@@ -207,6 +207,21 @@ PROGRAMS: dict[str, dict] = {
             "wage_level": ["PW_WAGE_LEVEL"],
             "h1b_dependent": ["H-1B_DEPENDENT", "H_1B_DEPENDENT"],
             "willful_violator": ["WILLFUL_VIOLATOR"],
+            # Section F, the prevailing wage the employer attested to and where
+            # it came from (read off FY2026 Q3's own header, Oct 4 2026):
+            # PREVAILING_WAGE and its unit; PW_OES_YEAR when it came from OES;
+            # PW_OTHER_SOURCE and PW_OTHER_YEAR when it didn't, with
+            # PW_SURVEY_PUBLISHER and PW_SURVEY_NAME for a private survey; and
+            # PW_TRACKING_NUMBER, the wage request's own case number when DOL
+            # determined the wage.
+            "pw_wage": ["PREVAILING_WAGE"],
+            "pw_unit": ["PW_UNIT_OF_PAY"],
+            "pw_oes_year": ["PW_OES_YEAR"],
+            "pw_other_source": ["PW_OTHER_SOURCE"],
+            "pw_other_year": ["PW_OTHER_YEAR"],
+            "pw_survey_publisher": ["PW_SURVEY_PUBLISHER"],
+            "pw_survey_name": ["PW_SURVEY_NAME"],
+            "pw_case": ["PW_TRACKING_NUMBER"],
         },
         "event_dates": [],
     },
@@ -304,6 +319,12 @@ LCA_COUNT_COLUMNS = (
     "new_concurrent_employment", "change_employer", "amended_petition",
 )
 
+# The LCA's prevailing wage and its source (Section F), in file order.
+LCA_PW_COLUMNS = (
+    "pw_wage", "pw_unit", "pw_oes_year", "pw_other_source", "pw_other_year",
+    "pw_survey_publisher", "pw_survey_name", "pw_case",
+)
+
 # A file that resolves none of these is unusable; the rest degrade to NULL
 # columns and say so in the log.
 REQUIRED_FIELDS = ("case", "status", "received", "decision", "employer")
@@ -319,6 +340,8 @@ COLUMNS = (
     "worksite_city", "naics",
     # LCA only; NULL on every wage-request row. See PROGRAMS["lca"].
     "workers", *LCA_COUNT_COLUMNS, "wage_level", "h1b_dependent", "willful_violator",
+    # LCA only: the prevailing wage attested to, and its source.
+    *LCA_PW_COLUMNS,
     # The seasonal programs only (H-2A, H-2B, CW-1); NULL elsewhere. `workers`
     # above holds their requested count.
     "workers_certified", "begin_date", "end_date", "worksite_county",
@@ -385,6 +408,14 @@ def table_ddl(table: str) -> list[str]:
              wage_level                 TEXT,
              h1b_dependent              INTEGER,
              willful_violator           INTEGER,
+             pw_wage                    REAL,
+             pw_unit                    TEXT,
+             pw_oes_year                TEXT,
+             pw_other_source            TEXT,
+             pw_other_year              TEXT,
+             pw_survey_publisher        TEXT,
+             pw_survey_name             TEXT,
+             pw_case                    TEXT,
              workers_certified          INTEGER,
              begin_date                 TEXT,
              end_date                   TEXT,
@@ -750,6 +781,14 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
         "wage_level": parse_wage_level(rec.get("wage_level")),
         "h1b_dependent": parse_flag(rec.get("h1b_dependent")),
         "willful_violator": parse_flag(rec.get("willful_violator")),
+        "pw_wage": parse_wage(rec.get("pw_wage")),
+        "pw_unit": (clean_text(rec.get("pw_unit"), 20) or "").upper() or None,
+        "pw_oes_year": clean_text(rec.get("pw_oes_year"), 40),
+        "pw_other_source": clean_text(rec.get("pw_other_source"), 80),
+        "pw_other_year": clean_text(rec.get("pw_other_year"), 40),
+        "pw_survey_publisher": clean_text(rec.get("pw_survey_publisher"), NAME_LEN),
+        "pw_survey_name": clean_text(rec.get("pw_survey_name"), NAME_LEN),
+        "pw_case": clean_text(rec.get("pw_case"), 40),
         # The seasonal programs only (the PW and LCA maps name none of these).
         "workers_certified": parse_count(rec.get("workers_certified")),
         "begin_date": to_iso((rec.get("begin_date") or "").strip()),
@@ -921,7 +960,7 @@ def ensure_columns(db: Turso, table: str) -> None:
     every row rewritten costs a write per index too. An ALTER is metadata
     only, and a backfill then writes each row once.
     """
-    types = {c: "REAL" if c == "wage" else "INTEGER" if c in INTEGER_COLUMNS else "TEXT"
+    types = {c: "REAL" if c in ("wage", "pw_wage") else "INTEGER" if c in INTEGER_COLUMNS else "TEXT"
              for c in COLUMNS}
     for col in add_missing_columns(db, table, types):
         log(f"  added missing column {table}.{col} {types[col]}")
@@ -932,7 +971,7 @@ def count_for_file(db: Turso, table: str, source_file: str) -> int:
 
 
 # Rows per backfill UPDATE: two parameters per column plus one per row, so
-# the eleven LCA detail columns make 4,600 parameters.
+# the nineteen LCA detail columns make 7,800 parameters.
 BACKFILL_ROWS_PER_STMT = 200
 BACKFILL_STMTS_PER_REQUEST = 8
 
@@ -941,8 +980,10 @@ BACKFILL_STMTS_PER_REQUEST = 8
 BACKFILL_GROUPS: dict[str, tuple[str, ...]] = {
     "attorney": ("attorney_name", "attorney_slug"),
     "place": ("worksite_city", "naics"),
-    # LCA only: the worker counts by kind, the wage level and the two flags.
-    "lca-detail": ("workers", *LCA_COUNT_COLUMNS, "wage_level", "h1b_dependent", "willful_violator"),
+    # LCA only: the worker counts by kind, the wage level, the two flags, and
+    # the prevailing wage with its source (added Oct 4 2026; one pass fills both).
+    "lca-detail": ("workers", *LCA_COUNT_COLUMNS, "wage_level", "h1b_dependent", "willful_violator",
+                   *LCA_PW_COLUMNS),
 }
 
 

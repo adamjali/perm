@@ -228,6 +228,8 @@ NO_LCA_DETAIL = {
     "change_previous_employment": None, "new_concurrent_employment": None,
     "change_employer": None, "amended_petition": None,
     "wage_level": None, "h1b_dependent": None, "willful_violator": None,
+    "pw_wage": None, "pw_unit": None, "pw_oes_year": None, "pw_other_source": None, "pw_other_year": None,
+    "pw_survey_publisher": None, "pw_survey_name": None, "pw_case": None,
 }
 
 PW_EXPECTED = [
@@ -278,6 +280,9 @@ LCA_HEADER = [
     "TOTAL_WORKER_POSITIONS", "NEW_EMPLOYMENT", "CONTINUED_EMPLOYMENT",
     "CHANGE_PREVIOUS_EMPLOYMENT", "NEW_CONCURRENT_EMPLOYMENT", "CHANGE_EMPLOYER",
     "AMENDED_PETITION", "PW_WAGE_LEVEL", "H-1B_DEPENDENT", "WILLFUL_VIOLATOR",
+    # Section F's source columns, verbatim from FY2026 Q3's own header (Oct 4 2026).
+    "PW_OES_YEAR", "PW_OTHER_SOURCE", "PW_OTHER_YEAR", "PW_SURVEY_PUBLISHER", "PW_SURVEY_NAME",
+    "PW_TRACKING_NUMBER",
 ]
 LCA_ROWS = [
     LCA_HEADER,
@@ -286,12 +291,16 @@ LCA_ROWS = [
     ["I-200-26010-111111", "Certified", D(2026, 1, 10), D(2026, 1, 17), "H-1B",
      "Data Scientist", "15-2051", "Data Scientists", "Hooli, Inc.", "TX",
      150000, 180000, "Year", 128000, "Year", "Austin", 541511,
-     2, 1, 0, 0, 0, 1, 0, "II", "N", "N"],
+     2, 1, 0, 0, 0, 1, 0, "II", "N", "N",
+     # An OES wage DOL determined: the year and the wage request's number.
+     "7/1/2025 - 6/30/2026", "", "", "", "", "P-100-25300-123456"],
     ["I-203-26011-222222", "Certified - Withdrawn", "2026-01-11", "2026-02-20", "E-3 Australian",
      "Nurse", "29-1141", "Registered Nurses", "Pied Piper LLC", "Washington",
      "48.00", "", "Hour", "45.10", "Hour", "Seattle", "622110",
      # Counts as text, a blank count, the N/A level, a Y flag and a blank one.
-     "1", "", "1", "0", "0", "0", "0", "N/A", "Y", ""],
+     "1", "", "1", "0", "0", "0", "0", "N/A", "Y", "",
+     # A private survey: no OES year, no wage request.
+     "", "Survey", "2025", "Economic Research Institute", "ERI Salary Assessor", ""],
 ]
 LCA_EXPECTED = [
     {"case_number": "I-200-26010-111111", "case_status": "CERTIFIED",
@@ -305,7 +314,10 @@ LCA_EXPECTED = [
      "workers": 2, "new_employment": 1, "continued_employment": 0,
      "change_previous_employment": 0, "new_concurrent_employment": 0,
      "change_employer": 1, "amended_petition": 0,
-     "wage_level": "II", "h1b_dependent": 0, "willful_violator": 0, **NO_SEASONAL},
+     "wage_level": "II", "h1b_dependent": 0, "willful_violator": 0,
+     "pw_wage": 128000.0, "pw_unit": "YEAR", "pw_oes_year": "7/1/2025 - 6/30/2026", "pw_other_source": None,
+     "pw_other_year": None, "pw_survey_publisher": None, "pw_survey_name": None, "pw_case": "P-100-25300-123456",
+     **NO_SEASONAL},
     {"case_number": "I-203-26011-222222", "case_status": "CERTIFIED - WITHDRAWN",
      "received_date": "2026-01-11", "decision_date": "2026-02-20",
      "employer_name": "Pied Piper LLC", "employer_slug": "pied-piper-llc",
@@ -317,7 +329,10 @@ LCA_EXPECTED = [
      "workers": 1, "new_employment": None, "continued_employment": 1,
      "change_previous_employment": 0, "new_concurrent_employment": 0,
      "change_employer": 0, "amended_petition": 0,
-     "wage_level": None, "h1b_dependent": 1, "willful_violator": None, **NO_SEASONAL},
+     "wage_level": None, "h1b_dependent": 1, "willful_violator": None,
+     "pw_wage": 45.1, "pw_unit": "HOUR", "pw_oes_year": None, "pw_other_source": "Survey", "pw_other_year": "2025",
+     "pw_survey_publisher": "Economic Research Institute", "pw_survey_name": "ERI Salary Assessor", "pw_case": None,
+     **NO_SEASONAL},
 ]
 
 # The performance page as it was on 2026-09-02, hrefs verbatim: the misspelled
@@ -623,11 +638,13 @@ def check_lca_detail_parsers() -> None:
     check("flag: Y", fd.parse_flag("y"), 1)
     check("flag: N", fd.parse_flag("N"), 0)
     check("flag: N/A is None", fd.parse_flag("N/A"), None)
-    check("backfill group lca-detail writes the ten LCA columns only",
+    check("backfill group lca-detail writes the LCA columns only, the wage source included",
           fd.BACKFILL_GROUPS["lca-detail"],
           ("workers", "new_employment", "continued_employment", "change_previous_employment",
            "new_concurrent_employment", "change_employer", "amended_petition",
-           "wage_level", "h1b_dependent", "willful_violator"))
+           "wage_level", "h1b_dependent", "willful_violator",
+           "pw_wage", "pw_unit", "pw_oes_year", "pw_other_source", "pw_other_year",
+           "pw_survey_publisher", "pw_survey_name", "pw_case"))
 
 
 def check_seasonal(tmp: str, write) -> None:
