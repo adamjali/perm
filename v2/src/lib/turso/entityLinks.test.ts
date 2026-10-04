@@ -14,15 +14,20 @@ const TABLES: Record<string, { kind?: string; slug: string }[]> = {
   ],
   perm_entity_alias: [{ kind: "employer", slug: "adobe-systems-inc" }],
   perm_live_recent: [{ slug: "new-startup-llc" }],
+  seasonal_employer_index: [{ slug: "shore-crabs-llc" }],
 };
 const asked: string[] = [];
 let fail = false;
+let noSeasonalTable = false;
 
 vi.mock("./client", () => ({
   rows: async (sql: string, args: unknown[]) => {
     if (fail) throw new Error("database unavailable");
     asked.push(sql.replace(/\s+/g, " "));
     const table = /FROM (\w+)/.exec(sql)![1]!;
+    if (noSeasonalTable && table === "seasonal_employer_index") {
+      throw new Error("SQLITE_ERROR: no such table: seasonal_employer_index");
+    }
     const kind = /kind = \?/.test(sql) ? (args[0] as string) : undefined;
     const wanted = new Set((kind ? args.slice(1) : args) as string[]);
     return (TABLES[table] ?? [])
@@ -36,14 +41,21 @@ import { keepLinkableSlugs, linkableSlugs } from "./entityLinks";
 beforeEach(() => {
   asked.length = 0;
   fail = false;
+  noSeasonalTable = false;
 });
 
 describe("linkableSlugs", () => {
-  it("knows an employer page by its published row, an alias, or a live PERM filing", async () => {
+  it("knows an employer page by its published row, an alias, a live PERM filing or a seasonal-only page", async () => {
     const ok = await linkableSlugs("employer", [
-      "adobe-inc", "adobe-systems-inc", "new-startup-llc", "steamboat-ski-resort-corporation", null, "",
+      "adobe-inc", "adobe-systems-inc", "new-startup-llc", "shore-crabs-llc", "steamboat-ski-resort-corporation", null, "",
     ]);
-    expect([...ok].sort()).toEqual(["adobe-inc", "adobe-systems-inc", "new-startup-llc"]);
+    expect([...ok].sort()).toEqual(["adobe-inc", "adobe-systems-inc", "new-startup-llc", "shore-crabs-llc"]);
+  });
+
+  it("treats a missing seasonal index (before its first nightly build) as no seasonal pages, not a failure", async () => {
+    noSeasonalTable = true;
+    const ok = await linkableSlugs("employer", ["adobe-inc", "shore-crabs-llc"]);
+    expect([...ok]).toEqual(["adobe-inc"]);
   });
 
   it("knows a law-firm page only by its published row or an alias, never by a live filing", async () => {
@@ -60,8 +72,8 @@ describe("linkableSlugs", () => {
   it("asks in batches, so a long list never builds one enormous query", async () => {
     const many = Array.from({ length: 650 }, (_, i) => `employer-${i}`);
     await linkableSlugs("employer", many);
-    // 3 batches (300, 300, 50) x 3 tables.
-    expect(asked).toHaveLength(9);
+    // 3 batches (300, 300, 50) x 4 tables.
+    expect(asked).toHaveLength(12);
   });
 });
 

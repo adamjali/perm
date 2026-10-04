@@ -3,7 +3,7 @@ import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { FinePrint } from "@/components/data/FinePrint";
 import { getFreshness, type DatasetFreshness } from "@/lib/turso/publicData";
-import { coverageFor } from "@/lib/datasetCoverage";
+import { coverageFor, datasetLabel } from "@/lib/datasetCoverage";
 
 /**
  * Where a page's figures came from, rendered beside them: one line per
@@ -90,35 +90,7 @@ function agePhrase(r: DatasetFreshness): string {
   return ` in ${r.ageDays} days`;
 }
 
-function label(d: string): string {
-  const names: Record<string, string> = {
-    "perm-cases": "Case data",
-    "processing-times": "Processing times",
-    "visa-bulletin": "Visa bulletin",
-    "daily-decisions": "Daily decisions",
-    "uscis-i140-times": "I-140 times",
-    "i485-inventory": "I-485 pending inventory",
-    "perm-month-stats": "Pending case counts",
-    "perm-case-status": "Per-case statuses",
-    "pwd-status": "Wage request statuses",
-    "lca-status": "LCA statuses",
-    "seasonal-status": "H-2A, H-2B and CW-1 statuses",
-    "pw-disclosure": "Wage determinations",
-    "lca-disclosure": "LCA disclosures",
-    "policy-notices": "Federal Register notices",
-    debarments: "DOL debarment lists",
-    "i140-trends": "I-140 filings by category",
-    "rfi-funnel": "RFI and audit outcomes",
-    entities: "Employers and firms",
-    "uscis-form-quarters": "USCIS quarterly form data",
-    "uscis-h1b-hub": "USCIS H-1B Employer Data Hub",
-    "sevp-top-employers": "ICE top OPT and CPT employers",
-    "uscis-i485-offices": "I-485 by field office",
-    "uscis-eb-awaiting-visa": "Petitions awaiting a visa",
-    "uscis-i140-class-country": "I-140 by class and country",
-  };
-  return names[d] ?? d;
-}
+const label = datasetLabel;
 
 function fmt(iso: string): string {
   // "2026-06-30" -> "Jun 30, 2026"; "2026-09" -> "Sep 2026"; else verbatim.

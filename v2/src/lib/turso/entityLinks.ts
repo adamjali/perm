@@ -12,9 +12,11 @@ import { rows } from "@/lib/turso/client";
  * case search are where those links appear).
  *
  * The rule mirrors the pages themselves. An employer page exists for a
- * published employer, an alias of one (`resolveEntity`), or an employer with a
- * live PERM filing (`liveEmployerRecord`); a law-firm page for a published firm
- * or an alias. Each table is asked once per 300 slugs, by primary key or index.
+ * published employer, an alias of one (`resolveEntity`), an employer with a
+ * live PERM filing (`liveEmployerRecord`), or one whose only filings are H-2A,
+ * H-2B or CW-1 (`seasonalEmployerRecord`); a law-firm page for a published
+ * firm or an alias. Each table is asked once per 300 slugs, by primary key or
+ * index.
  */
 export type LinkableKind = "employer" | "attorney";
 
@@ -46,6 +48,14 @@ export async function linkableSlugs(
           `SELECT DISTINCT employer_slug AS slug FROM perm_live_recent WHERE employer_slug IN (${marks})`,
           batch,
         ),
+        // Built nightly; before the first build there is no table, and no page.
+        rows<{ slug: string }>(
+          `SELECT slug FROM seasonal_employer_index WHERE slug IN (${marks})`,
+          batch,
+        ).catch((e: unknown) => {
+          if (/no such table/i.test(String(e))) return [];
+          throw e;
+        }),
       );
     }
     for (const found of await Promise.all(reads)) {

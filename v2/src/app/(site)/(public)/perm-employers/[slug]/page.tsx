@@ -24,6 +24,7 @@ import { notFound } from "next/navigation";
 import { firstThatFits } from "@/lib/describe";
 import { formatDollars, formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import {
   DisclosureNote,
   LimitsPanel,
@@ -96,6 +97,13 @@ import { debarmentsForSlug } from "@/lib/turso/debarments";
 import { warnForSlug } from "@/lib/turso/warn";
 import { WarnNoticeBand } from "@/components/entities/WarnNotice";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
+import { SeasonalEmployer } from "@/components/entities/SeasonalEmployer";
+import {
+  seasonalEmployerCases,
+  seasonalEmployerFigures,
+  seasonalEmployerRecord,
+} from "@/lib/turso/seasonalEmployers";
+import { seasonalVisas } from "@/lib/seasonalForms";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { comparables, fieldDistribution } from "@/lib/turso/entities";
 
@@ -167,6 +175,9 @@ async function loadSubject(
  */
 const LIVE_ONLY_CASE_LIMIT = 50;
 
+/** How many filings a seasonal-only page lists; the rest are a link to the case search. */
+const SEASONAL_CASE_LIMIT = 25;
+
 /**
  * The reduced page's data, or null when this slug names nothing anywhere.
  *
@@ -208,7 +219,27 @@ export async function generateMetadata({
   // 404, decided here, before the first byte.
   if (!found) {
     const record = await liveEmployerRecord(slug);
-    if (!record) notFound();
+    if (!record) {
+      // Third and last: an employer whose only filings are H-2A, H-2B or CW-1
+      // (seasonal_employer_index, built nightly). Indexable, and listed in the
+      // sitemap, by the owner's decision (Oct 3 2026).
+      const seasonal = await seasonalEmployerRecord(slug);
+      if (!seasonal) notFound();
+      const visas = seasonalVisas(seasonal);
+      const { title, absolute } = entityTitle(seasonal.name, [
+        `${visas} Filings: ${formatInt(seasonal.cases)}`,
+        `${visas} Filings`,
+      ]);
+      const noun = seasonal.cases === 1 ? "filing" : "filings";
+      const stem = `${seasonal.name}: ${formatInt(seasonal.cases)} ${visas} ${noun}`;
+      const description = firstThatFits([
+        `${stem}, with DOL's status on each, the workers certified and the wage offered, from DOL's own records.`,
+        `${stem}, with DOL's status, workers and wage.`,
+        `${stem}.`,
+        `${seasonal.name.slice(0, 120)}: ${visas} ${noun}.`,
+      ]);
+      return entityMetadata({ title, absolute, description, path: `${BASE}/${slug}` });
+    }
     // INDEXABLE, BY THE SITE OWNER'S DECISION, with the cost stated. Most
     // live-only employers hold exactly one case, so the page is a heading and
     // one row, and tens of thousands of those is the thin-content shape
@@ -338,7 +369,29 @@ export default async function EmployerPage({
     // reduced page is a different component rather than this one with
     // sections switched off.
     const live = await loadLiveOnly(slug);
-    if (!live) notFound();
+    if (!live) {
+      const seasonal = await seasonalEmployerRecord(slug);
+      if (!seasonal) notFound();
+      const [figures, list, fresh] = await Promise.all([
+        seasonalEmployerFigures(slug),
+        seasonalEmployerCases(slug, SEASONAL_CASE_LIMIT),
+        getFreshness(),
+      ]);
+      // The breadcrumb bar ends at "Employers", so the trail ending in this
+      // page's own name is emitted here, as the published page does.
+      return (
+        <>
+          <JsonLdScript schema={breadcrumbSchema(`${BASE}/${slug}`, seasonal.name)} />
+          <SeasonalEmployer
+            record={seasonal}
+            figures={figures}
+            cases={list.cases}
+            more={list.more}
+            asOf={fresh["seasonal-status"]?.asOf ?? null}
+          />
+        </>
+      );
+    }
     const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal] = await Promise.all([
       getFreshness(),
       getEmployerStages().catch(() => null),
@@ -348,32 +401,35 @@ export default async function EmployerPage({
       searchSeasonalCases({ text: live.record.name, limit: 5 }).catch(() => []),
     ]);
     return (
-      <UnpublishedEmployer
-        record={live.record}
-        cases={live.cases}
-        seasonal={<SeasonalFilings name={live.record.name} rows={liveSeasonal} className="mt-8" />}
-        asOf={fresh["perm-case-status"]?.asOf ?? null}
-        follow={
-          <EmployerFollow
-            slug={slug}
-            name={live.record.name}
-            row={liveStages?.employers.find((e) => e.slug === slug) ?? null}
-            moves={liveStages ? employerMoves(liveStages).filter((m) => m.slug === slug) : []}
-            logFrom={liveStages?.logFrom ?? null}
-            asOf={liveStages?.asOf ?? null}
-            docMissing={!liveStages}
-          />
-        }
-        wait={
-          <EmployerWait
-            name={live.record.name}
-            mine={liveWait}
-            field={fieldWait}
-            today={filedToday}
-            className="mt-8"
-          />
-        }
-      />
+      <>
+        <JsonLdScript schema={breadcrumbSchema(`${BASE}/${slug}`, live.record.name)} />
+        <UnpublishedEmployer
+          record={live.record}
+          cases={live.cases}
+          seasonal={<SeasonalFilings name={live.record.name} rows={liveSeasonal} className="mt-8" />}
+          asOf={fresh["perm-case-status"]?.asOf ?? null}
+          follow={
+            <EmployerFollow
+              slug={slug}
+              name={live.record.name}
+              row={liveStages?.employers.find((e) => e.slug === slug) ?? null}
+              moves={liveStages ? employerMoves(liveStages).filter((m) => m.slug === slug) : []}
+              logFrom={liveStages?.logFrom ?? null}
+              asOf={liveStages?.asOf ?? null}
+              docMissing={!liveStages}
+            />
+          }
+          wait={
+            <EmployerWait
+              name={live.record.name}
+              mine={liveWait}
+              field={fieldWait}
+              today={filedToday}
+              className="mt-8"
+            />
+          }
+        />
+      </>
     );
   }
   const row = found.subject;

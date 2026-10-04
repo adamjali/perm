@@ -54,7 +54,7 @@ describe("the sitemap reaches the live-only employers, and the page lets them in
     expect(sitemap).toContain("getLiveOnlySlugWindow(chunk, SITEMAP_CHUNK)");
     expect(sitemap).toContain("countLiveOnlyRanks()");
     expect(sitemap).toMatch(/live-employer-\$\{c \+ 1\}/);
-    expect(sitemap).toMatch(/\^\(employer\|attorney\|occupation\|live-employer\)-/);
+    expect(sitemap).toMatch(/\^\(employer\|attorney\|occupation\|live-employer\|seasonal-employer\)-/);
     const window = fnBody(publicData, "getLiveOnlySlugWindow");
     expect(window).toContain("FROM perm_live_only_index");
     expect(window).toContain("rank > ? AND rank <= ?");

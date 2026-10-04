@@ -114,6 +114,7 @@ const ISOLATED_UNIT_FILES = [
   // Added 2026-10-03. Both mock ../client and set per-test answers.
   "src/lib/turso/__tests__/seasonalCases.test.ts",
   "src/lib/turso/__tests__/employerProgramsSeasonal.test.ts",
+  "src/lib/turso/__tests__/seasonalEmployers.test.ts",
 ];
 
 export default defineConfig({

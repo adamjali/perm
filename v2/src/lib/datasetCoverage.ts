@@ -118,3 +118,60 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
 export function coverageFor(dataset: string): string | null {
   return DATASET_COVERAGE[dataset] ?? null;
 }
+
+/**
+ * The short name each dataset goes by on a page's source lines. Every dataset
+ * in DATASET_COVERAGE needs one (dataset-coverage.test.ts): without it the
+ * line printed the registry id, "h2a-disclosure:", to readers.
+ */
+export const DATASET_LABELS: Readonly<Record<string, string>> = {
+  "perm-cases": "Case data",
+  "pw-disclosure": "Wage determinations",
+  "lca-disclosure": "LCA disclosures",
+  "h2a-disclosure": "H-2A disclosures",
+  "h2b-disclosure": "H-2B disclosures",
+  "cw1-disclosure": "CW-1 disclosures",
+  "daily-decisions": "Daily decisions",
+  entities: "Employers and firms",
+  "stage-cohorts": "Cases by stage",
+  "perm-case-status": "Per-case statuses",
+  "perm-case-status-full": "Per-case statuses, full sweep",
+  "pwd-status": "Wage request statuses",
+  "lca-status": "LCA statuses",
+  "seasonal-postings": "SeasonalJobs.dol.gov postings",
+  "seasonal-status": "H-2A, H-2B and CW-1 statuses",
+  "live-recent": "Live PERM filings",
+  "decisions-observed": "Decisions we observed",
+  "review-stages": "Review stages",
+  "rfi-funnel": "RFI and audit outcomes",
+  "processing-times": "Processing times",
+  "visa-bulletin": "Visa bulletin",
+  "nvc-waiting-list": "NVC waiting list",
+  "visa-annual-limits": "Annual visa limits",
+  "uscis-case-status": "USCIS case statuses",
+  "i485-inventory": "I-485 pending inventory",
+  "uscis-i140-counts": "I-140 counts",
+  "uscis-i140-times": "I-140 times",
+  "i140-trends": "I-140 filings by category",
+  debarments: "DOL debarment lists",
+  "policy-notices": "Federal Register notices",
+  "policy-notices-oflc": "OFLC announcements",
+  "warn-notices": "WARN notices",
+  "warn-notices-ca": "California WARN notices",
+  "warn-notices-ny": "New York WARN notices",
+  "warn-notices-tx": "Texas WARN notices",
+  "warn-notices-wa": "Washington WARN notices",
+  "uscis-form-quarters": "USCIS quarterly form data",
+  "uscis-i485-offices": "I-485 by field office",
+  "uscis-eb-awaiting-visa": "Petitions awaiting a visa",
+  "uscis-i140-class-country": "I-140 by class and country",
+  "sevp-top-employers": "ICE top OPT and CPT employers",
+  "uscis-h1b-hub": "USCIS H-1B Employer Data Hub",
+  // Retired names still stamped on older rows.
+  "perm-month-stats": "Pending case counts",
+};
+
+/** A dataset's short name, or the id itself when none is written (a test keeps that from shipping). */
+export function datasetLabel(dataset: string): string {
+  return DATASET_LABELS[dataset] ?? dataset;
+}

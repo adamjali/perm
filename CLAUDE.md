@@ -397,3 +397,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (evening)".
 - **A later decision wins whatever order DOL's files load in**: the writer upserts, and the load check counts the rows a newer file kept.
 - **H-2A, H-2B and CW-1 reach October 2024; LCA reaches FY2020 Q2.** LCA FY2020 Q1 is held back by the load guard (yearly salaries under weekly and monthly units).
 - **A summary written before a backfill stays stale until the next pass**; the seasonal one was rebuilt by hand.
+
+## Oct 3 2026 (night), in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (night)".
+
+- **Every employer that files only H-2A, H-2B or CW-1 has a page** (32,388), from `seasonal_employer_index`, built nightly.
+- **They're all in the sitemap** as a fifth family, `seasonal-employer-N.xml`, and the case search links them.
+- **Employer pages that aren't published PERM sponsors carry their own breadcrumb list**, ending in the employer's name.
+- **Source lines name every dataset in words**; they had printed raw ids such as "h2a-disclosure:".
+

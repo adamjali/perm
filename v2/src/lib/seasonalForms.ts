@@ -31,3 +31,16 @@ export function seasonalForm(caseNumber: string): { form: string; label: string;
   const m = /^((?:JO-A|[A-Z])-\d{3})-\d{5}-/.exec(caseNumber.trim().toUpperCase());
   return (m ? SEASONAL_FORMS[m[1]!] : undefined) ?? null;
 }
+
+/**
+ * The visas an employer actually files under, in DOL's order: "H-2B",
+ * "H-2A and H-2B", "H-2A, H-2B and CW-1". A title naming all three for an
+ * employer that files one would say something untrue about it.
+ */
+export function seasonalVisas(counts: { h2a: number; h2b: number; cw1: number }): string {
+  const v = [counts.h2a ? "H-2A" : null, counts.h2b ? "H-2B" : null, counts.cw1 ? "CW-1" : null].filter(
+    (x): x is string => !!x,
+  );
+  if (v.length === 0) return "H-2A, H-2B and CW-1";
+  return v.length === 1 ? v[0]! : `${v.slice(0, -1).join(", ")} and ${v[v.length - 1]}`;
+}

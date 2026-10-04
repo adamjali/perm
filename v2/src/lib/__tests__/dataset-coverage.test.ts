@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { DATASET_COVERAGE, coverageFor } from "../datasetCoverage";
+import { DATASET_COVERAGE, coverageFor, datasetLabel } from "../datasetCoverage";
 
 /**
  * Every dataset the ingests register says what it CONTAINS, not just how often
@@ -89,5 +89,16 @@ describe("dataset coverage", () => {
     // 43 entries on Oct 3 2026 (the H-2A, H-2B and CW-1 files added three).
     expect(Object.keys(DATASET_COVERAGE).length).toBeLessThanOrEqual(55);
     void known;
+  });
+
+  it("gives every dataset a readable name for its source line", () => {
+    for (const id of Object.keys(DATASET_COVERAGE)) {
+      const name = datasetLabel(id);
+      expect(name, id).not.toBe(id);
+      expect(name, id).toMatch(/^[A-Z0-9]/);
+    }
+    // Control: an unknown id still comes back as itself, so the check above
+    // is testing the map, not a function that never returns the id.
+    expect(datasetLabel("no-such-dataset")).toBe("no-such-dataset");
   });
 });

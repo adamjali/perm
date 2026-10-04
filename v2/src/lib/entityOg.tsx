@@ -52,6 +52,15 @@ export function generateLiveEmployerOG(name: string, cases: number) {
   );
 }
 
+export function generateSeasonalEmployerOG(name: string, cases: number, visas: string) {
+  return card(
+    GROUND.employer,
+    `${KIND_EYEBROW.employer} · ${visas}`,
+    name,
+    `${cases.toLocaleString("en-US")} ${visas} ${cases === 1 ? "filing" : "filings"} in the Department of Labor's records.`,
+  );
+}
+
 function card(c: (typeof GROUND)[EntityKind], eyebrow: string, rawName: string, sentence: string) {
   const name = rawName.length > 60 ? `${rawName.slice(0, 57)}...` : rawName;
   const size = name.length <= 22 ? 84 : name.length <= 36 ? 64 : 48;

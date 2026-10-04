@@ -6,6 +6,7 @@ import {
   liveEmployerEntries,
   pagesEntries,
   parseChildName,
+  seasonalEmployerEntries,
   urlsetXml,
 } from "@/lib/sitemap/build";
 
@@ -32,6 +33,7 @@ export async function GET(
       // for a typo would be indexed as a legitimately empty section.
       if (!parsed) notFound();
       if (parsed.kind === "live-employer") return liveEmployerEntries(parsed.chunk);
+      if (parsed.kind === "seasonal-employer") return seasonalEmployerEntries(parsed.chunk);
       return entityEntries(parsed.kind, parsed.chunk);
     })();
 

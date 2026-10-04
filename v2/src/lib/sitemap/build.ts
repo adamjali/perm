@@ -16,6 +16,7 @@ import { getBacklogCensus } from "@/lib/turso/backlog";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
+import { countSeasonalEmployerRanks, getSeasonalEmployerSlugWindow } from "@/lib/turso/seasonalEmployers";
 import {
   countEntityRanks,
   countLiveOnlyRanks,
@@ -534,8 +535,31 @@ export async function groupEntries(): Promise<Entry[]> {
   );
 }
 
-/** The child-sitemap families: three entity kinds plus the live-only employers. */
-export type ChildKind = EntityKind | "live-employer";
+/**
+ * One chunk of the seasonal-only employers: employers whose only filings are
+ * H-2A, H-2B or CW-1 (seasonal_employer_index, built nightly). Listed in full
+ * by the owner's decision (Oct 3 2026); lastmod is each page's own day.
+ */
+export async function seasonalEmployerEntries(chunk: number): Promise<Entry[]> {
+  const base = baseUrl();
+  const slugs = await getSeasonalEmployerSlugWindow(chunk, SITEMAP_CHUNK);
+  const floor = chunk === 0 ? MIN_ROWS_PER_KIND : 1;
+  if (slugs.length < floor) {
+    const detail =
+      `Sitemap child seasonal-employer chunk ${chunk} built with only ${slugs.length} rows. ` +
+      `The read failed or the nightly table is empty.`;
+    captureError(new Error(detail));
+    throw new Error(detail);
+  }
+  const fallback = (await corpusAsOf()) ?? "2026-10-03";
+  return slugs.map(({ slug, lastChanged }) => ({
+    url: `${base}/perm-employers/${slug}`,
+    lastModified: lastChanged ?? fallback,
+  }));
+}
+
+/** The child-sitemap families: three entity kinds, the live-only and the seasonal-only employers. */
+export type ChildKind = EntityKind | "live-employer" | "seasonal-employer";
 
 /** Every child sitemap name, in the order the index lists them. */
 export async function childNames(): Promise<string[]> {
@@ -554,6 +578,13 @@ export async function childNames(): Promise<string[]> {
     return 0;
   });
   for (let c = 0; c < Math.ceil(live / SITEMAP_CHUNK); c += 1) names.push(`live-employer-${c + 1}`);
+  // Same rule for the seasonal-only family: no table, no children, and the
+  // other families stay up.
+  const seasonal = await countSeasonalEmployerRanks().catch((e: unknown) => {
+    captureError(e instanceof Error ? e : new Error(`seasonal-employer count failed: ${String(e)}`));
+    return 0;
+  });
+  for (let c = 0; c < Math.ceil(seasonal / SITEMAP_CHUNK); c += 1) names.push(`seasonal-employer-${c + 1}`);
   return names;
 }
 
@@ -561,7 +592,7 @@ export async function childNames(): Promise<string[]> {
 export function parseChildName(
   name: string,
 ): { kind: ChildKind; chunk: number } | null {
-  const m = /^(employer|attorney|occupation|live-employer)-(\d+)$/.exec(name);
+  const m = /^(employer|attorney|occupation|live-employer|seasonal-employer)-(\d+)$/.exec(name);
   if (!m) return null;
   const chunk = Number(m[2]) - 1;
   if (!Number.isInteger(chunk) || chunk < 0 || chunk > 999) return null;

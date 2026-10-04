@@ -65,8 +65,9 @@ describe("entity detail routes: the miss is decided in metadata", () => {
    *
    * An employer with no `perm_entities` row is no longer automatically a 404:
    * the live feed knows 21,495 employers the published disclosure files have
-   * never named, and those get a reduced page. So a genuine miss has to miss
-   * twice, and both reads are mocked here rather than one.
+   * never named, and those get a reduced page; and since Oct 3 2026 an
+   * employer whose only filings are H-2A, H-2B or CW-1 gets one too. So a
+   * genuine miss has to miss three times, and all three reads are mocked.
    */
   const missBoth = () => {
     vi.doMock("@/lib/turso/entityDetail", async (importOriginal) => ({
@@ -77,15 +78,20 @@ describe("entity detail routes: the miss is decided in metadata", () => {
       ...(await importOriginal<object>()),
       liveEmployerRecord: vi.fn().mockResolvedValue(null),
     }));
+    vi.doMock("@/lib/turso/seasonalEmployers", async (importOriginal) => ({
+      ...(await importOriginal<object>()),
+      seasonalEmployerRecord: vi.fn().mockResolvedValue(null),
+    }));
   };
   const unmockBoth = () => {
     vi.doUnmock("@/lib/turso/entityDetail");
     vi.doUnmock("@/lib/turso/liveEmployers");
+    vi.doUnmock("@/lib/turso/seasonalEmployers");
   };
 
   it("employer generateMetadata throws notFound when the slug names nothing", async () => {
     vi.resetModules();
-    // Only these two reads decide hit-vs-miss; the rest of the module is kept
+    // Only these three reads decide hit-vs-miss; the rest of the module is kept
     // real so the page's other imports resolve.
     missBoth();
     const { generateMetadata } = await import(

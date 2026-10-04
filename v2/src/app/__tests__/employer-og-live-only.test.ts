@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
  * The employer social card resolves in the same order as the page: the
- * published record, then the live-only record, and a 404 only when both miss.
+ * published record, then the live-only record, then the seasonal-only record
+ * (an employer whose only filings are H-2A, H-2B or CW-1), and a 404 only when
+ * all three miss.
  *
  * It used to stop at the published record. A file-based image is attached to
  * every page in the segment, so all ~22,600 live-only employer pages advertised
@@ -14,25 +16,31 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const published = { name: "Acme Corp", total: 12 };
 const live = { slug: "okemos-software-llc", name: "Okemos Software LLC", cases: 1, pending: 1 };
 
-async function load({ found, record }: { found: unknown; record: unknown }) {
+const seasonalOnly = { slug: "shore-crabs", name: "Shore Crabs LLC", cases: 3, h2a: 0, h2b: 3, cw1: 0 };
+
+async function load({ found, record, seasonal = null }: { found: unknown; record: unknown; seasonal?: unknown }) {
   vi.resetModules();
   const generateEntityOG = vi.fn(() => "published-card");
   const generateLiveEmployerOG = vi.fn(() => "live-card");
+  const generateSeasonalEmployerOG = vi.fn(() => "seasonal-card");
   vi.doMock("@/lib/turso/entityDetail", () => ({ resolveEntity: vi.fn().mockResolvedValue(found) }));
   vi.doMock("@/lib/turso/liveEmployers", () => ({ liveEmployerRecord: vi.fn().mockResolvedValue(record) }));
+  vi.doMock("@/lib/turso/seasonalEmployers", () => ({ seasonalEmployerRecord: vi.fn().mockResolvedValue(seasonal) }));
   vi.doMock("@/lib/entityOg", () => ({
     ENTITY_OG_SIZE: { width: 1200, height: 630 },
     generateEntityOG,
     generateLiveEmployerOG,
+    generateSeasonalEmployerOG,
   }));
   const mod = await import("../(site)/(public)/perm-employers/[slug]/opengraph-image");
   const out = await mod.default({ params: Promise.resolve({ slug: "x" }) });
-  return { out, generateEntityOG, generateLiveEmployerOG };
+  return { out, generateEntityOG, generateLiveEmployerOG, generateSeasonalEmployerOG };
 }
 
 afterEach(() => {
   vi.doUnmock("@/lib/turso/entityDetail");
   vi.doUnmock("@/lib/turso/liveEmployers");
+  vi.doUnmock("@/lib/turso/seasonalEmployers");
   vi.doUnmock("@/lib/entityOg");
 });
 
@@ -49,7 +57,13 @@ describe("employer social card", () => {
     expect(r.generateLiveEmployerOG).toHaveBeenCalledWith("Okemos Software LLC", 1);
   });
 
-  it("a slug in neither corpus is still a 404, like its page", async () => {
+  it("a seasonal-only employer gets its card, naming only the visas it files", async () => {
+    const r = await load({ found: null, record: null, seasonal: seasonalOnly });
+    expect(r.out).toBe("seasonal-card");
+    expect(r.generateSeasonalEmployerOG).toHaveBeenCalledWith("Shore Crabs LLC", 3, "H-2B");
+  });
+
+  it("a slug in none of the three is still a 404, like its page", async () => {
     const r = await load({ found: null, record: null });
     expect(r.out).toBeInstanceOf(Response);
     expect((r.out as Response).status).toBe(404);

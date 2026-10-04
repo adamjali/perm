@@ -7787,3 +7787,41 @@ showed 0 for three forms. It was rebuilt by hand from the server (`write_summary
   compile time, so `compile()` (or importing the module) is the check.
 - The case-search help line said a firm, state or occupation reads only the PERM file; it has read every
   published program since the wage-request and LCA files were indexed.
+
+## Oct 3 2026 (night): a page for every employer that files only H-2A, H-2B or CW-1
+
+**32,388 employers had filings we held and no page** (Oct 3): their only filings are H-2A, H-2B or
+CW-1, so no PERM table names them. By the owner's call they get an indexable page, and every one is
+in the sitemap.
+- **`seasonal_employer_index`**, written by `scripts/build_seasonal_employers.py` after the nightly
+  live-only rebuild in `case-status-direct.yml`: one row per employer slug in `seasonal_case_status`
+  or `seasonal_cases` that resolves to no published, aliased or live-only employer. A case in both
+  tables counts once, the visa comes from the case-number prefix (the job order is H-2A, the P-400
+  and P-500 wage requests are H-2B and CW-1), ranks are dense by first filing then slug, and the
+  write is a diff. Changed slugs join `changed-employer-slugs.json`, so the nightly expiry refreshes
+  them with the rest. `scripts/test_seasonal_employers.py` runs it on SQLite.
+- **The employer route resolves in three steps**, the page and its social card alike: the published
+  record, the live-only record, then `seasonalEmployerRecord`; a slug in none is a 404. The page
+  (`components/entities/SeasonalEmployer.tsx`, reads in `lib/turso/seasonalEmployers.ts`) shows
+  what we hold and nothing from the PERM model: filings by visa, the open ones, workers certified,
+  the median hourly wage ($5 to $200, published rows paid by the hour), then the newest 25 cases
+  with DOL's live status and, once decided, what the quarterly file printed. Every read keys on
+  the EXACT slug. Titles name only the visas the employer files (`seasonalVisas` in
+  `lib/seasonalForms.ts`): "H-2B Filings", never all three for a one-visa employer.
+- **The sitemap's fifth child family**, `seasonal-employer-N.xml`, reads the index by rank window
+  and lists nothing (keeping the other families) when the table can't be read. A new family needs
+  `sitemap.xml` resubmitted in Search Console the same day.
+- **Seasonal-only employers are linkable** (`entityLinks.ts` asks `seasonal_employer_index`), so
+  the all-programs search links them.
+- **The live-only and seasonal-only pages emit their own BreadcrumbList** ending in the employer's
+  name; the breadcrumb bar ends at "Employers" on those URLs, so they had none.
+- **Every dataset has a readable name** (`DATASET_LABELS` in `lib/datasetCoverage.ts`, held by
+  `dataset-coverage.test.ts`): the source lines had printed "h2a-disclosure:" to readers.
+
+**DOL's own H-2B file carries mangled punctuation**: 157 rows filed December 2023 to 2025 print
+"Ryan€s" for "Ryan's" and "€“" for a dash, in employer names and job titles. It's in DOL's file,
+not our parser (the published XLSX is UTF-8), and it shows as DOL printed it.
+
+**Prettier is not this repo's formatter.** One `prettier --write` on the employer page rewrapped 634
+lines to an 80-column width; the page was rebuilt from HEAD with only the intended change.
+
