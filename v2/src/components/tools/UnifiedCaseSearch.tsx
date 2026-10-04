@@ -9,6 +9,7 @@ import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { usePublicQuery } from "@/hooks/usePublicQuery";
 import { formatWage } from "@/lib/wageFormat";
+import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { SortableHeader } from "@/components/tools/SortableHeader";
 import { LinkPending, PendingLink } from "@/components/ui/pending-link";
@@ -1469,7 +1470,8 @@ export function UnifiedCaseSearch({
                       )}
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">
-                      {r.wage === null ? "—" : formatWage(r.wage, r.wageUnit)}
+                      {r.wage === null ? "—" : formatWage(r.wage, r.wageUnit)}{" "}
+                      <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.filedOn ?? "—"}{" "}</td>
                     {/* IN THIS COLUMN, BUT NEVER AS A BARE DATE. DOL's batch

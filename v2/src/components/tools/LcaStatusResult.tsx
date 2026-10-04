@@ -2,6 +2,7 @@ import Link from "next/link";
 import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import { lookupLcaCaseOutcome, lookupLcaDisclosed, type LcaDisclosedRow, type LcaRow } from "@/lib/turso/lcaCasesTypes";
 import { formatWage } from "@/lib/wageFormat";
+import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { isLookupGap } from "@/lib/dolMiss";
 
@@ -44,6 +45,7 @@ function Disclosed({ d }: { d: LcaDisclosedRow }) {
         DOL&apos;s record · from the quarterly disclosure file
       </p>{" "}
       {wage ? <p className="mt-2 font-heading text-3xl font-black sm:text-4xl">{wage}</p> : null}{" "}
+      <YearlyPayNote wage={d.wage} unit={d.wageUnit} />{" "}
       <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
         <div>
           <dt className="text-sm font-bold text-foreground/70">{wage ? "Wage offered" : "Wage"}</dt>{" "}

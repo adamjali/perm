@@ -89,7 +89,9 @@ describe("entity detail routes: the miss is decided in metadata", () => {
     vi.doUnmock("@/lib/turso/seasonalEmployers");
   };
 
-  it("employer generateMetadata throws notFound when the slug names nothing", async () => {
+  // The first import of the employer page loads its whole module graph: 4.6 s
+  // alone, past the default 10 s under a full suite's load (Oct 3 2026).
+  it("employer generateMetadata throws notFound when the slug names nothing", { timeout: 45_000 }, async () => {
     vi.resetModules();
     // Only these three reads decide hit-vs-miss; the rest of the module is kept
     // real so the page's other imports resolve.

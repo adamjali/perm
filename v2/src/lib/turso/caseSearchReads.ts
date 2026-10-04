@@ -26,6 +26,7 @@ import {
 import type { Lead, Outcome } from "@/lib/caseSearchPlan";
 import type { ChangeProgram } from "@/lib/changeProgram";
 import { tableColumns } from "./tableColumns";
+import { FLAG_ANNUAL_WAGE_SQL } from "./lcaWages";
 
 /**
  * Every read the unified case search makes, and the index each one rides.
@@ -1285,12 +1286,17 @@ export async function readFlagPublished(
     restConds.push("fiscal_year = ?");
     restParams.push(Number(narrow.fiscalYear));
   }
+  // YEARLY FIGURES, LIKE THE BOXES SAY. These files quote the unit the
+  // employer pays in, so the raw amount compared against "$100,000" dropped
+  // every $50-an-hour offer ($104,000 a year) and kept a yearly salary typed
+  // as "$100,000 per month". The expression annualises and reads a wrong-unit
+  // amount as NULL, which no bound matches.
   if (narrow.wageMin !== undefined) {
-    restConds.push("wage >= ?");
+    restConds.push(`(${FLAG_ANNUAL_WAGE_SQL}) >= ?`);
     restParams.push(narrow.wageMin);
   }
   if (narrow.wageMax !== undefined) {
-    restConds.push("wage <= ?");
+    restConds.push(`(${FLAG_ANNUAL_WAGE_SQL}) <= ?`);
     restParams.push(narrow.wageMax);
   }
   const rest = commonNarrowing(

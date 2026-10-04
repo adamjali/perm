@@ -568,6 +568,19 @@ describe("readFlagPublished, employer lead", () => {
     expect(secondPass().args).toEqual([11, 22, 2025, 100]);
   });
 
+  it("compares the wage bounds as yearly figures, the way the boxes are labelled", async () => {
+    // These files quote the unit the employer pays in. Against the raw amount,
+    // "at least $100,000" dropped every $50-an-hour offer ($104,000 a year)
+    // and kept a yearly salary filed as "$100,000 per month".
+    await readFlagPublished("lca", employer, { wageMin: 100000, wageMax: 300000 }, 100);
+    const sql = secondPass().sql;
+    expect(sql).toContain("WHEN wage_unit IN ('HOUR', 'HOURLY') THEN wage * 2080");
+    expect(sql).toMatch(/END\) >= \?/);
+    expect(sql).toMatch(/END\) <= \?/);
+    expect(sql).not.toMatch(/ AND wage >= \? /);
+    expect(secondPass().args).toEqual(expect.arrayContaining([100000, 300000]));
+  });
+
   it("filters on worksite_state, which is what this file calls the column", async () => {
     await readFlagPublished("lca", employer, { state: "TX", socCode: "15-1252.00" }, 100);
     expect(secondPass().sql).toContain("worksite_state = ?");

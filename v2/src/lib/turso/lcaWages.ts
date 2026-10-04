@@ -49,14 +49,36 @@ export interface LcaWageStateRow extends LcaWagePercentileRow {
   state: string;
 }
 
-/** Annual dollars from whatever unit the filing quoted. NULL for a unit not listed. */
+/**
+ * Annual dollars from whatever unit the filing quoted. NULL for a unit not
+ * listed, and NULL for an amount that can't be pay for its period (an hourly
+ * $10,000 or more, a weekly, bi-weekly or monthly $40,000 or more): those are
+ * yearly salaries under the wrong unit, and the floors are `looksYearly`'s in
+ * src/lib/wageFormat.ts (lcaWages.test.ts holds them together).
+ */
 export const ANNUAL_WAGE_SQL =
-  "CASE wage_unit WHEN 'YEAR' THEN wage WHEN 'HOUR' THEN wage * 2080 " +
-  "WHEN 'MONTH' THEN wage * 12 WHEN 'WEEK' THEN wage * 52 WHEN 'BI-WEEKLY' THEN wage * 26 END";
+  "CASE WHEN wage_unit = 'HOUR' AND wage >= 10000 THEN NULL " +
+  "WHEN wage_unit IN ('WEEK', 'BI-WEEKLY', 'MONTH') AND wage >= 40000 THEN NULL " +
+  "WHEN wage_unit = 'YEAR' THEN wage WHEN wage_unit = 'HOUR' THEN wage * 2080 " +
+  "WHEN wage_unit = 'MONTH' THEN wage * 12 WHEN wage_unit = 'WEEK' THEN wage * 52 " +
+  "WHEN wage_unit = 'BI-WEEKLY' THEN wage * 26 END";
 
 /** Rows outside this band are data defects (a wage of 1, or 15,000,000), not offers. */
 const MIN_ANNUAL = 10_000;
 const MAX_ANNUAL = 1_500_000;
+
+/**
+ * The same rule over every spelling the FLAG files use: the wage-request file
+ * adds ANNUAL and HOURLY, and the H-2A, H-2B and CW-1 files quote HOUR, WEEK
+ * and MONTH. For the wage bounds of the case search and the employer page's
+ * wage-request line.
+ */
+export const FLAG_ANNUAL_WAGE_SQL =
+  "CASE WHEN wage_unit IN ('HOUR', 'HOURLY') AND wage >= 10000 THEN NULL " +
+  "WHEN wage_unit IN ('WEEK', 'BI-WEEKLY', 'MONTH') AND wage >= 40000 THEN NULL " +
+  "WHEN wage_unit IN ('YEAR', 'ANNUAL') THEN wage WHEN wage_unit IN ('HOUR', 'HOURLY') THEN wage * 2080 " +
+  "WHEN wage_unit = 'MONTH' THEN wage * 12 WHEN wage_unit = 'WEEK' THEN wage * 52 " +
+  "WHEN wage_unit = 'BI-WEEKLY' THEN wage * 26 END";
 
 /** The first seven characters, `15-1252`, which is how the index is keyed. */
 export function socGroup(code: string): string {

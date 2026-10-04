@@ -105,6 +105,7 @@ import {
 } from "@/lib/turso/seasonalEmployers";
 import { seasonalVisas } from "@/lib/seasonalForms";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { comparables, fieldDistribution } from "@/lib/turso/entities";
 
 /**
@@ -709,7 +710,10 @@ export default async function EmployerPage({
                         </Link>{" "}
                         {r.jobTitle ? <span className="text-foreground/80">{r.jobTitle}</span> : null}{" "}
                         {formatWage(r.wage, r.wageUnit) ? (
-                          <span className="font-mono text-sm font-bold">{formatWage(r.wage, r.wageUnit)}</span>
+                          <span className="font-mono text-sm font-bold">
+                            {formatWage(r.wage, r.wageUnit)}
+                            <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
+                          </span>
                         ) : null}{" "}
                         <span className="ml-auto font-mono text-sm font-bold uppercase text-foreground/70">
                           {r.date ? `${r.date} · ` : ""}

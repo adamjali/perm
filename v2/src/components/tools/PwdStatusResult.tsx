@@ -12,6 +12,7 @@ import {
 import { currentMonthUtc } from "@/lib/dolFormat";
 import { calculatePWDExpiration } from "@/lib/perm";
 import { formatWage } from "@/lib/wageFormat";
+import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { QueueAlertForm } from "@/app/(site)/(public)/perm-processing-times/QueueAlertForm";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { isLookupGap } from "@/lib/dolMiss";
@@ -87,7 +88,10 @@ function Determination({ d }: { d: PwdDisclosedRow }) {
         DOL&apos;s determination · from the quarterly disclosure file
       </p>{" "}
       {issued && wage ? (
-        <p className="mt-2 font-heading text-3xl font-black sm:text-4xl">{wage}</p>
+        <>
+          <p className="mt-2 font-heading text-3xl font-black sm:text-4xl">{wage}</p>{" "}
+          <YearlyPayNote wage={d.wage} unit={d.wageUnit} />
+        </>
       ) : (
         <p className="mt-2 font-heading text-2xl font-black">{d.status.charAt(0) + d.status.slice(1).toLowerCase()}</p>
       )}{" "}

@@ -5,7 +5,7 @@ import { cache } from "react";
 import { medianOffset, type ProgramLine } from "../employerPrograms";
 import { one } from "./client";
 import { slugRange } from "./flagCases";
-import { ANNUAL_WAGE_SQL } from "./lcaWages";
+import { ANNUAL_WAGE_SQL, FLAG_ANNUAL_WAGE_SQL } from "./lcaWages";
 
 /**
  * One employer's wage-request and LCA record, as counts and a median.
@@ -18,10 +18,8 @@ import { ANNUAL_WAGE_SQL } from "./lcaWages";
  * not read here; the employer page already holds it from `perm_entities`.
  */
 
-/** The wage-request file spells its units three ways more than the LCA file does. */
-const PWD_ANNUAL_WAGE_SQL =
-  "CASE wage_unit WHEN 'YEAR' THEN wage WHEN 'ANNUAL' THEN wage WHEN 'HOUR' THEN wage * 2080 " +
-  "WHEN 'HOURLY' THEN wage * 2080 WHEN 'MONTH' THEN wage * 12 WHEN 'WEEK' THEN wage * 52 WHEN 'BI-WEEKLY' THEN wage * 26 END";
+/** The wage-request file spells its units more ways than the LCA file does. */
+const PWD_ANNUAL_WAGE_SQL = FLAG_ANNUAL_WAGE_SQL;
 const MIN_ANNUAL = 10_000;
 const MAX_ANNUAL = 1_500_000;
 

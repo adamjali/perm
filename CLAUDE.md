@@ -3,7 +3,7 @@
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-03
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **563 files / 8,409 tests across 5 vitest
+> have drifted: the suite is now **569 files / 8,468 tests across 5 vitest
 > projects** (2026-10-03), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
@@ -398,7 +398,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (evening)".
 - **H-2A, H-2B and CW-1 reach October 2024; LCA reaches FY2020 Q2.** LCA FY2020 Q1 is held back by the load guard (yearly salaries under weekly and monthly units).
 - **A summary written before a backfill stays stale until the next pass**; the seasonal one was rebuilt by hand.
 
-## Oct 3 2026 (night), in four lines
+## Oct 3 2026 (night), in six lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (night)".
 
@@ -406,4 +406,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (night)".
 - **They're all in the sitemap** as a fifth family, `seasonal-employer-N.xml`, and the case search links them.
 - **Employer pages that aren't published PERM sponsors carry their own breadcrumb list**, ending in the employer's name.
 - **Source lines name every dataset in words**; they had printed raw ids such as "h2a-disclosure:".
+- **A wage that can't be pay for its unit** ($100,000 "per month") is shown as DOL printed it with a note, and left out of every average and median (`looksYearly`).
+- **The case search's wage bounds and wage sort compare yearly figures**; they had compared DOL's raw amount across units.
 

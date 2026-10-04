@@ -59,10 +59,15 @@ def min_for_median() -> int:
 # Duplicated deliberately, the same way the entity slug rules are duplicated in
 # lib_slugs.py and entitySlug.ts: a doc built over a different population
 # than the fallback query reads is worse than no doc, because it is invisible.
+# An amount that can't be pay for its period (an hourly $10,000 or more, a
+# weekly, bi-weekly or monthly $40,000 or more) is a yearly salary under the
+# wrong unit, and reads as NULL, so it is in no figure.
 ANNUAL_WAGE_SQL = (
-    "CASE wage_unit WHEN 'YEAR' THEN wage WHEN 'HOUR' THEN wage * 2080 "
-    "WHEN 'MONTH' THEN wage * 12 WHEN 'WEEK' THEN wage * 52 "
-    "WHEN 'BI-WEEKLY' THEN wage * 26 END"
+    "CASE WHEN wage_unit = 'HOUR' AND wage >= 10000 THEN NULL "
+    "WHEN wage_unit IN ('WEEK', 'BI-WEEKLY', 'MONTH') AND wage >= 40000 THEN NULL "
+    "WHEN wage_unit = 'YEAR' THEN wage WHEN wage_unit = 'HOUR' THEN wage * 2080 "
+    "WHEN wage_unit = 'MONTH' THEN wage * 12 WHEN wage_unit = 'WEEK' THEN wage * 52 "
+    "WHEN wage_unit = 'BI-WEEKLY' THEN wage * 26 END"
 )
 DEFAULT_WHERE = (
     f"wage IS NOT NULL AND wage > 0 AND ({ANNUAL_WAGE_SQL}) BETWEEN 10000 AND 1500000 "

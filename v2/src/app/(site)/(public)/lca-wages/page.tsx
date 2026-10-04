@@ -55,7 +55,7 @@ const FAQS = [
   },
   {
     q: "Why are hourly filings mixed in with yearly ones?",
-    a: "Because employers quote the unit they pay in. Every figure is annualised first: an hourly wage times 2,080 hours, a monthly wage times 12, a weekly one times 52. A filing outside $10,000 to $1,500,000 a year is treated as a data defect and left out.",
+    a: "Because employers quote the unit they pay in. Every figure is annualised first: an hourly wage times 2,080 hours, a monthly wage times 12, a weekly one times 52. A filing outside $10,000 to $1,500,000 a year is treated as a data defect and left out, and so is one whose amount can't be pay for the unit it names (an hourly figure of $10,000 or more, or a weekly, bi-weekly or monthly one of $40,000 or more): those are yearly salaries filed under the wrong unit. They stay in the case search exactly as DOL printed them, marked.",
   },
   {
     q: "Which filings are in the window?",

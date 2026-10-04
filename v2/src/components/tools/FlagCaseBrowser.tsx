@@ -13,6 +13,7 @@ import { formatMonth } from "@/lib/dolFormat";
 // runtime import of a "server-only" module. Keep the path on the `import type`.
 import type { FlagCaseRow, FlagDisclosedRow, FlagDisclosureSummary, FlagKind, FlagListPage, FlagSummary } from "@/lib/turso/flagCases";
 import { formatWage } from "@/lib/wageFormat";
+import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { mergeHalves } from "@/lib/flagMerge";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { SortableHeader } from "@/components/tools/SortableHeader";
@@ -202,7 +203,8 @@ function Rows({
               <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}{" "}</td>
               {withWage ? (
                 <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
-                  {formatWage(wages?.get(r.caseNumber)?.wage ?? null, wages?.get(r.caseNumber)?.wageUnit ?? null) ?? ""}
+                  {formatWage(wages?.get(r.caseNumber)?.wage ?? null, wages?.get(r.caseNumber)?.wageUnit ?? null) ?? ""}{" "}
+                  <YearlyPayNote wage={wages?.get(r.caseNumber)?.wage} unit={wages?.get(r.caseNumber)?.wageUnit} short />
                 {" "}</td>
               ) : null}
               {withWage ? (
@@ -285,7 +287,10 @@ function DisclosedRows({
               {" "}</td>
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
               <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}{" "}</td>
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{formatWage(r.wage, r.wageUnit) ?? ""}{" "}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
+                {formatWage(r.wage, r.wageUnit) ?? ""}{" "}
+                <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
+              </td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.worksiteState ?? ""}{" "}</td>
               <td className="px-3 py-3 text-sm text-foreground/80">{r.socTitle ?? r.socCode ?? ""}{" "}</td>
               <td className="px-3 py-3 text-sm text-foreground/80">{r.attorneyName ?? ""}{" "}</td>

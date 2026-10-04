@@ -18,6 +18,7 @@ import { getEntityBySlug, getFreshness, getLiveBacklog } from "@/lib/turso/publi
 import { entityPending } from "@/lib/turso/entityDetail";
 import { searchByName } from "@/lib/turso/entities";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { LOOKS_YEARLY_NOTE, looksYearly } from "@/lib/wageFormat";
 import { pwd } from "@/lib/turso/pwdCases";
 import { lca } from "@/lib/turso/lcaCases";
 import { lookupSeasonalPosting, lookupSeasonalRecord, seasonal } from "@/lib/turso/seasonalCases";
@@ -170,6 +171,7 @@ export async function readCase(input: string): Promise<ReadResult<CaseRecord>> {
             occupationCode: disc.socCode,
             wage: disc.wage,
             wageUnit: disc.wageUnit,
+            ...(looksYearly(disc.wage, disc.wageUnit) ? { wageNote: LOOKS_YEARLY_NOTE } : {}),
             worksiteState: disc.worksiteState,
             visaClass: disc.visaClass,
             lawFirm: disc.attorneyName,

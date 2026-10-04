@@ -1,4 +1,5 @@
 import { seasonalForm } from "@/lib/seasonalForms";
+import { looksYearly } from "@/lib/wageFormat";
 import type { UnifiedCase } from "@/lib/turso/unifiedSearch";
 
 /**
@@ -33,6 +34,9 @@ export const CSV_COLUMNS: readonly { key: string; label: string; get: (r: Unifie
   { key: "firm", label: "law_firm", get: (r) => r.firmName },
   { key: "wage", label: "wage", get: (r) => r.wage },
   { key: "wage_unit", label: "wage_unit", get: (r) => r.wageUnit ?? (r.wage !== null && r.program === "perm" ? "Year" : null) },
+  // DOL's amount and unit stay as printed; this marks the ones that can't be
+  // pay for that unit ($100,000 a month), which every average leaves out.
+  { key: "wage_note", label: "wage_note", get: (r) => (looksYearly(r.wage, r.wageUnit) ? "looks like a yearly salary under this unit" : null) },
   { key: "industry_code", label: "industry_naics", get: (r) => r.industryCode },
   { key: "industry", label: "industry", get: (r) => r.industryTitle },
   { key: "citizenship", label: "worker_citizenship", get: (r) => r.citizenship },

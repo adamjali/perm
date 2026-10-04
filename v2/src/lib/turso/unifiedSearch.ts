@@ -23,6 +23,7 @@ import {
   type UnifiedNarrow,
 } from "./caseSearchReads";
 import { naicsTitle } from "@/lib/naicsTitles";
+import { annualised } from "@/lib/wageFormat";
 
 export { SLICE_CAP };
 import {
@@ -498,6 +499,16 @@ async function addSeenDecided(rows: UnifiedCase[]): Promise<void> {
 }
 
 /**
+ * The yearly figure a wage sort compares. PERM's file is already yearly; the
+ * others are multiplied out from their unit, and a wage that looks like a
+ * yearly salary under the wrong unit has no figure, so it sorts last.
+ */
+function yearlyWage(r: UnifiedCase): number | null {
+  if (r.wage === null) return null;
+  return r.wageUnit ? annualised(r.wage, r.wageUnit) : r.wage;
+}
+
+/**
  * An order over the merged rows. A row without the sort key goes last in both
  * directions: "no wage published" is not a low wage, and ranking it first in an
  * ascending sort would read as one.
@@ -506,7 +517,7 @@ export function compareBy(order: SearchOrder): (a: UnifiedCase, b: UnifiedCase) 
   if (order === "filed-desc") return byNewestFiling;
   const [key, dir] = order.split("-") as ["filed" | "decided" | "wage" | "days", "asc" | "desc"];
   const get = (r: UnifiedCase): string | number | null =>
-    key === "filed" ? r.filedOn : key === "decided" ? r.decidedOn : key === "wage" ? r.wage : r.days;
+    key === "filed" ? r.filedOn : key === "decided" ? r.decidedOn : key === "wage" ? yearlyWage(r) : r.days;
   const sign = dir === "asc" ? 1 : -1;
   return (a, b) => {
     const x = get(a);

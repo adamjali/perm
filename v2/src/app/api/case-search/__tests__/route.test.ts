@@ -167,13 +167,21 @@ describe("format=csv", () => {
     expect(r.headers.get("content-disposition")).toMatch(/^attachment; filename=".+\.csv"$/);
     const [header, first, ...rest] = (await r.text()).trimEnd().split("\r\n");
     expect(header).toBe(
-      "case_number,program,form,record,status,filed,decided,days_to_decision,employer,job_title,occupation_code,occupation,worksite_state,worksite_city,law_firm,wage,wage_unit,industry_naics,industry,worker_citizenship,worker_birth_country,worker_visa_at_filing,worker_education,worker_field_of_study,worker_school,job_minimum_education",
+      "case_number,program,form,record,status,filed,decided,days_to_decision,employer,job_title,occupation_code,occupation,worksite_state,worksite_city,law_firm,wage,wage_unit,wage_note,industry_naics,industry,worker_citizenship,worker_birth_country,worker_visa_at_filing,worker_education,worker_field_of_study,worker_school,job_minimum_education",
     );
     expect(first).toContain("G-100-19001-000001,perm,,\"published, FY2016-FY2023\",certified");
-    expect(first).toContain("SEATTLE,,120000,Year,541511");
+    expect(first).toContain("SEATTLE,,120000,Year,,541511");
     expect(rest).toEqual([]);
     // The same search the JSON answer makes, with the same filter.
     expect(lastNarrow()).toEqual({ citizenship: "INDIA" });
+  });
+
+  it("keeps DOL's amount and unit as printed, and marks one that looks like a yearly salary", async () => {
+    unifiedSearch.mockResolvedValue(
+      result({ rows: [row({ caseNumber: "I-200-24300-000001", program: "lca", wage: 100000, wageUnit: "Month" })] }),
+    );
+    const text = await (await get("q=acme&format=csv")).text();
+    expect(text).toContain(",100000,Month,looks like a yearly salary under this unit,");
   });
 
   it("names the seasonal form a row is, which the program key alone does not", async () => {

@@ -9,6 +9,7 @@ import { PROGRAM_LABEL } from "@/lib/changeProgram";
 // line on its own, so a type import wrapped over several lines reads as a
 // runtime import of a "server-only" module.
 import type { DecidedCase } from "@/lib/turso/decidedDays";
+import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { toneOf } from "./ChangeTable";
 
 /**
@@ -140,6 +141,7 @@ export function DecidedTable({
               </td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm tabular-nums">
                 {wageText(c)}{" "}
+                <YearlyPayNote wage={c.wage} unit={c.wageUnit} short />
               </td>
               <td className="px-3 py-3 text-sm text-foreground/80">
                 {c.attorneySlug ? (

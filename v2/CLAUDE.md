@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 563 files / 8,409 tests (2026-10-03 evening; ~22 min at a load average near 60, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 569 files / 8,468 tests (2026-10-03 night; ~22 min at a load average near 60, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -7824,4 +7824,28 @@ not our parser (the published XLSX is UTF-8), and it shows as DOL printed it.
 
 **Prettier is not this repo's formatter.** One `prettier --write` on the employer page rewrapped 634
 lines to an 80-column width; the page was rebuilt from HEAD with only the intended change.
+
+**A wage that can't be pay for its unit is shown as printed and left out of every average** (Oct 3
+2026, owner's call: "official data ... everything should still be available just with caveats").
+DOL's files carry yearly salaries filed under the wrong unit: $95,000 "per hour", $100,000 "per
+month". Measured over 3.65 million LCA rows, the amounts fall in two groups with a gap: hourly
+amounts thin out under $1,000 and restart at $10,000 (2,313 rows at $10,000 or more), and weekly,
+bi-weekly and monthly ones thin out above $20,000 and restart at $40,000 (1,378 monthly, 1,067
+weekly, 593 bi-weekly). About 5,400 rows, 0.15%; the wage-request file has 14, the seasonal files
+none (their monthly wages are real ones near $3,000).
+- **The rule is `looksYearly` in `src/lib/wageFormat.ts`** (`HOURLY_LOOKS_YEARLY` 10,000,
+  `PERIOD_LOOKS_YEARLY` 40,000). `annualised` returns null for such a row.
+- **The SQL reads them as NULL**: `ANNUAL_WAGE_SQL` (the salary explorer, the employer page's LCA
+  line) and its Python twin in `build_lca_facets.py` (also read by `build_wage_views.py`), and
+  `FLAG_ANNUAL_WAGE_SQL` for every spelling the FLAG files use (the wage-request line, the case
+  search's wage bounds). `wageFormat.test.ts` holds the SQL floors to the TypeScript ones.
+- **Shown everywhere as DOL printed it, with a note** (`YearlyPayNote`): the LCA and wage-request
+  lookups, the wage-request and LCA browsers, the all-programs search, the day's decided cases and
+  the employer page's newest filings. The search's CSV gained a `wage_note` column, the API's case
+  answer a `wageNote`.
+- **The case search's wage bounds compare yearly figures now.** They compared DOL's raw amount on
+  the wage-request, LCA and seasonal files, so "at least $100,000" dropped every $50-an-hour offer
+  ($104,000 a year) and kept "$100,000 per month". Sorting by wage compares yearly figures too.
+- **LCA FY2020 Q1 loads with `accept_drift`**: the load guard held it back because its weekly,
+  bi-weekly and monthly medians are yearly salaries, which is this same defect in DOL's file.
 
