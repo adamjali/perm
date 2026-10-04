@@ -1,5 +1,7 @@
 # GSC indexing priority list
 
+**Sitemap index resubmitted 2026-10-03, about 9:13 PM EDT** (no request slot): the seventh child family, `seasonal-employer-1..7.xml` (32,388 employers whose only filings are H-2A, H-2B or CW-1), shipped in `1f09dab7`; the index's Last read was Sep 30. Re-check its Discovered pages against the live sum on the next round.
+
 **Run of 2026-10-03, 3:55 to 4:15 AM EDT: 5 accepted, no refusal.** The first three emptied the
 old queue; the last two are pages the Oct 1 and Oct 2 deploys changed (queue reopened below). The sitemap index needed no resubmission: Google counts 106,317 discovered
 pages against 106,452 in the live children (135 apart; last read Sep 30).
