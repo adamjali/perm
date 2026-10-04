@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/convexStatic", () => ({ queryStatic: vi.fn() }));
 
 import { queryStatic } from "@/lib/convexStatic";
-import { computeMetrics, summarizeRfes, toBoardRow, type TimelineRecord } from "@/lib/communityTimeline";
+import { computeMetrics, summarizeRfes, toBoardRow, whoIsWaiting, type TimelineRecord } from "@/lib/communityTimeline";
 import Page from "../(site)/(public)/green-card-timelines/page";
 
 /**
@@ -42,6 +42,7 @@ function boardOf(records: TimelineRecord[], opensAt = 25) {
     metrics: computeMetrics(records),
     rfe: summarizeRfes(records),
     rows: shared.length >= opensAt ? shared.map(toBoardRow) : [],
+    waiting: whoIsWaiting(records),
   };
 }
 
@@ -77,6 +78,23 @@ describe("/green-card-timelines", () => {
     expect(out).toMatch(/I-140 filed to approved, premium.*?self-reported/s);
     expect(out).toContain("Median 289 days");
     expect(out).toContain("a median needs 5, and this stage has 0");
+  });
+
+  it("shows who's waiting where once the board opens, and keeps it shut below", async () => {
+    vi.mocked(queryStatic).mockResolvedValue(boardOf(Array.from({ length: 25 }, (_, i) => rec(i))) as never);
+    expect(await html()).not.toContain("Opens at 25 timelines, like the board.");
+    vi.mocked(queryStatic).mockResolvedValue(boardOf(Array.from({ length: 6 }, (_, i) => rec(i))) as never);
+    expect(await html()).toContain("Opens at 25 timelines, like the board. 6 so far.");
+  });
+
+  it("renders against a backend older than the who's-waiting field", async () => {
+    // Deploy skew: the page can reach a Convex deployment that sends no `waiting`.
+    const { waiting: _w, ...older } = boardOf(Array.from({ length: 25 }, (_, i) => rec(i)));
+    void _w;
+    vi.mocked(queryStatic).mockResolvedValue(older as never);
+    const out = await html();
+    expect(out).toContain("<table");
+    expect(out).toContain("Who&#x27;s waiting, and where");
   });
 
   it("lists RFE reasons, and renders a sentence when Convex can't be reached", async () => {

@@ -106,7 +106,7 @@ export function EadExtensionCalculator() {
             id={categoryId}
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="mt-1.5 min-h-[44px] w-full border-2 border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+            className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {EAD_CATEGORIES.map((c) => (
               <option key={c.code} value={c.code}>

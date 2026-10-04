@@ -131,7 +131,8 @@ export default async function GreenCardTimelinesPage() {
               here, so no line can be traced to a person.
             </p>
             <div className="mt-5">
-              {board.waiting.open ? (
+              {/* Optional chaining: a backend older than this page sends no `waiting`. */}
+              {board.waiting?.open ? (
                 <WhoIsWaiting waiting={board.waiting} total={board.total} />
               ) : (
                 <p className="text-base text-foreground/70">

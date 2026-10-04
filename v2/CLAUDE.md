@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 569 files / 8,468 tests (2026-10-03 night; ~22 min at a load average near 60, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 581 files / 8,554 tests (2026-10-04 midday; ~22 min at a load average near 60, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
