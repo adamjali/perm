@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-10-03
+> **Status:** Production | **Last Updated:** 2026-10-04
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -7790,6 +7790,9 @@ showed 0 for three forms. It was rebuilt by hand from the server (`write_summary
 
 ## Oct 3 2026 (night): a page for every employer that files only H-2A, H-2B or CW-1
 
+*Superseded Oct 4 2026 (midday, below): `employer_other_index` covers every employer with no PERM
+record, seasonal or not, and the sitemap family is `other-employer-N.xml` (the old name still resolves).*
+
 **32,388 employers had filings we held and no page** (Oct 3): their only filings are H-2A, H-2B or
 CW-1, so no PERM table names them. By the owner's call they get an indexable page, and every one is
 in the sitemap.
@@ -7882,3 +7885,91 @@ DOL processing times: 30 days (the longest gap between DOL's dates we've kept is
 Both limits warned on most mornings for sources doing nothing unusual. The stored rows were updated
 on the server the same morning; our own ingests dying is the runs check's job, not these limits'.
 
+## Oct 4 2026 (midday): one identity per employer, sponsor profiles, and where H-1B wages come from
+
+**Employer pages matched other programs by a name prefix, and that was wrong for the busiest ones.**
+H-1B, wage-request and seasonal rows reached a page through `slugRange` on the name, so Intel's page
+counted 8,219 LCAs filed by Intellectt, Inteli Platforms and Inteliroute, while Salesforce's missed the
+5,645 filed as "Salesforce.com, Inc.". `scripts/build_employer_map.py` (nightly, after the live-only
+rebuild in `case-status-direct.yml`) writes three tables, and every employer read keys on them by
+equality (`employerMatch` in `src/lib/turso/employerSlugs.ts`):
+
+| table | holds |
+|---|---|
+| `employer_page_map` (source_slug, page_slug, page_kind, key) | the one page each spelling in each program belongs to: 333,357 spellings |
+| `employer_other_index` | a page for each employer with no PERM record (H-1B, wage-request and seasonal filers): 182,226 |
+| `firm_page_map` | the same for law firms, 8,098 spellings, with the attorney typo rules run over every program |
+
+- **`program_key`** (`scripts/entity_identity.py`, twin in `src/lib/entitySlug.ts`, fixtures shared):
+  HTML entities decoded, the legal name before d/b/a or a/k/a, ".com" dropped, then `entity_key`.
+- **Ranks are kept across builds.** A new employer goes after the highest rank, an old one keeps its
+  own, and gaps are fine because the sitemap reads rank windows. Dense ranks rewrote 177,542 of
+  182,196 rows for 24 newcomers on the second build; after the fix a rebuild wrote 212.
+- **A page keeps the slug it was first published under**, and a spelling that merged into another page
+  redirects there.
+- **Two law-firm rules:** "LLLP" is a form word, and a form word glued to the last word ("LoewyLLP")
+  merges into an exactly matching busier firm (Rule C, `_GLUED_SUFFIXES`). Measured: 7 merges, 26
+  cases, every one right. Individual attorneys are never named, only firms.
+
+**Sponsor profiles, ranked part by part, never as one score** (owner's call). `build_sponsor_index.py`
+writes `sponsor_index` (71,512 sponsors): PERM approval rate (20+ decided), PERM filings in 12
+months, H-1B LCAs in 24 months, the share of H-1B positions that were transfers, the share at wage
+level III or IV, USCIS's H-1B approval rate over three fiscal years. Each part is a mid-rank
+percentile among sponsors with enough cases and says how many that was. The two H-1B shares cover the
+newest 24 months of LCA detail held, measured from the newest row that carries detail, not today.
+Warnings are dated facts: an active debarment, WARN notices in two years, the H-1B dependent
+declaration on the newest LCA, any willful-violator declaration, likely cap-exempt (a college's
+industry code). `/sponsor-finder` filters the table (count 68 ms, a page 5 ms).
+
+**H-1B by city.** `build_lca_cities.py` writes `lca_cities`, keyed exactly like the PERM city pages
+(`city_key`), with the newest three fiscal years' top employers and jobs: 3,218 cities with 20+
+LCAs, 844 of them without a PERM page, which get a page and a sitemap entry. A city with a PERM page
+keeps that page's slug.
+
+**The LCA file's Section F is read** (commit 6a6f58d1): `PREVAILING_WAGE`, `PW_UNIT_OF_PAY`,
+`PW_OES_YEAR`, `PW_OTHER_SOURCE`, `PW_OTHER_YEAR`, `PW_SURVEY_PUBLISHER`, `PW_SURVEY_NAME` and
+`PW_TRACKING_NUMBER`, into `pw_*` columns. **FY2023 to FY2026 had no LCA detail at all** (worker
+counts, wage level, flags): the Sep 14 history loads predate the mapping. `--backfill-lca-detail`
+fills both, one quarter per run, 6 to 12 minutes each, newest first; on Oct 4 at 11:45 AM EDT FY2024
+to FY2026 were done and FY2023 was part way. DOL lists only its newest file for the current fiscal
+year (FY2026 Q3, cumulative from Oct 1); earlier years are one file per quarter.
+
+- **DOL spells the source four ways, the same every year:** "Survey", "CBA", "SCA", "DBA", or an OES
+  year. `wageSourceCondition` matches those exactly.
+- **`/lca-wage-sources`** reads `perm_docs['lca_wage_sources']` (`build_wage_sources.py`, nightly,
+  7-day health budget): the split by year, survey firms with their spellings grouped (from
+  production's own: "Willis Tower Watson", "Wills Towers Watson", five AAMC spellings, four of
+  CUPA-HR; an unlisted firm groups by its letters), the surveys named, and the employers that use
+  surveys most. **A year is drawn only once 90% of its LCAs are read** (`splitYears`,
+  `src/lib/wageSourceYears.ts`): mid-backfill FY2021 read "1,397 LCAs" of 521,089.
+- **20 CFR 655.731(a)(2), as the page states it:** a union contract's rate is the prevailing wage
+  where one covers the occupation; otherwise the employer may use OES, "an independent authoritative
+  source, or other legitimate sources of wage data". The first draft said "the employer chooses".
+- **The case search's `wsrc` filter** (oes, survey, cba, contract) reads published LCAs alone and says
+  so (`lcaOnly`). It and the PERM-only fields turn each other off, with the reason said once at the
+  top of the section, and the route answers 400 to the pair instead of an empty answer.
+- **`P-200` to `P-203` are wage requests for H-1B, H-1B1 Chile, H-1B1 Singapore and E-3**, confirmed
+  against DOL's endpoint; they have been on the counter and in `pwd_case_status` since Oct 3.
+
+**Two regulation errors, corrected from the eCFR (Sep 30 2026 edition).**
+- `/perm-employers/compare` said "180 days after approval, the priority date moves with you (AC21)".
+  8 CFR 204.5(e) keeps the date from approval unless USCIS revokes for fraud, a revoked or invalidated
+  certification, or a material error; 180 days decides only whether a withdrawal revokes the I-140
+  (205.1(a)(3)(iii)(C)). The panel states the five rules as written.
+- `/tools/ead-extension`: no automatic extension for renewals received on or after Oct 30 2025
+  (274a.13(e), the interim final rule at 90 FR 48799, no final rule since); up to 540 days before that
+  under 274a.13(d), ending with the I-94 for H-4, L-2 and E spouses. Rules in `src/lib/eadExtension.ts`.
+
+**Smaller:** `/uscis-case-status` keeps a short list of receipt numbers in the visitor's browser only;
+`/green-card-timelines` shows who's waiting at each step (cells under 5 withheld, shut until 25
+timelines); USCIS's civil-surgeon search is linked where people meet the I-485.
+
+**`sr-only` goes on a wrapper, never on a `<table>`.** A table can't be narrower than its content
+and ignores `overflow`, so a screen-reader table kept its full width: `/lca-wage-sources` measured
+1,092 px wide at 390, and the daily pulse's table ran 7 px past the edge on every page carrying it
+(the root's `overflow-x: hidden` hid it on desktop). `sr-only-table.test.ts` gates it.
+
+**Server jobs for this batch ran from copies**, never the live checkout: `scp` to `/tmp/empmap/`, then
+`sudo systemd-run --uid=permtracker -p EnvironmentFile=/tmp/empmap/env -p Nice=10 -p CPUWeight=20
+-E PYTHONPATH=/srv/permtracker/repo/v2/scripts python3 /tmp/empmap/<script>`. Put credentials in an
+env file, never on the command line: `ps` shows a process's arguments.

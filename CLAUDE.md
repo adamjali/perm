@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-03
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-04
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **569 files / 8,468 tests across 5 vitest
@@ -402,8 +402,8 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (evening)".
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (night)".
 
-- **Every employer that files only H-2A, H-2B or CW-1 has a page** (32,388), from `seasonal_employer_index`, built nightly.
-- **They're all in the sitemap** as a fifth family, `seasonal-employer-N.xml`, and the case search links them.
+- **Every employer that files only H-2A, H-2B or CW-1 has a page** (32,388), from `seasonal_employer_index`, built nightly. *(Superseded Oct 4: `employer_other_index` covers every employer with no PERM record.)*
+- **They're all in the sitemap** as a fifth family, `seasonal-employer-N.xml`, and the case search links them. *(Renamed `other-employer-N.xml` on Oct 4; the old name still resolves.)*
 - **Employer pages that aren't published PERM sponsors carry their own breadcrumb list**, ending in the employer's name.
 - **Source lines name every dataset in words**; they had printed raw ids such as "h2a-disclosure:".
 - **A wage that can't be pay for its unit** ($100,000 "per month") is shown as DOL printed it with a note, and left out of every average and median (`looksYearly`).
@@ -418,3 +418,16 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 4 2026".
 - **The morning report groups runs by workflow file**, so a rename can't leave a fake "still failing".
 - **I-485 and DOL processing-times limits come from measured agency delays** (160 and 30 days).
 
+## Oct 4 2026 (midday), in nine lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 4 2026 (midday)".
+
+- **One page per employer by name identity, across every program** (`employer_page_map`): rows reached a page by a name prefix, so Intel's counted 8,219 LCAs of three other firms.
+- **About 182,000 employers with no PERM record have a page** (`employer_other_index`, ranks kept across builds; sitemap family `other-employer-N.xml`).
+- **Law firms likewise** (`firm_page_map`); a firm page shows its H-1B LCAs, wage requests and the employers it filed for.
+- **Each PERM sponsor's record is ranked part by part, with no single score** (`sponsor_index`); `/sponsor-finder` filters it.
+- **City pages show H-1B LCAs, and a city with H-1B alone gets a page** (`lca_cities`); occupation pages show the job's LCAs.
+- **The LCA file's prevailing wage and its source are read** and backfilled over every quarter; `/lca-wage-sources` and the case search's `wsrc` filter.
+- **`/tools/ead-extension`**, and employer compare's switching panel states the regulations; it had the 180-day rule wrong.
+- **Saved receipts on the USCIS lookup (in the browser only), who's waiting on the timelines board, and the civil-surgeon search linked.**
+- **`sr-only` goes on a wrapper, never on a `<table>`**: a table can't shrink, and the pulse ran past a phone's edge.
