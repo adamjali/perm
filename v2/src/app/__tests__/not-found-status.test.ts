@@ -65,9 +65,10 @@ describe("entity detail routes: the miss is decided in metadata", () => {
    *
    * An employer with no `perm_entities` row is no longer automatically a 404:
    * the live feed knows 21,495 employers the published disclosure files have
-   * never named, and those get a reduced page; and since Oct 3 2026 an
-   * employer whose only filings are H-2A, H-2B or CW-1 gets one too. So a
-   * genuine miss has to miss three times, and all three reads are mocked.
+   * never named, and those get a reduced page; since Oct 3 and 4 2026 an
+   * employer with no PERM record gets one too, and a spelling the nightly
+   * map assigns to another page redirects there. So a
+   * genuine miss has to miss four times, and all four reads are mocked.
    */
   const missBoth = () => {
     vi.doMock("@/lib/turso/entityDetail", async (importOriginal) => ({
@@ -78,22 +79,28 @@ describe("entity detail routes: the miss is decided in metadata", () => {
       ...(await importOriginal<object>()),
       liveEmployerRecord: vi.fn().mockResolvedValue(null),
     }));
-    vi.doMock("@/lib/turso/seasonalEmployers", async (importOriginal) => ({
+    vi.doMock("@/lib/turso/otherEmployers", async (importOriginal) => ({
       ...(await importOriginal<object>()),
-      seasonalEmployerRecord: vi.fn().mockResolvedValue(null),
+      otherEmployerRecord: vi.fn().mockResolvedValue(null),
+    }));
+    // The fourth and last read: a spelling the nightly map sends to another page.
+    vi.doMock("@/lib/turso/employerSlugs", async (importOriginal) => ({
+      ...(await importOriginal<object>()),
+      pageForSpelling: vi.fn().mockResolvedValue(null),
     }));
   };
   const unmockBoth = () => {
     vi.doUnmock("@/lib/turso/entityDetail");
     vi.doUnmock("@/lib/turso/liveEmployers");
-    vi.doUnmock("@/lib/turso/seasonalEmployers");
+    vi.doUnmock("@/lib/turso/otherEmployers");
+    vi.doUnmock("@/lib/turso/employerSlugs");
   };
 
   // The first import of the employer page loads its whole module graph: 4.6 s
   // alone, past the default 10 s under a full suite's load (Oct 3 2026).
   it("employer generateMetadata throws notFound when the slug names nothing", { timeout: 45_000 }, async () => {
     vi.resetModules();
-    // Only these three reads decide hit-vs-miss; the rest of the module is kept
+    // Only these four reads decide hit-vs-miss; the rest of the module is kept
     // real so the page's other imports resolve.
     missBoth();
     const { generateMetadata } = await import(

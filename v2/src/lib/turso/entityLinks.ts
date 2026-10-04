@@ -13,22 +13,30 @@ import { rows } from "@/lib/turso/client";
  *
  * The rule mirrors the pages themselves. An employer page exists for a
  * published employer, an alias of one (`resolveEntity`), an employer with a
- * live PERM filing (`liveEmployerRecord`), or one whose only filings are H-2A,
- * H-2B or CW-1 (`seasonalEmployerRecord`); a law-firm page for a published
- * firm or an alias. Each table is asked once per 300 slugs, by primary key or
- * index.
+ * live PERM filing (`liveEmployerRecord`), or one with no PERM record
+ * (`otherEmployerRecord`); a law-firm page for a published firm or an alias.
+ * And a spelling with no page of its own links to the page the nightly map
+ * assigns it (`employer_page_map`): "Salesforce.com, Inc." goes straight to
+ * Salesforce's page, not through a redirect. Each table is asked once per 300
+ * slugs, by primary key or index.
  */
 export type LinkableKind = "employer" | "attorney";
 
 const BATCH = 300;
 
-export async function linkableSlugs(
+const tolerateMissing = (e: unknown): { slug: string }[] => {
+  if (/no such table/i.test(String(e))) return [];
+  throw e;
+};
+
+/** Each slug that has a page, with the page it links to (itself, or the page the map assigns it). */
+export async function linkTargets(
   kind: LinkableKind,
   slugs: Iterable<string | null | undefined>,
-): Promise<Set<string>> {
+): Promise<Map<string, string>> {
   // A slug longer than the writer can produce names no page (liveEmployerRecord).
   const want = [...new Set([...slugs].filter((s): s is string => !!s && s.length <= 80))];
-  const ok = new Set<string>();
+  const out = new Map<string, string>();
   for (let i = 0; i < want.length; i += BATCH) {
     const batch = want.slice(i, i + BATCH);
     const marks = batch.map(() => "?").join(", ");
@@ -42,32 +50,49 @@ export async function linkableSlugs(
         [kind, ...batch],
       ),
     ];
+    let mapped: Promise<{ source_slug: string; page_slug: string }[]> = Promise.resolve([]);
     if (kind === "employer") {
       reads.push(
         rows<{ slug: string }>(
           `SELECT DISTINCT employer_slug AS slug FROM perm_live_recent WHERE employer_slug IN (${marks})`,
           batch,
         ),
-        // Built nightly; before the first build there is no table, and no page.
-        rows<{ slug: string }>(
-          `SELECT slug FROM seasonal_employer_index WHERE slug IN (${marks})`,
-          batch,
-        ).catch((e: unknown) => {
-          if (/no such table/i.test(String(e))) return [];
-          throw e;
-        }),
+        // Built nightly; before the first build the Oct 3 seasonal table stands in.
+        rows<{ slug: string }>(`SELECT slug FROM employer_other_index WHERE slug IN (${marks})`, batch).catch(
+          (e: unknown) => {
+            tolerateMissing(e);
+            return rows<{ slug: string }>(`SELECT slug FROM seasonal_employer_index WHERE slug IN (${marks})`, batch).catch(
+              tolerateMissing,
+            );
+          },
+        ),
       );
+      mapped = rows<{ source_slug: string; page_slug: string }>(
+        `SELECT source_slug, page_slug FROM employer_page_map WHERE source_slug IN (${marks})`,
+        batch,
+      ).catch((e: unknown) => tolerateMissing(e) as never[]);
     }
-    for (const found of await Promise.all(reads)) {
-      for (const r of found) ok.add(String(r.slug));
+    const [found, map] = await Promise.all([Promise.all(reads), mapped]);
+    for (const r of map) out.set(String(r.source_slug), String(r.page_slug));
+    for (const list of found) {
+      for (const r of list) if (!out.has(String(r.slug))) out.set(String(r.slug), String(r.slug));
     }
   }
-  return ok;
+  return out;
+}
+
+/** Which of these slugs have a page to link to (their own, or one the map assigns). */
+export async function linkableSlugs(
+  kind: LinkableKind,
+  slugs: Iterable<string | null | undefined>,
+): Promise<Set<string>> {
+  return new Set((await linkTargets(kind, slugs)).keys());
 }
 
 /**
- * Null out the employer and law-firm slugs that have no page, so the tables
- * that render them print the name as text instead of linking a 404.
+ * Point each employer slug at its page, and null out the employer and
+ * law-firm slugs that have no page, so the tables that render them print the
+ * name as text instead of linking a 404.
  *
  * If the lookup itself fails the rows are returned untouched: the pages still
  * render, and the cost is the old behaviour, not a missing table.
@@ -80,11 +105,11 @@ export async function keepLinkableSlugs<
   clearFirm: (t: T) => T = (t) => t,
 ): Promise<T[]> {
   if (items.length === 0) return items;
-  let employers: Set<string>;
+  let employers: Map<string, string>;
   let firms: Set<string>;
   try {
     [employers, firms] = await Promise.all([
-      linkableSlugs("employer", items.map((t) => t.employerSlug)),
+      linkTargets("employer", items.map((t) => t.employerSlug)),
       linkableSlugs("attorney", items.map(firmSlugOf)),
     ]);
   } catch {
@@ -92,7 +117,10 @@ export async function keepLinkableSlugs<
   }
   return items.map((t) => {
     let out = t;
-    if (out.employerSlug && !employers.has(out.employerSlug)) out = { ...out, employerSlug: null };
+    if (out.employerSlug) {
+      const page = employers.get(out.employerSlug) ?? null;
+      if (page !== out.employerSlug) out = { ...out, employerSlug: page };
+    }
     const firm = firmSlugOf(out);
     if (firm && !firms.has(firm)) out = clearFirm(out);
     return out;

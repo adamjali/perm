@@ -82,6 +82,14 @@
     [
       "&&&",
       ""
+    ],
+    [
+      "Fragomen, Del Rey, Bernsen Loewy, LLLP",
+      "fragomen del rey bernsen loewy"
+    ],
+    [
+      "Tafapolsky & Smith LLLP",
+      "tafapolsky smith"
     ]
   ],
   "keys_comment": [
@@ -141,6 +149,10 @@
     [
       "Law Offices of Lee & Associates",
       "Law Offices of Li & Associates"
+    ],
+    [
+      "Holl & Knight",
+      "Holland & Knight LLP"
     ]
   ],
   "must_not_merge_comment": [
@@ -181,6 +193,18 @@
     [
       "Fredrikson & Byron, P.A.",
       "Fredrikson Bryon, P.A."
+    ],
+    [
+      "FRAGOMEN, DEL REY, BERNSEN & LOEWY, LLP",
+      "Fragomen Del Rey Bernsen & LoewyLLP"
+    ],
+    [
+      "Farmer Law PC",
+      "Farmer LawPC"
+    ],
+    [
+      "Verma Cortes LLC",
+      "Verma CortesLLC"
     ]
   ],
   "typo_merges_comment": [
@@ -190,7 +214,8 @@
     "ATTORNEYS ONLY - see scripts/entity_identity.py for the measurement that",
     "disqualified this rule for employers.",
     "Loewy/Lowey and Byron/Bryon are five letters, which is why the transposition",
-    "floor is 5 and the insertion floor is 6. Lee/Li stays refused at three."
+    "floor is 5 and the insertion floor is 6. Lee/Li stays refused at three.",
+    "The glued ones (LoewyLLP, LawPC, CortesLLC) are Rule C: a legal-form word run into the last word."
   ],
   "slugs": [
     [

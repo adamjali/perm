@@ -87,11 +87,12 @@ jobs:
           # search and the employer pages see today's discoveries. A failure
           # here leaves the band a day staler; it must not fail the sweep.
           python3 scripts/build_entity_detail.py --live-recent-only || true
-          # Employers whose only filings are H-2A, H-2B or CW-1 get a page from
-          # this table; it runs after the live-only rebuild because it leaves
-          # out every slug that already has a page, and adds the pages it
-          # changed to the expiry list below.
-          python3 scripts/build_seasonal_employers.py || true
+          # Which employer page every spelling in every program belongs to
+          # (employer_page_map), and a page for every employer with no PERM
+          # record (employer_other_index). It runs after the live-only rebuild
+          # because a live-only employer's spellings go to that page, and adds
+          # the pages it changed to the expiry list below.
+          timeout 30m python3 scripts/build_employer_map.py || true
 
       # The walk only moves forward, so this is its second look: it re-asks DOL
       # about the holes in the trailing 90 day codes and writes only what DOL

@@ -174,6 +174,13 @@ export function slugRange(text: string): { lo: string; hi: string } | null {
   return { lo: needle, hi };
 }
 
+/** The employer condition a search reads: the employer's own spellings when given, else the typed name's prefix. */
+export function employerScope(args: Pick<SearchFlagArgs, "text" | "match">): { where: string; args: string[] } | null {
+  if (args.match) return args.match;
+  const range = slugRange(args.text);
+  return range ? { where: "employer_slug >= ? AND employer_slug < ?", args: [range.lo, range.hi] } : null;
+}
+
 export interface FlagCaseRow {
   caseNumber: string;
   filingDate: string | null;
@@ -230,6 +237,12 @@ export function isFlagKind(v: string): v is FlagKind {
 
 export interface SearchFlagArgs {
   text: string;
+  /**
+   * One employer's own spellings (`employerMatch` in employerSlugs.ts). When
+   * given it replaces the name-prefix range, so an employer page lists that
+   * employer's filings and not every name that starts the same way.
+   */
+  match?: { where: string; args: string[] } | null;
   title?: string;
   from?: string;
   to?: string;
@@ -480,12 +493,12 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     (await lookupOutcome(input, opts)).row;
 
   const search = async (args: SearchFlagArgs): Promise<FlagCaseRow[]> => {
-    const range = slugRange(args.text);
-    if (!range) return [];
+    const scope = employerScope(args);
+    if (!scope) return [];
     const take = Math.min(Math.max(1, Math.floor(args.limit ?? LIVE_SEARCH_MAX)), LIVE_SEARCH_MAX);
     const narrow = narrowingClauses("filing_date", args);
-    const conds = ["employer_slug >= ?", "employer_slug < ?", ...narrow.conds];
-    const params: (string | number)[] = [range.lo, range.hi, ...narrow.params];
+    const conds = [scope.where, ...narrow.conds];
+    const params: (string | number)[] = [...scope.args, ...narrow.params];
     const visa = visaClause(args.visa);
     if (visa.cond && visa.param) {
       conds.push(visa.cond);
@@ -562,15 +575,15 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
 
   const searchDisclosed = async (args: SearchFlagArgs): Promise<FlagDisclosedRow[]> => {
     if (!disclosureTable) return [];
-    const range = slugRange(args.text);
-    if (!range) return [];
+    const scope = employerScope(args);
+    if (!scope) return [];
     const take = Math.min(Math.max(1, Math.floor(args.limit ?? LIVE_SEARCH_MAX)), LIVE_SEARCH_MAX);
     // received_date is the file's filing date, and the second column of the
     // ingest's (employer_slug, received_date) index, so the month narrowing
     // and the ordering both ride the same range read.
     const narrow = narrowingClauses("received_date", args);
-    const conds = ["employer_slug >= ?", "employer_slug < ?", ...narrow.conds];
-    const params: (string | number)[] = [range.lo, range.hi, ...narrow.params];
+    const conds = [scope.where, ...narrow.conds];
+    const params: (string | number)[] = [...scope.args, ...narrow.params];
     if ((args.visa ?? "default") === "default" && config.defaultVisaClass) {
       conds.push("visa_class = ?");
       params.push(config.defaultVisaClass);

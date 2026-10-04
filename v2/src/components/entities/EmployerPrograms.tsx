@@ -28,10 +28,11 @@ export function EmployerPrograms({
   stages,
   logFrom = null,
   searchHref,
-  matchedPrefix = null,
+  spellings = null,
 }: {
   name: string;
-  perm: ProgramLine;
+  /** Null on a page for an employer with no PERM record: the ledger then shows the programs it does file. */
+  perm: ProgramLine | null;
   pwd: ProgramLine | null;
   lca: ProgramLine | null;
   /** H-2A, H-2B and CW-1, only when the employer has filed any. */
@@ -42,17 +43,17 @@ export function EmployerPrograms({
   logFrom?: string | null;
   /** The unified search prefilled with this employer. */
   searchHref: string;
-  /** The normalised-name prefix the three files were joined on. */
-  matchedPrefix?: string | null;
+  /** How many spellings of the employer's name the files were read under, when the nightly map named them. */
+  spellings?: number | null;
 }) {
-  const lines: ProgramLine[] = [perm, ...(pwd ? [pwd] : []), ...(lca ? [lca] : []), ...(seasonal ? [seasonal] : [])];
+  const lines: ProgramLine[] = [...(perm ? [perm] : []), ...(pwd ? [pwd] : []), ...(lca ? [lca] : []), ...(seasonal ? [seasonal] : [])];
   const gap = wageGap(perm, lca);
   return (
     <section className="mt-10">
       <h2 className="font-heading text-xl font-black sm:text-2xl">Across DOL&apos;s programs</h2>{" "}
       <p className="mt-2 max-w-3xl text-base text-foreground/75">
-        The wage request, the PERM and the H-1B labor condition application
-        {seasonal ? ", and its seasonal H-2A, H-2B and CW-1 work" : ""}, one line each.
+        {perm ? "The wage request, the PERM and the H-1B labor condition application" : "Each program it files"}
+        {perm && seasonal ? ", and its seasonal H-2A, H-2B and CW-1 work" : ""}, one line each.
       </p>{" "}
       <dl className="mt-4 max-w-3xl border-t-2 border-border">
         {lines.map((l) => (
@@ -129,7 +130,9 @@ export function EmployerPrograms({
         <p>
           Medians are of the published rows with a usable wage, annualised from
           whatever unit the filing quoted, and withheld under {WAGE_FLOOR} wages.
-          {matchedPrefix ? ` The three files spell an employer differently, so they are joined on the name prefix "${matchedPrefix}".` : ""}{" "}
+          {" "}DOL publishes no employer number, so filings are matched by the employer&apos;s legal name
+          {spellings && spellings > 1 ? `, read under the ${formatInt(spellings)} spellings DOL's files use for it` : ""}
+          ; another employer with the same legal name would be counted here too.{" "}
           The PERM is the green-card step; the wage request comes months before
           it, and the LCA is the separate form for an H-1B. DOL publishes each
           in its own file, and its live record shows what is still open.

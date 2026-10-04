@@ -20,7 +20,7 @@ import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits } from "@/lib/describe";
 import { formatDollars, formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -85,9 +85,9 @@ import { getEmployerLottery } from "@/lib/turso/h1bLotteryFoia";
 import { H1bLotteryHistory } from "@/components/entities/H1bLotteryHistory";
 import { CapExemptNote } from "@/components/entities/CapExemptNote";
 import { unifiedRows } from "@/lib/flagMerge";
-import { formatWage } from "@/lib/wageFormat";
 import { liveEmployerRecord } from "@/lib/turso/liveEmployers";
 import { getEmployerPrograms } from "@/lib/turso/employerPrograms";
+import { employerMatch, pageForSpelling } from "@/lib/turso/employerSlugs";
 import { getEmployerStages } from "@/lib/turso/employerStages";
 import { EmployerPrograms } from "@/components/entities/EmployerPrograms";
 import { EmployerFollow } from "@/components/employers/EmployerFollow";
@@ -97,15 +97,12 @@ import { debarmentsForSlug } from "@/lib/turso/debarments";
 import { warnForSlug } from "@/lib/turso/warn";
 import { WarnNoticeBand } from "@/components/entities/WarnNotice";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
-import { SeasonalEmployer } from "@/components/entities/SeasonalEmployer";
-import {
-  seasonalEmployerCases,
-  seasonalEmployerFigures,
-  seasonalEmployerRecord,
-} from "@/lib/turso/seasonalEmployers";
-import { seasonalVisas } from "@/lib/seasonalForms";
+import { OtherEmployer } from "@/components/entities/OtherEmployer";
+import { seasonalEmployerCases } from "@/lib/turso/seasonalEmployers";
+import { otherEmployerRecord, type OtherEmployerRecord } from "@/lib/turso/otherEmployers";
+import { programsMix, programsShort } from "@/lib/otherEmployers";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { YearlyPayNote } from "@/components/data/YearlyPayNote";
+import { WageAndLcaFilings } from "@/components/entities/WageAndLcaFilings";
 import { comparables, fieldDistribution } from "@/lib/turso/entities";
 
 /**
@@ -176,8 +173,37 @@ async function loadSubject(
  */
 const LIVE_ONLY_CASE_LIMIT = 50;
 
-/** How many filings a seasonal-only page lists; the rest are a link to the case search. */
+/** How many H-2A, H-2B and CW-1 filings a page with no PERM record lists; the rest are a link to the search. */
 const SEASONAL_CASE_LIMIT = 25;
+
+/**
+ * Last stop before a 404: a spelling with no page of its own that the nightly
+ * map assigns to another page ("salesforce-com-inc" to Salesforce's), or an
+ * employer page that merged into another. A permanent redirect, so an old
+ * link and any search result carrying the spelling land on the one page.
+ */
+async function redirectSpelling(slug: string): Promise<never> {
+  const to = await pageForSpelling(slug);
+  if (to) permanentRedirect(`${BASE}/${to.page}`);
+  notFound();
+}
+
+/** Title and description for an employer with no PERM record. */
+function otherEmployerMetadata(slug: string, other: OtherEmployerRecord): Metadata {
+  const programs = programsShort(other);
+  const { title, absolute } = entityTitle(other.name, [
+    `${programs} Filings: ${formatInt(other.cases)}`,
+    `${programs} Filings`,
+  ]);
+  const mix = programsMix(other, formatInt);
+  const description = firstThatFits([
+    `${other.name}: ${mix}, with DOL's status on each and the wage offered, from DOL's own records.`,
+    `${other.name}: ${mix}, from DOL's own records.`,
+    `${other.name}: ${mix}.`,
+    `${other.name.slice(0, 120)}: ${programs} filings.`,
+  ]);
+  return entityMetadata({ title, absolute, description, path: `${BASE}/${slug}` });
+}
 
 /**
  * The reduced page's data, or null when this slug names nothing anywhere.
@@ -193,6 +219,77 @@ async function loadLiveOnly(slug: string) {
   if (!record) return null;
   const cases = await recentLiveByEmployer(slug, LIVE_ONLY_CASE_LIMIT);
   return { record, cases };
+}
+
+/**
+ * The page for an employer with no PERM record. Every read keys on the
+ * employer's own spellings (employer_page_map), and each section is the same
+ * component the PERM page renders, absent when the employer has none of it.
+ */
+async function OtherEmployerPage({ slug, record }: { slug: string; record: OtherEmployerRecord }) {
+  const match = await employerMatch(slug);
+  const empty = { cases: [], more: false };
+  const [programs, fresh, wageLive, lcaLive, wageDets, lcaDets, seasonal, lcaProfile, uscisH1b, lottery] =
+    await Promise.all([
+      getEmployerPrograms(slug).catch(() => null),
+      getFreshness(),
+      record.pwd && match ? searchPwdCases({ text: record.name, match, limit: 5 }).catch(() => []) : [],
+      record.lca && match ? searchLcaCases({ text: record.name, match, limit: 5 }).catch(() => []) : [],
+      record.pwd && match ? searchPwdDeterminations({ text: record.name, match, limit: 5 }).catch(() => []) : [],
+      record.lca && match ? searchLcaDisclosed({ text: record.name, match, limit: 5 }).catch(() => []) : [],
+      record.h2a + record.h2b + record.cw1 > 0 && match
+        ? seasonalEmployerCases(match, SEASONAL_CASE_LIMIT).catch(() => empty)
+        : empty,
+      record.lca ? getLcaProfile(slug).catch(() => null) : null,
+      getUscisH1bRecord(slug).catch(() => null),
+      getEmployerLottery(slug).catch(() => null),
+    ]);
+  const lines = programs ? [programs.pwd, programs.lca, programs.seasonal] : [];
+  const open = lines.filter((l) => l && l.pending !== null);
+  const pending = open.length ? open.reduce((n, l) => n + (l?.pending ?? 0), 0) : null;
+  return (
+    <>
+      {/* The breadcrumb bar ends at "Employers", so the trail ending in this
+          page's own name is emitted here, as the published page does. */}
+      <JsonLdScript schema={breadcrumbSchema(`${BASE}/${slug}`, record.name)} />
+      <OtherEmployer
+        record={record}
+        pending={pending}
+        ledger={
+          programs ? (
+            <EmployerPrograms
+              name={record.name}
+              perm={null}
+              pwd={record.pwd ? programs.pwd : null}
+              lca={record.lca ? programs.lca : null}
+              seasonal={programs.seasonal}
+              stages={null}
+              searchHref={`/case-search?q=${encodeURIComponent(record.name)}`}
+              spellings={programs.match.basis === "map" ? programs.match.spellings : null}
+            />
+          ) : null
+        }
+        filings={
+          <WageAndLcaFilings
+            name={record.name}
+            wageReqs={unifiedRows(wageLive, wageDets, 5)}
+            lcas={unifiedRows(lcaLive, lcaDets, 5)}
+            heading="Its newest wage requests and LCAs"
+          />
+        }
+        seasonalCases={seasonal.cases}
+        seasonalMore={seasonal.more}
+        seasonalAsOf={fresh["seasonal-status"]?.asOf ?? null}
+        h1b={
+          <>
+            <LcaProfile name={record.name} profile={lcaProfile} />{" "}
+            <UscisH1bRecord record={uscisH1b} through={fresh["uscis-h1b-hub"]?.asOf ?? null} />{" "}
+            <H1bLotteryHistory years={lottery} />
+          </>
+        }
+      />
+    </>
+  );
 }
 
 export async function generateStaticParams() {
@@ -221,25 +318,13 @@ export async function generateMetadata({
   if (!found) {
     const record = await liveEmployerRecord(slug);
     if (!record) {
-      // Third and last: an employer whose only filings are H-2A, H-2B or CW-1
-      // (seasonal_employer_index, built nightly). Indexable, and listed in the
-      // sitemap, by the owner's decision (Oct 3 2026).
-      const seasonal = await seasonalEmployerRecord(slug);
-      if (!seasonal) notFound();
-      const visas = seasonalVisas(seasonal);
-      const { title, absolute } = entityTitle(seasonal.name, [
-        `${visas} Filings: ${formatInt(seasonal.cases)}`,
-        `${visas} Filings`,
-      ]);
-      const noun = seasonal.cases === 1 ? "filing" : "filings";
-      const stem = `${seasonal.name}: ${formatInt(seasonal.cases)} ${visas} ${noun}`;
-      const description = firstThatFits([
-        `${stem}, with DOL's status on each, the workers certified and the wage offered, from DOL's own records.`,
-        `${stem}, with DOL's status, workers and wage.`,
-        `${stem}.`,
-        `${seasonal.name.slice(0, 120)}: ${visas} ${noun}.`,
-      ]);
-      return entityMetadata({ title, absolute, description, path: `${BASE}/${slug}` });
+      // Third: an employer with no PERM record, whose filings are H-1B LCAs,
+      // wage requests, or H-2A, H-2B and CW-1 (employer_other_index, built
+      // nightly). Indexable, and listed in the sitemap, by the owner's
+      // decision (Oct 3 2026 for the seasonal ones, Oct 4 for the rest).
+      const other = await otherEmployerRecord(slug);
+      if (!other) return redirectSpelling(slug);
+      return otherEmployerMetadata(slug, other);
     }
     // INDEXABLE, BY THE SITE OWNER'S DECISION, with the cost stated. Most
     // live-only employers hold exactly one case, so the page is a heading and
@@ -371,43 +456,49 @@ export default async function EmployerPage({
     // sections switched off.
     const live = await loadLiveOnly(slug);
     if (!live) {
-      const seasonal = await seasonalEmployerRecord(slug);
-      if (!seasonal) notFound();
-      const [figures, list, fresh] = await Promise.all([
-        seasonalEmployerFigures(slug),
-        seasonalEmployerCases(slug, SEASONAL_CASE_LIMIT),
-        getFreshness(),
-      ]);
-      // The breadcrumb bar ends at "Employers", so the trail ending in this
-      // page's own name is emitted here, as the published page does.
-      return (
-        <>
-          <JsonLdScript schema={breadcrumbSchema(`${BASE}/${slug}`, seasonal.name)} />
-          <SeasonalEmployer
-            record={seasonal}
-            figures={figures}
-            cases={list.cases}
-            more={list.more}
-            asOf={fresh["seasonal-status"]?.asOf ?? null}
-          />
-        </>
-      );
+      const other = await otherEmployerRecord(slug);
+      if (!other) return redirectSpelling(slug);
+      return <OtherEmployerPage slug={slug} record={other} />;
     }
-    const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal] = await Promise.all([
-      getFreshness(),
-      getEmployerStages().catch(() => null),
-      getEmployerWait(slug).catch(() => ({ n: 0, p25: null, p50: null, p75: null })),
-      getFieldWait().catch(() => null),
-      getFiledTodayEstimate().catch(() => null),
-      searchSeasonalCases({ text: live.record.name, limit: 5 }).catch(() => []),
-    ]);
+    // Its other programs, over the spellings the nightly map gives this page.
+    const liveMatch = await employerMatch(slug).catch(() => null);
+    const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal, wageLive, lcaLive, wageDets, lcaDets, lcaProfile, uscisH1b, lottery] =
+      await Promise.all([
+        getFreshness(),
+        getEmployerStages().catch(() => null),
+        getEmployerWait(slug).catch(() => ({ n: 0, p25: null, p50: null, p75: null })),
+        getFieldWait().catch(() => null),
+        getFiledTodayEstimate().catch(() => null),
+        searchSeasonalCases({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
+        searchPwdCases({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
+        searchLcaCases({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
+        searchPwdDeterminations({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
+        searchLcaDisclosed({ text: live.record.name, match: liveMatch, limit: 5 }).catch(() => []),
+        getLcaProfile(slug).catch(() => null),
+        getUscisH1bRecord(slug).catch(() => null),
+        getEmployerLottery(slug).catch(() => null),
+      ]);
     return (
       <>
         <JsonLdScript schema={breadcrumbSchema(`${BASE}/${slug}`, live.record.name)} />
         <UnpublishedEmployer
           record={live.record}
           cases={live.cases}
-          seasonal={<SeasonalFilings name={live.record.name} rows={liveSeasonal} className="mt-8" />}
+          programs={
+            <>
+              <WageAndLcaFilings
+                name={live.record.name}
+                wageReqs={unifiedRows(wageLive, wageDets, 5)}
+                lcas={unifiedRows(lcaLive, lcaDets, 5)}
+                heading="Its wage requests and LCAs"
+                className="mt-8"
+              />{" "}
+              <LcaProfile name={live.record.name} profile={lcaProfile} />{" "}
+              <UscisH1bRecord record={uscisH1b} through={fresh["uscis-h1b-hub"]?.asOf ?? null} />{" "}
+              <H1bLotteryHistory years={lottery} />{" "}
+              <SeasonalFilings name={live.record.name} rows={liveSeasonal} className="mt-8" />
+            </>
+          }
           asOf={fresh["perm-case-status"]?.asOf ?? null}
           follow={
             <EmployerFollow
@@ -446,6 +537,10 @@ export default async function EmployerPage({
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305
   // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
+  // The employer's own spellings in the H-1B, wage-request and seasonal
+  // tables (employer_page_map, built nightly). Cached, so the program ledger,
+  // the LCA panel and the lists below all read the same rows.
+  const match = await employerMatch(canonicalSlug).catch(() => null);
   const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery] =
     await Promise.all([
       getDisclosureStats(),
@@ -470,12 +565,12 @@ export default async function EmployerPage({
       // The steps BEFORE the PERM: the wage requests and H-1B LCAs this
       // employer has filed. Two halves each: the live table from DOL's daily
       // check (status, pending included) and DOL's quarterly file (decided,
-      // with the wage). Matched by name prefix (those tables carry
-      // name-derived slugs), indexed, five each; merged newest-first below.
-      searchPwdCases({ text: row.name, limit: 5 }).catch(() => []),
-      searchLcaCases({ text: row.name, limit: 5 }).catch(() => []),
-      searchPwdDeterminations({ text: row.name, limit: 5 }).catch(() => []),
-      searchLcaDisclosed({ text: row.name, limit: 5 }).catch(() => []),
+      // with the wage). Read over the employer's own spellings, indexed, five
+      // each; merged newest-first below.
+      searchPwdCases({ text: row.name, match, limit: 5 }).catch(() => []),
+      searchLcaCases({ text: row.name, match, limit: 5 }).catch(() => []),
+      searchPwdDeterminations({ text: row.name, match, limit: 5 }).catch(() => []),
+      searchLcaDisclosed({ text: row.name, match, limit: 5 }).catch(() => []),
       getEmployerPrograms(canonicalSlug).catch(() => null),
       getEmployerStages().catch(() => null),
       debarmentsForSlug(canonicalSlug).catch(() => []),
@@ -488,11 +583,11 @@ export default async function EmployerPage({
       employerYears(canonicalSlug),
       employerHistoryCases(canonicalSlug, 25),
       workerFacets("employer", canonicalSlug),
-      // H-2A and H-2B, live record only (no quarterly file is loaded): the
+      // H-2A, H-2B and CW-1, live record and quarterly file together: the
       // band shows only when the sponsor has any.
-      searchSeasonalCases({ text: row.name, limit: 5 }).catch(() => []),
+      searchSeasonalCases({ text: row.name, match, limit: 5 }).catch(() => []),
       // What the LCAs were for (new hires vs transfers, OES level, Section H),
-      // over the same slug range as the program ledger.
+      // over the same spellings as the program ledger.
       getLcaProfile(canonicalSlug).catch(() => null),
       // What USCIS then decided on the H-1B petitions (its Employer Data Hub).
       getUscisH1bRecord(canonicalSlug).catch(() => null),
@@ -610,7 +705,7 @@ export default async function EmployerPage({
         stages={stagesDoc?.employers.find((e) => e.slug === canonicalSlug) ?? null}
         logFrom={stagesDoc?.logFrom ?? null}
         searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
-        matchedPrefix={programs?.matchedPrefix ?? null}
+        spellings={programs?.match.basis === "map" ? programs.match.spellings : null}
       />{" "}
       <EmployerFollow
         slug={canonicalSlug}
@@ -678,65 +773,12 @@ export default async function EmployerPage({
       {/* The two filings that come BEFORE a PERM, from the same daily DOL
           check: the wage request and, for H-1B holders, the LCA. Five each,
           newest first; every number links to its live status. */}
-      {wageReqs.length > 0 || lcas.length > 0 ? (
-        <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h2 className="font-heading text-xl font-black sm:text-2xl">
-            Before the PERM: wage requests and LCAs
-          </h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            Filed by {row.name}. Pending ones are DOL&apos;s daily check; decided
-            ones carry the wage from DOL&apos;s quarterly files.
-          </p>{" "}
-          <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 [&>*]:min-w-0">
-            {[
-              { label: "Wage requests", rows: wageReqs, href: `/pwd-cases?q=${encodeURIComponent(row.name)}` },
-              { label: "H-1B LCAs", rows: lcas, href: `/lca-cases?q=${encodeURIComponent(row.name)}` },
-            ].map((col) => (
-              <Fragment key={col.label}>{" "}
-              <div>
-                <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">
-                  {col.label}
-                </h3>{" "}
-                {col.rows.length > 0 ? (
-                  <ul className="mt-2 divide-y divide-border/60">
-                    {col.rows.map((r) => (
-                      <Fragment key={r.caseNumber}>{" "}
-                      <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
-                        <Link
-                          href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                          className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2"
-                        >
-                          {r.caseNumber}
-                        </Link>{" "}
-                        {r.jobTitle ? <span className="text-foreground/80">{r.jobTitle}</span> : null}{" "}
-                        {formatWage(r.wage, r.wageUnit) ? (
-                          <span className="font-mono text-sm font-bold">
-                            {formatWage(r.wage, r.wageUnit)}
-                            <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
-                          </span>
-                        ) : null}{" "}
-                        <span className="ml-auto font-mono text-sm font-bold uppercase text-foreground/70">
-                          {r.date ? `${r.date} · ` : ""}
-                          {r.status}
-                        </span>
-                      </li>
-                      </Fragment>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-2 text-sm text-foreground/70">None confirmed yet.</p>
-                )}{" "}
-                <p className="mt-2 text-sm">
-                  <Link href={col.href} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-                    All {col.label.toLowerCase()} by this employer
-                  </Link>
-                </p>
-              </div>
-              </Fragment>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <WageAndLcaFilings
+        name={row.name}
+        wageReqs={wageReqs}
+        lcas={lcas}
+        heading="Before the PERM: wage requests and LCAs"
+      />
 
       <CapExemptNote industry={facets.industry} />{" "}
       <LcaProfile name={row.name} profile={lcaProfile} />{" "}

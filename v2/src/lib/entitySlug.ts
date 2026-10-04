@@ -26,7 +26,7 @@
  * remaining word is identical.
  */
 const ENTITY_NOISE = new Set([
-  "llp", "llc", "inc", "pc", "plc", "pllc", "lp", "ltd", "corp",
+  "llp", "lllp", "llc", "inc", "pc", "plc", "pllc", "lp", "ltd", "corp",
   "corporation", "co", "company", "pa", "chartered", "and", "the",
 ]);
 

@@ -65,7 +65,7 @@ export function UnpublishedEmployer({
   asOf,
   follow,
   wait,
-  seasonal,
+  programs,
 }: {
   record: LiveEmployerRecord;
   /** The newest cases, already capped by the caller. */
@@ -76,8 +76,8 @@ export function UnpublishedEmployer({
   follow?: ReactNode;
   /** The wait section, rendered after the follow card. */
   wait?: ReactNode;
-  /** The sponsor's H-2A and H-2B filings, rendered after the case list (nothing when it has none). */
-  seasonal?: ReactNode;
+  /** Its other programs (wage requests, LCAs, USCIS's H-1B record, seasonal filings), after the case list. */
+  programs?: ReactNode;
 }) {
   const { name, cases: total, pending, firstFiling, lastFiling, stages, otherNames } =
     record;
@@ -268,7 +268,7 @@ export function UnpublishedEmployer({
         </section>
       ) : null}
 
-      {seasonal}{" "}
+      {programs}{" "}
 
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">

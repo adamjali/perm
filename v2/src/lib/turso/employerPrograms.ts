@@ -4,14 +4,14 @@ import { cache } from "react";
 
 import { medianOffset, type ProgramLine } from "../employerPrograms";
 import { one } from "./client";
-import { slugRange } from "./flagCases";
+import { employerMatch, type EmployerMatch } from "./employerSlugs";
 import { ANNUAL_WAGE_SQL, FLAG_ANNUAL_WAGE_SQL } from "./lcaWages";
 
 /**
  * One employer's wage-request and LCA record, as counts and a median.
  *
- * Every read is bounded by the employer's own slug range on the table's
- * employer index (`pwd_cases_emp`, `lca_cases_emp`, `pwd_case_status_emp`,
+ * Every read is bounded by the employer's own spellings (`employerMatch`,
+ * from the nightly `employer_page_map`) on the table's employer index (`pwd_cases_emp`, `lca_cases_emp`, `pwd_case_status_emp`,
  * `lca_case_status_emp`), so the cost is the employer's rows and nothing
  * else: for the largest H-1B filer that is a few thousand LCA rows sorted
  * once for the median, on a page that regenerates monthly. The PERM line is
@@ -44,21 +44,21 @@ const EMP_INDEX: Record<"perm" | "pwd" | "lca", string> = {
   lca: "lca_cases_emp",
 };
 
-async function programLine(program: "perm" | "pwd" | "lca", range: { lo: string; hi: string }): Promise<ProgramLine> {
+async function programLine(program: "perm" | "pwd" | "lca", match: EmployerMatch): Promise<ProgramLine> {
   const t = TABLES[program];
-  const where = "employer_slug >= ? AND employer_slug < ?";
+  const where = match.where;
   const [counts, live] = await Promise.all([
     one<{ n: number | string; wage_n: number | string }>(
       `SELECT COUNT(*) AS n, ` +
         `SUM(CASE WHEN (${t.annual}) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS wage_n ` +
         `FROM ${t.published} INDEXED BY ${EMP_INDEX[program]} WHERE ${where}`,
-      [MIN_ANNUAL, MAX_ANNUAL, range.lo, range.hi],
+      [MIN_ANNUAL, MAX_ANNUAL, ...match.args],
     ),
     t.live
       ? one<{ n: number | string }>(
           `SELECT COUNT(*) AS n FROM ${t.live} INDEXED BY ${t.live}_emp WHERE ${where} AND is_final = 0` +
             (t.visaType ? " AND visa_type = ?" : ""),
-          t.visaType ? [range.lo, range.hi, t.visaType] : [range.lo, range.hi],
+          t.visaType ? [...match.args, t.visaType] : match.args,
         ).catch(() => null)
       : Promise.resolve(null),
   ]);
@@ -69,7 +69,7 @@ async function programLine(program: "perm" | "pwd" | "lca", range: { lo: string;
     const mid = await one<{ annual: number | string }>(
       `SELECT (${t.annual}) AS annual FROM ${t.published} INDEXED BY ${EMP_INDEX[program]} ` +
         `WHERE ${where} AND (${t.annual}) BETWEEN ? AND ? ORDER BY annual LIMIT 1 OFFSET ?`,
-      [range.lo, range.hi, MIN_ANNUAL, MAX_ANNUAL, medianOffset(wageN)],
+      [...match.args, MIN_ANNUAL, MAX_ANNUAL, medianOffset(wageN)],
     );
     median = mid ? Number(mid.annual) : null;
   }
@@ -93,18 +93,18 @@ const MAX_HOURLY = 200;
  * the page shows no empty seasonal line for the many employers that never
  * file one.
  */
-async function seasonalLine(range: { lo: string; hi: string }): Promise<ProgramLine | null> {
-  const where = "employer_slug >= ? AND employer_slug < ?";
+async function seasonalLine(match: EmployerMatch): Promise<ProgramLine | null> {
+  const where = match.where;
   const hourly = "wage_unit IN ('HOUR', 'HOURLY') AND wage BETWEEN ? AND ?";
   const [counts, live] = await Promise.all([
     one<{ n: number | string; wage_n: number | string; certified: number | string | null }>(
       `SELECT COUNT(*) AS n, SUM(CASE WHEN ${hourly} THEN 1 ELSE 0 END) AS wage_n, ` +
         `SUM(workers_certified) AS certified FROM seasonal_cases INDEXED BY seasonal_cases_emp WHERE ${where}`,
-      [MIN_HOURLY, MAX_HOURLY, range.lo, range.hi],
+      [MIN_HOURLY, MAX_HOURLY, ...match.args],
     ),
     one<{ n: number | string }>(
       `SELECT COUNT(*) AS n FROM seasonal_case_status INDEXED BY seasonal_case_status_emp WHERE ${where} AND is_final = 0`,
-      [range.lo, range.hi],
+      match.args,
     ).catch(() => null),
   ]);
   const published = Number(counts?.n ?? 0);
@@ -116,7 +116,7 @@ async function seasonalLine(range: { lo: string; hi: string }): Promise<ProgramL
     const mid = await one<{ wage: number | string }>(
       `SELECT wage FROM seasonal_cases INDEXED BY seasonal_cases_emp WHERE ${where} AND ${hourly} ` +
         "ORDER BY wage LIMIT 1 OFFSET ?",
-      [range.lo, range.hi, MIN_HOURLY, MAX_HOURLY, medianOffset(wageN)],
+      [...match.args, MIN_HOURLY, MAX_HOURLY, medianOffset(wageN)],
     );
     median = mid ? Number(mid.wage) : null;
   }
@@ -137,41 +137,19 @@ export interface EmployerPrograms {
   lca: ProgramLine;
   /** H-2A, H-2B and CW-1, from `seasonal_cases` and the live table; null when the employer has none. */
   seasonal: ProgramLine | null;
-  /** The slug prefix every read was bounded by. */
-  matchedPrefix: string;
+  /** How the rows were matched to this employer: its mapped spellings, its own slug, or the old name prefix. */
+  match: Pick<EmployerMatch, "basis" | "spellings">;
 }
 
-/**
- * The slug range one employer's wage-request and LCA rows are read over.
- *
- * THE THREE FILES SPELL ONE EMPLOYER THREE WAYS. Measured: one large
- * employer's PERM entity, LCAs and wage requests sit under three different
- * slugs (`...-us-corporation`, `...-us-corp`, `...-corporation`), so the
- * entity's own slug range finds none of its LCAs. The join key that
- * works is the entity's `merge_key` - the normalised name the PERM entity
- * builder already uses to fold spellings, with the corporate suffix dropped -
- * slugified and used as the prefix. Where an entity has no merge key the
- * slug itself is the prefix, as before. Shared with the LCA profile
- * (`lcaProfile.ts`), so the two read exactly the same rows.
- */
-export const employerSlugRange = cache(async (slug: string): Promise<{ lo: string; hi: string } | null> => {
-  const entity = await one<{ merge_key: string | null }>(
-    "SELECT merge_key FROM perm_entities WHERE kind = 'employer' AND slug = ?",
-    [slug],
-  ).catch(() => null);
-  const prefixSource = entity?.merge_key ? String(entity.merge_key) : slug;
-  return slugRange(prefixSource);
-});
-
-/** All three programs for one employer, over that range. */
+/** Every program for one employer, over its spellings. */
 export const getEmployerPrograms = cache(async (slug: string): Promise<EmployerPrograms | null> => {
-  const range = await employerSlugRange(slug);
-  if (!range) return null;
+  const match = await employerMatch(slug);
+  if (!match) return null;
   const [perm, pwd, lca, seasonal] = await Promise.all([
-    programLine("perm", range),
-    programLine("pwd", range),
-    programLine("lca", range),
-    seasonalLine(range).catch(() => null),
+    programLine("perm", match),
+    programLine("pwd", match),
+    programLine("lca", match),
+    seasonalLine(match).catch(() => null),
   ]);
-  return { perm, pwd, lca, seasonal, matchedPrefix: range.lo };
+  return { perm, pwd, lca, seasonal, match: { basis: match.basis, spellings: match.spellings } };
 });

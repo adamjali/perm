@@ -52,12 +52,13 @@ export function generateLiveEmployerOG(name: string, cases: number) {
   );
 }
 
-export function generateSeasonalEmployerOG(name: string, cases: number, visas: string) {
+/** An employer with no PERM record: the programs it files, and how many filings. */
+export function generateOtherEmployerOG(name: string, cases: number, programs: string) {
   return card(
     GROUND.employer,
-    `${KIND_EYEBROW.employer} · ${visas}`,
+    `${KIND_EYEBROW.employer} · ${programs}`,
     name,
-    `${cases.toLocaleString("en-US")} ${visas} ${cases === 1 ? "filing" : "filings"} in the Department of Labor's records.`,
+    `${cases.toLocaleString("en-US")} ${programs} ${cases === 1 ? "filing" : "filings"} in the Department of Labor's records.`,
   );
 }
 

@@ -60,6 +60,13 @@ argument, and it is why the rule is scoped:
 
 Measured on attorneys: 185 merges over 5,864 firms, hand-checked in full.
 
+## Rule C - a legal-form word glued to the last word.  ATTORNEYS ONLY.
+
+"Bernsen & LoewyLLP" and "Farmer LawPC" key with the suffix stuck on. Cut
+it, and merge only when the result is exactly the key of a busier firm.
+Measured Oct 4 2026: 4 merges and 16 cases, all right. "LLLP" (a limited
+liability limited partnership) joined the noise words the same day: 3 merges.
+
 THE SLUG RULES ARE MIRRORED IN `src/lib/entitySlug.ts`. A key computed
 differently in the writer than in the reader is a detail page that 404s from
 its own index, so `scripts/test_entity_identity.py` asserts both against one
@@ -67,15 +74,21 @@ fixture set.
 """
 from __future__ import annotations
 
+import html
 import re
 
 # Words that say what kind of thing something is rather than which one.
 # Stripping them is conservative: two names still only merge when every
 # remaining word is identical.
 ENTITY_NOISE = {
-    "llp", "llc", "inc", "pc", "plc", "pllc", "lp", "ltd", "corp",
+    "llp", "lllp", "llc", "inc", "pc", "plc", "pllc", "lp", "ltd", "corp",
     "corporation", "co", "company", "pa", "chartered", "and", "the",
 }
+
+# Legal-form words a typist sometimes runs into the last word of a firm name
+# ("Bernsen & LoewyLLP", "Farmer LawPC"). Only the unmistakable ones: "and",
+# "the", "co" and "pa" end too many real words (Holland, Blythe, Frisco).
+_GLUED_SUFFIXES = ("lllp", "pllc", "llp", "llc", "inc", "ltd", "corp", "plc", "pc")
 
 # Tokens that cannot corroborate a Rule B match, because half the directory
 # contains them. `Hartzman Law Firm` and `Hartman Law Firm` agree on "law"
@@ -115,6 +128,36 @@ def entity_key(name: str) -> str:
             i += 1
     words = [w for w in glued if w not in ENTITY_NOISE]
     return " ".join(words) or cleaned.strip()
+
+
+# "Acme Holdings d/b/a Acme Staffing": the legal name is the part before the
+# trade name, and the legal name is what the PERM entity was built from.
+_TRADE_NAME = re.compile(r"\s+(?:d\s*/\s*b\s*/\s*a|d\.b\.a\.?|dba|a\s*/\s*k\s*/\s*a|aka)\s+.*$", re.I)
+
+
+def program_key(name: str) -> str:
+    """The key that joins an employer's H-1B, wage-request and seasonal rows to its page.
+
+    `entity_key` after three repairs the program files need and the PERM file
+    rarely does, each measured on the 40 busiest PERM employers (Oct 4 2026):
+
+    * HTML entities decoded. LCA rows print "JPMORGAN CHASE &amp; CO." (and,
+      double-encoded, "&amp;amp;"), whose key gained a stray "amp".
+    * Only the legal name before "d/b/a" (or "a/k/a"). "FMR LLC d/b/a Fidelity
+      Investments" is FMR LLC: 152 LCAs.
+    * ".com" dropped. "Salesforce.com, Inc." is the company that now files as
+      "Salesforce, Inc.": 5,645 LCAs.
+
+    What it still keeps apart is a different legal entity every time on that
+    sample: Intellectt and Inteli Platforms are not Intel (the old text prefix
+    gave Intel 8,219 of their LCAs), and IBM India Private Limited, Google
+    Public Sector LLC and Apple Payments Services LLC each file under their
+    own names. Matching is equality, never a prefix.
+    """
+    text = html.unescape(html.unescape(name or ""))
+    text = _TRADE_NAME.sub("", text)
+    text = re.sub(r"\.com\b", "", text, flags=re.I)
+    return entity_key(text)
 
 
 def _lev(a: str, b: str) -> int:
@@ -224,5 +267,24 @@ def typo_aliases(totals: dict[str, int], kind: str) -> dict[str, str]:
                 if (totals[ra], ra) < (totals[rb], rb):
                     ra, rb = rb, ra
                 parent[rb] = ra
+
+    # Rule C: a legal-form word glued onto the last word. "Fragomen Del Rey
+    # Bernsen & LoewyLLP" keys as "... loewyllp"; with the suffix cut it is
+    # exactly Fragomen's key. It merges only on that exact match, and only
+    # into a busier firm, so it can't invent a firm or swallow a bigger one.
+    # Measured Oct 4 2026: 4 merges, 16 cases, every one right.
+    for key in totals:
+        toks = key.split()
+        last = toks[-1] if toks else ""
+        for w in _GLUED_SUFFIXES:
+            if last.endswith(w) and len(last) > len(w) + 2:
+                target = " ".join(toks[:-1] + [last[: -len(w)]])
+                if target in totals and totals[target] > totals[key]:
+                    ra, rb = find(target), find(key)
+                    if ra != rb:
+                        if (totals[ra], ra) < (totals[rb], rb):
+                            ra, rb = rb, ra
+                        parent[rb] = ra
+                break
 
     return {k: find(k) for k in parent if find(k) != k}

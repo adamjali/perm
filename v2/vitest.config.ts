@@ -107,13 +107,16 @@ const ISOLATED_UNIT_FILES = [
   // means no neighbour can decide what it imports.
   "src/lib/turso/caseDiscovery.test.ts",
   "src/lib/turso/embedLookup.test.ts",
-  // Added 2026-10-01. Mocks ../client, ../tableColumns and ../employerPrograms;
+  // Added 2026-10-01. Mocks ../client, ../tableColumns and ../employerSlugs;
   // isolated from the start rather than after its first shared-pool collision.
   "src/lib/turso/__tests__/lcaProfile.test.ts",
   "src/lib/turso/__tests__/uscisH1b.test.ts",
   // Added 2026-10-03. Both mock ../client and set per-test answers.
   "src/lib/turso/__tests__/seasonalCases.test.ts",
   "src/lib/turso/__tests__/employerProgramsSeasonal.test.ts",
+  "src/lib/turso/__tests__/employerSlugs.test.ts",
+  "src/lib/turso/__tests__/otherEmployers.test.ts",
+  "src/lib/turso/__tests__/firmPrograms.test.ts",
   "src/lib/turso/__tests__/seasonalEmployers.test.ts",
 ];
 

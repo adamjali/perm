@@ -65,11 +65,11 @@ vi.mock("@/lib/turso/groups", () => ({
       label: "L", total: 30, certified: 20, denied: 5, withdrawn: 5, medianWage: null, fyFrom: 2016, fyTo: 2026 },
   ]),
 }));
-// The seasonal-only employer family. Zero by default, like the live-only one;
-// the family test below arranges a corpus.
-vi.mock("@/lib/turso/seasonalEmployers", () => ({
-  countSeasonalEmployerRanks: vi.fn(async () => 0),
-  getSeasonalEmployerSlugWindow: vi.fn(async () => []),
+// The family of employers with no PERM record. Zero by default, like the
+// live-only one; the family test below arranges a corpus.
+vi.mock("@/lib/turso/otherEmployers", () => ({
+  countOtherEmployerRanks: vi.fn(async () => 0),
+  getOtherEmployerSlugWindow: vi.fn(async () => []),
 }));
 vi.mock("@/lib/turso/backlog", () => ({
   getBacklogCensus: vi.fn(),
@@ -120,7 +120,7 @@ import { captureError } from "@/lib/sentry";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { countEntityRanks, countLiveOnlyRanks, getEntitySlugWindow, getLiveOnlySlugWindow } from "@/lib/turso/publicData";
 import { browseCounts } from "@/lib/turso/entityBrowse";
-import { countSeasonalEmployerRanks, getSeasonalEmployerSlugWindow } from "@/lib/turso/seasonalEmployers";
+import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/turso/otherEmployers";
 import { getBacklogCensus } from "@/lib/turso/backlog";
 import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -132,7 +132,7 @@ import {
   indexXml,
   liveEmployerEntries,
   pagesEntries,
-  seasonalEmployerEntries,
+  otherEmployerEntries,
   parseChildName,
   SITEMAP_CHUNK,
   urlsetXml,
@@ -217,8 +217,8 @@ describe("sitemap.ts", () => {
     // tests that care opt in.
     vi.mocked(countLiveOnlyRanks).mockResolvedValue(0);
     vi.mocked(getLiveOnlySlugWindow).mockResolvedValue([]);
-    vi.mocked(countSeasonalEmployerRanks).mockResolvedValue(0);
-    vi.mocked(getSeasonalEmployerSlugWindow).mockResolvedValue([]);
+    vi.mocked(countOtherEmployerRanks).mockResolvedValue(0);
+    vi.mocked(getOtherEmployerSlugWindow).mockResolvedValue([]);
   });
 
   it("lists every /perm-queue month holding a case, from the census, and OMITS an empty month (that page 404s)", async () => {
@@ -287,11 +287,11 @@ describe("sitemap.ts", () => {
     expect(names).toContain("employer-1");
   });
 
-  it("lists the seasonal-only employers as their own child family, every rank exactly once", async () => {
+  it("lists the employers with no PERM record as their own child family, every rank exactly once", async () => {
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     const size = SITEMAP_CHUNK + 7;
-    vi.mocked(countSeasonalEmployerRanks).mockResolvedValue(size);
-    vi.mocked(getSeasonalEmployerSlugWindow).mockImplementation(async (chunk: number, per: number) => {
+    vi.mocked(countOtherEmployerRanks).mockResolvedValue(size);
+    vi.mocked(getOtherEmployerSlugWindow).mockImplementation(async (chunk: number, per: number) => {
       const lo = chunk * per;
       const hi = Math.min(lo + per, size);
       return Array.from({ length: Math.max(0, hi - lo) }, (_, i) => ({
@@ -300,26 +300,27 @@ describe("sitemap.ts", () => {
       }));
     });
     const names = await childNames();
-    expect(names.filter((n) => n.startsWith("seasonal-employer-"))).toEqual([
-      "seasonal-employer-1", "seasonal-employer-2",
-    ]);
-    expect(parseChildName("seasonal-employer-2")).toEqual({ kind: "seasonal-employer", chunk: 1 });
+    expect(names.filter((n) => n.startsWith("other-employer-"))).toEqual(["other-employer-1", "other-employer-2"]);
+    expect(names.some((n) => n.startsWith("seasonal-employer-"))).toBe(false);
+    expect(parseChildName("other-employer-2")).toEqual({ kind: "other-employer", chunk: 1 });
+    // The family's Oct 3 name still answers the same window, for a crawler that read it then.
+    expect(parseChildName("seasonal-employer-2")).toEqual({ kind: "other-employer", chunk: 1 });
     const all: string[] = [];
-    for (const c of [0, 1]) all.push(...(await seasonalEmployerEntries(c)).map((e) => e.url));
+    for (const c of [0, 1]) all.push(...(await otherEmployerEntries(c)).map((e) => e.url));
     expect(all).toHaveLength(size);
     expect(new Set(all).size).toBe(size);
     expect(all[0]).toBe("https://permtracker.app/perm-employers/farm-1");
-    const first = await seasonalEmployerEntries(0);
+    const first = await otherEmployerEntries(0);
     expect(first[0]!.lastModified).toBe("2026-04-10");
     // An undated row falls back to a real date, never an empty lastmod.
     expect(first[1]!.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  it("lists NO seasonal-only children when that table cannot be read, and keeps the other families", async () => {
+  it("lists NO children for that family when its table cannot be read, and keeps the other families", async () => {
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
-    vi.mocked(countSeasonalEmployerRanks).mockRejectedValue(new Error("no such table: seasonal_employer_index"));
+    vi.mocked(countOtherEmployerRanks).mockRejectedValue(new Error("deadline"));
     const names = await childNames();
-    expect(names.some((n) => n.startsWith("seasonal-employer-"))).toBe(false);
+    expect(names.some((n) => n.startsWith("other-employer-"))).toBe(false);
     expect(names).toContain("employer-1");
   });
 

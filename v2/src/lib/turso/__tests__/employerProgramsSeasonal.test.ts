@@ -1,20 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * The employer page's H-2A, H-2B and CW-1 line: read over the employer's own
- * slug range on seasonal_cases and the live table, with the median taken over
+ * The employer page's H-2A, H-2B and CW-1 line: read over the employer's
+ * spellings (here a prefix-shaped match) on seasonal_cases and the live table, with the median taken over
  * hourly wages only, and absent for an employer that files none.
  */
 
 vi.mock("server-only", () => ({}));
 const one = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown>>();
 vi.mock("../client", () => ({ one, rows: vi.fn(), exec: vi.fn() }));
+vi.mock("../employerSlugs", () => ({
+  employerMatch: vi.fn(async () => ({
+    where: "employer_slug >= ? AND employer_slug < ?",
+    args: ["mcrp-farms", "mcrp-farmt"],
+    basis: "prefix",
+    spellings: null,
+  })),
+}));
 
 const { getEmployerPrograms } = await import("../employerPrograms");
 
 const answer = (seasonal: { n: number; wage_n: number; certified: number | null }, pending: number, median: number) =>
   one.mockImplementation(async (sql: string) => {
-    if (sql.includes("FROM perm_entities")) return { merge_key: "mcrp farms" };
     if (sql.includes("FROM seasonal_case_status")) return { n: pending };
     if (sql.includes("COUNT(*) AS n") && sql.includes("FROM seasonal_cases")) return seasonal;
     if (sql.includes("FROM seasonal_cases")) return { wage: median };
@@ -61,7 +68,6 @@ describe("the seasonal line on an employer page", () => {
   it("keeps the other lines when the seasonal table can't be read", async () => {
     one.mockImplementation(async (sql: string) => {
       if (sql.includes("seasonal_cases")) throw new Error("no such table: seasonal_cases");
-      if (sql.includes("FROM perm_entities")) return null;
       return { n: 3, wage_n: 0 };
     });
     const out = await getEmployerPrograms("mcrp-farms");

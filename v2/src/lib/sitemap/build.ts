@@ -16,7 +16,7 @@ import { getBacklogCensus } from "@/lib/turso/backlog";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
-import { countSeasonalEmployerRanks, getSeasonalEmployerSlugWindow } from "@/lib/turso/seasonalEmployers";
+import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/turso/otherEmployers";
 import {
   countEntityRanks,
   countLiveOnlyRanks,
@@ -536,30 +536,31 @@ export async function groupEntries(): Promise<Entry[]> {
 }
 
 /**
- * One chunk of the seasonal-only employers: employers whose only filings are
- * H-2A, H-2B or CW-1 (seasonal_employer_index, built nightly). Listed in full
- * by the owner's decision (Oct 3 2026); lastmod is each page's own day.
+ * One chunk of the employers with no PERM record: those whose filings are
+ * H-1B LCAs, wage requests, or H-2A, H-2B and CW-1 (employer_other_index,
+ * built nightly). Listed in full by the owner's decision (Oct 3 2026 for the
+ * seasonal ones, Oct 4 for the rest); lastmod is each page's own day.
  */
-export async function seasonalEmployerEntries(chunk: number): Promise<Entry[]> {
+export async function otherEmployerEntries(chunk: number): Promise<Entry[]> {
   const base = baseUrl();
-  const slugs = await getSeasonalEmployerSlugWindow(chunk, SITEMAP_CHUNK);
+  const slugs = await getOtherEmployerSlugWindow(chunk, SITEMAP_CHUNK);
   const floor = chunk === 0 ? MIN_ROWS_PER_KIND : 1;
   if (slugs.length < floor) {
     const detail =
-      `Sitemap child seasonal-employer chunk ${chunk} built with only ${slugs.length} rows. ` +
+      `Sitemap child other-employer chunk ${chunk} built with only ${slugs.length} rows. ` +
       `The read failed or the nightly table is empty.`;
     captureError(new Error(detail));
     throw new Error(detail);
   }
-  const fallback = (await corpusAsOf()) ?? "2026-10-03";
+  const fallback = (await corpusAsOf()) ?? "2026-10-04";
   return slugs.map(({ slug, lastChanged }) => ({
     url: `${base}/perm-employers/${slug}`,
     lastModified: lastChanged ?? fallback,
   }));
 }
 
-/** The child-sitemap families: three entity kinds, the live-only and the seasonal-only employers. */
-export type ChildKind = EntityKind | "live-employer" | "seasonal-employer";
+/** The child-sitemap families: three entity kinds, the live-only employers and those with no PERM record. */
+export type ChildKind = EntityKind | "live-employer" | "other-employer";
 
 /** Every child sitemap name, in the order the index lists them. */
 export async function childNames(): Promise<string[]> {
@@ -578,13 +579,13 @@ export async function childNames(): Promise<string[]> {
     return 0;
   });
   for (let c = 0; c < Math.ceil(live / SITEMAP_CHUNK); c += 1) names.push(`live-employer-${c + 1}`);
-  // Same rule for the seasonal-only family: no table, no children, and the
-  // other families stay up.
-  const seasonal = await countSeasonalEmployerRanks().catch((e: unknown) => {
-    captureError(e instanceof Error ? e : new Error(`seasonal-employer count failed: ${String(e)}`));
+  // Same rule for the employers with no PERM record: no table, no children,
+  // and the other families stay up.
+  const other = await countOtherEmployerRanks().catch((e: unknown) => {
+    captureError(e instanceof Error ? e : new Error(`other-employer count failed: ${String(e)}`));
     return 0;
   });
-  for (let c = 0; c < Math.ceil(seasonal / SITEMAP_CHUNK); c += 1) names.push(`seasonal-employer-${c + 1}`);
+  for (let c = 0; c < Math.ceil(other / SITEMAP_CHUNK); c += 1) names.push(`other-employer-${c + 1}`);
   return names;
 }
 
@@ -592,11 +593,14 @@ export async function childNames(): Promise<string[]> {
 export function parseChildName(
   name: string,
 ): { kind: ChildKind; chunk: number } | null {
-  const m = /^(employer|attorney|occupation|live-employer|seasonal-employer)-(\d+)$/.exec(name);
+  const m = /^(employer|attorney|occupation|live-employer|other-employer|seasonal-employer)-(\d+)$/.exec(name);
   if (!m) return null;
   const chunk = Number(m[2]) - 1;
   if (!Number.isInteger(chunk) || chunk < 0 || chunk > 999) return null;
-  return { kind: m[1] as ChildKind, chunk };
+  // `seasonal-employer-N` was this family's name from Oct 3 to Oct 4 2026; a
+  // crawler that read it then still asks for it, so it answers the same window.
+  const kind = m[1] === "seasonal-employer" ? "other-employer" : (m[1] as ChildKind);
+  return { kind, chunk };
 }
 
 const esc = (s: string) =>

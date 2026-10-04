@@ -5,11 +5,14 @@ const one = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown>>();
 vi.mock("../client", () => ({ one, rows: vi.fn(), exec: vi.fn() }));
 const tableColumns = vi.fn<(t: string) => Promise<Set<string>>>();
 vi.mock("../tableColumns", () => ({ tableColumns }));
-vi.mock("../employerPrograms", () => ({
-  employerSlugRange: vi.fn(async (slug: string) => (slug === "none" ? null : { lo: "acme", hi: "acmf" })),
+const W = "employer_slug IN (?, ?)";
+vi.mock("../employerSlugs", () => ({
+  employerMatch: vi.fn(async (slug: string) =>
+    slug === "none" ? null : { where: W, args: ["acme", "acme-inc"], basis: "map", spellings: 2 },
+  ),
 }));
 
-const { getLcaProfile, lcaProfileSql, LCA_NEWEST_FLAGS_SQL } = await import("../lcaProfile");
+const { getLcaProfile, lcaProfileSql, lcaNewestFlagsSql } = await import("../lcaProfile");
 const { shapeLcaProfile } = await import("../../lcaProfile");
 
 /**
@@ -31,15 +34,15 @@ describe("getLcaProfile", () => {
     expect(one).toHaveBeenCalledTimes(1);
     const sql = one.mock.calls[0]![0];
     expect(sql).not.toMatch(/workers|wage_level|h1b_dependent/);
-    expect(sql).toContain("INDEXED BY lca_cases_emp");
-    expect(one.mock.calls[0]![1]).toEqual(["acme", "acmf"]);
+    expect(sql).toContain(`INDEXED BY lca_cases_emp WHERE ${W}`);
+    expect(one.mock.calls[0]![1]).toEqual(["acme", "acme-inc"]);
     expect(p?.visas.find((v) => v.key === "e3")?.n).toBe(1);
   });
 
   it("reads the breakdown and the newest declaration once the columns exist", async () => {
     tableColumns.mockResolvedValue(new Set(["case_number", "workers"]));
     one.mockImplementation(async (sql: string) =>
-      sql === LCA_NEWEST_FLAGS_SQL
+      sql === lcaNewestFlagsSql(W)
         ? { h1b_dependent: 1, willful_violator: 0, filed: "2026-05-01" }
         : { filings: 2, detail_rows: 2, positions: 3, new_employment: 1, change_employer: 2, visa_h1b: 2 },
     );
@@ -49,13 +52,13 @@ describe("getLcaProfile", () => {
     expect(p?.kinds.find((k) => k.kind.key === "changeEmployer")?.n).toBe(2);
   });
 
-  it("returns null for an employer with no slug range", async () => {
+  it("returns null for an employer with no spellings to read", async () => {
     expect(await getLcaProfile("none")).toBeNull();
     expect(one).not.toHaveBeenCalled();
   });
 
   it("names exactly the columns the pure half reads", () => {
-    const aliases = [...lcaProfileSql(true).matchAll(/ AS ([a-z0-9_]+)/g)].map((m) => m[1]!).sort();
+    const aliases = [...lcaProfileSql(true, W).matchAll(/ AS ([a-z0-9_]+)/g)].map((m) => m[1]!).sort();
     // Shape a row carrying each alias as a distinct value and check every one lands somewhere.
     const fixture = Object.fromEntries(aliases.map((a, i) => [a, i + 1]));
     const p = shapeLcaProfile(fixture as never, null)!;
@@ -68,7 +71,7 @@ describe("getLcaProfile", () => {
   });
 
   it("counts the breakdown over certified LCAs only, and the blank level only among rows the backfill reached", () => {
-    const sql = lcaProfileSql(true);
+    const sql = lcaProfileSql(true, W);
     expect(sql).toMatch(/case_status = 'CERTIFIED' THEN workers END\) AS positions/);
     expect(sql).toMatch(/workers IS NOT NULL AND wage_level IS NULL THEN 1 ELSE 0 END\) AS level_blank/);
   });
