@@ -12,6 +12,7 @@ import {
   toBoardRow,
   validateTimeline,
   type TimelineRecord,
+  whoIsWaiting,
 } from "./lib/communityTimeline";
 import { query as mirrorQuery } from "./lib/publicMirror";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
@@ -314,6 +315,19 @@ export const board = query({
       byOutcome: v.array(countV),
     }),
     rows: v.array(boardRowV),
+    waiting: v.object({
+      open: v.boolean(),
+      byStage: v.array(v.object({ id: v.string(), label: v.string(), count: v.number() })),
+      lines: v.array(
+        v.object({
+          category: v.string(),
+          country: v.string(),
+          counts: v.array(v.union(v.number(), v.null())),
+          total: v.number(),
+        }),
+      ),
+      unlisted: v.number(),
+    }),
   }),
   handler: async (ctx) => {
     // NEWEST first. `take` in creation order keeps the OLDEST 5,000, so past
@@ -341,6 +355,7 @@ export const board = query({
       metrics: computeMetrics(records),
       rfe: summarizeRfes(records),
       rows,
+      waiting: whoIsWaiting(records),
     };
   },
 });

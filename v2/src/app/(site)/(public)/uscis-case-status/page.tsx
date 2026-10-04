@@ -6,6 +6,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
 import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
+import { SavedReceipts } from "@/components/tools/SavedReceipts";
 import { UscisReceiptForm } from "@/components/tools/UscisReceiptForm";
 import { UscisStatusResult } from "@/components/tools/UscisStatusResult";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -181,6 +182,8 @@ export default async function UscisCaseStatusPage({
       <div className="mt-8 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <UscisReceiptForm defaultValue={typed} />
       </div>
+
+      <SavedReceipts current={receipt} />
 
       {malformed ? (
         <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">

@@ -147,6 +147,17 @@ def main() -> int:
     i2 = bem.write_diff(db, bem.INDEX, bem.INDEX_COLS, index2)
     check("an unchanged rebuild writes nothing", (m2[0], m2[1], i2[0], i2[1]), (0, 0, 0, 0))
 
+    # A newcomer with an OLD first filing goes after the last rank and moves
+    # nobody: ranks are addresses in the sitemap's windows.
+    before = {r[0]: r[bem.INDEX_COLS.index("rank")] for r in index2}
+    db.execute("INSERT INTO lca_cases VALUES (?,?,?,?,?)",
+               ["I-200-20001-000001", "2001-01-02", "2001-01-09", "Ancient Sponsor Inc", "ancient-sponsor-inc"])
+    _, index4, _ = bem.plan(bem.read_sources(db), bem.read_pages(db))
+    after = {r[0]: r[bem.INDEX_COLS.index("rank")] for r in index4}
+    check("ranks stay put when an employer with an old first filing appears",
+          ({k: after[k] for k in before}, after["ancient-sponsor-inc"]), (before, max(before.values()) + 1))
+    db.execute("DELETE FROM lca_cases WHERE case_number = 'I-200-20001-000001'")
+
     # The URL holds when the volumes shift: three more filings under the second
     # spelling would make it the busiest, and the page still answers at the
     # slug it was published under.

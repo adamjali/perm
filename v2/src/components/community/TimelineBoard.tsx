@@ -6,9 +6,11 @@ import {
   DATE_FIELDS,
   METRIC_MIN_N,
   ROUTES,
+  WAITING_STAGES,
   type BoardRow,
   type MetricResult,
   type RfeSummary,
+  type WaitingView,
 } from "@/lib/communityTimeline";
 import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
@@ -246,6 +248,78 @@ export function RfeBars({ rfe }: { rfe: RfeSummary }) {
           </Fragment>
         ))}
       </dl>
+    </div>
+  );
+}
+
+/**
+ * Where the people who shared a timeline are now: a bar per step, then a
+ * table of category and country lines. A cell under the minimum reads "under
+ * 5" rather than a count, and a line too small to show is counted in words.
+ */
+export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: number }) {
+  const most = Math.max(...waiting.byStage.map((s) => s.count), 1);
+  return (
+    <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0">
+      <ChartTips label="Timelines by the step they've reached">
+        <ul className="grid grid-cols-1 gap-2">
+          {waiting.byStage.map((s) => (
+            <Fragment key={s.id}>
+              {" "}
+              <li
+                data-tip={`${s.label}\n${s.count.toLocaleString("en-US")} of ${total.toLocaleString("en-US")} timelines`}
+                className="grid grid-cols-[minmax(0,15rem)_1fr_auto] items-center gap-3 text-sm"
+              >
+                <span className="font-bold">{s.label}</span>{" "}
+                <span className="h-4 border-2 border-border bg-background" aria-hidden="true">
+                  <span className="block h-full bg-primary/50" style={{ width: `${(s.count / most) * 100}%` }} />
+                </span>{" "}
+                <span className="tabular-nums">{s.count.toLocaleString("en-US")}</span>
+              </li>
+            </Fragment>
+          ))}
+        </ul>
+      </ChartTips>{" "}
+      {waiting.lines.length ? (
+        <div className="overflow-x-auto border-2 border-border">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
+            <caption className="sr-only">Timelines by category, country and step</caption>
+            <thead>
+              <tr className="border-b-2 border-border bg-muted text-left">
+                <th scope="col" className="p-2 font-bold">
+                  Category and country{" "}
+                </th>
+                {WAITING_STAGES.map((s) => (
+                  <th key={s.id} scope="col" className="p-2 text-right font-bold">
+                    {`${s.label} `}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {waiting.lines.map((l) => (
+                <tr key={`${l.category}|${l.country}`} className="border-b border-border/50">
+                  <th scope="row" className="p-2 text-left font-bold">
+                    {`${l.category}, ${l.country} `}
+                  </th>
+                  {l.counts.map((c, i) => (
+                    <td key={WAITING_STAGES[i]!.id} className="p-2 text-right tabular-nums">
+                      {c === null ? "under 5 " : `${c.toLocaleString("en-US")} `}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}{" "}
+      {waiting.unlisted ? (
+        <p className="text-sm text-foreground/70">
+          {waiting.unlisted.toLocaleString("en-US")} more {waiting.unlisted === 1 ? "timeline sits" : "timelines sit"} on a
+          category and country with fewer than 5 timelines, or gave neither, so {waiting.unlisted === 1 ? "it isn't" : "they aren't"}{" "}
+          listed by line.
+        </p>
+      ) : null}
     </div>
   );
 }

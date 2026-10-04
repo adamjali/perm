@@ -125,7 +125,17 @@ export function GreenCardFeesCalculator() {
         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-foreground/70">
           <li>The PERM and the prevailing wage request: DOL charges no filing fee for either.</li>{" "}
           <li>Recruitment costs and attorney fees, which 20 CFR 656.12 puts on the employer for the PERM stage.</li>{" "}
-          <li>The I-693 medical exam: USCIS charges nothing, the civil surgeon does.</li>{" "}
+          <li>
+            The I-693 medical exam: USCIS charges nothing, the civil surgeon does.{" "}
+            <a
+              href="https://www.uscis.gov/tools/find-a-civil-surgeon"
+              rel="noopener"
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              USCIS lists civil surgeons by ZIP code
+            </a>
+            .
+          </li>{" "}
           <li>Consular processing (DS-260 and the immigrant visa fee) for anyone adjusting abroad instead of filing an I-485.</li>{" "}
           <li>Premium processing on an I-485, which USCIS does not offer.</li>
         </ul>

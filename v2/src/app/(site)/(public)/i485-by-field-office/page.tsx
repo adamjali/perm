@@ -317,6 +317,19 @@ export default async function I485ByFieldOfficePage() {
             <Link href="/guides/i485-vs-i485j-supplement-j" className="font-bold underline underline-offset-2 hover:text-primary">
               I-485 and Supplement J, told apart
             </Link>
+          </li>{" "}
+          <li>
+            <Link href="/guides/i693-medical-exam" className="font-bold underline underline-offset-2 hover:text-primary">
+              The I-693 medical exam every I-485 needs
+            </Link>
+            , and{" "}
+            <a
+              href="https://www.uscis.gov/tools/find-a-civil-surgeon"
+              rel="noopener"
+              className="font-bold underline underline-offset-2 hover:text-primary"
+            >
+              USCIS&apos;s search for a civil surgeon near you
+            </a>
           </li>
         </ul>
       </section>

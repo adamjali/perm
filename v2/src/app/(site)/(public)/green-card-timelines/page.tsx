@@ -3,7 +3,7 @@ import Link from "next/link";
 import { queryStatic } from "@/lib/convexStatic";
 
 import { api } from "@convex/_generated/api";
-import { BoardKey, BoardTable, RfeBars, StageMedians } from "@/components/community/TimelineBoard";
+import { BoardKey, BoardTable, RfeBars, StageMedians, WhoIsWaiting } from "@/components/community/TimelineBoard";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
@@ -120,6 +120,25 @@ export default async function GreenCardTimelinesPage() {
                 </p>
               </div>
             )}
+          </section>
+
+          <section className="mt-12" aria-labelledby="waiting-h">
+            <h2 id="waiting-h" className="font-heading text-2xl font-black sm:text-3xl">
+              Who&apos;s waiting, and where
+            </h2>{" "}
+            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+              Each timeline at the furthest step it reports, by category and country. Counts only, from every timeline
+              here, so no line can be traced to a person.
+            </p>
+            <div className="mt-5">
+              {board.waiting.open ? (
+                <WhoIsWaiting waiting={board.waiting} total={board.total} />
+              ) : (
+                <p className="text-base text-foreground/70">
+                  Opens at {board.opensAt} timelines, like the board. {board.total.toLocaleString("en-US")} so far.
+                </p>
+              )}
+            </div>
           </section>
 
           <section className="mt-12" aria-labelledby="rfe-h">

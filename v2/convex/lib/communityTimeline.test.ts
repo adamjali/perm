@@ -8,7 +8,11 @@ import {
   summarizeRfes,
   toBoardRow,
   validateTimeline,
+  WAITING_STAGES,
+  waitingStage,
+  whoIsWaiting,
   type TimelineRecord,
+  type WaitingStageId,
 } from "./communityTimeline";
 
 const TODAY = "2026-09-26";
@@ -151,4 +155,49 @@ describe("toBoardRow", () => {
 
 it("opens the board at a threshold that is more than one row", () => {
   expect(BOARD_OPENS_AT).toBeGreaterThan(METRIC_MIN_N);
+});
+
+describe("whoIsWaiting", () => {
+  const rec = (over: Partial<TimelineRecord>): TimelineRecord => ({ updatedAt: 1, public: false, ...over }) as TimelineRecord;
+  const many = (n: number, over: Partial<TimelineRecord>) => Array.from({ length: n }, () => rec(over));
+
+  it("places each timeline at the furthest step it reports", () => {
+    expect(waitingStage(rec({}))).toBe("perm");
+    expect(waitingStage(rec({ permCertifiedOn: "2025-01-01" }))).toBe("certified");
+    expect(waitingStage(rec({ i140FiledOn: "2025-02-01" }))).toBe("i140");
+    expect(waitingStage(rec({ i140FiledOn: "2025-02-01", i140ApprovedOn: "2025-03-01" }))).toBe("approved");
+    expect(waitingStage(rec({ i140ApprovedOn: "2025-03-01", i485FiledOn: "2025-05-01" }))).toBe("i485");
+    expect(waitingStage(rec({ i485FiledOn: "2025-05-01", greenCardOn: "2026-01-01" }))).toBe("done");
+  });
+
+  it("stays shut until the board's floor, so a count can't be a person", () => {
+    const v = whoIsWaiting(many(BOARD_OPENS_AT - 1, { category: "eb2", country: "india", i140ApprovedOn: "2025-01-01" }));
+    expect(v.open).toBe(false);
+    expect(v.lines).toEqual([]);
+    expect(v.byStage.every((s) => s.count === 0)).toBe(true);
+  });
+
+  it("withholds a cell under the minimum and folds a small line into 'unlisted'", () => {
+    const v = whoIsWaiting([
+      ...many(20, { category: "eb2", country: "india", i140ApprovedOn: "2025-01-01" }),
+      ...many(3, { category: "eb2", country: "india", i485FiledOn: "2025-06-01" }),
+      ...many(2, { category: "eb3-other", country: "philippines" }),
+      ...many(4, {}),
+    ]);
+    expect(v.open).toBe(true);
+    expect(v.lines).toHaveLength(1);
+    const india = v.lines[0]!;
+    expect([india.category, india.country, india.total]).toEqual(["EB-2", "India", 23]);
+    const at = (id: WaitingStageId) => india.counts[WAITING_STAGES.findIndex((s) => s.id === id)];
+    expect(at("approved")).toBe(20);
+    expect(at("i485")).toBeNull();
+    expect(at("done")).toBe(0);
+    expect(v.unlisted).toBe(6);
+    expect(v.byStage.reduce((a, s) => a + s.count, 0)).toBe(29);
+  });
+
+  it("leaves out hidden timelines", () => {
+    const v = whoIsWaiting([...many(30, { category: "eb2", country: "row" }), ...many(10, { category: "eb2", country: "row", hiddenAt: 5 })]);
+    expect(v.lines[0]!.total).toBe(30);
+  });
 });

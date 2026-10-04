@@ -222,16 +222,21 @@ def read_pages(db: Turso) -> dict:
             raise
         live = {}
     # Slugs already published as pages with no PERM record: this table's own
-    # last build, and the Oct 3 seasonal-only family it replaced.
+    # last build, and the Oct 3 seasonal-only family it replaced. The ranks
+    # this table already gave are kept (see `plan`).
     published: dict[str, int] = {}
+    ranks: dict[str, int] = {}
     for table in (INDEX, "seasonal_employer_index"):
         try:
-            for s, c in rows_of(db.execute(f"SELECT slug, cases FROM {table}")):
+            cols = "slug, cases, rank" if table == INDEX else "slug, cases, NULL"
+            for s, c, rank in rows_of(db.execute(f"SELECT {cols} FROM {table}")):
                 published[str(s)] = max(published.get(str(s), 0), int(c or 0))
+                if rank is not None:
+                    ranks[str(s)] = int(rank)
         except Exception as e:  # noqa: BLE001
             if not missing_table(e):
                 raise
-    return {"perm": perm, "alias": alias, "live": live, "published": published}
+    return {"perm": perm, "alias": alias, "live": live, "published": published, "ranks": ranks}
 
 
 def modal_name(names: Counter) -> str | None:
@@ -309,10 +314,25 @@ def plan(slugs: dict[str, dict], pages: dict) -> tuple[list[list], list[list], d
         index.append({"slug": page, "name": modal_name(names) or page, "programs": programs,
                       "first": first, "last": last})
 
-    index.sort(key=lambda r: (r["first"] or "9999", r["slug"]))
+    # RANKS STAY PUT. The sitemap reads this table in rank windows, so a rank
+    # is an address. Ranked densely by first filing, one new employer with an
+    # old first filing shifted everyone after it: the second build on Oct 4
+    # 2026 rewrote 177,542 of 182,196 rows for 24 newcomers. An employer keeps
+    # the rank it was given; newcomers go after the last one, oldest first
+    # filing first. A removed employer leaves a gap, which a window tolerates.
+    prior = pages.get("ranks", {})
+    kept = [r for r in index if r["slug"] in prior]
+    fresh = sorted((r for r in index if r["slug"] not in prior), key=lambda r: (r["first"] or "9999", r["slug"]))
+    next_rank = max((prior[r["slug"]] for r in kept), default=0) + 1
+    for r in kept:
+        r["rank"] = prior[r["slug"]]
+    for offset, r in enumerate(fresh):
+        r["rank"] = next_rank + offset
+    index = sorted(kept + fresh, key=lambda r: r["rank"])
     index_rows = []
-    for rank, r in enumerate(index, start=1):
+    for r in index:
         p = r["programs"]
+        rank = r["rank"]
         cases = sum(p[k] for k in PAGE_PROGRAMS)
         index_rows.append([r["slug"], r["name"], cases, p["perm"], p["lca"], p["pwd"], p["h2a"], p["h2b"], p["cw1"],
                            r["first"], rank, r["last"]])
@@ -468,7 +488,8 @@ def main() -> int:
     got_index = int(rows_of(db.execute(f"SELECT count(*) FROM {INDEX}"))[0][0] or 0)
     top = int(rows_of(db.execute(f"SELECT max(rank) FROM {INDEX}"))[0][0] or 0)
     got_firms = int(rows_of(db.execute(f"SELECT count(*) FROM {FIRM_MAP}"))[0][0] or 0)
-    ok = (got_map == len(rows) and got_index == len(index_rows) and top == len(index_rows)
+    want_top = max((r[INDEX_COLS.index("rank")] for r in index_rows), default=0)
+    ok = (got_map == len(rows) and got_index == len(index_rows) and top == want_top
           and got_firms == len(firm_rows))
     expired = add_changed_slugs(page_slugs)
     log(f"  {'ok ' if ok else 'MISMATCH'} {MAP} {got_map:,} of {len(rows):,} ({m_changed:,} written, {m_gone:,} removed); "

@@ -391,3 +391,85 @@ export const CASE_STOPS = [
   { id: "permCertifiedOn", label: "PERM certified", verified: true },
   ...DATE_FIELDS.map((f) => ({ id: f.id, label: f.short, verified: false })),
 ] as const;
+
+/**
+ * Who is waiting where: each timeline placed at the step it has reached, by
+ * category and country. Counts only, from every visible timeline (the same
+ * rows the medians use). A cell under WAITING_MIN_CELL is withheld, and the
+ * whole view stays shut until BOARD_OPENS_AT timelines exist, because a count
+ * of one in "EB-3 other workers, Philippines" is a person.
+ */
+export const WAITING_STAGES = [
+  { id: "perm", label: "PERM pending" },
+  { id: "certified", label: "PERM certified, I-140 not filed" },
+  { id: "i140", label: "I-140 pending" },
+  { id: "approved", label: "I-140 approved, waiting on the bulletin" },
+  { id: "i485", label: "I-485 pending" },
+  { id: "done", label: "Green card received" },
+] as const;
+export type WaitingStageId = (typeof WAITING_STAGES)[number]["id"];
+export const WAITING_MIN_CELL = 5;
+
+/** The furthest step a timeline reports. */
+export function waitingStage(r: TimelineRecord): WaitingStageId {
+  if (r.greenCardOn) return "done";
+  if (r.i485FiledOn) return "i485";
+  if (r.i140ApprovedOn) return "approved";
+  if (r.i140FiledOn) return "i140";
+  if (r.permCertifiedOn) return "certified";
+  return "perm";
+}
+
+export interface WaitingLine {
+  category: string;
+  country: string;
+  /** Per stage, in WAITING_STAGES order; null where the count is under WAITING_MIN_CELL. */
+  counts: (number | null)[];
+  total: number;
+}
+
+export interface WaitingView {
+  open: boolean;
+  /** Every visible timeline, placed. */
+  byStage: { id: WaitingStageId; label: string; count: number }[];
+  /** Category and country lines holding at least WAITING_MIN_CELL timelines, busiest first. */
+  lines: WaitingLine[];
+  /** Timelines on lines too small to show, or with no category or country given. */
+  unlisted: number;
+}
+
+export function whoIsWaiting(records: readonly TimelineRecord[]): WaitingView {
+  const live = records.filter((r) => r.hiddenAt === undefined);
+  const open = live.length >= BOARD_OPENS_AT;
+  const stageIndex = new Map(WAITING_STAGES.map((s, i) => [s.id, i] as const));
+  const byStage = WAITING_STAGES.map((s) => ({ id: s.id, label: s.label, count: 0 }));
+  const lines = new Map<string, { category: string; country: string; counts: number[] }>();
+  let unlisted = 0;
+  for (const r of live) {
+    const i = stageIndex.get(waitingStage(r)) ?? 0;
+    byStage[i]!.count += 1;
+    const cat = CATEGORIES.find((c) => c.id === r.category)?.label;
+    const ctry = COUNTRIES.find((c) => c.id === r.country)?.label;
+    if (!cat || !ctry) {
+      unlisted += 1;
+      continue;
+    }
+    const key = `${cat}|${ctry}`;
+    const line = lines.get(key) ?? { category: cat, country: ctry, counts: WAITING_STAGES.map(() => 0) };
+    line.counts[i]! += 1;
+    lines.set(key, line);
+  }
+  const shown: WaitingLine[] = [];
+  for (const l of lines.values()) {
+    const total = l.counts.reduce((a, b) => a + b, 0);
+    if (total < WAITING_MIN_CELL) {
+      unlisted += total;
+      continue;
+    }
+    shown.push({ ...l, total, counts: l.counts.map((c) => (c >= WAITING_MIN_CELL ? c : c === 0 ? 0 : null)) });
+  }
+  shown.sort((a, b) => b.total - a.total || a.category.localeCompare(b.category) || a.country.localeCompare(b.country));
+  return open
+    ? { open, byStage, lines: shown, unlisted }
+    : { open, byStage: byStage.map((s) => ({ ...s, count: 0 })), lines: [], unlisted: 0 };
+}
