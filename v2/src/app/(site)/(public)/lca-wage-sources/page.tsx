@@ -8,6 +8,7 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { formatInt, formatShare } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getWageSources } from "@/lib/turso/wageSources";
+import { splitYears } from "@/lib/wageSourceYears";
 
 /**
  * Where an H-1B's prevailing wage comes from. Under 20 CFR 655.731(a)(2) a
@@ -53,7 +54,7 @@ const COLOR: Record<string, string> = {
 
 export default async function LcaWageSourcesPage() {
   const doc = await getWageSources();
-  const years = (doc?.years ?? []).filter((y) => y.total >= 100);
+  const { shown: years, pending } = splitYears(doc?.years ?? []);
   const latest = years[years.length - 1];
 
   return (
@@ -109,7 +110,13 @@ export default async function LcaWageSourcesPage() {
                   </li>
                 </Fragment>
               ))}
-            </ul>
+            </ul>{" "}
+            {pending.length > 0 ? (
+              <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+                {pending.length === 1 ? `FY${pending[0]} appears` : `FY${pending[0]} to FY${pending[pending.length - 1]} appear`}{" "}
+                once this site has read the wage source on most of {pending.length === 1 ? "its" : "their"} LCAs.
+              </p>
+            ) : null}
             {/* sr-only on a <table> can't shrink it below its content; a div can. */}
             <div className="sr-only">
               <table>
@@ -201,7 +208,8 @@ export default async function LcaWageSourcesPage() {
 
           <FinePrint summary="What this counts" className="mt-10">
             <p>
-              Under 20 CFR 655.731(a)(2) an employer &quot;is not required to use any specific methodology to determine
+              Where a union contract covers the occupation, its rate is the prevailing wage. Otherwise, under 20 CFR
+              655.731(a)(2), an employer &quot;is not required to use any specific methodology to determine
               the prevailing wage and may utilize a wage obtained from an OFLC NPC (OES), an independent authoritative
               source, or other legitimate sources of wage data.&quot; DOL&apos;s LCA file records the choice: the OES year,
               or the other source with the survey&apos;s publisher and name as the employer typed them. Spellings of one

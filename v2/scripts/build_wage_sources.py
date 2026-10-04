@@ -110,6 +110,11 @@ def read(db: Turso) -> dict:
             kind = {"SURVEY": "Survey", "CBA": "CBA", "SCA": "SCA", "DBA": "DBA"}.get(
                 str(other or "").strip().upper(), "Other")
         by_year[num(fy)][kind] += num(n)
+    # Every LCA held, read or not, so the page can leave out a year the
+    # detail backfill hasn't finished: a partial year reads as the whole one.
+    all_by_year: dict[int, int] = {}
+    for fy, n in rows_of(db.execute("SELECT fiscal_year, COUNT(*) FROM lca_cases GROUP BY 1")):
+        all_by_year[num(fy)] = num(n)
     publishers = Counter()
     for name, n in rows_of(db.execute(
             "SELECT pw_survey_publisher, COUNT(*) FROM lca_cases WHERE pw_other_source = 'Survey' "
@@ -136,7 +141,7 @@ def read(db: Turso) -> dict:
     except Exception as e:  # noqa: BLE001
         if "no such table" not in str(e):
             raise
-    return {"by_year": by_year, "publishers": publishers, "surveys": surveys, "emp_total": emp_total,
+    return {"by_year": by_year, "all_by_year": all_by_year, "publishers": publishers, "surveys": surveys, "emp_total": emp_total,
             "emp_survey": emp_survey, "names": names, "page_of": page_of}
 
 
@@ -146,7 +151,8 @@ def plan(d: dict, as_of: str) -> dict:
     for fy in sorted(d["by_year"]):
         c = d["by_year"][fy]
         total = sum(c.values())
-        years.append({"fy": fy, "total": total, **{k: c.get(k, 0) for k in KINDS}})
+        years.append({"fy": fy, "total": total, "all": d.get("all_by_year", {}).get(fy, total),
+                      **{k: c.get(k, 0) for k in KINDS}})
     groups: dict[str, Counter] = defaultdict(Counter)
     for name, n in d["publishers"].items():
         groups[publisher_key(name)][name] += n

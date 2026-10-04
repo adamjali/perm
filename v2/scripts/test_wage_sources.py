@@ -69,17 +69,21 @@ def main() -> int:
     add(2, 2026, "lab", None, "Survey", "National Institute of Health", "Pay scale")
     add(1, 2026, "lab", None, "Survey", "NATIONAL INSTITUTE OF HEALTH", "Pay scale")
     add(9, 2025, "acme", None, None, wage=None)  # not backfilled yet: not counted
+    add(1, 2024, "acme", "7/1/2023 - 6/30/2024")
+    add(10, 2024, "acme", None, None, wage=None)
     doc = bws.plan(bws.read(db), "2026-06-30")
-    check("only rows with a prevailing wage on file count", doc["rows"], 57)
-    y = doc["years"][0]
+    check("only rows with a prevailing wage on file count", doc["rows"], 58)
+    y = doc["years"][-1]
     check("the split for the year", (y["fy"], y["OES"], y["Survey"], y["CBA"]), (2026, 30, 23, 4))
+    check("each year carries every LCA held, read or not",
+          [(y["fy"], y["total"], y["all"]) for y in doc["years"]], [(2024, 1, 11), (2026, 57, 57)])
     check("publishers grouped, spellings kept", (doc["publishers"][0]["name"], doc["publishers"][0]["n"], sorted(doc["publishers"][0]["spellings"])),
           ("Aon", 20, ["AON", "Aon plc"]))
     check("an unlisted firm's spellings are one row, named by the commoner",
           [(p["name"], p["n"]) for p in doc["publishers"] if "nstitute" in p["name"].lower()],
           [("National Institute of Health", 3)])
     check("an employer's spellings count once on its page, with its share",
-          [(e["slug"], e["survey"], e["lcas"]) for e in doc["employers"]], [("acme", 20, 50)])
+          [(e["slug"], e["survey"], e["lcas"]) for e in doc["employers"]], [("acme", 20, 51)])
     print(f"{len(FAILED)} failure(s)")
     return 1 if FAILED else 0
 

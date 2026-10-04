@@ -2,7 +2,11 @@ import "server-only";
 
 import { cache } from "react";
 
+import type { WageSourceYear } from "@/lib/wageSourceYears";
+
 import { one } from "./client";
+
+export type { WageSourceYear };
 
 /**
  * Where H-1B prevailing wages come from, from perm_docs['lca_wage_sources']
@@ -10,17 +14,6 @@ import { one } from "./client";
  * union contracts by fiscal year, the survey publishers and surveys, and the
  * employers that use surveys most. Null when the doc isn't built yet.
  */
-
-export interface WageSourceYear {
-  fy: number;
-  total: number;
-  OES: number;
-  Survey: number;
-  CBA: number;
-  SCA: number;
-  DBA: number;
-  Other: number;
-}
 
 export interface WageSourcesDoc {
   asOf: string;
@@ -40,3 +33,4 @@ export const getWageSources = cache(async (): Promise<WageSourcesDoc | null> => 
     return null;
   }
 });
+
