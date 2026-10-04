@@ -7849,3 +7849,36 @@ none (their monthly wages are real ones near $3,000).
 - **LCA FY2020 Q1 loads with `accept_drift`**: the load guard held it back because its weekly,
   bi-weekly and monthly medians are yearly salaries, which is this same defect in DOL's file.
 
+## Oct 4 2026: robots rules, a watchdog that knew too little, and limits from measurement
+
+**A loader read a page USCIS asks bots not to.** www.uscis.gov's robots.txt disallows
+`/tools/reports-and-studies/h-1b-employer-data-hub` (and, by prefix, every path under it), the
+civil-surgeon export and `/sites/default/files/archive/`. `ingest_uscis_h1b_hub.py` read the hub
+page every month to find its Tableau view. It now pins the view (`VIEW`, from the Oct 2 run's log;
+the Tableau host has no robots.txt), takes the newest year from the default export, and the quarter
+from USCIS's data page (`REPORTS_PAGE`, allowed), whose "Fiscal Year 2026: Quarter 3" heading agreed
+with the hub's own sentence. **`lib_gov_data.fetch` asks each host's robots.txt first** (once per run)
+and raises `RobotsDisallowed` before any request to a forbidden path; an unreadable file counts as no
+rules (www.dol.gov answers 403 to robots.txt itself). An audit of every address our scripts name
+against its host's rules found only the hub page (and a signed posting API, which robots rules
+don't govern). `test_robots_guard.py` and the hub test's dry run (every network call stubbed) hold it.
+
+**The watchdog restarted nginx for a full app.** Its nginx check asked for `/api/health` through
+nginx, so the app's 503 "busy" reply during a deploy's warm-up failed three checks (Oct 3, 3:16 PM
+EDT; nginx's access log shows three instant 503s) and it restarted nginx mid-deploy, dropping the
+site for about 5 seconds. nginx now answers `location = /__pt/nginx-alive` itself (204, no limits),
+the watchdog checks that, and while `health/deploying` is fresh it leaves the web copies and nginx
+to the deploy. `scripts/oracle/test_watchdog.py` runs the real script under bash on Linux against
+stand-ins for curl and systemctl; the old script fails both cases.
+
+**The morning report grouped runs by title.** A workflow renamed on Oct 3 left its old title's last
+failure reading "still failing" with no newer run under that title. Runs group by workflow file now,
+named from GitHub's workflow list; it also made "FLAG disclosure ingest" match the data-workflow list,
+which per-file titles never did.
+
+**Staleness limits come from what the agency has done.** I-485 inventory: 160 days (USCIS posts each
+month's count 20 to 96 days late and in batches; on Jun 3 2026 the newest anywhere was 152 days old).
+DOL processing times: 30 days (the longest gap between DOL's dates we've kept is 22, Aug 31 to Sep 22).
+Both limits warned on most mornings for sources doing nothing unusual. The stored rows were updated
+on the server the same morning; our own ingests dying is the runs check's job, not these limits'.
+

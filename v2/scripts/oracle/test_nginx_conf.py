@@ -234,6 +234,12 @@ def run(conf_text: str) -> None:
     check("busy-seen: answered by nginx, after its limit", "empty_gif;" in seen and "return" not in seen
           and "proxy_pass" not in seen)
     check("busy-seen: one address can't fill the log", zones_in(seen, "limit_req") == ["pt_busy_seen"])
+
+    # The watchdog's check on nginx itself (bin/permtracker-watchdog). Answered
+    # by nginx with no limit, so a full app can never fail it.
+    alive = locs.get("= /__pt/nginx-alive", "")
+    check("nginx-alive: answered by nginx itself", "return 204;" in alive and "proxy_pass" not in alive)
+    check("nginx-alive: no limit can refuse it", "limit_req" not in alive and "limit_conn" not in alive)
     fmt = re.search(r"log_format pt_busy_seen '([^']*)'", head)
     check("busy-seen: log records time, status, address, kind and browser",
           fmt is not None and all(v in fmt.group(1) for v in ("$time_iso8601", "$status", "$remote_addr", "$arg_k", "$http_user_agent")))
@@ -278,6 +284,10 @@ def probe() -> None:
         "refusal views no longer logged": good.replace("        access_log /var/log/permtracker-busy/seen.log pt_busy_seen;\n", "", 1),
         "refusal-view log loses the status": good.replace("'$time_iso8601 $status $remote_addr", "'$time_iso8601 $remote_addr", 1),
         "counting image answered before its limit": good.replace("        empty_gif;\n    }", "        return 204;\n    }", 1),
+        "nginx's own check sent through the app": good.replace(
+            "        return 204;\n    }", "        proxy_pass http://permtracker_app;\n    }", 1),
+        "nginx's own check behind the app's cap": good.replace(
+            "        return 204;\n    }", "        limit_conn pt_app 64;\n        return 204;\n    }", 1),
         "main access log dropped for the defense log": good.replace("    access_log /var/log/nginx/access.log;\n", "", 1),
         "defense log loses the network": good.replace("$status $http_x_pt_asn $http_x_pt_verified_bot", "$status $http_x_pt_verified_bot", 1),
     }

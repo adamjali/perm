@@ -409,3 +409,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (night)".
 - **A wage that can't be pay for its unit** ($100,000 "per month") is shown as DOL printed it with a note, and left out of every average and median (`looksYearly`).
 - **The case search's wage bounds and wage sort compare yearly figures**; they had compared DOL's raw amount across units.
 
+## Oct 4 2026, in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 4 2026".
+
+- **The shared fetcher honors robots.txt**; the H-1B Data Hub loader no longer reads the page USCIS asks bots not to.
+- **The watchdog checks nginx's own `/__pt/nginx-alive`** and leaves web copies and nginx alone during a deploy.
+- **The morning report groups runs by workflow file**, so a rename can't leave a fake "still failing".
+- **I-485 and DOL processing-times limits come from measured agency delays** (160 and 30 days).
+

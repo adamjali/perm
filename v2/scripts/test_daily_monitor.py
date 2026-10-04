@@ -59,6 +59,24 @@ def main() -> int:
     check(by["Tests"]["cancelled"] == 1 and by["Tests"]["running"] == 1, "cancelled and still-running are told apart")
     check(dm.summarize_runs([{"name": "npm_and_yarn in /v2 for next - Update #1", "status": "completed"}]) == {},
           "Dependabot version-update runs are left out")
+    # One workflow file, three titles: the name before a rename, and per-file
+    # titles after it (Oct 3 2026). Grouped by the file, the old title's
+    # failure is followed by the newer passes, so nothing reads still failing.
+    renamed = [
+        {"name": "PW and LCA disclosure ingest", "path": ".github/workflows/flag-disclosure-ingest.yml",
+         "status": "completed", "conclusion": "failure", "updated_at": "2026-10-03T17:05:00Z"},
+        {"name": "FLAG disclosure ingest (lca) LCA_Disclosure_Data_FY2020_Q2.xlsx",
+         "path": ".github/workflows/flag-disclosure-ingest.yml",
+         "status": "completed", "conclusion": "success", "updated_at": "2026-10-03T20:00:00Z"},
+        {"name": "FLAG disclosure ingest (h2a) H-2A_Disclosure_Data_FY2025_Q4.xlsx",
+         "path": ".github/workflows/flag-disclosure-ingest.yml",
+         "status": "completed", "conclusion": "success", "updated_at": "2026-10-03T21:00:00Z"},
+    ]
+    names = {".github/workflows/flag-disclosure-ingest.yml": "FLAG disclosure ingest"}
+    grouped = dm.summarize_runs(renamed, names)
+    check(list(grouped) == ["FLAG disclosure ingest"], f"one line per workflow file, under its current name ({list(grouped)})")
+    check(dm.recovered(grouped["FLAG disclosure ingest"]), "the renamed workflow's old failure reads as passed since")
+    check("FLAG disclosure ingest" in dm.DATA_WORKFLOWS, "its name is the one the data-workflow list knows")
     import inspect
     # Traffic separates likely people from single-page crawler visits.
     yday = (dt.datetime.now(dm.ET).date() - dt.timedelta(days=1)).isoformat()

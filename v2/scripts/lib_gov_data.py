@@ -11,13 +11,19 @@ empty cells in a way that silently shifts columns.
 * Sustained traffic from one address draws a 403 even with the full header
   set, which is address reputation rather than the client, so `fetch` backs
   off rather than retrying at once.
+* `fetch` asks each host's robots.txt first and refuses a path the host asks
+  automated clients not to read. www.uscis.gov names the H-1B Employer Data
+  Hub page and the civil-surgeon export there, and the hub loader read that
+  page every month until Oct 4 2026 without anything saying so.
 """
 from __future__ import annotations
 
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+import urllib.robotparser
 import zipfile
 from xml.etree.ElementTree import iterparse
 
@@ -60,13 +66,60 @@ def log(message: str) -> None:
     print(message, flush=True)
 
 
+class RobotsDisallowed(RuntimeError):
+    """A path the host's robots.txt asks automated clients not to read."""
+
+
+# One parsed robots.txt per scheme and host for the life of the run; None when
+# the host's file couldn't be read.
+_ROBOTS: dict[str, urllib.robotparser.RobotFileParser | None] = {}
+
+
+def _robots_text(origin: str) -> str | None:
+    """The host's robots.txt, or None when it can't be read.
+
+    An unreadable file counts as no rules. That's Google's convention for a
+    4xx (www.dol.gov answers 403 to robots.txt itself, from this laptop and the
+    server alike, while serving its disclosure files), and a 5xx or a dropped
+    connection shouldn't fail a monthly load on its own.
+    """
+    try:
+        req = urllib.request.Request(f"{origin}/robots.txt", headers=dict(BROWSER_HEADERS))
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            if resp.status != 200:
+                return None
+            return resp.read().decode("utf-8", errors="replace")
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+        return None
+
+
+def robots_allowed(url: str) -> bool:
+    """Whether the host's robots.txt lets an automated client read `url`."""
+    parts = urllib.parse.urlsplit(url)
+    origin = f"{parts.scheme}://{parts.netloc}"
+    if origin not in _ROBOTS:
+        text = _robots_text(origin)
+        if text is None:
+            log(f"  {origin}/robots.txt couldn't be read; reading as no rules")
+            _ROBOTS[origin] = None
+        else:
+            parsed = urllib.robotparser.RobotFileParser()
+            parsed.parse(text.splitlines())
+            _ROBOTS[origin] = parsed
+    rules = _ROBOTS[origin]
+    return rules is None or rules.can_fetch("*", url)
+
+
 def fetch(url: str, referer: str | None = None, attempts: int = FETCH_ATTEMPTS) -> bytes:
     """GET with the browser header set, backing off on a throttle.
 
     Raises after the final attempt rather than returning empty. A run that could
     not read the agency is not a run that found no data, and the two must never
-    report the same way.
+    report the same way. Refuses, before any request, a path the host's
+    robots.txt disallows.
     """
+    if not robots_allowed(url):
+        raise RobotsDisallowed(f"{url} is a path the host's robots.txt asks automated clients not to read")
     headers = dict(BROWSER_HEADERS)
     if referer:
         headers["Referer"] = referer

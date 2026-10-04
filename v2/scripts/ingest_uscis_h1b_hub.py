@@ -14,8 +14,17 @@ USCIS then decided.
 WHERE IT LIVES, AND HOW IT IS READ (measured from a residential address on
 2026-10-01):
 
-* The hub page on www.uscis.gov embeds a Tableau Server view; the view's URL
-  is read off that page, never typed here.
+* The hub page on www.uscis.gov embeds a Tableau Server view. That page is
+  NOT read: USCIS's robots.txt asks automated clients to stay off
+  `/tools/reports-and-studies/h-1b-employer-data-hub` (read Oct 4 2026), and
+  this loader read it every month until then. The view's address is written
+  here instead (`VIEW`, taken from the last run that read the page, Oct 2
+  2026); the Tableau host has no robots.txt. If USCIS moves the view, the
+  session request below fails and the run records the failure.
+* The newest fiscal year is the one the view's default export carries. The
+  quarter comes from USCIS's data page, which robots.txt allows and which
+  lists each quarter's releases ("Fiscal Year 2026: Quarter 3 Data Reports"):
+  the hub said FY2026 Q3 on Oct 2 and the data page said the same on Oct 4.
 * The workbook's sheets are read from the view's own session config
   (`startSession/viewing`, the request USCIS's page makes to render it), which
   lists `repository_urls` and says `allow_export_data: true` for guests.
@@ -72,7 +81,15 @@ from lib_gov_data import BROWSER_HEADERS, fetch, log, quarter_end  # noqa: E402
 from lib_turso import Turso, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_uscis_h1b_hub.py"
+# For readers only (the freshness record's source line). Never fetched: see above.
 HUB_PAGE = "https://www.uscis.gov/tools/reports-and-studies/h-1b-employer-data-hub"
+VIEW = "https://bigdataanalyticspub-sb.uscis.dhs.gov/views/H1BEmployerDataHub-Final/H1B-EmployerDataHub"
+# USCIS's data page, also read by the I-485 inventory loader. `items_per_page`
+# is the page's own control, so the newest quarter's heading is on page one.
+REPORTS_PAGE = ("https://www.uscis.gov/tools/reports-and-studies/"
+                "immigration-and-citizenship-data?items_per_page=100")
+# The hub's first year since it opened.
+FIRST_FY = 2009
 DATASET = "uscis-h1b-hub"
 LOADS_DOC = "uscis_h1b_hub_loads"
 TABLE = "uscis_h1b_employers"
@@ -132,21 +149,29 @@ class Refusal(Exception):
 # Discovery
 # ---------------------------------------------------------------------------
 
-def view_url(hub_html: str) -> str:
-    """The Tableau view the hub page embeds, as the page names it."""
-    m = re.search(r"https://[a-z0-9.-]+\.uscis\.dhs\.gov/views/[A-Za-z0-9_%.-]+/[A-Za-z0-9_%.-]+", hub_html)
-    if not m:
-        raise Refusal("the hub page names no Tableau view; USCIS may have moved the data")
-    return m.group(0)
+def reports_quarter(page_html: str) -> tuple[int, int]:
+    """(FY, quarter) of the newest quarterly release USCIS's data page lists."""
+    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", page_html))
+    found = [(int(fy), int(q)) for fy, q in re.findall(r"Fiscal Year (\d{4}):\s*Quarter (\d)", text, re.I)]
+    if not found:
+        raise Refusal("USCIS's data page lists no quarterly release")
+    return max(found)
 
 
-def coverage(hub_html: str) -> tuple[int, int, int]:
-    """(first FY, last FY, last FY's quarter) from the page's own sentence."""
-    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", hub_html))
-    m = re.search(r"fiscal year (\d{4}) through fiscal year (\d{4})(?: \(quarter (\d)\))?", text, re.I)
-    if not m:
-        raise Refusal("the hub page no longer says which years it covers")
-    return int(m.group(1)), int(m.group(2)), int(m.group(3) or 4)
+def hub_quarter(hub_fy: int, page_fy: int, page_q: int) -> int:
+    """The quarter the hub has reached for its newest year.
+
+    The data page's quarter when both name the same year; Q4 when the page has
+    moved into a year the hub hasn't (the hub's newest year is then complete);
+    Q1 when the hub has opened a year the page doesn't list yet.
+    """
+    if hub_fy == page_fy:
+        return page_q
+    if hub_fy == page_fy - 1:
+        return 4
+    if hub_fy == page_fy + 1:
+        return 1
+    raise Refusal(f"the hub's newest year is FY{hub_fy} and USCIS's data page is at FY{page_fy}")
 
 
 def session_sheets(view: str) -> list[str]:
@@ -386,11 +411,8 @@ def main(argv: list[str] | None = None) -> int:
         load_year(None, fy, rows, {}, 4, accept_drift=True, dry_run=True)
         return 0
 
-    hub = fetch(HUB_PAGE).decode("utf-8", errors="replace")
-    first_fy, last_fy, last_q = coverage(hub)
-    view = view_url(hub)
-    sheets = session_sheets(view)
-    log(f"hub covers FY{first_fy} to FY{last_fy} Q{last_q}; view {view}; sheets {sheets}")
+    page_fy, page_q = reports_quarter(fetch(REPORTS_PAGE).decode("utf-8", errors="replace"))
+    sheets = session_sheets(VIEW)
 
     db = None if args.dry_run else Turso()
     loads = (read_doc(db, LOADS_DOC) or {}) if db else {}
@@ -411,6 +433,11 @@ def main(argv: list[str] | None = None) -> int:
         if not sheet or default_text is None:
             raise Refusal(f"no sheet in {sheets} exports the employer table")
         field = fy_field(next(csv.reader(io.StringIO(default_text))))
+        default_fy, default_rows = parse(default_text, None)
+        first_fy, last_fy = FIRST_FY, default_fy
+        last_q = hub_quarter(last_fy, page_fy, page_q)
+        log(f"hub covers FY{first_fy} to FY{last_fy} Q{last_q} (USCIS's data page is at FY{page_fy} Q{page_q}); "
+            f"view {VIEW}; sheets {sheets}")
 
         def quarter_of(fy: int) -> int:
             return last_q if fy == last_fy else 4
@@ -420,10 +447,7 @@ def main(argv: list[str] | None = None) -> int:
             if i:
                 time.sleep(args.pause)
             if fy == last_fy:
-                got_fy, rows = parse(default_text, None)
-                if got_fy != fy:
-                    log(f"  the default export is FY{got_fy}, not FY{fy}; asking for FY{fy} by filter")
-                    got_fy, rows = parse(export(sheet, field, fy), fy)
+                got_fy, rows = default_fy, default_rows
             else:
                 got_fy, rows = parse(export(sheet, field, fy), fy)
             written += load_year(db, got_fy, rows, loads, quarter_of(fy),

@@ -8,6 +8,13 @@
 # causes a restart and a piece that keeps failing cannot restart-loop. Every
 # repair is logged to health/repairs.log, which the health report counts and the
 # morning email shows.
+#
+# While a deploy runs, the web copies and nginx are not checked: the deploy
+# starts, warms and checks its own copies and rolls back on a failure, and its
+# warm-up can fill the app for a few minutes. On Oct 3 2026 at 3:16 PM EDT a
+# deploy's warm-up filled the app, nginx's busy reply failed three checks, and
+# the watchdog restarted nginx mid-deploy. The database and the tunnel are
+# still checked; a marker older than 20 minutes is a deploy that died.
 set -u
 H=/srv/permtracker/health
 STATE=$H/watchdog.state
@@ -39,8 +46,13 @@ db_write_ok() {
   case "$out" in *'"type":"error"'*) return 1 ;; *'"type":"ok"'*) return 0 ;; *) return 1 ;; esac
 }
 web_ok()    { curl -sf -m 15 "http://127.0.0.1:$(port_of "$1")/api/health" >/dev/null; }
-nginx_ok()  { curl -sf -m 15 -H "Host: permtracker.app" http://127.0.0.1:8081/api/health >/dev/null; }
+# nginx's own answer (location = /__pt/nginx-alive), never the app's through it.
+nginx_ok()  { curl -sf -m 15 -H "Host: permtracker.app" http://127.0.0.1:8081/__pt/nginx-alive >/dev/null; }
 tunnel_ok() { curl -sf -m 5 http://127.0.0.1:20241/ready >/dev/null; }
+
+# A deploy is running (permtracker-deploy writes this marker for its whole run).
+deploying=0
+if [ -f "$H/deploying" ] && [ $(( now - $(stat -c %Y "$H/deploying") )) -lt 1200 ]; then deploying=1; fi
 
 note() { # name, passed?
   if [ "$2" = 1 ]; then fails[$1]=0; else fails[$1]=$(( ${fails[$1]:-0} + 1 )); fi
@@ -51,14 +63,15 @@ db_ok && note db 1 || note db 0
 if [ "${fails[db]}" = 0 ]; then db_write_ok && note db_write 1 || note db_write 0; else fails[db_write]=0; fi
 # Both copies: the live one serves visitors, the idle one is the instant
 # rollback, and a rollback onto a hung copy would take the site down.
-live=$(cat /srv/permtracker/app/active 2>/dev/null || echo blue)
 # blue2/green2 are each slot's second copy (one per CPU); a stopped one is the
-# old slot's, stopped on purpose by the deploy, and is not checked.
-for s in blue green blue2 green2; do
-  if systemctl is-active --quiet "permtracker-web@$s"; then web_ok "$s" && note "web_$s" 1 || note "web_$s" 0; else fails[web_$s]=0; fi
-done
-# Through nginx only means something when the live copy answers directly.
-if [ "${fails[web_$live]}" = 0 ]; then nginx_ok && note nginx 1 || note nginx 0; else fails[nginx]=0; fi
+# old slot's, stopped on purpose by the deploy, and is not checked. During a
+# deploy the counts are left as they were, neither raised nor cleared.
+if [ "$deploying" = 0 ]; then
+  for s in blue green blue2 green2; do
+    if systemctl is-active --quiet "permtracker-web@$s"; then web_ok "$s" && note "web_$s" 1 || note "web_$s" 0; else fails[web_$s]=0; fi
+  done
+  nginx_ok && note nginx 1 || note nginx 0
+fi
 if systemctl is-enabled --quiet cloudflared; then tunnel_ok && note tunnel 1 || note tunnel 0; else fails[tunnel]=0; fi
 
 repair() { # name, unit

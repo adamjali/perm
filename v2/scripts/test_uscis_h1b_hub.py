@@ -59,18 +59,60 @@ ACME = rows_for("ACME CORP", "54 - Professional, Scientific, and Technical Servi
 STEEL = rows_for("STEEL WORKS INC", "31-33 - Manufacturing", "AUSTIN", {"Continuation Approval": "2"}, line="2")
 
 
+# USCIS's data page as it read on Oct 4 2026: quarterly headings, newest first.
+REPORTS = ('<h3>Fiscal Year 2026: Quarter 3 Data Reports, April\u2013June</h3><p>...</p>'
+           '<h3>Fiscal Year 2026: Quarter 2 Data Reports, January\u2013March</h3>'
+           '<h3>Fiscal Year 2025: Quarter 4 Data Reports, July\u2013September</h3>')
+# The rules USCIS's robots.txt carried on Oct 4 2026, cut to the lines that matter here.
+USCIS_ROBOTS = """User-agent: *
+Crawl-delay: 10
+Disallow: /sites/default/files/archive/
+Disallow: /tools/reports-and-studies/h-1b-employer-data-hub
+Disallow: /tools/reports-and-studies/h-1b-employer-data-hub/export
+Disallow: /tools/civil-surgeons-by-region
+Disallow: /tools/find-a-doctor/list/export
+"""
+
+
 def test_discovery() -> None:
-    page = ('<p>The H-1B Employer Data Hub includes data from fiscal year 2009 through fiscal year 2026 '
-            '(quarter 3) on employers</p><script src="https://bigdataanalyticspub-sb.uscis.dhs.gov/javascripts/'
-            'api/tableau.embedding.3.latest.min.js"></script><tableau-viz src="https://bigdataanalyticspub-sb.'
-            'uscis.dhs.gov/views/H1BEmployerDataHub-Final/H1B-EmployerDataHub"></tableau-viz>')
-    check("the view the page embeds", hub.view_url(page),
-          "https://bigdataanalyticspub-sb.uscis.dhs.gov/views/H1BEmployerDataHub-Final/H1B-EmployerDataHub")
-    check("coverage from the page's sentence", hub.coverage(page), (2009, 2026, 3))
+    check("the newest quarter on USCIS's data page", hub.reports_quarter(REPORTS), (2026, 3))
+    refuses("a data page with no quarterly release", lambda: hub.reports_quarter("<p>H-1B data</p>"))
+    check("hub and page on one year: the page's quarter", hub.hub_quarter(2026, 2026, 3), 3)
+    check("page moved on, hub hasn't: the hub's year is complete", hub.hub_quarter(2026, 2027, 1), 4)
+    check("hub opened a year the page doesn't list yet: Q1", hub.hub_quarter(2027, 2026, 4), 1)
+    refuses("two years apart is a refusal", lambda: hub.hub_quarter(2024, 2026, 3))
     check("Q3 ends June 30", hub.quarter_end(2026, 3), "2026-06-30")
     check("Q1 ends the December before", hub.quarter_end(2026, 1), "2025-12-31")
-    refuses("a page without the sentence", lambda: hub.coverage("<p>H-1B data</p>"))
-    refuses("a page without a view", lambda: hub.view_url("<p>no viz here</p>"))
+
+
+def test_reads_only_allowed_pages() -> None:
+    """A dry run reads USCIS's data page and the Tableau host, nothing robots.txt forbids."""
+    import urllib.robotparser
+    rules = urllib.robotparser.RobotFileParser()
+    rules.parse(USCIS_ROBOTS.splitlines())
+    check("the hub page itself is forbidden (the fixture is live)", rules.can_fetch("*", hub.HUB_PAGE), False)
+    fetched: list[str] = []
+    saved = (hub.fetch, hub.session_sheets, hub.export)
+
+    def fake_fetch(url: str, *a, **k) -> bytes:
+        fetched.append(url)
+        if url != hub.REPORTS_PAGE:
+            raise AssertionError(f"unexpected fetch {url}")
+        return REPORTS.encode()
+
+    hub.fetch = fake_fetch
+    hub.session_sheets = lambda view: [view.rsplit("/", 1)[0] + "/H1BPublic"]
+    hub.export = lambda sheet, field=None, fy=None: export(
+        rows_for("ACME CORP", "54 - Professional, Scientific, and Technical Services", "RICHARDSON",
+                 {"New Employment Approval": "1,234"}, fy=str(fy or 2026)))
+    try:
+        rc = hub.main(["--dry-run"])
+    finally:
+        hub.fetch, hub.session_sheets, hub.export = saved
+    check("the dry run completes", rc, 0)
+    check("it reads only USCIS's data page on www.uscis.gov", fetched, [hub.REPORTS_PAGE])
+    check("which robots.txt allows", all(rules.can_fetch("*", u) for u in fetched), True)
+    check("the Tableau view sits on another host", hub.VIEW.startswith("https://www.uscis.gov"), False)
 
 
 def test_parse() -> None:
@@ -150,7 +192,7 @@ def test_store() -> None:
 
 
 def main() -> int:
-    for t in (test_discovery, test_parse, test_merge, test_refusals, test_drift, test_years, test_store):
+    for t in (test_discovery, test_reads_only_allowed_pages, test_parse, test_merge, test_refusals, test_drift, test_years, test_store):
         t()
     print(f"{N} checks")
     for f in FAILS:

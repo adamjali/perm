@@ -251,15 +251,20 @@ def main() -> int:
     # Via the shared helper: this script CREATE'd data_freshness with 6 columns
     # and INSERTed 6 VALUES into the live 7-column table (missing max_age_days),
     # which errors at runtime - and the workflow has never once run to expose
-    # it. USCIS publishes monthly, so a 45-day budget is a real stall, not
-    # ordinary lag between releases.
+    # it. The budget is the slowest USCIS has actually been, plus a little:
+    # it posts each month's count 20 to 96 days after the date it covers, in
+    # batches (Feb, Mar and Apr 2026 all went up Jun 4 to 10), so on Jun 3
+    # 2026 the newest count anywhere was Jan 2's, 152 days old. A 45-day
+    # budget warned on most mornings for a source doing nothing unusual
+    # (measured from USCIS's data page, Oct 4 2026). Our own ingest dying is
+    # caught by the runs check, not by this.
     stamp_freshness(
         db, "i485-inventory", as_of=newest_as_of,
         source="USCIS employment-based I-485 inventory (uscis.gov)",
         cadence="Monthly",
         note=f"{newest_total:,} pending applications; "
              f"{newest_sup:,} cells suppressed by USCIS",
-        max_age_days=45,
+        max_age_days=160,
     )
     record_run(db, "ingest_i485_inventory.py", status="ok",
                rows_written=newest_total, note=f"as of {newest_as_of}")

@@ -124,17 +124,25 @@ def fmt(n: float) -> str:
 # ── GitHub Actions ────────────────────────────────────────────────────────
 
 
-def summarize_runs(runs: list[dict]) -> dict:
+def summarize_runs(runs: list[dict], names: dict[str, str] | None = None) -> dict:
     """Per workflow: runs, failures, cancellations, re-runs, and when it last
     failed and last passed (ISO times, which sort as text). Pure, for the test.
+
+    Grouped by the workflow FILE, named by its current name (`names`: path to
+    name, from GitHub's workflow list). A run's own name is its title: a
+    renamed workflow, or one whose runs carry the file they load, used to split
+    into one line per title, and the old title's last failure then read "still
+    failing" with no newer run to clear it (Oct 4 2026: "PW and LCA disclosure
+    ingest", renamed the afternoon before). Without `names`, the run's name.
     """
+    names = names or {}
     by: dict[str, dict] = {}
     for r in runs:
         # Dependabot's version-update runs ("npm_and_yarn in /v2 for x - Update
         # #123") are one-off noise, one name per update.
         if " in /" in (r.get("name") or "") and " - Update #" in (r.get("name") or ""):
             continue
-        w = by.setdefault(r.get("name") or "?", {"runs": 0, "failed": 0, "cancelled": 0,
+        w = by.setdefault(names.get(r.get("path") or "") or r.get("name") or "?", {"runs": 0, "failed": 0, "cancelled": 0,
                                                  "reruns": 0, "running": 0,
                                                  "last_fail": "", "last_ok": ""})
         w["runs"] += 1
@@ -173,7 +181,12 @@ def github_section(since: dt.datetime) -> dict:
         if len(d.get("workflow_runs", [])) < 100:
             break
         page += 1
-    by = summarize_runs(runs)
+    try:
+        listed = http_json(f"https://api.github.com/repos/{REPO}/actions/workflows?per_page=100", headers)
+        names = {w["path"]: w["name"] for w in listed.get("workflows", []) if w.get("path") and w.get("name")}
+    except Exception:  # noqa: BLE001 - the run titles still group, as they did before
+        names = {}
+    by = summarize_runs(runs, names)
     lines, statuses = [], []
     still = 0
     for name in sorted(by):

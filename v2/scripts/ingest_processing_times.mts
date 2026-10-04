@@ -19,9 +19,12 @@ const RETRY_BASE_MS = 5000;
 // Statuses worth another attempt. A 404 means the page moved, and retrying
 // only delays the real error.
 const RETRYABLE_STATUS = [403, 429, 503];
-// DOL republishes roughly weekly with gaps of up to a week, so ten days is
-// longer than any observed gap and still short enough to catch this job dying.
-const FRESHNESS_MAX_AGE_DAYS = 10;
+// The longest DOL has gone between the dates it prints, in every reading kept
+// since Aug 20 2026, is 22 days (Aug 31 to Sep 22), plus the days it takes to
+// post a date; 30 covers that and warns past it. Ten warned whenever DOL was
+// simply between updates (Sep 15 and Oct 3 2026). This job dying is caught by
+// the runs check, not by this budget.
+const FRESHNESS_MAX_AGE_DAYS = 30;
 
 /** The environment first, then `.env.local`: the same rule as lib_turso.env(). */
 function env(name: string): string {
