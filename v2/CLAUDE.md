@@ -8122,6 +8122,16 @@ changed (`scripts/lib_reference.py`: `sync_rows`, `seen_before`, `sheet_rows`). 
   (new pages, pages whose own content changed, one sample per changed family; files feeding more than 15 pages are
   left to the sitemap's lastmod). It shares `scripts/lib_page_inputs.mjs` with `page_dates.mjs`, so the queue and
   the sitemap dates agree on what a change touches. Run it after every deploy; the automatic round runs it too.
+- **Cloudflare kept the pre-deploy HTML for up to a day** (`s-maxage=86400`; a deploy clears nothing there), so the
+  table fix above stayed invisible until the copies were purged by hand. The deploy workflow now runs
+  `node scripts/gsc_queue.mjs --since <push's before> --purge` after the switch: the same page list, sent to
+  Cloudflare's purge API, the homepage by its exact URL and everything else by prefix (a family's prefix covers every
+  page in it, query strings included). It compares commits only, because the build has already rewritten tracked
+  files by then. Cloudflare never stores click data (`?_rsc=` answers `cf-cache-status: BYPASS`), so HTML is all
+  there is to drop. Free plan: 5 prefix requests a minute, 100 prefixes each; chunks wait 13 s. It needs
+  `CF_PURGE_TOKEN` (Zone > Cache Purge on permtracker.app only) and `CF_ZONE_ID` (set Oct 5) as repo secrets;
+  without the token, on a manual run, or when Cloudflare refuses, it says so and the deploy carries on.
+  `--dry-run` prints the list and sends nothing.
 - **Testing Library's cleanup is registered in `vitest.setup.ts`.** It registers itself when first imported
   (`globals: true`), and the `unit` project shares a worker between files (`isolate: false`), so only the first file
   got the hook: `useFormDomSync.test.tsx` found the test before's `<input>` still in the page. Reproduce a shared-pool

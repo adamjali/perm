@@ -605,6 +605,10 @@ pages on its own.
    15 pages are left to the sitemap's lastmod). Add whatever it lists that the
    newest section doesn't already hold as a "Queue after the <date> deploy"
    section at the end, then work that section top down.
+8. **Google should crawl what was deployed, not Cloudflare's day-old copy.** The
+   deploy runs the same script with `--purge`, which drops Cloudflare's stored
+   HTML of exactly those pages (needs the `CF_PURGE_TOKEN` repo secret). Until
+   that token exists, purge by hand before requesting a page changed that day.
 
 ## Closed, do not re-litigate
 

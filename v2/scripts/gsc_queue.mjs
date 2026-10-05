@@ -19,6 +19,7 @@
  *
  *   node scripts/gsc_queue.mjs                 # since the queue's last update
  *   node scripts/gsc_queue.mjs --since 043d1653
+ *   node scripts/gsc_queue.mjs --since <before> --purge [--dry-run]   # drop Cloudflare's copies
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -53,12 +54,19 @@ if (!since) {
   process.exit(2);
 }
 const sinceDay = git(["log", "-1", "--format=%cs", since]).trim();
+// A purge compares commits only: in CI the build step has already rewritten
+// tracked files (page_dates.mjs writes src/lib/sitemap/page-dates.json), and
+// those are not changes the push made.
+const PURGE = process.argv.includes("--purge");
+const range = PURGE ? [since, "HEAD"] : [since];
 const diff = (filter) =>
-  git(["diff", "--name-only", "--relative", `--diff-filter=${filter}`, since, "--", "src", "content"])
+  git(["diff", "--name-only", "--relative", `--diff-filter=${filter}`, ...range, "--", "src", "content"])
     .split("\n")
     .filter(Boolean);
 // Untracked files are new too: a run before the commit should list them.
-const untracked = git(["ls-files", "--others", "--exclude-standard", "--", "src", "content"]).split("\n").filter(Boolean);
+const untracked = PURGE
+  ? []
+  : git(["ls-files", "--others", "--exclude-standard", "--", "src", "content"]).split("\n").filter(Boolean);
 const changed = new Set([...diff("ACMR"), ...untracked]);
 const added = new Set([...diff("A"), ...untracked]);
 
@@ -89,6 +97,55 @@ for (const file of changed) {
   const route = `/${m[1]}/${m[2]}`;
   if (!KNOWN.has(route)) continue;
   (added.has(file) ? fresh : edited).push(route);
+}
+
+// --purge: ask Cloudflare to drop its stored copies of the same pages, so the
+// fix a deploy shipped is what visitors and Google's crawler read now, not in
+// up to a day (pages carry s-maxage=86400 and Cloudflare serves the stored copy
+// until then; measured Oct 5 2026, when a deployed fix stayed invisible). A
+// family goes by prefix (one request covers every employer page), the homepage
+// by its exact URL, since its prefix would be the whole site. Needs
+// CF_PURGE_TOKEN (Zone > Cache Purge only) and CF_ZONE_ID; without them it says
+// so and exits 0, so a deploy never fails on it.
+if (PURGE) {
+  const host = "permtracker.app";
+  const statics = [...new Set([...fresh, ...edited])];
+  const files = statics.includes("/") ? [`https://${host}/`] : [];
+  const prefixes = [
+    ...statics.filter((r) => r !== "/").map((r) => `${host}${r}`),
+    ...[...new Set(families)].map((f) => `${host}${f.slice(0, f.indexOf("["))}`),
+  ];
+  const dry = process.argv.includes("--dry-run");
+  const token = process.env.CF_PURGE_TOKEN;
+  const zone = process.env.CF_ZONE_ID;
+  console.log(`purge: ${files.length} URL(s), ${prefixes.length} prefix(es) since ${since}`);
+  for (const x of [...files, ...prefixes]) console.log(`  ${x}`);
+  if (dry || (!files.length && !prefixes.length)) process.exit(0);
+  if (!token || !zone) {
+    console.log("::notice::CF_PURGE_TOKEN or CF_ZONE_ID not set: Cloudflare keeps its copies until they expire (up to a day)");
+    process.exit(0);
+  }
+  const send = async (body) => {
+    const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zone}/purge_cache`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!j.success) console.log(`::warning::purge refused (${res.status}): ${JSON.stringify(j.errors ?? []).slice(0, 200)}`);
+    return j.success === true;
+  };
+  let ok = true;
+  if (files.length) ok = (await send({ files })) && ok;
+  // Free plan: 100 prefixes a request, 5 prefix requests a minute (Cloudflare's
+  // purge limits page). Page click data (?_rsc=) is never stored at the edge
+  // (cf-cache-status: BYPASS), so the HTML copies are all there is to drop.
+  for (let i = 0; i < prefixes.length; i += 100) {
+    if (i) await new Promise((r) => setTimeout(r, 13_000));
+    ok = (await send({ prefixes: prefixes.slice(i, i + 100) })) && ok;
+  }
+  console.log(ok ? "purge: done" : "purge: not done in full (warned above)");
+  process.exit(0);
 }
 
 // Shallow pages first: hubs and tools carry more searches than the pages under them.

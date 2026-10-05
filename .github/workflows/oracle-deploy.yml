@@ -114,6 +114,23 @@ jobs:
           ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=20 \
             "deploy@$ORACLE_HOST" "deploy ${GITHUB_SHA::12}-${GITHUB_RUN_ATTEMPT}" < "$RUNNER_TEMP/release.tar.zst"
 
+      # Cloudflare keeps each page's HTML up to a day (s-maxage=86400) and a
+      # deploy does not clear it, so a fix shipped here stayed invisible until
+      # the copy expired (Oct 5 2026). This drops the copies of exactly the
+      # pages the push changed. Skips cleanly without the secrets, on a manual
+      # run (no "before"), and never fails the deploy.
+      - name: Drop Cloudflare's copies of the pages this push changed
+        continue-on-error: true
+        env:
+          CF_PURGE_TOKEN: ${{ secrets.CF_PURGE_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "no previous commit to compare with; skipping the purge"; exit 0
+          fi
+          node scripts/gsc_queue.mjs --since "$BEFORE" --purge
+
       - name: Close the tunnel
         if: always()
         run: pkill -f "18080:127.0.0.1:8080" || true

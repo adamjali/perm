@@ -442,7 +442,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 4 2026 (evening)".
 - **The defense's alert says what filled the app**, so "0 people" no longer reads as a false alarm.
 - **robots.txt's `/api` blocked `/api-terms`** (a prefix); an allow rule re-opens it, and a test checks every public page.
 
-## Oct 5 2026, in eleven lines
+## Oct 5 2026, in twelve lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the five "Oct 5 2026" sections.
 
@@ -455,6 +455,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the five "Oct 5 2026" sections.
 - **DOL's live wage search names a series by the June that closes it**; the tool had shown last year's levels since Sep 9 (`dolSearchYear`).
 - **DOL levels labelled "Annual Wage", and unlabelled ones of $5,000 or more, are already yearly** (`toYearly`); never multiply them by 2,080.
 - **A source line is a readable name, never a bare URL**: one pushed two pages sideways on a phone.
+- **The deploy drops Cloudflare's copies of the pages a push changed** (`gsc_queue.mjs --purge`), once `CF_PURGE_TOKEN` exists.
 - **Testing Library's cleanup runs from `vitest.setup.ts`**: the shared `unit` worker had left one test's render in the next.
 - **Who visits** (Oct 5): about 350 to 900 likely people a day, 4,553 a week, 11,784 a month; Cloudflare's 865k requests are mostly blocked scrapers and crawlers.
 
