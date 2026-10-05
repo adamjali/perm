@@ -279,7 +279,7 @@ def no(raw: str | None) -> bool:
 #
 # Identity lives in `scripts/entity_identity.py`, with `src/lib/entitySlug.ts`
 # mirroring it and one fixture file asserting both.
-from entity_identity import entity_key, typo_aliases  # noqa: E402
+from entity_identity import entity_key, identity_aliases  # noqa: E402
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_load_guard import Fingerprint  # noqa: E402
@@ -290,17 +290,18 @@ from lib_naics import normalize_naics  # noqa: E402
 from lib_turso import Turso, stamp_freshness  # noqa: E402
 
 
-def merge_entities(bucket: dict, name_of, kind: str | None = None) -> list[dict]:
+def merge_entities(bucket: dict, name_of, kind: str | None = None,
+                   aliases_out: dict | None = None) -> list[dict]:
     """Pool rows that are one entity, keeping the busiest spelling's name.
 
     Medians are recomputed from the POOLED day and wage lists. Averaging the
     per-spelling medians would be a median of medians, which is not the
     median of the combined population and can sit outside it entirely.
 
-    `kind` enables the second identity pass, which folds a single mistyped
-    token into the spelling it was mistyped from. It is off without one, and
-    `typo_aliases` itself refuses every kind but "attorney" - see
-    `scripts/entity_identity.py` for the measurement behind that.
+    `kind` enables the alias pass (`identity_aliases`): names that differ only
+    in where the gaps fall (Rule D, every kind), then a single mistyped token
+    (Rules B and C, attorneys only; `scripts/entity_identity.py` has the
+    measurement behind that).
     """
     alias: dict[str, str] = {}
     if kind:
@@ -308,7 +309,11 @@ def merge_entities(bucket: dict, name_of, kind: str | None = None) -> list[dict]
         for d in bucket.values():
             k = entity_key(name_of(d))
             totals[k] = totals.get(k, 0) + d["certified"] + d["denied"] + d.get("withdrawn", 0)
-        alias = typo_aliases(totals, kind)
+        alias = identity_aliases(totals, kind)
+    # Published with the payload so every later join (case rows, old pages, the
+    # employer map) finds a folded spelling's page from the spelling's own key.
+    if aliases_out is not None:
+        aliases_out.update(alias)
 
     merged: dict[str, dict] = {}
     for d in bucket.values():
@@ -1044,6 +1049,8 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
     # is not a rate -- so ENTITY_FLOOR is the smallest N where the numbers
     # mean anything, and everything below it still counts toward the
     # national totals, it just does not get its own row.
+    employer_aliases: dict[str, str] = {}
+    attorney_aliases: dict[str, str] = {}
     top_employers = [
         {
             "name": d["name"],
@@ -1053,7 +1060,7 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
             "medianDays": percentile(d["days"], 50),
         }
         for d in sorted(
-            merge_entities(acc["byEmployer"], lambda x: x["name"], "employer"),
+            merge_entities(acc["byEmployer"], lambda x: x["name"], "employer", employer_aliases),
             key=lambda d: -tot(d),
         )
         if tot(d) >= ENTITY_FLOOR
@@ -1069,7 +1076,7 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
             "medianDays": percentile(d["days"], 50),
         }
         for d in sorted(
-            merge_entities(acc["byAttorney"], lambda x: x["name"], "attorney"),
+            merge_entities(acc["byAttorney"], lambda x: x["name"], "attorney", attorney_aliases),
             key=lambda d: -tot(d),
         )
         if tot(d) >= ENTITY_FLOOR
@@ -1138,6 +1145,8 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
         "risk": risk,
         "topOccupations": top_socs,
         "topEmployers": top_employers,
+        # A spelling's key -> the key it merged under, per kind (turso_migrate*.py).
+        "keyAliases": {"employer": employer_aliases, "attorney": attorney_aliases},
     }
     body = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     payload["contentHash"] = hashlib.sha256(body.encode()).hexdigest()

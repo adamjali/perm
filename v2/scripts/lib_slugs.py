@@ -75,6 +75,22 @@ def plan_sticky_slugs(items: list, name_of, prior: dict[str, str],
     return out, vanished
 
 
+def with_aliases(key_slug: dict[str, str], aliases: dict[str, str]) -> dict[str, str]:
+    """`key_slug` plus every alias key, pointed at its canonical key's slug.
+
+    `aliases` maps a spelling's key to the key it merged under (the entity build's
+    typo and spacing aliases). A case row or an old page carries its OWN spelling's
+    key, so without this a merged spelling matched no page: 20 Fragomen cases filed
+    under "Bersen Loewy" had no firm link. A key that already holds a page keeps it.
+    """
+    out = dict(key_slug)
+    for variant, canonical in aliases.items():
+        slug = key_slug.get(canonical)
+        if slug:
+            out.setdefault(variant, slug)
+    return out
+
+
 def plan_aliases(vanished: list[str], prior_key: dict[str, str],
                  key_slug: dict[str, str]) -> tuple[list[tuple[str, str]], list[str]]:
     """Where a vanished slug should redirect: to the busiest entity that now

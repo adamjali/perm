@@ -8212,6 +8212,35 @@ one-click unsubscribe), AI crawlers (allowed on purpose). Cloudflare's GraphQL o
 without waiting for a person to be refused. A scraper never draws the busy page, so waiting for one would let it
 hold the app until a real visitor had already been turned away.
 
+## Oct 5 2026: one employer, whatever the spelling (Limited, spacing, aliases)
+
+Found by testing the extension's lookup: Infosys's PERM page showed 0 H-1B while 46,988 sat on a page of
+their own, and Wal-Mart's 1,595 PERM cases and Walmart's 417 were two companies.
+
+- **"limited" and "incorporated" are form words** like "ltd" and "inc" (`ENTITY_NOISE`, both languages):
+  440 key pairs join, every sampled one the same company.
+- **Rule D, spacing** (`spacing_aliases` in `scripts/entity_identity.py`): keys with the same letters and
+  the gaps elsewhere are one company, the busiest spelling the root; keys under 4 letters stay apart.
+  2,526 groups (Wal-Mart, JPMorgan, T-Mobile, AT&T, Lowe's, Moody's). No punctuation rule could do it:
+  treating `'`, `-` or `&` as part of a word joins about as many keys as it splits (378/237, 338/484,
+  24/44). Keys keep their spaces, because `nameVariants`, the law-firm typo rules and the lookup's
+  whole-word match read the words.
+- **The build publishes its aliases.** `merge_entities` fills `keyAliases` (Rule D then the typo rules,
+  `identity_aliases`); `turso_migrate.slug_maps` links a case filed under a folded spelling to the page
+  (`with_aliases`; 20 Fragomen cases under "Bersen Loewy" had no firm link), and
+  `turso_migrate_public` stores them as `perm_docs['key_aliases']`.
+- **Old pages are keyed by today's rule.** `prior_maps` recomputes an employer's or firm's key from its
+  stored name; keyed by the stored key, any rule change would have left an absorbed page with nowhere to
+  redirect and the next load refusing.
+- **Steps that join a name to today's pages use `SpacedKeyMap`** (exact key, then the same letters):
+  `build_entity_detail.py`, `ingest_perm_history.py`, `ingest_warn.py`. `build_employer_map.py` matches
+  through Rule D but stores each spelling's own key, which the lookup's exact step reads.
+- **The lookup** (`employerLookup.ts`): whole-word matching also accepts the same letters ending on a word
+  boundary ("walmart" may be "wal mart associates", "meta" still isn't "metamorphosis"), and when no name
+  contains the query, `searchByLetters` asks again with spaces and punctuation stripped in SQL.
+- **A tiny exact match gives way to a much busier namesake**, labelled possible (`SMALL_EXACT` 30,
+  `BUSIER_BY` 10, `BUSY_FLOOR` 100): "Amazon" had answered with a 1-case "AMAZON".
+
 ## Oct 5 2026: a Chrome extension and a keyless employer lookup
 
 - `GET /v1/lookup/employer?name=` (no key; `src/lib/api/employerLookup.ts`, `keyless.ts`): an exact published PERM

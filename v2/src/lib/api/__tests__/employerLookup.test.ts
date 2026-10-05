@@ -11,6 +11,7 @@ const getEntityBySlug = vi.fn();
 const getFreshness = vi.fn();
 const entityPending = vi.fn();
 const searchByName = vi.fn();
+const searchByLetters = vi.fn();
 const employerMatch = vi.fn();
 const otherEmployerRecord = vi.fn();
 
@@ -21,7 +22,10 @@ vi.mock("@/lib/turso/publicData", () => ({
   getFreshness: (...a: unknown[]) => getFreshness(...a),
 }));
 vi.mock("@/lib/turso/entityDetail", () => ({ entityPending: (...a: unknown[]) => entityPending(...a) }));
-vi.mock("@/lib/turso/entities", () => ({ searchByName: (...a: unknown[]) => searchByName(...a) }));
+vi.mock("@/lib/turso/entities", () => ({
+  searchByName: (...a: unknown[]) => searchByName(...a),
+  searchByLetters: (...a: unknown[]) => searchByLetters(...a),
+}));
 vi.mock("@/lib/turso/employerSlugs", () => ({ employerMatch: (...a: unknown[]) => employerMatch(...a) }));
 vi.mock("@/lib/turso/otherEmployers", () => ({ otherEmployerRecord: (...a: unknown[]) => otherEmployerRecord(...a) }));
 
@@ -55,6 +59,8 @@ beforeEach(() => {
   employerMatch.mockResolvedValue({ where: "employer_slug IN (?)", args: ["x"], basis: "map", spellings: 1 });
   entityPending.mockResolvedValue({ tracked: 400, pending: 160, stages: [], oldest: null });
   searchByName.mockResolvedValue([]);
+  searchByLetters.mockReset();
+  searchByLetters.mockResolvedValue([]);
 });
 
 describe("lookupEmployer", () => {
@@ -165,6 +171,27 @@ describe("lookupEmployer", () => {
     getEntityBySlug.mockResolvedValue(google);
     await lookupEmployer("Google");
     expect(searchByName).not.toHaveBeenCalled();
+  });
+
+  it("finds a brand spelled with the gaps elsewhere by its letters (Rule D)", async () => {
+    // "Walmart" is in no PERM name once WALMART ASSOCIATES folds into WAL-MART ASSOCIATES.
+    db({ perm: null });
+    const wm = { slug: "wal-mart-associates-inc", name: "WAL-MART ASSOCIATES, INC.", total: 2012, certified: 1990, denied: 9, recent12m: 120 };
+    searchByName.mockResolvedValue([]);
+    searchByLetters.mockResolvedValue([wm]);
+    getEntityBySlug.mockResolvedValue(wm);
+    const r = await lookupEmployer("Walmart");
+    if (!r.ok) throw new Error("expected an answer");
+    expect(r.data.match).toBe("possible");
+    expect(r.data.employer!.name).toBe("WAL-MART ASSOCIATES, INC.");
+    expect(searchByLetters.mock.calls[0]?.[1]).toBe("walmart");
+  });
+
+  it("only searches by letters when the name search finds nothing", async () => {
+    db({ perm: "google-llc" });
+    getEntityBySlug.mockResolvedValue(google);
+    await lookupEmployer("Google");
+    expect(searchByLetters).not.toHaveBeenCalled();
   });
 
   it("answers a repeat from memory", async () => {

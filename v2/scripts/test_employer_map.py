@@ -58,6 +58,7 @@ def seed() -> SqliteTurso:
         "INSERT INTO perm_entities VALUES ('employer', 'intel-corporation', 'Intel Corporation', 'intel', 900)",
         "INSERT INTO perm_entities VALUES ('employer', 'salesforce-inc', 'Salesforce, Inc.', 'salesforce', 500)",
         "INSERT INTO perm_entities VALUES ('employer', 'jpmorgan-chase-co', 'JPMorgan Chase & Co.', 'jpmorgan chase', 700)",
+        "INSERT INTO perm_entities VALUES ('employer', 'wal-mart-associates-inc', 'WAL-MART ASSOCIATES, INC.', 'wal mart associates', 1595)",
         "INSERT INTO perm_entity_alias VALUES ('employer', 'intel-corp-old', 'intel-corporation')",
         "INSERT INTO perm_live_only_index VALUES ('new-perm-filer', 'New PERM Filer', 2)",
         "INSERT INTO seasonal_employer_index VALUES ('green-acres-farm-llc', 2)",
@@ -78,6 +79,11 @@ def seed() -> SqliteTurso:
         ("I-200-25001-000009", "2024-09-01", "2024-09-08", "Acme Robotics LLC", "acme-robotics-llc"),
         ("I-200-25001-000010", "2024-09-02", "2024-09-09", "Acme Robotics LLC", "acme-robotics-llc"),
         ("I-200-25001-000011", "2024-09-03", "2024-09-10", "ACME ROBOTICS, L.L.C.", "acme-robotics-l-l-c"),
+        # Rule D (DOL's spellings): the same letters with the gaps elsewhere.
+        ("I-200-25002-000015", "2024-10-20", "2024-10-27", "WALMART ASSOCIATES, INC.", "walmart-associates-inc"),
+        ("I-200-25002-000016", "2024-10-21", "2024-10-28", "XENONINFOTEK INC", "xenoninfotek-inc"),
+        ("I-200-25002-000017", "2024-10-22", "2024-10-29", "XENONINFOTEK INC", "xenoninfotek-inc"),
+        ("I-200-25002-000018", "2024-10-23", "2024-10-30", "Xenon Infotek Inc", "xenon-infotek-inc"),
     ]
     for r in lca:
         db.execute("INSERT INTO lca_cases VALUES (?,?,?,?,?)", list(r))
@@ -125,6 +131,12 @@ def main() -> int:
     check("two spellings, one page", (page.get("acme-robotics-llc"), page.get("acme-robotics-l-l-c")),
           (("acme-robotics-llc", "other"), ("acme-robotics-llc", "other")))
     check("USCIS rows alone make no page", "old-sponsor-inc" in page, False)
+    check("WALMART reaches the Wal-Mart page (Rule D)", page.get("walmart-associates-inc"),
+          ("wal-mart-associates-inc", "perm"))
+    own_key = {r[0]: r[3] for r in rows}
+    check("its row keeps its own spelling's key, so the lookup's exact step finds it",
+          own_key.get("walmart-associates-inc"), "walmart associates")
+    check("two LCA-only spacings share one page", page.get("xenon-infotek-inc"), page.get("xenoninfotek-inc"))
 
     idx = {r[0]: r for r in index_rows}
     cols = bem.INDEX_COLS

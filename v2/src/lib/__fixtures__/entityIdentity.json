@@ -325,5 +325,27 @@
       "Bank of America, N.A.",
       "bank of america na"
     ]
+  ],
+  "spacing_merges": [
+    [
+      "WAL-MART ASSOCIATES, INC.",
+      "WALMART ASSOCIATES, INC."
+    ],
+    [
+      "JPMorgan Chase & Co.",
+      "JP MORGAN CHASE CO"
+    ],
+    [
+      "T-Mobile USA, Inc.",
+      "TMOBILE USA, INC."
+    ],
+    [
+      "Lowe's Companies, Inc.",
+      "LOWES COMPANIES, INC."
+    ],
+    [
+      "Moody's Analytics, Inc.",
+      "MOODYS ANALYTICS"
+    ]
   ]
 }

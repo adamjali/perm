@@ -442,7 +442,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 4 2026 (evening)".
 - **The defense's alert says what filled the app**, so "0 people" no longer reads as a false alarm.
 - **robots.txt's `/api` blocked `/api-terms`** (a prefix); an allow rule re-opens it, and a test checks every public page.
 
-## Oct 5 2026, in thirteen lines
+## Oct 5 2026, in fourteen lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the five "Oct 5 2026" sections.
 
@@ -453,6 +453,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the five "Oct 5 2026" sections.
 - **A law firm can claim its page**, verified by the email domains DOL's files tie to it.
 - **A firm's own words wait for the admin's review** before they show (`pending` on `firmProfiles`); one email a day and the morning report say what waits.
 - **A Chrome extension** shows a posting's employer record through the keyless `/v1/lookup/employer`.
+- **One employer, whatever the spelling**: "Limited" and "Incorporated" are form words, and names that differ only in spacing are one company (Rule D); the build publishes its aliases so every join finds the page.
 - **DOL's live wage search names a series by the June that closes it**; the tool had shown last year's levels since Sep 9 (`dolSearchYear`).
 - **DOL levels labelled "Annual Wage", and unlabelled ones of $5,000 or more, are already yearly** (`toYearly`); never multiply them by 2,080.
 - **A source line is a readable name, never a bare URL**: one pushed two pages sideways on a phone.

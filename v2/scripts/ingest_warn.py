@@ -12,7 +12,8 @@ only public trace of one, and 20 CFR 656.17(k) makes a layoff in the six months
 before filing something the employer has to account for. Each notice becomes
 one row in `warn_notices`, matched to a sponsor when the employer's normalised
 name (`entity_identity.entity_key`, the rule the entity table is keyed on)
-equals a PERM employer's `merge_key`. Exact matches only: a prefix match would
+equals a PERM employer's `merge_key`, or has the same letters with the gaps
+elsewhere (Rule D in entity_identity.py). Never a prefix match: that would
 attach a foundation's layoff to a company that shares its first word.
 
 California, New York, Texas and Washington are read, each by its own parser
@@ -37,7 +38,7 @@ import time
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from entity_identity import entity_key  # noqa: E402
+from entity_identity import SpacedKeyMap, entity_key  # noqa: E402
 from lib_turso import (  # noqa: E402
     Turso, add_missing_columns, query_rows, record_run, stamp_freshness,
 )
@@ -408,15 +409,15 @@ def fetch_washington(days: int = WA_DAYS, max_pages: int = WA_MAX_PAGES) -> list
 
 def match_employers(db: Turso, rows: list[dict]) -> int:
     """Attach a sponsor slug where the normalised name equals a PERM employer's merge key."""
-    keys = sorted({entity_key(r["company"]) for r in rows if r["company"]})
-    slug_by_key: dict[str, str] = {}
-    for i in range(0, len(keys), 100):
-        chunk = keys[i : i + 100]
-        marks = ",".join("?" * len(chunk))
-        for key, slug, _total in query_rows(
-                db, f"SELECT merge_key, slug, total FROM perm_entities WHERE kind = 'employer' "
-                    f"AND merge_key IN ({marks}) ORDER BY total DESC", chunk):
-            slug_by_key.setdefault(str(key), str(slug))  # busiest spelling wins
+    # Every employer page's key, busiest first, so a notice spelled with the gaps
+    # elsewhere ("WAL MART" against "Walmart") still finds its page (Rule D). One
+    # read of about 72,000 short rows a week.
+    held: dict[str, str] = {}
+    for key, slug in query_rows(
+            db, "SELECT merge_key, slug FROM perm_entities WHERE kind = 'employer' "
+                "AND merge_key IS NOT NULL ORDER BY total DESC"):
+        held.setdefault(str(key), str(slug))  # busiest spelling wins
+    slug_by_key = SpacedKeyMap(held)
     n = 0
     for r in rows:
         slug = slug_by_key.get(entity_key(r["company"]))

@@ -67,6 +67,21 @@ it, and merge only when the result is exactly the key of a busier firm.
 Measured Oct 4 2026: 4 merges and 16 cases, all right. "LLLP" (a limited
 liability limited partnership) joined the noise words the same day: 3 merges.
 
+## Rule D - the same letters with the gaps in different places.  DETERMINISTIC, every kind.
+
+`entity_key` splits on punctuation, so "WAL-MART ASSOCIATES" keys as `wal mart
+associates` and "WALMART ASSOCIATES" as `walmart associates`; "Lowe's" is `lowe s`
+and "LOWES" is `lowes`. Measured Oct 5 2026 over the 279,746 keys in
+employer_page_map: 2,526 groups identical once spaces are removed, a random 45 all
+one company. No punctuation rule fixes it: treating `'`, `-` or `&` as part of the
+word joins about as many keys as it splits (378/237, 338/484, 24/44), because
+DOL's filers write "Children's", "Childrens" and "Children s" interchangeably.
+Ignoring spaces joins without splitting. Unlike Rules B and C no letter differs,
+so it applies to employers too; keys under 4 letters are left apart. The keys keep
+their spaces (the variants list, the typo rules and the lookup's whole-word match
+read the words), so this is an alias map, published by the entity build as
+`keyAliases` and applied wherever a name is joined to a page.
+
 THE SLUG RULES ARE MIRRORED IN `src/lib/entitySlug.ts`. A key computed
 differently in the writer than in the reader is a detail page that 404s from
 its own index, so `scripts/test_entity_identity.py` asserts both against one
@@ -201,6 +216,85 @@ def token_typo(x: str, y: str) -> str | None:
     if len(x) < _MIN_INDEL or len(y) < _MIN_INDEL:
         return None
     return "indel" if _lev(x, y) == 1 else None
+
+
+_SPACING_MIN_LETTERS = 4
+
+
+def spacing_aliases(totals: dict[str, int]) -> dict[str, str]:
+    """Rule D: map each key to the busiest key with the same letters once spaces go.
+
+    `totals` is every key with its case count. Only keys that move are returned.
+    The root is the busiest spelling (ties by the key itself), so the result can't
+    depend on iteration order.
+    """
+    groups: dict[str, list[str]] = {}
+    for key in totals:
+        tight = key.replace(" ", "")
+        if len(tight) >= _SPACING_MIN_LETTERS:
+            groups.setdefault(tight, []).append(key)
+    out: dict[str, str] = {}
+    for keys in groups.values():
+        if len(keys) < 2:
+            continue
+        keys.sort(key=lambda k: (-totals[k], k))
+        for k in keys[1:]:
+            out[k] = keys[0]
+    return out
+
+
+class SpacedKeyMap(dict):
+    """A key -> page map that, on a miss, matches the same letters with the gaps
+    elsewhere (Rule D), for the steps that join a printed name to TODAY's pages.
+
+    Built from every page's key, so it also reaches spellings the current entity
+    build never saw (an FY2012 "WALMART ASSOCIATES" row, a WARN notice). When
+    several pages share the letters, `weight` (or failing that, first inserted)
+    picks the busiest. Only `.get` falls back; `[]` and `in` stay exact.
+    """
+
+    def __init__(self, base: dict | None = None, weight=None):
+        super().__init__(base or {})
+        self._tight: dict[str, object] = {}
+        best: dict[str, float] = {}
+        for k, v in self.items():
+            t = k.replace(" ", "")
+            if len(t) < _SPACING_MIN_LETTERS:
+                continue
+            w = weight(v) if weight else 0
+            if t not in self._tight or (weight and w > best[t]):
+                self._tight[t] = v
+                best[t] = w
+
+    def get(self, key, default=None):
+        if key in self:
+            return dict.__getitem__(self, key)
+        if key:
+            hit = self._tight.get(str(key).replace(" ", ""))
+            if hit is not None:
+                return hit
+        return default
+
+
+def identity_aliases(totals: dict[str, int], kind: str) -> dict[str, str]:
+    """Every alias the build applies to one kind: Rule D, then Rules B and C on top.
+
+    Composed, so a spelling that is both spaced and mistyped still lands on the
+    final root in one step.
+    """
+    spacing = spacing_aliases(totals)
+    pooled: dict[str, int] = {}
+    for k, n in totals.items():
+        root = spacing.get(k, k)
+        pooled[root] = pooled.get(root, 0) + n
+    typo = typo_aliases(pooled, kind)
+    out: dict[str, str] = {}
+    for k in totals:
+        root = spacing.get(k, k)
+        root = typo.get(root, root)
+        if root != k:
+            out[k] = root
+    return out
 
 
 def typo_aliases(totals: dict[str, int], kind: str) -> dict[str, str]:

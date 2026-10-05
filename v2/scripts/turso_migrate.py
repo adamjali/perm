@@ -23,6 +23,7 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from entity_identity import entity_key  # noqa: E402
+from lib_slugs import with_aliases  # noqa: E402
 from lib_load_guard import drift_findings, sanity_findings  # noqa: E402
 from lib_turso import (  # noqa: E402
     Turso, add_missing_columns, canon, canon_hash, case_update, query_rows, read_doc, stmt,
@@ -133,8 +134,10 @@ def slug_maps(payload: dict) -> tuple[dict[str, str], dict[str, str]]:
     takes the -2 suffix. Reversing those two steps silently reassigns pages.
     """
     maps: list[dict[str, str]] = []
-    for key, name_of in (("topEmployers", lambda r: r["name"]),
-                         ("topAttorneys", lambda r: r["name"])):
+    aliases = payload.get("keyAliases") or {}
+    for (key, name_of), kind in zip((("topEmployers", lambda r: r["name"]),
+                                     ("topAttorneys", lambda r: r["name"])),
+                                    ("employer", "attorney")):
         rows = payload.get(key) or []
         ordered = sorted(rows, key=lambda r: -r["total"])
         out: dict[str, str] = {}
@@ -145,9 +148,12 @@ def slug_maps(payload: dict) -> tuple[dict[str, str], dict[str, str]]:
                 collisions += 1
                 continue
             out[k] = slug
+        # A case filed under a folded spelling carries that spelling's own key.
+        linked = with_aliases(out, aliases.get(kind) or {})
         log(f"  {key:14s} {len(out):>6,} slugs"
-            + (f"  ({collisions} merge-key collisions)" if collisions else ""))
-        maps.append(out)
+            + (f"  ({collisions} merge-key collisions)" if collisions else "")
+            + (f"  (+{len(linked) - len(out):,} alias keys)" if len(linked) > len(out) else ""))
+        maps.append(linked)
     return maps[0], maps[1]
 
 

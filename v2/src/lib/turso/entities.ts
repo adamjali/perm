@@ -448,3 +448,24 @@ export async function searchByName(
   );
   return found.map(toEntityRow);
 }
+
+/** Names spelled with no space, hyphen or apostrophe, the SQL twin of `letters`. */
+const NAME_LETTERS =
+  "replace(replace(replace(replace(replace(replace(lower(name), ' ', ''), '-', ''), '''', ''), '.', ''), ',', ''), '&', '')";
+
+/**
+ * Entities whose name holds these letters once spaces and punctuation go: how
+ * "Walmart" finds "WAL-MART ASSOCIATES, INC." (Rule D in scripts/entity_identity.py).
+ * The same full scan as `searchByName`'s substring LIKE, so the lookup asks it only
+ * after that search found nothing. `letters` must be plain [a-z0-9], which also
+ * keeps LIKE's wildcards out of it.
+ */
+export async function searchByLetters(kind: EntityKind, letters: string, limit = 25): Promise<EntityRow[]> {
+  if (!/^[a-z0-9]{4,120}$/.test(letters)) return [];
+  const take = Math.min(Math.max(1, Math.floor(limit)), 100);
+  const found = await rows<EntityDbRow>(
+    `SELECT ${ENTITY_ROW_COLS} FROM perm_entities WHERE kind = ? AND ${NAME_LETTERS} LIKE ? ORDER BY rank LIMIT ?`,
+    [kind, `%${letters}%`, take],
+  );
+  return found.map(toEntityRow);
+}

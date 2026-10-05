@@ -10,7 +10,9 @@
  *    program key, read only once that column's index exists, because without
  *    it the read walks every spelling of every employer.
  * 3. Possible: the busiest published PERM employer whose name contains the
- *    query and whose key begins with every word of it (employerNameMatch.ts).
+ *    query and whose key begins with every word of it (employerNameMatch.ts),
+ *    or, when no name contains it, whose letters lead with the query's once
+ *    spaces and punctuation go ("Walmart" -> "WAL-MART ASSOCIATES").
  *    Always labelled possible, with the matched name shown.
  *
  * A SMALL EXACT MATCH GIVES WAY TO A MUCH BUSIER NAMESAKE. Job sites print the
@@ -35,7 +37,7 @@ import { entityKey, programKey } from "@/lib/entitySlug";
 import { cleanEmployerQuery, pickPossibleMatch } from "@/lib/employerNameMatch";
 import { one } from "@/lib/turso/client";
 import { entityPending } from "@/lib/turso/entityDetail";
-import { searchByName } from "@/lib/turso/entities";
+import { searchByLetters, searchByName } from "@/lib/turso/entities";
 import { employerMatch } from "@/lib/turso/employerSlugs";
 import { otherEmployerRecord } from "@/lib/turso/otherEmployers";
 import { getEntityBySlug, getFreshness } from "@/lib/turso/publicData";
@@ -228,7 +230,13 @@ export async function resolveEmployer(query: string): Promise<Resolved> {
   let candidates: Awaited<ReturnType<typeof searchByName>> | null = null;
   const possible = async () => {
     candidates ??= await searchByName("employer", query, CANDIDATES);
-    return pickPossibleMatch(query, candidates);
+    const hit = pickPossibleMatch(query, candidates);
+    if (hit) return hit;
+    // "Walmart" is in no name once WALMART ASSOCIATES folds into WAL-MART
+    // ASSOCIATES: ask again by letters, spaces and punctuation ignored (Rule D).
+    const letters = programKey(query).replace(/ /g, "");
+    if (letters.length < 4) return null;
+    return pickPossibleMatch(query, await searchByLetters("employer", letters, CANDIDATES));
   };
   /** An exact match, unless it's small and a namesake is far busier. */
   const exactOrBusier = async (employer: LookupEmployer): Promise<Resolved> => {

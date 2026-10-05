@@ -18,7 +18,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from entity_identity import entity_key, program_key, typo_aliases  # noqa: E402
+from entity_identity import entity_key, program_key, spacing_aliases, typo_aliases  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
 
 FIXTURES = pathlib.Path(__file__).resolve().parents[1] / "src/lib/__fixtures__/entityIdentity.json"
@@ -56,6 +56,25 @@ def main() -> int:
         got = typo_aliases({ka: 1000, kb: 3}, "attorney")
         if got:
             fails.append(f"typo_aliases linked {a!r} and {b!r}: {got}")
+        got = spacing_aliases({ka: 1000, kb: 3})
+        if got:
+            fails.append(f"spacing_aliases linked {a!r} and {b!r}: {got}")
+
+    # Names that differ only in where the gaps fall are one company (DOL's own
+    # spellings). The busier spelling survives as the root.
+    for big, small in fx["spacing_merges"]:
+        kb, ks = entity_key(big), entity_key(small)
+        if kb == ks:
+            fails.append(f"spacing pair already equal, so it tests nothing: {big!r} / {small!r}")
+            continue
+        got = spacing_aliases({kb: 1000, ks: 3})
+        if got.get(ks) != kb:
+            fails.append(f"spacing_aliases missed {small!r} -> {big!r} (got {got})")
+        if spacing_aliases({kb: 3, ks: 1000}).get(kb) != ks:
+            fails.append(f"spacing_aliases must keep the BUSIER spelling as root ({big!r})")
+    # Too short to tell a spacing variant from two different initialisms.
+    if spacing_aliases({"k v": 10, "kv": 3}):
+        fails.append("spacing_aliases must not join keys under 4 letters")
 
     # And the ones it must catch. The first name is the busier spelling and
     # has to survive as the root.
@@ -85,6 +104,7 @@ def main() -> int:
     print(f"slugify      {len(fx['slugs'])} fixtures")
     print(f"must_not_merge {len(fx['must_not_merge'])} pairs")
     print(f"typo_merges  {len(fx['typo_merges'])} pairs")
+    print(f"spacing_merges {len(fx['spacing_merges'])} pairs")
     if fails:
         print(f"\nFAIL ({len(fails)}):")
         for f in fails:

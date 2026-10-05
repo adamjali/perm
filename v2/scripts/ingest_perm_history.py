@@ -74,7 +74,7 @@ from xml.etree.ElementTree import iterparse
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import ingest_perm_disclosure as ipd  # noqa: E402
-from entity_identity import entity_key  # noqa: E402
+from entity_identity import SpacedKeyMap, entity_key  # noqa: E402
 from lib_naics import normalize_naics  # noqa: E402
 from lib_turso import (  # noqa: E402
     Turso, add_missing_columns, canon, canon_hash, case_update, insert_rows, insert_stmts,
@@ -374,11 +374,14 @@ def slug_maps(db) -> tuple[dict[str, str], dict[str, str]]:
     emp: dict[str, str] = {}
     att: dict[str, str] = {}
     res = db.execute("SELECT kind, merge_key, slug FROM perm_entities "
-                     "WHERE kind IN ('employer','attorney') AND merge_key IS NOT NULL")
+                     "WHERE kind IN ('employer','attorney') AND merge_key IS NOT NULL "
+                     "ORDER BY total DESC")
     for r in rows_of(res):
         kind, key, slug = r
         (emp if kind == "employer" else att).setdefault(key, slug)
-    return emp, att
+    # An old year's spelling with the gaps elsewhere still finds today's page (Rule
+    # D); busiest first, so the busiest page wins shared letters.
+    return SpacedKeyMap(emp), SpacedKeyMap(att)
 
 
 def fold_counts(counts: dict, emp: dict[str, str]) -> tuple[dict[tuple[str, int], list[int]], dict]:

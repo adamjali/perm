@@ -18,7 +18,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from entity_identity import entity_key  # noqa: E402
 from lib_turso import Turso, insert_rows, query_rows  # noqa: E402
-from lib_slugs import plan_aliases, plan_sticky_slugs  # noqa: E402
+from lib_slugs import plan_aliases, plan_sticky_slugs, with_aliases  # noqa: E402
 
 SCHEMA = [
     # Only these two are rebuilt wholesale: every row in them is derived from the
@@ -117,6 +117,24 @@ def identity_key(kind: str, name: str, code) -> str:
     return f"{code or ''}|{name}" if kind == "occupation" else name
 
 
+def prior_maps(rows) -> tuple[dict[str, dict[str, str]], dict[str, dict[str, str]]]:
+    """(kind -> identity -> slug, kind -> slug -> merge key) for the entities held now.
+
+    An employer's or firm's key is recomputed from its stored NAME with today's
+    `entity_key`, never read from the stored `merge_key`: when the rule changes
+    (Oct 5 2026, "limited" and "incorporated" became form words) an absorbed page's
+    stored key matches nothing this run, and the planner would refuse the whole
+    load over it. An occupation keeps its stored key, which carries the SOC code.
+    """
+    prior_slug: dict[str, dict[str, str]] = {}
+    prior_key: dict[str, dict[str, str]] = {}
+    for kind, name, slug, key, code in rows:
+        prior_slug.setdefault(kind, {})[identity_key(kind, name, code)] = slug
+        current = entity_key(name) if kind in ("employer", "attorney") and name else key
+        prior_key.setdefault(kind, {})[slug] = current or ""
+    return prior_slug, prior_key
+
+
 def count_kept(kind: str, assigned, name_of, prior: dict[str, str]) -> int:
     """How many entities kept the slug they held, keyed as the planner keys them."""
     return sum(1 for slug, item in assigned
@@ -168,10 +186,8 @@ def main() -> int:
     prior_slug: dict[str, dict[str, str]] = {}     # kind -> name -> slug
     prior_key: dict[str, dict[str, str]] = {}      # kind -> slug -> merge key
     try:
-        for kind, name, slug, key, code in query_rows(
-                db, "SELECT kind, name, slug, merge_key, code FROM perm_entities"):
-            prior_slug.setdefault(kind, {})[identity_key(kind, name, code)] = slug
-            prior_key.setdefault(kind, {})[slug] = key or ""
+        prior_slug, prior_key = prior_maps(query_rows(
+            db, "SELECT kind, name, slug, merge_key, code FROM perm_entities"))
     except Exception:  # noqa: BLE001 - first run: no table yet
         pass
     log(f"  prior entities: {sum(len(v) for v in prior_slug.values()):,} slugs held")
@@ -194,6 +210,9 @@ def main() -> int:
         key_slug: dict[str, str] = {}
         for slug, item in assigned:            # busiest first, so first wins
             key_slug.setdefault(entity_key(name_of(item)), slug)
+        # A spelling the build folded into another (typo and spacing aliases) points
+        # at the page its rows now live on.
+        key_slug = with_aliases(key_slug, (payload.get("keyAliases") or {}).get(kind) or {})
         aliases, unresolved = plan_aliases(vanished, prior_key.get(kind, {}), key_slug)
         alias_rows.extend((kind, old, target) for old, target in aliases)
         unresolved_all.extend((kind, old) for old in unresolved)
@@ -269,12 +288,17 @@ def main() -> int:
     # perm_entities in full, and a truncated copy here would become a second,
     # wrong source of truth.
     stats = {k: v for k, v in payload.items()
-             if k not in ("topEmployers", "topAttorneys", "topOccupations")}
+             if k not in ("topEmployers", "topAttorneys", "topOccupations", "keyAliases")}
     docs = [
         ("disclosure_stats", json.dumps(stats), stamp),
         ("cases_meta", json.dumps(meta), stamp),
         ("wage_meta", json.dumps({k: v for k, v in wages.items() if k != "rows"}), stamp),
     ]
+    # The build's aliases (a spelling's key -> the key it merged under), for every
+    # later step that joins a printed name to a page: the entity detail, the
+    # employer map, the history and WARN loaders.
+    if payload.get("keyAliases"):
+        docs.append(("key_aliases", json.dumps(payload["keyAliases"]), stamp))
     nd = insert_rows(db, "perm_docs", ["key", "json", "computed_at"], docs, per_stmt=1)
     log(f"    documents   {nd:>6,}")
 

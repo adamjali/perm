@@ -13,7 +13,8 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_slugs import plan_aliases, plan_sticky_slugs, with_unique_slugs  # noqa: E402
+from lib_slugs import plan_aliases, plan_sticky_slugs, with_aliases, with_unique_slugs  # noqa: E402
+from turso_migrate_public import prior_maps  # noqa: E402
 
 FAILURES: list[str] = []
 CHECKS = 0
@@ -107,6 +108,30 @@ def main() -> int:
     check("an entity whose merge key is gone entirely is unresolved", (aliases, unresolved), ([], ["globex"]))
     aliases, unresolved = plan_aliases(["zzz-unknown"], prior_key, key_slug)
     check("a slug with no recorded key is unresolved, never guessed", (aliases, unresolved), ([], ["zzz-unknown"]))
+
+    print("old pages are keyed by TODAY'S rule, so a rule change can't strand them")
+    # "Amgen Incorporated" was stored under "amgen incorporated"; since Oct 5 2026
+    # "incorporated" is a form word, so the rebuild files it under "amgen". Keyed by
+    # the stored key, its page had nowhere to go and the whole load refused.
+    rows = [("employer", "Amgen Incorporated", "amgen-incorporated", "amgen incorporated", None),
+            ("employer", "AMGEN INC.", "amgen-inc", "amgen", None),
+            ("occupation", "Software Developers", "software-developers", "15-1252|software developers", "15-1252")]
+    p_slug, p_key = prior_maps(rows)
+    check("an employer's prior key is recomputed from its name", p_key["employer"]["amgen-incorporated"], "amgen")
+    check("an occupation keeps its stored key (its identity carries the SOC code)",
+          p_key["occupation"]["software-developers"], "15-1252|software developers")
+    check("prior slugs are found by name as before", p_slug["employer"]["AMGEN INC."], "amgen-inc")
+    aliases, unresolved = plan_aliases(["amgen-incorporated"], p_key["employer"], {"amgen": "amgen-inc"})
+    check("so the absorbed page redirects instead of blocking the load",
+          (aliases, unresolved), ([("amgen-incorporated", "amgen-inc")], []))
+
+    print("alias keys resolve to their canonical page")
+    ks = with_aliases({"wal mart associates": "wal-mart-associates-inc"},
+                      {"walmart associates": "wal mart associates", "ghost": "not here"})
+    check("a variant key takes its canonical key's slug", ks.get("walmart associates"), "wal-mart-associates-inc")
+    check("an alias whose canonical has no page adds nothing", "ghost" in ks, False)
+    ks2 = with_aliases({"acme": "acme", "acme co": "acme-co"}, {"acme co": "acme"})
+    check("a key that already has its own page keeps it", ks2["acme co"], "acme-co")
 
     print()
     print(f"{CHECKS} checks")

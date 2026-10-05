@@ -27,13 +27,34 @@ vi.mock("next/cache", () => ({
 vi.mock("../client", () => ({ rows, one }));
 
 const { nameVariants } = await import("../entityDetail");
-const { fieldDistribution } = await import("../entities");
+const { fieldDistribution, searchByLetters } = await import("../entities");
 const { countPageworthy, getEntitySeed } = await import("../publicData");
 
 beforeEach(() => {
   rows.mockReset();
   one.mockReset();
   rows.mockResolvedValue([]);
+});
+
+describe("searchByLetters", () => {
+  it("strips spaces, hyphens, apostrophes, periods, commas and ampersands in SQL", async () => {
+    await searchByLetters("employer", "walmart");
+    const [sql, args] = rows.mock.calls[0]!;
+    // Each strip is its own replace(). An unquoted apostrophe literal broke this
+    // once while every mocked test still passed, so the literals are asserted.
+    for (const lit of ["' '", "'-'", "''''", "'.'", "','", "'&'"]) {
+      expect(sql).toContain(lit + ", ''");
+    }
+    expect((sql.match(/'/g) ?? []).length % 2).toBe(0);
+    expect(args).toEqual(["employer", "%walmart%", 25]);
+  });
+
+  it("refuses anything but plain letters, so LIKE's wildcards never reach it", async () => {
+    for (const bad of ["wal%mart", "wal_mart", "abc", "WALMART", "wal mart"]) {
+      expect(await searchByLetters("employer", bad)).toEqual([]);
+    }
+    expect(rows).not.toHaveBeenCalled();
+  });
 });
 
 describe("nameVariants", () => {

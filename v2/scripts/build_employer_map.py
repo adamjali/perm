@@ -60,7 +60,7 @@ import time
 from collections import Counter, defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from entity_identity import program_key, typo_aliases  # noqa: E402
+from entity_identity import program_key, spacing_aliases, typo_aliases  # noqa: E402
 from lib_turso import Turso, et_date, record_run, rows_of  # noqa: E402
 
 MAP = "employer_page_map"
@@ -253,6 +253,26 @@ def plan(slugs: dict[str, dict], pages: dict) -> tuple[list[list], list[list], d
     """(map rows, index rows, stats). Pure, for the test."""
     perm, alias, live, published_pages = pages["perm"], pages["alias"], pages["live"], pages["published"]
 
+    # Rule D (entity_identity.py): keys with the same letters and the gaps elsewhere
+    # ("wal mart associates" / "walmart associates") match as one, the busiest
+    # spelling as the root. Only MATCHING goes through it; each row still stores its
+    # own spelling's key, which the lookup's exact step reads.
+    weight: Counter = Counter()
+    for _slug, (name, merge_key, total) in perm.items():
+        weight[program_key(name)] += total
+        weight[program_key(merge_key)] += total
+    for _slug, (name, cases) in live.items():
+        weight[program_key(name)] += cases
+    for rec in slugs.values():
+        for name_, n in rec["names"].items():
+            weight[program_key(name_)] += n
+    weight.pop("", None)
+    spacing = spacing_aliases(dict(weight))
+
+    def match_key(name: str | None) -> str:
+        k = program_key(name or "")
+        return spacing.get(k, k)
+
     # Every key a published page answers to: its name, its merge key, and every
     # spelling the PERM tables hold under its slug. The busier page wins a key
     # two pages share.
@@ -263,33 +283,36 @@ def plan(slugs: dict[str, dict], pages: dict) -> tuple[list[list], list[list], d
             keys[key] = (weight, slug)
 
     for slug, (name, merge_key, total) in perm.items():
-        for key in {program_key(name), program_key(merge_key)}:
+        for key in {match_key(name), match_key(merge_key)}:
             claim(perm_keys, key, total, slug)
         for name_ in slugs.get(slug, new_slug())["names"]:
-            claim(perm_keys, program_key(name_), total, slug)
+            claim(perm_keys, match_key(name_), total, slug)
     live_keys: dict[str, tuple[int, str]] = {}
     for slug, (name, cases) in live.items():
-        claim(live_keys, program_key(name), cases, slug)
+        claim(live_keys, match_key(name), cases, slug)
         for name_ in slugs.get(slug, new_slug())["names"]:
-            claim(live_keys, program_key(name_), cases, slug)
+            claim(live_keys, match_key(name_), cases, slug)
 
     rows: list[list] = []
     groups: dict[str, list[str]] = defaultdict(list)
     stats = Counter()
+    own_key: dict[str, str] = {}
     for slug, rec in slugs.items():
         key = program_key(modal_name(rec["names"]) or slug.replace("-", " "))
+        own_key[slug] = key
+        mk = spacing.get(key, key)
         if slug in perm:
             rows.append([slug, slug, "perm", key]); stats["perm_own"] += 1
         elif slug in alias and alias[slug] in perm:
             rows.append([slug, alias[slug], "perm", key]); stats["perm_alias"] += 1
         elif slug in live:
             rows.append([slug, slug, "live", key]); stats["live_own"] += 1
-        elif key and key in perm_keys:
-            rows.append([slug, perm_keys[key][1], "perm", key]); stats["perm_key"] += 1
-        elif key and key in live_keys:
-            rows.append([slug, live_keys[key][1], "live", key]); stats["live_key"] += 1
+        elif mk and mk in perm_keys:
+            rows.append([slug, perm_keys[mk][1], "perm", key]); stats["perm_key"] += 1
+        elif mk and mk in live_keys:
+            rows.append([slug, live_keys[mk][1], "live", key]); stats["live_key"] += 1
         else:
-            groups[key or f"slug:{slug}"].append(slug)
+            groups[mk or f"slug:{slug}"].append(slug)
 
     index: list[dict] = []
     for key, members in groups.items():
@@ -313,7 +336,7 @@ def plan(slugs: dict[str, dict], pages: dict) -> tuple[list[list], list[list], d
         else:
             page = max(members, key=lambda s: (sum(slugs[s]["programs"].values()), -len(s), s))
         for s in members:
-            rows.append([s, page, "other", key if not key.startswith("slug:") else ""])
+            rows.append([s, page, "other", own_key.get(s, "") if not key.startswith("slug:") else ""])
         stats["other_slugs"] += len(members)
         index.append({"slug": page, "name": modal_name(names) or page, "programs": programs,
                       "first": first, "last": last})

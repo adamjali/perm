@@ -1,4 +1,4 @@
-# Employer names that differ only by spacing (plan, Oct 5 2026)
+# Employer names that differ only by spacing (plan, Oct 5 2026; built the same day)
 
 ## The defect
 

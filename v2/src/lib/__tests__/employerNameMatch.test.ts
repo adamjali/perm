@@ -35,6 +35,10 @@ describe("isPossibleMatch", () => {
     ["uber", "uber technologies"],
     ["deloitte", "deloitte consulting"],
     ["jpmorgan chase", "jpmorgan chase"],
+    // The same letters with the gaps elsewhere, ending on a word boundary (Rule D).
+    ["walmart", "wal mart associates"],
+    ["jp morgan", "jpmorgan chase"],
+    ["t mobile", "tmobile usa"],
   ])("%s may be %s", (q, c) => {
     expect(isPossibleMatch(q, c)).toBe(true);
   });
@@ -46,6 +50,9 @@ describe("isPossibleMatch", () => {
     // The query's words must all lead the candidate, in order.
     ["chase", "jpmorgan chase"],
     ["google cloud", "google"],
+    // Rule D still ends on a word: these letters stop inside one.
+    ["walma", "wal mart associates"],
+    ["mart", "wal mart associates"],
     // Too generic to name anyone.
     ["global", "global infotech"],
     ["technology solutions", "technology solutions group"],

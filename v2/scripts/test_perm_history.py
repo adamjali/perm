@@ -122,12 +122,14 @@ BROKEN = workbook([["SOMETHING", "ELSE"], ["x", "y"]])
 
 def seeded_db() -> SqliteTurso:
     db = SqliteTurso()
-    db.conn.execute("CREATE TABLE perm_entities (kind TEXT, slug TEXT, name TEXT, merge_key TEXT, code TEXT)")
+    # The real table's columns that the loader reads (it orders by total, busiest first).
+    db.conn.execute("CREATE TABLE perm_entities (kind TEXT, slug TEXT, name TEXT, merge_key TEXT, code TEXT, "
+                    "total INTEGER)")
     from entity_identity import entity_key
-    db.conn.executemany("INSERT INTO perm_entities VALUES (?,?,?,?,?)", [
-        ("employer", "acme-inc", "ACME INC", entity_key("ACME INC"), None),
-        ("attorney", "law-firm-llp", "Law Firm LLP", entity_key("Law Firm LLP"), None),
-        ("occupation", "software-developers", "Software Developers", None, "15-1252.00"),
+    db.conn.executemany("INSERT INTO perm_entities VALUES (?,?,?,?,?,?)", [
+        ("employer", "acme-inc", "ACME INC", entity_key("ACME INC"), None, 120),
+        ("attorney", "law-firm-llp", "Law Firm LLP", entity_key("Law Firm LLP"), None, 80),
+        ("occupation", "software-developers", "Software Developers", None, "15-1252.00", 900),
     ])
     db.conn.commit()
     return db

@@ -8,7 +8,9 @@
  * the query's key, in order. Whole words only: "Meta" is not Metamorphosis
  * Labs and "Intel" is not Intellectt (the text prefix that once counted
  * 8,219 of their LCAs on Intel's page). A query made only of words that name
- * nobody ("Global", "Technology Solutions") gets no possible match at all.
+ * nobody ("Global", "Technology Solutions") gets no possible match at all. The
+ * same letters with the gaps elsewhere also count, ending on a word boundary
+ * ("Walmart" may be "WAL-MART ASSOCIATES"; Rule D in scripts/entity_identity.py).
  *
  * Pure, so the browser extension's server answer can be tested without a
  * database. The answer always says "possible" and shows the matched name.
@@ -45,8 +47,18 @@ export function isPossibleMatch(queryKey: string, candidateKey: string): boolean
   const c = candidateKey.split(" ").filter(Boolean);
   if (q.length === 0 || queryKey.replace(/ /g, "").length < MIN_KEY_LENGTH) return false;
   if (q.every((w) => GENERIC.has(w))) return false;
-  if (q.length > c.length) return false;
-  return q.every((w, i) => c[i] === w);
+  if (q.length <= c.length && q.every((w, i) => c[i] === w)) return true;
+  // Rule D (scripts/entity_identity.py): the same letters with the gaps elsewhere,
+  // still ending where one of the candidate's words ends. "walmart" may be "wal
+  // mart associates"; "meta" is still not "metamorphosis labs".
+  const letters = q.join("");
+  let lead = "";
+  for (const w of c) {
+    lead += w;
+    if (lead === letters) return true;
+    if (lead.length >= letters.length) break;
+  }
+  return false;
 }
 
 /** The first candidate, in the order given (busiest first), that may be the query's employer. */

@@ -37,7 +37,7 @@ import sys
 from collections import Counter, defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from entity_identity import entity_key  # noqa: E402
+from entity_identity import SpacedKeyMap, entity_key  # noqa: E402
 from lib_naics import naics_title, normalize_naics  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
 from lib_turso import (  # noqa: E402
@@ -109,7 +109,8 @@ def slug_maps(db: Turso):
             if len(rs) < 20000:
                 break
             off += 20000
-        out[kind] = m
+        # A name spelled with the gaps elsewhere still finds its page (Rule D).
+        out[kind] = m if kind == "occupation" else SpacedKeyMap(m, weight=lambda v: v[1])
         log(f"  {kind:11s} {len(m):,} slugs")
     return out
 
