@@ -8040,7 +8040,8 @@ checked against the live file, `/api-terms` was the only one blocked.
 - **What shows**: `firmProfiles` (website on the verified domain unless the admin approves another, a 600-character
   plain-text description with no links, phones or names, languages, offices, practice focus), in a "From the firm"
   block marked as the firm's own words. The page reads it with `queryStatic` on its 30-day window, and every change
-  POSTs `/api/revalidate-firm` (needs `REVALIDATE_SECRET` on the Convex deployment).
+  POSTs `/api/revalidate-firm` with `REVALIDATE_SECRET`, set on Convex production Oct 5 2026 from the server's
+  `/srv/permtracker/app/env/production.env` by pipe (never printed; read back by name only).
 - **Email**: its own pool, `firmClaim`, 10 a day, charged before anything is staged; a full pool queues (`kind: "firm"`).
 - **Routes**: `/firm-claim/request` and `/firm-claim/edit-link` (JSON, to the .convex.site twin); `/firm-claim/confirm`
   and `/firm-claim/edit` are emailed links, rewritten in next.config.ts and relayed by nginx with the other email links.
@@ -8112,8 +8113,50 @@ changed (`scripts/lib_reference.py`: `sync_rows`, `seen_before`, `sheet_rows`). 
   `certifiedPercent`): Google's 1,608 certified and 4 denied had printed as "100%".
 - **The H-1B lists on city pages** are 44px rows now (the links were 24px). The bulletin line page's alert form
   still has the shared 24px date-picker button; that's the shared DateInput, not this batch.
-- **The dev server sends `X-Frame-Options: DENY`**, so the same-origin iframe sweep can't run against it; one
-  headless browser at 390 and 320 wide (`node_modules/.cache/qa/sweep.mjs`) did the sweep instead.
+- **The dev server sends `X-Frame-Options: DENY`**, so the same-origin iframe sweep can't run against it.
+  `node scripts/phone_sweep.mjs <base> <path>...` does it in one headless browser at 390 and 320 wide: page scroll
+  width, the culprit when it overflows (it hides each section of `<main>` in turn), text under 14px, standalone tap
+  targets under 43px. Its first run was mostly itself: the phone menu drawer sits off-screen on purpose, and a link
+  clipped inside a truncated row isn't overflow, so only the page's own scroll width is a verdict.
+- **`node scripts/gsc_queue.mjs`** lists the public pages changed since the Search Console queue's last commit
+  (new pages, pages whose own content changed, one sample per changed family; files feeding more than 15 pages are
+  left to the sitemap's lastmod). It shares `scripts/lib_page_inputs.mjs` with `page_dates.mjs`, so the queue and
+  the sitemap dates agree on what a change touches. Run it after every deploy; the automatic round runs it too.
+- **Testing Library's cleanup is registered in `vitest.setup.ts`.** It registers itself when first imported
+  (`globals: true`), and the `unit` project shares a worker between files (`isolate: false`), so only the first file
+  got the hook: `useFormDomSync.test.tsx` found the test before's `<input>` still in the page. Reproduce a shared-pool
+  leak with `--no-file-parallelism --no-cache` and the files in size order: vitest runs a file that failed last
+  time FIRST, so a plain rerun passes and proves nothing.
+- **`make-page-cards.mjs` reads its fonts from `.next/static/media`**, which only a production build writes; a
+  worktree with only a dev server has none, so copy the two `.woff2` files from a checkout that built.
+
+## Oct 5 2026: who visits, measured three ways
+
+Cloudflare, the server's nginx log and PostHog count different things; never quote one for another.
+
+| | last 24 h to 1:56 AM EDT Oct 5 | what it counts |
+|---|---|---|
+| Cloudflare requests | 864,750 | everything at the edge, including what it blocks and serves from cache |
+| reached the server | 381,620 | nginx's access log |
+| Cloudflare "403" | 333,690 | its own browser check (custom rule 5 on `/perm-case-status?case=`), never seen by the server; a scraper on Chinese home broadband (AS4837, AS4134) |
+| server "429" | 93,190 | our crawler limits: Meta's AI crawler 108k requests reached the server, AhrefsBot 60k, ClaudeBot 31.6k (216.73.216.32), SE Ranking 18k |
+| PostHog visitors | 1,510 | anything that runs our JavaScript, the scraper's headless Chrome included (3,372 on Oct 2 alone) |
+
+**Likely people** (PostHog, the scraper's labels left out: Windows Chrome 151 or 80 to 139; a phone or tablet, or
+two or more pages): 356 in the last 24 hours, 4,553 in 7 days (6,436 counting one-page desktop visits), 11,784 in
+30 days. Weekdays 700 to 900 a day, weekends 230 to 400. Last 7 days: 52% of visits view one page (a case lookup
+often answers in one), median visit 40 s, 44% over a minute, 22% over 5 minutes, 3.3 pages per visit on average;
+about 1 in 5 people seen earlier in the month came back on another day. This is an estimate, not a saved metric.
+
+**Cloudflare's Security Insights, checked Oct 5:** "Users without MFA" is real (the owner's login; his to fix). The
+rest are false or deliberate: HSTS (Cloudflare checks only its own switch; nginx already sends two years with
+subdomains), security.txt (live), Turnstile (the "PERM Tracker auth forms" widget exists), Bot Fight Mode (leave it
+off: Cloudflare's docs say custom rules can't skip it, so it would challenge the data jobs, the API, MCP and
+one-click unsubscribe), AI crawlers (allowed on purpose). Cloudflare's GraphQL on the Free plan refuses
+`firewallEventsAdaptiveGroups`; `firewallEventsAdaptive` (samples) works, and the rate budget empties fast.
+
+**The defense put Under Attack Mode on at 2:07 PM EDT Oct 4 for 32 minutes** on "app full 3 minutes running" with
+0 people shown the busy page. Whether it should wait for at least one person is the owner's open decision.
 
 ## Oct 5 2026: a Chrome extension and a keyless employer lookup
 

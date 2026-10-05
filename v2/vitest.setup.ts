@@ -1,4 +1,18 @@
-import { afterAll, beforeAll, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
+
+/**
+ * Unmount what each test rendered. Testing Library registers this itself when
+ * it's first imported (globals: true), but the `unit` project shares one worker
+ * between files (isolate: false), so the module loads once and only the first
+ * file got the hook. useFormDomSync.test.tsx then found the test before's
+ * <input> still in the page ("Found multiple elements"), at load 200 on Oct 5
+ * 2026 though never alone. A setup file runs for every test file, so the
+ * cleanup is registered for every file here.
+ */
+afterEach(() => {
+  cleanup();
+});
 import "@testing-library/jest-dom/vitest";
 import React from "react";
 
