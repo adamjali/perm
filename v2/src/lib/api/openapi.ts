@@ -14,6 +14,8 @@ export interface EndpointDoc {
   params?: { name: string; in: "path" | "query"; required: boolean; description: string }[];
   /** Whether the call counts against the plan's allowance. */
   counted: boolean;
+  /** Answered without a key, under shared limits (the browser extension's lookup). */
+  keyless?: boolean;
 }
 
 export const API_BASE = "https://permtracker.app/v1";
@@ -101,6 +103,14 @@ export const ENDPOINTS: EndpointDoc[] = [
     counted: true,
   },
   {
+    path: "/lookup/employer",
+    summary: "The employer page a printed name belongs to (an exact match, a possible one with the matched name, or none), with its PERM decisions, certified share, pending cases, newest filing and H-1B LCAs. No key: it's what the browser extension calls, under shared limits of 60 calls a minute per address.",
+    example: "/lookup/employer?name=Google",
+    params: [{ name: "name", in: "query", required: true, description: "The employer's name as a job posting prints it, 2 to 120 characters." }],
+    counted: false,
+    keyless: true,
+  },
+  {
     path: "/me",
     summary: "Your key's plan, its limits and what you've used today and this month. Not counted.",
     example: "/me",
@@ -129,9 +139,16 @@ export function openApiDocument(): Record<string, unknown> {
   const free = API_PLANS.free;
   const paths: Record<string, unknown> = {};
   for (const e of ENDPOINTS) {
+    const errors: Record<string, unknown> = {
+      "400": { description: "The request isn't valid. Not counted.", content: { "application/json": { schema: ERROR_SCHEMA } } },
+      ...(e.keyless ? {} : { "401": { description: "No key, or a key we don't recognise.", content: { "application/json": { schema: ERROR_SCHEMA } } } }),
+      "404": { description: "No such record. Counted.", content: { "application/json": { schema: ERROR_SCHEMA } } },
+      "429": { description: "A minute, day or month limit. Retry-After says when it lifts.", content: { "application/json": { schema: ERROR_SCHEMA } } },
+    };
     paths[e.path] = {
       get: {
         summary: e.summary,
+        ...(e.keyless ? { security: [] } : {}),
         parameters: (e.params ?? []).map((p) => ({
           name: p.name,
           in: p.in,
@@ -144,10 +161,7 @@ export function openApiDocument(): Record<string, unknown> {
             description: "The answer, with `meta.source`, `meta.asOf` and `meta.url` naming where it came from.",
             content: { "application/json": { schema: { type: "object", properties: { data: {}, meta: { type: "object" } } } } },
           },
-          "400": { description: "The request isn't valid. Not counted.", content: { "application/json": { schema: ERROR_SCHEMA } } },
-          "401": { description: "No key, or a key we don't recognise.", content: { "application/json": { schema: ERROR_SCHEMA } } },
-          "404": { description: "No such record. Counted.", content: { "application/json": { schema: ERROR_SCHEMA } } },
-          "429": { description: "A minute, day or month limit. Retry-After says when it lifts.", content: { "application/json": { schema: ERROR_SCHEMA } } },
+          ...errors,
         },
       },
     };
