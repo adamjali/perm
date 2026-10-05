@@ -155,7 +155,7 @@ describe("the request takes the firm's name from our records", () => {
 });
 
 describe("confirming a claim", () => {
-  it("publishes a claim from a domain DOL ties to the firm, and hands back an edit link", async () => {
+  it("confirms a claim from a domain DOL ties to the firm, holds its words for review, and hands back an edit link", async () => {
     vi.useFakeTimers();
     const t = createTestContext();
     const { calls } = stub(TIED);
@@ -168,10 +168,22 @@ describe("confirming a claim", () => {
 
     const token = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-confirm", Date.now() + CONFIRM_VALID_MS);
     const res = await t.mutation(internal.firmClaims.confirmByToken, { token });
-    expect(res?.published).toEqual([{ slug: SLUG, firmName: "Smith Immigration PLLC" }]);
+    expect(res?.published).toEqual([]);
+    expect(res?.submitted).toEqual([{ slug: SLUG, firmName: "Smith Immigration PLLC" }]);
     expect(res?.editToken).toBeTruthy();
+    expect((await claimRow(t, "jane@smithlaw.com"))?.status).toBe("verified");
+    expect(await t.query(api.firmClaims.publishedProfile, { slug: SLUG })).toBeNull();
+
+    const admin = await adminAuth(t);
+    const list = await admin.query(api.firmClaims.listForAdmin, {});
+    expect(list.edits).toHaveLength(1);
+    expect(list.edits[0]).toMatchObject({ slug: SLUG, firmName: "Smith Immigration PLLC", before: null });
+    expect(list.edits[0]!.after.description).toBe(PROFILE.description);
+
+    await admin.mutation(api.firmClaims.approveProfile, { slug: SLUG });
     const shown = await t.query(api.firmClaims.publishedProfile, { slug: SLUG });
     expect(shown).toMatchObject({ website: "https://www.smithlaw.com/", languages: ["Spanish"], verifiedBy: "domain" });
+    expect((await admin.query(api.firmClaims.listForAdmin, {})).edits).toEqual([]);
     await t.finishAllScheduledFunctions(vi.runAllTimers);
     vi.useRealTimers();
     expect(calls.some((c) => c.endsWith("/api/revalidate-firm"))).toBe(true);
@@ -262,12 +274,15 @@ describe("editing", () => {
     await claimOverHttp(t, "jane@smithlaw.com");
     const token = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-confirm", Date.now() + 60_000);
     await t.mutation(internal.firmClaims.confirmByToken, { token });
+    const admin = await adminAuth(t);
+    await admin.mutation(api.firmClaims.approveProfile, { slug: SLUG });
+    return admin;
   }
 
-  it("holds a website on another domain for the admin, and keeps links out of the description", async () => {
+  it("keeps links out of the description, and flags a website on another domain for the reviewer", async () => {
     const t = createTestContext();
     stub(TIED);
-    await verified(t);
+    const admin = await verified(t);
     const bad = await t.mutation(internal.firmClaims.saveProfile, {
       email: "jane@smithlaw.com",
       slug: SLUG,
@@ -280,9 +295,21 @@ describe("editing", () => {
       profile: { ...PROFILE, website: "https://someone-else.com" },
     });
     expect(elsewhere.ok).toBe(true);
-    const shown = await t.query(api.firmClaims.publishedProfile, { slug: SLUG });
-    expect(shown?.website).toBe("https://www.smithlaw.com/");
-    const admin = await adminAuth(t);
+    expect((await t.query(api.firmClaims.publishedProfile, { slug: SLUG }))?.website).toBe("https://www.smithlaw.com/");
+    const edits = (await admin.query(api.firmClaims.listForAdmin, {})).edits;
+    expect(edits[0]).toMatchObject({ websiteOffDomain: true });
+    await admin.mutation(api.firmClaims.approveProfile, { slug: SLUG });
+    expect((await t.query(api.firmClaims.publishedProfile, { slug: SLUG }))?.website).toBe("https://someone-else.com/");
+  });
+
+  it("still lets the admin pass a website held under the old rules", async () => {
+    const t = createTestContext();
+    stub(TIED);
+    const admin = await verified(t);
+    await t.run(async (ctx) => {
+      const p = await ctx.db.query("firmProfiles").withIndex("by_slug", (q) => q.eq("slug", SLUG)).unique();
+      await ctx.db.patch(p!._id, { pendingWebsite: "https://someone-else.com/" });
+    });
     await admin.mutation(api.firmClaims.approveWebsite, { slug: SLUG });
     expect((await t.query(api.firmClaims.publishedProfile, { slug: SLUG }))?.website).toBe("https://someone-else.com/");
   });
@@ -368,5 +395,138 @@ describe("the admin", () => {
     const res = await t.mutation(internal.firmClaims.confirmByToken, { token: again });
     expect(res?.review).toEqual(["Smith Immigration PLLC"]);
     expect(await t.query(api.firmClaims.publishedProfile, { slug: SLUG })).toBeNull();
+  });
+});
+
+describe("a firm's own words wait for review", () => {
+  async function live(t: T) {
+    await claimOverHttp(t, "jane@smithlaw.com");
+    const token = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-confirm", Date.now() + 60_000);
+    await t.mutation(internal.firmClaims.confirmByToken, { token });
+    const admin = await adminAuth(t);
+    await admin.mutation(api.firmClaims.approveProfile, { slug: SLUG });
+    return admin;
+  }
+
+  it("leaves the page as it was while an edit waits, and a decline keeps it so and says why", async () => {
+    const t = createTestContext();
+    stub(TIED);
+    const admin = await live(t);
+    const saved = await t.mutation(internal.firmClaims.saveProfile, {
+      email: "jane@smithlaw.com",
+      slug: SLUG,
+      profile: { ...PROFILE, description: "The best immigration firm in Florida." },
+    });
+    expect(saved.ok).toBe(true);
+    expect(saved.message).toMatch(/review/i);
+    expect((await t.query(api.firmClaims.publishedProfile, { slug: SLUG }))?.description).toBe(PROFILE.description);
+
+    const edits = (await admin.query(api.firmClaims.listForAdmin, {})).edits;
+    expect(edits).toHaveLength(1);
+    expect(edits[0]!.before?.description).toBe(PROFILE.description);
+    expect(edits[0]!.after.description).toBe("The best immigration firm in Florida.");
+
+    await admin.mutation(api.firmClaims.rejectProfile, { slug: SLUG, reason: "Please state facts, not rankings." });
+    expect((await t.query(api.firmClaims.publishedProfile, { slug: SLUG }))?.description).toBe(PROFILE.description);
+    expect((await admin.query(api.firmClaims.listForAdmin, {})).edits).toEqual([]);
+
+    const state = await t.query(internal.firmClaims.editStateFor, { email: "jane@smithlaw.com" });
+    expect(state[0]!.pending).toBeNull();
+    expect(state[0]!.declined?.reason).toBe("Please state facts, not rankings.");
+    expect(state[0]!.declined?.version.description).toBe("The best immigration firm in Florida.");
+
+    const link = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-edit", Date.now() + 60_000);
+    const html = await (await t.fetch(`/firm-claim/edit?token=${encodeURIComponent(link)}`, { method: "GET" })).text();
+    expect(html).toContain("Please state facts, not rankings.");
+    expect(html).toContain("The best immigration firm in Florida.");
+  });
+
+  it("shows a waiting edit on the firm's edit page, and publishes it only on approval", async () => {
+    vi.useFakeTimers();
+    const t = createTestContext();
+    const { calls } = stub(TIED);
+    vi.stubEnv("REVALIDATE_SECRET", "rv");
+    const admin = await live(t);
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const before = calls.filter((c) => c.endsWith("/api/revalidate-firm")).length;
+    await t.mutation(internal.firmClaims.saveProfile, {
+      email: "jane@smithlaw.com",
+      slug: SLUG,
+      profile: { ...PROFILE, languages: ["Spanish", "Haitian Creole"] },
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    // Nothing public changed, so nothing was refreshed.
+    expect(calls.filter((c) => c.endsWith("/api/revalidate-firm")).length).toBe(before);
+    const link = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-edit", Date.now() + 60_000);
+    const html = await (await t.fetch(`/firm-claim/edit?token=${encodeURIComponent(link)}`, { method: "GET" })).text();
+    expect(html).toMatch(/waiting for (our )?review/i);
+    expect(html).toContain("Haitian Creole");
+
+    await admin.mutation(api.firmClaims.approveProfile, { slug: SLUG });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    vi.useRealTimers();
+    expect((await t.query(api.firmClaims.publishedProfile, { slug: SLUG }))?.languages).toEqual(["Spanish", "Haitian Creole"]);
+    expect(calls.filter((c) => c.endsWith("/api/revalidate-firm")).length).toBeGreaterThan(before);
+  });
+
+  it("tells the admin about waiting work at most once a day", async () => {
+    const t = createTestContext();
+    stub(TIED);
+    await live(t);
+    await t.mutation(internal.firmClaims.saveProfile, {
+      email: "jane@smithlaw.com",
+      slug: SLUG,
+      profile: { ...PROFILE, description: "A second version." },
+    });
+    await t.mutation(internal.firmClaims.saveProfile, {
+      email: "jane@smithlaw.com",
+      slug: SLUG,
+      profile: { ...PROFILE, description: "A third version." },
+    });
+    const notices = await t.run(async (ctx) =>
+      ctx.db
+        .query("rateLimits")
+        .collect()
+        .then((r) => r.filter((x) => x.action === "firm_review_notice")),
+    );
+    expect(notices).toHaveLength(1);
+  });
+
+  it("lets only the admin approve or decline", async () => {
+    const t = createTestContext();
+    stub(TIED);
+    await claimOverHttp(t, "jane@smithlaw.com");
+    const token = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-confirm", Date.now() + 60_000);
+    await t.mutation(internal.firmClaims.confirmByToken, { token });
+    const id = await t.run(async (ctx) => ctx.db.insert("users", { email: "stranger@example.com" }));
+    const stranger = t.withIdentity({ subject: id, email: "stranger@example.com" });
+    await expect(stranger.mutation(api.firmClaims.approveProfile, { slug: SLUG })).rejects.toThrow(/Admin access required/);
+    await expect(stranger.mutation(api.firmClaims.rejectProfile, { slug: SLUG })).rejects.toThrow(/Admin access required/);
+    expect(await t.query(api.firmClaims.publishedProfile, { slug: SLUG })).toBeNull();
+  });
+
+  it("holds the words in auto mode too, until an automatic check exists", async () => {
+    const t = createTestContext();
+    stub(TIED);
+    vi.stubEnv("FIRM_PROFILE_REVIEW", "auto");
+    await claimOverHttp(t, "jane@smithlaw.com");
+    const token = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-confirm", Date.now() + 60_000);
+    const res = await t.mutation(internal.firmClaims.confirmByToken, { token });
+    expect(res?.submitted).toEqual([{ slug: SLUG, firmName: "Smith Immigration PLLC" }]);
+    expect(await t.query(api.firmClaims.publishedProfile, { slug: SLUG })).toBeNull();
+  });
+
+  it("drops changes a revoked claimant sent", async () => {
+    const t = createTestContext();
+    stub(TIED);
+    const admin = await live(t);
+    await t.mutation(internal.firmClaims.saveProfile, {
+      email: "jane@smithlaw.com",
+      slug: SLUG,
+      profile: { ...PROFILE, description: "Sent just before the revoke." },
+    });
+    const claim = (await claimRow(t, "jane@smithlaw.com"))!;
+    await admin.mutation(api.firmClaims.revokeClaim, { claimId: claim._id });
+    expect((await admin.query(api.firmClaims.listForAdmin, {})).edits).toEqual([]);
   });
 });

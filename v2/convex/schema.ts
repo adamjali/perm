@@ -2195,8 +2195,13 @@ export default defineSchema({
    * What a verified firm publishes on its page, one row per firm. Shown apart
    * from DOL's figures as the firm's own words. `hidden` is set by the admin or
    * by the firm itself, and when the last verified claim is revoked; a hidden
-   * profile is not shown anywhere. `websiteApproved` lets a website on another
-   * domain than the verified address's through (admin only).
+   * profile is not shown anywhere.
+   *
+   * The top-level fields are the APPROVED version, the only one the page reads.
+   * A version a firm sends waits in `pending` until the admin approves it
+   * (convex/firmClaims.ts, since Oct 5 2026); `lastReview` keeps the newest
+   * decision, and a declined version, so the firm can fix and resend it. A row
+   * can exist with nothing approved yet, which shows nothing.
    */
   firmProfiles: defineTable({
     slug: v.string(),
@@ -2210,9 +2215,44 @@ export default defineSchema({
     verifiedBy: v.union(v.literal("domain"), v.literal("admin")),
     hidden: v.optional(v.boolean()),
     hiddenBy: v.optional(v.union(v.literal("admin"), v.literal("firm"), v.literal("revoked"))),
-    publishedAt: v.number(),
+    /** When a version was first approved; absent while the first one waits. */
+    publishedAt: v.optional(v.number()),
+    /** When what the page shows last changed. */
     updatedAt: v.number(),
-  }).index("by_slug", ["slug"]),
+    /** The version a firm sent, waiting for the admin, and whose claim sent it. */
+    pending: v.optional(
+      v.object({
+        website: v.optional(v.string()),
+        description: v.optional(v.string()),
+        languages: v.array(v.string()),
+        offices: v.array(v.object({ city: v.string(), state: v.string() })),
+        focus: v.array(v.string()),
+        claimId: v.id("firmClaims"),
+      }),
+    ),
+    /** When `pending` arrived; the admin's list reads this index. */
+    pendingAt: v.optional(v.number()),
+    lastReview: v.optional(
+      v.object({
+        decision: v.union(v.literal("approved"), v.literal("declined")),
+        at: v.number(),
+        /** Shown to the firm with a decline. */
+        reason: v.optional(v.string()),
+        /** A declined version, so the firm's edit page can offer it back. */
+        version: v.optional(
+          v.object({
+            website: v.optional(v.string()),
+            description: v.optional(v.string()),
+            languages: v.array(v.string()),
+            offices: v.array(v.object({ city: v.string(), state: v.string() })),
+            focus: v.array(v.string()),
+          }),
+        ),
+      }),
+    ),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_pending_at", ["pendingAt"]),
 
   /**
    * Alert email waiting for its recipient's one email of the day.

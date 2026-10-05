@@ -33,6 +33,7 @@ import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { loggers } from "./lib/logging";
 import { easternDay, MS_PER_DAY } from "./lib/time";
 import { RETRY_MAX_ROWS } from "./lib/emailLimits";
+import { waitingForReview } from "./firmClaims";
 
 const log = loggers.email;
 /** Reports kept for the admin page. */
@@ -106,6 +107,8 @@ export const facts = internalQuery({
       (r) => r.day === today || r.day === yesterday,
     );
 
+    const firmWaiting = await waitingForReview(ctx, 50);
+
     return {
       users: users.length,
       signups24h: users.filter((u) => u._creationTime > since).length,
@@ -133,6 +136,8 @@ export const facts = internalQuery({
         retriedYesterday: yesterdayUtc?.retried ?? 0,
         lostYesterday: yesterdayUtc?.lost ?? 0,
       },
+      // Firm names are public; no address or role reaches the report.
+      firmReview: { waiting: firmWaiting.map((w) => ({ firmName: w.firmName, kind: w.kind, since: w.since })) },
     };
   },
 });

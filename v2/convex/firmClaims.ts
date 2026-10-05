@@ -34,14 +34,24 @@
  * words whatever the state, so the form can't be used to learn who has claimed
  * what.
  *
- * ## What's published
+ * ## What's published, and who checks it first
  *
  * `firmProfiles`, one row per firm: website, description, languages, offices,
  * practice focus. Shown on the firm page as the firm's own words, apart from
  * DOL's figures. No attorney's name, no phone number, no link in the
- * description; the website must be on the verified domain unless the admin
- * approves it. The page is refreshed through `/api/revalidate-firm` whenever
- * the profile is published, edited, hidden or revoked.
+ * description (`checkProfile` refuses those before anything is stored).
+ *
+ * Since Oct 5 2026 the firm's words wait for the admin: a verified claim's
+ * first profile and every later edit go into `pending`, and the page keeps
+ * showing the last approved version (or nothing) until the admin approves.
+ * The admin hears about waiting work once a day at most (an email when the
+ * first item arrives, then the 7:30 AM morning report lists everything that
+ * waits). Approving publishes and emails the firm; declining keeps the page as
+ * it was and emails the firm the reason. Taking a profile down never waits.
+ * `FIRM_PROFILE_REVIEW` (Convex env) picks the reviewer: "manual" (the
+ * default) or "auto", whose check (`autoReview`) isn't built yet and so holds
+ * everything for the admin. The page is refreshed through
+ * `/api/revalidate-firm` whenever what it shows changes.
  *
  * @module convex/firmClaims
  */
@@ -54,6 +64,7 @@ import {
   mutation,
   query,
   type MutationCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -69,6 +80,7 @@ import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmation
 import { getAdminEmail, requireAdmin } from "./lib/admin";
 import { createLogger } from "./lib/logging";
 import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
+import type { FirmClaimEmailKind } from "../src/emails/FirmClaimEmail";
 import {
   ROLE_MAX,
   checkProfile,
@@ -92,6 +104,35 @@ export const EDIT_VALID_MS = 2 * MS_PER_DAY;
 export const CLAIM_IP_LIMIT = { limit: 10, windowMs: MS_PER_HOUR };
 /** Rows read for the admin list, per status group. */
 const ADMIN_READ = 200;
+/** A decline's reason, shown to the firm. */
+export const REVIEW_REASON_MAX = 500;
+/** One "something waits for review" email to the admin a day; the morning report lists the rest. */
+const REVIEW_NOTICE_LIMIT = { limit: 1, windowMs: MS_PER_DAY };
+
+/**
+ * Who reviews a firm's words: the admin ("manual", the default), or an
+ * automatic check ("auto"). Set FIRM_PROFILE_REVIEW on the Convex deployment.
+ */
+export function firmReviewMode(): "manual" | "auto" {
+  return process.env.FIRM_PROFILE_REVIEW === "auto" ? "auto" : "manual";
+}
+
+/**
+ * The automatic check, not built yet: until it is, it holds everything for the
+ * admin, so switching to "auto" can't publish unreviewed words.
+ *
+ * What it should check before saying "publish": plain text only (no link,
+ * phone number, address or person's name: `checkProfile` already refuses the
+ * obvious forms), 600 characters, facts about the firm rather than promotion
+ * ("the best", rankings, guarantees of outcome), nothing about a named client
+ * or case, and a website on the verified domain. The likely build is an LLM
+ * check through the app's provider fallback (src/lib/ai/providers.ts) from an
+ * action, or a Claude routine that reads the admin list; either answers
+ * "publish" or "hold" with a reason the admin sees.
+ */
+export function autoReview(_profile: FirmProfile, _domain: string): { decision: "publish" | "hold"; reason: string } {
+  return { decision: "hold", reason: "The automatic check isn't built yet." };
+}
 
 export const NEUTRAL_REPLY =
   "Check your inbox. If the address can claim this page, a link to confirm is on its way; it works for 7 days.";
@@ -308,12 +349,13 @@ export const clearCooldown = internalMutation({
 async function sendFirmEmail(
   ctx: Parameters<typeof sendOrQueue>[0] & Parameters<typeof recordError>[0],
   args: {
-    kind: "confirm" | "approved" | "edit";
+    kind: FirmClaimEmailKind;
     email: string;
     firmName: string;
     url: string;
     validFor: string;
     domainVerified?: boolean;
+    reason?: string;
   },
 ): Promise<boolean> {
   const subject =
@@ -321,7 +363,11 @@ async function sendFirmEmail(
       ? `Confirm your claim on ${args.firmName}'s page`
       : args.kind === "approved"
         ? `Your claim on ${args.firmName}'s page is approved`
-        : `Edit ${args.firmName}'s profile on PERM Tracker`;
+        : args.kind === "published"
+          ? `Your changes to ${args.firmName}'s page are up`
+          : args.kind === "declined"
+            ? `Your changes to ${args.firmName}'s page need another look`
+            : `Edit ${args.firmName}'s profile on PERM Tracker`;
   let html: string | undefined;
   try {
     const { render } = await import("@react-email/render");
@@ -333,11 +379,15 @@ async function sendFirmEmail(
   const lead =
     args.kind === "confirm"
       ? args.domainVerified
-        ? "Confirm and your profile goes up on the firm's page, marked as the firm's own words."
+        ? "Confirm, and we'll check your profile before it goes up on the firm's page as the firm's own words."
         : "Confirm and we'll check the claim by hand, because DOL's files don't tie this address's domain to the firm."
       : args.kind === "approved"
         ? "We checked your claim and your profile is up on the firm's page. Change it or take it down here:"
-        : "Here's your link to change the firm's profile or take it down:";
+        : args.kind === "published"
+          ? "We checked your changes and they're up on the firm's page. Change them or take the profile down here:"
+          : args.kind === "declined"
+            ? `We didn't put your latest changes up${args.reason ? `: ${args.reason}` : "."} The page shows what it showed before. Fix them and send them again here:`
+            : "Here's your link to change the firm's profile or take it down:";
   const result = await sendOrQueue(ctx, `firm-claim-${args.kind}`, getResend(), {
     from: FROM_EMAIL,
     to: args.email,
@@ -391,22 +441,49 @@ export const sendConfirmation = internalAction({
 // Confirm
 // ============================================================================
 
-/** Publish a verified claim's draft as the firm's profile. */
-async function publishDraft(ctx: MutationCtx, claim: Doc<"firmClaims">, verifiedBy: "domain" | "admin"): Promise<void> {
-  const now = Date.now();
-  const d = claim.draft;
-  const siteOk = d.website ? websiteMatchesDomain(d.website, claim.domain) : false;
-  const existing = await ctx.db
+type ProfileVersion = {
+  website?: string;
+  description?: string;
+  languages: string[];
+  offices: { city: string; state: string }[];
+  focus: string[];
+};
+
+function versionOf(v: ProfileVersion): ProfileVersion {
+  return { website: v.website, description: v.description, languages: v.languages, offices: v.offices, focus: v.focus };
+}
+
+async function profileRow(ctx: MutationCtx, slug: string) {
+  return ctx.db
     .query("firmProfiles")
-    .withIndex("by_slug", (q) => q.eq("slug", claim.slug))
+    .withIndex("by_slug", (q) => q.eq("slug", slug))
     .unique();
+}
+
+/**
+ * Make a version what the firm's page shows, and clear anything waiting.
+ * `websiteApproved`: a person looked at it, so a website on another domain
+ * goes up too; otherwise such a website waits in `pendingWebsite`.
+ */
+async function publishVersion(
+  ctx: MutationCtx,
+  slug: string,
+  d: ProfileVersion,
+  opts: { verifiedBy: "domain" | "admin"; domain: string; websiteApproved: boolean; decision?: "approved" },
+): Promise<void> {
+  const now = Date.now();
+  const existing = await profileRow(ctx, slug);
+  const siteOk = d.website ? opts.websiteApproved || websiteMatchesDomain(d.website, opts.domain) : false;
   const fields = {
     description: d.description,
     languages: d.languages,
     offices: d.offices,
     focus: d.focus,
-    verifiedBy,
+    verifiedBy: opts.verifiedBy,
     updatedAt: now,
+    pending: undefined,
+    pendingAt: undefined,
+    ...(opts.decision ? { lastReview: { decision: opts.decision, at: now } } : {}),
     ...(d.website
       ? siteOk || d.website === existing?.website
         ? { website: d.website, pendingWebsite: undefined }
@@ -416,11 +493,60 @@ async function publishDraft(ctx: MutationCtx, claim: Doc<"firmClaims">, verified
   if (existing) {
     // A profile the admin hid stays hidden whoever verifies next.
     const unhide = existing.hiddenBy === "admin" ? {} : { hidden: undefined, hiddenBy: undefined };
-    await ctx.db.patch(existing._id, { ...fields, ...unhide });
+    await ctx.db.patch(existing._id, { ...fields, ...unhide, publishedAt: existing.publishedAt ?? now });
   } else {
-    await ctx.db.insert("firmProfiles", { slug: claim.slug, ...fields, languages: d.languages, offices: d.offices, focus: d.focus, publishedAt: now });
+    await ctx.db.insert("firmProfiles", { slug, ...fields, languages: d.languages, offices: d.offices, focus: d.focus, publishedAt: now });
   }
-  await ctx.scheduler.runAfter(0, internal.firmClaims.revalidateFirmPage, { slug: claim.slug });
+  await ctx.scheduler.runAfter(0, internal.firmClaims.revalidateFirmPage, { slug });
+}
+
+/** Publish a verified claim's draft as the firm's profile. Only a person's approval, or a passed automatic check, gets here. */
+async function publishDraft(ctx: MutationCtx, claim: Doc<"firmClaims">, verifiedBy: "domain" | "admin", websiteApproved = false): Promise<void> {
+  await publishVersion(ctx, claim.slug, claim.draft, { verifiedBy, domain: claim.domain, websiteApproved });
+}
+
+/**
+ * A verified firm sent words for its page: hold them for review, unless they
+ * only remove what's there (an empty version can't say anything) or the
+ * automatic check passes them. Returns what happened.
+ */
+async function submitProfile(ctx: MutationCtx, claim: Doc<"firmClaims">): Promise<"published" | "pending"> {
+  const d = claim.draft;
+  const verifiedBy = claim.verifiedBy ?? "domain";
+  if (!hasContent(d as FirmProfile)) {
+    await publishDraft(ctx, claim, verifiedBy);
+    return "published";
+  }
+  if (firmReviewMode() === "auto" && autoReview(d as FirmProfile, claim.domain).decision === "publish") {
+    await publishDraft(ctx, claim, verifiedBy);
+    return "published";
+  }
+  const now = Date.now();
+  const pending = { ...versionOf(d), claimId: claim._id };
+  const existing = await profileRow(ctx, claim.slug);
+  if (existing) {
+    await ctx.db.patch(existing._id, { pending, pendingAt: now });
+  } else {
+    // Nothing approved yet: a row that shows nothing until the admin approves.
+    await ctx.db.insert("firmProfiles", {
+      slug: claim.slug,
+      languages: [],
+      offices: [],
+      focus: [],
+      verifiedBy,
+      updatedAt: now,
+      pending,
+      pendingAt: now,
+    });
+  }
+  await noteReviewWaiting(ctx);
+  return "pending";
+}
+
+/** Tell the admin something waits for review: one email a day at most, charged before it's scheduled. */
+async function noteReviewWaiting(ctx: MutationCtx): Promise<void> {
+  const notice = await checkAndRecordRateLimit(ctx, "admin", "firm_review_notice", REVIEW_NOTICE_LIMIT);
+  if (notice.allowed) await ctx.scheduler.runAfter(0, internal.firmClaims.notifyAdminOfReview, {});
 }
 
 export const confirmByToken = internalMutation({
@@ -428,6 +554,8 @@ export const confirmByToken = internalMutation({
   returns: v.union(
     v.object({
       published: v.array(v.object({ slug: v.string(), firmName: v.string() })),
+      /** Confirmed, with the firm's words held for review. */
+      submitted: v.array(v.object({ slug: v.string(), firmName: v.string() })),
       review: v.array(v.string()),
       already: v.array(v.string()),
       editToken: v.optional(v.string()),
@@ -443,6 +571,7 @@ export const confirmByToken = internalMutation({
       .withIndex("by_email", (q) => q.eq("email", email))
       .take(MAX_CLAIMS_PER_ADDRESS + 1);
     const published: { slug: string; firmName: string }[] = [];
+    const submitted: { slug: string; firmName: string }[] = [];
     const review: string[] = [];
     const already: string[] = [];
     for (const c of claims) {
@@ -457,18 +586,19 @@ export const confirmByToken = internalMutation({
       if (c.status !== "pending_email") continue;
       if (c.domainReason === undefined) {
         await ctx.db.patch(c._id, { status: "verified", verifiedBy: "domain", confirmedAt: now });
-        await publishDraft(ctx, { ...c, status: "verified" }, "domain");
-        published.push({ slug: c.slug, firmName: c.firmName });
+        const outcome = await submitProfile(ctx, { ...c, status: "verified", verifiedBy: "domain" });
+        (outcome === "published" ? published : submitted).push({ slug: c.slug, firmName: c.firmName });
       } else {
         await ctx.db.patch(c._id, { status: "pending_review", confirmedAt: now });
-        await ctx.scheduler.runAfter(0, internal.firmClaims.notifyAdminOfReview, { claimId: c._id });
+        await noteReviewWaiting(ctx);
         review.push(c.firmName);
       }
     }
-    if (published.length === 0 && review.length === 0 && already.length === 0) return null;
-    const canEdit = published.length > 0 || already.length > 0;
+    if (published.length === 0 && submitted.length === 0 && review.length === 0 && already.length === 0) return null;
+    const canEdit = published.length > 0 || submitted.length > 0 || already.length > 0;
     return {
       published,
+      submitted,
       review,
       already,
       ...(canEdit ? { editToken: await makeExpiringToken(email, secret(), "firm-edit", now + EDIT_VALID_MS) } : {}),
@@ -476,15 +606,53 @@ export const confirmByToken = internalMutation({
   },
 });
 
+/** What waits for the admin: claims to check by hand and profile versions to read. Newest last. */
+export async function waitingForReview(
+  ctx: { db: QueryCtx["db"] },
+  limit = ADMIN_READ,
+): Promise<{ firmName: string; slug: string; kind: "claim" | "edit"; since: number }[]> {
+  const db = ctx.db;
+  const claims = await db
+    .query("firmClaims")
+    .withIndex("by_status", (q) => q.eq("status", "pending_review"))
+    .take(limit);
+  const edits = await db
+    .query("firmProfiles")
+    .withIndex("by_pending_at", (q) => q.gt("pendingAt", 0))
+    .take(limit);
+  const out: { firmName: string; slug: string; kind: "claim" | "edit"; since: number }[] = claims.map((c) => ({
+    firmName: c.firmName,
+    slug: c.slug,
+    kind: "claim" as const,
+    since: c.confirmedAt ?? c.createdAt,
+  }));
+  for (const p of edits) {
+    const claim = p.pending ? await db.get(p.pending.claimId) : null;
+    out.push({ firmName: claim?.firmName ?? p.slug, slug: p.slug, kind: "edit", since: p.pendingAt ?? p.updatedAt });
+  }
+  return out.sort((a, b) => a.since - b.since);
+}
+
+export const reviewWaiting = internalQuery({
+  args: {},
+  returns: v.array(v.object({ firmName: v.string(), slug: v.string(), kind: v.union(v.literal("claim"), v.literal("edit")), since: v.number() })),
+  handler: async (ctx) => waitingForReview(ctx),
+});
+
+/** One email: what waits for review right now. The caller charged the once-a-day limit. */
 export const notifyAdminOfReview = internalAction({
-  args: { claimId: v.id("firmClaims") },
+  // `claimId` is ignored; it's accepted so a notice scheduled before Oct 5 2026 still runs.
+  args: { claimId: v.optional(v.id("firmClaims")) },
   returns: v.null(),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const to = getAdminEmail();
     if (!to) return null;
     try {
-      const c = await ctx.runQuery(internal.firmClaims.getClaim, { claimId: args.claimId });
-      if (!c) return null;
+      const waiting = await ctx.runQuery(internal.firmClaims.reviewWaiting, {});
+      if (waiting.length === 0) return null;
+      const lines = waiting
+        .slice(0, 20)
+        .map((w) => `- ${w.firmName}: ${w.kind === "claim" ? "a claim to check by hand (DOL's files don't tie the address's domain to the firm)" : "profile changes to read"}`);
       await sendOrQueue(
         ctx,
         "firm-claim-review",
@@ -492,11 +660,15 @@ export const notifyAdminOfReview = internalAction({
         {
           from: FROM_EMAIL,
           to,
-          subject: `A firm-page claim needs a look: ${c.firmName}`,
+          subject: `Firm pages waiting for your review: ${waiting.length}`,
           text: [
-            `A claim on ${c.firmName}'s page was confirmed by email, and DOL's files don't tie the address's domain to the firm.`,
+            "These wait for you before anything shows on the firm pages:",
             "",
-            `Approve or reject it on the admin page: ${SITE_URL}/admin#firm-claims`,
+            ...lines,
+            "",
+            `Approve or decline on the admin page: ${SITE_URL}/admin#firm-claims`,
+            "",
+            "You get this at most once a day. The 7:30 AM report lists whatever still waits.",
           ].join("\n"),
         },
         { priority: "high" },
@@ -524,6 +696,11 @@ export const editStateFor = internalQuery({
       hidden: v.boolean(),
       hiddenBy: v.optional(v.string()),
       pendingWebsite: v.optional(v.string()),
+      /** A version waiting for review, and when it was sent. */
+      pending: v.union(profileOut, v.null()),
+      pendingAt: v.optional(v.number()),
+      /** The newest decline, while nothing newer waits: the reason and the version, to fix and resend. */
+      declined: v.optional(v.object({ at: v.number(), reason: v.optional(v.string()), version: profileOut })),
     }),
   ),
   handler: async (ctx, args) => {
@@ -538,16 +715,22 @@ export const editStateFor = internalQuery({
         .query("firmProfiles")
         .withIndex("by_slug", (q) => q.eq("slug", c.slug))
         .unique();
+      const live = p ? versionOf(p) : null;
+      const lr = p?.lastReview;
       out.push({
         slug: c.slug,
         firmName: c.firmName,
         domain: c.domain,
-        profile: p
-          ? { website: p.website, description: p.description, languages: p.languages, offices: p.offices, focus: p.focus }
-          : null,
+        // A row whose first version still waits has nothing live.
+        profile: live && hasContent(live as FirmProfile) ? live : null,
         hidden: p?.hidden === true,
         hiddenBy: p?.hiddenBy,
         pendingWebsite: p?.pendingWebsite,
+        pending: p?.pending ? versionOf(p.pending) : null,
+        pendingAt: p?.pendingAt,
+        ...(lr && lr.decision === "declined" && lr.version && !p?.pending
+          ? { declined: { at: lr.at, reason: lr.reason, version: lr.version } }
+          : {}),
       });
     }
     return out;
@@ -587,7 +770,14 @@ export const saveProfile = internalMutation({
     const checked = checkProfile(args.profile);
     if (!checked.ok) return { ok: false, message: "Some of the details need a fix.", errors: checked.errors as Record<string, string> };
     await ctx.db.patch(claim._id, { draft: checked.profile });
-    await publishDraft(ctx, { ...claim, draft: checked.profile }, claim.verifiedBy ?? "domain");
+    const outcome = await submitProfile(ctx, { ...claim, draft: checked.profile });
+    if (outcome === "pending") {
+      const shows = existing && hasContent(versionOf(existing) as FirmProfile) && !existing.hidden;
+      return {
+        ok: true,
+        message: `Sent for review. The firm's page keeps showing ${shows ? "the earlier version" : "nothing from the firm"} until we've checked it, and we'll email you when it's done. Saving again replaces what's waiting.`,
+      };
+    }
     const saved = await ctx.db
       .query("firmProfiles")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
@@ -669,6 +859,34 @@ export const sendEditLink = internalAction({
       if (!ok && args.kind === "edit") await ctx.runMutation(internal.firmClaims.clearCooldown, { claimId: args.claimId, which: "edit" });
     } catch (error) {
       await recordError(ctx, "action", "firmClaims.sendEditLink", error);
+    }
+    return null;
+  },
+});
+
+/** The firm hears the admin's decision on what it sent, with a fresh edit link. */
+export const sendReviewDecision = internalAction({
+  args: {
+    claimId: v.id("firmClaims"),
+    decision: v.union(v.literal("published"), v.literal("declined")),
+    reason: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    try {
+      const c = await ctx.runQuery(internal.firmClaims.getClaim, { claimId: args.claimId });
+      if (!c || c.status !== "verified") return null;
+      const token = await makeExpiringToken(c.email, secret(), "firm-edit", Date.now() + EDIT_VALID_MS);
+      await sendFirmEmail(ctx, {
+        kind: args.decision,
+        email: c.email,
+        firmName: c.firmName,
+        url: actionUrl("/firm-claim/edit", token),
+        validFor: "2 days",
+        reason: args.reason,
+      });
+    } catch (error) {
+      await recordError(ctx, "action", "firmClaims.sendReviewDecision", error);
     }
     return null;
   },
@@ -774,10 +992,29 @@ const adminClaim = v.object({
   pendingWebsite: v.optional(v.string()),
 });
 
-/** Every claim the admin needs to see, newest first, by group. SECURITY: requireAdmin; rows carry addresses. */
+const adminEdit = v.object({
+  slug: v.string(),
+  firmName: v.string(),
+  email: v.string(),
+  domain: v.string(),
+  submittedAt: v.number(),
+  /** What the page shows now; null when nothing from the firm is live yet. */
+  before: v.union(profileOut, v.null()),
+  after: profileOut,
+  /** The new website isn't on the domain the claim was verified with. */
+  websiteOffDomain: v.boolean(),
+  hidden: v.boolean(),
+});
+
+/** Every claim and waiting profile version the admin needs to see. SECURITY: requireAdmin; rows carry addresses. */
 export const listForAdmin = query({
   args: {},
-  returns: v.object({ review: v.array(adminClaim), verified: v.array(adminClaim), other: v.array(adminClaim) }),
+  returns: v.object({
+    review: v.array(adminClaim),
+    edits: v.array(adminEdit),
+    verified: v.array(adminClaim),
+    other: v.array(adminClaim),
+  }),
   handler: async (ctx) => {
     await requireAdmin(ctx);
     const read = async (status: Doc<"firmClaims">["status"]) =>
@@ -819,8 +1056,31 @@ export const listForAdmin = query({
       read("rejected"),
       read("revoked"),
     ]);
+    const waiting = await ctx.db
+      .query("firmProfiles")
+      .withIndex("by_pending_at", (q) => q.gt("pendingAt", 0))
+      .take(ADMIN_READ);
+    const edits = [];
+    for (const p of waiting) {
+      if (!p.pending) continue;
+      const claim = await ctx.db.get(p.pending.claimId);
+      const live = versionOf(p);
+      const after = versionOf(p.pending);
+      edits.push({
+        slug: p.slug,
+        firmName: claim?.firmName ?? p.slug,
+        email: claim?.email ?? "",
+        domain: claim?.domain ?? "",
+        submittedAt: p.pendingAt ?? p.updatedAt,
+        before: hasContent(live as FirmProfile) ? live : null,
+        after,
+        websiteOffDomain: Boolean(after.website && claim && !websiteMatchesDomain(after.website, claim.domain)),
+        hidden: p.hidden === true,
+      });
+    }
     return {
       review: await Promise.all(review.map(shape)),
+      edits,
       verified: await Promise.all(verified.map(shape)),
       other: await Promise.all([...pending, ...rejected, ...revoked].sort((a, b) => b.createdAt - a.createdAt).map(shape)),
     };
@@ -836,7 +1096,8 @@ export const approveClaim = mutation({
     if (!c || c.status !== "pending_review") throw new Error("Only a claim waiting for review can be approved.");
     const now = Date.now();
     await ctx.db.patch(c._id, { status: "verified", verifiedBy: "admin", reviewedAt: now });
-    await publishDraft(ctx, { ...c, status: "verified" }, "admin");
+    // The admin read the profile with the claim, so it goes up as it is.
+    await publishVersion(ctx, c.slug, c.draft, { verifiedBy: "admin", domain: c.domain, websiteApproved: true, decision: "approved" });
     await ctx.scheduler.runAfter(0, internal.firmClaims.sendEditLink, { claimId: c._id, kind: "approved" });
     return null;
   },
@@ -866,6 +1127,8 @@ export const revokeClaim = mutation({
     if (!c || c.status !== "verified") throw new Error("Only a verified claim can be revoked.");
     const now = Date.now();
     await ctx.db.patch(c._id, { status: "revoked", revokedAt: now });
+    const sent = await profileRow(ctx, c.slug);
+    if (sent?.pending?.claimId === c._id) await ctx.db.patch(sent._id, { pending: undefined, pendingAt: undefined });
     const others = await ctx.db
       .query("firmClaims")
       .withIndex("by_slug", (q) => q.eq("slug", c.slug))
@@ -898,6 +1161,47 @@ export const setProfileHidden = mutation({
       args.hidden ? { hidden: true, hiddenBy: "admin", updatedAt: Date.now() } : { hidden: undefined, hiddenBy: undefined, updatedAt: Date.now() },
     );
     await ctx.scheduler.runAfter(0, internal.firmClaims.revalidateFirmPage, { slug: args.slug });
+    return null;
+  },
+});
+
+/** Publish the version a firm sent. The admin read it, so a website on another domain goes up too. */
+export const approveProfile = mutation({
+  args: { slug: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const p = await profileRow(ctx, args.slug);
+    if (!p?.pending) throw new Error("That firm has nothing waiting for review.");
+    const claim = await ctx.db.get(p.pending.claimId);
+    if (!claim || claim.status !== "verified") throw new Error("The claim that sent this isn't verified any more.");
+    await publishVersion(ctx, args.slug, p.pending, {
+      verifiedBy: claim.verifiedBy ?? p.verifiedBy,
+      domain: claim.domain,
+      websiteApproved: true,
+      decision: "approved",
+    });
+    await ctx.scheduler.runAfter(0, internal.firmClaims.sendReviewDecision, { claimId: claim._id, decision: "published" });
+    return null;
+  },
+});
+
+/** Decline the version a firm sent. The page keeps what it showed; the firm gets the reason and its words back to fix. */
+export const rejectProfile = mutation({
+  args: { slug: v.string(), reason: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const p = await profileRow(ctx, args.slug);
+    if (!p?.pending) throw new Error("That firm has nothing waiting for review.");
+    const reason = args.reason?.trim().replace(/\s+/g, " ").slice(0, REVIEW_REASON_MAX) || undefined;
+    const claimId = p.pending.claimId;
+    await ctx.db.patch(p._id, {
+      pending: undefined,
+      pendingAt: undefined,
+      lastReview: { decision: "declined", at: Date.now(), reason, version: versionOf(p.pending) },
+    });
+    await ctx.scheduler.runAfter(0, internal.firmClaims.sendReviewDecision, { claimId, decision: "declined", reason });
     return null;
   },
 });

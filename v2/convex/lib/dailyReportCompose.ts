@@ -9,6 +9,7 @@
  * speak this shape, and STATUS_RANK must match RANK in the Python script.
  */
 
+import { SITE_URL } from "./links";
 import { MS_PER_DAY } from "./time";
 
 export type SectionStatus = "fail" | "warn" | "unknown" | "off" | "ok";
@@ -142,6 +143,8 @@ export interface Facts {
   confirmationQueue?: { waiting: number; oldestQueuedAt: number | null };
   /** Failed sends waiting to retry (convex/emailLedger.ts), and yesterday's UTC-day counts. */
   retries?: { waiting: number; oldestQueuedAt: number | null; retriedYesterday: number; lostYesterday: number };
+  /** Law-firm claims and profile changes waiting for the admin (convex/firmClaims.ts), oldest first. */
+  firmReview?: { waiting: Array<{ firmName: string; kind: "claim" | "edit"; since: number }> };
 }
 
 export interface ResendDay {
@@ -225,6 +228,10 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
     lines: emailLines,
   };
 
+  const sections: ReportSection[] = [app, email];
+  const firms = firmSection(f, now);
+  if (firms) sections.push(firms);
+
   const errors: ReportSection = {
     key: "errors",
     title: "Recorded server errors",
@@ -232,5 +239,41 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
     summary: f.errors.count === 0 ? "none in 24 h" : `${f.errors.count} in 24 h`,
     lines: f.errors.top.map(([op, n]) => `${op}: ${n}`),
   };
-  return [app, email, errors];
+  // Errors stays third: callers read [app, email, errors] by position.
+  sections.splice(2, 0, errors);
+  return sections;
+}
+
+function waited(ms: number): string {
+  const hours = Math.max(1, Math.round(ms / 3_600_000));
+  if (hours < 36) return `${hours} hour${hours === 1 ? "" : "s"}`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+/**
+ * Law firms waiting for the admin: nothing shows on their pages until the
+ * admin acts, so anything waiting is a thing to do ("warn"), and the section
+ * is absent when nothing waits.
+ */
+function firmSection(f: Facts, now: number): ReportSection | null {
+  const waiting = f.firmReview?.waiting ?? [];
+  if (waiting.length === 0) return null;
+  const claims = waiting.filter((w) => w.kind === "claim").length;
+  const edits = waiting.length - claims;
+  const parts = [
+    claims ? `${claims} claim${claims === 1 ? "" : "s"}` : "",
+    edits ? `${edits} profile change${edits === 1 ? "" : "s"}` : "",
+  ].filter(Boolean);
+  const oldest = Math.min(...waiting.map((w) => w.since));
+  return {
+    key: "firms",
+    title: "Law firms waiting for review",
+    status: "warn",
+    summary: `${parts.join(" and ")} waiting, the oldest for ${waited(now - oldest)}`,
+    lines: [
+      ...waiting.map((w) => `${w.firmName}: ${w.kind === "claim" ? "a claim to check by hand" : "profile changes"}, waiting ${waited(now - w.since)}`),
+      `Review them at ${SITE_URL}/admin#firm-claims`,
+    ],
+  };
 }

@@ -1,8 +1,10 @@
 /**
- * The three emails a law firm gets when it claims its page.
+ * The emails a law firm gets when it claims its page.
  *
  * - `confirm`: the link that proves the claimant reads mail at the address.
  * - `approved`: the admin checked a claim by hand and published it.
+ * - `published`: the admin read the firm's changes and put them up.
+ * - `declined`: the admin didn't put the changes up, and says why.
  * - `edit`: a fresh link to edit the firm's profile.
  *
  * Every link here GRANTS something, so every one expires (convex/lib/expiringToken.ts),
@@ -14,7 +16,7 @@ import { Section, Text } from "@react-email/components";
 import { EmailButton, EmailLayout } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
 
-export type FirmClaimEmailKind = "confirm" | "approved" | "edit";
+export type FirmClaimEmailKind = "confirm" | "approved" | "published" | "declined" | "edit";
 
 export interface FirmClaimEmailProps {
   kind: FirmClaimEmailKind;
@@ -26,14 +28,19 @@ export interface FirmClaimEmailProps {
   validFor: string;
   /** confirm only: whether DOL's files already tie the address's domain to the firm. */
   domainVerified?: boolean;
+  /** declined only: the admin's reason, if one was given. */
+  reason?: string;
 }
 
-const COPY: Record<FirmClaimEmailKind, { preview: (f: string) => string; body: (f: string, auto: boolean) => string; button: string }> = {
+const COPY: Record<
+  FirmClaimEmailKind,
+  { preview: (f: string) => string; body: (f: string, auto: boolean, reason?: string) => string; button: string }
+> = {
   confirm: {
     preview: (f) => `Confirm your claim on ${f}'s PERM Tracker page.`,
     body: (_f, auto) =>
       auto
-        ? "Confirm and your profile goes up on the firm's page, marked as the firm's own words, next to DOL's figures."
+        ? "Confirm, and we'll check your profile before it goes up on the firm's page, marked as the firm's own words, next to DOL's figures. We'll email you when it's up."
         : "Confirm and we'll check the claim by hand, because DOL's files don't tie this address's domain to the firm. We'll email you when it's done.",
     button: "Confirm the claim",
   },
@@ -42,6 +49,17 @@ const COPY: Record<FirmClaimEmailKind, { preview: (f: string) => string; body: (
     body: () => "We checked your claim and your profile is up on the firm's page, marked as the firm's own words. You can change it or take it down here.",
     button: "Edit the profile",
   },
+  published: {
+    preview: (f) => `Your changes to ${f}'s page are up.`,
+    body: () => "We read your changes and they're up on the firm's page, marked as the firm's own words. You can change them or take the profile down here.",
+    button: "Edit the profile",
+  },
+  declined: {
+    preview: (f) => `Your changes to ${f}'s page need another look.`,
+    body: (_f, _auto, reason) =>
+      `We didn't put your latest changes up${reason ? `: ${reason}` : "."} The firm's page shows what it showed before. Your changes are on the edit page to fix and send again.`,
+    button: "Fix and send again",
+  },
   edit: {
     preview: (f) => `Edit ${f}'s profile on PERM Tracker.`,
     body: () => "Here's your link to change the firm's profile or take it down.",
@@ -49,7 +67,7 @@ const COPY: Record<FirmClaimEmailKind, { preview: (f: string) => string; body: (
   },
 };
 
-export function FirmClaimEmail({ kind, firmName, url, validFor, domainVerified = false }: FirmClaimEmailProps) {
+export function FirmClaimEmail({ kind, firmName, url, validFor, domainVerified = false, reason }: FirmClaimEmailProps) {
   const c = COPY[kind];
   return (
     <EmailLayout
@@ -63,7 +81,7 @@ export function FirmClaimEmail({ kind, firmName, url, validFor, domainVerified =
       </Section>
 
       <Text className="em-text-body" style={styles.body}>
-        {c.body(firmName, domainVerified)}
+        {c.body(firmName, domainVerified, reason)}
       </Text>
 
       <Section style={styles.cta}>

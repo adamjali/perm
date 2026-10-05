@@ -12,6 +12,8 @@ describe("FirmClaimEmail", () => {
   it.each([
     ["confirm", "Confirm the claim"],
     ["approved", "Edit the profile"],
+    ["published", "Edit the profile"],
+    ["declined", "Fix and send again"],
     ["edit", "Edit the profile"],
   ] as const)("%s: names the firm, carries one link and says when it stops working", async (kind, button) => {
     const url = `https://permtracker.app/firm-claim/${kind === "confirm" ? "confirm" : "edit"}?token=T`;
@@ -30,6 +32,14 @@ describe("FirmClaimEmail", () => {
     const auto = await render(
       FirmClaimEmail({ kind: "confirm", firmName: "Smith Immigration PLLC", url: "https://x", validFor: "7 days", domainVerified: true }),
     );
-    expect(auto).toContain("goes up on the firm");
+    expect(auto).toContain("check your profile before it goes up");
+  });
+
+  it("gives a declined firm the admin's reason, and says the page didn't change", async () => {
+    const html = await render(
+      FirmClaimEmail({ kind: "declined", firmName: "Smith Immigration PLLC", url: "https://x", validFor: "2 days", reason: "Please state facts, not rankings." }),
+    );
+    expect(html).toContain("Please state facts, not rankings.");
+    expect(html).toContain("shows what it showed before");
   });
 });

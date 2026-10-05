@@ -217,7 +217,10 @@ export default function AdminDashboardClient() {
           {
             id: "firm-claims",
             label: "Firm claims",
-            badge: firmClaims && firmClaims.review.length > 0 ? `${firmClaims.review.length} waiting` : null,
+            badge:
+              firmClaims && firmClaims.review.length + firmClaims.edits.length > 0
+                ? `${firmClaims.review.length + firmClaims.edits.length} waiting`
+                : null,
             content: <FirmClaimsPanel data={firmClaims} />,
           },
           {

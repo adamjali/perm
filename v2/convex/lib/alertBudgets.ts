@@ -35,7 +35,10 @@ export const BUDGETS = {
   prefsLink: { key: "prefs_link_global", limit: 20, label: "Preference-page links" },
   /**
    * A law firm claiming its page (convex/firmClaims.ts): the confirmation
-   * link, the approval note and edit links. Rare by nature, so the bound is low.
+   * link and edit links. Rare by nature, so the bound is low. The emails an
+   * admin's click sends (a claim approved, changes published or declined, one
+   * per decision) and the admin's own "waiting for review" note (one a day)
+   * go through `sendOrQueue` without drawing on this pool.
    */
   firmClaim: { key: "firm_claim_global", limit: 10, label: "Firm page claims" },
   /**

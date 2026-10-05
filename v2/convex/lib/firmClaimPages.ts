@@ -19,20 +19,32 @@ import {
   type ProfileInput,
 } from "../../src/lib/firmProfile";
 
+type Version = {
+  website?: string;
+  description?: string;
+  languages: string[];
+  offices: FirmOffice[];
+  focus: string[];
+};
+
 export interface EditFirm {
   slug: string;
   firmName: string;
   domain: string;
-  profile: {
-    website?: string;
-    description?: string;
-    languages: string[];
-    offices: FirmOffice[];
-    focus: string[];
-  } | null;
+  /** What the firm's page shows now; null when nothing is live. */
+  profile: Version | null;
   hidden: boolean;
   hiddenBy?: string;
   pendingWebsite?: string;
+  /** A version waiting for review. */
+  pending?: Version | null;
+  pendingAt?: number;
+  /** The newest decline, while nothing newer waits. */
+  declined?: { at: number; reason?: string; version: Version };
+}
+
+function day(ms: number): string {
+  return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
 }
 
 /** What the form shows after a save: the result, and what was typed when it didn't pass. */
@@ -62,7 +74,8 @@ function asLines(offices: unknown): string {
 function firmForm(f: EditFirm, token: string, notice?: EditNotice): string {
   const mine = notice?.slug === f.slug ? notice : undefined;
   const typed = mine && !mine.ok ? mine.submitted : undefined;
-  const p = f.profile ?? { languages: [], offices: [], focus: [] };
+  // The form starts from what's waiting, then from a declined version, then from the page.
+  const p = f.pending ?? f.declined?.version ?? f.profile ?? { languages: [], offices: [], focus: [] };
   const website = typeof typed?.website === "string" ? typed.website : (p.website ?? f.pendingWebsite ?? "");
   const description = typeof typed?.description === "string" ? typed.description : (p.description ?? "");
   const languages = Array.isArray(typed?.languages) ? (typed.languages as string[]).join(", ") : p.languages.join(", ");
@@ -73,6 +86,14 @@ function firmForm(f: EditFirm, token: string, notice?: EditNotice): string {
     ? `<p class="note" role="status">${escapeHtml(mine.message)}</p>`
     : f.hidden
       ? `<p class="note">${f.hiddenBy === "admin" ? "We've taken this profile down, so nothing from the firm shows on its page." : "The profile is down, so nothing from the firm shows on its page."}</p>`
+      : "";
+  // Right after a save, the save's own message already says it's waiting.
+  const review = mine?.ok
+    ? ""
+    : f.pending
+    ? `<p class="note">Your changes${f.pendingAt ? ` from ${escapeHtml(day(f.pendingAt))}` : ""} are waiting for our review. The firm's page shows ${f.profile ? "the earlier version" : "nothing from the firm"} until we've checked them, and we'll email you. They're below; saving again replaces what's waiting.</p>`
+    : f.declined
+      ? `<p class="note">We didn't put your changes from ${escapeHtml(day(f.declined.at))} up${f.declined.reason ? `: ${escapeHtml(f.declined.reason)}` : "."} They're below to fix and send again.</p>`
       : "";
   const pending = f.pendingWebsite
     ? `<p class="detail">${escapeHtml(f.pendingWebsite)} isn't on ${escapeHtml(f.domain)}, the domain you confirmed with, so it shows once we've checked it.</p>`
@@ -85,6 +106,7 @@ function firmForm(f: EditFirm, token: string, notice?: EditNotice): string {
 <h2>${escapeHtml(f.firmName)}</h2>
 <p class="detail"><a href="${SITE_URL}/perm-attorneys/${encodeURIComponent(f.slug)}">The firm's page</a></p>
 ${status}
+${review}
 <form method="POST" action="${action}">
 <input type="hidden" name="action" value="save"/>
 <label for="w-${escapeHtml(f.slug)}">Website <span class="hint">On ${escapeHtml(f.domain)}, starting https://</span></label>
@@ -99,7 +121,7 @@ ${pending}
 <fieldset><legend>What the firm handles</legend>
 ${FOCUS_OPTIONS.map((o) => `<label class="check"><input type="checkbox" name="focus" value="${o.id}"${focus.has(o.id) ? " checked" : ""}/>${escapeHtml(o.label)}</label>`).join("")}
 </fieldset>
-<p class="actions"><button type="submit" class="btn go">Save the profile</button></p>
+<p class="actions"><button type="submit" class="btn go">Send for review</button></p>
 </form>
 ${toggle}
 </section>`;
@@ -113,7 +135,7 @@ export function firmEditPage(firms: EditFirm[], token: string, notice?: EditNoti
       `<h1>No confirmed claim</h1><p class="muted">This address has no confirmed claim on a firm's page any more. Claim the page again from the firm's page on ${escapeHtml(SITE_URL.replace("https://", ""))}.</p>`,
     );
   }
-  const intro = `<h1>Your firm's profile</h1><p class="muted">What you save shows on the firm's page as the firm's own words, apart from DOL's figures. This link works for 2 days; ask for a fresh one from the firm's page any time.</p>`;
+  const intro = `<h1>Your firm's profile</h1><p class="muted">What you send shows on the firm's page as the firm's own words, apart from DOL's figures, once we've checked it. Taking the profile down is immediate. This link works for 2 days; ask for a fresh one from the firm's page any time.</p>`;
   return htmlPage("Your firm's profile", intro + firms.map((f) => firmForm(f, token, notice)).join(""));
 }
 

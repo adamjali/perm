@@ -1,10 +1,11 @@
 "use client";
 
 /**
- * Law firms claiming their pages (convex/firmClaims.ts): the ones waiting for a
- * person, the verified ones, and the rest, with approve, reject, revoke, hide
- * and the website check. Waiting claims come first, with the reason the domain
- * check fell short, because that's what decides whether to approve.
+ * Law firms claiming their pages (convex/firmClaims.ts): claims waiting for a
+ * person, profile changes waiting for a read (before and after, approve or
+ * decline with a reason the firm is told), the verified claims, and the rest.
+ * Waiting claims come first, with the reason the domain check fell short,
+ * because that's what decides whether to approve.
  *
  * SECURITY: the rows carry claimants' addresses and roles; admin page only.
  */
@@ -20,6 +21,11 @@ import { focusLabel } from "@/lib/firmProfile";
 
 export type FirmClaimsData = FunctionReturnType<typeof api.firmClaims.listForAdmin>;
 type Claim = FirmClaimsData["review"][number];
+type Edit = FirmClaimsData["edits"][number];
+type Version = Edit["after"];
+
+/** A decline's reason; the server cuts at the same length. */
+const REASON_MAX = 500;
 
 const REASON: Record<string, string> = {
   personal: "Personal mail (Gmail, Yahoo and the like)",
@@ -72,7 +78,7 @@ function ClaimCard({ c }: { c: Claim }) {
         </a>{" "}
         <span className="text-sm font-bold">{c.status.replace("_", " ")}</span>
       </div>{" "}
-      <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
+      <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr] [&>*]:min-w-0">
         <dt className="font-bold">Address</dt> <dd className="break-all">{c.email}</dd>{" "}
         <dt className="font-bold">Role</dt> <dd>{c.role}</dd>{" "}
         <dt className="font-bold">Domain check</dt>{" "}
@@ -149,6 +155,113 @@ function ClaimCard({ c }: { c: Claim }) {
   );
 }
 
+
+function fieldRows(v: Version | null): { label: string; value: string }[] {
+  if (!v) return [];
+  return [
+    { label: "Website", value: v.website ?? "" },
+    { label: "Handles", value: v.focus.map(focusLabel).join(", ") },
+    { label: "Languages", value: v.languages.join(", ") },
+    { label: "Offices", value: v.offices.map((o) => `${o.city}, ${o.state}`).join("; ") },
+    { label: "About", value: v.description ?? "" },
+  ];
+}
+
+function EditCard({ e }: { e: Edit }) {
+  const approve = useMutation(api.firmClaims.approveProfile);
+  const decline = useMutation(api.firmClaims.rejectProfile);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [reason, setReason] = useState("");
+  const run = async (fn: () => Promise<unknown>) => {
+    setBusy(true);
+    setError("");
+    try {
+      await fn();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const before = fieldRows(e.before);
+  const after = fieldRows(e.after);
+  const reasonId = `decline-${e.slug}`;
+  return (
+    <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <a href={`/perm-attorneys/${e.slug}`} className="font-heading text-lg font-black underline decoration-primary decoration-2 underline-offset-2">
+          {e.firmName}
+        </a>{" "}
+        <span className="text-sm font-bold">{e.before ? "changes" : "first profile"}</span>
+      </div>{" "}
+      <p className="mt-1 text-sm">
+        Sent {when(e.submittedAt)} by <span className="break-all">{e.email}</span>
+        {e.hidden ? "; the profile is down, so approving won't show it" : ""}
+      </p>{" "}
+      <dl className="mt-3 grid grid-cols-1 gap-y-2 text-sm [&>*]:min-w-0">
+        {after.map((row, i) => {
+          const was = before[i]?.value ?? "";
+          const changed = e.before !== null && was !== row.value;
+          if (!row.value && !was) return null;
+          return (
+            <div key={row.label} className={changed ? "border-l-4 border-primary pl-3" : "pl-4"}>
+              <dt className="font-bold">
+                {row.label}
+                {changed ? " (changed)" : ""}
+                {row.label === "Website" && e.websiteOffDomain ? `, not on ${e.domain}` : ""}
+              </dt>{" "}
+              {changed ? (
+                <dd className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2 [&>*]:min-w-0">
+                  <span className="whitespace-pre-line break-words text-foreground/70">
+                    <span className="font-bold">Now: </span>
+                    {was || "nothing"}
+                  </span>{" "}
+                  <span className="whitespace-pre-line break-words">
+                    <span className="font-bold">New: </span>
+                    {row.value || "nothing"}
+                  </span>
+                </dd>
+              ) : (
+                <dd className="mt-1 whitespace-pre-line break-words">{row.value}</dd>
+              )}
+            </div>
+          );
+        })}
+      </dl>{" "}
+      <label htmlFor={reasonId} className="mt-4 block text-sm font-bold">
+        Reason for a decline <span className="font-normal text-foreground/70">(optional; the firm sees it)</span>
+      </label>{" "}
+      <textarea
+        id={reasonId}
+        value={reason}
+        maxLength={REASON_MAX}
+        onChange={(ev) => setReason(ev.target.value)}
+        rows={2}
+        className="mt-1 w-full min-w-0 border-2 border-border bg-background p-2 text-sm"
+      />{" "}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" disabled={busy} onClick={() => run(() => approve({ slug: e.slug }))} className={`${BTN} bg-primary text-primary-foreground`}>
+          Approve and publish
+        </button>{" "}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => run(() => decline({ slug: e.slug, reason: reason.trim() || undefined }))}
+          className={`${BTN} bg-background`}
+        >
+          Decline
+        </button>
+      </div>{" "}
+      {error ? (
+        <p role="alert" className="mt-2 text-sm font-bold text-destructive">
+          {error}
+        </p>
+      ) : null}
+    </li>
+  );
+}
+
 function Group({ title, note, claims }: { title: string; note: string; claims: Claim[] }) {
   return (
     <section>
@@ -159,7 +272,7 @@ function Group({ title, note, claims }: { title: string; note: string; claims: C
       {claims.length === 0 ? (
         <p className="mt-3 text-sm">None.</p>
       ) : (
-        <ul className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <ul className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2 [&>*]:min-w-0">
           {claims.map((c) => (
             <ClaimCard key={c._id} c={c} />
           ))}
@@ -174,10 +287,27 @@ export function FirmClaimsPanel({ data }: { data: FirmClaimsData | undefined }) 
   return (
     <div className="space-y-10">
       <Group
-        title="Waiting for a person"
-        note="Confirmed by email, but DOL's files don't tie the address's domain to the firm. Approving publishes the profile and emails the firm an edit link."
+        title="Claims waiting for a person"
+        note="Confirmed by email, but DOL's files don't tie the address's domain to the firm. Approving publishes the profile it came with and emails the firm an edit link."
         claims={data.review}
-      />
+      />{" "}
+      <section>
+        <h2 className="font-heading text-xl font-black">
+          Profile changes waiting <span className="tabular-nums text-foreground/70">{data.edits.length}</span>
+        </h2>{" "}
+        <p className="mt-1 text-sm text-foreground/70">
+          A verified firm&apos;s words show on its page only after you approve them. The page keeps what it shows until then. Either way the firm gets an email.
+        </p>{" "}
+        {data.edits.length === 0 ? (
+          <p className="mt-3 text-sm">None.</p>
+        ) : (
+          <ul className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2 [&>*]:min-w-0">
+            {data.edits.map((e) => (
+              <EditCard key={e.slug} e={e} />
+            ))}
+          </ul>
+        )}
+      </section>{" "}
       <Group title="Verified" note="Live claims. Revoking the last one on a firm takes its profile down." claims={data.verified} />
       <Group title="Unconfirmed, rejected and revoked" note="Newest first." claims={data.other} />
     </div>

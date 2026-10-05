@@ -104,7 +104,7 @@ function ClaimForm({ slug }: { slug: string }) {
   if (status === "done") {
     return (
       <p role="status" aria-live="polite" className="mt-4 border-2 border-border bg-primary px-4 py-3 text-base font-bold text-primary-foreground">
-        {message} Nothing shows on the page until you confirm.
+        {message} Nothing shows on the page until you confirm and we&apos;ve read it.
       </p>
     );
   }
@@ -205,8 +205,8 @@ function ClaimForm({ slug }: { slug: string }) {
         </button>{" "}
         <p className="mt-3 text-sm text-foreground/70">
           Free. An address at a domain DOL&apos;s own filings list for this firm is confirmed by the link alone; any
-          other address is checked by a person first. What you send shows here as the firm&apos;s own words, and we can
-          take it down.
+          other address is checked by a person first. What you send shows here as the firm&apos;s own words once we&apos;ve
+          read it, and we can take it down.
         </p>
       </div>
     </form>
@@ -272,8 +272,8 @@ export function FirmClaimPanel({ slug, firmName, claimed }: { slug: string; firm
         </summary>
         <div className="border-t-2 border-border px-6 pb-6 pt-4">
           <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
-            Add the firm&apos;s website, a short description, languages, offices and what it handles. It shows on this
-            page apart from DOL&apos;s figures, marked as the firm&apos;s own words.
+            Add the firm&apos;s website, a short description, languages, offices and what it handles. Once we&apos;ve read
+            it, it shows on this page apart from DOL&apos;s figures, marked as the firm&apos;s own words.
           </p>{" "}
           <ClaimForm slug={slug} />
           <div className="mt-8 border-t-2 border-border pt-5">

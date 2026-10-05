@@ -139,3 +139,32 @@ describe("the Convex sections", () => {
     expect(errors!.lines).toEqual(["caseStatusDirect.sweep: 25"]);
   });
 });
+
+describe("law firms waiting for review", () => {
+  it("adds no section when nothing waits", () => {
+    expect(convexSections(facts(), { sent: 1, bounced: 0, complained: 0 }, NOW).map((s) => s.key)).not.toContain("firms");
+    const quiet = convexSections(facts({ firmReview: { waiting: [] } }), { sent: 1, bounced: 0, complained: 0 }, NOW);
+    expect(quiet.map((s) => s.key)).not.toContain("firms");
+  });
+
+  it("lists each firm with what waits and for how long, and asks for a look", () => {
+    const sections = convexSections(
+      facts({
+        firmReview: {
+          waiting: [
+            { firmName: "Smith Immigration PLLC", kind: "edit", since: NOW - 5 * 3_600_000 },
+            { firmName: "Doe Law Group", kind: "claim", since: NOW - 50 * 3_600_000 },
+          ],
+        },
+      }),
+      { sent: 1, bounced: 0, complained: 0 },
+      NOW,
+    );
+    const firms = sections.find((s) => s.key === "firms")!;
+    expect(firms.status).toBe("warn");
+    expect(firms.summary).toBe("1 claim and 1 profile change waiting, the oldest for 2 days");
+    expect(firms.lines).toContain("Doe Law Group: a claim to check by hand, waiting 2 days");
+    expect(firms.lines).toContain("Smith Immigration PLLC: profile changes, waiting 5 hours");
+    expect(firms.lines[firms.lines.length - 1]).toMatch(/\/admin#firm-claims$/);
+  });
+});

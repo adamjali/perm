@@ -1072,7 +1072,7 @@ http.route({
     if (!token) return firmBadLinkPage();
     return messagePage(
       "Confirm your claim?",
-      "Confirm that you claim this firm's page on PERM Tracker. What you sent shows on the page as the firm's own words, apart from DOL's figures.",
+      "Confirm that you claim this firm's page on PERM Tracker. Once we've checked it, what you sent shows on the page as the firm's own words, apart from DOL's figures.",
       { post: `/firm-claim/confirm?token=${encodeURIComponent(token)}`, label: "Confirm the claim" },
     );
   }),
@@ -1090,13 +1090,19 @@ http.route({
     if (result.published.length > 0) {
       parts.push(`Your profile is up on ${escapeHtml(result.published.map((p) => p.firmName).join(", "))}'s page. It can take a few minutes to show.`);
     }
+    if (result.submitted.length > 0) {
+      parts.push(
+        `You're confirmed for ${escapeHtml(result.submitted.map((p) => p.firmName).join(", "))}. We'll read your profile before it goes up on the page, and email you when it's done.`,
+      );
+    }
     if (result.already.length > 0) parts.push(`Your claim on ${escapeHtml(result.already.join(", "))} was already confirmed.`);
     if (result.review.length > 0) {
       parts.push(
         `We'll check the claim on ${escapeHtml(result.review.join(", "))} by hand, because DOL's files don't tie this address's domain to the firm. We'll email you when it's done.`,
       );
     }
-    const title = result.published.length > 0 ? "You're confirmed" : result.review.length > 0 ? "Thanks, we'll take a look" : "Already confirmed";
+    const title =
+      result.published.length > 0 || result.submitted.length > 0 ? "You're confirmed" : result.review.length > 0 ? "Thanks, we'll take a look" : "Already confirmed";
     return messagePage(
       title,
       parts.join(" "),

@@ -8050,6 +8050,31 @@ checked against the live file, `/api-terms` was the only one blocked.
 - **Routes**: `/firm-claim/request` and `/firm-claim/edit-link` (JSON, to the .convex.site twin); `/firm-claim/confirm`
   and `/firm-claim/edit` are emailed links, rewritten in next.config.ts and relayed by nginx with the other email links.
 
+## Oct 5 2026: a firm's own words wait for review
+
+The owner's call, Oct 5: nothing a law firm writes shows on its page until the admin has read it. Until then a
+domain-verified claim published its profile the moment the link was clicked, and every later edit went live at once
+(only a website off the verified domain waited).
+
+- **`firmProfiles` holds two versions now**: the top-level fields are the APPROVED one, the only one the page reads;
+  `pending` is what a verified firm sent (with the claim that sent it, `pendingAt` indexed for the admin list), and
+  `lastReview` keeps the newest decision and a declined version so the firm can fix and resend it. A row can exist
+  with nothing approved, which shows nothing; `publishedAt` is set on the first approval.
+- **What waits**: a domain-verified claim's first profile and every later edit (`submitProfile` in
+  `convex/firmClaims.ts`). What doesn't: a claim the admin approved by hand (the admin read the profile with it),
+  taking a profile down, putting an approved one back up, and a version with nothing in it.
+- **Admin > Firm claims** lists "Profile changes waiting" with each changed field before and after, a flag for a
+  website off the verified domain, Approve (publishes, refreshes the page, emails the firm) and Decline with an
+  optional reason (the page keeps what it showed; the firm gets the reason and finds its text on the edit page).
+- **How the admin hears about it**: one email a day at most, sent when the first item arrives
+  (`noteReviewWaiting`, a 24-hour limit charged before it's scheduled), and the 7:30 AM morning report's "Law firms
+  waiting for review" section, which lists every firm and how long it has waited, marked to watch until it's done.
+  The per-claim admin email it replaces could have sent ten a day.
+- **The switch for later**: `FIRM_PROFILE_REVIEW` on the Convex deployment, `manual` (default) or `auto`. The automatic
+  check (`autoReview`) isn't built and holds everything, so `auto` can't publish unread words; its comment says what
+  it should check and where it would run (the app's AI provider fallback, or a Claude routine).
+- The decision emails ride `sendOrQueue` outside the `firmClaim` pool: one per admin click.
+
 ## Oct 5 2026: what a job is and pays, where a city sits, and the visas State issues
 
 Six federal sources now sit beside the PERM record. Each loader lives in `scripts/ingest_*.py`, discovers its file
