@@ -1,29 +1,38 @@
 # GSC indexing priority list
 
-**Run of 2026-10-04, 7:29 to 8:26 PM EDT: 5 accepted, no refusal.** Three pages new on Oct 4
-(`b9109f95`), then two legal pages Google had last read before they changed.
+**Run of 2026-10-05, 5:57 to 6:16 PM EDT: 6 accepted, then Quota Exceeded.** Six today plus the five
+from Oct 4 evening still inside the rolling 24 hours is the usual cap of about 11. Sitemap index:
+Google counts 237,542 discovered against 292,400 live (last read Oct 4, inside the 3-day rule; re-check
+next round, since the `other-employer` family grew it on Oct 4).
 
 | # | URL | Google's verdict | accepted (EDT) |
 |---|---|---|---|
-| 1 | `/sponsor-finder` | unknown to Google (new Oct 4) | 7:29 PM |
-| 2 | `/lca-wage-sources` | unknown to Google (new Oct 4) | 7:31 PM |
-| 3 | `/tools/ead-extension` | unknown to Google (new Oct 4) | 7:32 PM |
-| 4 | `/terms` | indexed (its API-use clause changed Oct 2) | 7:34 PM |
-| 5 | `/privacy` | indexed, last crawled Sep 23 (before it named Oracle and Cloudflare) | ~8:25 PM |
+| 1 | `/visa-issuances` | unknown to Google (new Oct 5) | 5:57 PM |
+| 2 | `/tools/wage-levels` | indexed; its content changed (it had shown last year's DOL levels) | 6:00 PM |
+| 3 | `/methodology` | indexed, last crawled Sep 24 | 6:04 PM |
+| 4 | `/perm-cities` | indexed, last crawled Sep 30 | 6:07 PM |
+| 5 | `/perm-countries` | indexed, last crawled Sep 30 | 6:10 PM |
+| 6 | `/perm-industries` | indexed, last crawled Sep 30 | 6:12 PM |
 
-Inspected only: `/api-terms` is **"indexed, though blocked by robots.txt"**: `Disallow: /api` is a
-prefix and matched it. Fixed with an allow rule and a test over every public page (Oct 4 evening
-batch); **request it after that deploy**. `/perm-processing-times`: indexed, crawled Oct 2, skipped.
-`/visa-bulletin/2008-07`: Discovered, never crawled, found through the sitemap with no referring
-page (the 2005 to 2014 months are linked only from the hub's month strip); not worth a slot each.
+Refused: `/perm-employers/google-llc` (indexed, last crawled Oct 2) hit Quota Exceeded at 6:16 PM; first in
+line next round. Inspected only: `/extension` indexed, crawled Oct 5 10:20 AM (after its change);
+`/` indexed, crawled Oct 4 6:42 AM and revisited often, so no slot spent.
 
-**After the deploy (`e9654214`, live by about 9:15 PM EDT):** `/api-terms` request **rejected** at
-9:19 PM: the live test still read "Blocked by robots.txt", because Google caches robots.txt (its
-report showed `https://permtracker.app/robots.txt` last fetched Oct 2, 9:29 AM). A recrawl of the
-robots.txt was requested from Settings, robots.txt, the row's menu, "Request a recrawl" (sent about
-9:21 PM EDT). That report is the way to make Google read a changed robots.txt at once.
+**Queue for the next round** (slots free up from about 7:30 PM EDT Oct 5 as the Oct 4 run ages out):
+1. `/perm-employers/google-llc` (the identity merge changed every employer page)
+2. `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`
+3. `/perm-wages/software-developers`
+4. `/perm-cities/new-york-ny`
+5. `/perm-countries/india`
+6. `/perm-industries/541511`
+7. `/visa-bulletin/categories/eb2-india`, then `/visa-bulletin/categories/eb3-india`
+8. `/privacy` and `/terms`: inspect; request only if last crawled before Oct 5
+9. `/api-terms`: request once Settings, robots.txt shows a fetch after Oct 4, 9:21 PM EDT
 
-**Queue for the next round:** the "Queue after the Oct 5 deploy" section at the end of this file.
+**Previous run:** Oct 4, 7:29 to 8:26 PM EDT, 5 accepted (`/sponsor-finder`, `/lca-wage-sources`,
+`/tools/ead-extension`, `/terms`, `/privacy`). `/api-terms` was "indexed, though blocked by robots.txt";
+the allow rule shipped that night, its request was rejected at 9:19 PM because Google still held the old
+robots.txt, and a robots.txt recrawl was requested from Settings at about 9:21 PM.
 
 ---
 
