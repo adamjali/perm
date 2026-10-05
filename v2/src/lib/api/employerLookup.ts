@@ -33,6 +33,7 @@ import { employerMatch } from "@/lib/turso/employerSlugs";
 import { otherEmployerRecord } from "@/lib/turso/otherEmployers";
 import { getEntityBySlug, getFreshness } from "@/lib/turso/publicData";
 import type { ReadResult } from "./reads";
+import { certifiedShare } from "./share";
 
 /** Below this many decided cases the site prints no certified share. */
 export const MIN_DECIDED_FOR_SHARE = 30;
@@ -145,7 +146,6 @@ async function describe(slug: string, kind: PageKind): Promise<LookupEmployer | 
       spellingCounts(slug),
     ]);
     if (!e) return null;
-    const decided = e.certified + e.denied;
     return {
       name: e.name,
       slug: e.slug,
@@ -155,7 +155,7 @@ async function describe(slug: string, kind: PageKind): Promise<LookupEmployer | 
         published: e.total,
         certified: e.certified,
         denied: e.denied,
-        certifiedShare: decided >= MIN_DECIDED_FOR_SHARE ? Math.round((e.certified / decided) * 1000) / 1000 : null,
+        certifiedShare: certifiedShare(e.certified, e.denied, MIN_DECIDED_FOR_SHARE),
         pending: pending ? pending.pending : counts.livePending,
         newestFiling: counts.newestFiling,
         filingsLast12Months: e.recent12m ?? null,

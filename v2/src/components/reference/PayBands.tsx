@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ChartTips } from "@/components/data/ChartTips";
 import { WageAxis } from "@/components/wages/WageAxis";
 import { formatDollars } from "@/lib/format";
+import { moneyShort } from "@/lib/wageLadder";
 import { cn } from "@/lib/utils";
 
 /**
@@ -49,6 +50,26 @@ export function bandDomain(bands: PayBand[]): [number, number] | null {
   return [Math.max(0, Math.floor((lo - pad) / 1000) * 1000), Math.ceil((hi + pad) / 1000) * 1000];
 }
 
+/** The share of a shared axis the narrowest row may take before it's unreadable. */
+export const MIN_ROW_SHARE = 0.12;
+
+/**
+ * Whether every row stays readable on one shared axis.
+ *
+ * One job in several areas reads best on one scale. Several jobs in one area
+ * can differ tenfold (food servers near $30k, pilots near $360k), and on one
+ * scale the cheaper rows shrink to a sliver; then each row gets its own.
+ */
+export function sharedScaleFits(bands: PayBand[]): boolean {
+  const shared = bandDomain(bands);
+  if (!shared) return true;
+  const span = shared[1] - shared[0];
+  return bands.every((b) => {
+    const own = bandDomain([b]);
+    return !own || (own[1] - own[0]) / span >= MIN_ROW_SHARE;
+  });
+}
+
 function tip(b: PayBand): string {
   const lines = [b.tipLabel];
   const add = (k: string, v: number | null | undefined) => v != null && lines.push(`${k}: ${formatDollars(v)}`);
@@ -60,10 +81,15 @@ function tip(b: PayBand): string {
   return lines.join("\n");
 }
 
-function Track({ band, domain }: { band: PayBand; domain: [number, number] }) {
+function Track({ band, domain, ends }: { band: PayBand; domain: [number, number]; ends?: boolean }) {
   const complete = band.p10 != null && band.p25 != null && band.median != null && band.p75 != null && band.p90 != null;
   return (
-    <div className="relative h-12 w-full" data-tip={tip(band)} role="img" aria-label={tip(band).replace(/\n/g, "; ")}>
+    <div
+      className={cn("relative w-full", ends ? "h-[4.25rem]" : "h-12")}
+      data-tip={tip(band)}
+      role="img"
+      aria-label={tip(band).replace(/\n/g, "; ")}
+    >
       <span aria-hidden="true" className="absolute inset-x-0 top-5 h-px bg-border" />
       {complete ? (
         <>
@@ -107,13 +133,35 @@ function Track({ band, domain }: { band: PayBand; domain: [number, number] }) {
           style={{ left: `${pct(band.perm, domain)}%` }}
         />
       ) : null}
+      {ends ? (
+        <>
+          <span aria-hidden="true" className="absolute left-0 top-12 font-mono text-sm tabular-nums text-foreground/70">
+            {moneyShort(domain[0])}
+          </span>{" "}
+          <span aria-hidden="true" className="absolute right-0 top-12 font-mono text-sm tabular-nums text-foreground/70">
+            {moneyShort(domain[1])}
+          </span>{" "}
+        </>
+      ) : null}
     </div>
   );
 }
 
-export function PayBands({ bands, label, className }: { bands: PayBand[]; label: string; className?: string }) {
+export function PayBands({
+  bands,
+  label,
+  className,
+  scale = "shared",
+}: {
+  bands: PayBand[];
+  label: string;
+  className?: string;
+  /** "auto" gives each row its own scale when one shared axis would crush a row. */
+  scale?: "shared" | "auto";
+}) {
   const domain = bandDomain(bands);
   if (!domain || !bands.length) return null;
+  const perRow = scale === "auto" && !sharedScaleFits(bands);
   const anyLevels = bands.some((b) => (b.levels ?? []).some((v) => v != null));
   const anyPerm = bands.some((b) => b.perm != null);
   return (
@@ -126,14 +174,21 @@ export function PayBands({ bands, label, className }: { bands: PayBand[]; label:
                 <div className="truncate text-base font-bold">{b.label}</div>
                 {b.sub ? <div className="truncate text-sm text-foreground/70">{b.sub}</div> : null}
               </div>{" "}
-              <Track band={b} domain={domain} />
+              <Track band={b} domain={perRow ? (bandDomain([b]) ?? domain) : domain} ends={perRow} />
             </li>
           ))}
         </ul>
       </ChartTips>
-      <div className="mt-1 sm:ml-[14rem]">
-        <WageAxis domain={domain} />
-      </div>
+      {perRow ? (
+        <p className="mt-2 text-sm text-foreground/70">
+          Each row has its own scale, marked at its ends: these jobs pay too differently to share one. The table
+          compares them.
+        </p>
+      ) : (
+        <div className="mt-1 sm:ml-[14rem]">
+          <WageAxis domain={domain} />
+        </div>
+      )}
       <ul className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/70">
         <li className="flex items-center gap-2">
           <span aria-hidden="true" className="inline-block h-4 w-8 border-2 border-border bg-data-good-ink" /> middle

@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import math
 import os
 import re
@@ -38,9 +39,12 @@ import zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import POLITE_PAUSE_S, discover_links, fetch, log  # noqa: E402
 from lib_reference import sheet_rows, sync_rows  # noqa: E402
-from lib_turso import Turso, query_rows, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_turso import Turso, add_missing_columns, query_rows, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_census_geo.py"
+# What the site prints as the source line: a readable name, never a bare URL (a URL has no
+# spaces, so it can't wrap, and it pushed two pages sideways on a phone, Oct 5 2026).
+SOURCE = "Census Bureau Gazetteer and metro delineation files (census.gov)"
 GAZ_INDEX = "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/"
 CODES_INDEX = "https://www2.census.gov/geo/docs/reference/codes2020/"
 DELINEATION_PAGE = "https://www.census.gov/geographies/reference-files/time-series/demo/metro-micro/delineation-files.html"
@@ -48,7 +52,10 @@ COUNTIES = "census_counties"
 CITIES = "city_geo"
 COUNTY_COLS = ("fips", "state_ab", "name", "lat", "lon", "cbsa", "cbsa_title", "cbsa_type", "csa_title")
 CITY_COLS = ("city_key", "place_geoid", "place_name", "lat", "lon", "county_fips", "county_name",
-             "county_basis", "cbsa", "cbsa_title", "cbsa_type", "wage_area", "wage_area_name", "wage_year")
+             "county_basis", "cbsa", "cbsa_title", "cbsa_type", "wage_area", "wage_area_name", "wage_year",
+             "counties", "wage_areas")
+# Added after the table first shipped, so a live table gains them by ALTER.
+LATE_CITY_COLS = {"counties": "TEXT", "wage_areas": "INTEGER"}
 
 DDL = [
     f"""CREATE TABLE IF NOT EXISTS {COUNTIES} (
@@ -57,7 +64,8 @@ DDL = [
     f"""CREATE TABLE IF NOT EXISTS {CITIES} (
         city_key TEXT PRIMARY KEY, place_geoid TEXT, place_name TEXT, lat REAL, lon REAL,
         county_fips TEXT, county_name TEXT, county_basis TEXT, cbsa TEXT, cbsa_title TEXT,
-        cbsa_type TEXT, wage_area TEXT, wage_area_name TEXT, wage_year INTEGER)""",
+        cbsa_type TEXT, wage_area TEXT, wage_area_name TEXT, wage_year INTEGER,
+        counties TEXT, wage_areas INTEGER)""",
     f"CREATE INDEX IF NOT EXISTS {CITIES}_cbsa ON {CITIES} (cbsa)",
 ]
 
@@ -224,7 +232,7 @@ def build(places_txt: str, counties_txt: str, by_county_txt: str, delineation: b
 
     # A city on both the PERM and the H-1B lists is one city.
     city_keys = sorted(set(city_keys))
-    city_rows, report = [], {"cities": len(city_keys), "matched": 0, "multiCounty": 0, "noWageArea": 0,
+    city_rows, report = [], {"cities": len(city_keys), "matched": 0, "multiCounty": 0, "splitWageArea": 0, "noWageArea": 0,
                              "unmatched": [], "ambiguous": []}
     for key in sorted(set(city_keys)):
         if "|" not in key:
@@ -276,9 +284,19 @@ def build(places_txt: str, counties_txt: str, by_county_txt: str, delineation: b
         w = wage.get(county_key(st, county_name[fips])) if fips in county_name else None
         if w is None:
             report["noWageArea"] += 1
+        # Every current county the place spans, and how many of DOL's wage areas
+        # they fall in. One nearest county is only a center point: New York city
+        # is five counties, and a reader asking which wage area a worksite is in
+        # needs to know when the city itself doesn't settle it.
+        spans = sorted(o for o in options if o in county_name) if basis == "nearest" else []
+        names = json.dumps([county_name[o] for o in sorted(spans, key=lambda o: county_name[o])]) if spans else None
+        areas = {wage[county_key(st, county_name[o])][0] for o in spans if county_key(st, county_name[o]) in wage}
+        if len(areas) > 1:
+            report["splitWageArea"] += 1
         city_rows.append((key, p["GEOID"], p["NAME"], round(pt[0], 6), round(pt[1], 6), fips,
                           county_name.get(fips or ""), basis, m[0], m[1], m[2],
-                          w[0] if w else None, w[1] if w else None, w[2] if w else None))
+                          w[0] if w else None, w[1] if w else None, w[2] if w else None,
+                          names, len(areas) if spans else None))
         report["matched"] += 1
     return county_rows, city_rows, report
 
@@ -330,19 +348,22 @@ def main() -> int:
                                            files["cousubs"])
     share = report["matched"] / max(report["cities"], 1)
     log(f"  {report['matched']} of {report['cities']} cities placed ({share:.1%}); {report['multiCounty']} span "
-        f"several counties; {report['noWageArea']} without a wage area; e.g. unmatched {report['unmatched'][:12]}")
+        f"several counties, {report['splitWageArea']} of them across DOL wage areas; {report['noWageArea']} without "
+        f"a wage area; e.g. unmatched {report['unmatched'][:12]}")
     if share < 0.85:
         raise Refusal(f"only {share:.1%} of cities matched a Census place")
     if args.dry_run:
         return 0
     db.script(DDL)
+    for col in add_missing_columns(db, CITIES, LATE_CITY_COLS):
+        log(f"  added missing column {CITIES}.{col}")
     got_c = sync_rows(db, COUNTIES, ("fips",), COUNTY_COLS, county_rows)
     got_p = sync_rows(db, CITIES, ("city_key",), CITY_COLS, city_rows)
     write_doc(db, "census_geo_meta", {"gazetteer": gaz_year, "placeByCounty": by_county_name,
                                       "delineation": list1,
                                       **{k: v for k, v in report.items() if k not in ("unmatched", "ambiguous")},
                                       "unmatched": report["unmatched"][:200], "ambiguous": report["ambiguous"]})
-    stamp_freshness(db, "census-geo", as_of=f"{gaz_year}-01-01", source=GAZ_INDEX, cadence="yearly",
+    stamp_freshness(db, "census-geo", as_of=f"{gaz_year}-01-01", source=SOURCE, cadence="yearly",
                     note=f"{report['matched']} cities placed, gazetteer {gaz_year}", max_age_days=800)
     record_run(db, SCRIPT, status="ok", rows_written=got_c["written"] + got_p["written"],
                note=f"counties {got_c}; cities {got_p}", started_at=started)

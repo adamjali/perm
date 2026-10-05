@@ -128,7 +128,7 @@ export default async function ExtensionPage() {
             ) : (
               <p className="inline-flex items-center gap-2 border-2 border-border bg-card px-4 py-3 text-base font-bold">
                 <PuzzlePieceIcon weight="bold" className="size-5 shrink-0" aria-hidden="true" />{" "}
-                Coming to the Chrome Web Store. This is where the link will be.
+                On the Chrome Web Store soon, free.
               </p>
             )}
           </div>

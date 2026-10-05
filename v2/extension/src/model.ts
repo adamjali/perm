@@ -42,6 +42,23 @@ export function shortDate(iso: string | null): string | null {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
+/**
+ * "97%", but never "100%" while a denial exists or "0%" while a case was
+ * certified: Google's 1,608 certified and 4 denied is 99.75%, which whole-
+ * percent rounding printed as 100%.
+ */
+export function certifiedPercent(certified: number, denied: number): string {
+  const decided = certified + denied;
+  if (decided <= 0) return "None decided";
+  if (denied === 0) return "100%";
+  if (certified === 0) return "0%";
+  const pct = (certified / decided) * 100;
+  const whole = Math.round(pct);
+  if (whole >= 100) return `${Math.min(99.9, Math.round(pct * 10) / 10).toFixed(1)}%`;
+  if (whole <= 0) return `${Math.max(0.1, Math.round(pct * 10) / 10).toFixed(1)}%`;
+  return `${whole}%`;
+}
+
 export function panelFor(state: PanelState): PanelModel {
   if (state.kind === "nothing") {
     return {
@@ -76,7 +93,7 @@ export function panelFor(state: PanelState): PanelModel {
   const p = e.perm;
   const rows: PanelRow[] = [{ label: "PERM cases published", value: p.published > 0 ? int(p.published) : "None yet" }];
   if (p.certifiedShare !== null) {
-    rows.push({ label: "Certified", value: `${Math.round(p.certifiedShare * 100)}%`, note: "of decided cases" });
+    rows.push({ label: "Certified", value: certifiedPercent(p.certified, p.denied), note: "of decided cases" });
   } else if (p.published > 0) {
     rows.push({ label: "Certified", value: "Too few to say", note: `under ${data.shareFloor} decided` });
   }

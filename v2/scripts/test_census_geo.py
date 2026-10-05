@@ -35,6 +35,7 @@ PLACES = "\n".join([
     "NM|3539380|x|x|Las Cruces city|25|A|1|1|1|1|32.3|-106.8",
     "CT|0908000|x|x|Bridgeport city|25|A|1|1|1|1|41.18|-73.19",
     "MA|2500840|x|x|Agawam Town city|25|A|1|1|1|1|42.06|-72.65",
+    "MI|2699990|x|x|Twinford city|25|A|1|1|1|1|42.3|-83.5",
 ])
 COUSUBS = "\n".join([
     "USPS|GEOID|GEOIDFQ|ANSICODE|NAME|FUNCSTAT|ALAND|AWATER|ALAND_SQMI|AWATER_SQMI|INTPTLAT|INTPTLONG",
@@ -74,6 +75,8 @@ BY_COUNTY = "\n".join([
     "NM|35|013|Dona Ana County|39380|x|Las Cruces city|INCORPORATED PLACE|C1|A",
     "CT|09|001|Fairfield County|08000|x|Bridgeport city|INCORPORATED PLACE|C5|A",
     "MA|25|013|Hampden County|00840|x|Agawam Town city|INCORPORATED PLACE|C5|A",
+    "MI|26|099|Macomb County|99990|x|Twinford city|INCORPORATED PLACE|C1|A",
+    "MI|26|091|Lenawee County|99990|x|Twinford city|INCORPORATED PLACE|C1|A",
 ])
 DELINEATION = xlsx_bytes({"List 1": [
     ["List 1. CBSAs"], [],
@@ -89,10 +92,13 @@ DELINEATION = xlsx_bytes({"List 1": [
 WAGE = [("CA", "Santa Clara County", "41940", "San Jose-Sunnyvale-Santa Clara, CA", 2026),
         ("NM", "Dona Ana County", "29740", "Las Cruces, NM", 2026),
         ("NY", "Kings County", "35620", "New York-Newark-Jersey City, NY-NJ", 2026),
+        ("NY", "New York County", "35620", "New York-Newark-Jersey City, NY-NJ", 2026),
+        ("MI", "Macomb County", "19804", "Detroit-Dearborn-Livonia, MI", 2026),
+        ("MI", "Lenawee County", "2600002", "Southeast Lower Michigan nonmetropolitan area", 2026),
         ("CT", "Greater Bridgeport Planning Region", "14860", "Bridgeport-Stamford-Danbury, CT", 2026)]
 KEYS = ["SAN JOSE|CA", "BOISE|ID", "HONOLULU|HI", "CARSON CITY|NV", "NEW YORK|NY", "ST. LOUIS|MO",
         "SAINT LOUIS|MO", "LAS CRUCES|NM", "ACTON|MA", "BRONX|NY", "CLINTON TOWNSHIP|MI",
-        "BRIDGEPORT|CT", "AGAWAM|MA", "AUTAUGAVILLE|AL", "ATLANTIS|FL", "nonsense"]
+        "BRIDGEPORT|CT", "AGAWAM|MA", "AUTAUGAVILLE|AL", "ATLANTIS|FL", "TWINFORD|MI", "nonsense"]
 
 
 def main() -> int:
@@ -108,6 +114,13 @@ def main() -> int:
     check("Carson City keeps its whole name", by["CARSON CITY|NV"][2], "Carson City")
     check("a place in several counties takes the nearest, and says so",
           (by["NEW YORK|NY"][6], by["NEW YORK|NY"][7]), ("Kings County", "nearest"))
+    check("and lists every county it spans, all in one wage area",
+          (by["NEW YORK|NY"][14], by["NEW YORK|NY"][15]), ('["Kings County", "New York County"]', 1))
+    check("a place across two wage areas says how many", by["TWINFORD|MI"][15], 2)
+    check("and is counted", rep["splitWageArea"], 1)
+    check("a one-county place lists none", (by["SAN JOSE|CA"][14], by["SAN JOSE|CA"][15]), (None, None))
+    check("rows match the column list", len(by["SAN JOSE|CA"]), len(g.CITY_COLS))
+    check("the late columns are in the column list", set(g.LATE_CITY_COLS) <= set(g.CITY_COLS), True)
     check("ST. and SAINT are one name", (by["ST. LOUIS|MO"][2], by["SAINT LOUIS|MO"][2]),
           ("St. Louis city", "St. Louis city"))
     check("Doña Ana in Census is Dona Ana in DOL", by["LAS CRUCES|NM"][11], "29740")

@@ -36,8 +36,9 @@ export interface WageLevelsResult {
 }
 
 /**
- * The series year DOL's search expects: the July that opened the series a
- * given date falls in. July 2026 to June 2027 is `2026`.
+ * The series a given date falls in, named by the July that opened it: July
+ * 2026 to June 2027 is `2026`. This is the site's name for a series, matching
+ * DOL's own file names ("July 2026 Wage Year") and our stored tables.
  */
 export function seriesYearFor(iso: string): number {
   const y = Number(iso.slice(0, 4));
@@ -45,9 +46,22 @@ export function seriesYearFor(iso: string): number {
   return m >= 7 ? y : y - 1;
 }
 
+/**
+ * The `year` DOL's live search takes for a series: the June that CLOSES it.
+ * Measured Oct 5 2026 against DOL's own downloadable tables: year 2027 answers
+ * with the July 2026 file's figures (pilots in Appleton, WI, Level I $139,960),
+ * year 2026 with the 2025-26 file's ($53,310), for two occupations; the area
+ * list follows the same rule (Connecticut's new area names arrive at 2026,
+ * the year its 2025-26 file first carried them). Until this, the tool showed
+ * last year's levels under this year's label.
+ */
+export function dolSearchYear(seriesYear: number): number {
+  return seriesYear + 1;
+}
+
 /** The body DOL's search posts. `bls_area` is a metro or non-metro area; counties need a different type. */
 export function wageSearchBody(soc: string, area: number, seriesYear: number): Record<string, unknown> {
-  return { collectionType: "alc", year: seriesYear, socCode: soc.slice(0, 7), area, areaType: "bls_area", rdFlag: "BOTH" };
+  return { collectionType: "alc", year: dolSearchYear(seriesYear), socCode: soc.slice(0, 7), area, areaType: "bls_area", rdFlag: "BOTH" };
 }
 
 /**

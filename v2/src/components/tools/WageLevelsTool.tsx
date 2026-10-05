@@ -30,6 +30,8 @@ type Result =
 interface StoredYear {
   wageYear: number;
   levels: (number | null)[];
+  /** Yearly, whichever way DOL published the row (src/lib/turso/reference.ts). */
+  yearly: (number | null)[];
   label: string | null;
 }
 
@@ -40,8 +42,6 @@ interface History {
 }
 
 const yearLabel = (y: number) => `${y}-${String((y + 1) % 100).padStart(2, "0")}`;
-/** DOL counts a wage year as 2,080 hours. */
-const YEARLY = 2080;
 
 function YearTable({ years, caption }: { years: StoredYear[]; caption: string }) {
   return (
@@ -62,9 +62,9 @@ function YearTable({ years, caption }: { years: StoredYear[]; caption: string })
           {[...years].reverse().map((y) => (
             <tr key={y.wageYear} className="border-b border-border/60">
               <td className="py-2 pr-4 tabular-nums">{yearLabel(y.wageYear)}{" "}</td>
-              {y.levels.map((v, i) => (
+              {y.yearly.map((v, i) => (
                 <td key={i} className="py-2 pr-4 text-right tabular-nums">
-                  {v != null ? usd(Math.round(v * YEARLY)) : i === 0 && y.label ? y.label : "—"}{" "}
+                  {v != null ? usd(v) : i === 0 && y.label ? y.label : "—"}{" "}
                 </td>
               ))}
             </tr>

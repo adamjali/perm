@@ -49,6 +49,9 @@ from lib_reference import keep_record, seen_before, sha256, sync_rows  # noqa: E
 from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_onet.py"
+# What the site prints as the source line: a readable name, never a bare URL (a URL has no
+# spaces, so it can't wrap, and it pushed two pages sideways on a phone, Oct 5 2026).
+SOURCE = "O*NET Database, USDOL/ETA (onetcenter.org)"
 PAGE = "https://www.onetcenter.org/database.html"
 HOST = "https://www.onetcenter.org"
 BRIGHT_CSV = "https://www.onetonline.org/find/bright/All_Bright_Outlook_Occupations.csv?b=0&fmt=csv"
@@ -250,7 +253,7 @@ def main() -> int:
     counts = sync_rows(db, TABLE, ("onet_code",), COLS, rows)
     write_doc(db, DOC, {**reference, "version": version})
     keep_record(db, RECORD, digest, version=version, rows=len(rows))
-    stamp_freshness(db, "onet", as_of=reference["asOf"], source=PAGE, cadence="twice a year",
+    stamp_freshness(db, "onet", as_of=reference["asOf"], source=SOURCE, cadence="twice a year",
                     note=f"O*NET {version}: {len(rows)} occupations", max_age_days=300)
     record_run(db, SCRIPT, status="ok", rows_written=counts["written"],
                note=f"O*NET {version}: {counts}", started_at=started)

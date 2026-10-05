@@ -46,6 +46,9 @@ from lib_reference import sha256, sheet_rows, sync_rows  # noqa: E402
 from lib_turso import Turso, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_visa_issuances.py"
+# What the site prints as the source line: a readable name, never a bare URL (a URL has no
+# spaces, so it can't wrap, and it pushed two pages sideways on a phone, Oct 5 2026).
+SOURCE = "State Department monthly immigrant visa issuances (state.gov)"
 HOST = "https://adoption.state.gov"
 PAGE = HOST + "/content/travel/en/legal/visa-law0/visa-statistics/immigrant-visa-statistics/monthly-immigrant-visa-issuances.html"
 TABLE = "visa_issuances"
@@ -289,7 +292,7 @@ def main() -> int:
     if doc["newest"]:
         y, m = map(int, doc["newest"].split("-"))
         stamp_freshness(db, "visa-issuances", as_of=f"{doc['newest']}-{calendar.monthrange(y, m)[1]:02d}",
-                        source=PAGE, cadence="monthly, posted months late",
+                        source=SOURCE, cadence="monthly, posted months late",
                         note=f"{len(doc['months'])} months, newest {doc['newest']}", max_age_days=330)
     status = "ok" if not refused else "failed"
     record_run(db, SCRIPT, status=status, rows_written=written,

@@ -43,7 +43,9 @@ describe("GET /api/wage-levels", () => {
     expect(res.headers.get("Cache-Control")).toContain("s-maxage=86400");
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://flag.dol.gov/recaptcha/wageSearch");
-    expect(JSON.parse(String(init.body))).toEqual({ collectionType: "alc", year: 2026, socCode: "15-1252", area: 31080, areaType: "bls_area", rdFlag: "BOTH" });
+    // The site's 2026 series (July 2026 to June 2027) is the one DOL's search calls 2027.
+    expect(JSON.parse(String(init.body))).toEqual({ collectionType: "alc", year: 2027, socCode: "15-1252", area: 31080, areaType: "bls_area", rdFlag: "BOTH" });
+    expect(body.seriesYear).toBe(2026);
   });
 
   it("reports an all-zero answer as no data rather than as a wage", async () => {
@@ -77,6 +79,7 @@ describe("GET /api/wage-areas", () => {
     const res = await AREAS(get("/api/wage-areas?state=CALIFORNIA&year=2026"));
     expect(res.status).toBe(200);
     expect(((await res.json()) as { areas: unknown[] }).areas).toEqual([{ value: 31080, label: "Los Angeles-Long Beach-Anaheim, CA" }]);
-    expect(String(fetchMock.mock.calls[0]?.[0])).toBe("https://flag.dol.gov/flag/api/getAreaOptions?state=CALIFORNIA&year=2026");
+    // DOL names the series by the June that closes it: the site's 2026 series is its 2027.
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe("https://flag.dol.gov/flag/api/getAreaOptions?state=CALIFORNIA&year=2027");
   });
 });

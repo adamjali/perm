@@ -92,3 +92,14 @@ describe("the API answer", () => {
     expect(parseLookup("nope")).toBeNull();
   });
 });
+
+describe("certifiedPercent", () => {
+  it("never prints 100% while a denial exists, or 0% while a case was certified", async () => {
+    const { certifiedPercent } = await import("../src/model");
+    expect(certifiedPercent(1608, 4)).toBe("99.8%");
+    expect(certifiedPercent(2999, 1)).toBe("99.9%");
+    expect(certifiedPercent(3000, 0)).toBe("100%");
+    expect(certifiedPercent(1, 2999)).toBe("0.1%");
+    expect(certifiedPercent(8800, 100)).toBe("99%");
+  });
+});

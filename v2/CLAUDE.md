@@ -8044,3 +8044,83 @@ checked against the live file, `/api-terms` was the only one blocked.
 - **Email**: its own pool, `firmClaim`, 10 a day, charged before anything is staged; a full pool queues (`kind: "firm"`).
 - **Routes**: `/firm-claim/request` and `/firm-claim/edit-link` (JSON, to the .convex.site twin); `/firm-claim/confirm`
   and `/firm-claim/edit` are emailed links, rewritten in next.config.ts and relayed by nginx with the other email links.
+
+## Oct 5 2026: what a job is and pays, where a city sits, and the visas State issues
+
+Six federal sources now sit beside the PERM record. Each loader lives in `scripts/ingest_*.py`, discovers its file
+from the agency's own page, refuses a file that fails the source's own totals or shape, and writes only rows that
+changed (`scripts/lib_reference.py`: `sync_rows`, `seen_before`, `sheet_rows`). The server runs them as
+`permtracker-uscis@reference` (the 14th, monthly) and `permtracker-uscis@visa-issuances` (Tuesdays).
+
+| source | loader | table | read by |
+|---|---|---|---|
+| O*NET 31.0 + O*NET OnLine Bright Outlook (CC BY 4.0, credit line on every page that shows it) | `ingest_onet.py` | `onet_occupations` | occupation pages |
+| BLS OEWS May 2025 (national, state, metro, non-metro) | `ingest_bls.py` | `bls_oews` | occupation and city pages, wage-level tool |
+| BLS projections 2025-35 | `ingest_bls.py` | `bls_projections` | occupation pages |
+| DOL OFLC wage tables, 2021-22 to 2026-27, ALC and ACWIA | `ingest_oflc_wages.py` | `oflc_wage_levels`, `oflc_wage_geography`, `oflc_occupation_basis` | occupation and city pages, `/api/wage-levels/history` |
+| Census places, county subdivisions, counties, metro delineation | `ingest_census_geo.py` | `census_counties`, `city_geo` | city pages |
+| BEA regional price parities (API, needs `BEA_API_KEY` in uscis.env) | `ingest_bea_rpp.py` | `bea_rpp` | city pages, once the key exists |
+| State monthly immigrant visa issuances, Mar 2017 on | `ingest_visa_issuances.py` | `visa_issuances` + `perm_docs['visa_issuances_summary']` | `/visa-issuances`, bulletin line pages |
+
+- **BLS answers a browser User-Agent from a script with 403** and serves one that names who's asking:
+  `lib_gov_data.CONTACT_HEADERS` (with an email) goes to BLS hosts only.
+- **The robots guard matches by RFC 9309's longest rule**, not Python's first-match parser, which read apps.bea.gov's
+  `Disallow: /` + `Allow: /api/` as forbidding the API. Two owner conventions are kept: a `User-agent: *` record with
+  no rules, then a blank line, allows everything (www2.census.gov's file; strict RFC grammar would forbid every
+  crawler there), and a comment line inside a group doesn't end it (www.uscis.gov has `# Custom` mid-group).
+- **O*NET's CSV zip is named in a `data-href-csv` attribute and the page's schema.org `contentURL`**, not in an href,
+  so `discover_links` (hrefs only) can't see it; `csv_zip_url` reads where the page names it.
+- **DOL's 2021-22 and 2022-23 county lists are in DOS code page 437** (Mayagüez is byte 0x81). DOL's Appendix A list
+  starts with 2024-25; earlier years store NULL, never 0. DOL's GeoLvl column is undocumented, stored as printed and
+  never described on a page. A "High Wage" row has only an average ($115 an hour, $239,200 a year, per DOL's notes).
+- **City matching** (`build` in `ingest_census_geo.py`): Census strips only LOWER-CASE legal descriptions ("Boise City
+  city" is BOISE, "Carson City" stays); New England towns and NJ/PA/MI townships come from the county-subdivision file
+  (status S and F excluded); Connecticut uses planning regions, which the 2020 places-by-county list predates, so a
+  retired county code gives way to the subdivision's; two equally good places in one state (NJ's Hamiltons) stay
+  unmatched. 3,555 of 3,902 cities placed, every one with a DOL wage area.
+- **State's tables**: Excel from Oct 2024, PDF before, parsed by word position, a month loaded only when its rows add
+  up to State's GRAND TOTAL. Categories come from State's own "Immigrant Visa Symbols" legend (T5 is EB-5, not the
+  T-visa symbol). Country keys normalise every dash: State wrote "China - mainland born" with a hyphen and an en dash.
+  May 2020's by-consulate table has 190 rows (consulates closed), so the floor is 50.
+- **City pages carry FY2016 PERM jobs coded in SOC 2010**, which BLS and DOL no longer publish, so the city figure
+  looks 18 jobs down for six with current data.
+
+## Oct 5 2026: what checking the new pages in a browser found
+
+- **DOL's live wage search names a series by the June that CLOSES it.** `year: 2027` answers with the July 2026
+  file's figures; the tool sent 2026 for "July 2026 to June 2027" and showed last year's levels from Sep 9 until
+  this fix. Checked against DOL's own downloadable tables for two occupations, and the area list follows the same
+  rule (Connecticut's new area names arrive at 2026, the year its 2025-26 file first printed them). The site keeps
+  naming a series by its July (labels, stored tables, DOL's file names); only `dolSearchYear` in
+  `src/lib/wageLevels.ts` adds one. The live search answers series from July 2022 on.
+- **Some DOL levels are already yearly.** Rows labelled "Annual Wage" (teachers, professors, pilots, athletes;
+  60,919 in 2026-27) hold yearly amounts, and the 2021-22 and 2022-23 files carry no label at all. `toYearly` in
+  `src/lib/turso/reference.ts` is the one conversion: as published when DOL labels the row yearly or an unlabelled
+  level is $5,000 or more (no hourly level in any year passes $807, no yearly one falls under $15,080), else hourly
+  x 2,080. Multiplying a pilot's $139,960 gave $291 million on Appleton, WI's city page.
+- **A city in several counties lists them all** (`city_geo.counties`, JSON) and says how many DOL wage areas they
+  fall in (`city_geo.wage_areas`): 310 of 3,555 cities span several counties, 73 of them across wage areas. The
+  wage area shown is the one at the city's center, and the page says so. The reader selects `*`, so a table
+  loaded before those columns existed still answers.
+- **`PayBands scale="auto"`** gives each row its own scale when one axis would squeeze a row under 12% of the width
+  (city pages compare jobs paying $30k with pilots at $360k); one job across areas keeps the shared axis.
+- **A source line must be a readable name.** Six new loaders stamped bare URLs as `data_freshness.source`; State's
+  had a 56-character first segment with no break, and two pages scrolled 75px sideways at 320 wide. Each loader
+  now stamps a `SOURCE` name, the six production rows were renamed in place, and `DataProvenance` wraps anywhere.
+  Ten older datasets (WARN states, visa limits, the H-1B hub) still print addresses; they wrap now.
+- **A share is never rounded to 1 while a denial exists** (`src/lib/api/share.ts`; the extension's
+  `certifiedPercent`): Google's 1,608 certified and 4 denied had printed as "100%".
+- **The H-1B lists on city pages** are 44px rows now (the links were 24px). The bulletin line page's alert form
+  still has the shared 24px date-picker button; that's the shared DateInput, not this batch.
+- **The dev server sends `X-Frame-Options: DENY`**, so the same-origin iframe sweep can't run against it; one
+  headless browser at 390 and 320 wide (`node_modules/.cache/qa/sweep.mjs`) did the sweep instead.
+
+## Oct 5 2026: a Chrome extension and a keyless employer lookup
+
+- `GET /v1/lookup/employer?name=` (no key; `src/lib/api/employerLookup.ts`, `keyless.ts`): an exact published PERM
+  employer, then a page `employer_page_map` ties the name's program key to, then a labelled possible match, else "no
+  record". 60 calls a minute per address, 1,200 for all keyless callers per copy; CORS for permtracker.app and
+  `chrome-extension://` only. `programKey` in TypeScript is held to Python's by the shared identity fixture.
+- The extension is `v2/extension/` (own tsconfigs, tests in the `unit` project), built by `pnpm build:extension` into
+  a store zip; `STORE.md` has the listing text. The owner opens the Chrome Web Store developer account; the store URL
+  then goes in `CHROME_STORE_URL` on `/extension`.

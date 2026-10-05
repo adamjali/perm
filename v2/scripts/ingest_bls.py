@@ -49,6 +49,9 @@ from lib_reference import keep_record, seen_before, sha256, sheet_rows, sync_row
 from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_bls.py"
+# Readable source names for the site's source line, never bare URLs.
+OEWS_SOURCE = "BLS Occupational Employment and Wage Statistics (bls.gov)"
+PROJ_SOURCE = "BLS Employment Projections (bls.gov)"
 OEWS_PAGE = "https://www.bls.gov/oes/tables.htm"
 PROJ_PAGE = "https://www.bls.gov/emp/tables.htm"
 HOST = "https://www.bls.gov"
@@ -272,7 +275,7 @@ def load_oews(db: Turso | None, args, started: float) -> int:
                                     "topCodedExample": ceiling[1] if ceiling else None})
     keep_record(db, "bls_oews_load", digest, series=series, rows=len(rows))
     # The estimates describe May of the series year; BLS publishes them the next spring.
-    stamp_freshness(db, "bls-oews", as_of=f"20{yy}-05-31", source=OEWS_PAGE, cadence="yearly, each spring",
+    stamp_freshness(db, "bls-oews", as_of=f"20{yy}-05-31", source=OEWS_SOURCE, cadence="yearly, each spring",
                     note=f"OEWS {series}: {len(rows)} occupation and area rows", max_age_days=760)
     record_run(db, SCRIPT + " --only oews", status="ok", rows_written=got["written"],
                note=f"OEWS {series}: {got}", started_at=started)
@@ -301,7 +304,7 @@ def load_projections(db: Turso | None, args, started: float) -> int:
         return 0
     got = sync_rows(db, PROJ_TABLE, ("soc7",), PROJ_COLS, rows)
     keep_record(db, "bls_projections_load", digest, baseYear=base, projYear=proj, rows=len(rows))
-    stamp_freshness(db, "bls-projections", as_of=f"{base}-12-31", source=PROJ_PAGE, cadence="yearly, each autumn",
+    stamp_freshness(db, "bls-projections", as_of=f"{base}-12-31", source=PROJ_SOURCE, cadence="yearly, each autumn",
                     note=f"{base} to {proj}: {len(rows)} occupations", max_age_days=760)
     record_run(db, SCRIPT + " --only projections", status="ok", rows_written=got["written"],
                note=f"{base}-{proj}: {got}", started_at=started)

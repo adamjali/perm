@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { PayBands, bandDomain, type PayBand } from "../PayBands";
+import { PayBands, bandDomain, sharedScaleFits, type PayBand } from "../PayBands";
 
 const sj: PayBand = {
   key: "41940",
@@ -45,5 +45,21 @@ describe("PayBands", () => {
     const withPerm = render(<PayBands bands={[{ ...sj, perm: 160000 }]} label="Pay" />);
     expect(withPerm.container.textContent).toContain("median PERM offer");
     expect(withPerm.container.textContent).toContain("Levels I to IV");
+  });
+
+  it("gives each row its own scale only when one axis would crush a row", () => {
+    const cook: PayBand = { key: "cook", label: "Cooks", tipLabel: "Cooks", p10: 26000, p25: 28000, median: 30000, p75: 33000, p90: 36000, levels: [27000, 29000, 31000, 33000] };
+    const pilot: PayBand = { key: "pilot", label: "Pilots", tipLabel: "Pilots", p10: null, p25: null, median: null, p75: null, p90: null, levels: [139960, 213933, 287907, 361880] };
+    expect(sharedScaleFits([sj, { ...sj, key: "b" }])).toBe(true);
+    expect(sharedScaleFits([cook, pilot])).toBe(false);
+    const shared = render(<PayBands bands={[cook, pilot]} label="Pay" />);
+    expect(shared.container.textContent).not.toContain("its own scale");
+    const auto = render(<PayBands bands={[cook, pilot]} label="Pay" scale="auto" />);
+    expect(auto.container.textContent).toContain("its own scale");
+    // Each row's own ends are printed, and the pilot row's scale starts near its own Level I, not at $25k.
+    expect(auto.container.textContent).toMatch(/Pilots \$13\dk \$3\d\dk/);
+    expect(auto.container.textContent).not.toMatch(/\dk[A-Z]/);
+    const fits = render(<PayBands bands={[sj, { ...sj, key: "b" }]} label="Pay" scale="auto" />);
+    expect(fits.container.textContent).not.toContain("its own scale");
   });
 });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { AREA_OPTIONS_URL, parseAreaOptions } from "@/lib/wageLevels";
+import { AREA_OPTIONS_URL, dolSearchYear, parseAreaOptions } from "@/lib/wageLevels";
 
 /**
  * GET /api/wage-areas?state=CALIFORNIA&year=2026
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    const res = await fetch(`${AREA_OPTIONS_URL}?state=${encodeURIComponent(state)}&year=${year}`, { signal: controller.signal, cache: "no-store", headers: { Accept: "application/json" } });
+    const res = await fetch(`${AREA_OPTIONS_URL}?state=${encodeURIComponent(state)}&year=${dolSearchYear(year)}`, { signal: controller.signal, cache: "no-store", headers: { Accept: "application/json" } });
     if (!res.ok) return NextResponse.json({ ok: false, message: `DOL answered ${res.status}.` }, { status: 502, headers: { "Cache-Control": "no-store" } });
     const areas = parseAreaOptions(await res.json());
     return NextResponse.json({ ok: true, state, seriesYear: year, areas }, { headers: { "Cache-Control": "public, max-age=86400, s-maxage=604800" } });

@@ -41,6 +41,37 @@ describe("reference reads", () => {
     expect(got?.version).toBe("31.0");
   });
 
+  it("reads a city's counties and wage-area count, and a table loaded before they existed", async () => {
+    one.mockResolvedValueOnce({
+      place_name: "New York city", lat: 40.66, lon: -73.94, county_name: "Kings County", county_basis: "nearest",
+      cbsa: "35620", cbsa_title: "New York-Newark-Jersey City, NY-NJ", cbsa_type: "metro", wage_area: "35620",
+      wage_area_name: "New York-Newark-Jersey City, NY-NJ", wage_year: 2026,
+      counties: JSON.stringify(["Bronx County", "Kings County", "New York County"]), wage_areas: 1,
+    });
+    const ny = await ref.cityGeo("NEW YORK|NY");
+    expect(one.mock.calls[0]![0]).toContain("SELECT *");
+    expect(ny).toMatchObject({ counties: ["Bronx County", "Kings County", "New York County"], wageAreas: 1 });
+    one.mockResolvedValueOnce({ place_name: "San Jose city", county_name: "Santa Clara County", county_basis: "single" });
+    expect(await ref.cityGeo("SAN JOSE|CA")).toMatchObject({ counties: null, wageAreas: null, countyName: "Santa Clara County" });
+    one.mockResolvedValueOnce({ place_name: "Odd city", counties: "{not json", wage_areas: null });
+    expect(await ref.cityGeo("ODD|XX")).toMatchObject({ counties: null });
+  });
+
+  it("turns DOL's levels into yearly amounts, keeping rows DOL already publishes yearly", async () => {
+    rows.mockResolvedValueOnce([
+      { soc7: "53-2011", wage_year: 2026, l1: 139960, l2: 213933, l3: 287907, l4: 361880, label: "Annual Wage" },
+      { soc7: "15-1252", wage_year: 2026, l1: 52.81, l2: 66.21, l3: null, l4: null, label: "High Wage" },
+    ]);
+    const got = await ref.wageLevelsForArea("1000005", ["53-2011.00", "15-1252"]);
+    expect(got[0]).toMatchObject({ annual: true, yearly: [139960, 213933, 287907, 361880] });
+    expect(got[1]).toMatchObject({ annual: false, yearly: [109845, 137717, null, null], label: "High Wage" });
+    expect(ref.toYearly([10], null)).toEqual([20800]);
+    // 2021-22 and 2022-23 carry no label; their yearly rows are told by size.
+    expect(ref.toYearly([87860, 96907, 105953, 115000], null)).toEqual([87860, 96907, 105953, 115000]);
+    expect(ref.toYearly([806.32], null)).toEqual([1677146]);
+    expect(ref.isAnnual([null, null, null, null], "High Wage")).toBe(false);
+  });
+
   it("has no O*NET answer for a code with no rows, or no code", async () => {
     expect(await ref.onetForSoc("99-9999")).toBeNull();
     expect(await ref.onetForSoc("junk")).toBeNull();
@@ -75,7 +106,7 @@ describe("reference reads", () => {
   it("keeps DOL's High Wage label on a row with no levels", async () => {
     rows.mockResolvedValueOnce([{ wage_year: "2026", l1: null, l2: null, l3: null, l4: null, label: "High Wage" }]);
     const got = await ref.wageLevelHistory("29-1216", "14460");
-    expect(got[0]).toEqual({ wageYear: 2026, levels: [null, null, null, null], label: "High Wage" });
+    expect(got[0]).toEqual({ wageYear: 2026, levels: [null, null, null, null], annual: false, yearly: [null, null, null, null], label: "High Wage" });
   });
 
   it("gives the busiest occupation page for each SOC code", async () => {

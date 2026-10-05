@@ -243,8 +243,12 @@ export const dolBasisFor = cache(async (code: string): Promise<DolBasis | null> 
 
 export interface WageLevelYear {
   wageYear: number;
-  /** Hourly, as DOL publishes them. */
+  /** As DOL publishes them: hourly, or yearly when `annual`. */
   levels: [number | null, number | null, number | null, number | null];
+  /** True when DOL labels the row "Annual Wage": its levels are already yearly. */
+  annual: boolean;
+  /** Each level as a yearly amount, whichever way DOL published it. */
+  yearly: (number | null)[];
   label: string | null;
 }
 
@@ -256,6 +260,39 @@ export function wageYearLabel(year: number): string {
 /** DOL counts a wage year as 2,080 hours. */
 export const HOURS_PER_YEAR = 2080;
 
+/**
+ * DOL's label on a row whose four levels are yearly amounts. Teachers,
+ * professors, pilots and athletes are published that way; multiplying their
+ * levels by 2,080 turned a $139,960 pilot's wage into $291 million.
+ */
+export const ANNUAL_LABEL = "Annual Wage";
+
+/**
+ * DOL's 2021-22 and 2022-23 files have no label column, and about 60,000 rows
+ * a year in them are yearly amounts all the same. Measured over every year
+ * held: no hourly level passes $807 and no yearly one falls under $15,080, so
+ * an unlabelled level at or over this is yearly.
+ */
+export const YEARLY_FLOOR = 5000;
+
+/** Whether a row's levels are yearly amounts: DOL says so, or an unlabelled row's figures can only be. */
+export function isAnnual(levels: (number | null)[], label: string | null): boolean {
+  if (label === ANNUAL_LABEL) return true;
+  return label == null && levels.some((v) => v != null && v >= YEARLY_FLOOR);
+}
+
+/** Four levels as yearly amounts: as published when the row is yearly, else hourly x 2,080. */
+export function toYearly(levels: (number | null)[], label: string | null): (number | null)[] {
+  const annual = isAnnual(levels, label);
+  return levels.map((v) => (v == null ? null : Math.round(annual ? v : v * HOURS_PER_YEAR)));
+}
+
+function levelYear(r: Record<string, unknown>): WageLevelYear {
+  const label = r.label == null || r.label === "" ? null : String(r.label);
+  const levels: WageLevelYear["levels"] = [num(r.l1), num(r.l2), num(r.l3), num(r.l4)];
+  return { wageYear: Number(r.wage_year), levels, annual: isAnnual(levels, label), yearly: toYearly(levels, label), label };
+}
+
 /** One occupation's four levels in one area, every wage year held, oldest first. */
 export async function wageLevelHistory(code: string, area: string, collection: "alc" | "edc" = "alc"): Promise<WageLevelYear[]> {
   const soc = soc7(code);
@@ -264,11 +301,7 @@ export async function wageLevelHistory(code: string, area: string, collection: "
     "SELECT wage_year, l1, l2, l3, l4, label FROM oflc_wage_levels WHERE soc7 = ? AND area = ? AND collection = ? ORDER BY wage_year",
     [soc, area, collection],
   ).catch(() => []);
-  return got.map((r) => ({
-    wageYear: Number(r.wage_year),
-    levels: [num(r.l1), num(r.l2), num(r.l3), num(r.l4)],
-    label: r.label == null || r.label === "" ? null : String(r.label),
-  }));
+  return got.map(levelYear);
 }
 
 /** The newest wage year's four levels for each of `codes` in one area. */
@@ -281,12 +314,7 @@ export async function wageLevelsForArea(area: string, codes: string[]): Promise<
        AND wage_year = (SELECT max(wage_year) FROM oflc_wage_levels)`,
     [area, ...socs],
   ).catch(() => []);
-  return got.map((r) => ({
-    soc: String(r.soc7),
-    wageYear: Number(r.wage_year),
-    levels: [num(r.l1), num(r.l2), num(r.l3), num(r.l4)],
-    label: r.label == null || r.label === "" ? null : String(r.label),
-  }));
+  return got.map((r) => ({ soc: String(r.soc7), ...levelYear(r) }));
 }
 
 /* ------------------------------------------------------------ Census, BEA */
@@ -304,11 +332,28 @@ export interface CityGeo {
   wageArea: string | null;
   wageAreaName: string | null;
   wageYear: number | null;
+  /** Every current county the place spans, when it spans several; null for one. */
+  counties: string[] | null;
+  /** How many of DOL's wage areas those counties fall in; null for one county. */
+  wageAreas: number | null;
+}
+
+/** A JSON list of county names, or null when absent or unreadable. */
+function countyList(v: unknown): string[] | null {
+  if (typeof v !== "string" || !v) return null;
+  try {
+    const got = JSON.parse(v) as unknown;
+    return Array.isArray(got) && got.length > 1 ? got.map(String) : null;
+  } catch {
+    return null;
+  }
 }
 
 export const cityGeo = cache(async (cityKey: string): Promise<CityGeo | null> => {
   const r = await one<Record<string, unknown>>(
-    "SELECT place_name, lat, lon, county_name, county_basis, cbsa, cbsa_title, cbsa_type, wage_area, wage_area_name, wage_year FROM city_geo WHERE city_key = ?",
+    // Every column, so a table loaded before `counties` and `wage_areas` were
+    // added still answers (those read as unknown) instead of failing the query.
+    "SELECT * FROM city_geo WHERE city_key = ?",
     [cityKey],
   ).catch(() => null);
   if (!r) return null;
@@ -325,6 +370,8 @@ export const cityGeo = cache(async (cityKey: string): Promise<CityGeo | null> =>
     wageArea: text(r.wage_area),
     wageAreaName: text(r.wage_area_name),
     wageYear: num(r.wage_year),
+    counties: countyList(r.counties),
+    wageAreas: num(r.wage_areas),
   };
 });
 
@@ -350,6 +397,8 @@ export async function cityGeoMany(cityKeys: string[]): Promise<Map<string, CityG
       wageArea: r.wage_area == null ? null : String(r.wage_area),
       wageAreaName: r.wage_area_name == null ? null : String(r.wage_area_name),
       wageYear: null,
+      counties: null,
+      wageAreas: null,
     });
   }
   return out;

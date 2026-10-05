@@ -18,6 +18,8 @@ import { getEntityBySlug, getFreshness, getLiveBacklog } from "@/lib/turso/publi
 import { entityPending } from "@/lib/turso/entityDetail";
 import { searchByName } from "@/lib/turso/entities";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
+
+import { certifiedShare } from "./share";
 import { LOOKS_YEARLY_NOTE, looksYearly } from "@/lib/wageFormat";
 import { pwd } from "@/lib/turso/pwdCases";
 import { lca } from "@/lib/turso/lcaCases";
@@ -319,7 +321,6 @@ export const ENTITY_PATHS: Record<string, { kind: EntityKind; page: string }> = 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/;
 
 function entityData(kind: EntityKind, page: string, e: NonNullable<Awaited<ReturnType<typeof getEntityBySlug>>>) {
-  const decided = e.certified + e.denied;
   return {
     kind,
     slug: e.slug,
@@ -328,7 +329,7 @@ function entityData(kind: EntityKind, page: string, e: NonNullable<Awaited<Retur
     publishedCases: e.total,
     certified: e.certified,
     denied: e.denied,
-    certifiedShare: decided > 0 ? Math.round((e.certified / decided) * 1000) / 1000 : null,
+    certifiedShare: certifiedShare(e.certified, e.denied),
     medianDaysToDecision: e.medianDays,
     // Each kind carries only the fields its record holds: an occupation its
     // code and median offered wage, a law firm its state. Printing null for

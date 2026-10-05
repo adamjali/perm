@@ -5,6 +5,8 @@
  * in the table at the end.
  */
 
+import { Fragment } from "react";
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -32,7 +34,7 @@ export const revalidate = 86400;
 
 const TITLE = "Immigrant Visas Issued Abroad, by Month";
 const DESCRIPTION =
-  "Every immigrant visa State's consulates issued each month since March 2017, by employment and family category, by country and by consulate, from State's own tables.";
+  "Every immigrant visa State's consulates issued each month since March 2017, by category, country and consulate, from State's own tables.";
 const PATH = "/visa-issuances";
 const STATE_PAGE =
   "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-statistics/immigrant-visa-statistics/monthly-immigrant-visa-issuances.html";
@@ -145,31 +147,38 @@ export default async function VisaIssuancesPage() {
         className="mt-10"
       >
         <ChartTips label="Employment visas issued abroad by month">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[40rem] text-left text-base">
-              <caption className="sr-only">Employment immigrant visas issued abroad by month</caption>
-              <thead>
-                <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
-                  <th className="py-2 pr-4 font-bold">Category</th>
-                  <th className="py-2 pr-4 font-bold">Each month</th>
-                  <th className="py-2 pr-4 text-right font-bold">{`${monthName(newest).split(" ")[0]}`}{" "}</th>
-                  <th className="py-2 text-right font-bold">Last 12 months</th>
-                </tr>
-              </thead>
-              <tbody>
-                {series.map((s) => (
-                  <tr key={s.c} className="border-b border-border/60">
+          {/* On a phone the bars take their own line under each category, so the
+              two figures sit beside the name instead of off the right edge. */}
+          <table className="w-full text-left text-base">
+            <caption className="sr-only">Employment immigrant visas issued abroad by month</caption>
+            <thead>
+              <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
+                <th className="py-2 pr-4 font-bold">Category</th>
+                <th className="hidden py-2 pr-4 font-bold sm:table-cell">Each month</th>
+                <th className="py-2 pr-4 text-right font-bold">{`${monthName(newest).split(" ")[0]}`}{" "}</th>
+                <th className="py-2 text-right font-bold">12 months</th>
+              </tr>
+            </thead>
+            <tbody>
+              {series.map((s) => (
+                <Fragment key={s.c}>
+                  <tr className="border-border/60 sm:border-b">
                     <th scope="row" className="py-2 pr-4 font-bold">{s.c}{" "}</th>
-                    <td className="py-2 pr-4">
+                    <td className="hidden py-2 pr-4 sm:table-cell">
                       <Spark label={s.c} points={s.points} max={sparkMax} />{" "}
                     </td>
                     <td className="py-2 pr-4 text-right tabular-nums">{formatInt(latest[s.c] ?? 0)}{" "}</td>
                     <td className="py-2 text-right font-bold tabular-nums">{formatInt(yearOf(s.c))}{" "}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  <tr className="border-b border-border/60 sm:hidden">
+                    <td colSpan={3} className="pb-3">
+                      <Spark label={s.c} points={s.points} max={sparkMax} />{" "}
+                    </td>
+                  </tr>
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
         </ChartTips>
       </FigurePlate>
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AREA_RE, parseAreaOptions, parseWageRates, seriesYearFor, SOC_RE, wageSearchBody } from "../wageLevels";
+import { AREA_RE, dolSearchYear, parseAreaOptions, parseWageRates, seriesYearFor, SOC_RE, wageSearchBody } from "../wageLevels";
 
 // DOL's answer for 15-1252 in Los Angeles, series 2025, as probed on Sep 8 2026.
 const DOL = {
@@ -17,10 +17,13 @@ describe("wageLevels", () => {
     expect(seriesYearFor("2026-09-08")).toBe(2026);
     expect(seriesYearFor("2026-06-30")).toBe(2025);
     expect(seriesYearFor("2026-07-01")).toBe(2026);
+    // The series that opened July 2026 is the one DOL's search calls 2027.
+    expect(dolSearchYear(seriesYearFor("2026-10-05"))).toBe(2027);
   });
 
   it("posts the shape DOL's own page posts", () => {
-    expect(wageSearchBody("15-1252.00", 31080, 2025)).toEqual({ collectionType: "alc", year: 2025, socCode: "15-1252", area: 31080, areaType: "bls_area", rdFlag: "BOTH" });
+    // DOL's search names a series by the June that closes it, so the July 2025 series asks for 2026.
+    expect(wageSearchBody("15-1252.00", 31080, 2025)).toEqual({ collectionType: "alc", year: 2026, socCode: "15-1252", area: 31080, areaType: "bls_area", rdFlag: "BOTH" });
   });
 
   it("reads the four levels as numbers and refuses a partial or all-zero answer", () => {

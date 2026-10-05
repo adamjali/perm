@@ -4,6 +4,7 @@ import { WarningIcon } from "@phosphor-icons/react/ssr";
 import { FinePrint } from "@/components/data/FinePrint";
 import { getFreshness, type DatasetFreshness } from "@/lib/turso/publicData";
 import { coverageFor, datasetLabel } from "@/lib/datasetCoverage";
+import { cn } from "@/lib/utils";
 
 /**
  * Where a page's figures came from, rendered beside them: one line per
@@ -28,7 +29,9 @@ export async function DataProvenance({ datasets, className }: { datasets: string
     return text ? [{ dataset: r.dataset, text }] : [];
   });
   return (
-    <div className={className ?? "mt-6 border-t-2 border-border pt-3"}>
+    // A source can be a bare web address with no spaces; on a phone it must wrap
+    // anywhere or it pushes the whole page sideways (a State URL did, Oct 5 2026).
+    <div className={cn(className ?? "mt-6 border-t-2 border-border pt-3", "[overflow-wrap:anywhere]")}>
       {rows.map((r) => (
         // Keyed Fragment with a leading space: array items render with nothing
         // between them, so two lines would otherwise read as one run of text.

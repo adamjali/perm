@@ -39,6 +39,9 @@ from lib_reference import sync_rows  # noqa: E402
 from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_bea_rpp.py"
+# What the site prints as the source line: a readable name, never a bare URL (a URL has no
+# spaces, so it can't wrap, and it pushed two pages sideways on a phone, Oct 5 2026).
+SOURCE = "BEA regional price parities (bea.gov)"
 API = "https://apps.bea.gov/api/data"
 SIGNUP = "https://apps.bea.gov/api/signup/"
 TABLE = "bea_rpp"
@@ -139,7 +142,7 @@ def main() -> int:
     db.script(DDL)
     got = sync_rows(db, TABLE, ("geo_fips", "year", "line"), COLS, rows)
     write_doc(db, "bea_rpp_meta", {"newestYear": newest, "areas": counts})
-    stamp_freshness(db, "bea-rpp", as_of=f"{newest}-12-31", source="https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area",
+    stamp_freshness(db, "bea-rpp", as_of=f"{newest}-12-31", source=SOURCE,
                     cadence="yearly", note=f"RPPs to {newest}: {counts}", max_age_days=900)
     record_run(db, SCRIPT, status="ok", rows_written=got["written"], note=f"{counts}; {got}", started_at=started)
     return 0

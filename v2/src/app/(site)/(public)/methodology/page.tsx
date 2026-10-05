@@ -416,8 +416,11 @@ export default async function MethodologyPage() {
             <dd className="mt-2 text-base leading-relaxed text-foreground/80">
               The four prevailing wage levels for every job in every area, from the tables the Office of Foreign Labor
               Certification publishes each July, both the all-industries table and the one for universities and research
-              employers (ACWIA). Levels are hourly in DOL&apos;s files and shown a year at 2,080 hours, as DOL computes
-              them. DOL&apos;s own average column is for the H-2 programs and is never shown as a level.
+              employers (ACWIA). Most levels are hourly in DOL&apos;s files and shown a year at 2,080 hours, as DOL
+              computes them. Jobs DOL publishes yearly (teachers, professors, pilots) are shown as published: DOL
+              labels them from 2023-24 on, and in the two older years we read a figure of $5,000 or more as yearly,
+              since no hourly level in any year comes near it. DOL&apos;s own average column is for the H-2 programs and
+              is never shown as a level.
             </dd>
           </div>{" "}
           <div className="border-2 border-border bg-card p-5 shadow-hard-sm">

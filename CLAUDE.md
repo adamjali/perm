@@ -441,3 +441,18 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 4 2026 (evening)".
 - **The /perm-cases month boxes lost a pattern no month could match** (a reader reported it): Firefox couldn't search with a month at all.
 - **The defense's alert says what filled the app**, so "0 people" no longer reads as a false alarm.
 - **robots.txt's `/api` blocked `/api-terms`** (a prefix); an allow rule re-opens it, and a test checks every public page.
+
+## Oct 5 2026, in nine lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the four "Oct 5 2026" sections.
+
+- **Occupation pages show what O*NET says the job is, BLS market pay with DOL's four levels where it's filed, BLS's outlook, and DOL's levels year by year.**
+- **City pages say which county, metro and DOL wage area they're in**, from Census's files; BEA's price level joins once `BEA_API_KEY` exists.
+- **The wage-level tool keeps every DOL wage year since 2021-22**, both tables, from DOL's own files.
+- **`/visa-issuances`**: State's monthly issuances since March 2017, each month checked against State's own total.
+- **A law firm can claim its page**, verified by the email domains DOL's files tie to it.
+- **A Chrome extension** shows a posting's employer record through the keyless `/v1/lookup/employer`.
+- **DOL's live wage search names a series by the June that closes it**; the tool had shown last year's levels since Sep 9 (`dolSearchYear`).
+- **DOL levels labelled "Annual Wage", and unlabelled ones of $5,000 or more, are already yearly** (`toYearly`); never multiply them by 2,080.
+- **A source line is a readable name, never a bare URL**: one pushed two pages sideways on a phone.
+

@@ -6,7 +6,6 @@ import { FigurePlate } from "@/components/tools/FigurePlate";
 import { formatDollars, formatInt } from "@/lib/format";
 import type { FacetRow } from "@/lib/turso/entityDetail";
 import {
-  HOURS_PER_YEAR,
   cityGeoMany,
   dolBasisFor,
   marketPayIn,
@@ -33,7 +32,6 @@ import { PayBands, type PayBand } from "./PayBands";
 
 const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const LEVELS = ["I", "II", "III", "IV"] as const;
-const yearly = (h: number | null) => (h == null ? null : Math.round(h * HOURS_PER_YEAR));
 
 /** Up to `n` metros (DOL wage areas) where this job's PERM filings sit, busiest first. */
 async function filingAreas(cities: FacetRow[], n: number) {
@@ -96,7 +94,7 @@ export async function OccupationReference({
   const newestLevels = (i: number) => {
     const h = histories[i] ?? [];
     const last = h[h.length - 1];
-    return last ? { year: last.wageYear, levels: last.levels.map(yearly), label: last.label } : null;
+    return last ? { year: last.wageYear, levels: last.yearly, label: last.label } : null;
   };
 
   const bands = [
@@ -200,9 +198,9 @@ export async function OccupationReference({
                 {[...history].reverse().map((y, i) => (
                   <tr key={y.wageYear} className={i === 0 ? "border-b border-border/60 font-bold" : "border-b border-border/60"}>
                     <td className="py-2 pr-4 tabular-nums">{wageYearLabel(y.wageYear)}{" "}</td>
-                    {y.levels.map((v, j) => (
+                    {y.yearly.map((v, j) => (
                       <td key={j} className="py-2 pr-4 text-right tabular-nums">
-                        {v != null ? formatDollars(yearly(v) as number) : y.label ? y.label : "—"}{" "}
+                        {v != null ? formatDollars(v) : j === 0 && y.label ? y.label : "—"}{" "}
                       </td>
                     ))}
                   </tr>

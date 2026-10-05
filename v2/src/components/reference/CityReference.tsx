@@ -3,7 +3,6 @@ import Link from "next/link";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { formatDollars, formatInt } from "@/lib/format";
 import {
-  HOURS_PER_YEAR,
   cityGeo,
   marketPayForArea,
   priceParity,
@@ -24,6 +23,19 @@ import { PayBands, type PayBand } from "./PayBands";
  */
 
 const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
+
+const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+/** Small counts as words, the way a sentence says them. */
+export function countWord(n: number): string {
+  return WORDS[n] ?? String(n);
+}
+
+/** "Bronx, Kings and New York counties", or the full names when the kinds differ. */
+export function countyPhrase(names: string[]): string {
+  const bare = names.every((n) => n.endsWith(" County")) ? names.map((n) => n.slice(0, -" County".length)) : names;
+  const list = bare.length > 1 ? `${bare.slice(0, -1).join(", ")} and ${bare.at(-1)}` : (bare[0] ?? "");
+  return bare === names ? list : `${list} counties`;
+}
 
 export interface CityJob {
   code: string;
@@ -73,7 +85,7 @@ export async function CityReference({
         median: p?.median ?? null,
         p75: p?.p75 ?? null,
         p90: p?.p90 ?? null,
-        levels: l ? l.levels.map((h) => (h == null ? null : Math.round(h * HOURS_PER_YEAR))) : null,
+        levels: l ? l.yearly : null,
       };
     })
     .filter((b): b is PayBand => b !== null)
@@ -81,6 +93,9 @@ export async function CityReference({
   const year = levels[0]?.wageYear ?? null;
   const series = pay[0]?.series ?? null;
   const placed = geo.countyBasis === "nearest-in-state" ? "near" : "in";
+  // A city whose counties fall in different wage areas has no one area; the
+  // figures are for the one at its center, and the page says so.
+  const split = (geo.wageAreas ?? 0) > 1;
 
   return (
     <>
@@ -89,7 +104,17 @@ export async function CityReference({
           Where {label} sits
         </h2>{" "}
         <dl className="mt-4 grid grid-cols-1 gap-px border-2 border-border bg-border sm:grid-cols-3 [&>*]:min-w-0">
-          {geo.countyName ? (
+          {geo.counties ? (
+            <div className="bg-card p-4">
+              <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">Counties</dt>{" "}
+              <dd className="mt-1 text-base font-bold">
+                {geo.counties.length <= 6 ? countyPhrase(geo.counties) : `${geo.counties.length} counties`}
+              </dd>{" "}
+              <dd className="mt-1 text-sm text-foreground/70">
+                {`Census places ${geo.placeName ?? label} in ${geo.counties.length === 2 ? "both" : `all ${countWord(geo.counties.length)}`}`}
+              </dd>
+            </div>
+          ) : geo.countyName ? (
             <div className="bg-card p-4">
               <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">County</dt>{" "}
               <dd className="mt-1 text-base font-bold">{geo.countyName}</dd>{" "}
@@ -116,7 +141,11 @@ export async function CityReference({
               <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">DOL wage area</dt>{" "}
               <dd className="mt-1 text-base font-bold">{geo.wageAreaName}</dd>{" "}
               <dd className="mt-1 text-sm text-foreground/70">
-                {geo.wageYear ? `The area DOL sets prevailing wages for, wage year ${wageYearLabel(geo.wageYear)}` : "The area DOL sets prevailing wages for"}
+                {split
+                  ? `For ${geo.countyName ?? "the county"}, at the city's center; its counties sit in ${countWord(geo.wageAreas ?? 0)} wage areas`
+                  : geo.wageYear
+                    ? `The area DOL sets prevailing wages for, wage year ${wageYearLabel(geo.wageYear)}`
+                    : "The area DOL sets prevailing wages for"}
               </dd>
             </div>
           ) : null}
@@ -137,11 +166,11 @@ export async function CityReference({
           n="05"
           title={`What these jobs pay in ${geo.wageAreaName ?? geo.cbsaTitle ?? label}`}
           subject={`${series ? `BLS ${series}` : "BLS"}${year ? `, DOL wage year ${wageYearLabel(year)}` : ""}`}
-          caption={`The jobs filed most in ${label}: what employers in the metro report paying everyone in each, and DOL's four prevailing wage levels there.`}
+          caption={`The jobs filed most in ${label}: what employers in the metro report paying everyone in each, and DOL's four prevailing wage levels there.${split ? ` ${label} spans ${countWord(geo.wageAreas ?? 0)} of DOL's wage areas; these figures are for ${geo.wageAreaName}, which takes in its center.` : ""}`}
           source="BLS Occupational Employment and Wage Statistics; DOL OFLC wage tables"
           className="mt-10"
         >
-          <PayBands bands={bands} label={`Market pay and DOL wage levels in ${label}`} />
+          <PayBands bands={bands} scale="auto" label={`Market pay and DOL wage levels in ${label}`} />
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[40rem] text-left text-base">
               <caption className="sr-only">Market pay and DOL wage levels for the jobs filed most here</caption>

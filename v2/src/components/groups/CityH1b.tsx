@@ -41,13 +41,14 @@ export function CityH1b({ city, className = "mt-10" }: { city: LcaCity | null; c
                 {col.items.map((it, i) => (
                   <Fragment key={`${it.key}-${i}`}>
                     {" "}
-                    <li className="flex items-baseline gap-3 py-1.5 text-base">
+                    <li className="flex items-center gap-3 text-base">
                       {it.href ? (
-                        <Link href={it.href} className={`min-w-0 truncate ${LINK}`}>
+                        // The link fills the row's height, so the tap target is 44px.
+                        <Link href={it.href} className={`min-w-0 truncate py-2.5 ${LINK}`}>
                           {it.text}
                         </Link>
                       ) : (
-                        <span className="min-w-0 truncate">{it.text}</span>
+                        <span className="min-w-0 truncate py-2.5">{it.text}</span>
                       )}{" "}
                       <span className="ml-auto font-mono text-sm tabular-nums text-foreground/70">{formatInt(it.n)}</span>
                     </li>

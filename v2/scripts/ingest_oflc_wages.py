@@ -9,9 +9,9 @@ universities, their affiliates and research organizations), the counties in
 each area, and, from 2023-24 on, the Job Zone and education DOL applies to
 each occupation when it picks a level.
 
-FLAG's live wage search (src/lib/wageLevels.ts) answers 2023 to 2026 only;
-these files reach 2021-22, and they're the tables themselves rather than one
-lookup at a time.
+FLAG's live wage search (src/lib/wageLevels.ts) answers the series from July
+2022 on (measured Oct 5 2026); these files reach July 2021, and they're the
+tables themselves rather than one lookup at a time.
 
 WHAT'S KEPT. `oflc_wage_levels`: wage year, collection (alc / edc), area, SOC,
 DOL's GeoLvl as printed, the four levels and the average, hourly, and DOL's
@@ -50,6 +50,9 @@ from lib_reference import keep_record, seen_before, sha256, sheet_paths, sheet_r
 from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_oflc_wages.py"
+# What the site prints as the source line: a readable name, never a bare URL (a URL has no
+# spaces, so it can't wrap, and it pushed two pages sideways on a phone, Oct 5 2026).
+SOURCE = "DOL OFLC wage data downloads (flag.dol.gov)"
 PAGE = "https://flag.dol.gov/wage-data/wage-data-downloads"
 HOST = "https://flag.dol.gov"
 LEVELS = "oflc_wage_levels"
@@ -285,7 +288,7 @@ def main() -> int:
         record_run(db, SCRIPT, status="failed", rows_written=written, note="; ".join(failed), started_at=started)
         return 1
     if newest in held:
-        stamp_freshness(db, "oflc-wage-levels", as_of=f"{newest}-07-01", source=PAGE, cadence="yearly, each July",
+        stamp_freshness(db, "oflc-wage-levels", as_of=f"{newest}-07-01", source=SOURCE, cadence="yearly, each July",
                         note=f"wage years {min(held)}-{max(held) + 1} held", max_age_days=400)
     record_run(db, SCRIPT, status="ok", rows_written=written,
                note=f"years {sorted(r['year'] for r in results)}; written {written}", started_at=started)
