@@ -6,7 +6,7 @@ WHAT COUNTS AS TROUBLE. Not traffic: a crawler at 300 pages a minute is fine
 while there's room. Trouble is people getting the "busy for a moment" page,
 from either of two signals:
 
-- two or more people (a browser, not a script) drew the busy page in the last
+- five or more people (a browser, not a script) drew the busy page in the last
   10 minutes (the page's counting image, /__pt/busy-seen?k=503); or
 - the whole app was full for 3 minutes running: at least 2% of page requests,
   and at least 20, answered 503 in each of the last 3 minutes.
