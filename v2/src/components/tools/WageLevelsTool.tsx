@@ -47,10 +47,10 @@ function YearTable({ years, caption }: { years: StoredYear[]; caption: string })
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[32rem] text-left text-base">
-        <caption className="sr-only">{caption}</caption>
+        <caption className="sr-only">{caption}{" "}</caption>
         <thead>
           <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
-            <th className="py-2 pr-4 font-bold">Wage year</th>
+            <th className="py-2 pr-4 font-bold">Wage year{" "}</th>
             {["I", "II", "III", "IV"].map((l) => (
               <th key={l} className="py-2 pr-4 text-right font-bold">
                 {`Level ${l}`}{" "}

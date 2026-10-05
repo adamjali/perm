@@ -8127,6 +8127,10 @@ changed (`scripts/lib_reference.py`: `sync_rows`, `seen_before`, `sheet_rows`). 
   got the hook: `useFormDomSync.test.tsx` found the test before's `<input>` still in the page. Reproduce a shared-pool
   leak with `--no-file-parallelism --no-cache` and the files in size order: vitest runs a file that failed last
   time FIRST, so a plain rerun passes and proves nothing.
+- **Run the rendered glued-text audit BEFORE the push** (`python3 scripts/audit_glued_text.py --base
+  http://localhost:<dev port>`; it rewrites the sitemap's paths onto the base). Run only after the deploy, it found
+  9 glued pairs in the new tables' `<th>` and `<caption>` text ("JobBLS median") that the source gate can't see.
+  Every header cell and caption carries a trailing `{" "}`, exactly like a data cell.
 - **`make-page-cards.mjs` reads its fonts from `.next/static/media`**, which only a production build writes; a
   worktree with only a dev server has none, so copy the two `.woff2` files from a checkout that built.
 

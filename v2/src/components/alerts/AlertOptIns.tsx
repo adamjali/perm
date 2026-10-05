@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
  */
 
 const OPT_IN_TEXT = {
-  newsletter: `Also send the ${MAIL_KINDS.newsletter.name.toLowerCase()}, ${MAIL_KINDS.newsletter.when.toLowerCase()}: DOL's queue, visa bulletin moves, USCIS times and new rules.`,
+  newsletter: `Also send the ${MAIL_KINDS.newsletter.name.toLowerCase()}, ${MAIL_KINDS.newsletter.when}: DOL's queue, visa bulletin moves, USCIS times and new rules.`,
   news: `Also send ${MAIL_KINDS.news.name.toLowerCase()}, now and then.`,
 } as const;
 

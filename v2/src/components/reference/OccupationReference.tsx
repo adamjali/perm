@@ -133,11 +133,11 @@ export async function OccupationReference({
           <PayBands bands={bands} label={`${name}: market pay and DOL wage levels`} />
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[40rem] text-left text-base">
-              <caption className="sr-only">Market pay and DOL wage levels, by area</caption>
+              <caption className="sr-only">Market pay and DOL wage levels, by area{" "}</caption>
               <thead>
                 <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
-                  <th className="py-2 pr-4 font-bold">Area</th>
-                  <th className="py-2 pr-4 text-right font-bold">BLS median</th>
+                  <th className="py-2 pr-4 font-bold">Area{" "}</th>
+                  <th className="py-2 pr-4 text-right font-bold">BLS median{" "}</th>
                   {LEVELS.map((l) => (
                     <th key={l} className="py-2 pr-4 text-right font-bold">
                       {`Level ${l}`}{" "}
@@ -183,10 +183,10 @@ export async function OccupationReference({
           </p>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[34rem] text-left text-base">
-              <caption className="sr-only">DOL wage levels by wage year, {busiest.name}</caption>
+              <caption className="sr-only">DOL wage levels by wage year, {busiest.name}{" "}</caption>
               <thead>
                 <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
-                  <th className="py-2 pr-4 font-bold">Wage year</th>
+                  <th className="py-2 pr-4 font-bold">Wage year{" "}</th>
                   {LEVELS.map((l) => (
                     <th key={l} className="py-2 pr-4 text-right font-bold">
                       {`Level ${l}`}{" "}

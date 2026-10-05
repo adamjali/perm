@@ -19,7 +19,8 @@
  * - When the page does overflow, `culprit` hides each section of <main> in
  *   turn and names the ones whose removal ends it, then the innermost
  *   elements past the edge.
- * - An inline link inside a sentence is exempt from the tap size (WCAG 2.5.8).
+ * - An inline link inside a sentence is exempt from the tap size (WCAG 2.5.8), a checkbox counts by
+ *   its label, and a button out of the tab order inside a full-size field is a shortcut, not a target.
  */
 import { chromium } from "playwright-core";
 
@@ -61,9 +62,15 @@ function measure(w) {
   }
   const taps = [];
   for (const el of document.querySelectorAll("main a, main button, main summary, main select, main input")) {
-    const b = el.getBoundingClientRect();
+    // A checkbox's target is its label; a button out of the tab order inside a field
+    // whose own control is full size is a shortcut (WCAG 2.5.8's equivalent-control exception).
+    const label = el.matches("input[type=checkbox], input[type=radio]")
+      ? el.closest("label") ?? (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null)
+      : null;
+    const b = (label ?? el).getBoundingClientRect();
     const inline = getComputedStyle(el).display === "inline" && el.closest("p, li, dd, td");
-    if (b.width > 0 && b.height > 0 && b.height < 43 && !inline) taps.push(`${el.tagName.toLowerCase()} ${Math.round(b.height)}px "${(el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 30)}"`);
+    const shortcut = el.tabIndex === -1 && [...(el.parentElement?.querySelectorAll("input") ?? [])].some((i) => i.getBoundingClientRect().height >= 43);
+    if (b.width > 0 && b.height > 0 && b.height < 43 && !inline && !shortcut) taps.push(`${el.tagName.toLowerCase()} ${Math.round(b.height)}px "${(el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 30)}"`);
   }
   return { overflow, culprit, small: [...new Set(small)].slice(0, 5), smallN: small.length, taps: [...new Set(taps)].slice(0, 5), tapsN: taps.length };
 }

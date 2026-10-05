@@ -150,13 +150,13 @@ export default async function VisaIssuancesPage() {
           {/* On a phone the bars take their own line under each category, so the
               two figures sit beside the name instead of off the right edge. */}
           <table className="w-full text-left text-base">
-            <caption className="sr-only">Employment immigrant visas issued abroad by month</caption>
+            <caption className="sr-only">Employment immigrant visas issued abroad by month{" "}</caption>
             <thead>
               <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
-                <th className="py-2 pr-4 font-bold">Category</th>
-                <th className="hidden py-2 pr-4 font-bold sm:table-cell">Each month</th>
+                <th className="py-2 pr-4 font-bold">Category{" "}</th>
+                <th className="hidden py-2 pr-4 font-bold sm:table-cell">Each month{" "}</th>
                 <th className="py-2 pr-4 text-right font-bold">{`${monthName(newest).split(" ")[0]}`}{" "}</th>
-                <th className="py-2 text-right font-bold">12 months</th>
+                <th className="py-2 text-right font-bold">12 months{" "}</th>
               </tr>
             </thead>
             <tbody>
@@ -221,7 +221,7 @@ export default async function VisaIssuancesPage() {
         </h2>{" "}
         <div className="mt-4 overflow-x-auto border-2 border-border bg-card shadow-hard">
           <table className="w-full min-w-[32rem] text-left text-base">
-            <caption className="sr-only">Immigrant visas issued abroad by category</caption>
+            <caption className="sr-only">Immigrant visas issued abroad by category{" "}</caption>
             <thead className="border-b-2 border-border bg-muted/40">
               <tr>
                 <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>

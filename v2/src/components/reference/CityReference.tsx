@@ -173,11 +173,11 @@ export async function CityReference({
           <PayBands bands={bands} scale="auto" label={`Market pay and DOL wage levels in ${label}`} />
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[40rem] text-left text-base">
-              <caption className="sr-only">Market pay and DOL wage levels for the jobs filed most here</caption>
+              <caption className="sr-only">Market pay and DOL wage levels for the jobs filed most here{" "}</caption>
               <thead>
                 <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
-                  <th className="py-2 pr-4 font-bold">Job</th>
-                  <th className="py-2 pr-4 text-right font-bold">BLS median</th>
+                  <th className="py-2 pr-4 font-bold">Job{" "}</th>
+                  <th className="py-2 pr-4 text-right font-bold">BLS median{" "}</th>
                   {["I", "II", "III", "IV"].map((l) => (
                     <th key={l} className="py-2 pr-4 text-right font-bold">
                       {`Level ${l}`}{" "}
