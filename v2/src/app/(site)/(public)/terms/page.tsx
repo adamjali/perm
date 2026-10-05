@@ -246,6 +246,20 @@ export default function TermsPage() {
               You’re solely responsible for the accuracy and legality of your
               User Content. You represent that you have all necessary rights to
               enter the data you provide.
+            </p>{" "}
+
+            <h3 id="firm-profiles" className="font-heading text-lg font-bold mt-6 mb-3">
+              A Law Firm’s Profile
+            </h3>{" "}
+            <p className="text-foreground/80 leading-relaxed">
+              A law firm may claim its page and add a website, a short
+              description, languages, offices and practice areas. It’s shown on
+              the firm’s page as the firm’s own words, apart from DOL’s figures,
+              and we don’t check it. By claiming a page you confirm you’re
+              authorized to speak for the firm and that what you send is
+              accurate and names no individual. It’s free. We may decline a
+              claim, and edit, hide or remove a profile, at any time and for any
+              reason.
             </p>
           </details>{" "}
 

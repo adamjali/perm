@@ -2140,6 +2140,81 @@ export default defineSchema({
     .index("by_created", ["createdAt"]),
 
   /**
+   * A law firm's claim on its `/perm-attorneys/<slug>` page (convex/firmClaims.ts).
+   *
+   * One row per (address, firm). Verified on its own when DOL's disclosure
+   * files print the address's domain beside the firm (`firm_email_domains`,
+   * scripts/build_firm_domains.py); otherwise it waits for the admin. The
+   * claimant's role is private: it helps the admin judge a manual claim and
+   * is never shown. The profile the claim submitted is kept here until it is
+   * published to `firmProfiles`.
+   */
+  firmClaims: defineTable({
+    slug: v.string(),
+    /** The firm's name from our records at claim time, never from the form. */
+    firmName: v.string(),
+    email: v.string(),
+    domain: v.string(),
+    /** Free text, private: "partner", "office manager". */
+    role: v.string(),
+    status: v.union(
+      v.literal("pending_email"),
+      v.literal("pending_review"),
+      v.literal("verified"),
+      v.literal("rejected"),
+      v.literal("revoked"),
+    ),
+    /** How a verified claim was verified. */
+    verifiedBy: v.optional(v.union(v.literal("domain"), v.literal("admin"))),
+    /** What the domain check found at request time: filings DOL ties to it, and why it fell short. */
+    domainFilings: v.number(),
+    domainReason: v.optional(v.string()),
+    /** The profile as submitted with the claim (see src/lib/firmProfile.ts). */
+    draft: v.object({
+      website: v.optional(v.string()),
+      description: v.optional(v.string()),
+      languages: v.array(v.string()),
+      offices: v.array(v.object({ city: v.string(), state: v.string() })),
+      focus: v.array(v.string()),
+    }),
+    createdAt: v.number(),
+    /** When the confirmation link went out; throttles repeats to one address. */
+    lastConfirmationSentAt: v.optional(v.number()),
+    lastEditLinkSentAt: v.optional(v.number()),
+    confirmedAt: v.optional(v.number()),
+    reviewedAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+    source: v.optional(v.string()),
+  })
+    .index("by_email", ["email"])
+    .index("by_email_slug", ["email", "slug"])
+    .index("by_slug", ["slug"])
+    .index("by_status", ["status", "createdAt"]),
+
+  /**
+   * What a verified firm publishes on its page, one row per firm. Shown apart
+   * from DOL's figures as the firm's own words. `hidden` is set by the admin or
+   * by the firm itself, and when the last verified claim is revoked; a hidden
+   * profile is not shown anywhere. `websiteApproved` lets a website on another
+   * domain than the verified address's through (admin only).
+   */
+  firmProfiles: defineTable({
+    slug: v.string(),
+    website: v.optional(v.string()),
+    /** A website held back because its domain isn't the verified one; the admin can approve it. */
+    pendingWebsite: v.optional(v.string()),
+    description: v.optional(v.string()),
+    languages: v.array(v.string()),
+    offices: v.array(v.object({ city: v.string(), state: v.string() })),
+    focus: v.array(v.string()),
+    verifiedBy: v.union(v.literal("domain"), v.literal("admin")),
+    hidden: v.optional(v.boolean()),
+    hiddenBy: v.optional(v.union(v.literal("admin"), v.literal("firm"), v.literal("revoked"))),
+    publishedAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_slug", ["slug"]),
+
+  /**
    * Alert email waiting for its recipient's one email of the day.
    *
    * Every alert kind builds its own complete email and hands it to
@@ -2275,6 +2350,7 @@ export default defineSchema({
       v.literal("queue"),
       v.literal("bulletin"),
       v.literal("prefs"),
+      v.literal("firm"),
     ),
     pool: v.string(),
     email: v.string(),

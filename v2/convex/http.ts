@@ -12,6 +12,10 @@ import { MAIL_KINDS, PREFS_KINDS, type PrefsKind } from "./lib/mailKinds";
 
 const isPrefsKind = (k: string): k is PrefsKind => (PREFS_KINDS as readonly string[]).includes(k);
 import { SLUG_RE as EMPLOYER_SLUG_RE, employerNameFor } from "./employerAlerts";
+import { FIRM_SLUG_RE, firmNameFor, verdictFor } from "./firmClaims";
+import { verifyExpiringToken } from "./lib/expiringToken";
+import { firmBadLinkPage, firmEditPage, type EditNotice } from "./lib/firmClaimPages";
+import { profileFromForm, type ProfileInput } from "../src/lib/firmProfile";
 import { SITE_URL } from "./lib/links";
 
 const http = httpRouter();
@@ -934,6 +938,237 @@ http.route({
       "You'll stop receiving alerts for every employer this address follows.",
       { post: `/employer-alert/unsubscribe?token=${encodeURIComponent(token)}` },
     );
+  }),
+});
+
+// ============================================================================
+// Claim a law firm's page (convex/firmClaims.ts)
+//
+// The request and edit-link forms POST JSON from the site to this .convex.site
+// twin, like the alert forms. The firm's NAME comes from our records, looked up
+// here from the slug, and the domain check runs here too (both read the public
+// mirror, which only an action can). The confirm and edit pages are emailed
+// links, branded onto permtracker.app (next.config.ts, nginx), where a GET only
+// renders and every change is a POST.
+// ============================================================================
+
+/** The profile fields a JSON body may carry, typed and capped before the mutation sees them. */
+function profileFromJson(raw: unknown): ProfileInput & {
+  website?: string;
+  description?: string;
+  languages?: string[];
+  offices?: { city: string; state: string }[];
+  focus?: string[];
+} {
+  const o = (typeof raw === "object" && raw !== null ? raw : {}) as Record<string, unknown>;
+  const str = (x: unknown, max: number) => (typeof x === "string" ? x.slice(0, max) : undefined);
+  const strs = (x: unknown, n: number, max: number) =>
+    Array.isArray(x) ? x.slice(0, n).filter((y): y is string => typeof y === "string").map((y) => y.slice(0, max)) : undefined;
+  const offices = Array.isArray(o.offices)
+    ? o.offices.slice(0, 11).map((x) => {
+        const r = (typeof x === "object" && x !== null ? x : {}) as Record<string, unknown>;
+        return { city: str(r.city, 120) ?? "", state: str(r.state, 4) ?? "" };
+      })
+    : undefined;
+  return {
+    website: str(o.website, 400),
+    description: str(o.description, 1200),
+    languages: strs(o.languages, 13, 80),
+    offices,
+    focus: strs(o.focus, 12, 20),
+  };
+}
+
+function clientIp(req: Request): string {
+  return (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown";
+}
+
+for (const path of ["/firm-claim/request", "/firm-claim/edit-link"]) {
+  http.route({
+    path,
+    method: "OPTIONS",
+    handler: httpAction(async (_ctx, req) => {
+      return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+    }),
+  });
+}
+
+http.route({
+  path: "/firm-claim/request",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) return json({ ok: false, message: "Malformed request." }, 400);
+    const { email, slug, role, source, profile } = body as Record<string, unknown>;
+    if (typeof email !== "string" || typeof slug !== "string" || typeof role !== "string") {
+      return json({ ok: false, message: "A work email, the firm and your role are all required." }, 400);
+    }
+    const cleanSlug = slug.slice(0, 120);
+    if (!FIRM_SLUG_RE.test(cleanSlug)) return json({ ok: false, message: "We don't know that firm." }, 400);
+    const cleanEmail = email.slice(0, 320);
+    let firmName: string | null;
+    let verdict: { verified: boolean; filings: number; reason?: string };
+    try {
+      firmName = await firmNameFor(cleanSlug);
+      verdict = firmName ? await verdictFor(cleanSlug, cleanEmail) : { verified: false, filings: 0 };
+    } catch (error) {
+      await recordError(ctx, "webhook", "http.firmClaim.lookup", error);
+      return json({ ok: false, message: "We can't check that firm right now. Please try again shortly.", throttled: true }, 503);
+    }
+    if (!firmName) return json({ ok: false, message: "We don't know that firm." }, 400);
+    const result = await ctx.runMutation(internal.firmClaims.request, {
+      slug: cleanSlug,
+      firmName: firmName.slice(0, 200),
+      email: cleanEmail,
+      role: role.slice(0, 240),
+      profile: profileFromJson(profile),
+      verdict,
+      source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      ip: clientIp(req),
+    });
+    return json(result, result.ok ? 200 : "throttled" in result && result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/firm-claim/edit-link",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    const { email, slug } = (typeof body === "object" && body !== null ? body : {}) as Record<string, unknown>;
+    if (typeof email !== "string" || typeof slug !== "string") {
+      return json({ ok: false, message: "An email address and the firm are both required." }, 400);
+    }
+    const result = await ctx.runMutation(internal.firmClaims.requestEditLink, {
+      email: email.slice(0, 320),
+      slug: slug.slice(0, 120),
+      ip: clientIp(req),
+    });
+    return json(result, result.ok ? 200 : "throttled" in result && result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/firm-claim/confirm",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return firmBadLinkPage();
+    return messagePage(
+      "Confirm your claim?",
+      "Confirm that you claim this firm's page on PERM Tracker. What you sent shows on the page as the firm's own words, apart from DOL's figures.",
+      { post: `/firm-claim/confirm?token=${encodeURIComponent(token)}`, label: "Confirm the claim" },
+    );
+  }),
+});
+
+http.route({
+  path: "/firm-claim/confirm",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return firmBadLinkPage();
+    const result = await ctx.runMutation(internal.firmClaims.confirmByToken, { token });
+    if (!result) return firmBadLinkPage("This confirmation link has expired or was already used.");
+    const parts: string[] = [];
+    if (result.published.length > 0) {
+      parts.push(`Your profile is up on ${escapeHtml(result.published.map((p) => p.firmName).join(", "))}'s page. It can take a few minutes to show.`);
+    }
+    if (result.already.length > 0) parts.push(`Your claim on ${escapeHtml(result.already.join(", "))} was already confirmed.`);
+    if (result.review.length > 0) {
+      parts.push(
+        `We'll check the claim on ${escapeHtml(result.review.join(", "))} by hand, because DOL's files don't tie this address's domain to the firm. We'll email you when it's done.`,
+      );
+    }
+    const title = result.published.length > 0 ? "You're confirmed" : result.review.length > 0 ? "Thanks, we'll take a look" : "Already confirmed";
+    return messagePage(
+      title,
+      parts.join(" "),
+      result.editToken ? { href: `/firm-claim/edit?token=${encodeURIComponent(result.editToken)}`, label: "Edit the profile" } : undefined,
+    );
+  }),
+});
+
+async function editEmail(req: Request): Promise<string | null> {
+  const token = new URL(req.url).searchParams.get("token");
+  const secret = process.env.UNSUBSCRIBE_SECRET;
+  if (!token || !secret) return null;
+  return verifyExpiringToken(token, secret, "firm-edit", Date.now());
+}
+
+http.route({
+  path: "/firm-claim/edit",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const email = await editEmail(req);
+    if (!email) return firmBadLinkPage("This edit link has expired. Ask for a fresh one from the firm's page.");
+    const token = new URL(req.url).searchParams.get("token")!;
+    const firms = await ctx.runQuery(internal.firmClaims.editStateFor, { email });
+    return firmEditPage(firms, token);
+  }),
+});
+
+http.route({
+  path: "/firm-claim/edit",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const email = await editEmail(req);
+    if (!email) return firmBadLinkPage("This edit link has expired. Ask for a fresh one from the firm's page.");
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token")!;
+    const slug = (url.searchParams.get("slug") ?? "").slice(0, 120);
+    if (!FIRM_SLUG_RE.test(slug)) return firmBadLinkPage();
+    let form: FormData;
+    try {
+      form = await req.formData();
+    } catch {
+      return firmBadLinkPage();
+    }
+    const get = (n: string) => {
+      const x = form.get(n);
+      return typeof x === "string" ? x : null;
+    };
+    const getAll = (n: string) => form.getAll(n).filter((x): x is string => typeof x === "string");
+    const action = get("action");
+    const submitted = profileFromForm(get, getAll);
+    const typed = submitted as {
+      website?: string;
+      description?: string;
+      languages?: string[];
+      offices?: { city: string; state: string }[];
+      focus?: string[];
+    };
+    const result = await ctx.runMutation(internal.firmClaims.saveProfile, {
+      email,
+      slug,
+      action: action === "hide" || action === "show" ? action : "save",
+      profile: {
+        website: typed.website,
+        description: typed.description,
+        languages: typed.languages,
+        offices: typed.offices,
+        focus: typed.focus,
+      },
+    });
+    const notice: EditNotice = { slug, ok: result.ok, message: result.message, errors: result.errors, submitted };
+    const firms = await ctx.runQuery(internal.firmClaims.editStateFor, { email });
+    return firmEditPage(firms, token, notice);
   }),
 });
 

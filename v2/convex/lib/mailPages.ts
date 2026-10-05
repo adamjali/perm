@@ -69,6 +69,17 @@ form{margin:0}
 .actions{margin-top:24px}
 .rules{margin:28px 0 0;padding:16px 0 0;border-top:2px solid #000;color:#52525b;font-size:15px}
 :focus-visible{outline:3px solid #2ECC40;outline-offset:2px}
+label{display:block;margin-top:20px;font-weight:700}
+.hint{display:block;font-weight:400;color:#52525b;font-size:15px}
+input[type=text],input[type=url],textarea{display:block;width:100%;margin-top:6px;padding:10px 12px;font:inherit;border:2px solid #000;border-radius:0;background:#fff;color:#18181b}
+textarea{min-height:128px;resize:vertical}
+fieldset{margin:20px 0 0;padding:0;border:0}
+legend{font-weight:700}
+.check{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin:4px 18px 0 0;font-weight:400}
+.check input{width:20px;height:20px;accent-color:#1D8229}
+.err{margin-top:6px;color:#B91C1C;font-weight:700;font-size:15px}
+.note{margin-top:16px;padding:12px 14px;border:2px solid #000;background:#f0fbf1}
+.firm{margin-top:32px;padding-top:8px;border-top:3px solid #000}
 `;
 
 /** The shared page: the brand bar and one card. `inner` is trusted HTML. */

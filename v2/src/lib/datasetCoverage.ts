@@ -112,6 +112,9 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   // --- USCIS H-1B Employer Data Hub -------------------------------------------
   "uscis-h1b-hub":
     "H-1B workers USCIS approved and denied per petitioner, by the fiscal year of its FIRST decision, from FY2009. Appeals, revocations and pending petitions are excluded, and the address is the petitioner's mailing address, not where the work is.",
+  // --- Firm page claims ----------------------------------------------------------
+  "firm-email-domains":
+    "The email DOMAINS DOL's newest PERM, wage-request and LCA files print beside each law firm, used only to check a claim on the firm's page. Never an address; personal mail and domains shared by many firms left out.",
 };
 
 /** The coverage sentence for a dataset, or null when nobody has written one. */
@@ -167,6 +170,7 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "uscis-i140-class-country": "I-140 by class and country",
   "sevp-top-employers": "ICE top OPT and CPT employers",
   "uscis-h1b-hub": "USCIS H-1B Employer Data Hub",
+  "firm-email-domains": "Law firms' email domains",
   // Retired names still stamped on older rows.
   "perm-month-stats": "Pending case counts",
 };

@@ -56,6 +56,10 @@ import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FirmPrograms } from "@/components/entities/FirmPrograms";
 import { getFirmPrograms } from "@/lib/turso/firmPrograms";
+import { api } from "@convex/_generated/api";
+import { queryStatic } from "@/lib/convexStatic";
+import { FirmProfileBlock } from "@/components/entities/FirmProfileBlock";
+import { FirmClaimPanel } from "@/components/entities/FirmClaimPanel";
 import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
 import { debarmentsForSlug } from "@/lib/turso/debarments";
 import { NameSpellings } from "@/components/entities/NameSpellings";
@@ -231,7 +235,7 @@ export default async function AttorneyPage({
   // memoises on them, so all 3,736 share one cohort read. The peer window is
   // wide because the state filter thins it hard: California holds 604 firms
   // and Wyoming a handful.
-  const [stats, dist, near, facets, variants, absorbed, freshness, debarments, programs] = await Promise.all([
+  const [stats, dist, near, facets, variants, absorbed, freshness, debarments, programs, firmProfile] = await Promise.all([
     getDisclosureStats(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -251,6 +255,10 @@ export default async function AttorneyPage({
     // Its H-1B LCAs and wage requests, by every printed spelling the nightly
     // firm map assigns this page.
     getFirmPrograms(canonicalSlug).catch(() => null),
+    // What a firm that claimed this page says about itself (convex/firmClaims.ts),
+    // read on the page's own window; a profile change refreshes the page through
+    // /api/revalidate-firm. A failed read shows no block rather than an error.
+    queryStatic(api.firmClaims.publishedProfile, { slug: canonicalSlug }, revalidate).catch(() => null),
   ]);
   const band = await sizeBand(KIND, row.rank);
 
@@ -388,6 +396,7 @@ export default async function AttorneyPage({
       ) : null}
 
       <FirmPrograms name={row.name} data={programs} />{" "}
+      <FirmProfileBlock firmName={row.name} profile={firmProfile} />{" "}
 
       <RankLadder
         rank={row.rank}
@@ -534,6 +543,7 @@ export default async function AttorneyPage({
           </p>
         </div>
       </section>
+      <FirmClaimPanel slug={canonicalSlug} firmName={row.name} claimed={firmProfile != null} />{" "}
       <UnpublishedFilingsNote subject="firm" />{" "}
       <DataProvenance
         datasets={[

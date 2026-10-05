@@ -64,7 +64,7 @@ def run(conf_text: str) -> None:
     # The analytics relay goes to PostHog, never to the app; internal locations
     # are only reached by nginx itself (the refresh mirror).
     relay = locs.get("^~ /ingest/", "")
-    mail_sel = r"~ ^/(prefs(/.*)?|unsubscribe|(queue|case|bulletin|employer)-alert/.*)$"
+    mail_sel = r"~ ^/(prefs(/.*)?|unsubscribe|(queue|case|bulletin|employer)-alert/.*|firm-claim/.*)$"
     mail = locs.get(mail_sel, "")
     proxied = {sel: b for sel, b in locs.items() if "proxy_pass" in b and not sel.startswith("@")
                and sel not in ("^~ /ingest/", mail_sel) and "internal;" not in b}
