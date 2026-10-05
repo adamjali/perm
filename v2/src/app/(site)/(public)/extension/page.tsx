@@ -174,7 +174,7 @@ export default async function ExtensionPage() {
               ["Certified", "The share of decided cases DOL certified, once the employer has 30 or more decided. Fewer, and the panel says it's too few to say."],
               ["Waiting at DOL now", "Its cases still open in DOL's live case status, which we check every day."],
               ["H-1B applications (LCAs)", "Labor condition applications in DOL's files: the first step of an H-1B, not the visa itself."],
-              ["Possible match", "The posting's name and DOL's didn't match exactly, so the panel names what it matched. Check it's the same company."],
+              ["Possible match", "The panel picked the busiest employer whose name starts with the posting's, and names it. A brand like \"Amazon\" files under several legal names. Check it's the same company."],
               ["No record", "Nothing under that name. Companies often file under their legal name, so it may still sponsor under another."],
             ] as const
           ).map(([term, meaning]) => (

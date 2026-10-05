@@ -13,6 +13,13 @@
  *    query and whose key begins with every word of it (employerNameMatch.ts).
  *    Always labelled possible, with the matched name shown.
  *
+ * A SMALL EXACT MATCH GIVES WAY TO A MUCH BUSIER NAMESAKE. Job sites print the
+ * brand ("Amazon", "Deloitte"), and DOL's files hold a 1-case "AMAZON" and a
+ * 4-case "Deloitte LLP" beside the companies people mean. An exact match under
+ * SMALL_EXACT published cases is set aside for the busiest possible match when
+ * that one has at least BUSIER_BY times its cases and BUSY_FLOOR in all, and
+ * the answer says "possible", so the reader sees which company it chose.
+ *
  * Nothing else is guessed. A name that matches none of the three is "no
  * record", said plainly.
  *
@@ -39,6 +46,12 @@ import { certifiedShare } from "./share";
 export const MIN_DECIDED_FOR_SHARE = 30;
 /** Candidates the possible-match step reads, busiest first. */
 const CANDIDATES = 25;
+/** An exact match with fewer published cases than this can give way to a namesake. */
+export const SMALL_EXACT = 30;
+/** How many times busier the namesake must be. */
+export const BUSIER_BY = 10;
+/** And the fewest published cases it may have. */
+export const BUSY_FLOOR = 100;
 
 export type LookupMatch = "exact" | "possible" | "none";
 export type PageKind = "perm" | "live" | "other";
@@ -209,19 +222,37 @@ async function describe(slug: string, kind: PageKind): Promise<LookupEmployer | 
   };
 }
 
-export async function resolveEmployer(query: string): Promise<{ match: LookupMatch; employer: LookupEmployer | null }> {
+type Resolved = { match: LookupMatch; employer: LookupEmployer | null };
+
+export async function resolveEmployer(query: string): Promise<Resolved> {
+  let candidates: Awaited<ReturnType<typeof searchByName>> | null = null;
+  const possible = async () => {
+    candidates ??= await searchByName("employer", query, CANDIDATES);
+    return pickPossibleMatch(query, candidates);
+  };
+  /** An exact match, unless it's small and a namesake is far busier. */
+  const exactOrBusier = async (employer: LookupEmployer): Promise<Resolved> => {
+    const own = employer.perm.published;
+    if (own >= SMALL_EXACT) return { match: "exact", employer };
+    const best = await possible().catch(() => null);
+    if (!best || best.slug === employer.slug || best.total < Math.max(BUSIER_BY * own, BUSY_FLOOR)) {
+      return { match: "exact", employer };
+    }
+    const busier = await describe(best.slug, "perm");
+    return busier ? { match: "possible", employer: busier } : { match: "exact", employer };
+  };
+
   const permSlug = await exactPermSlug(query);
   if (permSlug) {
     const employer = await describe(permSlug, "perm");
-    if (employer) return { match: "exact", employer };
+    if (employer) return exactOrBusier(employer);
   }
   const mapped = await exactMappedPage(query);
   if (mapped) {
     const employer = await describe(mapped.slug, mapped.kind);
-    if (employer) return { match: "exact", employer };
+    if (employer) return exactOrBusier(employer);
   }
-  const candidates = await searchByName("employer", query, CANDIDATES);
-  const best = pickPossibleMatch(query, candidates);
+  const best = await possible();
   if (best) {
     const employer = await describe(best.slug, "perm");
     if (employer) return { match: "possible", employer };

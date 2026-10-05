@@ -134,6 +134,39 @@ describe("lookupEmployer", () => {
     expect(r.meta.url).toBe("https://permtracker.app/perm-employers?q=Meta");
   });
 
+  it("sets a tiny exact match aside for a much busier namesake, and says possible", async () => {
+    // Job sites print "Amazon"; DOL holds a 1-case "AMAZON" beside Amazon's real filer.
+    db({ perm: "amazon" });
+    const tiny = { slug: "amazon", name: "AMAZON", total: 1, certified: 1, denied: 0, recent12m: 0 };
+    const big = { slug: "amazon-com-services-llc", name: "AMAZON.COM SERVICES LLC", total: 9000, certified: 8900, denied: 40, recent12m: 800 };
+    searchByName.mockResolvedValue([big, tiny]);
+    getEntityBySlug.mockImplementation(async (_k: string, slug: string) => [tiny, big].find((e) => e.slug === slug) ?? null);
+    const r = await lookupEmployer("Amazon");
+    if (!r.ok) throw new Error("expected an answer");
+    expect(r.data.match).toBe("possible");
+    expect(r.data.employer!.name).toBe("AMAZON.COM SERVICES LLC");
+  });
+
+  it("keeps a small exact match when no namesake is far busier", async () => {
+    db({ perm: "acme" });
+    const acme = { slug: "acme", name: "ACME", total: 20, certified: 18, denied: 1, recent12m: 2 };
+    // 150 is busier, but not ten times 20.
+    const brick = { slug: "acme-brick-co", name: "ACME BRICK CO", total: 150, certified: 140, denied: 3, recent12m: 9 };
+    searchByName.mockResolvedValue([brick, acme]);
+    getEntityBySlug.mockImplementation(async (_k: string, slug: string) => [acme, brick].find((e) => e.slug === slug) ?? null);
+    const r = await lookupEmployer("Acme");
+    if (!r.ok) throw new Error("expected an answer");
+    expect(r.data.match).toBe("exact");
+    expect(r.data.employer!.name).toBe("ACME");
+  });
+
+  it("never second-guesses an exact match with 30 or more published cases", async () => {
+    db({ perm: "google-llc" });
+    getEntityBySlug.mockResolvedValue(google);
+    await lookupEmployer("Google");
+    expect(searchByName).not.toHaveBeenCalled();
+  });
+
   it("answers a repeat from memory", async () => {
     db({ perm: "google-llc" });
     getEntityBySlug.mockResolvedValue(google);
