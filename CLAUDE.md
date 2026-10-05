@@ -447,7 +447,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 4 2026 (evening)".
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the five "Oct 5 2026" sections.
 
 - **Occupation pages show what O*NET says the job is, BLS market pay with DOL's four levels where it's filed, BLS's outlook, and DOL's levels year by year.**
-- **City pages say which county, metro and DOL wage area they're in**, from Census's files; BEA's price level joins once `BEA_API_KEY` exists.
+- **City pages say which county, metro and DOL wage area they're in**, from Census's files, and BEA's price level (key installed Oct 5; 51 states, 387 metros, to 2024).
 - **The wage-level tool keeps every DOL wage year since 2021-22**, both tables, from DOL's own files.
 - **`/visa-issuances`**: State's monthly issuances since March 2017, each month checked against State's own total.
 - **A law firm can claim its page**, verified by the email domains DOL's files tie to it.

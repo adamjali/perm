@@ -8089,7 +8089,7 @@ changed (`scripts/lib_reference.py`: `sync_rows`, `seen_before`, `sheet_rows`). 
 | BLS projections 2025-35 | `ingest_bls.py` | `bls_projections` | occupation pages |
 | DOL OFLC wage tables, 2021-22 to 2026-27, ALC and ACWIA | `ingest_oflc_wages.py` | `oflc_wage_levels`, `oflc_wage_geography`, `oflc_occupation_basis` | occupation and city pages, `/api/wage-levels/history` |
 | Census places, county subdivisions, counties, metro delineation | `ingest_census_geo.py` | `census_counties`, `city_geo` | city pages |
-| BEA regional price parities (API, needs `BEA_API_KEY` in uscis.env) | `ingest_bea_rpp.py` | `bea_rpp` | city pages, once the key exists |
+| BEA regional price parities (API, `BEA_API_KEY` in uscis.env since Oct 5) | `ingest_bea_rpp.py` | `bea_rpp` | city pages |
 | State monthly immigrant visa issuances, Mar 2017 on | `ingest_visa_issuances.py` | `visa_issuances` + `perm_docs['visa_issuances_summary']` | `/visa-issuances`, bulletin line pages |
 
 - **BLS answers a browser User-Agent from a script with 403** and serves one that names who's asking:
@@ -8112,6 +8112,11 @@ changed (`scripts/lib_reference.py`: `sync_rows`, `seen_before`, `sheet_rows`). 
   up to State's GRAND TOTAL. Categories come from State's own "Immigrant Visa Symbols" legend (T5 is EB-5, not the
   T-visa symbol). Country keys normalise every dash: State wrote "China - mainland born" with a hyphen and an en dash.
   May 2020's by-consulate table has 190 rows (consulates closed), so the floor is 50.
+- **BEA prints the housing line as "RPPs: Services: Rents"**; the word housing never appears in its descriptions, so
+  the loader matches `rents`. Its first real run (Oct 5, once the key existed) refused on a fixture written from a
+  guessed "Services: Housing"; the test carries BEA's five real descriptions now. First load: 37,230 values, 51
+  states, 387 metros, newest year 2024. The key came by email to the press inbox (Zoho files automated mail under
+  Notification, not Inbox) and needs one activation click behind a reCAPTCHA; it went to the server by pipe, unprinted.
 - **City pages carry FY2016 PERM jobs coded in SOC 2010**, which BLS and DOL no longer publish, so the city figure
   looks 18 jobs down for six with current data.
 
@@ -8219,5 +8224,8 @@ hold the app until a real visitor had already been turned away.
   possible match with 10 times its cases and 100 in all, answered as "possible". Known gaps left alone: "Infosys"
   and "Walmart" land on the right PERM sponsor with 0 LCAs, because the LCA files spell those employers differently.
 - The extension is `v2/extension/` (own tsconfigs, tests in the `unit` project), built by `pnpm build:extension` into
-  a store zip; `STORE.md` has the listing text. The owner opens the Chrome Web Store developer account; the store URL
-  then goes in `CHROME_STORE_URL` on `/extension`.
+  a store zip; `STORE.md` has the listing text. The developer account exists (fee paid Oct 5); **the listing is on hold
+  until the LLC's rename, EIN and bank account** (owner, Oct 5). A trader's name, address, phone and email show on the
+  listing to everyone, so it goes up as the organization with the registered agent's address and the business line.
+  The store URL then goes in `CHROME_STORE_URL` on `/extension`. Chrome blocks every extension from the store's
+  pages, so the store's forms are the owner's clicks.
