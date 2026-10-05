@@ -8203,7 +8203,9 @@ one-click unsubscribe), AI crawlers (allowed on purpose). Cloudflare's GraphQL o
 `firewallEventsAdaptiveGroups`; `firewallEventsAdaptive` (samples) works, and the rate budget empties fast.
 
 **The defense put Under Attack Mode on at 2:07 PM EDT Oct 4 for 32 minutes** on "app full 3 minutes running" with
-0 people shown the busy page. Whether it should wait for at least one person is the owner's open decision.
+0 people shown the busy page. **Kept as it is (owner, Oct 5):** a full app for 3 minutes running still acts
+without waiting for a person to be refused. A scraper never draws the busy page, so waiting for one would let it
+hold the app until a real visitor had already been turned away.
 
 ## Oct 5 2026: a Chrome extension and a keyless employer lookup
 
@@ -8211,6 +8213,11 @@ one-click unsubscribe), AI crawlers (allowed on purpose). Cloudflare's GraphQL o
   employer, then a page `employer_page_map` ties the name's program key to, then a labelled possible match, else "no
   record". 60 calls a minute per address, 1,200 for all keyless callers per copy; CORS for permtracker.app and
   `chrome-extension://` only. `programKey` in TypeScript is held to Python's by the shared identity fixture.
+- **A small exact match gives way to a much busier namesake** (`SMALL_EXACT`, `BUSIER_BY`, `BUSY_FLOOR`). Job sites
+  print the brand, and DOL's files hold a 1-case "AMAZON" and a 4-case "Deloitte LLP" beside the companies people mean,
+  so "Amazon" answered with 1 published case. An exact match under 30 published cases is set aside for the busiest
+  possible match with 10 times its cases and 100 in all, answered as "possible". Known gaps left alone: "Infosys"
+  and "Walmart" land on the right PERM sponsor with 0 LCAs, because the LCA files spell those employers differently.
 - The extension is `v2/extension/` (own tsconfigs, tests in the `unit` project), built by `pnpm build:extension` into
   a store zip; `STORE.md` has the listing text. The owner opens the Chrome Web Store developer account; the store URL
   then goes in `CHROME_STORE_URL` on `/extension`.
