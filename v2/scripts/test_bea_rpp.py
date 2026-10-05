@@ -23,8 +23,11 @@ def check(label, got, want):
         FAILS.append(f"{label}: got {got!r}, want {want!r}")
 
 
+# BEA's own descriptions, read from GetParameterValuesFiltered on Oct 5 2026 (SARPP and
+# MARPP print the same five). Housing is "Services: Rents"; a guessed "Housing" passed this
+# test while the live loader refused every run.
 VALUES = [{"Key": "1", "Desc": "[MARPP] RPPs: All items"}, {"Key": "2", "Desc": "[MARPP] RPPs: Goods"},
-          {"Key": "3", "Desc": "[MARPP] RPPs: Services: Housing"},
+          {"Key": "3", "Desc": "[MARPP] RPPs: Services: Rents"},
           {"Key": "4", "Desc": "[MARPP] RPPs: Services: Utilities"},
           {"Key": "5", "Desc": "[MARPP] RPPs: Services: Other"},
           {"Key": "6", "Desc": "[MARPP] Implicit regional price deflator"}]

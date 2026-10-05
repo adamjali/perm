@@ -48,7 +48,8 @@ TABLE = "bea_rpp"
 COLS = ("geo_fips", "year", "line", "kind", "geo_name", "value")
 TABLES = {"state": ("SARPP", "STATE"), "msa": ("MARPP", "MSA")}
 # Our line name -> words its BEA description must contain.
-LINES = {"all": ("all items",), "goods": ("goods",), "housing": ("housing",),
+# BEA prints housing as "RPPs: Services: Rents" (read Oct 5 2026); the word housing never appears.
+LINES = {"all": ("all items",), "goods": ("goods",), "housing": ("rents",),
          "utilities": ("utilities",), "other": ("other",)}
 MIN_ROWS = {"state": 51, "msa": 300}
 # BEA allows 100 requests a minute; this loader makes about a dozen.
