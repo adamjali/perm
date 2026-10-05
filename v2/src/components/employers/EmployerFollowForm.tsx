@@ -11,6 +11,7 @@
 
 import { useId, useState } from "react";
 import { AlertNote } from "@/components/alerts/AlertOptIns";
+import { formText } from "@/lib/forms/formText";
 
 function subscribeEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -28,15 +29,19 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
   const endpoint = subscribeEndpoint();
   if (!endpoint) return null;
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (status === "sending") return;
+    // The box itself, not only React's copy: an autofilled address can skip the
+    // event React listens for (formText).
+    const address = formText(e.currentTarget, "email", email).trim();
+    setEmail(address);
     setStatus("sending");
     try {
       const res = await fetch(endpoint!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), slug, source }),
+        body: JSON.stringify({ email: address, slug, source }),
       });
       const body = (await res.json().catch(() => null)) as { message?: string } | null;
       setMessage(String(body?.message ?? "Something went wrong. Try again in a moment."));
@@ -64,6 +69,7 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
         <input
           id={emailId}
           type="email"
+          name="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}

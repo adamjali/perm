@@ -20,6 +20,7 @@ import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 import type { CasePage } from "@/lib/turso/cases";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { formatInt } from "@/lib/format";
+import { formText } from "@/lib/forms/formText";
 
 /** One shared empty result, so an empty page or search does not mint a new array identity per render. */
 const EMPTY_ROWS: CaseRow[] = [];
@@ -130,6 +131,26 @@ const STATUS_LABEL: Record<Status, string> = {
 /** What the month inputs must hold before a filter is sent. */
 const MONTH_INPUT_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
+/** A month from the URL, or nothing: a hand-edited `from=` never reaches a query. */
+function urlMonth(raw: string | null): string {
+  const v = (raw ?? "").trim();
+  return MONTH_INPUT_RE.test(v) ? v : "";
+}
+
+/**
+ * The month boxes a submit couldn't read, by label.
+ *
+ * Firefox draws `type="month"` as a plain text box, so a month typed the way
+ * a person writes one ("March 2026") is the normal case there, and dropping
+ * it in silence leaves the reader thinking the filter ran.
+ */
+function unreadMonthLabels(from: string, to: string): string[] {
+  return [
+    ...(from && !MONTH_INPUT_RE.test(from) ? ["Filed from"] : []),
+    ...(to && !MONTH_INPUT_RE.test(to) ? ["Filed to"] : []),
+  ];
+}
+
 const CONTROL =
   "min-h-[44px] w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-base outline-none shadow-hard-sm focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
@@ -205,21 +226,30 @@ export function CaseBrowser({
   const [sortAsc, setSortAsc] = useState(false);
 
   // --- the two lookups that are not the browse table ----------------------
-  const [caseInput, setCaseInput] = useState("");
-  const [caseQuery, setCaseQuery] = useState("");
-  const [nameInput, setNameInput] = useState("");
+  // Both forms are seeded from the URL as well. A tap on a button before the
+  // page's script has loaded submits the form the plain way, as
+  // /perm-cases?q=google, and reading the URL here turns that into the search
+  // the reader asked for instead of a reload that drops it.
+  const [caseInput, setCaseInput] = useState(() => (params.get("case") ?? "").trim());
+  const [caseQuery, setCaseQuery] = useState(() => (params.get("case") ?? "").trim());
+  const [nameInput, setNameInput] = useState(() => (params.get("q") ?? "").trim());
   // The narrowing filters: title contains, filed between. Applied on submit
   // like the name, so a half-typed month never fires a request.
-  const [titleInput, setTitleInput] = useState("");
-  const [fromInput, setFromInput] = useState("");
-  const [toInput, setToInput] = useState("");
-  const [narrow, setNarrow] = useState<{ title: string; from: string; to: string }>({
-    title: "",
-    from: "",
-    to: "",
-  });
-  const [nameField, setNameField] = useState<"employer" | "attorney">("employer");
-  const [nameQuery, setNameQuery] = useState("");
+  const [titleInput, setTitleInput] = useState(() => (params.get("title") ?? "").trim());
+  const [fromInput, setFromInput] = useState(() => urlMonth(params.get("from")));
+  const [toInput, setToInput] = useState(() => urlMonth(params.get("to")));
+  const [narrow, setNarrow] = useState<{ title: string; from: string; to: string }>(() => ({
+    title: (params.get("title") ?? "").trim(),
+    from: urlMonth(params.get("from")),
+    to: urlMonth(params.get("to")),
+  }));
+  const [nameField, setNameField] = useState<"employer" | "attorney">(() =>
+    params.get("field") === "attorney" ? "attorney" : "employer",
+  );
+  const [nameQuery, setNameQuery] = useState(() => (params.get("q") ?? "").trim());
+  // Said when a Search press can't run, so a tap is never answered by nothing.
+  const [caseNote, setCaseNote] = useState<string | null>(null);
+  const [nameNote, setNameNote] = useState<string | null>(null);
   // A submit counter, folded into each lookup url. Without it, pressing the
   // button again with an UNCHANGED value is a no-op: the url does not change,
   // so usePublicQuery does not re-run - which after a failure looks like a dead
@@ -479,7 +509,14 @@ export function CaseBrowser({
           className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] [&>*]:min-w-0"
           onSubmit={(e) => {
             e.preventDefault();
-            setCaseQuery(caseInput.trim());
+            const value = formText(e.currentTarget, "case", caseInput).trim();
+            setCaseInput(value);
+            if (!value) {
+              setCaseNote("Type a case number first, like A-24123-45678 or G-100-26001-123456.");
+              return;
+            }
+            setCaseNote(null);
+            setCaseQuery(value);
             setCaseSubmit((s) => s + 1);
           }}
         >
@@ -487,6 +524,7 @@ export function CaseBrowser({
             <span className="sr-only">Case number</span>{" "}
             <input
               type="text"
+              name="case"
               value={caseInput}
               onChange={(e) => setCaseInput(e.target.value)}
               placeholder="A-24123-45678"
@@ -505,6 +543,11 @@ export function CaseBrowser({
             {caseLookupPending ? "Checking…" : "Look it up"}
           </button>
         </form>
+        {caseNote ? (
+          <p role="status" className="mt-3 text-base font-semibold">
+            {caseNote}
+          </p>
+        ) : null}
         {caseFailed ? (
           <RequestFailed
             what="The lookup"
@@ -742,11 +785,34 @@ export function CaseBrowser({
           className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[auto_1fr_auto] [&>*]:min-w-0"
           onSubmit={(e) => {
             e.preventDefault();
-            setNameQuery(nameInput.trim());
+            const form = e.currentTarget;
+            const field = formText(form, "field", nameField) === "attorney" ? "attorney" : "employer";
+            const name = formText(form, "q", nameInput).trim();
+            const title = formText(form, "title", titleInput).trim();
+            const from = formText(form, "from", fromInput).trim();
+            const to = formText(form, "to", toInput).trim();
+            setNameField(field);
+            setNameInput(name);
+            setTitleInput(title);
+            setFromInput(from);
+            setToInput(to);
+            if (name.length < 2) {
+              setNameNote(
+                `Type at least two letters of the ${field === "attorney" ? "law firm's" : "employer's"} name.`,
+              );
+              return;
+            }
+            const unread = unreadMonthLabels(from, to);
+            setNameNote(
+              unread.length > 0
+                ? `${unread.join(" and ")} needs a month written like 2026-03, so the search ran without it.`
+                : null,
+            );
+            setNameQuery(name);
             setNarrow({
-              title: titleInput.trim(),
-              from: MONTH_INPUT_RE.test(fromInput) ? fromInput : "",
-              to: MONTH_INPUT_RE.test(toInput) ? toInput : "",
+              title,
+              from: MONTH_INPUT_RE.test(from) ? from : "",
+              to: MONTH_INPUT_RE.test(to) ? to : "",
             });
             setNameSubmit((s) => s + 1);
           }}
@@ -754,6 +820,7 @@ export function CaseBrowser({
           <label className="block">
             <span className="sr-only">Search in</span>{" "}
             <select
+              name="field"
               value={nameField}
               onChange={(e) => setNameField(e.target.value as "employer" | "attorney")}
               className={CONTROL}
@@ -766,6 +833,7 @@ export function CaseBrowser({
             <span className="sr-only">Name</span>{" "}
             <input
               type="text"
+              name="q"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               placeholder="Start of a name"
@@ -789,6 +857,7 @@ export function CaseBrowser({
             <span className="mb-1 block text-sm font-bold">Job title contains</span>{" "}
             <input
               type="text"
+              name="title"
               value={titleInput}
               onChange={(e) => setTitleInput(e.target.value)}
               placeholder="e.g. software, analyst"
@@ -802,10 +871,10 @@ export function CaseBrowser({
               <span className="mb-1 block text-sm font-bold">Filed from</span>{" "}
               <input
                 type="month"
+                name="from"
                 value={fromInput}
                 onChange={(e) => setFromInput(e.target.value)}
                 placeholder="YYYY-MM"
-                pattern="\\d{4}-\\d{2}"
                 className={CONTROL + " min-w-0"}
               />
             </label>{" "}
@@ -813,15 +882,20 @@ export function CaseBrowser({
               <span className="mb-1 block text-sm font-bold">Filed to</span>{" "}
               <input
                 type="month"
+                name="to"
                 value={toInput}
                 onChange={(e) => setToInput(e.target.value)}
                 placeholder="YYYY-MM"
-                pattern="\\d{4}-\\d{2}"
                 className={CONTROL + " min-w-0"}
               />
             </label>
           </div>
         </form>
+        {nameNote ? (
+          <p role="status" className="mt-3 text-base font-semibold">
+            {nameNote}
+          </p>
+        ) : null}
         {searching && nameField === "employer" && liveHits.length > 0 ? (
           /* The live strip: filings newer than the last disclosure file, from
              DOL's live feed, each linking to its own status page. */
@@ -884,6 +958,7 @@ export function CaseBrowser({
                   onClick={() => {
                     setNameInput("");
                     setNameQuery("");
+                    setNameNote(null);
                   }}
                   className="font-bold underline decoration-primary decoration-2 underline-offset-2"
                 >

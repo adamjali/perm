@@ -12,6 +12,7 @@
 
 import * as React from "react";
 import { isQueued, replyHeading } from "@/lib/alertReply";
+import { formText } from "@/lib/forms/formText";
 
 function requestEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -30,15 +31,19 @@ export function PrefsRequestForm() {
   const endpoint = requestEndpoint();
   if (!endpoint) return null;
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (state === "busy") return;
+    // The box itself, not only React's copy: an autofilled address can skip the
+    // event React listens for (formText).
+    const address = formText(e.currentTarget, "email", email).trim();
+    setEmail(address);
     setState("busy");
     try {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: address }),
       });
       const body = (await res.json()) as { ok?: boolean; message?: string };
       setMessage(String(body.message ?? "Something went wrong. Try again."));
@@ -73,6 +78,7 @@ export function PrefsRequestForm() {
         <input
           id="prefs-email"
           type="email"
+          name="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}

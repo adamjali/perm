@@ -13,6 +13,7 @@
 import { useId, useState } from "react";
 import { isQueued, replyHeading } from "@/lib/alertReply";
 import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
+import { formText } from "@/lib/forms/formText";
 
 function subscribeEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -55,16 +56,20 @@ export function BulletinAlertForm({ source }: { source: string }) {
   const endpoint = subscribeEndpoint();
   if (!endpoint) return null;
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (status === "sending") return;
+    // The box itself, not only React's copy: an autofilled address can skip the
+    // event React listens for (formText).
+    const address = formText(e.currentTarget, "email", email).trim();
+    setEmail(address);
     setStatus("sending");
     try {
       const res = await fetch(endpoint!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email.trim(),
+          email: address,
           category,
           country,
           source,
@@ -164,6 +169,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
         <input
           id={emailId}
           type="email"
+          name="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}

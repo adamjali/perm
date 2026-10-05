@@ -160,6 +160,20 @@ with tempfile.TemporaryDirectory() as _proc:
 check("reads the database's and the website copies' ticks, nothing else",
       _ticks == {"db": 1000, "web": 100}, str(_ticks))
 
+# The alert says what filled the app. Oct 4 2026, 2:07 PM EDT: a scraper from
+# about 880 addresses filled it, nobody drew the busy page, and an alert that
+# said only "0 people shown the busy page" read as a false alarm.
+_flood = [dl(NOW - 30 - i * 0.1, status=503, uri="/pwd-cases", ua=f"Chrome/{140 + i % 6}") for i in range(300)]
+_flood += [dl(NOW - 40, status=200)] * 50
+_text = d.what_filled(d.page_requests(_flood, NOW - 600), NOW)
+check("says how many page requests were turned away, of how many", "300 of 350" in _text, _text)
+check("names the busiest section", "/pwd-cases (300)" in _text, _text)
+check("counts the browser labels", "6 browser labels" in _text, _text)
+check("says nothing when nothing was turned away", d.what_filled(d.page_requests([dl(NOW - 30)], NOW - 600), NOW) == "")
+check("a full app nobody saw reads as a scraper, not as zero people",
+      "scraper" in d.lead(0, _text) and "0 people" not in d.lead(0, _text))
+check("people shown the busy page lead when there are enough", d.lead(7, "").startswith("7 people were shown"))
+
 # An alert must name its User-Agent: Resend sits behind Cloudflare, which
 # answered Python's default one with 403 "error code: 1010" on every alert sent
 # until Oct 3 2026.

@@ -1,6 +1,9 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from "@/lib/constants/site";
 
+/** Public pages whose path starts with a disallowed prefix. */
+export const PUBLIC_UNDER_A_DISALLOW = ['/api-terms']
+
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = SITE_URL
 
@@ -76,7 +79,12 @@ export default function robots(): MetadataRoute.Robots {
       // ClaudeBot, anthropic-ai, Google-Extended, PerplexityBot, CCBot, Amazonbot, etc.
       {
         userAgent: '*',
-        allow: '/',
+        // The longer rule wins (RFC 9309, and Google and Bing both read it
+        // that way), so these re-open public pages a prefix above would block.
+        // '/api' blocked '/api-terms' until Oct 4 2026, and Search Console
+        // listed it "indexed, though blocked by robots.txt".
+        // robots-public-pages.test.ts checks every public page against this.
+        allow: ['/', ...PUBLIC_UNDER_A_DISALLOW],
         disallow: authDisallow,
       },
       ...freeloaders.map((bot) => ({ userAgent: bot, disallow: '/' })),

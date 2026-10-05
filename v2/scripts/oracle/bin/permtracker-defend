@@ -117,8 +117,8 @@ def tail_lines(path: pathlib.Path, max_bytes: int = 16 << 20) -> list[str]:
     return lines[1:] if size > max_bytes else lines
 
 
-def page_requests(lines: list[str], since: float) -> list[tuple[float, int, int | None, bool, str]]:
-    """(time, status, asn, verified crawler, user agent) for each app page since `since`."""
+def page_requests(lines: list[str], since: float) -> list[tuple[float, int, int | None, bool, str, str]]:
+    """(time, status, asn, verified crawler, user agent, path) for each app page since `since`."""
     out = []
     for ln in lines:
         m = DEFEND_LINE.match(ln)
@@ -128,7 +128,7 @@ def page_requests(lines: list[str], since: float) -> list[tuple[float, int, int 
         if t < since or STATIC.match(m.group(5)):
             continue
         asn = int(m.group(3)) if m.group(3).isdigit() else None
-        out.append((t, int(m.group(2)), asn, m.group(4) == "true", m.group(6)))
+        out.append((t, int(m.group(2)), asn, m.group(4) == "true", m.group(6), m.group(5)))
     return out
 
 
@@ -173,6 +173,36 @@ def find_source(reqs, now: float) -> dict | None:
     if ua and n_ua >= SOURCE_MIN and n_ua >= SOURCE_SHARE * total:
         return {"kind": "ua", "value": ua, "share": round(n_ua / total, 2), "requests": n_ua}
     return None
+
+
+def what_filled(reqs, now: float) -> str:
+    """What filled the app, in words, for the alert.
+
+    The defense acts on a full app even when nobody drew the busy page, which
+    is what a scraper looks like: it fetches pages and never draws them. An
+    alert that said only "0 people shown the busy page" read as a false alarm
+    (Oct 4 2026, 2:07 PM EDT: 841 page requests turned away in 3 minutes, from
+    about 880 addresses asking once or twice each). Pure.
+    """
+    recent = [r for r in reqs if r[0] >= now - 60 * FULL_MINUTES]
+    refused = [r for r in recent if r[1] == 503]
+    if not refused:
+        return ""
+    sections = Counter("/" + r[5].strip("/").split("/")[0] for r in refused).most_common(3)
+    where = ", ".join(f"{p} ({n})" for p, n in sections)
+    labels = len({r[4] for r in refused})
+    return (f"In the last {FULL_MINUTES} minutes {len(refused):,} of {len(recent):,} page requests were turned away "
+            f"with the busy reply, under {labels:,} browser labels, mostly for {where}.")
+
+
+def lead(people: int, filled: str) -> str:
+    """The alert's first sentence: who was turned away, in plain words."""
+    if people >= PEOPLE_BUSY:
+        head = f"{people} people were shown the busy page in the last 10 minutes."
+    else:
+        head = ("The app was full minute after minute, and no visitor's browser drew the busy page, which is what a "
+                "scraper looks like: it fetches pages and never draws them.")
+    return f"{head} {filled}".strip()
 
 
 def rule_expression(source: dict) -> str:
@@ -390,6 +420,7 @@ def main() -> int:
 
     cfg = read_env(CONFIG)
     live = bool(cfg.get("CF_API_TOKEN") and cfg.get("CF_ZONE_ID")) and not OFF.exists()
+    filled = what_filled(reqs, now)
     why = (f"{people} people shown the busy page in 10 minutes, app full {full} of the last {FULL_MINUTES} minutes"
            + (" (a deploy is running, so a full app is not counted)" if deploying else "")
            + (" (the database, not traffic, is using the CPU, so a full app is not counted)" if db_bound else ""))
@@ -408,9 +439,9 @@ def main() -> int:
                 state.update(mode="rule", since=now, source=info["source"])
                 note(f"challenge on for {describe(info['source'])}; {why}")
                 email(state, cfg, "PERM Tracker: automatic defense on",
-                      f"People were being turned away ({why}).\n\nCloudflare now asks {describe(info['source'])} "
+                      f"{lead(people, filled)}\n\nCloudflare now asks {describe(info['source'])} "
                       f"to pass a browser check. It turns itself off after 30 calm minutes, and moves to "
-                      f"Under Attack Mode if trouble continues for 10.\n\n{UNDO}")
+                      f"Under Attack Mode if trouble continues for 10.\n\nCounts: {why}.\n\n{UNDO}")
             elif act == "attack_on":
                 if state.get("mode") != "attack":
                     level = cf.security_level()
@@ -420,10 +451,14 @@ def main() -> int:
                     state.update(mode="attack", since=now)
                     note(f"Under Attack Mode on ({info['reason']}); {why}")
                     email(state, cfg, "PERM Tracker: Under Attack Mode on",
-                          f"People were still being turned away ({info['reason']}; {why}).\n\nEvery visitor now "
+                          f"{lead(people, filled)} "
+                          + ("No single network or browser label stood out, so a rule for one source couldn't "
+                             "help." if info["reason"] == "no single source" else
+                             f"A rule for the busiest source didn't end it ({info['reason']}).")
+                          + f"\n\nEvery visitor now "
                           f"passes Cloudflare's check first, except verified crawlers, AI assistants, link "
                           f"previews, unsubscribe and sign-in, which skip it. It turns itself off after 30 calm "
-                          f"minutes.\n\n{UNDO}")
+                          f"minutes.\n\nCounts: {why}.\n\n{UNDO}")
             elif act == "attack_off":
                 cf.set_security_level(state.get("restoreLevel") or "low")
                 state.update(mode="rule", since=now, attackCooldownUntil=now + ATTACK_COOLDOWN)

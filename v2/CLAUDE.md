@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 581 files / 8,554 tests (2026-10-04 midday; ~22 min at a load average near 60, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 586 files / 8,580 tests (2026-10-04 evening; ~22 min at a load average near 60, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -7973,3 +7973,56 @@ and ignores `overflow`, so a screen-reader table kept its full width: `/lca-wage
 `sudo systemd-run --uid=permtracker -p EnvironmentFile=/tmp/empmap/env -p Nice=10 -p CPUWeight=20
 -E PYTHONPATH=/srv/permtracker/repo/v2/scripts python3 /tmp/empmap/<script>`. Put credentials in an
 env file, never on the command line: `ps` shows a process's arguments.
+
+## Oct 4 2026 (evening): a search that ignored twenty presses, a pattern no month matched, and a clearer alert
+
+**A form's submit reads the boxes themselves** (`src/lib/forms/formText.ts`). PostHog recorded an
+iPhone (Chrome for iOS 154) on /perm-cases at 5:59 PM EDT: a name typed and two months picked,
+Search pressed twenty times, the form's own submit event firing each time, and not one request,
+because the component's copy of the name was empty while the box showed it. Chrome for iOS runs
+its own form script on the page (`__gcruniqueid` attributes in the autocapture chain), and React's
+value tracker can then treat real typing as no change. `formText(form, name, state)` reads the
+field from `FormData` at submit and falls back to state when the form doesn't carry it (no
+`name`, disabled). When the two disagree it sends `form_field_desync` with the field's name and
+the path, never the value, so how often this happens is measured. The /perm-cases forms, the
+wage-request and LCA search, the all-programs search box and the email box on the five alert
+forms read their fields this way; each of those fields now carries a `name`. The sign-in, sign-up and
+reset-password forms gate their buttons on React's copy (a disabled button until the email looks
+valid), so reading at submit can't help them: `useFormDomSync` (`src/hooks/useFormDomSync.ts`)
+listens on the form natively for input, change and leaving a field and copies each named field's
+value into its setter, so an autofill React never heard about still wakes the button.
+
+**Every search press is answered.** A name under two letters, an empty case box, and a month box
+holding something that isn't a month each print a `role="status"` sentence instead of doing
+nothing. The /perm-cases forms are also seeded from the URL (`case`, `field`, `q`, `title`,
+`from`, `to`), so a press before the page's script has loaded, which submits the form the plain
+way, still runs the search after the reload.
+
+**The /perm-cases month boxes carried `pattern="\\d{4}-\\d{2}"`.** In a JSX attribute a
+backslash is not an escape, so the browser saw a literal doubled backslash and no month could
+ever match. Chrome and iPhones draw a month picker and ignore `pattern`; Firefox (and any browser
+without `type="month"`) draws a text box, applies it, and refused the search outright. Reported
+through the contact form on Oct 4, 5:31 PM EDT. The pattern is gone; `MONTH_INPUT_RE` was
+already the check, and an unreadable month is now named. `CaseBrowser.test.tsx` holds both, each
+probed red against the old code.
+
+**The defense's alert says what filled the app.** The 2:07 PM EDT Under Attack Mode alert said
+"0 people shown the busy page", which read as a false alarm. It wasn't: about 880 addresses asked
+for search and employer pages once or twice each, 841 page requests got the busy reply in three
+minutes, and Under Attack Mode cut traffic from about 960 a minute to about 90. A scraper never
+draws the busy page, so the people count stays at zero. `what_filled()` and `lead()` in
+`bin/permtracker-defend` now open the email with the refused count, the browser labels and the
+busiest sections; installed on the server by hand (scripts/oracle isn't deployed by a push).
+
+**A storage spy on `window.localStorage` can't be undone on happy-dom or jsdom**: the storage
+object is a Proxy. `SavedReceipts.test.tsx` faked a refusing browser that way, and under CI's
+shuffle the fake leaked into the next test, so Tests was red on main from 12:15 PM EDT. It now
+swaps the whole `window.localStorage` getter and restores it in a `finally`; reproduced on 3 of 6
+seeds before, green on 8 of 8 after.
+
+**robots.txt's `Disallow: /api` blocked `/api-terms`**, because a robots path is a prefix, and
+Search Console listed the page "indexed, though blocked by robots.txt". robots.ts had a comment
+warning about exactly this. `PUBLIC_UNDER_A_DISALLOW` re-opens such pages with an allow rule (the
+longer rule wins, RFC 9309), and `robots-public-pages.test.ts` walks every page under the public
+tree with that longest-match rule; probed red with the allow removed. Of 5,577 sitemap pages
+checked against the live file, `/api-terms` was the only one blocked.

@@ -39,6 +39,7 @@ import {
   authBreadcrumb,
 } from "@/lib/auth/auth-telemetry";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
+import { useFormDomSync } from "@/hooks/useFormDomSync";
 
 type ResetStep = "email" | "reset";
 
@@ -62,6 +63,9 @@ export function ResetPasswordPageClient() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newPasswordTouched, setNewPasswordTouched] = useState(false);
+  // An autofilled field must enable the button: see useFormDomSync.
+  const emailFormRef = useFormDomSync({ email: setEmail });
+  const resetFormRef = useFormDomSync({ newPassword: setNewPassword, confirmPassword: setConfirmPassword });
   const [confirmTouched, setConfirmTouched] = useState(false);
 
   const emailValidation = validateEmailValue(email, emailTouched);
@@ -261,7 +265,7 @@ export function ResetPasswordPageClient() {
             choose a new password.
           </p>
 
-          <form onSubmit={handleResetSubmit} className="space-y-5" noValidate>
+          <form ref={resetFormRef} onSubmit={handleResetSubmit} className="space-y-5" noValidate>
             <div className="space-y-2">
               <Label htmlFor="code" className="text-sm uppercase mono font-bold tracking-widest">
                 Reset Code
@@ -347,7 +351,7 @@ export function ResetPasswordPageClient() {
           password.
         </p>
 
-        <form onSubmit={handleEmailSubmit} className="space-y-5" noValidate>
+        <form ref={emailFormRef} onSubmit={handleEmailSubmit} className="space-y-5" noValidate>
           <AuthField
             id="email"
             label="Email"

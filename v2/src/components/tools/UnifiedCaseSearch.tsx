@@ -44,6 +44,7 @@ import type { Program, UnifiedCase } from "@/lib/turso/unifiedSearch";
 import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/turso/caseSearchReads";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { formatInt } from "@/lib/format";
+import { formText } from "@/lib/forms/formText";
 import { seasonalForm } from "@/lib/seasonalForms";
 
 /**
@@ -519,9 +520,9 @@ export function UnifiedCaseSearch({
   };
 
   /** Only what this lead can carry goes on the wire. The route drops the rest anyway. */
-  const buildParams = (over: { firm?: string; occupation?: string } = {}) => {
+  const buildParams = (over: { firm?: string; occupation?: string; q?: string } = {}) => {
     const s = new URLSearchParams();
-    const q = textInput.trim();
+    const q = (over.q ?? textInput).trim();
     if (q) s.set("q", q);
     const firmValue = over.firm ?? firmInput.trim();
     const occValue = over.occupation ?? occInput.trim();
@@ -554,13 +555,17 @@ export function UnifiedCaseSearch({
     return s.toString();
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // The main box is read from the form, not only from state: a phone's
+    // autofill can fill it without the event React listens for (formText).
+    const q = formText(e.currentTarget, "q", textInput);
+    setTextInput(q);
     // The table shows the order that was asked for, whatever column a click
     // had chosen since.
     setSort(orderToSort(orderInput));
-    setSubmitted(buildParams());
-    setQuery((cur) => ({ search: textInput.trim(), n: cur.n + 1 }));
+    setSubmitted(buildParams({ q }));
+    setQuery((cur) => ({ search: q.trim(), n: cur.n + 1 }));
   };
 
   /**
@@ -626,6 +631,7 @@ export function UnifiedCaseSearch({
                 <input
                   id={`${uid}-q`}
                   type="text"
+                  name="q"
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
                   /* 361.8px of real Inter at 16px/500 before this, in a box

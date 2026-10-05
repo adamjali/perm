@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { isQueued, replyHeading } from "@/lib/alertReply";
 import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
+import { formText } from "@/lib/forms/formText";
 
 /**
  * Convex HTTP actions are served from the `.convex.site` twin of the
@@ -137,6 +138,10 @@ export function QueueAlertForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (status === "sending") return;
+    // The box itself, not only React's copy: an autofilled address can skip the
+    // event React listens for (formText).
+    const address = formText(event.currentTarget, "email", email).trim();
+    setEmail(address);
 
     setStatus("sending");
     setMessage("");
@@ -149,7 +154,7 @@ export function QueueAlertForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
+          email: address,
           filingMonth,
           role: role || undefined,
           source,
@@ -213,6 +218,7 @@ export function QueueAlertForm({
           <Input
             id={emailId}
             type="email"
+            name="email"
             required
             autoComplete="email"
             value={email}

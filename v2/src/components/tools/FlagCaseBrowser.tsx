@@ -29,6 +29,7 @@ import { nextSort, sortRows, type SortColumn, type SortState } from "@/lib/table
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { seasonalForm } from "@/lib/seasonalForms";
 import { formatInt } from "@/lib/format";
+import { formText } from "@/lib/forms/formText";
 
 /**
  * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
@@ -435,6 +436,8 @@ export function FlagCaseBrowser({
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
   const [allVisasInput, setAllVisasInput] = useState(false);
+  // Said when a Search press can't run as typed, so a tap is never answered by nothing.
+  const [searchNote, setSearchNote] = useState<string | null>(null);
   const [query, setQuery] = useState<{ employer: string; title: string; from: string; to: string; allVisas: boolean; n: number }>({
     employer: initial.trim(),
     title: "",
@@ -526,11 +529,34 @@ export function FlagCaseBrowser({
           className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] [&>*]:min-w-0"
           onSubmit={(e) => {
             e.preventDefault();
+            // Read the boxes, not only React's copy: see formText.
+            const form = e.currentTarget;
+            const employer = formText(form, "q", employerInput).trim();
+            const title = formText(form, "title", titleInput).trim();
+            const from = formText(form, "from", fromInput).trim();
+            const to = formText(form, "to", toInput).trim();
+            setEmployerInput(employer);
+            setTitleInput(title);
+            setFromInput(from);
+            setToInput(to);
+            if (employer.length < 2 && !normaliseCaseNumber(employer)) {
+              setSearchNote("Type at least two letters of the employer's name.");
+              return;
+            }
+            const unread = [
+              ...(from && !MONTH_RE.test(from) ? ["Filed from"] : []),
+              ...(to && !MONTH_RE.test(to) ? ["Filed to"] : []),
+            ];
+            setSearchNote(
+              unread.length > 0
+                ? `${unread.join(" and ")} needs a month written like 2026-03, so the search ran without it.`
+                : null,
+            );
             setQuery((q) => ({
-              employer: employerInput.trim(),
-              title: titleInput.trim(),
-              from: MONTH_RE.test(fromInput) ? fromInput : "",
-              to: MONTH_RE.test(toInput) ? toInput : "",
+              employer,
+              title,
+              from: MONTH_RE.test(from) ? from : "",
+              to: MONTH_RE.test(to) ? to : "",
               allVisas: allVisasInput,
               n: q.n + 1,
             }));
@@ -541,6 +567,7 @@ export function FlagCaseBrowser({
             <span className="mb-1 block text-sm font-bold">Employer</span>{" "}
             <input
               type="text"
+              name="q"
               value={employerInput}
               onChange={(e) => setEmployerInput(e.target.value)}
               /* 221.7px in a 220px box on a 320px phone: it clipped, and
@@ -561,6 +588,7 @@ export function FlagCaseBrowser({
             <span className="mb-1 block text-sm font-bold">Job title contains</span>{" "}
             <input
               type="text"
+              name="title"
               value={titleInput}
               onChange={(e) => setTitleInput(e.target.value)}
               placeholder="e.g. engineer"
@@ -572,11 +600,11 @@ export function FlagCaseBrowser({
           <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
             <label className="block">
               <span className="mb-1 block text-sm font-bold">Filed from</span>{" "}
-              <input type="month" value={fromInput} onChange={(e) => setFromInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL + " min-w-0"} />
+              <input type="month" name="from" value={fromInput} onChange={(e) => setFromInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL + " min-w-0"} />
             </label>{" "}
             <label className="block">
               <span className="mb-1 block text-sm font-bold">Filed to</span>{" "}
-              <input type="month" value={toInput} onChange={(e) => setToInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL + " min-w-0"} />
+              <input type="month" name="to" value={toInput} onChange={(e) => setToInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL + " min-w-0"} />
             </label>
           </div>{" "}
           {program.allVisasLabel ? (
@@ -591,6 +619,11 @@ export function FlagCaseBrowser({
             </label>
           ) : null}
         </form>{" "}
+        {searchNote ? (
+          <p role="status" className="mt-3 text-base font-semibold">
+            {searchNote}
+          </p>
+        ) : null}
         {typedCaseNumber ? (
           <p className="mt-4 border-2 border-primary bg-tint-primary p-4 text-base leading-relaxed">
             That is a case number.{" "}

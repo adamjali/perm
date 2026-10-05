@@ -50,13 +50,29 @@ describe("SavedReceipts", () => {
   });
 
   it("says so when the browser refuses to save, and still shows the list for this visit", async () => {
-    vi.spyOn(window.localStorage, "setItem").mockImplementation(() => {
-      throw new Error("QuotaExceededError");
-    });
-    render(<SavedReceipts current="EAC2190123456" />);
-    await act(async () => {});
-    fireEvent.click(screen.getByRole("button", { name: "Save EAC2190123456" }));
-    expect(screen.getByRole("status").textContent).toMatch(/isn't letting the page save/);
-    expect(screen.getByRole("link", { name: "EAC2190123456" })).toBeInTheDocument();
+    // A whole refusing storage behind the window's getter, restored below. A
+    // spy on window.localStorage.setItem was never undone (the storage object
+    // is a Proxy), so under CI's shuffled order this refusal leaked into the
+    // next test and broke its save (Oct 4 2026).
+    const refusing = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("QuotaExceededError");
+      },
+      removeItem: () => {},
+      clear: () => {},
+      key: () => null,
+      length: 0,
+    } as unknown as Storage;
+    const refuse = vi.spyOn(window, "localStorage", "get").mockReturnValue(refusing);
+    try {
+      render(<SavedReceipts current="EAC2190123456" />);
+      await act(async () => {});
+      fireEvent.click(screen.getByRole("button", { name: "Save EAC2190123456" }));
+      expect(screen.getByRole("status").textContent).toMatch(/isn't letting the page save/);
+      expect(screen.getByRole("link", { name: "EAC2190123456" })).toBeInTheDocument();
+    } finally {
+      refuse.mockRestore();
+    }
   });
 });

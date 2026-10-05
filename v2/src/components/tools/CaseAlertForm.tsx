@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { programNoun, type FlagProgram } from "@/lib/flagCaseNumber";
 import { isQueued } from "@/lib/alertReply";
 import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
+import { formText } from "@/lib/forms/formText";
 
 /**
  * Subscribe to status changes on ONE case.
@@ -83,16 +84,20 @@ export function CaseAlertForm({
   const endpoint = subscribeEndpoint();
   if (!endpoint) return null;
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (state.kind === "sending") return;
+    // The box itself, not only React's copy: an autofilled address can skip the
+    // event React listens for (formText).
+    const address = formText(e.currentTarget, "email", email).trim();
+    setEmail(address);
     setState({ kind: "sending" });
     try {
       const res = await fetch(endpoint!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email.trim(),
+          email: address,
           caseNumber,
           source: SOURCE[program],
           news: news || undefined,
@@ -166,6 +171,7 @@ export function CaseAlertForm({
         <input
           id={inputId}
           type="email"
+          name="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}

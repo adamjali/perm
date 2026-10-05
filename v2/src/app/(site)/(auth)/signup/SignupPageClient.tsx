@@ -43,6 +43,7 @@ import {
 } from "@/lib/auth/auth-telemetry";
 import { charLimitMessage } from "@/components/ui/char-limit";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
+import { useFormDomSync } from "@/hooks/useFormDomSync";
 
 type SignupStep = "credentials" | "verification";
 
@@ -68,6 +69,13 @@ export function SignupPageClient() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [nameTouched, setNameTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
+  // An autofilled field must enable the button: see useFormDomSync.
+  const credentialsFormRef = useFormDomSync({
+    email: setEmail,
+    name: setName,
+    password: setPassword,
+    confirmPassword: setConfirmPassword,
+  });
   const [confirmTouched, setConfirmTouched] = useState(false);
 
   // Track which fields have already had an "invalid" event reported, so
@@ -446,7 +454,7 @@ export function SignupPageClient() {
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={handleCredentialsSubmit} className="space-y-5" noValidate>
+        <form ref={credentialsFormRef} onSubmit={handleCredentialsSubmit} className="space-y-5" noValidate>
           <AuthField
             id="email"
             label="Email"

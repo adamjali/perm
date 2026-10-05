@@ -1,5 +1,27 @@
 # GSC indexing priority list
 
+**Run of 2026-10-04, 7:29 to 8:26 PM EDT: 5 accepted, no refusal.** Three pages new on Oct 4
+(`b9109f95`), then two legal pages Google had last read before they changed.
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/sponsor-finder` | unknown to Google (new Oct 4) | 7:29 PM |
+| 2 | `/lca-wage-sources` | unknown to Google (new Oct 4) | 7:31 PM |
+| 3 | `/tools/ead-extension` | unknown to Google (new Oct 4) | 7:32 PM |
+| 4 | `/terms` | indexed (its API-use clause changed Oct 2) | 7:34 PM |
+| 5 | `/privacy` | indexed, last crawled Sep 23 (before it named Oracle and Cloudflare) | ~8:25 PM |
+
+Inspected only: `/api-terms` is **"indexed, though blocked by robots.txt"**: `Disallow: /api` is a
+prefix and matched it. Fixed with an allow rule and a test over every public page (Oct 4 evening
+batch); **request it after that deploy**. `/perm-processing-times`: indexed, crawled Oct 2, skipped.
+`/visa-bulletin/2008-07`: Discovered, never crawled, found through the sitemap with no referring
+page (the 2005 to 2014 months are linked only from the hub's month strip); not worth a slot each.
+
+**Queue for the next round:** `/api-terms` (after the robots fix is live), then the 2005 to 2014
+bulletin months only if the Pages report shows them still Discovered in a week.
+
+---
+
 **Sitemap index resubmitted 2026-10-03, about 9:13 PM EDT** (no request slot): the seventh child family, `seasonal-employer-1..7.xml` (32,388 employers whose only filings are H-2A, H-2B or CW-1), shipped in `1f09dab7`; the index's Last read was Sep 30. Re-check its Discovered pages against the live sum on the next round.
 
 **Run of 2026-10-03, 3:55 to 4:15 AM EDT: 5 accepted, no refusal.** The first three emptied the

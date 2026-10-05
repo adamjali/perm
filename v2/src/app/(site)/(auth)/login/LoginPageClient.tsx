@@ -36,6 +36,7 @@ import {
   authBreadcrumb,
 } from "@/lib/auth/auth-telemetry";
 import { authRateLimitText } from "@/lib/auth/rateLimitText";
+import { useFormDomSync } from "@/hooks/useFormDomSync";
 
 type LoginStep = "login" | "verification";
 
@@ -53,6 +54,8 @@ export function LoginPageClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
+  // An autofilled email or password must enable the button: see useFormDomSync.
+  const credentialsFormRef = useFormDomSync({ email: setEmail, password: setPassword });
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showExpiredBanner, setShowExpiredBanner] = useState(false);
@@ -382,7 +385,7 @@ export function LoginPageClient() {
             Your session expired. Please sign in again.
           </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        <form ref={credentialsFormRef} onSubmit={handleSubmit} className="space-y-5" noValidate>
           <AuthField
             id="email"
             label="Email"

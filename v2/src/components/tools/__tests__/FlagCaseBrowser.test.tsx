@@ -87,3 +87,23 @@ describe("FlagCaseBrowser search filters", () => {
     expect(urls.some((u) => u.includes("action=list") && u.includes("order=oldest"))).toBe(true);
   });
 });
+
+describe("FlagCaseBrowser answers every press of Search", () => {
+  it("says why when the employer name is too short", () => {
+    render(<FlagCaseBrowser summary={null} program={LCA_PROGRAM} />);
+    fireEvent.change(screen.getByLabelText("Employer"), { target: { value: "a" } });
+    const before = usePublicQuery.mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Type at least two letters of the employer's name.");
+    const after = usePublicQuery.mock.calls.slice(before).map((c) => String(c[0]));
+    expect(after.some((u) => u.includes("text=a&") || u.endsWith("text=a"))).toBe(false);
+  });
+
+  it("searches for the name the box holds even when React never heard it typed", () => {
+    render(<FlagCaseBrowser summary={null} program={LCA_PROGRAM} />);
+    (screen.getByLabelText("Employer") as HTMLInputElement).value = "globex";
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    const urls = usePublicQuery.mock.calls.map((c) => String(c[0]));
+    expect(urls.some((u) => u.includes("action=search") && u.includes("text=globex"))).toBe(true);
+  });
+});

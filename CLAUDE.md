@@ -3,7 +3,7 @@
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-04
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **581 files / 8,554 tests across 5 vitest
+> have drifted: the suite is now **586 files / 8,580 tests across 5 vitest
 > projects** (2026-10-04), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
@@ -431,3 +431,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 4 2026 (midday)".
 - **`/tools/ead-extension`**, and employer compare's switching panel states the regulations; it had the 180-day rule wrong.
 - **Saved receipts on the USCIS lookup (in the browser only), who's waiting on the timelines board, and the civil-surgeon search linked.**
 - **`sr-only` goes on a wrapper, never on a `<table>`**: a table can't shrink, and the pulse ran past a phone's edge.
+
+## Oct 4 2026 (evening), in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 4 2026 (evening)".
+
+- **A form's submit reads its boxes, not only React's copy** (`src/lib/forms/formText.ts`): Chrome for iOS left the copy empty while the box showed a name, and Search did nothing twenty times.
+- **No search button answers a press with silence**: too short a name, an empty case box and an unreadable month each say so.
+- **The /perm-cases month boxes lost a pattern no month could match** (a reader reported it): Firefox couldn't search with a month at all.
+- **The defense's alert says what filled the app**, so "0 people" no longer reads as a false alarm.
+- **robots.txt's `/api` blocked `/api-terms`** (a prefix); an allow rule re-opens it, and a test checks every public page.
