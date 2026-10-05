@@ -17,8 +17,15 @@ batch); **request it after that deploy**. `/perm-processing-times`: indexed, cra
 `/visa-bulletin/2008-07`: Discovered, never crawled, found through the sitemap with no referring
 page (the 2005 to 2014 months are linked only from the hub's month strip); not worth a slot each.
 
-**Queue for the next round:** `/api-terms` (after the robots fix is live), then the 2005 to 2014
-bulletin months only if the Pages report shows them still Discovered in a week.
+**After the deploy (`e9654214`, live by about 9:15 PM EDT):** `/api-terms` request **rejected** at
+9:19 PM: the live test still read "Blocked by robots.txt", because Google caches robots.txt (its
+report showed `https://permtracker.app/robots.txt` last fetched Oct 2, 9:29 AM). A recrawl of the
+robots.txt was requested from Settings, robots.txt, the row's menu, "Request a recrawl" (sent about
+9:21 PM EDT). That report is the way to make Google read a changed robots.txt at once.
+
+**Queue for the next round:** `/api-terms` once the robots.txt report shows a fetch after Oct 4,
+9:21 PM; then the 2005 to 2014 bulletin months only if the Pages report shows them still
+Discovered in a week.
 
 ---
 
