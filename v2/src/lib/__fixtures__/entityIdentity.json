@@ -238,5 +238,64 @@
       "&&&",
       ""
     ]
+  ],
+  "program_keys_comment": [
+    "program_key (scripts/entity_identity.py) and programKey (src/lib/entitySlug.ts):",
+    "entity_key after decoding HTML entities, keeping the legal name before d/b/a or a/k/a,",
+    "and dropping .com. The key that joins a printed name to an employer page."
+  ],
+  "program_keys": [
+    [
+      "JPMORGAN CHASE &amp; CO.",
+      "jpmorgan chase"
+    ],
+    [
+      "JPMORGAN CHASE &amp;amp; CO.",
+      "jpmorgan chase"
+    ],
+    [
+      "FMR LLC d/b/a Fidelity Investments",
+      "fmr"
+    ],
+    [
+      "Salesforce.com, Inc.",
+      "salesforce"
+    ],
+    [
+      "Acme Holdings dba Acme Staffing",
+      "acme holdings"
+    ],
+    [
+      "O&#39;Neil Industries",
+      "o neil industries"
+    ],
+    [
+      "AT&amp;T Services, Inc.",
+      "at t services"
+    ],
+    [
+      "Amazon.com Services LLC",
+      "amazon services"
+    ],
+    [
+      "Google LLC",
+      "google"
+    ],
+    [
+      "Meta Platforms, Inc.",
+      "meta platforms"
+    ],
+    [
+      "Ernst &#x26; Young U.S. LLP",
+      "ernst young us"
+    ],
+    [
+      "Cognizant Technology Solutions U.S. Corporation a/k/a CTS",
+      "cognizant technology solutions us"
+    ],
+    [
+      "Bank of America, N.A.",
+      "bank of america na"
+    ]
   ]
 }

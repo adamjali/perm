@@ -247,6 +247,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "A free JSON API (permtracker.app/v1, keys from Settings) and an MCP server (permtracker.app/mcp, no key needed) with six read-only tools: look up a PERM, prevailing wage, H-1B LCA or H-2A/H-2B case by number, estimate a PERM decision date, DOL's queues, the visa bulletin, and employer, law firm and occupation records.",
   },
   {
+    path: "/extension",
+    label: "Browser extension",
+    blurb: "A free Chrome extension that shows the employer's PERM green card and H-1B record from DOL's files on a job posting (LinkedIn, Indeed, Glassdoor, Handshake, Wellfound, and any page with JobPosting structured data on a click). It sends only the employer's name.",
+  },
+  {
     path: "/badges",
     label: "Badges",
     blurb: "Embeddable SVG badges of DOL's own published figures, and every calculator, estimate and chart plus the case lookup as an iframe for other sites, with the HTML to copy.",

@@ -52,6 +52,8 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/api/__tests__/route.test.ts",
   "src/lib/api/__tests__/mcp.test.ts",
   "src/lib/api/__tests__/reads.test.ts",
+  "src/lib/api/__tests__/employerLookup.test.ts",
+  "src/lib/api/__tests__/lookupRoute.test.ts",
   "src/lib/turso/__tests__/openDataArchive.test.ts",
   "src/lib/ai/__tests__/page-context.test.tsx",
   "src/lib/__tests__/toast.test.ts",
@@ -174,6 +176,8 @@ export default defineConfig({
             "src/hooks/**/*.test.{ts,tsx}",
             "convex/lib/perm/**/*.test.ts",
             "convex/lib/*.test.ts",
+            // The browser extension's pure parts (extension/src); happy-dom gives them a DOMParser.
+            "extension/**/*.test.ts",
           ],
           // These files install per-file vi.mock factories for SHARED modules
           // (next/navigation, convex/react, sonner, @ai-sdk/react) with mutable

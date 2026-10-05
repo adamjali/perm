@@ -74,6 +74,10 @@ DDL = [
         page_kind TEXT NOT NULL,
         key TEXT NOT NULL)""",
     f"CREATE INDEX IF NOT EXISTS {MAP}_page ON {MAP} (page_slug)",
+    # The browser extension's lookup (src/lib/api/employerLookup.ts) finds a
+    # printed name's page by its program key; it reads this column only once
+    # the index exists, since without it every lookup walks the whole map.
+    f"CREATE INDEX IF NOT EXISTS {MAP}_key ON {MAP} (key)",
     f"""CREATE TABLE IF NOT EXISTS {INDEX} (
         slug TEXT PRIMARY KEY,
         name TEXT NOT NULL,

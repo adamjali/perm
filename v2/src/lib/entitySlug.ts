@@ -61,6 +61,45 @@ export function entityKey(raw: string): string {
   return kept.length > 0 ? kept.join(" ") : cleaned.trim();
 }
 
+/**
+ * The entities DOL's program files actually carry, plus numeric ones.
+ * Python's `html.unescape` knows every HTML5 name; these are the ones a
+ * printed employer name has been seen to hold, so the two agree on every
+ * name the fixture pins.
+ */
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ",
+};
+
+function decodeEntities(raw: string): string {
+  return raw.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (whole, body: string) => {
+    if (body[0] === "#") {
+      const code = body[1] === "x" || body[1] === "X" ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
+    }
+    return NAMED_ENTITIES[body.toLowerCase()] ?? whole;
+  });
+}
+
+/** "Acme Holdings d/b/a Acme Staffing": the legal name is the part before the trade name. */
+const TRADE_NAME = /\s+(?:d\s*\/\s*b\s*\/\s*a|d\.b\.a\.?|dba|a\s*\/\s*k\s*\/\s*a|aka)\s+.*$/i;
+
+/**
+ * The key that joins a printed employer name to its page across programs.
+ *
+ * `entityKey` after the three repairs the H-1B and wage-request files need:
+ * HTML entities decoded (twice, for "&amp;amp;"), only the legal name before
+ * "d/b/a" or "a/k/a", and ".com" dropped. Mirrors `program_key` in
+ * `scripts/entity_identity.py`, which builds `employer_page_map.key`; both are
+ * asserted against `program_keys` in the shared fixture.
+ */
+export function programKey(raw: string): string {
+  let text = decodeEntities(decodeEntities(raw ?? ""));
+  text = text.replace(TRADE_NAME, "");
+  text = text.replace(/\.com\b/gi, "");
+  return entityKey(text);
+}
+
 export function slugify(raw: string): string {
   return raw
     .toLowerCase()

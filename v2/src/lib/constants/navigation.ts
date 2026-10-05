@@ -225,6 +225,7 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
       { href: "/badges", label: "Badges" },
       { href: "/open-data", label: "Open data" },
       { href: "/developers", label: "API and AI assistants" },
+      { href: "/extension", label: "Browser extension" },
     ],
   },
   {

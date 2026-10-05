@@ -18,7 +18,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from entity_identity import entity_key, typo_aliases  # noqa: E402
+from entity_identity import entity_key, program_key, typo_aliases  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
 
 FIXTURES = pathlib.Path(__file__).resolve().parents[1] / "src/lib/__fixtures__/entityIdentity.json"
@@ -32,6 +32,13 @@ def main() -> int:
         got = entity_key(raw)
         if got != want:
             fails.append(f"entity_key({raw!r}) -> {got!r}, want {want!r}")
+
+    # program_key is what the browser extension's lookup and the employer map
+    # both join a printed name on, so the TypeScript twin answers the same.
+    for raw, want in fx["program_keys"]:
+        got = program_key(raw)
+        if got != want:
+            fails.append(f"program_key({raw!r}) -> {got!r}, want {want!r}")
 
     for raw, want in fx["slugs"]:
         got = slugify(raw)
@@ -74,6 +81,7 @@ def main() -> int:
         fails.append("control: 'U.S.' must survive the re-glue as a real word")
 
     print(f"entity_key   {len(fx['keys'])} fixtures")
+    print(f"program_key  {len(fx['program_keys'])} fixtures")
     print(f"slugify      {len(fx['slugs'])} fixtures")
     print(f"must_not_merge {len(fx['must_not_merge'])} pairs")
     print(f"typo_merges  {len(fx['typo_merges'])} pairs")

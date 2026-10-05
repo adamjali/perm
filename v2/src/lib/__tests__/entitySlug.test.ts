@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import fixtures from "../__fixtures__/entityIdentity.json";
-import { entityKey, findBySlug, slugify, withUniqueSlugs } from "../entitySlug";
+import { entityKey, findBySlug, programKey, slugify, withUniqueSlugs } from "../entitySlug";
 
 /**
  * The TypeScript half of a contract whose other half is Python.
@@ -48,6 +48,19 @@ describe("entityKey (mirrored in scripts/entity_identity.py)", () => {
   it("falls back rather than collapsing every noise-only name into one key", () => {
     expect(entityKey("The Company")).toBe("the company");
     expect(entityKey("&&&")).toBe("");
+  });
+});
+
+describe("programKey (mirrored in scripts/entity_identity.py program_key)", () => {
+  it.each(fixtures.program_keys as Array<[string, string]>)("%s -> %s", (raw, want) => {
+    expect(programKey(raw)).toBe(want);
+  });
+
+  it("covers the three repairs: entities, a trade name and .com", () => {
+    const raws = (fixtures.program_keys as Array<[string, string]>).map(([r]) => r).join(" ");
+    expect(raws).toContain("&amp;");
+    expect(raws).toMatch(/d\/b\/a/);
+    expect(raws).toContain(".com");
   });
 });
 
