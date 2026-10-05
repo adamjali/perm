@@ -132,6 +132,13 @@ def main() -> int:
     check("an alias whose canonical has no page adds nothing", "ghost" in ks, False)
     ks2 = with_aliases({"acme": "acme", "acme co": "acme-co"}, {"acme co": "acme"})
     check("a key that already has its own page keeps it", ks2["acme co"], "acme-co")
+    # The merged entity takes its NAME from the busiest single spelling, whose key can be
+    # the minority key of the group: "BigPanda Inc" names the page while "big panda" holds
+    # more cases. Keyed only by the name's key, the old "Big Panda Inc" page (key "big
+    # panda") had nowhere to go: 43 pages, and the Oct 5 2026 load refused.
+    ks3 = with_aliases({"bigpanda": "bigpanda-inc"}, {"bigpanda": "big panda", "big panda inc": "big panda"})
+    check("the canonical key reaches the page named by a minority spelling", ks3.get("big panda"), "bigpanda-inc")
+    check("and so does every other spelling of the group", ks3.get("big panda inc"), "bigpanda-inc")
 
     print()
     print(f"{CHECKS} checks")

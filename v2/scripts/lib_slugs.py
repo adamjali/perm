@@ -84,8 +84,14 @@ def with_aliases(key_slug: dict[str, str], aliases: dict[str, str]) -> dict[str,
     under "Bersen Loewy" had no firm link. A key that already holds a page keeps it.
     """
     out = dict(key_slug)
+    # A page is named by its busiest single spelling, whose key can be the minority
+    # key of its group, so the group's root must point at that page too.
+    for key, slug in key_slug.items():
+        root = aliases.get(key)
+        if root:
+            out.setdefault(root, slug)
     for variant, canonical in aliases.items():
-        slug = key_slug.get(canonical)
+        slug = out.get(canonical)
         if slug:
             out.setdefault(variant, slug)
     return out
