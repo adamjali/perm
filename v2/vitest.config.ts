@@ -176,6 +176,8 @@ export default defineConfig({
             "src/hooks/**/*.test.{ts,tsx}",
             "convex/lib/perm/**/*.test.ts",
             "convex/lib/*.test.ts",
+            // The browser extension's pure parts (extension/src); happy-dom gives them a DOMParser.
+            "extension/**/*.test.ts",
           ],
           // These files install per-file vi.mock factories for SHARED modules
           // (next/navigation, convex/react, sonner, @ai-sdk/react) with mutable

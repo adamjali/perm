@@ -47,6 +47,7 @@
   "exclude": [
     "node_modules",
     "test-utils",
+    "extension",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",

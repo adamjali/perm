@@ -94,3 +94,7 @@ scratchpad/
 # ingest artifact, not source: in CI the tree is ephemeral, but a local run
 # would otherwise leave it sitting untracked.
 changed-employer-slugs.json
+
+# The browser extension's build output (scripts/build_extension.mjs makes both).
+/extension/dist/
+/extension/*.zip

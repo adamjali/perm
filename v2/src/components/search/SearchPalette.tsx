@@ -147,6 +147,12 @@ function staticIndex(): { label: string; href: string; group: string; keywords: 
     keywords: "api developer developers key json mcp claude cursor chatgpt assistant connector openapi integration",
   });
   out.push({ label: "API Terms", href: "/api-terms", group: "Go to", keywords: "api terms license licence rules" });
+  out.push({
+    label: "Browser extension",
+    href: "/extension",
+    group: "Go to",
+    keywords: "chrome extension browser add-on plugin linkedin indeed glassdoor handshake wellfound job posting sponsor h-1b",
+  });
   for (const [label, href, keywords] of [
     ["中文指南 (Chinese)", "/zh", "chinese 中文 绿卡 排期 劳工证"],
     ["Guía en español (Spanish)", "/es", "spanish español green card"],

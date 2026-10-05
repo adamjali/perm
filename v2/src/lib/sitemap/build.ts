@@ -330,6 +330,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/badges`, lastModified: changed("/badges"), images: [`${base}/og/badges.jpg`] },
     { url: `${base}/open-data`, lastModified: newer(dol, changed("/open-data")), images: [`${base}/og/open-data.jpg`] },
     { url: `${base}/developers`, lastModified: changed("/developers"), images: [`${base}/og/developers.jpg`] },
+    { url: `${base}/extension`, lastModified: changed("/extension") },
     { url: `${base}/api-terms`, lastModified: changed("/api-terms"), images: [`${base}/og/api-terms.jpg`] },
     { url: `${base}/layoffs`, lastModified: newer(dol, changed("/layoffs")), images: [`${base}/og/layoffs.jpg`] },
     { url: `${base}/visa-bulletin/family`, lastModified: newer(dol, changed("/visa-bulletin/family")), images: [`${base}/og/visa-bulletin-family.jpg`] },
