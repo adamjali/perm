@@ -187,7 +187,22 @@ describe("lookupEmployer", () => {
     expect(searchByLetters.mock.calls[0]?.[1]).toBe("walmart");
   });
 
-  it("only searches by letters when the name search finds nothing", async () => {
+  it("weighs both searches together, so a smaller plain-text match can't hide the brand", async () => {
+    // "Lowes" is in "LOWES LANDSCAPING LLC" (6 cases) but not in "LOWE'S COMPANIES,
+    // INC." (270), which only the letters search finds.
+    db({ perm: null });
+    const landscaping = { slug: "lowes-landscaping-llc", name: "LOWES LANDSCAPING LLC", total: 6, certified: 6, denied: 0, recent12m: 1 };
+    const lowes = { slug: "lowe-s-companies-inc", name: "LOWE'S COMPANIES, INC.", total: 270, certified: 260, denied: 3, recent12m: 40 };
+    searchByName.mockResolvedValue([landscaping]);
+    searchByLetters.mockResolvedValue([lowes, landscaping]);
+    getEntityBySlug.mockImplementation(async (_k: string, slug: string) => [landscaping, lowes].find((e) => e.slug === slug) ?? null);
+    const r = await lookupEmployer("Lowes");
+    if (!r.ok) throw new Error("expected an answer");
+    expect(r.data.match).toBe("possible");
+    expect(r.data.employer!.name).toBe("LOWE'S COMPANIES, INC.");
+  });
+
+  it("never runs the letters search for an exact match that stands", async () => {
     db({ perm: "google-llc" });
     getEntityBySlug.mockResolvedValue(google);
     await lookupEmployer("Google");

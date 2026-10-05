@@ -229,14 +229,23 @@ type Resolved = { match: LookupMatch; employer: LookupEmployer | null };
 export async function resolveEmployer(query: string): Promise<Resolved> {
   let candidates: Awaited<ReturnType<typeof searchByName>> | null = null;
   const possible = async () => {
-    candidates ??= await searchByName("employer", query, CANDIDATES);
-    const hit = pickPossibleMatch(query, candidates);
-    if (hit) return hit;
-    // "Walmart" is in no name once WALMART ASSOCIATES folds into WAL-MART
-    // ASSOCIATES: ask again by letters, spaces and punctuation ignored (Rule D).
-    const letters = programKey(query).replace(/ /g, "");
-    if (letters.length < 4) return null;
-    return pickPossibleMatch(query, await searchByLetters("employer", letters, CANDIDATES));
+    if (!candidates) {
+      // Two searches, weighed together busiest first. The name search alone misses
+      // a brand whose page is spelled with the gaps elsewhere ("Walmart" against
+      // WAL-MART ASSOCIATES; "Lowes" against LOWE'S COMPANIES, 270 cases, while it
+      // did find LOWES LANDSCAPING, 6). The letters search ignores spaces and
+      // punctuation (Rule D in scripts/entity_identity.py).
+      const letters = programKey(query).replace(/ /g, "");
+      const [byName, byLetters] = await Promise.all([
+        searchByName("employer", query, CANDIDATES),
+        letters.length >= 4 ? searchByLetters("employer", letters, CANDIDATES) : Promise.resolve([]),
+      ]);
+      const seen = new Set<string>();
+      candidates = [...byName, ...byLetters]
+        .filter((e) => (seen.has(e.slug) ? false : (seen.add(e.slug), true)))
+        .sort((a, b) => b.total - a.total);
+    }
+    return pickPossibleMatch(query, candidates);
   };
   /** An exact match, unless it's small and a namesake is far busier. */
   const exactOrBusier = async (employer: LookupEmployer): Promise<Resolved> => {
