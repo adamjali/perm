@@ -170,6 +170,12 @@ def read_pairs(path: str, program: str) -> tuple[Counter, Counter, dict]:
                     f"{FIRM_COLUMNS[program] if firm_i is None else EMAIL_COLUMNS[program]}. "
                     "Read the record layout and add the new name.")
             continue
+        # A sheet can declare styled rows past its last case; counted apart, a
+        # blank row can't make the file look several times its size (the first
+        # dry run read 925,430 "rows" in a PERM file of about 150,000 cases).
+        if not any(str(v).strip() for v in cells.values()):
+            stats["blank"] += 1
+            continue
         stats["rows"] += 1
         key = program_key(cells.get(firm_i) or "")
         domain = domain_of(cells.get(email_i))

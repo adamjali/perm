@@ -4,6 +4,7 @@
 Runs build_firm_domains against a generated workbook and in-memory SQLite:
 
 1. only the DOMAIN of an address is read, and malformed cells are dropped;
+   styled empty rows past the last case are counted as blank, not as rows;
 2. personal and internet-provider mail never counts as a firm's domain;
 3. columns resolve by DOL's name, and a file with neither column refuses;
 4. a firm's spelling lands on its page by program_key, a spelling with no page is skipped;
@@ -81,6 +82,27 @@ check("a personal address still counts as an emailed filing", firms[frag] == 3)
 check("a row with no firm is skipped", stats.get("no_firm") == 1 and not any(d == "nofirm.com" for _k, d in pairs))
 check("a row with no email is skipped", stats.get("no_email") == 1)
 check("the employer's contact column is never read", not any(d == "acme.com" for _k, d in pairs))
+
+check("every case row is counted as a row", stats.get("rows") == 6)
+
+
+def styled_blanks(path: str, n: int) -> str:
+    """The same workbook with n styled, empty rows after the last case, as DOL's sheets carry."""
+    from openpyxl import load_workbook
+    from openpyxl.styles import Font
+    wb = load_workbook(path)
+    ws = wb.active
+    last = ws.max_row
+    for r in range(last + 1, last + 1 + n):
+        ws.cell(row=r, column=1).font = Font(bold=True)
+    wb.save(path)
+    return path
+
+
+_p, _f, blank_stats = b.read_pairs(styled_blanks(perm, 5), "perm")
+check("a styled empty row is counted as blank, not as a row without a firm",
+      blank_stats.get("blank") == 5 and blank_stats.get("rows") == 6 and blank_stats.get("no_firm") == 1)
+check("blank rows change no pair", _p == pairs)
 
 pw = workbook([
     ["CASE_NUMBER", "LAWFIRM_NAME_BUSINESS_NAME", "AGENT_ATTORNEY_EMAIL_ADDRESS"],
