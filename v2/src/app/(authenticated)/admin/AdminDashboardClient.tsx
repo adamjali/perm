@@ -13,6 +13,7 @@ import { BudgetPools, DeliveryPanel } from "@/components/admin/DeliveryPanel";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { ScorecardPanel } from "@/components/admin/ScorecardPanel";
 import { MonitorPanel } from "@/components/admin/MonitorPanel";
+import { FirmClaimsPanel } from "@/components/admin/FirmClaimsPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -29,6 +30,7 @@ export default function AdminDashboardClient() {
   const skip = isSigningOut || authLoading || !isAdmin;
   const signals = useQuery(api.adminSignals.getSignals, skip ? "skip" : {});
   const delivery = useQuery(api.adminDelivery.getDelivery, skip ? "skip" : {});
+  const firmClaims = useQuery(api.firmClaims.listForAdmin, skip ? "skip" : {});
 
   const dashboardData = useQuery(
     api.admin.getAdminDashboardData,
@@ -211,6 +213,12 @@ export default function AdminDashboardClient() {
             id: "scorecard",
             label: "Scorecard",
             content: <ScorecardPanel />,
+          },
+          {
+            id: "firm-claims",
+            label: "Firm claims",
+            badge: firmClaims && firmClaims.review.length > 0 ? `${firmClaims.review.length} waiting` : null,
+            content: <FirmClaimsPanel data={firmClaims} />,
           },
           {
             id: "monitor",

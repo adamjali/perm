@@ -176,7 +176,22 @@ export default function PrivacyPage() {
                 number that names nobody, kept to enforce your plan&rsquo;s
                 limits and to show your usage in Settings
               </li>
-            </ul>
+            </ul>{" "}
+
+            <h3 id="firm-claims" className="font-heading text-lg font-bold mt-6 mb-3">
+              Claiming a Law Firm&rsquo;s Page
+            </h3>{" "}
+            <p className="text-foreground/80 leading-relaxed">
+              When someone claims a law firm&rsquo;s page, we keep the email
+              address they used, the role they gave (shown to no one but us)
+              and what they sent for the profile. The profile is public on the
+              firm&rsquo;s page as the firm&rsquo;s own words; the address and
+              role are not. To check a claim we compare the address&rsquo;s
+              domain with the domains DOL&rsquo;s public filings list beside
+              the firm, of which we keep only the domains, never the addresses.
+              We may remove a profile at any time. Ask us to delete a claim and
+              its profile at the address below.
+            </p>
           </details>{" "}
 
           <details className="legal-section group border-b-2 border-border">

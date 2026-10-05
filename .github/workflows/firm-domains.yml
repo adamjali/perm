@@ -1,0 +1,66 @@
+name: Firm email domains
+
+# The email DOMAINS DOL's disclosure files print beside each law firm, which a
+# firm-page claim is checked against (v2/scripts/build_firm_domains.py,
+# convex/firmClaims.ts). Only domains are kept; no address is stored or printed.
+#
+# On GitHub's runners because www.dol.gov answers them and refuses the Oracle
+# server and the owner's laptop. Monthly, on the 12th, after the PERM (8th)
+# and FLAG (10th) loads, so the firm pages it maps onto are current and the
+# three never ask DOL for files on one morning.
+
+on:
+  schedule:
+    - cron: "0 7 12 * *"
+  workflow_dispatch:
+    inputs:
+      program:
+        description: Which disclosure file to read
+        required: true
+        default: all
+        type: choice
+        options: [all, perm, pw, lca]
+      dry_run:
+        description: "Download, read and plan; print counts, write nothing"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firm-domains
+  cancel-in-progress: false
+
+jobs:
+  domains:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+
+      - name: Build the firm email-domain table
+        working-directory: v2
+        env:
+          PROGRAM: ${{ inputs.program || 'all' }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          case "$PROGRAM" in
+            all|perm|pw|lca) ;;
+            *) echo "::error::program must be all, perm, pw or lca, got '$PROGRAM'"; exit 1 ;;
+          esac
+          if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
+            echo "::error::database secrets absent; nothing to write into."
+            exit 1
+          fi
+          EXTRA=""
+          if [ "$DRY_RUN" = "true" ]; then EXTRA="--dry-run"; fi
+          timeout 110m python3 scripts/build_firm_domains.py --program "$PROGRAM" $EXTRA \
+            || { python3 "$GITHUB_WORKSPACE/v2/scripts/record_ingest_failure.py" --script build_firm_domains.py --note "firm-domains workflow: the build exited non-zero" || true; exit 1; }

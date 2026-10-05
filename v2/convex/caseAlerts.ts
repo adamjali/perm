@@ -86,6 +86,7 @@
  *   bulletin-alert confirmations   30/day   (convex/bulletinAlerts.ts)
  *   bulletin alerts                40/day   (convex/bulletinAlerts.ts)
  *   preference-center links        20/day   (convex/emailPrefs.ts)
+ *   firm-page claim emails         10/day   (convex/firmClaims.ts)
  *   sign-in and reset codes        80/day   (convex/authMail.ts)
  *
  * They add up to more than 100 on purpose: the day's real count decides, and a

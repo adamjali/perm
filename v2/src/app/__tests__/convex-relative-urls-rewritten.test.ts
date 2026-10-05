@@ -28,8 +28,8 @@ import { describe, expect, it } from "vitest";
  * on our domain or pass our firewall.
  */
 const ROOT = join(__dirname, "..", "..", "..");
-/** The router and the page module it renders through: both emit relative URLs. */
-const http = ["http.ts", "lib/mailPages.ts"]
+/** The router and the page modules it renders through: all emit relative URLs. */
+const http = ["http.ts", "lib/mailPages.ts", "lib/firmClaimPages.ts"]
   .map((f) => readFileSync(join(ROOT, "convex", f), "utf8"))
   .join("\n");
 const config = readFileSync(join(ROOT, "next.config.ts"), "utf8");

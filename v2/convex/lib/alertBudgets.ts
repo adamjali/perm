@@ -34,6 +34,11 @@ export const BUDGETS = {
   bulletinAlert: { key: "bulletin_alert_global", limit: 40, label: "Bulletin alerts" },
   prefsLink: { key: "prefs_link_global", limit: 20, label: "Preference-page links" },
   /**
+   * A law firm claiming its page (convex/firmClaims.ts): the confirmation
+   * link, the approval note and edit links. Rare by nature, so the bound is low.
+   */
+  firmClaim: { key: "firm_claim_global", limit: 10, label: "Firm page claims" },
+  /**
    * Sign-in and password-reset codes (convex/authMail.ts). Not list mail: these
    * are the emails whose absence locks someone out, so the pool sits above the
    * busiest measured day instead of inside the list ledger's remainder. See the
@@ -50,6 +55,7 @@ export const LIST_MAIL_POOLS = [
   "bulletinConfirm",
   "bulletinAlert",
   "prefsLink",
+  "firmClaim",
 ] as const satisfies readonly (keyof typeof BUDGETS)[];
 
 /** Codes to one address, whatever kind: enough for a few resends, not a flood. */

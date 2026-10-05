@@ -323,6 +323,7 @@ async function replay(
   else if (kind === "queue") await ctx.runMutation(internal.queueAlerts.subscribe, call as never);
   else if (kind === "bulletin") await ctx.runMutation(internal.bulletinAlerts.subscribe, call as never);
   else if (kind === "prefs") await ctx.runMutation(internal.emailPrefs.requestLink, call as never);
+  else if (kind === "firm") await ctx.runMutation(internal.firmClaims.request, call as never);
   else throw new Error(`unknown queue kind ${kind}`);
 }
 

@@ -8026,3 +8026,21 @@ warning about exactly this. `PUBLIC_UNDER_A_DISALLOW` re-opens such pages with a
 longer rule wins, RFC 9309), and `robots-public-pages.test.ts` walks every page under the public
 tree with that longest-match rule; probed red with the allow removed. Of 5,577 sitemap pages
 checked against the live file, `/api-terms` was the only one blocked.
+
+## Oct 5 2026: a law firm can claim its page (free)
+
+- **The check is DOL's own record.** `scripts/build_firm_domains.py` (monthly, `firm-domains.yml`, on GitHub's
+  runners because www.dol.gov refuses the server) keeps only the email DOMAINS the newest PERM (`ATTY_AG_EMAIL`), PW
+  and LCA (`AGENT_ATTORNEY_EMAIL_ADDRESS`) files print beside each firm, in `firm_email_domains`, per program. Personal
+  mail and a domain on more than 3 firms never count. A claim from a domain tied to the firm (2+ filings, or every
+  emailed filing of a small firm; `claimVerdict` in `src/lib/firmProfile.ts`) verifies on the emailed click; anything
+  else waits for the admin (Admin > Firm claims). A claim the admin rejected or revoked never verifies itself again.
+- **Links that grant expire** (`convex/lib/expiringToken.ts`): 7 days to confirm, 2 days to edit, the expiry inside
+  the signature. The alert tokens never expire and are only for turning mail off.
+- **What shows**: `firmProfiles` (website on the verified domain unless the admin approves another, a 600-character
+  plain-text description with no links, phones or names, languages, offices, practice focus), in a "From the firm"
+  block marked as the firm's own words. The page reads it with `queryStatic` on its 30-day window, and every change
+  POSTs `/api/revalidate-firm` (needs `REVALIDATE_SECRET` on the Convex deployment).
+- **Email**: its own pool, `firmClaim`, 10 a day, charged before anything is staged; a full pool queues (`kind: "firm"`).
+- **Routes**: `/firm-claim/request` and `/firm-claim/edit-link` (JSON, to the .convex.site twin); `/firm-claim/confirm`
+  and `/firm-claim/edit` are emailed links, rewritten in next.config.ts and relayed by nginx with the other email links.
