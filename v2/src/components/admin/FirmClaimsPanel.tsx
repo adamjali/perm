@@ -236,6 +236,7 @@ function EditCard({ e }: { e: Edit }) {
         id={reasonId}
         value={reason}
         maxLength={REASON_MAX}
+        placeholder="What should the firm change?"
         onChange={(ev) => setReason(ev.target.value)}
         rows={2}
         className="mt-1 w-full min-w-0 border-2 border-border bg-background p-2 text-sm"

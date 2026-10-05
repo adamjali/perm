@@ -8236,10 +8236,24 @@ their own, and Wal-Mart's 1,595 PERM cases and Walmart's 417 were two companies.
   `build_entity_detail.py`, `ingest_perm_history.py`, `ingest_warn.py`. `build_employer_map.py` matches
   through Rule D but stores each spelling's own key, which the lookup's exact step reads.
 - **The lookup** (`employerLookup.ts`): whole-word matching also accepts the same letters ending on a word
-  boundary ("walmart" may be "wal mart associates", "meta" still isn't "metamorphosis"), and when no name
-  contains the query, `searchByLetters` asks again with spaces and punctuation stripped in SQL.
+  boundary ("walmart" may be "wal mart associates", "meta" still isn't "metamorphosis"). The possible-match
+  step reads the name search and `searchByLetters` (spaces and punctuation stripped in SQL) TOGETHER,
+  busiest first: run only when the name search came back empty, "Lowes" found the 6-case LOWES
+  LANDSCAPING and never reached LOWE'S COMPANIES (270).
 - **A tiny exact match gives way to a much busier namesake**, labelled possible (`SMALL_EXACT` 30,
   `BUSIER_BY` 10, `BUSY_FLOOR` 100): "Amazon" had answered with a 1-case "AMAZON".
+- **A merged page is named by its busiest SINGLE spelling, whose key can be the group's minority key**
+  ("BigPanda Inc" names the page while "big panda" holds more cases). `with_aliases` therefore points
+  each group's root at the page too; without it the first production load refused on 43 old pages with
+  nowhere to redirect, after writing 4,666 rows (the rerun finished the swap).
+- **The rebuild, Oct 5 2026:** `perm_entities` 77,966 rows; 527 employer and 107 law-firm pages merged
+  into another page. **A retired slug answers 308 to its survivor** (`viaAlias` in `loadSubject`): it had
+  rendered the survivor at a 200 with a canonical since a loading boundary made redirects impossible,
+  and that boundary was removed Aug 28 (the route's spelling redirect already answered 308); Walmart's page
+  reads 2,012 PERM and 22,181 LCAs, Infosys 46,988 LCAs, JPMorgan 1,957 PERM. The 1,522 employer and
+  1,225 firm slugs on either side of a merge were expired by hand through the two revalidate routes.
+- **A script copied to `/tmp` on the server lacks `src/`**: `build_wage_bands.py` reads
+  `src/lib/wageStats.ts` and failed there. Run such steps from `/srv/permtracker/repo/v2`.
 
 ## Oct 5 2026: a Chrome extension and a keyless employer lookup
 
