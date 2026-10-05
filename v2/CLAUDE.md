@@ -8042,6 +8042,10 @@ checked against the live file, `/api-terms` was the only one blocked.
   block marked as the firm's own words. The page reads it with `queryStatic` on its 30-day window, and every change
   POSTs `/api/revalidate-firm` with `REVALIDATE_SECRET`, set on Convex production Oct 5 2026 from the server's
   `/srv/permtracker/app/env/production.env` by pipe (never printed; read back by name only).
+- **First real load, Oct 5 2026, 5:34 AM EDT**: 8,486 firm and domain pairs (PERM 3,155, PW 2,777, LCA 2,554), read
+  back from the table. DOL's FY2026 Q3 sheets declare 596,000 to 846,000 styled empty rows past their last case;
+  the script counts them as `blank`, so its case counts now equal the files' (112,550 / 147,244 / 437,496). The dry
+  run had read them as 925,430 "rows" without a firm, which looked like a misparse and changed no pair.
 - **Email**: its own pool, `firmClaim`, 10 a day, charged before anything is staged; a full pool queues (`kind: "firm"`).
 - **Routes**: `/firm-claim/request` and `/firm-claim/edit-link` (JSON, to the .convex.site twin); `/firm-claim/confirm`
   and `/firm-claim/edit` are emailed links, rewritten in next.config.ts and relayed by nginx with the other email links.
@@ -8131,7 +8135,11 @@ changed (`scripts/lib_reference.py`: `sync_rows`, `seen_before`, `sheet_rows`). 
   there is to drop. Free plan: 5 prefix requests a minute, 100 prefixes each; chunks wait 13 s. It needs
   `CF_PURGE_TOKEN` (Zone > Cache Purge on permtracker.app only) and `CF_ZONE_ID` (set Oct 5) as repo secrets;
   without the token, on a manual run, or when Cloudflare refuses, it says so and the deploy carries on.
-  `--dry-run` prints the list and sends nothing.
+  `--dry-run` prints the list and sends nothing. Its first run in CI (the deploy of `452c3281`, Oct 5) compared against
+  `22a3f9be`, found no public page changed and stopped before needing the token.
+- **A build that dies in `next/font` with "Cannot read properties of null (reading '1')"** is Google Fonts answering
+  the runner with something its parser can't read; nothing in the push caused it. Re-run the failed job (Oct 5: the
+  re-run of the same commit built and deployed).
 - **Testing Library's cleanup is registered in `vitest.setup.ts`.** It registers itself when first imported
   (`globals: true`), and the `unit` project shares a worker between files (`isolate: false`), so only the first file
   got the hook: `useFormDomSync.test.tsx` found the test before's `<input>` still in the page. Reproduce a shared-pool
