@@ -83,6 +83,11 @@ import re
 ENTITY_NOISE = {
     "llp", "lllp", "llc", "inc", "pc", "plc", "pllc", "lp", "ltd", "corp",
     "corporation", "co", "company", "pa", "chartered", "and", "the",
+    # The spelled-out forms of "ltd" and "inc" (Oct 5 2026). Measured over the
+    # 279,746 keys in employer_page_map: 440 pairs join, every sampled one the same
+    # company ("INFOSYS LIMITED", 46,988 LCAs, had its own page apart from
+    # "INFOSYS LTD.", whose PERM page showed 0 H-1B; LTIMindtree, Amgen, Qualcomm).
+    "limited", "incorporated",
 }
 
 # Legal-form words a typist sometimes runs into the last word of a firm name

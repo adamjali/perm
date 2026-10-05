@@ -28,6 +28,9 @@
 const ENTITY_NOISE = new Set([
   "llp", "lllp", "llc", "inc", "pc", "plc", "pllc", "lp", "ltd", "corp",
   "corporation", "co", "company", "pa", "chartered", "and", "the",
+  // The spelled-out forms of "ltd" and "inc" (Oct 5 2026). Without them "INFOSYS LIMITED"
+  // (46,988 LCAs) sat on a page apart from "INFOSYS LTD.", whose PERM page showed 0 H-1B.
+  "limited", "incorporated",
 ]);
 
 /**
