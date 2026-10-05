@@ -152,6 +152,10 @@ async function loadSubject(
 ): Promise<{ subject: Subject; canonicalSlug: string } | null> {
   const found = await resolveEntity(KIND, slug);
   if (!found) return null;
+  // A spelling that merged into another page answers 308 to it. This once
+  // rendered the merged page with a canonical, because a loading boundary
+  // above the segment turned any redirect into a 200; that boundary is gone.
+  if (found.viaAlias) permanentRedirect(`${BASE}/${found.canonicalSlug}`);
   const { row, canonicalSlug } = found;
   return { canonicalSlug, subject: {
     slug: row.slug,

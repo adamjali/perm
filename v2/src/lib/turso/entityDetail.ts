@@ -65,26 +65,18 @@ export interface ResolvedEntity {
 /**
  * The entity behind a URL, following a retired spelling if that is what it is.
  *
- * ## Why this resolves instead of redirecting
+ * `viaAlias` tells the caller the URL was a retired spelling; the employer
+ * and law-firm pages answer it with a 308 to `canonicalSlug`.
  *
- * `permanentRedirect` was the first implementation and it does not work on
- * this route. `(site)/(public)/loading.tsx` puts a Suspense boundary above
- * every public page, so Next flushes the shell with a 200 before the page
- * body finishes. A redirect thrown after that flush cannot become a 3xx:
- * React reports "Switched to client rendering because the server rendering
- * errored" and ships a 200 whose payload is the NEXT_REDIRECT error. Measured
- * on /perm-attorneys/jackson-lewis-pc: 200, 122 KB, five copies of
- * `NEXT_REDIRECT;replace;/perm-attorneys/jackson-lewis-p-c;308;` in the body.
- * Moving the call into a segment `layout.tsx` does not help; that layout is
- * inside the same boundary.
+ * ## History: why this once rendered instead of redirecting
  *
- * So the retired URL RESOLVES instead. It serves the merged entity's page at
- * a 200, with `<link rel="canonical">` pointing at the surviving slug, which
- * is the consolidation signal Google documents for exactly this case. The
- * sitemap lists only canonical slugs, so nothing advertises the duplicate.
- *
- * A true 308 is still the better answer and needs a `redirects()` entry in
- * `next.config.ts`, which is outside this task's file ownership.
+ * While `(site)/(public)/loading.tsx` put a Suspense boundary above every
+ * public page, Next flushed a 200 before the page body ran and a redirect
+ * could not become a 3xx (measured on /perm-attorneys/jackson-lewis-pc: a 200
+ * carrying `NEXT_REDIRECT;replace;...;308;` in its body). So the retired URL
+ * served the merged page with a canonical. That boundary was removed on Aug
+ * 28 2026, and the employer route's spelling redirect answered 308 on Oct 5
+ * 2026, so the pages redirect now.
  */
 export async function resolveEntity(
   kind: EntityKind,

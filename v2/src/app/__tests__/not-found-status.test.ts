@@ -161,6 +161,32 @@ describe("entity detail routes: the miss is decided in metadata", () => {
     unmockBoth();
   });
 
+  /**
+   * A spelling that merged into another page answers 308 to it.
+   *
+   * It used to render the merged page at a 200 with a canonical, because a
+   * loading boundary above the segment made any redirect a 200. That boundary
+   * is gone (the spelling redirect on the same route answered 308 on Oct 5
+   * 2026), and the Oct 5 identity merge retired 634 more pages.
+   */
+  const aliasRow = { slug: "m-t-bank", name: "M&T BANK", rank: 900, total: 63, certified: 60, denied: 1, medianDays: null, medianAnnualWage: null };
+  it.each([
+    ["perm-employers", "employer"],
+    ["perm-attorneys", "attorney"],
+  ])("a retired %s slug redirects permanently to the page it merged into", { timeout: 45_000 }, async (route) => {
+    vi.resetModules();
+    vi.doMock("@/lib/turso/entityDetail", async (importOriginal) => ({
+      ...(await importOriginal<object>()),
+      resolveEntity: vi.fn().mockResolvedValue({ row: aliasRow, canonicalSlug: "m-t-bank", viaAlias: true }),
+    }));
+    const page = await import(`../(site)/(public)/${route}/[slug]/page`);
+    const meta = await digestOf(page.generateMetadata(params("mt-bank")));
+    expect(meta).toMatch(new RegExp(`^NEXT_REDIRECT;[a-z]+;/${route}/m-t-bank;308;`));
+    const body = await digestOf(page.default(params("mt-bank")));
+    expect(body).toMatch(new RegExp(`^NEXT_REDIRECT;[a-z]+;/${route}/m-t-bank;308;`));
+    vi.doUnmock("@/lib/turso/entityDetail");
+  });
+
   it("keeps the description under the SERP cut for the longest names DOL prints", async () => {
     // These names are the least curated in the corpus: they come straight off
     // the application with no merge pass behind them, so the longest of them

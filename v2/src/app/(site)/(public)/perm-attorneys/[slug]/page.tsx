@@ -18,7 +18,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits } from "@/lib/describe";
 import { formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -117,6 +117,10 @@ async function loadSubject(
 ): Promise<{ subject: Subject; canonicalSlug: string } | null> {
   const found = await resolveEntity(KIND, slug);
   if (!found) return null;
+  // A spelling that merged into another page answers 308 to it. This once
+  // rendered the merged page with a canonical, because a loading boundary
+  // above the segment turned any redirect into a 200; that boundary is gone.
+  if (found.viaAlias) permanentRedirect(`${BASE}/${found.canonicalSlug}`);
   const { row, canonicalSlug } = found;
   return { canonicalSlug, subject: {
     slug: row.slug,
@@ -156,9 +160,8 @@ export async function generateMetadata({
   // cold render per crawler guess. With the boundary gone the response waits
   // for this decision and a miss is a real 404.
   if (!found) notFound();
-  // The canonical names the SURVIVING slug. A retired spelling serves the
-  // merged entity's page rather than a redirect (see `resolveEntity`), so
-  // without this the two URLs would compete instead of consolidating.
+  // A retired spelling has already redirected in loadSubject, so the slug
+  // here is the surviving one and the canonical names it.
   const row = found.subject;
   const reliability = rateReliability(
     row.certified,
