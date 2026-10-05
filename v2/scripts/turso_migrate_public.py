@@ -83,7 +83,7 @@ SCHEMA = [
        )""",
     # IF NOT EXISTS, never dropped: an accumulator owned by
     # ingest_visa_bulletin.py, whose SOURCE_RANK decides when a month may be
-    # overwritten. This run only ever carries `--months 18`.
+    # overwritten. This run carries bulletins only from a hand-built artifact.
     """CREATE TABLE IF NOT EXISTS visa_bulletins (
          bulletin_month   TEXT PRIMARY KEY,
          source_url       TEXT,
@@ -152,9 +152,10 @@ def main() -> int:
     wages = json.load(open(art / "perm-wages.json"))
     meta = json.load(open(art / "perm-cases.ndjson.gz.meta.json"))
 
-    # The visa bulletin is the one optional input: its workflow step reads the
-    # Internet Archive, which has slow days, and may produce no file. Missing
-    # simply adds no months, which is safe because the table is an accumulator.
+    # The visa bulletin is the one optional input. No workflow step produces it
+    # since Oct 5 2026 (the daily direct read from State owns the series); a
+    # hand-built artifact may still carry one. Missing simply adds no months,
+    # which is safe because the table is an accumulator.
     bulletin_path = art / "visa-bulletin.json"
     if bulletin_path.exists():
         bulletins = json.load(open(bulletin_path))

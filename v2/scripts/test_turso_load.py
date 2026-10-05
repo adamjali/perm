@@ -23,10 +23,10 @@ WHAT IT ASSERTS, and why each one exists
 2. perm_docs is SHARED. The script owns three of its ten keys; dropping it
    took `live_census` with it, and the case lookup falls back to a ~1.8M
    row-read path without that document.
-3. A MISSING visa-bulletin.json must not fail the load. Its workflow step is
-   `continue-on-error` because it reads the Internet Archive; on 2026-08-29
-   the Archive refused every connection and a hard read took the whole corpus
-   load down with it.
+3. A MISSING visa-bulletin.json must not fail the load. On 2026-08-29 the
+   Internet Archive refused every connection and a hard read took the whole
+   corpus load down with it; since Oct 5 2026 no workflow step writes the
+   file at all, so a missing file is now the normal case.
 4. The VERIFY block must FAIL when an accumulator loses rows. A check that
    passes over data loss is worse than no check.
 

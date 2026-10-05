@@ -6,8 +6,11 @@ name: Federal data ingest
 # a GitHub runner because the files are far too large for a Convex action, and
 # www.dol.gov serves GitHub's runners.
 #
-# It also refreshes the visa bulletin series from the Internet Archive, which
-# the corpus load merges in below whatever the daily direct read already holds.
+# It no longer touches the visa bulletin. A step here read the last 18 months
+# from the Internet Archive, but every one of those months already comes from
+# the State Department's own pages through the daily direct read
+# (processing-times-ingest.yml), which outranks an archive copy; the step only
+# ever failed (28 minutes of 429s, then refusals, on Oct 5 2026). Removed Oct 5.
 #
 # Idempotent: the case load writes only the rows that changed, so an extra run
 # costs a download and little else.
@@ -92,19 +95,6 @@ jobs:
           if payload["uniqueCases"] < 50_000 or cohorts < 10 or frontier < 5:
               sys.exit("FATAL: payload is too small to be a real quarter of DOL data")
           PY
-
-      - name: Download the visa bulletin series
-        working-directory: v2
-        # Non-fatal: the archive is a free public service, and a slow day for it
-        # must not fail the DOL load. The loader refuses a short series anyway.
-        # Capped because the archive answered 429 for about 28 minutes on Oct 5
-        # 2026 and nearly ran the whole job into its 45-minute limit; a missing
-        # file leaves the stored series as it is.
-        continue-on-error: true
-        timeout-minutes: 8
-        run: |
-          python3 scripts/ingest_visa_bulletin.py \
-            --out "${RUNNER_TEMP}/visa-bulletin.json" --months 18
 
       # Kept for a week so a failed load can be finished from the artifact.
       - name: Upload payload artifacts

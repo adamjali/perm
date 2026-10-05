@@ -8255,6 +8255,26 @@ their own, and Wal-Mart's 1,595 PERM cases and Walmart's 417 were two companies.
 - **A script copied to `/tmp` on the server lacks `src/`**: `build_wage_bands.py` reads
   `src/lib/wageStats.ts` and failed there. Run such steps from `/srv/permtracker/repo/v2`.
 
+## Oct 5 2026 (evening): fewer alert emails, fewer scheduled jobs
+
+Adam: *"constantly getting emails from perm tracker post hog sentry with errors and github too check all fix all"*.
+
+- **PostHog's "New error type" alert (insight `JUT2jefy`) counts a type only once its SECOND distinct visit lands**,
+  among types first seen in the last 7 days. It had emailed on every never-seen error, one-off browser-extension
+  junk included: 5 emails that day, about 40 in 10 days; the new rule would have sent 3 since Oct 1, all real.
+- **A grouping rule files webpack's missing-module crash as one issue** ("reading 'call'", and Firefox's "can't
+  access property call"). Each deploy renames the runtime file, so it had become a new type, and an email, per build.
+- **That crash is still open**: about 8 a day of roughly 4,400 pageviews, caught by the error screen, which reloads
+  once and recovers. Ruled out with data: `failedRequests` is always empty (no file failed), most happen hours after
+  a deploy (not a build switch), and 39% of all pageviews follow a Cloudflare check against 28% of crashes (not the
+  check). PostHog can't decode its stack traces: it gets 403 fetching `/_next/static`, and no browser source maps ship.
+- **The Federal data ingest no longer reads the visa bulletin.** Its step pulled the last 18 months from the Internet
+  Archive, all of which the daily direct read from State already holds at a higher rank; it only ever failed.
+- **The due-check routine is now "LLC Deadline Reminders"** (`trig_01U2UC9qeUvdft461DoV785m`, Mondays 9 AM EDT, no
+  repo checkout): the rename to Asolys on Sunbiz (which refuses scripts), the annual report, the agent renewal. Its
+  health, bulletin and limits-sheet checks were duplicates of the morning report and of ingests automated Sep 26.
+- **Sentry 4T resolved** (an employer-list query deadline last seen Oct 3 during history loads; ~2 s now).
+
 ## Oct 5 2026: a Chrome extension and a keyless employer lookup
 
 - `GET /v1/lookup/employer?name=` (no key; `src/lib/api/employerLookup.ts`, `keyless.ts`): an exact published PERM
