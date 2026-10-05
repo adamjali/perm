@@ -245,6 +245,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/which-green-card`, lastModified: changed("/tools/which-green-card"), images: [`${base}/og/which-green-card.jpg`] },
     { url: `${base}/h1b-lottery-odds`, lastModified: changed("/h1b-lottery-odds"), images: [`${base}/og/h1b-lottery-odds.jpg`] },
     { url: `${base}/nvc-waiting-list`, lastModified: changed("/nvc-waiting-list"), images: [`${base}/og/nvc-waiting-list.jpg`] },
+    { url: `${base}/visa-issuances`, lastModified: changed("/visa-issuances"), images: [`${base}/og/visa-issuances.jpg`] },
     { url: `${base}/perm-cities`, lastModified: changed("/perm-cities"), images: [`${base}/og/perm-cities.jpg`] },
     { url: `${base}/perm-industries`, lastModified: changed("/perm-industries"), images: [`${base}/og/perm-industries.jpg`] },
     { url: `${base}/perm-countries`, lastModified: changed("/perm-countries"), images: [`${base}/og/perm-countries.jpg`] },

@@ -19,6 +19,7 @@ import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { lineIssuance, monthName } from "@/lib/turso/visaIssuances";
 import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
 import { PriorityDateEstimator } from "@/components/tools/PriorityDateEstimator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
@@ -123,7 +124,10 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
   if (!got) notFound();
   const { category, country, bulletins, board, fa, dff } = got;
   const { cat, where } = names(category, country);
-  const counts = await getLineCounts(category, country);
+  const [counts, issued] = await Promise.all([
+    getLineCounts(category, country),
+    lineIssuance(category, country).catch(() => null),
+  ]);
   const years = fiscalYearMoves(fa.states);
   const path = `/visa-bulletin/categories/${slug}`;
 
@@ -283,6 +287,25 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
         </section>
       ) : null}
 
+      {issued ? (
+        <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="issued">
+          <h2 id="issued" className="font-heading text-xl font-black sm:text-2xl">
+            What State issued abroad in this line
+          </h2>{" "}
+          <p className="mt-2 max-w-3xl text-base leading-relaxed">
+            <span className="font-heading text-3xl font-black tabular-nums">{issued.total.toLocaleString("en-US")}</span>{" "}
+            {issued.wholeCategory ? "EB-5 visas (all EB-5, which State doesn't split by set-aside)" : `${cat} visas`}{" "}
+            {country === "worldwide" ? "to people outside the four countries listed apart" : `to people chargeable to ${where}`}{" "}
+            from {monthName(issued.from)} to {monthName(issued.to)}, {issued.newest.toLocaleString("en-US")} of them in{" "}
+            {monthName(issued.to)}. Consulates only: a green card granted inside the US isn&apos;t in this count.{" "}
+            <Link href="/visa-issuances" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              Every month and category
+            </Link>
+            .
+          </p>
+        </section>
+      ) : null}
+
       <nav className="mt-12" aria-labelledby="other-lines">
         <h2 id="other-lines" className="font-heading text-2xl font-black">
           Other lines
@@ -319,7 +342,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
         <BulletinAlertForm source={`visa-bulletin/categories/${slug}`} />
       </section>
 
-      <DataProvenance datasets={["visa-bulletin", "uscis-eb-awaiting-visa", "i485-inventory"]} />
+      <DataProvenance datasets={["visa-bulletin", "uscis-eb-awaiting-visa", "i485-inventory", "visa-issuances"]} />
 
       <ToolPageFooter
         currentHref={path}

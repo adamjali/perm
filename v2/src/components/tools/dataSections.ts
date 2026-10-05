@@ -36,6 +36,7 @@ export type DataSection =
   | "sponsor-finder"
   | "wage-sources"
   | "nvc-waiting-list"
+  | "visa-issuances"
   | "by-city"
   | "by-industry"
   | "by-country"
@@ -163,6 +164,8 @@ export const SECTIONS: DataNavSection[] = [
   { key: "visa-bulletin-categories", group: "Visa bulletin", label: "By category and country", href: "/visa-bulletin/categories" },
   // State's yearly count of consular applicants waiting, the other half of the line.
   { key: "nvc-waiting-list", group: "Visa bulletin", label: "NVC waiting list", href: "/nvc-waiting-list" },
+  // State's monthly count of the visas its consulates issued, the line moving.
+  { key: "visa-issuances", group: "Visa bulletin", label: "Visas issued", href: "/visa-issuances" },
   // USCIS's quarterly workbooks: a different agency from everything above,
   // and the stage AFTER the labor certification. Its own group for the same
   // reason the visa bulletin has one.

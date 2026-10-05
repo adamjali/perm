@@ -94,8 +94,8 @@ def main() -> int:
                         ("DV", "Diversity"), ("SQ1", "Special immigrants"), ("GV3", "Special immigrants"),
                         ("ZZ9", "Other")]:
         check(f"{symbol} is {cat}", iv.category_of(symbol), cat)
-    check("State's two spellings of one place are one key",
-          iv.group_key("China-Mainland born") == iv.group_key("China - mainland born"), True)
+    check("State's spellings of one place are one key",
+          len({iv.group_key(n) for n in ("China-Mainland born", "China - mainland born", "China – mainland born")}), 1)
 
     print(f"{N} checks")
     for f in FAILS:

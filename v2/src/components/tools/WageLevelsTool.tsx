@@ -5,6 +5,7 @@ import { WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui/label";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
+import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { seriesYearFor, SOC_RE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
 
@@ -26,6 +27,54 @@ type Result =
   | { kind: "none"; message: string }
   | { kind: "error"; message: string };
 
+interface StoredYear {
+  wageYear: number;
+  levels: (number | null)[];
+  label: string | null;
+}
+
+interface History {
+  alc: StoredYear[];
+  edc: StoredYear[];
+  market: { series: string; median: number | null; p25: number | null; p75: number | null; employment: number | null } | null;
+}
+
+const yearLabel = (y: number) => `${y}-${String((y + 1) % 100).padStart(2, "0")}`;
+/** DOL counts a wage year as 2,080 hours. */
+const YEARLY = 2080;
+
+function YearTable({ years, caption }: { years: StoredYear[]; caption: string }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[32rem] text-left text-base">
+        <caption className="sr-only">{caption}</caption>
+        <thead>
+          <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
+            <th className="py-2 pr-4 font-bold">Wage year</th>
+            {["I", "II", "III", "IV"].map((l) => (
+              <th key={l} className="py-2 pr-4 text-right font-bold">
+                {`Level ${l}`}{" "}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {[...years].reverse().map((y) => (
+            <tr key={y.wageYear} className="border-b border-border/60">
+              <td className="py-2 pr-4 tabular-nums">{yearLabel(y.wageYear)}{" "}</td>
+              {y.levels.map((v, i) => (
+                <td key={i} className="py-2 pr-4 text-right tabular-nums">
+                  {v != null ? usd(Math.round(v * YEARLY)) : i === 0 && y.label ? y.label : "—"}{" "}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 const STATES = Object.entries(US_STATE_NAMES)
   .map(([code, name]) => ({ code, name }))
   .sort((a, b) => a.name.localeCompare(b.name));
@@ -42,6 +91,10 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
   const [area, setArea] = useState("");
   const [soc, setSoc] = useState(initialSoc);
   const [result, setResult] = useState<Result>({ kind: "idle" });
+  const [history, setHistory] = useState<History | null>(null);
+  // An iPhone's form script can fill the box without React hearing it, which
+  // left the button disabled with a code on screen (Oct 4 2026, /perm-cases).
+  const formRef = useFormDomSync({ soc: setSoc });
 
   const stateName = STATES.find((s) => s.code === state)?.name ?? "";
 
@@ -75,6 +128,11 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
     e.preventDefault();
     if (!ready) return;
     setResult({ kind: "loading" });
+    setHistory(null);
+    fetch(`/api/wage-levels/history?soc=${encodeURIComponent(soc.trim())}&area=${area}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: ({ ok?: boolean } & History) | null) => setHistory(j?.ok ? j : null))
+      .catch(() => setHistory(null));
     try {
       const res = await fetch(`/api/wage-levels?soc=${encodeURIComponent(soc.trim())}&area=${area}&year=${seriesYear}`);
       const j = (await res.json().catch(() => null)) as { ok?: boolean; levels?: WageLevel[] | null; message?: string; soc?: string; seriesYear?: number; source?: string } | null;
@@ -94,11 +152,12 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
 
   return (
     <div className="border-2 border-border bg-card p-5 shadow-hard sm:p-8">
-      <form onSubmit={lookUp} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+      <form ref={formRef} onSubmit={lookUp} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         <div>
           <Label htmlFor={socId}>SOC code</Label>{" "}
           <input
             id={socId}
+            name="soc"
             value={soc}
             onChange={(e) => setSoc(e.target.value)}
             placeholder="15-1252"
@@ -181,6 +240,47 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
             </a>
             , all-industries OEWS. The level a case is set at depends on the job&apos;s requirements, which DOL decides on the ETA-9141.
           </p>
+        </div>
+      ) : null}
+
+      {history && (history.alc.length > 0 || history.market) ? (
+        <div className="mt-8 space-y-6">
+          {history.market?.median != null ? (
+            <p className="max-w-3xl text-base leading-relaxed">
+              <span className="font-bold">The market here: </span>
+              employers in this area report paying everyone in this job a median of{" "}
+              <span className="font-heading text-xl font-black tabular-nums">{usd(history.market.median)}</span>
+              {history.market.p25 != null && history.market.p75 != null
+                ? `, the middle half ${usd(history.market.p25)} to ${usd(history.market.p75)}`
+                : ""}{" "}
+              (BLS, {history.market.series}).
+            </p>
+          ) : null}
+          {history.alc.length > 0 ? (
+            <div>
+              <h3 className="font-heading text-lg font-black">Every wage year DOL has published, from its own tables</h3>{" "}
+              <p className="mt-1 text-sm text-foreground/70">
+                A year at 2,080 hours, as DOL computes it. A determination keeps the figures of the year it was issued in.
+              </p>{" "}
+              <div className="mt-3">
+                <YearTable years={history.alc} caption="DOL wage levels by wage year, all industries" />
+              </div>
+            </div>
+          ) : null}
+          {history.edc.some((y) => y.levels.some((v) => v != null)) ? (
+            <details className="border-2 border-border bg-background p-4">
+              <summary className="cursor-pointer font-bold">
+                Universities and research employers (DOL&apos;s ACWIA table)
+              </summary>{" "}
+              <p className="mt-2 text-sm text-foreground/70">
+                Institutions of higher education and their related or affiliated nonprofits, and nonprofit and
+                government research organizations, are set from this table instead (20 CFR 656.40(e)).
+              </p>{" "}
+              <div className="mt-3">
+                <YearTable years={history.edc} caption="DOL wage levels by wage year, ACWIA institutions" />
+              </div>
+            </details>
+          ) : null}
         </div>
       ) : null}
     </div>

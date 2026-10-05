@@ -34,6 +34,7 @@ PLACES = "\n".join([
     "MO|2965000|x|x|St. Louis city|25|A|1|1|1|1|38.63|-90.24",
     "NM|3539380|x|x|Las Cruces city|25|A|1|1|1|1|32.3|-106.8",
     "CT|0908000|x|x|Bridgeport city|25|A|1|1|1|1|41.18|-73.19",
+    "MA|2500840|x|x|Agawam Town city|25|A|1|1|1|1|42.06|-72.65",
 ])
 COUSUBS = "\n".join([
     "USPS|GEOID|GEOIDFQ|ANSICODE|NAME|FUNCSTAT|ALAND|AWATER|ALAND_SQMI|AWATER_SQMI|INTPTLAT|INTPTLONG",
@@ -56,6 +57,7 @@ COUNTIES = "\n".join([
     "MO|29510|x|x|St. Louis city|1|1|1|1|38.63|-90.24",
     "NM|35013|x|x|Doña Ana County|1|1|1|1|32.35|-106.8",
     "MA|25017|x|x|Middlesex County|1|1|1|1|42.48|-71.39",
+    "MA|25013|x|x|Hampden County|1|1|1|1|42.13|-72.63",
     "MI|26099|x|x|Macomb County|1|1|1|1|42.69|-82.91",
     "MI|26091|x|x|Lenawee County|1|1|1|1|41.89|-84.06",
     "CT|09120|x|x|Greater Bridgeport Planning Region|1|1|1|1|41.2|-73.2",
@@ -71,6 +73,7 @@ BY_COUNTY = "\n".join([
     "MO|29|510|St. Louis city|65000|x|St. Louis city|INCORPORATED PLACE|C7|A",
     "NM|35|013|Dona Ana County|39380|x|Las Cruces city|INCORPORATED PLACE|C1|A",
     "CT|09|001|Fairfield County|08000|x|Bridgeport city|INCORPORATED PLACE|C5|A",
+    "MA|25|013|Hampden County|00840|x|Agawam Town city|INCORPORATED PLACE|C5|A",
 ])
 DELINEATION = xlsx_bytes({"List 1": [
     ["List 1. CBSAs"], [],
@@ -89,11 +92,12 @@ WAGE = [("CA", "Santa Clara County", "41940", "San Jose-Sunnyvale-Santa Clara, C
         ("CT", "Greater Bridgeport Planning Region", "14860", "Bridgeport-Stamford-Danbury, CT", 2026)]
 KEYS = ["SAN JOSE|CA", "BOISE|ID", "HONOLULU|HI", "CARSON CITY|NV", "NEW YORK|NY", "ST. LOUIS|MO",
         "SAINT LOUIS|MO", "LAS CRUCES|NM", "ACTON|MA", "BRONX|NY", "CLINTON TOWNSHIP|MI",
-        "BRIDGEPORT|CT", "AUTAUGAVILLE|AL", "ATLANTIS|FL", "nonsense"]
+        "BRIDGEPORT|CT", "AGAWAM|MA", "AUTAUGAVILLE|AL", "ATLANTIS|FL", "nonsense"]
 
 
 def main() -> int:
-    counties, cities, rep = g.build(PLACES, COUNTIES, BY_COUNTY, DELINEATION, WAGE, KEYS, COUSUBS)
+    counties, cities, rep = g.build(PLACES, COUNTIES, BY_COUNTY, DELINEATION, WAGE, KEYS + KEYS[:3], COUSUBS)
+    check("a city on both lists counts once", rep["cities"], len(set(KEYS)))
     by = {r[0]: r for r in cities}
     check("an incorporated place beats a CDP of the same name", by["SAN JOSE|CA"][2], "San Jose city")
     check("its one county, metro and wage area",
@@ -115,6 +119,7 @@ def main() -> int:
     check("a county code Census retired gives way to the subdivision's current one",
           (by["BRIDGEPORT|CT"][6], by["BRIDGEPORT|CT"][11]), ("Greater Bridgeport Planning Region", "14860"))
     check("a statistical CCD is not a town", "AUTAUGAVILLE|AL" in by, False)
+    check("a Massachusetts town-form city", by["AGAWAM|MA"][6], "Hampden County")
     check("a city Census has no place for stays unmatched", sorted(rep["unmatched"]), ["ATLANTIS|FL", "AUTAUGAVILLE|AL"])
     check("a malformed key is skipped", "nonsense" in by, False)
     cty = {r[0]: r for r in counties}

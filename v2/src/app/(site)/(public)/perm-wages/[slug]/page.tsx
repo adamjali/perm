@@ -57,6 +57,7 @@ import { WorkerMix } from "@/components/entities/WorkerMix";
 import { workerFacets } from "@/lib/turso/employerHistory";
 import { aliasTarget, entityFacets } from "@/lib/turso/entityDetail";
 import { comparables, fieldDistribution, getBySlug } from "@/lib/turso/entities";
+import { OccupationReference } from "@/components/reference/OccupationReference";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -417,6 +418,13 @@ export default async function OccupationPage({
         </section>
       ) : null}
 
+      <OccupationReference
+        code={row.code}
+        name={name}
+        permMedian={row.medianAnnualWage}
+        cities={facets.city ?? []}
+      />
+
       <WorkerMix facets={workers} subject="occupation" />
 
       <RankLadder
@@ -627,7 +635,7 @@ export default async function OccupationPage({
         </div>
       </section>
       <UnpublishedFilingsNote subject="occupation" />{" "}
-      <DataProvenance datasets={["perm-cases", "entities"]} />
+      <DataProvenance datasets={["perm-cases", "entities", "onet", "bls-oews", "bls-projections", "oflc-wage-levels"]} />
     </div>
   );
 }

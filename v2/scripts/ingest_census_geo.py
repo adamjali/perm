@@ -111,6 +111,9 @@ def place_keys(census_name: str) -> list[str]:
             keys.append(alt)
     if keys[0].startswith("URBAN "):
         keys.append(keys[0][6:])
+    # Massachusetts' town-form cities: "Agawam Town city" is DOL's AGAWAM.
+    if keys[0].endswith(" TOWN") and len(keys[0]) > 5:
+        keys.append(keys[0][:-5])
     return keys
 
 
@@ -219,6 +222,8 @@ def build(places_txt: str, counties_txt: str, by_county_txt: str, delineation: b
         for k in place_keys(c["NAME"]):
             add(c["USPS"], k, 1, c, "cousub")
 
+    # A city on both the PERM and the H-1B lists is one city.
+    city_keys = sorted(set(city_keys))
     city_rows, report = [], {"cities": len(city_keys), "matched": 0, "multiCounty": 0, "noWageArea": 0,
                              "unmatched": [], "ambiguous": []}
     for key in sorted(set(city_keys)):

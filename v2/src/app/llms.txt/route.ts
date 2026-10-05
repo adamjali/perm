@@ -382,6 +382,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "The State Department's yearly count of immigrant visa applicants waiting at the National Visa Center, by family and employment category, reconciled report against report. Consular cases only, families included; adjustments at USCIS are not in it.",
   },
   {
+    path: "/visa-issuances",
+    label: "Immigrant visas issued abroad, by month",
+    blurb:
+      "Every immigrant visa State's consulates issued each month since March 2017, by employment and family category, by country of chargeability and by consulate, from State's own tables, each month checked against State's grand total. Consular issuances only: a green card granted inside the US isn't in it.",
+  },
+  {
     path: "/green-card-timelines",
     label: "Green card timelines",
     blurb:

@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule for permtracker-uscis@visa-issuances
+# State posts each month's immigrant visa issuances on no fixed date, months
+# late; a weekly look reads one page and only the files that are new.
+[Timer]
+OnCalendar=Tue *-*-* 11:40:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@visa-issuances.service
+
+[Install]
+WantedBy=timers.target

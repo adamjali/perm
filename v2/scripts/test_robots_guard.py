@@ -134,6 +134,22 @@ Disallow: /
           gov.rules_allow(onet, "/dl_files/database/db_31_0_csv.zip"), True)
     check("a later group for one named crawler doesn't bind us",
           gov.rules_allow(onet, "/find/bright"), True)
+    census = gov.parse_robots("""User-agent: *
+
+User-agent: RavenCrawler
+Disallow: /
+
+User-agent: MegaIndex
+Disallow: /
+
+User-agent: Googlebot
+Crawl-delay: 30
+""")
+    check("Census's everyone-allowed record above its banned crawlers allows us",
+          gov.rules_allow(census, "/geo/docs/maps-data/data/gazetteer/"), True)
+    merged = gov.parse_robots("User-agent: *\nUser-agent: RavenCrawler\nDisallow: /\n")
+    check("two user-agent lines with no blank line still share one group",
+          gov.rules_allow(merged, "/x"), False)
     tie = gov.parse_robots("User-agent: *\nDisallow: /a\nAllow: /a\n")
     check("a tie goes to Allow", gov.rules_allow(tie, "/a/b"), True)
 

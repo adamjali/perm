@@ -109,6 +109,21 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   // --- ICE SEVIS by the Numbers -------------------------------------------------
   "sevp-top-employers":
     "The 200 employers with the most F-1 students on OPT or STEM OPT, and on CPT, for each year ICE published a list, under ICE's own employer names. Top 200 only; a student in two programs at one employer is counted in each.",
+  // --- what a job is, pays and costs where it is (added Oct 5 2026) -----------
+  onet:
+    "What O*NET says each occupation is and takes: its description, tasks, Job Zone and the education workers report. A description of the job everywhere, not of any one employer's opening.",
+  "bls-oews":
+    "What employers report paying everyone in each job, nationally, by state and by metro, from BLS's yearly survey (May of the year named). Citizens and immigrants alike; not PERM offers.",
+  "bls-projections":
+    "BLS's ten-year projection of each job's employment and yearly openings, and the entry education it calls typical. A projection, not a count.",
+  "oflc-wage-levels":
+    "The four prevailing wage levels DOL publishes for every job in every area, each wage year from 2021-22, as DOL's own tables print them. The floors an offer is held to, not what anyone was paid.",
+  "census-geo":
+    "Where each worksite city sits: its county, metro area and DOL wage area, matched to Census's place and county files. A city Census lists in no single place is left unmatched rather than guessed.",
+  "bea-rpp":
+    "BEA's regional price parities: what the same basket costs in a state or metro area against the national level of 100.",
+  "visa-issuances":
+    "Immigrant visas State's consulates issued abroad each month, by visa class and by country or consulate. A green card granted inside the United States (adjustment of status at USCIS) is not in it, and for employment categories that is most of them.",
   // --- USCIS H-1B Employer Data Hub -------------------------------------------
   "uscis-h1b-hub":
     "H-1B workers USCIS approved and denied per petitioner, by the fiscal year of its FIRST decision, from FY2009. Appeals, revocations and pending petitions are excluded, and the address is the petitioner's mailing address, not where the work is.",
@@ -167,6 +182,13 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "uscis-i140-class-country": "I-140 by class and country",
   "sevp-top-employers": "ICE top OPT and CPT employers",
   "uscis-h1b-hub": "USCIS H-1B Employer Data Hub",
+  onet: "O*NET occupation data",
+  "bls-oews": "BLS market pay",
+  "bls-projections": "BLS employment projections",
+  "oflc-wage-levels": "DOL wage tables",
+  "census-geo": "Census places and metros",
+  "bea-rpp": "BEA price parities",
+  "visa-issuances": "State visa issuances",
   // Retired names still stamped on older rows.
   "perm-month-stats": "Pending case counts",
 };

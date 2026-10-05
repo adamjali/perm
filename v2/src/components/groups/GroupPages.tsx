@@ -12,6 +12,8 @@ import { countryYears, getGroup, GROUP_PATH, listGroups, type GroupKind } from "
 import { formatInt } from "@/lib/format";
 import { lcaCityByKey, lcaCityBySlug, type LcaCity } from "@/lib/turso/lcaCities";
 
+import { CityReference } from "@/components/reference/CityReference";
+
 import { CityH1b } from "./CityH1b";
 import { GroupIndexTable, type GroupIndexRow } from "./GroupIndexTable";
 import { GroupView } from "./GroupView";
@@ -208,7 +210,13 @@ export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: s
           </p>
         </header>
         <CityH1b city={city} />
-        <DataProvenance datasets={["lca-disclosure"]} />
+        <CityReference
+          cityKey={city.key}
+          label={city.label}
+          jobs={city.occupations.map((o) => ({ code: o.code, title: o.title, slug: o.slug, n: o.n }))}
+          jobsNoun="certified LCAs"
+        />
+        <DataProvenance datasets={["lca-disclosure", "census-geo", "bls-oews", "oflc-wage-levels"]} />
       </div>
     );
   }
@@ -228,8 +236,22 @@ export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: s
       </header>
       <GroupView kind={kind} group={g} yearsOverride={years} />
       <CityH1b city={h1b} />
+      {kind === "city" ? (
+        <CityReference
+          cityKey={g.key}
+          label={g.label}
+          jobs={g.detail.occupations.map((o) => ({ code: o.code, title: o.title, slug: o.slug, n: o.n }))}
+          jobsNoun="PERM decisions"
+        />
+      ) : null}
       <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">{c.coverage}</p>
-      <DataProvenance datasets={h1b ? ["perm-cases", "lca-disclosure"] : ["perm-cases"]} />
+      <DataProvenance
+        datasets={[
+          "perm-cases",
+          ...(h1b ? ["lca-disclosure"] : []),
+          ...(kind === "city" ? ["census-geo", "bls-oews", "oflc-wage-levels"] : []),
+        ]}
+      />
     </div>
   );
 }

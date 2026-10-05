@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -42,6 +42,16 @@ case "$job" in
   # accepted, with wage and worksite (published daily at midnight Eastern).
   # The ingest records its own ok or failed row.
   seasonal-jobs) python3 scripts/ingest_seasonal_jobs.py || { rc=1; fail ingest_seasonal_jobs.py "ingest exited non-zero"; } ;;
+  # The reference sources beside the PERM record (Oct 5 2026). Each loader
+  # records its own ok or failed row and skips a file it has already loaded.
+  # Census runs after the wage tables: it reads DOL's county-to-area list.
+  # BEA's loader exits cleanly until BEA_API_KEY is in uscis.env.
+  reference)
+    for s in ingest_onet.py ingest_bls.py ingest_oflc_wages.py ingest_census_geo.py ingest_bea_rpp.py; do
+      nice -n 10 python3 "scripts/$s" || { rc=1; fail "$s" "ingest exited non-zero"; }
+    done ;;
+  # State's monthly immigrant visa issuances (adoption.state.gov; travel.state.gov refuses scripts).
+  visa-issuances) nice -n 10 python3 scripts/ingest_visa_issuances.py || { rc=1; fail ingest_visa_issuances.py "ingest exited non-zero"; } ;;
   *) echo "unknown job $job"; exit 2 ;;
 esac
 exit $rc

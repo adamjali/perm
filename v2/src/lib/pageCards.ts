@@ -35,6 +35,7 @@ export const PAGE_CARD_ALT = {
   "h1b-lottery-odds": "H-1B lottery odds by year. USCIS's registrations and selections since FY2021, and DHS's estimate of the odds by wage level from FY2027.",
   "visa-bulletin-categories": "Every line in the visa bulletin. Each employment category by country, with its cutoffs and history.",
   "nvc-waiting-list": "The immigrant visa waiting list. State's count of applicants waiting at the National Visa Center by category, each November since 2016.",
+  "visa-issuances": "Immigrant visas issued abroad. State's monthly count of the visas its consulates issued, by employment and family category, since March 2017.",
   "green-card-timelines": "Green card timelines as the people waiting report them: PERM dates checked against DOL, the I-140 and I-485 self-reported.",
   "uscis-processing-times": "USCIS processing times, the median. Every form's median months to a decision from USCIS's quarterly workbook, beside the figure on its processing-times page.",
   "i485-by-field-office": "The I-485 by field office. What each USCIS office received, approved, denied and still holds, employment-based first, from USCIS's quarterly count.",

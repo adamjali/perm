@@ -55,8 +55,10 @@ MONTHS = {m: i for i, m in enumerate(
     ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"), start=1)}
 SYMBOL = re.compile(r"^[A-Z][A-Z0-9]{0,3}$")
 NUMBER = re.compile(r"^[\d,]+$")
-# A month's worldwide table holds a few hundred to a few thousand rows.
-MIN_ROWS = 200
+# A month's worldwide table holds a few hundred to a few thousand rows; with
+# the consulates closed in May 2020 the by-consulate table had 190. The grand
+# total is the real check; this only stops an empty or truncated read.
+MIN_ROWS = 50
 
 DDL = [
     f"""CREATE TABLE IF NOT EXISTS {TABLE} (
@@ -97,6 +99,8 @@ def category_of(symbol: str) -> str:
 def group_key(name: str) -> str:
     """One key per country or post across State's spellings: "China-Mainland
     born" (2017) and "China - mainland born" (2024) are one place."""
+    # State writes the dash as a hyphen in some months and an en dash in others.
+    name = re.sub(r"[\u2010-\u2015\u2212]", "-", name)
     return re.sub(r"\s+", " ", re.sub(r"\s*-\s*", " - ", name)).strip().casefold()
 
 

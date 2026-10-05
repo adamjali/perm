@@ -1,0 +1,13 @@
+[Unit]
+Description=Schedule for permtracker-uscis@reference
+# O*NET (twice a year), BLS pay and projections, Census places, DOL's wage
+# tables (each July) and BEA's price parities all change once or twice a year;
+# each loader skips a file whose bytes it has already loaded, so a monthly look
+# costs a few page reads.
+[Timer]
+OnCalendar=*-*-14 10:40:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@reference.service
+
+[Install]
+WantedBy=timers.target

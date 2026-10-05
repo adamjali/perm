@@ -121,6 +121,18 @@ def parse_robots(text: str) -> list[tuple[bool, str]]:
     in_rules = False
     for raw in text.splitlines():
         line = raw.split("#", 1)[0].strip()
+        # Only a truly blank line separates: a comment line inside a group
+        # (USCIS has "# Custom" between Crawl-delay and its Disallows) doesn't.
+        if not raw.strip() and agents and not in_rules:
+            # A user-agent line with no rules, then a blank line, is a group of
+            # its own that allows everything. That's the original robots
+            # convention (records separated by blank lines), and it's how
+            # www2.census.gov writes "everyone is allowed" above its list of
+            # banned crawlers. Read strictly by RFC 9309, which has no blank-line
+            # separator, the same file would forbid every crawler, Google's
+            # included, which no public-data host means.
+            agents = []
+            continue
         if ":" not in line:
             continue
         field, value = (part.strip() for part in line.split(":", 1))
@@ -133,6 +145,9 @@ def parse_robots(text: str) -> list[tuple[bool, str]]:
             in_rules = True
             if "*" in agents and value:
                 rules.append((field == "allow", value))
+        elif field != "sitemap":
+            # Crawl-delay and the like belong to the group, so it has started.
+            in_rules = True
     return rules
 
 
