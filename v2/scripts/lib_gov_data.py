@@ -23,7 +23,6 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-import urllib.robotparser
 import zipfile
 from xml.etree.ElementTree import iterparse
 
@@ -49,6 +48,24 @@ BROWSER_HEADERS = {
 }
 
 
+# Hosts that refuse the browser set and serve a client that says who it is.
+# The Bureau of Labor Statistics answers a browser User-Agent from a script
+# with 403 and asks automated clients to identify themselves with contact
+# details; with this header its files and robots.txt answer 200 (measured
+# Oct 4 2026 from the laptop).
+CONTACT_HEADERS = {
+    "User-Agent": "PERMTracker/1.0 (+https://permtracker.app; support@permtracker.app)",
+    "Accept": "*/*",
+}
+CONTACT_HOSTS = ("www.bls.gov", "download.bls.gov", "data.bls.gov", "api.bls.gov")
+
+
+def headers_for(url: str) -> dict[str, str]:
+    """The header set a host serves: contact details for BLS, the browser set elsewhere."""
+    host = urllib.parse.urlsplit(url).netloc.lower()
+    return dict(CONTACT_HEADERS if host in CONTACT_HOSTS else BROWSER_HEADERS)
+
+
 # A large disclosure workbook can take minutes to arrive.
 FETCH_TIMEOUT_S = 300
 FETCH_ATTEMPTS = 4
@@ -72,7 +89,7 @@ class RobotsDisallowed(RuntimeError):
 
 # One parsed robots.txt per scheme and host for the life of the run; None when
 # the host's file couldn't be read.
-_ROBOTS: dict[str, urllib.robotparser.RobotFileParser | None] = {}
+_ROBOTS: dict[str, list[tuple[bool, str]] | None] = {}
 
 
 def _robots_text(origin: str) -> str | None:
@@ -84,13 +101,61 @@ def _robots_text(origin: str) -> str | None:
     connection shouldn't fail a monthly load on its own.
     """
     try:
-        req = urllib.request.Request(f"{origin}/robots.txt", headers=dict(BROWSER_HEADERS))
+        req = urllib.request.Request(f"{origin}/robots.txt", headers=headers_for(origin))
         with urllib.request.urlopen(req, timeout=30) as resp:
             if resp.status != 200:
                 return None
             return resp.read().decode("utf-8", errors="replace")
     except (urllib.error.URLError, TimeoutError, OSError, ValueError):
         return None
+
+
+def parse_robots(text: str) -> list[tuple[bool, str]]:
+    """The (allow, path pattern) rules of the group for every user agent (`*`).
+
+    RFC 9309 groups rules under one or more consecutive User-agent lines; only
+    the `*` group applies to us, since no host names this loader.
+    """
+    rules: list[tuple[bool, str]] = []
+    agents: list[str] = []
+    in_rules = False
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if ":" not in line:
+            continue
+        field, value = (part.strip() for part in line.split(":", 1))
+        field = field.lower()
+        if field == "user-agent":
+            if in_rules:
+                agents, in_rules = [], False
+            agents.append(value.lower())
+        elif field in ("allow", "disallow"):
+            in_rules = True
+            if "*" in agents and value:
+                rules.append((field == "allow", value))
+    return rules
+
+
+def _pattern_regex(pattern: str) -> re.Pattern[str]:
+    """A robots path pattern as a regex: `*` is any run, a trailing `$` anchors."""
+    anchored = pattern.endswith("$")
+    body = pattern[:-1] if anchored else pattern
+    return re.compile("".join(".*" if ch == "*" else re.escape(ch) for ch in body) + ("$" if anchored else ""))
+
+
+def rules_allow(rules: list[tuple[bool, str]], path: str) -> bool:
+    """RFC 9309 section 2.2.2: the longest matching rule wins, Allow on a tie.
+
+    Python's urllib.robotparser takes the FIRST matching rule instead, so a file
+    that opens with `Disallow: /` and then allows `/api/` (apps.bea.gov, Oct 4
+    2026) read as forbidding the API the host invites scripts to use.
+    """
+    best_len, allowed = -1, True
+    for allow, pattern in rules:
+        if _pattern_regex(pattern).match(path):
+            if len(pattern) > best_len or (len(pattern) == best_len and allow):
+                best_len, allowed = len(pattern), allow
+    return allowed
 
 
 def robots_allowed(url: str) -> bool:
@@ -103,11 +168,12 @@ def robots_allowed(url: str) -> bool:
             log(f"  {origin}/robots.txt couldn't be read; reading as no rules")
             _ROBOTS[origin] = None
         else:
-            parsed = urllib.robotparser.RobotFileParser()
-            parsed.parse(text.splitlines())
-            _ROBOTS[origin] = parsed
+            _ROBOTS[origin] = parse_robots(text)
     rules = _ROBOTS[origin]
-    return rules is None or rules.can_fetch("*", url)
+    path = parts.path or "/"
+    if parts.query:
+        path += "?" + parts.query
+    return rules is None or rules_allow(rules, path)
 
 
 def fetch(url: str, referer: str | None = None, attempts: int = FETCH_ATTEMPTS) -> bytes:
@@ -120,7 +186,7 @@ def fetch(url: str, referer: str | None = None, attempts: int = FETCH_ATTEMPTS) 
     """
     if not robots_allowed(url):
         raise RobotsDisallowed(f"{url} is a path the host's robots.txt asks automated clients not to read")
-    headers = dict(BROWSER_HEADERS)
+    headers = headers_for(url)
     if referer:
         headers["Referer"] = referer
 

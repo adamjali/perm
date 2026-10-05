@@ -86,6 +86,71 @@ def main() -> int:
         gov._robots_text, urllib.request.urlopen = saved
         gov._ROBOTS.clear()
 
+    # BEA's apps host forbids its regional download folder and allows only /api/
+    # (its robots.txt on Oct 4 2026), which is why the price parities load
+    # through the API.
+    bea = """User-agent: *
+Disallow: /
+Allow: /api/
+Allow: /regional/bearfacts/
+"""
+    gov._robots_text = lambda origin: bea if origin == "https://apps.bea.gov" else None
+    gov._ROBOTS.clear()
+    try:
+        check("BEA's regional zip is forbidden",
+              gov.robots_allowed("https://apps.bea.gov/regional/zip/SARPP.zip"), False)
+        check("BEA's API is allowed",
+              gov.robots_allowed("https://apps.bea.gov/api/data?method=GetData"), True)
+    finally:
+        gov._robots_text = saved[0]
+        gov._ROBOTS.clear()
+
+    # The rule matcher on its own, against lines two hosts carried on Oct 4 2026.
+    bls = gov.parse_robots("""User-agent: archive.org_bot
+Disallow:/include
+User-agent:*
+Disallow:/scripts
+Disallow:/*print*
+Disallow:/*.PDF$
+""")
+    check("BLS's group for every agent is the one read", len(bls), 3)
+    check("an OEWS download is allowed",
+          gov.rules_allow(bls, "/oes/special-requests/oesm25all.zip"), True)
+    check("a wildcard in the middle matches", gov.rules_allow(bls, "/oes/print.htm"), False)
+    check("a $ anchors the end", gov.rules_allow(bls, "/a/b.PDF"), False)
+    check("and only the end", gov.rules_allow(bls, "/a/b.PDF?x=1"), True)
+    onet = gov.parse_robots("""User-agent: W3C-checklink
+Disallow:
+
+User-agent: *
+Disallow: /shared/rate
+Disallow: /profile/jobinfo/
+
+User-agent: Jobrapido
+Disallow: /
+""")
+    check("an empty Disallow and another agent's group add nothing", len(onet), 2)
+    check("O*NET's database download is allowed",
+          gov.rules_allow(onet, "/dl_files/database/db_31_0_csv.zip"), True)
+    check("a later group for one named crawler doesn't bind us",
+          gov.rules_allow(onet, "/find/bright"), True)
+    tie = gov.parse_robots("User-agent: *\nDisallow: /a\nAllow: /a\n")
+    check("a tie goes to Allow", gov.rules_allow(tie, "/a/b"), True)
+
+    # BLS refuses a browser User-Agent and serves one with contact details.
+    check("BLS gets the contact header",
+          gov.headers_for("https://www.bls.gov/oes/special-requests/oesm25nat.zip")["User-Agent"],
+          gov.CONTACT_HEADERS["User-Agent"])
+    check("its download host too",
+          gov.headers_for("https://download.bls.gov/pub/time.series/oe/oe.footnote")["User-Agent"],
+          gov.CONTACT_HEADERS["User-Agent"])
+    check("the contact header names a way to reach us",
+          "support@permtracker.app" in gov.CONTACT_HEADERS["User-Agent"], True)
+    check("DOL keeps the browser set",
+          gov.headers_for("https://www.dol.gov/x.xlsx")["User-Agent"], gov.BROWSER_HEADERS["User-Agent"])
+    check("a caller's header dict is its own copy",
+          gov.headers_for("https://www.dol.gov/x") is gov.BROWSER_HEADERS, False)
+
     print(f"{N} checks")
     for f in FAILS:
         print("FAIL", f)
