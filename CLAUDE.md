@@ -3,8 +3,8 @@
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-04
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **586 files / 8,580 tests across 5 vitest
-> projects** (2026-10-04), not the 151 files / 3 projects TESTING.md records. Treat those
+> have drifted: the suite is now **606 files / 8,778 tests across 5 vitest
+> projects** (2026-10-05), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
 ## Production URLs
