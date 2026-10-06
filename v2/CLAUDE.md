@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 608 files / 8,824 tests (2026-10-06; ~38 min at a load average near 200, ~12.5 to 14 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 609 files / 8,826 tests (2026-10-06; ~38 min at a load average near 200, ~12.5 to 14 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -8333,4 +8333,14 @@ plain, natural set: "no salsey desperate weird unnatural". Method and what chang
 - **What can't be fixed by wording**: the "perm tracker" search (58k appearances, about 5th) is shared with
   rivals of near-identical names; /tutorials and /resources still collect about 5,700 appearances while
   Google catches up with their 308s to /guides.
+- **/faq opens with the case lookup and four tool tiles** (processing times, live data, calculators, for
+  attorneys). Google sends a large share of the "perm tracker" search there (September: /faq 1,160 clicks, the
+  homepage 906), and PostHog showed where those visitors went next, 30 days to Oct 6, scraper browsers excluded:
+  of about 1,200 visits that began on /faq, 278 went to the homepage, 263 left, 221 to the case lookup, 176 to
+  processing times and 154 to /tools. The questions are unchanged below. **The case number box says what to do
+  without a number** (`CaseLookupForm`, so on /faq, /perm-case-statuses and the lookup page alike): "Don't have the
+  number? Find the case by employer name", to /case-search, which reaches pending cases. Many people waiting never saw
+  their receipt; the lawyer filed it. The question list's `ScrollReveal`
+  logs a dev-only hydration warning (server `opacity:"1",transform:"none"`, client `opacity:1`); nothing on screen
+  differs, and it predates this change.
 

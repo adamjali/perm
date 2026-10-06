@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
 
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { looksLikeReceipt } from "@/lib/uscis/receipt";
@@ -102,6 +103,18 @@ export function CaseLookupForm({ defaultValue = "", className }: CaseLookupFormP
             into the page&apos;s address so you can bookmark the result.
           </>
         )}
+      </p>{" "}
+      {/* Many people waiting on a case never saw the receipt (the lawyer
+          filed it). The employer search reaches pending cases too. */}
+      <p className="mt-2 text-sm text-muted-foreground">
+        Don&apos;t have the number?{" "}
+        <Link
+          href="/case-search"
+          className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+        >
+          Find the case by employer name
+        </Link>
+        .
       </p>
     </form>
   );

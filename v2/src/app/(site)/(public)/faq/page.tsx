@@ -5,12 +5,21 @@
  * FAQPage JSON-LD for rich results and AI citability.
  */
 
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
+import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { FAQPageClient } from "./FAQPageClient";
+
+const START_LINKS = [
+  { href: "/perm-processing-times", label: "Processing times", note: "Which month DOL is reviewing now" },
+  { href: "/tools", label: "Live PERM data", note: "The queue and the wage backlog, from DOL's figures" },
+  { href: "/calculators", label: "Calculators", note: "Deadlines and decision estimates" },
+  { href: "/for-attorneys", label: "For attorneys", note: "Free case and deadline tracking" },
+] as const;
 
 export const dynamic = "force-static";
 
@@ -156,7 +165,25 @@ export default function FAQPage() {
           <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             What applicants and attorneys ask about PERM Tracker and
             the PERM labor certification process.
-          </p>
+          </p>{" "}
+          {/* Most visits here come from a search for the site's name, and
+              the pages people open next are the lookup, processing times
+              and the data (PostHog, 30 days to Oct 6 2026). */}
+          <CaseLookupForm className="mt-8 max-w-2xl" />{" "}
+          <nav aria-label="Main tools" className="mt-6 grid gap-3 sm:grid-cols-2">
+            {START_LINKS.map((l) => (
+              <Fragment key={l.href}>
+                {" "}
+                <Link
+                  href={l.href}
+                  className="border-2 border-border bg-background p-4 transition-shadow hover:shadow-hard"
+                >
+                  <span className="font-heading text-sm font-bold">{l.label}</span>{" "}
+                  <p className="mt-1 text-sm text-muted-foreground">{l.note}</p>
+                </Link>
+              </Fragment>
+            ))}
+          </nav>
         </div>
       </section>{" "}
 
