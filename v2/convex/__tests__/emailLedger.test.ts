@@ -7,7 +7,7 @@
  * or at a full queue, and that each of those is counted and told to the admin
  * once a day.
  */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestContext, setupSchedulerTests } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import {
@@ -34,10 +34,20 @@ const adminEmails = (t: T) =>
     (await ctx.db.system.query("_scheduled_functions").collect()).filter((j) => j.name.includes("sendAdminNotificationEmail")),
   );
 
+// The fake clock starts at the real time unless pinned, and these tests count a
+// UTC day and jump the clock minutes to weeks ahead. Unpinned, a run in the
+// last minutes before midnight UTC crossed into a new day mid-test: CI at
+// 11:56 PM UTC on Oct 5 2026 saw the day's count reset and room to send.
+const pinMidday = () =>
+  beforeEach(() => {
+    vi.setSystemTime(new Date("2026-10-05T12:00:00Z"));
+  });
+
 const payload = (to = "a@example.com") => JSON.stringify({ from: "x@permtracker.app", to, subject: "s", html: "<p>h</p>" });
 
 describe("the day's count", () => {
   setupSchedulerTests();
+  pinMidday();
 
   it("counts each send and keeps the highest count Resend reports", async () => {
     const t = createTestContext();
@@ -55,6 +65,7 @@ describe("the day's count", () => {
 
 describe("the retry queue", () => {
   setupSchedulerTests();
+  pinMidday();
 
   it("keeps a failed send, retries it in 5 minutes, and emails the admin once a day", async () => {
     const t = createTestContext();
@@ -179,6 +190,7 @@ describe("the retry queue", () => {
 
 describe("the drain sends due retries first", () => {
   setupSchedulerTests();
+  pinMidday();
   const realKey = process.env.AUTH_RESEND_KEY;
   afterEach(() => {
     vi.unstubAllGlobals();

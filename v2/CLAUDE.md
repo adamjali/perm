@@ -8274,6 +8274,14 @@ Adam: *"constantly getting emails from perm tracker post hog sentry with errors 
   repo checkout): the rename to Asolys on Sunbiz (which refuses scripts), the annual report, the agent renewal. Its
   health, bulletin and limits-sheet checks were duplicates of the morning report and of ingests automated Sep 26.
 - **Sentry 4T resolved** (an employer-list query deadline last seen Oct 3 during history loads; ~2 s now).
+- **The email-ledger tests pin their clock to midday UTC** (`pinMidday` in `convex/__tests__/emailLedger.test.ts`).
+  `setupSchedulerTests` starts the fake clock at the real time, and these tests count a UTC day and jump the clock
+  minutes ahead: CI at 11:56 PM UTC crossed midnight mid-test and failed. Probed red by pinning to 11:57 PM UTC.
+  Any test that jumps the clock over day-keyed logic needs the same pin.
+- **`source-map-js` is pinned to >=1.2.2** (GHSA-68fv-2mgg-jv7q, high, event-loop DoS); Dependabot can't bump a
+  transitive package, and 1.2.2 was under the 7-day release-age floor, so it is excluded by name until Oct 7 2026.
+  `pnpm audit` still lists `braces` 3.0.3 (GHSA-vfj7-8cjw-p6xm): no patched version exists, and it is dev-only (lint,
+  through `eslint-config-next`) with no untrusted glob patterns, so it is left.
 
 ## Oct 5 2026: a Chrome extension and a keyless employer lookup
 

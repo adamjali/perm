@@ -18,10 +18,11 @@ minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   - "@rolldown/*"
   # A package under an ACTIVE advisory is excluded by name, because the whole
-  # point of its entry in pnpm.overrides is to take the patch now: browserslist
-  # 4.28.7 fixes two HIGH advisories and was published five days ago, so the
-  # maturity window would have kept the vulnerable version installed. Remove
-  # the name once the advisory is old enough to clear the window on its own.
-  - "browserslist"
+  # point of its entry in pnpm.overrides is to take the patch now. Remove the
+  # name once the patched version is old enough to clear the window on its own
+  # (browserslist, the first one, left Oct 5 2026). source-map-js 1.2.2 fixes
+  # GHSA-68fv-2mgg-jv7q (HIGH, event-loop denial of service through indexed
+  # source-map offsets) and was published Sep 30 2026: remove after Oct 7 2026.
+  - "source-map-js"
 trustPolicy: no-downgrade
 blockExoticSubdeps: true
