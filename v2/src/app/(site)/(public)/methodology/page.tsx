@@ -18,9 +18,9 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { MoreText } from "@/components/data/MoreText";
 
-const TITLE = "How These Numbers Are Computed";
+const TITLE = "How PERM Tracker's Estimates Work";
 const DESCRIPTION =
-  "Why PERM estimators disagree by months on the same case, where our figures come from, and what we refuse to publish.";
+  "Where every figure on PERM Tracker comes from, why PERM estimates can differ by months on the same case, and what we won't publish.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,

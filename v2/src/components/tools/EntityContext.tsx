@@ -169,8 +169,23 @@ export interface EntityTitle {
  * residuals is a NAME that exceeds 60 characters by itself, so the only way
  * to satisfy the limit would be to cut it.
  */
-export function entityTitle(name: string, qualifiers: string[]): EntityTitle {
+export function entityTitle(
+  name: string,
+  qualifiers: string[],
+  opts: { dropBrandFirst?: boolean } = {},
+): EntityTitle {
   const withQualifier = qualifiers.map((q) => `${name} ${q}`);
+  // Employer pages pass `dropBrandFirst`: their first qualifier ("PERM and Green
+  // Card Sponsorship") is the searched phrase, so it keeps its place and the
+  // brand suffix gives way (Oct 6 2026). The other families keep the order
+  // below, which drops a qualifier before the brand.
+  if (opts.dropBrandFirst) {
+    for (const base of withQualifier) {
+      if (base.length + TITLE_SUFFIX.length <= TITLE_LIMIT) return { title: base, absolute: false };
+      if (base.length <= TITLE_LIMIT) return { title: base, absolute: true };
+    }
+    return { title: name, absolute: true };
+  }
   for (const base of withQualifier) {
     if (base.length + TITLE_SUFFIX.length <= TITLE_LIMIT) {
       return { title: base, absolute: false };

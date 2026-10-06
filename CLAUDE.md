@@ -3,8 +3,8 @@
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-04
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **606 files / 8,778 tests across 5 vitest
-> projects** (2026-10-05), not the 151 files / 3 projects TESTING.md records. Treat those
+> have drifted: the suite is now **608 files / 8,824 tests across 5 vitest
+> projects** (2026-10-06), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
 ## Production URLs
@@ -460,4 +460,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the five "Oct 5 2026" sections.
 - **The deploy drops Cloudflare's copies of the pages a push changed** (`gsc_queue.mjs --purge`), once `CF_PURGE_TOKEN` exists.
 - **Testing Library's cleanup runs from `vitest.setup.ts`**: the shared `unit` worker had left one test's render in the next.
 - **Who visits** (Oct 5): about 350 to 900 likely people a day, 4,553 a week, 11,784 a month; Cloudflare's 865k requests are mostly blocked scrapers and crawlers.
+
+## Oct 6 2026, in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
+
+- **Titles and descriptions say what people search, plainly**: chosen from 3 months of Search Console queries, no hype. The homepage title's Nov 7 freeze was lifted by the owner.
+- **Employer descriptions lead with the cases still waiting** ("has 218 PERM cases waiting with DOL, 216 of them on hold"), from `perm_entity_pending`.
+- **Industry titles are never cut mid-word** and carry the NAICS code, which is how people search them.
+- **The case-status dictionary opens with a case lookup**: most of its visitors searched "perm case status" for their own case.
 

@@ -45,12 +45,13 @@ const DESCRIPTION =
   "Who runs PERM Tracker, an immigration attorney who files these cases, since when, where every figure comes from, and what the site is not.";
 
 export const metadata: Metadata = withSocialCard({
-  title: TITLE,
+  // Absolute: the root template would make it "About PERM Tracker | PERM Tracker".
+  title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: "/about" },
   openGraph: {
     ...openGraphBase,
-    title: `${TITLE} | PERM Tracker`,
+    title: TITLE,
     description: DESCRIPTION,
     url: "/about",
   },

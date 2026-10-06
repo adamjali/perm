@@ -66,11 +66,11 @@ export const metadata: Metadata = withSocialCard({
   // to a literal that already starts with the brand → "...| PERM Tracker | PERM
   // Tracker" doubled. Using `absolute` is the documented escape hatch.
   // LEADS WITH THE NAME, THEN THE PHRASES PEOPLE SEARCH: "perm tracker" is
-  // the largest query in Search Console, and "processing times" and "case
-  // status" are the two largest non-brand clusters. 59 characters. FROZEN
-  // UNTIL 2026-11-07: every rewrite resets Google's read of the page, and
-  // rewrites in quick succession cost the brand query.
-  title: { absolute: "PERM Tracker: PERM Processing Times, Case Status and Alerts" },
+  // the largest query in Search Console (58k appearances in the 3 months to
+  // Oct 5 2026), and "case status" and "processing times" are the two largest
+  // non-brand clusters. "Free" is what the page offers first. 56 characters.
+  // The Nov 7 2026 freeze on this title was lifted by the owner on Oct 6 2026.
+  title: { absolute: "PERM Tracker: Free PERM Case Status and Processing Times" },
   // LEADS WITH THE PHRASE THIS PAGE ACTUALLY RANKS FOR: "perm tracker" brings
   // close to half the site's clicks in Search Console. A description that
   // never contains the query is one Google ignores, assembling a snippet
@@ -82,9 +82,11 @@ export const metadata: Metadata = withSocialCard({
   // no description is guaranteed to be used - but one that answers the query
   // it is competing for has a far better chance than one that never says it.
   //
-  // 138 characters, so nothing is truncated.
+  // Says what a visitor can do here, with the name as its subject (the gate in
+  // brand-signals.test.ts: without the name, Google printed scraped page text).
+  // No figure, so it can't go stale between renders. 140 characters.
   description:
-    "PERM Tracker shows where DOL's queue stands today and computes every deadline on your case. Look up a case number free, no account needed.",
+    "PERM Tracker looks up any PERM case by number, shows which month DOL is reviewing now, and estimates your decision. Free, no account needed.",
   alternates: {
     canonical: "/",
   },
@@ -92,7 +94,7 @@ export const metadata: Metadata = withSocialCard({
     // Spread openGraphBase to preserve siteName / locale / type / images that
     // Next.js's shallow merge would otherwise drop from the parent layout.
     ...openGraphBase,
-    title: "PERM Tracker: PERM Processing Times, Case Status and Alerts",
+    title: "PERM Tracker: Free PERM Case Status and Processing Times",
     // THE SOCIAL DESCRIPTION DRIFTED FROM THE META ONE. The `description` above
     // was rewritten to lead with the free case lookup; this one still opened
     // with "Every PERM filing window, PWD expiration and audit deadline,
@@ -100,7 +102,7 @@ export const metadata: Metadata = withSocialCard({
     // thing and every shared link said another, and the shared link is the one
     // a person waiting on a case actually receives.
     description:
-      "See where DOL's PERM queue stands today and look up any case number free, no account. Deadlines computed for the cases you track.",
+      "PERM Tracker looks up any PERM case by number, shows which month DOL is reviewing now, and estimates your decision. Free, no account needed.",
     url: "/",
   },
 }, "home");

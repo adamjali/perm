@@ -22,6 +22,7 @@ import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
 import { firstThatFits } from "@/lib/describe";
+import { pendingFollowOn, pendingSentence } from "@/lib/pendingSnippet";
 import { formatDollars, formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { breadcrumbSchema } from "@/lib/breadcrumbs";
@@ -346,13 +347,15 @@ export async function generateMetadata({
     // entity name can run past what Google shows on its own, and these names
     // are the least curated in the corpus - they come straight off the
     // application with no merge pass behind them.
-    const { title, absolute } = entityTitle(record.name, [
-      // SINGULAR WHEN THERE IS ONE, and there usually is: about four in
-      // five live-only employers hold exactly one case, so "1 Live Cases"
-      // would be the title on most of this family.
-      `PERM Filings: ${formatInt(record.cases)} Live Case${record.cases === 1 ? "" : "s"}`,
-      "PERM Filings",
-    ]);
+    // Named the way people search a sponsor: "<company> perm", "<company>
+    // green card sponsorship" (Search Console, Oct 2026). Filing a PERM is the
+    // employer's first step in sponsoring a green card, so both words are true
+    // of every page in this branch.
+    const { title, absolute } = entityTitle(
+      record.name,
+      ["PERM and Green Card Sponsorship", "PERM Sponsorship", "PERM Filings", "PERM"],
+      { dropBrandFirst: true },
+    );
     // No rate, no median, no rank - not even as a phrase. A snippet is where
     // a caveat cannot follow a number, so the description states only what
     // the page states: a count, and the absence of everything else.
@@ -401,10 +404,14 @@ export async function generateMetadata({
   //
   // entityTitle takes the first qualifier that fits under the 62-char limit and
   // falls back through the rest, so a long name simply keeps the short form.
-  const { title, absolute } = entityTitle(row.name, [
-    `PERM Filings: ${formatInt(row.total)} Cases`,
-    "PERM Filings",
-  ]);
+  // Named the way people search a sponsor ("<company> perm", "<company> green
+  // card sponsorship"); the count moves to the description, which leads with
+  // the cases still waiting when there are any (Oct 6 2026).
+  const { title, absolute } = entityTitle(
+    row.name,
+    ["PERM and Green Card Sponsorship", "PERM Sponsorship", "PERM Filings", "PERM"],
+    { dropBrandFirst: true },
+  );
   // The rate is left out of the description whenever the page itself is
   // withholding it. A SERP snippet reading "100.0% approved" over three cases
   // is the same claim the page refuses to make, made somewhere nobody can see
@@ -428,7 +435,15 @@ export async function generateMetadata({
     row.medianAnnualWage != null && row.medianAnnualWage > 0
       ? `, median offered wage ${formatDollars(row.medianAnnualWage)}`
       : "";
+  // Cases still waiting come first: a search like "adobe perm on hold" is
+  // from someone whose case is one of them (lib/pendingSnippet). One indexed
+  // point read, the same one the page makes for its live band.
+  const pending = await entityPending(KIND, found.canonicalSlug).catch(() => null);
+  const waiting = pendingSentence(row.name, pending);
   const description = firstThatFits([
+    ...(waiting && pending
+      ? [`${waiting} ${pendingFollowOn(pending, reliability.ratePct != null)}`, waiting]
+      : []),
     `${head}${wage}. Jobs, wages and case status, from DOL's own records.`,
     `${head}${wage}, from DOL's own disclosure files.`,
     `${head}, from DOL's own disclosure files.`,

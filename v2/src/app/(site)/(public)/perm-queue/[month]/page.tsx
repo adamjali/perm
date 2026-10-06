@@ -64,10 +64,12 @@ export async function generateMetadata({
   const peek = await getMonthBacklog(month);
   if (!peek || peek.total === 0) notFound();
   const label = formatMonth(month) ?? month;
-  const title = `PERM Cases Filed ${label}`;
+  // The month leads: someone who filed in it searches for it.
+  const title = `${label} PERM Filings: Where They Stand`;
   return withSocialCard({
     title,
-    description: `How many PERM cases filed in ${label} are still undecided, which of DOL's queues they're sitting in, and how much of the backlog sits in front of them.`,
+    // 143 characters at the longest month name (September).
+    description: `How many PERM cases filed in ${label} are still undecided, which DOL queue they're in, and how much of the backlog sits in front of them.`,
     alternates: { canonical: `/perm-queue/${month}` },
     robots: MIRROR_COMPLETE ? undefined : { index: false, follow: true },
     openGraph: { ...openGraphBase, title: `${title} | PERM Tracker`, url: `/perm-queue/${month}` },

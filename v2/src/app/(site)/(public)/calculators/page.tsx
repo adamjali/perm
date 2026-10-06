@@ -27,7 +27,7 @@ import {
 } from "@/components/tools/MiniDiagrams";
 import { SITE_URL } from "@/lib/constants/site";
 
-const TITLE = "PERM Calculators";
+const TITLE = "Free PERM Timeline and Deadline Calculators";
 const DESCRIPTION =
   "Free PERM calculators built on DOL's own published data: decision-time estimates, the wage queue, the I-140 backlog, and every statutory deadline.";
 

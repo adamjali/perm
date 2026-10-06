@@ -24,9 +24,9 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
 import { formatInt } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
-const TITLE = "Every PERM Law Firm, Ranked";
+const TITLE = "PERM Law Firms by Cases and Approval Rate";
 const DESCRIPTION =
-  "Every law firm filing PERM cases: volume, approval rate and median processing days per firm, searchable and sortable, from DOL's own disclosure files.";
+  "Compare every immigration law firm filing PERM cases by cases filed, approval rate and processing time, from DOL's own disclosure data.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,

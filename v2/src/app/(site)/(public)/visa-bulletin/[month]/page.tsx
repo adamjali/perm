@@ -111,7 +111,8 @@ export async function generateMetadata({
   // with it. The searched phrase is "visa bulletin <month> <year>"; it leads,
   // a short qualifier follows, and the rest is in the description below,
   // where there is room for it. Same shape as the
-  // sibling month family, /perm-queue/[month] ("PERM Cases Filed {label}").
+  // sibling month family, /perm-queue/[month] ("{label} PERM Filings: Where
+  // They Stand", 60 characters at its longest, September).
   // Worst case: "September 2026" -> 55 characters including " | PERM Tracker".
   const title = `Visa Bulletin ${label}: EB Cutoffs`;
   return withSocialCard(

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { stageFromSlug } from "@/components/rfi/stageMeta";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -37,9 +38,9 @@ import { SITE_URL } from "@/lib/constants/site";
  * census doc the sweep writes, never computed on a render.
  */
 
-const TITLE = "PERM Case Status Meanings: Every DOL Status";
+const TITLE = "PERM Case Status: What Each DOL Status Means";
 const DESCRIPTION =
-  "What each DOL case status means for a PERM, a wage request or an LCA: analyst review, RFI issued, on hold, appeals, certified, with the rule and the count.";
+  "What each DOL status means for a PERM, wage request or LCA case, from Analyst Review to Certified, and how to check your own case for free.";
 const PATH = "/perm-case-statuses";
 
 export const metadata: Metadata = withSocialCard({
@@ -198,7 +199,12 @@ export default async function PermCaseStatusesPage() {
           What each status DOL shows on a PERM, wage request, LCA, H-2A or H-2B case means, the rule behind
           it, and how many cases carry it today.
         </p>
-      </header>
+      </header>{" "}
+
+      {/* Searches like "perm case status" and "dol case status" land here, and
+          most of those people want their own case, so the lookup comes first
+          (Search Console, Oct 2026). The same plain GET form as the case page. */}
+      <CaseLookupForm className="mt-8 max-w-2xl" />{" "}
 
       {/* Four doors, one per program, then every status behind one fold: the
           flat list of all of them was the first thing the page showed. */}

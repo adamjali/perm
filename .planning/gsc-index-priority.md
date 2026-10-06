@@ -1,5 +1,26 @@
 # GSC indexing priority list
 
+**Oct 6 2026, new titles and descriptions (deployed after the full suite): queue for the next rounds,** in order
+of Search Console appearances over the 3 months to Oct 5, so the pages with the most to gain are recrawled first.
+Inspect each first; request when its last crawl is before the deploy.
+
+1. `/` (65,672 appearances; new title and description)
+2. `/faq` (23,571)
+3. `/for-attorneys` (14,578)
+4. `/guides` (6,762)
+5. `/calculators` (5,745)
+6. `/blog/perm-processing-times-2026` (3,426; its description and figures had said November 2025)
+7. `/perm-case-statuses` (2,920; new title and a case lookup at the top)
+8. `/about` (1,761; the title had said the name twice)
+9. `/perm-attorneys` (1,016)
+10. `/perm-employers/adobe-inc` (680; the employer template, now led by the cases waiting)
+11. `/perm-industries/621330` (226 appearances, 0 clicks; its title had been cut mid-word)
+12. `/methodology` (requested Oct 5, before its new title)
+13. `/guides/read-your-priority-date-history`, `/perm-queue/2025-12`, `/perm-wages/software-developers`
+14. Then the Oct 5 queue below, from `/perm-employers/google-llc` on.
+
+---
+
 **Run of 2026-10-05, 5:57 to 6:16 PM EDT: 6 accepted, then Quota Exceeded.** Six today plus the five
 from Oct 4 evening still inside the rolling 24 hours is the usual cap of about 11. Sitemap index:
 Google counts 237,542 discovered against 292,400 live (last read Oct 4, inside the 3-day rule; re-check

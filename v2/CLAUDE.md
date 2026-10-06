@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 606 files / 8,778 tests (2026-10-05; ~38 min at a load average near 200, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 608 files / 8,824 tests (2026-10-06; ~38 min at a load average near 200, ~12.5 to 14 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -8300,3 +8300,37 @@ Adam: *"constantly getting emails from perm tracker post hog sentry with errors 
   listing to everyone, so it goes up as the organization with the registered agent's address and the business line.
   The store URL then goes in `CHROME_STORE_URL` on `/extension`. Chrome blocks every extension from the store's
   pages, so the store's forms are the owner's clicks.
+
+## Oct 6 2026: titles and descriptions for the searches people make
+
+The owner asked for every title, description and H1 to be checked for what gets a click, then for a
+plain, natural set: "no salsey desperate weird unnatural". Method and what changed:
+
+- **Read Search Console first** (3 months to Oct 5: 6,190 clicks of 158,000 appearances, 3.9%). Export the
+  Performance report to Google Sheets (no file download, which bricks the browser extension), read each tab
+  with `fetch(.../gviz/tq?tqx=out:csv&sheet=<tab>)` from the sheet's own tab, and summarise in the page;
+  a POST from that tab to a local receiver stalls on Chrome's local-network prompt. Per-page queries come
+  from the report URL with `&breakdown=query&page=!<url>` (exact) or `page=*<part>` (contains).
+- **The site was technically clean** (603 pages: every title under 60 with the brand, one H1, no duplicate
+  titles, no missing descriptions), so the work was wording. Titles name the searched phrase and what the
+  page holds: the homepage "PERM Tracker: Free PERM Case Status and Processing Times" (the Nov 7 freeze lifted
+  by the owner Oct 6), /faq, /for-attorneys, /guides, /calculators, /perm-case-statuses, /perm-attorneys,
+  /about (it read "About PERM Tracker | PERM Tracker"), /methodology; employers "<name> PERM and Green Card
+  Sponsorship", occupations "<job> PERM Salaries", queue months "<month> PERM Filings: Where They Stand",
+  bulletin lines "<line> Visa Bulletin Cutoff and History".
+- **Employer descriptions lead with the cases still waiting** when there are any (`lib/pendingSnippet.ts`,
+  one point read of `perm_entity_pending`), and mention the approval rate only when the page shows one.
+- **Industry titles were cut mid-word by `.slice(0, 60)`** ("... (except Physi") and the description
+  repeated the cut. `lib/industryTitle.ts`: the name without its parenthetical plus the NAICS code (people
+  search by code), the code first when that won't fit 60, never a cut word.
+- **Stale figures in text that doesn't update itself**: the 2026 processing-times post said DOL was on
+  November 2025 (DOL's Sep 22 figure is December 2025); its description no longer carries a figure. The
+  priority-date guide's title said "84 Months" of an archive that now reaches 2005.
+- **Not changed, on purpose**: names stay as DOL prints them, capitals included. 19,064 employer and 1,037
+  firm names are all capitals, the stored spellings are slugs (no case), and a rule can't tell DEL or REY
+  from IBM or USA, or write JPMorgan or McKinsey. The homepage's 5-star rating markup is policy-compliant
+  (visible on the page) and stays.
+- **What can't be fixed by wording**: the "perm tracker" search (58k appearances, about 5th) is shared with
+  rivals of near-identical names; /tutorials and /resources still collect about 5,700 appearances while
+  Google catches up with their 308s to /guides.
+

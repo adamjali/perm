@@ -17,15 +17,15 @@ import { openGraphBase } from "@/lib/openGraphBase";
  */
 
 export const metadata: Metadata = withSocialCard({
-  title: "PERM Software for Attorneys and Firms",
+  title: "Free PERM Case Management for Attorneys",
   description:
-    "Track every PERM case's deadlines automatically: filing windows, wage expirations, recruitment clocks and audit responses, with reminders. Free.",
+    "Enter a case's dates once and every PERM deadline, filing window and wage expiration is worked out, with reminders. Free for attorneys and their teams.",
   alternates: {
     canonical: "/for-attorneys",
   },
   openGraph: {
     ...openGraphBase,
-    title: "PERM Software for Attorneys and Firms",
+    title: "Free PERM Case Management for Attorneys | PERM Tracker",
     description:
       "Every deadline computed per case, with reminders, calendar sync and a client-ready timeline. Free.",
     url: "/for-attorneys",

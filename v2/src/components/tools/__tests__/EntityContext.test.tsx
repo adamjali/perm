@@ -153,6 +153,29 @@ describe("entityTitle", () => {
     expect(t.title).toBe("Secretaries and Administrative Assistants PERM Salary");
   });
 
+  it("with dropBrandFirst, keeps the searched phrase and drops the brand", () => {
+    // Employer pages: "PERM and Green Card Sponsorship" is the phrase people
+    // search, so a name that can't fit it beside the brand loses the brand.
+    const q = ["PERM and Green Card Sponsorship", "PERM Sponsorship", "PERM Filings", "PERM"];
+    expect(entityTitle("Adobe Inc.", q, { dropBrandFirst: true })).toEqual({
+      title: "Adobe Inc. PERM and Green Card Sponsorship",
+      absolute: false,
+    });
+    expect(entityTitle("Microsoft Corporation", q, { dropBrandFirst: true })).toEqual({
+      title: "Microsoft Corporation PERM and Green Card Sponsorship",
+      absolute: true,
+    });
+    // Too long for the first two phrases: the first shorter one that fits, so the
+    // title still says PERM (a bare name had come out for this one).
+    const long = "Cognizant Technology Solutions US Corporation";
+    expect(entityTitle(long, q, { dropBrandFirst: true })).toEqual({
+      title: `${long} PERM Filings`,
+      absolute: true,
+    });
+    // Without the option the family keeps its old order (brand before qualifier).
+    expect(entityTitle("Microsoft Corporation", q).title).toBe("Microsoft Corporation PERM Sponsorship");
+  });
+
   it("falls back to the bare name and never cuts it", () => {
     // 79 characters, DOL's own longest SOC title. Nothing fits beside it, and
     // the name is the phrase people search, so it ships whole and over-length.

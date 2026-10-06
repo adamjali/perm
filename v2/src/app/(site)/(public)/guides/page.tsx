@@ -13,14 +13,15 @@ import { openGraphBase } from "@/lib/openGraphBase";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = withSocialCard({
-  title: "Guides",
+  title: "PERM Guides: Statuses, Deadlines, Next Steps",
   description:
-    "Comprehensive reference guides for the PERM labor certification process. Filing requirements, recruitment checklists, and best practices.",
+    "Plain-English guides to the PERM process: what each status means, what to do after an RFI or a denial, and how long each step takes.",
   alternates: { canonical: "/guides" },
   openGraph: {
     ...openGraphBase,
-    title: "Guides | PERM Tracker",
-    description: "Comprehensive PERM process guides and references.",
+    title: "PERM Guides: Statuses, Deadlines, Next Steps | PERM Tracker",
+    description:
+      "Plain-English guides to the PERM process: what each status means, what to do after an RFI or a denial, and how long each step takes.",
     url: "/guides",
   },
 }, "guides");

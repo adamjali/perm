@@ -17,6 +17,7 @@ import { CityReference } from "@/components/reference/CityReference";
 import { CityH1b } from "./CityH1b";
 import { GroupIndexTable, type GroupIndexRow } from "./GroupIndexTable";
 import { GroupView } from "./GroupView";
+import { industryName, industryTitle } from "@/lib/industryTitle";
 
 /**
  * The shared body of the six browse routes (an index and a detail page per
@@ -31,7 +32,10 @@ interface KindCopy {
   indexDescription: string;
   noun: string;
   facetLabel: string | null;
-  detailTitle: (label: string) => string;
+  /** The search title. Never cut by us: a cut word read "(except Physi" in titles and descriptions until Oct 6 2026. */
+  detailTitle: (label: string, key: string) => string;
+  /** What the description is about, when it differs from the title. */
+  detailSubject?: (label: string, key: string) => string;
   detailH1: (label: string) => string;
   coverage: string;
 }
@@ -60,7 +64,11 @@ const COPY: Record<GroupKind, KindCopy> = {
       "PERM decisions by industry (the employer's NAICS code) since FY2016: approval rates, median certified wages, top sponsors and jobs, from DOL's files.",
     noun: "industries",
     facetLabel: "Sector",
-    detailTitle: (l) => `PERM in ${l}`.slice(0, 60),
+    // People search these pages by code ("naics code 238340"), so the code is in
+    // the title. Census titles run to 126 characters; when the plain form doesn't
+    // fit Google's 60, the code leads and Google shortens the end.
+    detailTitle: industryTitle,
+    detailSubject: (l, k) => `PERM in ${industryName(l)} (NAICS ${k})`,
     detailH1: (l) => `PERM in ${l}`,
     coverage:
       "The industry is the NAICS code the employer entered on the form. DOL publishes the code alone; the title is the Census Bureau's, and a code Census never defined takes its parent group's title.",
@@ -74,7 +82,7 @@ const COPY: Record<GroupKind, KindCopy> = {
       "PERM decisions by the worker's country of citizenship, FY2008 to FY2023, with approval rates, wages, sponsors and jobs, from DOL's old-form files.",
     noun: "countries",
     facetLabel: null,
-    detailTitle: (l) => `PERM Cases for Citizens of ${l}`.slice(0, 60),
+    detailTitle: (l) => `PERM Cases for Citizens of ${l}`,
     detailH1: (l) => `PERM cases for citizens of ${l}`,
     coverage:
       "DOL printed the worker's citizenship, education and visa on its old form, and the last cases filed on it were decided in FY2024; the form in use since mid-2023 doesn't carry them. So these pages describe FY2008 to FY2023 (years) and FY2016 to FY2024 (everything else).",
@@ -175,15 +183,21 @@ export async function groupDetailMetadata(kind: GroupKind, slug: string): Promis
   }
   const c = COPY[kind];
   const path = `${GROUP_PATH[kind]}/${slug}`;
-  const title = c.detailTitle(g.label);
+  const title = c.detailTitle(g.label, g.key);
+  const subject = c.detailSubject ? c.detailSubject(g.label, g.key) : title;
   // The page's own name leads: without it, two places with the same count
   // would share one description word for word.
   const fy = g.fyFrom && g.fyTo ? `, FY${g.fyFrom} to FY${g.fyTo}` : "";
   const decisions = `${formatInt(g.total)} PERM decision${g.total === 1 ? "" : "s"}${fy}`;
   const description = firstThatFits([
-    `${title}: ${decisions}, with the approval rate, wages, top sponsors and jobs, from DOL's own files.`,
-    `${title}: ${decisions}: approval rate, wages, sponsors and jobs.`,
-    `${title}: ${decisions}.`,
+    `${subject}: ${decisions}, with the approval rate, wages, top sponsors and jobs, from DOL's own files.`,
+    `${subject}: ${decisions}: approval rate, wages, sponsors and jobs.`,
+    `${subject}: ${decisions}.`,
+    // A Census title can run to 126 characters, so nothing above fits; lead
+    // with the figures rather than cutting the name mid-phrase.
+    kind === "industry"
+      ? `${decisions} under NAICS ${g.key}: approval rate, wages, sponsors and jobs.`
+      : `${decisions}: approval rate, wages, sponsors and jobs.`,
   ]);
   return {
     title: { absolute: title.length > 44 ? title : `${title} | PERM Tracker` },

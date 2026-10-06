@@ -170,11 +170,9 @@ export async function generateMetadata({
   //
   // entityTitle takes the first qualifier that fits under the 62-char limit and
   // falls back through the rest, so a long name simply keeps the short form.
-  const { title, absolute } = entityTitle(name, [
-    `PERM Salary: ${formatInt(row.total)} Filings`,
-    "PERM Salary and Filings",
-    "PERM Salary",
-  ]);
+  // "<job> perm salary" is how people search these (Oct 2026); the filing
+  // count is in the description.
+  const { title, absolute } = entityTitle(name, ["PERM Salaries", "PERM Salary"]);
   const wagePart =
     row.medianAnnualWage != null ? `: ${formatDollars(row.medianAnnualWage)} median offered` : "";
   const head = `${name} PERM wages${wagePart} across ${formatInt(row.total)} filing${row.total === 1 ? "" : "s"}`;

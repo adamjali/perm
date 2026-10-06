@@ -15,15 +15,17 @@ import { FAQPageClient } from "./FAQPageClient";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = withSocialCard({
-  title: "Frequently asked questions",
+  // Named for what the page answers (it is the main sitelink under a search
+  // for "perm tracker", 23,571 appearances in the 3 months to Oct 5 2026).
+  title: "PERM FAQ: Timelines, Audits and Next Steps",
   description:
-    "Answers to common questions about PERM labor certification, deadlines, recruitment, and case management with PERM Tracker.",
+    "Plain answers to common PERM questions: how long it takes, what triggers an audit, the denial rate, the I-140 deadline and how to check your status.",
   alternates: { canonical: "/faq" },
   openGraph: {
     ...openGraphBase,
-    title: "FAQ | PERM Tracker",
+    title: "PERM FAQ: Timelines, Audits and Next Steps | PERM Tracker",
     description:
-      "What applicants and attorneys ask about PERM Tracker and the PERM labor certification process.",
+      "Plain answers to common PERM questions: how long it takes, what triggers an audit, the denial rate, the I-140 deadline and how to check your status.",
     url: "/faq",
   },
 }, "faq");
