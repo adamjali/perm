@@ -16,7 +16,7 @@ import sys
 import warnings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ingest_warn import CA_PAGE, PRUNE_MIN_COVERAGE, TX_DATA_PAGE, TX_PAGE, _cmp, _site, assign_ids, prune_plan, rank_of, parse_california, parse_new_york, parse_texas, parse_texas_api, parse_washington_page, write  # noqa: E402
+from ingest_warn import CA_PAGE, PRUNE_MIN_COVERAGE, TX_DATA_PAGE, TX_PAGE, _cmp, _site, assign_ids, prune_plan, rank_of, sponsor_matcher, SMALL_EXACT, BUSIER_BY, BUSY_FLOOR, parse_california, parse_new_york, parse_texas, parse_texas_api, parse_washington_page, write  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIXTURE = os.path.join(HERE, "fixtures", "ca_warn_2026-09-08.xlsx")
@@ -222,6 +222,20 @@ def main() -> int:
     db = FakeDb([], all_cols[:-1])
     write(db, [], "CA")
     check(any(q == "ALTER TABLE warn_notices ADD COLUMN site TEXT" for q, _ in db.sql), "a live table without the column gets it added", f)
+    # A tiny namesake gives way to the company people mean (Oct 6 2026: Washington's
+    # "Amazon" notice had matched a one-filing "AMAZON").
+    m = sponsor_matcher([
+        ("amazon com services", "amazon-com-services-llc", 2271), ("amazonia foods", "amazonia-foods", 9999),
+        ("acme widgets", "acme-widgets", 5000), ("acme", "acme", 50), ("tiny corp", "tiny-corp", 15),
+        ("tiny", "tiny", 2), ("amazon", "amazon", 1),
+    ])
+    check(m("amazon") == "amazon-com-services-llc", "a one-filing exact match gives way to the busiest same-name employer", f)
+    check(m("acme") == "acme", "an exact match with 30 or more filings stays, however busy a namesake is", f)
+    check(m("tiny") == "tiny", "a namesake that isn't ten times busier and past 100 filings doesn't take the notice", f)
+    check(m("nobody") is None, "no exact match still means no sponsor; the rule never adds a match", f)
+    ts = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "lib", "api", "employerLookup.ts")).read()
+    for name, val in (("SMALL_EXACT", SMALL_EXACT), ("BUSIER_BY", BUSIER_BY), ("BUSY_FLOOR", BUSY_FLOOR)):
+        check(f"export const {name} = {val};" in ts, f"{name} matches the keyless lookup's ({val})", f)
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0
 

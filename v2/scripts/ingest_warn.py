@@ -26,6 +26,7 @@ notice is one filing as the state printed it, with the state's own numbers.
 from __future__ import annotations
 
 import argparse
+import bisect
 import datetime as dt
 import hashlib
 import html
@@ -36,6 +37,7 @@ import os
 import sys
 import time
 import urllib.request
+from collections.abc import Callable
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from entity_identity import SpacedKeyMap, entity_key  # noqa: E402
@@ -407,20 +409,54 @@ def fetch_washington(days: int = WA_DAYS, max_pages: int = WA_MAX_PAGES) -> list
     return rows   # each page assigned its own ids in parse_washington_page
 
 
+# A tiny employer that merely shares a famous name is not the company in the notice:
+# Washington's "Amazon" notice matched a one-filing "AMAZON" while Amazon.com Services
+# LLC holds 2,271 (Oct 6 2026). When the exact match has fewer than SMALL_EXACT
+# filings, the busiest employer whose key begins with the same words takes the notice
+# if it has BUSIER_BY times the filings and BUSY_FLOOR in all. Same rule and numbers as
+# the keyless lookup (src/lib/api/employerLookup.ts); test_warn.py holds them together.
+SMALL_EXACT, BUSIER_BY, BUSY_FLOOR = 30, 10, 100
+
+
+def sponsor_matcher(entities) -> Callable[[str], str | None]:
+    """`entities` is (merge_key, slug, total) rows, busiest first; returns key -> slug or None."""
+    held: dict[str, str] = {}
+    totals: dict[str, int] = {}
+    for key, slug, total in entities:
+        held.setdefault(str(key), str(slug))  # busiest spelling wins
+        totals[str(slug)] = max(totals.get(str(slug), 0), int(total or 0))
+    by_key = SpacedKeyMap(held)
+    keys = sorted(held)
+
+    def match(key: str) -> str | None:
+        hit = by_key.get(key)
+        own = totals.get(hit, 0) if hit else 0
+        if not hit or own >= SMALL_EXACT:
+            return hit
+        prefix = key + " "  # whole words only: "amazon" never reaches "amazonia"
+        best = None
+        i = bisect.bisect_left(keys, prefix)
+        while i < len(keys) and keys[i].startswith(prefix):
+            slug = held[keys[i]]
+            if slug != hit and (best is None or totals[slug] > totals[best]):
+                best = slug
+            i += 1
+        return best if best and totals[best] >= max(BUSIER_BY * own, BUSY_FLOOR) else hit
+
+    return match
+
+
 def match_employers(db: Turso, rows: list[dict]) -> int:
     """Attach a sponsor slug where the normalised name equals a PERM employer's merge key."""
     # Every employer page's key, busiest first, so a notice spelled with the gaps
     # elsewhere ("WAL MART" against "Walmart") still finds its page (Rule D). One
     # read of about 72,000 short rows a week.
-    held: dict[str, str] = {}
-    for key, slug in query_rows(
-            db, "SELECT merge_key, slug FROM perm_entities WHERE kind = 'employer' "
-                "AND merge_key IS NOT NULL ORDER BY total DESC"):
-        held.setdefault(str(key), str(slug))  # busiest spelling wins
-    slug_by_key = SpacedKeyMap(held)
+    match = sponsor_matcher(query_rows(
+        db, "SELECT merge_key, slug, total FROM perm_entities WHERE kind = 'employer' "
+            "AND merge_key IS NOT NULL ORDER BY total DESC"))
     n = 0
     for r in rows:
-        slug = slug_by_key.get(entity_key(r["company"]))
+        slug = match(entity_key(r["company"]))
         r["employer_slug"] = slug
         n += 1 if slug else 0
     return n
