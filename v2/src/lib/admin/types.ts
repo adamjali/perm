@@ -3,6 +3,7 @@
  */
 
 import type { Id } from "@convex/_generated/dataModel";
+import type { Audience } from "@/lib/audience";
 
 /**
  * Per-user summary returned by the admin dashboard query.
@@ -28,4 +29,8 @@ export interface UserSummary {
   termsAccepted: number | null;
   termsVersion: string | null;
   lastActivity: number;
+  /** The role picked at onboarding or typed in Settings, as stored. */
+  role: string | null;
+  /** Who the account is for: practice, own case, other, or no role given. */
+  audience: Audience;
 }

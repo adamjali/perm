@@ -9,6 +9,7 @@
  * speak this shape, and STATUS_RANK must match RANK in the Python script.
  */
 
+import { audienceLine, type AudienceCounts } from "./audience";
 import { SITE_URL } from "./links";
 import { MS_PER_DAY } from "./time";
 
@@ -133,6 +134,9 @@ export const RESEND_SEND_ONLY = "the Resend key can only send, so it cannot read
 export interface Facts {
   users: number;
   signups24h: number;
+  /** Accounts and the day's sign-ups by who they're for (absent in older reports). */
+  audiences?: AudienceCounts;
+  signupsByAudience?: AudienceCounts;
   logins24h: number;
   subs: Array<{ kind: string; live: number; confirmed24h: number; left24h: number }>;
   errors: { count: number; top: [string, number][] };
@@ -145,6 +149,13 @@ export interface Facts {
   retries?: { waiting: number; oldestQueuedAt: number | null; retriedYesterday: number; lostYesterday: number };
   /** Law-firm claims and profile changes waiting for the admin (convex/firmClaims.ts), oldest first. */
   firmReview?: { waiting: Array<{ firmName: string; kind: "claim" | "edit"; since: number }> };
+  /** Alert ratings given in the last 7 days (convex/alertRatings.ts); absent in older reports. */
+  ratings?: {
+    count: number;
+    average: number | null;
+    byScore: number[];
+    notes: Array<{ score: number; note: string; updatedAt: number }>;
+  };
 }
 
 export interface ResendDay {
@@ -167,8 +178,14 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
     key: "app",
     title: "Accounts and subscribers",
     status: "ok",
-    summary: `${f.signups24h} sign-up${f.signups24h === 1 ? "" : "s"}, ${f.logins24h} signed in (24 h)`,
-    lines: [`${f.users} accounts in all`, `Confirmed subscriptions: ${subsLine}`],
+    summary:
+      `${f.signups24h} sign-up${f.signups24h === 1 ? "" : "s"}` +
+      (f.signups24h > 0 && f.signupsByAudience ? ` (${audienceLine(f.signupsByAudience)})` : "") +
+      `, ${f.logins24h} signed in (24 h)`,
+    lines: [
+      `${f.users} accounts in all${f.audiences ? `: ${audienceLine(f.audiences)}` : ""}`,
+      `Confirmed subscriptions: ${subsLine}`,
+    ],
   };
 
   const emailLines: string[] = [];
@@ -231,6 +248,8 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
   const sections: ReportSection[] = [app, email];
   const firms = firmSection(f, now);
   if (firms) sections.push(firms);
+  const ratings = ratingSection(f);
+  if (ratings) sections.push(ratings);
 
   const errors: ReportSection = {
     key: "errors",
@@ -249,6 +268,26 @@ function waited(ms: number): string {
   if (hours < 36) return `${hours} hour${hours === 1 ? "" : "s"}`;
   const days = Math.round(hours / 24);
   return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+/**
+ * What people said about their alerts in the last week, from the 1-to-5 row in
+ * a case's last alert. Information, never an alarm; absent until someone rates.
+ */
+function ratingSection(f: Facts): ReportSection | null {
+  const r = f.ratings;
+  if (!r || r.count === 0) return null;
+  const avg = r.average === null ? "" : `, average ${r.average.toFixed(1)} of 5`;
+  return {
+    key: "ratings",
+    title: "Alert ratings (7 days)",
+    status: "ok",
+    summary: `${r.count} rating${r.count === 1 ? "" : "s"}${avg}`,
+    lines: [
+      `Scores 1 to 5: ${r.byScore.join(", ")}`,
+      ...r.notes.map((n) => `${n.score} of 5: ${n.note.length > 160 ? `${n.note.slice(0, 157)}...` : n.note}`),
+    ],
+  };
 }
 
 /**

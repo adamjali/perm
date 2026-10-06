@@ -158,7 +158,14 @@ export function CaseNotFound({
             </b>{" "}
             The shape is right, so it got this far, and one wrong digit in the
             serial is still a well-formed case number that belongs to nobody.
-            Worth checking against the receipt.
+            Check it against the receipt, or{" "}
+            <Link
+              href="/case-search"
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              find the case by employer name
+            </Link>
+            .
           </li>
         </ul>
       </section>

@@ -141,12 +141,13 @@ export default async function PermTimelineCalculatorPage() {
           months={queue ? queue.months : []}
           activeRange={queue ? queue.activeRange : null}
           queueSource={queue ? queue.source : null}
+          alertAnchor="queue-alert"
         />
       </section>
 
       {/* The one thing here that genuinely needs an email, offered after the
           answer rather than in front of it. */}
-      <section className="mt-10">
+      <section id="queue-alert" className="mt-10 scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
         <QueueAlertForm source="perm-timeline-calculator" newestMonth={currentMonthUtc()} />
       </section>
 

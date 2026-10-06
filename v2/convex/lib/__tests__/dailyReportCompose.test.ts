@@ -168,3 +168,46 @@ describe("law firms waiting for review", () => {
     expect(firms.lines[firms.lines.length - 1]).toMatch(/\/admin#firm-claims$/);
   });
 });
+
+describe("the accounts line", () => {
+  it("splits accounts and sign-ups by who they're for, when the counts exist", () => {
+    const app = convexSections(
+      facts({
+        audiences: { practice: 40, "own-case": 120, other: 20, unstated: 15 },
+        signupsByAudience: { practice: 1, "own-case": 1, other: 0, unstated: 0 },
+      }),
+      RESEND_SEND_ONLY,
+      NOW,
+    ).find((s) => s.key === "app")!;
+    expect(app.summary).toBe("2 sign-ups (1 in practice, 1 own case), 9 signed in (24 h)");
+    expect(app.lines[0]).toBe("195 accounts in all: 40 in practice, 120 own case, 20 other, 15 no role");
+  });
+
+  it("reads a stored report from before the split exactly as it read then", () => {
+    const app = convexSections(facts(), RESEND_SEND_ONLY, NOW).find((s) => s.key === "app")!;
+    expect(app.summary).toBe("2 sign-ups, 9 signed in (24 h)");
+    expect(app.lines[0]).toBe("195 accounts in all");
+  });
+});
+
+describe("alert ratings", () => {
+  it("adds a section with the scores and the newest notes once anyone has rated", () => {
+    const sections = convexSections(
+      facts({ ratings: { count: 3, average: 4.333, byScore: [0, 0, 0, 2, 1], notes: [{ score: 5, note: "Clear and fast", updatedAt: NOW }] } }),
+      RESEND_SEND_ONLY,
+      NOW,
+    );
+    const section = sections.find((s) => s.key === "ratings")!;
+    expect(section.status).toBe("ok");
+    expect(section.summary).toBe("3 ratings, average 4.3 of 5");
+    expect(section.lines).toEqual(["Scores 1 to 5: 0, 0, 0, 2, 1", "5 of 5: Clear and fast"]);
+    // Errors keeps its third place whatever sections follow.
+    expect(sections[2]!.key).toBe("errors");
+  });
+
+  it("stays out of the report until someone rates", () => {
+    const keys = convexSections(facts({ ratings: { count: 0, average: null, byScore: [0, 0, 0, 0, 0], notes: [] } }), RESEND_SEND_ONLY, NOW).map((s) => s.key);
+    expect(keys).not.toContain("ratings");
+    expect(convexSections(facts(), RESEND_SEND_ONLY, NOW).map((s) => s.key)).not.toContain("ratings");
+  });
+});

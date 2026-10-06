@@ -12,7 +12,7 @@ import { DecidedList, PendingCensus } from "@/components/queue/PendingCensus";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
 import { StageBar, StageLegend } from "@/components/queue/StageBar";
 import { groupByStage } from "@/components/queue/stages";
-import { formatAsOf, formatMonth, monthsMoved } from "@/lib/dolFormat";
+import { currentMonthUtc, formatAsOf, formatMonth, monthsMoved } from "@/lib/dolFormat";
 import { MIRROR_COMPLETE, PROVISIONAL_NOTICE } from "@/lib/liveQueueGate";
 import {
   getAdjacentMonths,
@@ -25,6 +25,8 @@ import { LiveCaseBrowser } from "@/components/tools/LiveCaseBrowser";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { formatInt } from "@/lib/format";
+import { CaseNextStep } from "@/components/tools/CaseNextStep";
+import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 
 /**
  * One filing month, split across the queues DOL actually runs.
@@ -149,6 +151,9 @@ export default async function CohortPage({
   const dolMonth = estimator.frontier?.analystQueueMonth ?? null;
   const dolAsOf = estimator.frontier ? formatAsOf(estimator.frontier.asOf) : null;
   const isNoted = month === OCTOBER_2025.month;
+  // An alert on a month DOL has already reached would fire at once, so the
+  // form is offered only for a month still ahead of DOL.
+  const awaitingDol = dolMonth !== null && month > dolMonth;
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
@@ -214,6 +219,15 @@ export default async function CohortPage({
           )}
         </p>
       </section>{" "}
+
+      {/* What most visitors to a month page want next: their own case, and
+          an email when DOL gets to their month. */}
+      <CaseNextStep
+        question={`Filed in ${label}?`}
+        extra={awaitingDol ? { href: "#queue-alert", label: `Or get an email when DOL reaches ${label}` } : null}
+        source="queue-month-page"
+        className="mt-6"
+      />{" "}
 
       <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-xl font-black sm:text-2xl">
@@ -333,6 +347,17 @@ export default async function CohortPage({
           </p>
         ) : null}
       </section>{" "}
+
+      {awaitingDol ? (
+        <section id="queue-alert" className="mt-8 scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
+          <QueueAlertForm
+            source="queue-month-page"
+            newestMonth={currentMonthUtc()}
+            frontierMonth={dolMonth ?? undefined}
+            defaultMonth={month}
+          />
+        </section>
+      ) : null}{" "}
 
       <nav
         aria-label="Nearby filing months"

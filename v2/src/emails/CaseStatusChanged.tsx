@@ -51,6 +51,7 @@ import {
   StatusRail,
 } from "./components";
 import type { FigureRow } from "./components/FigureTable";
+import { RatingRow } from "./components/RatingRow";
 import { MONO_STACK, SANS_STACK } from "./components/QueueStamp";
 import { SITE_URL } from "../../convex/lib/links";
 
@@ -122,6 +123,12 @@ export interface CaseStatusChangedProps {
    * Optional because mail already built by older callers must still render.
    */
   timelineUrl?: string | null;
+  /**
+   * The feedback page with its token, for the "how useful were these alerts"
+   * row. Shown on the final email only, when the sender passes it; the page it
+   * opens is what records the score, never the link itself.
+   */
+  ratingUrl?: string | null;
 }
 
 export function CaseStatusChanged({
@@ -145,6 +152,7 @@ export function CaseStatusChanged({
   unsubscribeUrl,
   prefsUrl,
   timelineUrl = null,
+  ratingUrl = null,
 }: CaseStatusChangedProps) {
   // Three figure groups in one email is a spec sheet. When the RFI funnel is
   // showing it is the more useful of the two, so the employer record stands
@@ -212,9 +220,16 @@ export function CaseStatusChanged({
       <Text className="em-text-secondary" style={styles.caveat}>
         {observedAt
           ? `DOL showed this status when the case was last checked, on ${observedAt}.`
-          : "We don\u2019t have a check date for this case, so we can\u2019t say when DOL showed this."}{" "}
-        It isn&rsquo;t a decision on your case and it isn&rsquo;t a prediction of
-        one.
+          : "We don\u2019t have a check date for this case, so we can\u2019t say when DOL showed this."}
+        {/* A final status IS DOL's decision, so the disclaimer written for the
+            statuses before one would contradict the email (fixed Oct 6 2026). */}
+        {isFinal ? null : (
+          <>
+            {" "}
+            It isn&rsquo;t a decision on your case and it isn&rsquo;t a prediction
+            of one.
+          </>
+        )}
       </Text>
 
       {rfiRows && rfiRows.length > 0 ? (
@@ -266,6 +281,10 @@ export function CaseStatusChanged({
             Add your dates when they come
           </EmailButton>
         </Section>
+      ) : null}
+
+      {isFinal && ratingUrl ? (
+        <RatingRow question="How useful were these alerts?" baseUrl={ratingUrl} />
       ) : null}
 
       <EmailLinkList

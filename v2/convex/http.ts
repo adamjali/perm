@@ -7,7 +7,18 @@ import { recordError } from "./lib/errorRecording";
 import { isLiveContactEventType } from "./marketingWebhook";
 import { Webhook } from "svix";
 import { verifyUnsubscribeToken } from "./lib/unsubscribeToken";
-import { badLinkPage, escapeHtml, messagePage, prefsPage, type PrefsState } from "./lib/mailPages";
+import {
+  badLinkPage,
+  escapeHtml,
+  messagePage,
+  prefsPage,
+  ratingPage,
+  ratingThanksPage,
+  type PrefsState,
+} from "./lib/mailPages";
+import { RATING_PATH, parseScore } from "./alertRatings";
+import { REVIEW_URL } from "../src/lib/constants/externalLinks";
+import { normaliseFlagCaseNumber } from "../src/lib/flagCaseNumber";
 import { MAIL_KINDS, PREFS_KINDS, type PrefsKind } from "./lib/mailKinds";
 
 const isPrefsKind = (k: string): k is PrefsKind => (PREFS_KINDS as readonly string[]).includes(k);
@@ -587,6 +598,75 @@ http.route({
       "You'll stop receiving status alerts for every PERM case this address is watching.",
       { post: `/case-alert/unsubscribe?token=${encodeURIComponent(token)}` },
     );
+  }),
+});
+
+// Rating the alerts, from the boxes in a case's last alert (convex/alertRatings.ts).
+// GET shows the page with the email's pick marked and records nothing: mail
+// gateways open every link, and five boxes are five links. The POST is the
+// reader's own tap on the page.
+
+/** The token and case number from a rating link, checked, or null. */
+async function ratingTarget(url: URL): Promise<{ token: string; caseNumber: string } | null> {
+  const token = (url.searchParams.get("token") ?? "").slice(0, 512);
+  const parsed = normaliseFlagCaseNumber((url.searchParams.get("c") ?? "").slice(0, 64));
+  const secret = process.env.UNSUBSCRIBE_SECRET;
+  if (!token || !parsed || !secret) return null;
+  if (!(await verifyUnsubscribeToken(token, secret, "alert-rating"))) return null;
+  return { token, caseNumber: parsed.caseNumber };
+}
+
+/** The form's own path; every part is URL-encoded and the whole is escaped for the attribute. */
+function ratingAction(t: { token: string; caseNumber: string }): string {
+  return escapeHtml(`${RATING_PATH}?token=${encodeURIComponent(t.token)}&c=${encodeURIComponent(t.caseNumber)}`);
+}
+
+http.route({
+  path: RATING_PATH,
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const url = new URL(req.url);
+    const target = await ratingTarget(url);
+    if (!target) return badLinkPage("This rating link is incomplete or out of date.");
+    return ratingPage(ratingAction(target), parseScore(url.searchParams.get("r")));
+  }),
+});
+
+http.route({
+  path: RATING_PATH,
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const url = new URL(req.url);
+    const target = await ratingTarget(url);
+    if (!target) return badLinkPage("This rating link is incomplete or out of date.");
+    let form: FormData;
+    try {
+      form = await req.formData();
+    } catch {
+      return ratingPage(ratingAction(target), null);
+    }
+    const r = form.get("r");
+    const note = form.get("note");
+    const score = parseScore(typeof r === "string" ? r : null);
+    // No number pressed: show the numbers again.
+    if (score === null) return ratingPage(ratingAction(target), null);
+    const saved = await ctx.runMutation(internal.alertRatings.record, {
+      token: target.token,
+      caseNumber: target.caseNumber,
+      score,
+      note: typeof note === "string" ? note.slice(0, 4000) : undefined,
+      anonymous: form.get("anon") === "1",
+    });
+    if (!saved) return badLinkPage("This rating link doesn't match a case this address was watching.");
+    return ratingThanksPage({
+      score: saved.score,
+      caseNumber: saved.caseNumber,
+      action: ratingAction(target),
+      noted: saved.noted,
+      anonymous: saved.anonymous,
+      reviewUrl: REVIEW_URL,
+      status: saved.status,
+    });
   }),
 });
 

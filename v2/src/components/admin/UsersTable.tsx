@@ -21,6 +21,7 @@ import { ExportButton } from "./ExportButton";
 import { InlineEdit } from "./InlineEdit";
 import type { EditableField } from "./InlineEdit";
 import type { UserSummary } from "@/lib/admin/types";
+import { AUDIENCE_LABEL } from "@/lib/audience";
 import { captureError } from "@/lib/sentry";
 import { useState } from "react";
 
@@ -109,6 +110,18 @@ const COLUMNS: {
     label: "Status",
     render: (u) => <StatusBadge status={u.accountStatus} />,
     className: "min-w-[100px]",
+  },
+  {
+    // Who the account is for, from its role: the attorney counts leave out
+    // people tracking their own case (lib/audience.ts).
+    key: "audience",
+    label: "For",
+    render: (u) => (
+      <span title={u.role ?? "No role given"} className={u.audience === "practice" ? "font-bold" : undefined}>
+        {AUDIENCE_LABEL[u.audience]}
+      </span>
+    ),
+    className: "min-w-[110px]",
   },
   {
     key: "userType",

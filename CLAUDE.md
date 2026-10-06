@@ -3,7 +3,7 @@
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-04
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **609 files / 8,826 tests across 5 vitest
+> have drifted: the suite is now **616 files / 8,884 tests across 5 vitest
 > projects** (2026-10-06), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
@@ -461,7 +461,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the five "Oct 5 2026" sections.
 - **Testing Library's cleanup runs from `vitest.setup.ts`**: the shared `unit` worker had left one test's render in the next.
 - **Who visits** (Oct 5): about 350 to 900 likely people a day, 4,553 a week, 11,784 a month; Cloudflare's 865k requests are mostly blocked scrapers and crawlers.
 
-## Oct 6 2026, in six lines
+## Oct 6 2026, in thirteen lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
 
@@ -472,4 +472,11 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
 - **/faq opens with the case lookup and four tool tiles**: it takes much of the brand search, and its visitors go to those pages next. The case number box links
   to the employer search for anyone without their number.
 - **A layoff notice no longer lands on a tiny namesake**: "Amazon" had matched a one-filing "AMAZON"; the lookup's namesake rule now applies.
+- **The case page's answer card names the estimated date** with an "Email me changes" button; the record cards moved below the alert form.
+- **Every account says who it's for** (practice, own case, other, no role) on the admin page and in the morning report (`convex/lib/audience.ts`).
+- **"Waiting on my own case" leads onboarding** and watches the case on the account's own address in one step (`caseAlerts.watchMyCase`).
+- **A case's last alert asks for a 1-to-5 rating**; the box opens `/case-alert/rate`, and only the tap there records it (`convex/alertRatings.ts`).
+- **Every entry page leads to a case**: `CaseNextStep` (case-number box) under the header of employer and law firm pages, on month pages, and at the end of every article.
+- **Every article had ended with a sign-up button**, sending people waiting on their own case into the attorney app; it leads with the case lookup now.
+- **The funnel is counted**: `case_lookup_submitted` and `alert_signup` events in PostHog (no address is sent).
 

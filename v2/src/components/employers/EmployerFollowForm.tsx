@@ -12,6 +12,7 @@
 import { useId, useState } from "react";
 import { AlertNote } from "@/components/alerts/AlertOptIns";
 import { formText } from "@/lib/forms/formText";
+import { trackAlertSignup } from "@/lib/alertSignupEvent";
 
 function subscribeEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -46,7 +47,9 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
       const body = (await res.json().catch(() => null)) as { message?: string } | null;
       setMessage(String(body?.message ?? "Something went wrong. Try again in a moment."));
       setStatus(res.ok ? "done" : "error");
+      trackAlertSignup("employer", res.ok ? "accepted" : "refused", { source, status: res.status });
     } catch {
+      trackAlertSignup("employer", "error", { source });
       setMessage("Couldn't reach the server. Try again in a moment.");
       setStatus("error");
     }

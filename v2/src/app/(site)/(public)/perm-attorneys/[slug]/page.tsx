@@ -16,6 +16,7 @@
  */
 
 import type { Metadata } from "next";
+import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -34,7 +35,6 @@ import {
   rateReliability,
 } from "@/components/tools/EntityContext";
 import {
-  DecisionEstimatorCard,
   EntityStatCards,
   FieldPositionPlate,
   UnpublishedFilingsNote,
@@ -315,6 +315,14 @@ export default async function AttorneyPage({
       {/* The doubt goes ABOVE the figures, so a number computed from thin
           input cannot read as more authoritative than the doubt about it. */}
       <DebarmentNotice rows={debarments} pageName={row.name} today={new Date().toISOString().slice(0, 10)} />{" "}
+      {/* Many who land here are a client of this firm waiting on their own
+          case. DOL names the firm only once a case is published, so a pending
+          case is found by its employer rather than by the firm. */}
+      <CaseNextStep
+        question={`Is ${row.name} handling your case?`}
+        source="firm-page"
+        className="mt-8"
+      />{" "}
       <ReliabilityBand
         reliability={reliability}
         baselineDenialPct={baselineDenialPct}
@@ -523,8 +531,7 @@ export default async function AttorneyPage({
         className="mt-8"
       />
 
-      <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <DecisionEstimatorCard heading="They're handling your case?" />
+      <section className="mt-10 max-w-2xl">
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Running the practice?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">

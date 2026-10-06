@@ -16,7 +16,10 @@ function escapeCsvField(value: string | number | boolean | null | undefined): st
     return "";
   }
 
-  const str = String(value);
+  // A cell a spreadsheet would run as a formula ("=HYPERLINK(...)") is
+  // written as text: a role or a name is whatever its owner typed.
+  const raw = String(value);
+  const str = typeof value === "string" && /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
 
   // If contains comma, quote, or newline, wrap in quotes and escape internal quotes
   if (str.includes(",") || str.includes('"') || str.includes("\n")) {
@@ -54,7 +57,8 @@ export function exportUsersToCSV(users: UserSummary[]): string {
     "Deleted Cases",
     "Last Case Update",
     "User Type",
-    "Firm Name",
+    "Role",
+    "For",
     "Account Status",
     "Deleted At",
     "Terms Accepted",
@@ -78,6 +82,8 @@ export function exportUsersToCSV(users: UserSummary[]): string {
     escapeCsvField(user.deletedCases),
     escapeCsvField(formatTimestamp(user.lastCaseUpdate)),
     escapeCsvField(user.userType),
+    escapeCsvField(user.role ?? ""),
+    escapeCsvField(user.audience),
     escapeCsvField(user.accountStatus),
     escapeCsvField(formatTimestamp(user.deletedAt)),
     escapeCsvField(formatTimestamp(user.termsAccepted)),

@@ -1,79 +1,34 @@
-"use client";
+import Link from "next/link";
+
+import { CaseNextStep } from "@/components/tools/CaseNextStep";
 
 /**
- * ContentCTA
+ * The end of every article: the next step for the two people who read them.
  *
- * Full-width call-to-action banner for content pages.
- * Matches the neobrutalist CTASection pattern from the home page.
- * GSAP parallax on decorative elements + FM stagger text.
+ * Most readers are waiting on a case (47 of the 53 guides are written for
+ * them), so the case lookup leads: status, an estimated date and an email
+ * when it moves. People who file cases get a second, smaller door to the
+ * attorney page, which explains the app before asking for an account.
+ *
+ * It used to be one "Get Started Free" button to /signup under a sentence
+ * about checking a case number, which sent people waiting on their own case
+ * into a caseload manager built for attorneys.
  */
-
-import * as React from "react";
-import { motion } from "motion/react";
-import { NavLink } from "@/components/ui/nav-link";
-import { useParallax } from "@/hooks/useGSAP";
-import { stagger, fadeUp } from "@/lib/content/animations";
-
-interface ContentCTAProps {
-  title?: string;
-  description?: string;
-  buttonText?: string;
-  href?: string;
-}
-
-export default function ContentCTA({
-  title = "Track Your PERM, Free",
-  description = "Check any case number for its live DOL status and a decision estimate. Attorneys and firms get every deadline computed per case.",
-  buttonText = "Get Started Free",
-  href = "/signup",
-}: ContentCTAProps) {
-  const decoRef = React.useRef<HTMLDivElement>(null);
-  useParallax(decoRef, -0.1);
-
+export default function ContentCTA() {
   return (
-    <section className="relative overflow-hidden border-y-2 border-border bg-primary/5">
-      {/* Decorative background shapes */}
-      <div
-        ref={decoRef}
-        className="pointer-events-none absolute inset-0"
-        aria-hidden="true"
-      >
-        <div className="absolute -left-20 -top-20 h-60 w-60 border-4 border-primary/10 rotate-12" />
-        <div className="absolute -bottom-16 -right-16 h-48 w-48 bg-primary/5 -rotate-6" />
-      </div>{" "}
-
-      <div className="relative mx-auto max-w-[1400px] px-4 py-10 sm:px-8 sm:py-12">
-        <motion.div
-          className="text-center"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-50px" }}
-        >
-          <motion.h2
-            variants={fadeUp}
-            className="mb-3 font-heading text-xl font-bold sm:text-2xl"
+    <section className="border-y-2 border-border bg-primary/5">
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-8 sm:py-12">
+        <CaseNextStep question="Waiting on a PERM case?" numberKind="DOL" source="article-end" />{" "}
+        <p className="mt-6 text-base text-foreground/80">
+          File PERM cases for clients or your company?{" "}
+          <Link
+            href="/for-attorneys"
+            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
           >
-            {title}
-          </motion.h2>{" "}
-          <motion.p
-            variants={fadeUp}
-            className="mx-auto mb-6 max-w-xl text-muted-foreground"
-          >
-            {description}
-          </motion.p>{" "}
-          <motion.div variants={fadeUp}>
-            <NavLink
-              href={href}
-              className="inline-block border-2 border-black bg-primary px-6 py-3 font-heading text-sm font-bold shadow-hard transition-all duration-150 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-white"
-              style={{ color: "black" }}
-              spinnerClassName="text-black"
-              spinnerSize={14}
-            >
-              {buttonText}
-            </NavLink>
-          </motion.div>
-        </motion.div>
+            See the free deadline tracker
+          </Link>
+          .
+        </p>
       </div>
     </section>
   );

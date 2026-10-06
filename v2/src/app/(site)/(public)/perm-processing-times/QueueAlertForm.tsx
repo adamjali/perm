@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { isQueued, replyHeading } from "@/lib/alertReply";
 import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
 import { formText } from "@/lib/forms/formText";
+import { trackAlertSignup } from "@/lib/alertSignupEvent";
 
 /**
  * Convex HTTP actions are served from the `.convex.site` twin of the
@@ -91,8 +92,11 @@ export function QueueAlertForm({
   frontierMonth,
   queue = "perm",
   allowPwdChoice = false,
+  defaultMonth,
 }: {
   source: string;
+  /** The filing month to start on, "YYYY-MM": a month's own page passes itself. */
+  defaultMonth?: string;
   /** Newest selectable filing month, "YYYY-MM". Supplied by the server render. */
   newestMonth: string;
   /**
@@ -125,7 +129,7 @@ export function QueueAlertForm({
   const queueId = useId();
 
   const [email, setEmail] = useState("");
-  const [filingMonth, setFilingMonth] = useState("");
+  const [filingMonth, setFilingMonth] = useState(defaultMonth ?? "");
   const [role, setRole] = useState("");
   const [news, setNews] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState(queue);
@@ -166,7 +170,9 @@ export function QueueAlertForm({
       setQueued(isQueued(result));
       setStatus(result.ok ? "done" : "error");
       setMessage(result.message);
+      trackAlertSignup("queue", result.ok ? "accepted" : "refused", { source, queue: selectedQueue });
     } catch {
+      trackAlertSignup("queue", "error", { source });
       setStatus("error");
       setMessage("Something went wrong on our side. Try again in a moment.");
     }

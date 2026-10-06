@@ -123,11 +123,14 @@ export function InsightLede({
   direction,
   children,
   source,
+  actions,
 }: {
   verdict?: string;
   direction?: Direction;
   children: ReactNode;
   source?: ReactNode;
+  /** What to do next, under the claim and above the source line. */
+  actions?: ReactNode;
 }) {
   return (
     <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
@@ -138,7 +141,8 @@ export function InsightLede({
       ) : null}
       <p className="max-w-3xl font-heading text-xl font-black leading-snug sm:text-2xl">
         {children}
-      </p>
+      </p>{" "}
+      {actions ?? null}{" "}
       {/* /70, not /50. Measured on this panel in dark mode: the source line
           came out at 3.71:1 against a 4.5 floor, which is a dateline nobody
           can read on the one component whose whole job is saying where the
@@ -155,7 +159,7 @@ export function InsightLede({
         <p className="mt-3 font-mono text-sm uppercase tracking-wider text-background/70">
           {source}
         </p>
-      ) : null}
+      ) : null}{" "}
     </div>
   );
 }

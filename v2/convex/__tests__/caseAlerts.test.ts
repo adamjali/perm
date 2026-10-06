@@ -759,6 +759,7 @@ describe("failure handling", () => {
   });
 
   it("retires a subscription once the case reaches a final status", async () => {
+    vi.stubEnv("ALERT_RATING_ENABLED", "1");
     const t = createTestContext();
     const { alerts } = stubMirrorAndResend({
       cases: { [CASE]: { status: "CERTIFIED", isFinal: true } },
@@ -768,6 +769,12 @@ describe("failure handling", () => {
     const res = await t.action(internal.caseAlerts.sweepCaseChanges, {});
     expect(res.sent).toBe(1);
     expect(String(alerts()[0]!.text)).toContain("last alert");
+    // The last alert asks how useful they were, through a rating link, and
+    // drops the "not a decision" line a final status contradicts.
+    const last = alerts()[0]!;
+    expect(String(last.text)).toMatch(/Rate them from 1 to 5: https:\/\/permtracker\.app\/case-alert\/rate\?token=/);
+    expect(String(last.html)).toContain("/case-alert/rate?token=");
+    expect(String(last.text)).not.toContain("It isn't a decision on your case");
 
     const row = await t.run(async (ctx) => ctx.db.get(id));
     expect(row!.caseClosedAt).toBeDefined();
@@ -776,6 +783,32 @@ describe("failure handling", () => {
     // rather than being read forever.
     const after = await t.action(internal.caseAlerts.sweepCaseChanges, {});
     expect(after.checked).toBe(0);
+  });
+
+  it("leaves the rating row out of the last alert until the owner switches it on", async () => {
+    const t = createTestContext();
+    const { alerts } = stubMirrorAndResend({
+      cases: { [CASE]: { status: "CERTIFIED", isFinal: true } },
+    });
+    await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    const last = alerts()[0]!;
+    expect(String(last.text)).toContain("last alert");
+    expect(String(last.text)).not.toContain("/case-alert/rate");
+    expect(String(last.html)).not.toContain("/case-alert/rate");
+  });
+
+  it("asks for no rating while the case can still move", async () => {
+    const t = createTestContext();
+    const { alerts } = stubMirrorAndResend({
+      cases: { [CASE]: { status: "RFI ISSUED", isFinal: false } },
+    });
+    await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    const sent = alerts()[0]!;
+    expect(String(sent.text)).not.toContain("/case-alert/rate");
+    expect(String(sent.html)).not.toContain("/case-alert/rate");
+    expect(String(sent.text)).toContain("It isn't a decision on your case");
   });
 
   it("advances the cursor for rows that did NOT change", async () => {

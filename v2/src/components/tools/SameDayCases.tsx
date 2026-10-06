@@ -67,7 +67,7 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
           </li>
           </Fragment>
         ))}
-      </ul>
+      </ul>{" "}
 
       {data.nearby.length > 1 ? (
         <>

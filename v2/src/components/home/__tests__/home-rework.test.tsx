@@ -60,7 +60,7 @@ describe("boardRowsFor", () => {
     expect(rows).toEqual([{ label: "PERM waiting", value: "91,933" }]);
   });
 
-  it("reads the weekday off the date itself", () => {
+  it("names the day by its date, never a weekday that reads as a month", () => {
     const rows = boardRowsFor({
       frontierMonth: "2025-12-01",
       lastDay: { date: "2026-09-30", total: 901 },
@@ -70,7 +70,7 @@ describe("boardRowsFor", () => {
     });
     expect(rows.map((r) => `${r.label}=${r.value}`)).toEqual([
       "Now deciding=Dec 2025",
-      "Decided Wed=901",
+      "Decided Sep 30=901",
       "PERM waiting=91,933",
       "Wage requests=47,941",
     ]);

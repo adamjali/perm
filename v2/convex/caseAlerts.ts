@@ -116,8 +116,11 @@ import {
   internalAction,
   internalMutation,
   internalQuery,
+  mutation,
   type MutationCtx,
 } from "./_generated/server";
+import { getCurrentUserId, isEmailVerified } from "./lib/auth";
+import { ratingLink, ratingsOn } from "./alertRatings";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
@@ -522,6 +525,111 @@ export const subscribe = internalMutation({
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
+  },
+});
+
+/**
+ * A signed-in person watching their own case, from onboarding.
+ *
+ * The alert goes to the account's own address and nowhere else, so nobody can
+ * point it at a stranger's inbox. When sign-in already proved that address (a
+ * code for a password account, Google for a Google one) the row is confirmed
+ * here: a "confirm your address" email would ask them to prove what they just
+ * proved. An account whose address was never verified takes the ordinary
+ * double opt-in through `subscribe`, email and all.
+ */
+interface WatchResult {
+  ok: boolean;
+  message: string;
+  caseNumber?: string;
+  confirmationSent?: boolean;
+}
+
+export const watchMyCase = mutation({
+  args: { caseNumber: v.string() },
+  returns: v.object({
+    ok: v.boolean(),
+    message: v.string(),
+    /** The number as stored, for the case page link. */
+    caseNumber: v.optional(v.string()),
+    /** True when a confirmation email was sent instead of watching at once. */
+    confirmationSent: v.optional(v.boolean()),
+  }),
+  // Annotated: the handler calls back into this module through `internal`,
+  // and an inferred return type there types the whole generated API as any.
+  handler: async (ctx, args): Promise<WatchResult> => {
+    const userId = await getCurrentUserId(ctx);
+    const user = await ctx.db.get(userId);
+    const email = user?.email?.trim().toLowerCase();
+    if (!user || user.deletedAt || !email || !isPlausibleEmail(email)) {
+      return { ok: false, message: "Your account has no email address we can send alerts to." };
+    }
+    // Length before the shape rule, the cheap guard first.
+    const parsed = args.caseNumber.length <= 64 ? normaliseFlagCaseNumber(args.caseNumber) : null;
+    if (!parsed) {
+      return {
+        ok: false,
+        message: "That doesn't look like a DOL case number (G-, A-, P-, I- or H-).",
+      };
+    }
+    const caseNumber = parsed.caseNumber;
+
+    if (!(await isEmailVerified(ctx, userId))) {
+      const sent: { ok: boolean; message: string } = await ctx.runMutation(internal.caseAlerts.subscribe, {
+        email,
+        caseNumber,
+        source: "onboarding",
+      });
+      return { ok: sent.ok, message: sent.message, caseNumber, confirmationSent: sent.ok };
+    }
+
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("caseStatusAlerts")
+      .withIndex("by_email_case", (q) => q.eq("email", email).eq("caseNumber", caseNumber))
+      .first();
+    if (existing?.caseClosedAt !== undefined && existing.unsubscribedAt === undefined) {
+      return {
+        ok: true,
+        message: "DOL has already decided this case, so there's nothing left to watch.",
+        caseNumber,
+      };
+    }
+    if (existing) {
+      // Their own signed-in request, so it may put an address back on the
+      // list it left: this is a fresh act by the inbox's owner, which a
+      // replayed token never is.
+      await ctx.db.patch(existing._id, {
+        confirmedAt: existing.confirmedAt ?? now,
+        pendingCaseNumber: undefined,
+        unsubscribedAt: undefined,
+      });
+    } else {
+      const held = await ctx.db
+        .query("caseStatusAlerts")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .take(MAX_CASES_PER_ADDRESS);
+      if (held.length >= MAX_CASES_PER_ADDRESS) {
+        return {
+          ok: false,
+          message: `One address can watch ${MAX_CASES_PER_ADDRESS} cases, and yours already does.`,
+        };
+      }
+      await ctx.db.insert("caseStatusAlerts", {
+        email,
+        caseNumber,
+        createdAt: now,
+        source: "onboarding",
+        confirmedAt: now,
+      });
+    }
+    // The first alert must be a change, not today's status restated.
+    await ctx.scheduler.runAfter(0, internal.caseAlerts.seedLastSeen, { email });
+    return {
+      ok: true,
+      message: `Watching it. We'll email ${email} when DOL's status changes.`,
+      caseNumber,
+    };
   },
 });
 
@@ -1453,6 +1561,10 @@ export const sweepCaseChanges = internalAction({
         const unsubUrl = actionUrl("/case-alert/unsubscribe", token);
         const prefsUrl = await prefsLink(sub.email, unsubscribeSecret(), `case:${sub._id}`);
         const caseUrl = casePageUrl(sub.caseNumber);
+        // The last alert asks how useful the alerts were (convex/alertRatings.ts),
+        // once the owner has switched the row on.
+        const ratingUrl =
+          isFinal && ratingsOn() ? await ratingLink(sub.email, sub.caseNumber, unsubscribeSecret()) : null;
         const noun = programNoun(program);
         // The map is keyed off this same list, so the fallback is unreachable.
         // It says the sentence WITHOUT a date rather than an empty string, so
@@ -1561,6 +1673,7 @@ export const sweepCaseChanges = internalAction({
               caseUrl,
               unsubscribeUrl: unsubUrl,
               prefsUrl,
+              ratingUrl,
               // The ask for post-PERM dates goes with a PERM case's
               // certification only: an expiry, a denial or another program's
               // approval has nothing after it to report here.
@@ -1601,7 +1714,8 @@ export const sweepCaseChanges = internalAction({
             observedAt
               ? `DOL showed this status when the case was last checked, on ${observedAt}.`
               : "We don't have a check date for this case, so we can't say when DOL showed this.",
-            "It isn't a decision on your case and it isn't a prediction of one.",
+            // A final status IS the decision, so the disclaimer is for the rest.
+            ...(isFinal ? [] : ["It isn't a decision on your case and it isn't a prediction of one."]),
             "",
             ...(rfiRows
               ? [
@@ -1620,6 +1734,9 @@ export const sweepCaseChanges = internalAction({
             isFinal
               ? "This case has reached a final status, so this is the last alert for it."
               : "We'll email you again if it moves again, and we stop once it's decided.",
+            ...(ratingUrl
+              ? ["", `How useful were these alerts? Rate them from 1 to 5: ${ratingUrl}`]
+              : []),
             `Stop these alerts: ${unsubUrl}`,
             "",
             "PERM Tracker",

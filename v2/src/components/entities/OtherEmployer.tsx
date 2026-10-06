@@ -123,8 +123,11 @@ export function OtherEmployer({
   seasonalMore,
   seasonalAsOf,
   h1b,
+  nextStep,
 }: {
   record: OtherEmployerRecord;
+  /** The case-number box for someone waiting on one of its filings (CaseNextStep). */
+  nextStep?: ReactNode;
   /** Open cases across its programs in DOL's live record; null when the live record couldn't be read. */
   pending: number | null;
   /** The program ledger (EmployerPrograms), already built by the caller. */
@@ -168,6 +171,7 @@ export function OtherEmployer({
           Name as DOL prints it on the forms.
         </p>
       </header>{" "}
+      {nextStep ? <div className="mt-8">{nextStep}</div> : null}{" "}
 
       <section className="pop mt-8">
         <div className="grid grid-cols-1 gap-px border-2 border-border bg-border sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
@@ -191,17 +195,9 @@ export function OtherEmployer({
       ) : null}{" "}
       {h1b}{" "}
 
-      <section className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Waiting on one of these?</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            The{" "}
-            <Link href="/perm-case-status" className={LINK}>
-              case-number lookup
-            </Link>{" "}
-            asks DOL live and can email you when the status changes.
-          </p>
-        </div>
+      {/* The case-number box sits under the header now; this card points at
+          the full list for anyone reading to the end. */}
+      <section className="mt-10 max-w-2xl">
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Every filing under this name</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">

@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 609 files / 8,826 tests (2026-10-06; ~38 min at a load average near 200, ~12.5 to 14 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 616 files / 8,884 tests (2026-10-06; ~38 min at a load average near 200, ~12.5 to 14 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -8350,3 +8350,73 @@ plain, natural set: "no salsey desperate weird unnatural". Method and what chang
   logs a dev-only hydration warning (server `opacity:"1",transform:"none"`, client `opacity:1`); nothing on screen
   differs, and it predates this change.
 
+
+## Oct 6 2026 (afternoon): the case page answers first, accounts say who they're for, alerts get rated
+
+The owner asked whether the site gets people where they need to be (14 days of PostHog: 35% of visits look
+up a case; case alerts are the weakest step, about 2.5% of lookup visits) and whether sign-ups land in the
+right place. What changed:
+
+- **The case page's answer card names the estimated date** ("Estimated decision: around October 27, 2026")
+  with an "Email me changes" button that jumps to the alert form (`#watch`) and a link to the estimate panel
+  (`#estimate`). The estimate is built ONCE in `CaseStatusResult` (`buildCaseEstimate`) and handed to both the
+  card (`NextSteps`) and the panel (`CaseEstimatePanel`), so they can't name different days; with the date
+  above, the panel leads with the window instead of repeating it (`dateShownAbove`). Measured on a dev server
+  against production data at 390 wide: the date is 1.3 screens down; it was below the record cards, which
+  sat at 4.1 screens. The case-number plate and the record card now sit below the alert form: the card
+  already states the status, the filing date and the queue.
+- **The homepage board says "Decided Oct 5"**, a date: "DECIDED MON" in capitals read as "decided month".
+- **Three glued pairs on the case page** (the estimate's fine print, the same-day strip, the status
+  explainer) were fixed. The sitemap-driven audit never sees `?case=` pages, so check one by hand with
+  `glued_pairs()` from `scripts/audit_glued_text.py` after changing that page.
+- **Every account is marked by who it's for** (`convex/lib/audience.ts`, from the onboarding role in
+  `userProfiles.jobTitle`): practice (attorney, paralegal, HR, employer, or a typed title naming that work),
+  own case, other, or no role. The admin page has "In practice" and "Tracking own case" cards and a "For"
+  column; the morning report splits accounts and sign-ups the same way. Nobody is turned away; "Other" stays
+  its own bucket (owner, Oct 6: keep it).
+- **"Waiting on my own case" is listed first and gets its own step** (`OwnCaseStep`): one case-number box,
+  then `caseAlerts.watchMyCase` watches it on the account's own address. A verified account (Google, or a
+  password account with its code) starts watching at once with no confirmation email; an unverified one
+  takes the ordinary double opt-in through `subscribe`. The wizard ends there (step `done`) and opens the
+  case page. "Don't have the number?" goes to `/case-search`.
+- **A case's last alert asks "How useful were these alerts?"** with five boxes (`RatingRow`), **only while
+  `ALERT_RATING_ENABLED=1` is set on the Convex deployment** (`ratingsOn()`; off until the owner has seen the
+  pages, set by hand). Each box opens `/case-alert/rate` (Convex, `convex/alertRatings.ts`, relayed by nginx like
+  every alert link) with the pick marked; the GET records nothing, the tap on that page is the POST that does.
+  The thanks page matches the score (`ratingWords`): a 4 or 5 is thanked and offered the Senja review link
+  (`REVIEW_URL`), a 3 is asked what would have made it a 5, a 1 or 2 gets "Sorry they fell short" and "What went
+  wrong?". The note (plain text, 1,000 characters) has "Leave my email off this note": the row then keeps only
+  `key` (SHA-256 of address and case, for one row per person and case) and drops the address and case number for
+  good. "What comes next" follows the final status (`nextSteps`): certified goes on to the green card, denied to
+  the denial guide. The link is signed for `alert-rating` only and a rating is kept only for a case that
+  address watched. The morning report shows the week's count, average and newest notes once anyone rates. The
+  final alert also drops "It isn't a decision on your case", which a final status contradicts.
+- **The admin user CSV had one more heading than cells** ("Firm Name" with no value), so every column after
+  "User Type" sat under the wrong heading. Fixed, with Role and For columns, and a cell a spreadsheet would
+  run as a formula is written as text.
+
+### The funnel round, same afternoon: every door leads to a case
+
+PostHog, 14 days, scraper browsers left out: employer pages are the biggest way in (3,237 sessions, 63% leave
+after one page, 15% reach a case lookup), then the case page (2,691), the homepage (1,856), law firm pages (615,
+89% one page, 2% lookup), the wage-request and LCA pages, the timeline calculator (317, 6% lookup) and guides
+(249). What changed:
+
+- **`CaseNextStep`** (`src/components/tools/CaseNextStep.tsx`) is the one next step for someone waiting on a
+  case: a question in the page's terms ("Waiting on a case with Adobe Inc.?"), the case-number box (the
+  compact `CaseLookupForm`, its help line read by screen readers only), "Don't have the number?" and one extra
+  step. It sits under the header on all three employer page variants (the published one after its debarment
+  and WARN notices; extra = follow by email) and on law firm pages, at half a screen on a phone. The bottom
+  `DecisionEstimatorCard` (which only linked to the calculator) is deleted.
+- **Every article's ending sent its readers to sign up.** `ContentCTA` said "Check any case number for its live
+  DOL status" over one "Get Started Free" button to `/signup`, under all 53 guides (47 written for people
+  waiting on their own case), the blog and the changelog. It now leads with `CaseNextStep` and gives people who
+  file cases a smaller door to `/for-attorneys`. Probably one source of the "Other" and no-role accounts.
+- **Queue month pages** carry the next step ("Filed in February 2026?") and, while DOL hasn't reached the
+  month, a queue alert that starts on that month (`QueueAlertForm defaultMonth`).
+- **The timeline calculator's answer** is followed by "Email me when DOL reaches <month>" (to its alert form,
+  `#queue-alert`) and "Have the case number? Check the case itself".
+- **The no-record result** offers the employer search beside "check the digits".
+- **The funnel can be counted now.** `case_lookup_submitted` (`{ source }`, from `CaseLookupForm` when a page
+  names itself) and `alert_signup` (`{ kind, outcome, ... }`, `src/lib/alertSignupEvent.ts`, from all four alert
+  forms; never the address). Before this, PostHog had no event for an alert sign-up at all.

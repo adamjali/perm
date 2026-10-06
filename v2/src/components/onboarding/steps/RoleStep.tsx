@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,8 @@ import { BriefcaseIcon, BuildingIcon as Building2, QuestionIcon as HelpCircle, S
 import { cn } from "@/lib/utils";
 import { handleOperationError } from "@/lib/errors";
 import { retryOnce } from "@/lib/onboarding/retryOnce";
+import { OWN_CASE_ROLE } from "@/lib/audience";
+import { OwnCaseStep } from "./OwnCaseStep";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Scale,
@@ -27,7 +28,7 @@ interface RoleStepProps {
 export function RoleStep({ onNext }: RoleStepProps) {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const router = useRouter();
+  const [ownCase, setOwnCase] = useState(false);
   const saveRole = useMutation(api.onboarding.saveOnboardingRole);
 
   const handleContinue = async () => {
@@ -40,14 +41,13 @@ export function RoleStep({ onNext }: RoleStepProps) {
       // is the input to whether a beneficiary product ever gets built.
       await retryOnce(() => saveRole({ role: selectedRole }));
 
-      // A beneficiary is sent to their case, not through the rest of this
-      // wizard. The next steps are "create a case" and a caseload preview,
-      // which are the wrong questions for the person the case is about: they
-      // have one case, they did not file it, and they cannot edit it. Walking
-      // them through a portfolio setup would be asking them to build a tool
-      // for a job they do not have.
-      if (selectedRole === "Waiting on my own case") {
-        router.push("/perm-case-status");
+      // The person the case is about is offered a watch on that case, not
+      // the rest of this wizard. The next steps are "create a case" and a
+      // caseload preview, which are the wrong questions for someone who has
+      // one case, did not file it and cannot edit it. What they came for is
+      // the status and an email when it moves.
+      if (selectedRole === OWN_CASE_ROLE) {
+        setOwnCase(true);
         return;
       }
       onNext();
@@ -59,6 +59,8 @@ export function RoleStep({ onNext }: RoleStepProps) {
       setIsSaving(false);
     }
   };
+
+  if (ownCase) return <OwnCaseStep />;
 
   return (
     <div className="flex flex-col items-center px-2">

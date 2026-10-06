@@ -292,22 +292,6 @@ export function wageIsTheJobLimit({
   };
 }
 
-/** A closing card that sends a reader with a case at this entity to the estimator. */
-export function DecisionEstimatorCard({ heading }: { heading: string }) {
-  return (
-    <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-      <h2 className="font-heading text-lg font-black">{heading}</h2>{" "}
-      <p className="mt-2 text-base leading-relaxed text-foreground/70">
-        The{" "}
-        <Link href="/tools/perm-timeline-calculator" className={LINK}>
-          decision estimator
-        </Link>{" "}
-        reads your filing month against where DOL is now.
-      </p>
-    </div>
-  );
-}
-
 /**
  * Why the newest filings are missing here: DOL names the firm and the
  * occupation only when it publishes a case, while the live list carries the

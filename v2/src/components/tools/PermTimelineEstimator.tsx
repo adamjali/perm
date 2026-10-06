@@ -18,7 +18,7 @@
 
 import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } from "@phosphor-icons/react";
+import { BellIcon, CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 
 import {
   estimateQueueDecision,
@@ -130,6 +130,12 @@ export interface PermTimelineEstimatorProps {
   queueSource?: string | null;
   /** Renders the compact variant used inside other pages. */
   compact?: boolean;
+  /**
+   * The id of the page's queue alert form. With it, the answer is followed by
+   * an "email me" button that lands on the form; without it (an embed), only
+   * the link to the case lookup shows.
+   */
+  alertAnchor?: string;
   className?: string;
 }
 
@@ -209,6 +215,7 @@ export function PermTimelineEstimator({
   queueSource = null,
   compact = false,
   initialMonth = null,
+  alertAnchor,
   className,
 }: PermTimelineEstimatorProps) {
   const selectId = useId();
@@ -617,7 +624,26 @@ export function PermTimelineEstimator({
                   : envelope && envelope.modelCount === 1
                     ? "One model has enough published data to answer for this month."
                     : `The window comes from ${envelope?.modelCount ?? 0} models on different bases, spread across ${envelope?.spanMonths ?? 0} months. They are never averaged into one number, because the spread is the honest part. Open "How this was worked out" to see each.`}
-              </p>
+              </p>{" "}
+              {/* The next steps, right under the answer: hear when DOL reaches
+                  this month, or read the case itself, which knows its stage. */}
+              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
+                {alertAnchor ? (
+                  <a
+                    href={`#${alertAnchor}`}
+                    className="inline-flex min-h-[48px] items-center gap-2 border-2 border-border bg-primary px-4 py-2.5 font-heading text-base font-black text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                  >
+                    <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
+                    Email me when DOL reaches {formatMonth(month)}
+                  </a>
+                ) : null}{" "}
+                <Link
+                  href="/perm-case-status"
+                  className="inline-flex min-h-[44px] items-center font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  Have the case number? Check the case itself
+                </Link>
+              </div>
             </>
           ) : (
             /* The frontier has already passed this month, so every

@@ -120,6 +120,121 @@ export function badLinkPage(reason = "This link is incomplete or out of date."):
 }
 
 // ============================================================================
+// Rating the alerts (the boxes in a case's last alert)
+// ============================================================================
+
+// Five equal columns that shrink with the card: at 320 wide each box is
+// still 45px across (the body's padding narrows under 360), and 52px tall.
+const RATING_STYLE = `
+.scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;max-width:300px;margin-top:20px}
+.scale .btn{min-height:52px;padding:0;font-size:20px;box-shadow:3px 3px 0 #000}
+.scale .btn.picked{background:#2ECC40;outline:3px solid #000;outline-offset:2px}
+.ends{display:flex;justify-content:space-between;max-width:300px;margin-top:8px;color:#52525b;font-size:14px}
+.review{margin-top:24px;padding:16px 18px;border:2px solid #000;background:#f0fbf1}
+.review p{margin:4px 0 0}
+@media (max-width:360px){.body{padding:24px 16px 28px}}
+`;
+
+/**
+ * The page a box in the email opens. Nothing is recorded yet: the score from
+ * the link is marked, and each number is a submit button, so one more tap
+ * sends it. `action` is the form's own path with its token, built by the
+ * caller from parsed values.
+ */
+export function ratingPage(action: string, picked: number | null): Response {
+  const buttons = [1, 2, 3, 4, 5]
+    .map(
+      (n) =>
+        `<button type="submit" name="r" value="${n}" class="btn${n === picked ? " go picked" : ""}" aria-label="${n} of 5${n === picked ? ", your pick" : ""}">${n}</button>`,
+    )
+    .join(" ");
+  const lead =
+    picked === null
+      ? "Tap a number to send it: 1 is not useful, 5 is very useful."
+      : `You picked ${picked}. Tap it to send, or pick another.`;
+  return htmlPage(
+    "Rate your alerts",
+    `<style>${RATING_STYLE}</style><h1>How useful were these alerts?</h1><p class="muted">${escapeHtml(lead)}</p>
+<form method="POST" action="${action}">
+<div class="scale" role="group" aria-label="Your rating">${buttons}</div>
+<div class="ends" aria-hidden="true"><span>Not useful</span> <span>Very useful</span></div>
+</form>`,
+  );
+}
+
+/** What the thanks page says for each score: a headline, and what the note box asks. */
+export function ratingWords(score: number): { title: string; ask: string } {
+  if (score >= 5) return { title: "Thanks, glad they helped", ask: "Anything we could do better?" };
+  if (score === 4) return { title: "Thanks, glad they were useful", ask: "What would have made it a 5?" };
+  if (score === 3) return { title: "Thanks for rating them", ask: "What would have made it a 5?" };
+  return { title: "Sorry they fell short", ask: "What went wrong? One line helps us fix it." };
+}
+
+/**
+ * After the tap: thanks in words that match the score, a review link for a 4
+ * or a 5, the note box until they've written one (with the choice to leave
+ * their address off it), and what comes next for a decided case.
+ */
+export function ratingThanksPage(opts: {
+  score: number;
+  caseNumber: string;
+  /** The form's own path with its token (as for `ratingPage`). */
+  action: string;
+  /** They've sent a note, now or earlier. */
+  noted: boolean;
+  anonymous: boolean;
+  reviewUrl: string;
+  /** The case's final status, which decides what "next" means. */
+  status: string | null;
+}): Response {
+  const { score, caseNumber, action, noted, anonymous, reviewUrl, status } = opts;
+  const words = ratingWords(score);
+  const caseUrl = `${SITE_URL}/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
+  const lead = `You rated these alerts ${score} of 5.${noted ? (anonymous ? " Thanks for the note, kept without your email." : " Thanks for the note too.") : ""}`;
+  const review =
+    score >= 4
+      ? `<div class="review"><b>Would you say so in a short review?</b><p class="muted">It helps other people waiting on a case find the site.</p><p class="actions" style="margin-top:12px"><a class="btn go" href="${escapeHtml(reviewUrl)}">Leave a review</a></p></div>`
+      : "";
+  const note = noted
+    ? ""
+    : `<form method="POST" action="${action}">
+<input type="hidden" name="r" value="${score}"/>
+<label for="note">${escapeHtml(words.ask)} <span class="hint">Optional. We read every note.</span></label>
+<textarea id="note" name="note" maxlength="1000"></textarea>
+<label class="check"><input type="checkbox" name="anon" value="1"/> Leave my email off this note</label>
+<span class="hint">Then we can't reply, and the note isn't tied to your case.</span>
+<p class="actions"><button type="submit" class="btn go">Send</button></p>
+</form>`;
+  // A good rating asks for the review first; a poor one asks what went wrong first.
+  const asks = score >= 4 ? `${review}${note}` : `${note}`;
+  return htmlPage(
+    "Thanks for rating",
+    `<style>${RATING_STYLE}</style><h1>${escapeHtml(words.title)}</h1><p class="muted">${escapeHtml(lead)}</p>${asks}
+<h2>What comes next</h2>
+${nextSteps(status)
+    .map((l) => `<p><a href="${l.href}">${escapeHtml(l.label)}</a></p>`)
+    .join("\n")}
+<p><a href="${caseUrl}">Your case's page</a></p>`,
+  );
+}
+
+/** What comes after the status the last alert reported. Exported for the test. */
+export function nextSteps(status: string | null): Array<{ href: string; label: string }> {
+  const s = (status ?? "").trim().toUpperCase();
+  if (s === "CERTIFIED") {
+    return [
+      { href: `${SITE_URL}/guides/waiting-on-your-green-card`, label: "The steps after PERM, and how long each takes" },
+      { href: `${SITE_URL}/tools/green-card-line`, label: "Where your green card line stands" },
+    ];
+  }
+  if (s.startsWith("DENIED")) {
+    return [{ href: `${SITE_URL}/guides/perm-denied-what-happens-next`, label: "What a denial means, and the options after one" }];
+  }
+  // Withdrawn, expired or anything else final: the case page says what DOL recorded.
+  return [];
+}
+
+// ============================================================================
 // The preferences page
 // ============================================================================
 

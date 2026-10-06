@@ -17,6 +17,7 @@
  */
 
 import type { Metadata } from "next";
+import { CaseNextStep } from "@/components/tools/CaseNextStep";
 import { Fragment } from "react";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
@@ -37,7 +38,6 @@ import {
   rateReliability,
 } from "@/components/tools/EntityContext";
 import {
-  DecisionEstimatorCard,
   EntityStatCards,
   FieldPositionPlate,
   approvalCard,
@@ -262,6 +262,15 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
       <OtherEmployer
         record={record}
         pending={pending}
+        nextStep={
+          <CaseNextStep
+            question={`Waiting on a filing with ${record.name}?`}
+            searchHref={`/case-search?q=${encodeURIComponent(record.name)}`}
+            searchLabel="Find it among their filings"
+            numberKind="DOL"
+            source="employer-page-other"
+          />
+        }
         ledger={
           programs ? (
             <EmployerPrograms
@@ -521,6 +530,15 @@ export default async function EmployerPage({
             </>
           }
           asOf={fresh["perm-case-status"]?.asOf ?? null}
+          nextStep={
+            <CaseNextStep
+              question={`Waiting on a case with ${live.record.name}?`}
+              searchHref={`/case-search?q=${encodeURIComponent(live.record.name)}`}
+              searchLabel="Find it among their filings"
+              extra={{ href: "#follow", label: "Or follow this employer by email" }}
+              source="employer-page-live"
+            />
+          }
           follow={
             <EmployerFollow
               slug={slug}
@@ -675,6 +693,16 @@ export default async function EmployerPage({
           footnote to a fact; over it, the number arrives already qualified. */}
       <DebarmentNotice rows={debarments} pageName={row.name} today={new Date().toISOString().slice(0, 10)} />{" "}
       <WarnNoticeBand rows={warn} pageName={row.name} />{" "}
+      {/* Most people who land here work for this sponsor and came for their
+          own case, so the way to it comes before the sponsor's figures. */}
+      <CaseNextStep
+        question={`Waiting on a case with ${row.name}?`}
+        searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
+        searchLabel="Find it among their filings"
+        extra={{ href: "#follow", label: "Or follow this employer by email" }}
+        source="employer-page"
+        className="mt-8"
+      />{" "}
       <ReliabilityBand
         reliability={reliability}
         baselineDenialPct={baselineDenialPct}
@@ -1004,8 +1032,9 @@ export default async function EmployerPage({
         className="mt-8"
       />
 
-      <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <DecisionEstimatorCard heading="Your case is with them?" />
+      {/* The case-number box sits near the top now, so the old bottom card
+          that only pointed at the calculator is gone. */}
+      <section className="mt-10 max-w-2xl">
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Comparing sponsors?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">

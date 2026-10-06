@@ -14,6 +14,7 @@ import { useId, useState } from "react";
 import { isQueued, replyHeading } from "@/lib/alertReply";
 import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
 import { formText } from "@/lib/forms/formText";
+import { trackAlertSignup } from "@/lib/alertSignupEvent";
 
 function subscribeEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -85,7 +86,9 @@ export function BulletinAlertForm({ source }: { source: string }) {
       );
       setQueued(isQueued(body));
       setStatus(res.ok ? "done" : "error");
+      trackAlertSignup("bulletin", res.ok ? "accepted" : "refused", { status: res.status });
     } catch {
+      trackAlertSignup("bulletin", "error");
       setMessage("Couldn't reach the server. Try again in a moment.");
       setStatus("error");
     }

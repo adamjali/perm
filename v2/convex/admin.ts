@@ -584,7 +584,7 @@ export const saveAdminSortPreference = mutation({
       v.literal("userType"), v.literal("emailVerified"), v.literal("verificationMethod"),
       v.literal("deletedCases"), v.literal("termsVersion"),
       v.literal("termsAccepted"), v.literal("lastCaseUpdate"), v.literal("deletedAt"),
-      v.literal("userId"), v.literal("authProviders")
+      v.literal("userId"), v.literal("authProviders"), v.literal("audience"), v.literal("role")
     ),
     sortOrder: v.union(v.literal("asc"), v.literal("desc")),
   },

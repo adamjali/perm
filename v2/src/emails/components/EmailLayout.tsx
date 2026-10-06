@@ -186,6 +186,8 @@ const DARK_MODE_STYLES = [
   // The figure table sits directly on the card. #2A2A2A would be 1.36:1 there.
   "  .cs-fig-label { color: #D4D4D8 !important; }",
   "  .cs-fig-value { color: #FAFAFA !important; }",
+  // The rating boxes stay paper-on-ink like the outline buttons.
+  "  .rt-box { background-color: #FAFAFA !important; color: #000001 !important; border-color: #000001 !important; }",
   "}",
 ].join("\n");
 

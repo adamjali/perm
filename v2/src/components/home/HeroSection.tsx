@@ -148,7 +148,6 @@ function CaseNumberAnatomy({ id }: { id: string }) {
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** "2025-12-01" -> "Dec 2025": a board row is about ten cells wide. */
 function boardMonth(iso: string): string {
@@ -156,16 +155,20 @@ function boardMonth(iso: string): string {
   return `${MONTHS[Number(m) - 1] ?? ""} ${y}`;
 }
 
-/** The day's weekday, read from the date itself (noon UTC, so no zone can move it). */
-function weekdayOf(iso: string): string {
-  return WEEKDAYS[new Date(`${iso}T12:00:00Z`).getUTCDay()] ?? "";
+/**
+ * "2026-10-05" -> "Oct 5". A date, not a weekday: the board is set in
+ * capitals, and "DECIDED MON" read as "decided month".
+ */
+function boardDay(iso: string): string {
+  const [, m, d] = iso.split("-");
+  return `${MONTHS[Number(m) - 1] ?? ""} ${Number(d)}`;
 }
 
 export function boardRowsFor(board: HeroBoard | undefined): FlapRow[] {
   if (!board) return [];
   const rows: FlapRow[] = [];
   if (board.frontierMonth) rows.push({ label: "Now deciding", value: boardMonth(board.frontierMonth) });
-  if (board.lastDay) rows.push({ label: `Decided ${weekdayOf(board.lastDay.date)}`, value: board.lastDay.total.toLocaleString("en-US") });
+  if (board.lastDay) rows.push({ label: `Decided ${boardDay(board.lastDay.date)}`, value: board.lastDay.total.toLocaleString("en-US") });
   if (board.pending !== null) rows.push({ label: "PERM waiting", value: board.pending.toLocaleString("en-US") });
   if (board.pwdPending) rows.push({ label: "Wage requests", value: board.pwdPending.toLocaleString("en-US") });
   return rows;

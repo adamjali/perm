@@ -1,18 +1,24 @@
 import Link from "next/link";
+import { Fragment } from "react";
 
 import { FinePrint } from "@/components/data/FinePrint";
-import { buildCaseEstimate, type CaseEstimateInput } from "@/lib/caseEstimate";
+import {
+  buildCaseEstimate,
+  type CaseEstimate as Estimate,
+  type CaseEstimateInput,
+} from "@/lib/caseEstimate";
 import { formatAsOf } from "@/lib/dolFormat";
 
 /**
  * The estimate block on the case-status page: when could THIS case be
  * decided, given the stage it is actually at.
  *
- * SECOND BLOCK, NEVER FIRST. The federal record renders above this, because
- * a fact about the case outranks a statistic about its cohort; the estimate
- * is labeled as an estimate in the heading, carries its model and basis
- * inline, and the alert form renders directly beneath it - the natural next
- * step after reading a window is asking to hear when the answer changes.
+ * NEVER FIRST. DOL's status leads the case page, because a fact about the
+ * case outranks a statistic about its cohort. The answer card under it names
+ * this estimate's date in one line (most visitors came for that date); this
+ * panel carries the window, the model and its basis, and the alert form
+ * renders directly beneath it, because the next step after reading a window
+ * is asking to hear when the answer changes.
  *
  * The stage adjustment is the point: a case at RFI reads its cohort's p90,
  * not the median (measured over 18 matured cohorts; see lib/queueForecast).
@@ -24,11 +30,36 @@ const fmtDate = (iso: string) => formatAsOf(iso) ?? iso;
 
 export function CaseEstimate(props: CaseEstimateInput) {
   const est = buildCaseEstimate(props);
-  if (!est) return null;
+  return est ? <CaseEstimatePanel est={est} /> : null;
+}
 
+/** The anchor the case page's answer card links to. */
+export const ESTIMATE_ANCHOR = "estimate";
+
+const ANCHOR_OFFSET = "scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]";
+
+/**
+ * The panel itself, for a caller that already built the estimate: the case
+ * page builds it once and shows its date in the answer card too, so the two
+ * can never name different days.
+ */
+export function CaseEstimatePanel({
+  est,
+  dateShownAbove = false,
+}: {
+  est: Estimate;
+  /**
+   * The answer card above already names the date in large type, so the
+   * panel leads with the window instead of printing the same day twice.
+   */
+  dateShownAbove?: boolean;
+}) {
   if (est.kind === "no-date") {
     return (
-      <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+      <section
+        id={ESTIMATE_ANCHOR}
+        className={`mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8 ${ANCHOR_OFFSET}`}
+      >
         <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Estimate
         </p>{" "}
@@ -115,12 +146,17 @@ export function CaseEstimate(props: CaseEstimateInput) {
   // everything about how it's worked out folded below. The window isn't a
   // confidence interval, so each model words it for what it is.
   return (
-    <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+    <section
+      id={ESTIMATE_ANCHOR}
+      className={`mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8 ${ANCHOR_OFFSET}`}
+    >
       <h2 className="font-heading text-2xl font-black">When this case could be decided</h2>{" "}
-      <p className="mt-4 font-heading text-3xl font-black sm:text-4xl">
-        Around {fmtDate(est.estimatedDate)}
-      </p>{" "}
-      <p className="mt-1 text-base text-foreground/80">
+      {dateShownAbove ? null : (
+        <p className="mt-4 font-heading text-3xl font-black sm:text-4xl">
+          Around {fmtDate(est.estimatedDate)}
+        </p>
+      )}{" "}
+      <p className={dateShownAbove ? "mt-3 text-base text-foreground/80" : "mt-1 text-base text-foreground/80"}>
         {est.earliestDate && est.latestDate ? (
           <>
             {est.modelId === "decision-pace"
@@ -141,13 +177,16 @@ export function CaseEstimate(props: CaseEstimateInput) {
       <FinePrint summary="How this is worked out" className="mt-4">
         <p>
           {est.modelLabel}: {est.basis} Source: {est.source}
-        </p>
+        </p>{" "}
         {est.stage ? (
           <p>Adjusted for the case&apos;s stage: the {est.stage.percentile}th percentile of its filing month.</p>
-        ) : null}
+        ) : null}{" "}
         {est.caveats.map((c) => (
-          <p key={c}>{c}</p>
-        ))}
+          <Fragment key={c}>
+            {" "}
+            <p>{c}</p>
+          </Fragment>
+        ))}{" "}
         <p>
           Every model and its spread, side by side, is on{" "}
           <Link href="/tools/perm-timeline-calculator">the processing time calculator</Link>, and how each

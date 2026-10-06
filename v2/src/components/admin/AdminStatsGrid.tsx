@@ -1,6 +1,6 @@
 "use client";
 
-import { ClockIcon, FolderOpenIcon, TrendUpIcon as TrendingUp, UserCheckIcon, UserMinusIcon as UserX, UsersIcon } from "@phosphor-icons/react";
+import { BriefcaseIcon, ClockIcon, FolderOpenIcon, TrendUpIcon as TrendingUp, UserCheckIcon, UserIcon, UserMinusIcon as UserX, UsersIcon } from "@phosphor-icons/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AdminStatsGridProps {
@@ -10,6 +10,9 @@ interface AdminStatsGridProps {
     deletedUsers: number;
     pendingDeletion: number;
     usersWithCases: number;
+    /** Absent from a dashboard built before the audience mark existed. */
+    practiceUsers?: number;
+    ownCaseUsers?: number;
     totalCasesInSystem: number;
   };
 }
@@ -31,7 +34,22 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
       bgColor: "bg-primary/10",
     },
     {
-      label: "Users with Cases",
+      // Attorneys, paralegals, HR and employers: the people the app is for.
+      label: "In practice",
+      value: data.practiceUsers ?? 0,
+      icon: BriefcaseIcon,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      label: "Tracking own case",
+      value: data.ownCaseUsers ?? 0,
+      icon: UserIcon,
+      color: "text-data-info-ink",
+      bgColor: "bg-data-info/10",
+    },
+    {
+      label: "Users with cases",
       value: data.usersWithCases,
       icon: FolderOpenIcon,
       color: "text-stage-recruitment-ink",

@@ -219,6 +219,55 @@ describe("CaseStatusResult, pending case", () => {
     expect(text).toMatch(/processing time calculator/i);
   });
 
+  it("names the estimate's date once, on the answer card, with the window in the panel", () => {
+    const { container } = renderPending({}, ESTIMATOR);
+    const text = container.textContent ?? "";
+    expect(text).toMatch(/Estimated decision/);
+    // Built once by the page; the card names the day and the panel under it
+    // explains the window, so the same date isn't printed twice in a row.
+    const days = [...text.matchAll(/Around ([A-Z][a-z]+ \d{1,2}, \d{4})/g)].map((m) => m[1]);
+    expect(days).toHaveLength(1);
+    expect(container.querySelector("section#estimate")?.textContent).toMatch(/When this case could be decided/);
+    expect(container.querySelector("section#estimate")?.textContent).toMatch(/days from\s+filing/);
+    // Its "how" link lands on the panel, which carries that anchor.
+    expect(container.querySelector('a[href="#estimate"]')).not.toBeNull();
+    expect(container.querySelector("section#estimate")).not.toBeNull();
+  });
+
+  it("puts a button on the answer card that lands on the alert form", () => {
+    const { container } = renderPending({}, ESTIMATOR);
+    const button = container.querySelector('a[href="#watch"]');
+    expect(button?.textContent).toMatch(/Email me changes/);
+    expect(container.querySelector("#watch")?.textContent).toMatch(/Watch this case/);
+  });
+
+  it("puts the record's details below the date and the alert form", () => {
+    // The answer card already states the status, filing date and queue; the
+    // record cards are reference and sit under the next steps.
+    const { container } = renderPending({}, ESTIMATOR);
+    const html = container.innerHTML;
+    const at = (needle: string) => {
+      const i = html.indexOf(needle);
+      expect(i, needle).toBeGreaterThan(-1);
+      return i;
+    };
+    expect(at('id="estimate"')).toBeLessThan(at('id="watch"'));
+    expect(at('id="watch"')).toBeLessThan(at("Job title"));
+  });
+
+  it("says when no date can be given, from the answer card too", () => {
+    const { container } = renderPending(
+      {
+        live: { ...PENDING.live!, status: "BALCA APPEALS" },
+        statusOutlook: { status: "BALCA APPEALS", nowInStatus: 167 },
+      },
+      ESTIMATOR,
+    );
+    const text = container.textContent ?? "";
+    expect(text).toMatch(/No date can honestly be put on this case yet/);
+    expect(text).not.toMatch(/Estimated decision/);
+  });
+
   it("refuses a date for an appeal and shows the measured age instead", () => {
     const { container } = renderPending(
       {
@@ -455,6 +504,8 @@ describe("CaseStatusResult, decided case", () => {
   it("does not offer alerts on a case that is already decided", () => {
     const { container } = renderDecided(null);
     expect(container.textContent).not.toMatch(/Watch this case/);
+    expect(container.querySelector('a[href="#watch"]')?.textContent ?? "").not.toMatch(/Email me changes/);
+    expect(container.querySelector('a[href="#watch"]')).toBeNull();
   });
 
   it("drops the elapsed-days count once a case is finished", () => {

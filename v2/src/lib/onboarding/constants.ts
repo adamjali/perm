@@ -7,6 +7,13 @@ export const ONBOARDING_ROLES: {
   icon: string;
 }[] = [
   {
+    // Listed FIRST. It is the largest group arriving here, and it gets its
+    // own short path: one case number and an email when DOL moves it.
+    role: "Waiting on my own case",
+    description: "You're the applicant. Watch your case by email",
+    icon: "UserCheck",
+  },
+  {
     role: "Immigration Attorney",
     description: "Managing PERM cases for clients",
     icon: "Scale",
@@ -24,14 +31,6 @@ export const ONBOARDING_ROLES: {
   {
     role: "Employer/Petitioner",
     description: "Sponsoring a worker for permanent residency",
-    icon: "UserCheck",
-  },
-  {
-    // Listed FIRST, not last. It is the largest group arriving here and the
-    // one this wizard cannot serve, so it should be the easiest to find and
-    // the fastest to leave by.
-    role: "Waiting on my own case",
-    description: "You're the applicant. We'll take you to your case",
     icon: "UserCheck",
   },
   {

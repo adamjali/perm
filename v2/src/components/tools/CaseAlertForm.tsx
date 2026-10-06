@@ -8,6 +8,7 @@ import { programNoun, type FlagProgram } from "@/lib/flagCaseNumber";
 import { isQueued } from "@/lib/alertReply";
 import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
 import { formText } from "@/lib/forms/formText";
+import { trackAlertSignup } from "@/lib/alertSignupEvent";
 
 /**
  * Subscribe to status changes on ONE case.
@@ -113,7 +114,9 @@ export function CaseAlertForm({
         body?.message ??
         "That did not go through. Try again in a moment, or check the case on DOL's own status page.";
       setState(res.ok ? { kind: "done", message, queued: isQueued(body) } : { kind: "refused", message });
+      trackAlertSignup("case", res.ok ? "accepted" : "refused", { program, status: res.status });
     } catch {
+      trackAlertSignup("case", "error", { program });
       setState({
         kind: "refused",
         message:

@@ -33,6 +33,8 @@ import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { loggers } from "./lib/logging";
 import { easternDay, MS_PER_DAY } from "./lib/time";
 import { RETRY_MAX_ROWS } from "./lib/emailLimits";
+import { countAudiences } from "./lib/audience";
+import { ratingsSince } from "./alertRatings";
 import { waitingForReview } from "./firmClaims";
 
 const log = loggers.email;
@@ -109,9 +111,16 @@ export const facts = internalQuery({
 
     const firmWaiting = await waitingForReview(ctx, 50);
 
+    // Who each account is for, from its onboarding role, so the report's
+    // attorney figure leaves out people tracking their own case.
+    const roleByUser = new Map(profiles.map((p) => [p.userId, p.jobTitle]));
+    const fresh = users.filter((u) => u._creationTime > since);
+
     return {
       users: users.length,
-      signups24h: users.filter((u) => u._creationTime > since).length,
+      signups24h: fresh.length,
+      audiences: countAudiences(users.map((u) => roleByUser.get(u._id))),
+      signupsByAudience: countAudiences(fresh.map((u) => roleByUser.get(u._id))),
       logins24h: profiles.filter((p) => (p.lastLoginAt ?? 0) > since).length,
       subs,
       errors: {
@@ -138,6 +147,8 @@ export const facts = internalQuery({
       },
       // Firm names are public; no address or role reaches the report.
       firmReview: { waiting: firmWaiting.map((w) => ({ firmName: w.firmName, kind: w.kind, since: w.since })) },
+      // What people said about their alerts, the last week: scores and notes only.
+      ratings: await ratingsSince(ctx, now - 7 * MS_PER_DAY),
     };
   },
 });

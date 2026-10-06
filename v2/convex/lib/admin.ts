@@ -8,6 +8,7 @@
 import { QueryCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { getCurrentUserId } from "./auth";
+import { audienceOf, type Audience } from "./audience";
 
 /**
  * Get the admin email address from ADMIN_EMAIL env var.
@@ -103,6 +104,10 @@ export type UserSummaryRow = {
   termsAccepted: number | null;
   termsVersion: string | null;
   lastActivity: number;
+  /** The role picked at onboarding or typed in Settings, as stored. */
+  role: string | null;
+  /** Who the account is for (convex/lib/audience.ts). */
+  audience: Audience;
 };
 
 export interface AdminDashboardData {
@@ -112,6 +117,9 @@ export interface AdminDashboardData {
   deletedUsers: number;
   pendingDeletion: number;
   usersWithCases: number;
+  /** Active accounts whose role is practice work, and those tracking their own case. */
+  practiceUsers: number;
+  ownCaseUsers: number;
   totalCasesInSystem: number;
   users: UserSummaryRow[];
   totalCount: number;
@@ -215,6 +223,8 @@ export async function getAdminDashboardDataHelper(
   let deletedUsers = 0;
   let pendingDeletion = 0;
   let usersWithCases = 0;
+  let practiceUsers = 0;
+  let ownCaseUsers = 0;
 
   // Assemble per-user summary
   const userSummaries = users.map((user) => {
@@ -288,6 +298,10 @@ export async function getAdminDashboardDataHelper(
     if (accountStatus === "deleted") deletedUsers++;
     if (accountStatus === "pending_deletion") pendingDeletion++;
     if (totalCasesCount > 0) usersWithCases++;
+    const role = profile?.jobTitle?.trim() || null;
+    const audience = audienceOf(role);
+    if (accountStatus === "active" && audience === "practice") practiceUsers++;
+    if (accountStatus === "active" && audience === "own-case") ownCaseUsers++;
 
     return {
       userId: user._id,
@@ -309,6 +323,8 @@ export async function getAdminDashboardDataHelper(
       termsAccepted: profile?.termsAcceptedAt ?? null,
       termsVersion: profile?.termsVersion ?? null,
       lastActivity,
+      role,
+      audience,
     };
   });
 
@@ -319,6 +335,8 @@ export async function getAdminDashboardDataHelper(
         u.name.toLowerCase().includes(search) ||
         u.userType.toLowerCase().includes(search) ||
         u.accountStatus.toLowerCase().includes(search) ||
+        u.audience.includes(search) ||
+        (u.role ?? "").toLowerCase().includes(search) ||
         u.userId.toLowerCase().includes(search)
       )
     : userSummaries;
@@ -340,6 +358,8 @@ export async function getAdminDashboardDataHelper(
     deletedUsers,
     pendingDeletion,
     usersWithCases,
+    practiceUsers,
+    ownCaseUsers,
     totalCasesInSystem: cases.length,
     users: pageUsers,
     totalCount,

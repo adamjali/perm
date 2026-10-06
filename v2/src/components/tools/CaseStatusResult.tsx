@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FinePrint } from "@/components/data/FinePrint";
 import { Fragment } from "react";
-import { WarningIcon } from "@phosphor-icons/react/ssr";
+import { BellIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { FigurePlate } from "@/components/tools/FigurePlate";
@@ -9,7 +9,11 @@ import { InsightLede, Verdict } from "@/components/tools/Insight";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { CaseMilestones } from "@/components/tools/CaseMilestones";
 import { CasePushAlert } from "@/components/tools/CasePushAlert";
-import { CaseEstimate } from "@/components/tools/CaseEstimate";
+import {
+  CaseEstimate,
+  CaseEstimatePanel,
+  ESTIMATE_ANCHOR,
+} from "@/components/tools/CaseEstimate";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
 import { SameDayCases } from "@/components/tools/SameDayCases";
 import { QueueTape } from "@/components/tools/QueueTape";
@@ -34,6 +38,7 @@ import { getStatusMeaning, KIND_LABEL } from "@/lib/permStatus";
 import { statusAnchor } from "@/lib/statusDictionary";
 import { isApproval } from "@/lib/caseStatusVocabulary";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
+import { buildCaseEstimate, type CaseEstimate as Estimate } from "@/lib/caseEstimate";
 import type { SameDay } from "@/lib/sameDay";
 import type { CaseLookupResult } from "@/lib/turso/caseLookup";
 import type { CaseWageContext, CohortDuration } from "@/lib/turso/caseContext";
@@ -69,6 +74,9 @@ const money = (n: number) =>
 
 /** Below this many decided cases, a percentage is arithmetic on an anecdote. */
 const MIN_RATE_SAMPLE = 20;
+
+/** Where the answer card's "Email me when it changes" lands. */
+const WATCH_ANCHOR = "watch";
 
 export interface CaseStatusResultProps {
   result: CaseLookupResult;
@@ -153,6 +161,22 @@ export function CaseStatusResult({
   const parsed = parseCaseNumber(result.caseNumber);
   const check = statusCheckAge(live?.lastCheckedAt, today);
   const elapsed = daysElapsed(filingDate, today);
+  // Built once: the answer card names its date and the panel below explains
+  // it, so the two can never disagree.
+  const estimate = buildCaseEstimate({
+    filingDate,
+    status,
+    isFinal,
+    estimator,
+    casesAhead,
+    decisionPace,
+    sweepAgeDays,
+    stragglers,
+    measuredStageAges,
+    stageExit,
+    stageDuration,
+    today,
+  });
 
   // 54 cases in 277,016 carry a live status that contradicts DOL's decided
   // record. It is 0.02% of the overlap and it is the whole ballgame when it
@@ -192,6 +216,7 @@ export function CaseStatusResult({
         publishedFront={publishedFront}
         publishedAsOf={publishedAsOf}
         casesAhead={casesAhead}
+        estimate={estimate}
       />
 
       {check?.stale && !isFinal ? (
@@ -267,6 +292,25 @@ export function CaseStatusResult({
         </p>
       ) : null}
 
+
+      {/* The estimate, right after the answer: the question that brought
+          most readers here, answered by the canonical models and adjusted for
+          the stage this case is actually at. Renders nothing when no
+          defensible estimate exists. */}
+      {estimate ? <CaseEstimatePanel est={estimate} dateShownAbove={!isFinal} /> : null}{" "}
+      {/* Only while the case can still change. On a decided one this would
+          promise mail that can never arrive. Directly beneath the estimate on
+          purpose: "email me when this changes" is the next step after reading
+          a window, and the answer card's button lands here. */}
+      {!isFinal ? (
+        <div id={WATCH_ANCHOR} className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
+          <CaseAlertForm caseNumber={result.caseNumber} className="mt-8" />{" "}
+          <CasePushAlert caseNumber={result.caseNumber} className="mt-4" />
+        </div>
+      ) : null}{" "}
+      {/* The record's details below the next steps: the answer card already
+          states the status, the filing date and the queue, so these two cards
+          are reference, not the answer. */}
       <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         {parsed ? (
           <CaseNumberPlate parsed={parsed} recordedFilingDate={filingDate} />
@@ -280,35 +324,6 @@ export function CaseStatusResult({
           check={check}
         />
       </section>
-
-      {/* The estimate, after the record and before everything else: the
-          question that brought most readers here, answered by the canonical
-          models and adjusted for the stage this case is actually at. Renders
-          nothing when no defensible estimate exists. */}
-      <CaseEstimate
-        filingDate={filingDate}
-        status={status}
-        isFinal={isFinal}
-        estimator={estimator}
-        casesAhead={casesAhead}
-        decisionPace={decisionPace}
-        sweepAgeDays={sweepAgeDays}
-        stragglers={stragglers}
-        measuredStageAges={measuredStageAges}
-        stageExit={stageExit}
-        stageDuration={stageDuration}
-        today={today}
-      />
-      {/* Only while the case can still change. On a decided one this would
-          promise mail that can never arrive. Directly beneath the estimate on
-          purpose: "email me when this changes" is the next step after reading
-          a window. */}
-      {!isFinal ? (
-        <>
-          <CaseAlertForm caseNumber={result.caseNumber} className="mt-8" />{" "}
-          <CasePushAlert caseNumber={result.caseNumber} className="mt-4" />
-        </>
-      ) : null}{" "}
       {/* After DOL: the I-140 and I-485 have no federal per-case record, so
           this is the only trace of them, as labelled user reports. Rendered for
           decided cases too, because a certified PERM is exactly the case whose
@@ -411,6 +426,7 @@ function Answer({
   publishedFront,
   publishedAsOf,
   casesAhead,
+  estimate,
 }: {
   status: string | null;
   isFinal: boolean;
@@ -429,6 +445,8 @@ function Answer({
   check: ReturnType<typeof statusCheckAge>;
   publishedFront: string | null;
   publishedAsOf: string | null;
+  /** The estimate the panel below explains, built once by the caller. */
+  estimate: Estimate | null;
 }) {
   const verdict = meaning ? KIND_LABEL[meaning.kind] : isFinal ? "Decided" : "Pending";
 
@@ -466,6 +484,7 @@ function Answer({
       verdict={verdict}
       direction={direction as "good" | "warn" | "flat"}
       source={sourceBits.length > 0 ? sourceBits.join(" · ") : undefined}
+      actions={isFinal ? undefined : <NextSteps estimate={estimate} />}
     >
       {/* The status is stated as a LABEL, never slotted into a clause. "This
           case is in Analyst Review" reads fine and "This case is in In
@@ -519,6 +538,49 @@ function Answer({
         </>
       ) : null}
     </InsightLede>
+  );
+}
+
+/**
+ * What most people open a pending case for, on the answer card itself: when
+ * it could be decided, and a way to hear when it moves. The date is the
+ * estimate panel's own (built once by the caller), and both links land
+ * further down this page, so nothing here is a second estimate.
+ */
+function NextSteps({ estimate }: { estimate: Estimate | null }) {
+  const link =
+    "inline-flex min-h-[44px] items-center text-base font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary";
+  return (
+    <div className="mt-6 flex flex-col gap-4 border-t border-background/25 pt-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+      {estimate?.kind === "date" ? (
+        <p>
+          <span className="block font-mono text-sm uppercase tracking-wider text-background/70">
+            Estimated decision
+          </span>{" "}
+          <span className="block font-heading text-2xl font-black sm:text-3xl">
+            Around {formatAsOf(estimate.estimatedDate) ?? estimate.estimatedDate}
+          </span>{" "}
+          <a href={`#${ESTIMATE_ANCHOR}`} className={link}>
+            How this estimate is worked out
+          </a>
+        </p>
+      ) : estimate?.kind === "no-date" ? (
+        <p className="max-w-xl text-base leading-relaxed text-background/80">
+          No date can honestly be put on this case yet.{" "}
+          <a href={`#${ESTIMATE_ANCHOR}`} className={link}>
+            Here&apos;s why
+          </a>
+        </p>
+      ) : null}{" "}
+      <a
+        href={`#${WATCH_ANCHOR}`}
+        className="inline-flex min-h-[48px] items-center justify-center gap-2 self-start border-2 border-background bg-primary px-5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-primary-foreground transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:self-auto"
+      >
+        <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
+        {/* The alert form's own button label, so the action keeps one name. */}
+        Email me changes
+      </a>
+    </div>
   );
 }
 
@@ -1013,7 +1075,7 @@ function StatusExplainer({
             >
               Every status, side by side
             </Link>
-          </p>
+          </p>{" "}
 
           {meaning.deadline ? (
             <p className="mt-4 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed">

@@ -188,7 +188,7 @@ export default defineSchema({
       v.literal("userType"), v.literal("emailVerified"), v.literal("verificationMethod"),
       v.literal("deletedCases"), v.literal("termsVersion"),
       v.literal("termsAccepted"), v.literal("lastCaseUpdate"), v.literal("deletedAt"),
-      v.literal("userId"), v.literal("authProviders")
+      v.literal("userId"), v.literal("authProviders"), v.literal("audience"), v.literal("role")
     )),
     adminSortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
 
@@ -1442,6 +1442,34 @@ export default defineSchema({
      */
     .index("by_alert_sweep", ["notifiedAt", "unsubscribedAt", "filingMonth"])
     .index("by_created", ["createdAt"]),
+
+  /**
+   * How useful a subscriber found their case alerts, sent from the 1-to-5 row
+   * in the last alert (the one that says the case is decided). One row per
+   * address and case: a second rating replaces the first. Written only by
+   * `alertRatings.record`, behind a signed link, and only for an address that
+   * really watched that case.
+   */
+  alertRatings: defineTable({
+    /**
+     * SHA-256 of "<address>|<case number>": what keeps one row per person and
+     * case, and the only trace of who rated once they ask to be anonymous.
+     */
+    key: v.string(),
+    /** Absent once the rater asked to leave their address off. */
+    email: v.optional(v.string()),
+    caseNumber: v.optional(v.string()),
+    /** They ticked "leave my email off this note"; never undone by a later tap. */
+    anonymous: v.optional(v.boolean()),
+    /** 1 (not useful) to 5 (very useful). */
+    score: v.number(),
+    /** Their own words, plain text, at most NOTE_MAX characters. */
+    note: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_key", ["key"])
+    .index("by_updatedAt", ["updatedAt"]),
 
   /**
    * Someone waiting on ONE specific PERM case, by case number.

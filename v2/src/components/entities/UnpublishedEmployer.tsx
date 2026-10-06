@@ -66,8 +66,11 @@ export function UnpublishedEmployer({
   follow,
   wait,
   programs,
+  nextStep,
 }: {
   record: LiveEmployerRecord;
+  /** The case-number box for someone waiting on one of its cases (CaseNextStep). */
+  nextStep?: ReactNode;
   /** The newest cases, already capped by the caller. */
   cases: LiveCaseRow[];
   /** As-of date of the live case corpus, ISO. */
@@ -113,16 +116,9 @@ export function UnpublishedEmployer({
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
           A case reaches DOL&apos;s quarterly files only once it&apos;s decided, so this sponsor has no
           approval rate, decision time, wage or rank yet. Below are its cases, with DOL&apos;s status on each.
-          For one case&apos;s status today,{" "}
-          <Link
-            href="/perm-case-status"
-            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-          >
-            look up its number
-          </Link>
-          .
         </p>
-      </section>
+      </section>{" "}
+      {nextStep ? <div className="mt-8">{nextStep}</div> : null}
 
       {/* Only the counts we can stand behind, and each one labelled with the
           corpus it came from rather than presented as a lifetime figure. */}

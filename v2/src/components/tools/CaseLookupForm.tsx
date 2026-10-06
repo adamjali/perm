@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 
+import { analytics } from "@/lib/analytics";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { looksLikeReceipt } from "@/lib/uscis/receipt";
 
@@ -31,9 +32,26 @@ export interface CaseLookupFormProps {
   /** Repopulates the box after a submit, so the URL and the field agree. */
   defaultValue?: string;
   className?: string;
+  /** The box's label. Kept for screen readers when `compact` hides it. */
+  label?: string;
+  /** For a block that already asks the question: the label is read, not shown. */
+  compact?: boolean;
+  /** Where "Don't have the number?" goes, and its words. */
+  searchHref?: string;
+  searchLabel?: string;
+  /** Which page sent the lookup, for the funnel's lookup event. */
+  source?: string;
 }
 
-export function CaseLookupForm({ defaultValue = "", className }: CaseLookupFormProps) {
+export function CaseLookupForm({
+  defaultValue = "",
+  className,
+  label = "Your PERM case number",
+  compact = false,
+  searchHref = "/case-search",
+  searchLabel = "Find the case by employer name",
+  source,
+}: CaseLookupFormProps) {
   const inputId = useId();
   const helpId = useId();
   const [value, setValue] = useState(defaultValue);
@@ -51,14 +69,26 @@ export function CaseLookupForm({ defaultValue = "", className }: CaseLookupFormP
     edited && !isReceipt && value.trim().length > 0 && normaliseCaseNumber(value) === null;
 
   return (
-    <form method="get" action="/perm-case-status" className={className}>
+    <form
+      method="get"
+      action="/perm-case-status"
+      className={className}
+      // A plain GET still navigates; this only records which page sent it.
+      onSubmit={() => {
+        if (source) analytics.capture("case_lookup_submitted", { source });
+      }}
+    >
       <label
         htmlFor={inputId}
-        className="block font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground"
+        className={
+          compact
+            ? "sr-only"
+            : "block font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground"
+        }
       >
-        Your PERM case number
+        {label}
       </label>{" "}
-      <div className="mt-2 flex flex-wrap items-stretch gap-3">
+      <div className={compact ? "flex flex-wrap items-stretch gap-3" : "mt-2 flex flex-wrap items-stretch gap-3"}>
         <input
           id={inputId}
           name="case"
@@ -85,7 +115,13 @@ export function CaseLookupForm({ defaultValue = "", className }: CaseLookupFormP
           Look it up
         </button>
       </div>
-      <p id={helpId} className="mt-2 text-sm text-muted-foreground">
+      {/* Compact, the help line is for screen readers until there is
+          something to warn about: the block around it already says what the
+          number is for. */}
+      <p
+        id={helpId}
+        className={compact && !isReceipt && !malformed ? "sr-only" : "mt-2 text-sm text-muted-foreground"}
+      >
         {isReceipt ? (
           <span className="font-bold text-data-warn-ink">
             That looks like a USCIS receipt number (three letters, ten digits),
@@ -109,10 +145,10 @@ export function CaseLookupForm({ defaultValue = "", className }: CaseLookupFormP
       <p className="mt-2 text-sm text-muted-foreground">
         Don&apos;t have the number?{" "}
         <Link
-          href="/case-search"
+          href={searchHref}
           className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
         >
-          Find the case by employer name
+          {searchLabel}
         </Link>
         .
       </p>

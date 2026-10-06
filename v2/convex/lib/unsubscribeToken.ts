@@ -86,7 +86,9 @@ export type TokenPurpose =
   | "bulletin-unsubscribe"
   | "employer-confirm"
   | "employer-unsubscribe"
-  | "prefs";
+  | "prefs"
+  /** The rating row in a case's last alert: rate the alerts, nothing else. */
+  | "alert-rating";
 
 /** The exact string that gets signed. Kept in one place so both sides agree. */
 function signedMessage(normalizedEmail: string, purpose?: TokenPurpose): string {
