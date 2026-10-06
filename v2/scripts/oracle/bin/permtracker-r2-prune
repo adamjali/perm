@@ -1,0 +1,29 @@
+#!/bin/bash
+# permtracker-r2-prune <db|server|convex> <name just uploaded> [--dry-run]
+#
+# Removes the off-site copies lib/r2_keep.py lets go: the newest 15 and the
+# first copy of each of the 3 newest months stay, and nothing under 8 days old
+# is touched. The three backup jobs run this right after a new copy's upload
+# and size check, never on a clock of its own, so a server that stops uploading
+# (dead, or its Oracle account gone) never deletes a copy. Added Oct 5 2026; the
+# bucket's own 15-day expiry was removed the same day.
+#
+# A failure here deletes nothing and never fails the backup that called it.
+set -uo pipefail
+folder=${1:-}; newest=${2:-}; dry=${3:-}
+[[ "$folder" =~ ^(db|server|convex)$ ]] || { echo "prune: unknown folder '$folder'"; exit 2; }
+[ -n "$newest" ] || { echo "prune: no name given"; exit 2; }
+# shellcheck disable=SC1091
+. /usr/local/lib/permtracker/r2-env
+list=$(rclone lsjson "r2:permtracker-backups/$folder/") || { echo "prune: listing $folder failed; deleted nothing"; exit 0; }
+gone=$(printf '%s' "$list" | python3 /usr/local/lib/permtracker/r2_keep.py "$newest") \
+  || { echo "prune: could not decide for $folder; deleted nothing"; exit 0; }
+n=0; failed=0
+while IFS= read -r name; do
+  [ -n "$name" ] || continue
+  if [ "$dry" = "--dry-run" ]; then echo "prune: would delete $folder/$name"; n=$((n + 1)); continue; fi
+  if rclone deletefile "r2:permtracker-backups/$folder/$name" -q; then n=$((n + 1)); else failed=$((failed + 1)); echo "prune: could not delete $folder/$name"; fi
+done <<< "$gone"
+total=$(printf '%s' "$list" | python3 -c 'import json,sys; print(sum(1 for e in json.load(sys.stdin) if not e.get("IsDir")))')
+note=""; [ "$failed" -gt 0 ] && note=", $failed refused"
+echo "prune: $folder held $total, removed $n${dry:+ (dry run)}$note"

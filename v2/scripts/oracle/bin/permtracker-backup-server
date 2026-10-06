@@ -15,7 +15,9 @@
 # that half is never on this machine or in R2. Open one with:
 #   openssl cms -decrypt -binary -inform DER -in server-...tar.zst.cms \
 #     -inkey backup-key.pem | tar --zstd -tvf -
-# Added Sep 29 2026. Newest 7 kept here; R2 keeps 15 days, locked for 7.
+# Added Sep 29 2026. Newest 7 kept here. R2 locks each copy for 7 days and keeps
+# the newest 15 plus a copy a month for 3 months, removed only after a newer one
+# lands (permtracker-r2-prune).
 set -euo pipefail
 B=/srv/permtracker/backups; R=/etc/permtracker/backup-recipient.pem
 REQUIRED=(/srv/permtracker/app/env /srv/permtracker/secrets /srv/permtracker/db-auth /root/permtracker-jwt
@@ -42,3 +44,4 @@ remote=$(rclone lsjson "r2:permtracker-backups/server/$name" | python3 -c 'impor
 [ "$remote" = "$size" ] || { echo "uploaded size $remote does not match $size"; exit 1; }
 printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$size" "$name" > "$B/SERVER_OK"; chown permtracker:permtracker "$B/SERVER_OK"
 echo "server copy ok: $name ($size bytes, sealed) in R2"
+/usr/local/bin/permtracker-r2-prune server "$name" || true

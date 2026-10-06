@@ -600,7 +600,8 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
         used = (b.get("offsiteOk") or {}).get("bucketBytes")
         if used is not None:
             gb = used / 1e9
-            # R2's free tier is 10 GB-month; old copies auto-delete after 15 days.
+            # R2's free tier is 10 GB-month. Old copies go only after a newer one
+            # lands (oracle/bin/permtracker-r2-prune: newest 15 + 3 monthly).
             if gb > R2_FAIL_GB:
                 fails.append(f"R2 holds {gb:.1f} GB, about to pass the free 10 GB")
             elif gb > R2_WARN_GB:

@@ -108,7 +108,7 @@ zstd -dc /srv/permtracker/backups/db-<stamp>.sql.zst | sqlite3 /tmp/restore.db
 ```
 
 The sealed copies open only with the backup key's private half (on the owner's
-Mac). Fetch one from R2 (`server/` or `convex/`, 15 days kept) or from
+Mac). Fetch one from R2 (`server/` or `convex/`) or from
 `/srv/permtracker/backups/`, then:
 
 ```bash
@@ -121,8 +121,8 @@ npx convex import --prod --replace convex.zip
 ```
 
 Layers, newest first: Oracle's own disk backups (3 days, whole machine), the
-nightly database dump (7 here, 15 days in R2), the sealed server and Convex
-copies (7 here, 15 days in R2), and the weekly public dump of the tables DOL
+nightly database dump (7 here), the sealed server and Convex copies (7 here),
+the same three in R2, and the weekly public dump of the tables DOL
 cannot give back (GitHub artifact, 90 days, `backup-observations.yml`).
 
 ## Switch day (only on the owner's go)
@@ -165,3 +165,36 @@ cannot give back (GitHub artifact, 90 days, `backup-observations.yml`).
 9. Check Google sign-in (Convex sends Google back to permtracker.app, so it can
    only be tested on the real domain). Rollback: point the two DNS records back
    to Vercel.
+
+## If this server or the Oracle account is gone
+
+Nothing that can't be rebuilt lives only here. Accounts, cases and
+subscriptions are in Convex; the code is on GitHub; the domain, DNS, tunnel and
+backups are on Cloudflare. What stops: every page, the API, case-status alerts
+and the data jobs (their clocks are this server's timers).
+
+**How we'd hear:** Cloudflare's notification "PERM Tracker server connection
+changed (Oracle tunnel)" (`tunnel_health_event` on tunnel `permtracker-oracle`,
+emails on any status change, set Oct 5 2026), then the review routine's "NO
+daily report arrived" the next morning.
+
+**R2 keeps copies until a newer one lands.** Each copy is locked for 7 days.
+Older ones are removed only by `bin/permtracker-r2-prune`, which the three
+backup jobs run right after a new copy's upload and size check: the newest 15
+and the first copy of each of the 3 newest months stay, nothing under 8 days
+old is touched, and nothing goes unless the copy just uploaded is the newest
+listed (`lib/r2_keep.py`, `test_r2_keep.py`). The bucket's own "delete after
+15 days" rule was removed Oct 5 2026: a dead server uploads nothing, so it
+would have emptied the bucket 15 days later. The bucket's size against the
+free 10 GB is `backups/OFFSITE_SIZE`, which the morning report reads.
+
+**Rebuilding elsewhere** (never rehearsed yet): copy the newest `db/`,
+`server/` and `convex/` objects from R2 to the owner's Mac; on the new Linux
+machine install sqld, nginx, Node and cloudflared and this directory's files;
+open the sealed server copy with the backup key (secrets, env files, the
+database signing key, the tunnel token); load the dump as in "Restore a
+backup"; start cloudflared with the SAME tunnel token, so DNS and every
+`db.permtracker.app` URL in GitHub and Convex stay as they are; update the
+GitHub secrets `ORACLE_HOST`, `ORACLE_KNOWN_HOSTS` and the deploy key; deploy;
+run each nightly job once by hand.
+

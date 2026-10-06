@@ -195,6 +195,8 @@ case "$action" in
     remote=$(rclone lsjson "r2:permtracker-backups/convex/$name" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r[0]["Size"] if r else -1)')
     [ "$remote" = "$size" ] || { log "convex backup: uploaded size $remote does not match $size"; exit 4; }
     printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$size" "$name" > "$B/CONVEX_OK"; chown permtracker:permtracker "$B/CONVEX_OK"
-    log "convex backup $name ($size bytes, sealed) stored and in R2" ;;
+    log "convex backup $name ($size bytes, sealed) stored and in R2"
+    # Older copies go only now, after this one landed (permtracker-r2-prune).
+    log "$(/usr/local/bin/permtracker-r2-prune convex "$name" 2>&1 | tail -1)" || true ;;
   *) log "unknown action"; exit 2 ;;
 esac

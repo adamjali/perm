@@ -5,8 +5,13 @@
 #
 # Then the same file goes off the machine, to Cloudflare R2 (bucket
 # permtracker-backups, Standard class, the free tier): a copy that survives
-# losing this server. The bucket deletes copies after 15 days and locks each
-# one for 7, so even a stolen key cannot erase the last week. The upload is
+# losing this server. The bucket locks each copy for 7 days, so even a stolen
+# key cannot erase the last week, and older copies are removed only after a new
+# one has landed and checked out (permtracker-r2-prune: the newest 15 and the
+# first of each of the 3 newest months stay), so a server that stops uploading
+# never loses its last copies. Until Oct 5 2026 the bucket deleted every copy
+# after 15 days, which would have emptied it 15 days after losing this
+# server. The upload is
 # checked by size against the local file; OFFSITE_OK records it, and the daily
 # report fails when it goes stale. No key in /etc/permtracker/r2.env means no
 # upload, and the report says so rather than passing quietly.
@@ -33,5 +38,7 @@ remote=$(rclone lsjson "r2:permtracker-backups/db/$name" | python3 -c 'import js
 [ "$remote" = "$size" ] || { echo "off-site: uploaded size $remote does not match $size"; exit 1; }
 printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$size" "$name" > "$B/OFFSITE_OK"
 echo "off-site ok: $name ($size bytes) in R2"
+# Only now, with a newer copy in place, may older ones go.
+/usr/local/bin/permtracker-r2-prune db "$name" || true
 # The whole bucket, against R2's free 10 GB: the report warns long before a charge.
 rclone size r2:permtracker-backups --json | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r["count"], r["bytes"])' > "$B/OFFSITE_SIZE" || true
