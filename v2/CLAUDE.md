@@ -8340,7 +8340,13 @@ plain, natural set: "no salsey desperate weird unnatural". Method and what chang
   processing times and 154 to /tools. The questions are unchanged below. **The case number box says what to do
   without a number** (`CaseLookupForm`, so on /faq, /perm-case-statuses and the lookup page alike): "Don't have the
   number? Find the case by employer name", to /case-search, which reaches pending cases. Many people waiting never saw
-  their receipt; the lawyer filed it. The question list's `ScrollReveal`
+  their receipt; the lawyer filed it.
+- **A layoff notice no longer lands on a tiny namesake** (`sponsor_matcher` in `scripts/ingest_warn.py`). Washington's
+  "Amazon" notices had matched a one-filing employer named "AMAZON"; an exact match under 30 filings now gives way to
+  the busiest employer whose key begins with the same words, with ten times the filings and 100 in all, the keyless
+  lookup's rule and numbers (`test_warn.py` holds them together). Measured first on production: it moved that one
+  company and no other, so Amazon.com Services LLC's page lists its three notices. Branch-named notices ("Amazon -
+  SJC13") still match nothing; the rule never adds a match. The question list's `ScrollReveal`
   logs a dev-only hydration warning (server `opacity:"1",transform:"none"`, client `opacity:1`); nothing on screen
   differs, and it predates this change.
 

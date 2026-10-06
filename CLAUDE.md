@@ -461,7 +461,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the five "Oct 5 2026" sections.
 - **Testing Library's cleanup runs from `vitest.setup.ts`**: the shared `unit` worker had left one test's render in the next.
 - **Who visits** (Oct 5): about 350 to 900 likely people a day, 4,553 a week, 11,784 a month; Cloudflare's 865k requests are mostly blocked scrapers and crawlers.
 
-## Oct 6 2026, in five lines
+## Oct 6 2026, in six lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
 
@@ -471,4 +471,5 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
 - **The case-status dictionary opens with a case lookup**: most of its visitors searched "perm case status" for their own case.
 - **/faq opens with the case lookup and four tool tiles**: it takes much of the brand search, and its visitors go to those pages next. The case number box links
   to the employer search for anyone without their number.
+- **A layoff notice no longer lands on a tiny namesake**: "Amazon" had matched a one-filing "AMAZON"; the lookup's namesake rule now applies.
 
