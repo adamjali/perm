@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS } from "@/lib/constants/about";
+import { DISAMBIGUATION, LEGAL_FORM, LEGAL_NAME, PEOPLE, POSTAL_ADDRESS } from "@/lib/constants/about";
 import { getOrganizationSchema } from "@/lib/structuredData";
 
 /**
@@ -25,6 +25,7 @@ const PUBLIC = join(__dirname, "..", "(site)", "(public)");
 const terms = readFileSync(join(PUBLIC, "terms", "page.tsx"), "utf8");
 const about = readFileSync(join(PUBLIC, "about", "page.tsx"), "utf8");
 const privacy = readFileSync(join(PUBLIC, "privacy", "page.tsx"), "utf8");
+const llms = readFileSync(join(__dirname, "..", "llms.txt", "route.ts"), "utf8");
 const emailLayout = readFileSync(join(__dirname, "..", "..", "emails", "components", "EmailLayout.tsx"), "utf8");
 
 describe("the legal entity", () => {
@@ -63,5 +64,17 @@ describe("the legal entity", () => {
 
   it("owns the copyright every email carries", () => {
     expect(emailLayout).toMatch(/&copy; \{`\$\{new Date\(\)\.getFullYear\(\)\} \$\{LEGAL_NAME\}`\}/);
+  });
+
+  it("is what tells the site apart from others with similar names", () => {
+    // schema.org disambiguatingDescription: the domain, the company and the
+    // source, which no similarly named site can claim; no person is named.
+    expect(DISAMBIGUATION).toContain("permtracker.app");
+    expect(DISAMBIGUATION).toContain(LEGAL_NAME);
+    expect(DISAMBIGUATION).toMatch(/Department of Labor's own case records/);
+    for (const p of PEOPLE) expect(DISAMBIGUATION).not.toContain(p.name.split(" ")[0]);
+    const org = getOrganizationSchema("https://permtracker.app") as { disambiguatingDescription?: string };
+    expect(org.disambiguatingDescription).toBe(DISAMBIGUATION);
+    expect(llms).toMatch(/^\s+DISAMBIGUATION,$/m);
   });
 });

@@ -24,6 +24,7 @@ import { getAllPosts } from "@/lib/content";
 import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import { DISAMBIGUATION } from "@/lib/constants/about";
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";
 
@@ -474,6 +475,8 @@ export async function GET() {
     "# PERM Tracker",
     "",
     "> PERM Tracker (permtracker.app) is a free web app for the US Department of Labor PERM (Program Electronic Review Management) labor certification process, for both the person waiting on a case and the attorney managing one. Without an account: look a case up by NUMBER across all three DOL programs - PERM (G-), prevailing wage request (P-) and H-1B LCA (I-200/I-203) - for its live DOL status and a stage-aware decision estimate (with email alerts on changes); or, with no case number at all, find it by employer name, law firm, worksite state or occupation. Use timeline calculators for every green-card stage (PWD, PERM, I-140, I-485), and browse DOL's own disclosure and queue data as searchable datasets. With a free account: case-management software that computes every interdependent PERM deadline per case.",
+    "",
+    DISAMBIGUATION,
     "",
     "Every figure on this site is measured from a named federal source and carries the window it was measured over. Nothing is modelled. Where the data cannot support a number, the site says so rather than estimating one: there is no per-case denial-risk score, and processing-time estimates are withheld for filing cohorts too young to measure.",
     "",

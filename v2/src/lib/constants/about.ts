@@ -77,6 +77,18 @@ export const LEGAL_NAME = "PERM Tracker LLC";
 export const LEGAL_FORM = "a Florida limited liability company";
 
 /**
+ * What tells this site apart from others with similar names, for schema.org's
+ * `disambiguatingDescription` ("a short description of the item used to
+ * disambiguate from other, similar items") and the top of llms.txt. Google's
+ * site-names guide (updated Dec 10 2025) reads only name, url and
+ * alternateName, so this is for assistants that read the JSON-LD or llms.txt.
+ * It names only what no other site can claim (the domain, the company, the
+ * source) and no other site and no person. It reads LEGAL_NAME, so the
+ * rename changes it with everything else.
+ */
+export const DISAMBIGUATION = `PERM Tracker at permtracker.app, run by ${LEGAL_NAME} in Florida: a free site that reads the Department of Labor's own case records for PERM, prevailing wage, H-1B LCA, H-2A and H-2B filings, with a free deadline app for immigration attorneys.`;
+
+/**
  * The LLC's postal address, printed in every email footer. It is the principal
  * and mailing address filed with Florida (Northwest Registered Agent's St.
  * Petersburg office), so it is already public and is nobody's home. CAN-SPAM

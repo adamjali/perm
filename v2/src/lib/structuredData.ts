@@ -15,7 +15,7 @@
  * product was. Both sides of the product, in both descriptions, always.
  */
 
-import { FOUNDED, LEGAL_NAME, ORGANIZATION_SAME_AS, PEOPLE } from './constants/about';
+import { DISAMBIGUATION, FOUNDED, LEGAL_NAME, ORGANIZATION_SAME_AS, PEOPLE } from './constants/about';
 
 /**
  * Single source for the schema.org `@id` fragments used to cross-link entities
@@ -99,6 +99,8 @@ export function getOrganizationSchema(baseUrl: string) {
     // The entity the Terms bind. One constant feeds this, the About page and
     // the Terms, so the three cannot name different parties.
     legalName: LEGAL_NAME,
+    // Tells this site apart from others with similar names (see DISAMBIGUATION).
+    disambiguatingDescription: DISAMBIGUATION,
     url: baseUrl,
     logo: `${baseUrl}/icon-512.png`,
     contactPoint: {
