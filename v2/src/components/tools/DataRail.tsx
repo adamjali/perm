@@ -3,7 +3,20 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { CaretRightIcon, CircleNotchIcon, HouseIcon } from "@phosphor-icons/react";
+import {
+  BookOpenIcon,
+  BuildingsIcon,
+  CalendarDotsIcon,
+  CaretRightIcon,
+  ChartBarIcon,
+  CircleNotchIcon,
+  HourglassMediumIcon,
+  HouseIcon,
+  MagnifyingGlassIcon,
+  StampIcon,
+  WarningIcon,
+  type Icon,
+} from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 import { LinkPending } from "@/components/ui/pending-link";
@@ -27,14 +40,34 @@ import {
  * on a case file.
  *
  * The current tab protrudes past the rail's border with its own hard shadow,
- * so "you are here" is a shape rather than a tint. Groups are disclosures (a
- * caret that turns, set in the label face); destinations are links (the
- * reading face). Motion is horizontal, toward the content, and is dropped
- * under `prefers-reduced-motion`.
+ * so "you are here" is a shape rather than a tint. Groups are disclosures (the
+ * group's icon, its name in the heading face, how many pages it holds, and a
+ * caret that turns); destinations are links (the reading face). Collapsed, the
+ * rail is a strip of the group icons, and a group's square opens the rail at
+ * that group. Motion is horizontal, toward the content, and is dropped under
+ * `prefers-reduced-motion`.
  */
 
 const RAIL_W = "17rem";
 const RAIL_W_COLLAPSED = "3rem";
+
+/**
+ * One picture per group, on its heading and in the collapsed strip. Groups
+ * only: 48 pages have no 48 pictures that tell them apart (a PERM case, a wage
+ * request and an LCA would all be the same document), and an icon that doesn't
+ * separate one row from the next is decoration. Typed by `DataGroup`, so a new
+ * group without an icon fails the typecheck.
+ */
+export const GROUP_ICONS: Record<DataGroup, Icon> = {
+  "Case tools": MagnifyingGlassIcon,
+  Queue: HourglassMediumIcon,
+  "Employers and wages": BuildingsIcon,
+  Breakdowns: ChartBarIcon,
+  "Denials and audits": WarningIcon,
+  "Visa bulletin": CalendarDotsIcon,
+  USCIS: StampIcon,
+  Reference: BookOpenIcon,
+};
 
 export function DataRail() {
   const pathname = usePathname();
@@ -50,6 +83,17 @@ export function DataRail() {
   const [railOpen, setRailOpen] = useState(true);
 
   const [open, setOpen] = useState<DataGroup | null>(active?.group ?? null);
+
+  // The strip and the open rail replace each other, so whatever had focus is
+  // gone after the click. This names the element to focus once the swap lands:
+  // the opened group's heading, or the toggle that took the old one's place.
+  const focusAfterToggle = useRef<string | null>(null);
+  useEffect(() => {
+    const id = focusAfterToggle.current;
+    if (!id) return;
+    focusAfterToggle.current = null;
+    document.getElementById(id)?.focus();
+  }, [railOpen]);
 
   // Sticky only when it fits. A sticky element taller than the viewport never
   // shows its bottom, and a scroll box would clip the protruding tab, so the
@@ -108,7 +152,9 @@ export function DataRail() {
 
   if (!isDataPath(pathname)) return null;
 
-  const body = (
+  // Rendered twice, in the desktop rail and the phone panel, so every id
+  // carries where it is: two elements with one id break `aria-controls`.
+  const renderBody = (where: "rail" | "panel") => (
     <>
       <Tab
         href={OVERVIEW.href}
@@ -120,13 +166,18 @@ export function DataRail() {
         const isOpen = g === open;
         const items = SECTIONS.filter((s) => s.group === g);
         const holdsActive = active?.group === g;
+        const GroupIcon = GROUP_ICONS[g];
         return (
           <Fragment key={g}>{" "}
             <div>
               <button
                 type="button"
+                id={`${where}-head-${slug(g)}`}
+                // The spoken name says what the bare number means; it keeps
+                // the visible words, so voice control still finds it.
+                aria-label={`${g}, ${items.length} pages`}
                 aria-expanded={isOpen}
-                aria-controls={`rail-${slug(g)}`}
+                aria-controls={`${where}-${slug(g)}`}
                 onClick={() => setOpen(isOpen ? null : g)}
                 className={cn(
                   // `group/tab` stays because a child targets it; the rest
@@ -148,6 +199,16 @@ export function DataRail() {
                       : "bg-transparent group-hover/tab:bg-border",
                   )}
                 />
+                {/* The rail-marker box Overview's house sits in, so the group
+                    names line up with "Overview" above them. */}
+                <span aria-hidden="true" className="rail-marker">
+                  <GroupIcon className="size-3.5" weight="bold" />
+                </span>{" "}
+                <span className="flex-1">{g}</span>{" "}
+                {/* How many pages are inside, before it opens. */}
+                <span aria-hidden="true" className="font-mono text-sm font-medium tabular-nums text-muted-foreground">
+                  {items.length}
+                </span>{" "}
                 <CaretRightIcon
                   className={cn(
                     "size-3.5 shrink-0 transition-transform duration-200 ease-out",
@@ -156,8 +217,7 @@ export function DataRail() {
                   )}
                   weight="bold"
                   aria-hidden="true"
-                />{" "}
-                <span className="flex-1">{g}</span>
+                />
               </button>{" "}
               {/* The height animation. `grid-template-rows` 0fr to 1fr is the
                   one technique that transitions to content height without a
@@ -166,7 +226,7 @@ export function DataRail() {
                   documented trap. `inert` takes the links out of the tab order
                   while closed; `hidden` would defeat the transition. */}
               <div
-                id={`rail-${slug(g)}`}
+                id={`${where}-${slug(g)}`}
                 className={cn(
                   "grid transition-[grid-template-rows] duration-200 ease-out",
                   "motion-reduce:transition-none",
@@ -219,8 +279,9 @@ export function DataRail() {
       <div
         className={cn(
           "-ml-4 hidden bg-background sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch",
-          // Collapsed, there's no rail to draw an edge for, just a tab.
-          railOpen && "lg:border-r-2 lg:border-border",
+          // Open or collapsed, the rail has an edge: collapsed, it's the strip
+          // of group squares, and the toggle tab sits on this border.
+          "lg:border-r-2 lg:border-border",
           // Collapsing changes this column's width; the content beside it is
           // `lg:flex-1` and takes the space back. No overlay, no scrim.
           "transition-[width] duration-200 ease-out motion-reduce:transition-none",
@@ -252,9 +313,13 @@ export function DataRail() {
                   handle, which is the shape it turns into when collapsed. */}
               <button
                 type="button"
+                id="rail-collapse"
                 aria-expanded={true}
                 aria-controls="data-rail-desktop"
-                onClick={() => setRailOpen(false)}
+                onClick={() => {
+                  focusAfterToggle.current = "rail-expand";
+                  setRailOpen(false);
+                }}
                 className={cn(
                   // Sits on the rail's right border with no left border of its
                   // own: its left edge overlaps the rail's 2px border, so the
@@ -271,40 +336,67 @@ export function DataRail() {
                 <CaretRightIcon className="size-4 rotate-180" weight="bold" aria-hidden="true" />
               </button>
               <div id="data-rail-desktop" className="flex flex-1 flex-col">
-                {body}
+                {renderBody("rail")}
                 <RailFooter />
               </div>
             </>
           ) : (
-            /* Collapsed, the tab still names the current section, set
-               vertically. A caret pointing into the page means "this opens". */
-            <button
-              type="button"
-              aria-expanded={false}
-              aria-controls="data-rail-desktop"
-              onClick={() => setRailOpen(true)}
-              className={cn(
-                // A tab, not a bar: sized to its content and protruding like
-                // every other tab. No `w-full`: with an explicit width the
-                // negative margin moves the next sibling instead of reaching
-                // out.
-                "-mr-[12px] flex shrink-0 flex-col items-center gap-3 py-3",
-                "border-y-2 border-r-2 border-border bg-background",
-                "text-primary transition-colors duration-150 hover:bg-tint-primary",
-                "focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-primary",
-                "motion-reduce:transition-none",
-              )}
-            >
-              <span className="sr-only">Expand data sections</span>
-              <CaretRightIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
-              <span
-                aria-hidden="true"
-                className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-foreground/70"
-                style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+            /* Collapsed, a strip: the same edge tab that collapsed it, pointing
+               into the page, then Overview and one square per group, the group
+               holding this page lit. A group's square opens the rail with that
+               group open, so the strip is a way in, not only a way back. */
+            <div className="flex flex-col items-stretch">
+              <button
+                type="button"
+                id="rail-expand"
+                aria-expanded={false}
+                aria-controls="data-rail-desktop"
+                onClick={() => {
+                  focusAfterToggle.current = "rail-collapse";
+                  setRailOpen(true);
+                }}
+                className={cn(
+                  "-mr-[36px] mb-1 flex size-9 shrink-0 items-center justify-center self-end",
+                  "border-y-2 border-r-2 border-border bg-background text-primary",
+                  "transition-colors duration-150 hover:bg-tint-primary",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                  "motion-reduce:transition-none",
+                )}
               >
-                {active?.label ?? OVERVIEW.label}
-              </span>
-            </button>
+                <span className="sr-only">Expand data sections</span>
+                <CaretRightIcon className="size-4" weight="bold" aria-hidden="true" />
+              </button>{" "}
+              <Link
+                href={OVERVIEW.href}
+                aria-label={OVERVIEW.label}
+                title={OVERVIEW.label}
+                aria-current={onOverview ? "page" : undefined}
+                className={cn("rail-square", onOverview ? "bg-primary text-black" : "text-primary hover:bg-tint-primary")}
+              >
+                <HouseIcon className="size-4" weight="fill" aria-hidden="true" />
+              </Link>{" "}
+              {GROUPS.map((g) => {
+                const GroupIcon = GROUP_ICONS[g];
+                const here = active?.group === g;
+                return (
+                  <Fragment key={g}>{" "}
+                    <button
+                      type="button"
+                      aria-label={here ? `${g} (this page's group)` : g}
+                      title={g}
+                      onClick={() => {
+                        focusAfterToggle.current = `rail-head-${slug(g)}`;
+                        setOpen(g);
+                        setRailOpen(true);
+                      }}
+                      className={cn("rail-square", here ? "bg-primary text-black" : "text-foreground/65 hover:bg-tint-primary hover:text-foreground")}
+                    >
+                      <GroupIcon className="size-4" weight="bold" aria-hidden="true" />
+                    </button>
+                  </Fragment>
+                );
+              })}
+            </div>
           )}
         </nav>
       </div>
@@ -380,7 +472,7 @@ export function DataRail() {
           panelOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        {body}
+        {renderBody("panel")}
         <RailFooter />
       </nav>
     </>

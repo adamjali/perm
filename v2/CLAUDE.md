@@ -8524,3 +8524,16 @@ from one address, so it can't carry a full pass.
   videos (valid, but no video result where the video isn't the page's main content), HowTo on
   guides with steps (no Google result since Sep 13 2023), the app's rating (a SoftwareApplication,
   visible on the page, from users, with a way to leave one).
+
+## Oct 7 2026: the data rail has group icons
+
+Each of the rail's eight groups carries one Phosphor icon (`GROUP_ICONS` in `DataRail.tsx`, typed by
+`DataGroup`, so a new group without one fails the typecheck), its name in sentence case in the
+heading face (it was mono capitals) and how many pages it holds; the caret moved to the right. The
+48 pages keep no icons: most have no picture that tells them apart, and one that doesn't separate
+rows is decoration. Collapsed, the rail is a strip of Overview and the group icons, the group
+holding the page lit; a group's square opens the rail at that group with focus on its heading, and
+each toggle hands focus to the one that replaces it. The groups render in both the desktop rail and
+the phone panel, so their ids carry where they are (`rail-…`, `panel-…`); they had been duplicated.
+`DataRail.test.tsx` holds the icons, the spoken names ("Case tools, 7 pages"), unique ids and both
+strip behaviours; row heights didn't change, so `rail-fits.test.ts` holds as before.

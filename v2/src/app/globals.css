@@ -2298,7 +2298,9 @@ input[type="week"] {
   justify-content: center;
 }
 
-/* The group header (CASE TOOLS, QUEUE, ...). 452 characters x 8 per page. */
+/* The group header: its icon, its name, how many pages it holds, the caret.
+   Sentence case in the heading face (it was mono capitals until Oct 7 2026;
+   beside an icon the capitals read as a second label). */
 .rail-tab {
   position: relative;
   display: flex;
@@ -2308,13 +2310,10 @@ input[type="week"] {
   gap: 0.625rem;
   padding: 0.625rem 0.75rem 0.625rem 1rem;
   text-align: left;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  /* 14px and .1em: the label floor the rest of the site holds (12px/.12em
-     mono caps fall under it). The longest group name still clears the rail. */
-  font-size: 0.875rem;
+  font-family: var(--font-heading);
+  /* 15px: between Overview (16px) and the pages under each group (14px). */
+  font-size: 0.9375rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
   transition-property: transform, background-color, color;
   transition-duration: 150ms;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
@@ -2331,6 +2330,26 @@ input[type="week"] {
 @media (prefers-reduced-motion: reduce) {
   .rail-tab { transition: none; }
   .rail-tab:hover { transform: none; }
+}
+
+/* One square in the collapsed rail: Overview or a group, its icon alone, 44px
+   tall across the strip. The name is its tooltip and its accessible name. */
+.rail-square {
+  display: flex;
+  height: 2.75rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  transition-property: background-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.rail-square:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-square { transition: none; }
 }
 
 /* The desktop rail has to fit under the header with its largest group open,

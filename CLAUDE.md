@@ -480,7 +480,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
 - **Every article had ended with a sign-up button**, sending people waiting on their own case into the attorney app; it leads with the case lookup now.
 - **The funnel is counted**: `case_lookup_submitted` and `alert_signup` events in PostHog (no address is sent).
 
-## Oct 7 2026, in six lines
+## Oct 7 2026, in seven lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 
@@ -490,3 +490,4 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 - **Loading screens sweep** (owner's call), and the case page's loading state is the answer's own shape at its measured heights.
 - **Alerts within minutes**: watched cases are asked about every 5 minutes on weekday working hours (the server, not GitHub), a status change is always emailed at once, and DOL's processing times and the visa bulletin are read hourly through the weekday.
 - **The structured data was checked against Google's own rules**: the Organization carries every field we can fill, the app category is one Google accepts, list pages use Google's list shape.
+- **The data rail's groups have icons and page counts**, and collapsed it's a strip of the group icons that opens the rail at the group chosen.
