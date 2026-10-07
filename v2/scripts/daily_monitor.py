@@ -58,7 +58,7 @@ DATA_WORKFLOWS = {
     "Case status (direct from DOL)", "PWD case status (direct from DOL)",
     "DOL processing times", "Federal data ingest", "Ingest health",
     "FLAG disclosure ingest", "PERM history ingest (FY2008 to FY2023)",
-    "Watched cases (hourly)", "Backup observations",
+    "Watched cases (by hand)", "Backup observations",
 }
 
 # Pages a visitor reads every day. Each must answer 200 to a plain request.

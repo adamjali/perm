@@ -480,7 +480,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
 - **Every article had ended with a sign-up button**, sending people waiting on their own case into the attorney app; it leads with the case lookup now.
 - **The funnel is counted**: `case_lookup_submitted` and `alert_signup` events in PostHog (no address is sent).
 
-## Oct 7 2026, in four lines
+## Oct 7 2026, in five lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 
@@ -488,3 +488,4 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 - **Case lookups under the frozen Windows Chrome 151 label get 30 a minute together** in nginx: a scraper on 2,153 addresses passed Cloudflare's checks under it.
 - **Cloudflare's rules 3 and 5 are one rule now**, so the defense's own rule has a slot (4 of the free plan's 5 used).
 - **Loading screens sweep** (owner's call), and the case page's loading state is the answer's own shape at its measured heights.
+- **Alerts within minutes**: watched cases are asked about every 5 minutes on weekday working hours (the server, not GitHub), a status change is always emailed at once, and DOL's processing times and the visa bulletin are read hourly through the weekday.

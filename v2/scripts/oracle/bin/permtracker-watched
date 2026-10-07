@@ -1,0 +1,17 @@
+#!/bin/bash
+# permtracker-watched: ask DOL about the cases someone has an alert on (scripts/check_watched_cases.py).
+# Fired every 5 minutes by permtracker-watched.timer; the script's --cadence lets every run through on
+# weekdays 7 AM to 9 PM Eastern and only the half-hour ones otherwise. It reads the list from Convex
+# (GET /watched-cases: case numbers only) and, when a case moved, asks Convex to send the alerts now
+# (POST /watched-cases/sweep). Both need the secret in /srv/permtracker/secrets/watched_cases_secret,
+# which is also WATCHED_CASES_SECRET on the Convex production deployment.
+set -uo pipefail
+R=/srv/permtracker/repo; V2=$R/v2
+# The shared checkout is refreshed at most once an hour from here (the daily jobs reset it too).
+if [ -z "$(find "$R/.git/FETCH_HEAD" -mmin -60 2>/dev/null)" ]; then
+  git -C "$R" fetch -q origin main && git -C "$R" reset -q --hard origin/main
+fi
+set -a; . /srv/permtracker/app/env/uscis.env; set +a
+export WATCHED_CASES_SECRET_FILE=/srv/permtracker/secrets/watched_cases_secret
+export NEXT_PUBLIC_CONVEX_URL="$(sed -n 's/^NEXT_PUBLIC_CONVEX_URL=//p' /srv/permtracker/app/env/production.env | tr -d '"' | head -1)"
+cd "$V2" && exec python3 scripts/check_watched_cases.py --from-convex --cadence --sweep

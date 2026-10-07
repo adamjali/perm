@@ -7,12 +7,16 @@ import { internalQuery } from "./_generated/server";
  *
  * WHY THIS EXISTS. The full sweep asks DOL about every case twice a day, so
  * without this a watched case could change status and the subscriber not hear
- * about it for up to twelve hours. `watched-cases.yml` runs every hour, reads
- * this list, asks DOL about
- * only these numbers (a few hundred at most, 50 per request), writes any
- * change through the same Python writer the daily sweeps use, and then runs
- * the existing alert sweeps. Nothing about who is watching leaves Convex: the
- * workflow receives case numbers only, never an address or an endpoint.
+ * about it for up to twelve hours. Since Oct 7 2026 the server asks DOL about
+ * these numbers every 5 minutes on weekdays from 7 AM to 9 PM Eastern, and
+ * every 30 minutes otherwise (`permtracker-watched.timer`, running
+ * `scripts/check_watched_cases.py --from-convex`). It reads this list through
+ * `GET /watched-cases`, writes any change through the same Python writer the
+ * daily sweeps use, and then asks for the alert sweeps through
+ * `POST /watched-cases/sweep`. Both routes need `WATCHED_CASES_SECRET`.
+ * Nothing about who is watching leaves Convex: the server receives case
+ * numbers only, never an address or an endpoint. `watched-cases.yml` stays as
+ * a hand-run fallback.
  *
  * Email alerts count once confirmed and until unsubscribed or closed; browser
  * push alerts until closed. Numbers are uppercased and deduplicated, and the
@@ -52,3 +56,20 @@ export const watchedCaseNumbers = internalQuery({
     return { caseNumbers: [...out].sort(), capped: false };
   },
 });
+
+/**
+ * The shared secret on the two server routes, compared as SHA-256 digests so
+ * neither its length nor a matching prefix shows in the timing. Unset means
+ * the routes are off, never open.
+ */
+export async function watchedSecretOk(given: string | null): Promise<"ok" | "denied" | "off"> {
+  const want = process.env.WATCHED_CASES_SECRET;
+  if (!want) return "off";
+  if (!given) return "denied";
+  const digest = async (x: string) =>
+    new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(x)));
+  const [a, b] = await Promise.all([digest(given), digest(want)]);
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i]! ^ b[i]!;
+  return diff === 0 ? "ok" : "denied";
+}

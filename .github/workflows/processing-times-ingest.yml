@@ -18,8 +18,15 @@ name: DOL processing times
 # Manual run:
 #   cd v2 && node --experimental-strip-types scripts/ingest_processing_times.mts
 
+run-name: ${{ inputs.quick == 'true' && 'DOL processing times (hourly)' || 'DOL processing times' }}
+
 on:
   workflow_dispatch:
+    inputs:
+      quick:
+        description: "Only DOL's processing times and the visa bulletin (the weekday hourly pass)"
+        required: false
+        default: "false"
 
 permissions:
   contents: read
@@ -65,7 +72,7 @@ jobs:
             || python3 -m pip install --quiet --break-system-packages openpyxl pdfplumber
 
       - name: Federal Register notices
-        if: always()
+        if: always() && inputs.quick != 'true'
         working-directory: v2
         run: |
           python3 scripts/ingest_policy_notices.py \
@@ -74,7 +81,7 @@ jobs:
       # OFLC's announcements page, into the policy feed. A parse of zero rows
       # refuses to write rather than emptying the feed's OFLC half.
       - name: OFLC announcements
-        if: always()
+        if: always() && inputs.quick != 'true'
         working-directory: v2
         run: |
           python3 scripts/ingest_oflc_news.py \
@@ -83,7 +90,7 @@ jobs:
       # California, New York, Texas and Washington. Texas's own site challenges
       # scripts, so its automatic source is the state's open data portal.
       - name: WARN notices
-        if: always()
+        if: always() && inputs.quick != 'true'
         working-directory: v2
         run: |
           python3 scripts/ingest_warn.py \
@@ -93,7 +100,7 @@ jobs:
       # Hour H-1B page. www.dol.gov answers this runner with a full browser
       # header set.
       - name: Debarment lists
-        if: always()
+        if: always() && inputs.quick != 'true'
         working-directory: v2
         run: |
           python3 scripts/ingest_debarments.py \
@@ -128,7 +135,7 @@ jobs:
       # The yearly spillover figures (annual limits, Table V) from the same
       # State host. A PDF is fetched only in the week a new fiscal year appears.
       - name: Visa annual limits (direct)
-        if: always()
+        if: always() && inputs.quick != 'true'
         working-directory: v2
         run: |
           python3 scripts/ingest_visa_limits.py --discover \
@@ -158,7 +165,7 @@ jobs:
       # sides publish means one side has a parsing bug. Their availability is
       # not our correctness, so it can't fail the run.
       - name: Cross-check against a third-party source
-        if: always()
+        if: always() && inputs.quick != 'true'
         continue-on-error: true
         working-directory: v2
         env:

@@ -1,0 +1,10 @@
+[Unit]
+Description=PERM Tracker watched-case check
+After=network-online.target permtracker-db.service
+[Service]
+Type=oneshot
+User=permtracker
+# Most runs exit in a second (not due); a due one asks DOL a few times. One at a time: a run still
+# going when the next fires makes the next one a no-op (exit 0), never a pile-up.
+TimeoutStartSec=4min
+ExecStart=/usr/bin/flock -n -E 0 /tmp/permtracker-watched.lock /usr/local/bin/permtracker-watched

@@ -637,6 +637,49 @@ describe("the change detector", () => {
     expect(alerts()).toHaveLength(1);
   });
 
+  it("sends a moved case at once, even to an address already mailed today that follows more", async () => {
+    // Owner's call, Oct 7 2026: a status change never waits for the daily
+    // bundle. Without IMMEDIATE_KINDS this address (mailed today, two live
+    // subscriptions, an older item waiting) would be queued until tomorrow.
+    const t = createTestContext();
+    const { alerts } = stubMirrorAndResend({
+      cases: {
+        [CASE]: { status: "RFI ISSUED", isFinal: false },
+        [PWD_CASE]: { status: "IN PROCESS", isFinal: false },
+      },
+    });
+    const id = await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
+    await seededSubscription(t, "person@example.com", "IN PROCESS", PWD_CASE);
+    const { easternDay } = await import("../lib/time");
+    await t.run(async (ctx) => {
+      await ctx.db.insert("alertRecipients", {
+        email: "person@example.com",
+        lastSentDay: easternDay(Date.now()),
+        lastSentAt: Date.now(),
+        emailsSent: 1,
+      });
+      await ctx.db.insert("alertOutbox", {
+        email: "person@example.com",
+        kind: "case",
+        ref: `case:${id}`,
+        status: "queued",
+        subject: "an older note about this case",
+        text: "older",
+        summary: { title: CASE, line: "older", url: "https://permtracker.app" },
+        createdAt: Date.now() - 60_000,
+      });
+    });
+
+    const res = await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(res.sent).toBe(1);
+    expect(res.queued).toBe(0);
+    expect(alerts()).toHaveLength(1);
+    const waiting = await t.run(async (ctx) =>
+      (await ctx.db.query("alertOutbox").collect()).filter((r) => r.status === "queued"),
+    );
+    expect(waiting, "the older item about the same case is dropped, not bundled later").toHaveLength(0);
+  });
+
   it("stays silent on the FIRST sighting of a case it did not hold", async () => {
     const t = createTestContext();
     const { alerts } = stubMirrorAndResend({

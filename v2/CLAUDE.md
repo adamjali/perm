@@ -6412,11 +6412,10 @@ samples cases daily, stores our prediction in Turso `estimate_predictions` (id
 rivals as A, B, C). Rival endpoints come from `RIVAL_A_API` / `RIVAL_B_API` on Vercel; nothing in
 the repo names them. The backtest writes `perm_docs['estimator_backtest']` weekly (Mondays).
 
-**Watched cases are checked hourly.** `watched-cases.yml` (dispatched `:25` past each hour) reads
-case NUMBERS only from `watchedCases:watchedCaseNumbers`, asks DOL, and writes with conditional
+**Watched cases are checked every 5 minutes (since Oct 7 2026; hourly before).** See "Oct 7 2026:
+alerts within minutes". It reads case NUMBERS only, asks DOL, and writes with conditional
 statements (`UPDATE ... WHERE current_status = <what I read>`, then the event only
-`WHERE changes() > 0`), so a sweep running at the same time can't produce a double event. It
-skips an hour when a sweep is running and runs the alert sweeps only when something moved.
+`WHERE changes() > 0`), so a sweep running at the same time can't produce a double event.
 
 **New public pages** (each in the sitemap, rail or tools nav, palette, llms.txt, known-routes, and
 with its own social card): `/tools/green-card-line`, `/tools/eb2-vs-eb3`,
@@ -8462,3 +8461,38 @@ answer card with its date and button, the estimate panel, the alert form, the re
 card held to its measured height at 390, 768 and 1440 wide: 2,682 against 2,681 px on a phone and 1,651
 against 1,649 on desktop. Tailwind's `animate-pulse` (an opacity pulse) is gone from it and the video
 player.
+
+## Oct 7 2026: alerts within minutes (owner's call: "faster and more often, as much as reasonable")
+
+A certified user wrote that our email reached him after his attorney had heard; FLAG emails the
+attorney the moment DOL decides. Before this change a watched case was asked about once an hour
+(GitHub, dispatched at :25 and skipped while a sweep ran), and the email then waited for the
+once-a-day bundle whenever the address followed more than one thing or had been mailed that day.
+
+| what | before | now |
+|---|---|---|
+| watched cases against DOL | hourly, through GitHub | **every 5 minutes, Mon to Fri, 7 AM to 9 PM Eastern**; on the half hour otherwise (`permtracker-watched.timer` on the server) |
+| the email for a status change | at once only for a one-subscription address not mailed that day | **always at once** (`IMMEDIATE_KINDS` in `convex/lib/alertDelivery.ts`); an older queued item about the same case is dropped |
+| browser push | 7:20 AM and 7:20 PM ET | 30 s after the email sweep, whenever a watched case moved |
+| DOL's processing times (site and queue-month alerts) | daily | **hourly at :05 and :10, Mon to Fri, 12 to 22 UTC** (quick pass of `processing-times-ingest.yml`; Convex `dol-processing-times-hourly`) |
+| the visa bulletin read and its alert sweep | daily | **hourly in the same quick pass**; `bulletin-alerts-hourly` at :25 |
+| pending PERM pass | 4:10 AM and 3:40 PM ET | **plus 10:40 AM ET on weekdays** (`case-status-midday`) |
+
+**How the server reaches Convex without a deploy key.** Two routes in `convex/http.ts`, both behind
+`WATCHED_CASES_SECRET` (Convex production env, and `/srv/permtracker/secrets/watched_cases_secret`,
+mode 600): `GET /watched-cases` answers case numbers only, and `POST /watched-cases/sweep` schedules
+the email and push sweeps. Unset means off (503), never open; the secret is compared as SHA-256
+digests. `convex/__tests__/watchedRoutes.test.ts` holds all three answers, probed by opening the gate.
+Convex's own Turso client stays read-only on purpose (`publicMirror.ts`): the server pulls the list,
+Convex never writes the corpus.
+
+**`scripts/check_watched_cases.py --from-convex --cadence --sweep`** is the job: `due()` decides which
+5-minute runs go through (tested across a weekday, a weekend and the clock change), the writes are the
+same conditional pair as before, and it records a run when something changed or failed and once an
+hour, so `ingest_runs` gains about 24 rows a day, not 288. `check_watched` in the health check fails
+past 3 hours without one. `watched-cases.yml` is kept as the hand-run fallback; nothing dispatches it.
+
+**What it costs:** about 2 DOL requests per 5-minute run for the few hundred watched numbers (DOL's
+batch is 50), against the roughly 10,000 the nightly sweep makes; Resend volume is unchanged, only
+the timing. **What it can't do:** beat the attorney. DOL emails the filer the moment it decides; the
+best we can do is a few minutes after.

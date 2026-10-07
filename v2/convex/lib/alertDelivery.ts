@@ -14,6 +14,12 @@
  *   Tracker updates" email when several do. An address already mailed today
  *   waits for tomorrow's first run.
  *
+ * - EXCEPT a case-status change (kind "case"), which always goes now (owner's
+ *   call, Oct 7 2026): it is the news someone signed up to hear first, and
+ *   holding it for a bundle could cost them most of a day. Anything older
+ *   about the same case still waiting is dropped, so no bundle repeats it.
+ *   Queue, bulletin and employer news still follow the rule above.
+ *
  * A queued item counts as delivered for the producer's own change detector,
  * so the producer never re-queues it; the outbox owns retries from then on.
  * A failed direct send returns `failed` and the producer does NOT advance,
@@ -30,6 +36,9 @@ import { FROM_EMAIL, getResend, sendOrQueue } from "./email";
 import { easternDay } from "./time";
 
 export type AlertKind = "case" | "queue" | "bulletin" | "employer";
+
+/** Kinds that never wait for a bundle. */
+export const IMMEDIATE_KINDS: ReadonlySet<AlertKind> = new Set<AlertKind>(["case"]);
 
 export interface AlertSummary {
   /** What it is about: "G-100-26125-868956", "Adobe Inc.", "EB2 India". */
@@ -75,7 +84,7 @@ export async function deliverAlert(ctx: ActionCtx, item: AlertItem): Promise<Del
     day,
   });
 
-  if (!state.sendNow) {
+  if (!state.sendNow && !IMMEDIATE_KINDS.has(item.kind)) {
     await ctx.runMutation(internal.alertOutbox.enqueue, {
       email: item.email,
       kind: item.kind,

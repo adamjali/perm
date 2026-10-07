@@ -1,9 +1,10 @@
-name: Watched cases (hourly)
+name: Watched cases (by hand)
 
-# Asks DOL, every hour, about only the cases someone has an alert on. The full
-# and pending sweeps check every case twice a day, so without this a watched
-# case could move and its subscriber hear up to twelve hours later. Dispatched
-# hourly at :25 by the server's timer (/api/cron/dispatch/watched-cases).
+# Asks DOL about only the cases someone has an alert on. Since Oct 7 2026 the
+# server does this itself every 5 minutes through the weekday (7 AM to 9 PM
+# Eastern) and on the half hour otherwise (permtracker-watched.timer running
+# scripts/check_watched_cases.py --from-convex --cadence --sweep). This
+# workflow is kept as the hand-run fallback; nothing dispatches it.
 #
 #   1. Skip the hour if a sweep is running: it covers these cases anyway.
 #   2. Read the watched list from Convex (case numbers only, never an address).

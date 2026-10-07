@@ -66,10 +66,17 @@ export const CRON_JOBS: Record<string, CronJob> = {
     schedule: "40 10 * * 0",
     description: "the rolling-window PWD and LCA re-check, Sundays",
   },
-  "watched-cases": {
-    workflow: "watched-cases.yml",
-    schedule: "25 * * * *",
-    description: "the cases someone has an alert on, against DOL, hourly (skips an hour a sweep is running)",
+  "processing-times-hourly": {
+    workflow: "processing-times-ingest.yml",
+    inputs: { quick: "true" },
+    schedule: "5 12-22 * * 1-5",
+    description: "DOL's processing times and the visa bulletin only, hourly through the weekday",
+  },
+  "case-status-midday": {
+    workflow: "case-status-direct.yml",
+    inputs: { mode: "pending" },
+    schedule: "40 14 * * 1-5",
+    description: "pending PERM cases against DOL, a weekday morning pass between the night and afternoon ones",
   },
   "case-status-pending": {
     workflow: "case-status-direct.yml",

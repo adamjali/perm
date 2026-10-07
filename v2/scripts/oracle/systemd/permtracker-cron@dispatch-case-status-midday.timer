@@ -1,0 +1,9 @@
+[Unit]
+Description=Schedule for permtracker-cron@dispatch-case-status-midday
+# A weekday morning pending pass between the 4:10 AM and 3:40 PM Eastern ones.
+[Timer]
+OnCalendar=Mon..Fri *-*-* 14:40:00 UTC
+Persistent=true
+Unit=permtracker-cron@dispatch-case-status-midday.service
+[Install]
+WantedBy=timers.target

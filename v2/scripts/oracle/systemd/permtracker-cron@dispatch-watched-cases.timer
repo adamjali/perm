@@ -1,8 +1,0 @@
-[Unit]
-Description=Schedule for permtracker-cron@dispatch-watched-cases
-[Timer]
-OnCalendar=*-*-* *:25:00 UTC
-Persistent=true
-Unit=permtracker-cron@dispatch-watched-cases.service
-[Install]
-WantedBy=timers.target

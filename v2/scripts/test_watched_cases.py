@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Gates for the hourly watched-case check. No network: the SQL runs on an
+"""Gates for the watched-case check (every 5 minutes on the server). No network: the SQL runs on an
 in-memory SQLite with the same table shapes, so the conditional writes are
 exercised for real."""
 from __future__ import annotations
 import pathlib, sqlite3, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from check_watched_cases import plan_changes, split_programs
+from check_watched_cases import due, plan_changes, split_programs
 
 fails: list[str] = []
 def check(cond, msg):
@@ -67,6 +67,17 @@ check(n == 1, "no second event when a sweep already recorded the move")
 c = db()
 run(c, plan); run(c, plan)
 check(c.execute("SELECT COUNT(*) FROM perm_case_events").fetchone()[0] == 1, "a replay adds nothing")
+
+# ---- cadence -------------------------------------------------------------------
+import datetime as _dt
+from zoneinfo import ZoneInfo as _Z
+def et(y, m, d, h, mi):
+    return _dt.datetime(y, m, d, h, mi, tzinfo=_Z("America/New_York")).astimezone(_dt.timezone.utc)
+check(due(et(2026, 10, 7, 10, 17)), "a weekday morning: every run")
+check(due(et(2026, 10, 7, 20, 59)) and not due(et(2026, 10, 7, 21, 7)), "the weekday window closes at 9 PM Eastern")
+check(due(et(2026, 10, 7, 6, 2)) and not due(et(2026, 10, 7, 6, 50)), "before 7 AM: the half-hour runs only")
+check(due(et(2026, 10, 10, 12, 31)) and not due(et(2026, 10, 10, 12, 17)), "a Saturday: the half-hour runs only")
+check(due(et(2026, 11, 2, 7, 10)), "Eastern time after the clocks change (Nov 2 2026 is a Monday)")
 
 print(f"\n{len(fails)} failure(s)")
 sys.exit(1 if fails else 0)

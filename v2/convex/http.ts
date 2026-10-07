@@ -28,6 +28,7 @@ import { verifyExpiringToken } from "./lib/expiringToken";
 import { firmBadLinkPage, firmEditPage, type EditNotice } from "./lib/firmClaimPages";
 import { profileFromForm, type ProfileInput } from "../src/lib/firmProfile";
 import { SITE_URL } from "./lib/links";
+import { watchedSecretOk } from "./watchedCases";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
@@ -1718,6 +1719,48 @@ http.route({
     const endpointHash = await sha256Hex(endpoint);
     const result = await ctx.runMutation(internal.casePushAlerts.stop, { endpointHash });
     return json(result, 200);
+  }),
+});
+
+// ============================================================================
+// The server's watched-case check (scripts/check_watched_cases.py --from-convex)
+// ============================================================================
+
+const serverJson = (body: unknown, status: number) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+
+async function watchedGate(req: Request): Promise<Response | null> {
+  const verdict = await watchedSecretOk(req.headers.get("x-watched-secret"));
+  if (verdict === "off") return serverJson({ ok: false, message: "This route is off." }, 503);
+  if (verdict === "denied") return serverJson({ ok: false, message: "Not allowed." }, 401);
+  return null;
+}
+
+/** Case numbers only: never an address, a name or an endpoint. */
+http.route({
+  path: "/watched-cases",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const refused = await watchedGate(req);
+    if (refused) return refused;
+    const list = await ctx.runQuery(internal.watchedCases.watchedCaseNumbers, {});
+    return serverJson({ ok: true, ...list }, 200);
+  }),
+});
+
+/** A watched case moved: run the email and browser-push sweeps now. Both are idempotent. */
+http.route({
+  path: "/watched-cases/sweep",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const refused = await watchedGate(req);
+    if (refused) return refused;
+    await ctx.scheduler.runAfter(0, internal.caseAlerts.sweepCaseChanges, {});
+    await ctx.scheduler.runAfter(30_000, internal.casePushAlertsSweep.sweep, {});
+    return serverJson({ ok: true, scheduled: ["caseAlerts.sweepCaseChanges", "casePushAlertsSweep.sweep"] }, 202);
   }),
 });
 

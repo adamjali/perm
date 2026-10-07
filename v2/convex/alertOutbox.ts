@@ -21,6 +21,7 @@ import { SITE_URL } from "./lib/links";
 import { oneClickUnsubscribeUrl, prefsLink } from "./lib/prefsLink";
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
 import { oneClickHeaders } from "./lib/alertDelivery";
+import { dropQueued } from "./lib/alertOutboxStore";
 import { recordError } from "./lib/errorRecording";
 import { createLogger } from "./lib/logging";
 import { easternDay, MS_PER_DAY } from "./lib/time";
@@ -189,6 +190,8 @@ export const recordDirect = internalMutation({
       direct: true,
     });
     await stampRecipient(ctx, args.email, args.day, now);
+    // A direct send supersedes anything older about the same thing still waiting.
+    await dropQueued(ctx, args.email, args.ref as Parameters<typeof dropQueued>[2]);
     return null;
   },
 });

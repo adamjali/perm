@@ -497,6 +497,37 @@ def check_gap_sweep(db) -> int:
     return 0
 
 
+# The server asks DOL about watched cases every 5 minutes on weekdays and on
+# the half hour otherwise, and records a run at least once an hour
+# (scripts/check_watched_cases.py). Three hours without one means the timer,
+# the secret or the Convex route has stopped, and alerts are back to the
+# twice-daily sweeps without anyone being told.
+WATCHED_MAX_AGE_HOURS = 3
+
+
+def check_watched(db) -> int:
+    """Fail when the server's watched-case check has stopped recording runs."""
+    try:
+        res = db.execute(
+            "SELECT finished_at, note FROM ingest_runs WHERE script = ? ORDER BY finished_at DESC LIMIT 1",
+            ["check_watched_cases.py"])
+        rows = rows_of(res)
+    except RuntimeError as exc:
+        print(f"watched cases     : unreadable ({str(exc)[:120]})")
+        return 0
+    if not rows or rows[0][0] is None:
+        print("watched cases     : never run")
+        return 0
+    age_h = (NOW_MS - int(rows[0][0])) / 3_600_000
+    print(f"watched cases     : last run {age_h:.1f}h ago ({str(rows[0][1] or '')[:80]})")
+    if age_h > WATCHED_MAX_AGE_HOURS:
+        print(f"\nThe watched-case check has not recorded a run in {age_h:.1f} hours. "
+              "Check permtracker-watched.timer on the server, its secret, and Convex's "
+              "GET /watched-cases. Alerts now wait for the twice-daily sweeps.")
+        return 1
+    return 0
+
+
 # A job that stops on its own budget every run is not keeping up. One capped
 # run is a job doing its work and records `ok`; a streak of them is capacity
 # running short, the leading signal a generous lag budget misses. A warning,
@@ -702,6 +733,7 @@ def main() -> int:
     yield_bad = check_discovery_yield(db)
     backfill_bad = check_backfill(db)
     gapsweep_bad = check_gap_sweep(db)
+    watched_bad = check_watched(db)
     check_cap_streak(db)        # a warning only; see CAP_STREAK_RUNS
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
@@ -748,7 +780,7 @@ def main() -> int:
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
     if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad
-            or coverage_bad or gapsweep_bad or docs_bad or views_bad or handread_bad or unparseable):
+            or coverage_bad or gapsweep_bad or watched_bad or docs_bad or views_bad or handread_bad or unparseable):
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
           "most recent run finished clean, the discovery frontier is moving, the "

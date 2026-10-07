@@ -258,6 +258,17 @@ crons.daily(
   internal.dolProcessingTimes.refresh
 );
 
+// Hourly through the weekday as well (Oct 7 2026), matching the site's own
+// hourly DOL read (processing-times-ingest.yml's quick pass, :05), so a month
+// DOL reaches is emailed within the hour instead of the next afternoon. Same
+// one GET; `store` writes only when DOL's content changed.
+crons.cron(
+  "dol-processing-times-hourly",
+  "10 12-22 * * 1-5",
+  internal.dolProcessingTimes.refresh,
+  {}
+);
+
 // ============================================================================
 // PER-CASE STATUS ALERTS
 // ============================================================================
@@ -266,10 +277,11 @@ crons.daily(
  * Look at every live case subscription and mail the ones whose case has moved.
  *
  * These two ticks follow the twice-daily sweeps. The watched cases are ALSO
- * checked hourly (`.github/workflows/watched-cases.yml`), and
- * that workflow runs this sweep itself when a watched case moved, so a
- * subscriber hears within the hour; these ticks remain the floor. DOL
- * publishes no timestamp for a status change, so an hour is the resolution.
+ * checked by the server every 5 minutes on weekdays from 7 AM to 9 PM Eastern
+ * and every 30 minutes otherwise (`scripts/check_watched_cases.py`, since
+ * Oct 7 2026), which asks for this sweep itself through
+ * `POST /watched-cases/sweep` the moment a watched case moved; these ticks
+ * remain the floor.
  *
  * 11:00 and 23:00 UTC (7am and 7pm ET), deliberately clear of the 14:00, 15:00
  * and 16:00 UTC bulk email jobs above so the two never contend for the shared
@@ -311,6 +323,16 @@ crons.cron(
 crons.daily(
   "bulletin-alerts",
   { hourUTC: 17, minuteUTC: 30 },
+  internal.bulletinAlerts.sweep,
+  {}
+);
+
+// And twenty minutes after each weekday hourly read of State's page (the
+// quick pass at :05 in processing-times-ingest.yml), so a bulletin that lands
+// mid-morning is mailed that hour. On a quiet hour this is one row read.
+crons.cron(
+  "bulletin-alerts-hourly",
+  "25 12-22 * * 1-5",
   internal.bulletinAlerts.sweep,
   {}
 );

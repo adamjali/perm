@@ -1,11 +1,16 @@
-"""Ask DOL, every hour, about only the cases someone is waiting to hear about.
+"""Ask DOL about only the cases someone is waiting to hear about.
 
 The full and pending sweeps ask about every case twice a day, so a watched
 case could change and its subscriber hear up to twelve hours later.
-`watched-cases.yml`
-runs this every hour with the list from Convex (`watchedCases:
-watchedCaseNumbers`: case numbers only, never an address), then runs the
-existing alert sweeps when anything moved.
+
+Since Oct 7 2026 the server runs this every 5 minutes (`permtracker-watched.
+timer`): `--cadence` lets it through every time on weekdays from 7 AM to 9 PM
+Eastern, when DOL decides cases, and on the half hour otherwise.
+`--from-convex` reads the list from Convex's `GET /watched-cases` (case
+numbers only, never an address) and `--sweep` asks Convex's
+`POST /watched-cases/sweep` to send the alerts as soon as anything moved.
+Both routes need WATCHED_CASES_SECRET. `watched-cases.yml` still runs it by
+hand from a file.
 
 SAME DOL CLIENT, SAME SOURCE, SAME TABLES as the sweeps, so a change recorded
 here is the change the sweep would have recorded a few hours later, and every
@@ -22,6 +27,7 @@ in the sweeps' own snapshot comparison.
 
     python3 scripts/check_watched_cases.py watched.json
     python3 scripts/check_watched_cases.py watched.json --dry-run
+    python3 scripts/check_watched_cases.py --from-convex --cadence --sweep
 
 Prints `CHANGED=<n>` last, for the workflow to decide whether to run alerts.
 """
@@ -31,9 +37,12 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 import sys
 import time
+import urllib.request
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib_flag_serials import PERM_OFFICE_PREFIXES  # noqa: E402
@@ -163,13 +172,59 @@ def check(db: Turso, program: str, numbers: list[str], dry: bool) -> dict:
             "moved": moved, "applied": applied, "inserted": inserted}
 
 
+ET = ZoneInfo("America/New_York")
+
+
+def due(now: datetime.datetime) -> bool:
+    """The cadence: every run on weekdays from 7 AM to 9 PM Eastern, when DOL
+    decides cases; otherwise only the run that lands in the first five minutes
+    of a half hour (the timer fires every 5 minutes)."""
+    et = now.astimezone(ET)
+    if et.weekday() < 5 and 7 <= et.hour < 21:
+        return True
+    return et.minute % 30 < 5
+
+
+def convex_site() -> str:
+    site = os.environ.get("CONVEX_SITE_URL", "").strip()
+    if not site:
+        cloud = os.environ.get("NEXT_PUBLIC_CONVEX_URL", "").strip()
+        site = cloud.replace(".convex.cloud", ".convex.site")
+    if not site.startswith("https://"):
+        raise SystemExit("CONVEX_SITE_URL (or NEXT_PUBLIC_CONVEX_URL) is not set")
+    return site.rstrip("/")
+
+
+def convex_call(path: str, method: str = "GET") -> dict:
+    secret = os.environ.get("WATCHED_CASES_SECRET", "").strip()
+    if not secret and os.environ.get("WATCHED_CASES_SECRET_FILE"):
+        secret = Path(os.environ["WATCHED_CASES_SECRET_FILE"]).read_text().strip()
+    if not secret:
+        raise SystemExit("WATCHED_CASES_SECRET is not set")
+    req = urllib.request.Request(convex_site() + path, method=method, data=b"" if method == "POST" else None,
+                                 headers={"x-watched-secret": secret, "User-Agent": "permtracker-watched/1.0"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read() or b"{}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("file", help="JSON from watchedCases:watchedCaseNumbers ({caseNumbers: [...]}), or a bare list")
+    ap.add_argument("file", nargs="?", help="JSON from watchedCases:watchedCaseNumbers ({caseNumbers: [...]}), or a bare list")
+    ap.add_argument("--from-convex", action="store_true", help="Read the list from Convex's GET /watched-cases instead of a file.")
+    ap.add_argument("--cadence", action="store_true", help="Exit quietly unless this run is due (see due()).")
+    ap.add_argument("--sweep", action="store_true", help="When anything moved, ask Convex to send the alerts now.")
     ap.add_argument("--dry-run", action="store_true", help="Ask DOL and plan, write nothing.")
     a = ap.parse_args()
     started = time.time()
-    doc = json.loads(Path(a.file).read_text())
+    if a.cadence and not due(datetime.datetime.now(datetime.timezone.utc)):
+        print("not due; CHANGED=0")
+        return 0
+    if a.from_convex:
+        doc = convex_call("/watched-cases")
+    elif a.file:
+        doc = json.loads(Path(a.file).read_text())
+    else:
+        ap.error("give a file or --from-convex")
     numbers = doc.get("caseNumbers", []) if isinstance(doc, dict) else doc
     groups = split_programs(numbers)
     db = Turso()
@@ -189,10 +244,22 @@ def main() -> int:
     if failed:
         note += "; FAILED " + "; ".join(failed)
     print(note)
-    if not a.dry_run:
+    swept = ""
+    if a.sweep and changed and not a.dry_run:
+        try:
+            convex_call("/watched-cases/sweep", "POST")
+            swept = "; alerts asked for"
+        except Exception as exc:  # noqa: BLE001
+            # The Convex crons still sweep twice a day, so a refused call delays the email, never loses it.
+            swept = f"; alert call failed ({exc})"
+        print(swept.lstrip("; "))
+    # Every 5 minutes is 288 runs a day: record the ones that changed or
+    # failed something, and one an hour so the health check sees it alive.
+    on_the_hour = datetime.datetime.now(datetime.timezone.utc).minute < 5
+    if not a.dry_run and (changed or failed or swept or on_the_hour or not a.cadence):
         # A DOL refusal is named but is not a broken ingest: the sweeps cover
-        # every case twice a day anyway, and next hour tries again.
-        record_run(db, SCRIPT, status="ok", rows_written=changed, note=note, started_at=started)
+        # every case twice a day anyway, and the next run tries again.
+        record_run(db, SCRIPT, status="ok", rows_written=changed, note=note + swept, started_at=started)
     print(f"CHANGED={changed}")
     return 0
 

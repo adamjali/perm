@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule for permtracker-cron@dispatch-processing-times-hourly
+# DOL's processing times and the visa bulletin, hourly through the weekday (8 AM to 6 PM Eastern in
+# daylight time), so a new DOL month or bulletin reaches the site and its alerts within the hour.
+[Timer]
+OnCalendar=Mon..Fri *-*-* 12..22:05:00 UTC
+Persistent=true
+Unit=permtracker-cron@dispatch-processing-times-hourly.service
+[Install]
+WantedBy=timers.target

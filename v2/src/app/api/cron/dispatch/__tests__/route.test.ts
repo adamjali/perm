@@ -154,8 +154,11 @@ describe("the server's timers agree with the job table", () => {
   function onCalendar(cron: string): string {
     const [min, hour, dom, mon, dow] = cron.split(" ");
     expect([dom, mon], `${cron}: only minute, hour and weekday are used`).toEqual(["*", "*"]);
-    const pad = (v: string | undefined) => (v === "*" ? "*" : String(v).padStart(2, "0"));
-    const day = dow === "*" ? "" : `${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][Number(dow)]} `;
+    // A single value or one range ("12-22", "1-5"): systemd writes a range as "12..22".
+    const pad = (v: string | undefined) =>
+      v === "*" ? "*" : String(v).split("-").map((x) => x.padStart(2, "0")).join("..");
+    const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const day = dow === "*" ? "" : `${String(dow).split("-").map((d) => names[Number(d)]).join("..")} `;
     return `${day}*-*-* ${pad(hour)}:${pad(min)}:00 UTC`;
   }
 

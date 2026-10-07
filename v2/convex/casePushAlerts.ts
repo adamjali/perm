@@ -20,7 +20,7 @@ import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
  * lengths and hashes the address and the endpoint; shape checks run before
  * any limit is charged; a per-address limit raises the cost of abuse and the
  * global daily budget bounds the table however many addresses rotate; one
- * browser watches at most ten cases; GET is never a mutation.
+ * browser watches at most CASES_PER_BROWSER (25) cases; GET is never a mutation.
  */
 
 // Browser push costs nothing to send, so these only bound the table and a

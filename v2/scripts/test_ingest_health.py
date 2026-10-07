@@ -378,6 +378,20 @@ def main() -> int:
     check("demand: a quoted JSON count is read",
           health.check_lookup_demand(DemandDB(days(['"7"'] + [3] * 10))) == 0)
 
+    # --- the server's watched-case check ------------------------------------
+    class WatchedDB:
+        def __init__(self, age_h):
+            self.age_h = age_h
+        def execute(self, sql, args=None):
+            assert "check_watched_cases.py" in str(args), "read the wrong script key"
+            rows = [] if self.age_h is None else [[
+                {"type": "integer", "value": str(int(health.NOW_MS - self.age_h * 3_600_000))},
+                {"type": "text", "value": "perm 3 watched, 0 moved"}]]
+            return {"response": {"result": {"rows": rows}}}
+    check("watched: a run 40 minutes ago passes", health.check_watched(WatchedDB(0.66)) == 0)
+    check("watched: never run is not a failure (it is new)", health.check_watched(WatchedDB(None)) == 0)
+    check("watched: nothing for 4 hours FAILS", health.check_watched(WatchedDB(4.0)) == 1)
+
     # --- the serial gap sweep ------------------------------------------------
     # Probed, not found: a sweep that recovers nothing is the goal state. The
     # gate exists for the two ways the sweep goes quiet without erroring - it
