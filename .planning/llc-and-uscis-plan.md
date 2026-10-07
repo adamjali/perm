@@ -45,6 +45,9 @@ The routine's Check 4 watches Sunbiz. When the record appears (or Northwest emai
 
 ## Gate B: register with USCIS as the LLC (needs Gate A)
 
+**On hold by the owner's call (Oct 7 2026): register only after the LLC's planned name change**, so the
+identity form, the developer account and USCIS's due diligence carry the final legal name once.
+
 USCIS's own gate, quoted from developer.uscis.gov: APIs are for "software development
 organizations incorporated within the United States" that comply with the Terms of Use,
 offer Section 508 compliant apps, and post a suitable privacy policy; "USCIS will
