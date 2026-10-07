@@ -38,6 +38,25 @@ export function publishedStatusLabel(status: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+/**
+ * The live statuses DOL's case service leaves on some applications it has
+ * already decided. Must stay identical to
+ * PROGRAMS["seasonal"]["settled_by_file"]["statuses"] in
+ * scripts/ingest_pwd_status_direct.py, whose sweep marks such a case finished.
+ * An appeal is not here: a decided case can really be appealed back into review.
+ */
+export const SETTLED_BY_FILE_STATUSES: ReadonlySet<string> = new Set(["IN PROCESS"]);
+
+/**
+ * DOL's published file records a decision on a case its live service still
+ * calls in process (Oct 7 2026: 1,725 of the 1,726 H-2B applications filed
+ * Oct 2024 to Mar 2026 that still read IN PROCESS). The page then reports the
+ * decision and drops everything that assumes a wait.
+ */
+export function decidedInFileOnly(liveStatus: string, publishedDecisionDate: string | null): boolean {
+  return SETTLED_BY_FILE_STATUSES.has(liveStatus.trim().toUpperCase()) && Boolean(publishedDecisionDate);
+}
+
 /** Whether a published status is DOL granting the application, partly or wholly. */
 export function publishedGranted(status: string): boolean {
   return /CERTIFICATION/i.test(status) && !/WITHDRAWN/i.test(status);

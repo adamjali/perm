@@ -587,6 +587,12 @@ describe("readFlagPublished, employer lead", () => {
     expect(secondPass().sql).toContain("worksite_state = ?");
   });
 
+  it("applies the law-firm filter too, which it once ignored", async () => {
+    await readFlagPublished("pwd", employer, { firmSlug: "fragomen" }, 100);
+    expect(secondPass().sql).toContain("attorney_slug = ?");
+    expect(secondPass().args).toContain("fragomen");
+  });
+
   it("narrows by the SOC GROUP, because a dotted code matches nothing here", async () => {
     // `soc_code = '15-1252.00'` against pwd_cases matches 0 of 634,638 rows,
     // so an employer who files wage requests for that occupation constantly
@@ -649,24 +655,52 @@ describe("readFlagPublished, equality leads", () => {
     expect(firstPass().args).toEqual(["CA", "2025-01-01", "2025-04-01", 100]);
   });
 
-  it("strips the narrowing this index cannot carry, even if the caller sends it", async () => {
-    // The route drops these and the UI greys them out. This makes it
-    // structural, so no hand-crafted URL can reach a slice walk.
-    rows.mockResolvedValueOnce([]);
+  it("applies every other filter inside a window of the lead, rather than dropping it", async () => {
+    // It used to strip these, while the form offered them and the route passed
+    // them through, so "this firm, in Wyoming" answered with the firm's wage
+    // requests and LCAs from every state (found Oct 7 2026). PERM applies them;
+    // so does every program now.
     await readFlagPublished(
       "pwd",
       state,
-      { title: "engineer", from: "2024-01", to: "2024-12", wageMin: 100000, fiscalYear: "2025" },
+      { title: "engineer", from: "2024-01", to: "2024-12", wageMin: 100000, fiscalYear: "2025", firmSlug: "fragomen" },
       100,
     );
-    // The WHERE clause only: every one of these column names is in the SELECT
-    // list too, so a check over the whole statement fails on a correct query.
-    const where = firstPass().sql.split(" WHERE ")[1] ?? "";
-    expect(where).not.toContain("job_title LIKE");
-    expect(where).not.toContain("received_date");
-    expect(where).not.toContain("wage >=");
-    expect(where).not.toContain("fiscal_year");
-    expect(firstPass().args).toEqual(["CA", "PERM", 100]);
+    // The seek: the lead and the visa class only, over the newest SLICE_CAP.
+    expect(firstPass().sql).toMatch(/^SELECT rowid FROM pwd_cases INDEXED BY pwd_cases_state_dec WHERE worksite_state = \? AND visa_class = \?/);
+    expect(firstPass().args).toEqual(["CA", "PERM", SLICE_CAP]);
+    // The test: every filter, on the rows the seek found.
+    const second = String(rows.mock.calls[1]?.[0] ?? "");
+    const where = second.split(" WHERE ")[1] ?? "";
+    expect(second).toContain("NOT INDEXED");
+    expect(where).toContain("rowid IN (?, ?)");
+    expect(where).toContain("attorney_slug = ?");
+    expect(where).toContain("fiscal_year = ?");
+    expect(where).toMatch(/>= \?/);
+    expect(where).toContain("job_title LIKE");
+    expect(where).toContain("received_date");
+    const args = rows.mock.calls[1]?.[1] as unknown[];
+    expect(args).toContain("fragomen");
+    expect(args).toContain(2025);
+    expect(args).toContain(100000);
+  });
+
+  it("applies a second equality on a firm lead", async () => {
+    await readFlagPublished("lca", firm, { state: "WY", socCode: "15-1252.00" }, 100);
+    expect(firstPass().sql).toContain("INDEXED BY lca_cases_att_dec");
+    const where = String(rows.mock.calls[1]?.[0] ?? "").split(" WHERE ")[1] ?? "";
+    expect(where).toContain("worksite_state = ?");
+    expect(where).toContain("substr(soc_code, 1, 7) = ?");
+    expect(rows.mock.calls[1]?.[1]).toEqual(expect.arrayContaining(["WY", "15-1252"]));
+  });
+
+  it("says the filters ran inside a window when the window was full", async () => {
+    rows.mockImplementation(async (sql: string) =>
+      sql.startsWith("SELECT rowid") ? Array.from({ length: SLICE_CAP }, (_, i) => ({ rowid: i + 1 })) : [],
+    );
+    expect((await readFlagPublished("pwd", state, { firmSlug: "fragomen" }, 100)).windowed).toBe(true);
+    rows.mockImplementation(async (sql: string) => (sql.startsWith("SELECT rowid") ? [{ rowid: 1 }] : []));
+    expect((await readFlagPublished("pwd", state, { firmSlug: "fragomen" }, 100)).windowed).toBe(false);
   });
 
   it("seeks the firm rather than reading nothing, now that it is ingested", async () => {

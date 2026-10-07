@@ -56,3 +56,25 @@ describe("seasonal details", () => {
     expect(h2aDecideBy(null)).toBeNull();
   });
 });
+
+describe("a decision DOL's file holds on a case its live service calls in process", () => {
+  it("is decided only for the rule's statuses, and only with a published decision", async () => {
+    const { decidedInFileOnly } = await import("../seasonalDetails");
+    expect(decidedInFileOnly("IN PROCESS", "2025-12-09")).toBe(true);
+    expect(decidedInFileOnly(" in process ", "2025-12-09")).toBe(true);
+    expect(decidedInFileOnly("IN PROCESS", null)).toBe(false);
+    // An appeal re-opens a decided case for real: the file's old decision is not the answer.
+    expect(decidedInFileOnly("PENDING APPEAL", "2025-12-09")).toBe(false);
+  });
+
+  it("uses the same statuses as the sweep that marks such a case finished", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { SETTLED_BY_FILE_STATUSES } = await import("../seasonalDetails");
+    const src = readFileSync(join(process.cwd(), "scripts/ingest_pwd_status_direct.py"), "utf8");
+    const m = /"settled_by_file": \{"statuses": \(([^)]*)\)/.exec(src);
+    expect(m, "settled_by_file rule not found in the sweep").not.toBeNull();
+    const py = new Set([...m![1]!.matchAll(/"([^"]+)"/g)].map((x) => x[1]!));
+    expect(py).toEqual(new Set(SETTLED_BY_FILE_STATUSES));
+  });
+});

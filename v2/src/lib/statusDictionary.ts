@@ -246,10 +246,10 @@ export const SEASONAL_STATUSES: (FlagStatusEntry & { forms: string })[] = [
   {
     status: "NOR ISSUED",
     label: "NOR issued",
-    pending: true,
-    forms: "H-2B applications",
-    summary: "A notice DOL sent on an H-2B application that is still open.",
-    unsourced: "DOL publishes no definition of NOR and the H-2B rules don't use the abbreviation. The letter itself says what it asks for and by when.",
+    pending: false,
+    forms: "H-2B and CW-1 applications",
+    summary: "DOL rejected the application. Its published files record every NOR case they hold as rejected.",
+    unsourced: "DOL publishes no definition of NOR and its rules don't use the abbreviation. Of the NOR cases filed October 2024 to May 2026, DOL's H-2B and CW-1 disclosure files hold 547, and all 547 read \"Determination issued: rejected\" (checked October 7, 2026). The letter itself says why.",
   },
   {
     status: "NRM ISSUED",

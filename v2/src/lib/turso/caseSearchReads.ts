@@ -1193,6 +1193,58 @@ export function wageSourceCondition(source: WageSourceKey): { cond: string; para
   }
 }
 
+/**
+ * The filters a published FLAG read tests row by row, beyond its lead: the
+ * second and third equalities (whichever the lead is not), the fiscal year and
+ * the yearly wage bounds. Shared by the employer path and the equality-lead
+ * path, which used to drop all of these on a firm, state or occupation lead
+ * (Oct 7 2026): "this firm, in Wyoming" answered with the firm's wage requests
+ * and LCAs from every state, and nothing said so.
+ */
+function flagRowNarrowing(narrow: UnifiedNarrow, leadKind: Lead["kind"]): { conds: string[]; params: (string | number)[] } {
+  const conds: string[] = [];
+  const params: (string | number)[] = [];
+  if (leadKind !== "firm" && narrow.firmSlug) {
+    conds.push("attorney_slug = ?");
+    params.push(narrow.firmSlug);
+  }
+  if (leadKind !== "state" && narrow.state) {
+    conds.push("worksite_state = ?");
+    params.push(narrow.state);
+  }
+  if (leadKind !== "occupation" && narrow.socCode) {
+    // THE 6-DIGIT GROUP, not the code as typed. `pwd_cases` holds ZERO dotted
+    // SOC codes out of 634,638, so `soc_code = '15-1252.00'` matches nothing
+    // there and would report an employer as having filed no wage requests for
+    // an occupation they file constantly. See `socGroup`.
+    const group = socGroup(narrow.socCode);
+    if (group) {
+      conds.push(`${SOC_GROUP_EXPR} = ?`);
+      params.push(group);
+    }
+  }
+  if (narrow.fiscalYear) {
+    // INTEGER here, TEXT in perm_cases. Two columns of the same name and two
+    // storage classes; binding the wrong one matches nothing and errors nowhere.
+    conds.push("fiscal_year = ?");
+    params.push(Number(narrow.fiscalYear));
+  }
+  // YEARLY FIGURES, LIKE THE BOXES SAY. These files quote the unit the
+  // employer pays in, so the raw amount compared against "$100,000" dropped
+  // every $50-an-hour offer ($104,000 a year) and kept a yearly salary typed
+  // as "$100,000 per month". The expression annualises and reads a wrong-unit
+  // amount as NULL, which no bound matches.
+  if (narrow.wageMin !== undefined) {
+    conds.push(`(${FLAG_ANNUAL_WAGE_SQL}) >= ?`);
+    params.push(narrow.wageMin);
+  }
+  if (narrow.wageMax !== undefined) {
+    conds.push(`(${FLAG_ANNUAL_WAGE_SQL}) <= ?`);
+    params.push(narrow.wageMax);
+  }
+  return { conds, params };
+}
+
 export async function readFlagPublished(
   program: FlagProgramKey,
   lead: Lead,
@@ -1250,9 +1302,7 @@ export async function readFlagPublished(
       conds.push(source.cond);
       params.push(...source.params);
     }
-    // The decided range only, and for the same reason as `readPermPublished`:
-    // it is the last column of this index. The title and the filed range are
-    // stripped rather than trusted, so no caller can reach the slice walk.
+    // The decided range rides the seek: it is the last column of this index.
     const common = commonNarrowing(
       {
         ...(narrow.decidedFrom ? { decidedFrom: narrow.decidedFrom } : {}),
@@ -1264,12 +1314,46 @@ export async function readFlagPublished(
     conds.push(...common.conds);
     params.push(...common.params);
 
-    const found = await rows<DisclosedDbRow>(
-      `SELECT ${DISCLOSED_COLS} FROM ${published} INDEXED BY ${index} ` +
-        `WHERE ${conds.join(" AND ")} ORDER BY decision_date DESC LIMIT ?`,
-      [...params, limit],
+    // EVERY OTHER FILTER IS APPLIED, inside a window. These tables carry no
+    // composite index for a second equality, so a selective one (a big firm
+    // plus `state='WY'`) would walk the firm's whole slice. The rows are
+    // tested against the newest SLICE_CAP of the lead instead, and the answer
+    // says so when that window was full, as the employer path does.
+    const rest = flagRowNarrowing(narrow, lead.kind);
+    const filed = commonNarrowing(
+      {
+        ...(narrow.title ? { title: narrow.title } : {}),
+        ...(narrow.from ? { from: narrow.from } : {}),
+        ...(narrow.to ? { to: narrow.to } : {}),
+      },
+      "received_date",
+      null,
     );
-    return { rows: found.map(toDisclosed), windowed: false };
+    const restConds = [...rest.conds, ...filed.conds];
+    const restParams = [...rest.params, ...filed.params];
+    if (restConds.length === 0) {
+      const found = await rows<DisclosedDbRow>(
+        `SELECT ${DISCLOSED_COLS} FROM ${published} INDEXED BY ${index} ` +
+          `WHERE ${conds.join(" AND ")} ORDER BY decision_date DESC LIMIT ?`,
+        [...params, limit],
+      );
+      return { rows: found.map(toDisclosed), windowed: false };
+    }
+    const ids = await rows<{ rowid: number }>(
+      `SELECT rowid FROM ${published} INDEXED BY ${index} ` +
+        `WHERE ${conds.join(" AND ")} ORDER BY decision_date DESC LIMIT ?`,
+      [...params, SLICE_CAP],
+    );
+    if (ids.length === 0) return { rows: [], windowed: false };
+    // `NOT INDEXED` for the reason given in `readEmployerSlice`: it keeps the
+    // second pass on the rowid list instead of a status index.
+    const found = await rows<DisclosedDbRow>(
+      `SELECT ${DISCLOSED_COLS} FROM ${published} NOT INDEXED ` +
+        `WHERE rowid IN (${ids.map(() => "?").join(", ")}) AND ${restConds.join(" AND ")} ` +
+        `ORDER BY decision_date DESC, case_number DESC LIMIT ?`,
+      [...ids.map((r) => r.rowid), ...restParams, limit],
+    );
+    return { rows: found.map(toDisclosed), windowed: ids.length >= SLICE_CAP };
   }
 
   const range = slugRange(lead.value);
@@ -1297,40 +1381,9 @@ export async function readFlagPublished(
     restConds.push(s.cond);
     restParams.push(...s.params);
   }
-  if (narrow.state) {
-    restConds.push("worksite_state = ?");
-    restParams.push(narrow.state);
-  }
-  if (narrow.socCode) {
-    // THE 6-DIGIT GROUP, not the code as typed. `pwd_cases` holds ZERO dotted
-    // SOC codes out of 634,638, so `soc_code = '15-1252.00'` matches nothing
-    // there and would report an employer as having filed no wage requests for
-    // an occupation they file constantly. See `socGroup`.
-    const group = socGroup(narrow.socCode);
-    if (group) {
-      restConds.push(`${SOC_GROUP_EXPR} = ?`);
-      restParams.push(group);
-    }
-  }
-  if (narrow.fiscalYear) {
-    // INTEGER here, TEXT in perm_cases. Two columns of the same name and two
-    // storage classes; binding the wrong one matches nothing and errors nowhere.
-    restConds.push("fiscal_year = ?");
-    restParams.push(Number(narrow.fiscalYear));
-  }
-  // YEARLY FIGURES, LIKE THE BOXES SAY. These files quote the unit the
-  // employer pays in, so the raw amount compared against "$100,000" dropped
-  // every $50-an-hour offer ($104,000 a year) and kept a yearly salary typed
-  // as "$100,000 per month". The expression annualises and reads a wrong-unit
-  // amount as NULL, which no bound matches.
-  if (narrow.wageMin !== undefined) {
-    restConds.push(`(${FLAG_ANNUAL_WAGE_SQL}) >= ?`);
-    restParams.push(narrow.wageMin);
-  }
-  if (narrow.wageMax !== undefined) {
-    restConds.push(`(${FLAG_ANNUAL_WAGE_SQL}) <= ?`);
-    restParams.push(narrow.wageMax);
-  }
+  const row = flagRowNarrowing(narrow, "employer");
+  restConds.push(...row.conds);
+  restParams.push(...row.params);
   if (source) {
     restConds.push(source.cond);
     restParams.push(...source.params);

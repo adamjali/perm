@@ -10,6 +10,7 @@ import {
   type SeasonalRow,
 } from "@/lib/turso/seasonalCasesTypes";
 import {
+  decidedInFileOnly,
   h2aDecideBy,
   publishedGranted,
   publishedStatusLabel,
@@ -238,11 +239,16 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
   }
 
   const entry = entryFor(row.status);
+  // DOL's live service leaves some decided applications on IN PROCESS; its
+  // published file is then the record of the decision, and nothing that
+  // assumes a wait (the timing panel, the alert form) is drawn.
+  const fileDecided = decidedInFileOnly(row.status, record?.decisionDate ?? null);
+  const done = row.isFinal || fileDecided;
   // When DOL usually decides a case like this one, for a pending application
   // only; null when there's no measured basis, and nothing is drawn.
   const timingFiled = (row.submittedDate ?? row.filingDate)?.slice(0, 10) ?? null;
   const timingFirstDay = posting?.beginDate ?? record?.beginDate ?? null;
-  const view = row.isFinal
+  const view = done
     ? null
     : timingView({
         caseNumber: row.caseNumber,
@@ -278,20 +284,30 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
             <dt className="text-sm font-bold text-foreground/70">Last checked against DOL</dt>{" "}
             <dd className="font-medium">{day(row.lastCheckedAt) ?? "Today"}</dd>
           </div>
-        </dl>
+        </dl>{" "}
+        {fileDecided && record ? (
+          <p className="mt-4 max-w-2xl border-l-4 border-primary pl-3 text-base leading-relaxed">
+            <span className="font-bold">
+              DOL&apos;s published file records the decision: {publishedStatusLabel(record.status)}
+              {day(record.decisionDate) ? `, ${day(record.decisionDate)}` : ""}.
+            </span>{" "}
+            Its live case status still reads &ldquo;{prettyStatus(row.status)}&rdquo;, which DOL doesn&apos;t update on
+            some applications it has already decided.
+          </p>
+        ) : null}
       </section>
 
       <SeasonalDetails
         record={record}
         posting={posting}
-        pending={!row.isFinal}
+        pending={!done}
         caseNumber={row.caseNumber}
         ruleShownElsewhere={view?.ruleDay != null}
       />{" "}
 
       {view ? <SeasonalTimingPanel view={view} firstDay={timingFirstDay} filingDate={timingFiled} /> : null}{" "}
 
-      {!row.isFinal ? <CaseAlertForm caseNumber={row.caseNumber} program="seasonal" /> : null}
+      {!done ? <CaseAlertForm caseNumber={row.caseNumber} program="seasonal" /> : null}
 
       <section className="border-2 border-border bg-tint-primary p-5 sm:p-6">
         <h3 className="font-heading text-xl font-black">What this status means</h3>{" "}

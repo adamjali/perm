@@ -33,6 +33,9 @@ export const SEASONAL_FINAL_STATUSES: ReadonlySet<string> = new Set([
   "BALCA OVERTURNED",
   // An H-2A job order's own decision (JO-A-300).
   "APPROVED",
+  // A rejection: every NOR case DOL's H-2B and CW-1 files hold (547 of 547,
+  // filed Oct 2024 to May 2026) reads "DETERMINATION ISSUED - REJECTED".
+  "NOR ISSUED",
 ]);
 
 export const seasonal = makeFlagProgram({

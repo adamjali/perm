@@ -137,12 +137,28 @@ PROGRAMS: dict[str, dict] = {
                   # for all 1,399 job orders SeasonalJobs listed on Oct 3 2026
                   # read APPROVED, IN PROCESS, NOD ISSUED, WITHDRAWN, DENIED or
                   # AVAILABLE FOR 9142A LINKING.
-                  "APPROVED"},
+                  "APPROVED",
+                  # A rejection. DOL defines NOR nowhere, but its own files do:
+                  # of the NOR cases filed Oct 2024 to May 2026, the H-2B and
+                  # CW-1 files hold 547, and all 547 read DETERMINATION ISSUED
+                  # - REJECTED (measured Oct 7 2026). It was filed as pending
+                  # until then, so 1,300 rejected cases read as waiting.
+                  "NOR ISSUED"},
         "pending": {"IN PROCESS", "ACCEPTED - PENDING RECRUITMENT", "NOD ISSUED",
-                    "NOR ISSUED", "NRM ISSUED", "RFI ISSUED", "PENDING APPEAL",
+                    "NRM ISSUED", "RFI ISSUED", "PENDING APPEAL",
                     "PENDING CENTER DIRECTOR REVIEW", "POST-CERT REQUEST PENDING",
                     # A job order accepted and waiting for its H-2A application.
                     "AVAILABLE FOR 9142A LINKING"},
+        # DOL's live service never moves some decided applications off IN
+        # PROCESS: of the H-2B applications filed Oct 2024 to Mar 2026 still
+        # reading IN PROCESS on Oct 7 2026, DOL's own file held a decision for
+        # 1,725 of 1,726 (1,621 of them "CERTIFICATION (RETURNED)"). A row with
+        # one of these statuses AND a decision in the published table is
+        # finished. Its status word stays DOL's live one, so no sweep ever
+        # sees a move that didn't happen; only the flag says it's done. An
+        # appeal status is not here: a decided case can be appealed back
+        # into review, and that is real.
+        "settled_by_file": {"statuses": ("IN PROCESS",), "table": "seasonal_cases"},
         "doc": "seasonal_live_summary",
         "freshness": "seasonal-status",
         # An H-2A or H-2B season is decided within months of filing.
@@ -362,8 +378,30 @@ def candidate_batches(code: str, lo: int, hi: int, known: set[int], prefix: str 
 # Writes
 # ---------------------------------------------------------------------------
 
-def is_final(status: str, program: str = "pwd") -> int:
-    return 1 if status.strip().upper() in PROGRAMS[program]["final"] else 0
+def is_final(status: str, program: str = "pwd", published: bool = False) -> int:
+    """1 when the case is finished: a final status, or (for a program with a
+    `settled_by_file` rule) one of its statuses on a case DOL's published file
+    records as decided. `published` says whether the file holds it."""
+    s = status.strip().upper()
+    if s in PROGRAMS[program]["final"]:
+        return 1
+    rule = PROGRAMS[program].get("settled_by_file")
+    return 1 if published and rule and s in rule["statuses"] else 0
+
+
+def decided_in_file(db, program: str) -> set[str]:
+    """The live rows a program's `settled_by_file` rule could finish: their
+    status is one of the rule's and the published table records a decision."""
+    rule = PROGRAMS[program].get("settled_by_file")
+    if not rule:
+        return set()
+    marks = ",".join("?" for _ in rule["statuses"])
+    table = PROGRAMS[program]["table"]
+    return {str(r[0]) for r in query_rows(
+        db,
+        f"SELECT s.case_number FROM {table} s JOIN {rule['table']} c ON c.case_number = s.case_number "
+        f"WHERE c.decision_date IS NOT NULL AND s.current_status IN ({marks})",
+        list(rule["statuses"]))}
 
 
 def _flag(v) -> int:
@@ -493,6 +531,7 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
             f"FROM {table} {where} ORDER BY {order} LIMIT {limit or 10**9}", args)
     }
     todo = sorted(rows)
+    published = decided_in_file(db, program)
     log(f"{program}: {len(todo):,} cases to check, {BATCH} per request "
         f"= {(len(todo)+BATCH-1)//BATCH:,} requests")
     checked = moved = missing = fails = healed = 0
@@ -549,7 +588,7 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
             visa = (v.get("visaType") or "").strip() or None
             if new_status and new_status != old_status:
                 moved += 1
-                fin = is_final(new_status, program)
+                fin = is_final(new_status, program, cn in published)
                 pending_writes.append(stmt(
                     f"UPDATE {table} SET current_status=?, is_final=?, employer_name=?, "
                     f"job_title=?, visa_type=COALESCE(?, visa_type), last_checked_at=?, "
@@ -560,14 +599,14 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
                     f"INSERT OR IGNORE INTO {events} (case_number, changed_at, from_status, "
                     f"to_status, to_final, source) VALUES (?,?,?,?,?,?)",
                     [cn, stamp, old_status, new_status, fin, SOURCE]))
-            elif new_status and _flag(old[3]) != is_final(new_status, program):
+            elif new_status and _flag(old[3]) != is_final(new_status, program, cn in published):
                 # Same status, wrong flag: the status set learned a word after
-                # the row was stored. Fix the flag; no event, because nothing
-                # moved.
+                # the row was stored, or DOL's file has since recorded the
+                # decision. Fix the flag; no event, because nothing moved.
                 healed += 1
                 pending_writes.append(stmt(
                     f"UPDATE {table} SET is_final=? WHERE case_number=?",
-                    [is_final(new_status, program), cn]))
+                    [is_final(new_status, program, cn in published), cn]))
             # An unchanged row is not written. This branch used to stamp
             # last_checked_at on every row it looked at: ~300,000 UPDATEs a
             # Sunday to record 54 transitions, each one maintaining every
@@ -629,7 +668,10 @@ def write_summary_doc(db: Turso, program: str = "pwd") -> bool:
     if sum(by_status.values()) != total:
         log(f"  MISMATCH {key} {sum(by_status.values()):,} vs count {total:,}; doc not written")
         return False
-    final = sum(n for s, n in by_status.items() if (s or "").upper() in cfg["final"])
+    # The flag, not the status words: a case DOL's file has decided is finished
+    # under a pending word (`settled_by_file`), and every other count here
+    # (by month, by form) already reads the flag.
+    final = int(query_rows(db, f"SELECT COALESCE(SUM(is_final), 0) FROM {table}")[0][0] or 0)
     earliest = query_rows(db, f"SELECT MIN(first_seen_at) FROM {table}")[0][0]
     doc = {
         "total": total,

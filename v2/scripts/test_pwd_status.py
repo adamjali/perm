@@ -38,11 +38,18 @@ def sweep_heals_stale_flags() -> None:
         ("P-400-25325-428824", "BALCA OVERTURNED", "B", "t", "0"),
         ("H-300-26246-000001", "IN PROCESS", "C", "t", "0"),
         ("H-300-26246-000002", "FULL CERTIFICATION", "D", "t", "1"),
+        # A rejection stored while NOR ISSUED was still filed as pending.
+        ("C-500-26100-000003", "NOR ISSUED", "E", "t", "0"),
+        # DOL's file records a decision; its live service still says IN PROCESS.
+        ("H-400-25321-412193", "IN PROCESS", "F", "t", "0"),
     ]
+    # What the "decided in DOL's file" query returns: only the IN PROCESS row
+    # the file holds. An appeal is never in it (its status is not the rule's).
+    in_file = [("H-400-25321-412193",)]
     writes: list[dict] = []
     saved = (m.query_rows, m.lookup_with_retry, m.run_stmts, m.record_sweep, m.time.sleep)
     try:
-        m.query_rows = lambda db, sql, args=None: stored
+        m.query_rows = lambda db, sql, args=None: in_file if "JOIN seasonal_cases" in sql else stored
         m.lookup_with_retry = lambda nums: [
             {"caseNumber": c, "caseStatus": st} for c, st, *_ in stored if c in nums]
         m.run_stmts = lambda db, stmts, per_request=200: writes.extend(stmts) or [1] * len(stmts)
@@ -54,11 +61,15 @@ def sweep_heals_stale_flags() -> None:
     sqls = [w["stmt"]["sql"] for w in writes]
     fixed = sorted(w["stmt"]["args"][1]["value"] for w in writes
                    if w["stmt"]["sql"].startswith("UPDATE seasonal_case_status SET is_final"))
-    check("both stale rows get their flag fixed", fixed,
-          ["P-400-25308-369253", "P-400-25325-428824"])
+    check("every stale row gets its flag fixed, and only those", fixed,
+          ["C-500-26100-000003", "H-400-25321-412193", "P-400-25308-369253", "P-400-25325-428824"])
+    check("each fix sets the case finished",
+          sorted({w["stmt"]["args"][0]["value"] for w in writes}), ["1"])
     check("a heal writes no event (nothing moved)",
           any("seasonal_case_events" in q for q in sqls), False)
-    check("rows whose flag agrees are not written", len(writes), 2)
+    check("rows whose flag agrees are not written", len(writes), 4)
+    check("DOL's status word is never rewritten by a heal",
+          any("current_status" in q for q in sqls), False)
 
 
 def main() -> int:
@@ -88,6 +99,14 @@ def main() -> int:
     check("in process is pending", is_final("IN PROCESS"), 0)
     check("case and whitespace do not matter", is_final("  withdrawn "), 1)
     check("an unseen status is pending, not final", is_final("CENTER DIRECTOR REVIEW"), 0)
+    check("NOR ISSUED is a rejection, so final", is_final("NOR ISSUED", "seasonal"), 1)
+    check("IN PROCESS with a decision in DOL's file is finished",
+          is_final("IN PROCESS", "seasonal", published=True), 1)
+    check("IN PROCESS without one is still pending", is_final("IN PROCESS", "seasonal"), 0)
+    check("an appeal stays pending whatever the file says",
+          is_final("PENDING APPEAL", "seasonal", published=True), 0)
+    check("the file rule is seasonal only: a PWD request in process stays pending",
+          is_final("IN PROCESS", "pwd", published=True), 0)
     check("the final set names the observed outcomes",
           {"DETERMINATION ISSUED", "REDETERMINATION AFFIRMED", "REDETERMINATION MODIFIED",
            "WITHDRAWN"} <= PWD_FINAL, True)

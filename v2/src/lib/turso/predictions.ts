@@ -118,12 +118,19 @@ async function samplePerm(months: string[]): Promise<SampledCase[]> {
   return out;
 }
 
+/**
+ * The wage requests the case page dates: PERM's own (`PwdStatusResult` shows no
+ * estimate for one DOL tags H-1B or E-3, because DOL's backlog figures are for
+ * PERM requests). Sampling the others would grade a number nobody was shown.
+ */
+const PWD_DATED = "(visa_type IS NULL OR upper(visa_type) = 'PERM')";
+
 async function samplePwd(months: string[]): Promise<SampledCase[]> {
   const out: SampledCase[] = [];
   for (const m of months) {
     const r = await rows<{ case_number: string; filing_date: string; employer_name: string | null }>(
       `SELECT case_number, filing_date, employer_name FROM pwd_case_status
-        WHERE current_status = 'IN PROCESS' AND is_final = 0
+        WHERE current_status = 'IN PROCESS' AND is_final = 0 AND ${PWD_DATED}
           AND filing_date >= ? AND filing_date < ?
         ORDER BY random() LIMIT ?`,
       [`${m}-01`, `${monthEnd(m)}-01`, PWD_PER_MONTH],
@@ -224,7 +231,7 @@ export async function predictOurs(today: string): Promise<{
   if (pwdEst && pwdEst.asOf && pwdEst.backlog.length > 0) {
     const pending = await rows<{ m: string }>(
       `SELECT DISTINCT substr(filing_date, 1, 7) AS m FROM pwd_case_status
-        WHERE current_status = 'IN PROCESS' AND is_final = 0 AND filing_date IS NOT NULL
+        WHERE current_status = 'IN PROCESS' AND is_final = 0 AND filing_date IS NOT NULL AND ${PWD_DATED}
         ORDER BY m DESC LIMIT ?`,
       [PWD_MONTHS],
     );

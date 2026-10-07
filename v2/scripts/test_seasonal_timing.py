@@ -40,6 +40,18 @@ def main() -> int:
     # A denial and a withdrawal must not count.
     rows.append(("H-300-25001-900000", "H-2A", "DETERMINATION ISSUED - DENIED", "2025-01-01", "2025-06-01", "2025-07-01"))
     rows.append(("H-300-25001-900001", "H-2A", "DETERMINATION ISSUED - WITHDRAWN", "2025-01-01", "2025-06-01", "2025-07-01"))
+    # H-2B in two seasons on two clocks: received Jan 2025 and decided 70 days
+    # later, received Jul 2025 and decided 30 days later; plus 10 in Apr 2025,
+    # under the floor for a season of its own.
+    from datetime import date, timedelta
+    for i in range(60):
+        rows.append((f"H-400-25001-{i:06d}", "H-2B", "DETERMINATION ISSUED - CERTIFICATION",
+                     "2025-01-02", (date(2025, 1, 2) + timedelta(days=70)).isoformat(), "2025-04-01"))
+        rows.append((f"H-400-25182-{i:06d}", "H-2B", "DETERMINATION ISSUED - CERTIFICATION",
+                     "2025-07-01", (date(2025, 7, 1) + timedelta(days=30)).isoformat(), "2025-10-01"))
+    for i in range(10):
+        rows.append((f"H-400-25092-{i:06d}", "H-2B", "DETERMINATION ISSUED - CERTIFICATION",
+                     "2025-04-02", "2025-05-02", "2025-06-01"))
     # Ten CW-1 certifications: under the floor, so no block.
     for i in range(10):
         rows.append((f"C-500-25001-{i:06d}", "CW-1", "DETERMINATION ISSUED - CERTIFICATION", "2025-01-01", "2025-02-01", "2025-03-01"))
@@ -52,7 +64,13 @@ def main() -> int:
     check("H-2A counts certifications only", (h2a.get("daysToDecision") or {}).get("n"), 60)
     check("H-2A days to decision", (h2a.get("daysToDecision") or {}).get("p50"), 20)
     check("CW-1 under the floor has no block", "CW-1" in doc, False)
-    check("H-2B with no rows has no block", "H-2B" in doc, False)
+    h2b = doc.get("H-2B") or {}
+    seasons = h2b.get("seasons") or {}
+    check("H-2B seasons are keyed by receipt quarter, at the floor only", sorted(seasons), ["2025-Q1", "2025-Q3"])
+    check("each season carries its own wait", (seasons.get("2025-Q1", {}).get("daysToDecision") or {}).get("p50"), 70)
+    check("the other season too", (seasons.get("2025-Q3", {}).get("daysToDecision") or {}).get("p50"), 30)
+    check("H-2B reads its season", h2b.get("useSeason"), True)
+    check("H-2A stays pooled", "useSeason" in h2a, False)
     lead = h2a.get("leadDays") or {}
     on_time = h2a.get("onTime") or {}
     want_share = round(sum(1 for d in lead_days(rows) if d >= 30) / 60, 4)

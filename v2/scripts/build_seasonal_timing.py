@@ -13,6 +13,19 @@ Each a set of percentiles (nearest rank) with its count. A visa under
 MIN_N certifications gets no block, so a page never quotes a percentile
 over a handful of cases.
 
+    seasons         the same two clocks per calendar quarter of RECEIPT
+                    ("2025-Q1"), each quarter with MIN_N certifications
+    useSeason       H-2B only: the case page reads the quarter a year before
+                    the case's own instead of every quarter pooled
+
+WHY H-2B READS ITS SEASON (Oct 7 2026, scripts/backtest_seasonal.py). Pooled,
+the H-2B middle-half range held 21% of the next quarter's real decisions
+where it should hold half, typically 21 days off: the cap seasons (filings
+for April and October starts) run on their own clock. The same quarter a
+year earlier had the smaller typical miss in every quarter it could be
+tested on (12, 5 and 28 days against 22, 21 and 40). H-2A and CW-1 did best
+pooled and stay pooled.
+
 Certifications only, because they are what a person waiting is waiting for:
 a withdrawal's date is the employer's, and a denial follows its own notices.
 The window (the files and the decided range) rides in the doc, so a page
@@ -66,6 +79,14 @@ def percentiles(hist: dict[int, int]) -> dict | None:
     return out
 
 
+# Visas whose case page reads the receipt quarter a year earlier (see above).
+SEASON_VISAS = ("H-2B",)
+WAITED = "julianday(decision_date) - julianday(received_date)"
+LEAD = "julianday(begin_date) - julianday(decision_date)"
+QUARTER = ("substr(received_date, 1, 4) || '-Q' || "
+           "((CAST(substr(received_date, 6, 2) AS INTEGER) + 2) / 3)")
+
+
 def histogram(db: Turso, expr: str, visa: str) -> dict[int, int]:
     rows = query_rows(
         db,
@@ -76,11 +97,32 @@ def histogram(db: Turso, expr: str, visa: str) -> dict[int, int]:
     return {int(d): int(n) for d, n in rows if d is not None}
 
 
+def season_blocks(db: Turso, visa: str) -> dict[str, dict]:
+    """Both clocks per calendar quarter of receipt, for quarters at the floor."""
+    out: dict[str, dict] = {}
+    for clock, expr in (("daysToDecision", WAITED), ("leadDays", LEAD)):
+        hists: dict[str, dict[int, int]] = {}
+        for q, d, n in query_rows(
+            db,
+            f"SELECT {QUARTER} AS q, CAST({expr} AS INTEGER) AS d, COUNT(*) FROM seasonal_cases "
+            f"WHERE visa_class = ? AND {GRANTED} AND d IS NOT NULL AND received_date IS NOT NULL "
+            f"GROUP BY q, d",
+            [visa],
+        ):
+            if q and d is not None:
+                hists.setdefault(str(q), {})[int(d)] = int(n)
+        for q, h in hists.items():
+            pct = percentiles(h)
+            if pct:
+                out.setdefault(q, {})[clock] = pct
+    return dict(sorted(out.items()))
+
+
 def build(db: Turso) -> dict:
     doc: dict = {"asOf": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "minN": MIN_N}
     for visa in VISAS:
-        waited = histogram(db, "julianday(decision_date) - julianday(received_date)", visa)
-        lead = histogram(db, "julianday(begin_date) - julianday(decision_date)", visa)
+        waited = histogram(db, WAITED, visa)
+        lead = histogram(db, LEAD, visa)
         window = query_rows(
             db,
             f"SELECT MIN(decision_date), MAX(decision_date), COUNT(DISTINCT source_file) "
@@ -95,6 +137,11 @@ def build(db: Turso) -> dict:
             "decidedTo": last,
             "files": int(files or 0),
         }
+        seasons = season_blocks(db, visa)
+        if seasons:
+            block["seasons"] = seasons
+        if visa in SEASON_VISAS:
+            block["useSeason"] = True
         if visa == "H-2A" and lead:
             n = sum(lead.values())
             on_time = sum(c for d, c in lead.items() if d >= H2A_DEADLINE_DAYS)
