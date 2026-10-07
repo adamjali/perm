@@ -123,7 +123,9 @@ function CaseNumberAnatomy({ id }: { id: string }) {
         {parts.map((p, i) => (
           <Fragment key={p.seg}>
             {i > 0 ? <span className="text-lg font-bold text-muted-foreground">-</span> : null}{" "}
-            <span className="border-2 border-border bg-background px-2 py-1 text-base font-bold">{p.seg}</span>{" "}
+            {/* Dashed, so the example reads as an example: drawn as solid boxes,
+                visitors clicked the parts as if they were buttons. */}
+            <span className="border-2 border-dashed border-foreground/40 px-2 py-1 text-base font-bold">{p.seg}</span>{" "}
           </Fragment>
         ))}
         {parts.map((p, i) => (

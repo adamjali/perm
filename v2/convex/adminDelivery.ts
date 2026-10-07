@@ -13,7 +13,7 @@
  */
 
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { query, type QueryCtx } from "./_generated/server";
 import { requireAdmin } from "./lib/admin";
 import { BUDGETS, type BudgetName } from "./lib/alertBudgets";
 import { QUEUE_MAX } from "./confirmationQueue";
@@ -30,6 +30,38 @@ const OUTBOX_WEEK_READ = 3000;
 const FOLLOWS_READ = 2000;
 
 const kindValidator = v.union(v.literal("case"), v.literal("queue"), v.literal("bulletin"), v.literal("employer"));
+
+/**
+ * When the address behind an outbox row signed up for that alert, and when it
+ * confirmed, read from `ref` (`<kind>:<row id>`). Beside the send time it
+ * says how long the person had waited for the news (Oct 7 2026: the panel
+ * showed when an alert went out and never when its reader had asked).
+ */
+async function signedUp(
+  ctx: QueryCtx,
+  ref: string,
+): Promise<{ signedUpAt: number | null; confirmedAt: number | null }> {
+  const [kind, raw] = ref.split(":");
+  let row: { _creationTime: number; createdAt?: number; confirmedAt?: number } | null = null;
+  if (raw) {
+    if (kind === "case") {
+      const id = ctx.db.normalizeId("caseStatusAlerts", raw);
+      row = id ? await ctx.db.get(id) : null;
+    } else if (kind === "queue") {
+      const id = ctx.db.normalizeId("dolQueueAlerts", raw);
+      row = id ? await ctx.db.get(id) : null;
+    } else if (kind === "bulletin") {
+      const id = ctx.db.normalizeId("bulletinAlerts", raw);
+      row = id ? await ctx.db.get(id) : null;
+    } else if (kind === "employer") {
+      const id = ctx.db.normalizeId("employerAlerts", raw);
+      row = id ? await ctx.db.get(id) : null;
+    }
+  }
+  return row
+    ? { signedUpAt: row.createdAt ?? row._creationTime, confirmedAt: row.confirmedAt ?? null }
+    : { signedUpAt: null, confirmedAt: null };
+}
 
 export const getDelivery = query({
   args: {},
@@ -83,6 +115,9 @@ export const getDelivery = query({
         bundleSize: v.union(v.number(), v.null()),
         direct: v.boolean(),
         lastError: v.union(v.string(), v.null()),
+        /** The subscription behind the alert; null once its row is gone. */
+        signedUpAt: v.union(v.number(), v.null()),
+        confirmedAt: v.union(v.number(), v.null()),
       }),
     ),
     /** Every outbox row in the last 7 days; `recent` carries the newest 30. */
@@ -213,18 +248,21 @@ export const getDelivery = query({
           byKind,
         },
       },
-      recent: week.slice(0, 30).map((r) => ({
-        email: r.email,
-        kind: r.kind,
-        status: r.status,
-        title: r.summary.title,
-        line: r.summary.line,
-        createdAt: r.createdAt,
-        sentAt: r.sentAt ?? null,
-        bundleSize: r.bundleSize ?? null,
-        direct: r.direct === true,
-        lastError: r.lastError ?? null,
-      })),
+      recent: await Promise.all(
+        week.slice(0, 30).map(async (r) => ({
+          email: r.email,
+          kind: r.kind,
+          status: r.status,
+          title: r.summary.title,
+          line: r.summary.line,
+          createdAt: r.createdAt,
+          sentAt: r.sentAt ?? null,
+          bundleSize: r.bundleSize ?? null,
+          direct: r.direct === true,
+          lastError: r.lastError ?? null,
+          ...(await signedUp(ctx, r.ref)),
+        })),
+      ),
       recentTotal: week.length,
       follows: {
         employers: counts.size,

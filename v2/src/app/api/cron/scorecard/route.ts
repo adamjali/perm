@@ -40,8 +40,16 @@ export async function GET(request: Request): Promise<NextResponse> {
   // `?dry=1` computes today's predictions and returns them without writing
   // anything and without calling a rival: the QA path, and the way to look at
   // what a run would record before trusting it.
-  const dry = new URL(request.url).searchParams.get("dry") === "1";
+  const params = new URL(request.url).searchParams;
+  const dry = params.get("dry") === "1";
   try {
+    // `?docs=1` rewrites the two summaries from the rows already recorded, and
+    // records, asks and grades nothing: the way to show a change to the
+    // summaries the same day it deploys, without a second rival round.
+    if (params.get("docs") === "1") {
+      const { rows } = await writeScorecardDocs(recordedOn);
+      return NextResponse.json({ docs: true, recordedOn, rows });
+    }
     if (dry) {
       const { perm, pwd, sample } = await predictOurs(today);
       return NextResponse.json({ dry: true, recordedOn, sampled: sample.length, perm, pwd });

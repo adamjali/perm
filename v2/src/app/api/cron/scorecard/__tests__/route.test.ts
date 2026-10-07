@@ -55,6 +55,17 @@ describe("GET /api/cron/scorecard", () => {
     expect(predictOurs).not.toHaveBeenCalled();
   });
 
+  it("a summaries-only run rewrites the docs and records, asks and grades nothing", async () => {
+    const res = await call(`Bearer ${SECRET}`, "?docs=1");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ docs: true, recordedOn: "2026-09-27", rows: 1 });
+    expect(writeScorecardDocs).toHaveBeenCalledTimes(1);
+    expect(predictOurs).not.toHaveBeenCalled();
+    expect(recordPredictions).not.toHaveBeenCalled();
+    expect(rivalPredictions).not.toHaveBeenCalled();
+    expect(gradeOpenPredictions).not.toHaveBeenCalled();
+  });
+
   it("a dry run predicts and returns, writing nothing and calling no rival", async () => {
     const res = await call(`Bearer ${SECRET}`, "?dry=1");
     expect(res.status).toBe(200);

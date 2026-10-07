@@ -43,6 +43,15 @@ interface SignalSub {
   createdAt: number;
   /** Last time a real alert was sent, when the table records one. */
   lastNotifiedAt: number | null;
+  /** When the address confirmed, and when it stopped: the subscription's own clock. */
+  confirmedAt: number | null;
+  unsubscribedAt: number | null;
+  /** Alerts sent on this subscription, where the table counts them. */
+  alertCount: number | null;
+  /** What the alert last reported (a case's status, a bulletin cutoff). */
+  lastSeen: string | null;
+  /** Where the person signed up, as the form recorded it. */
+  source: string | null;
 }
 
 const status = (r: {
@@ -62,8 +71,20 @@ const subValidator = v.array(
     ),
     createdAt: v.number(),
     lastNotifiedAt: v.union(v.number(), v.null()),
+    confirmedAt: v.union(v.number(), v.null()),
+    unsubscribedAt: v.union(v.number(), v.null()),
+    alertCount: v.union(v.number(), v.null()),
+    lastSeen: v.union(v.string(), v.null()),
+    source: v.union(v.string(), v.null()),
   }),
 );
+
+/** The clock fields every subscription table shares. */
+const clock = (r: { confirmedAt?: number; unsubscribedAt?: number; source?: string }) => ({
+  confirmedAt: r.confirmedAt ?? null,
+  unsubscribedAt: r.unsubscribedAt ?? null,
+  source: r.source ?? null,
+});
 
 export const getSignals = query({
   args: {},
@@ -122,6 +143,9 @@ export const getSignals = query({
         status: status(r),
         createdAt: r._creationTime,
         lastNotifiedAt: r.lastAlertSentAt ?? null,
+        ...clock(r),
+        alertCount: r.alertCount ?? null,
+        lastSeen: r.lastSeenStatus ?? null,
       }),
     );
     const queueAlerts = (await ctx.db.query("dolQueueAlerts").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
@@ -131,6 +155,9 @@ export const getSignals = query({
         status: status(r),
         createdAt: r._creationTime,
         lastNotifiedAt: r.notifiedAt ?? null,
+        ...clock(r),
+        alertCount: r.notifiedAt ? 1 : 0,
+        lastSeen: null,
       }),
     );
     const bulletinAlerts = (await ctx.db.query("bulletinAlerts").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
@@ -140,6 +167,9 @@ export const getSignals = query({
         status: status(r),
         createdAt: r._creationTime,
         lastNotifiedAt: r.lastAlertSentAt ?? null,
+        ...clock(r),
+        alertCount: r.alertCount ?? null,
+        lastSeen: r.lastSeenCutoff ?? null,
       }),
     );
     const employerAlerts = (await ctx.db.query("employerAlerts").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
@@ -149,6 +179,9 @@ export const getSignals = query({
         status: status(r),
         createdAt: r._creationTime,
         lastNotifiedAt: r.lastAlertSentAt ?? null,
+        ...clock(r),
+        alertCount: r.alertCount ?? null,
+        lastSeen: null,
       }),
     );
     const news = (await ctx.db.query("newsSubscribers").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
@@ -158,6 +191,9 @@ export const getSignals = query({
         status: status(r),
         createdAt: r.createdAt,
         lastNotifiedAt: null,
+        ...clock(r),
+        alertCount: null,
+        lastSeen: null,
       }),
     );
 

@@ -103,7 +103,9 @@ export default async function PermEmployersPage() {
             <div className="border-2 border-border bg-card p-6 sm:p-8">
               <h2 className="font-heading text-xl font-black">The top ten, by filings</h2>
               <ChartTips label="The top ten sponsors, by filings" className="mt-6">
-              <div className="space-y-3">
+              {/* Each name opens its employer page: visitors clicked the plain
+                  names over and over expecting it (PostHog, Oct 2026). */}
+              <div className="space-y-1">
                 {topTen.map((e) => (
                   <div
                     key={e.name}
@@ -118,9 +120,12 @@ export default async function PermEmployersPage() {
                       .filter(Boolean)
                       .join("\n")}
                     className="grid grid-cols-[minmax(0,220px)_1fr] items-center gap-3">
-                    <p className="truncate text-sm font-bold">
-                      {e.name}
-                    </p>
+                    <Link
+                      href={`/perm-employers/${e.slug}`}
+                      className="flex min-h-[44px] min-w-0 items-center text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    >
+                      <span className="truncate">{e.name}</span>
+                    </Link>
                     <div className="flex min-w-0 items-center gap-2">
                       <div
                         aria-hidden="true"

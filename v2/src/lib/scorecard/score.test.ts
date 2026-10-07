@@ -188,6 +188,20 @@ describe("headToHead", () => {
     expect(h.oursCloser + h.rivalCloser + h.ties).toBe(0);
   });
 
+  it("counts the shared cases still waiting past each side's own date", () => {
+    const rows = [
+      r({ caseNumber: "G-6", predicted: "2026-10-20" }), // ours still ahead
+      r({ caseNumber: "G-6", source: "rival-a", model: "rival", predicted: "2026-09-25" }), // theirs passed
+      r({ caseNumber: "G-7", predicted: "2026-09-28" }),
+      r({ caseNumber: "G-7", source: "rival-a", model: "rival", predicted: "2026-09-27" }), // both passed
+      r({ caseNumber: "G-8", predicted: "2026-09-10", decidedOn: "2026-09-12", outcome: "CERTIFIED" }),
+      r({ caseNumber: "G-8", source: "rival-a", model: "rival", predicted: "2026-09-01", decidedOn: "2026-09-12", outcome: "CERTIFIED" }), // decided: not waiting
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-a"]!;
+    expect(h.rivalLateWaiting).toBe(2);
+    expect(h.oursLateWaiting).toBe(1);
+  });
+
   it("never grades a withdrawal", () => {
     const rows = [
       r({ caseNumber: "G-5", predicted: "2026-09-10", decidedOn: "2026-09-11", outcome: "WITHDRAWN" }),

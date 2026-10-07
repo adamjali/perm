@@ -25,6 +25,12 @@ import { cn } from "@/lib/utils";
  * LOADING IS A THIRD STATE, not a flavour of "no more pages". While a page is
  * in flight both buttons are off, the line says so, and a spinner turns beside
  * it so the wait is visibly a wait.
+ *
+ * A PAGE CHANGE SHOWS ITS NEW ROWS (Oct 7 2026). The controls sit under a long
+ * list, so the new rows arrived above the screen and the press looked like it
+ * had done nothing: on /pwd-cases 18 people pressed "Older" 49 times in a week,
+ * paging further each time without seeing it. Given `scrollTo`, a press brings
+ * the top of the list back into view whenever it has scrolled out above.
  */
 export function Pager({
   page,
@@ -40,6 +46,7 @@ export function Pager({
   buttonClassName,
   labelClassName,
   className,
+  scrollTo,
   children,
 }: {
   /** 1-based, for display only. */
@@ -60,9 +67,18 @@ export function Pager({
   buttonClassName: string;
   labelClassName?: string;
   className?: string;
+  /** The top of the list being paged; give it a `scroll-mt-*` clear of the header. */
+  scrollTo?: React.RefObject<HTMLElement | null>;
   /** Anything that belongs beside the status line, such as a column note. */
   children?: React.ReactNode;
 }) {
+  const go = (move: () => void) => () => {
+    move();
+    const top = scrollTo?.current;
+    if (!top || top.getBoundingClientRect().top >= 0) return;
+    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    top.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
+  };
   const reason = loading
     ? "Loading…"
     : !hasNext && !hasPrevious
@@ -99,7 +115,7 @@ export function Pager({
           className={buttonClassName}
           disabled={loading || !hasPrevious}
           aria-describedby={reason ? id : undefined}
-          onClick={onPrevious}
+          onClick={go(onPrevious)}
         >
           {previousLabel}
         </button>{" "}
@@ -108,7 +124,7 @@ export function Pager({
           className={buttonClassName}
           disabled={loading || !hasNext}
           aria-describedby={reason ? id : undefined}
-          onClick={onNext}
+          onClick={go(onNext)}
         >
           {nextLabel}
         </button>

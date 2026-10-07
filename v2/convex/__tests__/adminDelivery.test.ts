@@ -65,4 +65,27 @@ describe("adminDelivery.getDelivery", () => {
     expect(d.follows).toMatchObject({ confirmed: 2, pending: 1 });
     expect(d.follows.top[0]).toMatchObject({ slug: "adobe-inc", followers: 2 });
   });
+
+  it("says when each alert's reader signed up and confirmed, beside when it went out", async () => {
+    const t = createTestContext();
+    const adminId = await t.run(async (ctx) => ctx.db.insert("users", { email: ADMIN }));
+    const now = Date.now();
+    const signed = now - 9 * 86_400_000;
+    await t.run(async (ctx) => {
+      const sub = await ctx.db.insert("caseStatusAlerts", {
+        email: "w@x.com",
+        caseNumber: "G-100-25335-445491",
+        createdAt: signed,
+        confirmedAt: signed + 600_000,
+      });
+      const base = { subject: "s", summary: { title: "T", line: "L", url: "https://permtracker.app" }, createdAt: now - 60_000 };
+      await ctx.db.insert("alertOutbox", { ...base, email: "w@x.com", kind: "case", ref: `case:${sub}`, status: "sent", sentAt: now });
+      // A ref whose row is gone answers null, never a guessed date.
+      await ctx.db.insert("alertOutbox", { ...base, email: "z@x.com", kind: "case", ref: "case:gone", status: "sent", sentAt: now - 1 });
+    });
+    const d = await t.withIdentity({ subject: adminId, email: ADMIN }).query(api.adminDelivery.getDelivery, {});
+    const held = d.recent.find((r) => r.email === "w@x.com")!;
+    expect(held).toMatchObject({ signedUpAt: signed, confirmedAt: signed + 600_000 });
+    expect(d.recent.find((r) => r.email === "z@x.com")).toMatchObject({ signedUpAt: null, confirmedAt: null });
+  });
 });

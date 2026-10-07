@@ -94,6 +94,12 @@ describe("adminSignals.getSignals", () => {
     expect(s.subscriptions.caseAlerts[0]).toMatchObject({
       subject: "G-100-25324-425560",
       status: "confirmed",
+      // The subscription's own clock, so the panel can say how long after
+      // signing up an alert reached its reader.
+      confirmedAt: now,
+      unsubscribedAt: null,
+      lastSeen: "ANALYST REVIEW",
+      alertCount: null,
     });
     // A pending (unconfirmed) row must SAY pending - an admin reading
     // "1 subscriber" for a typo'd address that never confirmed would be
@@ -102,7 +108,7 @@ describe("adminSignals.getSignals", () => {
       subject: "PWD OEWS · 2025-11",
       status: "pending",
     });
-    expect(s.subscriptions.news[0]?.status).toBe("unsubscribed");
+    expect(s.subscriptions.news[0]).toMatchObject({ status: "unsubscribed", unsubscribedAt: now });
 
     expect(s.recentCases[0]).toMatchObject({
       email: "member@example.com",

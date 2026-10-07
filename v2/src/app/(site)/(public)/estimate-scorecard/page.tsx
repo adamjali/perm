@@ -7,6 +7,7 @@ import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { daysToAnchor } from "@/lib/predictionLedger";
 import { HORIZONS, PWD_BEFORE_FIX, PWD_MODEL, type Cell } from "@/lib/scorecard/score";
+import { readMethods, readOurs } from "@/lib/scorecard/verdict";
 import { getEstimatorBacktest, getScorecardSummary } from "@/lib/turso/predictions";
 import { getScorecard } from "@/lib/turso/scorecard";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
@@ -101,6 +102,11 @@ export default async function EstimateScorecardPage() {
   const pwdBeforeFix = pwd?.byModel[PWD_BEFORE_FIX] ?? null;
   const cur = backtest?.current ?? null;
   const old = backtest?.allPending ?? null;
+  // The same sentences the admin scorecard and the morning report print.
+  const shortAnswer = [
+    ...(perm ? readOurs(perm.all, perm.byHorizon, sample?.perm.since ?? null, backtest) : []),
+    ...(perm ? readMethods(perm.byModel) : []),
+  ];
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
@@ -111,6 +117,17 @@ export default async function EstimateScorecardPage() {
           How close our PERM decision dates land, graded against what DOL actually did.
         </p>
       </header>
+
+      {shortAnswer.length > 0 ? (
+        <section aria-labelledby="short-h" className="mt-8 max-w-3xl border-l-4 border-primary pl-5">
+          <h2 id="short-h" className="font-heading text-2xl font-black">The short answer</h2>{" "}
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/85">
+            {shortAnswer.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {backtest && cur && cur.typicalMissDays !== null ? (
         <section aria-labelledby="backtest-h" className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">

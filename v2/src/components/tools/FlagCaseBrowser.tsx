@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useId, useMemo, useState } from "react";
+import { Fragment, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 
@@ -495,6 +495,7 @@ export function FlagCaseBrowser({
   // still in process are the ones people are most likely to be asking about.
   const [order, setOrder] = useState<"newest" | "oldest">("newest");
   const [cursors, setCursors] = useState<string[]>([]);
+  const browseTop = useRef<HTMLElement>(null);
   const months = useMemo(
     () => (summary ? [...summary.byMonth].sort((a, b) => (a.month < b.month ? 1 : -1)) : []),
     [summary],
@@ -715,7 +716,7 @@ export function FlagCaseBrowser({
         for the PERM, the wage request, the LCA and any H-2A, H-2B or CW-1 filing side by side.
       </p>
 
-      <section id="browse" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+      <section id="browse" ref={browseTop} className="scroll-mt-28 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <h2 className="font-heading text-xl font-black">Browse every {program.noun} DOL has confirmed</h2>{" "}
         {summary ? (
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
@@ -801,6 +802,7 @@ export function FlagCaseBrowser({
             nextLabel={order === "oldest" ? "Newer" : "Older"}
             labelClassName="text-sm font-bold"
             buttonClassName={CHIP + "bg-card disabled:opacity-40 disabled:hover:bg-card"}
+            scrollTo={browseTop}
             onPrevious={() => setCursors((c) => c.slice(0, -1))}
             onNext={() => page && setCursors((c) => [...c, page.continueCursor])}
           >

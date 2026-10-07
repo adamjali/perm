@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 
@@ -89,6 +89,7 @@ export function LiveCaseBrowser({
   const [kind, setKind] = useState<LiveKind>("all");
   const [month, setMonth] = useState<string>(initialMonth);
   const [cursors, setCursors] = useState<string[]>([]);
+  const liveTop = useRef<HTMLElement>(null);
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<LiveSort>("filed");
@@ -155,7 +156,7 @@ export function LiveCaseBrowser({
   const busy = loading && shownPage !== undefined;
 
   return (
-    <section id="live" className="scroll-mt-24">
+    <section id="live" ref={liveTop} className="scroll-mt-24">
       <div className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Newer than DOL&apos;s published files
@@ -355,6 +356,7 @@ export function LiveCaseBrowser({
             nextLabel="Older"
             labelClassName="text-sm font-bold"
             buttonClassName="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+            scrollTo={liveTop}
             onPrevious={() => setCursors((c) => c.slice(0, -1))}
             onNext={() => page && setCursors((c) => [...c, page.continueCursor])}
           >

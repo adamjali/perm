@@ -329,6 +329,7 @@ def data_section(now_ms: int) -> dict:
     moved = one("SELECT COUNT(*) FROM perm_case_events WHERE changed_at >= ?", [day_ago])
     frontier = one("SELECT json FROM perm_docs WHERE key = 'discovery_frontier'")
     score = one("SELECT json FROM perm_docs WHERE key = 'scorecard_summary'")
+    rivals = one("SELECT json FROM perm_docs WHERE key = 'scorecard_rivals'")
     lines = [f"PERM status changes recorded in 24 h: {int(moved[0]) if moved else 0:,}"]
     # The other programs on the same counter, one line: a program whose sweep
     # stopped writing shows here as a zero beside the others.
@@ -352,6 +353,15 @@ def data_section(now_ms: int) -> dict:
         if rec is not None:
             lines.append(f"Estimate scorecard: {rec} predictions recorded, {graded or 0} graded"
                          + (f", typical miss {miss} days" if miss is not None else " (grading starts 30 days after the first)"))
+    # The verdicts the admin page prints, written by the site with the summary
+    # (src/lib/scorecard/verdict.ts), so the email and the page say the same.
+    if rivals and rivals[0]:
+        readings = (json.loads(rivals[0]).get("readings") or {})
+        for r in readings.get("rivals") or []:
+            points = r.get("points") or []
+            lines.append(f"Scorecard, {r.get('name')}: {r.get('headline')}. " + " ".join(points))
+        for line in (readings.get("ours") or [])[:2]:
+            lines.append(f"Scorecard, ours: {line}")
     if not moved or int(moved[0]) == 0:
         status = "warn"
         lines.append("No PERM status change recorded in 24 h: the sweep may not have written")

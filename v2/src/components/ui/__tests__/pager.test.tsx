@@ -86,4 +86,26 @@ describe("Pager", () => {
     expect(screen.getByRole("button", { name: "Newer" })).toBeInTheDocument();
     expect(screen.getByText("Older is off: this is the last page.")).toBeInTheDocument();
   });
+
+  it("brings the list back into view when it has scrolled out above", async () => {
+    const top = document.createElement("section");
+    const scrollIntoView = vi.fn();
+    top.scrollIntoView = scrollIntoView;
+    top.getBoundingClientRect = () => ({ top: -900 }) as DOMRect;
+    const onNext = vi.fn();
+    render(<Pager {...base} onNext={onNext} scrollTo={{ current: top }} />);
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(onNext).toHaveBeenCalled();
+    expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: "start" }));
+  });
+
+  it("leaves the page alone when the list's top is already on screen", async () => {
+    const top = document.createElement("section");
+    const scrollIntoView = vi.fn();
+    top.scrollIntoView = scrollIntoView;
+    top.getBoundingClientRect = () => ({ top: 120 }) as DOMRect;
+    render(<Pager {...base} scrollTo={{ current: top }} />);
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
 });

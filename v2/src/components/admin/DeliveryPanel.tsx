@@ -15,6 +15,7 @@ import type { FunctionReturnType } from "convex/server";
 import { formatInt } from "@/lib/format";
 import { EASTERN_TIMEZONE, MS_PER_HOUR } from "@/lib/time";
 import type { api } from "@convex/_generated/api";
+import { between } from "./elapsed";
 
 export type Delivery = FunctionReturnType<typeof api.adminDelivery.getDelivery>;
 
@@ -170,10 +171,11 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
             </p>
           ) : null}
           <div className="mt-3 overflow-x-auto border-2 border-border">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-[880px] text-left text-sm">
               <thead className="bg-muted">
                 <tr>
-                  <th className="px-3 py-2 font-bold">{"When "}</th>
+                  <th className="px-3 py-2 font-bold">{"Sent "}</th>
+                  <th className="px-3 py-2 font-bold">{"Signed up "}</th>
                   <th className="px-3 py-2 font-bold">{"To "}</th>
                   <th className="px-3 py-2 font-bold">{"What "}</th>
                   <th className="px-3 py-2 font-bold">{"State "}</th>
@@ -183,6 +185,18 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
                 {data.recent.map((r, i) => (
                   <tr key={`${r.email}-${r.createdAt}-${i}`} className="border-t-2 border-border align-top">
                     <td className="whitespace-nowrap px-3 py-2 tabular-nums">{`${when(r.sentAt ?? r.createdAt)} `}</td>
+                    <td className="whitespace-nowrap px-3 py-2 tabular-nums">
+                      {r.signedUpAt ? (
+                        <>
+                          {when(r.signedUpAt)}{" "}
+                          <span className="block text-sm text-muted-foreground">
+                            {`${between(r.signedUpAt, r.sentAt ?? r.createdAt)} before${r.confirmedAt ? `, confirmed after ${between(r.signedUpAt, r.confirmedAt)}` : ", never confirmed"}`}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">subscription removed</span>
+                      )}{" "}
+                    </td>
                     <td className="px-3 py-2 [overflow-wrap:anywhere]">{`${r.email} `}</td>
                     <td className="px-3 py-2">
                       <span className="font-bold">{`${KIND_LABEL[r.kind]}: ${r.title}`}</span>{" "}

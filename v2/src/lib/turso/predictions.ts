@@ -10,6 +10,7 @@ import {
   type Source,
   type Summary,
 } from "@/lib/scorecard/score";
+import { readMethods, readOurs, readRival } from "@/lib/scorecard/verdict";
 import { exec, one, rows } from "@/lib/turso/client";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
 import { loadPermEstimateContext, estimatePermCase } from "@/lib/turso/permEstimate";
@@ -376,10 +377,22 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
       outcome: r.outcome!,
     }));
   const pub: ScorecardDoc = { perm: summarise(ours, today, "perm"), pwd: summarise(ours, today, "pwd"), recent };
+  const perm = summarise(mapped, today, "perm");
+  // The same cases, ours against each rival: neither side scored on an easier sample.
+  const h2h = headToHead(all.map((r) => ({ ...toRow(r), caseNumber: r.case_number })), today);
+  const mine = perm.bySource.ours;
+  const backtest = await getEstimatorBacktest().catch(() => null);
   const priv = {
-    perm: summarise(mapped, today, "perm"),
-    // The same cases, ours against each rival: neither side scored on an easier sample.
-    headToHead: headToHead(all.map((r) => ({ ...toRow(r), caseNumber: r.case_number })), today),
+    perm,
+    headToHead: h2h,
+    // The sentences every surface prints (scorecard/verdict.ts), stored so the
+    // morning report, which is Python, quotes them instead of re-deriving them.
+    readings: {
+      ours: mine
+        ? [...readOurs(mine.all, mine.byHorizon, perm.since, backtest), ...readMethods(mine.byModel)]
+        : [],
+      rivals: Object.entries(h2h).map(([src, h]) => readRival(src, h)),
+    },
   };
   const now = Date.now();
   await exec(

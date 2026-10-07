@@ -201,6 +201,14 @@ export interface HeadToHead {
   ties: number;
   /** Still waiting past BOTH dates: the later prediction is already the closer one. */
   settledWhileWaiting: number;
+  /**
+   * Shared cases still waiting past each side's own date (Oct 7 2026; older
+   * docs lack them). A side with many is being flattered by grading only the
+   * decided cases, since each of these becomes a miss of at least the days
+   * it is already late.
+   */
+  oursLateWaiting?: number;
+  rivalLateWaiting?: number;
 }
 
 /**
@@ -225,6 +233,8 @@ export function headToHead(
       shared: 0, decided: 0, oursTypicalDays: null, rivalTypicalDays: null,
       oursCloser: 0, rivalCloser: 0, ties: 0, settledWhileWaiting: 0,
     };
+    let oursLate = 0;
+    let rivalLate = 0;
     const oursErr: number[] = [];
     const rivalErr: number[] = [];
     for (const r of rows) {
@@ -233,6 +243,10 @@ export function headToHead(
       if (!o) continue;
       h.shared += 1;
       if (r.decidedOn && !isGradedOutcome(r.outcome)) continue;
+      if (!r.decidedOn) {
+        if (o.predicted < today) oursLate += 1;
+        if (r.predicted < today) rivalLate += 1;
+      }
       let eo: number;
       let er: number;
       if (r.decidedOn) {
@@ -256,6 +270,8 @@ export function headToHead(
     }
     h.oursTypicalDays = median(oursErr);
     h.rivalTypicalDays = median(rivalErr);
+    h.oursLateWaiting = oursLate;
+    h.rivalLateWaiting = rivalLate;
     out[src] = h;
   }
   return out;

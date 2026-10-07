@@ -8537,3 +8537,50 @@ each toggle hands focus to the one that replaces it. The groups render in both t
 the phone panel, so their ids carry where they are (`rail-…`, `panel-…`); they had been duplicated.
 `DataRail.test.tsx` holds the icons, the spoken names ("Case tools, 7 pages"), unique ids and both
 strip behaviours; row heights didn't change, so `rail-fits.test.ts` holds as before.
+
+## Oct 7 2026 (afternoon): the scorecard in plain words, sign-up times, and rapid clicks
+
+**The scorecard reads as sentences now** (`src/lib/scorecard/verdict.ts`). The owner read the admin
+table's "8" and "4" as Rival A beating us and couldn't tell a lead from luck. `readRival` turns a
+head-to-head into a headline ("Rival A leads so far, not clearly yet"), the split, the typical miss
+on both sides, a two-sided sign test said in words ("could still be luck: fair coin flips split at
+least that unevenly about 4 times in 10"; clear only under 1 in 20), and the late-and-waiting count
+on the same cases (`oursLateWaiting` / `rivalLateWaiting` on `HeadToHead`), because grading only the
+decided cases flatters whoever dates cases sooner. `readOurs` leads with the weekly backtest, says
+when both checks lean the same way, flags a range that held under half the time, and says when the
+fair test (`SETTLE_DAYS`) begins. `readMethods` splits "ours" by the method that dated each case.
+`letterFor` grades A to F on a printed scale. `writeScorecardDocs` stores the sentences in
+`scorecard_rivals.readings`, so the morning report quotes them instead of re-deriving them; the
+admin panel opens with them and a square per judged case, and folds every figure under "Every
+figure"; `/estimate-scorecard` opens with "The short answer" (ours only). `GET
+/api/cron/scorecard?docs=1` rewrites the two summaries and records, asks and grades nothing.
+
+**What the split by method showed (Oct 7):** of our 33 graded PERM dates, 11 came from the main
+method (typically 4 days off, matching the backtest's 4 over 11,473 decisions), 19 from DOL's
+published average and 3 from the behind-the-queue rate. DOL's average leads for an in-line case whose
+filing month DOL's queue has already passed (since Sep 22 DOL works December 2025, so November 2025
+filings) while filed + 336 days is still ahead: `estimateByPace` refuses `overdue`, and the
+stragglers model answers only once every filing-anchored date has elapsed. Those 19 ran 3 to 34 days
+late, 7 of them more than two weeks. Not changed: the owner decides.
+
+**The record keeps each method apart.** Every prediction stores its model name (`decision-pace`,
+`dol-average`, `stragglers`, PWD's `pwd-queue` and the relabelled `pwd-queue-request-month`); the
+analyst-review-only count shipped with the scorecard on Sep 26, so no PERM row was recorded under the
+old count. A change to how a method dates cases needs a new model name, or the grades mix two methods.
+
+**Admin lists say when each person signed up.** "Latest alerts" has a Signed up column (joined from
+the outbox row's `ref`, `<kind>:<row id>`, null once the row is gone), with how long before the send
+and how long the person took to confirm; every subscription row reads "Signed up X · confirmed N
+minutes later · alerted Y, N days after signing up · last seen CERTIFIED · from the PERM case page".
+
+**Rapid clicks, 7 days of PostHog (scraper labels left out):** paging buttons under a long list
+(/pwd-cases "Older", 18 people, 49 clicks) changed rows above the screen, so `Pager` takes `scrollTo`
+and brings the list's top back into view; the /perm-employers top-ten names were plain text and are
+links now; the homepage's example case number is drawn dashed so it doesn't read as buttons. Most of
+the rest were text boxes clicked several times (selecting a case number to replace or copy; every
+one of the 67 case-page sessions went on to look a case up) and phones tapping chart bars to read
+each day's figures: not defects.
+
+**Held: sharp 0.35.5** (GHSA-wq5f-xc86-pv6w, librsvg). `pnpm add` re-resolves the tree and the
+`trustPolicy: no-downgrade` gate refuses semver@6.3.1 (already in the lockfile, under eslint-config-next),
+so nothing changed. Exposure is low: the image optimizer reads only local files and refuses SVG.

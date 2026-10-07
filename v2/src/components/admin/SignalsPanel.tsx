@@ -18,6 +18,7 @@
 import { useMemo, useState } from "react";
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "@convex/_generated/api";
+import { between, sourceWords } from "./elapsed";
 
 export type Signals = FunctionReturnType<typeof api.adminSignals.getSignals>;
 type Sub = Signals["subscriptions"]["caseAlerts"][number];
@@ -34,6 +35,28 @@ const STATUS_CLASS: Record<string, string> = {
 const SHOWN = 10;
 /** Rows adminSignals reads per list (`take(500)`), newest first. */
 const SUB_READ_CAP = 500;
+
+/**
+ * A subscription's own clock, labelled: when the person signed up, when they
+ * confirmed, and how long after signing up each alert reached them. The row
+ * used to print one unlabelled date and "alerted" beside it (Oct 7 2026).
+ */
+function SubClock({ r }: { r: Sub }) {
+  const parts = [`Signed up ${when(r.createdAt)}`];
+  if (r.confirmedAt) parts.push(`confirmed ${between(r.createdAt, r.confirmedAt)} later`);
+  if (r.lastNotifiedAt) {
+    const n = r.alertCount ?? 1;
+    parts.push(
+      `${n > 1 ? `${n} alerts, last` : "alerted"} ${when(r.lastNotifiedAt)}, ${between(r.createdAt, r.lastNotifiedAt)} after signing up`,
+    );
+  } else if (r.status === "confirmed" && r.alertCount !== null) {
+    parts.push("no alert yet");
+  }
+  if (r.lastSeen) parts.push(`last seen ${r.lastSeen}`);
+  if (r.unsubscribedAt) parts.push(`stopped ${when(r.unsubscribedAt)}`);
+  if (r.source) parts.push(`from ${sourceWords(r.source)}`);
+  return <span className="basis-full text-sm tabular-nums text-muted-foreground">{parts.join(" · ")}</span>;
+}
 
 function SubList({ title, rows, open, capped }: { title: string; rows: Sub[]; open: boolean; capped: boolean }) {
   const [all, setAll] = useState(false);
@@ -56,10 +79,7 @@ function SubList({ title, rows, open, capped }: { title: string; rows: Sub[]; op
               <span className="min-w-0 font-medium [overflow-wrap:anywhere]">{r.email}</span>{" "}
               <span className="min-w-0 text-muted-foreground [overflow-wrap:anywhere]">{r.subject}</span>{" "}
               <span className={`px-1.5 py-0.5 text-sm font-bold ${STATUS_CLASS[r.status] ?? ""}`}>{r.status}</span>{" "}
-              <span className="ml-auto text-sm tabular-nums text-muted-foreground">
-                {when(r.createdAt)}
-                {r.lastNotifiedAt ? `, alerted ${when(r.lastNotifiedAt)}` : ""}
-              </span>
+              <SubClock r={r} />
             </li>
           ))}
         </ul>
