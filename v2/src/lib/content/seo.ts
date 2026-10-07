@@ -85,9 +85,13 @@ export function generateArticleSchema(
       "@id": `${BASE_URL}/${type}/${slug}`,
     },
     keywords: meta.tags.join(", "),
+    // The summary and the body's first paragraph. "first h2 + p" matched
+    // nothing on 8 of 77 articles (a table or list follows the heading there),
+    // and "first h2" matched twice on one; these two match exactly once on all
+    // 77 (measured Oct 7 2026; seo.test.ts holds the shape).
     speakable: {
       "@type": "SpeakableSpecification" as const,
-      cssSelector: [".article-description", ".article-content h2:first-of-type", ".article-content h2:first-of-type + p"],
+      cssSelector: [".article-description", ".article-content > p:first-of-type"],
     },
   };
 }
@@ -153,14 +157,14 @@ export function generateVideoObjectSchema(
 /**
  * Generate ItemList schema for content listing pages.
  *
- * Each entry nests its content in `item` as an Article, which is where the
- * date signal has to live. An earlier version put `datePublished` and
- * `dateModified` directly on the ListItem: neither is a ListItem property in
- * schema.org (ListItem defines only `item`, `nextItem`, `previousItem` and
- * `position` beyond what it inherits from Thing), so all five listing pages
- * carried a schema.org validation error. Nesting keeps the dates and makes the
- * markup valid, which is the shape Google documents for a list whose entries
- * are full entities rather than bare links.
+ * Each entry is Google's summary-page shape: a ListItem with its position,
+ * the entry's URL and its title. Two earlier shapes were wrong: dates directly
+ * on the ListItem (not ListItem properties in schema.org, so all five listing
+ * pages carried a validation error), then an Article nested in `item` with
+ * only a name and dates, a second, incomplete Article for a URL whose own page
+ * carries the full one. Google shows no carousel for article lists in the US,
+ * so the list says what's on the page and nothing more; the dates live in each
+ * article's own markup.
  *
  * `urlFor` is an optional strategy for building each item's URL. Defaults to
  * `${BASE_URL}/${post.type}/${post.slug}` (the standard detail-route shape).
@@ -180,14 +184,8 @@ export function generateItemListSchema(
       return {
         "@type": "ListItem" as const,
         position: i + 1,
-        item: {
-          "@type": "Article" as const,
-          "@id": url,
-          url,
-          name: post.meta.title,
-          datePublished: toISO8601(post.meta.date),
-          dateModified: toISO8601(post.meta.updated || post.meta.date),
-        },
+        url,
+        name: post.meta.title,
       };
     }),
     numberOfItems: posts.length,

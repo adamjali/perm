@@ -8496,3 +8496,31 @@ past 3 hours without one. `watched-cases.yml` is kept as the hand-run fallback; 
 batch is 50), against the roughly 10,000 the nightly sweep makes; Resend volume is unchanged, only
 the timing. **What it can't do:** beat the attorney. DOL emails the filer the moment it decides; the
 best we can do is a few minutes after.
+
+## Oct 7 2026: the structured data, checked against Google's own rules
+
+Google's rules for every type the site emits were read from its own pages on Oct 7 2026 and kept,
+quoted and dated, in `~/.claude/explanations/20261007_structured_data_rules/GOOGLE-RULES.md`. One
+page per template (97, from the sitemaps) was crawled and each of its 1,798 nodes checked against
+schema.org's published vocabulary and Google's required fields. The checker was probed with six
+planted defects first, and caught all six; schema.org's own validator refuses after about 19 pages
+from one address, so it can't carry a full pass.
+
+- **The Organization carries what Google lists and we can truthfully fill**: description (the
+  one-liner and both halves, `ORGANIZATION_DESCRIPTION`), the WebSite's alternate names, email, the
+  filed address (`POSTAL_ADDRESS_PARTS`, which also builds `POSTAL_ADDRESS`) and a
+  `disambiguatingDescription` (`DISAMBIGUATION`, also near the top of llms.txt). No phone or tax id
+  exists to publish yet; add the EIN as `taxID` once it's issued.
+- **`applicationCategory` must be one of Google's 22 app types** (`GOOGLE_APP_CATEGORIES`).
+  `WebApplication` is a schema.org type and not on the list; the site is `ReferenceApplication`, the
+  calculators `UtilitiesApplication`.
+- **Speakable points at elements every article renders once** (`.article-description`,
+  `.article-content > p:first-of-type`): "first h2 + p" matched nothing on 8 of 77 articles. It's a
+  US, news-only beta for Google; harmless here.
+- **List pages are Google's summary shape** (position, url, name). The nested Article stubs with no
+  headline, image or author are gone; each article's own page carries the full Article.
+- **Kept on purpose:** FAQPage (no Google rich result for anyone since May 7 2026; other engines
+  read it), Dataset (only Google's Dataset Search since Nov 5 2025), the homepage and article
+  videos (valid, but no video result where the video isn't the page's main content), HowTo on
+  guides with steps (no Google result since Sep 13 2023), the app's rating (a SoftwareApplication,
+  visible on the page, from users, with a way to leave one).

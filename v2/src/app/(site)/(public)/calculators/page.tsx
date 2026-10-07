@@ -280,7 +280,7 @@ export default function CalculatorsPage() {
         "@type": "WebApplication" as const,
         name: t.name,
         url: `${SITE_URL}${t.href}`,
-        applicationCategory: "BusinessApplication",
+        applicationCategory: "UtilitiesApplication",
         offers: { "@type": "Offer" as const, price: "0", priceCurrency: "USD" },
       },
     })),

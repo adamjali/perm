@@ -96,7 +96,14 @@ export const DISAMBIGUATION = `PERM Tracker at permtracker.app, run by ${LEGAL_N
  * (15 U.S.C. 7704(a)(5)(A)(iii)); printing it on every email means no template
  * has to decide whether it is commercial.
  */
-export const POSTAL_ADDRESS = "7901 4th St N, Ste 300, St. Petersburg, FL 33702";
+export const POSTAL_ADDRESS_PARTS = {
+  streetAddress: "7901 4th St N, Ste 300",
+  addressLocality: "St. Petersburg",
+  addressRegion: "FL",
+  postalCode: "33702",
+  addressCountry: "US",
+} as const;
+export const POSTAL_ADDRESS = `${POSTAL_ADDRESS_PARTS.streetAddress}, ${POSTAL_ADDRESS_PARTS.addressLocality}, ${POSTAL_ADDRESS_PARTS.addressRegion} ${POSTAL_ADDRESS_PARTS.postalCode}`;
 
 /**
  * The line that tells every visitor this isn't a law firm. The LLC is managed
@@ -114,6 +121,13 @@ export const NOT_LEGAL_SERVICES =
 
 export const ABOUT_ONE_LINER =
   "PERM Tracker is a free, independent website that follows the PERM labor certification process using the Department of Labor's own published data.";
+
+/**
+ * The Organization node's description (Google: "A detailed description of
+ * your organization"): the one-liner, then both halves, so no machine reader
+ * sees one audience only.
+ */
+export const ORGANIZATION_DESCRIPTION = `${ABOUT_ONE_LINER.replace(/\.$/, "")}, with two free halves: case lookups, estimates and email alerts for anyone waiting on a PERM, wage request, H-1B LCA, H-2A or H-2B case, and a deadline app for immigration attorneys, paralegals and HR teams.`;
 
 /**
  * The two halves, each stated in full. The homepage lede, the mirrored

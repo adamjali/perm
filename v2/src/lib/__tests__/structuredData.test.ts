@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   getDatasetSchema,
@@ -7,9 +9,10 @@ import {
   getWebSiteSchema,
   getFAQPageSchema,
   getHomepageRatingPartialSchema,
+  GOOGLE_APP_CATEGORIES,
 } from "../structuredData";
 import { MEDIUM_PROFILE_URL } from "@/lib/constants/externalLinks";
-import { ORGANIZATION_SAME_AS, PEOPLE } from "@/lib/constants/about";
+import { ABOUT_TWO_HALVES, ORGANIZATION_DESCRIPTION, ORGANIZATION_SAME_AS, PEOPLE, POSTAL_ADDRESS } from "@/lib/constants/about";
 
 const BASE = "https://permtracker.app";
 
@@ -96,6 +99,30 @@ describe("getOrganizationSchema", () => {
     expect(schema.url).toBe(BASE);
   });
 
+  it("carries every field Google lists that the business can truthfully fill", () => {
+    // developers.google.com/search/docs/appearance/structured-data/organization
+    // (updated 2026-09-08): no field is required; description, alternateName,
+    // email and address were missing until Oct 7 2026. No telephone or tax id
+    // exists to publish yet.
+    const org = schema as unknown as {
+      description?: string;
+      alternateName?: string[];
+      email?: string;
+      address?: Record<string, string>;
+    };
+    expect(org.description).toBe(ORGANIZATION_DESCRIPTION);
+    // Both audiences, as every machine-read description must.
+    expect(ORGANIZATION_DESCRIPTION).toMatch(/waiting on/);
+    expect(ORGANIZATION_DESCRIPTION).toMatch(/attorneys/);
+    expect(ABOUT_TWO_HALVES.practice).toMatch(/attorneys/);
+    expect(org.alternateName).toEqual(getWebSiteSchema(BASE).alternateName);
+    expect(org.email).toBe("support@permtracker.app");
+    const a = org.address ?? {};
+    expect(a["@type"]).toBe("PostalAddress");
+    expect(a.addressCountry).toBe("US");
+    expect(`${a.streetAddress}, ${a.addressLocality}, ${a.addressRegion} ${a.postalCode}`).toBe(POSTAL_ADDRESS);
+  });
+
   it("names the founder as a Person node that agrees with the About facts", () => {
     const founders = (schema as { founder?: { name: string; jobTitle: string; sameAs: string[] }[] }).founder ?? [];
     expect(founders.map((f) => f.name)).toEqual(PEOPLE.map((p) => p.name));
@@ -171,6 +198,16 @@ describe("getHomepageRatingPartialSchema", () => {
     // live on 2026-08-29 before the fix.
     const graphNode = getSoftwareApplicationSchema(BASE);
     expect(partial.applicationCategory).toBe(graphNode.applicationCategory);
+  });
+
+  it("uses a category Google accepts, on every app node", () => {
+    // 'WebApplication' (until Oct 7 2026) is a schema.org type, not one of
+    // Google's 22 app types; the calculators page lists its tools too.
+    const cats = [getSoftwareApplicationSchema(BASE).applicationCategory, partial.applicationCategory];
+    const calc = readFileSync(join(__dirname, "..", "..", "app", "(site)", "(public)", "calculators", "page.tsx"), "utf8");
+    for (const m of calc.matchAll(/applicationCategory: "([A-Za-z]+)"/g)) cats.push(m[1] as never);
+    expect(cats.length).toBeGreaterThanOrEqual(3);
+    for (const c of cats) expect(GOOGLE_APP_CATEGORIES).toContain(c);
   });
 
   it("aggregateRating fields are present and string-typed (schema.org)", () => {

@@ -15,7 +15,18 @@
  * product was. Both sides of the product, in both descriptions, always.
  */
 
-import { DISAMBIGUATION, FOUNDED, LEGAL_NAME, ORGANIZATION_SAME_AS, PEOPLE } from './constants/about';
+import {
+  DISAMBIGUATION,
+  FOUNDED,
+  LEGAL_NAME,
+  ORGANIZATION_DESCRIPTION,
+  ORGANIZATION_SAME_AS,
+  PEOPLE,
+  POSTAL_ADDRESS_PARTS,
+} from './constants/about';
+
+/** The other names the site goes by: the WebSite node (Google's site name) and the Organization share them. */
+const ALTERNATE_NAMES = ['PERMTracker', 'permtracker.app'];
 
 /**
  * Single source for the schema.org `@id` fragments used to cross-link entities
@@ -30,6 +41,24 @@ export const SCHEMA_IDS = {
 } as const;
 
 /**
+ * The app's category, from the 22 values Google accepts ("The value must be a
+ * supported app type", developers.google.com/search/docs/appearance/
+ * structured-data/software-app, read Oct 7 2026). It said 'WebApplication',
+ * which is a schema.org type and not on that list. ReferenceApplication: the
+ * public half is case lookups and DOL's data, and BusinessApplication would
+ * describe only the attorney half. Both nodes sharing the app's @id read it.
+ */
+export const GOOGLE_APP_CATEGORIES = [
+  'GameApplication', 'SocialNetworkingApplication', 'TravelApplication', 'ShoppingApplication',
+  'SportsApplication', 'LifestyleApplication', 'BusinessApplication', 'DesignApplication',
+  'DeveloperApplication', 'DriverApplication', 'EducationalApplication', 'HealthApplication',
+  'FinanceApplication', 'SecurityApplication', 'BrowserApplication', 'CommunicationApplication',
+  'DesktopEnhancementApplication', 'EntertainmentApplication', 'MultimediaApplication',
+  'HomeApplication', 'UtilitiesApplication', 'ReferenceApplication',
+] as const;
+const APP_CATEGORY: (typeof GOOGLE_APP_CATEGORIES)[number] = 'ReferenceApplication';
+
+/**
  * Generate SoftwareApplication schema for PERM Tracker
  * Used in root layout for site-wide structured data
  */
@@ -38,9 +67,7 @@ export function getSoftwareApplicationSchema(baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication' as const,
     name: 'PERM Tracker',
-    // WebApplication over BusinessApplication/'Legal Software': the old pair
-    // encoded B2B-only, and half the product is a free consumer surface.
-    applicationCategory: 'WebApplication',
+    applicationCategory: APP_CATEGORY,
     operatingSystem: 'Web Browser',
     isAccessibleForFree: true,
     offers: {
@@ -99,10 +126,16 @@ export function getOrganizationSchema(baseUrl: string) {
     // The entity the Terms bind. One constant feeds this, the About page and
     // the Terms, so the three cannot name different parties.
     legalName: LEGAL_NAME,
+    alternateName: ALTERNATE_NAMES,
+    description: ORGANIZATION_DESCRIPTION,
     // Tells this site apart from others with similar names (see DISAMBIGUATION).
     disambiguatingDescription: DISAMBIGUATION,
     url: baseUrl,
     logo: `${baseUrl}/icon-512.png`,
+    email: 'support@permtracker.app',
+    // The LLC's principal and mailing address as filed with Florida; already
+    // printed on the Terms, the Privacy Policy and every email.
+    address: { '@type': 'PostalAddress' as const, ...POSTAL_ADDRESS_PARTS },
     contactPoint: {
       '@type': 'ContactPoint' as const,
       email: 'support@permtracker.app',
@@ -154,7 +187,7 @@ export function getWebSiteSchema(baseUrl: string) {
     // "PERM Tracker" is generic (it IS the search query), and another site
     // declares the byte-identical string, while Google "generally won't use the
     // same site name for two different sites."
-    alternateName: ['PERMTracker', 'permtracker.app'],
+    alternateName: ALTERNATE_NAMES,
     url: baseUrl,
     description:
       'Free PERM tracking for green-card applicants and immigration attorneys: live DOL data, per-case status, and automatic deadlines.',
@@ -258,7 +291,7 @@ export function getHomepageRatingPartialSchema(baseUrl: string) {
     // parser saw one entity asserting two different categories; a
     // non-merging one saw two SoftwareApplications with the same identity.
     // Neither is what the complete-node pattern below is trying to achieve.
-    applicationCategory: 'WebApplication' as const,
+    applicationCategory: APP_CATEGORY,
     operatingSystem: 'Web Browser',
     offers: {
       '@type': 'Offer' as const,

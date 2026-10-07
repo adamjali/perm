@@ -67,7 +67,7 @@ describe("ChangelogPage structured data", () => {
     const ld = parseLdJsonFromPage();
     const graph = ld["@graph"] as Array<{
       "@type": string;
-      itemListElement?: Array<{ item: { url: string } }>;
+      itemListElement?: Array<{ url: string }>;
     }>;
     const itemList = graph.find((n) => n["@type"] === "ItemList");
     expect(itemList).toBeDefined();
@@ -75,24 +75,18 @@ describe("ChangelogPage structured data", () => {
     expect(items.length).toBe(2);
     for (const entry of items) {
       // Anchor URL shape, NOT a detail URL like /changelog/entry-one which would 404
-      expect(entry.item.url).toMatch(/^https?:\/\/[^/]+\/changelog#[a-z0-9-]+$/);
-      expect(entry.item.url).not.toMatch(/\/changelog\/[a-z0-9-]+$/);
+      expect(entry.url).toMatch(/^https?:\/\/[^/]+\/changelog#[a-z0-9-]+$/);
+      expect(entry.url).not.toMatch(/\/changelog\/[a-z0-9-]+$/);
     }
   });
 
-  it("each ItemList entry carries its dates on the nested item, in ISO 8601", () => {
-    // The dates live on `item`, not on the ListItem: schema.org does not define
-    // datePublished/dateModified on ListItem, and putting them there flagged
-    // every listing page with a validation error.
+  it("each ItemList entry is a position, an anchor URL and a name, with no thin Article", () => {
+    // The nested Article carried only a name and dates, a second, incomplete
+    // Article for each entry (Oct 7 2026). The dates show on the page itself.
     const ld = parseLdJsonFromPage();
-    const graph = ld["@graph"] as Array<{
-      "@type": string;
-      itemListElement?: Array<{ item: { datePublished: string; dateModified: string } }>;
-    }>;
+    const graph = ld["@graph"] as Array<{ "@type": string; itemListElement?: Array<Record<string, unknown>> }>;
     const items = graph.find((n) => n["@type"] === "ItemList")!.itemListElement!;
-    expect(items[0]!.item.datePublished).toBe("2026-01-15T00:00:00+00:00");
-    // entry-two has `updated`, so dateModified diverges from datePublished
-    expect(items[1]!.item.datePublished).toBe("2026-02-20T00:00:00+00:00");
-    expect(items[1]!.item.dateModified).toBe("2026-03-04T00:00:00+00:00");
+    for (const it of items) expect(Object.keys(it).sort()).toEqual(["@type", "name", "position", "url"]);
+    expect(JSON.stringify(items)).not.toMatch(/"Article"|datePublished/);
   });
 });

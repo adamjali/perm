@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { KNOWN_PERSON_AUTHORS } from "@/lib/constants/externalLinks";
 import { CONTENT_TYPE_CONFIG } from "../types";
 import { describe, it, expect } from "vitest";
@@ -28,6 +30,16 @@ function createTestMeta(overrides: Partial<PostMeta> = {}): PostMeta {
 describe("generateArticleSchema", () => {
   const slug = "test-article";
   const type: ContentType = "blog";
+
+  it("points Speakable at elements every article renders exactly once", () => {
+    // "first h2 + p" matched nothing on 8 of 77 live articles (a table or
+    // list follows the heading); these two matched once on all 77, Oct 7 2026.
+    const schema = generateArticleSchema(createTestMeta(), slug, type);
+    expect(schema.speakable.cssSelector).toEqual([".article-description", ".article-content > p:first-of-type"]);
+    const dir = join(__dirname, "..", "..", "..", "components", "content");
+    expect(readFileSync(join(dir, "ArticleHeader.tsx"), "utf8")).toMatch(/className="article-description /);
+    expect(readFileSync(join(dir, "ArticleBody.tsx"), "utf8")).toMatch(/className="article-content /);
+  });
 
   it("returns correct @context and @type", () => {
     const schema = generateArticleSchema(createTestMeta(), slug, type);
@@ -216,53 +228,28 @@ describe("generateItemListSchema", () => {
     expect(generateItemListSchema([], "resources").name).toBe("PERM Tracker Resources");
   });
 
-  it("emits one ListItem per post, nesting url and name in the item entity", () => {
+  it("emits one ListItem per post with its position, url and name", () => {
     const posts = [
       createTestPost({ slug: "first", title: "First Post" }),
       createTestPost({ slug: "second", title: "Second Post" }),
     ];
     const schema = generateItemListSchema(posts, "blog");
     expect(schema.numberOfItems).toBe(2);
-    expect(schema.itemListElement).toHaveLength(2);
-    expect(schema.itemListElement[0]).toMatchObject({
-      "@type": "ListItem",
-      position: 1,
-      item: {
-        "@type": "Article",
-        "@id": `${BASE_URL}/blog/first`,
-        url: `${BASE_URL}/blog/first`,
-        name: "First Post",
-      },
-    });
-    expect(schema.itemListElement[1]).toMatchObject({
-      "@type": "ListItem",
-      position: 2,
-      item: { url: `${BASE_URL}/blog/second`, name: "Second Post" },
-    });
+    expect(schema.itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, url: `${BASE_URL}/blog/first`, name: "First Post" },
+      { "@type": "ListItem", position: 2, url: `${BASE_URL}/blog/second`, name: "Second Post" },
+    ]);
   });
 
-  it("keeps ListItem free of properties schema.org does not define on it", () => {
-    // datePublished/dateModified on a ListItem is a schema.org validation
-    // error, and it silently flagged all five listing pages in Site Audit.
-    const schema = generateItemListSchema([createTestPost()], "blog");
+  it("keeps each entry to Google's summary-page shape, with no thin Article inside", () => {
+    // datePublished on a ListItem is a schema.org error (it flagged all five
+    // listing pages in Site Audit); nesting an Article with only a name and
+    // dates made a second, incomplete Article for each URL (Oct 7 2026). The
+    // dates and the full Article live on each article's own page.
+    const schema = generateItemListSchema([createTestPost({ date: "2026-01-15", updated: "2026-03-04" })], "blog");
     const listItem = schema.itemListElement[0] as Record<string, unknown>;
-    expect(listItem).not.toHaveProperty("datePublished");
-    expect(listItem).not.toHaveProperty("dateModified");
-    expect(Object.keys(listItem).sort()).toEqual(["@type", "item", "position"]);
-  });
-
-  it("includes datePublished and dateModified per item in ISO 8601", () => {
-    const post = createTestPost({ date: "2026-01-15", updated: "2026-03-04" });
-    const schema = generateItemListSchema([post], "blog");
-    expect(schema.itemListElement[0].item.datePublished).toBe("2026-01-15T00:00:00+00:00");
-    expect(schema.itemListElement[0].item.dateModified).toBe("2026-03-04T00:00:00+00:00");
-  });
-
-  it("falls back dateModified to datePublished when meta.updated is absent", () => {
-    const post = createTestPost({ date: "2026-02-10" });
-    const schema = generateItemListSchema([post], "blog");
-    expect(schema.itemListElement[0].item.datePublished).toBe("2026-02-10T00:00:00+00:00");
-    expect(schema.itemListElement[0].item.dateModified).toBe("2026-02-10T00:00:00+00:00");
+    expect(Object.keys(listItem).sort()).toEqual(["@type", "name", "position", "url"]);
+    expect(JSON.stringify(schema)).not.toMatch(/"Article"|datePublished|dateModified/);
   });
 
   it("returns an empty list with numberOfItems=0 for an empty posts array", () => {
