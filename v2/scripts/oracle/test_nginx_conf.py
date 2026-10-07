@@ -108,6 +108,15 @@ def run(conf_text: str) -> None:
     for sel in ("= /perm-case-status", "= /embed/case-status"):
         m = re.search(r"limit_conn\s+pt_lookup_conn\s+(\d+);", locs.get(sel, ""))
         check(f"{sel}: lookups-together cap below the whole-app cap", m is not None and int(m.group(1)) < 64)
+    # The frozen Chrome 151 label that walked case numbers on Oct 6 2026 gets a
+    # small allowance of lookups together, on both lookup pages.
+    for sel in ("= /perm-case-status", "= /embed/case-status"):
+        check(f"{sel}: the frozen label's lookups are limited together",
+              "pt_stale_label" in zones_in(locs.get(sel, ""), "limit_req"))
+    stale = re.search(r"\$pt_stale_label\s*\{([^}]*)\}", head)
+    check("the frozen-label limit counts lookups only, under that exact label",
+          stale is not None and '"~^lookups:Mozilla/5\\.0 \\(Windows NT 10\\.0; Win64; x64\\)' in stale.group(1)
+          and "Chrome/151\\.0\\.0\\.0 Safari/537\\.36$\"" in stale.group(1) and 'default "";' in stale.group(1))
     lookup_all = re.search(r"\$pt_lookup_all\s*\{([^}]*)\}", head)
     check("pre-loads are not counted as lookups together",
           lookup_all is not None and '"1:1"   "";' in lookup_all.group(1))
@@ -272,6 +281,9 @@ def probe() -> None:
             "proxy_set_header X-Forwarded-For $remote_addr;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie",
             "proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie", 1),
         "lookups-together cap removed": good.replace("        limit_conn pt_lookup_conn 24;\n", "", 1),
+        "frozen-label limit dropped from a lookup page": good.replace(
+            "        limit_req zone=pt_stale_label burst=10 nodelay;\n", "", 1),
+        "frozen-label limit catches every page": good.replace('    "~^lookups:Mozilla', '    "~:Mozilla', 1),
         "API share of the app's slots removed": good.replace("        limit_conn pt_apiall 24;\n", "", 1),
         "MCP streams hold app slots": good.replace("        limit_conn pt_mcpall 48;\n", "        limit_conn pt_mcpall 48;\n        limit_conn pt_app 64;\n", 1),
         "MCP streams buffered": good.replace("        proxy_buffering off;\n        proxy_read_timeout 3600s;\n", "        proxy_read_timeout 3600s;\n", 1),

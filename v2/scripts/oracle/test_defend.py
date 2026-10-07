@@ -56,6 +56,16 @@ full = [dl(NOW - 30 - i % 50, status=503 if i % 10 == 0 else 200) for i in range
 check("a minute with 10% refused counts as full", d.full_minutes(d.page_requests(full, NOW - 600), NOW) >= 1)
 calm = [dl(NOW - 30 - i % 50, status=503 if i == 0 else 200) for i in range(600)]
 check("one refusal is not a full minute", d.full_minutes(d.page_requests(calm, NOW - 600), NOW) == 0)
+# Crawlers past their own small cap get a 503 too, and that is no person turned
+# away (Oct 7 2026: ShapBot, Meta's crawler, AhrefsBot and Applebot drew most of
+# the 503s while nobody was shown the busy page).
+SHAP = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ShapBot/0.1.0"
+crawl = ([dl(NOW - 30 - i % 50, status=503, ua=SHAP) for i in range(60)]
+         + [dl(NOW - 30 - i % 50, status=503, bot="true") for i in range(60)]
+         + [dl(NOW - 30 - i % 50) for i in range(500)])
+check("crawlers' 503s don't make a minute full", d.full_minutes(d.page_requests(crawl, NOW - 600), NOW) == 0)
+people = crawl + [dl(NOW - 30 - i % 50, status=503) for i in range(60)]
+check("people's 503s still do", d.full_minutes(d.page_requests(people, NOW - 600), NOW) >= 1)
 
 # The source
 mix = [dl(NOW - i % 200, asn=132203, ua=SCRAPER) for i in range(400)] + [dl(NOW - i % 200) for i in range(300)]

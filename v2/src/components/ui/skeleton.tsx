@@ -5,8 +5,9 @@ import { cn } from "@/lib/utils"
  *
  * It draws what it stands in for: a square-cornered box (the radius token is
  * 0px) on the muted ground with a real --border edge. Both come from tokens,
- * so it is right in dark mode, and nothing moves, because perpetual motion is
- * banned.
+ * so it is right in dark mode. A slow band sweeps across it while it waits
+ * (`.skeleton-pulse` in globals.css), so a loading page reads as working, not
+ * frozen; reduced motion keeps the still ground.
  *
  * The `circle` variant keeps its radius on purpose. It stands in for an
  * avatar, which is genuinely round; squaring it would misdescribe the thing

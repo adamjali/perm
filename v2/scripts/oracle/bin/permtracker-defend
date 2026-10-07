@@ -149,11 +149,18 @@ def people_busy(lines: list[str], now: float) -> int:
 
 
 def full_minutes(reqs, now: float) -> int:
-    """How many of the last FULL_MINUTES whole minutes the app was full."""
+    """How many of the last FULL_MINUTES whole minutes the app was full.
+
+    Crawlers are left out of both counts. nginx answers a crawler past its own
+    small cap (a few pages at a time) with the same 503 as a full app, so
+    counting them made a minute "full" with no person turned away: on Oct 7
+    2026, 12:16 AM EDT, ShapBot, Meta's crawler, AhrefsBot and Applebot drew
+    most of 137 such replies in five minutes while the defense counted 0
+    people shown the busy page, and it was heading for Under Attack Mode."""
     n = 0
     for k in range(1, FULL_MINUTES + 1):
         lo, hi = now - 60 * k, now - 60 * (k - 1)
-        minute = [r for r in reqs if lo <= r[0] < hi]
+        minute = [r for r in reqs if lo <= r[0] < hi and not r[3] and not NOT_PERSON.search(r[4])]
         refused = sum(1 for r in minute if r[1] == 503)
         if refused >= FULL_MIN and refused >= FULL_SHARE * len(minute):
             n += 1

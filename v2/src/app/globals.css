@@ -23,6 +23,11 @@
   /* Muted */
   --muted: #F5F5F5;
   --muted-foreground: #666666;
+  /* The band that sweeps a loading skeleton (.skeleton-pulse): a tint of the
+     foreground, so a darker band on the light ground and a lighter one in
+     dark mode. Declared on the root, it resolves against each theme's
+     --foreground. */
+  --skeleton-sheen: color-mix(in oklab, var(--foreground) 7%, transparent);
 
   /* Accent */
   /* A hover WASH, not the brand. This was the lime, so every ghost/outline
@@ -371,18 +376,50 @@
     font-family: var(--font-mono);
   }
 
-  /* Skeleton placeholder ground.
-     NO SHIMMER. The previous version swept an infinite gradient across two
-     hardcoded greys (#eeeeee/#dddddd, and a separate #3a3a3a pair under
-     .dark): a perpetual animation, which is banned, and theme-blind on top of
-     it. A skeleton stands in for a card, so it takes the card's own muted
-     ground and the Skeleton component draws the --border edge. This is also
-     exactly what a prefers-reduced-motion visitor already saw, so the two
-     audiences now get the same thing.
-     background-COLOR, not the `background` shorthand: the shorthand also reset
-     background-image on any caller that had set one. */
+  /* Skeleton placeholder: the card's own muted ground, with a slow band that
+     sweeps across it while the content loads. The owner's call, Oct 6 2026:
+     flat boxes read as a page that froze. It is a sweep, never a pulse:
+     nothing blinks or breathes, the band is a tint of the theme's own
+     foreground (so it is right in dark mode), it ends the moment the content
+     replaces the box, and a visitor who asks for reduced motion gets the
+     still ground (the reduced-motion block below).
+     The band lives in the element's own background, so it needs no
+     positioned parent and can't escape its box. The image is three boxes
+     wide with the band in the middle third; moving its position from 100%
+     to 0% carries the band from off the left edge to off the right, then it
+     rests before the next pass. Every skeleton on a screen mounts together,
+     so they sweep together.
+     background-COLOR and -IMAGE, never the `background` shorthand: the
+     shorthand resets properties a caller may have set. */
   .skeleton-pulse {
     background-color: var(--muted);
+    background-image: linear-gradient(
+      100deg,
+      transparent 40%,
+      var(--skeleton-sheen) 50%,
+      transparent 60%
+    );
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    animation: skeleton-sweep 1.9s ease-in-out infinite;
+  }
+
+  /* A skeleton drawn inside an inverted (ink) panel, such as the case page's
+     answer card: its bars are tints of the page ground over the ink, so they
+     read as text-to-come in both themes rather than as white slabs. */
+  .skeleton-on-ink {
+    background-color: color-mix(in oklab, var(--background) 16%, transparent);
+    --skeleton-sheen: color-mix(in oklab, var(--background) 22%, transparent);
+  }
+
+  @keyframes skeleton-sweep {
+    0% {
+      background-position: 100% 0;
+    }
+    70%,
+    100% {
+      background-position: 0% 0;
+    }
   }
 
   /* Hazard background - yellow/black diagonal stripes */
@@ -1804,10 +1841,13 @@ body[data-scroll-locked] {
   /* Completely disable decorative animations.
      .bounce-spin is the loading-skeleton accent; the spinning square is
      decoration on top of the skeleton and can go entirely.
-     .skeleton-pulse does not animate for anyone, so there is nothing to
-     slow. */
+     .skeleton-pulse keeps its still ground and loses the sweeping band. */
   .bounce-spin {
     animation: none !important;
+  }
+  .skeleton-pulse {
+    animation: none !important;
+    background-image: none !important;
   }
 
   /* Ensure visibility for entrance animations (instant reveal) */

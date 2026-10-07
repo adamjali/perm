@@ -8420,3 +8420,45 @@ after one page, 15% reach a case lookup), then the case page (2,691), the homepa
 - **The funnel can be counted now.** `case_lookup_submitted` (`{ source }`, from `CaseLookupForm` when a page
   names itself) and `alert_signup` (`{ kind, outcome, ... }`, `src/lib/alertSignupEvent.ts`, from all four alert
   forms; never the address). Before this, PostHog had no event for an alert sign-up at all.
+
+## Oct 7 2026 (just after midnight): a scraper, a blind defense, and loading screens that move
+
+**A scraper walked case numbers under one frozen browser label, and nothing stopped it.** From about
+8:27 PM EDT Oct 6, 4,043 of 4,063 case lookups in 15 minutes came from 2,153 residential addresses
+under `Windows ... Chrome/151.0.0.0`, both web copies sat at 90% CPU and the load average at 5.65 on
+two CPUs. It passed Cloudflare's checks (the one-click check for that label and the browser check on
+lookups were on throughout). Three defects let it run:
+- **The defense was blind after every nightly log rotation.** `/var/log/permtracker-busy` was
+  `root:permtracker 750`; nginx's workers run as `www-data`, couldn't reopen their files after the
+  rotation ("Permission denied" at 00:23 Oct 3, 00:35 Oct 6, 00:27 Oct 7) and kept writing to the
+  rotated `.1` files, so `permtracker-defend` read an empty `defend.log` (pageRequests 0) until a
+  deploy restarted the workers. The folder is `751` now (12:56 AM EDT).
+- **The defense had nowhere to put its rule.** Cloudflare's free plan allows 5 custom rules and 5 were
+  used, so every `rule_on` answered HTTP 400 (logged to `health/repairs.log` from 8:20 PM Oct 6) and,
+  because a failed `rule_on` leaves the mode off, it never escalated either. Rules 3 (Tencent) and 5
+  (case lookups), both a managed challenge, are one rule now; 4 are used. Numbering since: 1 Meta
+  lookups, 2 trusted traffic skips, 3 Windows Chrome 151 and 80-139 (one-click), 4 lookups or Tencent.
+- **The defense counted crawlers' 503s as a full app.** nginx answers a crawler past its own small
+  cap with the same 503 as a full app; once the defense could see again, ShapBot, Meta's crawler,
+  AhrefsBot and Applebot made minutes "full" with 0 people shown the busy page, and it was ten
+  minutes from putting every visitor behind Under Attack Mode. `full_minutes` leaves verified and
+  named crawlers out of both counts now (`test_defend.py`, probed red against the old code; installed
+  12:19 AM EDT).
+- **nginx limits case lookups under that exact label to 30 a minute together** (`$pt_stale_label`,
+  a regex key: a literal that long overflows `map_hash_bucket_size 64` and the first reload was
+  refused; nginx kept its old rules and the site stayed up). Measured after: 436 of 585 of its lookups
+  refused in two minutes and the busiest copy at 9% CPU. People reported Chrome 152 and 154 that night.
+  `test_nginx_conf.py` holds the limit on both lookup pages, with two probes.
+
+**Real visitors' load times were fine throughout** (PostHog `$web_vitals`, bots and the label left
+out): three in four saw the main content within 1.0 to 1.4 s on desktop and 0.6 to 0.9 s on phones for
+three weeks; Oct 6 desktop was the slowest day at 1.38 s.
+
+**Loading screens sweep now** (owner's call, Oct 6: flat boxes read as a page that froze). Every
+`.skeleton-pulse` carries a slow band (`--skeleton-sheen`, a tint of the foreground; `.skeleton-on-ink`
+inside an inverted panel) that crosses it, rests and repeats; nothing blinks or breathes, and reduced
+motion keeps the still ground. The case page's loading state is the answer's own shape now (the ink
+answer card with its date and button, the estimate panel, the alert form, the record's two cards), each
+card held to its measured height at 390, 768 and 1440 wide: 2,682 against 2,681 px on a phone and 1,651
+against 1,649 on desktop. Tailwind's `animate-pulse` (an opacity pulse) is gone from it and the video
+player.

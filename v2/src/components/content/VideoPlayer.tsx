@@ -34,13 +34,10 @@ const VIDEO_CONFIG: Record<
 const DynamicPlayer = dynamic(() => import("./VideoPlayerInner"), {
   ssr: false,
   loading: () => (
-    <div className="flex aspect-video items-center justify-center bg-muted">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-12 w-12 animate-pulse border-2 border-border bg-primary" />
-        <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
-          Loading video...
-        </span>
-      </div>
+    <div className="skeleton-pulse flex aspect-video items-center justify-center">
+      <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
+        Loading video...
+      </span>
     </div>
   ),
 });
