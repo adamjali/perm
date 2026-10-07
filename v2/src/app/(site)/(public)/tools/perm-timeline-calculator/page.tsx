@@ -15,6 +15,8 @@ import { currentMonthUtc } from "@/lib/dolFormat";
 import { getDecisionPace } from "@/lib/turso/decisionPace";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { getEstimatorData } from "@/lib/turso/estimate";
+import { getStragglerRates } from "@/lib/turso/stragglers";
+import { getRangeCoverage } from "@/lib/turso/rangeCoverage";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";
@@ -74,7 +76,7 @@ const FAQS = [
 export default async function PermTimelineCalculatorPage() {
   // Wrapped: a page that cannot reach Convex must still render its explanation,
   // its FAQ and its signup rather than failing the route outright.
-  const [data, daily, decisionPace, sweep] = await Promise.all([
+  const [data, daily, decisionPace, sweep, stragglers, rangeCoverage] = await Promise.all([
     getEstimatorData(),
     getDailyDecisions(),
     // The CALENDAR rate the decision-pace model divides by, distinct from
@@ -83,6 +85,11 @@ export default async function PermTimelineCalculatorPage() {
     // the month-granular ones answer as before.
     getDecisionPace().catch(() => null),
     getSweepCoverage().catch(() => null),
+    // How fast DOL is finishing the in-line cases its queue has passed: the
+    // answer for a filing month DOL has left behind. Null-safe like the rest.
+    getStragglerRates().catch(() => null),
+    // The weekly backtest's measured range coverage, quoted under the range.
+    getRangeCoverage().catch(() => null),
   ]);
   const pace = businessDayPace(daily, 28);
 
@@ -139,6 +146,8 @@ export default async function PermTimelineCalculatorPage() {
               : null
           }
           months={queue ? queue.months : []}
+          stragglers={stragglers}
+          rangeCoverage={rangeCoverage}
           activeRange={queue ? queue.activeRange : null}
           queueSource={queue ? queue.source : null}
           alertAnchor="queue-alert"

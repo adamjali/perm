@@ -748,8 +748,15 @@ describe('estimateQueueDecision: decision pace', () => {
     // Whatever this says, it must NOT claim a confidence interval.
     const caveats = paceAsk().caveats.join(' ');
     expect(caveats).toContain('not a confidence interval');
-    // The measured share, re-measured on the analyst-review count (2026-09-26).
-    expect(caveats).toMatch(/4 cases in 10/);
+    // Without a measurement it names no figure: a typed one went stale twice.
+    expect(caveats).not.toMatch(/\d+%/);
+  });
+
+  it('quotes the weekly backtest when it is given, and only that', () => {
+    const caveats = paceAsk({
+      rangeCoverage: { insideShare: 0.287, judged: 8023, within7Share: 0.781, through: '2026-10-04' },
+    }).caveats.join(' ');
+    expect(caveats).toContain('it held for 29% of 8,023 cases, while 78% were decided within a week of the single date');
   });
 
   it('does not fire for a case the queue has already passed', () => {

@@ -10,7 +10,8 @@
  * the data.
  *
  * THE BAND IS A PACE SCENARIO, NOT A CONFIDENCE INTERVAL. Its measured
- * coverage is well under 80%, about four in ten near the front of the queue.
+ * coverage is well under 80% (the weekly backtest measures it, and the caveat
+ * quotes that figure: see `rangeCaveat` in queueEstimate.ts).
  * Any surface rendering it must say so; calling it "80% confident" is the
  * single most checkable false claim a queue estimator can make.
  *

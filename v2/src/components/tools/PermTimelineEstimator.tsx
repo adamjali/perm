@@ -22,11 +22,14 @@ import { BellIcon, CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } fro
 
 import {
   estimateQueueDecision,
+  rangeCaveat,
   type CohortStat,
   type DolFrontier,
   type MeasuredPace,
+  type RangeCoverage,
 } from "@/lib/perm";
 import type { Pace } from "@/lib/dolPace";
+import type { StragglerRates } from "@/lib/stragglerRates";
 import { formatMonth } from "@/lib/dolFormat";
 import { DateInput } from "@/components/forms/DateInput";
 
@@ -124,6 +127,15 @@ export interface PermTimelineEstimatorProps {
    * it as guaranteed took a whole page down once already.
    */
   months?: readonly MonthQueue[];
+  /**
+   * How fast DOL is deciding the in-line cases its queue has passed
+   * (perm_docs['straggler_rates']). With it, a filing month DOL has left
+   * behind is answered with that measured rate, the way the case page dates
+   * such a case; without it, only the case lookup is offered.
+   */
+  stragglers?: StragglerRates | null;
+  /** The weekly backtest's measurement of the printed range, quoted under it. */
+  rangeCoverage?: RangeCoverage | null;
   /** Months DOL has started and not finished, from the same series. */
   activeRange?: { from: string; to: string } | null;
   /** Attribution for the pending counts, rendered where the counts are. */
@@ -211,6 +223,8 @@ export function PermTimelineEstimator({
   decisionPace = null,
   sweepAgeDays = null,
   months = [],
+  stragglers = null,
+  rangeCoverage = null,
   activeRange = null,
   queueSource = null,
   compact = false,
@@ -340,6 +354,7 @@ export function PermTimelineEstimator({
           : null,
         decisionPace,
         sweepAgeDays,
+        rangeCoverage,
       }),
     // `month` is deliberately absent: `filingDate` is derived from it, so
     // listing both re-runs the memo twice for one change. `filingRate` IS
@@ -347,7 +362,7 @@ export function PermTimelineEstimator({
     // inside, and a memo that reads a value it does not depend on is the
     // shape that goes stale the first time the derivation changes.
     [filingDate, today, frontier, cohorts, frontierAdvance,
-     months, decisionPace, sweepAgeDays, filingRate],
+     months, decisionPace, sweepAgeDays, filingRate, rangeCoverage],
   );
 
   const position = POSITION_COPY[estimate.position];
@@ -415,7 +430,15 @@ export function PermTimelineEstimator({
   const lead = estimate.models[0] ?? null;
   const leadIsCounting = lead?.id === "decision-pace";
   const dayEarned = leadIsCounting;
+  // A FILING MONTH DOL HAS PASSED GETS NO FILING-MONTH DATE (Oct 7 2026).
+  // DOL's published average still names a future day for the month just
+  // passed, and backtested it ran typically 29 days late there: the cases left
+  // in line are being finished at a measured rate, which the passed-month
+  // block below states instead.
+  const passed = estimate.position === "overdue";
+  const passedMonth = passed ? (months.find((m) => m.filingMonth === month) ?? null) : null;
   const shown = useMemo(() => {
+    if (passed) return null;
     if (leadIsCounting && lead?.earliestDate && lead?.latestDate) {
       return {
         anchor: lead.estimatedDate,
@@ -425,7 +448,12 @@ export function PermTimelineEstimator({
       };
     }
     return envelope ? { ...envelope, fromLead: false } : null;
-  }, [leadIsCounting, lead, envelope]);
+  }, [passed, leadIsCounting, lead, envelope]);
+  // The range's own caveat is printed under the date when the date comes from
+  // the lead model; listing it again below would say the same thing twice.
+  const notes = shown?.fromLead
+    ? estimate.caveats.filter((c) => c !== rangeCaveat(rangeCoverage))
+    : estimate.caveats;
 
 
   /**
@@ -620,7 +648,7 @@ export function PermTimelineEstimator({
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
                 {shown.fromLead
-                  ? "If DOL holds its recent pace. That is a pace scenario, not a confidence interval - tested against past cases it contained the real decision date about 57% of the time, and closer to 41% within two months of a decision. The other models are under “How this was worked out” below."
+                  ? `${rangeCaveat(rangeCoverage)} The other models are under “How this was worked out” below.`
                   : envelope && envelope.modelCount === 1
                     ? "One model has enough published data to answer for this month."
                     : `The window comes from ${envelope?.modelCount ?? 0} models on different bases, spread across ${envelope?.spanMonths ?? 0} months. They are never averaged into one number, because the spread is the honest part. Open "How this was worked out" to see each.`}
@@ -662,11 +690,22 @@ export function PermTimelineEstimator({
                   ? ` by ${Math.abs(estimate.monthsBehindFrontier)} month${Math.abs(estimate.monthsBehindFrontier) === 1 ? "" : "s"}`
                   : ""}
               </p>{" "}
-              <p className="mt-3 text-base leading-relaxed text-foreground/70">
-                Most cases filed this month are decided. One still pending is usually at an audit, an RFI or
-                a hold, which the filing month can&apos;t date. Your case number can: it carries DOL&apos;s live
-                status and an estimate for that stage.
-              </p>{" "}
+              {passedMonth && passedMonth.pending > 0 && typeof passedMonth.analystReview === "number" ? (
+                <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                  {`Of the ${passedMonth.pending.toLocaleString("en-US")} cases filed this month still waiting, ${passedMonth.analystReview.toLocaleString("en-US")} ${passedMonth.analystReview === 1 ? "is" : "are"} still in normal review`}
+                  {stragglers
+                    ? `, and DOL is finishing those about ${Math.round(stragglers.dailyRate * 100)}% a day: half within ${stragglers.medianDays} days, eight in ten within ${stragglers.p80Days}.`
+                    : "."}{" "}
+                  The rest are at an audit, an RFI or a hold, which the filing month can&apos;t date. Your case
+                  number says which yours is, with an estimate for it.
+                </p>
+              ) : (
+                <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                  A case from this month still waiting is either among the last in normal review or at an audit,
+                  an RFI or a hold, which the filing month can&apos;t date. Your case number says which, with an
+                  estimate for it.
+                </p>
+              )}{" "}
               <p className="mt-4">
                 <Link
                   href="/perm-case-status"
@@ -866,7 +905,7 @@ export function PermTimelineEstimator({
           would show up to four equally loud and different answers and leave
           the reader to pick. The headline above is
           the answer; this is how it was reached, for anyone who wants it. */}
-      {hasDate && estimate.models.length > 0 ? (
+      {hasDate && estimate.models.length > 0 && !passed ? (
         <details className="group border-t-2 border-border">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-6 sm:p-8">
             <span className="font-heading text-base font-black">
@@ -937,7 +976,7 @@ export function PermTimelineEstimator({
       ) : null}
 
       {/* Caveats. Not boilerplate: each one is generated for this case. */}
-      {hasDate && estimate.caveats.length > 0 ? (
+      {hasDate && notes.length > 0 ? (
         <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
           <div className="flex items-start gap-3">
             <WarningIcon
@@ -947,7 +986,7 @@ export function PermTimelineEstimator({
             <div>
               <h3 className="font-heading text-base font-black">What this can’t tell you</h3>{" "}
               <ul className="mt-3 space-y-2">
-                {estimate.caveats.map((c) => (
+                {notes.map((c) => (
                   <li key={c} className="text-base leading-relaxed text-foreground/70">
                     {c}
                   </li>

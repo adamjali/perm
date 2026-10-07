@@ -129,6 +129,41 @@ export interface QueueEstimateInput {
    * withheld rather than run on stale counts.
    */
   sweepAgeDays?: number | null;
+  /**
+   * How often the printed range has held, as the weekly backtest measured it
+   * (scripts/backtest_queue.py -> perm_docs['estimator_backtest']). The
+   * caveat quotes it; a figure typed into the copy went stale twice ("about
+   * 57%", "about 4 in 10") while the measurement moved to 29%. Omit it and
+   * the caveat says the range often misses, with no figure.
+   */
+  rangeCoverage?: RangeCoverage | null;
+}
+
+/** The backtest's measurement of the printed range, as the caveat quotes it. */
+export interface RangeCoverage {
+  /** Share of judged cases decided inside their range, 0 to 1. */
+  insideShare: number;
+  /** Cases judged: dated at least a week before the test's end. */
+  judged: number;
+  /** Share of decided cases within a week of the single date, 0 to 1. */
+  within7Share: number | null;
+  /** The test's last day, YYYY-MM-DD. */
+  through: string;
+}
+
+/** The caveat under a pace range: what it is, and how often it has held. */
+export function rangeCaveat(c: RangeCoverage | null | undefined): string {
+  const lead = 'The range is what happens if DOL keeps to its recent pace, not a confidence interval.';
+  if (!c || !(c.judged > 0)) {
+    return `${lead} Real decisions often land outside it, so lean on the single date.`;
+  }
+  const inside = Math.round(c.insideShare * 100);
+  const week = c.within7Share !== null ? Math.round(c.within7Share * 100) : null;
+  return (
+    `${lead} Tested each week on real decisions, it held for ${inside}% of ${c.judged.toLocaleString('en-US')} cases` +
+    (week !== null ? `, while ${week}% were decided within a week of the single date` : '') +
+    '.'
+  );
 }
 
 // ============================================================================
@@ -462,15 +497,11 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     // against - is a reason NOT to print a date, and the models below are
     // the honest fallback rather than a second opinion to average in.
     if (paced.kind === 'estimate') {
-      // STATE THE COVERAGE WHEREVER THE BAND IS SHOWN. Measured on the
-      // analyst-review count (scripts/backtest_queue.py): 44% of 2,293
-      // near-front cases landed inside it, and almost every miss was a case
-      // still waiting a week past its date. That is a pace scenario, not a
-      // confidence interval, and labelling it as one ("80% confident") is the
-      // most checkable false claim a queue estimator can make.
-      caveats.push(
-        'The range is what happens if DOL keeps to its recent pace, not a confidence interval. Near the front of the queue, tested on September 2026 decisions, it held for about 4 cases in 10: most of the rest were decided within a few days of it, and some waited weeks longer.',
-      );
+      // STATE THE COVERAGE WHEREVER THE BAND IS SHOWN, as the weekly backtest
+      // measured it. That is a pace scenario, not a confidence interval, and
+      // labelling it as one ("80% confident") is the most checkable false
+      // claim a queue estimator can make.
+      caveats.push(rangeCaveat(input.rangeCoverage));
       const toISO = (d: number) => formatUTC(new Date(d * MS_PER_DAY));
       models.push({
         id: 'decision-pace',

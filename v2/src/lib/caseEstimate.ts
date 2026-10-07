@@ -23,6 +23,7 @@ import {
   estimateQueueDecision,
   type EstimateModelId,
   type MeasuredPace,
+  type RangeCoverage,
 } from "@/lib/perm";
 import {
   COHORT_PERCENTILE_FACTOR,
@@ -86,6 +87,8 @@ export interface CaseEstimateInput {
    * analyst review behind the queue uses it; without it that case gets no date.
    */
   stragglers?: StragglerRates | null;
+  /** The weekly backtest's measurement of the printed range, quoted in its caveat. */
+  rangeCoverage?: RangeCoverage | null;
   /** `YYYY-MM-DD`, injected so the function stays pure. */
   today: string;
 }
@@ -207,6 +210,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
     casesAhead: input.casesAhead ?? null,
     decisionPace: input.decisionPace ?? null,
     sweepAgeDays: input.sweepAgeDays ?? null,
+    rangeCoverage: input.rangeCoverage ?? null,
     frontierAdvanceRange:
       input.estimator.frontierAdvance &&
       input.estimator.frontierAdvance.slowest &&
@@ -218,6 +222,41 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
         : null,
   });
 
+  // A CASE STILL IN LINE BEHIND THE QUEUE IS DATED BY THE RATE DOL IS
+  // DECIDING EXACTLY THAT GROUP AT, even while DOL's published average would
+  // still name a future day (Oct 7 2026). That average is filed + ~336 days,
+  // a mean dragged out by audits, and on the day DOL moved past November 2025
+  // it dated the 3,194 November cases still in analyst review typically 29
+  // days late; the measured rate was typically 6 days off, and level or best
+  // on every origin tested. scripts/backtest_queue.py re-measures it weekly
+  // (its "passed" section).
+  const s = input.stragglers;
+  if (est.position === "overdue" && canon === "ANALYST REVIEW" && s) {
+    const today = parseISO(input.today);
+    const at = (n: number) => format(addDays(today, n), "yyyy-MM-dd");
+    const passedBy =
+      est.monthsBehindFrontier !== null ? Math.abs(est.monthsBehindFrontier) : null;
+    return {
+      kind: "date",
+      modelId: "stragglers",
+      estimatedDate: at(s.medianDays),
+      modelDate: at(s.medianDays),
+      earliestDate: at(1),
+      latestDate: at(s.p80Days),
+      totalDays: differenceInCalendarDays(addDays(today, s.medianDays), parseISO(input.filingDate)),
+      modelLabel: "Behind DOL's queue",
+      basis:
+        `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}, ` +
+        `and this case is still in analyst review. Over the last ${s.windowDays} days DOL decided ` +
+        `${s.decided.toLocaleString("en-US")} of the ${s.pool.toLocaleString("en-US")} cases in the same spot, ` +
+        `about ${Math.round(s.dailyRate * 100)}% a day: half within ${s.medianDays} days, eight in ten within ${s.p80Days}.`,
+      source: "PERM Tracker's daily check of every pending PERM case on DOL's FLAG system, measured again every night",
+      stage: null,
+      caveats: [
+        "A case can still leave the line for an audit, a request for information or a hold, and a rate can't see that coming. If the status above changes, this estimate does too.",
+      ],
+    };
+  }
   // Models arrive most-defensible-first; the head is the one the timeline
   // page leads with too. No models means no answer, not a made-up one -
   // except the overdue case, where the absence IS the answer: the calculator
@@ -226,36 +265,6 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
   // a case still pending here is out of filing order.
   const model = est.models[0];
   if (!model) {
-    // Still in line, with the queue already past its month: no filing-order
-    // model applies, but the rate DOL is deciding exactly this group at does.
-    // Measured, re-measured nightly, and only when it stands on enough cases.
-    const s = input.stragglers;
-    if (est.position === "overdue" && canon === "ANALYST REVIEW" && s) {
-      const today = parseISO(input.today);
-      const at = (n: number) => format(addDays(today, n), "yyyy-MM-dd");
-      const passedBy =
-        est.monthsBehindFrontier !== null ? Math.abs(est.monthsBehindFrontier) : null;
-      return {
-        kind: "date",
-        modelId: "stragglers",
-        estimatedDate: at(s.medianDays),
-        modelDate: at(s.medianDays),
-        earliestDate: at(1),
-        latestDate: at(s.p80Days),
-        totalDays: differenceInCalendarDays(addDays(today, s.medianDays), parseISO(input.filingDate)),
-        modelLabel: "Behind DOL's queue",
-        basis:
-          `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}, ` +
-          `and this case is still in analyst review. Over the last ${s.windowDays} days DOL decided ` +
-          `${s.decided.toLocaleString("en-US")} of the ${s.pool.toLocaleString("en-US")} cases in the same spot, ` +
-          `about ${Math.round(s.dailyRate * 100)}% a day: half within ${s.medianDays} days, eight in ten within ${s.p80Days}.`,
-        source: "PERM Tracker's daily check of every pending PERM case on DOL's FLAG system, measured again every night",
-        stage: null,
-        caveats: [
-          "A case can still leave the line for an audit, a request for information or a hold, and a rate can't see that coming. If the status above changes, this estimate does too.",
-        ],
-      };
-    }
     if (est.position === "overdue") {
       const passedBy =
         est.monthsBehindFrontier !== null

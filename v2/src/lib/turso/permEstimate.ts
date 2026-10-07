@@ -12,6 +12,7 @@ import { buildCaseEstimate, type CaseEstimate } from "@/lib/caseEstimate";
 import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
 import { getDecisionPace } from "@/lib/turso/decisionPace";
 import { getStragglerRates } from "@/lib/turso/stragglers";
+import { getRangeCoverage } from "@/lib/turso/rangeCoverage";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { getLiveBacklog } from "@/lib/turso/publicData";
 import { ageByStatusFrom, exitMixFor, getStageStats, stageDurationFor } from "@/lib/turso/stageStats";
@@ -24,19 +25,21 @@ export interface PermEstimateContext {
   sweep: Awaited<ReturnType<typeof getSweepCoverage>> | null;
   stageStats: Awaited<ReturnType<typeof getStageStats>> | null;
   stragglers: Awaited<ReturnType<typeof getStragglerRates>> | null;
+  rangeCoverage: Awaited<ReturnType<typeof getRangeCoverage>> | null;
 }
 
 /** Every input but the case itself. Each read but the backlog is allowed to be missing. */
 export async function loadPermEstimateContext(): Promise<PermEstimateContext> {
-  const [backlog, estimator, decisionPace, sweep, stageStats, stragglers] = await Promise.all([
+  const [backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage] = await Promise.all([
     getLiveBacklog(),
     getEstimatorData().catch(() => null),
     getDecisionPace().catch(() => null),
     getSweepCoverage().catch(() => null),
     getStageStats().catch(() => null),
     getStragglerRates().catch(() => null),
+    getRangeCoverage().catch(() => null),
   ]);
-  return { backlog, estimator, decisionPace, sweep, stageStats, stragglers };
+  return { backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage };
 }
 
 export function estimatePermCase(
@@ -59,6 +62,7 @@ export function estimatePermCase(
     decisionPace: ctx.decisionPace?.pace ?? null,
     sweepAgeDays,
     stragglers: ctx.stragglers,
+    rangeCoverage: ctx.rangeCoverage,
     measuredStageAges: ageByStatusFrom(ctx.stageStats),
     stageExit: exitMixFor(ctx.stageStats, c.status),
     stageDuration: stageDurationFor(ctx.stageStats, c.status),

@@ -43,6 +43,8 @@ export {
   cohortMaturity,
   reportablePercentiles,
   COHORT_SETTLED_MONTHS,
+  rangeCaveat,
+  type RangeCoverage,
   type QueueEstimate,
   type QueueEstimateInput,
   type QueuePosition,

@@ -152,6 +152,9 @@ jobs:
           if [ "$(date -u +%u)" = "1" ]; then
             timeout 20m python3 scripts/backtest_queue.py --write \
               || echo "::warning::estimator backtest failed; the scorecard keeps last week's figure"
+            # The wage-request month estimate, graded against DOL's own determinations.
+            timeout 10m python3 scripts/backtest_pwd.py --write \
+              || echo "::warning::wage-request backtest failed; the scorecard keeps last week's figure"
           else
             echo "not Monday; the backtest runs weekly"
           fi

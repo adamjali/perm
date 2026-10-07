@@ -25,4 +25,11 @@ minimumReleaseAgeExclude:
   # source-map offsets) and was published Sep 30 2026: remove after Oct 7 2026.
   - "source-map-js"
 trustPolicy: no-downgrade
+# A version excluded by name has been checked by hand: semver 6.3.1 is npm's
+# own 2023 patch to the old 6.x line (published Jul 10 2023 by a semver
+# maintainer, integrity matching the lockfile's), released after 7.5.x carried
+# provenance, which is the pattern no-downgrade misreads as a takeover. It
+# blocked the sharp 0.35.5 security update (GHSA-wq5f-xc86-pv6w) on Oct 7 2026.
+trustPolicyExclude:
+  - 'semver@6.3.1'
 blockExoticSubdeps: true

@@ -191,6 +191,24 @@ describe("a case still in line behind DOL's queue, with the straggler rate", () 
     expect(e.estimatedDate > TODAY).toBe(true);
   });
 
+  it("prefers the rate to DOL's published average, even while that average still names a future day", () => {
+    // Filed Aug 25 2025 against a Sep 2025 frontier: filed + 372 days is
+    // Sep 1 2026, after TODAY, so the average would still answer. Backtested
+    // Oct 7 2026, that average ran typically 29 days late for exactly these
+    // cases and the measured rate about 6.
+    const e = buildCaseEstimate({
+      filingDate: "2025-08-25",
+      status: "ANALYST REVIEW",
+      isFinal: false,
+      estimator: ESTIMATOR,
+      stragglers: STRAGGLERS,
+      today: TODAY,
+    });
+    if (e?.kind !== "date") throw new Error("expected a dated estimate");
+    expect(e.modelId).toBe("stragglers");
+    expect(e.estimatedDate).toBe("2026-09-05");
+  });
+
   it("keeps the refusal for a case out of line (an RFI, a hold): the rate is about the line", () => {
     const e = buildCaseEstimate({
       filingDate: "2024-11-05",

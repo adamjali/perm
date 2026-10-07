@@ -22,6 +22,15 @@ calendar mean of DOL decisions over the observed days in the 28 before T0, from
 shutdown-length collapse; none falls in a normal window. The previous rule
 (every pending case ahead) is scored alongside, so a regression shows.
 
+THE LEFT-BEHIND SECTION (Oct 7 2026). A case still in analyst review whose
+filing month DOL's queue has already passed is dated by the rate DOL is
+finishing exactly that group at (scripts/build_straggler_rates.py), not by
+DOL's published average. `passed` re-measures that rule weekly against the two
+it replaced or could: DOL's average (filed + its average days) and the cases
+ahead at the pace. A case still waiting at END counts as late by at least END
+minus its date; a case that left the line another way (an RFI, a hold, a
+withdrawal) is not on this clock and is left out.
+
 Read-only unless `--write`, which stores the summary in
 `perm_docs['estimator_backtest']` for /estimate-scorecard.
 
@@ -34,6 +43,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import math
 import statistics
 import sys
 from datetime import date, datetime, timedelta
@@ -68,6 +78,110 @@ def pace_before(db: Turso, t0: date) -> float | None:
     # Over the days actually observed, like `measurePace`: a window the series
     # doesn't yet fill must not be divided by 28.
     return sum(vals) / len(vals)
+
+
+def frontier_at(db: Turso, t0: date) -> tuple[str | None, int | None]:
+    """DOL's Analyst Review month and its average days, from the newest reading on or before t0."""
+    rows = query_rows(
+        db,
+        "SELECT json FROM processing_time_readings WHERE perm_as_of <= ? ORDER BY perm_as_of DESC LIMIT 1",
+        [t0.isoformat()],
+    )
+    if not rows or not rows[0][0]:
+        return None, None
+    j = json.loads(rows[0][0])
+    month = next((q["priorityDate"] for q in j.get("permQueues", []) if q.get("queue") == "Analyst Review"), None)
+    avg = next((a["calendarDays"] for a in j.get("permAverageDays", [])
+                if a.get("determination") == "Analyst Review"), None)
+    return month, (int(avg) if avg else None)
+
+
+def first_moves(db: Turso, t0: date) -> dict[str, tuple[date, str, bool]]:
+    """Each case's first status change on or after t0: (day, new status, final)."""
+    t0_ms = int(datetime(t0.year, t0.month, t0.day, tzinfo=ET).timestamp() * 1000)
+    return {
+        r[0]: (datetime.fromtimestamp(int(r[3]) / 1000, ET).date(), (r[1] or "").upper(), bool(int(r[2] or 0)))
+        for r in query_rows(
+            db,
+            "SELECT case_number, to_status, to_final, MIN(changed_at) FROM perm_case_events "
+            "WHERE changed_at >= ? AND source = ? GROUP BY case_number",
+            [t0_ms, c.SOURCE],
+        )
+    }
+
+
+def straggler_rate(cases_lo: list[dict], moves_lo: dict[str, tuple[date, str, bool]],
+                   lo: date, hi: date, frontier: str) -> float | None:
+    """build_straggler_rates.py over [lo, hi): decided / exposure among in-line
+    cases filed before the frontier month. A withdrawal is the employer's act
+    and isn't counted as DOL deciding."""
+    decided = exposure = 0.0
+    span = (hi - lo).days
+    for x in cases_lo:
+        if x["st0"] != IN_LINE or x["m"] >= frontier:
+            continue
+        mv = moves_lo.get(x["cn"])
+        if mv and mv[0] < hi:
+            exposure += (mv[0] - lo).days + 0.5
+            if mv[2] and not mv[1].startswith("WITHDRAWN"):
+                decided += 1
+        else:
+            exposure += span
+    return decided / exposure if exposure else None
+
+
+def score_floor(pred: dict[str, date], outcome: dict[str, date | None], end: date) -> dict:
+    """Errors on decided cases, and a floor for the ones still waiting: a case
+    waiting at END is at least END minus its date late once that date passed."""
+    errs, floors = [], []
+    for cn, p in pred.items():
+        o = outcome[cn]
+        if o is not None:
+            errs.append((o - p).days)
+            floors.append(abs((o - p).days))
+        else:
+            floors.append(max(0, (end - p).days))
+    return {
+        "cases": len(pred),
+        "decided": len(errs),
+        "typicalMissDays": round(statistics.median([abs(e) for e in errs]), 1) if errs else None,
+        "biasDays": round(statistics.median(errs), 1) if errs else None,
+        "missAtLeastDays": round(statistics.median(floors), 1) if floors else None,
+        "within7Share": round(sum(1 for f in floors if f <= 7) / len(floors), 3) if floors else None,
+    }
+
+
+def passed_section(cases: list[dict], moves: dict[str, tuple[date, str, bool]], t0: date, end: date,
+                   frontier: str, avg_days: int | None, rate: float | None, pace: float) -> dict | None:
+    """The left-behind cases on t0, dated three ways and scored on one set."""
+    keep: list[dict] = []
+    outcome: dict[str, date | None] = {}
+    in_line = sorted((x for x in cases if x["st0"] == IN_LINE), key=lambda x: x["fd"])
+    rank = {x["cn"]: i for i, x in enumerate(in_line)}
+    for x in in_line:
+        if x["m"] >= frontier:
+            continue
+        mv = moves.get(x["cn"])
+        if mv is None or mv[0] > end:
+            outcome[x["cn"]] = None
+        elif mv[2] and not mv[1].startswith("WITHDRAWN"):
+            outcome[x["cn"]] = mv[0]
+        else:
+            continue  # left the line another way: not on this clock
+        keep.append(x)
+    if not keep or not rate:
+        return None
+    median = math.log(2) / rate
+    by_rate = {x["cn"]: t0 + timedelta(days=round(median)) for x in keep}
+    by_ahead = {x["cn"]: t0 + timedelta(days=max(1, round(rank[x["cn"]] / pace))) for x in keep}
+    by_avg = {x["cn"]: date.fromisoformat(x["fd"]) + timedelta(days=avg_days) for x in keep} if avg_days else {}
+    return {
+        "frontierMonth": frontier,
+        "medianDays": round(median, 1),
+        "rate": score_floor(by_rate, outcome, end),
+        "dolAverage": score_floor(by_avg, outcome, end) if by_avg else None,
+        "casesAhead": score_floor(by_ahead, outcome, end),
+    }
 
 
 MIN_BAND_DAYS = 7          # decisionPace.ts
@@ -240,6 +354,12 @@ def main() -> int:
         "rangeCoverage": coverage(bands, decided, end, current),
         "method": "analyst review ahead, prorated by filing day, over the calendar mean of the 28 days before T0",
     }
+    frontier, avg_days = frontier_at(db, t0)
+    if frontier:
+        lo = t0 - timedelta(days=14)
+        cases_lo, _ = rebuild(db, lo)
+        rate = straggler_rate(cases_lo, first_moves(db, lo), lo, t0, frontier)
+        result["passed"] = passed_section(cases, first_moves(db, t0), t0, end, frontier, avg_days, rate, pace)
     print(json.dumps(result, indent=2))
     if a.write:
         write_doc(db, "estimator_backtest", json.dumps(result))

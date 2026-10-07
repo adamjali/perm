@@ -116,7 +116,7 @@ describe("the answer is shown at the resolution it earned", () => {
     // case page has always shown the lead model's band. Two surfaces
     // describing one estimate must not disagree about what the estimate is.
     renderTool();
-    expect(screen.getByText(/pace scenario, not a confidence interval/i)).toBeTruthy();
+    expect(screen.getByText(/not a confidence interval/i)).toBeTruthy();
     expect(screen.queryByText(/models on different bases/i)).toBeNull();
   });
 

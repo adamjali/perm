@@ -38,6 +38,7 @@ import { getStatusMeaning, KIND_LABEL } from "@/lib/permStatus";
 import { statusAnchor } from "@/lib/statusDictionary";
 import { isApproval } from "@/lib/caseStatusVocabulary";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
+import type { RangeCoverage } from "@/lib/perm";
 import { buildCaseEstimate, type CaseEstimate as Estimate } from "@/lib/caseEstimate";
 import type { SameDay } from "@/lib/sameDay";
 import type { CaseLookupResult } from "@/lib/turso/caseLookup";
@@ -98,6 +99,8 @@ export interface CaseStatusResultProps {
   decisionPace?: Parameters<typeof CaseEstimate>[0]["decisionPace"];
   sweepAgeDays?: number | null;
   stragglers?: Parameters<typeof CaseEstimate>[0]["stragglers"];
+  /** The weekly backtest's measurement of the printed range, quoted under it. */
+  rangeCoverage?: RangeCoverage | null;
   /** Measured stage ages, so the estimate reads today's numbers not a table. */
   measuredStageAges?: ReadonlyMap<string, number>;
   /** What usually happens next at this case's stage, when measurable. */
@@ -142,6 +145,7 @@ export function CaseStatusResult({
   decisionPace = null,
   sweepAgeDays = null,
   stragglers = null,
+  rangeCoverage = null,
   measuredStageAges,
   stageExit,
   stageDuration,
@@ -172,6 +176,7 @@ export function CaseStatusResult({
     decisionPace,
     sweepAgeDays,
     stragglers,
+    rangeCoverage,
     measuredStageAges,
     stageExit,
     stageDuration,

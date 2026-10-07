@@ -31,6 +31,7 @@ import { getEstimatorData } from "@/lib/turso/estimate";
 import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
 import { getDecisionPace } from "@/lib/turso/decisionPace";
 import { getStragglerRates } from "@/lib/turso/stragglers";
+import { getRangeCoverage } from "@/lib/turso/rangeCoverage";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { getSameDay } from "@/lib/turso/sameDay";
 import {
@@ -365,7 +366,7 @@ export default async function PermCaseStatusPage({
 async function Lookup({ caseNumber }: { caseNumber: string }) {
   const today = todayUtc();
 
-  const [result, backlog, estimator, mirrorSize, decisionPace, sweep, stragglers] =
+  const [result, backlog, estimator, mirrorSize, decisionPace, sweep, stragglers, rangeCoverage] =
     await Promise.all([
       lookupCase(caseNumber).catch(() => null),
       getLiveBacklog().catch((): CohortMonth[] => []),
@@ -378,6 +379,8 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       getSweepCoverage().catch(() => null),
       // Null when stale or thin; a case behind the queue then gets no date.
       getStragglerRates().catch(() => null),
+      // The weekly backtest's measured range coverage, quoted under the range.
+      getRangeCoverage().catch(() => null),
     ]);
 
   // Inputs to the decision-pace model, both null-safe, from the SAME helper
@@ -463,6 +466,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       casesAhead={casesAhead}
       decisionPace={decisionPace?.pace ?? null}
       stragglers={stragglers}
+      rangeCoverage={rangeCoverage}
       sweepAgeDays={sweepAgeDays}
       measuredStageAges={ageByStatusFrom(stageStats)}
       stageExit={exitMixFor(stageStats, result.live?.status ?? "")}
