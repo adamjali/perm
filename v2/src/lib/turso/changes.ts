@@ -80,9 +80,13 @@ import { CHANGE_PROGRAMS, type ChangeProgram } from "@/lib/changeProgram";
  * A status pair that records a lapsed certification rather than a decision.
  * Kept as a pair, not a single status: `-> CERTIFIED - EXPIRED` is mechanical,
  * but a case arriving at `CERTIFIED` is exactly what we want to show.
+ * The PERM pair is byte-identical to EXPIRY_FROM / EXPIRY_TO in
+ * scripts/ingest_case_status_direct.py; test_observed_decisions.py holds them.
  */
+const EXPIRY_FROM = "CERTIFIED";
+const EXPIRY_TO = "CERTIFIED - EXPIRED";
 const EXPIRY_PAIRS: readonly (readonly [string, string])[] = [
-  ["CERTIFIED", "CERTIFIED - EXPIRED"],
+  [EXPIRY_FROM, EXPIRY_TO],
   // H-2A, H-2B and CW-1 certifications lapse the same way (Oct 7 2026).
   ["FULL CERTIFICATION", "FULL CERTIFICATION - EXPIRED"],
   ["PARTIAL CERTIFICATION", "PARTIAL CERTIFICATION - EXPIRED"],

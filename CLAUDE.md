@@ -480,7 +480,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
 - **Every article had ended with a sign-up button**, sending people waiting on their own case into the attorney app; it leads with the case lookup now.
 - **The funnel is counted**: `case_lookup_submitted` and `alert_signup` events in PostHog (no address is sent).
 
-## Oct 7 2026, in eighteen lines
+## Oct 7 2026, in twenty lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 
@@ -500,3 +500,5 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 - **The change feed and decided days read H-2A, H-2B and CW-1**, and the visa bulletin's release day is recorded before each bulletin and graded on the day the site first holds it.
 - **Next 16.3.8** (six advisories, two of them about self-hosted caching and the image optimizer); 16.4.0 is out and not taken.
 - **Admin alert lists say when each person signed up and confirmed**, and paged lists bring their new rows into view.
+- **Every employer page shows DOL's debarment and layoff notices**, the live-only and no-PERM pages too; WARN notices link 485 of 3,168 now (276 before).
+- **The local suite runs vitest only; CI also runs the 70 Python script tests**, and one reads `changes.ts`: run them before pushing a file a Python test reads.

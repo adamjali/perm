@@ -8666,7 +8666,19 @@ floor the same day; `^16.3.6` allowed it. Next 16.4.0 is out and not taken.
 **Alert timing copy** said "every hour" and "the daily sweep" in three places; watched cases are
 checked every 5 minutes on weekdays and every half hour otherwise since the morning of Oct 7.
 
-Still open, in the ledger: a seasonal social card and guides, seasonal decisions per day, WARN and
-debarment on no-PERM employer pages, a rival comparison for the priority-date estimate, and the green
-card line's years, which needs a year more of USCIS's counts before it can be graded.
+**Every employer page carries DOL's debarment and layoff notices now** (`853986ae`), the live-only and
+no-PERM pages included, and `/seasonal-cases` has its own card. WARN notices that name no PERM sponsor
+fall back to a unique live-only or no-PERM page by program key, never a bare one-word brand
+(`page_matcher` in `ingest_warn.py`); the stored notices were relinked the same night, 276 to 485 of
+3,168. LCA rows carry industry and worksite city for every year loaded (2019 to 2026, 100%).
+
+**The local `pnpm test:run` runs vitest only; CI also runs all 70 `scripts/test_*.py`, and some read
+TypeScript.** Replacing `EXPIRY_FROM` / `EXPIRY_TO` in `changes.ts` with a list of pairs passed 8,960 local
+tests and turned CI red twice, because `test_observed_decisions.py` holds those two constants to the
+Python sweep's. Before pushing a change to a file a Python test reads, run the loop CI runs:
+`for t in scripts/test_*.py scripts/oracle/test_*.py; do python3 "$t" || echo "FAIL $t"; done`.
+
+Still open, in the ledger: seasonal guides, seasonal decisions per day, a rival comparison for the
+priority-date estimate, and the green card line's years, which needs a year more of USCIS's counts
+before it can be graded.
 
