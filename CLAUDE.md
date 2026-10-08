@@ -521,7 +521,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 8 2026".
 - **The PERM range is measured by distance, every night, and never wider than 60 days**: near the front the date 6 days early to 13 late, judged at two weeks; farther out the pace rule, bounded, says it's untested. Two clocks run the test; nothing falls back on age.
 - **Wage requests get a day**: requests in process filed earlier over DOL's measured exits (typically 2 days off on its first test); the month is the fallback.
 - **Each subscriber's date is recorded once** (`watched`), never put to a rival, counts only in public.
-- **RFI ISSUED's median reads 30 days**, measured by itself; NORD is never expanded anywhere.
+- **An RFI case is dated from its own RFI day**: the 30-day window, then a median 4 days (1,021 RFIs followed); the slow end is the attorney's two weeks until measured. NORD is never expanded.
 - **The filing chart lost to the pace** as an early signal (3.0 months against 2.7 on 4,152 readers).
-- **H-2B assignment groups predict January's timing** (group A 41 days, H 125); to build before Jan 5 2027.
+- **H-2B applications in DOL's assignment groups are dated by their group** (`ingest_h2b_groups.py`): typically 5 days off on January 2026, against 25 for the season method.
 

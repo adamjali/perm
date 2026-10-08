@@ -249,3 +249,48 @@ describe("statuses where a decision already exists", () => {
     ).toBeNull();
   });
 });
+
+describe("an RFI case is dated from its own RFI day (Oct 8 2026)", () => {
+  const clock = {
+    leaveDays: { p25: 31, p50: 31, p75: 31 },
+    afterLeaveDays: { p25: 2, p50: 4, p75: 7, p90: null },
+    slowEndDays: 14,
+    slowEndFrom: "an immigration attorney's estimate" as const,
+    watched: 1021,
+    watchedFrom: "2026-08-27",
+    test: null,
+  };
+  const base = {
+    filingDate: "2025-10-15",
+    status: "RFI ISSUED",
+    isFinal: false,
+    estimator: ESTIMATOR,
+    today: "2026-10-08",
+  };
+
+  it("names the RFI clock, the day and the range", () => {
+    const e = buildCaseEstimate({ ...base, rfi: { enteredOn: "2026-10-01", clock } });
+    expect(e?.kind).toBe("date");
+    if (e?.kind !== "date") return;
+    expect(e.modelId).toBe("rfi-clock");
+    expect([e.earliestDate, e.estimatedDate, e.latestDate]).toEqual(["2026-11-03", "2026-11-05", "2026-11-15"]);
+    expect(e.basis).toContain("October 1, 2026");
+    expect(e.caveats.join(" ")).toContain("an immigration attorney's estimate");
+  });
+
+  it("says an RFI past its window can't be dated, instead of guessing", () => {
+    const e = buildCaseEstimate({ ...base, today: "2026-10-20", rfi: { enteredOn: "2026-08-28", clock } });
+    expect(e?.kind).toBe("no-date");
+  });
+
+  it("falls to what it did before when the RFI day isn't known", () => {
+    const withUnknown = buildCaseEstimate({ ...base, rfi: { enteredOn: null, clock } });
+    const without = buildCaseEstimate(base);
+    expect(withUnknown).toEqual(without);
+  });
+
+  it("leaves a case in analyst review alone", () => {
+    const e = buildCaseEstimate({ ...base, status: "ANALYST REVIEW", rfi: { enteredOn: "2026-10-01", clock } });
+    expect(e?.kind === "date" && e.modelId).not.toBe("rfi-clock");
+  });
+});

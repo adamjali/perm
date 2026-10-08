@@ -13,6 +13,7 @@
  * certifications came after it), so they are placed against the filing date.
  */
 
+import type { GroupPick } from "@/lib/h2bGroups";
 import { seasonalForm, type SeasonalVisa } from "@/lib/seasonalForms";
 
 export interface TimingPercentiles {
@@ -126,6 +127,16 @@ export function parseSeasonalTiming(json: string): SeasonalTiming | null {
 /** Applications only: a wage request or a job order is not decided on these clocks. */
 const APPLICATION = /^(?:H-300|H-400|C-500)-/;
 
+/**
+ * Is this application still waiting on DOL's first decision? An appeal and a
+ * post-certification request come after one, so "when DOL usually decides"
+ * counted from filing would date something that already happened.
+ */
+export function awaitingFirstDecision(status: string | null | undefined): boolean {
+  const s = (status ?? "").trim().toUpperCase();
+  return !(s.includes("APPEAL") || s.includes("POST-CERT"));
+}
+
 export interface TimingView {
   visa: SeasonalVisa;
   /** "start": counted back from the first day of work; "filed": forward from the filing date. */
@@ -153,7 +164,10 @@ export interface TimingView {
   onTimeShare: number | null;
   /** When the figures are one receipt quarter's, not every quarter pooled: which, in words. */
   season: string | null;
+  /** An H-2B application in one of DOL's assignment groups: the group's own figures. */
+  group: GroupPick | null;
 }
+
 
 function addDays(day: string, n: number): string {
   const d = new Date(`${day.slice(0, 10)}T12:00:00Z`);
@@ -174,10 +188,29 @@ export function timingView(args: {
   firstDay: string | null;
   today: string;
   timing: SeasonalTiming | null;
+  /**
+   * The case's H-2B assignment group and its estimate (src/lib/h2bGroups.ts).
+   * When present it wins: the group was typically 5 days off on January 2026,
+   * the season pooled 25 (scripts/backtest_seasonal.py, its h2bGroups section).
+   */
+  group?: GroupPick | null;
 }): TimingView | null {
   const { caseNumber, filingDate, firstDay, today, timing } = args;
-  if (!timing || !APPLICATION.test(caseNumber.trim().toUpperCase())) return null;
+  if (!APPLICATION.test(caseNumber.trim().toUpperCase())) return null;
   const visa = seasonalForm(caseNumber)?.visa;
+  const g = args.group ?? null;
+  if (g && visa === "H-2B" && filingDate && isDay(filingDate)) {
+    const d = g.days;
+    const at = (n: number) => addDays(filingDate, n);
+    return finish({
+      visa, basis: "filed", p: { n: 0, p10: d.p10, p25: d.p25, p50: d.p50, p75: d.p75, p90: d.p90 },
+      // The decided-window line reads the visa's pooled block when there is one.
+      block: timing?.["H-2B"] ?? ({ decidedFrom: null, decidedTo: null } as unknown as VisaTiming),
+      early: at(d.p10), from: at(d.p25), typical: at(d.p50), to: at(d.p75), late: at(d.p90), today,
+      days: { from: d.p25, typical: d.p50, to: d.p75 }, ruleDay: null, group: g,
+    });
+  }
+  if (!timing) return null;
   const block = visa ? timing[visa] : undefined;
   if (!visa || !block) return null;
 
@@ -234,6 +267,7 @@ function finish(a: {
   days: { from: number; typical: number; to: number };
   ruleDay: string | null;
   season?: string | null;
+  group?: GroupPick | null;
 }): TimingView {
   const span = dayNumber(a.late) - dayNumber(a.early);
   const raw = span > 0 ? (dayNumber(a.today) - dayNumber(a.early)) / span : 0;
@@ -255,11 +289,15 @@ function finish(a: {
     pastMost: a.today > a.to,
     onTimeShare: a.basis === "start" && a.block.onTime ? a.block.onTime.share : null,
     season: a.season ?? null,
+    group: a.group ?? null,
   };
 }
 
 /** How the page's own method did on past seasons: perm_docs['seasonal_backtest']. */
-export type SeasonalCheck = Partial<Record<SeasonalVisa, { share: number; cases: number; quarters: number }>>;
+export type SeasonalCheck = Partial<Record<SeasonalVisa, { share: number; cases: number; quarters: number }>> & {
+  /** The H-2B assignment-group method on the newest season DOL has finished. */
+  groups?: { share: number; cases: number; quarters: number; typicalMissDays: number; season: string };
+};
 
 /** The backtest's summary per visa, or null when it is missing or unreadable. */
 export function parseSeasonalCheck(json: string): SeasonalCheck | null {
@@ -281,6 +319,14 @@ export function parseSeasonalCheck(json: string): SeasonalCheck | null {
     if (typeof share === "number" && share >= 0 && share <= 1 && isInt(cases) && cases > 0 && isInt(quarters)) {
       out[visa] = { share, cases, quarters };
     }
+  }
+  const tests = (d as { h2bGroups?: unknown[] } | null)?.h2bGroups;
+  const g = (Array.isArray(tests) ? tests[tests.length - 1] : undefined) as
+    | { season?: string; decided?: number; groups?: { middleHalfShare?: number; typicalMissDays?: number } }
+    | undefined;
+  if (g && typeof g.season === "string" && isInt(g.decided) && g.decided > 0 && typeof g.groups?.middleHalfShare === "number"
+      && typeof g.groups.typicalMissDays === "number") {
+    out.groups = { share: g.groups.middleHalfShare, cases: g.decided, quarters: 1, typicalMissDays: g.groups.typicalMissDays, season: g.season };
   }
   return Object.keys(out).length ? out : null;
 }

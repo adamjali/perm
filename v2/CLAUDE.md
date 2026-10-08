@@ -8779,10 +8779,17 @@ request, the month stays the fallback. First test (Sep 23 start): 2,728 decided,
 watched set and rewrites only when the set changes. Never put to a rival, excluded from `headToHead`,
 and the public doc carries counts and errors only (`ScorecardDoc.watched`).
 
-**RFI ISSUED now has a measured median of 30 days** (`stage_stats.durations`, by itself: 276 of 324 RFIs
-watched 30 days had left on day 30). AILA Doc. 24101705 (an OFLC panel, Sep 27 2024) says employers have
-30 days to respond; no DOL text says so, and DOL's 2018 webinars gave "usually fifteen (15) days" for the
-old system's reconsideration RFIs.
+**An RFI case is dated from its own RFI day** (`estimateRfiCase`, `convex/lib/perm/calculators/rfiClock.ts`;
+model `rfi-clock`). Of 1,021 RFIs our sweep followed from their first day, nearly all moved on day 31 of our
+record (the 30-day response window, seen a day late), most went back to analyst review, and DOL decided those a
+median 4 days later (middle half 2 to 7). So the date is the RFI day + 35, the range runs to the 30 days plus the
+slow end, and the slow end is the record's own 90th percentile once measurable, an immigration attorney's two
+weeks until then. `backtest_queue.py` measures it nightly (`rfiClock`, with `watchedFrom`, the log's first day:
+an RFI begun on or before it has no known start and keeps the old answer) and tests it out of sample once the
+record is 49 days long. The case page, the API, the daily sample (`RFI_PER_DAY`) and subscribers read
+`rfiEnteredOn` (the newest entry into RFI ISSUED). An RFI past its window says so instead of a date.
+AILA Doc. 24101705 (an OFLC panel, Sep 27 2024): "employers have 30 days to respond to PERM RFIs"; no DOL text
+says so, and DOL's 2018 webinars gave "usually fifteen (15) days" for the old system's reconsideration RFIs.
 
 **NORD is never expanded.** A badge said "notice of intent to deny" and a stage note "notice of results
 of documentation"; DOL publishes no expansion (FLAG's 05/28/2025 release notes name the field only).
@@ -8791,8 +8798,15 @@ of documentation"; DOL publishes no expansion (FLAG's 05/28/2025 release notes n
 `backtest_bulletin.py`, weekly): for 4,152 readers between the two charts on 27 lines, the pace was
 typically 2.7 months off, the filing chart's learned lag 3.0, their average 2.9.
 
-**H-2B assignment groups predict January.** DOL randomizes the first three days' H-2B applications into
-groups (84 FR 7399, Mar 4 2019) and publishes each case's group (`FY26_JanPeak_PublicFacingReport.xlsx`,
-which also names attorneys: store the case and group only). January 2026: group A decided a median 41
-days after filing, H 125, each group's middle half about two weeks; January 2025's group medians were
-0 to 14 days early against 2026's. Not built: DOL lists the next groups about Jan 5 2027.
+**H-2B applications in DOL's assignment groups are dated by their group.** DOL randomizes the first three
+days' H-2B applications into groups and works them in order (84 FR 7399, Mar 4 2019), and lists each case's
+group on OFLC's news page (`FY26_JanPeak_PublicFacingReport.xlsx` and its siblings, discovered, never built).
+`scripts/ingest_h2b_groups.py` (server, `permtracker-uscis@h2b-groups`, 8:45 AM ET daily) stores the case,
+season, group and dates only (the lists name attorneys; that column is never read) in `h2b_groups`, and writes
+`perm_docs['h2b_group_timing']`: each season's groups (percentiles over the group's whole line, read only once
+that share is decided) and, for a season still being decided, `group_estimate`: last same-month season's
+groups spaced by this season's applications, anchored on this season's own group A once half of it is
+decided, each percentile switching to the group's own once measurable. `timingView({ group })` and the panel
+use it; the sample records it as `H-2B-group` and waits for the list on a case filed in a season's first three
+days. Tested on January 2026 (8,198 cases, from January 2025's groups): typically 5 days off, against 25 for
+the page's season method; the middle half held 43%. `backtest_seasonal.py` scores each finished season.

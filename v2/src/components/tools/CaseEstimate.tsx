@@ -165,6 +165,8 @@ export function CaseEstimatePanel({
                 : "If DOL keeps its recent pace, between "
               : est.modelId === "queue-advance"
                 ? "At the fastest and slowest the queue has moved, between "
+                : est.modelId === "rfi-clock"
+                  ? "Going by how RFIs have gone, between "
                 : est.modelId === "stragglers"
                   ? "Half of the cases still in line behind DOL's queue are decided by the date above, and eight in ten between "
                   : "Between "}

@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule for permtracker-uscis@h2b-groups
+# DOL posts a season's H-2B assignment-group list about five days after the
+# season opens (Jan and Jul); the timing is rebuilt each day after the 4:10 AM
+# sweep has read the night's decisions.
+[Timer]
+OnCalendar=*-*-* 08:45:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@h2b-groups.service
+
+[Install]
+WantedBy=timers.target

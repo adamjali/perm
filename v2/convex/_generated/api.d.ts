@@ -125,6 +125,7 @@ import type * as lib_perm_calculators_pwdQueue from "../lib/perm/calculators/pwd
 import type * as lib_perm_calculators_queueEstimate from "../lib/perm/calculators/queueEstimate.js";
 import type * as lib_perm_calculators_recruitment from "../lib/perm/calculators/recruitment.js";
 import type * as lib_perm_calculators_rfi from "../lib/perm/calculators/rfi.js";
+import type * as lib_perm_calculators_rfiClock from "../lib/perm/calculators/rfiClock.js";
 import type * as lib_perm_cascade from "../lib/perm/cascade.js";
 import type * as lib_perm_constants from "../lib/perm/constants.js";
 import type * as lib_perm_dates_businessDays from "../lib/perm/dates/businessDays.js";
@@ -328,6 +329,7 @@ declare const fullApi: ApiFromModules<{
   "lib/perm/calculators/queueEstimate": typeof lib_perm_calculators_queueEstimate;
   "lib/perm/calculators/recruitment": typeof lib_perm_calculators_recruitment;
   "lib/perm/calculators/rfi": typeof lib_perm_calculators_rfi;
+  "lib/perm/calculators/rfiClock": typeof lib_perm_calculators_rfiClock;
   "lib/perm/cascade": typeof lib_perm_cascade;
   "lib/perm/constants": typeof lib_perm_constants;
   "lib/perm/dates/businessDays": typeof lib_perm_dates_businessDays;

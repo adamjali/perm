@@ -226,7 +226,9 @@ export type EstimateModelId = 'decision-pace' | 'dol-average' | 'queue-advance'
   | 'cohort-percentile' | 'cohort-shape'
   /** A case DOL's queue has passed, still in line: from the measured straggler
    *  rate (src/lib/stragglerRates.ts), never from the filing month. */
-  | 'stragglers';
+  | 'stragglers'
+  /** A case at RFI ISSUED, dated from its own RFI day (rfiClock.ts). */
+  | 'rfi-clock';
 
 export interface EstimateModel {
   id: EstimateModelId;

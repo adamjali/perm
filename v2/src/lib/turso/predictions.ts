@@ -24,6 +24,10 @@ import { getSeasonalCheck, getSeasonalTiming } from "@/lib/turso/seasonalTiming"
 import { exec, one, rows } from "@/lib/turso/client";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
 import { getPwdDayData } from "@/lib/turso/pwdDayQueue";
+import { DIRECT_EVENT_SOURCE } from "@/lib/turso/rfi";
+import { rfiEnteredOn } from "@/lib/turso/rfiClock";
+import { getH2bGroupTiming } from "@/lib/turso/h2bGroups";
+import { pickGroup } from "@/lib/h2bGroups";
 import { loadPermEstimateContext, estimatePermCase } from "@/lib/turso/permEstimate";
 import { easternDay } from "@/lib/time";
 
@@ -79,6 +83,9 @@ export async function ensurePredictionsTable(): Promise<void> {
 /** Cases per filing month, and how many recent months, in the daily PERM sample. */
 export const PERM_PER_MONTH = 3;
 export const PERM_MONTHS = 14;
+/** RFI cases a day, from RFIs our sweep saw begin within the last RFI_RECENT_DAYS. */
+export const RFI_PER_DAY = 6;
+export const RFI_RECENT_DAYS = 35;
 export const PWD_PER_MONTH = 3;
 export const PWD_MONTHS = 6;
 /**
@@ -259,14 +266,32 @@ export async function predictSeasonal(recordedOn: string): Promise<NewPrediction
   // The page reads the posting first, then the published record.
   for (const r of records) if (r.begin_date) begin.set(r.case_number, r.begin_date.slice(0, 10));
   for (const r of postings) if (r.begin_date) begin.set(r.case_number, r.begin_date.slice(0, 10));
+  // H-2B applications in DOL's assignment groups are dated by their group, as
+  // the page dates them.
+  const h2b = nums.filter((n) => n.startsWith("H-400-"));
+  const [groupRows, groupTiming] = h2b.length
+    ? await Promise.all([
+        rows<{ case_number: string; peak: string; grp: string }>(
+          `SELECT case_number, peak, grp FROM h2b_groups WHERE case_number IN (${h2b.map(() => "?").join(",")})`,
+          h2b,
+        ).catch(() => []),
+        getH2bGroupTiming().catch(() => null),
+      ])
+    : [[], null];
+  const groupOf = new Map(groupRows.map((r) => [r.case_number, r]));
   const out: NewPrediction[] = [];
   for (const c of picked) {
+    const g = groupOf.get(c.case_number);
+    // Filed in a season's first three days: DOL lists its group about five days
+    // later, so wait for the list rather than record it by the season method.
+    if (c.case_number.startsWith("H-400-") && !g && /-(01|07)-0[1-3]$/.test(c.filed)) continue;
     const view = timingView({
       caseNumber: c.case_number,
       filingDate: c.filed,
       firstDay: begin.get(c.case_number) ?? null,
       today: recordedOn,
       timing,
+      group: g && groupTiming ? pickGroup(groupTiming, g.peak, g.grp) : null,
     });
     if (!view) continue;
     out.push({
@@ -277,7 +302,7 @@ export async function predictSeasonal(recordedOn: string): Promise<NewPrediction
       status: "pending",
       // "H-2B-filed-season": the visa, the clock, and whether one season's
       // figures were used, so a change of method shows in the split.
-      model: `${view.visa}-${view.basis}${view.season ? "-season" : ""}`,
+      model: view.group ? "H-2B-group" : `${view.visa}-${view.basis}${view.season ? "-season" : ""}`,
       predicted: view.typical,
       bandEarly: view.from,
       bandLate: view.to,
@@ -352,6 +377,31 @@ export async function predictOurs(today: string): Promise<{
       bandLate: est.latestDate,
       casesAhead,
     });
+  }
+
+  // RFI cases, dated from their own RFI day (the RFI clock): a few a day from
+  // the RFIs our sweep saw begin in the last five weeks. Never put to a rival:
+  // the rival sample is analyst-review cases only.
+  if (ctx.rfiClock) {
+    const since = Date.now() - RFI_RECENT_DAYS * 86_400_000;
+    const rfiRows = await rows<{ case_number: string; at: number | string; filing_date: string | null }>(
+      `SELECT e.case_number, MAX(e.changed_at) AS at, s.filing_date FROM perm_case_events e
+         JOIN perm_case_status s ON s.case_number = e.case_number
+        WHERE e.to_status = 'RFI ISSUED' AND e.from_status <> 'RFI ISSUED' AND e.source = ? AND e.changed_at >= ?
+          AND s.current_status = 'RFI ISSUED' AND s.is_final = 0
+        GROUP BY e.case_number ORDER BY random() LIMIT ?`,
+      [DIRECT_EVENT_SOURCE, since, RFI_PER_DAY],
+    ).catch(() => []);
+    for (const x of rfiRows) {
+      if (!x.filing_date) continue;
+      const c = { filingDate: x.filing_date, status: "RFI ISSUED", rfiEnteredOn: easternDay(Number(x.at)) };
+      const { estimate: est } = estimatePermCase(ctx, c, today);
+      if (!est || est.kind !== "date" || est.modelId !== "rfi-clock") continue;
+      perm.push({
+        source: "ours", program: "perm", caseNumber: x.case_number, filingDate: x.filing_date, status: "RFI ISSUED",
+        model: est.modelId, predicted: est.estimatedDate, bandEarly: est.earliestDate, bandLate: est.latestDate, casesAhead: null,
+      });
+    }
   }
 
   const pwd: NewPrediction[] = [];
@@ -448,14 +498,16 @@ export async function predictWatched(today: string): Promise<NewPrediction[]> {
   };
   if (permNums.length) {
     const ctx = await loadPermEstimateContext();
-    const found = await inChunks<{ case_number: string; filing_date: string | null; employer_name: string | null }>(
+    const found = await inChunks<{ case_number: string; filing_date: string | null; employer_name: string | null; current_status: string }>(
       permNums,
-      (ph) => `SELECT case_number, filing_date, employer_name FROM perm_case_status
-                WHERE case_number IN (${ph}) AND current_status = 'ANALYST REVIEW' AND is_final = 0`,
+      (ph) => `SELECT case_number, filing_date, employer_name, current_status FROM perm_case_status
+                WHERE case_number IN (${ph}) AND current_status IN ('ANALYST REVIEW', 'RFI ISSUED') AND is_final = 0`,
     );
     for (const x of found) {
       if (!x.filing_date) continue;
-      const c = { caseNumber: x.case_number, filingDate: x.filing_date, employerName: x.employer_name, status: "ANALYST REVIEW" };
+      const status = x.current_status.trim().toUpperCase();
+      const rfiEntered = status === "RFI ISSUED" ? await rfiEnteredOn(x.case_number).catch(() => null) : null;
+      const c = { caseNumber: x.case_number, filingDate: x.filing_date, employerName: x.employer_name, status, rfiEnteredOn: rfiEntered };
       const { estimate: est, casesAhead } = estimatePermCase(ctx, c, today);
       if (!est || est.kind !== "date") continue;
       out.push({

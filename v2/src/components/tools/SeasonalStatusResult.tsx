@@ -20,8 +20,10 @@ import {
 import { isLookupGap } from "@/lib/dolMiss";
 import { SEASONAL_STATUSES, statusAnchor } from "@/lib/statusDictionary";
 import { seasonalForm } from "@/lib/seasonalForms";
-import { easternDay, timingView } from "@/lib/seasonalTiming";
+import { awaitingFirstDecision, easternDay, timingView } from "@/lib/seasonalTiming";
 import { getSeasonalCheck, getSeasonalTiming } from "@/lib/turso/seasonalTiming";
+import { getH2bGroupTiming, h2bGroupOf } from "@/lib/turso/h2bGroups";
+import { pickGroup } from "@/lib/h2bGroups";
 import { SeasonalTimingPanel } from "@/components/tools/SeasonalTimingPanel";
 
 /**
@@ -174,12 +176,16 @@ function SeasonalDetails({
 }
 
 export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
-  const [outcome, record, posting, timing, checks] = await Promise.all([
+  const isH2b = caseNumber.trim().toUpperCase().startsWith("H-400-");
+  const [outcome, record, posting, timing, checks, groupOf, groupTiming] = await Promise.all([
     lookupSeasonalCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "records" as const })),
     lookupSeasonalRecord(caseNumber).catch(() => null),
     lookupSeasonalPosting(caseNumber).catch(() => null),
     getSeasonalTiming().catch(() => null),
     getSeasonalCheck().catch(() => null),
+    // DOL's H-2B assignment group, for an application filed in a season's first days.
+    isH2b ? h2bGroupOf(caseNumber).catch(() => null) : Promise.resolve(null),
+    isH2b ? getH2bGroupTiming().catch(() => null) : Promise.resolve(null),
   ]);
   const { row, dolMiss } = outcome;
   const form = formOf(caseNumber);
@@ -252,7 +258,10 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
   // only; null when there's no measured basis, and nothing is drawn.
   const timingFiled = (row.submittedDate ?? row.filingDate)?.slice(0, 10) ?? null;
   const timingFirstDay = posting?.beginDate ?? record?.beginDate ?? null;
-  const view = done
+  // An H-2B application in one of DOL's assignment groups is dated by its group.
+  const firstDecision = awaitingFirstDecision(row.status);
+  const group = !done && firstDecision && groupOf && groupTiming ? pickGroup(groupTiming, groupOf.peak, groupOf.letter) : null;
+  const view = done || !firstDecision
     ? null
     : timingView({
         caseNumber: row.caseNumber,
@@ -260,6 +269,7 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
         firstDay: timingFirstDay,
         today: easternDay(),
         timing,
+        group,
       });
   return (
     <div className="space-y-6">
@@ -314,7 +324,7 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
           view={view}
           firstDay={timingFirstDay}
           filingDate={timingFiled}
-          checked={checks?.[view.visa] ?? null}
+          checked={view.group ? (checks?.groups ?? null) : (checks?.[view.visa] ?? null)}
         />
       ) : null}{" "}
 

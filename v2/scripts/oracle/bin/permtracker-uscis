@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests|h2b-groups>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -65,6 +65,9 @@ case "$job" in
         else rc=1; fail "$s" "failed twice"; fi
       fi
     done ;;
+  # DOL's H-2B assignment-group lists, read only when new or changed, and
+  # each group's timing rebuilt from the night's statuses (Oct 8 2026).
+  h2b-groups) nice -n 10 python3 scripts/ingest_h2b_groups.py || { rc=1; fail ingest_h2b_groups.py "ingest exited non-zero"; } ;;
   *) echo "unknown job $job"; exit 2 ;;
 esac
 exit $rc

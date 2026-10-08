@@ -25,6 +25,7 @@ import { pwd } from "@/lib/turso/pwdCases";
 import { lca } from "@/lib/turso/lcaCases";
 import { lookupSeasonalPosting, lookupSeasonalRecord, seasonal } from "@/lib/turso/seasonalCases";
 import { estimatePermCase, loadPermEstimateContext } from "@/lib/turso/permEstimate";
+import { rfiEnteredOn } from "@/lib/turso/rfiClock";
 
 export interface ApiMeta {
   /** Who published the underlying records. */
@@ -423,6 +424,7 @@ export async function readEstimate(args: { caseNumber?: string | null; filed?: s
   let status = "ANALYST REVIEW";
   let url = `${SITE_URL}/tools/perm-timeline-calculator`;
 
+  let rfiEntered: string | null = null;
   if (args.caseNumber) {
     const ref = normaliseFlagCaseNumber(args.caseNumber.slice(0, 40));
     if (!ref) return bad("That isn't a case number.");
@@ -441,6 +443,8 @@ export async function readEstimate(args: { caseNumber?: string | null; filed?: s
     }
     filingDate = r.live?.filingDate ?? null;
     status = r.live?.status ?? status;
+    // An RFI case is dated from its own RFI day, as on the case page.
+    if (status?.trim().toUpperCase() === "RFI ISSUED") rfiEntered = await rfiEnteredOn(ref.caseNumber).catch(() => null);
   } else if (args.filed) {
     if (!DATE_RE.test(args.filed)) return bad("filed must look like 2026-02-15.");
     if (args.filed > today) return bad("filed can't be in the future.");
@@ -451,7 +455,7 @@ export async function readEstimate(args: { caseNumber?: string | null; filed?: s
   if (!filingDate) return { ok: false, status: 404, code: "not_found", message: "This case has no filing date on record, so no estimate.", url };
 
   const ctx = await loadPermEstimateContext();
-  const { estimate, casesAhead } = estimatePermCase(ctx, { filingDate, status }, today);
+  const { estimate, casesAhead } = estimatePermCase(ctx, { filingDate, status, rfiEnteredOn: rfiEntered }, today);
   const meta: ApiMeta = {
     source: "PERM Tracker's estimate, from DOL's published queue and the decision pace our sweep measures. An estimate, not a promise.",
     asOf: today,

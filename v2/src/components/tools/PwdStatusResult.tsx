@@ -49,6 +49,11 @@ function chipClass(row: PwdCaseRow): string {
   return "bg-tint-primary";
 }
 
+/** A share as a percent; one decimal just under 100, so 99.5% never reads as all of them. */
+function sharePct(x: number): string {
+  return x >= 0.99 && x < 1 ? `${(Math.floor(x * 1000) / 10).toFixed(1)}%` : `${Math.round(x * 100)}%`;
+}
+
 function day(iso: string | null): string | null {
   if (!iso) return null;
   const d = iso.slice(0, 10);
@@ -370,7 +375,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
               {formatInt(dated.requestsAhead)} PERM wage requests filed before this one are still in process,
               and DOL has been finishing about {formatInt(Math.round(dated.pace))} a day.
               {dayData?.tested
-                ? ` Tested on ${formatInt(dayData.tested.decided)} requests DOL has since decided, the date was typically ${dayData.tested.typicalMissDays} ${dayData.tested.typicalMissDays === 1 ? "day" : "days"} off${dayData.tested.within7Share !== null ? `, and ${Math.round(dayData.tested.within7Share * 100)}% were within a week` : ""}.`
+                ? ` Tested on ${formatInt(dayData.tested.decided)} requests DOL has since decided, the date was typically ${dayData.tested.typicalMissDays} ${dayData.tested.typicalMissDays === 1 ? "day" : "days"} off${dayData.tested.within7Share !== null ? `, and ${sharePct(dayData.tested.within7Share)} were within a week` : ""}.`
                 : ""}
             </p>
           ) : null}{" "}

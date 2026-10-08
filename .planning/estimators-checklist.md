@@ -29,6 +29,8 @@ The ten things:
 | Priority date estimate | same arithmetic as above | as above | as above | as above | as above | as above | as above | printed on the I-485 tool | as above | yes (bulletin alerts) |
 | Green card line, years at last year's pace | yes | not yet: needs quarters of USCIS's counts | not testable yet (one year of counts) | n/a | n/a | n/a | to check | no | no | no (USCIS side) |
 | Bulletin release day | yes | yes (from the November 2026 bulletin) | n/a (archive floors are the measure) | yes | yes (middle half) | n/a | none found | yes | yes | yes (bulletin alerts) |
+| PERM date for a case at RFI (from Oct 8) | yes (`rfi-clock`) | yes (and subscribers') | yes (nightly, out of sample from ~Oct 16) | yes | yes (measured; slow end the attorney's until measured) | yes | rival A dates it as if in line | yes | with PERM | yes (case alerts) |
+| H-2B by assignment group (from Oct 8) | yes | yes (`H-2B-group`) | yes (weekly, per finished season) | yes | yes (middle half, quoted) | yes | none | yes | yes | yes (case alerts) |
 | Stage durations (RFI, hold) | yes | n/a until measurable | no | yes | no | n/a | none | no | no | yes (case alerts) |
 | Filing chart as an early signal (bulletin) | n/a: tested, not used | n/a | yes (weekly, beside the pace) | yes | n/a | yes | n/a | no | no | n/a |
 | H-1B lottery odds | n/a: DHS's own estimate, quoted | | | | | | | | | |

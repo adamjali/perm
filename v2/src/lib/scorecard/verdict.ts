@@ -262,6 +262,7 @@ export function readOurs(
 export const METHOD_NAME: Record<string, string> = {
   "decision-pace": "Our main method (cases ahead of yours, at DOL's measured pace)",
   "dol-average": "DOL's published average, which the case page shows for cases DOL's queue has just passed",
+  "rfi-clock": "The RFI clock, for a case at a request for information, dated from its own RFI day",
   stragglers: "The behind-the-queue rate, for cases the queue passed earlier",
   "queue-advance": "The queue's monthly advance",
 };

@@ -38,7 +38,7 @@ import { getStatusMeaning, KIND_LABEL } from "@/lib/permStatus";
 import { statusAnchor } from "@/lib/statusDictionary";
 import { isApproval } from "@/lib/caseStatusVocabulary";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
-import type { RangeCoverage } from "@/lib/perm";
+import type { RangeCoverage, RfiClock } from "@/lib/perm";
 import { buildCaseEstimate, type CaseEstimate as Estimate } from "@/lib/caseEstimate";
 import type { SameDay } from "@/lib/sameDay";
 import type { CaseLookupResult } from "@/lib/turso/caseLookup";
@@ -112,6 +112,8 @@ export interface CaseStatusResultProps {
     entered: number;
     windowDays: number;
   } | null;
+  /** For a case at RFI ISSUED: its RFI day and the measured RFI clock. */
+  rfi?: { enteredOn: string | null; clock: RfiClock | null } | null;
   /** The PERM cases filed the same day, or null when unknown. */
   sameDay?: SameDay | null;
   /** "YYYY-MM-DD", passed in so every elapsed figure shares one clock. */
@@ -149,6 +151,7 @@ export function CaseStatusResult({
   measuredStageAges,
   stageExit,
   stageDuration,
+  rfi = null,
   sameDay,
   today,
 }: CaseStatusResultProps) {
@@ -180,6 +183,7 @@ export function CaseStatusResult({
     measuredStageAges,
     stageExit,
     stageDuration,
+    rfi,
     today,
   });
 

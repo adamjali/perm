@@ -371,6 +371,7 @@ PRECOMPUTED_DOCS = {
     "recent_decision_wait": (3, "the employer pages' wait section and the fastest/slowest view"),
     "scorecard_summary": (3, "the estimate scorecard's daily sample"),
     "pwd_day_queue": (3, "the wage-request lookup's estimated day"),
+    "h2b_group_timing": (3, "the H-2B lookup's assignment-group timing"),
     "estimator_backtest": (3, "the case page's measured range and the estimate scorecard's backtest, nightly"),
     # Rebuilt after each monthly H-2A, H-2B and CW-1 load (the 10th).
     "seasonal_timing": (45, "the seasonal case page's decision-timing panel"),

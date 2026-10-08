@@ -26,6 +26,18 @@ function at(v: TimingView, iso: string): string {
   return `${(Math.min(1, Math.max(0, f)) * 100).toFixed(2)}%`;
 }
 
+/** The first sentence for a case in one of DOL's H-2B assignment groups. */
+function groupLead(view: TimingView): string {
+  const g = view.group!;
+  const placed = `DOL put this application in group ${g.letter} of ${g.of} in its ${g.season} lottery, and works the groups in order.`;
+  if (g.days.basis === "this group's own decisions") {
+    return `${placed} Half of group ${g.letter}'s applications this season were decided by day ${view.days.typical} after filing, the middle half ${view.days.from} to ${view.days.to} days.`;
+  }
+  const more = g.morePercent === 0 ? "as many applications" : `${Math.abs(g.morePercent)}% ${g.morePercent > 0 ? "more" : "fewer"} applications`;
+  const anchor = g.days.basis === "this season's group A" ? ", set from how fast this season's group A went," : "";
+  return `${placed} The ${g.previous} groups, spaced out for this season's ${more}${anchor} put group ${g.letter} ${view.days.from} to ${view.days.to} days after filing.`;
+}
+
 export function SeasonalTimingPanel({
   view,
   firstDay,
@@ -45,6 +57,15 @@ export function SeasonalTimingPanel({
       <h3 id="seasonal-timing" className="font-heading text-xl font-black">
         When DOL usually decides
       </h3>{" "}
+      {view.group ? (
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/85">
+          {groupLead(view)} For this case{filingDate ? `, filed ${day(filingDate)}` : ""}, that&apos;s{" "}
+          <span className="font-bold">
+            {day(view.from)} to {day(view.to)}
+          </span>
+          , most often around {day(view.typical)}.
+        </p>
+      ) : (
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/85">
         {start
           ? `Half of the H-2A applications DOL certified were decided ${view.days.to} to ${view.days.from} days before the work began. For this job, starting ${firstDay ? day(firstDay) : "on its first day"}, that's `
@@ -53,7 +74,8 @@ export function SeasonalTimingPanel({
           {day(view.from)} to {day(view.to)}
         </span>
         , most often around {day(view.typical)}.
-      </p>{" "}
+      </p>
+      )}{" "}
       <div className="mt-5" aria-hidden="true">
         <div className="relative h-8">
           <div className="absolute inset-x-0 top-3 h-2 border-2 border-border bg-muted" />{" "}
@@ -118,6 +140,16 @@ export function SeasonalTimingPanel({
           {Math.round(checked.share * 100)}% landed inside the middle half drawn this way. A perfect estimate puts half there.
         </p>
       ) : null}{" "}
+      {view.group ? (
+        <p className="mt-4 text-sm text-foreground/70">
+          From DOL&apos;s {view.group.season} H-2B assignment-group list, which puts the applications filed in the
+          season&apos;s first three days in groups by lottery and works them in order (
+          <a href="https://www.federalregister.gov/documents/2019/03/04/2019-03809/selection-procedures-for-reviewing-applications-filed-by-employers-seeking-temporary-employment-of" className={LINK} rel="noopener">
+            84 FR 7399
+          </a>
+          ), and DOL&apos;s decisions on the {view.group.previous} groups. An estimate from past cases, not a promise.
+        </p>
+      ) : (
       <p className="mt-4 text-sm text-foreground/70">
         From {view.n.toLocaleString("en-US")} certifications in DOL&apos;s published {view.visa} files
         {view.season
@@ -127,6 +159,7 @@ export function SeasonalTimingPanel({
             : ""}
         . An estimate from past cases, not a promise.
       </p>
+      )}
     </section>
   );
 }

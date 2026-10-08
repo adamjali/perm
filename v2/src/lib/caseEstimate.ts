@@ -21,9 +21,11 @@ import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 
 import {
   estimateQueueDecision,
+  estimateRfiCase,
   type EstimateModelId,
   type MeasuredPace,
   type RangeCoverage,
+  type RfiClock,
 } from "@/lib/perm";
 import {
   COHORT_PERCENTILE_FACTOR,
@@ -89,6 +91,12 @@ export interface CaseEstimateInput {
   stragglers?: StragglerRates | null;
   /** The weekly backtest's measurement of the printed range, quoted in its caveat. */
   rangeCoverage?: RangeCoverage | null;
+  /**
+   * For a case at RFI ISSUED: the day our sweep saw it enter RFI, and the RFI
+   * clock the nightly backtest measures. With both, the case is dated from its
+   * own RFI day (estimateRfiCase); without either, it gets what it got before.
+   */
+  rfi?: { enteredOn: string | null; clock: RfiClock | null } | null;
   /** `YYYY-MM-DD`, injected so the function stays pure. */
   today: string;
 }
@@ -186,6 +194,58 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
   // rendered QA pass against a real case in exactly this state.
   const canon = input.status?.trim().toUpperCase().replace(/\s+/g, " ");
   if (canon === "DETERMINATION ISSUED") return null;
+
+  // AN RFI IS DATED FROM ITS OWN DAY (Oct 8 2026). It isn't in filing order,
+  // so the cases-ahead date doesn't apply; the record does. Of the RFIs our
+  // sweep followed from their first day, nearly all moved on day 31 of our
+  // record (the 30-day response window, seen a day late), most went back to
+  // analyst review, and DOL decided those a few days later.
+  const clock = input.rfi?.clock ?? null;
+  if (canon === "RFI ISSUED" && clock && input.rfi?.enteredOn) {
+    const r = estimateRfiCase({ enteredOn: input.rfi.enteredOn, today: input.today, clock });
+    if (r.kind === "estimate") {
+      const entered = input.rfi.enteredOn;
+      const longDay = (iso: string) => format(parseISO(iso), "MMMM d, yyyy");
+      const caveats = [
+        clock.slowEndFrom === "measured"
+          ? `The late end allows ${clock.slowEndDays} days after the 30, the slowest tenth of the RFIs we've followed.`
+          : `The late end allows ${clock.slowEndDays} days after the 30, an immigration attorney's estimate, until our record has followed enough RFIs that long to measure it.`,
+        "An employer can ask for more time, and DOL can ask a second time; either moves the date, and the status above will show it.",
+      ];
+      if (clock.test && clock.test.decided >= 30 && clock.test.typicalMissDays !== null) {
+        caveats.push(
+          `Tested on ${clock.test.judged.toLocaleString("en-US")} RFIs from days it wasn't drawn from, the date was typically ${clock.test.typicalMissDays} ${clock.test.typicalMissDays === 1 ? "day" : "days"} off and ${Math.round(clock.test.insideShare * 100)}% were decided inside the range.`,
+        );
+      }
+      return {
+        kind: "date",
+        modelId: "rfi-clock",
+        estimatedDate: r.date,
+        modelDate: r.date,
+        earliestDate: r.earliest,
+        latestDate: r.latest,
+        totalDays: differenceInCalendarDays(parseISO(r.date), parseISO(input.filingDate)),
+        modelLabel: "Request for information",
+        basis:
+          `Our daily check saw DOL issue a request for information on this case on ${longDay(entered)}. ` +
+          `Of the ${clock.watched.toLocaleString("en-US")} RFIs we've followed from their first day, nearly all moved on day ${clock.leaveDays.p50} of our record ` +
+          `(the 30-day response window; the check sees each move a day after DOL makes it), most went back to analyst review, ` +
+          `and DOL decided those a median ${clock.afterLeaveDays.p50} days later.`,
+        source: "PERM Tracker's daily check of every pending PERM case on DOL's FLAG system, measured again every night",
+        stage: null,
+        caveats,
+      };
+    }
+    if (r.reason === "past-window") {
+      return {
+        kind: "no-date",
+        note: r.detail,
+        age: { of: "this-case", days: differenceInCalendarDays(parseISO(input.today), parseISO(input.filingDate)) },
+        nextStep: input.stageExit ?? null,
+        stageDuration: input.stageDuration ?? null,
+      };
+    }
+  }
 
   // Appeals first: they are a different proceeding, and even a perfect cohort
   // model has no standing to date them. The measured age is the honest read.

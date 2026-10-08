@@ -13,6 +13,7 @@ import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
 import { getDecisionPace } from "@/lib/turso/decisionPace";
 import { getStragglerRates } from "@/lib/turso/stragglers";
 import { getRangeCoverage } from "@/lib/turso/rangeCoverage";
+import { getRfiClock } from "@/lib/turso/rfiClock";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { getLiveBacklog } from "@/lib/turso/publicData";
 import { ageByStatusFrom, exitMixFor, getStageStats, stageDurationFor } from "@/lib/turso/stageStats";
@@ -26,11 +27,12 @@ export interface PermEstimateContext {
   stageStats: Awaited<ReturnType<typeof getStageStats>> | null;
   stragglers: Awaited<ReturnType<typeof getStragglerRates>> | null;
   rangeCoverage: Awaited<ReturnType<typeof getRangeCoverage>> | null;
+  rfiClock: Awaited<ReturnType<typeof getRfiClock>> | null;
 }
 
 /** Every input but the case itself. Each read but the backlog is allowed to be missing. */
 export async function loadPermEstimateContext(): Promise<PermEstimateContext> {
-  const [backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage] = await Promise.all([
+  const [backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage, rfiClock] = await Promise.all([
     getLiveBacklog(),
     getEstimatorData().catch(() => null),
     getDecisionPace().catch(() => null),
@@ -38,13 +40,15 @@ export async function loadPermEstimateContext(): Promise<PermEstimateContext> {
     getStageStats().catch(() => null),
     getStragglerRates().catch(() => null),
     getRangeCoverage().catch(() => null),
+    getRfiClock().catch(() => null),
   ]);
-  return { backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage };
+  return { backlog, estimator, decisionPace, sweep, stageStats, stragglers, rangeCoverage, rfiClock };
 }
 
 export function estimatePermCase(
   ctx: PermEstimateContext,
-  c: { filingDate: string; status: string },
+  /** `rfiEnteredOn`: for a case at RFI ISSUED, the day our sweep saw it enter RFI (rfiEnteredOn). */
+  c: { filingDate: string; status: string; rfiEnteredOn?: string | null },
   today: string,
 ): { estimate: CaseEstimate | null; casesAhead: number | null } {
   const { casesAhead, sweepAgeDays } = caseEstimateInputs({
@@ -66,6 +70,7 @@ export function estimatePermCase(
     measuredStageAges: ageByStatusFrom(ctx.stageStats),
     stageExit: exitMixFor(ctx.stageStats, c.status),
     stageDuration: stageDurationFor(ctx.stageStats, c.status),
+    rfi: { enteredOn: c.rfiEnteredOn ?? null, clock: ctx.rfiClock },
     today,
   });
   return { estimate, casesAhead };

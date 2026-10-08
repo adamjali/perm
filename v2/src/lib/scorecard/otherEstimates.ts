@@ -34,6 +34,7 @@ const SEASONAL_LABEL: Record<string, { label: string; visa: SeasonalVisa; tested
   "H-2B-filed-season": { label: "H-2B, from the same season a year earlier", visa: "H-2B", tested: true },
   "H-2B-filed": { label: "H-2B, every season pooled (no season a year earlier)", visa: "H-2B", tested: false },
   "CW-1-filed": { label: "CW-1, counted from filing", visa: "CW-1", tested: true },
+  "H-2B-group": { label: "H-2B, by DOL's assignment group", visa: "H-2B", tested: false },
 };
 
 export function otherEstimateRows(
@@ -73,7 +74,8 @@ export function otherEstimateRows(
   for (const [model, meta] of Object.entries(SEASONAL_LABEL)) {
     const cell = byModel[model];
     if (!cell || cell.recorded === 0) continue;
-    const check = meta.tested ? checks?.[meta.visa] : undefined;
+    // The group method has its own test: the newest season DOL finished.
+    const check = model === "H-2B-group" ? checks?.groups : meta.tested ? checks?.[meta.visa] : undefined;
     out.push({
       model,
       label: meta.label,

@@ -32,6 +32,7 @@ import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
 import { getDecisionPace } from "@/lib/turso/decisionPace";
 import { getStragglerRates } from "@/lib/turso/stragglers";
 import { getRangeCoverage } from "@/lib/turso/rangeCoverage";
+import { getRfiClock, rfiEnteredOn } from "@/lib/turso/rfiClock";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { getSameDay } from "@/lib/turso/sameDay";
 import {
@@ -367,7 +368,7 @@ export default async function PermCaseStatusPage({
 async function Lookup({ caseNumber }: { caseNumber: string }) {
   const today = todayUtc();
 
-  const [result, backlog, estimator, mirrorSize, decisionPace, sweep, stragglers, rangeCoverage] =
+  const [result, backlog, estimator, mirrorSize, decisionPace, sweep, stragglers, rangeCoverage, rfiClock] =
     await Promise.all([
       lookupCase(caseNumber).catch(() => null),
       getLiveBacklog().catch((): CohortMonth[] => []),
@@ -382,7 +383,14 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       getStragglerRates().catch(() => null),
       // The weekly backtest's measured range coverage, quoted under the range.
       getRangeCoverage().catch(() => null),
+      // The RFI clock, for a case at RFI ISSUED.
+      getRfiClock().catch(() => null),
     ]);
+  // Only an RFI case is dated from its RFI day; one point read when it is.
+  const rfiEntered =
+    result?.live?.status?.trim().toUpperCase() === "RFI ISSUED"
+      ? await rfiEnteredOn(caseNumber).catch(() => null)
+      : null;
 
   // Inputs to the decision-pace model, both null-safe, from the SAME helper
   // the daily scorecard records with (see caseEstimateInputs.ts): a graded
@@ -468,6 +476,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       decisionPace={decisionPace?.pace ?? null}
       stragglers={stragglers}
       rangeCoverage={rangeCoverage}
+      rfi={{ enteredOn: rfiEntered, clock: rfiClock }}
       sweepAgeDays={sweepAgeDays}
       measuredStageAges={ageByStatusFrom(stageStats)}
       stageExit={exitMixFor(stageStats, result.live?.status ?? "")}
