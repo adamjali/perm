@@ -8890,13 +8890,18 @@ the CLI, the packages and the plugin once they're published.
 | `pnpm check` | 2.2 min: typecheck 51 s, pyflakes 4 s, 73 script tests 47 s, affected vitest 27 s |
 | `pnpm test:run` on the old Mac | 15.3 min (22.3 before the speed work), swapping |
 | CI Tests | 2.2 min (about 8 before): three parts of ~3,000 tests each, 9,028 together |
-| deploy: build | 4.2 to 4.5 min with no cache (compile 2.4 to 2.6 min, TypeScript 43 to 45 s, pages 53 s) |
+| deploy: build | 3.8 min (compile 2.6 min, TypeScript 6 s with its build info kept from the last deploy, 45 s without; pages 54 s) |
 | deploy: wait for tests | 1 to 2 s (the tests finish during the build) |
 | deploy: server | 4.8 to 6.1 min, of which the warm-up is its whole 4-minute budget (881 pages, never all of them) |
-| push to live | 9.7 to 11.2 min |
+| push to live | 9.2 min (696bfbca), 9.7 to 11.2 before the TypeScript cache |
 | Convex deploy | 42 s (`npx convex deploy --dry-run`, nothing changed) |
 
-The morning report prints the CI and deploy lines every day ("How long things take", `speed_lines` in
+**Webpack's own cache can't be kept between deploys**: Next keys it on a config string that includes
+the server-actions encryption key (`configVars` in `next/dist/build/webpack-config.js`), which it generates
+fresh for every build, so a restored cache never matched (compile 2.6 min either way). A pinned key would
+fix it, but its copy would then sit in the Actions cache, which a forked pull request's workflow can
+restore from this public repo. Only `.next/cache/.tsbuildinfo` is kept; the 255 MB webpack entries were
+deleted. The morning report prints the CI and deploy lines every day ("How long things take", `speed_lines` in
 `daily_monitor.py`), and `pnpm check` prints its own.
 
 **A second deploy of the same commit deleted most of the live release (2:19 PM EDT).** The release name
