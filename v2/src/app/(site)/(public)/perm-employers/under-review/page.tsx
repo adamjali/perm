@@ -6,7 +6,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { EmployerStagesTable } from "@/components/employers/EmployerStagesTable";
 import { ChartTips } from "@/components/data/ChartTips";
 import { StatusRibbon, ribbonLegend, ribbonParts } from "@/components/employers/StatusRibbon";
-import { stageMeta, stageSlug, isReviewStage } from "@/components/rfi/stageMeta";
+import { stageMeta, stageSlug, hasStagePage } from "@/components/rfi/stageMeta";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import {
   HOLD_STATUS,
@@ -169,7 +169,7 @@ export default async function EmployersUnderReviewPage() {
                 <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                   <dt className="font-heading text-xl font-black tabular-nums tracking-tight sm:text-2xl">{formatInt(n)}</dt>{" "}
                   <dd className="text-base leading-snug">
-                    {isReviewStage(status) ? (
+                    {hasStagePage(status) ? (
                       <Link href={`/perm-rfi-audit/${stageSlug(status)}`} className={LINK}>
                         {stageMeta(status).label}
                       </Link>

@@ -164,6 +164,14 @@ const MEANINGS: Record<string, Omit<StatusMeaning, "status" | "label">> = {
     deadline: null,
     cite: null,
   },
+  "DENIED - BALCA AFFIRMED": {
+    kind: "decided",
+    summary:
+      "The employer appealed the denial to the Board of Alien Labor Certification Appeals, and the Board affirmed it. The Board reviews the record the decision was made on and must affirm the denial, direct the Certifying Officer to grant the certification, or order a hearing; this is the first of the three. The regulation names no further step inside DOL.",
+    action: null,
+    deadline: null,
+    cite: { label: "20 CFR 656.27(c)", href: CFR("656.27") },
+  },
   CERTIFIED: {
     kind: "decided",
     summary:

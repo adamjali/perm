@@ -151,6 +151,17 @@ export function reviewStages(): { status: string; slug: string }[] {
     .map((status) => ({ status, slug: stageSlug(status) }));
 }
 
+/**
+ * Whether a status has its own stage page. A status this file doesn't know
+ * falls back to the "review" group, so isReviewStage() alone would link it to
+ * a page that was never built: the employer census did, for DENIED - BALCA
+ * AFFIRMED and RECONSIDERATION APPEALS - RFI ISSUED, and every prefetch of
+ * those links answered 404 (Oct 8 2026, about 990 a day).
+ */
+export function hasStagePage(status: string): boolean {
+  return stageFromSlug(stageSlug(status)) !== null;
+}
+
 /** The status a URL segment names, or null. */
 export function stageFromSlug(slug: string): string | null {
   return reviewStages().find((s) => s.slug === slug)?.status ?? null;

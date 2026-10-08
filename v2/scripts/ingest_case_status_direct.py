@@ -66,6 +66,9 @@ FINAL_STATUSES = {
     "CERTIFIED-EXPIRED",
     # An appeal dismissed by BALCA ends the case (9 rows sat pending forever).
     "DENIED - BALCA DISMISSED",
+    # The Board affirmed the denial, 20 CFR 656.27(c)(1); no DOL step follows.
+    # 18 cases filed in 2023 had sat as pending and in the stage census.
+    "DENIED - BALCA AFFIRMED",
 }
 
 
@@ -115,6 +118,7 @@ DECISION_BUCKETS = {
     "CERTIFIED-EXPIRED": "certified",
     "DENIED": "denied",
     "DENIED - BALCA DISMISSED": "denied",
+    "DENIED - BALCA AFFIRMED": "denied",
     "WITHDRAWN": "withdrawn",
 }
 
