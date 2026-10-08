@@ -928,3 +928,9 @@ Request once the push after `7928533c` is live.
 1. `/perm-case-status` (an RFI case's date, the measured range, the bounded window)
 2. `/tools/perm-timeline-calculator` (the measured range by distance)
 3. `/estimate-scorecard` (RFI dates, subscribers' dates, the wage-request day graded)
+
+## Queue after the Oct 8 evening changes (stage links only where a page exists, Board-affirmed denials final)
+
+1. `/perm-employers/under-review` (busiest page of Oct 8: the PERM suspensions; a status row no longer links to a page that doesn't exist)
+2. `/perm-case-statuses` (a definition for DENIED - BALCA AFFIRMED)
+3. `/perm-rfi-audit` (the stage list shares the same link rule)
