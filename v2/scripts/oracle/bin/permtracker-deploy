@@ -5,6 +5,8 @@
 #   rollback              switch traffic back to the other copy
 #   second                start the live slot's second copy and add it
 #   status                print which copy serves and what each runs
+#   prune-releases        delete old releases no slot runs (the deploy starts
+#                         it in the background after the switch)
 #   convex-backup <stamp> store a SEALED Convex export read on stdin (the
 #                         nightly workflow encrypts it on GitHub with the
 #                         backup key's public half), then copy it to R2
@@ -186,10 +188,25 @@ case "$action" in
     # The previous release keeps its first copy running (instant rollback); its
     # second copy stops.
     systemctl stop "permtracker-web@${active}2" 2>/dev/null || true
-    keep=$(for s in blue blue2 green green2; do readlink "$A/slots/$s" 2>/dev/null | xargs -r basename; done)
-    ls -1t "$A/releases" | tail -n +11 | while read r; do echo "$keep" | grep -qx "$r" || rm -rf "$A/releases/$r"; done
-    find "$A/shared/_next/static" -type f -mtime +21 -delete 2>/dev/null || true
+    # Old releases go in the background: traffic has already moved, and on a
+    # busy server deleting a release folder (its node_modules and page cache)
+    # took 7 minutes after the switch (Oct 8 2026, 2:50 to 2:57 PM EDT), all of
+    # it counted as deploy time while the site was already live.
+    systemd-run --quiet --no-block --collect --unit="permtracker-release-prune-$(date +%s)" \
+      -p Nice=15 -p IOSchedulingClass=idle "$(readlink -f "$0")" prune-releases \
+      || "$(readlink -f "$0")" prune-releases
     log "deployed $rel" ;;
+  prune-releases)
+    # Keep the ten newest releases and every one a slot runs from; drop build
+    # files no release has served for three weeks. One at a time.
+    exec 9>"$A/.release-prune.lock"
+    flock -n 9 || exit 0
+    # A slot with no link yet is skipped (under pipefail its failed readlink
+    # would otherwise end the prune before it deleted anything).
+    keep=$(for s in blue blue2 green green2; do readlink "$A/slots/$s" 2>/dev/null | xargs -r basename || true; done)
+    ls -1t "$A/releases" | tail -n +11 | while read -r r; do echo "$keep" | grep -qx "$r" || rm -rf "$A/releases/$r"; done
+    find "$A/shared/_next/static" -type f -mtime +21 -delete 2>/dev/null || true
+    log "old releases pruned" ;;
   convex-backup)
     # Only ciphertext is accepted: a CMS file (DER, first byte 0x30) under
     # 2 GB. The plaintext never touches this machine or R2.

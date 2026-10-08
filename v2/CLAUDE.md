@@ -8892,7 +8892,7 @@ the CLI, the packages and the plugin once they're published.
 | CI Tests | 2.2 min (about 8 before): three parts of ~3,000 tests each, 9,028 together |
 | deploy: build | 3.8 min (compile 2.6 min, TypeScript 6 s with its build info kept from the last deploy, 45 s without; pages 54 s) |
 | deploy: wait for tests | 1 to 2 s (the tests finish during the build) |
-| deploy: server | 4.8 to 6.1 min, of which the warm-up is its whole 4-minute budget (881 pages, never all of them) |
+| deploy: server | 4.5 to 5 min to the switch, of which the warm-up is its whole 4-minute budget (881 pages, never all of them); deleting old releases after the switch runs in the background since Oct 8 (it took 7 more minutes once) |
 | push to live | 9.2 min (696bfbca), 9.7 to 11.2 before the TypeScript cache |
 | Convex deploy | 42 s (`npx convex deploy --dry-run`, nothing changed) |
 
