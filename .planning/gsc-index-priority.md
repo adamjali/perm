@@ -1,59 +1,52 @@
 # GSC indexing priority list
 
-**Oct 6 2026, new titles and descriptions (deployed after the full suite): queue for the next rounds,** in order
-of Search Console appearances over the 3 months to Oct 5, so the pages with the most to gain are recrawled first.
-Inspect each first; request when its last crawl is before the deploy.
+**Run of 2026-10-07, 9:12 to 9:42 PM EDT: 11 accepted, the 12th refused (Quota Exceeded).** Order: the
+Oct 6 title list, then the pages changed in the Oct 7 deploys. Each was inspected first; a page crawled
+after its own change kept its slot.
 
-1. `/` (65,672 appearances; new title and description)
-2. `/faq` (23,571)
-3. `/for-attorneys` (14,578)
-4. `/guides` (6,762)
-5. `/calculators` (5,745)
-6. `/blog/perm-processing-times-2026` (3,426; its description and figures had said November 2025)
-7. `/perm-case-statuses` (2,920; new title and a case lookup at the top)
-8. `/about` (1,761; the title had said the name twice)
-9. `/perm-attorneys` (1,016)
-10. `/perm-employers/adobe-inc` (680; the employer template, now led by the cases waiting)
-11. `/perm-industries/621330` (226 appearances, 0 clicks; its title had been cut mid-word)
-12. `/methodology` (requested Oct 5, before its new title)
-13. `/guides/read-your-priority-date-history`, `/perm-queue/2025-12`, `/perm-wages/software-developers`
-14. Then the Oct 5 queue below, from `/perm-employers/google-llc` on.
-
----
-
-**Run of 2026-10-05, 5:57 to 6:16 PM EDT: 6 accepted, then Quota Exceeded.** Six today plus the five
-from Oct 4 evening still inside the rolling 24 hours is the usual cap of about 11. Sitemap index:
-Google counts 237,542 discovered against 292,400 live (last read Oct 4, inside the 3-day rule; re-check
-next round, since the `other-employer` family grew it on Oct 4).
+**Sitemap index resubmitted at about 9:04 PM EDT** (no request slot): Google counted 289,784 discovered
+against 307,184 live, last read Oct 4.
 
 | # | URL | Google's verdict | accepted (EDT) |
 |---|---|---|---|
-| 1 | `/visa-issuances` | unknown to Google (new Oct 5) | 5:57 PM |
-| 2 | `/tools/wage-levels` | indexed; its content changed (it had shown last year's DOL levels) | 6:00 PM |
-| 3 | `/methodology` | indexed, last crawled Sep 24 | 6:04 PM |
-| 4 | `/perm-cities` | indexed, last crawled Sep 30 | 6:07 PM |
-| 5 | `/perm-countries` | indexed, last crawled Sep 30 | 6:10 PM |
-| 6 | `/perm-industries` | indexed, last crawled Sep 30 | 6:12 PM |
+| 1 | `/faq` | indexed, last crawled Oct 1 (before the Oct 6 case lookup and tool tiles) | 9:12 PM |
+| 2 | `/guides` | indexed, last crawled Sep 24 | 9:16 PM |
+| 3 | `/perm-case-statuses` | indexed, last crawled Oct 2 | 9:21 PM |
+| 4 | `/perm-case-status` | indexed, last crawled Oct 2 (answer card, passed-month dates, alert timing) | 9:23 PM |
+| 5 | `/perm-attorneys` | indexed, last crawled Oct 2 | 9:28 PM |
+| 6 | `/case-search` | indexed, last crawled Sep 30 (industry and city filter every program now) | 9:31 PM |
+| 7 | `/estimate-scorecard` | indexed, last crawled Sep 11 | 9:33 PM |
+| 8 | `/tools/perm-timeline-calculator` | indexed, last crawled Oct 3 | 9:35 PM |
+| 9 | `/perm-industries/621330` | indexed, last crawled Oct 1 (its title had been cut mid-word) | 9:36 PM |
+| 10 | `/seasonal-cases` | indexed, last crawled Oct 4 | 9:38 PM |
+| 11 | `/tools/green-card-line` | indexed, last crawled Oct 2 | 9:40 PM |
 
-Refused: `/perm-employers/google-llc` (indexed, last crawled Oct 2) hit Quota Exceeded at 6:16 PM; first in
-line next round. Inspected only: `/extension` indexed, crawled Oct 5 10:20 AM (after its change);
-`/` indexed, crawled Oct 4 6:42 AM and revisited often, so no slot spent.
+Refused: `/tools/i485-queue-position` (indexed, last crawled Oct 1) at 9:42 PM; first in line next round.
+Inspected only, crawled after their change: `/` (Oct 7, 8:32 PM), `/for-attorneys` (Oct 6, 5:42 PM),
+`/blog/perm-processing-times-2026` (Oct 7, 1:32 PM), `/api-terms` (Oct 7, 11:18 AM, now plain "indexed",
+the robots block is gone), `/perm-employers/adobe-inc` (Oct 6, 9:33 PM). Held: `/calculators` (Oct 6,
+2:29 PM) and `/about` (Oct 6, 4:22 PM), crawled after their titles; only the Oct 7 structured data is newer.
 
-**Queue for the next round** (slots free up from about 7:30 PM EDT Oct 5 as the Oct 4 run ages out):
-1. `/perm-employers/google-llc` (the identity merge changed every employer page)
-2. `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`
-3. `/perm-wages/software-developers`
-4. `/perm-cities/new-york-ny`
-5. `/perm-countries/india`
-6. `/perm-industries/541511`
-7. `/visa-bulletin/categories/eb2-india`, then `/visa-bulletin/categories/eb3-india`
-8. `/privacy` and `/terms`: inspect; request only if last crawled before Oct 5
-9. `/api-terms`: request once Settings, robots.txt shows a fetch after Oct 4, 9:21 PM EDT
+**Queue for the next round** (slots free up from about 9:12 PM EDT Oct 8). Inspect each; request only those
+last crawled before their change:
+1. `/tools/i485-queue-position` (refused tonight)
+2. `/perm-employers/google-llc` (the Oct 5 identity merge changed every employer page)
+3. `/tools/eb2-vs-eb3`
+4. `/perm-cases`, `/pwd-cases`, `/lca-cases`, `/perm-employers` (changed in the Oct 7 deploys)
+5. `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`
+6. `/methodology` (requested Oct 5, before its Oct 6 title)
+7. `/perm-processing-times`, `/visa-bulletin`, `/perm-denial-risk`, `/perm-rfi-audit`, `/blog`, `/changelog`,
+   `/tools/priority-date-calculator`, `/tools/pwd-calculator` (the Oct 6 afternoon list)
+8. `/guides/read-your-priority-date-history`, `/perm-queue/2025-12`, `/perm-wages/software-developers`
+9. `/perm-cities/new-york-ny`, `/perm-countries/india`, `/perm-industries/541511`,
+   `/visa-bulletin/categories/eb2-india`, `/visa-bulletin/categories/eb3-india`
+10. `/calculators`, `/about` (structured data only), then `/privacy` and `/terms` (inspect)
 
-**Previous run:** Oct 4, 7:29 to 8:26 PM EDT, 5 accepted (`/sponsor-finder`, `/lca-wage-sources`,
-`/tools/ead-extension`, `/terms`, `/privacy`). `/api-terms` was "indexed, though blocked by robots.txt";
-the allow rule shipped that night, its request was rejected at 9:19 PM because Google still held the old
-robots.txt, and a robots.txt recrawl was requested from Settings at about 9:21 PM.
+Employer pages with no PERM record gained debarment and layoff notices tonight (`853986ae`); that family is
+left to the sitemap's lastmod.
+
+**Previous run:** Oct 5, 5:57 to 6:16 PM EDT, 6 accepted (`/visa-issuances`, `/tools/wage-levels`,
+`/methodology`, `/perm-cities`, `/perm-countries`, `/perm-industries`); `/perm-employers/google-llc` refused.
 
 ---
 
@@ -907,3 +900,16 @@ lastmod; the homepage carries the most of it and goes first. `/blog`, `/changelo
 Left out: `/terms`, `/privacy` and `/accessibility` read the same constants and render identically.
 The two employer pages in the Server error (5xx) report, `/perm-employers/numinformatics-inc` and
 `/perm-employers/locus-location-systems-llc`, are being re-crawled by their Validate fix (started Oct 7).
+
+## Queue after the Oct 7 evening changes (estimates graded everywhere; every filter applies on every program)
+
+Generated by `node scripts/gsc_queue.mjs --since c1489f88` (changes since 2026-10-07). `/` is in the section above.
+Request these only once the 9:01 PM EDT deploy (`58973b9c`) is live, and only those last crawled before Oct 7.
+
+1. `/perm-case-status` (passed-month cases dated by the measured rate; alert timing says every 5 minutes)
+2. `/case-search` (industry and worksite city now filter every program, not only PERM)
+3. `/estimate-scorecard` (every estimate graded or tested, the bulletin release day included)
+4. `/tools/perm-timeline-calculator`, `/tools/green-card-line`, `/tools/i485-queue-position`, `/tools/eb2-vs-eb3`
+5. `/seasonal-cases` (rejections and decided cases stop reading as waiting)
+6. `/perm-cases`, `/pwd-cases`, `/lca-cases`, `/perm-employers`, `/for-attorneys`
+7. `/perm-attorneys/[slug]` sample: `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`
