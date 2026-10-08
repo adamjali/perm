@@ -8678,7 +8678,60 @@ tests and turned CI red twice, because `test_observed_decisions.py` holds those 
 Python sweep's. Before pushing a change to a file a Python test reads, run the loop CI runs:
 `for t in scripts/test_*.py scripts/oracle/test_*.py; do python3 "$t" || echo "FAIL $t"; done`.
 
-Still open, in the ledger: seasonal guides, seasonal decisions per day, a rival comparison for the
-priority-date estimate, and the green card line's years, which needs a year more of USCIS's counts
-before it can be graded.
+Still open, in the ledger: the green card line's years, which needs a year more of USCIS's counts
+before it can be graded, and the PERM range (below).
+
+## Oct 7 2026 (night): a decision isn't the end, and what the range test showed
+
+**A case alert keeps watching for a year after DOL decides** (owner's call). A decision had retired
+the subscription, but final statuses move: in the month to Sep 25, 2,541 denied PERM cases went to
+reconsideration appeals and 105 withdrawn ones came back certified, and the watcher heard none of it.
+`recordAlert` sets `decidedAt` on a final status and clears it on a move back out; the sweep retires a
+row (`caseClosedAt`) once `WATCH_AFTER_DECISION_MS` (365 days) pass with nothing moved, and starts the
+clock quietly for a row first seen already decided. **A certification lapsing on its own clock**
+(`isLapse`: X to "X - EXPIRED") is recorded with no email: it isn't DOL acting, and "expired" would
+alarm someone whose I-140 went in months ago. `caseAlerts:reopenRetired` put the 41 rows retired
+under the old rule back on watch from their decision date. Growth stays bounded: the sweep's index
+reads live rows only, and every decided case leaves a year later.
+
+**Every status DOL uses is classified, and the health check warns on one that isn't.** ARCHIVED (725
+H-2A job orders filed 2022 to 2024, every known work period over), the Board's decisions (affirmed,
+overturned, dismissed) and a modified wage review had fallen to pending; RFI, redetermination and
+review statuses are pending by name now. 741 rows healed with the sweep's own `is_final`.
+`check_unclassified_statuses` prints a warning (never a failure: pending is the safe default) naming
+any status in neither set, and `statusDictionary.test.ts` requires a definition for every classified
+status unless it's named as never seen.
+
+**The green card line printed no years figure from Sep 26 to Oct 7**: the stored FY2024 Table V year
+predated the per-country parser, and `--discover` only fetched years it didn't hold. A held year
+missing a current field (`TABLE_V_FIELDS`) is read again now; re-run on the server and the four line
+pages purged at Cloudflare.
+
+**Priority dates, our pace against dividing by yearly visas** (`supplyDivision` in
+`bulletin_backtest`). The rival that forecasts this way closes its API in robots.txt and its inputs
+can't be rebuilt (its India EB-2 supply is 7,235; Table V says 3,916), so the approach is re-run on
+USCIS's inventory and Table V, on the same dates as our pace. On the 9 inventory reports held (Dec
+2025 to Aug 2026): dates 3 months past the cutoff that came current, the pace was closer on 66 and
+the division on 8; 6 months, 42 and 3. Not settled: the window favours lines that moved, and the
+division has fewer dates already overdue (17 against 43 at 3 months). Readings on the admin page and
+in the morning email.
+
+**What the PERM range test shows** (`estimator_backtest`, 8,023 dates judged): the printed range held
+29% because it's about a week wide and drawn mostly after the date, while DOL usually decides a few
+days before it; 48% of decisions came before the range began. The same dates held 60% within 5 days
+either side of the date and 77% within 7. The date itself is typically 4 days off. Widening and
+centring the range is the owner's decision.
+
+**H-2A, H-2B and CW-1 decisions per day** come from DOL's seasonal files (`dol-disclosure-h2a`, `-h2b`,
+`-cw1` in `daily_decisions`, `build_daily_decisions.py --only seasonal`, after each seasonal load) and
+are drawn on `/seasonal-cases` with each visa's outcomes as a bar. The chart says the October 2025
+drop is the shutdown. Two guides (`h2a-case-status-and-timing`, `h2b-and-cw1-case-status-and-timing`)
+carry the eCFR rules and the measured timing.
+
+**Smaller:** the case browsers' pickers pushed the page 12 to 22px past a 320 screen (fixed in
+`FlagCaseBrowser`); `shoot.mjs` hides floating controls before a clipped capture, after scrolling,
+or the back-to-top button fades into the corner; Serwist's own `register()` throwing on a browser that
+returns no registration is filtered as noise (`src/lib/exceptionNoise.ts`), and PostHog's grouping
+rule takes Safari's wording of the webpack crash (`].call')`). The wage-request backtest
+(`pwd_backtest`) had never been written; run once by hand, its weekly run is Mondays.
 

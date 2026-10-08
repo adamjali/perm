@@ -23,16 +23,26 @@ The ten things:
 |---|---|---|---|---|---|---|---|---|---|---|
 | PERM decision date | yes | yes | yes | yes | yes (29% of 8,023 quoted) | yes | yes (3) | yes | yes | yes (case alerts) |
 | PERM date for a case DOL's queue has passed | yes | yes | yes | yes | with PERM | yes | with PERM | with PERM | with PERM | yes |
-| Wage-request month | yes | yes | yes (weekly from Oct 12) | yes | month is the range | yes | none publishes one | yes | yes | yes (case alerts) |
+| Wage-request month | yes | yes | yes (weekly; first run Oct 7 by hand) | yes | month is the range | yes | none publishes one | yes | yes | yes (case alerts) |
 | H-2A, H-2B, CW-1 "when DOL usually decides" | yes | yes (from Oct 8) | yes (weekly) | yes | yes (quoted on the panel) | yes | none found | yes | yes | yes (case alerts) |
-| Green card line, months until current | yes | from the next bulletin | yes (weekly, since 2016) | yes | n/a: a single figure, its accuracy printed | yes (5 windows) | to check | printed on the tool | yes (stale test) | yes (bulletin alerts) |
-| Priority date estimate | same arithmetic as above | as above | as above | as above | as above | as above | to check | printed on the I-485 tool | as above | yes (bulletin alerts) |
+| Green card line, months until current | yes | from the next bulletin | yes (weekly, since 2016) | yes | n/a: a single figure, its accuracy printed | yes (5 windows) | rival's API closed by robots.txt; its approach re-run on USCIS data, same dates (Oct 7) | printed on the tool | yes (stale test) | yes (bulletin alerts) |
+| Priority date estimate | same arithmetic as above | as above | as above | as above | as above | as above | as above | printed on the I-485 tool | as above | yes (bulletin alerts) |
 | Green card line, years at last year's pace | yes | not yet: needs quarters of USCIS's counts | not testable yet (one year of counts) | n/a | n/a | n/a | to check | no | no | no (USCIS side) |
 | Bulletin release day | yes | yes (from the November 2026 bulletin) | n/a (archive floors are the measure) | yes | yes (middle half) | n/a | none found | yes | yes | yes (bulletin alerts) |
 | Stage durations (RFI, hold) | yes | n/a until measurable | no | yes | no | n/a | none | no | no | yes (case alerts) |
 | H-1B lottery odds | n/a: DHS's own estimate, quoted | | | | | | | | | |
 
 ## Findings so far
+
+- **Oct 7 (night): the PERM range.** Held 29% of 8,023 because it's about a week
+  wide and drawn mostly after the date, while DOL decides a few days before it
+  (48% of decisions came before the range began). The same dates: 60% within 5
+  days either side, 77% within 7. Waiting on the owner to widen and centre it.
+- **Oct 7 (night): priority dates.** Our pace against dividing the I-485s ahead by
+  Table V's yearly visas, on the 9 USCIS reports held: 66 to 8 closer at 3 months,
+  42 to 3 at 6; not settled (short window, and the division has fewer dates overdue).
+- **Oct 7 (night): seasonal.** First daily sample records Oct 8 at 8 AM EDT (36 a day
+  in the dry run). Decisions per day and two guides shipped.
 
 - **Oct 7:** our 33 graded PERM dates came from three methods. The main method was
   typically 4 days off. DOL's published average, the fallback for in-line cases

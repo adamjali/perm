@@ -502,3 +502,14 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 - **Admin alert lists say when each person signed up and confirmed**, and paged lists bring their new rows into view.
 - **Every employer page shows DOL's debarment and layoff notices**, the live-only and no-PERM pages too; WARN notices link 485 of 3,168 now (276 before).
 - **The local suite runs vitest only; CI also runs the 70 Python script tests**, and one reads `changes.ts`: run them before pushing a file a Python test reads.
+
+## Oct 7 2026 (night), in six lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026 (night)".
+
+- **A case alert keeps watching for a year after DOL decides** (an appeal or a reversal is emailed; a certification lapsing isn't), then retires; the 41 rows retired the old way are back on watch.
+- **Every DOL status is classified** (ARCHIVED job orders and the Board's decisions are final; 741 rows healed), and the health check warns on any new one.
+- **The green card line's years figure is back**: the stored Table V year predated the per-country parser; a held year missing a field is read again.
+- **Priority dates: our pace beat dividing by yearly visas** on the 9 USCIS reports held (66 to 8 at 3 months, 42 to 3 at 6), not yet settled.
+- **The PERM range held 29% because it's narrow and late**; 7 days either side of the date held 77%. Widening it is the owner's call.
+- **H-2A, H-2B and CW-1 decisions per day** chart on `/seasonal-cases`, with two guides; the case browsers fit a 320 screen.

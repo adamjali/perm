@@ -913,3 +913,12 @@ Request these only once the 9:01 PM EDT deploy (`58973b9c`) is live, and only th
 5. `/seasonal-cases` (rejections and decided cases stop reading as waiting)
 6. `/perm-cases`, `/pwd-cases`, `/lca-cases`, `/perm-employers`, `/for-attorneys`
 7. `/perm-attorneys/[slug]` sample: `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`
+
+## Queue after the Oct 7 night changes (seasonal guides and chart, the green card line's years)
+
+Request once the push after `7928533c` is live.
+
+1. `/guides/h2a-case-status-and-timing` and `/guides/h2b-and-cw1-case-status-and-timing` (new; the sitemap carries them)
+2. `/seasonal-cases` (decisions per day and each visa's outcomes)
+3. `/tools/green-card-line`, `/tools/eb2-vs-eb3` (the years figure is back; it was blank Sep 26 to Oct 7)
+4. `/perm-case-statuses` (definitions for archived job orders and the Board's decisions)
