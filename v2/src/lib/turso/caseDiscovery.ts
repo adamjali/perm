@@ -44,6 +44,7 @@ export const FINAL_STATUSES = new Set([
   "WITHDRAWN",
   "CERTIFIED-EXPIRED",
   "DENIED - BALCA DISMISSED",
+  "DENIED - BALCA AFFIRMED",
 ]);
 
 /**
