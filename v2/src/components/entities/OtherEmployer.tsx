@@ -124,10 +124,13 @@ export function OtherEmployer({
   seasonalAsOf,
   h1b,
   nextStep,
+  notices,
 }: {
   record: OtherEmployerRecord;
   /** The case-number box for someone waiting on one of its filings (CaseNextStep). */
   nextStep?: ReactNode;
+  /** DOL's own notices about the employer (a debarment), right under the heading. */
+  notices?: ReactNode;
   /** Open cases across its programs in DOL's live record; null when the live record couldn't be read. */
   pending: number | null;
   /** The program ledger (EmployerPrograms), already built by the caller. */
@@ -171,6 +174,7 @@ export function OtherEmployer({
           Name as DOL prints it on the forms.
         </p>
       </header>{" "}
+      {notices}{" "}
       {nextStep ? <div className="mt-8">{nextStep}</div> : null}{" "}
 
       <section className="pop mt-8">

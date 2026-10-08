@@ -349,7 +349,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/pwd-cases`, lastModified: changed("/pwd-cases"), images: [`${base}/og/pwd-cases.jpg`] },
     { url: `${base}/lca-cases`, lastModified: changed("/lca-cases"), images: [`${base}/og/lca-cases.jpg`] },
     // No card image yet: the page's own card is made from a capture after it ships.
-    { url: `${base}/seasonal-cases`, lastModified: changed("/seasonal-cases") },
+    { url: `${base}/seasonal-cases`, lastModified: changed("/seasonal-cases"), images: [`${base}/og/seasonal-cases.jpg`] },
     { url: `${base}/case-search`, lastModified: changed("/case-search"), images: [`${base}/og/case-search.jpg`] },
     // The bare path only. A `?case=` result sets robots:{index:false} and
     // canonicalises back here, so advertising one would contradict the page's

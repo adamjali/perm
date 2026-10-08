@@ -87,6 +87,7 @@ export const PAGE_CARD_ALT = {
   "compare-my-offer": "Compare an H-1B offer against what employers actually filed for the same job and state. The offer stays in the browser.",
   "policy-changes": "Immigration policy changes on the record. Every Federal Register rule, proposed rule and notice touching PERM, wages, H-1B and the I-485, linked.",
   "employer-compare": "Two employers side by side: PERM filings, approval rate, wage levels and recent activity, from DOL's own files.",
+  "seasonal-cases": "Find an H-2A, H-2B or CW-1 filing. The six forms on DOL's record, each with its count and how many are still in process.",
   "pwd-cases": "Find a prevailing wage request. Pending from DOL's daily check, decided with the wage set, searched by employer.",
   "security": "How your data is protected. Encryption at rest, isolated accounts, short sessions, and no client data on the public pages.",
   "accessibility": "The standard the site builds to, WCAG 2.2 AA, what it means on each page, and where to report a barrier.",

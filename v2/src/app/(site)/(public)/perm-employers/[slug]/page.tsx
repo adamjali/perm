@@ -236,7 +236,7 @@ async function loadLiveOnly(slug: string) {
 async function OtherEmployerPage({ slug, record }: { slug: string; record: OtherEmployerRecord }) {
   const match = await employerMatch(slug);
   const empty = { cases: [], more: false };
-  const [programs, fresh, wageLive, lcaLive, wageDets, lcaDets, seasonal, lcaProfile, uscisH1b, lottery] =
+  const [programs, fresh, wageLive, lcaLive, wageDets, lcaDets, seasonal, lcaProfile, uscisH1b, lottery, debarments, warn] =
     await Promise.all([
       getEmployerPrograms(slug).catch(() => null),
       getFreshness(),
@@ -250,6 +250,8 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
       record.lca ? getLcaProfile(slug).catch(() => null) : null,
       getUscisH1bRecord(slug).catch(() => null),
       getEmployerLottery(slug).catch(() => null),
+      debarmentsForSlug(slug).catch(() => []),
+      warnForSlug(slug).catch(() => []),
     ]);
   const lines = programs ? [programs.pwd, programs.lca, programs.seasonal] : [];
   const open = lines.filter((l) => l && l.pending !== null);
@@ -262,6 +264,12 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
       <OtherEmployer
         record={record}
         pending={pending}
+        notices={
+          <>
+            <DebarmentNotice rows={debarments} pageName={record.name} today={new Date().toISOString().slice(0, 10)} />{" "}
+            <WarnNoticeBand rows={warn} pageName={record.name} />
+          </>
+        }
         nextStep={
           <CaseNextStep
             question={`Waiting on a filing with ${record.name}?`}
@@ -492,7 +500,7 @@ export default async function EmployerPage({
     }
     // Its other programs, over the spellings the nightly map gives this page.
     const liveMatch = await employerMatch(slug).catch(() => null);
-    const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal, wageLive, lcaLive, wageDets, lcaDets, lcaProfile, uscisH1b, lottery] =
+    const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal, wageLive, lcaLive, wageDets, lcaDets, lcaProfile, uscisH1b, lottery, liveDebarments, liveWarn] =
       await Promise.all([
         getFreshness(),
         getEmployerStages().catch(() => null),
@@ -507,6 +515,8 @@ export default async function EmployerPage({
         getLcaProfile(slug).catch(() => null),
         getUscisH1bRecord(slug).catch(() => null),
         getEmployerLottery(slug).catch(() => null),
+        debarmentsForSlug(slug).catch(() => []),
+        warnForSlug(slug).catch(() => []),
       ]);
     return (
       <>
@@ -514,6 +524,12 @@ export default async function EmployerPage({
         <UnpublishedEmployer
           record={live.record}
           cases={live.cases}
+          notices={
+            <>
+              <DebarmentNotice rows={liveDebarments} pageName={live.record.name} today={new Date().toISOString().slice(0, 10)} />{" "}
+              <WarnNoticeBand rows={liveWarn} pageName={live.record.name} />
+            </>
+          }
           programs={
             <>
               <WageAndLcaFilings

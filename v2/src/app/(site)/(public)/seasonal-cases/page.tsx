@@ -7,6 +7,7 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FlagCaseBrowser, SEASONAL_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 import { getSeasonalPublishedSummary, getSeasonalSummary } from "@/lib/turso/seasonalCases";
 import { SEASONAL_FORMS } from "@/lib/seasonalForms";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
@@ -28,9 +29,7 @@ const TITLE = "H-2A, H-2B and CW-1 Case Search";
 const DESCRIPTION =
   "Find an H-2A, H-2B or CW-1 filing by employer: DOL's current status, and the wage, workers and work period from its published files.";
 
-// No card of its own yet (a card is a capture of the rendered page, made
-// after it ships); until then the root home card stands in.
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/seasonal-cases" },
@@ -40,7 +39,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/seasonal-cases",
   },
-};
+}, "seasonal-cases");
 
 export const revalidate = 86400;
 

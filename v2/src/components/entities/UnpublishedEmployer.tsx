@@ -67,10 +67,13 @@ export function UnpublishedEmployer({
   wait,
   programs,
   nextStep,
+  notices,
 }: {
   record: LiveEmployerRecord;
   /** The case-number box for someone waiting on one of its cases (CaseNextStep). */
   nextStep?: ReactNode;
+  /** DOL's own notices about the employer (a debarment), right under the heading. */
+  notices?: ReactNode;
   /** The newest cases, already capped by the caller. */
   cases: LiveCaseRow[];
   /** As-of date of the live case corpus, ISO. */
@@ -118,6 +121,7 @@ export function UnpublishedEmployer({
           approval rate, decision time, wage or rank yet. Below are its cases, with DOL&apos;s status on each.
         </p>
       </section>{" "}
+      {notices}{" "}
       {nextStep ? <div className="mt-8">{nextStep}</div> : null}
 
       {/* Only the counts we can stand behind, and each one labelled with the
