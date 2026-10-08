@@ -135,6 +135,18 @@ case "$action" in
     systemctl stop "permtracker-web@${active}2" 2>/dev/null || true ;;
   deploy)
     [[ "$rel" =~ ^[0-9a-f]{7,40}(-[0-9]{1,6})?$ ]] || { log "bad release id"; exit 2; }
+    # A release a slot runs from is never replaced. Oct 8 2026, 2:19 PM EDT: a
+    # second run on the same commit arrived under the live release's name, and
+    # the `rm -rf` below deleted most of the folder the live site was serving
+    # from (31 errors on files it had removed, until a rollback 2 minutes
+    # later). The workflow now names each run's release uniquely; this is the
+    # guard that holds whatever name arrives.
+    for s in blue blue2 green green2; do
+      in_use=$(readlink -f "$A/slots/$s" 2>/dev/null || true)
+      if [ -n "$in_use" ] && { [ "$in_use" = "$(readlink -f "$A/releases")/$rel" ] || [ "$in_use" = "$(readlink -f "$A/releases")/$rel.w2" ]; }; then
+        log "release $rel is what $s runs; refusing to replace it (each deploy needs its own release id)"; exit 5
+      fi
+    done
     idle=$(other_of "$active")
     tmp=$A/incoming/$rel.tar.zst
     cat > "$tmp"

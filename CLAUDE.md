@@ -525,7 +525,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 8 2026".
 - **The filing chart lost to the pace** as an early signal (3.0 months against 2.7 on 4,152 readers).
 - **H-2B applications in DOL's assignment groups are dated by their group** (`ingest_h2b_groups.py`): typically 5 days off on January 2026, against 25 for the season method.
 
-## Oct 8 2026 (afternoon), in five lines
+## Oct 8 2026 (afternoon), in seven lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the two "Oct 8 2026" afternoon sections.
 
@@ -534,4 +534,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the two "Oct 8 2026" afternoon 
 - **Tests got faster**: three budget tests from 171 s to under 2 s (`fillRateWindow`), and the happy-dom projects pre-bundle their heaviest packages (a sample: 135 s to 63 s).
 - **`pnpm check`** is the quick look before a push: typecheckers, pyflakes, data script tests, and the vitest tests affected since `origin/main`.
 - **A Node package and CLI, a Python package, a Claude Code plugin and an admin Developers tab** are built, none published: npm, PyPI and listings wait for the owner.
+- **Every step is timed** (commit 1 s, push 11 s, `pnpm check` 2.2 min, CI 2.2 min, push to live about 10 min) and the morning report prints the CI and deploy figures daily.
+- **A redeploy of the same commit deleted the live release's folder** (2:19 PM EDT, 31 errors, rolled back at 2:21): the deploy now refuses a release id a slot runs from, and each run names its own.
 

@@ -43,7 +43,10 @@ jobs:
     env:
       NODE_OPTIONS: --max-old-space-size=12288
       NEXT_TELEMETRY_DISABLED: "1"
-      DEPLOYMENT_ID: ${{ github.sha }}-${{ github.run_attempt }}
+      # One name per run: a second run on the same commit reused the live
+      # release's name on Oct 8 2026 and the server deleted the live folder
+      # (permtracker-deploy now refuses a name a slot runs from).
+      DEPLOYMENT_ID: ${{ github.sha }}-${{ github.run_number }}
       VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
       NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
       NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
@@ -154,7 +157,7 @@ jobs:
           ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
         run: |
           ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=20 \
-            "deploy@$ORACLE_HOST" "deploy ${GITHUB_SHA::12}-${GITHUB_RUN_ATTEMPT}" < "$RUNNER_TEMP/release.tar.zst"
+            "deploy@$ORACLE_HOST" "deploy ${GITHUB_SHA::12}-${GITHUB_RUN_NUMBER}" < "$RUNNER_TEMP/release.tar.zst"
 
       # Cloudflare keeps each page's HTML up to a day (s-maxage=86400) and a
       # deploy does not clear it, so a fix shipped here stayed invisible until

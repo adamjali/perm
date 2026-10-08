@@ -8878,3 +8878,35 @@ yes, from the persona's accounts.
 Still to build, none of it billing: sandbox keys, key scopes and expiry, live lookups and exports (for Plus),
 webhooks, OAuth sign-in for assistants and the signed-in MCP tools, bulk snapshots, and `/developers` pages for
 the CLI, the packages and the plugin once they're published.
+
+## Oct 8 2026 (afternoon): every step timed, and a redeploy that deleted the live release
+
+**What each step takes, measured Oct 8:**
+
+| step | time |
+|---|---|
+| commit | under 1 s (no commit hook) |
+| push | 11 s (the pre-push hook runs `tsgo`) |
+| `pnpm check` | 2.2 min: typecheck 51 s, pyflakes 4 s, 73 script tests 47 s, affected vitest 27 s |
+| `pnpm test:run` on the old Mac | 15.3 min (22.3 before the speed work), swapping |
+| CI Tests | 2.2 min (about 8 before): three parts of ~3,000 tests each, 9,028 together |
+| deploy: build | 4.2 to 4.5 min with no cache (compile 2.4 to 2.6 min, TypeScript 43 to 45 s, pages 53 s) |
+| deploy: wait for tests | 1 to 2 s (the tests finish during the build) |
+| deploy: server | 4.8 to 6.1 min, of which the warm-up is its whole 4-minute budget (881 pages, never all of them) |
+| push to live | 9.7 to 11.2 min |
+| Convex deploy | 42 s (`npx convex deploy --dry-run`, nothing changed) |
+
+The morning report prints the CI and deploy lines every day ("How long things take", `speed_lines` in
+`daily_monitor.py`), and `pnpm check` prints its own.
+
+**A second deploy of the same commit deleted most of the live release (2:19 PM EDT).** The release name
+was the commit plus `GITHUB_RUN_ATTEMPT`, so a dispatched redeploy (sent to measure the compiler cache)
+arrived as `14bbcd8ef65b-1`, the release green was serving, and the deploy's `rm -rf "$A/releases/$rel"`
+emptied it before failing on the page cache the running copy was still writing. For two minutes the first
+copy served from memory: nginx logged 31 errors (28 on `/sw.js`, 3 on a video thumbnail), no page errored.
+`permtracker-deploy rollback` put traffic on blue at 2:21 PM; the damaged copy was stopped and its release
+deleted, so a later rollback refuses instead of landing on it. Two fixes: the deploy refuses with exit 5 a
+release id any slot runs from, first or second copy (`scripts/oracle/test_deploy_guard.py`, Linux only, run
+on the server: green with the guard, six failures with it removed), and every run names its release
+`<sha>-<run number>` (and `DEPLOYMENT_ID` likewise). The fixed script was installed by hand
+(`/usr/local/sbin/permtracker-deploy`, after checking the installed copy matched the repo's).
