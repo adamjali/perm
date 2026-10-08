@@ -111,3 +111,78 @@ describe("easternDay", () => {
     expect(easternDay(new Date("2026-10-04T05:00:00Z"))).toBe("2026-10-04");
   });
 });
+
+describe("H-2B reads its season", () => {
+  // The Oct 7 2026 doc's shape: H-2B carries its receipt quarters and the
+  // builder's useSeason flag; H-2A carries quarters too but reads them pooled.
+  const SEASONED = {
+    ...DOC,
+    "H-2A": {
+      ...DOC["H-2A"],
+      seasons: { "2025-Q4": { daysToDecision: { n: 9000, p10: 1, p25: 2, p50: 3, p75: 4, p90: 5 }, leadDays: null } },
+    },
+    "H-2B": {
+      ...DOC["H-2B"],
+      useSeason: true,
+      seasons: {
+        "2025-Q1": { daysToDecision: { n: 9436, p10: 40, p25: 54, p50: 72, p75: 90, p90: 104 }, leadDays: null },
+        "2025-Q3": { daysToDecision: { n: 3034, p10: 20, p25: 27, p50: 37, p75: 52, p90: 70 }, leadDays: null },
+        "bad key": { daysToDecision: { n: 1, p10: 1, p25: 1, p50: 1, p75: 1, p90: 1 }, leadDays: null },
+      },
+    },
+  };
+  const t = parseSeasonalTiming(JSON.stringify(SEASONED)) as SeasonalTiming;
+  const view = (caseNumber: string, filingDate: string, firstDay: string | null = null) =>
+    timingView({ caseNumber, filingDate, firstDay, today: "2026-10-07", timing: t });
+
+  it("keeps only well-formed quarters", () => {
+    expect(Object.keys(t["H-2B"]?.seasons ?? {})).toEqual(["2025-Q1", "2025-Q3"]);
+    expect(t["H-2B"]?.useSeason).toBe(true);
+  });
+
+  it("dates a January filing from last January-to-March's certifications", () => {
+    const v = view("H-400-26010-000001", "2026-01-10")!;
+    expect(v.season).toBe("January to March 2025");
+    expect(v.days).toEqual({ from: 54, typical: 72, to: 90 });
+    expect(v.typical).toBe("2026-03-23");
+  });
+
+  it("falls back to every quarter pooled when last year's season is missing", () => {
+    const v = view("H-400-26100-000001", "2026-04-10")!;
+    expect(v.season).toBeNull();
+    expect(v.days).toEqual({ from: 39, typical: 70, to: 102 });
+  });
+
+  it("leaves H-2A pooled, as the backtest chose", () => {
+    const v = view("H-300-26280-000001", "2026-10-07", "2026-12-01")!;
+    expect(v.basis).toBe("start");
+    expect(v.season).toBeNull();
+  });
+
+  it("names the quarter a year before the filing", async () => {
+    const { seasonKeyFor, seasonLabel } = await import("../seasonalTiming");
+    expect(seasonKeyFor("2026-02-10")).toBe("2025-Q1");
+    expect(seasonKeyFor("2026-12-31")).toBe("2025-Q4");
+    expect(seasonKeyFor("junk")).toBeNull();
+    expect(seasonLabel("2025-Q3")).toBe("July to September 2025");
+  });
+});
+
+describe("parseSeasonalCheck", () => {
+  it("reads each visa's own method's result from the backtest", async () => {
+    const { parseSeasonalCheck } = await import("../seasonalTiming");
+    const doc = {
+      visas: {
+        "H-2A": { pageMethod: "pooled/start", page: { quarters: 5, cases: 32539, middleHalfShare: 0.51, wideShare: 0.788 } },
+        "H-2B": { pageMethod: "same-season/filed", page: { quarters: 3, cases: 15225, middleHalfShare: 0.427 } },
+        "CW-1": { pageMethod: "pooled/filed", page: null },
+      },
+    };
+    expect(parseSeasonalCheck(JSON.stringify(doc))).toEqual({
+      "H-2A": { share: 0.51, cases: 32539, quarters: 5 },
+      "H-2B": { share: 0.427, cases: 15225, quarters: 3 },
+    });
+    expect(parseSeasonalCheck("not json")).toBeNull();
+    expect(parseSeasonalCheck(JSON.stringify({ visas: { "H-2A": { page: { middleHalfShare: 2, cases: 5, quarters: 1 } } } }))).toBeNull();
+  });
+});

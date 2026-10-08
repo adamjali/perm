@@ -6,9 +6,11 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { daysToAnchor } from "@/lib/predictionLedger";
-import { HORIZONS, PWD_BEFORE_FIX, PWD_MODEL, type Cell } from "@/lib/scorecard/score";
+import { HORIZONS, PWD_BEFORE_FIX, type Cell } from "@/lib/scorecard/score";
 import { readMethods, readOurs } from "@/lib/scorecard/verdict";
+import { otherEstimateRows } from "@/lib/scorecard/otherEstimates";
 import { getEstimatorBacktest, getScorecardSummary } from "@/lib/turso/predictions";
+import { getSeasonalCheck } from "@/lib/turso/seasonalTiming";
 import { getScorecard } from "@/lib/turso/scorecard";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { withSocialCard } from "@/lib/socialCard";
@@ -87,19 +89,20 @@ function SampleCells({ cell, since }: { cell: Cell; since: string | null }) {
 }
 
 export default async function EstimateScorecardPage() {
-  const [rows, sweep, sample, backtest] = await Promise.all([
+  const [rows, sweep, sample, backtest, checks] = await Promise.all([
     getScorecard(),
     getSweepCoverage().catch(() => null),
     getScorecardSummary().catch(() => null),
     getEstimatorBacktest().catch(() => null),
+    getSeasonalCheck().catch(() => null),
   ]);
   const today = new Date().toISOString().slice(0, 10);
   const asOf = sweep?.finishedOn ?? null;
   const perm = sample?.perm.bySource.ours ?? null;
   const pwd = sample?.pwd.bySource.ours ?? null;
   // Graded only as the estimator now works; see PWD_BEFORE_FIX.
-  const pwdNow = pwd?.byModel[PWD_MODEL] ?? null;
   const pwdBeforeFix = pwd?.byModel[PWD_BEFORE_FIX] ?? null;
+  const others = otherEstimateRows(sample?.pwd, sample?.seasonal, checks);
   const cur = backtest?.current ?? null;
   const old = backtest?.allPending ?? null;
   // The same sentences the admin scorecard and the morning report print.
@@ -253,22 +256,64 @@ export default async function EstimateScorecardPage() {
             The first sample is recorded the morning after this page went live. Grades follow as DOL decides.
           </p>
         )}
-        {pwd && (pwd.all.recorded > 0 || pwdBeforeFix) ? (
-          <p className="mt-6 border-t-2 border-border pt-4 text-base text-foreground/80">
-            <b className="font-bold text-foreground">Prevailing wage requests:</b> {formatInt(pwdNow?.recorded ?? 0)}{" "}
-            recorded, {formatInt(pwdNow?.graded ?? 0)} graded
-            {pwdNow && pwdNow.graded > 0 ? <>, typical miss {days(pwdNow.typicalMissDays)}</> : null}. That estimate names
-            a month, so it is graded against the middle of the month.
-            {pwdBeforeFix ? (
-              <>
-                {" "}
-                The {formatInt(pwdBeforeFix.recorded)} recorded before the fix on October 3, 2026 counted the wait from the month
-                a request was received instead of from DOL&rsquo;s own count date, which dated most of them in the
-                past. They stay in the record and are left out of this line.
-              </>
-            ) : null}
-          </p>
-        ) : null}
+      </section>
+
+      <section aria-labelledby="other-h" className="mt-12">
+        <h2 id="other-h" className="font-heading text-2xl font-black sm:text-3xl">The other estimates</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base text-foreground/80">
+          The wage-request month and the H-2A, H-2B and CW-1 dates, written down and graded the same way. Each H-2A,
+          H-2B and CW-1 application is recorded once, in its first week, as its case page dated it.
+        </p>{" "}
+        {others.length > 0 ? (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[44rem] border-collapse text-left text-base">
+              <thead>
+                <tr className="border-b-2 border-border">
+                  <th scope="col" className="py-2 pr-3 font-bold">Estimate{" "}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-bold">Written down{" "}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-bold">Graded{" "}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-bold">Typical miss{" "}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-bold">Inside the range{" "}</th>
+                  <th scope="col" className="py-2 font-bold">Tested on past filings{" "}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {others.map((r) => (
+                  <tr key={r.model} className="border-b border-border/40 align-top">
+                    <td className="py-2 pr-3">{r.label}{" "}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{formatInt(r.recorded)}{" "}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{formatInt(r.graded)}{" "}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{r.graded > 0 ? days(r.typicalMissDays) : "none yet"}{" "}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">
+                      {r.graded > 0 ? `${pct(r.inRangeShare)} in ${r.range}` : "none yet"}{" "}
+                    </td>
+                    <td className="py-2">
+                      {r.tested
+                        ? `${pct(r.tested.share)} of ${formatInt(r.tested.cases)} landed in the middle half`
+                        : "not tested this way"}{" "}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-4 text-base text-foreground/80">The first of these are recorded the morning after this section went live.</p>
+        )}{" "}
+        <FinePrint summary="How these are graded">
+          The wage-request estimate names a month, so it is graded against the middle of the month, and the month is its
+          range. An H-2A, H-2B or CW-1 range is the middle half of DOL&rsquo;s past certifications, so a well-judged one
+          catches about half; it is graded on certifications only, as the case page dates them. The past-filings column is
+          the weekly test of each method against the next quarter&rsquo;s real decisions.
+          {pwdBeforeFix ? (
+            <>
+              {" "}
+              The {formatInt(pwdBeforeFix.recorded)} wage-request months recorded before the fix on October 3, 2026 counted
+              the wait from the month a request was received instead of from DOL&rsquo;s own count date, which dated most of
+              them in the past. They stay in the record and are left out of this table.
+            </>
+          ) : null}
+        </FinePrint>
       </section>
 
       <h2 className="mt-12 font-heading text-2xl font-black sm:text-3xl">Worked examples</h2>{" "}

@@ -5,12 +5,17 @@ import {
   headToHead,
   isGradedOutcome,
   PWD_MODEL,
+  type Program,
   summarise,
   type PredictionRow,
   type Source,
   type Summary,
 } from "@/lib/scorecard/score";
+import { scorecardAlarms } from "@/lib/scorecard/alarms";
 import { readMethods, readOurs, readRival } from "@/lib/scorecard/verdict";
+import { SETTLED_BY_FILE_STATUSES } from "@/lib/seasonalDetails";
+import { timingView } from "@/lib/seasonalTiming";
+import { getSeasonalCheck, getSeasonalTiming } from "@/lib/turso/seasonalTiming";
 import { exec, one, rows } from "@/lib/turso/client";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
 import { loadPermEstimateContext, estimatePermCase } from "@/lib/turso/permEstimate";
@@ -56,6 +61,9 @@ const DDL = [
      scored_at TEXT
    )`,
   `CREATE INDEX IF NOT EXISTS idx_ep_open ON estimate_predictions (outcome, program, case_number)`,
+  // The seasonal sample records each application once; this answers "already
+  // recorded?" without walking the table.
+  `CREATE INDEX IF NOT EXISTS idx_ep_case ON estimate_predictions (case_number, program)`,
 ];
 
 export async function ensurePredictionsTable(): Promise<void> {
@@ -67,6 +75,15 @@ export const PERM_PER_MONTH = 3;
 export const PERM_MONTHS = 14;
 export const PWD_PER_MONTH = 3;
 export const PWD_MONTHS = 6;
+/**
+ * H-2A, H-2B and CW-1: each application recorded ONCE, in its first week, as
+ * the case page dated it that day. A timing panel describes a whole wait, so
+ * the fair test is the date it gave near the start; sampling the same case
+ * again as it aged would grade the cases still waiting over and over.
+ */
+export const SEASONAL_PER_FORM = 12;
+export const SEASONAL_RECENT_DAYS = 7;
+const SEASONAL_FORMS = ["H-300-", "H-400-", "C-500-"] as const;
 /**
  * Of the day's PERM sample, how many are also put to each rival: all of them,
  * since Oct 3 2026, so every rival is graded on exactly our cases and the
@@ -144,7 +161,7 @@ async function samplePwd(months: string[]): Promise<SampledCase[]> {
 
 export interface NewPrediction {
   source: Source;
-  program: "perm" | "pwd";
+  program: Program;
   caseNumber: string;
   filingDate: string;
   status: string;
@@ -186,6 +203,82 @@ async function insertPredictions(recordedOn: string, preds: NewPrediction[]): Pr
     );
   }
   return written;
+}
+
+const dayBefore = (day: string, n: number): string => {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+};
+
+/**
+ * Today's H-2A, H-2B and CW-1 predictions: pending applications filed in the
+ * last SEASONAL_RECENT_DAYS and never recorded, dated by `timingView` with the
+ * inputs `SeasonalLookup` uses (the filing day, and the first day of work from
+ * the SeasonalJobs posting or DOL's file), so each row is what the case page
+ * showed that day.
+ */
+export async function predictSeasonal(recordedOn: string): Promise<NewPrediction[]> {
+  const timing = await getSeasonalTiming().catch(() => null);
+  if (!timing) return [];
+  const since = dayBefore(recordedOn, SEASONAL_RECENT_DAYS);
+  const picked: { case_number: string; filed: string }[] = [];
+  for (const prefix of SEASONAL_FORMS) {
+    const got = await rows<{ case_number: string; filed: string }>(
+      `SELECT s.case_number, substr(COALESCE(s.submitted_date, s.filing_date), 1, 10) AS filed
+         FROM seasonal_case_status s
+        WHERE s.case_number >= ? AND s.case_number < ? AND s.is_final = 0
+          AND substr(COALESCE(s.submitted_date, s.filing_date), 1, 10) >= ?
+          AND NOT EXISTS (SELECT 1 FROM estimate_predictions e
+                           WHERE e.case_number = s.case_number AND e.program = 'seasonal')
+        ORDER BY random() LIMIT ?`,
+      [prefix, `${prefix.slice(0, -1)}.`, since, SEASONAL_PER_FORM],
+    ).catch(() => []);
+    picked.push(...got);
+  }
+  if (picked.length === 0) return [];
+  const nums = picked.map((p) => p.case_number);
+  const marks = nums.map(() => "?").join(",");
+  const [postings, records] = await Promise.all([
+    rows<{ case_number: string; begin_date: string | null }>(
+      `SELECT case_number, begin_date FROM seasonal_postings WHERE case_number IN (${marks})`,
+      nums,
+    ).catch(() => []),
+    rows<{ case_number: string; begin_date: string | null }>(
+      `SELECT case_number, begin_date FROM seasonal_cases WHERE case_number IN (${marks})`,
+      nums,
+    ).catch(() => []),
+  ]);
+  const begin = new Map<string, string>();
+  // The page reads the posting first, then the published record.
+  for (const r of records) if (r.begin_date) begin.set(r.case_number, r.begin_date.slice(0, 10));
+  for (const r of postings) if (r.begin_date) begin.set(r.case_number, r.begin_date.slice(0, 10));
+  const out: NewPrediction[] = [];
+  for (const c of picked) {
+    const view = timingView({
+      caseNumber: c.case_number,
+      filingDate: c.filed,
+      firstDay: begin.get(c.case_number) ?? null,
+      today: recordedOn,
+      timing,
+    });
+    if (!view) continue;
+    out.push({
+      source: "ours",
+      program: "seasonal",
+      caseNumber: c.case_number,
+      filingDate: c.filed,
+      status: "pending",
+      // "H-2B-filed-season": the visa, the clock, and whether one season's
+      // figures were used, so a change of method shows in the split.
+      model: `${view.visa}-${view.basis}${view.season ? "-season" : ""}`,
+      predicted: view.typical,
+      bandEarly: view.from,
+      bandLate: view.to,
+      casesAhead: null,
+    });
+  }
+  return out;
 }
 
 /** Our own PERM and PWD predictions for today's sample, as the pages would show them. */
@@ -286,9 +379,13 @@ export async function gradeOpenPredictions(): Promise<{ graded: number; open: nu
     `SELECT id, program, case_number FROM estimate_predictions WHERE outcome IS NULL`,
   );
   let graded = 0;
-  for (const program of ["perm", "pwd"] as const) {
-    const statusTable = program === "perm" ? "perm_case_status" : "pwd_case_status";
-    const eventTable = program === "perm" ? "perm_case_events" : "pwd_case_events";
+  const TABLES = {
+    perm: ["perm_case_status", "perm_case_events"],
+    pwd: ["pwd_case_status", "pwd_case_events"],
+    seasonal: ["seasonal_case_status", "seasonal_case_events"],
+  } as const;
+  for (const program of ["perm", "pwd", "seasonal"] as const) {
+    const [statusTable, eventTable] = TABLES[program];
     const nums = [...new Set(open.filter((r) => r.program === program).map((r) => r.case_number))];
     for (let i = 0; i < nums.length; i += 200) {
       const chunk = nums.slice(i, i + 200);
@@ -306,17 +403,32 @@ export async function gradeOpenPredictions(): Promise<{ graded: number; open: nu
         finals.map((f) => f.case_number),
       );
       const firstFinal = new Map(ev.map((e) => [e.case_number, Number(e.t)]));
+      // A seasonal case finished under a pending word (the sweep's
+      // settled_by_file rule) has no final event: DOL's file holds its
+      // decision, its date and its status.
+      const published = new Map<string, { status: string; decided: string | null }>();
+      if (program === "seasonal") {
+        const pub = await rows<{ case_number: string; case_status: string; decision_date: string | null }>(
+          `SELECT case_number, case_status, decision_date FROM seasonal_cases WHERE case_number IN (${fq})`,
+          finals.map((f) => f.case_number),
+        ).catch(() => []);
+        for (const r of pub) published.set(r.case_number, { status: r.case_status, decided: r.decision_date });
+      }
       for (const f of finals) {
         const ms = firstFinal.get(f.case_number);
+        const filed = published.get(f.case_number);
+        const settled = filed !== undefined && SETTLED_BY_FILE_STATUSES.has(f.current_status.trim().toUpperCase());
         const decidedOn = Number.isFinite(ms)
           ? easternDate(ms!)
-          : f.fetched_at
-            ? easternDate(Date.parse(f.fetched_at))
-            : null;
+          : filed?.decided
+            ? filed.decided.slice(0, 10)
+            : f.fetched_at
+              ? easternDate(Date.parse(f.fetched_at))
+              : null;
         graded += await exec(
           `UPDATE estimate_predictions SET decided_on = ?, outcome = ?, scored_at = ?
             WHERE program = ? AND case_number = ? AND outcome IS NULL`,
-          [decidedOn, f.current_status, new Date().toISOString(), program, f.case_number],
+          [decidedOn, settled ? filed!.status : f.current_status, new Date().toISOString(), program, f.case_number],
         );
       }
     }
@@ -326,7 +438,7 @@ export async function gradeOpenPredictions(): Promise<{ graded: number; open: nu
 
 interface StoredRow {
   source: Source;
-  program: "perm" | "pwd";
+  program: Program;
   model: string;
   recorded_on: string;
   predicted: string;
@@ -352,6 +464,8 @@ const toRow = (r: StoredRow): PredictionRow => ({
 export interface ScorecardDoc {
   perm: Summary;
   pwd: Summary;
+  /** H-2A, H-2B and CW-1, recorded once each in its first week (Oct 8 2026 on; older docs lack it). */
+  seasonal?: Summary;
   /** A handful of the newest graded PERM cases, for the page's worked examples. */
   recent: {
     caseNumber: string;
@@ -383,14 +497,35 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
       model: r.model,
       outcome: r.outcome!,
     }));
-  const pub: ScorecardDoc = { perm: summarise(ours, today, "perm"), pwd: summarise(ours, today, "pwd"), recent };
+  const pub: ScorecardDoc = {
+    perm: summarise(ours, today, "perm"),
+    pwd: summarise(ours, today, "pwd"),
+    seasonal: summarise(ours, today, "seasonal"),
+    recent,
+  };
   const perm = summarise(mapped, today, "perm");
   // The same cases, ours against each rival: neither side scored on an easier sample.
   const h2h = headToHead(all.map((r) => ({ ...toRow(r), caseNumber: r.case_number })), today);
   const mine = perm.bySource.ours;
   const backtest = await getEstimatorBacktest().catch(() => null);
+  const ages = await rows<{ key: string; computed_at: number | string }>(
+    `SELECT key, computed_at FROM perm_docs WHERE key IN ('estimator_backtest', 'seasonal_backtest', 'pwd_backtest')`,
+  ).catch(() => []);
+  const ageOf = (key: string) => {
+    const r = ages.find((a) => a.key === key);
+    return r ? Number(r.computed_at) : null;
+  };
+  const alarms = scorecardAlarms(mapped, today, [
+    { label: "The weekly PERM backtest", computedAt: ageOf("estimator_backtest") },
+    { label: "The weekly H-2A, H-2B and CW-1 backtest", computedAt: ageOf("seasonal_backtest") },
+    { label: "The weekly wage-request backtest", computedAt: ageOf("pwd_backtest") },
+  ]);
   const priv = {
     perm,
+    pwd: pub.pwd,
+    seasonal: pub.seasonal,
+    seasonalChecks: await getSeasonalCheck().catch(() => null),
+    alarms,
     headToHead: h2h,
     // The sentences every surface prints (scorecard/verdict.ts), stored so the
     // morning report, which is Python, quotes them instead of re-deriving them.

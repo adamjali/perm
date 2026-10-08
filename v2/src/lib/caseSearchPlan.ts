@@ -148,21 +148,24 @@ export const FILTER_KEYS: readonly FilterKey[] = [
 
 /**
  * The filters only DOL's published PERM file can answer, because no other
- * record this site holds carries the column: not the live check (DOL names
- * none of them before publication), and not the wage-request or LCA files
- * (DOL's LCA file does print a worksite city and an industry code; this site
- * has not mapped them into the search yet). A search that sets one reads
- * published PERM and says so rather than returning other programs unfiltered.
+ * record this site holds carries the column: the worker's details, which DOL
+ * printed on the old ETA-9089. A search that sets one reads published PERM and
+ * says so rather than returning other programs unfiltered.
+ *
+ * Industry and city left this list on Oct 7 2026: every published file prints
+ * them (the PW, LCA, H-2A, H-2B and CW-1 layouts), and the history quarters
+ * that had been loaded without them were backfilled that night.
  */
 export const PERM_ONLY_FILTERS: readonly FilterKey[] = [
-  "industry",
-  "city",
   "citizenship",
   "birthCountry",
   "visaClass",
   "education",
   "jobEducation",
 ];
+
+/** Read from every program's published file; the live check names neither. */
+export const PLACE_FILTERS: readonly FilterKey[] = ["industry", "city"];
 
 /**
  * The filters only DOL's published LCA file can answer: where the prevailing
@@ -455,6 +458,7 @@ export const PUBLISHED_ONLY_FILTERS: readonly FilterKey[] = [
   "occupation",
   "fiscalYear",
   "wage",
+  ...PLACE_FILTERS,
   ...PERM_ONLY_FILTERS,
   ...LCA_ONLY_FILTERS,
 ];
@@ -482,7 +486,7 @@ export function withStageNarrow(
     fiscalYear: { on: false, why: "stage-live-only" },
     wage: { on: false, why: "stage-live-only" },
     ...Object.fromEntries(
-      [...PERM_ONLY_FILTERS, ...LCA_ONLY_FILTERS].map((k) => [k, { on: false, why: "stage-live-only" as const }]),
+      [...PLACE_FILTERS, ...PERM_ONLY_FILTERS, ...LCA_ONLY_FILTERS].map((k) => [k, { on: false, why: "stage-live-only" as const }]),
     ),
   };
 }

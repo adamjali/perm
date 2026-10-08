@@ -28,9 +28,11 @@ import { daysBetween } from "@/lib/time";
 
 export type Source = "ours" | "rival-a" | "rival-b" | "rival-c";
 
+export type Program = "perm" | "pwd" | "seasonal";
+
 export interface PredictionRow {
   source: Source;
-  program: "perm" | "pwd";
+  program: Program;
   model: string;
   recordedOn: string;
   predicted: string;
@@ -72,9 +74,15 @@ export function horizonOf(recordedOn: string, predicted: string): Horizon {
  * often within days of filing, and scoring it would reward any model that
  * guessed early. Recorded, never graded.
  */
-export function isGradedOutcome(outcome: string | null): boolean {
+export function isGradedOutcome(outcome: string | null, program: Program = "perm"): boolean {
   if (!outcome) return false;
-  return !/WITHDRAWN/i.test(outcome);
+  if (/WITHDRAWN/i.test(outcome)) return false;
+  // H-2A, H-2B and CW-1 are graded on certifications only, like for like with
+  // the panel, which dates them from DOL's past certifications ("Half of the
+  // applications DOL certified..."). A rejection or denial runs on its own
+  // notices and is recorded, not graded.
+  if (program === "seasonal") return /CERTIFICATION/i.test(outcome);
+  return true;
 }
 
 export interface Grade {
@@ -126,12 +134,12 @@ export interface Cell {
 }
 
 export function summariseCell(rows: readonly PredictionRow[], today: string): Cell {
-  const graded = rows.filter((r) => r.decidedOn && isGradedOutcome(r.outcome));
+  const graded = rows.filter((r) => r.decidedOn && isGradedOutcome(r.outcome, r.program));
   const errs = graded.map((r) => grade(r, r.decidedOn!).errorDays);
   const banded = graded.filter((r) => r.bandEarly && r.bandLate);
   const inBand = banded.filter((r) => grade(r, r.decidedOn!).inBand).length;
   const settledRows = rows.filter(
-    (r) => daysBetween(r.predicted, today) > SETTLE_DAYS && !(r.outcome && !isGradedOutcome(r.outcome)),
+    (r) => daysBetween(r.predicted, today) > SETTLE_DAYS && !(r.outcome && !isGradedOutcome(r.outcome, r.program)),
   );
   const hits = settledRows.filter(
     (r) => r.decidedOn && Math.abs(daysBetween(r.predicted, r.decidedOn)) <= SETTLE_DAYS,
@@ -167,7 +175,7 @@ export interface Summary {
   }>;
 }
 
-export function summarise(rows: readonly PredictionRow[], today: string, program: "perm" | "pwd" = "perm"): Summary {
+export function summarise(rows: readonly PredictionRow[], today: string, program: Program = "perm"): Summary {
   const mine = rows.filter((r) => r.program === program);
   const since = mine.reduce<string | null>((a, r) => (a === null || r.recordedOn < a ? r.recordedOn : a), null);
   const bySource: Summary["bySource"] = {};

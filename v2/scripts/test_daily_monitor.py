@@ -283,8 +283,54 @@ def main() -> int:
     check(v(doc(busySeen=busy(4, [(25, 6), (26, 0), (27, 5), (28, 4)])), now_ms)["status"] == "ok",
           "a quiet day in between breaks the streak")
 
+    data_section_reads_the_scorecard_alarms()
+
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0
+
+
+def data_section_reads_the_scorecard_alarms() -> None:
+    """The scorecard's alarms, worked out by the site (scorecard/alarms.ts),
+    reach the email and turn the data section amber; the other estimates get
+    a line each."""
+    import os
+    import types
+
+    priv = {
+        "alarms": ["Wage-request months: no case graded yet, though 12 predicted dates passed a week ago or more."],
+        "pwd": {"bySource": {"ours": {"all": {"recorded": 234, "graded": 12, "typicalMissDays": 9}}}},
+        "seasonal": {"bySource": {"ours": {"all": {"recorded": 30, "graded": 0, "typicalMissDays": None}}}},
+    }
+
+    def query_rows(_db, sql, _args=None):
+        if "COUNT(*)" in sql:
+            return [[5]]
+        if "scorecard_rivals" in sql:
+            return [[json.dumps(priv)]]
+        return []
+
+    fake = types.ModuleType("lib_turso")
+    fake.Turso = lambda *a, **k: None
+    fake.query_rows = query_rows
+    saved = sys.modules.get("lib_turso")
+    sys.modules["lib_turso"] = fake
+    os.environ.setdefault("TURSO_DATABASE_URL", "http://x")
+    os.environ.setdefault("TURSO_AUTH_TOKEN", "x")
+    try:
+        sec = dm.data_section(0)
+    finally:
+        if saved is not None:
+            sys.modules["lib_turso"] = saved
+        else:
+            del sys.modules["lib_turso"]
+    lines = sec["lines"]
+    check(sec["status"] == "warn", "a scorecard alarm turns the data section amber")
+    check(any(l.startswith("Scorecard alarm: Wage-request months: no case graded yet") for l in lines),
+          "the alarm is printed in the site's own words")
+    check("Scorecard, wage-request months: 234 recorded, 12 graded, typical miss 9 days" in lines,
+          "the wage-request estimate gets its own line")
+    check("Scorecard, H-2A, H-2B and CW-1 dates: 30 recorded, 0 graded" in lines,
+          "a seasonal record with no grade yet says so without a miss")
 
 
 if __name__ == "__main__":

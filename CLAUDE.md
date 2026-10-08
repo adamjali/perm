@@ -480,7 +480,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
 - **Every article had ended with a sign-up button**, sending people waiting on their own case into the attorney app; it leads with the case lookup now.
 - **The funnel is counted**: `case_lookup_submitted` and `alert_signup` events in PostHog (no address is sent).
 
-## Oct 7 2026, in ten lines
+## Oct 7 2026, in sixteen lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 
@@ -492,5 +492,9 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 - **The structured data was checked against Google's own rules**: the Organization carries every field we can fill, the app category is one Google accepts, list pages use Google's list shape.
 - **The data rail's groups have icons and page counts**, and collapsed it's a strip of the group icons that opens the rail at the group chosen.
 - **The scorecard reads as sentences** (`scorecard/verdict.ts`): who's closer, whether the split could be luck, what grading only decided cases hides, and a grade; the morning report quotes the stored sentences.
-- **19 of our 33 graded PERM dates were DOL's published average**, which the case page shows for cases the queue just passed; the main method was 4 days off. Not changed yet.
+- **A case DOL's queue has passed is dated by the measured rate** DOL finishes those cases (the backtest: 6 days typical against 29 for DOL's average), and every range quotes its measured coverage (29% of 8,023), never a typed figure.
+- **NOR ISSUED is a rejection, and an "In process" H-2A/H-2B/CW-1 case DOL's file has decided is finished**: 3,155 rows had read as pending. The sweep is the one writer of the flag; DOL's status word is never rewritten.
+- **The case search applied only the decided range to wage-request, LCA and seasonal files** on a firm, state or occupation search; every filter applies now, and industry and city search every program's file (backfilled tonight for 13 LCA quarters and all three wage-request files).
+- **Every estimate is graded or tested**: H-2A, H-2B and CW-1 recorded once each in its first week, a weekly seasonal backtest (H-2B now reads the same season a year earlier; pooled held 21%), a weekly bulletin backtest of "months until current" (a year out: typically 8 months off, 1 time in 4 within a quarter, printed beside the figure), and alarms in the morning email.
+- **Wage-request, LCA and seasonal results offer browser push and an alert on a number not found yet**, like PERM; law firm pages carry H-2A, H-2B and CW-1 work; CW-1 is in the glossary.
 - **Admin alert lists say when each person signed up and confirmed**, and paged lists bring their new rows into view.

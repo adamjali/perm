@@ -8581,6 +8581,75 @@ the rest were text boxes clicked several times (selecting a case number to repla
 one of the 67 case-page sessions went on to look a case up) and phones tapping chart bars to read
 each day's figures: not defects.
 
-**Held: sharp 0.35.5** (GHSA-wq5f-xc86-pv6w, librsvg). `pnpm add` re-resolves the tree and the
-`trustPolicy: no-downgrade` gate refuses semver@6.3.1 (already in the lockfile, under eslint-config-next),
-so nothing changed. Exposure is low: the image optimizer reads only local files and refuses SVG.
+**sharp 0.35.5** (GHSA-wq5f-xc86-pv6w, librsvg) went in that evening: `pnpm add` re-resolves the tree
+and the `trustPolicy: no-downgrade` gate refused semver@6.3.1 (already in the lockfile, under
+eslint-config-next), so `pnpm-workspace.yaml` excludes exactly that version from the trust check, with
+the owner's yes.
+
+## Oct 7 2026 (evening): every estimate graded or tested, and three silent data defects
+
+Ledger: `../.planning/estimators-checklist.md` (every estimate and the ten things each gets).
+
+**A case DOL's queue has passed is dated by the measured rate** (`straggler` branch in
+`src/lib/caseEstimate.ts`): DOL's published average had dated those, and the backtest
+(`scripts/backtest_queue.py`, "passed" section, five origins) found it 29 days late typically on
+Sep 22 against 6 for the rate DOL actually finishes them. The calculator gives such a month no
+filing-month date and states the split and the rate. **Range coverage is read from the backtest**
+(`perm_docs['estimator_backtest'].rangeCoverage`, `src/lib/rangeCoverage.ts`), never typed.
+
+**NOR ISSUED is final, and "settled by file" is a rule of the sweep.** DOL defines NOR nowhere; its
+H-2B and CW-1 files record all 547 NOR cases they hold (filed Oct 2024 to May 2026) as
+"DETERMINATION ISSUED - REJECTED". And DOL's live service leaves some decided applications on IN
+PROCESS: 1,725 of the 1,726 H-2B applications filed Oct 2024 to Mar 2026 still reading IN PROCESS
+had a decision in DOL's file (1,621 "CERTIFICATION (RETURNED)"). `PROGRAMS["seasonal"]["settled_by_file"]`
+in `ingest_pwd_status_direct.py` marks such a row finished; `is_final(status, program, published)`
+is used by the sweep's change and heal branches alike, so it is the one writer of the flag and
+nothing flip-flops. DOL's status word is never rewritten. Wage requests and LCAs were checked and
+have only real re-openings (redeterminations, director reviews). The case page
+(`decidedInFileOnly`, `SETTLED_BY_FILE_STATUSES` in `src/lib/seasonalDetails.ts`, pinned to the
+Python) reports the file's decision and drops the timing panel and the alert form. 3,155 rows were
+healed on the server the same evening with the sweep's own functions.
+
+**The case search dropped filters on three programs.** `readFlagPublished` applied only the decided
+range on a firm, state or occupation lead, while the form enabled every filter and the route passed
+them through ("this firm, in Wyoming" listed the firm's filings from every state); the employer path
+ignored the law-firm filter. `flagRowNarrowing` applies them all, inside the newest `SLICE_CAP` rows
+of the lead, and `windowed` says when that window was full. **Industry and city** left
+`PERM_ONLY_FILTERS` (now the worker's old-form fields only) for `PLACE_FILTERS`: every published file
+prints them, and the published rows now select and return `naics` and `worksite_city`. They had been
+loaded for LCA FY2020 to FY2022 Q3 and FY2026 only and for no wage request; `--backfill-place` was
+dispatched one file at a time (13 LCA quarters, 3 PW files) on GitHub's runners.
+
+**Seasonal timing, measured.** `scripts/backtest_seasonal.py` (weekly) rebuilds the panel's numbers
+at each quarter's start and tests them on that quarter's certifications, both clocks and three
+history windows, using a quarter once at most 5% of it is undecided anywhere. H-2A pooled from the
+first day of work: 51% inside the middle half, 8 days typical. CW-1 pooled from filing: 58%, 10 days.
+H-2B pooled held 21%; the same receipt quarter a year earlier did best (43%, 12 days), so
+`build_seasonal_timing.py` writes `seasons` per receipt quarter with `useSeason` on H-2B and the panel
+names the season and prints the measured share (`perm_docs['seasonal_backtest']`). Every method
+missed January 2026's cap season by 28 to 40 days.
+
+**The bulletin's "months until current", measured.** `scripts/backtest_bulletin.py` (weekly) replays
+`monthsToReach` on every bulletin since Oct 2016 for readers 3, 6, 12 and 24 months past the cutoff:
+a year out it was typically 7.7 months off and within a quarter of the real wait 23% of the time
+(India 10 months). Trailing windows of 1 to 5 years were no better on the same readers, so the
+method stays and the green card line and the I-485 tool print the measured sentence beside it
+(`src/lib/bulletinCheck.ts`).
+
+**The scorecard covers every estimate.** H-2A, H-2B and CW-1 applications are recorded once each,
+in their first week (`predictSeasonal`), graded on certifications only (`isGradedOutcome(outcome,
+program)`), with a decision DOL's file holds as the outcome when the live word never moved.
+`scorecard/alarms.ts` writes the alarms (recording stopped, grades stopped while dates were due,
+the recent miss doubled, a weekly backtest stale) into the admin doc; the admin page leads with them
+and the morning email prints each and turns amber. `scorecard/otherEstimates.ts` is the one table of
+the other estimates for the public page and the admin page. The wage-request sample takes PERM
+wage requests only, the ones the page dates.
+
+**Parity, both ways** (from a mapped matrix of every feature by program): wage-request, LCA and
+seasonal results offer browser push and an alert on a number not found yet (`WatchThisNumber`);
+law firm pages show H-2A, H-2B and CW-1 work; CW-1 is in the glossary; llms.txt and every page's
+structured data name the H-2A, H-2B and CW-1 prefixes, gated by
+`three-programs-in-machine-copy.test.ts`. Still open, in the ledger: a seasonal social card and
+guides, seasonal in the change feed and decisions per day, WARN and debarment on no-PERM employer
+pages, the bulletin release-day record, the I-140 quarterly check.
+

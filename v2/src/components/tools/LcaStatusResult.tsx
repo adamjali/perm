@@ -3,7 +3,7 @@ import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import { lookupLcaCaseOutcome, lookupLcaDisclosed, type LcaDisclosedRow, type LcaRow } from "@/lib/turso/lcaCasesTypes";
 import { formatWage } from "@/lib/wageFormat";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
-import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
+import { WatchThisNumber } from "@/components/tools/WatchThisNumber";
 import { isLookupGap } from "@/lib/dolMiss";
 
 /**
@@ -135,11 +135,12 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
   }
 
   if (!row && isLookupGap(dolMiss)) {
-    return <DolUnanswered caseNumber={caseNumber} label="Labor condition application" miss={dolMiss} />;
+    return <DolUnanswered caseNumber={caseNumber} label="Labor condition application" miss={dolMiss} watch="lca" />;
   }
 
   if (!row) {
     return (
+      <div className="space-y-6">
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Labor condition application
@@ -161,7 +162,9 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
           </Link>
           .
         </p>
-      </section>
+      </section>{" "}
+      <WatchThisNumber caseNumber={caseNumber} program="lca" />
+      </div>
     );
   }
 
@@ -214,7 +217,7 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
       {/* An LCA is usually decided within seven business days, so the alert is
           worth offering only while it is still pending: on a certified one it
           would be a subscription to nothing. */}
-      {!row.isFinal ? <CaseAlertForm caseNumber={row.caseNumber} program="lca" /> : null}
+      {!row.isFinal ? <WatchThisNumber caseNumber={row.caseNumber} program="lca" /> : null}
 
       <section className="border-2 border-border bg-tint-primary p-5 sm:p-6">
         <h3 className="font-heading text-xl font-black">What this status means</h3>{" "}

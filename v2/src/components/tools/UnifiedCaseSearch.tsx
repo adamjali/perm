@@ -1049,18 +1049,18 @@ export function UnifiedCaseSearch({
 
           <fieldset className="min-w-0">
             <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              Worker and job
+              Industry, city, worker and job
             </legend>{" "}
             <p className="mb-3 mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">
-              These are fields of DOL&apos;s published PERM file alone, so setting
-              one leaves out wage requests, LCAs, H-2A, H-2B and CW-1 filings and
-              filings still open.{" "}
+              Industry and city come from every program&apos;s published file, so they leave out filings still
+              open. The worker&apos;s details are fields of DOL&apos;s published PERM file alone, so setting one
+              also leaves out wage requests, LCAs and H-2A, H-2B and CW-1 filings.{" "}
               {OLD_FORM_NOTE}
             </p>{" "}
             {lcaOnlySet && can.wageSource.on ? (
               <p className="mb-3 border-l-4 border-border pl-3 text-sm font-semibold leading-relaxed">
-                Off while a prevailing wage source is set: that field is in DOL&apos;s LCA file, and these
-                are in the PERM file. Clear the wage source to use them.
+                The worker&apos;s details are off while a prevailing wage source is set: that field is in
+                DOL&apos;s LCA file, and they are in the PERM file. Clear the wage source to use them.
               </p>
             ) : null}{" "}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">

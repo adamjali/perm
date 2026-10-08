@@ -356,6 +356,8 @@ def main() -> int:
         vb.ingest_direct(2)
         check("control: a month not held is stored, labelled as State's own host",
               any("INSERT OR REPLACE INTO visa_bulletins" in q for q in fresh.sql))
+        check("a month new to the site records the day it was first held, once",
+              any("INSERT OR IGNORE INTO bulletin_first_seen" in q for q in fresh.sql))
         check("a run that stores a month tells the workflow, so the bulletin pages are expired",
               "bulletin_changed=true" in open(gh_out.name).read())
 

@@ -33,7 +33,7 @@ export interface EmbedDef {
 }
 
 export const EMBEDS: readonly EmbedDef[] = [
-  { slug: "case-status", title: "Check a DOL case", blurb: "Look up any PERM, prevailing wage or LCA case number and see DOL's current status.", href: "/perm-case-status", height: 560, group: "lookup" },
+  { slug: "case-status", title: "Check a DOL case", blurb: "Look up any PERM, prevailing wage, LCA, H-2A, H-2B or CW-1 case number and see DOL's current status.", href: "/perm-case-status", height: 560, group: "lookup" },
   { slug: "perm-timeline", title: "When will DOL decide my PERM?", blurb: "An estimate from the day DOL received the case, counted against DOL's own queue.", href: "/tools/perm-timeline-calculator", height: 900, group: "estimate" },
   { slug: "pwd-queue", title: "Prevailing wage wait", blurb: "Where a prevailing wage request sits in DOL's queue, and when it is likely to be reached.", href: "/tools/pwd-calculator", height: 760, group: "estimate" },
   { slug: "i140-queue", title: "I-140 wait", blurb: "USCIS's own I-140 processing figures for each category, and what they mean for a filing.", href: "/tools/i140-calculator", height: 760, group: "estimate" },

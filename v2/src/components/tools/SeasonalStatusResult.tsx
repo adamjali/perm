@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { DolUnanswered } from "@/components/tools/DolUnanswered";
-import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
+import { WatchThisNumber } from "@/components/tools/WatchThisNumber";
 import {
   lookupSeasonalCaseOutcome,
   lookupSeasonalPosting,
@@ -21,7 +21,7 @@ import { isLookupGap } from "@/lib/dolMiss";
 import { SEASONAL_STATUSES, statusAnchor } from "@/lib/statusDictionary";
 import { seasonalForm } from "@/lib/seasonalForms";
 import { easternDay, timingView } from "@/lib/seasonalTiming";
-import { getSeasonalTiming } from "@/lib/turso/seasonalTiming";
+import { getSeasonalCheck, getSeasonalTiming } from "@/lib/turso/seasonalTiming";
 import { SeasonalTimingPanel } from "@/components/tools/SeasonalTimingPanel";
 
 /**
@@ -174,11 +174,12 @@ function SeasonalDetails({
 }
 
 export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
-  const [outcome, record, posting, timing] = await Promise.all([
+  const [outcome, record, posting, timing, checks] = await Promise.all([
     lookupSeasonalCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "records" as const })),
     lookupSeasonalRecord(caseNumber).catch(() => null),
     lookupSeasonalPosting(caseNumber).catch(() => null),
     getSeasonalTiming().catch(() => null),
+    getSeasonalCheck().catch(() => null),
   ]);
   const { row, dolMiss } = outcome;
   const form = formOf(caseNumber);
@@ -215,11 +216,12 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
   }
 
   if (!row && isLookupGap(dolMiss)) {
-    return <DolUnanswered caseNumber={caseNumber} label={form} miss={dolMiss} />;
+    return <DolUnanswered caseNumber={caseNumber} label={form} miss={dolMiss} watch="seasonal" />;
   }
 
   if (!row) {
     return (
+      <div className="space-y-6">
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">{form}</p>{" "}
         <h2 className="mt-2 font-heading text-2xl font-black">No record under {caseNumber}</h2>{" "}
@@ -234,7 +236,9 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
           </a>
           .
         </p>
-      </section>
+      </section>{" "}
+      <WatchThisNumber caseNumber={caseNumber} program="seasonal" />
+      </div>
     );
   }
 
@@ -305,12 +309,21 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
         ruleShownElsewhere={view?.ruleDay != null}
       />{" "}
 
-      {view ? <SeasonalTimingPanel view={view} firstDay={timingFirstDay} filingDate={timingFiled} /> : null}{" "}
+      {view ? (
+        <SeasonalTimingPanel
+          view={view}
+          firstDay={timingFirstDay}
+          filingDate={timingFiled}
+          checked={checks?.[view.visa] ?? null}
+        />
+      ) : null}{" "}
 
-      {!done ? <CaseAlertForm caseNumber={row.caseNumber} program="seasonal" /> : null}
+      {!done ? <WatchThisNumber caseNumber={row.caseNumber} program="seasonal" /> : null}
 
       <section className="border-2 border-border bg-tint-primary p-5 sm:p-6">
-        <h3 className="font-heading text-xl font-black">What this status means</h3>{" "}
+        <h3 className="font-heading text-xl font-black">
+          {fileDecided ? "What DOL's live status means" : "What this status means"}
+        </h3>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
           {entry?.summary ?? "DOL's status for this case, as shown on its own case status page."}
         </p>{" "}

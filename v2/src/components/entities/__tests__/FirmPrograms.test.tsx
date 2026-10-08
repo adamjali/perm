@@ -16,6 +16,7 @@ const data = {
     ],
   },
   pwd: null,
+  seasonal: null,
 };
 
 describe("FirmPrograms", () => {
@@ -38,4 +39,16 @@ describe("FirmPrograms", () => {
     const { container } = render(<FirmPrograms name="Fragomen" data={data} />);
     expect(container.textContent).not.toMatch(/Apple Inc\.32,377|527,135LCAs/);
   });
+
+  it("shows the H-2A, H-2B and CW-1 work too, with its certified share", () => {
+    render(
+      <FirmPrograms
+        name="An Agent"
+        data={{ spellings: 1, lca: null, pwd: null, seasonal: { filings: 400, certified: 380, firstDecided: "2024-10-01", lastDecided: "2026-06-30", employers: [] } }}
+      />,
+    );
+    expect(screen.getByText("H-2A, H-2B and CW-1")).toBeInTheDocument();
+    expect(screen.getByText(/applications, 95% certified/)).toBeInTheDocument();
+  });
 });
+

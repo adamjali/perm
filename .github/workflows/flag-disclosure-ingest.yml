@@ -221,8 +221,8 @@ jobs:
       # pages against the previous quarter). The reader keeps the live query as
       # a fallback, so a skipped rebuild is a slow page, never an empty one.
       - name: Rebuild the LCA salary explorer's precomputed docs
-        # A detail backfill writes no wage, so these docs cannot change.
-        if: success() && matrix.program == 'lca' && inputs.backfill_lca_detail != true && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
+        # A detail or place backfill writes no wage, so these docs cannot change.
+        if: success() && matrix.program == 'lca' && inputs.backfill_lca_detail != true && inputs.backfill_place != true && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
         working-directory: v2
         run: |
           timeout 30m python3 scripts/build_lca_facets.py

@@ -8,6 +8,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { getBulletinBoard } from "@/lib/turso/bulletin";
+import { getBulletinCheck } from "@/lib/turso/bulletinCheck";
 import { getLineSnapshot } from "@/lib/turso/greenCardLine";
 import type { PaceBasis } from "@/lib/bulletinNext";
 
@@ -74,9 +75,10 @@ const FAQS = [
 const PACE_CATEGORIES = new Set(["EB2", "EB3", "EW3"]);
 
 export default async function GreenCardLinePage() {
-  const [snapshot, board] = await Promise.all([
+  const [snapshot, board, check] = await Promise.all([
     getLineSnapshot(),
     getBulletinBoard().catch(() => null),
+    getBulletinCheck().catch(() => null),
   ]);
   const pace: Record<string, PaceBasis> = {};
   for (const c of board?.finalAction ?? []) {
@@ -115,7 +117,7 @@ export default async function GreenCardLinePage() {
       </header>
 
       <section className="mt-10">
-        <GreenCardLine snapshot={snapshot} pace={pace} />
+        <GreenCardLine snapshot={snapshot} pace={pace} check={check} />
       </section>{" "}
 
       <section className="mt-12">

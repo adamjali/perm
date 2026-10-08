@@ -7,8 +7,9 @@ import { keepLinkableSlugs } from "./entityLinks";
 import { tableColumns } from "./tableColumns";
 
 /**
- * One law firm's work outside PERM: the H-1B LCAs and prevailing wage
- * requests it filed for clients, and the employers it filed them for.
+ * One law firm's work outside PERM: the H-1B LCAs, prevailing wage requests
+ * and H-2A, H-2B and CW-1 applications it filed for clients, and the employers
+ * it filed them for.
  *
  * DOL names the representing firm on each filing, keyed here by its printed
  * name (`attorney_slug`). `scripts/build_employer_map.py` writes
@@ -31,7 +32,7 @@ export interface FirmEmployer {
 
 export interface FirmProgramLine {
   filings: number;
-  /** LCAs DOL certified; null for wage requests, whose outcome is a wage, not a yes or no. */
+  /** LCAs or seasonal applications DOL certified; null for wage requests, whose outcome is a wage, not a yes or no. */
   certified: number | null;
   firstDecided: string | null;
   lastDecided: string | null;
@@ -41,6 +42,8 @@ export interface FirmProgramLine {
 export interface FirmPrograms {
   lca: FirmProgramLine | null;
   pwd: FirmProgramLine | null;
+  /** H-2A, H-2B and CW-1 applications (Oct 7 2026 on). */
+  seasonal: FirmProgramLine | null;
   /** How many printed spellings of the firm's name the files were read under. */
   spellings: number;
 }
@@ -57,9 +60,17 @@ async function firmSlugs(slug: string): Promise<string[]> {
   return found.length ? found.map((r) => String(r.source_slug)) : [slug];
 }
 
-async function line(table: "lca_cases" | "pwd_cases", slugs: string[]): Promise<FirmProgramLine | null> {
+const CERTIFIED_SQL: Record<"lca_cases" | "pwd_cases" | "seasonal_cases", string> = {
+  lca_cases: "SUM(CASE WHEN case_status = 'CERTIFIED' THEN 1 ELSE 0 END)",
+  pwd_cases: "NULL",
+  // Full and partial certifications, as the seasonal case page counts a grant.
+  seasonal_cases:
+    "SUM(CASE WHEN case_status LIKE '%CERTIFICATION%' AND case_status NOT LIKE '%WITHDRAWN%' THEN 1 ELSE 0 END)",
+};
+
+async function line(table: "lca_cases" | "pwd_cases" | "seasonal_cases", slugs: string[]): Promise<FirmProgramLine | null> {
   const where = `attorney_slug IN (${slugs.map(() => "?").join(", ")})`;
-  const certified = table === "lca_cases" ? "SUM(CASE WHEN case_status = 'CERTIFIED' THEN 1 ELSE 0 END)" : "NULL";
+  const certified = CERTIFIED_SQL[table];
   const [counts, top] = await Promise.all([
     one<{ n: number | string; certified: number | string | null; first: string | null; last: string | null }>(
       `SELECT COUNT(*) AS n, ${certified} AS certified, MIN(decision_date) AS first, MAX(decision_date) AS last ` +
@@ -88,10 +99,11 @@ async function line(table: "lca_cases" | "pwd_cases", slugs: string[]): Promise<
 
 export const getFirmPrograms = cache(async (slug: string): Promise<FirmPrograms | null> => {
   const slugs = await firmSlugs(slug);
-  const [lca, pwd] = await Promise.all([
+  const [lca, pwd, seasonal] = await Promise.all([
     line("lca_cases", slugs).catch(() => null),
     line("pwd_cases", slugs).catch(() => null),
+    line("seasonal_cases", slugs).catch(() => null),
   ]);
-  if (!lca && !pwd) return null;
-  return { lca, pwd, spellings: slugs.length };
+  if (!lca && !pwd && !seasonal) return null;
+  return { lca, pwd, seasonal, spellings: slugs.length };
 });

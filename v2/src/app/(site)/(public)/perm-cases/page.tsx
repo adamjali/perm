@@ -150,7 +150,7 @@ export default async function PermCasesPage() {
             href="/case-search"
             className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
           >
-            Search all three DOL programs at once
+            Search every DOL program at once
           </Link>
           .
         </p>

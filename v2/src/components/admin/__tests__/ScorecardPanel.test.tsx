@@ -27,7 +27,14 @@ const cell = (over: Partial<Cell>): Cell => ({
 const horizons = { "0-30": cell({}), "31-90": cell({ graded: 0 }), "91-180": cell({ graded: 0 }), "181+": cell({ graded: 0 }) };
 
 // A doc as it was before readings were stored: the panel derives them.
-const doc = {
+const doc: Record<string, unknown> = {
+  alarms: ["Wage-request months: no case graded yet, though 12 predicted dates passed a week ago or more."],
+  seasonal: {
+    computedOn: "2026-10-08",
+    since: "2026-10-08",
+    bySource: { ours: { all: cell({}), byModel: { "H-2B-filed-season": cell({ recorded: 10, graded: 0 }) }, byHorizon: horizons } },
+  },
+  seasonalChecks: { "H-2B": { share: 0.427, cases: 15225, quarters: 3 } },
   perm: {
     computedOn: "2026-10-07",
     since: "2026-09-26",
@@ -70,4 +77,13 @@ describe("ScorecardPanel", () => {
     expect(us?.textContent).toContain("6 days late");
     expect(grade(a)).toBe("A");
   });
+
+  it("leads with what needs a look, and lists the other estimates", async () => {
+    render(<ScorecardPanel />);
+    expect(await screen.findByText("Needs a look")).toBeTruthy();
+    expect(screen.getByText(/no case graded yet, though 12 predicted dates passed/)).toBeTruthy();
+    const row = screen.getByText("H-2B, from the same season a year earlier").closest("tr");
+    expect(row?.textContent).toContain("43% of 15,225");
+  });
 });
+

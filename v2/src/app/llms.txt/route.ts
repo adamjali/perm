@@ -38,7 +38,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/perm-case-status",
     label: "Case status lookup (PERM, prevailing wage and LCA)",
     blurb:
-      "Check a case number for its live DOL status, its place in the queue, and a stage-aware decision estimate. Takes all three DOL programs: PERM (G-), prevailing wage requests (P-) and H-1B LCAs (I-200 and I-203). Works for PENDING cases, not just decided ones, because it asks DOL directly rather than reading the quarterly files. Free, no account, and it emails when the status changes. No case number? Search by employer name instead.",
+      "Check a case number for its live DOL status, its place in the queue, and a stage-aware decision estimate. Takes every DOL program on the same case-number counter: PERM (G-), prevailing wage requests (P-), H-1B LCAs (I-200 and I-203), and H-2A, H-2B and CW-1 applications (H-300-, H-400-, C-500-). Works for PENDING cases, not just decided ones, because it asks DOL directly rather than reading the quarterly files. Free, no account, and it emails when the status changes. No case number? Search by employer name instead.",
   },
   {
     path: "/uscis-case-status",
@@ -474,7 +474,7 @@ export async function GET() {
   const lines: string[] = [
     "# PERM Tracker",
     "",
-    "> PERM Tracker (permtracker.app) is a free web app for the US Department of Labor PERM (Program Electronic Review Management) labor certification process, for both the person waiting on a case and the attorney managing one. Without an account: look a case up by NUMBER across all three DOL programs - PERM (G-), prevailing wage request (P-) and H-1B LCA (I-200/I-203) - for its live DOL status and a stage-aware decision estimate (with email alerts on changes); or, with no case number at all, find it by employer name, law firm, worksite state or occupation. Use timeline calculators for every green-card stage (PWD, PERM, I-140, I-485), and browse DOL's own disclosure and queue data as searchable datasets. With a free account: case-management software that computes every interdependent PERM deadline per case.",
+    "> PERM Tracker (permtracker.app) is a free web app for the US Department of Labor PERM (Program Electronic Review Management) labor certification process, for both the person waiting on a case and the attorney managing one. Without an account: look a case up by NUMBER across every DOL program - PERM (G-), prevailing wage request (P-), H-1B LCA (I-200/I-203) and H-2A, H-2B and CW-1 (H-300/H-400/C-500) - for its live DOL status and a stage-aware decision estimate (with email alerts on changes); or, with no case number at all, find it by employer name, law firm, worksite state or occupation. Use timeline calculators for every green-card stage (PWD, PERM, I-140, I-485), and browse DOL's own disclosure and queue data as searchable datasets. With a free account: case-management software that computes every interdependent PERM deadline per case.",
     "",
     DISAMBIGUATION,
     "",

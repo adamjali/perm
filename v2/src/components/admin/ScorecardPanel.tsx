@@ -8,7 +8,9 @@ import { formatInt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { api } from "@convex/_generated/api";
+import { otherEstimateRows } from "@/lib/scorecard/otherEstimates";
 import { HORIZONS, type Cell, type HeadToHead, type Summary } from "@/lib/scorecard/score";
+import type { SeasonalCheck } from "@/lib/seasonalTiming";
 import {
   GRADE_SCALE,
   gradedMiss,
@@ -37,6 +39,11 @@ interface Doc {
   perm: Summary;
   headToHead?: Record<string, HeadToHead>;
   readings?: { ours: string[]; rivals: RivalReading[] };
+  /** Oct 8 2026 on; older docs lack them. */
+  pwd?: Summary;
+  seasonal?: Summary;
+  seasonalChecks?: SeasonalCheck | null;
+  alarms?: string[];
 }
 
 const days = (x: number | null | undefined) => (x == null ? "-" : `${formatInt(Math.round(x))}d`);
@@ -173,6 +180,7 @@ export function ScorecardPanel() {
     doc.readings?.ours ??
     (mine ? [...readOurs(mine.all, mine.byHorizon, perm.since, null), ...readMethods(mine.byModel)] : []);
   const sources = Object.keys(perm.bySource).sort((a, b) => (a === "ours" ? -1 : b === "ours" ? 1 : a < b ? -1 : 1));
+  const others = otherEstimateRows(doc.pwd, doc.seasonal, doc.seasonalChecks ?? null);
   const when = new Date(computedAt).toLocaleString("en-US", {
     timeZone: EASTERN_TIMEZONE,
     dateStyle: "medium",
@@ -183,7 +191,18 @@ export function ScorecardPanel() {
     <div className="space-y-8">
       <p className="text-sm text-muted-foreground">
         PERM, recorded daily since {perm.since ?? "-"}. Updated {when} ET.
-      </p>
+      </p>{" "}
+
+      {doc.alarms && doc.alarms.length > 0 ? (
+        <section aria-labelledby="sc-alarms" className="border-2 border-l-8 border-data-bad-ink bg-card p-5 sm:p-6">
+          <h2 id="sc-alarms" className="font-heading text-xl font-black">Needs a look</h2>{" "}
+          <ul className="mt-3 max-w-3xl list-disc space-y-2 pl-5 text-base leading-relaxed">
+            {doc.alarms.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section aria-labelledby="sc-who" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <h2 id="sc-who" className="font-heading text-xl font-black">Who&apos;s closer, on the same cases</h2>{" "}
@@ -239,6 +258,41 @@ export function ScorecardPanel() {
           </table>
         </div>
       </section>{" "}
+
+      {others.length > 0 ? (
+        <section aria-labelledby="sc-others" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+          <h2 id="sc-others" className="font-heading text-xl font-black">The other estimates</h2>{" "}
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+            Ours only: no rival dates wage requests or H-2A, H-2B and CW-1 cases. Each seasonal application is
+            recorded once, in its first week.
+          </p>{" "}
+          <div className="mt-4 overflow-x-auto border-2 border-border">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  {["Estimate", "Recorded", "Graded", "Typical miss", "In its range", "Tested on past filings"].map((h, i) => (
+                    <th key={h} scope="col" className={cn("px-3 py-2 font-bold", i === 0 ? "text-left" : "text-right")}>{`${h} `}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {others.map((r) => (
+                  <tr key={r.model} className="border-t-2 border-border">
+                    <th scope="row" className="px-3 py-2 text-left font-bold">{`${r.label} `}</th>
+                    <td className="px-3 py-2 text-right tabular-nums">{`${r.recorded} `}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{`${r.graded} `}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{`${days(r.typicalMissDays)} `}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{`${pct(r.inRangeShare)} `}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {`${r.tested ? `${pct(r.tested.share)} of ${formatInt(r.tested.cases)}` : "-"} `}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}{" "}
 
       <details className="border-2 border-border bg-card">
         <summary className="flex min-h-[44px] cursor-pointer items-center px-5 font-bold">Every figure</summary>

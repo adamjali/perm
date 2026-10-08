@@ -132,4 +132,29 @@ describe("rounding a count this uncertain", () => {
     expect(formatYears(31.7)).toBe("32");
     expect(formatYears(140)).toBe("more than 99");
   });
+
+  it("says how the past pace held on past bulletins, beside its own figure", () => {
+    // Cutoff 1 April 2022 (the fixture's); the pace moves 30 days a month.
+    const pace = {
+      "EW3|worldwide": {
+        latest: { kind: "date" as const, iso: "2022-04-01" },
+        movedDays: 3000,
+        spanMonths: 100,
+        retrogressions: [],
+      },
+    };
+    const check = {
+      90: { readers: 1829, reached: 1734, typicalMissMonths: 2.1, withinQuarterShare: 0.595 },
+      365: { readers: 1829, reached: 1539, typicalMissMonths: 7.7, withinQuarterShare: 0.23 },
+      730: { readers: 1829, reached: 1187, typicalMissMonths: 13.1, withinQuarterShare: 0.145 },
+    };
+    render(
+      <GreenCardLine snapshot={lineSnapshot()} pace={pace} check={check} defaultCategory="EW3" defaultCountry="worldwide" />,
+    );
+    setDate("2023-04-15");
+    expect(
+      screen.getByText(/Tested on 1,829 past bulletin readings: for a date about a year past the cutoff, this pace was typically 8 months off/),
+    ).toBeInTheDocument();
+  });
 });
+

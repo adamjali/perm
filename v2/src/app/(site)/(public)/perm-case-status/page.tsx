@@ -259,7 +259,7 @@ export default async function PermCaseStatusPage({
         <div className="mt-4 border-2 border-border bg-tint-primary p-5">
           <p className="text-base leading-relaxed">
             <b className="font-bold">Looking for an employer rather than a number?</b>{" "}
-            Search every filing under that name across all three DOL programs:
+            Search every filing under that name across every DOL program:
             the PERM, the wage request that came before it and the H-1B
             condition application beside it.
           </p>{" "}

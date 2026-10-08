@@ -296,6 +296,9 @@ const fromFlagDisclosed = (r: FlagDisclosedRow, program: Program): UnifiedCase =
   // does. Both dates are right here, so leaving it null showed a filing date
   // and a decision date beside an empty "days" on every wage request and LCA.
   days: daysBetween(r.receivedDate, r.decisionDate),
+  industryCode: r.naics,
+  industryTitle: naicsTitle(r.naics)?.title ?? null,
+  city: r.worksiteCity,
 });
 
 /**

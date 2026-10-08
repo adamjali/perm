@@ -24,6 +24,11 @@ export interface TimingPercentiles {
   p90: number;
 }
 
+export interface SeasonTiming {
+  daysToDecision: TimingPercentiles | null;
+  leadDays: TimingPercentiles | null;
+}
+
 export interface VisaTiming {
   daysToDecision: TimingPercentiles | null;
   leadDays: TimingPercentiles | null;
@@ -32,11 +37,36 @@ export interface VisaTiming {
   files: number;
   /** H-2A only: the share decided at least `deadlineDays` before the first day of work. */
   onTime?: { n: number; share: number; deadlineDays: number };
+  /** The same two clocks per calendar quarter of receipt, keyed "2025-Q1". */
+  seasons?: Record<string, SeasonTiming>;
+  /**
+   * The page reads the case's receipt quarter a year earlier instead of every
+   * quarter pooled. Set by the builder for H-2B, where the backtest found the
+   * pooled range held 21% of later decisions and the season's did better in
+   * every quarter it could be tested on (scripts/backtest_seasonal.py).
+   */
+  useSeason?: boolean;
 }
 
 export type SeasonalTiming = Partial<Record<SeasonalVisa, VisaTiming>> & { asOf: string };
 
 const VISAS: readonly SeasonalVisa[] = ["H-2A", "H-2B", "CW-1"];
+const SEASON_KEY = /^\d{4}-Q[1-4]$/;
+const QUARTER_MONTHS = ["January to March", "April to June", "July to September", "October to December"] as const;
+
+/** The receipt quarter a year before a filing date's own: "2026-02-10" is "2025-Q1". */
+export function seasonKeyFor(filingDate: string): string | null {
+  if (!isDay(filingDate)) return null;
+  const y = Number(filingDate.slice(0, 4));
+  const q = Math.floor((Number(filingDate.slice(5, 7)) - 1) / 3) + 1;
+  return `${y - 1}-Q${q}`;
+}
+
+/** "2025-Q1" as words: "January to March 2025". */
+export function seasonLabel(key: string): string {
+  const q = Number(key.slice(-1));
+  return `${QUARTER_MONTHS[q - 1] ?? key} ${key.slice(0, 4)}`;
+}
 const isInt = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v);
 const isDay = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v);
 
@@ -73,6 +103,17 @@ export function parseSeasonalTiming(json: string): SeasonalTiming | null {
       decidedTo: isDay(r.decidedTo) ? r.decidedTo.slice(0, 10) : null,
       files: isInt(r.files) ? r.files : 0,
     };
+    if (r.seasons && typeof r.seasons === "object") {
+      const seasons: Record<string, SeasonTiming> = {};
+      for (const [key, v] of Object.entries(r.seasons as Record<string, unknown>)) {
+        if (!SEASON_KEY.test(key) || !v || typeof v !== "object") continue;
+        const sv = v as Record<string, unknown>;
+        const season = { daysToDecision: pcts(sv.daysToDecision), leadDays: pcts(sv.leadDays) };
+        if (season.daysToDecision || season.leadDays) seasons[key] = season;
+      }
+      if (Object.keys(seasons).length) block.seasons = seasons;
+    }
+    if (r.useSeason === true) block.useSeason = true;
     const ot = r.onTime as Record<string, unknown> | undefined;
     if (ot && isInt(ot.n) && typeof ot.share === "number" && ot.share >= 0 && ot.share <= 1 && isInt(ot.deadlineDays)) {
       block.onTime = { n: ot.n, share: ot.share, deadlineDays: ot.deadlineDays };
@@ -110,6 +151,8 @@ export interface TimingView {
   pastMost: boolean;
   /** H-2A, start basis: the share DOL decided at least 30 days before the first day of work. */
   onTimeShare: number | null;
+  /** When the figures are one receipt quarter's, not every quarter pooled: which, in words. */
+  season: string | null;
 }
 
 function addDays(day: string, n: number): string {
@@ -156,9 +199,15 @@ export function timingView(args: {
       ruleDay: block.onTime ? at(block.onTime.deadlineDays) : null,
     });
   }
-  if (!filingDate || !isDay(filingDate) || !block.daysToDecision) return null;
+  if (!filingDate || !isDay(filingDate)) return null;
+  // The season a year earlier when the builder says this visa runs on one,
+  // and that season reached the floor; every quarter pooled otherwise.
+  const key = block.useSeason ? seasonKeyFor(filingDate) : null;
+  const seasonal = key ? block.seasons?.[key]?.daysToDecision ?? null : null;
+  const pooled = block.daysToDecision;
+  if (!seasonal && !pooled) return null;
   basis = "filed";
-  p = block.daysToDecision;
+  p = (seasonal ?? pooled)!;
   at = (d) => addDays(filingDate, d);
   const [early, from, typical, to, late] = [p.p10, p.p25, p.p50, p.p75, p.p90].map(at) as [
     string, string, string, string, string,
@@ -167,6 +216,7 @@ export function timingView(args: {
     visa, basis, p, block, early, from, typical, to, late, today,
     days: { from: p.p25, typical: p.p50, to: p.p75 },
     ruleDay: null,
+    season: seasonal && key ? seasonLabel(key) : null,
   });
 }
 
@@ -183,6 +233,7 @@ function finish(a: {
   today: string;
   days: { from: number; typical: number; to: number };
   ruleDay: string | null;
+  season?: string | null;
 }): TimingView {
   const span = dayNumber(a.late) - dayNumber(a.early);
   const raw = span > 0 ? (dayNumber(a.today) - dayNumber(a.early)) / span : 0;
@@ -203,7 +254,35 @@ function finish(a: {
     todayAt: Math.min(1, Math.max(0, raw)),
     pastMost: a.today > a.to,
     onTimeShare: a.basis === "start" && a.block.onTime ? a.block.onTime.share : null,
+    season: a.season ?? null,
   };
+}
+
+/** How the page's own method did on past seasons: perm_docs['seasonal_backtest']. */
+export type SeasonalCheck = Partial<Record<SeasonalVisa, { share: number; cases: number; quarters: number }>>;
+
+/** The backtest's summary per visa, or null when it is missing or unreadable. */
+export function parseSeasonalCheck(json: string): SeasonalCheck | null {
+  let d: unknown;
+  try {
+    d = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  const visas = (d as { visas?: unknown } | null)?.visas;
+  if (!visas || typeof visas !== "object") return null;
+  const out: SeasonalCheck = {};
+  for (const visa of VISAS) {
+    const page = ((visas as Record<string, unknown>)[visa] as { page?: Record<string, unknown> } | undefined)?.page;
+    if (!page) continue;
+    const share = page.middleHalfShare;
+    const cases = page.cases;
+    const quarters = page.quarters;
+    if (typeof share === "number" && share >= 0 && share <= 1 && isInt(cases) && cases > 0 && isInt(quarters)) {
+      out[visa] = { share, cases, quarters };
+    }
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 /** Today's date in Eastern time, YYYY-MM-DD: after 8 PM Eastern the UTC date is already tomorrow. */

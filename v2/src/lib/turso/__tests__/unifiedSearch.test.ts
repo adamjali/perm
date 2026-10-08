@@ -551,10 +551,21 @@ describe("filters only published PERM can answer", () => {
     expect(readFlagPublished).toHaveBeenCalledTimes(3);
   });
 
+  it("asks every program's file for an industry or a city, and skips only the live half", async () => {
+    // Every published file prints both (backfilled Oct 7 2026); the live
+    // check names neither.
+    const out = await unifiedSearch({ lead: employerLead, narrow: { naics: "54", city: "Austin" } });
+    expect(readPermPublished).toHaveBeenCalledOnce();
+    expect(readFlagPublished).toHaveBeenCalledTimes(3);
+    expect(readFlagLive).not.toHaveBeenCalled();
+    expect(out.permOnly).toEqual([]);
+    expect(out.skipped.live).toBe(true);
+  });
+
   it("names every PERM-only filter in words", () => {
     expect(
       permOnlyFilters({ naics: "54", city: "Austin", visaClass: "H-1B", jobEducation: "Master's" }),
-    ).toEqual(["industry", "worksite city", "visa at filing", "education the job requires"]);
+    ).toEqual(["visa at filing", "education the job requires"]);
     expect(permOnlyFilters({ state: "TX" })).toEqual([]);
   });
 });

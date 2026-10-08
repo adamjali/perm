@@ -1242,8 +1242,23 @@ function flagRowNarrowing(narrow: UnifiedNarrow, leadKind: Lead["kind"]): { cond
     conds.push(`(${FLAG_ANNUAL_WAGE_SQL}) <= ?`);
     params.push(narrow.wageMax);
   }
+  // Industry and city, matched exactly as the PERM read matches them (a NAICS
+  // prefix or sector range, the city folded). An unreadable NAICS answers
+  // nothing, as it does there.
+  if (narrow.naics || narrow.city) {
+    const place = extraNarrowing(
+      { ...(narrow.naics ? { naics: narrow.naics } : {}), ...(narrow.city ? { city: narrow.city } : {}) },
+      FLAG_PLACE_COLS,
+    );
+    if (place.impossible) conds.push("0");
+    conds.push(...place.conds);
+    params.push(...place.params);
+  }
   return { conds, params };
 }
+
+/** The place columns every published FLAG table carries. */
+const FLAG_PLACE_COLS = new Set(["naics", "worksite_city"]);
 
 export async function readFlagPublished(
   program: FlagProgramKey,

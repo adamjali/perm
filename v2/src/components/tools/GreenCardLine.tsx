@@ -7,6 +7,7 @@ import { ChartHit } from "@/components/data/ChartHit";
 import { ChartTips } from "@/components/data/ChartTips";
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { bulletinCheckSentence, type BulletinCheck } from "@/lib/bulletinCheck";
 import { monthsToReach, type PaceBasis } from "@/lib/bulletinNext";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import {
@@ -55,6 +56,8 @@ export interface GreenCardLineProps {
   snapshot: LineSnapshot;
   /** Bulletin pace per line, keyed `${category}|${country}` in bulletin keys. */
   pace: Record<string, PaceBasis>;
+  /** How the past-pace arithmetic held on past bulletins (scripts/backtest_bulletin.py). */
+  check?: BulletinCheck | null;
   /** Preselected line, e.g. from the EB-3 Other Workers guide. */
   defaultCategory?: LineCategory;
   defaultCountry?: CountryKey;
@@ -72,6 +75,7 @@ export interface GreenCardLineProps {
 export function GreenCardLine({
   snapshot,
   pace,
+  check = null,
   defaultCategory = "EB2",
   defaultCountry = "india",
   lockCategory = false,
@@ -212,6 +216,7 @@ export function GreenCardLine({
           reach={reach}
           priorityDate={priorityDate}
           showYears={showYears}
+          check={check}
         />
       )}
     </div>
@@ -227,6 +232,7 @@ function LineAnswer({
   reach,
   priorityDate,
   showYears,
+  check,
 }: {
   result: Estimate;
   lineLabel: string;
@@ -234,7 +240,9 @@ function LineAnswer({
   reach: ReturnType<typeof monthsToReach>;
   priorityDate: string;
   showYears: boolean;
+  check: BulletinCheck | null;
 }) {
+  const tested = reach ? bulletinCheckSentence(check, reach.gapDays) : null;
   const { parts } = result;
   const segs = [
     { key: "current", label: "Current, not finished", note: "I-485s USCIS holds with a visa number available", value: (parts.currentUnfinished.low + parts.currentUnfinished.high) / 2, cls: "bg-data-good" },
@@ -341,7 +349,8 @@ function LineAnswer({
             At that pace it reaches your date in about{" "}
             <b className="font-bold">{formatYears(reach.months / 12)} years</b>. That&apos;s the past pace, and the
             line behind the cutoff grew fastest in the last three years, so the count above is the better guide.
-          </p>
+          </p>{" "}
+          {tested ? <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">{tested}</p> : null}
         </div>
       ) : null}
 

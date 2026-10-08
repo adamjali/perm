@@ -356,12 +356,26 @@ def data_section(now_ms: int) -> dict:
     # The verdicts the admin page prints, written by the site with the summary
     # (src/lib/scorecard/verdict.ts), so the email and the page say the same.
     if rivals and rivals[0]:
-        readings = (json.loads(rivals[0]).get("readings") or {})
+        priv = json.loads(rivals[0])
+        readings = priv.get("readings") or {}
         for r in readings.get("rivals") or []:
             points = r.get("points") or []
             lines.append(f"Scorecard, {r.get('name')}: {r.get('headline')}. " + " ".join(points))
         for line in (readings.get("ours") or [])[:2]:
             lines.append(f"Scorecard, ours: {line}")
+        # The other estimates, one line each, from the same doc.
+        for key, label in (("pwd", "wage-request months"), ("seasonal", "H-2A, H-2B and CW-1 dates"),
+                           ("bulletin", "visa bulletin release days")):
+            cell = ((priv.get(key) or {}).get("bySource") or {}).get("ours", {}).get("all") or {}
+            if cell.get("recorded"):
+                miss = cell.get("typicalMissDays")
+                lines.append(f"Scorecard, {label}: {cell['recorded']} recorded, {cell.get('graded') or 0} graded"
+                             + (f", typical miss {miss} days" if miss is not None and cell.get("graded") else ""))
+        # The alarms the site works out with the summaries (scorecard/alarms.ts):
+        # each needs a person, so each turns the section amber.
+        for alarm in priv.get("alarms") or []:
+            lines.append(f"Scorecard alarm: {alarm}")
+            status = "warn"
     if not moved or int(moved[0]) == 0:
         status = "warn"
         lines.append("No PERM status change recorded in 24 h: the sweep may not have written")

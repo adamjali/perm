@@ -21,6 +21,7 @@ import {
   ensurePredictionsTable,
   gradeOpenPredictions,
   predictOurs,
+  predictSeasonal,
   recordPredictions,
   RIVAL_SAMPLE,
   writeScorecardDocs,
@@ -51,18 +52,21 @@ export async function GET(request: Request): Promise<NextResponse> {
       return NextResponse.json({ docs: true, recordedOn, rows });
     }
     if (dry) {
-      const { perm, pwd, sample } = await predictOurs(today);
-      return NextResponse.json({ dry: true, recordedOn, sampled: sample.length, perm, pwd });
+      const [{ perm, pwd, sample }, seasonal] = await Promise.all([predictOurs(today), predictSeasonal(recordedOn)]);
+      return NextResponse.json({ dry: true, recordedOn, sampled: sample.length, perm, pwd, seasonal });
     }
     await ensurePredictionsTable();
     const { perm, pwd, sample, pendingBefore } = await predictOurs(today);
-    const ours = await recordPredictions(recordedOn, [...perm, ...pwd]);
+    const seasonal = await predictSeasonal(recordedOn);
+    const ours = await recordPredictions(recordedOn, [...perm, ...pwd, ...seasonal]);
     const rivalCases = pick(sample, RIVAL_SAMPLE, rngFor(recordedOn));
     const { preds, failures } = await rivalPredictions(rivalCases, today, pendingBefore);
     const rivals = await recordPredictions(recordedOn, preds);
     const { graded, open } = await gradeOpenPredictions();
     const { rows } = await writeScorecardDocs(recordedOn);
-    const out = { recordedOn, ours, perm: perm.length, pwd: pwd.length, rivals, failures, graded, open, rows };
+    const out = {
+      recordedOn, ours, perm: perm.length, pwd: pwd.length, seasonal: seasonal.length, rivals, failures, graded, open, rows,
+    };
     console.log(`[scorecard] ${JSON.stringify(out)}`);
     return NextResponse.json(out);
   } catch (e) {

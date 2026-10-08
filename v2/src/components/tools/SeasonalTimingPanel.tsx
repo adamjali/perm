@@ -26,7 +26,18 @@ function at(v: TimingView, iso: string): string {
   return `${(Math.min(1, Math.max(0, f)) * 100).toFixed(2)}%`;
 }
 
-export function SeasonalTimingPanel({ view, firstDay, filingDate }: { view: TimingView; firstDay: string | null; filingDate: string | null }) {
+export function SeasonalTimingPanel({
+  view,
+  firstDay,
+  filingDate,
+  checked = null,
+}: {
+  view: TimingView;
+  firstDay: string | null;
+  filingDate: string | null;
+  /** How this visa's method did on past seasons, from the weekly backtest. */
+  checked?: { share: number; cases: number } | null;
+}) {
   const start = view.basis === "start";
   const share = view.onTimeShare === null ? null : Math.round(view.onTimeShare * 100);
   return (
@@ -37,7 +48,7 @@ export function SeasonalTimingPanel({ view, firstDay, filingDate }: { view: Timi
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/85">
         {start
           ? `Half of the H-2A applications DOL certified were decided ${view.days.to} to ${view.days.from} days before the work began. For this job, starting ${firstDay ? day(firstDay) : "on its first day"}, that's `
-          : `Half of the ${view.visa} applications DOL certified were decided ${view.days.from} to ${view.days.to} days after filing. For this case${filingDate ? `, filed ${day(filingDate)}` : ""}, that's `}
+          : `Half of the ${view.visa} applications DOL certified${view.season ? ` that were filed ${view.season}` : ""} were decided ${view.days.from} to ${view.days.to} days after filing. For this case${filingDate ? `, filed ${day(filingDate)}` : ""}, that's `}
         <span className="font-bold">
           {day(view.from)} to {day(view.to)}
         </span>
@@ -101,10 +112,20 @@ export function SeasonalTimingPanel({ view, firstDay, filingDate }: { view: Timi
           ), unless the application was modified; {share}% of the certifications met it.
         </p>
       ) : null}{" "}
+      {checked ? (
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/85">
+          Tested on {checked.cases.toLocaleString("en-US")} later {view.visa} decisions,{" "}
+          {Math.round(checked.share * 100)}% landed inside the middle half drawn this way. A perfect estimate puts half there.
+        </p>
+      ) : null}{" "}
       <p className="mt-4 text-sm text-foreground/70">
         From {view.n.toLocaleString("en-US")} certifications in DOL&apos;s published {view.visa} files
-        {view.decidedFrom && view.decidedTo ? `, decided ${day(view.decidedFrom)} to ${day(view.decidedTo)}` : ""}. An
-        estimate from past cases, not a promise.
+        {view.season
+          ? `, filed ${view.season}. That's the same months a year before this case, because ${view.visa} decisions run on a seasonal clock`
+          : view.decidedFrom && view.decidedTo
+            ? `, decided ${day(view.decidedFrom)} to ${day(view.decidedTo)}`
+            : ""}
+        . An estimate from past cases, not a promise.
       </p>
     </section>
   );

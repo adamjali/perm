@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const predictOurs = vi.fn();
+const predictSeasonal = vi.fn();
 const recordPredictions = vi.fn();
 const ensurePredictionsTable = vi.fn();
 const gradeOpenPredictions = vi.fn();
@@ -9,6 +10,7 @@ const rivalPredictions = vi.fn();
 
 vi.mock("@/lib/turso/predictions", () => ({
   predictOurs: (...a: unknown[]) => predictOurs(...a),
+  predictSeasonal: (...a: unknown[]) => predictSeasonal(...a),
   recordPredictions: (...a: unknown[]) => recordPredictions(...a),
   ensurePredictionsTable: () => ensurePredictionsTable(),
   gradeOpenPredictions: () => gradeOpenPredictions(),
@@ -38,7 +40,8 @@ const SAMPLE = [
 
 describe("GET /api/cron/scorecard", () => {
   beforeEach(() => {
-    for (const f of [predictOurs, recordPredictions, ensurePredictionsTable, gradeOpenPredictions, writeScorecardDocs, rivalPredictions]) f.mockReset();
+    for (const f of [predictOurs, predictSeasonal, recordPredictions, ensurePredictionsTable, gradeOpenPredictions, writeScorecardDocs, rivalPredictions]) f.mockReset();
+    predictSeasonal.mockResolvedValue([{ id: "seasonal" }]);
     predictOurs.mockResolvedValue({ perm: [{ id: 1 }], pwd: [], sample: SAMPLE, pendingBefore: () => 0 });
     recordPredictions.mockResolvedValue(1);
     rivalPredictions.mockResolvedValue({ preds: [], failures: ["rival-a x: HTTP 500"] });
@@ -81,6 +84,10 @@ describe("GET /api/cron/scorecard", () => {
     const body = await res.json();
     expect(body.failures).toEqual(["rival-a x: HTTP 500"]);
     expect(recordPredictions).toHaveBeenCalledTimes(2);
+    // Ours, H-2A, H-2B and CW-1 included, in one write before any rival is asked.
+    expect(recordPredictions.mock.calls[0]![1]).toEqual([{ id: 1 }, { id: "seasonal" }]);
+    expect(predictSeasonal).toHaveBeenCalledWith("2026-09-27");
+    expect(body.seasonal).toBe(1);
     expect(rivalPredictions.mock.calls[0]![0]).toHaveLength(2);
     expect(gradeOpenPredictions).toHaveBeenCalledTimes(1);
     expect(writeScorecardDocs).toHaveBeenCalledWith("2026-09-27");

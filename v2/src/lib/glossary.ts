@@ -220,6 +220,15 @@ export const GLOSSARY: GlossaryTerm[] = [
     see: [{ label: "Every status, explained", href: "/perm-case-statuses" }],
   },
   {
+    term: "CW-1",
+    slug: "cw-1",
+    aka: ["CNMI-Only Transitional Worker", "CW1"],
+    definition:
+      "The temporary worker visa for the Commonwealth of the Northern Mariana Islands. DOL first certifies that there aren't enough able, willing and qualified U.S. workers there and that hiring won't hurt local wages. The employer files Form ETA-9142C (a C-500- number) with a prevailing wage determination (a P-500- number).",
+    cite: CFR655("655.400"),
+    see: [{ label: "H-2A, H-2B and CW-1 case search", href: "/seasonal-cases" }],
+  },
+  {
     term: "H-1B recapture",
     slug: "h1b-recapture",
     definition:

@@ -587,6 +587,21 @@ describe("readFlagPublished, employer lead", () => {
     expect(secondPass().sql).toContain("worksite_state = ?");
   });
 
+  it("applies an industry and a city as the PERM read does", async () => {
+    await readFlagPublished("lca", employer, { naics: "5415", city: "seattle" }, 100);
+    expect(secondPass().sql).toContain("substr(naics, 1, ?) = ?");
+    expect(secondPass().sql).toContain("upper(worksite_city) = ?");
+    expect(secondPass().args).toEqual(expect.arrayContaining([4, "5415", "SEATTLE"]));
+    rows.mockClear();
+    await readFlagPublished("seasonal", state, { naics: "31-33" }, 100);
+    expect(String(rows.mock.calls[1]?.[0] ?? "")).toContain("substr(naics, 1, 2) IN (?, ?, ?)");
+  });
+
+  it("answers nothing for an industry it can't read, rather than ignoring it", async () => {
+    await readFlagPublished("pwd", employer, { naics: "software" }, 100);
+    expect(secondPass().sql).toMatch(/ AND 0\b/);
+  });
+
   it("applies the law-firm filter too, which it once ignored", async () => {
     await readFlagPublished("pwd", employer, { firmSlug: "fragomen" }, 100);
     expect(secondPass().sql).toContain("attorney_slug = ?");

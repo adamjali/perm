@@ -39,6 +39,7 @@ import { pairKey,
   type I485CellTable,
 } from "@/lib/i485/position";
 import { formatAsOf, formatAsOfShort, formatMonth } from "@/lib/dolFormat";
+import { bulletinCheckSentence, type BulletinCheck } from "@/lib/bulletinCheck";
 import { monthsToReach, scenarioMonths, type PaceBasis } from "@/lib/bulletinNext";
 import { ChartTips } from "@/components/data/ChartTips";
 import { Label } from "@/components/ui/label";
@@ -46,6 +47,8 @@ import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 
 export interface I485QueuePositionProps {
+  /** How the past-pace arithmetic held on past bulletins (scripts/backtest_bulletin.py). */
+  check?: BulletinCheck | null;
   cells: I485CellTable;
   options: readonly { country: string; categories: readonly string[] }[];
   /** USCIS's own as-of date for the release, `YYYY-MM-DD`. */
@@ -162,6 +165,7 @@ export function I485QueuePosition({
   filingChart,
   filingChartMonth,
   pace,
+  check = null,
   className,
 }: I485QueuePositionProps) {
   const countryId = useId();
@@ -494,6 +498,10 @@ export function I485QueuePosition({
                           ({Math.round(reach.basis.movedDays / reach.basis.spanMonths)} days per calendar month), it would reach this date in about{" "}
                           <strong className="font-semibold">{reach.months >= 24 ? `${(reach.months / 12).toFixed(1)} years` : `${reach.months} months`}</strong>.
                           {reach.basis.retrogressions > 0 ? ` It retrogressed ${reach.basis.retrogressions} ${reach.basis.retrogressions === 1 ? "time" : "times"} inside that window, which is why this is arithmetic and not a promise.` : " That is arithmetic over a closed window, not a promise."}
+                          {(() => {
+                            const tested = bulletinCheckSentence(check, reach.gapDays);
+                            return tested ? <> {tested}</> : null;
+                          })()}
                         </>
                       )}
                     </p>

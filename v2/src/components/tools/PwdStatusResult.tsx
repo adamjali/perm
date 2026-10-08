@@ -14,7 +14,7 @@ import { calculatePWDExpiration } from "@/lib/perm";
 import { formatWage } from "@/lib/wageFormat";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { QueueAlertForm } from "@/app/(site)/(public)/perm-processing-times/QueueAlertForm";
-import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
+import { WatchThisNumber } from "@/components/tools/WatchThisNumber";
 import { isLookupGap } from "@/lib/dolMiss";
 import { formatInt } from "@/lib/format";
 
@@ -194,11 +194,12 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
   }
 
   if (!row && isLookupGap(dolMiss)) {
-    return <DolUnanswered caseNumber={caseNumber} label="Prevailing wage request" miss={dolMiss} />;
+    return <DolUnanswered caseNumber={caseNumber} label="Prevailing wage request" miss={dolMiss} watch="pwd" />;
   }
 
   if (!row) {
     return (
+      <div className="space-y-6">
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Prevailing wage request
@@ -226,7 +227,9 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           </Link>
           .
         </p>
-      </section>
+      </section>{" "}
+      <WatchThisNumber caseNumber={caseNumber} program="pwd" />
+      </div>
     );
   }
 
@@ -353,7 +356,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           the reader came for, so it goes first and is offered on every pending
           request, PERM-tagged or not. The queue-month alert below is the
           weaker, broader signal and only makes sense for a PERM request. */}
-      {!row.isFinal ? <CaseAlertForm caseNumber={row.caseNumber} program="pwd" /> : null}
+      {!row.isFinal ? <WatchThisNumber caseNumber={row.caseNumber} program="pwd" /> : null}
 
       {!row.isFinal && !notPerm ? (
         // The broader signal: hear when DOL reaches this filing month. Same

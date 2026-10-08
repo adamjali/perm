@@ -29,10 +29,14 @@ const SURFACES = [
   "src/lib/structuredData.ts",
 ] as const;
 
-/** The three program prefixes, as a reader would recognise them. */
-const PREFIXES = [/\bG-/, /\bP-/, /\bI-20[03]\b/];
+/**
+ * The program prefixes, as a reader would recognise them. H-2A, H-2B and CW-1
+ * joined on Oct 7 2026: the lookup had answered them since Oct 1, while both
+ * surfaces still said "all three DOL programs" and named none of them.
+ */
+const PREFIXES = [/\bG-/, /\bP-/, /\bI-20[03]\b/, /\bH-300\b/, /\bH-400\b/, /\bC-500\b/];
 
-describe("machine-read copy covers all three DOL programs", () => {
+describe("machine-read copy covers every DOL program it looks up", () => {
   it.each(SURFACES)("%s names every program prefix", (rel) => {
     const src = readFileSync(path.join(process.cwd(), rel), "utf8");
     // A file that shrank to nothing would pass a "no bad phrase" check while

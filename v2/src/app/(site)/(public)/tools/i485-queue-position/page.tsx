@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { I485QueuePosition } from "@/components/tools/I485QueuePosition";
 import { getBulletinBoard } from "@/lib/turso/bulletin";
+import { getBulletinCheck } from "@/lib/turso/bulletinCheck";
 import type { PaceBasis } from "@/lib/bulletinNext";
 import type { CountryKey } from "@/lib/perm";
 
@@ -95,7 +96,10 @@ const FAQS = [
 ];
 
 export default async function I485QueuePositionPage() {
-  const board = await getBulletinBoard().catch(() => null);
+  const [board, check] = await Promise.all([
+    getBulletinBoard().catch(() => null),
+    getBulletinCheck().catch(() => null),
+  ]);
   // Keyed the way the tool keys its own table (USCIS spellings), so the
   // client picks the cell with the same pairKey it already uses.
   const pace: Record<string, PaceBasis> = {};
@@ -170,6 +174,7 @@ export default async function I485QueuePositionPage() {
             filingChart={newestBulletin?.datesForFiling ?? null}
             filingChartMonth={newestBulletin?.bulletinMonth ?? null}
             pace={pace}
+            check={check}
           />
         </SearchParamsBoundary>
       </section>{" "}

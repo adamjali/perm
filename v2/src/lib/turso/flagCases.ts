@@ -72,6 +72,9 @@ export interface FlagDisclosedRow {
   /** The representing law firm. DOL publishes it for all three programs. */
   attorneyName: string | null;
   attorneySlug: string | null;
+  /** The employer's NAICS code and the primary worksite city, as DOL's file prints them. */
+  naics: string | null;
+  worksiteCity: string | null;
 }
 
 export interface DisclosedDbRow {
@@ -91,6 +94,8 @@ export interface DisclosedDbRow {
   fiscal_year: number | string | null;
   attorney_name: string | null;
   attorney_slug: string | null;
+  naics: string | null;
+  worksite_city: string | null;
 }
 
 export const DISCLOSED_COLS =
@@ -100,7 +105,11 @@ export const DISCLOSED_COLS =
   // A firm search returned 44 correct wage requests with an empty law-firm
   // column because these two were missing here: the WHERE clause found them and
   // the SELECT never fetched them.
-  "attorney_name, attorney_slug";
+  "attorney_name, attorney_slug, " +
+  // Every published file carries both since the Oct 7 2026 backfill (the PW,
+  // LCA, H-2A, H-2B and CW-1 layouts all print them); the case search filters
+  // on them and its CSV prints them.
+  "naics, worksite_city";
 
 const num = (v: number | string | null): number | null => {
   if (v === null || v === undefined) return null;
@@ -125,6 +134,8 @@ export const toDisclosed = (r: DisclosedDbRow): FlagDisclosedRow => ({
   fiscalYear: num(r.fiscal_year),
   attorneyName: r.attorney_name,
   attorneySlug: r.attorney_slug,
+  naics: r.naics ?? null,
+  worksiteCity: r.worksite_city ?? null,
 });
 
 export interface FlagDisclosureSummary {

@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
-import { parseSeasonalTiming, type SeasonalTiming } from "@/lib/seasonalTiming";
+import { parseSeasonalCheck, parseSeasonalTiming, type SeasonalCheck, type SeasonalTiming } from "@/lib/seasonalTiming";
 import { one } from "./client";
 
 /**
@@ -13,4 +13,14 @@ import { one } from "./client";
 export const getSeasonalTiming = cache(async (): Promise<SeasonalTiming | null> => {
   const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'seasonal_timing'").catch(() => null);
   return r ? parseSeasonalTiming(String(r.json)) : null;
+});
+
+/**
+ * perm_docs['seasonal_backtest'], written weekly by scripts/backtest_seasonal.py:
+ * how the method each visa's panel uses did against later decisions. Null when
+ * missing, and the panel then prints no "tested on" line.
+ */
+export const getSeasonalCheck = cache(async (): Promise<SeasonalCheck | null> => {
+  const r = await one<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'seasonal_backtest'").catch(() => null);
+  return r ? parseSeasonalCheck(String(r.json)) : null;
 });

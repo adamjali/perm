@@ -399,12 +399,29 @@ def validated(page: str, m: str) -> dict:
     return parsed
 
 
+FIRST_SEEN_DDL = (
+    "CREATE TABLE IF NOT EXISTS bulletin_first_seen ("
+    " bulletin_month TEXT PRIMARY KEY, first_seen_at INTEGER NOT NULL, source TEXT)"
+)
+
+
 def write_month(db: Turso, m: str, parsed: dict, source: str) -> None:
     """Store one validated bulletin as a primary-source row."""
     ensure_family_columns(db)
     prior = db.scalar(
         "SELECT source_url FROM visa_bulletins WHERE bulletin_month = ?", [m]
     )
+    # The first time this site held the month, kept once and never moved: a
+    # re-parse rewrites computed_at, and the estimate scorecard grades the
+    # release-day estimate against the day the bulletin was first found
+    # (src/lib/turso/predictions.ts). Only a NEW month records it, so the
+    # history the archive backfill fills in never claims a day.
+    if not prior:
+        db.execute(FIRST_SEEN_DDL)
+        db.execute(
+            "INSERT OR IGNORE INTO bulletin_first_seen (bulletin_month, first_seen_at, source) VALUES (?,?,?)",
+            [m, int(time.time() * 1000), source],
+        )
     db.execute(
         "INSERT OR REPLACE INTO visa_bulletins "
         "(bulletin_month, source_url, archived_at, final_action, "
