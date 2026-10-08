@@ -121,11 +121,20 @@ jobs:
         run: pnpm build
 
       - name: Package the standalone server
+        env:
+          BEFORE: ${{ github.event.before }}
         run: |
           S=$(dirname "$(find .next/standalone -name server.js -not -path '*/node_modules/*' | head -1)")
           test -f "$S/server.js"
           cp -r .next/static "$S/.next/static"
           cp -r public "$S/public"
+          # The pages this push changed, which the server warms before the
+          # rest: the same list the Cloudflare step below drops copies of. None
+          # on a manual run (no "before"); a failure here never fails the deploy.
+          if [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            node scripts/gsc_queue.mjs --since "$BEFORE" --warm-list > "$S/warm-first.txt" 2>/dev/null || : > "$S/warm-first.txt"
+            echo "warm first: $(grep -c . "$S/warm-first.txt" || true) changed pages and families"
+          fi
           tar --zstd -cf "$RUNNER_TEMP/release.tar.zst" -C "$S" .
           echo "release: $(du -h "$RUNNER_TEMP/release.tar.zst" | cut -f1), server at ${S#.next/standalone}"
 

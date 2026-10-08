@@ -41,10 +41,39 @@ def run(app: pathlib.Path, bindir: pathlib.Path, rel: str, action: str = "deploy
     return subprocess.run(["bash", str(script), f"{action} {rel}".strip()], input=b"", capture_output=True, env=env, timeout=60)
 
 
+def order(first: str | None, paths: list[str]) -> list[str]:
+    """The deploy's own order_paths(), lifted out of the script and run."""
+    text = SCRIPT.read_text()
+    start = text.index("order_paths(){")
+    fn = text[start:text.index("\n}\n", start) + 3]
+    with tempfile.TemporaryDirectory() as tmp:
+        f = pathlib.Path(tmp) / "warm-first.txt"
+        if first is not None:
+            f.write_text(first)
+        r = subprocess.run(["bash", "-c", fn + f'order_paths "{f}"'], input="\n".join(paths) + "\n",
+                           capture_output=True, text=True, timeout=30)
+    return r.stdout.split()
+
+
+def check_order() -> None:
+    usual = ["/", "/perm-queue", "/visa-bulletin", "/visa-bulletin/2026-10", "/guides/a",
+             "/visa-bulletin/2025-01", "/perm-employers/google-llc"]
+    check(order(None, usual) == usual, "with no list the usual order is kept")
+    got = order("page /guides/a\nprefix /visa-bulletin/\npage /perm-case-status\n", usual)
+    check(got[:5] == ["/guides/a", "/perm-case-status", "/visa-bulletin/2026-10", "/visa-bulletin/2025-01", "/"],
+          f"changed pages first, then the changed family, then the rest ({got[:5]})")
+    check(sorted(got) == sorted(set(usual) | {"/perm-case-status"}) and len(got) == len(set(got)), "every page once")
+    check(order("page /\n", usual)[0] == "/" and len(order("page /\n", usual)) == len(usual),
+          "the homepage as a changed page is a page, not a prefix for everything")
+    check(order("prefix /\nnonsense\n", usual) == usual, "a bare / or a malformed line changes nothing")
+
+
 def main() -> int:
+    check_order()
     if platform.system() != "Linux":
-        print("skipped: Linux only (CI and the server run it)")
-        return 0
+        print("skipped the rest: Linux only (CI and the server run it)")
+        print(f"\n{len(failures)} failure(s)")
+        return 1 if failures else 0
     with tempfile.TemporaryDirectory() as tmp:
         root = pathlib.Path(tmp)
         app, bindir = root / "app", root / "bin"

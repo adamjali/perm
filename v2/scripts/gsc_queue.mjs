@@ -20,6 +20,7 @@
  *   node scripts/gsc_queue.mjs                 # since the queue's last update
  *   node scripts/gsc_queue.mjs --since 043d1653
  *   node scripts/gsc_queue.mjs --since <before> --purge [--dry-run]   # drop Cloudflare's copies
+ *   node scripts/gsc_queue.mjs --since <before> --warm-list           # what the deploy warms first
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -58,13 +59,17 @@ const sinceDay = git(["log", "-1", "--format=%cs", since]).trim();
 // tracked files (page_dates.mjs writes src/lib/sitemap/page-dates.json), and
 // those are not changes the push made.
 const PURGE = process.argv.includes("--purge");
-const range = PURGE ? [since, "HEAD"] : [since];
+// --warm-list reads the same commit range as --purge, so the deploy warms
+// first exactly the pages it then tells Cloudflare to forget.
+const WARM = process.argv.includes("--warm-list");
+const COMMITS_ONLY = PURGE || WARM;
+const range = COMMITS_ONLY ? [since, "HEAD"] : [since];
 const diff = (filter) =>
   git(["diff", "--name-only", "--relative", `--diff-filter=${filter}`, ...range, "--", "src", "content"])
     .split("\n")
     .filter(Boolean);
 // Untracked files are new too: a run before the commit should list them.
-const untracked = PURGE
+const untracked = COMMITS_ONLY
   ? []
   : git(["ls-files", "--others", "--exclude-standard", "--", "src", "content"]).split("\n").filter(Boolean);
 const changed = new Set([...diff("ACMR"), ...untracked]);
@@ -97,6 +102,20 @@ for (const file of changed) {
   const route = `/${m[1]}/${m[2]}`;
   if (!KNOWN.has(route)) continue;
   (added.has(file) ? fresh : edited).push(route);
+}
+
+// --warm-list: one line per page the push changed ("page <path>") and per
+// changed family ("prefix <path>/", every page under it). The deploy writes it
+// into the release, and the server's warm-up renders these before the rest:
+// Cloudflare drops its copies of exactly these pages after the switch, so
+// their next visitors are the ones who reach the server (permtracker-deploy).
+if (WARM) {
+  const lines = [
+    ...[...new Set([...fresh, ...edited])].map((r) => `page ${r}`),
+    ...[...new Set(families)].map((f) => `prefix ${f.slice(0, f.indexOf("["))}`),
+  ];
+  if (lines.length) console.log(lines.join("\n"));
+  process.exit(0);
 }
 
 // --purge: ask Cloudflare to drop its stored copies of the same pages, so the

@@ -76,7 +76,28 @@ switch_to(){ # $1 slot
   echo "$1" > $A/active
   log "traffic now on $1 ($(readlink $A/slots/$1 | xargs basename)), ports $p1$([ "$p2" != "$p1" ] && echo " and $p2")"
 }
-warm(){ # $1 port
+order_paths(){ # $1 the release's warm-first.txt; the usual warm-up paths on stdin
+  # The pages the push changed go first ("page <path>" lines), then the
+  # sitemap pages under a changed family ("prefix <path>/"), then the rest in
+  # their usual order, each once. Those are the pages the deploy tells
+  # Cloudflare to forget after the switch, so their next visitors are the ones
+  # who reach the server; warmed last, the 4-minute budget could run out first.
+  local all exact="" prefixes=""
+  all=$(cat)
+  if [ -f "$1" ]; then
+    exact=$(awk '$1 == "page" && $2 ~ /^\// { print $2 }' "$1")
+    prefixes=$(awk '$1 == "prefix" && $2 ~ /^\/.+\/$/ { print $2 }' "$1")
+  fi
+  {
+    printf '%s\n' "$exact"
+    if [ -n "$prefixes" ]; then
+      printf '%s\n' "$all" | PFX="$prefixes" awk 'BEGIN { n = split(ENVIRON["PFX"], p, "\n") }
+        { for (i = 1; i <= n; i++) if (p[i] != "" && index($0, p[i]) == 1) { print; next } }'
+    fi
+    printf '%s\n' "$all"
+  } | awk 'NF && !seen[$0]++'
+}
+warm(){ # $1 port, $2 the release folder (for its warm-first.txt)
   # Render the core pages on the NEW copy before it takes traffic. Each release
   # starts with an empty page cache, so without this the first visitor to every
   # page after a deploy waited for a cold render: 1 to 4.5 s, 152 of 855 pages
@@ -91,16 +112,18 @@ warm(){ # $1 port
   # `set -euo pipefail`, head closing the pipe killed curl with SIGPIPE (141),
   # the path list "failed", and warm returned before logging, so the first two
   # deploys with it (Oct 1 2026) warmed nothing and said nothing.
-  local port=$1 core emp paths
+  local port=$1 first="${2:-}/warm-first.txt" core emp paths changed=0
   core=$(curl -fsS --max-time 30 -H "Host: permtracker.app" "http://127.0.0.1:$port/sitemaps/pages.xml" || true)
   emp=$(curl -fsS --max-time 30 -H "Host: permtracker.app" "http://127.0.0.1:$port/sitemaps/employer-1.xml" || true)
   paths=$( { printf '%s\n' "$core" | grep -o '<loc>[^<]*</loc>' || true
              printf '%s\n' "$emp" | grep -o '<loc>[^<]*</loc>' | sed -n '1,300p' || true; } \
     | sed -e 's#<loc>https://permtracker.app##' -e 's#</loc>##' | grep -v '^$' || true)
+  paths=$(printf '%s\n' "$paths" | order_paths "$first" || true)
   if [ -z "$paths" ]; then log "warm-up skipped: the new copy served no sitemap paths"; return 0; fi
+  [ -f "$first" ] && changed=$(grep -c '^page \|^prefix ' "$first" || true)
   printf '%s\n' "$paths" | timeout 240 xargs -P 2 -I{} \
     curl -s -o /dev/null --max-time 30 -H "Host: permtracker.app" "http://127.0.0.1:$port{}" || true
-  log "warmed up to $(printf '%s\n' "$paths" | wc -l) pages on the new copy (4-minute budget)"
+  log "warmed up to $(printf '%s\n' "$paths" | wc -l) pages on the new copy, the push's $changed changed pages and families first (4-minute budget)"
 }
 healthy(){ # $1 port
   for i in $(seq 1 90); do
@@ -182,7 +205,7 @@ case "$action" in
     date +%s > /srv/permtracker/health/deploying
     trap 'rm -f /srv/permtracker/health/deploying' EXIT
     for w in "$idle" "${idle}2"; do systemctl set-property --runtime "permtracker-web@$w" CPUWeight=20; done
-    warm "$(port_of "$idle")" & warm "$(port_of "${idle}2")" & wait || true
+    warm "$(port_of "$idle")" "$A/releases/$rel" & warm "$(port_of "${idle}2")" "$A/releases/$rel.w2" & wait || true
     for w in "$idle" "${idle}2"; do systemctl set-property --runtime "permtracker-web@$w" CPUWeight=200; done
     switch_to "$idle"
     # The previous release keeps its first copy running (instant rollback); its
