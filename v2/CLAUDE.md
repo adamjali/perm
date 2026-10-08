@@ -29,8 +29,8 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 634 files / 9,026 tests (2026-10-08; 15.3 min on the old Mac while it swapped, 22.3 the run before the Oct 8 speed work). Run this before every push.** |
-| `pnpm check` | Typecheckers, pyflakes, every data script test, and the vitest tests affected since `origin/main` (`scripts/check.sh`). The quick look; CI runs the whole suite and the deploy waits for it |
+| `pnpm test:run` | All 5 projects. Baseline 634 files / 9,026 tests (2026-10-08; 15.3 min on the old Mac while it swapped). GitHub runs it on every push and the deploy waits for it; run it locally for a broad change |
+| `pnpm check` | **The pre-push gate (owner, Oct 8 2026, 3:09 PM EDT)**: typecheckers, pyflakes, every data script test, and the vitest tests affected since `origin/main` (`scripts/check.sh`, about 2 min). CI runs the whole suite and the deploy waits for it; deploy Convex only once that suite is green |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -180,7 +180,13 @@ SWC minifier bug details: [CONCERNS.md TD-01](../.planning/codebase/CONCERNS.md)
 
 ---
 
-## Before pushing: `pnpm test:run`, not `pnpm test:fast`
+## Before pushing: `pnpm check`, and CI's full suite before anything goes live
+
+**Since Oct 8 2026 (owner's call) the local gate is `pnpm check`**, and the full suite runs on GitHub on
+every push: the site deploy waits for it (`oracle-deploy.yml`), and Convex is deployed only once it's
+green. The history below is why the full suite, not a subset, is what has to pass before production.
+
+### Why not `pnpm test:fast`
 
 `test:fast` runs **2 of the 5** vitest projects (`unit`, `unit-isolated`). It
 does NOT run `components` — which owns `src/app/**/*.test.{ts,tsx}`,
@@ -197,7 +203,7 @@ does NOT run `components` — which owns `src/app/**/*.test.{ts,tsx}`,
 Making `sitemap()` async broke `src/app/__tests__/sitemap.test.ts`
 (`sitemap().map` on a Promise). `test:fast` + `--project convex` were both green
 locally and CI went red on the first push, because the broken file was in the
-one project neither command runs. **`pnpm test:run` is the pre-push gate.**
+one project neither command runs. **The full suite, now on CI, is the gate before production.**
 Same failure shape as the typecheckers below: a check that did not cover its
 subject reads exactly like a pass.
 
