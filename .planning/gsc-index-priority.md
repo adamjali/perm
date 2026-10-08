@@ -922,3 +922,9 @@ Request once the push after `7928533c` is live.
 2. `/seasonal-cases` (decisions per day and each visa's outcomes)
 3. `/tools/green-card-line`, `/tools/eb2-vs-eb3` (the years figure is back; it was blank Sep 26 to Oct 7)
 4. `/perm-case-statuses` (definitions for archived job orders and the Board's decisions)
+
+## Queue after the Oct 8 changes (RFI cases dated from their RFI day, a day for wage requests, the measured range)
+
+1. `/perm-case-status` (an RFI case's date, the measured range, the bounded window)
+2. `/tools/perm-timeline-calculator` (the measured range by distance)
+3. `/estimate-scorecard` (RFI dates, subscribers' dates, the wage-request day graded)
