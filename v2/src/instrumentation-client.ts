@@ -21,6 +21,7 @@ import {
   releaseHeld,
 } from "@/lib/analytics";
 import { edgeCountry } from "@/lib/edgeCountry";
+import { fromServiceWorkerRegister } from "@/lib/exceptionNoise";
 
 // The live site's security policy has no 'unsafe-eval', so zod must not
 // compile parsers with new Function: its probe would be refused and log a
@@ -45,18 +46,6 @@ function redactCaseParam(props: Record<string, unknown> | undefined): void {
     if (typeof v !== "string" || !v.includes("case=")) continue;
     props[key] = v.replace(/([?&]case=)[^&#]*/gi, "$1redacted");
   }
-}
-
-/** True when an exception came from the browser's own service-worker registration. */
-function fromServiceWorkerRegister(props: Record<string, unknown> | undefined): boolean {
-  const list = props?.$exception_list as
-    | Array<{ stacktrace?: { frames?: Array<{ function?: string }> } }>
-    | undefined;
-  return (list || []).some((e) =>
-    (e.stacktrace?.frames || []).some((f) =>
-      /ServiceWorkerContainer\.register|_registerScript/.test(f.function || ""),
-    ),
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -226,7 +215,7 @@ function startPostHog(key: string, country: string | null): void {
           if (/Java exception was raised during method invocation/.test(msg)) return null;
           if (/Script \S*sw\.js load failed/.test(msg)) return null;
           if (/^\s*Script error\.?\s*$/.test(msg)) return null;
-          if (fromServiceWorkerRegister(event.properties)) return null;
+          if (fromServiceWorkerRegister(event.properties, msg)) return null;
         }
         return event;
       },

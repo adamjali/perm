@@ -532,7 +532,7 @@ http.route({
     if (!token) return badLinkPage();
     return messagePage(
       "Confirm your case alerts",
-      "We'll email you when the Department of Labor's status for your case changes, and stop once it's decided.",
+      "We'll email you when the Department of Labor's status for your case changes, and for a year after it's decided, in case it's appealed or reopened.",
       {
         post: `/case-alert/confirm?token=${encodeURIComponent(token)}`,
         label: "Confirm",

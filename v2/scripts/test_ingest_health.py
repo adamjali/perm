@@ -461,6 +461,31 @@ def main() -> int:
     check("streak: a capped gap sweep warns too", "::warning::the gap sweep" in out, out)
     check("streak: it never fails the check", rc == 0)
 
+    # --- statuses no set classifies ---------------------------
+    # Read as pending (safe), so warning only; but a finished case counted as
+    # waiting is a wrong count everywhere (725 closed job orders, Oct 7 2026).
+    class StatusDB:
+        def __init__(self, unknown):
+            self.unknown = unknown   # table -> [(status, n)]
+        def execute(self, sql, args=None):
+            table = sql.split(" FROM ")[1].split()[0]
+            rows = [[{"type": "text", "value": st}, {"type": "integer", "value": str(n)}]
+                    for st, n in self.unknown.get(table, [])]
+            return {"response": {"result": {"rows": rows}}}
+
+    def statuses(unknown):
+        buf = _io.StringIO()
+        with _ctx.redirect_stdout(buf):
+            rc = health.check_unclassified_statuses(StatusDB(unknown))
+        return rc, buf.getvalue()
+
+    rc, out = statuses({"seasonal_case_status": [("ARCHIVED", 725)]})
+    check("unclassified: a status in neither set warns and names it",
+          rc == 0 and "::warning::H-2A, H-2B and CW-1" in out and "ARCHIVED (725)" in out, out)
+    rc, out = statuses({})
+    check("unclassified: every status classified reads ok, no warning",
+          "::warning" not in out and out.count("every status on record is classified") == 3, out)
+
     check_freshness_verdict()
     check_capped_partial_is_not_broken()
     check_hand_read_figures()

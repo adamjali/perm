@@ -17,7 +17,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
-import { MAX_CASES_PER_ADDRESS } from "../caseAlerts";
+import { MAX_CASES_PER_ADDRESS, WATCH_AFTER_DECISION_MS } from "../caseAlerts";
 import { BUDGETS, SUBSCRIBE_IP_LIMIT } from "../lib/alertBudgets";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 
@@ -801,7 +801,7 @@ describe("failure handling", () => {
     expect(alerts()).toHaveLength(1);
   });
 
-  it("retires a subscription once the case reaches a final status", async () => {
+  it("keeps watching a decided case for a year, then retires it", async () => {
     vi.stubEnv("ALERT_RATING_ENABLED", "1");
     const t = createTestContext();
     const { alerts } = stubMirrorAndResend({
@@ -811,8 +811,8 @@ describe("failure handling", () => {
 
     const res = await t.action(internal.caseAlerts.sweepCaseChanges, {});
     expect(res.sent).toBe(1);
-    expect(String(alerts()[0]!.text)).toContain("last alert");
-    // The last alert asks how useful they were, through a rating link, and
+    expect(String(alerts()[0]!.text)).toContain("keep watching it for a year");
+    // The decision's alert asks how useful they were, through a rating link, and
     // drops the "not a decision" line a final status contradicts.
     const last = alerts()[0]!;
     expect(String(last.text)).toMatch(/Rate them from 1 to 5: https:\/\/permtracker\.app\/case-alert\/rate\?token=/);
@@ -820,12 +820,66 @@ describe("failure handling", () => {
     expect(String(last.text)).not.toContain("It isn't a decision on your case");
 
     const row = await t.run(async (ctx) => ctx.db.get(id));
-    expect(row!.caseClosedAt).toBeDefined();
+    expect(row!.decidedAt).toBeDefined();
+    expect(row!.caseClosedAt).toBeUndefined();
 
-    // A certified case cannot move again, so it must drop out of the sweep
-    // rather than being read forever.
+    // Still watched, in case it's appealed or reopened, and quiet while it isn't.
+    const next = await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(next.checked).toBe(1);
+    expect(next.sent).toBe(0);
+
+    // A year on with nothing moved, it retires and leaves the sweep.
+    await t.run(async (ctx) => ctx.db.patch(id, { decidedAt: Date.now() - WATCH_AFTER_DECISION_MS - 1 }));
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect((await t.run(async (ctx) => ctx.db.get(id)))!.caseClosedAt).toBeDefined();
     const after = await t.action(internal.caseAlerts.sweepCaseChanges, {});
     expect(after.checked).toBe(0);
+    expect(alerts()).toHaveLength(1);
+  });
+
+  it("emails when a decided case is appealed, and stops counting its year", async () => {
+    const t = createTestContext();
+    const { alerts } = stubMirrorAndResend({
+      cases: { [CASE]: { status: "RECONSIDERATION APPEALS", isFinal: false } },
+    });
+    const id = await seededSubscription(t, "person@example.com", "DENIED");
+    await t.run(async (ctx) => ctx.db.patch(id, { decidedAt: Date.now() - 30 * 24 * 3600 * 1000 }));
+
+    const res = await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(res.sent).toBe(1);
+    expect(String(alerts()[0]!.text)).toContain("We'll email you again if it moves again.");
+    const row = await t.run(async (ctx) => ctx.db.get(id));
+    expect(row!.decidedAt).toBeUndefined();
+    expect(row!.caseClosedAt).toBeUndefined();
+  });
+
+  it("records a certification lapsing on its own clock without an email", async () => {
+    const t = createTestContext();
+    const { alerts } = stubMirrorAndResend({
+      cases: { [CASE]: { status: "CERTIFIED - EXPIRED", isFinal: true } },
+    });
+    const id = await seededSubscription(t, "person@example.com", "CERTIFIED");
+
+    const res = await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(res.sent).toBe(0);
+    expect(alerts()).toHaveLength(0);
+    expect((await t.run(async (ctx) => ctx.db.get(id)))!.lastSeenStatus).toBe("CERTIFIED - EXPIRED");
+  });
+
+  it("puts subscriptions retired on their decision back on watch, once", async () => {
+    const t = createTestContext();
+    stubMirrorAndResend({ cases: {} });
+    const id = await seededSubscription(t, "person@example.com", "DENIED");
+    const closedAt = Date.now() - 10 * 24 * 3600 * 1000;
+    await t.run(async (ctx) => ctx.db.patch(id, { caseClosedAt: closedAt }));
+
+    expect(await t.mutation(internal.caseAlerts.reopenRetired, { dryRun: true })).toEqual({ reopened: 1 });
+    expect((await t.run(async (ctx) => ctx.db.get(id)))!.caseClosedAt).toBe(closedAt);
+    expect(await t.mutation(internal.caseAlerts.reopenRetired, { dryRun: false })).toEqual({ reopened: 1 });
+    const row = await t.run(async (ctx) => ctx.db.get(id));
+    expect(row!.caseClosedAt).toBeUndefined();
+    expect(row!.decidedAt).toBe(closedAt);
+    expect(await t.mutation(internal.caseAlerts.reopenRetired, { dryRun: false })).toEqual({ reopened: 0 });
   });
 
   it("leaves the rating row out of the last alert until the owner switches it on", async () => {
@@ -836,7 +890,7 @@ describe("failure handling", () => {
     await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
     await t.action(internal.caseAlerts.sweepCaseChanges, {});
     const last = alerts()[0]!;
-    expect(String(last.text)).toContain("last alert");
+    expect(String(last.text)).toContain("keep watching it for a year");
     expect(String(last.text)).not.toContain("/case-alert/rate");
     expect(String(last.html)).not.toContain("/case-alert/rate");
   });
@@ -1167,14 +1221,11 @@ describe("the three FLAG programs", () => {
 
     const res = await t.action(internal.caseAlerts.sweepCaseChanges, {});
     expect(res.sent).toBe(1);
-    expect(String(alerts()[0]!.text)).toContain("last alert");
+    expect(String(alerts()[0]!.text)).toContain("keep watching it for a year");
 
+    // Read as decided: its year of watching has started.
     const row = await t.run(async (ctx) => ctx.db.get(id));
-    expect(row!.caseClosedAt).toBeDefined();
-
-    // And it really has left the sweep, rather than merely being stamped.
-    const after = await t.action(internal.caseAlerts.sweepCaseChanges, {});
-    expect(after.checked).toBe(0);
+    expect(row!.decidedAt).toBeDefined();
   });
 
   it("does NOT close a case whose is_final arrives as the STRING \"0\"", async () => {
@@ -1187,8 +1238,9 @@ describe("the three FLAG programs", () => {
     await t.action(internal.caseAlerts.sweepCaseChanges, {});
     const row = await t.run(async (ctx) => ctx.db.get(id));
     // The half of the string bug a `Boolean()` reading gets wrong: a live case
-    // silently retired on its first sighting, and never heard from again.
+    // read as decided on its first sighting.
     expect(row!.caseClosedAt).toBeUndefined();
+    expect(row!.decidedAt).toBeUndefined();
   });
 
   it("calls each program by its own name in the subject and the body", async () => {

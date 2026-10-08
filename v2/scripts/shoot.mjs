@@ -55,6 +55,21 @@ try {
       await page.waitForTimeout(s.settle ?? 1200);
       const file = join(OUT, `${s.name}.png`);
       const target = s.clip ? page.locator(s.clip).first() : page;
+      // A clipped shot scrolls its element into view, which brings up the
+      // floating controls (back to top, the chat bubble) over its corner. Hide
+      // everything fixed that isn't the element or inside it.
+      if (s.clip) {
+        // Scroll first and let the controls the scroll summons finish arriving,
+        // or they fade in after the hide and land in the shot half drawn.
+        await target.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(600);
+        await target.evaluate((el) => {
+          for (const node of document.querySelectorAll("body *")) {
+            if (node === el || el.contains(node) || node.contains(el)) continue;
+            if (getComputedStyle(node).position === "fixed") node.style.setProperty("display", "none", "important");
+          }
+        });
+      }
       await target.screenshot({ path: file, ...(s.clip ? {} : { fullPage: !!s.fullPage }) });
       const box = s.clip ? await target.boundingBox() : { width, height };
       manifest.push({ name: s.name, url: s.url, file, w: Math.round(box?.width ?? width), h: Math.round(box?.height ?? height) });

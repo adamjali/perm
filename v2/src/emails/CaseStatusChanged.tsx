@@ -171,8 +171,8 @@ export function CaseStatusChanged({
       settingsLabel="Email preferences"
       footerText={
         isFinal
-          ? `You asked to be told when DOL's status for ${caseNumber} changed. It has reached a final status, so this is the last alert for this case.`
-          : `You asked to be told when DOL's status for ${caseNumber} changed. We'll email you again if it moves again, and we stop once it's decided.`
+          ? `You asked to be told when DOL's status for ${caseNumber} changed. DOL has decided it; we'll keep watching for a year in case it's appealed or reopened, and email you only if it moves.`
+          : `You asked to be told when DOL's status for ${caseNumber} changed. We'll email you again if it moves again.`
       }
       footerExtra={
         <Text className="em-text-secondary" style={styles.footerExtra}>

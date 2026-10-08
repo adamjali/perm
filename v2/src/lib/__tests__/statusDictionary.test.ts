@@ -58,6 +58,10 @@ describe("statusDictionary", () => {
       "PENDING CENTER DIRECTOR REVIEW",
       "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
       "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
+      "PENDING BALCA",
+      "BALCA AFFIRMED",
+      "BALCA OVERTURNED",
+      "BALCA DISMISSED",
       "RETURNED UNPROCESSED",
       "WITHDRAWN",
     ];
@@ -77,5 +81,31 @@ describe("statusDictionary", () => {
       expect(e.pending, `${e.status}: dictionary says pending=${e.pending}`).toBe(!final.has(u));
     }
     expect(dictionaryAnchors().filter((a) => a.program === "seasonal")).toHaveLength(SEASONAL_STATUSES.length);
+  });
+
+  it("files every wage-request entry under the same pending or decided call the ingest makes", () => {
+    const final = pythonSet("pwd", "final");
+    const pending = pythonSet("pwd", "pending");
+    for (const e of PWD_STATUSES) {
+      const u = e.status.toUpperCase();
+      expect(final.has(u) || pending.has(u), `${e.status} is in neither of the ingest's sets`).toBe(true);
+      expect(e.pending, `${e.status}: dictionary says pending=${e.pending}`).toBe(!final.has(u));
+    }
+  });
+
+  it("defines every status the ingest classifies, so a lookup never meets an undefined word", () => {
+    // Classified as a safety net and never seen, so the page carries no
+    // definition for them: on Oct 7 2026 none of the 568,611 wage requests
+    // carried DENIED (DOL issues a wage, not a denial), and none of the H-2A,
+    // H-2B and CW-1 records carried these five.
+    const neverSeen: Record<string, string[]> = {
+      pwd: ["DENIED"],
+      seasonal: ["BALCA DISMISSED", "PARTIAL CERTIFICATION - WITHDRAWN", "REDETERMINATION AFFIRMED", "REDETERMINATION MODIFIED", "PENDING BALCA"],
+    };
+    for (const [program, entries] of [["pwd", PWD_STATUSES], ["seasonal", SEASONAL_STATUSES]] as const) {
+      const defined = new Set([...entries.map((e) => e.status.toUpperCase()), ...neverSeen[program]!]);
+      const classified = [...pythonSet(program, "final"), ...pythonSet(program, "pending")];
+      expect(classified.filter((st) => !defined.has(st)), `${program} statuses with no dictionary entry`).toEqual([]);
+    }
   });
 });

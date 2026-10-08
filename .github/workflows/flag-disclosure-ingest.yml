@@ -237,6 +237,19 @@ jobs:
         working-directory: v2
         run: timeout 10m python3 scripts/build_seasonal_timing.py
 
+      # H-2A, H-2B and CW-1 decisions per day, by DOL's own decision date
+      # (/seasonal-cases draws them). A failure is recorded, never silent, and
+      # leaves the old series in place.
+      - name: Rebuild the seasonal decisions per day
+        if: success() && (matrix.program == 'h2a' || matrix.program == 'h2b' || matrix.program == 'cw1') && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
+        working-directory: v2
+        run: |
+          timeout 10m python3 scripts/build_daily_decisions.py --only seasonal || {
+            python3 scripts/record_ingest_failure.py --script build_daily_decisions.py \
+              --note "seasonal series: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            exit 1
+          }
+
       # The pages built from these files sit on a week-long window, which is
       # only right if a load expires them. `success()` so a failed or refused
       # load never claims fresh pages.

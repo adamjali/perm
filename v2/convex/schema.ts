@@ -1517,13 +1517,21 @@ export default defineSchema({
     lastConfirmationSentAt: v.optional(v.number()),
 
     /**
-     * Set when the case reached a final status and we sent the last alert.
+     * When the sweep retired the row: a year after DOL decided the case, with
+     * nothing moved since (`decidedAt`). Retired rows leave the sweep.
      *
-     * Retires the row from the sweep permanently. A certified or denied case
-     * cannot move again, so continuing to read it every hour would be a growing
-     * cost that buys nothing, and this is the field that stops it.
+     * Until Oct 7 2026 it was set on the decision itself. But a decision is not
+     * always the end: in the month to Sep 25 2026, 2,541 denied PERM cases went
+     * to reconsideration appeals and 105 withdrawn ones came back certified,
+     * and the person watching heard none of it.
      */
     caseClosedAt: v.optional(v.number()),
+    /**
+     * When the case reached its current final status. The row keeps being
+     * watched for WATCH_AFTER_DECISION_MS from here, in case it is appealed or
+     * reopened; a move back out of a final status clears it.
+     */
+    decidedAt: v.optional(v.number()),
     /**
      * When the sweep last LOOKED at this row, whether or not anything moved.
      *

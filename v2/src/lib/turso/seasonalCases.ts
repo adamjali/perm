@@ -31,8 +31,12 @@ export const SEASONAL_FINAL_STATUSES: ReadonlySet<string> = new Set([
   "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
   "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
   "BALCA OVERTURNED",
+  "BALCA AFFIRMED",
+  "BALCA DISMISSED",
   // An H-2A job order's own decision (JO-A-300).
   "APPROVED",
+  // A closed H-2A job order: filed 2022 to 2024, its work period over.
+  "ARCHIVED",
   // A rejection: every NOR case DOL's H-2B and CW-1 files hold (547 of 547,
   // filed Oct 2024 to May 2026) reads "DETERMINATION ISSUED - REJECTED".
   "NOR ISSUED",

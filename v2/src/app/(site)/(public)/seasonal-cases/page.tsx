@@ -9,6 +9,8 @@ import { FlagCaseBrowser, SEASONAL_PROGRAM } from "@/components/tools/FlagCaseBr
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { getSeasonalPublishedSummary, getSeasonalSummary } from "@/lib/turso/seasonalCases";
+import { getDailyDecisions, type DailyDecisions } from "@/lib/turso/publicData";
+import { DailyDecisionsChart } from "@/components/tools/DailyDecisionsChart";
 import { SEASONAL_FORMS } from "@/lib/seasonalForms";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { formatInt } from "@/lib/format";
@@ -53,11 +55,45 @@ function longDate(iso: string | null): string | null {
 /** The forms in the order a reader meets them: farm work and its job order, other seasonal work and its wage, then CW-1. */
 const FORM_ORDER = ["H-300", "JO-A-300", "H-400", "P-400", "C-500", "P-500"] as const;
 
+/** DOL's decisions per day in its H-2A, H-2B and CW-1 files (scripts/build_daily_decisions.py). */
+const DECIDED_SERIES = [
+  { visa: "H-2A", source: "dol-disclosure-h2a" },
+  { visa: "H-2B", source: "dol-disclosure-h2b" },
+  { visa: "CW-1", source: "dol-disclosure-cw1" },
+] as const;
+
+/** The three visas' days summed into one series, for the one chart. */
+function combine(series: readonly (readonly DailyDecisions[])[]): DailyDecisions[] {
+  const by = new Map<string, DailyDecisions>();
+  for (const days of series) {
+    for (const d of days) {
+      const t = by.get(d.date) ?? { date: d.date, total: 0, certified: 0, denied: 0, withdrawn: 0 };
+      t.total += d.total;
+      t.certified += d.certified;
+      t.denied += d.denied;
+      t.withdrawn += d.withdrawn;
+      by.set(d.date, t);
+    }
+  }
+  return [...by.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
 export default async function SeasonalCasesPage() {
-  const [summary, published] = await Promise.all([
+  const [summary, published, ...decided] = await Promise.all([
     getSeasonalSummary(),
     getSeasonalPublishedSummary().catch(() => []),
+    // A series that can't be read draws nothing; the page never fails for it.
+    ...DECIDED_SERIES.map((s) => getDailyDecisions(s.source).catch(() => [] as DailyDecisions[])),
   ]);
+  // Each visa's outcomes over the whole file: the chart above them carries the
+  // rate, so one rate is printed and the cards can't disagree with it.
+  const perVisa = DECIDED_SERIES.map((s, i) => {
+    const days = decided[i] ?? [];
+    const sum = (k: "total" | "certified" | "denied" | "withdrawn") => days.reduce((n, d) => n + d[k], 0);
+    return { visa: s.visa, total: sum("total"), certified: sum("certified"), denied: sum("denied"), withdrawn: sum("withdrawn") };
+  }).filter((v) => v.total > 0);
+  const pct = (n: number, of: number) => (of > 0 ? Math.round((n / of) * 100) : 0);
+  const allDecided = combine(decided);
   const earliest = summary?.byMonth.length
     ? [...summary.byMonth].map((m) => m.month).sort()[0] ?? null
     : null;
@@ -157,6 +193,17 @@ export default async function SeasonalCasesPage() {
               status lookup
             </Link>{" "}
             takes H-300, JO-A-300, H-400, P-400, C-500 and P-500 numbers, asks DOL directly, and can email you when the status changes.
+          </p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+            What each status means, and when DOL decides:{" "}
+            <Link href="/guides/h2a-case-status-and-timing" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              H-2A
+            </Link>{" "}
+            and{" "}
+            <Link href="/guides/h2b-and-cw1-case-status-and-timing" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              H-2B and CW-1
+            </Link>
+            .
           </p>
         </div>
       </section>
@@ -166,6 +213,56 @@ export default async function SeasonalCasesPage() {
           <FlagCaseBrowser summary={summary} program={SEASONAL_PROGRAM} />
         </SearchParamsBoundary>
       </div>
+
+      {allDecided.length > 0 ? (
+        <section aria-labelledby="seasonal-decided" className="mt-14">
+          <h2 id="seasonal-decided" className="font-heading text-2xl font-black">
+            What DOL decides, week by week
+          </h2>{" "}
+          <p className="mt-1 text-sm text-foreground/70">
+            H-2A, H-2B and CW-1 together, by DOL&apos;s own decision date in its published files,{" "}
+            {longDate(allDecided[0]!.date) ?? allDecided[0]!.date} to{" "}
+            {longDate(allDecided[allDecided.length - 1]!.date) ?? allDecided[allDecided.length - 1]!.date}.
+            {/* Measured Oct 7 2026: no H-2A, H-2B or CW-1 decision from Oct 1 to Oct 30, 2025, the
+                weeks DOL's own notice says OFLC stopped all processing for the shutdown. */}
+            {allDecided.some((d) => d.date.startsWith("2025-10"))
+              ? " The drop in October 2025 is the government shutdown, when DOL stopped processing."
+              : null}
+          </p>{" "}
+          <DailyDecisionsChart points={allDecided} className="mt-4" />{" "}
+          <ChartTips label="How each visa's decisions came out">
+            <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
+              {perVisa.map((v) => {
+                const parts = [
+                  { key: "certified", n: v.certified, word: "certified", cls: "bg-data-good" },
+                  { key: "denied", n: v.denied, word: "denied or rejected", cls: "bg-data-bad" },
+                  { key: "withdrawn", n: v.withdrawn, word: "withdrawn", cls: "bg-data-none" },
+                ];
+                return (
+                  <li key={v.visa} className="border-2 border-border bg-card p-4">
+                    <p className="font-heading text-lg font-black">{v.visa}</p>{" "}
+                    <p className="mt-1 font-heading text-3xl font-black tabular-nums">{pct(v.certified, v.total)}%</p>{" "}
+                    <p className="text-sm text-foreground/70">certified, of {formatInt(v.total)} decided</p>{" "}
+                    {/* Drawn to measure: each segment is that outcome's share of the visa's decisions. */}
+                    <div className="mt-3 flex h-3 w-full overflow-hidden border border-border" aria-hidden="true">
+                      {parts.map((part) =>
+                        part.n > 0 ? (
+                          <div
+                            key={part.key}
+                            className={part.cls}
+                            style={{ width: `${(part.n / v.total) * 100}%` }}
+                            data-tip={`${v.visa}: ${formatInt(part.n)} ${part.word}\n${pct(part.n, v.total)}% of ${formatInt(v.total)} decided`}
+                          />
+                        ) : null,
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </ChartTips>
+        </section>
+      ) : null}{" "}
 
       <section className="mt-12 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">How this works</h2>{" "}

@@ -66,11 +66,20 @@ PROGRAMS: dict[str, dict] = {
         # RETURNED UNPROCESSED (274 rows) and CENTER DIRECTOR REVIEW AFFIRMED
         # DETERMINATION (1) were unknown to this set and so counted as pending
         # forever; both are terminal. Mirror pwdCases.ts, pinned by its test.
+        # The Center Director's changed wage and the Board's decisions
+        # (affirmed, overturned, dismissed) were in neither set until Oct 7
+        # 2026, so 12 decided requests read as waiting. 20 CFR 656.41 and
+        # 656.26: the Board is the last administrative word.
         "final": {"DETERMINATION ISSUED", "REDETERMINATION AFFIRMED",
                   "REDETERMINATION MODIFIED", "WITHDRAWN", "DENIED",
                   "RETURNED UNPROCESSED",
-                  "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION"},
-        "pending": {"IN PROCESS"},
+                  "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
+                  "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
+                  "BALCA AFFIRMED", "BALCA OVERTURNED", "BALCA DISMISSED"},
+        # Pending by name, not by falling through: an RFI, a redetermination
+        # or a review is DOL still working the request (652 rows, Oct 7 2026).
+        "pending": {"IN PROCESS", "RFI ISSUED", "PENDING REDETERMINATION",
+                    "PENDING CENTER DIRECTOR REVIEW", "PENDING BALCA"},
         "doc": "pwd_live_summary",
         "freshness": "pwd-status",
         # The weekly full pass re-checks filings this recent. Determinations
@@ -131,8 +140,13 @@ PROGRAMS: dict[str, dict] = {
                   "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
                   "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
                   # The Board's decision on an appealed wage determination is
-                  # the last administrative word (20 CFR 655.13(c)).
-                  "BALCA OVERTURNED",
+                  # the last administrative word (20 CFR 655.13(c), 655.61(e)).
+                  "BALCA OVERTURNED", "BALCA AFFIRMED", "BALCA DISMISSED",
+                  # A closed H-2A job order. All 725 held on Oct 7 2026 were
+                  # filed Dec 2022 to Nov 2024, none moved while we watched,
+                  # and every one whose work period we know had ended. Read as
+                  # pending until then, so 725 finished job orders counted as open.
+                  "ARCHIVED",
                   # An H-2A job order's own decision (JO-A-300); DOL's answers
                   # for all 1,399 job orders SeasonalJobs listed on Oct 3 2026
                   # read APPROVED, IN PROCESS, NOD ISSUED, WITHDRAWN, DENIED or
@@ -145,7 +159,7 @@ PROGRAMS: dict[str, dict] = {
                   # until then, so 1,300 rejected cases read as waiting.
                   "NOR ISSUED"},
         "pending": {"IN PROCESS", "ACCEPTED - PENDING RECRUITMENT", "NOD ISSUED",
-                    "NRM ISSUED", "RFI ISSUED", "PENDING APPEAL",
+                    "NRM ISSUED", "RFI ISSUED", "PENDING APPEAL", "PENDING BALCA",
                     "PENDING CENTER DIRECTOR REVIEW", "POST-CERT REQUEST PENDING",
                     # A job order accepted and waiting for its H-2A application.
                     "AVAILABLE FOR 9142A LINKING"},

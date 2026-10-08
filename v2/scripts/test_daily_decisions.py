@@ -72,6 +72,27 @@ empty.execute("INSERT INTO daily_decisions VALUES ('2024-01-02','dol-disclosure'
 check("an empty read leaves the series as it was",
       b.build(empty) == 1 and series(empty) == {"2024-01-02": [3, 3, 0, 0]})
 
+# H-2A, H-2B and CW-1, from DOL's seasonal files: DOL's outcome phrases
+# normalised, one source per visa, and PERM's series left alone.
+sea = fresh()
+sea.execute("CREATE TABLE seasonal_cases (case_number TEXT PRIMARY KEY, case_status TEXT, decision_date TEXT, visa_class TEXT)")
+sea.execute("INSERT INTO seasonal_cases VALUES "
+            "('H-300-1','DETERMINATION ISSUED - CERTIFICATION','2025-03-03','H-2A'),"
+            "('H-300-2','DETERMINATION ISSUED - CERTIFICATION (EXPIRED)','2025-03-03','H-2A'),"
+            "('H-300-3','DETERMINATION ISSUED - WITHDRAWN','2025-03-03','H-2A'),"
+            "('H-400-1','DETERMINATION ISSUED - REJECTED','2025-03-04','H-2B'),"
+            "('H-400-2','DETERMINATION ISSUED - PARTIAL CERTIFICATION (RETURNED)','2025-03-04','H-2B'),"
+            "('C-500-1','DETERMINATION ISSUED - DENIED','2025-03-05','CW-1'),"
+            "('C-500-2','WITHDRAWN',NULL,'CW-1')")
+sea.execute("INSERT INTO daily_decisions VALUES ('2024-01-02','dol-disclosure',3,3,0,0,1)")
+check("the seasonal group builds", all(b.build(sea, False, src) == 0 for src in b.GROUPS["seasonal"]))
+check("H-2A: a certification in any form is certified; a withdrawal is withdrawn",
+      series(sea, "dol-disclosure-h2a") == {"2025-03-03": [3, 2, 0, 1]})
+check("H-2B: a rejection counts as denied, a returned certification as certified",
+      series(sea, "dol-disclosure-h2b") == {"2025-03-04": [2, 1, 1, 0]})
+check("CW-1: a case with no decision date isn't counted", series(sea, "dol-disclosure-cw1") == {"2025-03-05": [1, 0, 1, 0]})
+check("PERM's series is untouched by the seasonal build", series(sea) == {"2024-01-02": [3, 3, 0, 0]})
+
 print()
 print(f"{len(FAILS)} failure(s)")
 sys.exit(1 if FAILS else 0)

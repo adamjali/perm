@@ -565,6 +565,39 @@ def check_cap_streak(db) -> int:
     return 0
 
 
+def check_unclassified_statuses(db) -> int:
+    """Warn on any status DOL uses that the sweep classifies as neither final
+    nor pending. Such a row is read as pending, which is the safe default, so
+    it never fails the check; but a finished case read as waiting is a wrong
+    count on every page, and it sat unseen until Oct 7 2026 (725 closed H-2A
+    job orders, 12 decided wage requests). A person decides which set it goes
+    in, in ingest_pwd_status_direct.PROGRAMS and its TypeScript mirror."""
+    from ingest_pwd_status_direct import PROGRAMS  # noqa: PLC0415
+    found = 0
+    for name, cfg in PROGRAMS.items():
+        known = sorted(cfg["final"] | cfg["pending"])
+        marks = ",".join("?" for _ in known)
+        try:
+            rows = query_rows(
+                db,
+                f"SELECT current_status, COUNT(*) FROM {cfg['table']} "
+                f"WHERE upper(trim(current_status)) NOT IN ({marks}) GROUP BY current_status",
+                known,
+            )
+        except RuntimeError as exc:
+            print(f"unclassified      : {cfg['label']} unreadable ({str(exc)[:100]})")
+            continue
+        if not rows:
+            print(f"unclassified      : {cfg['label']}: every status on record is classified  ok")
+            continue
+        found += len(rows)
+        listed = ", ".join(f"{st} ({int(n):,})" for st, n in rows)
+        print(f"unclassified      : {cfg['label']}: {listed}  UNCLASSIFIED")
+        print(f"::warning::{cfg['label']} has statuses the sweep classifies as neither final nor "
+              f"pending, read as pending until someone decides: {listed}")
+    return 0
+
+
 def check_lookup_demand(db) -> int:
     try:
         rows = query_rows(db, "SELECT key, json FROM perm_docs WHERE key LIKE 'discovery_budget_%' "
@@ -735,6 +768,7 @@ def main() -> int:
     gapsweep_bad = check_gap_sweep(db)
     watched_bad = check_watched(db)
     check_cap_streak(db)        # a warning only; see CAP_STREAK_RUNS
+    check_unclassified_statuses(db)   # a warning only; see its docstring
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
     docs_bad = check_precomputed_docs(db)

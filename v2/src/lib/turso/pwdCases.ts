@@ -40,6 +40,11 @@ export const PWD_FINAL_STATUSES: ReadonlySet<string> = new Set([
   "DENIED",
   "RETURNED UNPROCESSED",
   "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
+  "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
+  // The Board's decisions are the last administrative word (20 CFR 656.26).
+  "BALCA AFFIRMED",
+  "BALCA OVERTURNED",
+  "BALCA DISMISSED",
 ]);
 
 export const PWD_DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, via lookup)";

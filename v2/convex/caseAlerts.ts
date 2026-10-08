@@ -210,6 +210,24 @@ const ALERT_GLOBAL_BUDGET = CASE_ALERT_BUDGET;
 const ALERT_COOLDOWN_MS = 6 * MS_PER_HOUR;
 
 /**
+ * How long a decided case stays watched. A final status still moves (an
+ * appeal, a reconsideration, a withdrawn case certified after all), and the
+ * person who asked to hear about this case wants to hear about that too. A
+ * year with nothing moved retires the row. Every email carries the stop link.
+ */
+export const WATCH_AFTER_DECISION_MS = 365 * 24 * MS_PER_HOUR;
+
+/**
+ * A certification running out on its own clock: CERTIFIED to CERTIFIED -
+ * EXPIRED, 180 days on, whether or not the I-140 was filed. Not DOL acting on
+ * the case, and an email saying "expired" would alarm someone whose petition
+ * went in months ago, so it is recorded without an email.
+ */
+export function isLapse(from: string, to: string): boolean {
+  return to.toUpperCase() === `${from.toUpperCase()} - EXPIRED`;
+}
+
+/**
  * How many cases one address may watch.
  *
  * A product limit AND a read bound, and the second is why it is not merely
@@ -591,7 +609,7 @@ export const watchMyCase = mutation({
     if (existing?.caseClosedAt !== undefined && existing.unsubscribedAt === undefined) {
       return {
         ok: true,
-        message: "DOL has already decided this case, so there's nothing left to watch.",
+        message: "DOL decided this case over a year ago and nothing has moved since, so there's nothing left to watch.",
         caseNumber,
       };
     }
@@ -1005,6 +1023,7 @@ export const dueForCheck = internalQuery({
       caseNumber: v.string(),
       lastSeenStatus: v.optional(v.string()),
       lastAlertSentAt: v.optional(v.number()),
+      decidedAt: v.optional(v.number()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -1014,6 +1033,7 @@ export const dueForCheck = internalQuery({
       caseNumber: string;
       lastSeenStatus?: string;
       lastAlertSentAt?: number;
+      decidedAt?: number;
     }[] = [];
 
     for await (const row of ctx.db
@@ -1031,6 +1051,7 @@ export const dueForCheck = internalQuery({
         caseNumber: row.caseNumber,
         lastSeenStatus: row.lastSeenStatus,
         lastAlertSentAt: row.lastAlertSentAt,
+        decidedAt: row.decidedAt,
       });
       if (out.length >= args.limit) break;
     }
@@ -1090,10 +1111,60 @@ export const recordAlert = internalMutation({
       lastAlertSentAt: now,
       lastCheckedAt: now,
       alertCount: (row.alertCount ?? 0) + 1,
-      // A final status cannot move again, so the subscription retires itself
-      // rather than being read forever for a case that will never change.
-      ...(args.isFinal ? { caseClosedAt: now } : {}),
+      // A decision starts the year of watching for an appeal or a reopening;
+      // a move back out of a final status ends it (patching undefined deletes).
+      decidedAt: args.isFinal ? now : undefined,
     });
+    return null;
+  },
+});
+
+/** Start a decided case's year of watching without an email (first seen already decided). */
+export const markDecided = internalMutation({
+  args: { id: v.id("caseStatusAlerts") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.id);
+    if (!row || row.decidedAt !== undefined) return null;
+    await ctx.db.patch(args.id, { decidedAt: Date.now() });
+    return null;
+  },
+});
+
+/**
+ * One-off, Oct 7 2026: rows retired on their decision under the old rule go
+ * back on watch, with the decision date as the start of their year. Idempotent;
+ * `dryRun` counts without writing.
+ *
+ *   npx convex run caseAlerts:reopenRetired '{"dryRun": true}' --prod
+ */
+export const reopenRetired = internalMutation({
+  args: { dryRun: v.boolean() },
+  returns: v.object({ reopened: v.number() }),
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() - WATCH_AFTER_DECISION_MS;
+    let reopened = 0;
+    for await (const row of ctx.db
+      .query("caseStatusAlerts")
+      .withIndex("by_alert_sweep", (q) => q.eq("unsubscribedAt", undefined).gte("caseClosedAt", cutoff))) {
+      if (row.caseClosedAt === undefined || !row.confirmedAt) continue;
+      reopened += 1;
+      if (!args.dryRun) {
+        await ctx.db.patch(row._id, { decidedAt: row.caseClosedAt, caseClosedAt: undefined });
+      }
+    }
+    return { reopened };
+  },
+});
+
+/** A year after the decision with nothing moved: the row leaves the sweep. */
+export const retireWatched = internalMutation({
+  args: { id: v.id("caseStatusAlerts") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.id);
+    if (!row || row.caseClosedAt !== undefined) return null;
+    await ctx.db.patch(args.id, { caseClosedAt: Date.now() });
     return null;
   },
 });
@@ -1460,7 +1531,28 @@ export const sweepCaseChanges = internalAction({
 
       // THE CHANGE DETECTOR. Both sides are defined strings, canonicalised the
       // same way, compared with an explicit inequality.
-      if (sub.lastSeenStatus === current.status) continue;
+      if (sub.lastSeenStatus === current.status) {
+        // A decided case is watched for a year after its decision, then retired.
+        // A row first seen already decided (or decided before Oct 7 2026) gets
+        // its clock started here, quietly.
+        if (current.isFinal) {
+          if (sub.decidedAt === undefined) {
+            await ctx.runMutation(internal.caseAlerts.markDecided, { id: sub._id });
+          } else if (now - sub.decidedAt > WATCH_AFTER_DECISION_MS) {
+            await ctx.runMutation(internal.caseAlerts.retireWatched, { id: sub._id });
+          }
+        }
+        continue;
+      }
+
+      // A certification lapsing on its own clock: recorded, never emailed.
+      if (isLapse(sub.lastSeenStatus, current.status)) {
+        await ctx.runMutation(internal.caseAlerts.seedObserved, {
+          id: sub._id,
+          status: current.status,
+        });
+        continue;
+      }
 
       // Safety valve against upstream churn. A real status change is rare, so
       // this only ever bites when the mirror is flapping.
@@ -1732,8 +1824,8 @@ export const sweepCaseChanges = internalAction({
             `Open this case: ${caseUrl}`,
             "",
             isFinal
-              ? "This case has reached a final status, so this is the last alert for it."
-              : "We'll email you again if it moves again, and we stop once it's decided.",
+              ? "DOL has decided this case. We'll keep watching it for a year in case it's appealed or reopened, and email you only if it moves."
+              : "We'll email you again if it moves again.",
             ...(ratingUrl
               ? ["", `How useful were these alerts? Rate them from 1 to 5: ${ratingUrl}`]
               : []),

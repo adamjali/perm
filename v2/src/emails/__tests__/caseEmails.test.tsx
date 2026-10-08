@@ -285,10 +285,11 @@ describe("case email templates", () => {
     expect(body).toContain("#FAFAFA");
   });
 
-  it("says this is the last alert only when the case is final", async () => {
+  it("says a decided case stays watched for a year, and only when it's decided", async () => {
     const { live, closed } = await renderAll();
-    expect(closed).toContain("last alert");
-    expect(live).not.toContain("last alert");
+    expect(closed).toContain("keep watching for a year in case it&#x27;s appealed or reopened");
+    expect(live).not.toContain("keep watching for a year");
+    expect(live).toContain("email you again if it moves again");
   });
 
   // -------------------------------------------------------------------------

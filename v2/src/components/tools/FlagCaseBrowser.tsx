@@ -743,7 +743,7 @@ export function FlagCaseBrowser({
               </Fragment>
             ))}
           </div>{" "}
-          <label className="ml-auto flex min-h-[44px] items-center gap-2 text-sm font-bold">
+          <label className="ml-auto flex min-h-[44px] min-w-0 max-w-full items-center gap-2 text-sm font-bold">
             <span>Order</span>{" "}
             <select
               value={order}
@@ -751,13 +751,13 @@ export function FlagCaseBrowser({
                 setOrder(e.target.value === "oldest" ? "oldest" : "newest");
                 setCursors([]);
               }}
-              className="min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] min-w-0 max-w-full flex-1 border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="newest">{"Newest filing first "}</option>
               <option value="oldest">{"Oldest filing first "}</option>
             </select>
           </label>{" "}
-          <label className="flex min-h-[44px] items-center gap-2 text-sm font-bold">
+          <label className="flex min-h-[44px] min-w-0 max-w-full items-center gap-2 text-sm font-bold">
             <span>Filed in</span>{" "}
             <select
               value={month}
@@ -765,7 +765,7 @@ export function FlagCaseBrowser({
                 setMonth(e.target.value);
                 setCursors([]);
               }}
-              className="min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] min-w-0 max-w-full flex-1 border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="">Any month</option>
               {months.map((m) => (

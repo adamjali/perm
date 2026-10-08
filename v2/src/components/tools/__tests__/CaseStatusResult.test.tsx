@@ -300,7 +300,7 @@ describe("CaseStatusResult, pending case", () => {
   it("offers alerts while the case can still change", () => {
     const { container } = renderPending();
     expect(container.textContent).toMatch(/Watch this case/);
-    expect(container.textContent).toMatch(/stop once it&apos;s decided|stop once it's decided/);
+    expect(container.textContent).toMatch(/for a year after it's decided, in case it's\s+appealed or reopened/);
   });
 
   it("renders no alert form at all when the endpoint is not configured", () => {
