@@ -126,6 +126,21 @@ jobs:
         # hiccups in a deterministic suite.
         run: pnpm test:run --retry=2 --shard=${{ matrix.shard }}/3
 
+      # The CI reporters print only failures, so a part that ran nothing would
+      # read exactly like one that passed. Each part runs about a third of the
+      # suite (9,026 tests on Oct 8 2026); under 1,000 means the split is wrong.
+      - name: Count what this part ran
+        if: ${{ !cancelled() }}
+        run: |
+          node -e '
+            const r = require("./coverage/test-results.json");
+            console.log(`${r.numTotalTests} tests: ${r.numPassedTests} passed, ${r.numFailedTests} failed, ${r.numPendingTests} skipped`);
+            if (r.numTotalTests < 1000) {
+              console.log("::error::this part ran fewer than 1,000 tests; the shard split or the include globs are wrong");
+              process.exit(1);
+            }
+          '
+
   # The one check branch protection requires, under the name it has always had.
   gate:
     name: Typecheck + Vitest
