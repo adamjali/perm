@@ -1,0 +1,7 @@
+{
+  "name": "permtracker",
+  "owner": { "name": "PERM Tracker", "email": "support@permtracker.app", "url": "https://permtracker.app" },
+  "plugins": [
+    { "name": "permtracker", "source": "./", "description": "DOL case status, PERM decision estimates, the queue and visa bulletins, from permtracker.app" }
+  ]
+}

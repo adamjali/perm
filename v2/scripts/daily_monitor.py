@@ -386,6 +386,43 @@ def data_section(now_ms: int) -> dict:
     return section("data", "The data", status, lines[0], lines[1:])
 
 
+# ── the API and the assistants ─────────────────────────────────────────────
+
+
+def api_lines(rows: list, today: str) -> tuple[str, list[str]]:
+    """Pure: (summary, lines) from api_usage rows of (day, account, key_id, calls).
+    Keyed calls are an account's; "anonymous" is the MCP server and the keyless
+    lookup, by the bucket they're counted under."""
+    days = sorted({r[0] for r in rows})
+    yday = max((d for d in days if d < today), default=None)
+    def calls(pred):
+        return sum(int(r[3]) for r in rows if pred(r))
+    keyed_y = calls(lambda r: r[0] == yday and r[1] != "anonymous")
+    anon_y = {k: calls(lambda r, k=k: r[0] == yday and r[1] == "anonymous" and r[2] == k)
+              for k in sorted({r[2] for r in rows if r[1] == "anonymous"})}
+    accounts_y = len({r[1] for r in rows if r[0] == yday and r[1] != "anonymous"})
+    week = [d for d in days if d < today][-7:]
+    keyed_w = calls(lambda r: r[0] in week and r[1] != "anonymous")
+    accounts_w = len({r[1] for r in rows if r[0] in week and r[1] != "anonymous"})
+    summary = (f"{keyed_y:,} keyed calls from {accounts_y} account{'s' if accounts_y != 1 else ''} yesterday"
+               if yday else "No API calls recorded yet")
+    lines = []
+    if anon_y:
+        lines.append("Without a key yesterday: " + ", ".join(f"{k} {v:,}" for k, v in anon_y.items()))
+    if week:
+        lines.append(f"Last {len(week)} days: {keyed_w:,} keyed calls from {accounts_w} account{'s' if accounts_w != 1 else ''}")
+    return summary, lines
+
+
+def api_section() -> dict:
+    from lib_turso import Turso, query_rows  # noqa: PLC0415
+
+    db = Turso(os.environ["TURSO_DATABASE_URL"], os.environ["TURSO_AUTH_TOKEN"])
+    rows = query_rows(db, "SELECT day, account, key_id, calls FROM api_usage WHERE day >= date('now', '-8 day')", [])
+    summary, lines = api_lines(rows, dt.datetime.now(dt.timezone.utc).date().isoformat())
+    return section("api", "The API and assistants", "ok", summary, lines)
+
+
 # ── traffic ───────────────────────────────────────────────────────────────
 
 
@@ -740,6 +777,7 @@ def build(now: dt.datetime) -> dict:
         guarded("site", "The site", site_section),
         guarded("data", "The data", data_section, now_ms),
         guarded("traffic", "Traffic", traffic_section),
+        guarded("api", "The API and assistants", api_section),
         guarded("sentry", "Errors (Sentry)", sentry_section),
         guarded("browser", "Errors in visitors' browsers", browser_errors_section),
         guarded("server", "The server (Oracle)", server_section, now_ms),

@@ -15,6 +15,7 @@ import type * as abuseDetection from "../abuseDetection.js";
 import type * as accountDeletion from "../accountDeletion.js";
 import type * as admin from "../admin.js";
 import type * as adminDelivery from "../adminDelivery.js";
+import type * as adminDevelopers from "../adminDevelopers.js";
 import type * as adminScorecard from "../adminScorecard.js";
 import type * as adminSecurity from "../adminSecurity.js";
 import type * as adminSignals from "../adminSignals.js";
@@ -219,6 +220,7 @@ declare const fullApi: ApiFromModules<{
   accountDeletion: typeof accountDeletion;
   admin: typeof admin;
   adminDelivery: typeof adminDelivery;
+  adminDevelopers: typeof adminDevelopers;
   adminScorecard: typeof adminScorecard;
   adminSecurity: typeof adminSecurity;
   adminSignals: typeof adminSignals;

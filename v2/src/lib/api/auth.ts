@@ -39,6 +39,9 @@ async function verifyRemote(keyHash: string) {
 /** The key the request carries, or null when it carries none. */
 export function presentedKey(request: Request): string | null {
   const auth = request.headers.get("authorization");
+  // "Bearer" with nothing after it is no key: the Claude Code plugin sends
+  // exactly that when its optional key is left empty.
+  if (auth && /^Bearer\s*$/i.test(auth.trim())) return null;
   if (auth) {
     const m = /^Bearer\s+(\S+)\s*$/i.exec(auth);
     return m ? m[1]! : auth.trim();

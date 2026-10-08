@@ -1,0 +1,16 @@
+{
+  "name": "permtracker",
+  "version": "0.1.0",
+  "description": "The PERM Tracker API from Node and the command line: DOL case status, decision estimates, the PERM queue, visa bulletins, and employer, law firm and occupation records.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "bin": { "permtracker": "./dist/cli.js" },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" },
+  "keywords": ["perm", "dol", "immigration", "green card", "visa bulletin", "h-1b", "lca", "prevailing wage"],
+  "homepage": "https://permtracker.app/developers",
+  "license": "MIT",
+  "scripts": { "build": "node ../scripts/build_sdk.mjs" }
+}

@@ -178,6 +178,8 @@ export default defineConfig({
             "convex/lib/*.test.ts",
             // The browser extension's pure parts (extension/src); happy-dom gives them a DOMParser.
             "extension/**/*.test.ts",
+            // The `permtracker` npm package: the SDK and the CLI, against a fake fetch.
+            "sdk/**/*.test.ts",
           ],
           // These files install per-file vi.mock factories for SHARED modules
           // (next/navigation, convex/react, sonner, @ai-sdk/react) with mutable

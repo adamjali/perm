@@ -12,6 +12,7 @@ import { ActivityPanel, DigestPanel, SubscriptionsPanel } from "@/components/adm
 import { BudgetPools, DeliveryPanel } from "@/components/admin/DeliveryPanel";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { ScorecardPanel } from "@/components/admin/ScorecardPanel";
+import { DevelopersPanel } from "@/components/admin/DevelopersPanel";
 import { MonitorPanel } from "@/components/admin/MonitorPanel";
 import { FirmClaimsPanel } from "@/components/admin/FirmClaimsPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -222,6 +223,11 @@ export default function AdminDashboardClient() {
                 ? `${firmClaims.review.length + firmClaims.edits.length} waiting`
                 : null,
             content: <FirmClaimsPanel data={firmClaims} />,
+          },
+          {
+            id: "developers",
+            label: "Developers",
+            content: <DevelopersPanel />,
           },
           {
             id: "monitor",

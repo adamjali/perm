@@ -1,0 +1,30 @@
+{
+  "name": "permtracker",
+  "displayName": "PERM Tracker",
+  "version": "0.1.0",
+  "description": "The Department of Labor's live status for any PERM, prevailing wage, H-1B LCA, H-2A, H-2B or CW-1 case, when a pending PERM case is likely to be decided, DOL's queue, visa bulletins, and employer, law firm and occupation records, from permtracker.app.",
+  "author": { "name": "PERM Tracker", "email": "support@permtracker.app", "url": "https://permtracker.app" },
+  "homepage": "https://permtracker.app/developers",
+  "license": "MIT",
+  "keywords": ["perm", "dol", "immigration", "green-card", "visa-bulletin", "h-1b"],
+  "documentationUrl": "https://permtracker.app/developers",
+  "supportUrl": "https://permtracker.app/contact",
+  "privacyPolicyUrl": "https://permtracker.app/privacy",
+  "termsOfServiceUrl": "https://permtracker.app/api-terms",
+  "commands": ["./commands/case.md", "./commands/when.md"],
+  "mcpServers": {
+    "permtracker": {
+      "type": "http",
+      "url": "https://permtracker.app/mcp",
+      "headers": { "Authorization": "Bearer ${user_config.api_key}" }
+    }
+  },
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "PERM Tracker API key (optional)",
+      "description": "Leave empty to use the shared free limits. A free key from permtracker.app, Settings, API keys, gives you your own.",
+      "sensitive": true
+    }
+  }
+}

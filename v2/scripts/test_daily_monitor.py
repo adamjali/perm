@@ -285,6 +285,15 @@ def main() -> int:
 
     data_section_reads_the_scorecard_alarms()
 
+    # The API and the assistants: keyed calls by account, keyless ones by bucket.
+    rows = [("2026-10-07", "acct_a", "k1", 30), ("2026-10-07", "acct_b", "k2", 5), ("2026-10-07", "anonymous", "mcp", 12),
+            ("2026-10-07", "anonymous", "lookup", 4), ("2026-10-06", "acct_a", "k1", 9), ("2026-10-08", "acct_a", "k1", 100)]
+    summ, alines = dm.api_lines(rows, "2026-10-08")
+    check(summ == "35 keyed calls from 2 accounts yesterday", "yesterday's keyed calls, today's partial day left out")
+    check("Without a key yesterday: lookup 4, mcp 12" in alines, "keyless calls by bucket")
+    check("Last 2 days: 44 keyed calls from 2 accounts" in alines, "the week's keyed calls")
+    check(dm.api_lines([], "2026-10-08")[0] == "No API calls recorded yet", "an empty table says so")
+
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0
 
