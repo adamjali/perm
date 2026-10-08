@@ -104,8 +104,8 @@ export function CaseEstimatePanel({
             watched leaving it - before that the median has not been observed
             and any number would be extrapolation. It appears on its own, with
             no code change and no flag, the first time a stage crosses that
-            line. Measured 2026-09-10: ANALYST REVIEW is there at 68%, RFI is
-            at 0.7%. */}
+            line. RFI ISSUED crossed it by Oct 8 2026: of the 324 RFIs watched
+            for 30 days, 276 had left on day 30, so its median reads 30. */}
         {est.stageDuration ? (
           <p className="mt-3 text-base leading-relaxed text-foreground/80">
             Cases that reach this stage leave it after{" "}
@@ -160,7 +160,9 @@ export function CaseEstimatePanel({
         {est.earliestDate && est.latestDate ? (
           <>
             {est.modelId === "decision-pace"
-              ? "If DOL keeps its recent pace, between "
+              ? est.rangeFrom === "measured"
+                ? "Going by how far recent decisions landed from their dates, between "
+                : "If DOL keeps its recent pace, between "
               : est.modelId === "queue-advance"
                 ? "At the fastest and slowest the queue has moved, between "
                 : est.modelId === "stragglers"

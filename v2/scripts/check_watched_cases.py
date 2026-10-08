@@ -46,7 +46,7 @@ from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib_flag_serials import PERM_OFFICE_PREFIXES  # noqa: E402
-from lib_turso import Turso, query_rows, record_run, run_stmts, stmt  # noqa: E402
+from lib_turso import Turso, query_rows, read_doc, record_run, run_stmts, stmt, write_doc  # noqa: E402
 import ingest_case_status_direct as perm  # noqa: E402
 import ingest_pwd_status_direct as flag  # noqa: E402
 
@@ -207,6 +207,22 @@ def convex_call(path: str, method: str = "GET") -> dict:
         return json.loads(r.read() or b"{}")
 
 
+# The scorecard records the date each subscriber's case page showed, once per
+# case (src/lib/turso/predictions.ts, predictWatched). It reads the list from
+# this doc: case numbers only, never an address. Written only when it changed.
+WATCHED_DOC = "watched_cases"
+
+
+def keep_watched_list(db, numbers: list[str]) -> bool:
+    """Store the watched case numbers when the set differs from the stored one."""
+    want = sorted({n.strip().upper() for n in numbers if n and n.strip()})
+    have = read_doc(db, WATCHED_DOC) or {}
+    if sorted(have.get("caseNumbers") or []) == want:
+        return False
+    write_doc(db, WATCHED_DOC, {"caseNumbers": want, "count": len(want)})
+    return True
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("file", nargs="?", help="JSON from watchedCases:watchedCaseNumbers ({caseNumbers: [...]}), or a bare list")
@@ -228,6 +244,11 @@ def main() -> int:
     numbers = doc.get("caseNumbers", []) if isinstance(doc, dict) else doc
     groups = split_programs(numbers)
     db = Turso()
+    if not a.dry_run and a.from_convex:
+        try:
+            keep_watched_list(db, numbers)
+        except Exception as exc:  # noqa: BLE001 - the list is for the scorecard; the check goes on
+            print(f"::warning::watched list not kept: {exc}")
     results, failed = [], []
     for program, nums in groups.items():
         if not nums:

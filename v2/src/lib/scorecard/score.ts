@@ -26,7 +26,12 @@
 
 import { daysBetween } from "@/lib/time";
 
-export type Source = "ours" | "rival-a" | "rival-b" | "rival-c";
+/**
+ * `watched` is the date a subscriber's own case page showed, recorded once per
+ * case (predictWatched). It is ours, kept apart from the random sample so the
+ * two can't be mixed, and it is never a rival in the head-to-head.
+ */
+export type Source = "ours" | "watched" | "rival-a" | "rival-b" | "rival-c";
 
 export type Program = "perm" | "pwd" | "seasonal" | "bulletin";
 
@@ -56,6 +61,12 @@ export const SETTLE_DAYS = 30;
  */
 export const PWD_MODEL = "pwd-queue";
 export const PWD_BEFORE_FIX = "pwd-queue-request-month";
+/**
+ * The wage-request DAY (Oct 8 2026): requests in process filed earlier, over
+ * DOL's measured pace (estimatePwdDay). The page shows it wherever the sweep's
+ * count is fresh, so the sample records it there and the month elsewhere.
+ */
+export const PWD_DAY_MODEL = "pwd-day";
 
 export type Horizon = "0-30" | "31-90" | "91-180" | "181+";
 export const HORIZONS: readonly Horizon[] = ["0-30", "31-90", "91-180", "181+"];
@@ -236,7 +247,7 @@ export function headToHead(
   const ours = new Map<string, PredictionRow & { caseNumber: string }>();
   for (const r of rows) if (r.source === "ours" && r.program === "perm") ours.set(key(r), r);
   const out: Record<string, HeadToHead> = {};
-  for (const src of [...new Set(rows.filter((r) => r.source !== "ours").map((r) => r.source))].sort()) {
+  for (const src of [...new Set(rows.filter((r) => r.source !== "ours" && r.source !== "watched").map((r) => r.source))].sort()) {
     const h: HeadToHead = {
       shared: 0, decided: 0, oursTypicalDays: null, rivalTypicalDays: null,
       oursCloser: 0, rivalCloser: 0, ties: 0, settledWhileWaiting: 0,

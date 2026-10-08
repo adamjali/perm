@@ -759,6 +759,41 @@ describe('estimateQueueDecision: decision pace', () => {
     expect(caveats).toContain('it held for 29% of 8,023 cases, while 78% were decided within a week of the single date');
   });
 
+  const MEASURED = {
+    insideShare: 0.469, judged: 8445, within7Share: 0.79, through: '2026-10-07', judgeDays: 14,
+    measured: [{ fromDays: 0, toDays: 14, earlyDays: -6, lateDays: 13, decided: 3786, judged: 4785, insideShare: 0.63, stuckShare: 0.209 }],
+    served: { judged: 451, insideShare: 0.457, stuckShare: 0.426 },
+  };
+
+  it('prints the measured range near the front, and says what it held on its own cases', () => {
+    const near = Math.round(PACE.pace * 10);
+    const r = paceAsk({ casesAhead: near, rangeCoverage: MEASURED });
+    const m = r.models.find((x) => x.id === 'decision-pace')!;
+    expect(m.rangeFrom).toBe('measured');
+    const day = Date.parse(`${m.estimatedDate}T00:00:00Z`) / 86_400_000;
+    expect(Date.parse(`${m.latestDate}T00:00:00Z`) / 86_400_000).toBe(day + 13);
+    // The out-of-sample test is under 1,000 cases, so the in-sample figure is quoted, and said to be.
+    expect(m.rangeNote).toContain('On the 4,785 recent cases it was measured on, 63% were decided inside it');
+    expect(m.rangeNote).toContain('21% were still waiting two weeks after their date');
+    expect(r.caveats).toContain(m.rangeNote);
+  });
+
+  it('quotes the out-of-sample test once it has enough cases', () => {
+    const near = Math.round(PACE.pace * 10);
+    const m = paceAsk({
+      casesAhead: near,
+      rangeCoverage: { ...MEASURED, served: { judged: 5170, insideShare: 0.608, stuckShare: 0.203 } },
+    }).models.find((x) => x.id === 'decision-pace')!;
+    expect(m.rangeNote).toContain("Tested on 5,170 cases it wasn't drawn from, 61% were decided inside it and 20% were still waiting");
+  });
+
+  it('says a far-out range is untested instead of quoting the near test', () => {
+    const m = paceAsk({ rangeCoverage: MEASURED }).models.find((x) => x.id === 'decision-pace')!;
+    expect(m.rangeFrom).toBe('pace');
+    expect(m.rangeNote).toContain("can't be tested on real decisions yet");
+    expect(m.rangeNote).not.toMatch(/\d+%/);
+  });
+
   it('does not fire for a case the queue has already passed', () => {
     // Filed long before the frontier: the absence of a date is the answer,
     // and `position === "overdue"` owns it.

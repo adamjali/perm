@@ -244,8 +244,9 @@ export const BADGE_DEFS: readonly BadgeDef[] = [
     "Denied PERM cases whose reconsideration request is with DOL."),
   stage("stage-balca", "BALCA APPEALS", "At BALCA",
     "PERM cases on appeal to the Board of Alien Labor Certification Appeals."),
-  stage("stage-nord", "NORD ISSUED", "Notice of intent to deny",
-    "PERM cases where DOL has issued a notice of intent to deny."),
+  // DOL publishes no expansion of NORD, so the badge doesn't invent one.
+  stage("stage-nord", "NORD ISSUED", "NORD issued",
+    "PERM cases at DOL's NORD ISSUED status. DOL doesn't say what NORD stands for."),
 
   // ---- Visa bulletin ----------------------------------------------------
   ...(["EB1", "EB2", "EB3"] as const).flatMap((cat) =>

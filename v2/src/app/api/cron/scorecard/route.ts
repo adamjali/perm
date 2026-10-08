@@ -22,6 +22,7 @@ import {
   gradeOpenPredictions,
   predictOurs,
   predictSeasonal,
+  predictWatched,
   predictBulletinRelease,
   recordPredictions,
   RIVAL_SAMPLE,
@@ -53,14 +54,22 @@ export async function GET(request: Request): Promise<NextResponse> {
       return NextResponse.json({ docs: true, recordedOn, rows });
     }
     if (dry) {
-      const [{ perm, pwd, sample }, seasonal] = await Promise.all([predictOurs(today), predictSeasonal(recordedOn)]);
-      return NextResponse.json({ dry: true, recordedOn, sampled: sample.length, perm, pwd, seasonal });
+      const [{ perm, pwd, sample }, seasonal, watched] = await Promise.all([
+        predictOurs(today), predictSeasonal(recordedOn), predictWatched(today).catch(() => []),
+      ]);
+      // Watched cases are counted, never listed: the dry answer is read in a terminal.
+      return NextResponse.json({ dry: true, recordedOn, sampled: sample.length, perm, pwd, seasonal, watched: watched.length });
     }
     await ensurePredictionsTable();
     const { perm, pwd, sample, pendingBefore } = await predictOurs(today);
     const seasonal = await predictSeasonal(recordedOn);
     const release = await predictBulletinRelease(recordedOn).catch(() => []);
-    const ours = await recordPredictions(recordedOn, [...perm, ...pwd, ...seasonal, ...release]);
+    // Subscribers' own cases, once each; recorded with ours, never put to a rival.
+    const watched = await predictWatched(today).catch((e) => {
+      console.error("[scorecard] watched cases not recorded", e);
+      return [];
+    });
+    const ours = await recordPredictions(recordedOn, [...perm, ...pwd, ...seasonal, ...release, ...watched]);
     const rivalCases = pick(sample, RIVAL_SAMPLE, rngFor(recordedOn));
     const { preds, failures } = await rivalPredictions(rivalCases, today, pendingBefore);
     const rivals = await recordPredictions(recordedOn, preds);
@@ -68,6 +77,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     const { rows } = await writeScorecardDocs(recordedOn);
     const out = {
       recordedOn, ours, perm: perm.length, pwd: pwd.length, seasonal: seasonal.length, release: release.length,
+      watched: watched.length,
       rivals, failures, graded, open, rows,
     };
     console.log(`[scorecard] ${JSON.stringify(out)}`);

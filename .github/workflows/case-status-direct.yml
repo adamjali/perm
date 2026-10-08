@@ -47,7 +47,7 @@ jobs:
   sweep:
     runs-on: ubuntu-24.04
     # Above the main step's `timeout 105m`, the gap sweep's 25m, the published
-    # sync's 15m and the Monday backtests' 20m + 10m + 10m + 5m. The step-level
+    # sync's 15m, the nightly backtests' 20m + 10m and the Monday backtests' 10m + 5m. The step-level
     # `timeout` commands are what catch a hang (see below).
     timeout-minutes: 200
     env:
@@ -141,20 +141,24 @@ jobs:
                  --script "build_straggler_rates.py" \
                  --note "stragglers: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
-      # The standing estimator backtest, Mondays on the full pass. It scores
-      # the site's dates against what DOL decided since and writes the one doc
-      # /estimate-scorecard prints. A failure only warns: the page keeps last
-      # week's figure and says when it was computed.
-      - name: Estimator backtest (weekly)
+      # The standing estimator backtest, every night on the full pass. It
+      # scores the site's dates against what DOL decided since, re-measures
+      # the range the case page prints for each distance, and writes the one
+      # doc the case page and /estimate-scorecard read. A failure only warns:
+      # the pages keep the newest measurement, the server reruns both backtests
+      # at 7:05 AM ET (permtracker-uscis@backtests, its second clock), and the
+      # health check fails the doc past 3 days.
+      - name: Estimator backtest (nightly; the others weekly)
         if: env.MODE == 'full'
         working-directory: v2
         run: |
+          timeout 20m python3 scripts/backtest_queue.py --write \
+            || echo "::warning::estimator backtest failed; the site keeps the last measured range"
+          # The wage-request month and day, graded against what DOL went on to do;
+          # its day section measures the range the wage-request page prints.
+          timeout 10m python3 scripts/backtest_pwd.py --write \
+            || echo "::warning::wage-request backtest failed; the site keeps the last measured range"
           if [ "$(date -u +%u)" = "1" ]; then
-            timeout 20m python3 scripts/backtest_queue.py --write \
-              || echo "::warning::estimator backtest failed; the scorecard keeps last week's figure"
-            # The wage-request month estimate, graded against DOL's own determinations.
-            timeout 10m python3 scripts/backtest_pwd.py --write \
-              || echo "::warning::wage-request backtest failed; the scorecard keeps last week's figure"
             # H-2A, H-2B and CW-1: each visa's method, and the alternatives,
             # against the next quarter's real certifications.
             timeout 10m python3 scripts/backtest_seasonal.py --write \
@@ -164,7 +168,7 @@ jobs:
             timeout 5m python3 scripts/backtest_bulletin.py --write \
               || echo "::warning::bulletin backtest failed; the tools keep last week's figure"
           else
-            echo "not Monday; the backtest runs weekly"
+            echo "not Monday; the seasonal and bulletin backtests run weekly"
           fi
 
       # Employer pages cache for 30 days, right for their quarterly figures and

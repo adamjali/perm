@@ -8735,3 +8735,64 @@ returns no registration is filtered as noise (`src/lib/exceptionNoise.ts`), and 
 rule takes Safari's wording of the webpack crash (`].call')`). The wage-request backtest
 (`pwd_backtest`) had never been written; run once by hand, its weekly run is Mondays.
 
+
+## Oct 8 2026: the range the backtest measures, a day for wage requests, subscribers' dates
+
+**The PERM range is measured, by distance, every night** (`scripts/backtest_queue.py`, `rangeModel` and
+`servedRange` in `perm_docs['estimator_backtest']`). The script reads the status table and the event log once
+(`Record`), tests every weekly start day back to `MAX_START_DAYS`, and per distance bucket
+(`HORIZON_BUCKETS`) takes the middle 80% of how far decided cases landed from our date, pooling the newest
+four start days that judged that bucket. A bucket needs 300 decided cases (`RANGE_MIN_DECIDED`).
+- **Judge a date at two weeks** (`RANGE_JUDGE_DAYS = 14`). At one week the late edge came out at exactly
+  +7: nothing decided later than a week could be seen, so the quantile was the censoring point. At two
+  weeks it is +13.
+- `estimateByPace` takes `measuredRange` and uses a row whose distance covers the case
+  (`rangeFrom: "measured"`), else the pace rule (`"pace"`). `rangeCaveat(c, paced)` says which: the
+  out-of-sample test once it has `SERVED_MIN_JUDGED` (1,000) cases, the in-sample share until then, and
+  for an unmeasured distance that it can't be tested yet. The model carries its own `rangeNote`, so the
+  timeline tool filters the caveat it already printed instead of rebuilding it.
+- **No range is wider than 60 days** (`MAX_BAND_DAYS`, `boundRange`; owner's call): wider is cut to a
+  third before the date and two thirds after, measured or not, PERM and wage requests alike, and the
+  backtest's `bound_range` mirrors it so it tests what the page prints. Before it, a case filed this week
+  got about 76 days.
+- **No fallback on age** (owner's call): the newest measurement is always used. The test is kept running
+  instead: GitHub's full pass every night, then the server's `permtracker-uscis@backtests` at 7:05 AM ET
+  (one retry each, a failure row after two), the health check failing `estimator_backtest` past 3 days,
+  and the scorecard alarm on a nightly clock (`everyDays: 1` on `BacktestAge`). `printedRangeCheck` is
+  what the scorecard tile and sentences quote.
+- First measured run (Oct 8): near the front, 6 days early to 13 late on 3,786 decided; the fixed rule
+  held 27% at two weeks. The case page reads "Going by how far recent decisions landed from their dates,
+  between ...".
+
+**Wage requests get a day** (`estimatePwdDay` in `convex/lib/perm/calculators/pwdQueue.ts`): PERM wage
+requests in process filed earlier (same day counted half) over DOL's measured exits a calendar day,
+counted from the sweep's day. `perm_docs['pwd_day_queue']` is written after every PWD pass
+(`write_pwd_day_queue`, in `finish_docs`): in-process counts by filing day and 28 complete days of exits,
+each case once, today left out. `src/lib/pwdDay.ts` parses it with the backtest's measured range
+(`perm_docs['pwd_backtest'].day`, now nightly); `PwdStatusResult` prints the day for an IN PROCESS
+request, the month stays the fallback. First test (Sep 23 start): 2,728 decided, typically 2 days off,
+99.5% within a week; the month method was 15 days from mid-month. The sample records it as
+`PWD_DAY_MODEL` (`pwd-day`).
+
+**Each subscriber's date is recorded once** (`predictWatched`, source `watched`): the scorecard reads
+`perm_docs['watched_cases']`, case numbers only, which `check_watched_cases.py` keeps from Convex's
+watched set and rewrites only when the set changes. Never put to a rival, excluded from `headToHead`,
+and the public doc carries counts and errors only (`ScorecardDoc.watched`).
+
+**RFI ISSUED now has a measured median of 30 days** (`stage_stats.durations`, by itself: 276 of 324 RFIs
+watched 30 days had left on day 30). AILA Doc. 24101705 (an OFLC panel, Sep 27 2024) says employers have
+30 days to respond; no DOL text says so, and DOL's 2018 webinars gave "usually fifteen (15) days" for the
+old system's reconsideration RFIs.
+
+**NORD is never expanded.** A badge said "notice of intent to deny" and a stage note "notice of results
+of documentation"; DOL publishes no expansion (FLAG's 05/28/2025 release notes name the field only).
+
+**The filing chart was tested as an early signal and lost** (`filing_chart_test` in
+`backtest_bulletin.py`, weekly): for 4,152 readers between the two charts on 27 lines, the pace was
+typically 2.7 months off, the filing chart's learned lag 3.0, their average 2.9.
+
+**H-2B assignment groups predict January.** DOL randomizes the first three days' H-2B applications into
+groups (84 FR 7399, Mar 4 2019) and publishes each case's group (`FY26_JanPeak_PublicFacingReport.xlsx`,
+which also names attorneys: store the case and group only). January 2026: group A decided a median 41
+days after filing, H 125, each group's middle half about two weeks; January 2025's group medians were
+0 to 14 days early against 2026's. Not built: DOL lists the next groups about Jan 5 2027.

@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule for permtracker-uscis@backtests
+# The second clock for the nightly estimate backtests: after the 4:10 AM full
+# pass (which runs them first) usually has, and before the 7:30 AM morning
+# report. Running beside it is harmless: both write the same doc.
+[Timer]
+OnCalendar=*-*-* 07:05:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@backtests.service
+
+[Install]
+WantedBy=timers.target

@@ -151,7 +151,7 @@ DB_URL = ENV["TURSO_DATABASE_URL"].replace("libsql://", "https://").rstrip("/") 
 BIG_READS = {
     "case-status full sweep": "SELECT case_number, current_status, employer_name, job_title FROM perm_case_status ORDER BY case_number LIMIT 1000000000 OFFSET 0",
     "case-status pending sweep": "SELECT case_number, current_status, employer_name, job_title FROM perm_case_status WHERE is_final=0 OR is_final='0' ORDER BY case_number LIMIT 1000000000 OFFSET 0",
-    "weekly estimate backtest": "SELECT case_number, filing_date, current_status, is_final FROM perm_case_status WHERE filing_date >= '2015-01-01' AND filing_date < '2099-01-01'",
+    "nightly estimate backtest": "SELECT case_number, filing_date, current_status, is_final, upper(substr(trim(employer_name), 1, 2)) FROM perm_case_status WHERE filing_date >= '2015-01-01' AND filing_date < '2099-01-01'",
     "nightly live-cases rebuild": "SELECT case_number, filing_date, status, is_final, employer_name, employer_slug, job_title, decided_seen FROM perm_live_recent",
     "quarterly entity rebuild": "SELECT kind, name, slug, merge_key, code FROM perm_entities",
     "weekly PWD re-check": "SELECT case_number, current_status, employer_name, job_title FROM pwd_case_status WHERE filing_date >= date('now', '-180 days') ORDER BY filing_date, case_number LIMIT 1000000000",

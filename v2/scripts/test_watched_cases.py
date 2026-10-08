@@ -79,5 +79,17 @@ check(due(et(2026, 10, 7, 6, 2)) and not due(et(2026, 10, 7, 6, 50)), "before 7 
 check(due(et(2026, 10, 10, 12, 31)) and not due(et(2026, 10, 10, 12, 17)), "a Saturday: the half-hour runs only")
 check(due(et(2026, 11, 2, 7, 10)), "Eastern time after the clocks change (Nov 2 2026 is a Monday)")
 
+# ---- the list kept for the scorecard (Oct 8 2026) ----------------------------
+import check_watched_cases as _w
+_store: dict = {}
+_w.read_doc = lambda db, key: _store.get(key)
+_w.write_doc = lambda db, key, doc: _store.__setitem__(key, doc)
+check(_w.keep_watched_list(None, ["g-100-26001-000001 ", "P-100-26001-000002"]), "the first list is kept")
+check(_store["watched_cases"]["caseNumbers"] == ["G-100-26001-000001", "P-100-26001-000002"],
+      "case numbers only, trimmed, uppercased, sorted")
+check(not _w.keep_watched_list(None, ["P-100-26001-000002", "G-100-26001-000001"]), "the same set in another order is not rewritten")
+check(_w.keep_watched_list(None, ["G-100-26001-000001"]), "a changed set is rewritten")
+check("@" not in str(_store), "no address is ever in it")
+
 print(f"\n{len(fails)} failure(s)")
 sys.exit(1 if fails else 0)

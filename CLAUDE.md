@@ -513,3 +513,15 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026 (night)".
 - **Priority dates: our pace beat dividing by yearly visas** on the 9 USCIS reports held (66 to 8 at 3 months, 42 to 3 at 6), not yet settled.
 - **The PERM range held 29% because it's narrow and late**; 7 days either side of the date held 77%. Widening it is the owner's call.
 - **H-2A, H-2B and CW-1 decisions per day** chart on `/seasonal-cases`, with two guides; the case browsers fit a 320 screen.
+
+## Oct 8 2026, in six lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 8 2026".
+
+- **The PERM range is measured by distance, every night, and never wider than 60 days**: near the front the date 6 days early to 13 late, judged at two weeks; farther out the pace rule, bounded, says it's untested. Two clocks run the test; nothing falls back on age.
+- **Wage requests get a day**: requests in process filed earlier over DOL's measured exits (typically 2 days off on its first test); the month is the fallback.
+- **Each subscriber's date is recorded once** (`watched`), never put to a rival, counts only in public.
+- **RFI ISSUED's median reads 30 days**, measured by itself; NORD is never expanded anywhere.
+- **The filing chart lost to the pace** as an early signal (3.0 months against 2.7 on 4,152 readers).
+- **H-2B assignment groups predict January's timing** (group A 41 days, H 125); to build before Jan 5 2027.
+

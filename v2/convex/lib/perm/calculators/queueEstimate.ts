@@ -1,7 +1,7 @@
 import { addDays, differenceInCalendarMonths } from 'date-fns';
 import { formatUTC, validateISODate } from '../dates/dateUtils';
 import { monthStart, monthsBetween } from '../dates/monthUtils';
-import { estimateByPace, type MeasuredPace } from './decisionPace';
+import { estimateByPace, type MeasuredPace, type MeasuredRangeRow } from './decisionPace';
 import { DAYS_PER_MONTH_2DP, MS_PER_DAY } from "../../time";
 
 /**
@@ -139,9 +139,21 @@ export interface QueueEstimateInput {
   rangeCoverage?: RangeCoverage | null;
 }
 
+/** One distance from today the nightly backtest measured a range for. */
+export interface MeasuredBucket extends MeasuredRangeRow {
+  /** Decided cases the range was drawn from. */
+  decided: number;
+  /** Cases judged: decided ones, plus those still waiting past their date. */
+  judged: number;
+  /** Share of judged cases decided inside the range, on the cases it was drawn from. */
+  insideShare: number | null;
+  /** Share of judged cases still waiting `judgeDays` after their date. */
+  stuckShare: number | null;
+}
+
 /** The backtest's measurement of the printed range, as the caveat quotes it. */
 export interface RangeCoverage {
-  /** Share of judged cases decided inside their range, 0 to 1. */
+  /** Share of judged cases decided inside the pace rule's range, 0 to 1. */
   insideShare: number;
   /** Cases judged: dated at least a week before the test's end. */
   judged: number;
@@ -149,11 +161,48 @@ export interface RangeCoverage {
   within7Share: number | null;
   /** The test's last day, YYYY-MM-DD. */
   through: string;
+  /** Measured ranges by distance from today; absent on an older doc. */
+  measured?: readonly MeasuredBucket[];
+  /** The measured ranges tested on start days they were not drawn from. */
+  served?: { judged: number; insideShare: number; stuckShare: number } | null;
+  /** A date is judged once it is this many days old. */
+  judgeDays?: number;
 }
 
-/** The caveat under a pace range: what it is, and how often it has held. */
-export function rangeCaveat(c: RangeCoverage | null | undefined): string {
+/** Below this many cases, the out-of-sample test is too thin to quote. */
+export const SERVED_MIN_JUDGED = 1000;
+
+const pct = (x: number) => `${Math.round(x * 100)}%`;
+const daysWords = (d: number) => (d === 14 ? 'two weeks' : d === 7 ? 'a week' : `${d} days`);
+
+/**
+ * The caveat under a pace range: what it is, and how often it has held.
+ * `at` is the estimate it sits under; without it (an older caller) the pace
+ * rule's own test is quoted.
+ */
+export function rangeCaveat(
+  c: RangeCoverage | null | undefined,
+  at?: { rawDays: number; rangeFrom: 'measured' | 'pace' } | null,
+): string {
+  const row = at && c?.measured?.find((r) => r.fromDays <= at.rawDays && at.rawDays <= r.toDays);
+  if (c && at?.rangeFrom === 'measured' && row) {
+    const lead = 'The range is where most of DOL\'s recent decisions landed against dates this far out, measured again every night.';
+    const wait = daysWords(c.judgeDays ?? 14);
+    const s = c.served;
+    if (s && s.judged >= SERVED_MIN_JUDGED) {
+      return `${lead} Tested on ${s.judged.toLocaleString('en-US')} cases it wasn't drawn from, ${pct(s.insideShare)} were decided inside it and ${pct(s.stuckShare)} were still waiting ${wait} after their date, usually on hold or at an RFI.`;
+    }
+    if (row.insideShare !== null && row.stuckShare !== null) {
+      return `${lead} On the ${row.judged.toLocaleString('en-US')} recent cases it was measured on, ${pct(row.insideShare)} were decided inside it and ${pct(row.stuckShare)} were still waiting ${wait} after their date, usually on hold or at an RFI.`;
+    }
+    return lead;
+  }
   const lead = 'The range is what happens if DOL keeps to its recent pace, not a confidence interval.';
+  if (at && c?.measured?.length) {
+    // Measured near the front, not at this distance: the record of real
+    // decisions doesn't reach dates this far out yet.
+    return `${lead} Dates this far out can't be tested on real decisions yet, so lean on the single date.`;
+  }
   if (!c || !(c.judged > 0)) {
     return `${lead} Real decisions often land outside it, so lean on the single date.`;
   }
@@ -197,6 +246,10 @@ export interface EstimateModel {
   latestDate: string | null;
   /** Citable origin of the numbers. */
   source: string;
+  /** The caveat that goes with this model's range, when it has one worth stating. */
+  rangeNote?: string;
+  /** decision-pace only: a range the backtest measured, or the pace rule's. */
+  rangeFrom?: 'measured' | 'pace';
 }
 
 export type QueuePosition = 'awaiting-queue' | 'queue-reached' | 'overdue';
@@ -491,6 +544,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       status: 'ANALYST REVIEW',
       monthsBehindFrontier: monthsBehind,
       sweepAgeDays: input.sweepAgeDays ?? 0,
+      measuredRange: input.rangeCoverage?.measured ?? null,
     });
     // Only a dated estimate becomes a model. Every other kind - a stale
     // sweep, an overdue case, a cleared queue, a horizon we cannot measure
@@ -501,7 +555,8 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       // measured it. That is a pace scenario, not a confidence interval, and
       // labelling it as one ("80% confident") is the most checkable false
       // claim a queue estimator can make.
-      caveats.push(rangeCaveat(input.rangeCoverage));
+      const rangeNote = rangeCaveat(input.rangeCoverage, paced);
+      caveats.push(rangeNote);
       const toISO = (d: number) => formatUTC(new Date(d * MS_PER_DAY));
       models.push({
         id: 'decision-pace',
@@ -514,6 +569,8 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
         earliestDate: toISO(paced.early),
         latestDate: toISO(paced.late),
         source: 'Our own count of DOL\'s live queue, and the decision rate we have observed over the last 28 days',
+        rangeNote,
+        rangeFrom: paced.rangeFrom,
       });
     } else if (
       paced.kind === 'refused' &&

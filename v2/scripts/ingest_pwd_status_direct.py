@@ -42,7 +42,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_turso import (  # noqa: E402
-    Turso, add_missing_columns, query_rows, read_doc, record_run, record_sweep,
+    ET, Turso, add_missing_columns, query_rows, read_doc, record_run, record_sweep,
     run_independently, run_stmts, stamp_freshness, stmt, write_doc,
 )
 from ingest_case_status_direct import (  # noqa: E402
@@ -657,6 +657,66 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
 # Summary docs
 # ---------------------------------------------------------------------------
 
+# The wage-request day estimate's two inputs, in one doc the lookup page reads
+# with a single point read (convex/lib/perm/calculators/pwdQueue.ts,
+# estimatePwdDay; tested by scripts/backtest_pwd.py's day section).
+DAY_QUEUE_KEY = "pwd_day_queue"
+DAY_QUEUE_PACE_DAYS = 28
+# PERM wage requests: P-100 numbers DOL tags PERM or leaves untagged. The
+# primary-key range is the prefix: "." sorts right after "-".
+DAY_QUEUE_RANGE = ("P-100-", "P-100.")
+PERM_WAGE = "(visa_type IS NULL OR upper(visa_type) = 'PERM')"
+
+
+def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date) -> dict:
+    """Pure: requests in process by filing day, and the requests that left IN
+    PROCESS for a final status on each of the 28 complete days before today
+    (by the day our sweep saw them, Eastern), each case once."""
+    by_day = sorted([str(fd), int(n)] for fd, n in by_day_rows if fd)
+    counts: dict[str, int] = {}
+    seen: set[str] = set()
+    for cn, at in sorted(exit_rows, key=lambda r: int(r[1])):
+        if cn in seen:
+            continue
+        seen.add(cn)
+        d = datetime.datetime.fromtimestamp(int(at) / 1000, ET).date().isoformat()
+        counts[d] = counts.get(d, 0) + 1
+    first = min(counts) if counts else None
+    days = []
+    for i in range(DAY_QUEUE_PACE_DAYS, 0, -1):
+        d = (today - datetime.timedelta(days=i)).isoformat()
+        if first is not None and d >= first:
+            days.append({"date": d, "n": counts.get(d, 0)})
+    return {"asOf": today.isoformat(), "byDay": by_day, "days": days,
+            "inProcess": sum(n for _, n in by_day)}
+
+
+def write_pwd_day_queue(db: Turso) -> bool:
+    lo, hi = DAY_QUEUE_RANGE
+    today = datetime.datetime.now(ET).date()
+    start = today - datetime.timedelta(days=DAY_QUEUE_PACE_DAYS)
+    since_ms = int(datetime.datetime(start.year, start.month, start.day, tzinfo=ET).timestamp() * 1000)
+    by_day_rows = query_rows(
+        db,
+        "SELECT filing_date, COUNT(*) FROM pwd_case_status WHERE case_number >= ? AND case_number < ? "
+        f"AND current_status = 'IN PROCESS' AND filing_date IS NOT NULL AND {PERM_WAGE} GROUP BY filing_date",
+        [lo, hi])
+    exit_rows = query_rows(
+        db,
+        "SELECT e.case_number, e.changed_at FROM pwd_case_events e JOIN pwd_case_status s "
+        "ON s.case_number = e.case_number WHERE e.changed_at >= ? AND e.case_number >= ? "
+        f"AND e.case_number < ? AND e.to_final = 1 AND e.from_status = 'IN PROCESS' AND {PERM_WAGE.replace('visa_type', 's.visa_type')}",
+        [since_ms, lo, hi])
+    doc = day_queue_doc(by_day_rows, exit_rows, today)
+    if not doc["byDay"] or len(doc["days"]) < 14:
+        log(f"  {DAY_QUEUE_KEY}: {len(doc['byDay'])} filing days, {len(doc['days'])} days of exits; not written")
+        return False
+    write_doc(db, DAY_QUEUE_KEY, json.dumps(doc, separators=(",", ":")))
+    log(f"  {DAY_QUEUE_KEY}: {doc['inProcess']:,} in process over {len(doc['byDay'])} filing days, "
+        f"{sum(d['n'] for d in doc['days']):,} finished in {len(doc['days'])} days")
+    return True
+
+
 def write_summary_doc(db: Turso, program: str = "pwd") -> bool:
     """perm_docs[<program>_live_summary]: counts by status, program tag and
     filing month, so the pages never count the table per request. Reconciled
@@ -871,7 +931,8 @@ def main() -> int:
 
         failed = run_independently(
             [(f"{name}_summary_doc", (lambda n=name: write_one(n)))
-             for name in PROGRAMS])
+             for name in PROGRAMS]
+            + [(DAY_QUEUE_KEY, lambda: write_pwd_day_queue(db))])
         if note_for is None:
             return failed
         for name in PROGRAMS:

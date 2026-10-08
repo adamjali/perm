@@ -100,14 +100,17 @@ export type CaseEstimate =
        * WHICH model produced the date and band.
        *
        * The UI needs it because a band's MEANING comes from its model, and
-       * these two are not the same kind of claim. `decision-pace` gives a
-       * pace scenario whose coverage is measured at 57-58% overall and 41%
-       * at the near horizon - so "most likely between" would be false for
-       * it. `queue-advance` gives the spread of DOL's own observed frontier
-       * movement. Labelling both the same way is how a scenario gets read as
+       * these are not the same kind of claim. `decision-pace` gives either
+       * a range the nightly backtest measured for that distance or, where
+       * none is measured yet, a pace scenario that held for under half of
+       * real decisions; its caveat quotes which and how often it held.
+       * `queue-advance` gives the spread of DOL's own observed frontier
+       * movement. Labelling them the same way is how a scenario gets read as
        * a confidence interval.
        */
       modelId: EstimateModelId;
+      /** decision-pace only: whether the range was measured or the pace rule's. */
+      rangeFrom?: "measured" | "pace";
       /** Stage-adjusted central estimate, `YYYY-MM-DD`. */
       estimatedDate: string;
       /** The unadjusted model date, for the delta line. */
@@ -315,6 +318,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
   return {
     kind: "date",
     modelId: model.id,
+    ...(model.rangeFrom ? { rangeFrom: model.rangeFrom } : {}),
     estimatedDate: format(addDays(filing, totalDays), "yyyy-MM-dd"),
     modelDate: model.estimatedDate,
     earliestDate: shiftDate(model.earliestDate),

@@ -14,6 +14,7 @@
 
 import { addDays, format, parseISO } from "date-fns";
 
+import { printedRangeCheck, type BacktestRangeFields } from "@/lib/rangeCoverage";
 import { formatInt } from "@/lib/format";
 
 import { HORIZONS, SETTLE_DAYS, type Cell, type HeadToHead, type Horizon } from "./score";
@@ -151,7 +152,7 @@ export function readRival(source: string, h: HeadToHead): RivalReading {
   return { source, name, leader, clear, headline, points };
 }
 
-/** The weekly backtest's headline figures, as `scripts/backtest_queue.py` writes them. */
+/** The nightly backtest's headline figures, as `scripts/backtest_queue.py` writes them. */
 export interface BacktestFigures {
   t0: string;
   end: string;
@@ -162,6 +163,8 @@ export interface BacktestFigures {
     within7Share: number | null;
   } | null;
   rangeCoverage?: { judged: number; insideShare: number | null } | null;
+  rangeModel?: BacktestRangeFields["rangeModel"];
+  servedRange?: BacktestRangeFields["servedRange"];
 }
 
 /**
@@ -197,7 +200,7 @@ export function readOurs(
   const btLean = bt && bt.decided >= 100 ? leanWords(bt.biasDays ?? null) : null;
   if (bt && bt.typicalMissDays !== null) {
     out.push(
-      `On ${formatInt(bt.decided)} real DOL decisions (the weekly backtest), our dates were typically ${dayWord(bt.typicalMissDays)} off${bt.within7Share !== null ? `, and ${Math.round(bt.within7Share * 100)}% landed within a week` : ""}.`,
+      `On ${formatInt(bt.decided)} real DOL decisions (the nightly backtest), our dates were typically ${dayWord(bt.typicalMissDays)} off${bt.within7Share !== null ? `, and ${Math.round(bt.within7Share * 100)}% landed within a week` : ""}.`,
     );
   }
   if (sampleLean && btLean && Math.sign(ours.biasDays!) === Math.sign(bt!.biasDays!)) {
@@ -210,10 +213,21 @@ export function readOurs(
     out.push(`In the daily sample, ${sampleLean}.`);
   }
   // The backtest's range check covers thousands of cases; the sample's, dozens.
-  const range = backtest?.rangeCoverage;
-  const inside = range && range.insideShare !== null && range.judged >= 100
-    ? { share: range.insideShare, n: range.judged }
-    : ours.inBandShare !== null && ours.graded >= 10
+  const check = printedRangeCheck(backtest);
+  if (check && check.kind !== "pace-rule" && check.judged >= 100) {
+    const tested = check.kind === "out-of-sample"
+      ? `tested on ${formatInt(check.judged)} cases it wasn't drawn from`
+      : `measured on ${formatInt(check.judged)} recent cases`;
+    out.push(
+      `The range we print near the front is re-measured every night from where DOL's decisions landed: ${tested}, ${Math.round(check.share * 100)}% were decided inside it` +
+        (check.stuckShare !== null
+          ? ` and ${Math.round(check.stuckShare * 100)}% were still waiting ${check.judgeDays === 14 ? "two weeks" : `${check.judgeDays} days`} after their date.`
+          : "."),
+    );
+  }
+  const inside = check && check.kind === "pace-rule" && check.judged >= 100
+    ? { share: check.share, n: check.judged }
+    : !check && ours.inBandShare !== null && ours.graded >= 10
       ? { share: ours.inBandShare, n: ours.graded }
       : null;
   if (inside && inside.share < 0.5) {

@@ -213,6 +213,67 @@ def backtest_visa(rows: list[dict], visa: str, pending_in) -> dict:
     return {"pageMethod": page, "page": totals.get(page), "quarters": quarters, "totals": totals}
 
 
+# ---- H-2B assignment groups (Oct 8 2026) --------------------------------------
+# A season DOL has finished, dated per case the way the page would have dated it
+# before any of that season was decided (last same-month season's groups, spread
+# by this season's applications: ingest_h2b_groups.group_estimate), against the
+# page's current H-2B method on the same cases (the same receipt quarter a year
+# earlier, pooled).
+GROUP_SEASON_DONE = 0.9   # a season is scored once this share of it is decided
+
+
+def h2b_group_test(db: Turso) -> list[dict]:
+    import ingest_h2b_groups as g
+    have = query_rows(db, "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'h2b_groups'", [])
+    if not have:
+        return []
+    doc = g.build(db)
+    peaks = doc["peaks"]
+    out = []
+    for peak, info in sorted(peaks.items()):
+        prev = g.previous_peak(peaks, peak)
+        groups = info["groups"]
+        cases = sum(x["cases"] for x in groups.values())
+        decided = sum(x["decided"] for x in groups.values())
+        if not prev or not cases or decided / cases < GROUP_SEASON_DONE:
+            continue
+        blank = {k: {"cases": v["cases"], "decided": 0} for k, v in groups.items()}
+        est = g.group_estimate(peaks[prev]["groups"], peaks[prev]["applications"], blank, info["applications"])
+        rows = query_rows(db, "SELECT case_number, grp, submitted FROM h2b_groups WHERE peak = ?", [peak])
+        lookup = {cn: (grp, sub) for cn, grp, sub in rows}
+        dec = g.decisions(db, {cn: {"submitted": sub} for cn, (_, sub) in lookup.items()})
+        # The page's current method on the same cases: certified H-2B filed in the same
+        # receipt quarter a year earlier.
+        y, m = int(peak[:4]) - 1, int(peak[5:7])
+        q_lo, q_hi = f"{y}-{m:02d}-01", f"{y}-{m + 3:02d}-01"
+        base = sorted(int(d) for (d,) in query_rows(
+            db, "SELECT CAST(julianday(decision_date) - julianday(received_date) AS INTEGER) FROM seasonal_cases "
+                "WHERE visa_class = 'H-2B' AND case_status LIKE '%CERTIFICATION%' AND received_date >= ? AND received_date < ?",
+            [q_lo, q_hi]) if d is not None)
+        bp = {k: base[min(len(base) - 1, int(k / 100 * len(base)))] for k in (25, 50, 75)} if len(base) >= 50 else None
+        errs, inside, berrs, binside = [], 0, [], 0
+        for cn, (grp, _sub) in lookup.items():
+            days, withdrawn = dec.get(cn, (None, False))
+            if days is None or withdrawn or grp not in est:
+                continue
+            e = est[grp]
+            errs.append(abs(days - e["p50"]))
+            inside += e["p25"] <= days <= e["p75"]
+            if bp:
+                berrs.append(abs(days - bp[50]))
+                binside += bp[25] <= days <= bp[75]
+        if not errs:
+            continue
+        med = lambda v: sorted(v)[len(v) // 2]
+        out.append({
+            "season": peak, "from": prev, "decided": len(errs),
+            "groups": {"typicalMissDays": med(errs), "middleHalfShare": round(inside / len(errs), 3)},
+            "pageMethod": ({"typicalMissDays": med(berrs), "middleHalfShare": round(binside / len(berrs), 3)}
+                           if berrs else None),
+        })
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--write", action="store_true")
@@ -225,6 +286,9 @@ def main() -> int:
         if len(rows) < MIN_N:
             continue
         out["visas"][visa] = backtest_visa(rows, visa, lambda lo, hi, v=visa: still_pending(db, v, lo, hi))
+    groups = h2b_group_test(db)
+    if groups:
+        out["h2bGroups"] = groups
     print(json.dumps(out, indent=2))
     if a.write and any(v["quarters"] for v in out["visas"].values()):
         write_doc(db, "seasonal_backtest", json.dumps(out))

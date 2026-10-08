@@ -1,5 +1,6 @@
 import { differenceInCalendarMonths, parseISO } from 'date-fns';
 import { addMonths, monthStart, monthsBetween } from '../dates/monthUtils';
+import { boundRange, type MeasuredPace, type MeasuredRangeRow } from './decisionPace';
 
 /**
  * Prevailing wage determination queue estimation.
@@ -184,4 +185,104 @@ export function measurePwdClearance(
 
   if (cleared <= 0) return null;
   return cleared / months;
+}
+
+// ============================================================================
+// THE DAY (Oct 8 2026)
+// ============================================================================
+
+/**
+ * The PERM wage-request queue as our nightly sweep counts it
+ * (perm_docs['pwd_day_queue'], scripts/ingest_pwd_status_direct.py).
+ *
+ * The month estimate above divides DOL's monthly backlog; this counts the
+ * requests themselves. Every PERM wage request in process carries its filing
+ * day, so the count ahead of one is exact rather than half a month, and DOL's
+ * pace is measured from the requests our sweep watched it finish. The
+ * standing backtest (scripts/backtest_pwd.py, its day section) tests it
+ * against what DOL went on to do, and measures the range by distance.
+ */
+export interface PwdDayQueue {
+  /** The day the sweep counted, `YYYY-MM-DD`. */
+  asOf: string;
+  /** Requests in process by filing day: `[YYYY-MM-DD, count]`, any order. */
+  byDay: readonly (readonly [string, number])[];
+  /** Requests DOL finished, by the day our sweep saw it (measurePace). */
+  pace: MeasuredPace;
+}
+
+export interface PwdDayInput {
+  /** The request's filing day, `YYYY-MM-DD`. */
+  filingDate: string;
+  today: string;
+  queue: PwdDayQueue;
+  /** Ranges the backtest measured, by days out; other distances use the pace spread. */
+  measuredRange?: readonly MeasuredRangeRow[] | null;
+}
+
+export type PwdDayEstimate =
+  | {
+      kind: 'estimate';
+      /** `YYYY-MM-DD` */
+      date: string;
+      earliest: string;
+      latest: string;
+      /** Requests in process filed earlier, same-day filings counted half. */
+      requestsAhead: number;
+      /** Days from the count to the date. */
+      days: number;
+      /** Requests DOL finishes a calendar day. */
+      pace: number;
+      rangeFrom: 'measured' | 'pace';
+    }
+  | { kind: 'refused'; reason: 'stale'; detail: string };
+
+/** Past this many days the count and the pace are too old to date a request from. */
+export const PWD_DAY_MAX_AGE_DAYS = 3;
+
+const dayNum = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86_400_000);
+const isoOf = (n: number) => new Date(n * 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * A wage request's likely determination day: the requests in process filed
+ * before it, divided by DOL's measured pace, counted from the sweep's day.
+ * DOL works wage requests in the order it received them.
+ */
+export function estimatePwdDay(input: PwdDayInput): PwdDayEstimate {
+  const { filingDate, queue } = input;
+  const today = dayNum(input.today);
+  const asOf = dayNum(queue.asOf);
+  if (today - asOf > PWD_DAY_MAX_AGE_DAYS) {
+    return { kind: 'refused', reason: 'stale', detail: `Our last count of DOL's wage queue was ${today - asOf} days ago.` };
+  }
+  let ahead = 0;
+  for (const [fd, n] of queue.byDay) {
+    if (fd < filingDate) ahead += n;
+    else if (fd === filingDate) ahead += n / 2;
+  }
+  const pace = queue.pace.pace;
+  const days = Math.round(ahead / pace);
+  const day = Math.max(today, asOf + days);
+  const row = input.measuredRange?.find((r) => r.fromDays <= days && days <= r.toDays);
+  let early: number;
+  let late: number;
+  if (row) {
+    early = day + Math.min(0, row.earlyDays);
+    late = day + Math.max(0, row.lateDays);
+  } else {
+    // If DOL keeps to its fastest or slowest recent weekday pace.
+    early = asOf + Math.round(ahead / queue.pace.fast);
+    late = asOf + Math.round(ahead / queue.pace.slow);
+  }
+  [early, late] = boundRange(day, early, late, today);
+  return {
+    kind: 'estimate',
+    date: isoOf(day),
+    earliest: isoOf(early),
+    latest: isoOf(late),
+    requestsAhead: Math.round(ahead),
+    days,
+    pace,
+    rangeFrom: row ? 'measured' : 'pace',
+  };
 }

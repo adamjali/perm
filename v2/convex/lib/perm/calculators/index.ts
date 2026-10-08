@@ -44,7 +44,9 @@ export {
   reportablePercentiles,
   COHORT_SETTLED_MONTHS,
   rangeCaveat,
+  SERVED_MIN_JUDGED,
   type RangeCoverage,
+  type MeasuredBucket,
   type QueueEstimate,
   type QueueEstimateInput,
   type QueuePosition,
@@ -65,19 +67,28 @@ export {
   MAX_HORIZON_DAYS,
   MIN_BAND_FRACTION,
   MIN_BAND_DAYS,
+  MAX_BAND_DAYS,
+  boundRange,
   type DecisionDay,
   type MeasuredPace,
   type PaceEstimateInput,
   type PaceEstimate,
   type PaceRefusal,
+  type MeasuredRangeRow,
 } from './decisionPace';
 export {
   estimatePwdQueue,
+  estimatePwdDay,
+  PWD_DAY_MAX_AGE_DAYS,
   measurePwdClearance,
   type PwdBacklogMonth,
+  type PwdDayQueue,
+  type PwdDayInput,
+  type PwdDayEstimate,
   type PwdQueueInput,
   type PwdQueueEstimate,
 } from './pwdQueue';
+export { estimateRfiCase, type RfiClock, type RfiEstimate } from './rfiClock';
 export {
   estimateI140Queue,
   type I140QuarterStats,

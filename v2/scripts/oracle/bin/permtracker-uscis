@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs|reference|visa-issuances|backtests>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -52,6 +52,19 @@ case "$job" in
     done ;;
   # State's monthly immigrant visa issuances (adoption.state.gov; travel.state.gov refuses scripts).
   visa-issuances) nice -n 10 python3 scripts/ingest_visa_issuances.py || { rc=1; fail ingest_visa_issuances.py "ingest exited non-zero"; } ;;
+  # The estimate backtests' second clock (Oct 8 2026). GitHub's full pass runs
+  # them every night; this runs them again each morning, so one failed night
+  # never leaves the case page's measured range unrefreshed. Each gets one
+  # retry; two failures record a failure row the health check reports.
+  backtests)
+    for s in backtest_queue.py backtest_pwd.py; do
+      if nice -n 10 python3 "scripts/$s" --write > /dev/null; then ok "$s" "measured and written"
+      else
+        sleep 600
+        if nice -n 10 python3 "scripts/$s" --write > /dev/null; then ok "$s" "written on the retry"
+        else rc=1; fail "$s" "failed twice"; fi
+      fi
+    done ;;
   *) echo "unknown job $job"; exit 2 ;;
 esac
 exit $rc

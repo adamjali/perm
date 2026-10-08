@@ -9,7 +9,7 @@
 import type { SeasonalCheck } from "@/lib/seasonalTiming";
 import type { SeasonalVisa } from "@/lib/seasonalForms";
 
-import { PWD_MODEL, type Summary } from "./score";
+import { PWD_DAY_MODEL, PWD_MODEL, type Summary } from "./score";
 
 export interface OtherEstimateRow {
   /** The method's id as recorded (`estimate_predictions.model`). */
@@ -20,8 +20,8 @@ export interface OtherEstimateRow {
   typicalMissDays: number | null;
   /** Share of graded cases decided inside the printed range. */
   inRangeShare: number | null;
-  /** What the range is: a named month, or a middle half that should hold half. */
-  range: "the month" | "the middle half";
+  /** What the range is: a named month, a middle half that should hold half, or the printed range. */
+  range: "the month" | "the middle half" | "the printed range";
   /** The page method's result on past filings, from the weekly backtest; null when there is none. */
   tested: { share: number; cases: number } | null;
 }
@@ -43,6 +43,19 @@ export function otherEstimateRows(
   bulletin: Summary | null | undefined = null,
 ): OtherEstimateRow[] {
   const out: OtherEstimateRow[] = [];
+  const wageDay = pwd?.bySource.ours?.byModel[PWD_DAY_MODEL];
+  if (wageDay && wageDay.recorded > 0) {
+    out.push({
+      model: PWD_DAY_MODEL,
+      label: "Wage-request day",
+      recorded: wageDay.recorded,
+      graded: wageDay.graded,
+      typicalMissDays: wageDay.typicalMissDays,
+      inRangeShare: wageDay.inBandShare,
+      range: "the printed range",
+      tested: null,
+    });
+  }
   const wage = pwd?.bySource.ours?.byModel[PWD_MODEL];
   if (wage && wage.recorded > 0) {
     out.push({

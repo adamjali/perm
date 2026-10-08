@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_BAND_DAYS,
   MAX_HORIZON_DAYS,
+  boundRange,
   MIN_BAND_DAYS,
   MIN_BAND_FRACTION,
   estimateByPace,
@@ -293,5 +295,61 @@ describe("estimateByPace: the date and its band", () => {
       if (r.kind !== "estimate") continue;
       expect(r.day - T).toBe(Math.round(ahead / normal.pace));
     }
+  });
+});
+
+describe("estimateByPace: a measured range wins where one exists", () => {
+  const rows = [{ fromDays: 0, toDays: 14, earlyDays: -6, lateDays: 13 }];
+
+  it("uses the measured edges at a measured distance", () => {
+    const casesAhead = Math.round(normal.pace * 10);
+    const r = ask({ casesAhead, measuredRange: rows });
+    if (r.kind !== "estimate") throw new Error("expected an estimate");
+    expect(r.rangeFrom).toBe("measured");
+    expect(r.late).toBe(r.day + 13);
+    expect(r.early).toBe(Math.max(T + 1, r.day - 6));
+  });
+
+  it("never opens the measured range in the past", () => {
+    const r = ask({ casesAhead: Math.round(normal.pace * 2), measuredRange: rows });
+    if (r.kind !== "estimate") throw new Error("expected an estimate");
+    expect(r.early).toBe(T + 1);
+    expect(r.early).toBeLessThanOrEqual(r.day);
+  });
+
+  it("keeps the pace rule at a distance nobody has measured", () => {
+    const r = ask({ casesAhead: 30_000, measuredRange: rows });
+    const plain = ask({ casesAhead: 30_000 });
+    if (r.kind !== "estimate" || plain.kind !== "estimate") throw new Error("expected estimates");
+    expect(r.rawDays).toBeGreaterThan(14);
+    expect(r.rangeFrom).toBe("pace");
+    expect([r.early, r.late]).toEqual([plain.early, plain.late]);
+  });
+
+  it("refuses exactly as before: a measured range never dates a case the rules refuse", () => {
+    const r = ask({ casesAhead: 30_000, status: "RFI ISSUED", measuredRange: rows });
+    expect(r.kind).toBe("refused");
+  });
+});
+
+describe("no range is wider than MAX_BAND_DAYS", () => {
+  it("cuts a wide range to a third before the date and two thirds after", () => {
+    expect(boundRange(1138, 1100, 1214, 1001)).toEqual([1118, 1178]);
+    expect(boundRange(1010, 1004, 1023, 1001)).toEqual([1004, 1023]);
+    expect(boundRange(1005, 990, 1080, 1001)).toEqual([1001, 1061]);
+  });
+
+  it("bounds the pace rule far out", () => {
+    const r = ask({ casesAhead: Math.round(normal.pace * 138) });
+    if (r.kind !== "estimate") throw new Error("expected an estimate");
+    expect(r.late - r.early).toBeLessThanOrEqual(MAX_BAND_DAYS);
+    expect(r.early).toBeLessThanOrEqual(r.day);
+    expect(r.late).toBeGreaterThanOrEqual(r.day);
+  });
+
+  it("bounds a measured range too", () => {
+    const r = ask({ casesAhead: Math.round(normal.pace * 10), measuredRange: [{ fromDays: 0, toDays: 14, earlyDays: -40, lateDays: 90 }] });
+    if (r.kind !== "estimate") throw new Error("expected an estimate");
+    expect(r.late - r.early).toBeLessThanOrEqual(MAX_BAND_DAYS);
   });
 });

@@ -43,7 +43,7 @@ describe("scorecardAlarms", () => {
     ];
     const got = scorecardAlarms(rows, TODAY);
     expect(got).toHaveLength(1);
-    expect(got[0]).toMatch(/^Wage-request months: no case graded yet, though 12 predicted dates passed/);
+    expect(got[0]).toMatch(/^Wage-request dates: no case graded yet, though 12 predicted dates passed/);
   });
 
   it("stays quiet when fewer dates are due than the floor", () => {
@@ -80,5 +80,14 @@ describe("scorecardAlarms", () => {
         { label: "The weekly wage-request backtest", computedAt: null },
       ]),
     ).toEqual(["The weekly PERM backtest last ran 12 days ago; it runs weekly."]);
+  });
+
+  it("holds a nightly test to its own clock", () => {
+    const at = (d: string) => Date.parse(`${d}T12:00:00Z`);
+    const nightly = (d: string) => [{ label: "The nightly PERM backtest", computedAt: at(d), everyDays: 1 }];
+    expect(scorecardAlarms([], "2026-10-08", nightly("2026-10-05"))).toEqual([]);
+    expect(scorecardAlarms([], "2026-10-08", nightly("2026-10-04"))).toEqual([
+      "The nightly PERM backtest last ran 4 days ago; it runs every night.",
+    ]);
   });
 });

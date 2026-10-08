@@ -34,7 +34,7 @@ export const BACKTEST_DAYS = 9;
 
 const LABEL: Record<Program, string> = {
   perm: "PERM decision dates",
-  pwd: "Wage-request months",
+  pwd: "Wage-request dates",
   seasonal: "H-2A, H-2B and CW-1 dates",
   bulletin: "Visa bulletin release days",
 };
@@ -53,6 +53,8 @@ export interface BacktestAge {
   label: string;
   /** When it last wrote, ms since the epoch; null when it never has. */
   computedAt: number | null;
+  /** How often it runs, in days; 7 when omitted. Alarms past this plus two. */
+  everyDays?: number;
 }
 
 /** Our own estimates' alarms, as sentences, most urgent first. Empty when all is well. */
@@ -99,7 +101,10 @@ export function scorecardAlarms(
   for (const b of backtests) {
     if (b.computedAt === null) continue;
     const age = Math.floor((now - b.computedAt) / 86_400_000);
-    if (age > BACKTEST_DAYS) out.push(`${b.label} last ran ${age} days ago; it runs weekly.`);
+    const every = b.everyDays ?? 7;
+    if (age > (every === 7 ? BACKTEST_DAYS : every + 2)) {
+      out.push(`${b.label} last ran ${age} days ago; it runs ${every === 1 ? "every night" : "weekly"}.`);
+    }
   }
   return out;
 }

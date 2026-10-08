@@ -451,8 +451,9 @@ export function PermTimelineEstimator({
   }, [passed, leadIsCounting, lead, envelope]);
   // The range's own caveat is printed under the date when the date comes from
   // the lead model; listing it again below would say the same thing twice.
+  const rangeNote = lead?.rangeNote ?? rangeCaveat(rangeCoverage);
   const notes = shown?.fromLead
-    ? estimate.caveats.filter((c) => c !== rangeCaveat(rangeCoverage))
+    ? estimate.caveats.filter((c) => c !== rangeNote)
     : estimate.caveats;
 
 
@@ -648,7 +649,7 @@ export function PermTimelineEstimator({
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
                 {shown.fromLead
-                  ? `${rangeCaveat(rangeCoverage)} The other models are under “How this was worked out” below.`
+                  ? `${rangeNote} The other models are under “How this was worked out” below.`
                   : envelope && envelope.modelCount === 1
                     ? "One model has enough published data to answer for this month."
                     : `The window comes from ${envelope?.modelCount ?? 0} models on different bases, spread across ${envelope?.spanMonths ?? 0} months. They are never averaged into one number, because the spread is the honest part. Open "How this was worked out" to see each.`}

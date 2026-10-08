@@ -8,6 +8,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { daysToAnchor } from "@/lib/predictionLedger";
 import { HORIZONS, PWD_BEFORE_FIX, type Cell } from "@/lib/scorecard/score";
 import { readMethods, readOurs } from "@/lib/scorecard/verdict";
+import { printedRangeCheck } from "@/lib/rangeCoverage";
 import { otherEstimateRows } from "@/lib/scorecard/otherEstimates";
 import { getEstimatorBacktest, getScorecardSummary } from "@/lib/turso/predictions";
 import { getSeasonalCheck } from "@/lib/turso/seasonalTiming";
@@ -20,7 +21,7 @@ import { MS_PER_DAY } from "@/lib/time";
 /**
  * The estimate scorecard, in three layers, strongest evidence first.
  *
- * 1. The standing backtest (weekly, `scripts/backtest_queue.py`): the queue
+ * 1. The standing backtest (nightly, `scripts/backtest_queue.py`): the queue
  *    rebuilt as it stood on a past day and every in-line case near the front
  *    dated the way the site dates it, graded against thousands of real DOL
  *    decisions. It is the evidence the estimator's method rests on.
@@ -35,7 +36,7 @@ import { MS_PER_DAY } from "@/lib/time";
 
 const TITLE = "PERM Estimate Scorecard";
 const DESCRIPTION =
-  "How close our PERM decision dates land: a weekly backtest over thousands of real DOL decisions, and a daily sample recorded before the outcome.";
+  "How close our PERM decision dates land: a nightly backtest over thousands of real DOL decisions, and a daily sample recorded before the outcome.";
 const PATH = "/estimate-scorecard";
 
 export const metadata: Metadata = withSocialCard({
@@ -105,6 +106,21 @@ export default async function EstimateScorecardPage() {
   const others = otherEstimateRows(sample?.pwd, sample?.seasonal, checks, sample?.bulletin);
   const cur = backtest?.current ?? null;
   const old = backtest?.allPending ?? null;
+  const rangeCheck = printedRangeCheck(backtest);
+  // The dates people watching their own case were given, kept apart from the
+  // random sample. Counts only: no subscriber's case number is published.
+  const w = sample?.watched;
+  const wRecorded = (w?.perm?.recorded ?? 0) + (w?.pwd?.recorded ?? 0);
+  const wGraded = (w?.perm?.graded ?? 0) + (w?.pwd?.graded ?? 0);
+  const watchedLine =
+    wRecorded > 0
+      ? `People watching their own case: the date each one's page showed is recorded once, ${formatInt(wRecorded)} so far.` +
+        (w?.perm && w.perm.graded > 0 && w.perm.typicalMissDays !== null
+          ? ` Of the ${formatInt(w.perm.graded)} PERM cases DOL has since decided, the date was typically ${days(w.perm.typicalMissDays)} off.`
+          : wGraded > 0
+            ? ` ${formatInt(wGraded)} have been decided.`
+            : " None decided yet.")
+      : null;
   // The same sentences the admin scorecard and the morning report print.
   const shortAnswer = [
     ...(perm ? readOurs(perm.all, perm.byHorizon, sample?.perm.since ?? null, backtest) : []),
@@ -171,11 +187,15 @@ export default async function EstimateScorecardPage() {
           ) : null}
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
             <Figure label="Within a week" value={pct(cur.within7Share)} note="of those decisions" />
-            {backtest.rangeCoverage?.insideShare != null ? (
+            {rangeCheck ? (
               <Figure
                 label="Inside the printed range"
-                value={pct(backtest.rangeCoverage.insideShare)}
-                note={`of ${formatInt(backtest.rangeCoverage.judged)} cases dated a week or more before the end; a case still waiting counts as a miss`}
+                value={pct(rangeCheck.share)}
+                note={
+                  rangeCheck.kind === "pace-rule"
+                    ? `of ${formatInt(rangeCheck.judged)} cases dated a week or more before the end; a case still waiting counts as a miss`
+                    : `of ${formatInt(rangeCheck.judged)} cases near the front, ${rangeCheck.kind === "out-of-sample" ? "tested on start days the range wasn't drawn from" : "on the recent cases it was measured on"}; ${pct(rangeCheck.stuckShare)} were still waiting two weeks after their date`
+                }
               />
             ) : null}
             <Figure
@@ -186,7 +206,7 @@ export default async function EstimateScorecardPage() {
             <Figure label={"DOL\u2019s pace used"} value={`${formatInt(Math.round(backtest.pace))} a day`} note="the measured average before the first day" />
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            Recomputed every Monday. This run: {formatAsOf(new Date(backtest.computedAt).toISOString().slice(0, 10))}.
+            Recomputed every night. This run: {formatAsOf(new Date(backtest.computedAt).toISOString().slice(0, 10))}.
           </p>
         </section>
       ) : null}
@@ -249,7 +269,8 @@ export default async function EstimateScorecardPage() {
                 None graded yet. The nearest sampled cases are due within weeks, and the grades appear here the morning
                 after DOL decides each one.
               </p>
-            )}
+            )}{" "}
+            {watchedLine ? <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">{watchedLine}</p> : null}
           </>
         ) : (
           <p className="mt-4 text-base text-foreground/80">
@@ -261,7 +282,7 @@ export default async function EstimateScorecardPage() {
       <section aria-labelledby="other-h" className="mt-12">
         <h2 id="other-h" className="font-heading text-2xl font-black sm:text-3xl">The other estimates</h2>{" "}
         <p className="mt-2 max-w-2xl text-base text-foreground/80">
-          The wage-request month and the H-2A, H-2B and CW-1 dates, written down and graded the same way. Each H-2A,
+          The wage-request date and the H-2A, H-2B and CW-1 dates, written down and graded the same way. Each H-2A,
           H-2B and CW-1 application is recorded once, in its first week, as its case page dated it.
         </p>{" "}
         {others.length > 0 ? (

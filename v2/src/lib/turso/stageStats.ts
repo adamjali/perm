@@ -177,6 +177,9 @@ const NOT_A_DIVERSION = new Set(["ANALYST REVIEW", "IN PROCESS"]);
  *     RFI ISSUED               422 /   3  (0.7%) -> not yet
  *     APPLICATION ON HOLD      218 /   0  (0%)   -> not yet
  *
+ * By Oct 8 2026 RFI ISSUED had crossed it: of the 324 RFIs watched for 30
+ * days, 276 had left on day 30, so its median reads 30 on its own.
+ *
  * The RFI line is the one worth reading twice. Most RFI exits observed say
  * nothing about duration: those cases were already at an RFI when the event
  * log opened, so their start is unknown. Only the ones we watched both enter

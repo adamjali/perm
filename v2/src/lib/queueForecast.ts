@@ -171,7 +171,7 @@ const STAGE_PLACEMENT: Readonly<Record<string, StagePlacement>> = {
   "NORD ISSUED": {
     percentile: 95,
     observedAgeDays: 697,
-    note: "A notice of results of documentation puts a case near the far end of its month.",
+    note: "A case at NORD ISSUED sits near the far end of its filing month. DOL doesn't say what NORD stands for.",
   },
   "RECONSIDERATION APPEALS": {
     percentile: null,

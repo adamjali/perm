@@ -71,6 +71,26 @@ export const MIN_BAND_FRACTION = 0.55;
 export const MIN_BAND_DAYS = 7;
 
 /**
+ * No range is wider than this (owner's call, Oct 8 2026: as accurate as can be
+ * measured, and bounded). Wider is cut to a third before the date and two
+ * thirds after, the split the measured ranges show. Before the cap the pace
+ * rule gave a case filed this week about 76 days.
+ */
+export const MAX_BAND_DAYS = 60;
+
+/** Cut a range to MAX_BAND_DAYS around its date, never opening before `floor`. */
+export function boundRange(day: number, early: number, late: number, floor: number): [number, number] {
+  let e = Math.min(day, Math.max(floor, early));
+  let l = Math.max(day, late);
+  if (l - e > MAX_BAND_DAYS) {
+    const before = Math.min(day - e, Math.round(MAX_BAND_DAYS / 3));
+    e = day - before;
+    l = Math.min(l, day + (MAX_BAND_DAYS - before));
+  }
+  return [e, l];
+}
+
+/**
  * One calendar day of decisions.
  *
  * `dayOfWeek` is 0 = Sunday through 6 = Saturday, matching `Date#getUTCDay`.
@@ -189,6 +209,22 @@ export type PaceRefusal =
   | "pace-unmeasurable"
   | "beyond-horizon";
 
+/**
+ * A range the nightly backtest measured for one distance from today
+ * (scripts/backtest_queue.py, perm_docs['estimator_backtest'].rangeModel):
+ * the middle 80% of how far real decisions landed from our date, for dates
+ * between `fromDays` and `toDays` out. Only measured distances are passed in;
+ * every other distance keeps the pace rule below.
+ */
+export interface MeasuredRangeRow {
+  fromDays: number;
+  toDays: number;
+  /** Days before the date the range opens, zero or negative. */
+  earlyDays: number;
+  /** Days after the date the range closes, zero or positive. */
+  lateDays: number;
+}
+
 export interface PaceEstimateInput {
   /** Days since the epoch. Day numbers, never Date objects. */
   today: number;
@@ -201,6 +237,8 @@ export interface PaceEstimateInput {
   monthsBehindFrontier: number | null;
   /** How long ago our sweep last read DOL, in days. */
   sweepAgeDays: number;
+  /** Measured ranges by distance; a distance not listed uses the pace rule. */
+  measuredRange?: readonly MeasuredRangeRow[] | null;
 }
 
 export type PaceEstimate =
@@ -223,6 +261,8 @@ export type PaceEstimate =
       casesAhead: number;
       rawDays: number;
       pace: number;
+      /** Where the range came from: a measured distance, or the pace rule. */
+      rangeFrom: "measured" | "pace";
     };
 
 /**
@@ -315,6 +355,16 @@ export function estimateByPace(input: PaceEstimateInput): PaceEstimate {
   }
 
   const day = today + rawDays;
+  /*
+   * A MEASURED RANGE WINS where one exists. The pace rule below held for
+   * under half of real decisions near the front (the nightly backtest), and
+   * the measured one is where DOL's recent decisions at this distance landed.
+   */
+  const row = input.measuredRange?.find((r) => r.fromDays <= rawDays && rawDays <= r.toDays);
+  if (row) {
+    const [early, late] = boundRange(day, day + Math.min(0, row.earlyDays), day + Math.max(0, row.lateDays), today + 1);
+    return { kind: "estimate", day, early, late, casesAhead, rawDays, pace: pace.pace, rangeFrom: "measured" };
+  }
   let early = today + Math.round(casesAhead / pace.fast);
   let late = today + Math.round(casesAhead / pace.slow);
   const floor = Math.max(MIN_BAND_DAYS, Math.round(rawDays * MIN_BAND_FRACTION));
@@ -331,17 +381,18 @@ export function estimateByPace(input: PaceEstimateInput): PaceEstimate {
     early -= Math.round(grow / 3);
     late += Math.round((grow * 2) / 3);
   }
-  // A pending case cannot be decided in the past.
-  early = Math.max(today + 1, early);
+  // A pending case cannot be decided in the past, the band must bracket the
+  // estimate even when a clip moved an edge, and no band passes the cap.
+  [early, late] = boundRange(day, early, late, today + 1);
 
   return {
     kind: "estimate",
     day,
-    // The band must bracket the estimate even when a clip moved an edge.
-    early: Math.min(early, day),
-    late: Math.max(late, day),
+    early,
+    late,
     casesAhead,
     rawDays,
     pace: pace.pace,
+    rangeFrom: "pace",
   };
 }

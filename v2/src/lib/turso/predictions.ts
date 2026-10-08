@@ -1,10 +1,12 @@
 import "server-only";
 
-import { estimatePwdQueue } from "@/lib/perm";
+import { estimatePwdDay, estimatePwdQueue } from "@/lib/perm";
 import {
   headToHead,
   isGradedOutcome,
+  PWD_DAY_MODEL,
   PWD_MODEL,
+  type Cell,
   type Program,
   summarise,
   type PredictionRow,
@@ -12,6 +14,7 @@ import {
   type Summary,
 } from "@/lib/scorecard/score";
 import { scorecardAlarms } from "@/lib/scorecard/alarms";
+import type { BacktestRangeFields } from "@/lib/rangeCoverage";
 import { parseSupplyDivision, readMethods, readOurs, readRival, readSupplyDivision } from "@/lib/scorecard/verdict";
 import { SETTLED_BY_FILE_STATUSES } from "@/lib/seasonalDetails";
 import { timingView } from "@/lib/seasonalTiming";
@@ -20,6 +23,7 @@ import { monthAfter, releaseEstimate } from "@/lib/bulletinReleaseEstimate";
 import { getSeasonalCheck, getSeasonalTiming } from "@/lib/turso/seasonalTiming";
 import { exec, one, rows } from "@/lib/turso/client";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
+import { getPwdDayData } from "@/lib/turso/pwdDayQueue";
 import { loadPermEstimateContext, estimatePermCase } from "@/lib/turso/permEstimate";
 import { easternDay } from "@/lib/time";
 
@@ -318,9 +322,10 @@ export async function predictOurs(today: string): Promise<{
   /** Pending cases filed before a month, from the same census, for rival C's method. */
   pendingBefore: (month: string) => number;
 }> {
-  const [ctx, pwdEst] = await Promise.all([
+  const [ctx, pwdEst, pwdDay] = await Promise.all([
     loadPermEstimateContext(),
     getPwdEstimatorData().catch(() => null),
+    getPwdDayData().catch(() => null),
   ]);
   const { backlog } = ctx;
 
@@ -358,6 +363,25 @@ export async function predictOurs(today: string): Promise<{
       [PWD_MONTHS],
     );
     for (const c of await samplePwd(pending.map((r) => r.m))) {
+      // THE DAY, when the page would show one: the same call PwdStatusResult makes.
+      const d = pwdDay
+        ? estimatePwdDay({ filingDate: c.filingDate.slice(0, 10), today, queue: pwdDay.queue, measuredRange: pwdDay.measuredRange })
+        : null;
+      if (d && d.kind === "estimate") {
+        pwd.push({
+          source: "ours",
+          program: "pwd",
+          caseNumber: c.caseNumber,
+          filingDate: c.filingDate,
+          status: c.status,
+          model: PWD_DAY_MODEL,
+          predicted: d.date,
+          bandEarly: d.earliest,
+          bandLate: d.latest,
+          casesAhead: d.requestsAhead,
+        });
+        continue;
+      }
       const q = estimatePwdQueue({
         requestMonth: c.filingDate.slice(0, 7),
         frontierMonth: pwdEst.frontier?.oewsMonth ?? null,
@@ -387,6 +411,79 @@ export async function predictOurs(today: string): Promise<{
   const pendingBefore = (month: string): number =>
     backlog.filter((m) => m.month < month).reduce((n, m) => n + m.pending, 0);
   return { perm, pwd, sample, pendingBefore };
+}
+
+/**
+ * The date each subscriber's own case page showed, recorded ONCE per case: the
+ * first day the scorecard sees it watched and still in line. The list is case
+ * numbers only (perm_docs['watched_cases'], kept by
+ * scripts/check_watched_cases.py from Convex's watched set), and the rows are
+ * never put to a rival or shown by number: the public doc carries counts only.
+ */
+export async function predictWatched(today: string): Promise<NewPrediction[]> {
+  const doc = await one<{ json: string }>(`SELECT json FROM perm_docs WHERE key = 'watched_cases'`).catch(() => null);
+  let numbers: string[] = [];
+  try {
+    const d = doc ? (JSON.parse(String(doc.json)) as { caseNumbers?: unknown }) : null;
+    if (Array.isArray(d?.caseNumbers)) numbers = d.caseNumbers.filter((x): x is string => typeof x === "string");
+  } catch {
+    return [];
+  }
+  if (numbers.length === 0) return [];
+  const done = new Set(
+    (await rows<{ case_number: string }>(`SELECT case_number FROM estimate_predictions WHERE source = 'watched'`))
+      .map((r) => r.case_number),
+  );
+  const todo = numbers.filter((n) => !done.has(n));
+  const permNums = todo.filter((n) => /^G-\d{3}-/.test(n));
+  const pwdNums = todo.filter((n) => n.startsWith("P-100-"));
+  const out: NewPrediction[] = [];
+  const inChunks = async <T,>(nums: string[], sql: (ph: string) => string): Promise<T[]> => {
+    const got: T[] = [];
+    for (let i = 0; i < nums.length; i += 200) {
+      const chunk = nums.slice(i, i + 200);
+      got.push(...(await rows<T>(sql(chunk.map(() => "?").join(",")), chunk)));
+    }
+    return got;
+  };
+  if (permNums.length) {
+    const ctx = await loadPermEstimateContext();
+    const found = await inChunks<{ case_number: string; filing_date: string | null; employer_name: string | null }>(
+      permNums,
+      (ph) => `SELECT case_number, filing_date, employer_name FROM perm_case_status
+                WHERE case_number IN (${ph}) AND current_status = 'ANALYST REVIEW' AND is_final = 0`,
+    );
+    for (const x of found) {
+      if (!x.filing_date) continue;
+      const c = { caseNumber: x.case_number, filingDate: x.filing_date, employerName: x.employer_name, status: "ANALYST REVIEW" };
+      const { estimate: est, casesAhead } = estimatePermCase(ctx, c, today);
+      if (!est || est.kind !== "date") continue;
+      out.push({
+        source: "watched", program: "perm", caseNumber: c.caseNumber, filingDate: c.filingDate, status: c.status,
+        model: est.modelId, predicted: est.estimatedDate, bandEarly: est.earliestDate, bandLate: est.latestDate, casesAhead,
+      });
+    }
+  }
+  if (pwdNums.length) {
+    const day = await getPwdDayData().catch(() => null);
+    if (day) {
+      const found = await inChunks<{ case_number: string; filing_date: string | null }>(
+        pwdNums,
+        (ph) => `SELECT case_number, filing_date FROM pwd_case_status
+                  WHERE case_number IN (${ph}) AND current_status = 'IN PROCESS' AND is_final = 0 AND ${PWD_DATED}`,
+      );
+      for (const x of found) {
+        if (!x.filing_date) continue;
+        const d = estimatePwdDay({ filingDate: x.filing_date.slice(0, 10), today, queue: day.queue, measuredRange: day.measuredRange });
+        if (d.kind !== "estimate") continue;
+        out.push({
+          source: "watched", program: "pwd", caseNumber: x.case_number, filingDate: x.filing_date, status: "IN PROCESS",
+          model: PWD_DAY_MODEL, predicted: d.date, bandEarly: d.earliest, bandLate: d.latest, casesAhead: d.requestsAhead,
+        });
+      }
+    }
+  }
+  return out;
 }
 
 export async function recordPredictions(recordedOn: string, preds: NewPrediction[]): Promise<number> {
@@ -510,6 +607,11 @@ export interface ScorecardDoc {
   seasonal?: Summary;
   /** The visa bulletin's release day, one per bulletin (Oct 8 2026 on). */
   bulletin?: Summary;
+  /**
+   * The dates subscribers' own case pages showed, one per case (Oct 8 2026 on).
+   * Counts and errors only: no case number from this set is ever published.
+   */
+  watched?: { perm: Cell | null; pwd: Cell | null };
   /** A handful of the newest graded PERM cases, for the page's worked examples. */
   recent: {
     caseNumber: string;
@@ -529,6 +631,7 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
   );
   const mapped = all.map(toRow);
   const ours = mapped.filter((r) => r.source === "ours");
+  const watchedRows = mapped.filter((r) => r.source === "watched");
   const recent = all
     .filter((r) => r.source === "ours" && r.program === "perm" && r.decided_on && isGradedOutcome(r.outcome))
     .sort((a, b) => (a.decided_on! < b.decided_on! ? 1 : -1))
@@ -546,6 +649,10 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
     pwd: summarise(ours, today, "pwd"),
     seasonal: summarise(ours, today, "seasonal"),
     bulletin: summarise(ours, today, "bulletin"),
+    watched: {
+      perm: summarise(watchedRows, today, "perm").bySource.watched?.all ?? null,
+      pwd: summarise(watchedRows, today, "pwd").bySource.watched?.all ?? null,
+    },
     recent,
   };
   const perm = summarise(mapped, today, "perm");
@@ -564,9 +671,9 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
     return r ? Number(r.computed_at) : null;
   };
   const alarms = scorecardAlarms(mapped, today, [
-    { label: "The weekly PERM backtest", computedAt: ageOf("estimator_backtest") },
+    { label: "The nightly PERM backtest", computedAt: ageOf("estimator_backtest"), everyDays: 1 },
     { label: "The weekly H-2A, H-2B and CW-1 backtest", computedAt: ageOf("seasonal_backtest") },
-    { label: "The weekly wage-request backtest", computedAt: ageOf("pwd_backtest") },
+    { label: "The nightly wage-request backtest", computedAt: ageOf("pwd_backtest"), everyDays: 1 },
   ]);
   const priv = {
     perm,
@@ -631,12 +738,15 @@ export interface EstimatorBacktest {
   inLineAtT0: number;
   current: BacktestCell;
   allPending: BacktestCell;
-  /** Cases dated a week before the end, decided inside the printed range. */
+  /** Cases dated a week before the end, decided inside the pace rule's range. */
   rangeCoverage?: { judged: number; insideShare: number | null };
+  /** The measured ranges by distance and their out-of-sample test (src/lib/rangeCoverage.ts reads them). */
+  rangeModel?: BacktestRangeFields["rangeModel"];
+  servedRange?: BacktestRangeFields["servedRange"];
   computedAt: number;
 }
 
-/** The weekly standing backtest (scripts/backtest_queue.py), one point read. */
+/** The nightly standing backtest (scripts/backtest_queue.py), one point read. */
 export async function getEstimatorBacktest(): Promise<EstimatorBacktest | null> {
   const r = await one<{ json: string; computed_at: number | string }>(
     `SELECT json, computed_at FROM perm_docs WHERE key = 'estimator_backtest'`,

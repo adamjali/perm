@@ -86,6 +86,24 @@ def main() -> int:
     check("no Table V year, no comparison", bt.supply_division(steady, inventory, None), None)
     check("no inventory, no comparison", bt.supply_division(steady, {}, {"employment_by_chargeability": {}}), None)
 
+    # The filing chart, three months ahead of final action on a steady line:
+    # final action reaches each filing-chart date three bulletins later, so the
+    # learned lag is 3 and both methods are exact for a reader between them.
+    fmt = lambda d: d.strftime("%d%b%y").upper()
+    steady = [(month(i), ("date", date.fromordinal(date(2010, 1, 1).toordinal() + 30 * i))) for i in range(60)]
+    fa_arch = [(m, {"EB2": {"india": fmt(c[1])}}) for m, c in steady]
+    dff_arch = {m: {"EB2": {"india": fmt(date.fromordinal(c[1].toordinal() + 90))}} for m, c in steady}
+    fa_series = [(m, bt.parse_cutoff(fmt(c[1]))) for m, c in steady]
+    dff_series = {m: bt.parse_cutoff(fmt(date.fromordinal(c[1].toordinal() + 90))) for m, c in steady}
+    check("the filing chart's lag is learned from what had resolved", bt.learned_lag(fa_series, dff_series, 40), 3.0)
+    check("too little history gives no lag", bt.learned_lag(fa_series, dff_series, 3), None)
+    fc = bt.filing_chart_test(fa_arch, dff_arch)
+    # The pace is in fractions of a month and the wait in whole bulletins, so it
+    # is off by under half a month; the lag counts whole bulletins and is exact.
+    check("the lag is exact on a steady line, the pace within half a month",
+          (fc["filingLag"]["typicalMissMonths"], fc["pace"]["typicalMissMonths"] <= 0.5), (0.0, True))
+    check("the same readers for both", fc["pace"]["readers"], fc["filingLag"]["readers"])
+
     print(f"\n{len(FAILED)} failed")
     return 1 if FAILED else 0
 

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  estimatePwdDay,
   estimatePwdQueue,
   measurePwdClearance,
   type PwdBacklogMonth,
+  type PwdDayQueue,
 } from './pwdQueue';
+import type { MeasuredPace } from './decisionPace';
 
 /**
  * DOL's real published PERM prevailing-wage backlog as of 2026-06-30, taken
@@ -206,5 +209,55 @@ describe('measurePwdClearance', () => {
         ],
       }),
     ).toBeNull();
+  });
+});
+
+
+describe('estimatePwdDay', () => {
+  const pace: MeasuredPace = {
+    pace: 500, fast: 800, slow: 300, weekdayMean: 700, weekendMean: 0, weekdaysUsed: 20, daysUsed: 28,
+  };
+  // 1,000 filed Jul 1, 2,000 on Jul 2, 500 on Jul 3.
+  const queue: PwdDayQueue = {
+    asOf: '2026-10-08',
+    byDay: [['2026-07-02', 2000], ['2026-07-01', 1000], ['2026-07-03', 500]],
+    pace,
+  };
+  const ask = (filingDate: string, over: Partial<Parameters<typeof estimatePwdDay>[0]> = {}) =>
+    estimatePwdDay({ filingDate, today: '2026-10-08', queue, ...over });
+
+  it('counts every earlier filing day and half its own', () => {
+    const r = ask('2026-07-02');
+    if (r.kind !== 'estimate') throw new Error('expected a date');
+    expect(r.requestsAhead).toBe(2000); // 1,000 + 2,000 / 2
+    expect(r.days).toBe(4);
+    expect(r.date).toBe('2026-10-12');
+  });
+
+  it('uses the measured range at a measured distance', () => {
+    const r = ask('2026-07-02', { measuredRange: [{ fromDays: 0, toDays: 14, earlyDays: -3, lateDays: 1 }] });
+    if (r.kind !== 'estimate') throw new Error('expected a date');
+    expect([r.earliest, r.date, r.latest]).toEqual(['2026-10-09', '2026-10-12', '2026-10-13']);
+    expect(r.rangeFrom).toBe('measured');
+  });
+
+  it('falls back to the fastest and slowest recent pace elsewhere', () => {
+    const r = ask('2026-07-03');
+    if (r.kind !== 'estimate') throw new Error('expected a date');
+    // 3,250 ahead: 3,250 / 800 = 4, 3,250 / 300 = 11.
+    expect([r.earliest, r.date, r.latest]).toEqual(['2026-10-12', '2026-10-15', '2026-10-19']);
+    expect(r.rangeFrom).toBe('pace');
+  });
+
+  it('never dates a request before today, and never opens its range in the past', () => {
+    const r = ask('2026-06-30', { today: '2026-10-10' });
+    if (r.kind !== 'estimate') throw new Error('expected a date');
+    expect(r.date).toBe('2026-10-10');
+    expect(r.earliest >= '2026-10-10').toBe(true);
+  });
+
+  it('refuses a count more than three days old', () => {
+    expect(ask('2026-07-02', { today: '2026-10-12' }).kind).toBe('refused');
+    expect(ask('2026-07-02', { today: '2026-10-11' }).kind).toBe('estimate');
   });
 });

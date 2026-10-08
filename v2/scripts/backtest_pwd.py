@@ -126,6 +126,147 @@ def score_months(pred: dict[str, str], outcome: dict[str, date | None], end: dat
     }
 
 
+# ---- the day method (Oct 8 2026) ------------------------------------------
+# The same shape as the PERM date: requests in process filed before this one,
+# divided by DOL's measured rate of finishing them. DOL works wage requests by
+# receipt date, and the live table carries every request's filing day, so the
+# count ahead is exact rather than prorated. Tested here before the site uses it.
+DAY_PACE_DAYS = 28
+DAY_MIN_PACE_DAYS = 14
+DAY_JUDGE_DAYS = 7
+DAY_BUCKETS = ((0, 14), (15, 30), (31, 60), (61, 120), (121, 100_000))
+DAY_RANGE_MIN = 300
+
+
+def exits_per_day(events: dict, t0: date, days: int) -> float | None:
+    """Requests leaving IN PROCESS for a final status, per calendar day, over the days before t0."""
+    lo = t0 - timedelta(days=days)
+    n, first = 0, None
+    for evs in events.values():
+        for at, fr, to, tf in evs:
+            d = datetime.fromtimestamp(at / 1000, ET).date()
+            first = d if first is None or d < first else first
+            if lo <= d < t0 and tf and fr == IN_LINE:
+                n += 1
+                break
+    if first is None or (t0 - max(first, lo)).days < DAY_MIN_PACE_DAYS:
+        return None
+    return n / (t0 - max(first, lo)).days
+
+
+def day_predictions(in_line: list[tuple[str, str]], t0: date, pace: float) -> dict[str, tuple[date, int]]:
+    """(case, filing day) in process on t0 -> (date, days out). Same-day filings count half."""
+    by_day: dict[str, int] = {}
+    for _, fd in in_line:
+        by_day[fd] = by_day.get(fd, 0) + 1
+    before, run = {}, 0
+    for fd in sorted(by_day):
+        before[fd] = run + by_day[fd] / 2
+        run += by_day[fd]
+    out = {}
+    for cn, fd in in_line:
+        h = round(before[fd] / pace)
+        out[cn] = (t0 + timedelta(days=h), h)
+    return out
+
+
+def day_bucket(h: int) -> int:
+    return next((i for i, (lo, hi) in enumerate(DAY_BUCKETS) if lo <= h <= hi), len(DAY_BUCKETS) - 1)
+
+
+def day_score(pred: dict[str, tuple[date, int]], outcome: dict[str, date | None], end: date,
+              ranges: dict[str, tuple[int, int]] | None = None) -> dict:
+    errs, judged, stuck, inside = [], 0, 0, 0
+    for cn, (p, h) in pred.items():
+        if (end - p).days < DAY_JUDGE_DAYS:
+            continue
+        judged += 1
+        o = outcome[cn]
+        if o is None or o > end:
+            stuck += 1
+            continue
+        e = (o - p).days
+        errs.append(e)
+        if ranges and day_bucket(h) in ranges:
+            lo, hi = ranges[day_bucket(h)]
+            inside += lo <= e <= hi
+    a = sorted(abs(e) for e in errs)
+    out = {
+        "judged": judged, "decided": len(errs),
+        "typicalMissDays": round(statistics.median(a), 1) if a else None,
+        "biasDays": round(statistics.median(errs), 1) if errs else None,
+        "within7Share": round(sum(1 for x in a if x <= 7) / len(a), 3) if a else None,
+        "stuckShare": round(stuck / judged, 3) if judged else None,
+    }
+    if ranges is not None:
+        out["insideShare"] = round(inside / judged, 3) if judged else None
+    return out
+
+
+def day_range_model(samples: list[dict[int, list[int]]]) -> dict[int, tuple[int, int]]:
+    """Per distance bucket, the middle 80% of decided errors over the start days given."""
+    out = {}
+    for i in range(len(DAY_BUCKETS)):
+        errs = sorted(e for s in samples for e in s.get(i, []))
+        if len(errs) >= DAY_RANGE_MIN:
+            q = lambda p: errs[min(len(errs) - 1, max(0, int(round(p * (len(errs) - 1)))))]
+            out[i] = (min(0, q(0.10)), max(0, q(0.90)))
+    return out
+
+
+def day_section(rows: list, events: dict, end: date) -> dict | None:
+    """Weekly start days, oldest first; each start day's range comes from the ones before it."""
+    starts, t = [], end - timedelta(days=14)
+    while exits_per_day(events, t, DAY_PACE_DAYS) is not None:
+        starts.append(t)
+        t -= timedelta(days=7)
+    runs, samples = [], []
+    for t0 in sorted(starts):
+        pace = exits_per_day(events, t0, DAY_PACE_DAYS)
+        t_ms = int(datetime(t0.year, t0.month, t0.day, tzinfo=ET).timestamp() * 1000)
+        in_line, outcome = [], {}
+        for cn, fd, cur in rows:
+            if not fd or fd > t0.isoformat():
+                continue
+            after = [e for e in events.get(cn, []) if e[0] >= t_ms]
+            st0 = after[0][1] if after else (cur or "").upper()
+            if st0 != IN_LINE:
+                continue
+            mv = after[0] if after else None
+            if mv is None:
+                outcome[cn] = None
+            elif mv[3] and not mv[2].startswith("WITHDRAWN"):
+                outcome[cn] = datetime.fromtimestamp(mv[0] / 1000, ET).date()
+            elif mv[3]:
+                outcome[cn] = "withdrawn"
+            else:
+                outcome[cn] = "left"
+            in_line.append((cn, fd))
+        # Every request in process is ahead of the later ones, whatever became of it.
+        pred_all = day_predictions(in_line, t0, pace)
+        pred = {cn: v for cn, v in pred_all.items() if outcome[cn] not in ("withdrawn", "left")}
+        model = day_range_model(samples[-4:]) if samples else None
+        run = {"t0": t0.isoformat(), "pace": round(pace, 1), "inLine": len(in_line),
+               "day": day_score(pred, outcome, end, model if model else None)}
+        runs.append(run)
+        sample: dict[int, list[int]] = {}
+        for cn, (p, h) in pred.items():
+            o = outcome[cn]
+            if (end - p).days >= DAY_JUDGE_DAYS and isinstance(o, date) and o <= end:
+                sample.setdefault(day_bucket(h), []).append((o - p).days)
+        samples.append(sample)
+    if not runs:
+        return None
+    model = day_range_model(samples[-4:])
+    return {
+        "method": "requests in process filed earlier (same day counted half), over DOL's measured exits a calendar day",
+        "origins": runs,
+        "rangeModel": [{"fromDays": DAY_BUCKETS[i][0], "toDays": DAY_BUCKETS[i][1], "earlyDays": lo, "lateDays": hi}
+                       for i, (lo, hi) in sorted(model.items())],
+        "judgeDays": DAY_JUDGE_DAYS,
+    }
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     today = datetime.now(ET).date()
@@ -183,6 +324,9 @@ def main() -> int:
             })
     result = {"end": end.isoformat(), "origins": origins,
               "method": "requests ahead plus half the same month, over DOL's measured clearance, from DOL's as-of date"}
+    day = day_section(rows, events, end)
+    if day:
+        result["day"] = day
     print(json.dumps(result, indent=2))
     if a.write and origins:
         write_doc(db, "pwd_backtest", json.dumps(result))

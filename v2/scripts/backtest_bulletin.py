@@ -170,6 +170,97 @@ def backtest(bulletins: list[tuple[str, dict]]) -> dict:
     }
 
 
+# ---- the dates-for-filing chart as an early signal (Oct 8 2026) -------------
+# The bulletin prints two charts. The dates-for-filing chart is where State
+# expects the final-action date to reach in the coming months, so a reader
+# whose date is between the two has a second clock: the month the filing chart
+# first covered their date, plus how long final action has usually taken to
+# follow it on that line. Measured out of sample: at each bulletin the lag is
+# learned only from dates final action had already reached by then, and only
+# once most of the dates it could have followed are resolved (or the median
+# is the fast ones only).
+FILING_FRACTIONS = (0.25, 0.5, 0.75, 1.0)
+LAG_LOOKBACK = 36   # months of filing-chart dates the lag is learned from
+LAG_MIN = 6
+
+
+def first_reach(series: list[tuple[str, tuple]], start: int, target: date) -> int | None:
+    """Index of the first bulletin at or after `start` whose cutoff reaches `target` or is current."""
+    for k in range(start, len(series)):
+        c = series[k][1]
+        if c[0] == "current" or (c[0] == "date" and c[1] >= target):
+            return k
+    return None
+
+
+def learned_lag(fa: list[tuple[str, tuple]], dff: dict[str, tuple], i: int) -> float | None:
+    """Median months from the filing chart reaching a date to final action reaching it, from
+    filing-chart dates in the LAG_LOOKBACK months before bulletin i, using only what was known at i."""
+    months = [m for m, _ in fa]
+    lags, unresolved = [], 0
+    for j in range(max(0, i - LAG_LOOKBACK), i):
+        c = dff.get(months[j])
+        if not c or c[0] != "date":
+            continue
+        k = first_reach(fa, j, c[1])
+        if k is not None and k <= i:
+            lags.append(k - j)
+        else:
+            unresolved += 1
+    if len(lags) < LAG_MIN or unresolved >= len(lags):
+        return None
+    return float(statistics.median(lags))
+
+
+def filing_chart_test(fa_bulletins: list[tuple[str, dict]], dff_bulletins: dict[str, dict]) -> dict:
+    """The site's pace against the filing chart's lag, on the same readers: dates between
+    the two charts at a bulletin, scored against when final action reached them."""
+    pace_pairs, lag_pairs, mean_pairs, n_lines = [], [], [], 0
+    for cat in CATEGORIES:
+        for country in COUNTRIES:
+            fa = []
+            for month, chart in fa_bulletins:
+                c = parse_cutoff(((chart or {}).get(cat) or {}).get(country))
+                if c:
+                    fa.append((month, c))
+            dff = {}
+            for month, chart in dff_bulletins.items():
+                c = parse_cutoff(((chart or {}).get(cat) or {}).get(country))
+                if c:
+                    dff[month] = c
+            used = False
+            for i, (month, c) in enumerate(fa[:-1]):
+                f = dff.get(month)
+                if month < FIRST_ORIGIN or c[0] != "date" or not f or f[0] != "date" or f[1] <= c[1]:
+                    continue
+                pace = per_month(fa, i)
+                lag = learned_lag(fa, dff, i)
+                if not pace or lag is None:
+                    continue
+                for frac in FILING_FRACTIONS:
+                    target = date.fromordinal(c[1].toordinal() + round((f[1] - c[1]).days * frac))
+                    actual, reached = months_to_reach(fa, i, target)
+                    # When the filing chart first covered this date, at or before bulletin i.
+                    months = [m for m, _ in fa]
+                    j = next((jj for jj in range(max(0, i - LAG_LOOKBACK), i + 1)
+                              if dff.get(months[jj]) and (dff[months[jj]][0] == "current"
+                                                          or (dff[months[jj]][0] == "date" and dff[months[jj]][1] >= target))), i)
+                    lag_est = max(0.0, j + lag - i)
+                    pace_est = (target - c[1]).days / pace
+                    pace_pairs.append((pace_est, actual, reached))
+                    lag_pairs.append((lag_est, actual, reached))
+                    mean_pairs.append(((pace_est + lag_est) / 2, actual, reached))
+                    used = True
+            n_lines += used
+    return {
+        "method": "readers between the two charts; the pace against the filing chart's learned lag, on the same readers",
+        "lines": n_lines,
+        "pace": score(pace_pairs),
+        "filingLag": score(lag_pairs),
+        "meanOfBoth": score(mean_pairs),
+    }
+
+
 # The supply-division comparison: the lines Table V counts by chargeability,
 # and the chargeability names USCIS and Table V use for the bulletin's columns.
 SUPPLY_COLUMN = {"EB1": "1st", "EB2": "2nd", "EB3": "3rd", "EW3": "3rd_other_workers"}
@@ -276,13 +367,15 @@ def main() -> int:
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
     db = Turso()
-    rows = query_rows(db, "SELECT bulletin_month, final_action FROM visa_bulletins ORDER BY bulletin_month", [])
-    bulletins = [(str(m), json.loads(j) if j else {}) for m, j in rows]
+    rows = query_rows(db, "SELECT bulletin_month, final_action, dates_for_filing FROM visa_bulletins ORDER BY bulletin_month", [])
+    bulletins = [(str(m), json.loads(j) if j else {}) for m, j, _ in rows]
+    filing = {str(m): json.loads(f) for m, _, f in rows if f}
     out = {
         "method": "gap past the final-action cutoff over the pace since October 2014, against the months the cutoff took",
         "bulletins": [bulletins[0][0], bulletins[-1][0]] if bulletins else None,
         **backtest(bulletins),
     }
+    out["filingChart"] = filing_chart_test(bulletins, filing)
     supply = supply_division(bulletins, read_inventory(db), newest_table_v(db))
     if supply:
         out["supplyDivision"] = supply

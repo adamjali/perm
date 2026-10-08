@@ -131,7 +131,7 @@ describe("readOurs", () => {
 
   it("leads with the backtest and says both checks lean the same way", () => {
     const out = readOurs(cell({}), horizons(31, 2), "2026-09-26", backtest);
-    expect(out[0]).toBe("On 11,473 real DOL decisions (the weekly backtest), our dates were typically 4 days off, and 78% landed within a week.");
+    expect(out[0]).toBe("On 11,473 real DOL decisions (the nightly backtest), our dates were typically 4 days off, and 78% landed within a week.");
     expect(out[1]).toContain("Both checks say our dates run late");
     expect(out.join(" ")).toContain("Only 29% of 8,023 decisions landed inside the range");
     expect(out.join(" ")).toContain("31 of our 33 grades are for dates within a month; 2 are further out");

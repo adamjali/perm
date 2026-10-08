@@ -21,18 +21,48 @@ The ten things:
 
 | estimate | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| PERM decision date | yes | yes | yes | yes | yes (29% of 8,023 quoted) | yes | yes (3) | yes | yes | yes (case alerts) |
+| PERM decision date | yes | yes (and each subscriber's date, once, from Oct 8) | yes (nightly from Oct 8) | yes | yes (measured by distance, nightly; quoted out of sample once 1,000 tested) | yes | yes (3) | yes | yes (nightly clock) | yes (case alerts) |
 | PERM date for a case DOL's queue has passed | yes | yes | yes | yes | with PERM | yes | with PERM | with PERM | with PERM | yes |
-| Wage-request month | yes | yes | yes (weekly; first run Oct 7 by hand) | yes | month is the range | yes | none publishes one | yes | yes | yes (case alerts) |
+| Wage-request day (from Oct 8; the month is the fallback) | yes | yes (`pwd-day`, and subscribers') | yes (nightly, day section) | yes | yes (measured near the front; pace spread farther out, said so) | yes | none publishes one | yes | yes (nightly clock) | yes (case alerts) |
 | H-2A, H-2B, CW-1 "when DOL usually decides" | yes | yes (from Oct 8) | yes (weekly) | yes | yes (quoted on the panel) | yes | none found | yes | yes | yes (case alerts) |
 | Green card line, months until current | yes | from the next bulletin | yes (weekly, since 2016) | yes | n/a: a single figure, its accuracy printed | yes (5 windows) | rival's API closed by robots.txt; its approach re-run on USCIS data, same dates (Oct 7) | printed on the tool | yes (stale test) | yes (bulletin alerts) |
 | Priority date estimate | same arithmetic as above | as above | as above | as above | as above | as above | as above | printed on the I-485 tool | as above | yes (bulletin alerts) |
 | Green card line, years at last year's pace | yes | not yet: needs quarters of USCIS's counts | not testable yet (one year of counts) | n/a | n/a | n/a | to check | no | no | no (USCIS side) |
 | Bulletin release day | yes | yes (from the November 2026 bulletin) | n/a (archive floors are the measure) | yes | yes (middle half) | n/a | none found | yes | yes | yes (bulletin alerts) |
 | Stage durations (RFI, hold) | yes | n/a until measurable | no | yes | no | n/a | none | no | no | yes (case alerts) |
+| Filing chart as an early signal (bulletin) | n/a: tested, not used | n/a | yes (weekly, beside the pace) | yes | n/a | yes | n/a | no | no | n/a |
 | H-1B lottery odds | n/a: DHS's own estimate, quoted | | | | | | | | | |
 
 ## Findings so far
+
+- **Oct 8: the PERM range, measured.** The backtest now tests every weekly start
+  day each night and measures a range per distance (the middle 80% of decided
+  errors from the start days before). Near the front: the date 6 days early to 13
+  late, judged at two weeks (at one week the late edge sat at exactly +7, the
+  censoring point). Out of sample on Sep 23: 60.8% inside with 20.3% still
+  waiting, against 43 to 50% for the fixed rule on the same days. The case page
+  and the calculator print it; farther out the pace rule stays and says it can't
+  be tested yet. Rival C's method re-run on every decided case: typically 11 to
+  12 days off and early, within a week 28 to 30%; ours 3 to 4 and 71 to 79%.
+- **Oct 8: wage-request day.** Requests in process filed earlier (same day half)
+  over DOL's measured exits: on Sep 23, 2,728 decided, typically 2 days off,
+  99.5% within a week; the month method was 15 days off from mid-month. Shipped
+  on the lookup, recorded as `pwd-day`. One start day so far: the test grows nightly.
+- **Oct 8: subscribers.** 12 decided subscriber cases replayed: typically 3 days
+  off, 11 of 12 within a week. From Oct 8 each subscriber's date is recorded once
+  (`watched`), never sent to a rival, counts only on the public page.
+- **Oct 8: RFI.** The stage curve crossed its median: of 324 RFIs watched 30 days,
+  276 had left on day 30 (AILA's summary of an OFLC panel says 30 days to respond;
+  no DOL text found). DOL's 2018 webinars said "usually fifteen days" for the old
+  system's reconsideration RFIs. Recommended: date an RFI case from its RFI day + 30.
+- **Oct 8: H-2B assignment groups** (84 FR 7399, Mar 4 2019; DOL's per-case group
+  files). January 2026: group A decided a median 41 days after filing, H 125, each
+  group's middle half about two weeks. January 2025's groups predict January 2026's
+  within 0 to 14 days (2 to 8 scaled by the 15% more applications). One pair of
+  years: a lead to build before Jan 5 2027, when DOL lists the next groups.
+- **Oct 8: filing chart.** For 4,152 readers between the two charts (27 lines), the
+  pace was typically 2.7 months off, the filing chart's learned lag 3.0 (running
+  late), their average 2.9. The pace stays; the comparison stays in the backtest.
 
 - **Oct 7 (night): the PERM range.** Held 29% of 8,023 because it's about a week
   wide and drawn mostly after the date, while DOL decides a few days before it

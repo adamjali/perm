@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { estimatePwdQueue } from "@/lib/perm";
+import { estimatePwdDay, estimatePwdQueue } from "@/lib/perm";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
+import { getPwdDayData } from "@/lib/turso/pwdDayQueue";
+import { easternDay } from "@/lib/time";
 import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import {
   lookupPwdCaseOutcome,
@@ -142,11 +144,12 @@ function Determination({ d }: { d: PwdDisclosedRow }) {
 }
 
 export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
-  const [{ row, dolMiss }, disclosed, est] = await Promise.all([
+  const [{ row, dolMiss }, disclosed, est, dayData] = await Promise.all([
     // A failure to read our own table is also "could not settle it", never "no record".
     lookupPwdCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "records" as const })),
     lookupPwdDetermination(caseNumber).catch(() => null),
     getPwdEstimatorData().catch(() => null),
+    getPwdDayData().catch(() => null),
   ]);
 
   if (!row && disclosed) {
@@ -245,6 +248,19 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
         })
       : null;
   const notPerm = row.visaType !== null && row.visaType.toUpperCase() !== "PERM";
+  // THE DAY, for a PERM request still in line: the requests in process filed
+  // before it over DOL's measured pace (estimatePwdDay). The month above stays
+  // the fallback when the count is missing or stale.
+  const dayEst =
+    !notPerm && dayData && row.filingDate && row.status.trim().toUpperCase() === "IN PROCESS"
+      ? estimatePwdDay({
+          filingDate: row.filingDate.slice(0, 10),
+          today: easternDay(),
+          queue: dayData.queue,
+          measuredRange: dayData.measuredRange,
+        })
+      : null;
+  const dated = dayEst && dayEst.kind === "estimate" ? dayEst : null;
 
   return (
     <div className="space-y-6">
@@ -336,10 +352,27 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
               <div className="border-2 border-border bg-card p-4">
                 <dt className="text-sm font-bold text-foreground/70">Estimated determination</dt>{" "}
                 <dd className="mt-1 font-heading text-2xl font-black">
-                  {estimate.estimatedMonth ? formatMonth(estimate.estimatedMonth) : "Not enough history yet"}
+                  {dated
+                    ? `Around ${day(dated.date)}`
+                    : estimate.estimatedMonth
+                      ? formatMonth(estimate.estimatedMonth)
+                      : "Not enough history yet"}
                 </dd>
               </div>
             </dl>
+          ) : null}{" "}
+          {dated ? (
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
+              {dated.rangeFrom === "measured"
+                ? "Going by how far recent determinations landed from their dates, between "
+                : "If DOL keeps to its fastest or slowest recent pace, between "}
+              <b>{day(dated.earliest)}</b> and <b>{day(dated.latest)}</b>.{" "}
+              {formatInt(dated.requestsAhead)} PERM wage requests filed before this one are still in process,
+              and DOL has been finishing about {formatInt(Math.round(dated.pace))} a day.
+              {dayData?.tested
+                ? ` Tested on ${formatInt(dayData.tested.decided)} requests DOL has since decided, the date was typically ${dayData.tested.typicalMissDays} ${dayData.tested.typicalMissDays === 1 ? "day" : "days"} off${dayData.tested.within7Share !== null ? `, and ${Math.round(dayData.tested.within7Share * 100)}% were within a week` : ""}.`
+                : ""}
+            </p>
           ) : null}{" "}
           <p className="mt-4 text-sm leading-relaxed text-foreground/70">
             An estimate only. It assumes DOL keeps clearing requests at its
