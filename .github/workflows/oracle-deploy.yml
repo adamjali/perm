@@ -95,6 +95,24 @@ jobs:
       - name: Date each page by its last change (the sitemap's lastmod)
         run: node scripts/page_dates.mjs
 
+      # The compiler's cache from the last deploy: webpack's module cache and
+      # TypeScript's incremental build info. Without it every build compiled
+      # from nothing ("No build cache found": compile 2.4 min, TypeScript 43 s
+      # on Oct 8 2026). Only those two, never all of .next/cache: its fetch and
+      # data caches hold saved answers for up to a week, and a build that
+      # restored them would prerender pages from last week's figures. Each
+      # deploy saves its own entry (keyed by commit) and restores the newest
+      # entry for the same lockfile.
+      - name: Restore the compiler's cache from the last deploy
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            v2/.next/cache/webpack
+            v2/.next/cache/.tsbuildinfo
+          key: next-compile-${{ runner.arch }}-${{ hashFiles('v2/pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            next-compile-${{ runner.arch }}-${{ hashFiles('v2/pnpm-lock.yaml') }}-
+
       - name: Build
         env:
           TURSO_DATABASE_URL: http://127.0.0.1:18080

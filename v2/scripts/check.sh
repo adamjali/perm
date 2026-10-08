@@ -20,11 +20,17 @@ base=${1:-origin/main}
 PY=python3
 [ -x /usr/local/Caskroom/miniconda/base/bin/python3 ] && PY=/usr/local/Caskroom/miniconda/base/bin/python3
 
+# Each step says how long it took, and the end gives the total.
+t0=$(date +%s); tlast=$t0
+took(){ now=$(date +%s); echo "   ($(( now - tlast ))s)"; tlast=$now; }
+
 echo "== 1/4 typecheck (app, Convex, extension, SDK)"
 pnpm -s typecheck
+took
 
 echo "== 2/4 pyflakes over the data scripts"
 "$PY" -m pyflakes scripts/*.py scripts/oracle/*.py
+took
 
 echo "== 3/4 data script tests"
 failed=0; n=0; log=$(mktemp)
@@ -35,6 +41,9 @@ done
 rm -f "$log"
 echo "$n script tests, $failed failed"
 [ "$failed" -eq 0 ]
+took
 
 echo "== 4/4 vitest: tests affected since $base"
 pnpm exec vitest run --changed "$base"
+took
+echo "== passed in $(( $(date +%s) - t0 ))s"

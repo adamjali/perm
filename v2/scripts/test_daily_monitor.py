@@ -294,6 +294,26 @@ def main() -> int:
     check("Last 2 days: 44 keyed calls from 2 accounts" in alines, "the week's keyed calls")
     check(dm.api_lines([], "2026-10-08")[0] == "No API calls recorded yet", "an empty table says so")
 
+    # How long things take: passing runs only, a deploy split into its steps.
+    T, D = dm.TESTS_PATH, dm.DEPLOY_PATH
+    sruns = [
+        {"path": T, "status": "completed", "conclusion": "success", "run_started_at": "2026-10-08T17:43:00Z", "updated_at": "2026-10-08T17:45:00Z"},
+        {"path": T, "status": "completed", "conclusion": "success", "run_started_at": "2026-10-08T12:00:00Z", "updated_at": "2026-10-08T12:03:00Z"},
+        {"path": T, "status": "completed", "conclusion": "failure", "run_started_at": "2026-10-08T10:00:00Z", "updated_at": "2026-10-08T10:30:00Z"},
+        {"path": D, "status": "completed", "conclusion": "success", "id": 7, "run_started_at": "2026-10-08T17:43:00Z", "updated_at": "2026-10-08T17:53:00Z"},
+        {"path": D, "status": "in_progress", "conclusion": None, "id": 8, "run_started_at": "2026-10-08T18:00:00Z"},
+    ]
+    steps = {7: [{"name": "Build", "started_at": "2026-10-08T17:44:00Z", "completed_at": "2026-10-08T17:48:00Z"},
+                 {"name": "Wait for the full test suite to pass for this commit", "started_at": "2026-10-08T17:48:00Z", "completed_at": "2026-10-08T17:48:00Z"},
+                 {"name": "Deploy to the idle copy, health-check, switch", "started_at": "2026-10-08T17:48:00Z", "completed_at": "2026-10-08T17:53:00Z"}]}
+    ssum, slines = dm.speed_lines(sruns, steps)
+    check(ssum == "Push to live typically 10.0 min, tests 2.5 min", f"the speed summary ({ssum})")
+    check("Tests: 2 runs, typically 2.5 min (slowest 3.0)" in slines, "a failed test run is not timed")
+    check(any("build 4.0, waiting for tests 0.0, server 5.0" in x for x in slines), "the deploy's parts, by step name")
+    deploy_yml = (HERE.parent.parent / ".github" / "workflows" / "oracle-deploy.yml").read_text()
+    check(all(f"name: {n}\n" in deploy_yml for n, _ in dm.DEPLOY_STEPS), "every timed step name is one oracle-deploy.yml has")
+    check(dm.speed_lines([], {})[0] == "No deploys or test runs", "an empty day says so")
+
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0
 

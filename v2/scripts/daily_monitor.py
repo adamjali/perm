@@ -167,20 +167,36 @@ def recovered(w: dict) -> bool:
     return bool(w["failed"]) and w["last_ok"] > w["last_fail"]
 
 
-def github_section(since: dt.datetime) -> dict:
+def gh_headers() -> dict:
     token = os.environ.get("GITHUB_TOKEN")
     headers = {"Accept": "application/vnd.github+json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    runs, page = [], 1
+    return headers
+
+
+_RUNS: dict[str, list] = {}
+
+
+def runs_since(since: dt.datetime) -> list[dict]:
+    """Every workflow run created since `since`, read once per report."""
     created = since.strftime("%Y-%m-%dT%H:%M:%SZ")
-    while page <= 5:
-        d = http_json(f"https://api.github.com/repos/{REPO}/actions/runs"
-                      f"?created=%3E%3D{created}&per_page=100&page={page}", headers)
-        runs += d.get("workflow_runs", [])
-        if len(d.get("workflow_runs", [])) < 100:
-            break
-        page += 1
+    if created not in _RUNS:
+        runs, page = [], 1
+        while page <= 5:
+            d = http_json(f"https://api.github.com/repos/{REPO}/actions/runs"
+                          f"?created=%3E%3D{created}&per_page=100&page={page}", gh_headers())
+            runs += d.get("workflow_runs", [])
+            if len(d.get("workflow_runs", [])) < 100:
+                break
+            page += 1
+        _RUNS[created] = runs
+    return _RUNS[created]
+
+
+def github_section(since: dt.datetime) -> dict:
+    headers = gh_headers()
+    runs = runs_since(since)
     try:
         listed = http_json(f"https://api.github.com/repos/{REPO}/actions/workflows?per_page=100", headers)
         names = {w["path"]: w["name"] for w in listed.get("workflows", []) if w.get("path") and w.get("name")}
@@ -217,6 +233,71 @@ def github_section(since: dt.datetime) -> dict:
         tail = f"{still} workflow{'s' if still != 1 else ''} still failing"
     summary = f"{len(runs)} runs across {len(by)} workflows, {tail}"
     return section("github", "GitHub Actions (24 h)", worst(statuses), summary, lines)
+
+
+# ── how long things take ──────────────────────────────────────────────────
+
+TESTS_PATH = ".github/workflows/test.yml"
+DEPLOY_PATH = ".github/workflows/oracle-deploy.yml"
+# The deploy's own step names (oracle-deploy.yml), read for its parts.
+DEPLOY_STEPS = (("Build", "build"),
+                ("Wait for the full test suite to pass for this commit", "waiting for tests"),
+                ("Deploy to the idle copy, health-check, switch", "server"))
+
+
+def minutes(start, end) -> float | None:
+    try:
+        a = dt.datetime.fromisoformat(str(start).replace("Z", "+00:00"))
+        b = dt.datetime.fromisoformat(str(end).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return max(0.0, (b - a).total_seconds() / 60)
+
+
+def typical(xs: list[float]) -> str:
+    return f"{statistics.median(xs):.1f}"
+
+
+def speed_lines(runs: list[dict], deploy_steps: dict) -> tuple[str, list[str]]:
+    """Pure: (summary, lines) for the test runs and deploys that passed in the
+    window. A deploy's time is from its push to the switch (the run's own
+    span); `deploy_steps` maps a run id to its steps, for the parts."""
+    def done(path):
+        return [r for r in runs if r.get("path") == path and r.get("status") == "completed"
+                and r.get("conclusion") == "success"]
+    tests = [m for r in done(TESTS_PATH) if (m := minutes(r.get("run_started_at") or r.get("created_at"), r.get("updated_at"))) is not None]
+    deploys = done(DEPLOY_PATH)
+    total = [m for r in deploys if (m := minutes(r.get("run_started_at") or r.get("created_at"), r.get("updated_at"))) is not None]
+    lines = []
+    if tests:
+        lines.append(f"Tests: {len(tests)} run{'s' if len(tests) != 1 else ''}, typically {typical(tests)} min (slowest {max(tests):.1f})")
+    else:
+        lines.append("Tests: no passing run in the last 24 hours")
+    if total:
+        parts = []
+        for name, label in DEPLOY_STEPS:
+            xs = [m for r in deploys for st in deploy_steps.get(r.get("id"), []) if st.get("name") == name
+                  if (m := minutes(st.get("started_at"), st.get("completed_at"))) is not None]
+            if xs:
+                parts.append(f"{label} {typical(xs)}")
+        lines.append(f"Deploys: {len(total)}, push to live typically {typical(total)} min (slowest {max(total):.1f})"
+                     + (f": {', '.join(parts)}" if parts else ""))
+        summary = f"Push to live typically {typical(total)} min" + (f", tests {typical(tests)} min" if tests else "")
+    else:
+        lines.append("Deploys: none in the last 24 hours")
+        summary = f"No deploys; tests typically {typical(tests)} min" if tests else "No deploys or test runs"
+    return summary, lines
+
+
+def speed_section(since: dt.datetime) -> dict:
+    runs = runs_since(since)
+    steps = {}
+    for r in runs:
+        if r.get("path") == DEPLOY_PATH and r.get("conclusion") == "success":
+            d = http_json(f"https://api.github.com/repos/{REPO}/actions/runs/{r['id']}/jobs", gh_headers())
+            steps[r["id"]] = [st for j in d.get("jobs", []) for st in j.get("steps", [])]
+    summary, lines = speed_lines(runs, steps)
+    return section("speed", "How long things take (24 h)", "ok", summary, lines)
 
 
 # ── the ingest health check ───────────────────────────────────────────────
@@ -774,6 +855,7 @@ def build(now: dt.datetime) -> dict:
     sections = [
         guarded("health", "Ingests and data freshness", health_section),
         guarded("github", "GitHub Actions (24 h)", github_section, since),
+        guarded("speed", "How long things take (24 h)", speed_section, since),
         guarded("site", "The site", site_section),
         guarded("data", "The data", data_section, now_ms),
         guarded("traffic", "Traffic", traffic_section),
