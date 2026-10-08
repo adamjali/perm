@@ -5,9 +5,11 @@ import {
   chanceOfSplit,
   chanceWords,
   letterFor,
+  parseSupplyDivision,
   readMethods,
   readOurs,
   readRival,
+  readSupplyDivision,
   settlesFrom,
 } from "./verdict";
 
@@ -169,5 +171,36 @@ describe("readMethods", () => {
       "DOL's published average, which the case page shows for cases DOL's queue has just passed: 19 graded, typically 6 days off, 7 more than two weeks off, and its dates run late.",
     );
     expect(out[1]).toBe("Our main method (cases ahead of yours, at DOL's measured pace): 11 graded, typically 4 days off, and its dates run late.");
+  });
+});
+
+describe("readSupplyDivision", () => {
+  const gap = (pace: number, supply: number, tie = 0) => ({
+    pace: { reached: pace + supply + tie, readers: 136, typicalMissMonths: 1.3, stillWaitingPastEstimate: 43 },
+    supply: { reached: pace + supply + tie, typicalMissMonths: 5.1, stillWaitingPastEstimate: 17 },
+    closerWhenReached: { pace, supply, tie },
+  });
+  const doc = (byGap: Record<string, ReturnType<typeof gap>>) =>
+    JSON.stringify({ byGap: {}, supplyDivision: { tableVYear: 2024, inventoryReports: ["2025-12-03", "2026-08-05"], byGap } });
+
+  it("says who was closer, whether it could be luck, and what is still waiting", () => {
+    const lines = readSupplyDivision(parseSupplyDivision(doc({ "90": gap(66, 8) })));
+    expect(lines[0]).toContain("2 inventory reports since 2025-12-03");
+    expect(lines[0]).toContain("robots.txt");
+    expect(lines[1]).toContain("the pace was closer on 66, the division on 8");
+    expect(lines[1]).toContain("unlikely to be luck");
+    expect(lines[1]).toContain("43 by the pace, 17 by the division");
+  });
+
+  it("calls a close split possible luck, and a gap with nothing current says so", () => {
+    const lines = readSupplyDivision(parseSupplyDivision(doc({ "180": gap(5, 4), "365": gap(0, 0) })));
+    expect(lines.find((l) => l.startsWith("Dates 6 months"))).toContain("could still be luck");
+    expect(lines.find((l) => l.startsWith("Dates a year"))).toBe("Dates a year past the cutoff: none has come current yet.");
+  });
+
+  it("reads nothing from a doc without the comparison, or one that isn't JSON", () => {
+    expect(readSupplyDivision(parseSupplyDivision(JSON.stringify({ byGap: {} })))).toEqual([]);
+    expect(readSupplyDivision(parseSupplyDivision("not json"))).toEqual([]);
+    expect(readSupplyDivision(parseSupplyDivision(null))).toEqual([]);
   });
 });

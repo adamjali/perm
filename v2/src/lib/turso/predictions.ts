@@ -12,7 +12,7 @@ import {
   type Summary,
 } from "@/lib/scorecard/score";
 import { scorecardAlarms } from "@/lib/scorecard/alarms";
-import { readMethods, readOurs, readRival } from "@/lib/scorecard/verdict";
+import { parseSupplyDivision, readMethods, readOurs, readRival, readSupplyDivision } from "@/lib/scorecard/verdict";
 import { SETTLED_BY_FILE_STATUSES } from "@/lib/seasonalDetails";
 import { timingView } from "@/lib/seasonalTiming";
 import { BULLETIN_FIRST_CAPTURES } from "@/lib/bulletinCaptures";
@@ -553,6 +553,9 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
   const h2h = headToHead(all.map((r) => ({ ...toRow(r), caseNumber: r.case_number })), today);
   const mine = perm.bySource.ours;
   const backtest = await getEstimatorBacktest().catch(() => null);
+  const bulletinDoc = await one<{ json: string }>(
+    `SELECT json FROM perm_docs WHERE key = 'bulletin_backtest'`,
+  ).catch(() => null);
   const ages = await rows<{ key: string; computed_at: number | string }>(
     `SELECT key, computed_at FROM perm_docs WHERE key IN ('estimator_backtest', 'seasonal_backtest', 'pwd_backtest')`,
   ).catch(() => []);
@@ -580,6 +583,9 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
         ? [...readOurs(mine.all, mine.byHorizon, perm.since, backtest), ...readMethods(mine.byModel)]
         : [],
       rivals: Object.entries(h2h).map(([src, h]) => readRival(src, h)),
+      // Priority dates: our pace against dividing by yearly visas, on the same
+      // dates (the weekly bulletin backtest).
+      priorityDate: readSupplyDivision(parseSupplyDivision(bulletinDoc?.json ? String(bulletinDoc.json) : null)),
     },
   };
   const now = Date.now();

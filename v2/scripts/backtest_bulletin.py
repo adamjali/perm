@@ -15,6 +15,17 @@ category went current). A reader still waiting at the newest bulletin is
 counted at the months already waited when that is past the estimate: a floor,
 the same rule the PERM scorecard uses for a case still waiting past its date.
 
+THE OTHER WAY TO DO IT, ON THE SAME DATES. A rival forecasts the same wait by
+dividing the people ahead of a date by the line's yearly green cards. Its API
+is closed to scripts by its robots.txt and its inputs can't be rebuilt from
+public files (its India EB-2 queue is a quarter of USCIS's; its supply isn't
+Table V's), so the approach is re-run on primary data instead: USCIS's own
+I-485 inventory ahead of the date, over the line's green cards in the newest
+Table V year. That is also what the green card line's years figure does. It
+can only start where an inventory report exists (we hold them from December
+2025), so it is scored on far fewer dates than the pace, and both methods are
+scored on exactly those dates (`supplyDivision`).
+
 Read-only unless `--write`, which stores the summary in
 `perm_docs['bulletin_backtest']` for /estimate-scorecard and the line pages.
 
@@ -159,6 +170,107 @@ def backtest(bulletins: list[tuple[str, dict]]) -> dict:
     }
 
 
+# The supply-division comparison: the lines Table V counts by chargeability,
+# and the chargeability names USCIS and Table V use for the bulletin's columns.
+SUPPLY_COLUMN = {"EB1": "1st", "EB2": "2nd", "EB3": "3rd", "EW3": "3rd_other_workers"}
+TABLE_V_COUNTRY = {"china": "china", "india": "india", "mexico": "mexico", "philippines": "philippines", "worldwide": "row"}
+USCIS_COUNTRY = {"China": "china", "India": "india", "Mexico": "mexico", "Philippines": "philippines",
+                 "Rest of the World": "worldwide"}
+SUPPLY_GAPS = (90, 180, 365)
+
+
+def ahead_of(cells: list[tuple[int, int]], target: date) -> float:
+    """I-485s pending with a priority date before `target`: every earlier month
+    whole, and the target's own month by the share of it already past (the
+    same proration the PERM queue count uses). `cells` is (month index, count);
+    USCIS's "prior years" row is month index 0, before every real month."""
+    t = target.year * 12 + target.month - 1
+    dim = (date(target.year + (target.month == 12), target.month % 12 + 1, 1) - date(target.year, target.month, 1)).days
+    total = 0.0
+    for m, n in cells:
+        if m < t:
+            total += n
+        elif m == t:
+            total += n * (target.day - 1) / dim
+    return total
+
+
+def supply_division(bulletins: list[tuple[str, dict]], inventory: dict[str, dict], table_v: dict | None) -> dict | None:
+    """Both methods on the same readers: every inventory report, line and
+    country with a dated cutoff in that month's bulletin, GAP days past it."""
+    if not table_v or not inventory:
+        return None
+    by = table_v.get("employment_by_chargeability") or {}
+    pairs: dict[int, dict[str, list]] = {g: {"pace": [], "supply": []} for g in SUPPLY_GAPS}
+    closer: dict[int, dict[str, int]] = {g: {"pace": 0, "supply": 0, "tie": 0} for g in SUPPLY_GAPS}
+    for cat, column in SUPPLY_COLUMN.items():
+        for country in COUNTRIES:
+            per_year = (by.get(TABLE_V_COUNTRY[country]) or {}).get(column)
+            if not per_year:
+                continue
+            series = []
+            for month, chart in bulletins:
+                c = parse_cutoff(((chart or {}).get(cat) or {}).get(country))
+                if c:
+                    series.append((month, c))
+            index = {m: i for i, (m, _) in enumerate(series)}
+            for as_of, cells_by in inventory.items():
+                i = index.get(as_of[:7])
+                if i is None or i == len(series) - 1 or series[i][1][0] != "date":
+                    continue
+                pace = per_month(series, i)
+                cells = cells_by.get((cat, country))
+                if not pace or not cells:
+                    continue
+                for g in SUPPLY_GAPS:
+                    target = date.fromordinal(series[i][1][1].toordinal() + g)
+                    actual, reached = months_to_reach(series, i, target)
+                    by_pace = g / pace
+                    by_supply = ahead_of(cells, target) / (per_year / 12)
+                    pairs[g]["pace"].append((by_pace, actual, reached))
+                    pairs[g]["supply"].append((by_supply, actual, reached))
+                    if reached:
+                        a, b = abs(actual - by_pace), abs(actual - by_supply)
+                        closer[g]["pace" if a < b else "supply" if b < a else "tie"] += 1
+    if not any(pairs[g]["pace"] for g in SUPPLY_GAPS):
+        return None
+    return {
+        "method": "USCIS's I-485s ahead of the date over the line's yearly green cards (Table V), on the same dates as the pace",
+        "tableVYear": table_v.get("fiscal_year"),
+        "inventoryReports": sorted(inventory),
+        "byGap": {
+            str(g): {"pace": score(pairs[g]["pace"]), "supply": score(pairs[g]["supply"]), "closerWhenReached": closer[g]}
+            for g in SUPPLY_GAPS if pairs[g]["pace"]
+        },
+    }
+
+
+def read_inventory(db: Turso) -> dict[str, dict]:
+    """{as_of: {(category, country): [(month index, count)]}} from USCIS's
+    reports, both statuses (the line counts everyone ahead, current or not)."""
+    out: dict[str, dict] = {}
+    for as_of, cat, country, year, month, n in query_rows(
+        db,
+        "SELECT as_of, category, country, pd_year, pd_month, SUM(count) FROM i485_inventory "
+        "GROUP BY as_of, category, country, pd_year, pd_month",
+        [],
+    ):
+        key = USCIS_COUNTRY.get(str(country))
+        if not key or str(cat) not in SUPPLY_COLUMN:
+            continue
+        idx = 0 if not str(year).isdigit() else int(year) * 12 + int(month) - 1
+        out.setdefault(str(as_of), {}).setdefault((str(cat), key), []).append((idx, int(n)))
+    return out
+
+
+def newest_table_v(db: Turso) -> dict | None:
+    rows = query_rows(db, "SELECT json FROM perm_docs WHERE key = 'visa_annual_limits'", [])
+    if not rows or not rows[0][0]:
+        return None
+    years = (json.loads(rows[0][0]).get("table_v") or {})
+    return years[max(years, key=int)] if years else None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--write", action="store_true")
@@ -171,6 +283,9 @@ def main() -> int:
         "bulletins": [bulletins[0][0], bulletins[-1][0]] if bulletins else None,
         **backtest(bulletins),
     }
+    supply = supply_division(bulletins, read_inventory(db), newest_table_v(db))
+    if supply:
+        out["supplyDivision"] = supply
     print(json.dumps(out, indent=2))
     if a.write and out.get("byGap"):
         write_doc(db, "bulletin_backtest", out)

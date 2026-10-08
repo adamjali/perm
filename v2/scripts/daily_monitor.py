@@ -363,6 +363,10 @@ def data_section(now_ms: int) -> dict:
             lines.append(f"Scorecard, {r.get('name')}: {r.get('headline')}. " + " ".join(points))
         for line in (readings.get("ours") or [])[:2]:
             lines.append(f"Scorecard, ours: {line}")
+        # Priority dates: the first tested gap that has come current, after
+        # the line that says what is compared.
+        for line in (readings.get("priorityDate") or [])[:2]:
+            lines.append(f"Scorecard, priority dates: {line}")
         # The other estimates, one line each, from the same doc.
         for key, label in (("pwd", "wage-request months"), ("seasonal", "H-2A, H-2B and CW-1 dates"),
                            ("bulletin", "visa bulletin release days")):

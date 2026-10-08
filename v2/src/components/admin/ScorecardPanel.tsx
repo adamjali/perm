@@ -38,7 +38,7 @@ import {
 interface Doc {
   perm: Summary;
   headToHead?: Record<string, HeadToHead>;
-  readings?: { ours: string[]; rivals: RivalReading[] };
+  readings?: { ours: string[]; rivals: RivalReading[]; priorityDate?: string[] };
   /** Oct 8 2026 on; older docs lack them. */
   pwd?: Summary;
   seasonal?: Summary;
@@ -226,6 +226,17 @@ export function ScorecardPanel() {
           <h2 id="sc-ours" className="font-heading text-xl font-black">What our own numbers say</h2>{" "}
           <ul className="mt-3 max-w-3xl list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/85">
             {ours.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}{" "}
+
+      {doc.readings?.priorityDate && doc.readings.priorityDate.length > 0 ? (
+        <section aria-labelledby="sc-pd" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+          <h2 id="sc-pd" className="font-heading text-xl font-black">Priority dates: our pace or dividing by visas</h2>{" "}
+          <ul className="mt-3 max-w-3xl list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/85">
+            {doc.readings.priorityDate.map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ul>

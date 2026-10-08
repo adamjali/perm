@@ -251,8 +251,21 @@ def table_v_link(report_html: str) -> str | None:
     return DIRECT_ORIGIN + m.group(1) if m else None
 
 
+# What a stored Table V year must carry to count as held. A year read by an
+# older parser lacks the newer fields, so it is read again and repaired: the
+# Sep 26 per-country rows never reached the stored FY2024 year, and the green
+# card line's years figure had nothing to divide by until Oct 7 2026.
+TABLE_V_FIELDS = ("employment_by_chargeability",)
+
+
+def table_v_held(held: dict, fy: int) -> bool:
+    entry = held.get("table_v", {}).get(str(fy))
+    return isinstance(entry, dict) and all(k in entry for k in TABLE_V_FIELDS)
+
+
 def discover(held: dict) -> tuple[bytes | None, bytes | None, str]:
-    """PDF bytes for any fiscal year State links that `held` lacks, plus a note."""
+    """PDF bytes for any fiscal year State links that `held` lacks (or holds
+    from an older parser), plus a note."""
     notes = []
     limits_pdf = table_v_pdf = None
     lim = newest_limits_link(fetch(DIRECT_STATS).decode("utf-8", "replace"))
@@ -262,11 +275,12 @@ def discover(held: dict) -> tuple[bytes | None, bytes | None, str]:
     elif lim:
         notes.append(f"limits FY{lim[0]} held")
     rep = newest_report_link(fetch(DIRECT_REPORTS).decode("utf-8", "replace"))
-    if rep and str(rep[0]) not in held.get("table_v", {}):
+    if rep and not table_v_held(held, rep[0]):
         tv = table_v_link(fetch(rep[1]).decode("utf-8", "replace"))
         if tv:
             table_v_pdf = fetch(tv)
-            notes.append(f"Table V FY{rep[0]} new")
+            stale = str(rep[0]) in held.get("table_v", {})
+            notes.append(f"Table V FY{rep[0]} {'read again (held from an older parser)' if stale else 'new'}")
         else:
             notes.append(f"report {rep[0]} has no Table V link yet")
     elif rep:

@@ -64,6 +64,28 @@ def main() -> int:
           len({w["365"]["readers"] for w in out["byWindow"].values()}), 1)
     check("the site's own window is named", out["siteWindow"], "since-2014")
 
+    # The supply-division comparison. Proration: a date on the 16th of a
+    # 30-day month counts the earlier months whole and half of its own.
+    cells = [(0, 10), (2025 * 12 + 0, 30), (2025 * 12 + 5, 60)]   # prior years, Jan 2025, Jun 2025
+    check("everyone ahead of a mid-June date", bt.ahead_of(cells, date(2025, 6, 16)), 10 + 30 + 60 * 15 / 30)
+    check("nobody in the date's own month counts on its 1st", bt.ahead_of(cells, date(2025, 6, 1)), 40)
+    # A steady cutoff, 30 days a month, and an inventory whose count ahead of
+    # the 90-day reader takes exactly three months at 120 visas a year: both
+    # methods say three months, the cutoff takes three, and they tie.
+    steady = [(month(i), {"EB2": {"india": (date(2010, 1, 1).fromordinal(date(2010, 1, 1).toordinal() + 30 * i)).strftime("%d%b%y").upper()}})
+              for i in range(40)]
+    as_of = month(30) + "-05"
+    cutoff = date(2010, 1, 1).fromordinal(date(2010, 1, 1).toordinal() + 30 * 30)
+    target = date.fromordinal(cutoff.toordinal() + 90)
+    inventory = {as_of: {("EB2", "india"): [(target.year * 12 + target.month - 2, 30)]}}
+    sd = bt.supply_division(steady, inventory, {"fiscal_year": 2024, "employment_by_chargeability": {"india": {"2nd": 120}}})
+    g90 = sd["byGap"]["90"]
+    check("both methods are scored on the same readers", (g90["pace"]["readers"], g90["supply"]["readers"]), (1, 1))
+    check("the division is people ahead over a month's visas", g90["supply"]["typicalMissMonths"], 0.0)
+    check("a dead heat is a tie, not a win", g90["closerWhenReached"], {"pace": 0, "supply": 0, "tie": 1})
+    check("no Table V year, no comparison", bt.supply_division(steady, inventory, None), None)
+    check("no inventory, no comparison", bt.supply_division(steady, {}, {"employment_by_chargeability": {}}), None)
+
     print(f"\n{len(FAILED)} failed")
     return 1 if FAILED else 0
 

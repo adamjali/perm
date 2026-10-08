@@ -285,3 +285,63 @@ export const GRADE_SCALE = "A within 3 days, B within a week, C within two weeks
 
 /** The miss a grade is given on: counting the late-and-waiting ones when the cell has them. */
 export const gradedMiss = (c: Cell) => (c.missAtLeastDays ?? c.typicalMissDays);
+
+/**
+ * Priority dates: the site's pace against dividing by yearly visas, on the
+ * same dates (scripts/backtest_bulletin.py, `supplyDivision`). The approach
+ * is a rival's; its API is closed to scripts and its inputs can't be rebuilt,
+ * so it is re-run on USCIS's inventory and Table V and named as an approach,
+ * never as the rival's own figures.
+ */
+export interface SupplyGap {
+  pace: { reached: number; readers: number; typicalMissMonths: number | null; stillWaitingPastEstimate: number };
+  supply: { reached: number; typicalMissMonths: number | null; stillWaitingPastEstimate: number };
+  closerWhenReached: { pace: number; supply: number; tie: number };
+}
+
+export interface SupplyDivision {
+  tableVYear: number | null;
+  inventoryReports: string[];
+  byGap: Record<string, SupplyGap>;
+}
+
+export function parseSupplyDivision(json: string | null | undefined): SupplyDivision | null {
+  if (!json) return null;
+  try {
+    const sd = (JSON.parse(json) as { supplyDivision?: SupplyDivision }).supplyDivision;
+    return sd && sd.byGap && typeof sd.byGap === "object" ? sd : null;
+  } catch {
+    return null;
+  }
+}
+
+const GAP_WORDS: Record<string, string> = { "90": "3 months", "180": "6 months", "365": "a year" };
+const monthWord = (n: number) => `${n.toFixed(1)} ${n === 1 ? "month" : "months"}`;
+
+export function readSupplyDivision(sd: SupplyDivision | null): string[] {
+  if (!sd) return [];
+  const reports = sd.inventoryReports.length;
+  const out: string[] = [
+    `Our "months until current" (the cutoff's past pace) against dividing the people ahead by the line's yearly green cards, the approach a rival uses, re-run on USCIS's ${formatInt(reports)} inventory ${reports === 1 ? "report" : "reports"} since ${sd.inventoryReports[0] ?? "-"} and Table V for ${sd.tableVYear ?? "-"}. Its own figures can't be fetched (its robots.txt closes the API) or rebuilt.`,
+  ];
+  for (const [gap, g] of Object.entries(sd.byGap)) {
+    const words = GAP_WORDS[gap];
+    if (!words) continue;
+    const { pace, supply, tie } = g.closerWhenReached;
+    if (pace + supply + tie === 0) {
+      out.push(`Dates ${words} past the cutoff: none has come current yet.`);
+      continue;
+    }
+    const p = chanceOfSplit(pace, supply);
+    const luck = p === null ? "" : p < CLEAR_P
+      ? ` That split is unlikely to be luck (${chanceWords(p)}).`
+      : ` That could still be luck (${chanceWords(p)}).`;
+    const misses = g.pace.typicalMissMonths !== null && g.supply.typicalMissMonths !== null
+      ? ` Typical miss: the pace ${monthWord(g.pace.typicalMissMonths)}, the division ${monthWord(g.supply.typicalMissMonths)}.`
+      : "";
+    out.push(
+      `Dates ${words} past the cutoff that came current (${formatInt(g.pace.reached)} of ${formatInt(g.pace.readers)}): the pace was closer on ${formatInt(pace)}, the division on ${formatInt(supply)}${tie ? `, ${formatInt(tie)} tied` : ""}.${luck}${misses} Still waiting past the estimate: ${formatInt(g.pace.stillWaitingPastEstimate)} by the pace, ${formatInt(g.supply.stillWaitingPastEstimate)} by the division; each becomes a miss once it comes current.`,
+    );
+  }
+  return out;
+}

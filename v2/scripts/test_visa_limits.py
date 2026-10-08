@@ -70,6 +70,12 @@ def main() -> int:
     check(tv is not None and tv.endswith("/Table%20V.pdf"), "the whole Table V is taken, not its parts or Table VI", f)
     check(v.newest_limits_link("<p>nothing</p>") is None and v.table_v_link("") is None,
           "a page with no link finds nothing rather than guessing", f)
+    # A year stored by an older parser is read again, so a parser change
+    # repairs what is held instead of waiting for the next fiscal year.
+    full = {"table_v": {"2024": {"fiscal_year": 2024, "employment_by_chargeability": {}}}}
+    old_parser = {"table_v": {"2024": {"fiscal_year": 2024, "employment": {}}}}
+    check(v.table_v_held(full, 2024) and not v.table_v_held(old_parser, 2024) and not v.table_v_held({}, 2024),
+          "a Table V year missing the per-country rows doesn't count as held", f)
 
     print("\nALL PASS" if not f else f"\n{len(f)} FAILED")
     return 1 if f else 0
