@@ -8848,8 +8848,11 @@ deployed: `755f6817` and `3427ce10` went live with CI failing on pyflakes. A pus
 its own and is never cancelled, so every deploy has a run to wait for; a pull request's runs still cancel.
 
 **`pnpm check`** (`scripts/check.sh`): both typecheckers, pyflakes, every data script test, and
-`vitest run --changed origin/main`. A test that reads source as a file (the gates that scan `src/`) isn't
-"affected" by an import graph, so this is the quick first look; CI is the whole one.
+`vitest run --changed origin/main`, then every test file that names a changed file (by basename, or by
+repo path for names many files share). The second run exists because `--changed` follows imports only: on
+Oct 8 a change to the Python ingest's `FINAL_STATUSES` passed `pnpm check` and turned CI red, because
+`caseDiscovery.test.ts` reads that Python file as text. A gate that scans all of `src/` without naming a
+file is still missed, so this is the quick first look; CI is the whole one.
 
 **The old Mac swaps under the suite**: 8 GB with Chrome and several Claude sessions, so a full local run sat
 at a load average of 50 to 80 with 2.8 GB in swap on Oct 8. Its local time says more about the memory than

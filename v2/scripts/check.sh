@@ -44,6 +44,25 @@ echo "$n script tests, $failed failed"
 took
 
 echo "== 4/4 vitest: tests affected since $base"
+# --changed follows imports, so a test that reads a changed file as text (a
+# parity test reading a Python ingest's status list, a gate scanning src/)
+# isn't picked up. Add every test file that names a changed file: by basename,
+# or by repo path for names many files share (page.tsx, route.ts, index.ts).
+extra=""
+for f in $( { git diff --name-only --relative "$base" 2>/dev/null; git ls-files --others --exclude-standard; } | sort -u); do
+  b=$(basename "$f")
+  case "$b" in page.tsx|layout.tsx|route.ts|index.ts|index.tsx|loading.tsx|types.ts|utils.ts) needle="$f" ;; *) needle="$b" ;; esac
+  extra="$extra $(grep -rlF --include='*.test.ts' --include='*.test.tsx' -- "$needle" src convex test-utils sdk extension 2>/dev/null | xargs -n1 basename 2>/dev/null | tr '\n' ' ')"
+done
+extra=$(printf '%s\n' $extra | sort -u | tr '\n' ' ')
 pnpm exec vitest run --changed "$base"
+# A second run, because vitest treats file arguments beside --changed as a
+# filter on the changed set, not an addition to it. Basenames, because the
+# arguments are regexes and a route-group path like (site) matches nothing.
+if [ -n "$(printf '%s' "$extra" | tr -d ' ')" ]; then
+  echo "   and the tests that read a changed file as text:"
+  # shellcheck disable=SC2086
+  pnpm exec vitest run $extra
+fi
 took
 echo "== passed in $(( $(date +%s) - t0 ))s"
