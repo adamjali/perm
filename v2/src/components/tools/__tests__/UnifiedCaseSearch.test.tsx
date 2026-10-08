@@ -187,7 +187,9 @@ describe("the reason a control is off", () => {
 });
 
 describe("a long answer is shown a page at a time, and says so", () => {
-  it("draws 100 rows, counts the rest, and shows more on request", () => {
+  // Renders 230 table rows three times; about 5 s on the old Mac when idle, so
+  // a loaded machine needs more than the project's 10 s.
+  it("draws 100 rows, counts the rest, and shows more on request", { timeout: 30_000 }, () => {
     const many = Array.from({ length: 230 }, (_, i) => row(`G-100-24001-${String(100000 + i).padStart(6, "0")}`));
     usePublicQuery.mockImplementation((url: string) =>
       url === "skip" ? { data: undefined, failed: false } : { data: answer({ rows: many, counts: { perm: 230, pwd: 0, lca: 0, seasonal: 0 } }), failed: false },

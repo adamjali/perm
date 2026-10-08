@@ -26,10 +26,11 @@ Use the right command for the situation - you rarely need the full 10-minute sui
 # While coding - watch mode re-tests on save (recommended)
 pnpm test
 
-# Quick sanity check before commit
-pnpm test:fast
+# Before a push: typecheck, the data scripts' lint and tests, and the
+# vitest tests that import anything changed since origin/main
+pnpm check
 
-# Only test what you changed since last commit
+# Just the affected vitest tests
 pnpm test:changed
 
 # Run specific test file
@@ -69,8 +70,9 @@ pnpm test:convex      # Convex integration tests only
 |---------|---------|-------------|
 | `pnpm test:fast` | Unit + PERM tests (~40s, 1300+ tests) | During development |
 | `pnpm test:perm` | PERM business logic only | Working on calculators/validators |
-| `pnpm test:changed` | Changed files only | Before committing |
-| `pnpm test:run` | Full suite (~10 min, 3600+ tests) | Before PR |
+| `pnpm check` | Typecheck, data scripts, and the tests affected since `origin/main` | Before a push |
+| `pnpm test:changed` | The vitest tests affected since `origin/main` | While working |
+| `pnpm test:run` | Full suite (all 5 projects) | When a change is broad; CI runs it on every push and the deploy waits for it |
 
 ### All Scripts
 
@@ -91,7 +93,7 @@ pnpm test:convex      # Convex integration tests only
 - `pnpm test:calculators` - Deadline calculators only
 
 **Smart Testing:**
-- `pnpm test:changed` - Files changed since last commit
+- `pnpm test:changed` - Tests that import a file changed since `origin/main` (a test that reads source as a file, like the src/ scanning gates, isn't picked; CI runs everything)
 - `pnpm test:related` - Tests related to changed files
 
 **Coverage:**

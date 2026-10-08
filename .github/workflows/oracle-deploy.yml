@@ -25,6 +25,8 @@ on:
 
 permissions:
   contents: read
+  # To read whether the test suite passed for this commit (the wait below).
+  actions: read
 
 concurrency:
   group: oracle-deploy
@@ -106,6 +108,27 @@ jobs:
           cp -r public "$S/public"
           tar --zstd -cf "$RUNNER_TEMP/release.tar.zst" -C "$S" .
           echo "release: $(du -h "$RUNNER_TEMP/release.tar.zst" | cut -f1), server at ${S#.next/standalone}"
+
+      # The build runs while the test suite does (test.yml, about 4 minutes in
+      # three parts); nothing reaches the server until the suite has passed
+      # for this exact commit. A failed or cancelled suite stops the deploy
+      # here, with the live site untouched.
+      - name: Wait for the full test suite to pass for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 120); do
+            line=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/test.yml/runs?head_sha=$GITHUB_SHA&event=push&per_page=1" \
+              --jq '.workflow_runs[0] | "\(.status) \(.conclusion) \(.html_url)"' 2>/dev/null || true)
+            set -- $line
+            if [ "${1:-}" = completed ]; then
+              if [ "${2:-}" = success ]; then echo "the full suite passed: $3"; exit 0; fi
+              echo "::error::the test suite did not pass for this commit (${2:-unknown}): ${3:-}"; exit 1
+            fi
+            [ "$i" = 1 ] && echo "waiting for the test suite (${1:-not started})"
+            sleep 15
+          done
+          echo "::error::the test suite had not finished 30 minutes after the build"; exit 1
 
       - name: Deploy to the idle copy, health-check, switch
         env:

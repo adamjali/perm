@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createTestContext } from "../../test-utils/convex";
+import { createTestContext, fillRateWindow } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import { CASES_PER_BROWSER, GLOBAL_BUDGET } from "../casePushAlerts";
 import { parseSubscription } from "../casePushAlerts";
@@ -79,7 +79,9 @@ describe("casePushAlerts.subscribe", () => {
 
   it("refuses everyone once the daily budget is spent, with nothing written past it", async () => {
     const t = createTestContext();
-    const CAP = GLOBAL_BUDGET.limit + 20;
+    const LEFT = 3;
+    await fillRateWindow(t, "all", "push-subscribe-global", GLOBAL_BUDGET.limit - LEFT);
+    const CAP = LEFT + 20;
     let refusedAt = -1;
     for (let i = 0; i < CAP; i++) {
       const r = await t.mutation(internal.casePushAlerts.subscribe, {
@@ -95,7 +97,7 @@ describe("casePushAlerts.subscribe", () => {
       }
     }
     if (refusedAt < 0) throw new Error(`budget not exhausted after ${CAP} subscriptions`);
-    expect(refusedAt).toBe(GLOBAL_BUDGET.limit);
-    expect(await t.query(internal.casePushAlerts.activeRows, {})).toHaveLength(GLOBAL_BUDGET.limit);
-  }, 180_000);
+    expect(refusedAt).toBe(LEFT);
+    expect(await t.query(internal.casePushAlerts.activeRows, {})).toHaveLength(LEFT);
+  });
 });

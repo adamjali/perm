@@ -111,3 +111,30 @@ export async function resetRateLimit(
     await rateLimiter.reset(ctx as never, name as never, { key });
   });
 }
+
+/**
+ * Fill a `checkAndRecordRateLimit` window with `count` attempts in ONE
+ * transaction, so a test can reach a large daily budget in a few calls.
+ *
+ * Filling a 1,000-a-day budget through the endpoint itself took about a minute
+ * per test: each call collects every attempt already in the window, so the fill
+ * reads ~500,000 rows. Seeding all but the last few keeps the claim the same
+ * (the endpoint charges THIS budget and refuses at exactly its limit) and costs
+ * a handful of calls. The key mirrors `getRateLimitKey` in
+ * convex/lib/rateLimit.ts; if that format ever changes, the seeded rows stop
+ * counting, the endpoint never refuses inside the test's small cap, and the
+ * test throws rather than passing over nothing.
+ */
+export async function fillRateWindow(
+  t: ReturnType<typeof createTestContext>,
+  identifier: string,
+  action: string,
+  count: number,
+) {
+  await t.run(async (ctx) => {
+    const now = Date.now();
+    for (let i = 0; i < count; i++) {
+      await ctx.db.insert("rateLimits", { key: `${action}:${identifier}`, timestamp: now, identifier, action });
+    }
+  });
+}

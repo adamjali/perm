@@ -134,6 +134,36 @@ export default defineConfig({
       json: "./coverage/test-results.json",
     },
 
+    // Pre-bundle the heaviest packages the component tree imports. A happy-dom
+    // file under isolate:true starts in a fresh worker and loads every package
+    // anew, and @phosphor-icons/react alone is about 1,500 modules. Bundled,
+    // the import phase of a 29-file components sample fell from 212 s to 30 s
+    // and its wall time from 135 s to 63 s (Oct 8 2026, runs interleaved
+    // A B B A). "client" is the mode the happy-dom projects run in; node and
+    // edge-runtime ones are untouched. Mocks of these packages still apply
+    // (vitest.setup.ts's motion/react, the Phosphor mocks): the whole
+    // components project passed with this on.
+    deps: {
+      optimizer: {
+        client: {
+          enabled: true,
+          include: [
+            "@phosphor-icons/react",
+            "@phosphor-icons/react/ssr",
+            "motion/react",
+            "date-fns",
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-dropdown-menu",
+            "cmdk",
+            "sonner",
+            "class-variance-authority",
+          ],
+        },
+      },
+    },
+
     // Coverage configuration
     coverage: {
       provider: "v8",

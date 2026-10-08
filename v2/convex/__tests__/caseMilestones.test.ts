@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createTestContext } from "../../test-utils/convex";
+import { createTestContext, fillRateWindow } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import { GLOBAL_BUDGET, PER_IP } from "../caseMilestones";
 
@@ -77,7 +77,9 @@ describe("caseMilestones.report", () => {
 
   it("refuses everyone once the daily budget is spent, and nothing is written past it", async () => {
     const t = createTestContext();
-    const CAP = GLOBAL_BUDGET.limit + 20;
+    const LEFT = 3;
+    await fillRateWindow(t, "all", "milestone-report-global", GLOBAL_BUDGET.limit - LEFT);
+    const CAP = LEFT + 20;
     let refusedAt = -1;
     for (let i = 0; i < CAP; i++) {
       const r = await t.mutation(internal.caseMilestones.report, {
@@ -93,8 +95,8 @@ describe("caseMilestones.report", () => {
       }
     }
     if (refusedAt < 0) throw new Error(`budget not exhausted after ${CAP} reports`);
-    expect(refusedAt).toBe(GLOBAL_BUDGET.limit);
-    const rows = await t.run(async (ctx) => ctx.db.query("caseMilestones").take(GLOBAL_BUDGET.limit + 50));
-    expect(rows).toHaveLength(GLOBAL_BUDGET.limit);
-  }, 180_000);
+    expect(refusedAt).toBe(LEFT);
+    const rows = await t.run(async (ctx) => ctx.db.query("caseMilestones").take(LEFT + 50));
+    expect(rows).toHaveLength(LEFT);
+  });
 });

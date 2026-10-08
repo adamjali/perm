@@ -3,8 +3,8 @@
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-04
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **616 files / 8,884 tests across 5 vitest
-> projects** (2026-10-06), not the 151 files / 3 projects TESTING.md records. Treat those
+> have drifted: the suite is now **634 files / 9,026 tests across 5 vitest
+> projects** (2026-10-08), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
 ## Production URLs
@@ -524,4 +524,14 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 8 2026".
 - **An RFI case is dated from its own RFI day**: the 30-day window, then a median 4 days (1,021 RFIs followed); the slow end is the attorney's two weeks until measured. NORD is never expanded.
 - **The filing chart lost to the pace** as an early signal (3.0 months against 2.7 on 4,152 readers).
 - **H-2B applications in DOL's assignment groups are dated by their group** (`ingest_h2b_groups.py`): typically 5 days off on January 2026, against 25 for the season method.
+
+## Oct 8 2026 (afternoon), in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the two "Oct 8 2026" afternoon sections.
+
+- **The deploy waits for the full test suite** for its exact commit (`oracle-deploy.yml` builds meanwhile); a red suite had deployed twice that day.
+- **CI runs the suite in three parts at once**; `Typecheck + Vitest` is now the job that passes only when every part did.
+- **Tests got faster**: three budget tests from 171 s to under 2 s (`fillRateWindow`), and the happy-dom projects pre-bundle their heaviest packages (a sample: 135 s to 63 s).
+- **`pnpm check`** is the quick look before a push: typecheckers, pyflakes, data script tests, and the vitest tests affected since `origin/main`.
+- **A Node package and CLI, a Python package, a Claude Code plugin and an admin Developers tab** are built, none published: npm, PyPI and listings wait for the owner.
 

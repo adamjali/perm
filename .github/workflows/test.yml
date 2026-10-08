@@ -9,14 +9,18 @@ on:
 permissions:
   contents: read
 
-# Cancel superseded runs on the same ref to save CI minutes.
+# A pull request's superseded runs are cancelled to save minutes. A push to
+# main never is, and gets a group of its own: the deploy of that commit waits
+# for this run to pass (oracle-deploy.yml), and a cancelled or merely pending
+# run would leave it nothing to wait on.
 concurrency:
-  group: tests-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: tests-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  test:
-    name: Typecheck + Vitest
+  # Typecheck, the data scripts' lint and their tests: the quick half.
+  checks:
+    name: Typecheck and data scripts
     runs-on: ubuntu-24.04
     # All app code lives in v2/, so every step runs from there.
     defaults:
@@ -79,9 +83,58 @@ jobs:
           [ "$n" -ge 40 ] || { echo "::error::only $n tests found; the glob is wrong"; exit 1; }
           [ "$failed" -eq 0 ]
 
-      - name: Run full test suite
-        # Runs even when a script test failed, so one gate can't hide another;
-        # the failed step still fails the job. --retry=2 re-runs only a test
-        # that fails, a net for rare runner hiccups in a deterministic suite.
-        if: ${{ !cancelled() }}
-        run: pnpm test:run --retry=2
+
+  # The whole vitest suite in three parts at once: about 6 minutes in one job,
+  # about a third of that each here, so the suite finishes before the deploy's
+  # build does and the deploy never waits on it.
+  vitest:
+    name: Vitest ${{ matrix.shard }} of 3
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    defaults:
+      run:
+        working-directory: v2
+
+    env:
+      CI: "true"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          # A `uses:` step ignores the job's working directory and would read
+          # the repo root's package.json; the `packageManager` pin is in v2/.
+          package_json_file: v2/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: v2/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run this part of the test suite
+        # --retry=2 re-runs only a test that fails, a net for rare runner
+        # hiccups in a deterministic suite.
+        run: pnpm test:run --retry=2 --shard=${{ matrix.shard }}/3
+
+  # The one check branch protection requires, under the name it has always had.
+  gate:
+    name: Typecheck + Vitest
+    if: ${{ always() }}
+    needs: [checks, vitest]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every part passed
+        run: |
+          echo "checks: ${{ needs.checks.result }}, vitest: ${{ needs.vitest.result }}"
+          test "${{ needs.checks.result }}" = success
+          test "${{ needs.vitest.result }}" = success

@@ -29,7 +29,8 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 616 files / 8,884 tests (2026-10-06; ~38 min at a load average near 200, ~12.5 to 14 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 634 files / 9,026 tests (2026-10-08; 15.3 min on the old Mac while it swapped, 22.3 the run before the Oct 8 speed work). Run this before every push.** |
+| `pnpm check` | Typecheckers, pyflakes, every data script test, and the vitest tests affected since `origin/main` (`scripts/check.sh`). The quick look; CI runs the whole suite and the deploy waits for it |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -7579,7 +7580,8 @@ holds every path in `ENDPOINTS` to a route file under `src/app/v1` and every too
 read-only token): all six tools answered, including a PERM and a wage-request case filed that day.
 
 **Not built yet** (plan phases 3 and on): OAuth sign-in for assistants, billing, webhooks, exports, live lookups,
-an admin Developers tab and morning-report lines for API use, the CLI and SDKs, directory listings.
+directory listings. *(The admin Developers tab, the morning report's API lines, the CLI, both packages and the
+Claude Code plugin were built Oct 8; see "Oct 8 2026: the Node and Python packages".)*
 
 ## Oct 3 2026: browser errors read to their cause, sitemap dates from git, the nightly bulletin read
 
@@ -8810,3 +8812,69 @@ decided, each percentile switching to the group's own once measurable. `timingVi
 use it; the sample records it as `H-2B-group` and waits for the list on a case filed in a season's first three
 days. Tested on January 2026 (8,198 cases, from January 2025's groups): typically 5 days off, against 25 for
 the page's season method; the middle half held 43%. `backtest_seasonal.py` scores each finished season.
+
+## Oct 8 2026 (afternoon): faster tests, and a deploy that waits for them
+
+**Three tests were a fifth of the suite's test time.** The daily budgets for browser push, milestone reports
+and community timelines went to 1,000 a day on Sep 29, and each test filled its budget through the endpoint:
+every call collects every attempt already in the window, so one fill read about 500,000 rows (72, 54 and 45 s
+on the old Mac). `fillRateWindow` in `test-utils/convex.ts` seeds all but three attempts in one transaction; the
+three tests now take under a second each and still throw when the endpoint charges a different budget (probed
+by renaming each endpoint's budget: all three went red).
+
+**The happy-dom projects pre-bundle their heaviest packages** (`deps.optimizer.client` in `vitest.config.ts`).
+A components file starts in a fresh worker and loaded every package anew; `@phosphor-icons/react` alone is
+about 1,500 modules. On a 29-file sample, runs interleaved A B B A: import 212 s to 30 s, wall 135 s to 63 s.
+The whole components project passed with it, mocks of those packages included.
+
+**Not taken: one shared environment across components files** (`isolate: false`). It halved that project
+again (666 s to 316 s under the same load) and every file passed in that order but one timeout, but vitest 4
+resets neither modules nor mocks between files without isolation (`run()` in its `base` chunk), so a file can
+pass on another file's leftovers.
+
+**CI runs the suite in three parts at once**, beside a job for the typecheck, pyflakes and the data script
+tests. `Typecheck + Vitest`, the check branch protection requires, is a job that passes only when all four
+did (`test.yml`).
+
+**The deploy waits for the suite.** `oracle-deploy.yml` builds while the tests run, then polls the Tests run
+for its exact commit and stops before touching the server unless it passed. Until Oct 8 a red suite still
+deployed: `755f6817` and `3427ce10` went live with CI failing on pyflakes. A push to main gets a Tests group of
+its own and is never cancelled, so every deploy has a run to wait for; a pull request's runs still cancel.
+
+**`pnpm check`** (`scripts/check.sh`): both typecheckers, pyflakes, every data script test, and
+`vitest run --changed origin/main`. A test that reads source as a file (the gates that scan `src/`) isn't
+"affected" by an import graph, so this is the quick first look; CI is the whole one.
+
+**The old Mac swaps under the suite**: 8 GB with Chrome and several Claude sessions, so a full local run sat
+at a load average of 50 to 80 with 2.8 GB in swap on Oct 8. Its local time says more about the memory than
+about the tests. Measured anyway, the same machine, before and after: 1,336 s to 919 s wall, the import
+phase 1,998 s to 545 s, test time 774 s to 672 s; 634 files and 9,026 tests passed.
+
+## Oct 8 2026: the Node and Python packages, the CLI, the Claude Code plugin, API use on the admin page
+
+Plan phases 3 and 4, everything but billing (which waits for the LLC's rename). **Nothing is published**:
+npm, PyPI, a public plugin repository and directory listings are outward-facing and each needs the owner's
+yes, from the persona's accounts.
+
+- **`sdk/`** is the npm package `permtracker` (MIT, no dependencies, Node 18+): `PermTracker` with one method
+  per `/v1` route, every answer `{ data, meta, usage }` (usage from the RateLimit and X-Calls headers), a
+  refusal thrown as `PermTrackerError` with the API's code, message and `retryAfter`; and `npx permtracker`,
+  the CLI (`login` saves the key to `~/.config/permtracker/config.json`, mode 600). `pnpm build:sdk` writes
+  `sdk/dist` (git-ignored); `typecheck:sdk` is part of `pnpm typecheck`; its tests run in `unit`.
+- **`sdk-python/`** is the same client and CLI for Python (`permtracker` on PyPI once published), standard
+  library only; `scripts/test_sdk_python.py` tests both against a fake transport, and CI runs it with the
+  other script tests. The CLI's plain listing matches the Node CLI's, held by the test.
+- **`claude-plugin/`** is a Claude Code plugin (`plugin.json`, a one-plugin `marketplace.json`, `/case` and
+  `/when` commands) that adds the MCP server at `https://permtracker.app/mcp`. Its key is optional
+  (`userConfig.api_key`, sensitive); left empty the plugin sends a bare `Bearer`, which `presentedKey` reads as
+  no key, so the call takes the shared keyless pool instead of failing as a malformed key
+  (`src/lib/api/__tests__/auth.test.ts`). `claude plugin validate` passed.
+- **Admin > Developers** (`convex/adminDevelopers.ts`, `DevelopersPanel.tsx`): every API account with its
+  plan, keys and calls, and calls a day for 30 days split into keyed, MCP and the extension's lookup. Counts
+  live in the public-data database under random ids; the action joins them to accounts for the admin alone.
+- **The morning report** has "The API and assistants": yesterday's keyed calls and accounts, keyless calls by
+  bucket, and the week (`api_lines`, tested).
+
+Still to build, none of it billing: sandbox keys, key scopes and expiry, live lookups and exports (for Plus),
+webhooks, OAuth sign-in for assistants and the signed-in MCP tools, bulk snapshots, and `/developers` pages for
+the CLI, the packages and the plugin once they're published.

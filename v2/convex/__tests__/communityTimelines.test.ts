@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createTestContext } from "../../test-utils/convex";
+import { createTestContext, fillRateWindow } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
 import { GLOBAL_BUDGET, PER_IP } from "../communityTimelines";
 
@@ -147,15 +147,18 @@ describe("communityTimelines.save", () => {
 
   it("the global daily budget refuses new timelines across rotating addresses", async () => {
     const t = createTestContext();
-    let refused = false;
-    for (let i = 0; i < GLOBAL_BUDGET.limit + 20 && !refused; i++) {
+    const LEFT = 3;
+    await fillRateWindow(t, "all", "timeline-save-global", GLOBAL_BUDGET.limit - LEFT);
+    let refusedAt = -1;
+    for (let i = 0; i < LEFT + 20 && refusedAt < 0; i++) {
       const ip = i.toString(16).padStart(64, "0");
       const c = `G-100-25324-${String(100000 + i).padStart(6, "0")}`;
       const r = await t.mutation(internal.communityTimelines.save, save({}, { caseNumber: c, ip }));
-      if (!r.ok) refused = true;
+      if (!r.ok) refusedAt = i;
     }
-    if (!refused) throw new Error(`${GLOBAL_BUDGET.limit + 20} new timelines were never refused`);
-  }, 180_000);
+    if (refusedAt < 0) throw new Error(`${LEFT + 20} new timelines were never refused`);
+    expect(refusedAt).toBe(LEFT);
+  });
 });
 
 describe("communityTimelines.remove", () => {
