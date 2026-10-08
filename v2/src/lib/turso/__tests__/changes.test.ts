@@ -89,6 +89,7 @@ function mockDb(opts: {
   perm?: typeof REAL_PERM_ROLLUP;
   pwd?: typeof REAL_PERM_ROLLUP;
   lca?: typeof REAL_PERM_ROLLUP;
+  seasonal?: typeof REAL_PERM_ROLLUP;
   rows?: Record<string, unknown>[];
   transitions?: Record<string, unknown>[];
 } = {}) {
@@ -96,17 +97,25 @@ function mockDb(opts: {
     perm: opts.perm ?? REAL_PERM_ROLLUP,
     pwd: opts.pwd ?? [],
     lca: opts.lca ?? [],
+    seasonal: opts.seasonal ?? [],
   };
   rows.mockImplementation(async (sql, args) => {
-    const program = sql.includes("pwd_") ? "pwd" : sql.includes("lca_") ? "lca" : "perm";
+    const program = sql.includes("pwd_")
+      ? "pwd"
+      : sql.includes("lca_")
+        ? "lca"
+        : sql.includes("seasonal_")
+          ? "seasonal"
+          : "perm";
     if (sql.includes("MIN(changed_at)")) {
       const first = rollups[program]![0];
       return first ? [{ lo: first.ts }] : [{ lo: null }];
     }
-    if (sql.includes("SUM(CASE WHEN from_status")) {
-      const bound = (args ?? []) as unknown[];
-      const lo = Number(bound[2]);
-      const hi = bound.length > 3 ? Number(bound[3]) : Number.POSITIVE_INFINITY;
+    if (sql.includes("SUM(CASE WHEN (from_status")) {
+      // The expiry pairs come first, then the bounds: read the numbers.
+      const bound = ((args ?? []) as unknown[]).filter((a): a is number => typeof a === "number");
+      const lo = Number(bound[0]);
+      const hi = bound.length > 1 ? Number(bound[1]) : Number.POSITIVE_INFINITY;
       return rollups[program]!.filter((s) => s.ts >= lo && s.ts < hi);
     }
     if (sql.includes("LEFT JOIN")) return opts.rows ?? [];
@@ -127,10 +136,12 @@ describe("the change feed's two filters", () => {
     await getChangeDay("2026-09-02");
 
     const sql = issued().find((s) => s.includes("LEFT JOIN"))!;
-    expect(sql).toContain("NOT (e.from_status = ? AND e.to_status = ?)");
+    expect(sql).toContain("NOT ((e.from_status = ? AND e.to_status = ?) OR (e.from_status = ? AND e.to_status = ?)");
     const bound = argsFor("LEFT JOIN");
     expect(bound[2]).toBe("CERTIFIED");
     expect(bound[3]).toBe("CERTIFIED - EXPIRED");
+    // H-2A, H-2B and CW-1 certifications lapse the same way (Oct 7 2026).
+    expect(bound).toEqual(expect.arrayContaining(["FULL CERTIFICATION - EXPIRED", "PARTIAL CERTIFICATION - EXPIRED"]));
   });
 
   it("tests a timestamp for bulk on its RAW size, not on what survives the expiry filter", async () => {
@@ -235,11 +246,11 @@ describe("the query shape that keeps the feed affordable", () => {
     // that day to the present - the unbounded read this rewrite removes.
     mockDb();
     await getChangeDay("2026-08-27");
-    const roll = issued().find((s) => s.includes("SUM(CASE WHEN from_status"))!;
+    const roll = issued().find((s) => s.includes("SUM(CASE WHEN (from_status"))!;
     expect(roll).toContain("WHERE changed_at >= ? AND changed_at < ?");
-    const bound = argsFor("SUM(CASE WHEN from_status");
-    expect(bound[2]).toBe(ms("2026-08-27"));
-    expect(bound[3]).toBe(ms("2026-08-28"));
+    // After the expiry pairs, the two bounds.
+    const bound = argsFor("SUM(CASE WHEN (from_status").filter((a) => typeof a === "number");
+    expect(bound).toEqual([ms("2026-08-27"), ms("2026-08-28")]);
   });
 
   it("costs no query at all for a program with nothing that day", async () => {
@@ -264,7 +275,7 @@ describe("the three programs", () => {
       lca: [{ ts: ms("2026-09-03") + 3_600_000, n: 3, expiries: 0 }],
     });
     const day = await getChangeDay("2026-09-03");
-    expect(day?.byProgram).toEqual({ perm: 10, pwd: 4, lca: 3 });
+    expect(day?.byProgram).toEqual({ perm: 10, pwd: 4, lca: 3, seasonal: 0 });
     expect(day?.total).toBe(17);
   });
 

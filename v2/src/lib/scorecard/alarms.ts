@@ -36,6 +36,7 @@ const LABEL: Record<Program, string> = {
   perm: "PERM decision dates",
   pwd: "Wage-request months",
   seasonal: "H-2A, H-2B and CW-1 dates",
+  bulletin: "Visa bulletin release days",
 };
 
 const median = (xs: number[]): number => {
@@ -61,7 +62,7 @@ export function scorecardAlarms(
   backtests: readonly BacktestAge[] = [],
 ): string[] {
   const out: string[] = [];
-  for (const program of ["perm", "pwd", "seasonal"] as const) {
+  for (const program of ["perm", "pwd", "seasonal", "bulletin"] as const) {
     const mine = rows.filter((r) => r.source === "ours" && r.program === program);
     if (mine.length === 0) continue;
     const label = LABEL[program];

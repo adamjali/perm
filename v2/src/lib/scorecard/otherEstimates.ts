@@ -40,6 +40,7 @@ export function otherEstimateRows(
   pwd: Summary | null | undefined,
   seasonal: Summary | null | undefined,
   checks: SeasonalCheck | null = null,
+  bulletin: Summary | null | undefined = null,
 ): OtherEstimateRow[] {
   const out: OtherEstimateRow[] = [];
   const wage = pwd?.bySource.ours?.byModel[PWD_MODEL];
@@ -69,6 +70,19 @@ export function otherEstimateRows(
       inRangeShare: cell.inBandShare,
       range: "the middle half",
       tested: check ? { share: check.share, cases: check.cases } : null,
+    });
+  }
+  const release = bulletin?.bySource.ours?.byModel["archive-capture-days"];
+  if (release && release.recorded > 0) {
+    out.push({
+      model: "archive-capture-days",
+      label: "Visa bulletin release day",
+      recorded: release.recorded,
+      graded: release.graded,
+      typicalMissDays: release.typicalMissDays,
+      inRangeShare: release.inBandShare,
+      range: "the middle half",
+      tested: null,
     });
   }
   return out;

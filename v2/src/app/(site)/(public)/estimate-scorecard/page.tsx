@@ -102,7 +102,7 @@ export default async function EstimateScorecardPage() {
   const pwd = sample?.pwd.bySource.ours ?? null;
   // Graded only as the estimator now works; see PWD_BEFORE_FIX.
   const pwdBeforeFix = pwd?.byModel[PWD_BEFORE_FIX] ?? null;
-  const others = otherEstimateRows(sample?.pwd, sample?.seasonal, checks);
+  const others = otherEstimateRows(sample?.pwd, sample?.seasonal, checks, sample?.bulletin);
   const cur = backtest?.current ?? null;
   const old = backtest?.allPending ?? null;
   // The same sentences the admin scorecard and the morning report print.

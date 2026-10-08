@@ -1,5 +1,5 @@
 /**
- * The three FLAG programs the change feed covers, and what to call them.
+ * The FLAG programs the change feed covers, and what to call them.
  *
  * A PLAIN MODULE, NOT AN EXPORT FROM `turso/changes`. That module is
  * `server-only`, so a value import of it from a client component is a build
@@ -16,7 +16,7 @@
  */
 
 /** In the order they are offered, busiest first. */
-export const CHANGE_PROGRAMS = ["perm", "pwd", "lca"] as const;
+export const CHANGE_PROGRAMS = ["perm", "pwd", "lca", "seasonal"] as const;
 
 export type ChangeProgram = (typeof CHANGE_PROGRAMS)[number];
 
@@ -35,6 +35,7 @@ export const PROGRAM_LABEL: Record<ChangeProgram, string> = {
   perm: "PERM",
   pwd: "Prevailing wage",
   lca: "H-1B LCA",
+  seasonal: "H-2A, H-2B and CW-1",
 };
 
 /** The case-number prefixes DOL issues for each, for the reader's orientation. */
@@ -42,4 +43,5 @@ export const PROGRAM_PREFIX: Record<ChangeProgram, string> = {
   perm: "G-100, G-200, G-300, G-400",
   pwd: "P-100",
   lca: "I-200, I-203",
+  seasonal: "H-300, H-400, C-500, P-400, P-500, JO-A-300",
 };

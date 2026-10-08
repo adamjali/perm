@@ -164,8 +164,8 @@ export function CaseAlertForm({
       </p>{" "}
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
         Get an email when DOL&apos;s status for this {noun} changes. A watched
-        case is checked against DOL every hour, and we stop once it&apos;s
-        decided.
+        case is checked against DOL every 5 minutes on weekdays and every half
+        hour otherwise, and we stop once it&apos;s decided.
       </p>
       <div className="mt-4 flex flex-wrap items-stretch gap-3">
         <label htmlFor={inputId} className="sr-only">

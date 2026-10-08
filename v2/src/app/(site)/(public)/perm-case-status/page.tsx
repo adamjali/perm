@@ -108,7 +108,7 @@ const FAQS = [
   },
   {
     q: "Is this DOL's official status?",
-    a: "Close to it, and the chain is worth stating. These statuses come from DOL's own case-status search, which we sweep against every pending case twice a day and against the full corpus daily, and every hour for a case someone has an alert on. DOL publishes no documented API for it, so this is the same endpoint their search page uses rather than a supported one. It is a sweep, not a live reading: a case decided since the last sweep will show at DOL first, and DOL is the authority for any single case."
+    a: "Close to it, and the chain is worth stating. These statuses come from DOL's own case-status search, which we sweep against every pending case twice a day and against the full corpus daily, and every 5 minutes on weekdays (every half hour otherwise) for a case someone has an alert on. DOL publishes no documented API for it, so this is the same endpoint their search page uses rather than a supported one. It is a sweep, not a live reading: a case decided since the last sweep will show at DOL first, and DOL is the authority for any single case."
   },
   {
     q: "Is the decision date on this page a prediction for my case?",
@@ -311,7 +311,8 @@ export default async function PermCaseStatusPage({
           These statuses are read from DOL directly. The FLAG case-status
           search answers a batch lookup, and we run it against every case once a
           day, against every undecided case twice a day, and against cases with
-          an alert on them every hour. DOL publishes no documented API for this,
+          an alert on them every 5 minutes on weekdays (every half hour at night
+          and at weekends). DOL publishes no documented API for this,
           so it is the same endpoint their own search page uses rather than a
           supported one. The date shown on each case is when our check saw it,
           and it is a snapshot rather than a live feed. DOL is the authority for

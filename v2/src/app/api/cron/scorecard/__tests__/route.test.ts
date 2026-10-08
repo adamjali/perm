@@ -11,6 +11,7 @@ const rivalPredictions = vi.fn();
 vi.mock("@/lib/turso/predictions", () => ({
   predictOurs: (...a: unknown[]) => predictOurs(...a),
   predictSeasonal: (...a: unknown[]) => predictSeasonal(...a),
+  predictBulletinRelease: async () => [],
   recordPredictions: (...a: unknown[]) => recordPredictions(...a),
   ensurePredictionsTable: () => ensurePredictionsTable(),
   gradeOpenPredictions: () => gradeOpenPredictions(),

@@ -81,8 +81,16 @@ import { CHANGE_PROGRAMS, type ChangeProgram } from "@/lib/changeProgram";
  * Kept as a pair, not a single status: `-> CERTIFIED - EXPIRED` is mechanical,
  * but a case arriving at `CERTIFIED` is exactly what we want to show.
  */
-const EXPIRY_FROM = "CERTIFIED";
-const EXPIRY_TO = "CERTIFIED - EXPIRED";
+const EXPIRY_PAIRS: readonly (readonly [string, string])[] = [
+  ["CERTIFIED", "CERTIFIED - EXPIRED"],
+  // H-2A, H-2B and CW-1 certifications lapse the same way (Oct 7 2026).
+  ["FULL CERTIFICATION", "FULL CERTIFICATION - EXPIRED"],
+  ["PARTIAL CERTIFICATION", "PARTIAL CERTIFICATION - EXPIRED"],
+];
+/** `(from_status = ? AND to_status = ?) OR ...`, with a column prefix. */
+const expiryClause = (p = "") =>
+  EXPIRY_PAIRS.map(() => `(${p}from_status = ? AND ${p}to_status = ?)`).join(" OR ");
+const EXPIRY_ARGS: string[] = EXPIRY_PAIRS.flat();
 
 /**
  * Rows under one timestamp above which the write is a catch-up sweep.
@@ -132,6 +140,7 @@ const TABLES: Record<ChangeProgram, { events: string; status: string }> = {
   perm: { events: "perm_case_events", status: "perm_case_status" },
   pwd: { events: "pwd_case_events", status: "pwd_case_status" },
   lca: { events: "lca_case_events", status: "lca_case_status" },
+  seasonal: { events: "seasonal_case_events", status: "seasonal_case_status" },
 };
 
 export interface CaseChange {
@@ -210,7 +219,7 @@ function isoDay(ms: number): string {
 }
 
 function emptyByProgram(): Record<ChangeProgram, number> {
-  return { perm: 0, pwd: 0, lca: 0 };
+  return { perm: 0, pwd: 0, lca: 0, seasonal: 0 };
 }
 
 /** One row of the per-timestamp roll-up. */
@@ -237,13 +246,13 @@ async function rollUp(
   // unbounded read this rewrite exists to remove.
   const r = await rows<Record<string, unknown>>(
     `SELECT changed_at AS ts, COUNT(*) AS n,
-            SUM(CASE WHEN from_status = ? AND to_status = ? THEN 1 ELSE 0 END) AS expiries
+            SUM(CASE WHEN ${expiryClause()} THEN 1 ELSE 0 END) AS expiries
        FROM ${TABLES[program].events}
       WHERE changed_at >= ?${ceiling === undefined ? "" : " AND changed_at < ?"}
       GROUP BY changed_at`,
     ceiling === undefined
-      ? [EXPIRY_FROM, EXPIRY_TO, floor]
-      : [EXPIRY_FROM, EXPIRY_TO, floor, ceiling],
+      ? [...EXPIRY_ARGS, floor]
+      : [...EXPIRY_ARGS, floor, ceiling],
   );
   return r.map((row) => ({
     ts: Number(row.ts ?? 0),
@@ -301,6 +310,7 @@ export async function getChangeCalendar(
     perm: null,
     pwd: null,
     lca: null,
+    seasonal: null,
   };
   for (const [program, roll] of rolls) {
     foldDays(program, roll, byDate);
@@ -359,10 +369,10 @@ async function dayRows(
        FROM ${t.events} e
        LEFT JOIN ${t.status} s ON s.case_number = e.case_number
       WHERE e.changed_at >= ? AND e.changed_at < ?
-        AND NOT (e.from_status = ? AND e.to_status = ?)${drop}
+        AND NOT (${expiryClause("e.")})${drop}
       ORDER BY s.employer_name IS NULL, s.employer_name, e.case_number
       LIMIT ?`,
-    [lo, hi, EXPIRY_FROM, EXPIRY_TO, ...bulkStamps, limit],
+    [lo, hi, ...EXPIRY_ARGS, ...bulkStamps, limit],
   );
 }
 
@@ -380,9 +390,9 @@ async function dayTransitions(
     `SELECT from_status, to_status, COUNT(*) AS n
        FROM ${TABLES[program].events}
       WHERE changed_at >= ? AND changed_at < ?
-        AND NOT (from_status = ? AND to_status = ?)${drop}
+        AND NOT (${expiryClause()})${drop}
       GROUP BY from_status, to_status`,
-    [lo, hi, EXPIRY_FROM, EXPIRY_TO, ...bulkStamps],
+    [lo, hi, ...EXPIRY_ARGS, ...bulkStamps],
   );
   return r.map((row) => ({
     fromStatus: String(row.from_status ?? ""),
@@ -416,7 +426,7 @@ export async function getChangeDay(
   );
 
   const byProgram = emptyByProgram();
-  const bulk: Record<ChangeProgram, number[]> = { perm: [], pwd: [], lca: [] };
+  const bulk: Record<ChangeProgram, number[]> = { perm: [], pwd: [], lca: [], seasonal: [] };
   let expiriesExcluded = 0;
   let bulkExcluded = 0;
 

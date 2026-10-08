@@ -127,7 +127,7 @@ export function CasePushAlert({ caseNumber, className }: { caseNumber: string; c
       </h3>{" "}
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/70">
         No email and no account: the browser hands this site a delivery address that identifies the browser, not
-        you, and the daily sweep sends one notification when DOL&apos;s status for this case changes. Turn it off
+        you, and one notification goes out minutes after DOL&apos;s status for this case changes. Turn it off
         here or in the browser&apos;s settings.
       </p>{" "}
       {state.kind === "on" || state.kind === "off" ? (

@@ -22,6 +22,7 @@ import {
   gradeOpenPredictions,
   predictOurs,
   predictSeasonal,
+  predictBulletinRelease,
   recordPredictions,
   RIVAL_SAMPLE,
   writeScorecardDocs,
@@ -58,14 +59,16 @@ export async function GET(request: Request): Promise<NextResponse> {
     await ensurePredictionsTable();
     const { perm, pwd, sample, pendingBefore } = await predictOurs(today);
     const seasonal = await predictSeasonal(recordedOn);
-    const ours = await recordPredictions(recordedOn, [...perm, ...pwd, ...seasonal]);
+    const release = await predictBulletinRelease(recordedOn).catch(() => []);
+    const ours = await recordPredictions(recordedOn, [...perm, ...pwd, ...seasonal, ...release]);
     const rivalCases = pick(sample, RIVAL_SAMPLE, rngFor(recordedOn));
     const { preds, failures } = await rivalPredictions(rivalCases, today, pendingBefore);
     const rivals = await recordPredictions(recordedOn, preds);
     const { graded, open } = await gradeOpenPredictions();
     const { rows } = await writeScorecardDocs(recordedOn);
     const out = {
-      recordedOn, ours, perm: perm.length, pwd: pwd.length, seasonal: seasonal.length, rivals, failures, graded, open, rows,
+      recordedOn, ours, perm: perm.length, pwd: pwd.length, seasonal: seasonal.length, release: release.length,
+      rivals, failures, graded, open, rows,
     };
     console.log(`[scorecard] ${JSON.stringify(out)}`);
     return NextResponse.json(out);

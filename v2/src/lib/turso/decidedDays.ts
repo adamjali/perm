@@ -143,8 +143,8 @@ export const RANGE_MAX_DAYS_UNINDEXED = 92;
 
 /**
  * The narrows that live in an optional column, and the column each reads.
- * `city`, `naics`, `citizenship` and `education` exist on PERM rows only;
- * `visa_class` on all three. A table that has not gained a column yet (a load
+ * `citizenship` and `education` exist on PERM rows only; `city` and `naics`
+ * on every published file since the Oct 7 2026 backfill; `visa_class` on all. A table that has not gained a column yet (a load
  * still to run) is detected by `columnsOf` and treated as not carrying it.
  */
 const OPTIONAL: Record<"city" | "naics" | "citizenship" | "visaClass" | "education", string> = {
@@ -180,14 +180,22 @@ const PUBLISHED: Record<
     status: "case_status",
     state: "worksite_state",
     hasWageUnit: true,
-    optional: ["visaClass"],
+    optional: ["city", "naics", "visaClass"],
   },
   lca: {
     tables: ["lca_cases"],
     status: "case_status",
     state: "worksite_state",
     hasWageUnit: true,
-    optional: ["visaClass"],
+    optional: ["city", "naics", "visaClass"],
+  },
+  // H-2A, H-2B and CW-1, one table with the visa on each row.
+  seasonal: {
+    tables: ["seasonal_cases"],
+    status: "case_status",
+    state: "worksite_state",
+    hasWageUnit: true,
+    optional: ["city", "naics", "visaClass"],
   },
 };
 
@@ -596,7 +604,7 @@ async function countDay(
   programs: readonly ChangeProgram[],
   narrow: DecidedNarrow,
 ): Promise<Record<ChangeProgram, number>> {
-  const out: Record<ChangeProgram, number> = { perm: 0, pwd: 0, lca: 0 };
+  const out: Record<ChangeProgram, number> = { perm: 0, pwd: 0, lca: 0, seasonal: 0 };
   await Promise.all(
     programs.map(async (p) => {
       for (const table of tablesFor(p, { from: date, to: date })) {

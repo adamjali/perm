@@ -15,6 +15,8 @@ import { scorecardAlarms } from "@/lib/scorecard/alarms";
 import { readMethods, readOurs, readRival } from "@/lib/scorecard/verdict";
 import { SETTLED_BY_FILE_STATUSES } from "@/lib/seasonalDetails";
 import { timingView } from "@/lib/seasonalTiming";
+import { BULLETIN_FIRST_CAPTURES } from "@/lib/bulletinCaptures";
+import { monthAfter, releaseEstimate } from "@/lib/bulletinReleaseEstimate";
 import { getSeasonalCheck, getSeasonalTiming } from "@/lib/turso/seasonalTiming";
 import { exec, one, rows } from "@/lib/turso/client";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
@@ -281,6 +283,33 @@ export async function predictSeasonal(recordedOn: string): Promise<NewPrediction
   return out;
 }
 
+/**
+ * The coming bulletin's release day, recorded once, as the bulletin page
+ * reads it, and only up to the start of its middle half: a record written
+ * later would already know the bulletin hadn't come out by then.
+ */
+export async function predictBulletinRelease(recordedOn: string): Promise<NewPrediction[]> {
+  const held = await one<{ m: string | null }>("SELECT MAX(bulletin_month) AS m FROM visa_bulletins").catch(() => null);
+  if (!held?.m) return [];
+  const bulletin = monthAfter(String(held.m));
+  const est = releaseEstimate(bulletin, BULLETIN_FIRST_CAPTURES);
+  if (!est || recordedOn > est.early) return [];
+  return [
+    {
+      source: "ours",
+      program: "bulletin",
+      caseNumber: `bulletin:${bulletin}`,
+      filingDate: recordedOn,
+      status: "not yet published",
+      model: "archive-capture-days",
+      predicted: est.typical,
+      bandEarly: est.early,
+      bandLate: est.late,
+      casesAhead: null,
+    },
+  ];
+}
+
 /** Our own PERM and PWD predictions for today's sample, as the pages would show them. */
 export async function predictOurs(today: string): Promise<{
   perm: NewPrediction[];
@@ -379,6 +408,19 @@ export async function gradeOpenPredictions(): Promise<{ graded: number; open: nu
     `SELECT id, program, case_number FROM estimate_predictions WHERE outcome IS NULL`,
   );
   let graded = 0;
+  // A bulletin's release day: graded on the day this site first held it.
+  for (const r of open.filter((x) => x.program === "bulletin")) {
+    const month = r.case_number.replace(/^bulletin:/, "");
+    const seen = await one<{ t: number | string }>(
+      "SELECT first_seen_at AS t FROM bulletin_first_seen WHERE bulletin_month = ?",
+      [month],
+    ).catch(() => null);
+    if (!seen) continue;
+    graded += await exec(
+      `UPDATE estimate_predictions SET decided_on = ?, outcome = 'PUBLISHED', scored_at = ? WHERE id = ? AND outcome IS NULL`,
+      [easternDate(Number(seen.t)), new Date().toISOString(), r.id],
+    );
+  }
   const TABLES = {
     perm: ["perm_case_status", "perm_case_events"],
     pwd: ["pwd_case_status", "pwd_case_events"],
@@ -466,6 +508,8 @@ export interface ScorecardDoc {
   pwd: Summary;
   /** H-2A, H-2B and CW-1, recorded once each in its first week (Oct 8 2026 on; older docs lack it). */
   seasonal?: Summary;
+  /** The visa bulletin's release day, one per bulletin (Oct 8 2026 on). */
+  bulletin?: Summary;
   /** A handful of the newest graded PERM cases, for the page's worked examples. */
   recent: {
     caseNumber: string;
@@ -501,6 +545,7 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
     perm: summarise(ours, today, "perm"),
     pwd: summarise(ours, today, "pwd"),
     seasonal: summarise(ours, today, "seasonal"),
+    bulletin: summarise(ours, today, "bulletin"),
     recent,
   };
   const perm = summarise(mapped, today, "perm");
@@ -524,6 +569,7 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
     perm,
     pwd: pub.pwd,
     seasonal: pub.seasonal,
+    bulletin: pub.bulletin,
     seasonalChecks: await getSeasonalCheck().catch(() => null),
     alarms,
     headToHead: h2h,

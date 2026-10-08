@@ -16,7 +16,7 @@ import sys
 import warnings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ingest_warn import CA_PAGE, PRUNE_MIN_COVERAGE, TX_DATA_PAGE, TX_PAGE, _cmp, _site, assign_ids, prune_plan, rank_of, sponsor_matcher, SMALL_EXACT, BUSIER_BY, BUSY_FLOOR, parse_california, parse_new_york, parse_texas, parse_texas_api, parse_washington_page, write  # noqa: E402
+from ingest_warn import fallback, page_matcher, CA_PAGE, PRUNE_MIN_COVERAGE, TX_DATA_PAGE, TX_PAGE, _cmp, _site, assign_ids, prune_plan, rank_of, sponsor_matcher, SMALL_EXACT, BUSIER_BY, BUSY_FLOOR, parse_california, parse_new_york, parse_texas, parse_texas_api, parse_washington_page, write  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIXTURE = os.path.join(HERE, "fixtures", "ca_warn_2026-09-08.xlsx")
@@ -233,6 +233,16 @@ def main() -> int:
     check(m("acme") == "acme", "an exact match with 30 or more filings stays, however busy a namesake is", f)
     check(m("tiny") == "tiny", "a namesake that isn't ten times busier and past 100 filings doesn't take the notice", f)
     check(m("nobody") is None, "no exact match still means no sponsor; the rule never adds a match", f)
+    # The fallback: an employer with no PERM record has a page too.
+    pm = page_matcher([("fresh farms", "fresh-farms-llc"), ("fresh farms", "fresh-farms-llc"),
+                       ("twin co", "twin-co-ca"), ("twin co", "twin-co-tx")])
+    check(pm("fresh farms") == "fresh-farms-llc", "a notice no PERM sponsor matches reaches a no-PERM employer's page", f)
+    check(pm("twin co") is None, "a key that leads to two pages matches neither", f)
+    check(pm("nobody") is None, "and no key still means no page", f)
+    brand = page_matcher([("kaiser", "kaiser-pllc"), ("freshrealm", "freshrealm-inc"), ("blue cascade orchards", "bco")])
+    check(fallback(brand, "Kaiser") is None, "a bare one-word brand links nothing: a small namesake isn't the company meant", f)
+    check(fallback(brand, "FreshRealm, Inc.") == "freshrealm-inc", "a one-word name with its legal form links", f)
+    check(fallback(brand, "Blue Cascade Orchards") == "bco", "a name of several words links without one", f)
     ts = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "lib", "api", "employerLookup.ts")).read()
     for name, val in (("SMALL_EXACT", SMALL_EXACT), ("BUSIER_BY", BUSIER_BY), ("BUSY_FLOOR", BUSY_FLOOR)):
         check(f"export const {name} = {val};" in ts, f"{name} matches the keyless lookup's ({val})", f)

@@ -8649,7 +8649,24 @@ wage requests only, the ones the page dates.
 seasonal results offer browser push and an alert on a number not found yet (`WatchThisNumber`);
 law firm pages show H-2A, H-2B and CW-1 work; CW-1 is in the glossary; llms.txt and every page's
 structured data name the H-2A, H-2B and CW-1 prefixes, gated by
-`three-programs-in-machine-copy.test.ts`. Still open, in the ledger: a seasonal social card and
-guides, seasonal in the change feed and decisions per day, WARN and debarment on no-PERM employer
-pages, the bulletin release-day record, the I-140 quarterly check.
+`three-programs-in-machine-copy.test.ts`. The change feed and the decided-day half read H-2A, H-2B
+and CW-1 too (`CHANGE_PROGRAMS`), with their own certification-expired pairs left out like PERM's
+(`EXPIRY_PAIRS` in `turso/changes.ts`); city and industry are optional narrows on every program there.
+
+**The bulletin release day is recorded and graded** (`predictBulletinRelease`, program `bulletin` in
+`estimate_predictions`): the day by which half the past bulletins were captured, with the quarter and
+three-quarter days as its range, recorded no later than the range's first day, and graded on the day
+this site first held the bulletin (`bulletin_first_seen`, written once by `write_month` in
+`ingest_visa_bulletin.py` for a month new to the site). The first is the November 2026 bulletin.
+
+**Next 16.3.8** (Oct 7): six advisories, among them SSRF in the image optimizer (high) and cache
+poisoning of SSG and ISR pages on self-hosted sites, which this site is. It cleared the 7-day release
+floor the same day; `^16.3.6` allowed it. Next 16.4.0 is out and not taken.
+
+**Alert timing copy** said "every hour" and "the daily sweep" in three places; watched cases are
+checked every 5 minutes on weekdays and every half hour otherwise since the morning of Oct 7.
+
+Still open, in the ledger: a seasonal social card and guides, seasonal decisions per day, WARN and
+debarment on no-PERM employer pages, a rival comparison for the priority-date estimate, and the green
+card line's years, which needs a year more of USCIS's counts before it can be graded.
 

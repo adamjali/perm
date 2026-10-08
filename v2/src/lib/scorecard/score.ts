@@ -28,7 +28,7 @@ import { daysBetween } from "@/lib/time";
 
 export type Source = "ours" | "rival-a" | "rival-b" | "rival-c";
 
-export type Program = "perm" | "pwd" | "seasonal";
+export type Program = "perm" | "pwd" | "seasonal" | "bulletin";
 
 export interface PredictionRow {
   source: Source;

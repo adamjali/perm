@@ -40,7 +40,7 @@ import urllib.request
 from collections.abc import Callable
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from entity_identity import SpacedKeyMap, entity_key  # noqa: E402
+from entity_identity import SpacedKeyMap, entity_key, program_key  # noqa: E402
 from lib_turso import (  # noqa: E402
     Turso, add_missing_columns, query_rows, record_run, stamp_freshness,
 )
@@ -446,20 +446,68 @@ def sponsor_matcher(entities) -> Callable[[str], str | None]:
     return match
 
 
+def page_matcher(pairs) -> Callable[[str], str | None]:
+    """`pairs` is (key, page_slug) from employer_page_map's live and no-PERM pages.
+
+    The fallback for a notice no PERM sponsor matches: an employer that files
+    H-1B LCAs, wage requests or H-2A/H-2B/CW-1 applications but no PERM has a
+    page too (Oct 4 2026), and its workers are as likely to search it. Exact
+    key only, and a key that leads to more than one page matches nothing:
+    without PERM filings to rank by, there is no busiest page to prefer.
+    """
+    pages: dict[str, set[str]] = {}
+    for key, slug in pairs:
+        if key and slug:
+            pages.setdefault(str(key), set()).add(str(slug))
+
+    def match(key: str) -> str | None:
+        found = pages.get(key)
+        return next(iter(found)) if found and len(found) == 1 else None
+
+    return match
+
+
 def match_employers(db: Turso, rows: list[dict]) -> int:
-    """Attach a sponsor slug where the normalised name equals a PERM employer's merge key."""
+    """Attach a sponsor slug where the normalised name equals a PERM employer's merge key,
+    or failing that, a live-only or no-PERM employer page's own key."""
     # Every employer page's key, busiest first, so a notice spelled with the gaps
     # elsewhere ("WAL MART" against "Walmart") still finds its page (Rule D). One
     # read of about 72,000 short rows a week.
     match = sponsor_matcher(query_rows(
         db, "SELECT merge_key, slug, total FROM perm_entities WHERE kind = 'employer' "
             "AND merge_key IS NOT NULL ORDER BY total DESC"))
+    try:
+        other = page_matcher(query_rows(
+            db, "SELECT key, page_slug FROM employer_page_map WHERE page_kind IN ('live', 'other')"))
+    except Exception:  # noqa: BLE001 - before the map's first build, PERM sponsors only
+        other = page_matcher([])
     n = 0
     for r in rows:
-        slug = match(entity_key(r["company"]))
+        slug = match(entity_key(r["company"])) or fallback(other, r["company"])
         r["employer_slug"] = slug
         n += 1 if slug else 0
     return n
+
+
+# A legal form in the notice's own name: "Visa Inc." names one company,
+# "Visa" a brand that many filers share.
+FORM_WORD = re.compile(r"\b(inc|incorporated|llc|l\.l\.c|corp|corporation|co|company|ltd|limited|lp|llp|pllc|pc)\b\.?",
+                       re.I)
+
+
+def fallback(other: Callable[[str], str | None], company: str) -> str | None:
+    """The no-PERM page match, refused for a bare one-word brand.
+
+    Measured Oct 7 2026: of 48 one-word names the fallback would link, the
+    bare ones are where it went wrong ("Kaiser" reached a small "Kaiser PLLC",
+    "Spirit" a "Spirit LLC"), while one-word names that carry their legal form
+    ("FreshRealm, Inc.", "Huhtamaki, Inc.") were right. A wrong link is worse
+    than none, so a bare one-word name links nothing.
+    """
+    key = program_key(company)
+    if len(key.split()) == 1 and not FORM_WORD.search(company):
+        return None
+    return other(key)
 
 
 # Which source outranks which, so a fresher record is never overwritten by a

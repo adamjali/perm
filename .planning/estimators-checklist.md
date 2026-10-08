@@ -64,4 +64,9 @@ The ten things:
   divides USCIS's count of the line by one fiscal year's green cards. Grading it
   needs the line measured again a year or more later; USCIS's quarterly counts go
   back about a year here. It is recorded as a target, not claimed.
+- **Oct 7, parity:** layoff notices linked to an employer page went from 276 of 3,168
+  to 485: an unmatched notice may now reach a live-only or no-PERM employer's page
+  by exact name key, never a bare one-word brand ("Kaiser" had reached a small
+  "Kaiser PLLC"). Debarments and layoff notices show on those pages too. The
+  H-2A, H-2B and CW-1 search has its own social card.
 

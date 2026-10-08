@@ -42,6 +42,7 @@ interface Doc {
   /** Oct 8 2026 on; older docs lack them. */
   pwd?: Summary;
   seasonal?: Summary;
+  bulletin?: Summary;
   seasonalChecks?: SeasonalCheck | null;
   alarms?: string[];
 }
@@ -180,7 +181,7 @@ export function ScorecardPanel() {
     doc.readings?.ours ??
     (mine ? [...readOurs(mine.all, mine.byHorizon, perm.since, null), ...readMethods(mine.byModel)] : []);
   const sources = Object.keys(perm.bySource).sort((a, b) => (a === "ours" ? -1 : b === "ours" ? 1 : a < b ? -1 : 1));
-  const others = otherEstimateRows(doc.pwd, doc.seasonal, doc.seasonalChecks ?? null);
+  const others = otherEstimateRows(doc.pwd, doc.seasonal, doc.seasonalChecks ?? null, doc.bulletin);
   const when = new Date(computedAt).toLocaleString("en-US", {
     timeZone: EASTERN_TIMEZONE,
     dateStyle: "medium",

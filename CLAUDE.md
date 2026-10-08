@@ -480,7 +480,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 6 2026".
 - **Every article had ended with a sign-up button**, sending people waiting on their own case into the attorney app; it leads with the case lookup now.
 - **The funnel is counted**: `case_lookup_submitted` and `alert_signup` events in PostHog (no address is sent).
 
-## Oct 7 2026, in sixteen lines
+## Oct 7 2026, in eighteen lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 
@@ -497,4 +497,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 7 2026".
 - **The case search applied only the decided range to wage-request, LCA and seasonal files** on a firm, state or occupation search; every filter applies now, and industry and city search every program's file (backfilled tonight for 13 LCA quarters and all three wage-request files).
 - **Every estimate is graded or tested**: H-2A, H-2B and CW-1 recorded once each in its first week, a weekly seasonal backtest (H-2B now reads the same season a year earlier; pooled held 21%), a weekly bulletin backtest of "months until current" (a year out: typically 8 months off, 1 time in 4 within a quarter, printed beside the figure), and alarms in the morning email.
 - **Wage-request, LCA and seasonal results offer browser push and an alert on a number not found yet**, like PERM; law firm pages carry H-2A, H-2B and CW-1 work; CW-1 is in the glossary.
+- **The change feed and decided days read H-2A, H-2B and CW-1**, and the visa bulletin's release day is recorded before each bulletin and graded on the day the site first holds it.
+- **Next 16.3.8** (six advisories, two of them about self-hosted caching and the image optimizer); 16.4.0 is out and not taken.
 - **Admin alert lists say when each person signed up and confirmed**, and paged lists bring their new rows into view.
