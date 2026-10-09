@@ -63,7 +63,8 @@ export type DataSection =
   | "employers-under-review"
   | "visa-bulletin"
   | "visa-bulletin-next"
-  | "methodology";
+  | "methodology"
+  | "h1b-employers";
 
 export type DataGroup =
   | "Case tools"
@@ -126,8 +127,8 @@ export const SECTIONS: DataNavSection[] = [
   { key: "attorneys", group: "Employers and wages", label: "Law firms", href: "/perm-attorneys" },
   { key: "wages", group: "Employers and wages", label: "Wages", href: "/perm-wages" },
   { key: "lca-wages", group: "Employers and wages", label: "H-1B salaries", href: "/lca-wages" },
+  { key: "h1b-employers", group: "Employers and wages", label: "Top H-1B employers", href: "/h1b-employers" },
   { key: "compare-offer", group: "Employers and wages", label: "Compare my offer", href: "/tools/compare-my-offer" },
-  { key: "layoffs", group: "Employers and wages", label: "Layoff notices", href: "/layoffs" },
   { key: "compare-employers", group: "Employers and wages", label: "Compare employers", href: "/perm-employers/compare" },
   // Every decided case sliced one way: by where the job is, what the
   // employer does, and where the worker is a citizen of.
@@ -150,6 +151,10 @@ export const SECTIONS: DataNavSection[] = [
   // would have left it unreachable by navigation, not merely mislabelled.
   { key: "rfi-audit", group: "Denials and audits", label: "RFI and audits", href: "/perm-rfi-audit" },
   { key: "employers-under-review", group: "Denials and audits", label: "Employers under review", href: "/perm-employers/under-review" },
+  // Moved from Employers and wages when Top H-1B employers joined it (Oct 9
+  // 2026): eight entries there ran the rail past its height budget, and a
+  // layoff notice is the same kind of warning sign as a hold.
+  { key: "layoffs", group: "Denials and audits", label: "Layoff notices", href: "/layoffs" },
 
   // Its own group, not "Reference". This is a calculator over State Department
   // data: a different agency, a different dataset and a different question from

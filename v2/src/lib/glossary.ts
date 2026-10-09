@@ -229,6 +229,15 @@ export const GLOSSARY: GlossaryTerm[] = [
     see: [{ label: "H-2A, H-2B and CW-1 case search", href: "/seasonal-cases" }],
   },
   {
+    term: "H-1B dependent",
+    slug: "h1b-dependent",
+    aka: ["H-1B dependent employer"],
+    definition:
+      "An employer whose H-1B workers pass a share of its U.S. staff: more than 7 with 25 or fewer full-time-equivalent employees, more than 12 with 26 to 50, or 15% or more with 51 or more. On an LCA that isn't only for workers paid $60,000 a year or holding a related master's degree, it also attests it isn't displacing U.S. workers and recruited them first.",
+    cite: CFR655("655.736"),
+    see: [{ label: "Top H-1B employers", href: "/h1b-employers" }],
+  },
+  {
     term: "H-1B recapture",
     slug: "h1b-recapture",
     definition:

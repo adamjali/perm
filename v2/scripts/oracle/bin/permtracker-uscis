@@ -35,7 +35,9 @@ case "$job" in
   quarterly) python3 scripts/ingest_uscis_quarterly.py || { rc=1; fail ingest_uscis_quarterly.py "ingest exited non-zero"; } ;;
   # USCIS's H-1B Employer Data Hub (a Tableau export, 75 to 110 MB a year).
   # The ingest records its own ok row, or its refusal with the reason; this adds the timer's row on any non-zero exit.
-  h1b-hub) nice -n 10 python3 scripts/ingest_uscis_h1b_hub.py || { rc=1; fail ingest_uscis_h1b_hub.py "ingest exited non-zero"; } ;;
+  # Then the busiest H-1B employers by year and state, which read the hub's rows.
+  h1b-hub) nice -n 10 python3 scripts/ingest_uscis_h1b_hub.py || { rc=1; fail ingest_uscis_h1b_hub.py "ingest exited non-zero"; }
+    nice -n 10 python3 scripts/build_h1b_ranks.py || { rc=1; fail build_h1b_ranks.py "builder exited non-zero"; } ;;
   # ICE's yearly top-200 OPT and CPT employer lists (a handful of small PDFs).
   sevp) python3 scripts/ingest_sevp_top_employers.py || { rc=1; fail ingest_sevp_top_employers.py "ingest exited non-zero"; } ;;
   # DOL's SeasonalJobs feeds: the H-2A and H-2B applications and job orders DOL

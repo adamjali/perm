@@ -42,6 +42,7 @@ export const DISCLOSURE_PAGES = [
   "/methodology",
   "/tools/salary-explorer",
   "/lca-wages",
+  "/h1b-employers",
   "/tools/compare-my-offer",
   "/tools/i140-trends",
 ] as const;

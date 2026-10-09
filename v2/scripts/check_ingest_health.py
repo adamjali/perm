@@ -363,6 +363,8 @@ PRECOMPUTED_DOCS = {
     "lca_filter_options": (100, "the H-1B salary explorer's facets and default view"),
     # Rebuilt nightly by build_wage_sources.py; a week's grace for a missed night.
     "lca_wage_sources": (7, "the H-1B prevailing wage sources page"),
+    # Rebuilt after each LCA load (monthly) and each Data Hub read (monthly).
+    "h1b_ranks_summary": (45, "the top H-1B employer pages' ranks and totals"),
     "live_census": (8, "the case lookup's queue position"),
     "review_stages": (5, "the review-stage cohort pages"),
     "wage_filter_options": (100, "the PERM salary explorer's facets"),

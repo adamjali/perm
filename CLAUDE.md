@@ -549,3 +549,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 8 2026 (night)".
 - **A filing month leads with its share decided** and reads `perm_docs['month_detail']` (decisions per day, where DOL has reached, the initials grid), written after every sweep.
 - **The MCP door gets about 1,800 requests a day, almost all directory and uptime bots** found through the MCP Registry; 3 to 30 real tool calls a day.
 - **The lookup challenge stops the scraper label completely** (1 of 2,148 addresses through) and costs a real visitor about 2 to 3 s; whether to loosen it is the owner's call.
+
+## Oct 9 2026, in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 9 2026".
+
+- **`/h1b-employers` and a page per state rank the 100 busiest H-1B employers each fiscal year** two ways: DOL's certified LCAs (FY2020 on, by worksite) and USCIS's approvals (FY2009 on, by petitioner), from `h1b_employer_ranks`, rebuilt after each LCA load and Data Hub read.
+- **A state view shows only the ranked source's figures**: the two sources mean different things by state.
+- **Layoff notices moved to Denials and audits** in the data rail, which had run out of height.
+- **USCIS's abbreviated names now reach employer pages** ("SVCS", "TECH SOLNS", "UNIV"): 413,406 H-1B approvals that sat on no record, Tata's and Cognizant's among them.
+

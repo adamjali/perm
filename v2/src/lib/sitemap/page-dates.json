@@ -140,5 +140,7 @@
   "/visa-bulletin/categories": "2026-10-02",
   "/visa-bulletin/categories/[line]": "2026-10-02",
   "/visa-bulletin/family": "2026-10-01",
-  "/zh": "2026-09-26"
+  "/zh": "2026-09-26",
+  "/h1b-employers": "2026-10-09",
+  "/h1b-employers/[state]": "2026-10-09"
 }

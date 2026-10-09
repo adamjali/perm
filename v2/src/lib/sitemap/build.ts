@@ -18,6 +18,8 @@ import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
 import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/turso/otherEmployers";
 import { lcaOnlyCities } from "@/lib/turso/lcaCities";
+import { getH1bSummary } from "@/lib/turso/h1bRanks";
+import { rankedStates, stateSlug } from "@/lib/h1bRanks";
 import {
   countEntityRanks,
   countLiveOnlyRanks,
@@ -188,6 +190,21 @@ export async function pagesEntries(): Promise<Entry[]> {
   } catch {
     queueMonths = [];
   }
+  // The top H-1B employer state pages: one per state the default year ranks,
+  // from the SAME summary the route's generateStaticParams reads (an unranked
+  // state 404s there). Dated by the newest day either source covers.
+  let h1bStates: string[] = [];
+  let h1bAsOf: string | null = null;
+  try {
+    const summary = await getH1bSummary();
+    if (summary) {
+      h1bStates = rankedStates(summary);
+      const newest = summary.years[0]!;
+      h1bAsOf = [newest.lcaThrough, newest.uscisThrough].filter((d): d is string => !!d).sort().pop() ?? null;
+    }
+  } catch {
+    h1bStates = [];
+  }
   const allPosts = getAllPosts();
   if (allPosts.length === 0) {
     captureError(
@@ -302,6 +319,11 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-by-state`, lastModified: newer(dol, changed("/perm-by-state")), images: [`${base}/og/perm-by-state.jpg`] },
     { url: `${base}/perm-wages`, lastModified: newer(dol, changed("/perm-wages")), images: [`${base}/og/perm-wages.jpg`] },
     { url: `${base}/lca-wages`, lastModified: newer(dol, changed("/lca-wages")), images: [`${base}/og/lca-wages.jpg`] },
+    { url: `${base}/h1b-employers`, lastModified: newer(h1bAsOf, changed("/h1b-employers")), images: [`${base}/og/h1b-employers.jpg`] },
+    ...h1bStates.map((code) => ({
+      url: `${base}/h1b-employers/${stateSlug(code)}`,
+      lastModified: newer(h1bAsOf, changed("/h1b-employers/[state]")),
+    })),
     { url: `${base}/tools/compare-my-offer`, lastModified: changed("/tools/compare-my-offer"), images: [`${base}/og/compare-my-offer.jpg`] },
     { url: `${base}/tools/rfi-deadline`, lastModified: changed("/tools/rfi-deadline"), images: [`${base}/og/rfi-deadline.jpg`] },
     { url: `${base}/tools/pwd-validity`, lastModified: changed("/tools/pwd-validity"), images: [`${base}/og/pwd-validity.jpg`] },

@@ -8983,3 +8983,44 @@ addresses. No load worth acting on.
 addresses through; other addresses 250 of 831 (iPhones 86 of 137). PostHog: 50 of 54 sessions that
 submitted a case number reached the answer, median 4.1 s against about 0.7 s for the page. Loosening it
 is the owner's call.
+
+## Oct 9 2026: the busiest H-1B employers, by year and state
+
+`/h1b-employers` and one page per state (`/h1b-employers/<state>`, e.g. `texas`, `district-of-columbia`)
+rank the 100 busiest H-1B employers each fiscal year two ways, from `h1b_employer_ranks` and
+`perm_docs['h1b_ranks_summary']`, written by `scripts/build_h1b_ranks.py`:
+
+| ranking | source | years | "state" means |
+|---|---|---|---|
+| certified H-1B LCAs (H-1B1 and E-3 left out) | DOL's LCA files | FY2020 on | the WORKSITE |
+| H-1B approvals, all six petition kinds | USCIS's Employer Data Hub | FY2009 on | the PETITIONER's address |
+
+- **A state view shows only the ranked source's figures**, because one row holding both would set a job in
+  Texas beside approvals filed from Washington. The national view shows both.
+- **A row reaches an employer page through `employer_page_map`** (97.6% of FY2025 approvals map); a row
+  with no page keeps its own spelling and isn't linked. Names are the page's own, as DOL prints them.
+- **Median pay** uses the salary explorer's yearly wage rule and band (`ANNUAL_WAGE_SQL`, imported from
+  `build_lca_facets.py`), withheld under five filings. "Senior roles" needs 20 leveled LCAs.
+- **Marks:** H-1B dependent when most of the year's LCAs declare it (Meta declared it on all 6,418 of its
+  FY2025 LCAs); willful violator only when most do (one LCA in 6,418 carried it, a typing error far more
+  often than a finding). PERM holds, WARN notices in two years and debarment describe the employer today.
+- **Rebuilt** after each LCA load (`flag-disclosure-ingest.yml`) and each Data Hub read
+  (`permtracker-uscis h1b-hub`, the 20th); about 8 minutes, 111,255 rows over 18 years. The health check
+  watches the doc at 45 days. `/h1b-employers` is in `/api/revalidate-disclosure`'s list; the state pages
+  turn over on their weekly window.
+- **The page opens on the newest complete fiscal year** (`defaultYear`), ranked by LCAs; the year, the
+  ranking and the state live in the URL and the address, read through `/api/h1b-employers`. The first 25
+  rows show; ranks 26 to 100 sit in a native `<details>`, in the HTML either way.
+- **FY2025, nationally:** 531,108 certified H-1B LCAs from 59,740 employers; the 10 busiest filed 83,914
+  (1 in 6), the top 100 182,717. USCIS approved 406,335 workers for 51,548 employers.
+- **The rail's Employers and wages group would have held 8 entries** (729px against 700), so Layoff notices
+  moved to Denials and audits, next to Employers under review.
+- **Glossary:** "H-1B dependent", from 20 CFR 655.736 and 655.737 read on eCFR (Oct 9 2026).
+- **USCIS abbreviates names on older Data Hub rows** ("TATA CONSULTANCY SVCS LTD", "COGNIZANT TECH SOLNS US
+  CORP", "UNIV OF MICHIGAN"), and those spellings matched no page: 4,233 spellings and 413,406 approvals were
+  on no employer's record, and Tata showed twice in one year's list. `build_employer_map.py` now writes out
+  `ABBREVIATIONS` for a spelling that files nothing and matches nothing, and joins it only when every way of
+  writing it out reaches the same page (4,349 joins with the lottery's rows; 25 sampled by hand, all right).
+  A spelling that files keeps its own page, so no URL moved. The join was found by checking the first
+  build's unlinked rows per year, not by any gate.
+

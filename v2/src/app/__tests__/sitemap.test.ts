@@ -60,6 +60,23 @@ vi.mock("@/lib/turso/publicData", () => ({
 // because the route 404s an empty month and the sitemap must omit it.
 // Cities with H-1B filings and no PERM page: none by default.
 vi.mock("@/lib/turso/lcaCities", () => ({ lcaOnlyCities: vi.fn(async () => []) }));
+// The top H-1B employer state pages: one ranked state, so the family is listed.
+vi.mock("@/lib/turso/h1bRanks", () => ({
+  getH1bSummary: vi.fn(async () => ({
+    top: 100,
+    years: [
+      {
+        fy: 2025,
+        lcaThrough: "2025-09-30",
+        uscisThrough: "2025-09-30",
+        places: {
+          US: { lcas: 10, lcaEmployers: 2, lcaTop10: 10, positions: 10, uscisAppr: 5, uscisEmployers: 2, uscisTop10: 5, uscisNew: 1 },
+          TX: { lcas: 4, lcaEmployers: 1, lcaTop10: 4, positions: 4, uscisAppr: 0, uscisEmployers: 0, uscisTop10: 0, uscisNew: 0 },
+        },
+      },
+    ],
+  })),
+}));
 vi.mock("@/lib/turso/groups", () => ({
   GROUP_PATH: { city: "/perm-cities", industry: "/perm-industries", country: "/perm-countries" },
   listGroups: vi.fn(async (kind: string) => [

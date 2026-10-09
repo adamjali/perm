@@ -84,6 +84,7 @@ export const PAGE_CARD_ALT = {
   "perm-wages": "What PERM cases pay. Wage percentiles by occupation, employer and state, from DOL's disclosure files.",
   "privacy": "Privacy policy. What the site collects, what it never collects, and who processes it.",
   "lca-wages": "H-1B salaries by occupation and state. Every wage on a certified labor condition application, as percentiles, from DOL's files.",
+  "h1b-employers": "Top H-1B employers by year and state. The 100 busiest each fiscal year, from DOL's certified LCAs and USCIS's approvals.",
   "compare-my-offer": "Compare an H-1B offer against what employers actually filed for the same job and state. The offer stays in the browser.",
   "policy-changes": "Immigration policy changes on the record. Every Federal Register rule, proposed rule and notice touching PERM, wages, H-1B and the I-485, linked.",
   "employer-compare": "Two employers side by side: PERM filings, approval rate, wage levels and recent activity, from DOL's own files.",
