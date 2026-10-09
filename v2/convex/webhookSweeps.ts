@@ -49,17 +49,23 @@ const TOLD_CAP = 200;
 /* case.status_changed                                                 */
 /* ------------------------------------------------------------------ */
 
+/**
+ * The watches a sweep that began at `before` still has to check: least
+ * recently checked first (never-checked rows sort first), and only those
+ * checked before the sweep began. A batch stamps what it checked with a later
+ * time, so the next batch moves on, and once every watch is stamped the list
+ * is empty and the sweep stops. Without the bound the oldest batch is always
+ * full once there are more watches than a batch, and the chain never ends.
+ */
 export const dueCaseWatches = internalQuery({
-  args: { limit: v.number() },
+  args: { limit: v.number(), before: v.number() },
   returns: v.array(
     v.object({ _id: v.id("webhookWatches"), target: v.string(), lastSeenStatus: v.union(v.string(), v.null()) }),
   ),
   handler: async (ctx, args) => {
-    // Least recently checked first (never-checked rows sort first), so a
-    // sweep that stops short round-robins.
     const rows = await ctx.db
       .query("webhookWatches")
-      .withIndex("by_kind_and_checked", (q) => q.eq("kind", "case"))
+      .withIndex("by_kind_and_checked", (q) => q.eq("kind", "case").lt("lastCheckedAt", args.before))
       .take(args.limit);
     return rows.map((w) => ({ _id: w._id, target: w.target, lastSeenStatus: w.lastSeenStatus ?? null }));
   },
@@ -117,12 +123,13 @@ export const recordCaseWatches = internalMutation({
 
 /** Compare every watched case with our record and queue an event for each change. */
 export const sweepCaseWatches = internalAction({
-  args: {},
+  args: { startedAt: v.optional(v.number()) },
   returns: v.object({ checked: v.number(), seeded: v.number(), changed: v.number() }),
-  handler: async (ctx): Promise<{ checked: number; seeded: number; changed: number }> => {
+  handler: async (ctx, args): Promise<{ checked: number; seeded: number; changed: number }> => {
+    const startedAt = args.startedAt ?? Date.now();
     const batch: { _id: Id<"webhookWatches">; target: string; lastSeenStatus: string | null }[] = await ctx.runQuery(
       internal.webhookSweeps.dueCaseWatches,
-      { limit: BATCH },
+      { limit: BATCH, before: startedAt },
     );
     if (batch.length === 0) return { checked: 0, seeded: 0, changed: 0 };
 
@@ -167,7 +174,9 @@ export const sweepCaseWatches = internalAction({
       }
     }
     await ctx.runMutation(internal.webhookSweeps.recordCaseWatches, { checked: batch.map((w) => w._id), seeds, changes });
-    if (batch.length === BATCH) await ctx.scheduler.runAfter(1_000, internal.webhookSweeps.sweepCaseWatches, {});
+    // A full batch: more of this pass is waiting. The same start time carries
+    // on, so the pass ends once every watch has been checked since it began.
+    if (batch.length === BATCH) await ctx.scheduler.runAfter(1_000, internal.webhookSweeps.sweepCaseWatches, { startedAt });
     return { checked: batch.length, seeded: seeds.length, changed: changes.length };
   },
 });
@@ -176,8 +185,9 @@ export const sweepCaseWatches = internalAction({
 /* employer.moved                                                      */
 /* ------------------------------------------------------------------ */
 
+/** Employer watches a pass begun at `before` hasn't checked yet; see dueCaseWatches. */
 export const dueEmployerWatches = internalQuery({
-  args: { limit: v.number() },
+  args: { limit: v.number(), before: v.number() },
   returns: v.array(
     v.object({
       _id: v.id("webhookWatches"),
@@ -189,7 +199,7 @@ export const dueEmployerWatches = internalQuery({
   handler: async (ctx, args) => {
     const rows = await ctx.db
       .query("webhookWatches")
-      .withIndex("by_kind_and_checked", (q) => q.eq("kind", "employer"))
+      .withIndex("by_kind_and_checked", (q) => q.eq("kind", "employer").lt("lastCheckedAt", args.before))
       .take(args.limit);
     return rows.map((w) => ({ _id: w._id, target: w.target, toldMoves: w.toldMoves ?? [], followingFrom: w.followingFrom ?? null }));
   },
@@ -239,11 +249,12 @@ export const recordEmployerWatches = internalMutation({
 });
 
 export const sweepEmployerWatches = internalAction({
-  args: {},
+  args: { startedAt: v.optional(v.number()) },
   returns: v.object({ checked: v.number(), told: v.number() }),
-  handler: async (ctx): Promise<{ checked: number; told: number }> => {
+  handler: async (ctx, args): Promise<{ checked: number; told: number }> => {
+    const startedAt = args.startedAt ?? Date.now();
     const batch: { _id: Id<"webhookWatches">; target: string; toldMoves: string[]; followingFrom: string | null }[] =
-      await ctx.runQuery(internal.webhookSweeps.dueEmployerWatches, { limit: BATCH });
+      await ctx.runQuery(internal.webhookSweeps.dueEmployerWatches, { limit: BATCH, before: startedAt });
     if (batch.length === 0) return { checked: 0, told: 0 };
     let doc;
     try {
@@ -268,7 +279,7 @@ export const sweepEmployerWatches = internalAction({
       }))
       .filter((x) => x.moves.length > 0);
     await ctx.runMutation(internal.webhookSweeps.recordEmployerWatches, { checked: batch.map((w) => w._id), news });
-    if (batch.length === BATCH) await ctx.scheduler.runAfter(1_000, internal.webhookSweeps.sweepEmployerWatches, {});
+    if (batch.length === BATCH) await ctx.scheduler.runAfter(1_000, internal.webhookSweeps.sweepEmployerWatches, { startedAt });
     return { checked: batch.length, told: news.reduce((n, x) => n + x.moves.length, 0) };
   },
 });
