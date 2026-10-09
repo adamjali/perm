@@ -1746,7 +1746,8 @@ body[data-scroll-locked] {
   padding: 0.75em 1em;
   border: 2px solid var(--border);
   background: var(--muted);
-  font-size: 0.8125rem;
+  /* 14px, the public text floor (Oct 1 2026); 13px here sat under it. */
+  font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
