@@ -8,6 +8,8 @@ import { API_PLANS } from "@convex/lib/apiPlans";
 
 export interface EndpointDoc {
   path: string;
+  /** GET unless said; one path can carry several methods, each its own entry. */
+  method?: "GET" | "POST" | "DELETE";
   summary: string;
   /** One example call, path and query only. */
   example: string;
@@ -16,6 +18,10 @@ export interface EndpointDoc {
   counted: boolean;
   /** Answered without a key, under shared limits (the browser extension's lookup). */
   keyless?: boolean;
+  /** The scope a key needs beyond reading public records. */
+  scope?: "export" | "live_lookup" | "webhooks";
+  /** Its route gives a sandbox key its own answer rather than the shared samples. */
+  sandboxOwn?: boolean;
 }
 
 export const API_BASE = "https://permtracker.app/v1";

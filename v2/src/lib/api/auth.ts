@@ -3,12 +3,17 @@
  *
  * A key arrives as `Authorization: Bearer pt_live_...` (or `X-API-Key`, for
  * clients that can only set a custom header). Never in the address: a key in
- * a URL ends up in logs and browser history.
+ * a URL ends up in logs and browser history. A `pt_test_` key is a sandbox
+ * key: the routes answer it from fixed sample data.
  *
  * The cheap check runs first: a string that isn't key-shaped, or whose
  * checksum doesn't match, is refused without asking Convex. A well-formed key
  * is checked by its SHA-256 against Convex (apiKeys.verify) and the answer is
- * kept for 60 seconds, so a revoked key stops within a minute.
+ * kept for 60 seconds, so a revoked key stops within a minute; a revoke or a
+ * rotation also clears the cached answer at once (`forgetKeys`, through
+ * /api/revalidate-api-key). The times a key stops on its own (its expiry, the
+ * end of a rotation's 24 hours) are compared here, on every call, with this
+ * server's clock.
  */
 import "server-only";
 
@@ -16,7 +21,8 @@ import { fetchQuery } from "convex/nextjs";
 
 import { api } from "@convex/_generated/api";
 import { hashApiKey, parseApiKey } from "@convex/lib/apiKeyFormat";
-import { apiPlan, type ApiPlan, type ApiPlanId } from "@convex/lib/apiPlans";
+import { apiPlan, isApiScope, type ApiPlan, type ApiPlanId, type ApiScope } from "@convex/lib/apiPlans";
+import { checkedLabel } from "@/lib/time";
 
 export type ApiCaller =
   | {
@@ -29,12 +35,17 @@ export type ApiCaller =
       accountPlan: ApiPlanId;
       /** Whether the account's own plan decides (the switch is Convex's PAYWALL_ENFORCED). */
       paywall: boolean;
+      scopes: ApiScope[];
+      /** A pt_test_ key: fixed sample data, nothing counted. */
+      sandbox: boolean;
+      /** When the key stops on its own, if it does. */
+      expiresAt: number | null;
     }
   | { kind: "anonymous" };
 
 export type AuthOutcome =
   | { ok: true; caller: ApiCaller }
-  | { ok: false; code: "invalid_key" | "revoked_key" | "key_check_failed"; message: string };
+  | { ok: false; code: "invalid_key" | "revoked_key" | "expired_key" | "key_check_failed"; message: string };
 
 type Verified = Awaited<ReturnType<typeof verifyRemote>>;
 
@@ -69,7 +80,7 @@ export async function authenticate(request: Request, now = Date.now()): Promise<
     return {
       ok: false,
       code: "invalid_key",
-      message: "That isn't a PERM Tracker API key. Keys start with pt_live_ and are 46 characters long.",
+      message: "That isn't a PERM Tracker API key. Keys start with pt_live_ (or pt_test_ for sandbox keys) and are 46 characters long.",
     };
   }
 
@@ -100,6 +111,22 @@ export async function authenticate(request: Request, now = Date.now()): Promise<
   if (v.revoked) {
     return { ok: false, code: "revoked_key", message: "This key was revoked. Make a new one in Settings, under API keys." };
   }
+  const expiresAt = typeof v.expiresAt === "number" ? v.expiresAt : null;
+  if (expiresAt !== null && now >= expiresAt) {
+    return {
+      ok: false,
+      code: "expired_key",
+      message: `This key expired at ${checkedLabel(expiresAt)}. Make a new one in Settings, under API keys.`,
+    };
+  }
+  const graceUntil = typeof v.graceUntil === "number" ? v.graceUntil : null;
+  if (graceUntil !== null && now >= graceUntil) {
+    return {
+      ok: false,
+      code: "revoked_key",
+      message: `This key was rotated and stopped working at ${checkedLabel(graceUntil)}. Use the key that replaced it.`,
+    };
+  }
   return {
     ok: true,
     caller: {
@@ -109,8 +136,29 @@ export async function authenticate(request: Request, now = Date.now()): Promise<
       plan: apiPlan(v.plan),
       accountPlan: apiPlan(v.accountPlan).id,
       paywall: v.paywall === true,
+      // A Convex deployment older than scopes answers without them: the default set.
+      scopes: Array.isArray(v.scopes) ? v.scopes.filter(isApiScope) : ["read", "export", "live_lookup", "webhooks"],
+      sandbox: v.sandbox === true || parsed.sandbox,
+      expiresAt,
     },
   };
+}
+
+/**
+ * Drop the cached answers for these keys, so the next call asks Convex. Called
+ * when a key is revoked or rotated (POST /api/revalidate-api-key), on both
+ * copies of the site.
+ */
+export function forgetKeys(keyIds: readonly string[]): number {
+  const drop = new Set(keyIds);
+  let n = 0;
+  for (const [hash, hit] of cache) {
+    if (hit.value && drop.has(hit.value.keyId)) {
+      cache.delete(hash);
+      n++;
+    }
+  }
+  return n;
 }
 
 /** Test seam. */

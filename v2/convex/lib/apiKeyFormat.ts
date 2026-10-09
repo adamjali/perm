@@ -3,6 +3,7 @@
  * one and the site code that checks one.
  *
  *   pt_live_ + 32 random characters + a 6-character checksum
+ *   pt_test_ + the same, for a sandbox key (fixed sample data, nothing counted)
  *
  * The checksum lets the site refuse a mistyped or made-up key without asking
  * Convex, and it lets secret scanners (GitHub's included) tell a real key from
@@ -14,13 +15,14 @@
  */
 
 export const API_KEY_PREFIX = "pt_live_";
+export const SANDBOX_KEY_PREFIX = "pt_test_";
 export const API_KEY_BODY_LENGTH = 32;
 export const API_KEY_CHECK_LENGTH = 6;
 export const API_KEY_ID_LENGTH = 8;
 export const API_KEY_LENGTH = API_KEY_PREFIX.length + API_KEY_BODY_LENGTH + API_KEY_CHECK_LENGTH;
 
 const ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-const KEY_RE = /^pt_live_([0-9A-Za-z]{32})([0-9A-Za-z]{6})$/;
+const KEY_RE = /^pt_(live|test)_([0-9A-Za-z]{32})([0-9A-Za-z]{6})$/;
 
 let crcTable: Uint32Array | null = null;
 
@@ -41,8 +43,8 @@ function crc32(text: string): number {
 }
 
 /** CRC32 of prefix and body, as 6 base-62 characters (62^6 covers 2^32). */
-export function apiKeyChecksum(body: string): string {
-  let n = crc32(API_KEY_PREFIX + body);
+export function apiKeyChecksum(body: string, prefix: string = API_KEY_PREFIX): string {
+  let n = crc32(prefix + body);
   let out = "";
   for (let i = 0; i < API_KEY_CHECK_LENGTH; i++) {
     out = ALPHABET[n % 62] + out;
@@ -67,24 +69,26 @@ export function randomBase62(length: number, randomBytes: (n: number) => Uint8Ar
 }
 
 /** A new key. `randomBytes` is crypto.getRandomValues in production. */
-export function buildApiKey(randomBytes: (n: number) => Uint8Array): string {
+export function buildApiKey(randomBytes: (n: number) => Uint8Array, sandbox = false): string {
+  const prefix = sandbox ? SANDBOX_KEY_PREFIX : API_KEY_PREFIX;
   const body = randomBase62(API_KEY_BODY_LENGTH, randomBytes);
-  return API_KEY_PREFIX + body + apiKeyChecksum(body);
+  return prefix + body + apiKeyChecksum(body, prefix);
 }
 
-/** The key's public id, or null when the text isn't a well-formed key. */
-export function parseApiKey(text: string): { key: string; keyId: string } | null {
+/** The key's public id and kind, or null when the text isn't a well-formed key. */
+export function parseApiKey(text: string): { key: string; keyId: string; sandbox: boolean } | null {
   if (text.length !== API_KEY_LENGTH) return null;
   const m = KEY_RE.exec(text);
   if (!m) return null;
-  const body = m[1]!;
-  if (apiKeyChecksum(body) !== m[2]) return null;
-  return { key: text, keyId: body.slice(0, API_KEY_ID_LENGTH) };
+  const sandbox = m[1] === "test";
+  const body = m[2]!;
+  if (apiKeyChecksum(body, sandbox ? SANDBOX_KEY_PREFIX : API_KEY_PREFIX) !== m[3]) return null;
+  return { key: text, keyId: body.slice(0, API_KEY_ID_LENGTH), sandbox };
 }
 
 /** How a key is shown once it can't be shown again: its prefix and id. */
-export function displayKeyId(keyId: string): string {
-  return `${API_KEY_PREFIX}${keyId}…`;
+export function displayKeyId(keyId: string, sandbox = false): string {
+  return `${sandbox ? SANDBOX_KEY_PREFIX : API_KEY_PREFIX}${keyId}…`;
 }
 
 /** SHA-256 of the whole key, lowercase hex. The only form of a key that is stored. */

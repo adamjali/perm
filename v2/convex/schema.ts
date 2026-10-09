@@ -2490,6 +2490,22 @@ export default defineSchema({
     name: v.string(),
     createdAt: v.number(),
     revokedAt: v.optional(v.number()),
+    /**
+     * What the key may do (convex/lib/apiPlans.ts API_SCOPES). Absent on a key
+     * made before scopes existed (Oct 8 2026), which holds DEFAULT_SCOPES.
+     */
+    scopes: v.optional(v.array(v.string())),
+    /** When the key stops working on its own, if its maker chose a lifetime. */
+    expiresAt: v.optional(v.number()),
+    /** A pt_test_ key: fixed sample data, never the live records, never counted. */
+    sandbox: v.optional(v.boolean()),
+    /**
+     * Set when the key was rotated: it keeps working until `graceUntil` (24
+     * hours) so the new key can be rolled out, then stops. `replacedBy` is
+     * the new key's public id.
+     */
+    graceUntil: v.optional(v.number()),
+    replacedBy: v.optional(v.string()),
   })
     .index("by_hash", ["keyHash"])
     .index("by_key_id", ["keyId"])

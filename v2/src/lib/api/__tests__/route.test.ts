@@ -16,7 +16,17 @@ vi.mock("../usage", () => ({
 import { apiGet } from "../route";
 import type { ReadResult } from "../reads";
 
-const KEY_CALLER = { kind: "key" as const, keyId: "KEY00001", account: "acct_a", plan: API_PLANS.free, accountPlan: "free" as const, paywall: true };
+const KEY_CALLER = {
+  kind: "key" as const,
+  keyId: "KEY00001",
+  account: "acct_a",
+  plan: API_PLANS.free,
+  accountPlan: "free" as const,
+  paywall: true,
+  scopes: ["read" as const],
+  sandbox: false,
+  expiresAt: null,
+};
 const meta = { source: "DOL", asOf: "2026-10-01", url: "https://permtracker.app/x" };
 
 function call(read: () => Promise<ReadResult<unknown>>) {
@@ -105,3 +115,41 @@ describe("a /v1 call", () => {
     err.mockRestore();
   });
 });
+
+describe("scopes and sandbox keys", () => {
+  it("refuses a key without the scope a call needs, before reading or counting", async () => {
+    const read = vi.fn();
+    const GET = apiGet(read, { scope: "export" });
+    const res = await GET(new Request("https://permtracker.app/v1/exports/employers"), { params: Promise.resolve({}) });
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error.code).toBe("missing_scope");
+    expect(body.error.message).toContain('"export"');
+    expect(read).not.toHaveBeenCalled();
+    expect(takeMinute).not.toHaveBeenCalled();
+  });
+
+  it("answers a sandbox key from the samples, never the live read, and counts nothing", async () => {
+    authenticate.mockResolvedValue({ ok: true, caller: { ...KEY_CALLER, sandbox: true } });
+    const read = vi.fn();
+    const GET = apiGet<{ caseNumber: string }>(read);
+    const res = await GET(new Request("https://permtracker.app/v1/cases/G-100-26000-000101"), {
+      params: Promise.resolve({ caseNumber: "G-100-26000-000101" }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.employer).toBe("Example Robotics LLC");
+    expect(body.meta.source).toMatch(/sandbox/i);
+    expect(res.headers.get("X-Sandbox")).toBe("true");
+    expect(read).not.toHaveBeenCalled();
+    expect(checkAllowance).not.toHaveBeenCalled();
+    expect(countCall).not.toHaveBeenCalled();
+  });
+
+  it("still holds a sandbox key to the minute limit", async () => {
+    authenticate.mockResolvedValue({ ok: true, caller: { ...KEY_CALLER, sandbox: true } });
+    takeMinute.mockReturnValue({ ok: false, remaining: 0, reset: 9 });
+    expect((await call(vi.fn())).status).toBe(429);
+  });
+});
+

@@ -146,3 +146,127 @@ describe("API keys", () => {
     expect(await t.run((ctx) => ctx.db.query("apiAccounts").collect())).toEqual([]);
   });
 });
+
+describe("what a key carries", () => {
+  it("keeps the chosen scopes, always with read, and never writing cases", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    const made = await as(t, userId).action(api.apiKeys.create, { name: "x", scopes: ["export", "cases_write", "nonsense"] });
+    if (!made.ok) throw new Error(made.message);
+    const v = await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(made.key) });
+    expect(v && "scopes" in v ? v.scopes : null).toEqual(["read", "export"]);
+  });
+
+  it("gives a key made without a choice the default scopes", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    const made = await as(t, userId).action(api.apiKeys.create, { name: "x" });
+    if (!made.ok) throw new Error(made.message);
+    const v = await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(made.key) });
+    expect(v && "scopes" in v ? v.scopes : null).toEqual(["read", "export", "live_lookup", "webhooks"]);
+  });
+
+  it("records a lifetime as an end time, and refuses one out of range", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    const before = Date.now();
+    const made = await as(t, userId).action(api.apiKeys.create, { name: "x", expiresInDays: 30 });
+    if (!made.ok) throw new Error(made.message);
+    const v = await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(made.key) });
+    const expiresAt = v && "expiresAt" in v ? v.expiresAt : null;
+    expect(expiresAt).toBeGreaterThanOrEqual(before + 30 * 86_400_000);
+    expect(expiresAt).toBeLessThan(before + 31 * 86_400_000);
+    expect((await as(t, userId).action(api.apiKeys.create, { name: "y", expiresInDays: 0 })).ok).toBe(false);
+    expect((await as(t, userId).action(api.apiKeys.create, { name: "y", expiresInDays: 1.5 })).ok).toBe(false);
+  });
+
+  it("makes sandbox keys under their own allowance, marked as sandbox", async () => {
+    vi.stubEnv("PAYWALL_ENFORCED", "1");
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    expect((await as(t, userId).action(api.apiKeys.create, { name: "live" })).ok).toBe(true);
+    const s1 = await as(t, userId).action(api.apiKeys.create, { name: "test 1", sandbox: true });
+    if (!s1.ok) throw new Error(s1.message);
+    expect(s1.key.startsWith("pt_test_")).toBe(true);
+    expect((await as(t, userId).action(api.apiKeys.create, { name: "test 2", sandbox: true })).ok).toBe(true);
+    const s3 = await as(t, userId).action(api.apiKeys.create, { name: "test 3", sandbox: true });
+    expect(s3).toEqual({ ok: false, message: "The Free plan has 2 sandbox keys. Revoke one to make a new one." });
+    const v = await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(s1.key) });
+    expect(v).toMatchObject({ sandbox: true });
+  });
+
+  it("lists scopes, kind and lifetime in Settings", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await as(t, userId).action(api.apiKeys.create, { name: "x", scopes: ["read"], expiresInDays: 7, sandbox: true });
+    const mine = await as(t, userId).query(api.apiKeys.mine, {});
+    expect(mine?.keys[0]).toMatchObject({ name: "x", scopes: ["read"], sandbox: true, graceUntil: null, replacedBy: null });
+    expect(mine?.keys[0]?.expiresAt).toBeGreaterThan(Date.now());
+  });
+});
+
+describe("rotating a key", () => {
+  it("makes a new key with the same name and scopes, and keeps the old one working for 24 hours", async () => {
+    vi.stubEnv("PAYWALL_ENFORCED", "1");
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    const old = await as(t, userId).action(api.apiKeys.create, { name: "deploy", scopes: ["read", "webhooks"] });
+    if (!old.ok) throw new Error(old.message);
+    const before = Date.now();
+    const next = await as(t, userId).action(api.apiKeys.rotate, { keyId: old.keyId });
+    if (!next.ok) throw new Error(next.message);
+    expect(next.name).toBe("deploy");
+    expect(next.key).not.toBe(old.key);
+
+    const fresh = await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(next.key) });
+    expect(fresh).toMatchObject({ revoked: false, scopes: ["read", "webhooks"], graceUntil: null });
+    const stale = await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(old.key) });
+    const graceUntil = stale && "graceUntil" in stale ? stale.graceUntil : null;
+    expect(stale).toMatchObject({ revoked: false });
+    expect(graceUntil).toBeGreaterThanOrEqual(before + 24 * 3_600_000);
+    expect(graceUntil).toBeLessThan(before + 25 * 3_600_000);
+  });
+
+  it("doesn't need a free place on the Free plan's one key", async () => {
+    vi.stubEnv("PAYWALL_ENFORCED", "1");
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    const old = await as(t, userId).action(api.apiKeys.create, { name: "only" });
+    if (!old.ok) throw new Error(old.message);
+    expect((await as(t, userId).action(api.apiKeys.rotate, { keyId: old.keyId })).ok).toBe(true);
+  });
+
+  it("allows one rotation in flight, so rotating can't stack working keys", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    const old = await as(t, userId).action(api.apiKeys.create, { name: "k" });
+    if (!old.ok) throw new Error(old.message);
+    const next = await as(t, userId).action(api.apiKeys.rotate, { keyId: old.keyId });
+    if (!next.ok) throw new Error(next.message);
+    const again = await as(t, userId).action(api.apiKeys.rotate, { keyId: next.keyId });
+    expect(again.ok).toBe(false);
+    expect(await as(t, userId).action(api.apiKeys.rotate, { keyId: old.keyId })).toMatchObject({ ok: false });
+  });
+
+  it("won't rotate someone else's key", async () => {
+    const t = createTestContext();
+    const a = await makeUser(t, "a@example.com");
+    const b = await makeUser(t, "b@example.com");
+    const made = await as(t, a).action(api.apiKeys.create, { name: "A" });
+    if (!made.ok) throw new Error(made.message);
+    expect(await as(t, b).action(api.apiKeys.rotate, { keyId: made.keyId })).toEqual({ ok: false, message: "That key isn't one of yours." });
+  });
+
+  it("never gives the new key a longer life than the old one had", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    const old = await as(t, userId).action(api.apiKeys.create, { name: "k", expiresInDays: 10 });
+    if (!old.ok) throw new Error(old.message);
+    const oldEnd = (await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(old.key) })) as { expiresAt: number };
+    const next = await as(t, userId).action(api.apiKeys.rotate, { keyId: old.keyId });
+    if (!next.ok) throw new Error(next.message);
+    const newEnd = (await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(next.key) })) as { expiresAt: number };
+    expect(newEnd.expiresAt).toBeLessThanOrEqual(oldEnd.expiresAt + 86_400_000);
+  });
+});
+
