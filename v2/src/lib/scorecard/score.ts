@@ -228,16 +228,116 @@ export interface HeadToHead {
    */
   oursLateWaiting?: number;
   rivalLateWaiting?: number;
+  /**
+   * A floor on each side's miss over the same cases (Oct 8 2026; older docs
+   * lack them): every decided case at its miss, and every case still waiting
+   * past at least one side's date at the days each side is late so far (0 if
+   * that side's date is still ahead). Waiting cases only get later, so these
+   * can only rise.
+   */
+  floorCases?: number;
+  oursAtLeastDays?: number | null;
+  rivalAtLeastDays?: number | null;
+  /** The same comparison split by the kind of case our method dated (Oct 8 2026). */
+  byKind?: Partial<Record<CaseKind, HeadToHead>>;
+}
+
+/**
+ * What kind of case our date was for, read from the method that dated it:
+ * a case in DOL's ordinary line (`working`), one whose filing month DOL's
+ * queue had already passed (`passed`), or one at a request for information.
+ * They differ in how hard they are to date, and a rival can lead on one kind
+ * while trailing on the other, so the head-to-head is read for each.
+ */
+export type CaseKind = "working" | "passed" | "rfi";
+export const CASE_KINDS: readonly CaseKind[] = ["working", "passed", "rfi"];
+const PASSED_MODELS = new Set(["stragglers", "dol-average"]);
+export function caseKindOf(model: string): CaseKind {
+  if (PASSED_MODELS.has(model)) return "passed";
+  if (model === "rfi-clock") return "rfi";
+  return "working";
+}
+
+/** Day number of an ISO date, for midpoint arithmetic. */
+const dayNumber = (iso: string) => Math.round(Date.parse(`${iso}T00:00:00Z`) / 86_400_000);
+
+/**
+ * Who is closer on a case still waiting, if that is already decided.
+ *
+ * DOL can only decide today or later. Once today is past the midpoint of the
+ * two dates, any such day is nearer the later date, so the later one has won
+ * whatever happens; on the midpoint itself a decision today would tie. Before
+ * that the earlier date can still be the closer one, and the case waits.
+ */
+function settledWinner(ours: string, rival: string, today: string): "ours" | "rival" | "tie" | null {
+  if (ours === rival) return dayNumber(today) > dayNumber(ours) ? "tie" : null;
+  const t = dayNumber(today) * 2;
+  if (t <= dayNumber(ours) + dayNumber(rival)) return null;
+  return ours > rival ? "ours" : "rival";
+}
+
+function emptyHeadToHead(): HeadToHead {
+  return {
+    shared: 0, decided: 0, oursTypicalDays: null, rivalTypicalDays: null,
+    oursCloser: 0, rivalCloser: 0, ties: 0, settledWhileWaiting: 0,
+    oursLateWaiting: 0, rivalLateWaiting: 0,
+    floorCases: 0, oursAtLeastDays: null, rivalAtLeastDays: null,
+  };
+}
+
+/** One side's comparison over a list of paired cases. */
+function compare(pairs: readonly [PredictionRow, PredictionRow][], today: string): HeadToHead {
+  const h = emptyHeadToHead();
+  const oursErr: number[] = [];
+  const rivalErr: number[] = [];
+  const oursFloor: number[] = [];
+  const rivalFloor: number[] = [];
+  for (const [o, r] of pairs) {
+    h.shared += 1;
+    if (r.decidedOn && !isGradedOutcome(r.outcome)) continue;
+    if (r.decidedOn) {
+      h.decided += 1;
+      const eo = Math.abs(daysBetween(o.predicted, r.decidedOn));
+      const er = Math.abs(daysBetween(r.predicted, r.decidedOn));
+      oursErr.push(eo);
+      rivalErr.push(er);
+      oursFloor.push(eo);
+      rivalFloor.push(er);
+      if (eo < er) h.oursCloser += 1;
+      else if (er < eo) h.rivalCloser += 1;
+      else h.ties += 1;
+      continue;
+    }
+    const oursLate = o.predicted < today;
+    const rivalLate = r.predicted < today;
+    if (oursLate) h.oursLateWaiting! += 1;
+    if (rivalLate) h.rivalLateWaiting! += 1;
+    if (oursLate || rivalLate) {
+      oursFloor.push(Math.max(0, daysBetween(o.predicted, today)));
+      rivalFloor.push(Math.max(0, daysBetween(r.predicted, today)));
+    }
+    const won = settledWinner(o.predicted, r.predicted, today);
+    if (!won) continue;
+    h.settledWhileWaiting += 1;
+    if (won === "ours") h.oursCloser += 1;
+    else if (won === "rival") h.rivalCloser += 1;
+    else h.ties += 1;
+  }
+  h.oursTypicalDays = median(oursErr);
+  h.rivalTypicalDays = median(rivalErr);
+  h.floorCases = oursFloor.length;
+  h.oursAtLeastDays = median(oursFloor);
+  h.rivalAtLeastDays = median(rivalFloor);
+  return h;
 }
 
 /**
  * Ours against each rival on exactly the same cases, so neither side's figure
  * comes from an easier sample.
  *
- * A case still pending past both predicted dates is already settled between
- * the two: DOL will decide after today, so the later prediction is the closer
- * one whenever that happens. A case pending past only one date is not settled
- * (the other may yet be exact) and is left out of the count.
+ * A case still waiting is counted for the side it can no longer lose to (see
+ * settledWinner): grading only the decided cases would favour whoever dates
+ * cases sooner, because early decisions arrive first.
  */
 export function headToHead(
   rows: readonly (PredictionRow & { caseNumber: string })[],
@@ -248,49 +348,19 @@ export function headToHead(
   for (const r of rows) if (r.source === "ours" && r.program === "perm") ours.set(key(r), r);
   const out: Record<string, HeadToHead> = {};
   for (const src of [...new Set(rows.filter((r) => r.source !== "ours" && r.source !== "watched").map((r) => r.source))].sort()) {
-    const h: HeadToHead = {
-      shared: 0, decided: 0, oursTypicalDays: null, rivalTypicalDays: null,
-      oursCloser: 0, rivalCloser: 0, ties: 0, settledWhileWaiting: 0,
-    };
-    let oursLate = 0;
-    let rivalLate = 0;
-    const oursErr: number[] = [];
-    const rivalErr: number[] = [];
+    const pairs: [PredictionRow, PredictionRow][] = [];
     for (const r of rows) {
       if (r.source !== src || r.program !== "perm") continue;
       const o = ours.get(key(r));
-      if (!o) continue;
-      h.shared += 1;
-      if (r.decidedOn && !isGradedOutcome(r.outcome)) continue;
-      if (!r.decidedOn) {
-        if (o.predicted < today) oursLate += 1;
-        if (r.predicted < today) rivalLate += 1;
-      }
-      let eo: number;
-      let er: number;
-      if (r.decidedOn) {
-        h.decided += 1;
-        eo = Math.abs(daysBetween(o.predicted, r.decidedOn));
-        er = Math.abs(daysBetween(r.predicted, r.decidedOn));
-        oursErr.push(eo);
-        rivalErr.push(er);
-      } else if (o.predicted < today && r.predicted < today) {
-        // Both dates passed: each miss is (decision - its date), so the later
-        // date's miss is the smaller one, whatever the decision day turns out.
-        h.settledWhileWaiting += 1;
-        eo = daysBetween(o.predicted, today);
-        er = daysBetween(r.predicted, today);
-      } else {
-        continue;
-      }
-      if (eo < er) h.oursCloser += 1;
-      else if (er < eo) h.rivalCloser += 1;
-      else h.ties += 1;
+      if (o) pairs.push([o, r]);
     }
-    h.oursTypicalDays = median(oursErr);
-    h.rivalTypicalDays = median(rivalErr);
-    h.oursLateWaiting = oursLate;
-    h.rivalLateWaiting = rivalLate;
+    const h = compare(pairs, today);
+    const byKind: Partial<Record<CaseKind, HeadToHead>> = {};
+    for (const kind of CASE_KINDS) {
+      const these = pairs.filter(([o]) => caseKindOf(o.model) === kind);
+      if (these.length) byKind[kind] = compare(these, today);
+    }
+    h.byKind = byKind;
     out[src] = h;
   }
   return out;

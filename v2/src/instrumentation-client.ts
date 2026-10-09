@@ -21,6 +21,7 @@ import {
   releaseHeld,
 } from "@/lib/analytics";
 import { edgeCountry } from "@/lib/edgeCountry";
+import { chunkDiagnostics, isMissingModule } from "@/components/error/recovery";
 import { fromServiceWorkerRegister } from "@/lib/exceptionNoise";
 
 // The live site's security policy has no 'unsafe-eval', so zod must not
@@ -147,6 +148,13 @@ function startPostHog(key: string, country: string | null): void {
             event.properties?.$exception_message || "",
             ...(exList || []).map((e) => e.value || ""),
           ].join(" ");
+
+          // The missing-module crash carries what it needs to be read (see
+          // chunkDiagnostics): uncaught ones arrive here, caught ones through
+          // reportCaughtError, which has already attached it.
+          if (isMissingModule(msg) && event.properties && !("chunks" in event.properties)) {
+            event.properties.chunks = chunkDiagnostics();
+          }
 
           // Stale deployment — normal during deploys, error boundaries reload the page
           if (

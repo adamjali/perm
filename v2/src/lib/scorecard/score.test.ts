@@ -178,14 +178,70 @@ describe("headToHead", () => {
     expect(h.decided).toBe(0);
   });
 
-  it("leaves a waiting case alone while one of the two dates is still ahead", () => {
+  it("settles a waiting case once today is past the midpoint of the two dates", () => {
+    // Sep 5 and Oct 20 meet at Sep 27-28. DOL decides on Oct 1 or later, which
+    // is nearer Oct 20 whatever day it is, so the later date has already won.
     const rows = [
       r({ caseNumber: "G-4", predicted: "2026-10-20" }),
       r({ caseNumber: "G-4", source: "rival-b", model: "rival", predicted: "2026-09-05" }),
     ];
     const h = headToHead(rows, "2026-10-01")["rival-b"]!;
     expect(h.shared).toBe(1);
+    expect(h.settledWhileWaiting).toBe(1);
+    expect(h.oursCloser).toBe(1);
+  });
+
+  it("leaves a waiting case alone while the earlier date can still win", () => {
+    // Sep 25 and Oct 20 meet at Oct 7-8: a decision on Oct 2 would favour Sep 25.
+    const rows = [
+      r({ caseNumber: "G-4", predicted: "2026-10-20" }),
+      r({ caseNumber: "G-4", source: "rival-b", model: "rival", predicted: "2026-09-25" }),
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-b"]!;
     expect(h.oursCloser + h.rivalCloser + h.ties).toBe(0);
+  });
+
+  it("does not settle on the midpoint day itself, where a decision today would tie", () => {
+    const rows = [
+      r({ caseNumber: "G-9", predicted: "2026-10-11" }),
+      r({ caseNumber: "G-9", source: "rival-b", model: "rival", predicted: "2026-09-21" }),
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-b"]!;
+    expect(h.oursCloser + h.rivalCloser + h.ties).toBe(0);
+  });
+
+  it("splits the comparison by the kind of case our method dated", () => {
+    const rows = [
+      r({ caseNumber: "W-1", model: "decision-pace", predicted: "2026-09-10", decidedOn: "2026-09-11", outcome: "CERTIFIED" }),
+      r({ caseNumber: "W-1", source: "rival-a", model: "rival", predicted: "2026-09-01", decidedOn: "2026-09-11", outcome: "CERTIFIED" }),
+      r({ caseNumber: "P-1", model: "stragglers", predicted: "2026-09-20", decidedOn: "2026-09-08", outcome: "CERTIFIED" }),
+      r({ caseNumber: "P-1", source: "rival-a", model: "rival", predicted: "2026-09-07", decidedOn: "2026-09-08", outcome: "CERTIFIED" }),
+      r({ caseNumber: "P-2", model: "dol-average", predicted: "2026-09-30", decidedOn: "2026-09-02", outcome: "CERTIFIED" }),
+      r({ caseNumber: "P-2", source: "rival-a", model: "rival", predicted: "2026-09-01", decidedOn: "2026-09-02", outcome: "CERTIFIED" }),
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-a"]!;
+    expect(h.byKind?.working).toMatchObject({ shared: 1, oursCloser: 1, rivalCloser: 0 });
+    expect(h.byKind?.passed).toMatchObject({ shared: 2, oursCloser: 0, rivalCloser: 2 });
+    expect(h.oursCloser).toBe(1);
+    expect(h.rivalCloser).toBe(2);
+  });
+
+  it("gives each side a floor on its miss, counting waiting cases at the days they are late", () => {
+    const rows = [
+      // decided: ours 2 off, rival 9 off
+      r({ caseNumber: "F-1", predicted: "2026-09-10", decidedOn: "2026-09-12", outcome: "CERTIFIED" }),
+      r({ caseNumber: "F-1", source: "rival-a", model: "rival", predicted: "2026-09-03", decidedOn: "2026-09-12", outcome: "CERTIFIED" }),
+      // waiting: ours not due yet (0 so far), rival 20 days late by Oct 1
+      r({ caseNumber: "F-2", predicted: "2026-10-05" }),
+      r({ caseNumber: "F-2", source: "rival-a", model: "rival", predicted: "2026-09-11" }),
+      // waiting, neither side due: says nothing yet
+      r({ caseNumber: "F-3", predicted: "2026-10-09" }),
+      r({ caseNumber: "F-3", source: "rival-a", model: "rival", predicted: "2026-10-08" }),
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-a"]!;
+    expect(h.floorCases).toBe(2);
+    expect(h.oursAtLeastDays).toBe(1); // median of 2 and 0
+    expect(h.rivalAtLeastDays).toBe(15); // median of 9 and 20, rounded
   });
 
   it("counts the shared cases still waiting past each side's own date", () => {

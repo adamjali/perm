@@ -168,9 +168,46 @@ describe("readMethods", () => {
     });
     expect(out).toHaveLength(2);
     expect(out[0]).toBe(
-      "DOL's published average, which the case page shows for cases DOL's queue has just passed: 19 graded, typically 6 days off, 7 more than two weeks off, and its dates run late.",
+      "DOL's published average, which the case page used for cases DOL's queue had just passed: 19 graded, typically 6 days off, 7 more than two weeks off, and its dates run late. Retired October 7, 2026: the case page no longer dates cases this way.",
     );
     expect(out[1]).toBe("Our main method (cases ahead of yours, at DOL's measured pace): 11 graded, typically 4 days off, and its dates run late.");
+  });
+});
+
+describe("readOurs on the cases the queue had passed", () => {
+  it("sets our rate against answering today, waiting cases counted", () => {
+    const bt = {
+      t0: "2026-09-24", end: "2026-10-08", current: null,
+      passed: {
+        rate: { cases: 1180, decided: 600, missAtLeastDays: 6 },
+        today: { cases: 1180, decided: 600, missAtLeastDays: 11 },
+      },
+    };
+    const out = readOurs(cell({ graded: 0 }), null, null, bt).join(" ");
+    expect(out).toContain('On 1,180 cases DOL\'s queue had already passed, counting the ones still waiting at the days they\'re late, our rate rule was at least 6 days off, against 11 days for answering "today".');
+  });
+});
+
+describe("readRival on the waiting cases and by kind", () => {
+  it("states a floor once waiting cases are counted, and splits by kind", () => {
+    const r = readRival("rival-a", h2h({
+      oursCloser: 6, rivalCloser: 12, ties: 0, decided: 17, settledWhileWaiting: 1,
+      floorCases: 40, oursAtLeastDays: 3, rivalAtLeastDays: 9,
+      byKind: {
+        working: h2h({ oursCloser: 5, rivalCloser: 1, ties: 0, oursTypicalDays: 4, rivalTypicalDays: 12 }),
+        passed: h2h({ oursCloser: 1, rivalCloser: 11, ties: 0, oursTypicalDays: 9, rivalTypicalDays: 2 }),
+      },
+    }));
+    const text = r.points.join(" ");
+    expect(text).toContain("DOL can no longer decide nearer the earlier date");
+    expect(text).toContain("the typical miss on 40 cases is at least 3 days for us and 9 days for Rival A");
+    expect(text).toContain("On cases in DOL's ordinary line when dated: we were closer on 5, Rival A on 1 (typical miss on the decided: us 4 days, Rival A 12 days).");
+    expect(text).toContain("On cases whose filing month DOL's queue had already passed: we were closer on 1, Rival A on 11");
+  });
+
+  it("says nothing about floors when every compared case is decided", () => {
+    const r = readRival("rival-b", h2h({ floorCases: 13, decided: 13, oursAtLeastDays: 6, rivalAtLeastDays: 1 }));
+    expect(r.points.join(" ")).not.toContain("still waiting past a date");
   });
 });
 

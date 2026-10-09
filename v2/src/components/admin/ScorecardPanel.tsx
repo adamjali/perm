@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 import { api } from "@convex/_generated/api";
 import { otherEstimateRows } from "@/lib/scorecard/otherEstimates";
-import { HORIZONS, type Cell, type HeadToHead, type Summary } from "@/lib/scorecard/score";
+import { CASE_KINDS, HORIZONS, type CaseKind, type Cell, type HeadToHead, type Summary } from "@/lib/scorecard/score";
 import type { SeasonalCheck } from "@/lib/seasonalTiming";
 import {
   GRADE_SCALE,
@@ -48,6 +48,29 @@ interface Doc {
 }
 
 const days = (x: number | null | undefined) => (x == null ? "-" : `${formatInt(Math.round(x))}d`);
+
+const KIND_SHORT: Record<CaseKind, string> = {
+  working: "In DOL's line",
+  passed: "Queue had passed",
+  rfi: "At an RFI",
+};
+
+/** One rival's head-to-head row; `sub` indents a per-kind row under it. */
+function HeadToHeadRow({ label, h, sub = false }: { label: string; h: HeadToHead; sub?: boolean }) {
+  const cells = [
+    h.shared, h.decided, days(h.oursTypicalDays), days(h.rivalTypicalDays),
+    days(h.oursAtLeastDays), days(h.rivalAtLeastDays),
+    h.oursCloser, h.rivalCloser, h.ties, h.oursLateWaiting ?? "-", h.rivalLateWaiting ?? "-",
+  ];
+  return (
+    <tr className={cn("border-border", sub ? "border-t text-muted-foreground" : "border-t-2")}>
+      <th scope="row" className={cn("px-3 py-2 text-left", sub ? "pl-8 font-normal" : "font-bold")}>{`${label} `}</th>
+      {cells.map((c, i) => (
+        <td key={i} className="px-3 py-2 text-right tabular-nums">{`${c} `}</td>
+      ))}
+    </tr>
+  );
+}
 const pct = (x: number | null) => (x === null ? "-" : `${Math.round(x * 100)}%`);
 
 /** "6 days late", "1 day early", "on time": which way a source's dates lean. */
@@ -345,32 +368,25 @@ export function ScorecardPanel() {
           </div>{" "}
           {Object.keys(h2h).length > 0 ? (
             <div className="overflow-x-auto border-2 border-border">
-              <table className="w-full min-w-[760px] text-sm">
+              <table className="w-full min-w-[960px] text-sm">
                 <caption className="p-2 text-left text-sm text-muted-foreground">
-                  Head to head: only cases both sides dated the same day.
+                  Head to head: only cases both sides dated the same day, then split by the kind of case. A waiting case counts once DOL can no longer decide nearer the earlier date; "waiting counted" puts each waiting case at the days it is late so far.
                 </caption>
                 <thead className="bg-muted">
                   <tr>
-                    {["Rival", "Shared", "Decided", "Our miss", "Their miss", "We were closer", "They were closer", "Tied", "Our late, waiting", "Their late, waiting"].map((h, i) => (
+                    {["Rival", "Shared", "Decided", "Our miss", "Their miss", "Ours, waiting counted", "Theirs, waiting counted", "We were closer", "They were closer", "Tied", "Our late, waiting", "Their late, waiting"].map((h, i) => (
                       <th key={h} scope="col" className={cn("px-3 py-2 font-bold", i === 0 ? "text-left" : "text-right")}>{`${h} `}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(h2h).map(([src, h]) => (
-                    <tr key={src} className="border-t-2 border-border">
-                      <th scope="row" className="px-3 py-2 text-left font-bold">{`${sourceName(src)} `}</th>
-                      <td className="px-3 py-2 text-right tabular-nums">{`${h.shared} `}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{`${h.decided} `}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{`${days(h.oursTypicalDays)} `}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{`${days(h.rivalTypicalDays)} `}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{`${h.oursCloser} `}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{`${h.rivalCloser} `}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{`${h.ties} `}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{`${h.oursLateWaiting ?? "-"} `}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{`${h.rivalLateWaiting ?? "-"} `}</td>
-                    </tr>
-                  ))}
+                  {Object.entries(h2h).flatMap(([src, h]) => [
+                    <HeadToHeadRow key={src} label={sourceName(src)} h={h} />,
+                    ...CASE_KINDS.flatMap((kind) => {
+                      const k = h.byKind?.[kind];
+                      return k ? [<HeadToHeadRow key={`${src}-${kind}`} label={KIND_SHORT[kind]} h={k} sub />] : [];
+                    }),
+                  ])}
                 </tbody>
               </table>
             </div>

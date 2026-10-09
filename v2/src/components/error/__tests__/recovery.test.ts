@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import posthog from "posthog-js";
-import { claimAutoReload, failedRequests, isReloadCurable, reportCaughtError } from "../recovery";
+import { chunkDiagnostics, claimAutoReload, failedRequests, isMissingModule, isReloadCurable, reportCaughtError } from "../recovery";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
@@ -115,5 +115,56 @@ describe("reportCaughtError", () => {
     const e = new Error("y");
     reportCaughtError("GlobalError", e);
     await vi.waitFor(() => expect(Sentry.captureException).toHaveBeenCalledWith(e, expect.anything()));
+  });
+});
+
+describe("chunkDiagnostics", () => {
+  const w = window as unknown as { webpackChunk_N_E?: unknown };
+  afterEach(() => {
+    delete w.webpackChunk_N_E;
+    document.querySelectorAll("script[data-test]").forEach((n) => n.remove());
+  });
+
+  const addScript = (src: string) => {
+    const s = document.createElement("script");
+    s.setAttribute("data-test", "1");
+    s.src = src;
+    document.head.appendChild(s);
+  };
+
+  it("names a chunk id pushed twice, the evidence of a foreign push", () => {
+    w.webpackChunk_N_E = [[[3398], {}], [[37, 3398], {}], [[6353], {}], "junk"];
+    const d = chunkDiagnostics()!;
+    expect(d.pushes).toBe(3);
+    expect(d.duplicateIds).toEqual(["3398"]);
+  });
+
+  it("lists scripts that are not our build files, extensions by origin only", () => {
+    addScript(`${location.origin}/_next/static/chunks/webpack-abc.js?dpl=e9befd65d03be117531be9b5cf9fb4a44501f0eb-87`);
+    addScript("chrome-extension://abcdefghijklmnop/inject.js");
+    addScript("https://analytics.ahrefs.com/analytics.js");
+    const d = chunkDiagnostics()!;
+    expect(d.foreignScripts).toContain("chrome-extension://abcdefghijklmnop");
+    expect(d.foreignScripts).toContain("https://analytics.ahrefs.com");
+    expect(d.foreignScripts.join(" ")).not.toContain("inject.js");
+    expect(d.dpl).toEqual(["e9befd65d03b"]);
+  });
+
+  it("is empty-handed, not broken, when nothing was pushed", () => {
+    const d = chunkDiagnostics()!;
+    expect(d).toMatchObject({ pushes: 0, duplicateIds: [] });
+  });
+});
+
+describe("isMissingModule", () => {
+  it.each([
+    "Cannot read properties of undefined (reading 'call')",
+    "can't access property \"call\", e[r] is undefined",
+    "undefined is not an object (evaluating 'o[e].call')",
+  ])("recognises webpack's missing module: %s", (m) => {
+    expect(isMissingModule(m)).toBe(true);
+  });
+  it("leaves other errors alone", () => {
+    expect(isMissingModule("Failed to fetch")).toBe(false);
   });
 });

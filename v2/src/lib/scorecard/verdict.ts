@@ -17,7 +17,14 @@ import { addDays, format, parseISO } from "date-fns";
 import { printedRangeCheck, type BacktestRangeFields } from "@/lib/rangeCoverage";
 import { formatInt } from "@/lib/format";
 
-import { HORIZONS, SETTLE_DAYS, type Cell, type HeadToHead, type Horizon } from "./score";
+import { CASE_KINDS, HORIZONS, SETTLE_DAYS, type CaseKind, type Cell, type HeadToHead, type Horizon } from "./score";
+
+/** How a reading names each kind of case (score.ts caseKindOf). */
+export const KIND_WORDS: Record<CaseKind, string> = {
+  working: "On cases in DOL's ordinary line when dated",
+  passed: "On cases whose filing month DOL's queue had already passed",
+  rfi: "On cases at a request for information",
+};
 
 export const SOURCE_NAME: Record<string, string> = {
   ours: "Us",
@@ -111,7 +118,7 @@ export function readRival(source: string, h: HeadToHead): RivalReading {
 
   const points: string[] = [];
   const waitingNote = h.settledWhileWaiting > 0
-    ? `, counting ${formatInt(h.settledWhileWaiting)} still waiting past both dates, where the later date already wins`
+    ? `, counting ${formatInt(h.settledWhileWaiting)} still waiting that DOL can no longer decide nearer the earlier date`
     : "";
   points.push(
     `Of ${formatInt(compared)} cases we both dated that can be judged${waitingNote}: we were closer on ${formatInt(won)}, ${name} on ${formatInt(lost)}${h.ties ? `, ${formatInt(h.ties)} tied` : ""}.`,
@@ -119,6 +126,21 @@ export function readRival(source: string, h: HeadToHead): RivalReading {
   if (h.oursTypicalDays !== null && h.rivalTypicalDays !== null) {
     points.push(
       `Typical miss on the ${formatInt(h.decided)} decided: us ${dayWord(h.oursTypicalDays)}, ${name} ${dayWord(h.rivalTypicalDays)}.`,
+    );
+  }
+  const floorN = h.floorCases ?? 0;
+  if (floorN > h.decided && h.oursAtLeastDays != null && h.rivalAtLeastDays != null) {
+    points.push(
+      `Counting the cases still waiting past a date at the days they're late so far, the typical miss on ${formatInt(floorN)} cases is at least ${dayWord(h.oursAtLeastDays)} for us and ${dayWord(h.rivalAtLeastDays)} for ${name}, and those can only grow.`,
+    );
+  }
+  for (const kind of CASE_KINDS) {
+    const k = h.byKind?.[kind];
+    if (!k) continue;
+    const n = k.oursCloser + k.rivalCloser + k.ties;
+    if (n === 0) continue;
+    points.push(
+      `${KIND_WORDS[kind]}: we were closer on ${formatInt(k.oursCloser)}, ${name} on ${formatInt(k.rivalCloser)}${k.ties ? `, ${formatInt(k.ties)} tied` : ""}${k.oursTypicalDays !== null && k.rivalTypicalDays !== null ? ` (typical miss on the decided: us ${dayWord(k.oursTypicalDays)}, ${name} ${dayWord(k.rivalTypicalDays)})` : ""}.`,
     );
   }
   if (p !== null && leader !== "even") {
@@ -165,6 +187,17 @@ export interface BacktestFigures {
   rangeCoverage?: { judged: number; insideShare: number | null } | null;
   rangeModel?: BacktestRangeFields["rangeModel"];
   servedRange?: BacktestRangeFields["servedRange"];
+  /** Cases DOL's queue had passed, dated several ways on one set (backtest_queue.py passed_section). */
+  passed?: {
+    rate?: PassedScore | null;
+    today?: PassedScore | null;
+  } | null;
+}
+
+export interface PassedScore {
+  cases: number;
+  decided: number;
+  missAtLeastDays: number | null;
 }
 
 /**
@@ -211,6 +244,15 @@ export function readOurs(
     out.push(`In the backtest, ${btLean}.`);
   } else if (sampleLean) {
     out.push(`In the daily sample, ${sampleLean}.`);
+  }
+  // Cases the queue had passed: our rate against simply answering "today",
+  // which is how a rival that leads on these cases dates them.
+  const rate = backtest?.passed?.rate;
+  const now = backtest?.passed?.today;
+  if (rate && now && rate.cases >= 100 && rate.missAtLeastDays !== null && now.missAtLeastDays !== null) {
+    out.push(
+      `On ${formatInt(rate.cases)} cases DOL's queue had already passed, counting the ones still waiting at the days they're late, our rate rule was at least ${dayWord(rate.missAtLeastDays)} off, against ${dayWord(now.missAtLeastDays)} for answering "today".`,
+    );
   }
   // The backtest's range check covers thousands of cases; the sample's, dozens.
   const check = printedRangeCheck(backtest);
@@ -261,10 +303,20 @@ export function readOurs(
  */
 export const METHOD_NAME: Record<string, string> = {
   "decision-pace": "Our main method (cases ahead of yours, at DOL's measured pace)",
-  "dol-average": "DOL's published average, which the case page shows for cases DOL's queue has just passed",
+  "dol-average": "DOL's published average, which the case page used for cases DOL's queue had just passed",
   "rfi-clock": "The RFI clock, for a case at a request for information, dated from its own RFI day",
   stragglers: "The behind-the-queue rate, for cases the queue passed earlier",
   "queue-advance": "The queue's monthly advance",
+};
+
+/**
+ * Methods the case page no longer uses, and the day it stopped. Their grades
+ * stay in the record (a retired method's misses are still misses) but every
+ * sentence about one says it's retired, so its numbers aren't read as today's.
+ */
+export const RETIRED_METHODS: Record<string, string> = {
+  "dol-average": "October 7, 2026",
+  "pwd-queue-request-month": "October 3, 2026",
 };
 
 /** One sentence per method with at least `min` grades, busiest first. */
@@ -278,7 +330,8 @@ export function readMethods(byModel: Record<string, Cell> | null | undefined, mi
       const lean = c.biasDays !== null && Math.abs(c.biasDays) >= 2
         ? `, and its dates run ${c.biasDays < 0 ? "late" : "early"}`
         : "";
-      return `${METHOD_NAME[m] ?? m}: ${formatInt(c.graded)} graded, typically ${dayWord(c.typicalMissDays!)} off${far ? `, ${formatInt(far)} more than two weeks off` : ""}${lean}.`;
+      const retired = RETIRED_METHODS[m] ? ` Retired ${RETIRED_METHODS[m]}: the case page no longer dates cases this way.` : "";
+      return `${METHOD_NAME[m] ?? m}: ${formatInt(c.graded)} graded, typically ${dayWord(c.typicalMissDays!)} off${far ? `, ${formatInt(far)} more than two weeks off` : ""}${lean}.${retired}`;
     });
 }
 

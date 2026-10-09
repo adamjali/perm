@@ -99,6 +99,9 @@ check(p["medianDays"] == round(0.6931471805599453 / 0.0866, 1), "the rate's medi
 check(p["dolAverage"]["biasDays"] < -20, "DOL's average dates these November cases weeks late")
 check(p["rate"]["missAtLeastDays"] < p["dolAverage"]["missAtLeastDays"], "the rate beats the average here")
 check(passed_section(cases, moves, t0, end, "2025-12", 336, None, 600.0) is None, "no rate, no section")
+check(p["today"]["cases"] == 4 and p["today"]["missAtLeastDays"] == 7.5,
+      "answering 'today' is scored on the same cases, the waiting one at its days late")
+check(p["rate"]["missAtLeastDays"] < p["today"]["missAtLeastDays"], "the rate beats 'today' here")
 
 # ---- the record read once, rebuilt for any start day (Oct 8 2026) ----------
 def ms(d: date, hour: int = 12) -> int:

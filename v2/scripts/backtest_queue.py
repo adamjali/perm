@@ -175,12 +175,17 @@ def passed_section(cases: list[dict], moves: dict[str, tuple[date, str, bool]], 
     by_rate = {x["cn"]: t0 + timedelta(days=round(median)) for x in keep}
     by_ahead = {x["cn"]: t0 + timedelta(days=max(1, round(rank[x["cn"]] / pace))) for x in keep}
     by_avg = {x["cn"]: date.fromisoformat(x["fd"]) + timedelta(days=avg_days) for x in keep} if avg_days else {}
+    # "Today": a rival's answer for these cases is the day it was asked. It wins
+    # the first decisions and carries every case still waiting, so it is scored
+    # here on the same set, waiting cases counted, to keep the rate honest.
+    by_today = {x["cn"]: t0 for x in keep}
     return {
         "frontierMonth": frontier,
         "medianDays": round(median, 1),
         "rate": score_floor(by_rate, outcome, end),
         "dolAverage": score_floor(by_avg, outcome, end) if by_avg else None,
         "casesAhead": score_floor(by_ahead, outcome, end),
+        "today": score_floor(by_today, outcome, end),
     }
 
 

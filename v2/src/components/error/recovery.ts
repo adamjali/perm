@@ -76,6 +76,75 @@ export function failedRequests(): string[] {
 }
 
 /**
+ * Webpack's "a module factory is missing" crash, in Chrome's, Firefox's and
+ * Safari's words.
+ */
+const MISSING_MODULE = /reading 'call'|property "call"|property 'call'|\]\.call'\)/;
+export function isMissingModule(message: string): boolean {
+  return MISSING_MODULE.test(message);
+}
+
+export interface ChunkDiagnostics {
+  /** Entries in webpack's chunk list, `self.webpackChunk_N_E`. */
+  pushes: number;
+  /** Chunk ids pushed more than once: one build never does that. */
+  duplicateIds: string[];
+  /** Scripts that aren't our build files: an origin, or a same-site path. */
+  foreignScripts: string[];
+  /** Distinct deployment ids on our own build files (first 12 characters). */
+  dpl: string[];
+}
+
+/**
+ * Evidence for the missing-module crash (Oct 8 2026). It fires on desktop
+ * Chrome and Edge about half a second after a fresh load, inside a chunk the
+ * page prefetched, with no failed request and a chunk graph that checks out.
+ * Webpack marks a chunk installed when any script pushes its id into
+ * `webpackChunk_N_E`, and skips the modules of a later push of the same id;
+ * every Next.js build shares that global name. So a foreign push (a browser
+ * extension injecting another Next-built bundle) is the one way to get a
+ * missing module with nothing failing. A duplicate id or a foreign script
+ * here would show it; none, with the crash, rules it out.
+ */
+export function chunkDiagnostics(): ChunkDiagnostics | null {
+  try {
+    const global = (window as unknown as { webpackChunk_N_E?: unknown }).webpackChunk_N_E;
+    const counts = new Map<string, number>();
+    let pushes = 0;
+    if (Array.isArray(global)) {
+      for (const entry of global) {
+        if (!Array.isArray(entry) || !Array.isArray(entry[0])) continue;
+        pushes += 1;
+        for (const id of entry[0] as unknown[]) counts.set(String(id), (counts.get(String(id)) ?? 0) + 1);
+      }
+    }
+    const duplicateIds = [...counts].filter(([, n]) => n > 1).map(([id]) => id).slice(0, 10);
+    const foreign = new Set<string>();
+    const dpl = new Set<string>();
+    for (const script of Array.from(document.scripts)) {
+      if (!script.src) continue;
+      let u: URL;
+      try {
+        u = new URL(script.src, window.location.href);
+      } catch {
+        continue;
+      }
+      if (u.origin === window.location.origin && u.pathname.startsWith("/_next/")) {
+        const d = u.searchParams.get("dpl");
+        if (d) dpl.add(d.slice(0, 12));
+        continue;
+      }
+      // An extension's origin names the extension; its file paths add nothing.
+      const ext = /-extension:$/.test(u.protocol);
+      foreign.add(ext || u.origin !== window.location.origin ? `${u.protocol}//${u.host}` : u.pathname.slice(0, 60));
+    }
+    return { pushes, duplicateIds, foreignScripts: [...foreign].slice(0, 10), dpl: [...dpl] };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Record a caught error in PostHog (always loaded) and, where it is, Sentry.
  * Pass `sentry: false` when the caller already reports to Sentry itself.
  */
@@ -93,6 +162,7 @@ export function reportCaughtError(
     reloadCurable,
     autoReloaded,
     ...(reloadCurable && { failedRequests: failedRequests() }),
+    ...(isMissingModule(String(error?.message ?? "")) && { chunks: chunkDiagnostics() }),
   });
   if (!sentry) return;
   import("@sentry/nextjs")
