@@ -1,0 +1,60 @@
+---
+title: "Alerts within minutes, measured estimates, and H-1B rankings"
+seoTitle: "Faster alerts and measured estimates"
+description: "Watched cases checked every 5 minutes, estimate ranges measured nightly, a date for wage requests and RFIs, and the top H-1B employers by year and state."
+date: "2026-10-09"
+author: "PERM Tracker team"
+image: "/og/h1b-employers.jpg"
+imageAlt: "The H-1B employers page: the busiest employers ranked by year and state"
+category: "Feature"
+tags: ["changelog", "update", "alerts", "estimates", "h-1b", "api"]
+---
+
+This week made the alerts faster and put a measurement behind every date the
+site gives.
+
+## Alerts within minutes
+
+A watched case is checked every 5 minutes on weekdays from 7 AM to 9 PM
+Eastern, and every half hour otherwise. A status change is emailed at once.
+DOL emails the filer the moment it decides, so the attorney still hears first;
+this gets as close as anyone can after that.
+
+A case alert keeps watching for a year after DOL decides, so an appeal or a
+reversal is emailed too.
+
+## Every date, measured
+
+- **The PERM range** is measured every night against how far recent decisions
+  landed from their dates, by how far out the case is, and it's never wider than
+  60 days.
+- **A case DOL's queue has passed** is dated by the rate DOL actually finishes
+  those cases.
+- **A wage request** gets a day, from the requests ahead of it and DOL's
+  measured pace.
+- **A case at RFI** is dated from the day its RFI was issued.
+- **H-2B applications** in DOL's assignment groups are dated by their group.
+
+[The scorecard](/estimate-scorecard) shows how each one is doing.
+
+## The busiest H-1B employers
+
+[H-1B employers](/h1b-employers) ranks the 100 busiest employers for each fiscal
+year and state, two ways: by DOL's certified LCAs, where the job is, and by
+USCIS's approvals, where the employer is.
+
+## For developers
+
+The [API](/developers) gained keys with scopes and expiry, sandbox keys,
+exports, live DOL lookups and signed webhooks. Everything is free for now.
+
+## Fixes
+
+- A page left open in a tab or on a phone's home screen now refreshes its
+  figures when you come back to it after half an hour.
+- Articles and the FAQ quote DOL's current average and queue month with the date
+  DOL published them, where they had carried August's figures.
+- Comparison tables and step numbers were missing from 47 articles; they show
+  again.
+- [Filing months](/perm-queue) lead with the share of the month DOL has decided,
+  and the case page draws the line ahead of a case month by month.

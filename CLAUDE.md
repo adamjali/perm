@@ -550,12 +550,17 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 8 2026 (night)".
 - **The MCP door gets about 1,800 requests a day, almost all directory and uptime bots** found through the MCP Registry; 3 to 30 real tool calls a day.
 - **The lookup challenge stops the scraper label completely** (1 of 2,148 addresses through) and costs a real visitor about 2 to 3 s; whether to loosen it is the owner's call.
 
-## Oct 9 2026, in four lines
+## Oct 9 2026, in nine lines
 
-Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 9 2026".
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the two "Oct 9 2026" sections.
 
 - **`/h1b-employers` and a page per state rank the 100 busiest H-1B employers each fiscal year** two ways: DOL's certified LCAs (FY2020 on, by worksite) and USCIS's approvals (FY2009 on, by petitioner), from `h1b_employer_ranks`, rebuilt after each LCA load and Data Hub read.
 - **A state view shows only the ranked source's figures**: the two sources mean different things by state.
 - **Layoff notices moved to Denials and audits** in the data rail, which had run out of height.
 - **USCIS's abbreviated names now reach employer pages** ("SVCS", "TECH SOLNS", "UNIV"): 413,406 H-1B approvals that sat on no record, Tata's and Cognizant's among them.
+- **A page left open refreshes its figures when the reader comes back** after 30 minutes (`RefreshWhenStale`, public layout and embeds): a phone showed Oct 2's homepage on Oct 9 while the server, Cloudflare, the browser cache and the service worker all held Oct 8.
+- **DOL's average and queue month are never typed into prose**: `<DolNow />` in articles, `lib/dolNow.ts` on the FAQ, and `no-typed-dol-average.test.ts` fails on a typed one (seven places said "372 days as of August 2026"; DOL said 336).
+- **next-mdx-remote 6 strips JavaScript expressions by default** (`blockJS`), so every `rows={[...]}` table and step number was missing from 47 articles since Feb 12; the site's own MDX sets `blockJS: false` and keeps `blockDangerousJS`.
+- **The data pages' Q&A takes live figures** (`PageBasics figures=`); typed counts there had drifted (437,496 LCAs against 3,754,961 held).
+- **The changelog runs to Oct 9** in five new entries, and older ones are in sentence case with one category scheme.
 

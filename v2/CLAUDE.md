@@ -9024,3 +9024,47 @@ rank the 100 busiest H-1B employers each fiscal year two ways, from `h1b_employe
   A spelling that files keeps its own page, so no URL moved. The join was found by checking the first
   build's unlinked rows per year, not by any gate.
 
+
+## Oct 9 2026 (morning): stale figures, from a screenshot of the homepage
+
+The owner's phone showed the homepage reading "Checked against DOL 4:01 PM ET, Oct 2" and "DECIDED THU" on
+Oct 9. Every server-side copy was current, checked in this order:
+
+| layer | what it held | how it was checked |
+|---|---|---|
+| the origin (both copies) | Oct 8, 3:59 PM | `curl -H "Host: permtracker.app" http://127.0.0.1:8081/` on the server |
+| Cloudflare | Oct 8 | its Cache Rule respects the origin; nginx sends `Cloudflare-CDN-Cache-Control: max-age=600, stale-while-revalidate=3600, stale-if-error=86400` |
+| the browser's HTTP cache | re-fetches | a local page with the homepage's exact header, opened three times in Safari and in Chrome (navigation and link click): a new copy each time |
+| the service worker | never caches documents | `src/app/sw.ts`: documents are `NetworkOnly` |
+
+"DECIDED THU" is the board's format before Oct 6, so the page was drawn by code no server has run since: a
+tab or home-screen page left open. **`RefreshWhenStale`** (`src/components/ui/refresh-when-stale.tsx`, in
+the public layout and `EmbedFrame`) calls `router.refresh()` when a page becomes visible again (a tab
+switch, an unlocked screen, a back-forward restore, coming back online) and its figures are 30 minutes old
+or more. `router.refresh()` keeps what the reader typed.
+
+**Typed DOL figures.** DOL's average and queue month were typed into seven places ("about 372 days as of
+August 2026", "working cases filed around September 2025") while DOL said 336 days and December 2025.
+`lib/dolNow.ts` words them from the processing-times snapshot with DOL's date; `<DolNow />` puts them in
+an article (`show="average"` or the default whole sentence) and the FAQ reads them on render (it's on
+`revalidate-dol`'s list now, with a daily window). Blog posts gained the guides' daily window.
+`no-typed-dol-average.test.ts` fails on a typed one; a sentence about what DOL said on one named day, beside
+what other tools said that day, is a dated record and is listed there by file.
+
+**`PageBasics` answers can read live figures** (`figures=` prop, an answer may be a function of them). The
+two "how many" answers (I-485 pending, EB-2 India awaiting a visa) read their page's own figures; the
+others dropped counts that only restated the page.
+
+**next-mdx-remote 6 strips every JavaScript expression by default.** `blockJS` defaults to true since the
+Feb 12 2026 upgrade (the fix for CVE-2026-0969, which is about compiling untrusted MDX), so each
+`<ComparisonTable rows={[...]} />` got no rows and rendered nothing, and every `<Step number={1}>` lost its
+number: 47 of 79 articles, live, for eight months. Nothing errored and no gate looked for a table. Every MDX
+source here is a file in this repo, so `createContentDetailPage.tsx` sets `blockJS: false` and keeps
+`blockDangerousJS: true`. Measured before and after over all 79 articles on a dev server: every page 200,
+tables 0 to 1+ on 24 articles, step numbers back on the rest. `ComparisonTable` cells are React nodes now,
+so a cell can hold `<DolNow />`. Article table headers went from 13px to the 14px floor (an unlayered
+`.prose-neobrutalist thead th` rule in `globals.css` sets them, whatever the component's classes say).
+
+**The dev server's Turbopack cache filled the old Mac's disk** after about 200 routes were compiled for
+link checks (`ENOSPC`, and then the Bash tool itself couldn't start). `rm -rf .next/dev/cache` freed 8.5
+GB and regenerates. Stop the dev server when a sweep is done.
