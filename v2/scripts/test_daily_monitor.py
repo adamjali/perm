@@ -284,6 +284,8 @@ def main() -> int:
           "a quiet day in between breaks the streak")
 
     data_section_reads_the_scorecard_alarms()
+    long_lines_end_at_a_sentence()
+    busy_replies_are_tried_again()
 
     # The API and the assistants: keyed calls by account, keyless ones by bucket.
     rows = [("2026-10-07", "acct_a", "k1", 30), ("2026-10-07", "acct_b", "k2", 5), ("2026-10-07", "anonymous", "mcp", 12),
@@ -372,6 +374,88 @@ def data_section_reads_the_scorecard_alarms() -> None:
           "the wage-request estimate gets its own line")
     check("Scorecard, H-2A, H-2B and CW-1 dates: 30 recorded, 0 graded" in lines,
           "a seasonal record with no grade yet says so without a miss")
+
+
+def long_lines_end_at_a_sentence() -> None:
+    """Convex keeps LINE_MAX characters of a line and drops the rest wherever
+    it falls; the report shortens a longer line itself, at a sentence."""
+    ts = (HERE.parent / "convex" / "lib" / "dailyReportCompose.ts").read_text()
+    cap = re.search(r"\.map\(\(l\) => String\(l\)\.slice\(0, (\d+)\)\)", ts)
+    check(cap is not None and int(cap.group(1)) == dm.LINE_MAX,
+          f"LINE_MAX matches the cap Convex puts on each line ({cap.group(1) if cap else None})")
+    short = "Scorecard, ours: typically 4 days off."
+    check(dm.fit(short) == short, "a short line is left alone")
+    # The shape that was cut on Oct 9 2026: a headline, then one sentence per point.
+    rival = ("Scorecard, Rival A: Rival A leads so far, not clearly yet. "
+             + " ".join(f"Point {i} says something about the cases both of us dated and how far each was off." for i in range(9)))
+    out = dm.fit(rival)
+    check(len(rival) > dm.LINE_MAX and len(out) <= dm.LINE_MAX, f"a long line fits the cap ({len(out)})")
+    check(out.endswith("off." + dm.MORE), f"it ends at a whole sentence and points to the admin page ({out[-50:]!r})")
+    words = "word " * 120
+    w = dm.fit(words.strip())
+    check(len(w) <= dm.LINE_MAX and w.endswith("word..."), "a line with no sentence to end at stops at a whole word")
+    sec = dm.section("data", "The data", "ok", "s", [short, rival])
+    check(sec["lines"][0] == short and len(sec["lines"][1]) <= dm.LINE_MAX, "every section line is fitted")
+
+
+def busy_replies_are_tried_again() -> None:
+    """A busy or failed reply (429, 5xx) is tried again; a refusal (404) is
+    not; and a section that still fails names the status code."""
+    import email.message
+    import urllib.error
+
+    def fail(code):
+        hdrs = email.message.Message()
+        return urllib.error.HTTPError("https://example.test", code, "x", hdrs, None)
+
+    class Body(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    real_open, real_sleep = dm.urllib.request.urlopen, dm.time.sleep
+    slept: list[float] = []
+    try:
+        dm.time.sleep = slept.append
+        answers = [fail(503), fail(504), Body(b'{"results": [1]}')]
+
+        def opener(*_a, **_k):
+            a = answers.pop(0)
+            if isinstance(a, Exception):
+                raise a
+            return a
+
+        dm.urllib.request.urlopen = opener
+        try:
+            got = dm.http_json("https://example.test")
+        except urllib.error.HTTPError as e:
+            got = f"HTTP {e.code} raised"
+        check(got == {"results": [1]} and slept == [5, 15],
+              f"two busy replies are waited out and the third answer is read (got {got}, waits {slept})")
+        calls = []
+
+        def refuse(*_a, **_k):
+            calls.append(1)
+            raise fail(404)
+
+        dm.urllib.request.urlopen = refuse
+        try:
+            dm.http_json("https://example.test")
+            check(False, "a 404 raises")
+        except urllib.error.HTTPError:
+            check(len(calls) == 1, "a 404 is not tried again")
+
+        def always_busy(*_a, **_k):
+            raise fail(504)
+
+        dm.urllib.request.urlopen = always_busy
+        sec = dm.guarded("traffic", "Traffic", lambda: dm.http_json("https://example.test"))
+        check(sec["status"] == "unknown" and sec["summary"] == "could not be read (HTTP 504)",
+              f"a section that still fails names the status code ({sec['summary']})")
+    finally:
+        dm.urllib.request.urlopen, dm.time.sleep = real_open, real_sleep
 
 
 if __name__ == "__main__":

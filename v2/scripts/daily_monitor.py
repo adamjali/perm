@@ -67,6 +67,32 @@ PROBES = ["/", "/perm-queue", "/perm-processing-times", "/visa-bulletin",
 
 RANK = {"fail": 4, "warn": 3, "unknown": 2, "off": 1, "ok": 0}
 
+# Convex keeps this many characters of each report line (readReport in
+# convex/lib/dailyReportCompose.ts) and cuts the rest wherever it falls, so a
+# longer line has to be shortened here, at a sentence. The scorecard's rival
+# readings ran past it on Oct 9 2026 and the email ended them mid-word.
+LINE_MAX = 400
+MORE = " More on the admin page."
+
+# Answers a second try can cure: the far end was busy or briefly down.
+# PostHog's query endpoint gave one on Oct 5 and Oct 9 2026, and a section
+# read "unknown" for the day. The waits are seconds before each retry.
+RETRY_CODES = frozenset({429, 500, 502, 503, 504})
+RETRY_WAITS = (5, 15)
+
+
+def fit(line: str, limit: int = LINE_MAX) -> str:
+    """A line Convex will keep whole: the sentences that fit, then a pointer
+    to the admin page, or as many words as fit when no sentence does."""
+    if len(line) <= limit:
+        return line
+    room = limit - len(MORE)
+    cut = line.rfind(". ", 0, room)
+    if cut >= room // 3:
+        return line[: cut + 1] + MORE
+    cut = line.rfind(" ", 0, limit - 3)
+    return (line[:cut] if cut > 0 else line[: limit - 3]) + "..."
+
 
 def worst(statuses) -> str:
     """The worst status of a set, "ok" for an empty one."""
@@ -75,13 +101,21 @@ def worst(statuses) -> str:
 
 def section(key: str, title: str, status: str, summary: str, lines=None) -> dict:
     return {"key": key, "title": title, "status": status, "summary": summary,
-            "lines": list(lines or [])}
+            "lines": [fit(str(l)) for l in (lines or [])]}
 
 
-def http_json(url: str, headers=None, data=None, timeout=45):
-    req = urllib.request.Request(url, headers=headers or {}, data=data)
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.load(r)
+def http_json(url: str, headers=None, data=None, timeout=45, waits=RETRY_WAITS):
+    """Read a JSON answer, trying again after a busy or failed reply."""
+    for wait in (*waits, None):
+        req = urllib.request.Request(url, headers=headers or {}, data=data)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.load(r)
+        except urllib.error.HTTPError as e:
+            if wait is None or e.code not in RETRY_CODES:
+                raise
+            asked = str(e.headers.get("Retry-After") or "") if e.headers else ""
+            time.sleep(min(int(asked), 30) if asked.isdigit() else wait)
 
 
 def spike_note(today: float, prior: list[float], unit: str, *, drop: bool = False) -> str | None:
@@ -873,6 +907,10 @@ def guarded(key: str, title: str, fn, *args) -> dict:
     """Run one section. A failure costs that section, never the report."""
     try:
         return fn(*args)
+    except urllib.error.HTTPError as e:
+        # The status code says who to look at (429 a limit, 5xx their side);
+        # it goes in the report, never to stdout.
+        return section(key, title, "unknown", f"could not be read (HTTP {e.code})")
     except Exception as e:  # noqa: BLE001
         return section(key, title, "unknown", f"could not be read ({type(e).__name__})")
 
