@@ -2,10 +2,18 @@ import { Webhook } from "svix";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createTestContext } from "../../test-utils/convex";
+
+// Host names resolve without the network: "private.example.com" points at the
+// cloud metadata address, everything else at a public one.
+vi.mock("node:dns/promises", () => ({
+  lookup: async (host: string) =>
+    host === "private.example.com" ? [{ address: "169.254.169.254", family: 4 }] : [{ address: "93.184.216.34", family: 4 }],
+}));
 import { api, internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { hashApiKey } from "../lib/apiKeyFormat";
 import { RETRY_WINDOW_MS } from "../lib/webhookSign";
+import { KEEP_DAYS, pauseEmailText } from "../webhookDelivery";
 
 type T = ReturnType<typeof createTestContext>;
 
@@ -245,7 +253,7 @@ describe("failures, retries and pausing", () => {
         createdAt: Date.now(),
       }),
     );
-    await t.mutation(internal.webhookDelivery.recordResult, { deliveryId: d._id, ok: false, statusCode: 503, now: Date.now() });
+    await t.mutation(internal.webhookDelivery.recordResult, { deliveryId: d._id, attempt: 7, ok: false, statusCode: 503, now: Date.now() });
 
     const after = await t.run((ctx) => ctx.db.query("webhookDeliveries").collect());
     expect(after.map((x) => x.status).sort()).toEqual(["failed", "held"]);
@@ -278,6 +286,135 @@ describe("failures, retries and pausing", () => {
     const made = await endpoint(t, a);
     await expect(as(t, b).mutation(api.webhooks.resumeEndpoint, { endpointId: made.id })).rejects.toThrow();
     await expect(as(t, b).mutation(api.webhooks.deleteEndpoint, { endpointId: made.id })).rejects.toThrow();
+  });
+});
+
+describe("delivering safely", () => {
+  async function pending(t: T, userId: Id<"users">, extra: Record<string, number> = {}) {
+    await watchedChange(t, userId);
+    const d = (await t.run((ctx) => ctx.db.query("webhookDeliveries").first()))!;
+    if (Object.keys(extra).length) await t.run((ctx) => ctx.db.patch(d._id, extra));
+    return d;
+  }
+
+  it("never reads the answer's body", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId);
+    let pulled = 0;
+    let cancelled = false;
+    // A body that would be endless in real life; here it ends after ten chunks
+    // so the old behaviour (reading it all) fails the test instead of the run.
+    answer = () =>
+      new Response(
+        new ReadableStream({
+          pull(c) {
+            pulled++;
+            if (pulled > 10) c.close();
+            else c.enqueue(new TextEncoder().encode("x".repeat(1024)));
+          },
+          cancel() {
+            cancelled = true;
+          },
+        }),
+        { status: 200 },
+      );
+    await pending(t, userId);
+    await t.action(internal.webhookDelivery.deliverDue, {});
+    expect(pulled).toBeLessThanOrEqual(1);
+    expect(cancelled).toBe(true);
+    expect((await t.run((ctx) => ctx.db.query("webhookDeliveries").first()))!.status).toBe("delivered");
+  });
+
+  it("fails a delivery whose 24 hours ran out without an answer recorded, and sends nothing", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId);
+    const d = await pending(t, userId, { attempts: 3, firstAttemptAt: Date.now() - RETRY_WINDOW_MS - 60_000, nextAttemptAt: Date.now() - 1 });
+    sent = [];
+    await t.action(internal.webhookDelivery.deliverDue, {});
+    expect(sent).toHaveLength(0);
+    expect((await t.run((ctx) => ctx.db.get(d._id)))!.status).toBe("failed");
+    const e = (await t.run((ctx) => ctx.db.query("webhookEndpoints").first()))!;
+    expect(e.pausedAt).toBeDefined();
+  });
+
+  it("ignores the result of a claim another run has since taken over, and never undoes a delivery", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId);
+    const d = await pending(t, userId);
+    const now = Date.now();
+    const first = await t.mutation(internal.webhookDelivery.claimDue, { now, limit: 10 });
+    expect(first.map((c) => c.attempt)).toEqual([1]);
+    // The first run's lease runs out; another run claims the same row.
+    const second = await t.mutation(internal.webhookDelivery.claimDue, { now: now + 60 * 60_000, limit: 10 });
+    expect(second.map((c) => c.attempt)).toEqual([2]);
+    await t.mutation(internal.webhookDelivery.recordResult, { deliveryId: d._id, attempt: 1, ok: false, statusCode: 500, now });
+    expect((await t.run((ctx) => ctx.db.get(d._id)))!).toMatchObject({ status: "pending", attempts: 2 });
+    await t.mutation(internal.webhookDelivery.recordResult, { deliveryId: d._id, attempt: 2, ok: true, statusCode: 200, now });
+    await t.mutation(internal.webhookDelivery.recordResult, { deliveryId: d._id, attempt: 2, ok: false, statusCode: 500, now });
+    expect((await t.run((ctx) => ctx.db.get(d._id)))!.status).toBe("delivered");
+  });
+
+  it("holds a claim for longer than a whole batch can take", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId);
+    await pending(t, userId);
+    const now = Date.now();
+    await t.mutation(internal.webhookDelivery.claimDue, { now, limit: 10 });
+    // 25 sends at 10 seconds each would be 250 seconds; a run five minutes later still can't take it.
+    expect(await t.mutation(internal.webhookDelivery.claimDue, { now: now + 5 * 60_000, limit: 10 })).toEqual([]);
+  });
+
+  it("won't send to a host name that resolves to a private address", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId, ["case.status_changed"], "https://private.example.com/hook");
+    const d = await pending(t, userId);
+    sent = [];
+    await t.action(internal.webhookDelivery.deliverDue, {});
+    expect(sent.filter((x) => x.url.includes("private.example.com"))).toHaveLength(0);
+    expect((await t.run((ctx) => ctx.db.get(d._id)))!.lastError).toMatch(/private address/);
+  });
+
+  it("sends nothing already queued for an account whose plan has no webhooks once the paywall is on", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId);
+    const d = await pending(t, userId);
+    vi.stubEnv("PAYWALL_ENFORCED", "1");
+    sent = [];
+    await t.action(internal.webhookDelivery.deliverDue, {});
+    expect(sent).toHaveLength(0);
+    expect((await t.run((ctx) => ctx.db.get(d._id)))!).toMatchObject({ status: "failed" });
+  });
+
+  it("prunes past 30 days, held deliveries and their events included, and stops", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId);
+    const old = Date.now() - (KEEP_DAYS + 1) * 86_400_000;
+    await t.run(async (ctx) => {
+      const e = (await ctx.db.query("webhookEndpoints").first())!;
+      for (let i = 0; i < 501; i++) {
+        const eventId = await ctx.db.insert("webhookEvents", { type: "queue.moved", key: `old:${i}`, payload: "{}", createdAt: old });
+        await ctx.db.insert("webhookDeliveries", {
+          endpointId: e._id, eventId, account: e.account, type: "queue.moved", status: "held", attempts: 0, nextAttemptAt: old, createdAt: old,
+        });
+      }
+    });
+    await t.mutation(internal.webhookDelivery.prune, {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect(await t.run((ctx) => ctx.db.query("webhookDeliveries").collect())).toHaveLength(0);
+    expect(await t.run((ctx) => ctx.db.query("webhookEvents").collect())).toHaveLength(0);
+  });
+
+  it("tells a paused endpoint's owner how long its events wait", () => {
+    const text = pauseEmailText("https://hooks.example.com/x", "Deliveries failed for 24 hours.", "https://permtracker.app/settings");
+    expect(text).toMatch(new RegExp(`${KEEP_DAYS} days`));
+    expect(text).not.toMatch(/not lost/);
   });
 });
 

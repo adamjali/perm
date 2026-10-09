@@ -359,7 +359,7 @@ export default function DevelopersPage() {
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/75">
           Answer with any 2xx within 10 seconds. Anything else, a redirect included, is retried after{" "}
           {RETRY_DELAYS_MS.slice(0, 6).map(wait).join(", ")} and at the 24-hour mark. After 24 hours the endpoint
-          pauses, we email you once, and events wait for you to resume it. The delivery log in Settings keeps 30 days,
+          pauses, we email you once, and events from the last 30 days wait for you to resume it. The delivery log in Settings keeps 30 days,
           with a button to send any one again.
         </p>
       </section>

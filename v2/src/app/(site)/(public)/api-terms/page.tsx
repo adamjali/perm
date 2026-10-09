@@ -166,7 +166,7 @@ export default function ApiTermsPage() {
             Webhooks are delivered on a best-effort basis. We sign each delivery, and you are responsible for checking
             the signature before acting on it. We retry a delivery your endpoint does not accept for up to 24 hours;
             after that we may pause the endpoint until you resume it. We keep a log of deliveries, without their
-            responses, for 30 days.
+            responses, and the events a paused endpoint is waiting for, for 30 days.
           </p>
         </Section>
 

@@ -79,7 +79,7 @@ describe("WebhooksSection", () => {
       ],
     };
     render(<WebhooksSection />);
-    expect(screen.getByText(/Events since then are kept/)).toBeInTheDocument();
+    expect(screen.getByText(/Events from the last 30 days wait for it/)).toBeInTheDocument();
     expect(screen.getByText(/12:00 PM ET, Oct 9/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Resume" }));
     expect(mutation).toHaveBeenCalledWith({ endpointId: "e1" });

@@ -42,6 +42,12 @@ export const BUDGETS = {
    */
   firmClaim: { key: "firm_claim_global", limit: 10, label: "Firm page claims" },
   /**
+   * The one email a paused webhook endpoint's owner gets
+   * (convex/webhookDelivery.ts). One per pause, and a pause takes 24 hours of
+   * failures, so the bound is low.
+   */
+  webhookPause: { key: "webhook_pause_global", limit: 20, label: "Webhook pause notices" },
+  /**
    * Sign-in and password-reset codes (convex/authMail.ts). Not list mail: these
    * are the emails whose absence locks someone out, so the pool sits above the
    * busiest measured day instead of inside the list ledger's remainder. See the
@@ -59,6 +65,7 @@ export const LIST_MAIL_POOLS = [
   "bulletinAlert",
   "prefsLink",
   "firmClaim",
+  "webhookPause",
 ] as const satisfies readonly (keyof typeof BUDGETS)[];
 
 /** Codes to one address, whatever kind: enough for a few resends, not a flood. */

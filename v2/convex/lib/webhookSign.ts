@@ -119,7 +119,11 @@ export function checkWebhookUrl(raw: string): { ok: true; url: string } | { ok: 
   if (u.protocol !== "https:") return { ok: false, message: "Webhooks are sent over https only." };
   if (u.username || u.password) return { ok: false, message: "Leave the user name and password out of the address; check the signature instead." };
   if (u.port && u.port !== "443") return { ok: false, message: "Webhooks are sent to the standard https port only." };
-  const host = u.hostname.toLowerCase();
+  // A name may end in one dot (the fully qualified form); it names the same
+  // host, so it's dropped before any rule below reads the name.
+  let host = u.hostname.toLowerCase();
+  if (host.endsWith(".")) host = host.slice(0, -1);
+  if (host.endsWith(".") || host.includes("..")) return { ok: false, message: "Use a public host name." };
   if (IPV4.test(host) || host.startsWith("[") || host.includes(":")) {
     return { ok: false, message: "Use a host name, not an IP address." };
   }
@@ -127,8 +131,86 @@ export function checkWebhookUrl(raw: string): { ok: true; url: string } | { ok: 
   if (host === "permtracker.app" || host.endsWith(".permtracker.app") || host.endsWith(".convex.cloud") || host.endsWith(".convex.site")) {
     return { ok: false, message: "Webhooks can't be sent to PERM Tracker itself." };
   }
+  u.hostname = host;
   u.hash = "";
   return { ok: true, url: u.toString() };
+}
+
+/* ------------------------------------------------------------------ */
+/* Where a name resolves                                                */
+/* ------------------------------------------------------------------ */
+
+function ipv4Bytes(ip: string): number[] | null {
+  const parts = ip.split(".");
+  if (parts.length !== 4 || !parts.every((p) => /^\d{1,3}$/.test(p))) return null;
+  const bytes = parts.map(Number);
+  return bytes.every((b) => b <= 255) ? bytes : null;
+}
+
+function privateIpv4([a, b, c]: number[]): boolean {
+  if (a === undefined || b === undefined || c === undefined) return true;
+  return (
+    a === 0 || // "this network"
+    a === 10 ||
+    (a === 100 && b >= 64 && b <= 127) || // carrier-grade NAT
+    a === 127 ||
+    (a === 169 && b === 254) || // link-local, cloud metadata
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 0 && (c === 0 || c === 2)) ||
+    (a === 192 && b === 168) ||
+    (a === 198 && (b === 18 || b === 19)) || // benchmarking
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113) ||
+    a >= 224 // multicast, reserved, broadcast
+  );
+}
+
+/** An IPv6 address as eight 16-bit groups, or null when it isn't one. */
+function ipv6Groups(ip: string): number[] | null {
+  let text = ip.toLowerCase().replace(/^\[|\]$/g, "");
+  const zone = text.indexOf("%");
+  if (zone >= 0) text = text.slice(0, zone);
+  // An IPv4 tail ("::ffff:10.0.0.1") becomes two groups.
+  const lastColon = text.lastIndexOf(":");
+  if (lastColon >= 0 && text.slice(lastColon + 1).includes(".")) {
+    const v4 = ipv4Bytes(text.slice(lastColon + 1));
+    if (!v4) return null;
+    text = `${text.slice(0, lastColon + 1)}${((v4[0]! << 8) | v4[1]!).toString(16)}:${((v4[2]! << 8) | v4[3]!).toString(16)}`;
+  }
+  const halves = text.split("::");
+  if (halves.length > 2) return null;
+  const parse = (part: string) => (part === "" ? [] : part.split(":"));
+  const head = parse(halves[0] ?? "");
+  const tail = halves.length === 2 ? parse(halves[1] ?? "") : [];
+  const missing = 8 - head.length - tail.length;
+  if (halves.length === 1 ? head.length !== 8 : missing < 1) return null;
+  const all = [...head, ...Array<string>(halves.length === 2 ? missing : 0).fill("0"), ...tail];
+  if (!all.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return null;
+  return all.map((g) => parseInt(g, 16));
+}
+
+/**
+ * True when an address a webhook's host resolves to is one we never deliver
+ * to: private, loopback, link-local (where cloud metadata lives), carrier
+ * NAT, multicast, reserved or documentation ranges, in IPv4 or IPv6
+ * (IPv4-mapped and NAT64 forms judged by the IPv4 they carry). Anything that
+ * doesn't parse as an address counts as private.
+ */
+export function isPrivateAddress(ip: string): boolean {
+  const v4 = ipv4Bytes(ip);
+  if (v4) return privateIpv4(v4);
+  const g = ipv6Groups(ip);
+  if (!g) return true;
+  const [g0 = 0, g1 = 0, , , , g5 = 0, g6 = 0, g7 = 0] = g;
+  const embedded = [g6 >> 8, g6 & 0xff, g7 >> 8, g7 & 0xff];
+  if (g.slice(0, 7).every((x) => x === 0)) return true; // :: and ::1 (and the old IPv4-compatible form)
+  if (g.slice(0, 5).every((x) => x === 0) && g5 === 0xffff) return privateIpv4(embedded); // ::ffff:a.b.c.d
+  if (g0 === 0x64 && g1 === 0xff9b && g.slice(2, 6).every((x) => x === 0)) return privateIpv4(embedded); // NAT64
+  if ((g0 & 0xfe00) === 0xfc00) return true; // unique local
+  if ((g0 & 0xffc0) === 0xfe80) return true; // link-local
+  if ((g0 & 0xff00) === 0xff00) return true; // multicast
+  if (g0 === 0x2001 && g1 === 0x0db8) return true; // documentation
+  return false;
 }
 
 /* ------------------------------------------------------------------ */

@@ -6,6 +6,7 @@ import {
   RETRY_WINDOW_MS,
   buildWebhookSecret,
   checkWebhookUrl,
+  isPrivateAddress,
   nextAttemptAt,
   normaliseEvents,
   signWebhook,
@@ -70,12 +71,32 @@ describe("where we'll deliver", () => {
     ["https://intranet/x", /public host/],
     ["https://permtracker.app/api/x", /PERM Tracker itself/],
     ["https://giant-dragon-464.convex.site/x", /PERM Tracker itself/],
+    ["https://localhost./x", /public host/],
+    ["https://metadata.google.internal./x", /public host/],
+    ["https://permtracker.app./x", /PERM Tracker itself/],
+    ["https://giant-dragon-464.convex.site./x", /PERM Tracker itself/],
+    ["https://hooks.example.com../x", /public host/],
     ["not a url", /isn't a web address/],
     [`https://example.com/${"a".repeat(2100)}`, /2048 characters/],
   ])("refuses %s", (url, why) => {
     const r = checkWebhookUrl(url);
     expect(r.ok).toBe(false);
     expect(r.ok ? "" : r.message).toMatch(why);
+  });
+});
+
+describe("addresses a host name may resolve to", () => {
+  it.each([
+    "0.0.0.0", "10.1.2.3", "100.64.0.1", "127.0.0.1", "169.254.169.254", "172.16.0.1", "172.31.255.255",
+    "192.0.0.1", "192.168.1.1", "198.18.0.1", "224.0.0.1", "255.255.255.255",
+    "::", "::1", "fc00::1", "fd12:3456::1", "fe80::1", "ff02::1", "::ffff:10.0.0.1", "::ffff:169.254.169.254",
+    "not an address",
+  ])("refuses %s", (ip) => {
+    expect(isPrivateAddress(ip)).toBe(true);
+  });
+
+  it.each(["93.184.216.34", "8.8.8.8", "172.32.0.1", "100.128.0.1", "2606:4700::1111", "::ffff:93.184.216.34"])("allows %s", (ip) => {
+    expect(isPrivateAddress(ip)).toBe(false);
   });
 });
 

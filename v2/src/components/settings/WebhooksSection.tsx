@@ -158,7 +158,7 @@ export default function WebhooksSection() {
                 </p>{" "}
                 {e.pausedAt !== null && (
                   <p className="border-2 border-border bg-muted px-3 py-2 text-sm">
-                    Paused {checkedLabel(e.pausedAt)}. {e.pauseReason ?? ""} Events since then are kept until you resume it.
+                    Paused {checkedLabel(e.pausedAt)}. {e.pauseReason ?? ""} Events from the last 30 days wait for it and go out when you resume it.
                   </p>
                 )}
                 <div className="flex flex-wrap gap-2">
