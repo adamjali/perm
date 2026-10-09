@@ -116,6 +116,20 @@ describe("watches", () => {
     expect((await as(t, userId).action(api.webhooks.addWatch, { kind: "both", target: "x" })).ok).toBe(false);
   });
 
+  it("leaves a Free account's watches off the 5-minute list once the paywall is on", async () => {
+    vi.stubEnv("PAYWALL_ENFORCED", "1");
+    const t = createTestContext();
+    await t.run(async (ctx) => {
+      const free = await ctx.db.insert("users", { email: "free@example.com" });
+      const plus = await ctx.db.insert("users", { email: "plus@example.com" });
+      await ctx.db.insert("apiAccounts", { userId: free, account: "acct_free", plan: "free", createdAt: 0 });
+      await ctx.db.insert("apiAccounts", { userId: plus, account: "acct_plus", plan: "plus", createdAt: 0 });
+      await ctx.db.insert("webhookWatches", { userId: free, account: "acct_free", kind: "case", target: "G-100-26045-111111", createdAt: 0 });
+      await ctx.db.insert("webhookWatches", { userId: plus, account: "acct_plus", kind: "case", target: "G-100-26045-222222", createdAt: 0 });
+    });
+    expect(await t.query(internal.webhooks.watchedCaseTargets, { limit: 100 })).toEqual(["G-100-26045-222222"]);
+  });
+
   it("lands on the server's 5-minute list", async () => {
     const t = createTestContext();
     const userId = await makeUser(t, "dev@example.com");
@@ -264,6 +278,60 @@ describe("failures, retries and pausing", () => {
     const made = await endpoint(t, a);
     await expect(as(t, b).mutation(api.webhooks.resumeEndpoint, { endpointId: made.id })).rejects.toThrow();
     await expect(as(t, b).mutation(api.webhooks.deleteEndpoint, { endpointId: made.id })).rejects.toThrow();
+  });
+});
+
+describe("the watch sweeps", () => {
+  /** A public database that answers every read with no rows, or with the employer census. */
+  function mirror(stagesJson?: string): () => number {
+    let reads = 0;
+    vi.stubEnv("TURSO_DATABASE_URL", "libsql://db.example.com");
+    vi.stubEnv("TURSO_AUTH_TOKEN", "t");
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      if (!String(url).endsWith("/v2/pipeline")) return new Response("ok");
+      reads++;
+      const census = stagesJson !== undefined && String(init.body).includes("perm_docs");
+      const result = census
+        ? {
+            cols: [{ name: "json" }, { name: "computed_at" }],
+            rows: [[{ type: "text", value: stagesJson }, { type: "integer", value: String(Date.now()) }]],
+          }
+        : { cols: [], rows: [] };
+      return Response.json({ results: [{ type: "ok", response: { result } }, { type: "ok" }] });
+    });
+    return () => reads;
+  }
+  async function manyWatches(t: T, kind: "case" | "employer", n: number) {
+    await t.run(async (ctx) => {
+      const userId = await ctx.db.insert("users", { email: "w@example.com" });
+      for (let i = 0; i < n; i++) {
+        const target = kind === "case" ? `G-100-26045-${String(100000 + i)}` : `employer-${i}`;
+        await ctx.db.insert("webhookWatches", { userId, account: "acct_x", kind, target, createdAt: 0 });
+      }
+    });
+  }
+
+  it("checks every case watch once and stops, however many batches that takes", async () => {
+    const t = createTestContext();
+    const reads = mirror();
+    await manyWatches(t, "case", 301);
+    await t.action(internal.webhookSweeps.sweepCaseWatches, {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect(reads()).toBe(2);
+    const rows = await t.run((ctx) => ctx.db.query("webhookWatches").collect());
+    expect(rows.filter((w) => w.lastCheckedAt === undefined)).toHaveLength(0);
+  });
+
+  it("checks every employer watch once and stops, however many batches that takes", async () => {
+    const t = createTestContext();
+    const doc = JSON.stringify({ asOf: "2026-10-09", pendingTotal: 0, nationwide: {}, minPending: 0, employers: [] });
+    const reads = mirror(doc);
+    await manyWatches(t, "employer", 301);
+    await t.action(internal.webhookSweeps.sweepEmployerWatches, {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect(reads()).toBe(2);
+    const rows = await t.run((ctx) => ctx.db.query("webhookWatches").collect());
+    expect(rows.filter((w) => w.lastCheckedAt === undefined)).toHaveLength(0);
   });
 });
 
