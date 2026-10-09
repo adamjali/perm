@@ -205,6 +205,11 @@ describe("readRival on the waiting cases and by kind", () => {
     expect(text).toContain("On cases whose filing month DOL's queue had already passed: we were closer on 1, Rival A on 11");
   });
 
+  it("says nothing about a floor of zero, which only means dates not yet due", () => {
+    const r = readRival("rival-a", h2h({ floorCases: 40, decided: 17, oursAtLeastDays: 0, rivalAtLeastDays: 2 }));
+    expect(r.points.join(" ")).not.toContain("still waiting past a date");
+  });
+
   it("says nothing about floors when every compared case is decided", () => {
     const r = readRival("rival-b", h2h({ floorCases: 13, decided: 13, oursAtLeastDays: 6, rivalAtLeastDays: 1 }));
     expect(r.points.join(" ")).not.toContain("still waiting past a date");

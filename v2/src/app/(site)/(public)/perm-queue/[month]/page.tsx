@@ -26,6 +26,12 @@ import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { formatInt } from "@/lib/format";
 import { CaseNextStep } from "@/components/tools/CaseNextStep";
+import { getLiveBacklog } from "@/lib/turso/publicData";
+import { getDecisionPace } from "@/lib/turso/decisionPace";
+import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
+import { monthEndDate, type MonthEnd } from "@/lib/caseEstimateInputs";
+import { monthMakeup, type MonthMakeup } from "@/lib/monthMakeup";
+import { formatShare } from "@/lib/format";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 
 /**
@@ -122,13 +128,25 @@ export default async function CohortPage({
   // review" living on this page, and the day those two disagree the queue
   // board and the calculator start quoting different frontiers for one thing.
   // The extra reads are three indexed lookups an hour per month page.
-  const [backlog, ahead, adjacent, estimator] = await Promise.all([
+  const [backlog, ahead, adjacent, estimator, allMonths, pace, sweep] = await Promise.all([
     getMonthBacklog(month),
     getPendingBefore(month),
     getAdjacentMonths(month),
     getEstimatorData(),
+    getLiveBacklog().catch(() => []),
+    getDecisionPace().catch(() => null),
+    getSweepCoverage().catch(() => null),
   ]);
   if (!backlog || backlog.total === 0) notFound();
+  const makeup = monthMakeup(backlog.statuses);
+  const end = monthEndDate({
+    backlog: allMonths,
+    month,
+    pace: pace?.pace ?? null,
+    frontierMonth: estimator.frontier?.analystQueueMonth ?? null,
+    sweepFinishedOn: sweep?.finishedOn ?? null,
+    today: new Date().toISOString().slice(0, 10),
+  });
 
   // The month's LIVE rows: every case filed this month that DOL's published
   // files do not hold yet, pending or decided, from the same table the case
@@ -162,15 +180,7 @@ export default async function CohortPage({
         <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Filed {label}
         </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/80">
-          {formatInt(backlog.total)}{" "}
-          {backlog.total === 1 ? "application carries" : "applications carry"}{" "}
-          {article(label)} {label} filing date.{" "}
-          {formatInt(backlog.decided)} {backlog.decided === 1 ? "has" : "have"} a
-          decision. {formatInt(split.pending)}{" "}
-          {split.pending === 1 ? "was" : "were"} still waiting when the scan
-          last checked.
-        </p>{" "}
+        <MonthHeadline makeup={makeup} label={label} end={end} />{" "}
         <SourceNote className="mt-4 text-base leading-relaxed text-foreground/70" />
       </header>
 
@@ -229,7 +239,12 @@ export default async function CohortPage({
         className="mt-6"
       />{" "}
 
-      <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+      <details className="mt-6 border-2 border-border bg-card">
+        <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-black">
+          {`Every status, pending and decided, and the ${label} cases themselves`}
+        </summary>
+        <div className="border-t-2 border-border px-4 pb-6 sm:px-5">
+      <section className="mt-6">
         <h2 className="font-heading text-xl font-black sm:text-2xl">
           Still pending
         </h2>{" "}
@@ -280,7 +295,7 @@ export default async function CohortPage({
         )}
       </section>{" "}
 
-      <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+      <section className="mt-6">
         <h2 className="font-heading text-xl font-black sm:text-2xl">
           Already decided
         </h2>{" "}
@@ -295,7 +310,7 @@ export default async function CohortPage({
         </div>
       </section>{" "}
 
-      <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+      <section className="mt-6">
         <h2 className="font-heading text-xl font-black sm:text-2xl">
           Who filed in {label}
         </h2>{" "}
@@ -347,6 +362,9 @@ export default async function CohortPage({
           </p>
         ) : null}
       </section>{" "}
+
+        </div>
+      </details>{" "}
 
       {awaitingDol ? (
         <section id="queue-alert" className="mt-8 scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
@@ -537,5 +555,89 @@ function SiblingLink({
         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
       ) : null}
     </Link>
+  );
+}
+
+const longDay = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
+
+/**
+ * The month in one number first: the share DOL has decided, the split as one
+ * bar, then three tiles. Every figure is the census's, the same counts the
+ * folded tables below carry, so the headline can't disagree with them.
+ */
+function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: string; end: MonthEnd | null }) {
+  const pct = m.total ? m.decided / m.total : 0;
+  const parts = [
+    { key: "certified", n: m.certified + m.otherDecided, cls: "bg-data-good-ink", text: "certified" },
+    { key: "denied", n: m.denied, cls: "bg-data-bad-ink", text: "denied" },
+    { key: "withdrawn", n: m.withdrawn, cls: "bg-data-none-ink", text: "withdrawn by the employer" },
+    { key: "line", n: m.inLine, cls: "bg-foreground", text: "in DOL's line" },
+    { key: "outside", n: m.outside, cls: "bg-data-warn-ink", text: "on hold, at an RFI or on appeal" },
+  ].filter((p) => p.n > 0);
+  return (
+    <div className="mt-5">
+      <p className="font-heading text-5xl font-black tabular-nums tracking-tight sm:text-6xl">
+        {formatShare(pct)} <span className="text-2xl sm:text-3xl">decided</span>
+      </p>{" "}
+      <p className="mt-2 text-lg text-foreground/80">
+        {`${formatInt(m.decided)} of the ${formatInt(m.total)} applications filed in ${label} have a decision.`}
+      </p>{" "}
+      <ChartTips label={`Applications filed in ${label}, by where they stand`} className="mt-5">
+        <div className="flex h-6 w-full border-2 border-border bg-muted" role="img" aria-label={parts.map((p) => `${formatInt(p.n)} ${p.text}`).join(", ")}>
+          {parts.map((p) => (
+            <span
+              key={p.key}
+              className={`block h-full ${p.cls}`}
+              style={{ width: `${(p.n / m.total) * 100}%` }}
+              data-tip={`${formatInt(p.n)} ${p.text}`}
+            />
+          ))}
+        </div>
+      </ChartTips>{" "}
+      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+        {parts.map((p) => (
+          <Fragment key={p.key}>{" "}
+          <li className="flex items-center gap-2">
+            <span className={`inline-block size-3 border border-border ${p.cls}`} aria-hidden="true" />{" "}
+            {`${formatInt(p.n)} ${p.text}`}
+          </li>
+          </Fragment>
+        ))}
+      </ul>{" "}
+      <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="border-2 border-border bg-card p-4 shadow-hard-sm">
+          <dt className="text-sm font-bold">In DOL&apos;s line</dt>{" "}
+          <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(m.inLine)}</dd>{" "}
+          <dd className="text-sm text-foreground/70">analyst review, worked in filing order</dd>
+        </div>{" "}
+        <div className="border-2 border-border bg-card p-4 shadow-hard-sm">
+          <dt className="text-sm font-bold">Outside the line</dt>{" "}
+          <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(m.outside)}</dd>{" "}
+          <dd className="text-sm text-foreground/70">on hold, at an RFI or on appeal</dd>
+        </div>{" "}
+        <div className="border-2 border-border bg-card p-4 shadow-hard-sm">
+          {end?.kind === "estimate" ? (
+            <>
+              <dt className="text-sm font-bold">The line reaches this month&apos;s end</dt>{" "}
+              <dd className="mt-1 font-heading text-2xl font-black sm:text-3xl">{`around ${longDay(end.date)}`}</dd>{" "}
+              <dd className="text-sm text-foreground/70">{`${formatInt(end.casesThrough)} cases in line through ${label}, at DOL's recent pace`}</dd>
+            </>
+          ) : end?.kind === "passed" ? (
+            <>
+              <dt className="text-sm font-bold">DOL&apos;s queue has passed this month</dt>{" "}
+              <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(end.inLine)}</dd>{" "}
+              <dd className="text-sm text-foreground/70">still in line, decided as DOL gets to them</dd>
+            </>
+          ) : (
+            <>
+              <dt className="text-sm font-bold">Waiting in all</dt>{" "}
+              <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(m.inLine + m.outside)}</dd>{" "}
+              <dd className="text-sm text-foreground/70">no date printed without a fresh pace</dd>
+            </>
+          )}
+        </div>
+      </dl>
+    </div>
   );
 }

@@ -129,9 +129,12 @@ export function readRival(source: string, h: HeadToHead): RivalReading {
     );
   }
   const floorN = h.floorCases ?? 0;
-  if (floorN > h.decided && h.oursAtLeastDays != null && h.rivalAtLeastDays != null) {
+  // A floor of 0 means most of that side's dates aren't due yet; it says nothing.
+  const oursFloor = h.oursAtLeastDays ?? 0;
+  const rivalFloor = h.rivalAtLeastDays ?? 0;
+  if (floorN > h.decided && oursFloor >= 1 && rivalFloor >= 1) {
     points.push(
-      `Counting the cases still waiting past a date at the days they're late so far, the typical miss on ${formatInt(floorN)} cases is at least ${dayWord(h.oursAtLeastDays)} for us and ${dayWord(h.rivalAtLeastDays)} for ${name}, and those can only grow.`,
+      `Counting the cases still waiting past a date at the days they're late so far, the typical miss on ${formatInt(floorN)} cases is at least ${dayWord(oursFloor)} for us and ${dayWord(rivalFloor)} for ${name}, and those can only grow.`,
     );
   }
   for (const kind of CASE_KINDS) {
