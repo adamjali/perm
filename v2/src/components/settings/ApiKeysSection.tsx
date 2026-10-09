@@ -339,7 +339,7 @@ export default function ApiKeysSection() {
             <label className="block text-sm font-semibold">
               How long it lasts
               <select
-                className="mt-1 h-11 w-full border-2 border-border bg-background px-3 text-base md:text-sm"
+                className="mt-1 h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base md:text-sm"
                 value={lifetime === null ? "" : String(lifetime)}
                 onChange={(e) => setLifetime(e.target.value === "" ? null : Number(e.target.value))}
               >

@@ -291,7 +291,7 @@ export default function WebhooksSection() {
             <label className="block text-sm font-semibold">
               Watch
               <select
-                className="mt-1 h-11 w-full border-2 border-border bg-background px-3 text-base md:text-sm"
+                className="mt-1 h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base md:text-sm"
                 value={watchKind}
                 onChange={(ev) => setWatchKind(ev.target.value === "employer" ? "employer" : "case")}
               >
