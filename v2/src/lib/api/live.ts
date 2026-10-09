@@ -34,10 +34,9 @@ import { bumpDocCount } from "@/lib/turso/embedLookup";
 import { lca } from "@/lib/turso/lcaCases";
 import { pwd } from "@/lib/turso/pwdCases";
 import { seasonal } from "@/lib/turso/seasonalCases";
-import type { ApiPlan } from "@convex/lib/apiPlans";
+import { API_LIVE_DAILY_CAP, type ApiPlan } from "@convex/lib/apiPlans";
 import type { DiscoveryMiss } from "@/lib/dolMiss";
 
-import { API_LIVE_DAILY_CAP } from "./limits";
 import { readCase, type CaseRecord, type ReadResult } from "./reads";
 import { resetsIn, utcDay } from "./usage";
 

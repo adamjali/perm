@@ -16,8 +16,9 @@ const signedUp = (ms: number) =>
   new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: EASTERN_TIMEZONE });
 
 /**
- * Who uses the API and the assistants: accounts with their plan, keys and
- * calls, and calls a day with and without a key. For the admin page only
+ * Who uses the API and the assistants: accounts with their plan, keys,
+ * webhooks and calls, calls a day with and without a key, working keys by
+ * scope, webhook health, and live DOL lookups against the API-wide ceiling. For the admin page only
  * (convex/adminDevelopers.ts joins the counts to their accounts).
  */
 export function DevelopersPanel() {
@@ -38,18 +39,20 @@ export function DevelopersPanel() {
 
   if (state.kind === "loading") return <p className="text-sm text-muted-foreground">Loading API use...</p>;
   if (state.kind === "error") return <p className="text-sm text-destructive">{state.message}</p>;
-  const { accounts, days, usageReadable } = state.s;
+  const { accounts, days, usageReadable, keys, webhooks, live } = state.s;
   const total = days.reduce((n, d) => n + d.keyed + d.mcp + d.extension + d.other, 0);
   const max = Math.max(1, ...days.map((d) => d.keyed + d.mcp + d.extension + d.other));
 
   return (
     <div className="space-y-8">
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 [&>*]:min-w-0">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 [&>*]:min-w-0">
         {[
           ["API accounts", formatInt(accounts.length)],
-          ["Active keys", formatInt(accounts.reduce((n, a) => n + a.activeKeys, 0))],
+          ["Working keys", `${formatInt(keys.live)}${keys.sandbox ? ` + ${formatInt(keys.sandbox)} sandbox` : ""}`],
           ["On Plus", formatInt(accounts.filter((a) => a.plan === "Plus").length)],
           ["Calls, 30 days", usageReadable ? formatInt(total) : "unreadable"],
+          ["Webhook endpoints", `${formatInt(webhooks.endpoints)}${webhooks.paused ? ` (${formatInt(webhooks.paused)} paused)` : ""}`],
+          ["Live lookups today", live.readable ? `${formatInt(live.today)} of ${formatInt(live.ceiling)}` : "unreadable"],
         ].map(([label, value]) => (
           <div key={label} className="border-2 border-border bg-card p-4">
             <dt className="text-sm font-bold text-foreground/70">{label}</dt>{" "}
@@ -86,16 +89,45 @@ export function DevelopersPanel() {
         <p className="mt-2 text-sm text-muted-foreground">Green: calls with a key. Grey: the MCP server and the browser extension, which need none. UTC days.</p>
       </section>{" "}
 
+      <section aria-labelledby="dev-keys">
+        <h3 id="dev-keys" className="font-heading text-xl font-black">Keys and webhooks</h3>{" "}
+        <ul className="mt-3 space-y-1.5 text-base">
+          <li>
+            {`Working keys by scope: ${
+              Object.entries(keys.byScope)
+                .map(([scope, n]) => `${scope} ${formatInt(n)}`)
+                .join(", ")
+            }. `}
+          </li>{" "}
+          <li>
+            {`Webhooks, last 24 hours: ${formatInt(webhooks.deliveredSince)} delivered, ${formatInt(webhooks.failedSince)} failed. ` +
+              `${formatInt(webhooks.pending)} waiting, ${formatInt(webhooks.held)} held for paused endpoints, ${formatInt(webhooks.watches)} watches. `}
+          </li>{" "}
+          <li>
+            {live.readable
+              ? `Live DOL lookups through the API: ${formatInt(live.today)} today and ${formatInt(live.yesterday)} yesterday (UTC), of ${formatInt(live.ceiling)} a day for every account together. `
+              : "Live DOL lookups couldn't be read from the public-data database. "}
+          </li>
+        </ul>{" "}
+        {(webhooks.paused > 0 || webhooks.failedSince > 0) && (
+          <p className="mt-2 text-base text-destructive">
+            {webhooks.paused > 0
+              ? `${formatInt(webhooks.paused)} endpoint${webhooks.paused === 1 ? " is" : "s are"} paused after a day of failures; its owner was emailed once.`
+              : "Some deliveries failed in the last day; they're retried for 24 hours."}
+          </p>
+        )}
+      </section>{" "}
+
       <section aria-labelledby="dev-accounts">
         <h3 id="dev-accounts" className="font-heading text-xl font-black">Accounts</h3>{" "}
         {accounts.length === 0 ? (
           <p className="mt-2 text-base text-muted-foreground">Nobody has made a key yet.</p>
         ) : (
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+            <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b-2 border-border">
-                  {["Email ", "Plan ", "Keys ", "Since ", "Yesterday ", "30 days "].map((h) => (
+                  {["Email ", "Plan ", "Keys ", "Webhooks ", "Since ", "Yesterday ", "30 days "].map((h) => (
                     <th key={h} scope="col" className="py-2 pr-3 font-bold">{h}</th>
                   ))}
                 </tr>
@@ -105,7 +137,14 @@ export function DevelopersPanel() {
                   <tr key={a.account} className="border-b border-border/40">
                     <td className="py-2 pr-3">{`${a.email ?? "account deleted"} `}</td>
                     <td className="py-2 pr-3">{`${a.plan} `}</td>
-                    <td className="py-2 pr-3 tabular-nums">{`${a.activeKeys}${a.revokedKeys ? ` (+${a.revokedKeys} revoked)` : ""} `}</td>
+                    <td className="py-2 pr-3 tabular-nums">
+                      {`${a.activeKeys}${a.sandboxKeys ? ` + ${a.sandboxKeys} sandbox` : ""}${a.revokedKeys ? ` (+${a.revokedKeys} revoked)` : ""} `}
+                    </td>
+                    <td className="py-2 pr-3 tabular-nums">
+                      {a.endpoints === 0 && a.watches === 0
+                        ? "none "
+                        : `${a.endpoints} endpoint${a.endpoints === 1 ? "" : "s"}${a.pausedEndpoints ? ` (${a.pausedEndpoints} paused)` : ""}, ${a.watches} watch${a.watches === 1 ? "" : "es"} `}
+                    </td>
                     <td className="py-2 pr-3">{`${signedUp(a.createdAt)} `}</td>
                     <td className="py-2 pr-3 tabular-nums">{`${formatInt(a.callsYesterday)} `}</td>
                     <td className="py-2 tabular-nums">{`${formatInt(a.calls30d)} `}</td>

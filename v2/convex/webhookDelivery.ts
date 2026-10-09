@@ -23,7 +23,7 @@
  */
 import { v } from "convex/values";
 
-import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, type QueryCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { decryptToken } from "./lib/crypto";
@@ -298,6 +298,33 @@ export const prune = internalMutation({
 });
 
 /** What's waiting and what failed, for the admin page and the morning report. */
+/** Endpoints, paused ones, deliveries waiting and held, and what was delivered or failed since `since`. */
+export async function webhookHealth(ctx: QueryCtx, since: number) {
+  const endpoints = await ctx.db.query("webhookEndpoints").take(2000);
+  const pending = await ctx.db
+    .query("webhookDeliveries")
+    .withIndex("by_status_and_next", (q) => q.eq("status", "pending"))
+    .take(5000);
+  const held = await ctx.db
+    .query("webhookDeliveries")
+    .withIndex("by_status_and_next", (q) => q.eq("status", "held"))
+    .take(5000);
+  const recent = await ctx.db
+    .query("webhookDeliveries")
+    .withIndex("by_created", (q) => q.gte("createdAt", since))
+    .take(5000);
+  const watches = await ctx.db.query("webhookWatches").take(10_000);
+  return {
+    endpoints: endpoints.length,
+    paused: endpoints.filter((e) => e.pausedAt !== undefined).length,
+    pending: pending.length,
+    held: held.length,
+    deliveredSince: recent.filter((d) => d.status === "delivered").length,
+    failedSince: recent.filter((d) => d.status === "failed").length,
+    watches: watches.length,
+  };
+}
+
 export const health = internalQuery({
   args: { since: v.number() },
   returns: v.object({
@@ -307,28 +334,7 @@ export const health = internalQuery({
     held: v.number(),
     deliveredSince: v.number(),
     failedSince: v.number(),
+    watches: v.number(),
   }),
-  handler: async (ctx, args) => {
-    const endpoints = await ctx.db.query("webhookEndpoints").take(2000);
-    const pending = await ctx.db
-      .query("webhookDeliveries")
-      .withIndex("by_status_and_next", (q) => q.eq("status", "pending"))
-      .take(5000);
-    const held = await ctx.db
-      .query("webhookDeliveries")
-      .withIndex("by_status_and_next", (q) => q.eq("status", "held"))
-      .take(5000);
-    const recent = await ctx.db
-      .query("webhookDeliveries")
-      .withIndex("by_created", (q) => q.gte("createdAt", args.since))
-      .take(5000);
-    return {
-      endpoints: endpoints.length,
-      paused: endpoints.filter((e) => e.pausedAt !== undefined).length,
-      pending: pending.length,
-      held: held.length,
-      deliveredSince: recent.filter((d) => d.status === "delivered").length,
-      failedSince: recent.filter((d) => d.status === "failed").length,
-    };
-  },
+  handler: async (ctx, args) => await webhookHealth(ctx, args.since),
 });

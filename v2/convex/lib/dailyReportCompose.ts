@@ -9,6 +9,7 @@
  * speak this shape, and STATUS_RANK must match RANK in the Python script.
  */
 
+import type { KeyCounts } from "./apiKeyStats";
 import { audienceLine, type AudienceCounts } from "./audience";
 import { SITE_URL } from "./links";
 import { MS_PER_DAY } from "./time";
@@ -156,6 +157,19 @@ export interface Facts {
     byScore: number[];
     notes: Array<{ score: number; note: string; updatedAt: number }>;
   };
+  /** Working API keys by scope (convex/lib/apiKeyStats.ts) and webhook health; absent in older reports. */
+  developers?: {
+    keys: KeyCounts;
+    webhooks: {
+      endpoints: number;
+      paused: number;
+      pending: number;
+      held: number;
+      deliveredSince: number;
+      failedSince: number;
+      watches: number;
+    };
+  };
 }
 
 export interface ResendDay {
@@ -250,6 +264,8 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
   if (firms) sections.push(firms);
   const ratings = ratingSection(f);
   if (ratings) sections.push(ratings);
+  const developers = developerSection(f);
+  if (developers) sections.push(developers);
 
   const errors: ReportSection = {
     key: "errors",
@@ -287,6 +303,40 @@ function ratingSection(f: Facts): ReportSection | null {
       `Scores 1 to 5: ${r.byScore.join(", ")}`,
       ...r.notes.map((n) => `${n.score} of 5: ${n.note.length > 160 ? `${n.note.slice(0, 157)}...` : n.note}`),
     ],
+  };
+}
+
+/**
+ * Who holds API keys, with which scopes, and whether webhooks are getting
+ * through. Absent until anyone has a key or an endpoint; a paused endpoint,
+ * a failed delivery or deliveries held back ask for a look.
+ */
+function developerSection(f: Facts): ReportSection | null {
+  const d = f.developers;
+  if (!d || (d.keys.live + d.keys.sandbox === 0 && d.webhooks.endpoints === 0)) return null;
+  const w = d.webhooks;
+  const scopes = Object.entries(d.keys.byScope)
+    .filter(([, n]) => n > 0)
+    .map(([scope, n]) => `${scope} ${n}`)
+    .join(", ");
+  const lines = [
+    `Keys by scope: ${scopes || "none"}${d.keys.sandbox ? ` (${d.keys.sandbox} sandbox key${d.keys.sandbox === 1 ? "" : "s"} besides)` : ""}`,
+    `Webhooks: ${w.watches} watch${w.watches === 1 ? "" : "es"}, ${w.failedSince} failed in 24 h, ${w.pending} waiting`,
+  ];
+  if (w.paused > 0) {
+    lines.push(`${w.paused} endpoint${w.paused === 1 ? "" : "s"} paused after a day of failures, holding ${w.held} deliver${w.held === 1 ? "y" : "ies"}`);
+  } else if (w.held > 0) {
+    lines.push(`${w.held} deliver${w.held === 1 ? "y" : "ies"} held back`);
+  }
+  return {
+    key: "developers",
+    title: "API keys and webhooks",
+    status: w.paused > 0 || w.failedSince > 0 || w.held > 0 ? "warn" : "ok",
+    summary:
+      `${d.keys.live} live key${d.keys.live === 1 ? "" : "s"}, ` +
+      `${w.endpoints} webhook endpoint${w.endpoints === 1 ? "" : "s"}, ` +
+      `${w.deliveredSince} deliver${w.deliveredSince === 1 ? "y" : "ies"} in 24 h`,
+    lines,
   };
 }
 

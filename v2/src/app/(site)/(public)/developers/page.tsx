@@ -10,10 +10,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { API_PLANS, GRANTABLE_SCOPES, SCOPE_LABELS } from "@convex/lib/apiPlans";
+import { API_LIVE_DAILY_CAP, API_PLANS, GRANTABLE_SCOPES, SCOPE_LABELS } from "@convex/lib/apiPlans";
 import { RETRY_DELAYS_MS, WEBHOOK_EVENTS, WEBHOOK_EVENT_LABELS } from "@convex/lib/webhookSign";
 import { API_BASE, ENDPOINTS, MCP_TOOLS, MCP_URL } from "@/lib/api/openapi";
-import { API_LIVE_DAILY_CAP } from "@/lib/api/limits";
 import { SANDBOX_CASE_NUMBERS } from "@/lib/api/sandbox";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";

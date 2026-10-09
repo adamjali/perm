@@ -75,6 +75,13 @@ export const API_PLANS: Record<ApiPlanId, ApiPlan> = {
   },
 };
 
+/**
+ * Live DOL lookups a UTC day for every API account together, whatever their
+ * plans allow (src/lib/api/live.ts enforces it). Kept here so the docs, the
+ * admin page and the morning report print the same number.
+ */
+export const API_LIVE_DAILY_CAP = 20_000;
+
 /** The refusal for a plan with no webhooks: one sentence, used by every door. */
 export const NO_WEBHOOKS_MESSAGE = "Webhooks come with the Plus plan.";
 

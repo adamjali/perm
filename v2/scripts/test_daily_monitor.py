@@ -294,6 +294,18 @@ def main() -> int:
     check("Last 2 days: 44 keyed calls from 2 accounts" in alines, "the week's keyed calls")
     check(dm.api_lines([], "2026-10-08")[0] == "No API calls recorded yet", "an empty table says so")
 
+    # Live DOL lookups through the API, against the ceiling every account shares.
+    ts_cap = re.search(r"export const API_LIVE_DAILY_CAP = ([\d_]+);", (HERE.parent / "convex" / "lib" / "apiPlans.ts").read_text())
+    check(ts_cap is not None and int(ts_cap.group(1).replace("_", "")) == dm.API_LIVE_DAILY_CAP,
+          "the report's live-lookup ceiling is the one the API enforces")
+    line, warn = dm.live_lookup_line({"all": 120, "acct_a": 100, "acct_b": 20}, 20_000)
+    check(line == "Live DOL lookups yesterday: 120 of the 20,000 a day every account shares, from 2 accounts" and not warn,
+          f"live lookups yesterday ({line})")
+    line, warn = dm.live_lookup_line({"all": 17_000, "acct_a": 17_000}, 20_000)
+    check(warn and "17,000 of the 20,000" in line and "from 1 account" in line, "near the ceiling asks for a look")
+    line, warn = dm.live_lookup_line(None, 20_000)
+    check(line == "No live DOL lookups through the API yesterday" and not warn, "a day without any says so")
+
     # How long things take: passing runs only, a deploy split into its steps.
     T, D = dm.TESTS_PATH, dm.DEPLOY_PATH
     sruns = [
