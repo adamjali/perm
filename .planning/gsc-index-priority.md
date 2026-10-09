@@ -1,52 +1,51 @@
 # GSC indexing priority list
 
-**Run of 2026-10-07, 9:12 to 9:42 PM EDT: 11 accepted, the 12th refused (Quota Exceeded).** Order: the
-Oct 6 title list, then the pages changed in the Oct 7 deploys. Each was inspected first; a page crawled
-after its own change kept its slot.
+**Run of 2026-10-09, 5:07 to 5:30 PM EDT: 11 accepted, the 12th refused (Quota Exceeded).** Order: the
+Oct 9 list (newest section at the end), top down. Each was inspected first; a page crawled after its own
+change kept its slot.
 
-**Sitemap index resubmitted at about 9:04 PM EDT** (no request slot): Google counted 289,784 discovered
-against 307,184 live, last read Oct 4.
+**Sitemap index not resubmitted:** no new child family since the last read (Oct 7); Google counts 307,713
+discovered against 311,398 live.
 
 | # | URL | Google's verdict | accepted (EDT) |
 |---|---|---|---|
-| 1 | `/faq` | indexed, last crawled Oct 1 (before the Oct 6 case lookup and tool tiles) | 9:12 PM |
-| 2 | `/guides` | indexed, last crawled Sep 24 | 9:16 PM |
-| 3 | `/perm-case-statuses` | indexed, last crawled Oct 2 | 9:21 PM |
-| 4 | `/perm-case-status` | indexed, last crawled Oct 2 (answer card, passed-month dates, alert timing) | 9:23 PM |
-| 5 | `/perm-attorneys` | indexed, last crawled Oct 2 | 9:28 PM |
-| 6 | `/case-search` | indexed, last crawled Sep 30 (industry and city filter every program now) | 9:31 PM |
-| 7 | `/estimate-scorecard` | indexed, last crawled Sep 11 | 9:33 PM |
-| 8 | `/tools/perm-timeline-calculator` | indexed, last crawled Oct 3 | 9:35 PM |
-| 9 | `/perm-industries/621330` | indexed, last crawled Oct 1 (its title had been cut mid-word) | 9:36 PM |
-| 10 | `/seasonal-cases` | indexed, last crawled Oct 4 | 9:38 PM |
-| 11 | `/tools/green-card-line` | indexed, last crawled Oct 2 | 9:40 PM |
+| 1 | `/h1b-employers` | unknown to Google (new page) | 5:07 PM |
+| 2 | `/h1b-employers/california` | unknown to Google (new page) | 5:09 PM |
+| 3 | `/guides/ultimate-perm-guide-2026` | indexed, last crawled Aug 30 (tables and step numbers missing then) | 5:11 PM |
+| 4 | `/guides/complete-perm-filing-guide` | indexed, last crawled Oct 5 | 5:13 PM |
+| 5 | `/guides/three-180-day-clocks` | indexed, last crawled Sep 7 | 5:15 PM |
+| 6 | `/faq` | indexed, last crawled Oct 7 (before DOL's average read live) | 5:17 PM |
+| 7 | `/perm-case-status` | indexed, last crawled Oct 7 | 5:20 PM |
+| 8 | `/guides/check-perm-case-status` | indexed, last crawled Oct 7 | 5:21 PM |
+| 9 | `/guides/reading-the-perm-data` | indexed, last crawled Aug 29 | 5:23 PM |
+| 10 | `/blog/perm-audit-what-it-means` | indexed, last crawled Sep 8 | 5:25 PM |
+| 11 | `/blog/is-my-company-still-filing-perm` | indexed, last crawled Sep 10 | 5:28 PM |
 
-Refused: `/tools/i485-queue-position` (indexed, last crawled Oct 1) at 9:42 PM; first in line next round.
-Inspected only, crawled after their change: `/` (Oct 7, 8:32 PM), `/for-attorneys` (Oct 6, 5:42 PM),
-`/blog/perm-processing-times-2026` (Oct 7, 1:32 PM), `/api-terms` (Oct 7, 11:18 AM, now plain "indexed",
-the robots block is gone), `/perm-employers/adobe-inc` (Oct 6, 9:33 PM). Held: `/calculators` (Oct 6,
-2:29 PM) and `/about` (Oct 6, 4:22 PM), crawled after their titles; only the Oct 7 structured data is newer.
+Refused: `/developers` (indexed, last crawled Oct 8, 3:22 PM, before its Oct 9 12:14 AM change) at 5:30 PM;
+first in line next round. Inspected only, crawled after its change: `/` (Oct 9, 4:53 PM).
 
-**Queue for the next round** (slots free up from about 9:12 PM EDT Oct 8). Inspect each; request only those
-last crawled before their change:
-1. `/tools/i485-queue-position` (refused tonight)
-2. `/perm-employers/google-llc` (the Oct 5 identity merge changed every employer page)
-3. `/tools/eb2-vs-eb3`
-4. `/perm-cases`, `/pwd-cases`, `/lca-cases`, `/perm-employers` (changed in the Oct 7 deploys)
-5. `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`
-6. `/methodology` (requested Oct 5, before its Oct 6 title)
-7. `/perm-processing-times`, `/visa-bulletin`, `/perm-denial-risk`, `/perm-rfi-audit`, `/blog`, `/changelog`,
+**Queue for the next round** (slots free up from about 5:07 PM EDT Oct 10). Newest changes first. Inspect
+each; request only those last crawled before their change:
+1. `/developers` (refused tonight), `/api-terms` (both changed Oct 9, 12:14 AM)
+2. `/i140-awaiting-visa`, `/i485-by-field-office` (the Q&A reads live figures)
+3. `/changelog/alerts-in-minutes-and-measured-estimates`
+4. `/perm-employers/under-review`, `/perm-case-statuses`, `/perm-rfi-audit` (Oct 8 evening)
+5. `/tools/perm-timeline-calculator`, `/estimate-scorecard` (Oct 8; `/perm-case-status` was done tonight)
+6. `/guides/h2a-case-status-and-timing`, `/guides/h2b-and-cw1-case-status-and-timing`, `/seasonal-cases`,
+   `/tools/green-card-line`, `/tools/eb2-vs-eb3` (Oct 7 night)
+7. `/tools/i485-queue-position` (refused Oct 7), `/perm-employers/google-llc`, `/perm-cases`, `/pwd-cases`,
+   `/lca-cases`, `/perm-employers`, `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`, `/methodology`
+8. `/perm-processing-times`, `/visa-bulletin`, `/perm-denial-risk`, `/blog`, `/changelog`,
    `/tools/priority-date-calculator`, `/tools/pwd-calculator` (the Oct 6 afternoon list)
-8. `/guides/read-your-priority-date-history`, `/perm-queue/2025-12`, `/perm-wages/software-developers`
-9. `/perm-cities/new-york-ny`, `/perm-countries/india`, `/perm-industries/541511`,
+9. `/guides/read-your-priority-date-history`, `/perm-queue/2025-12`, `/perm-wages/software-developers`,
+   `/perm-cities/new-york-ny`, `/perm-countries/india`, `/perm-industries/541511`,
    `/visa-bulletin/categories/eb2-india`, `/visa-bulletin/categories/eb3-india`
 10. `/calculators`, `/about` (structured data only), then `/privacy` and `/terms` (inspect)
 
-Employer pages with no PERM record gained debarment and layoff notices tonight (`853986ae`); that family is
-left to the sitemap's lastmod.
-
-**Previous run:** Oct 5, 5:57 to 6:16 PM EDT, 6 accepted (`/visa-issuances`, `/tools/wage-levels`,
-`/methodology`, `/perm-cities`, `/perm-countries`, `/perm-industries`); `/perm-employers/google-llc` refused.
+**Previous run:** Oct 7, 9:12 to 9:42 PM EDT, 11 accepted (`/faq`, `/guides`, `/perm-case-statuses`,
+`/perm-case-status`, `/perm-attorneys`, `/case-search`, `/estimate-scorecard`,
+`/tools/perm-timeline-calculator`, `/perm-industries/621330`, `/seasonal-cases`, `/tools/green-card-line`);
+`/tools/i485-queue-position` refused.
 
 ---
 
@@ -934,3 +933,17 @@ Request once the push after `7928533c` is live.
 1. `/perm-employers/under-review` (busiest page of Oct 8: the PERM suspensions; a status row no longer links to a page that doesn't exist)
 2. `/perm-case-statuses` (a definition for DENIED - BALCA AFFIRMED)
 3. `/perm-rfi-audit` (the stage list shares the same link rule)
+
+## Queue after the Oct 9 changes (H-1B employer rankings, live DOL figures, article tables restored)
+
+Listed by `node scripts/gsc_queue.mjs --since b0905d9c`; the pages already in the Oct 8 sections are left there.
+
+1. `/h1b-employers` (new: the 100 busiest H-1B employers by fiscal year) and a state sample, `/h1b-employers/california`
+2. `/guides/ultimate-perm-guide-2026`, `/guides/complete-perm-filing-guide`, `/guides/three-180-day-clocks` (their comparison tables and step numbers had been missing since Feb 12; DOL's figures now read live)
+3. `/faq` (DOL's average read live)
+4. `/` (the homepage)
+5. `/perm-case-status`
+6. `/guides/check-perm-case-status`, `/guides/reading-the-perm-data`, `/blog/perm-audit-what-it-means`, `/blog/is-my-company-still-filing-perm`
+7. `/developers`, `/api-terms` (scopes, sandbox keys, exports, live lookups, webhooks)
+8. `/i140-awaiting-visa`, `/i485-by-field-office` (the Q&A reads live figures)
+9. `/changelog/alerts-in-minutes-and-measured-estimates` (newest of the five new entries; the sitemap carries the rest)
