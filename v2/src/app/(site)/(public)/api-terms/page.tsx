@@ -48,7 +48,7 @@ export default function ApiTermsPage() {
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
       <div className="card-brutalist p-8">
         <h1 className="mb-2 font-heading text-4xl font-black">API Terms</h1>{" "}
-        <p className="mb-6 text-foreground/60">Effective Date: October 2, 2026</p>
+        <p className="mb-6 text-foreground/60">Effective Date: October 9, 2026</p>
 
         <Section id="agreement" title="1. Agreement">
           <p>
@@ -70,6 +70,12 @@ export default function ApiTermsPage() {
             them confidential, send them only in a request header, and never publish them in public code, web pages or
             URLs. You may not share a key with another person or organization. If a key may have been exposed, revoke
             it in Settings and make a new one. We may revoke a key that has been published or misused.
+          </p>{" "}
+          <p>
+            A key carries the scopes you choose when you make it, and may only be used for what they allow. A key you
+            give a lifetime stops working at the end of it. When you rotate a key, the replaced key continues to work
+            for 24 hours and then stops. A sandbox key (one beginning pt_test_) returns fixed sample data only; its
+            answers are not records of any real case, employer or person and may not be presented as such.
           </p>
         </Section>
 
@@ -83,6 +89,12 @@ export default function ApiTermsPage() {
             day and {free.perMonth.toLocaleString("en-US")} a month. You may not use more than one account, rotate keys
             or use any other means to exceed the limits of your plan. Calls to the MCP server without a key share a
             common allowance and may be refused when it is in use.
+          </p>{" "}
+          <p>
+            Each plan also limits the rows one export may return, the live lookups of the Department of Labor&rsquo;s
+            case status your account may make in a day, and its webhook endpoints and watches. Live lookups are further
+            limited across all accounts together, and may be refused when that shared allowance is used, whatever your
+            plan allows.
           </p>
         </Section>
 
@@ -117,6 +129,14 @@ export default function ApiTermsPage() {
               Present an estimate from the API as a determination, prediction or statement of any government agency,
               or as legal advice.
             </li>{" "}
+            <li>
+              Use live lookups to walk ranges of case numbers, or to ask about case numbers you have no reason to look
+              up, in order to discover filings.
+            </li>{" "}
+            <li>
+              Register a webhook endpoint you do not control, or one whose purpose is to make us send requests to a
+              third party&rsquo;s service.
+            </li>{" "}
             <li>Interfere with the API or the site, or probe, scan or test their security without our written consent.</li>
           </ul>
         </Section>
@@ -141,13 +161,21 @@ export default function ApiTermsPage() {
             it. We will announce changes that break existing use on the developers page and, where practical, before
             they take effect. Changes that break existing use will be made in a new version of the API where
             practical.
+          </p>{" "}
+          <p>
+            Webhooks are delivered on a best-effort basis. We sign each delivery, and you are responsible for checking
+            the signature before acting on it. We retry a delivery your endpoint does not accept for up to 24 hours;
+            after that we may pause the endpoint until you resume it. We keep a log of deliveries, without their
+            responses, for 30 days.
           </p>
         </Section>
 
         <Section id="fees" title="8. Fees">
           <p>
-            The Free plan is free. If we offer paid plans, their prices and terms will be shown before purchase and
-            will govern them.
+            The Free plan is free. Until billing for paid plans opens, every account receives the Plus plan&rsquo;s
+            limits and features at no charge. We will give notice on the developers page, and by email to the holders
+            of active keys, before any charge applies. If we offer paid plans, their prices and terms will be shown
+            before purchase and will govern them.
           </p>
         </Section>
 

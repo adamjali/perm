@@ -37,11 +37,11 @@ import { seasonal } from "@/lib/turso/seasonalCases";
 import type { ApiPlan } from "@convex/lib/apiPlans";
 import type { DiscoveryMiss } from "@/lib/dolMiss";
 
+import { API_LIVE_DAILY_CAP } from "./limits";
 import { readCase, type CaseRecord, type ReadResult } from "./reads";
 import { resetsIn, utcDay } from "./usage";
 
-/** Live lookups a UTC day for every API account together. */
-export const API_LIVE_DAILY_CAP = 20_000;
+export { API_LIVE_DAILY_CAP };
 
 const counterKey = (now: Date) => `api_live_${utcDay(now)}`;
 

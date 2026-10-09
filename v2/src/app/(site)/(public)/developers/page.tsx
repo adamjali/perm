@@ -10,8 +10,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { API_PLANS } from "@convex/lib/apiPlans";
+import { API_PLANS, GRANTABLE_SCOPES, SCOPE_LABELS } from "@convex/lib/apiPlans";
+import { RETRY_DELAYS_MS, WEBHOOK_EVENTS, WEBHOOK_EVENT_LABELS } from "@convex/lib/webhookSign";
 import { API_BASE, ENDPOINTS, MCP_TOOLS, MCP_URL } from "@/lib/api/openapi";
+import { API_LIVE_DAILY_CAP } from "@/lib/api/limits";
+import { SANDBOX_CASE_NUMBERS } from "@/lib/api/sandbox";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
@@ -44,14 +47,57 @@ function Code({ children }: { children: string }) {
 
 const ERRORS: Array<[string, string, string]> = [
   ["400", "bad_request", "The request isn't valid: the message says which part. Not counted."],
-  ["401", "missing_key, invalid_key, revoked_key", "No key, or one we don't recognise."],
+  ["401", "missing_key, invalid_key, revoked_key, expired_key", "No key, or one we don't recognise, revoked, past its lifetime or past a rotation's 24 hours."],
+  ["403", "missing_scope, plan_feature, sandbox_key", "The key lacks the scope, the plan lacks the feature, or a sandbox key asked to change something. Not counted."],
   ["404", "not_found", "No such record. Counted, because the lookup ran."],
-  ["429", "rate_limited, daily_limit, monthly_limit", "A limit. Retry-After says how many seconds until it lifts."],
-  ["503", "unavailable, busy", "A source isn't loaded, or the site is busy. Try again shortly."],
+  ["429", "rate_limited, daily_limit, monthly_limit, live_daily_limit, live_api_limit", "A limit. Retry-After says how many seconds until it lifts."],
+  ["503", "unavailable, dol_unavailable, busy", "A source isn't loaded, DOL didn't answer a live lookup in time, or the site is busy. Try again shortly."],
 ];
+
+/** "1 minute", "5 minutes", "2 hours": a retry wait, said plainly. */
+function wait(ms: number): string {
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 60) return minutes === 1 ? "1 minute" : `${minutes} minutes`;
+  const hours = Math.round(minutes / 60);
+  return hours === 1 ? "1 hour" : `${hours} hours`;
+}
+
+const WEBHOOK_EXAMPLE = `POST https://example.com/hooks/perm
+webhook-id: msg_jd7abc123
+webhook-timestamp: 1791561600
+webhook-signature: v1,K5oZ...base64...=
+
+{
+  "type": "case.status_changed",
+  "timestamp": "2026-10-09T16:05:00.000Z",
+  "data": {
+    "caseNumber": "G-100-26045-123456",
+    "program": "perm",
+    "from": "ANALYST REVIEW",
+    "to": "CERTIFIED",
+    "isFinal": true,
+    "observedOn": "2026-10-09",
+    "url": "https://permtracker.app/perm-case-status?case=G-100-26045-123456"
+  }
+}`;
+
+const VERIFY_EXAMPLE = `import { createHmac, timingSafeEqual } from "node:crypto";
+
+// secret: the whsec_... value shown when you made the endpoint
+export function verify(secret, headers, rawBody) {
+  const key = Buffer.from(secret.slice("whsec_".length), "base64");
+  const signed = \`\${headers["webhook-id"]}.\${headers["webhook-timestamp"]}.\${rawBody}\`;
+  const want = createHmac("sha256", key).update(signed).digest("base64");
+  const age = Math.abs(Date.now() / 1000 - Number(headers["webhook-timestamp"]));
+  return age < 300 && headers["webhook-signature"].split(" ").some((s) => {
+    const got = s.split(",")[1] ?? "";
+    return got.length === want.length && timingSafeEqual(Buffer.from(got), Buffer.from(want));
+  });
+}`;
 
 export default function DevelopersPage() {
   const free = API_PLANS.free;
+  const plus = API_PLANS.plus;
   const steps: Array<{ title: string; body: React.ReactNode; code: string }> = [
     {
       title: "Make a key",
@@ -104,25 +150,46 @@ export default function DevelopersPage() {
 
       <section className="mt-12" aria-labelledby="limits">
         <h2 id="limits" className="font-heading text-2xl font-black">
-          Free plan
+          Plans
         </h2>{" "}
-        <dl className="mt-4 grid grid-cols-2 gap-px border-3 border-border bg-border sm:grid-cols-4">
-          {(
-            [
-              ["A minute", fmt(free.perMinute)],
-              ["A day", fmt(free.perDay)],
-              ["A month", fmt(free.perMonth)],
-              ["Keys", fmt(free.keys)],
-            ] as const
-          ).map(([label, value]) => (
-            <div key={label} className="bg-card px-4 py-4">
-              <dt className="text-sm font-semibold text-foreground/70">{label}</dt>{" "}
-              <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{value}</dd>
-            </div>
-          ))}
-        </dl>{" "}
+        <p className="mt-2 max-w-2xl border-2 border-border bg-primary/15 px-4 py-3 text-base">
+          Paid features are free for now: every account gets the Plus plan&rsquo;s limits, exports, live DOL lookups and
+          webhooks until billing opens. We&rsquo;ll say so here, and email key holders, before that changes.
+        </p>{" "}
+        <div className="mt-4 overflow-x-auto border-3 border-border">
+          <table className="w-full min-w-[480px] text-left text-sm">
+            <thead className="bg-muted">
+              <tr>
+                <th scope="col" className="px-4 py-3 font-bold">Allowance{" "}</th>
+                <th scope="col" className="px-4 py-3 font-bold">Free{" "}</th>
+                <th scope="col" className="px-4 py-3 font-bold">Plus{" "}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y-2 divide-border">
+              {(
+                [
+                  ["Calls a minute", free.perMinute, plus.perMinute],
+                  ["Calls a day", free.perDay, plus.perDay],
+                  ["Calls a month", free.perMonth, plus.perMonth],
+                  ["Live keys", free.keys, plus.keys],
+                  ["Sandbox keys", free.sandboxKeys, plus.sandboxKeys],
+                  ["Rows in one export", free.exportRows, plus.exportRows],
+                  ["Live DOL lookups a day", free.liveLookupsPerDay, plus.liveLookupsPerDay],
+                  ["Webhook endpoints", free.webhookEndpoints, plus.webhookEndpoints],
+                  ["Watched cases and employers", free.webhookWatches, plus.webhookWatches],
+                ] as const
+              ).map(([label, f, p]) => (
+                <tr key={label}>
+                  <th scope="row" className="px-4 py-3 font-semibold">{label}{" "}</th>
+                  <td className="px-4 py-3 font-mono tabular-nums">{f === 0 ? "None" : fmt(f)}{" "}</td>
+                  <td className="px-4 py-3 font-mono tabular-nums">{fmt(p)}{" "}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>{" "}
         <p className="mt-3 text-base text-foreground/75">
-          Calls, counted per account and reset at midnight UTC. Need more?{" "}
+          Calls are counted per account and reset at midnight UTC. Need more?{" "}
           <a href="mailto:support@permtracker.app?subject=API%20limits" className={link}>
             Write to us
           </a>
@@ -135,7 +202,7 @@ export default function DevelopersPage() {
           Endpoints
         </h2>{" "}
         <p className="mt-2 text-base text-foreground/75">
-          All GET, all under <code className="font-mono">{API_BASE}</code>. The{" "}
+          All under <code className="font-mono">{API_BASE}</code>; GET unless marked. The{" "}
           <a href={`${API_BASE}/openapi.json`} className={link}>
             OpenAPI description
           </a>{" "}
@@ -152,8 +219,11 @@ export default function DevelopersPage() {
             </thead>
             <tbody className="divide-y-2 divide-border">
               {ENDPOINTS.map((e) => (
-                <tr key={e.path} className="align-top">
-                  <td className="px-4 py-3 font-mono font-bold whitespace-nowrap">{e.path}{" "}</td>
+                <tr key={`${e.method ?? "GET"} ${e.path}`} className="align-top">
+                  <td className="px-4 py-3 font-mono font-bold whitespace-nowrap">
+                    {e.method && e.method !== "GET" ? `${e.method} ` : ""}
+                    {e.path}{" "}
+                  </td>
                   <td className="px-4 py-3 leading-relaxed">
                     {e.summary}{" "}
                   </td>
@@ -197,6 +267,102 @@ export default function DevelopersPage() {
             </table>
           </div>
         </details>
+      </section>
+
+      <section className="mt-12" aria-labelledby="keys">
+        <h2 id="keys" className="font-heading text-2xl font-black">
+          Scopes, lifetimes and rotation
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/75">
+          Each key says what it may do. Give a script only what it needs; a call outside its scopes answers 403 and
+          isn&rsquo;t counted. Writing to your cases is reserved for the firm tools and can&rsquo;t be granted yet.
+        </p>{" "}
+        <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
+          {GRANTABLE_SCOPES.map((sc) => (
+            <li key={sc} className="border-2 border-border bg-card px-4 py-3">
+              <p className="font-mono text-sm font-bold">{sc}</p>{" "}
+              <p className="mt-1 text-sm text-foreground/75">{SCOPE_LABELS[sc]}</p>
+            </li>
+          ))}
+        </ul>{" "}
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/75">
+          A key can last 30 days, 90, a year or until you revoke it. Rotating one gives you a new key at once and keeps
+          the old one working for 24 hours, so you can switch over. A revoked key stops within a minute, usually at once.
+          GET <code className="font-mono">/v1/me</code> shows the key&rsquo;s scopes, its end and what&rsquo;s left today.
+        </p>
+      </section>
+
+      <section className="mt-12" aria-labelledby="sandbox">
+        <h2 id="sandbox" className="font-heading text-2xl font-black">
+          Sandbox keys
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/75">
+          A key that starts <code className="font-mono">pt_test_</code> answers every read and export from fixed sample
+          data in the same shape as the real thing, and nothing it does is counted. Use one for tests and CI. Its
+          sample cases are{" "}
+          {SANDBOX_CASE_NUMBERS.map((n, i) => (
+            <span key={n}>
+              {i > 0 ? ", " : ""}
+              <code className="font-mono">{n}</code>
+            </span>
+          ))}
+          : numbers DOL&rsquo;s numbering never issues, so none is a real person&rsquo;s case.
+        </p>
+      </section>
+
+      <section className="mt-12" aria-labelledby="live">
+        <h2 id="live" className="font-heading text-2xl font-black">
+          Exports and live DOL lookups
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/75">
+          <code className="font-mono">/v1/exports/cases</code> takes the case search&rsquo;s own parameters and returns
+          the whole answer, up to {fmt(plus.exportRows)} rows on Plus, as JSON or CSV (cells a spreadsheet would run as
+          a formula are written as text). When more matched, X-Export-Truncated says so. An export counts as one call.
+        </p>{" "}
+        <Code>{`curl -H "Authorization: Bearer YOUR_KEY" \
+"${API_BASE}/exports/cases?q=acme&state=CA&format=csv"`}</Code>{" "}
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/75">
+          Add <code className="font-mono">live=1</code> to a case lookup and a number our records don&rsquo;t hold yet
+          is asked of DOL right now, then kept, so the nightly sweep follows it. A case we hold answers from our record
+          and costs nothing. Plus has {fmt(plus.liveLookupsPerDay)} a day, and every account together{" "}
+          {fmt(API_LIVE_DAILY_CAP)}, so DOL never sees a spike from us. A refusal names the limit and when it
+          resets.
+        </p>
+      </section>
+
+      <section className="mt-12" aria-labelledby="webhooks">
+        <h2 id="webhooks" className="font-heading text-2xl font-black">
+          Webhooks
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/75">
+          Register an https endpoint in Settings or with POST <code className="font-mono">/v1/webhooks</code>, choose
+          its events, and watch case numbers or employers with POST <code className="font-mono">/v1/watches</code>. Each
+          delivery is a signed POST, the Standard Webhooks way, so any of its libraries can check it.
+        </p>{" "}
+        <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
+          {WEBHOOK_EVENTS.map((ev) => (
+            <li key={ev} className="border-2 border-border bg-card px-4 py-3">
+              <p className="font-mono text-sm font-bold">{ev}</p>{" "}
+              <p className="mt-1 text-sm text-foreground/75">{WEBHOOK_EVENT_LABELS[ev]}</p>
+            </li>
+          ))}
+        </ul>{" "}
+        <details className="mt-4 border-2 border-border bg-card px-4 py-3">
+          <summary className="cursor-pointer font-bold">A delivery, and how to check its signature</summary>
+          <Code>{WEBHOOK_EXAMPLE}</Code>{" "}
+          <p className="mt-3 text-sm leading-relaxed text-foreground/75">
+            The signature is HMAC-SHA256, keyed by your secret without its whsec_ prefix (base64-decoded), over the id,
+            the timestamp and the raw body joined by dots. Refuse a timestamp more than five minutes off, and use the
+            id to skip a delivery you&rsquo;ve already handled: it&rsquo;s the same on every retry.
+          </p>{" "}
+          <Code>{VERIFY_EXAMPLE}</Code>
+        </details>{" "}
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/75">
+          Answer with any 2xx within 10 seconds. Anything else, a redirect included, is retried after{" "}
+          {RETRY_DELAYS_MS.slice(0, 6).map(wait).join(", ")} and at the 24-hour mark. After 24 hours the endpoint
+          pauses, we email you once, and events wait for you to resume it. The delivery log in Settings keeps 30 days,
+          with a button to send any one again.
+        </p>
       </section>
 
       <section className="mt-12" aria-labelledby="assistants">
