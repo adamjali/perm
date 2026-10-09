@@ -14,6 +14,7 @@ import type { Id } from "../_generated/dataModel";
 import { hashApiKey } from "../lib/apiKeyFormat";
 import { RETRY_WINDOW_MS } from "../lib/webhookSign";
 import { KEEP_DAYS, pauseEmailText } from "../webhookDelivery";
+import { RESUMES_PER_HOUR } from "../webhooks";
 
 type T = ReturnType<typeof createTestContext>;
 
@@ -279,6 +280,16 @@ describe("failures, retries and pausing", () => {
     expect((await t.run((ctx) => ctx.db.query("webhookDeliveries").first()))!.status).toBe("delivered");
   });
 
+  it("lets an owner resume an endpoint only so often", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    const made = await endpoint(t, userId);
+    for (let i = 0; i < RESUMES_PER_HOUR; i++) {
+      await as(t, userId).mutation(api.webhooks.resumeEndpoint, { endpointId: made.id });
+    }
+    await expect(as(t, userId).mutation(api.webhooks.resumeEndpoint, { endpointId: made.id })).rejects.toThrow(/resumes this hour/);
+  });
+
   it("won't let one person resume or delete another's endpoint", async () => {
     const t = createTestContext();
     const a = await makeUser(t, "a@example.com");
@@ -503,6 +514,9 @@ describe("the feeds", () => {
 });
 
 describe("the API's door", () => {
+  const SERVER = "server-secret-for-tests";
+  beforeEach(() => vi.stubEnv("API_SERVER_SECRET", SERVER));
+
   async function keyFor(t: T, userId: Id<"users">, opts: { scopes?: string[]; sandbox?: boolean } = {}) {
     const made = await as(t, userId).action(api.apiKeys.create, { name: "k", ...opts });
     if (!made.ok) throw new Error(made.message);
@@ -513,10 +527,12 @@ describe("the API's door", () => {
     const t = createTestContext();
     const userId = await makeUser(t, "dev@example.com");
     const keyHash = await keyFor(t, userId);
-    expect(await t.action(api.webhooks.apiAddWatch, { keyHash, kind: "case", target: "G-100-26045-123456" })).toMatchObject({ ok: true });
-    const listed = await t.mutation(api.webhooks.apiList, { keyHash });
+    const door = { keyHash, serverSecret: SERVER };
+    expect(await t.action(api.webhooks.apiAddWatch, { ...door, kind: "case", target: "G-100-26045-123456" })).toMatchObject({ ok: true });
+    const listed = await t.mutation(api.webhooks.apiList, door);
     expect(listed.ok && listed.watches.map((w) => w.target)).toEqual(["G-100-26045-123456"]);
-    expect(await t.mutation(api.webhooks.apiRemoveWatch, { keyHash, kind: "case", target: "g-100-26045-123456" })).toEqual({
+    // Removed under the same rule that stored it: case and spaces don't matter.
+    expect(await t.mutation(api.webhooks.apiRemoveWatch, { ...door, kind: "case", target: " g-100-26045 -123456" })).toEqual({
       ok: true,
       removed: true,
     });
@@ -526,10 +542,41 @@ describe("the API's door", () => {
     const t = createTestContext();
     const userId = await makeUser(t, "dev@example.com");
     const readOnly = await keyFor(t, userId, { scopes: ["read"] });
-    expect(await t.mutation(api.webhooks.apiList, { keyHash: readOnly })).toMatchObject({ ok: false, message: 'This key needs the "webhooks" scope.' });
+    expect(await t.mutation(api.webhooks.apiList, { keyHash: readOnly, serverSecret: SERVER })).toMatchObject({
+      ok: false,
+      message: 'This key needs the "webhooks" scope.',
+    });
     const sandbox = await keyFor(t, userId, { sandbox: true });
-    expect(await t.mutation(api.webhooks.apiList, { keyHash: sandbox })).toMatchObject({ ok: false, message: expect.stringMatching(/Sandbox/) });
-    expect(await t.mutation(api.webhooks.apiList, { keyHash: "0".repeat(64) })).toMatchObject({ ok: false });
+    expect(await t.mutation(api.webhooks.apiList, { keyHash: sandbox, serverSecret: SERVER })).toMatchObject({
+      ok: false,
+      message: expect.stringMatching(/Sandbox/),
+    });
+    expect(await t.mutation(api.webhooks.apiList, { keyHash: "0".repeat(64), serverSecret: SERVER })).toMatchObject({ ok: false });
+  });
+
+  it("refuses a good key that comes without the server's secret, so /v1's limits can't be skipped", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    const keyHash = await keyFor(t, userId);
+    const refused = { ok: false, message: expect.stringMatching(/PERM Tracker API/) };
+    expect(await t.mutation(api.webhooks.apiList, { keyHash, serverSecret: "guess" })).toMatchObject(refused);
+    expect(await t.mutation(api.webhooks.apiDeleteEndpoint, { keyHash, serverSecret: "", endpointId: "x" })).toMatchObject(refused);
+    expect(await t.mutation(api.webhooks.apiRemoveWatch, { keyHash, serverSecret: "guess", kind: "case", target: "x" })).toMatchObject(refused);
+    expect(await t.action(api.webhooks.apiAddWatch, { keyHash, serverSecret: "guess", kind: "case", target: "G-100-26045-123456" })).toMatchObject(refused);
+    expect(await t.action(api.webhooks.apiCreateEndpoint, { keyHash, serverSecret: "guess", url: "https://a.example.com/x", events: ["queue.moved"] })).toMatchObject(refused);
+    // Unset on the deployment means shut, never open.
+    vi.stubEnv("API_SERVER_SECRET", "");
+    expect(await t.mutation(api.webhooks.apiList, { keyHash, serverSecret: "" })).toMatchObject(refused);
+  });
+
+  it("checks the key before reading anything to resolve a watch", async () => {
+    const t = createTestContext();
+    vi.stubEnv("TURSO_DATABASE_URL", "libsql://db.example.com");
+    vi.stubEnv("TURSO_AUTH_TOKEN", "t");
+    sent = [];
+    const r = await t.action(api.webhooks.apiAddWatch, { keyHash: "f".repeat(64), serverSecret: SERVER, kind: "employer", target: "google-llc" });
+    expect(r).toMatchObject({ ok: false });
+    expect(sent).toHaveLength(0);
   });
 
   it("makes an endpoint through the API and won't delete another account's", async () => {
@@ -538,10 +585,15 @@ describe("the API's door", () => {
     const b = await makeUser(t, "b@example.com");
     const ka = await keyFor(t, a);
     const kb = await keyFor(t, b);
-    const made = await t.action(api.webhooks.apiCreateEndpoint, { keyHash: ka, url: "https://a.example.com/x", events: ["queue.moved"] });
+    const made = await t.action(api.webhooks.apiCreateEndpoint, {
+      keyHash: ka,
+      serverSecret: SERVER,
+      url: "https://a.example.com/x",
+      events: ["queue.moved"],
+    });
     if (!made.ok) throw new Error(made.message);
-    expect(await t.mutation(api.webhooks.apiDeleteEndpoint, { keyHash: kb, endpointId: made.id })).toMatchObject({ ok: false });
-    expect(await t.mutation(api.webhooks.apiDeleteEndpoint, { keyHash: ka, endpointId: made.id })).toEqual({ ok: true });
+    expect(await t.mutation(api.webhooks.apiDeleteEndpoint, { keyHash: kb, serverSecret: SERVER, endpointId: made.id })).toMatchObject({ ok: false });
+    expect(await t.mutation(api.webhooks.apiDeleteEndpoint, { keyHash: ka, serverSecret: SERVER, endpointId: made.id })).toEqual({ ok: true });
   });
 });
 

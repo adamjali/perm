@@ -21,7 +21,21 @@ import { admitKeyed, apiError, settle, type Admitted } from "./route";
 const BODY_MAX = 4096;
 const HEADERS = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } as const;
 
+/**
+ * The secret Convex's webhook functions want from this server
+ * (convex/webhooks.ts, serverDoorOpen). Unset here means the door is shut,
+ * and the API says so instead of asking Convex.
+ */
+function serverSecret(): string | null {
+  const s = process.env.API_SERVER_SECRET ?? "";
+  return s.length >= 16 ? s : null;
+}
+
 async function admitWebhooks(request: Request): Promise<Admitted | NextResponse> {
+  if (!serverSecret()) {
+    console.error("[api] webhooks: API_SERVER_SECRET is not set on this server");
+    return apiError(503, "unavailable", "Webhooks can't be managed through the API right now. Try again later, or use Settings.");
+  }
   const admitted = await admitKeyed(request, "webhooks");
   if (admitted instanceof NextResponse) return admitted;
   if (admitted.caller.sandbox) {
@@ -71,7 +85,7 @@ export async function listWebhooks(request: Request): Promise<NextResponse> {
   const admitted = await admitWebhooks(request);
   if (admitted instanceof NextResponse) return admitted;
   return guarded(admitted, async () => {
-    const r = await fetchMutation(api.webhooks.apiList, { keyHash: admitted.caller.keyHash });
+    const r = await fetchMutation(api.webhooks.apiList, { keyHash: admitted.caller.keyHash, serverSecret: serverSecret() ?? "" });
     if (!r.ok) return refused(admitted, r.message);
     return answer(admitted, 200, { endpoints: r.endpoints, watches: r.watches, events: WEBHOOK_EVENTS });
   });
@@ -87,7 +101,12 @@ export async function createWebhook(request: Request): Promise<NextResponse> {
   const admitted = await admitWebhooks(request);
   if (admitted instanceof NextResponse) return admitted;
   return guarded(admitted, async () => {
-    const r = await fetchAction(api.webhooks.apiCreateEndpoint, { keyHash: admitted.caller.keyHash, url, events });
+    const r = await fetchAction(api.webhooks.apiCreateEndpoint, {
+      keyHash: admitted.caller.keyHash,
+      serverSecret: serverSecret() ?? "",
+      url,
+      events,
+    });
     if (!r.ok) return refused(admitted, r.message);
     return answer(admitted, 201, {
       id: r.id,
@@ -103,7 +122,11 @@ export async function deleteWebhook(request: Request, id: string): Promise<NextR
   const admitted = await admitWebhooks(request);
   if (admitted instanceof NextResponse) return admitted;
   return guarded(admitted, async () => {
-    const r = await fetchMutation(api.webhooks.apiDeleteEndpoint, { keyHash: admitted.caller.keyHash, endpointId: id });
+    const r = await fetchMutation(api.webhooks.apiDeleteEndpoint, {
+      keyHash: admitted.caller.keyHash,
+      serverSecret: serverSecret() ?? "",
+      endpointId: id,
+    });
     if (!r.ok) return apiError(404, "not_found", r.message, { headers: settle(admitted, true) });
     return answer(admitted, 200, { deleted: id });
   });
@@ -122,6 +145,7 @@ export async function addWatch(request: Request): Promise<NextResponse> {
   return guarded(admitted, async () => {
     const r = await fetchAction(api.webhooks.apiAddWatch, {
       keyHash: admitted.caller.keyHash,
+      serverSecret: serverSecret() ?? "",
       kind: caseNumber !== null ? "case" : "employer",
       target: (caseNumber ?? employer ?? "").slice(0, 130),
     });
@@ -135,10 +159,21 @@ export async function removeWatch(request: Request, target: string): Promise<Nex
   const kind = new URL(request.url).searchParams.get("kind") ?? "case";
   if (kind !== "case" && kind !== "employer") return apiError(400, "bad_request", "kind must be case or employer.");
   if (target.length === 0 || target.length > 130) return apiError(400, "bad_request", "Name the case number or employer to stop watching.");
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(target);
+  } catch {
+    return apiError(400, "bad_request", "That watch name isn't valid in an address. Name a case number or an employer page's name.");
+  }
   const admitted = await admitWebhooks(request);
   if (admitted instanceof NextResponse) return admitted;
   return guarded(admitted, async () => {
-    const r = await fetchMutation(api.webhooks.apiRemoveWatch, { keyHash: admitted.caller.keyHash, kind, target: decodeURIComponent(target) });
+    const r = await fetchMutation(api.webhooks.apiRemoveWatch, {
+      keyHash: admitted.caller.keyHash,
+      serverSecret: serverSecret() ?? "",
+      kind,
+      target: decoded,
+    });
     if (!r.ok) return refused(admitted, r.message);
     if (!r.removed) return apiError(404, "not_found", "This account doesn't watch that.", { headers: settle(admitted, true) });
     return answer(admitted, 200, { removed: target });

@@ -49,6 +49,8 @@ import { normaliseFlagCaseNumber } from "../src/lib/flagCaseNumber";
 const randomBytes = (n: number) => crypto.getRandomValues(new Uint8Array(n));
 /** Test events and resends a person may ask for in an hour: each one is a request to their server. */
 export const MANUAL_SENDS_PER_HOUR = 20;
+/** Resumes an owner may make in an hour: each releases up to 2,000 held deliveries at once. */
+export const RESUMES_PER_HOUR = 10;
 
 type Failure = { ok: false; message: string };
 const failure = v.object({ ok: v.literal(false), message: v.string() });
@@ -83,6 +85,23 @@ async function keyAccount(ctx: MutationCtx, keyHash: string): Promise<{ userId: 
   const account = await accountOf(ctx, key.userId);
   if (!account) return denied;
   return { userId: key.userId, account };
+}
+
+/**
+ * The API's door is open only to the site's own server, which sends
+ * API_SERVER_SECRET (set on this deployment and on the server) with every
+ * call. A key's hash alone is not enough: the key's holder could compute it
+ * and call these functions directly, skipping /v1's per-minute limit and its
+ * call counting. Unset means shut, never open. Compared in time that doesn't
+ * depend on where the strings differ.
+ */
+const DOOR_SHUT: Failure = { ok: false, message: "These functions answer the PERM Tracker API only. Call https://permtracker.app/v1." };
+function serverDoorOpen(given: string): boolean {
+  const want = process.env.API_SERVER_SECRET ?? "";
+  if (want.length < 16 || given.length !== want.length) return false;
+  let diff = 0;
+  for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ given.charCodeAt(i);
+  return diff === 0;
 }
 
 /* ------------------------------------------------------------------ */
@@ -355,6 +374,11 @@ export const resumeEndpoint = mutation({
   handler: async (ctx, args) => {
     const e = await ownEndpoint(ctx, args.endpointId);
     await requireWebhookPlan(ctx, e.account);
+    const r = await checkAndRecordRateLimit(ctx, e.userId, "webhook-resume", { limit: RESUMES_PER_HOUR, windowMs: MS_PER_HOUR });
+    if (!r.allowed) {
+      const minutes = Math.max(1, Math.ceil(r.resetInMs / 60_000));
+      throw new ConvexError(`That's ${RESUMES_PER_HOUR} resumes this hour. Try again in ${minutes} minutes.`);
+    }
     await ctx.db.patch(e._id, { pausedAt: undefined, pauseReason: undefined, pauseNotifiedAt: undefined });
     const now = Date.now();
     let released = 0;
@@ -551,9 +575,10 @@ export const removeWatch = mutation({
 const listed = v.object({ ok: v.literal(true), endpoints: v.array(endpointRow), watches: v.array(watchRow) });
 
 export const apiList = mutation({
-  args: { keyHash: v.string() },
+  args: { keyHash: v.string(), serverSecret: v.string() },
   returns: v.union(listed, failure),
   handler: async (ctx, args) => {
+    if (!serverDoorOpen(args.serverSecret)) return DOOR_SHUT;
     const k = await keyAccount(ctx, args.keyHash);
     if ("ok" in k) return k;
     const [endpoints, watches] = await Promise.all([endpointsOf(ctx, k.account.account), watchesOf(ctx, k.account.account)]);
@@ -562,9 +587,10 @@ export const apiList = mutation({
 });
 
 export const apiCreateEndpoint = action({
-  args: { keyHash: v.string(), url: v.string(), events: v.array(v.string()) },
+  args: { keyHash: v.string(), serverSecret: v.string(), url: v.string(), events: v.array(v.string()) },
   returns: v.union(created, failure),
   handler: async (ctx, args): Promise<Created> => {
+    if (!serverDoorOpen(args.serverSecret)) return DOOR_SHUT;
     if (!API_KEY_HASH_RE.test(args.keyHash)) return { ok: false, message: "This key can't manage webhooks." };
     if (args.events.length > 20) return { ok: false, message: "That's more events than exist." };
     return await buildEndpoint(ctx, { keyHash: args.keyHash }, args.url.slice(0, 4096), args.events);
@@ -572,9 +598,10 @@ export const apiCreateEndpoint = action({
 });
 
 export const apiDeleteEndpoint = mutation({
-  args: { keyHash: v.string(), endpointId: v.string() },
+  args: { keyHash: v.string(), serverSecret: v.string(), endpointId: v.string() },
   returns: v.union(v.object({ ok: v.literal(true) }), failure),
   handler: async (ctx, args) => {
+    if (!serverDoorOpen(args.serverSecret)) return DOOR_SHUT;
     const k = await keyAccount(ctx, args.keyHash);
     if ("ok" in k) return k;
     const id = ctx.db.normalizeId("webhookEndpoints", args.endpointId.slice(0, 64));
@@ -585,11 +612,26 @@ export const apiDeleteEndpoint = mutation({
   },
 });
 
+/** Whether a key may manage webhooks now, before an action spends any read on its request. */
+export const keyMayManage = internalMutation({
+  args: { keyHash: v.string() },
+  returns: v.union(v.object({ ok: v.literal(true) }), failure),
+  handler: async (ctx, args) => {
+    const k = await keyAccount(ctx, args.keyHash);
+    return "ok" in k ? k : { ok: true as const };
+  },
+});
+
 export const apiAddWatch = action({
-  args: { keyHash: v.string(), kind: v.string(), target: v.string() },
+  args: { keyHash: v.string(), serverSecret: v.string(), kind: v.string(), target: v.string() },
   returns: v.union(watched, failure),
   handler: async (ctx, args): Promise<Watched> => {
+    if (!serverDoorOpen(args.serverSecret)) return DOOR_SHUT;
     if (!API_KEY_HASH_RE.test(args.keyHash)) return { ok: false, message: "This key can't manage webhooks." };
+    // The key first: resolving an employer reads the public database, and a
+    // hash nobody holds must cost nothing.
+    const allowed: { ok: true } | Failure = await ctx.runMutation(internal.webhooks.keyMayManage, { keyHash: args.keyHash });
+    if (!allowed.ok) return allowed;
     const t = await resolveTarget(args.kind, args.target);
     if ("ok" in t) return t;
     const r: Watched = await ctx.runMutation(internal.webhooks.insertWatch, {
@@ -603,14 +645,19 @@ export const apiAddWatch = action({
 });
 
 export const apiRemoveWatch = mutation({
-  args: { keyHash: v.string(), kind: v.string(), target: v.string() },
+  args: { keyHash: v.string(), serverSecret: v.string(), kind: v.string(), target: v.string() },
   returns: v.union(v.object({ ok: v.literal(true), removed: v.boolean() }), failure),
   handler: async (ctx, args) => {
+    if (!serverDoorOpen(args.serverSecret)) return DOOR_SHUT;
     const k = await keyAccount(ctx, args.keyHash);
     if ("ok" in k) return k;
     if (args.kind !== "case" && args.kind !== "employer") return { ok: false as const, message: 'A watch is on a "case" or an "employer".' };
     const kind: "case" | "employer" = args.kind;
-    const target = kind === "case" ? args.target.trim().toUpperCase().slice(0, 40) : args.target.trim().toLowerCase().slice(0, 120);
+    // The same rules that stored the watch (resolveTarget), so what was added
+    // under one spelling can be removed under another.
+    const text = args.target.trim().slice(0, 130);
+    const target = kind === "case" ? normaliseFlagCaseNumber(text.slice(0, 40))?.caseNumber : text.toLowerCase();
+    if (!target) return { ok: true as const, removed: false };
     const w = await ctx.db
       .query("webhookWatches")
       .withIndex("by_account_kind_target", (q) => q.eq("account", k.account.account).eq("kind", kind).eq("target", target))

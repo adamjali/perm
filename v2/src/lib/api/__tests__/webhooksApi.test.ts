@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { API_PLANS } from "@convex/lib/apiPlans";
 
@@ -18,7 +18,7 @@ vi.mock("../usage", () => ({
   countCall: (...a: unknown[]) => countCall(...a),
 }));
 
-const { addWatch, createWebhook, deleteWebhook, listWebhooks } = await import("../webhooksApi");
+const { addWatch, createWebhook, deleteWebhook, listWebhooks, removeWatch } = await import("../webhooksApi");
 
 const caller = {
   kind: "key" as const,
@@ -36,19 +36,35 @@ const post = (body: unknown) =>
   new Request("https://permtracker.app/v1/webhooks", { method: "POST", body: typeof body === "string" ? body : JSON.stringify(body) });
 
 beforeEach(() => {
+  vi.stubEnv("API_SERVER_SECRET", "server-secret-for-tests");
   authenticate.mockReset().mockResolvedValue({ ok: true, caller });
   fetchMutation.mockReset();
   fetchAction.mockReset();
   countCall.mockReset();
 });
 
+afterEach(() => vi.unstubAllEnvs());
+
 describe("the webhook doors", () => {
   it("lists the account's endpoints and watches by the key's hash, and counts the call", async () => {
     fetchMutation.mockResolvedValue({ ok: true, endpoints: [], watches: [] });
     const res = await listWebhooks(new Request("https://permtracker.app/v1/webhooks"));
     expect(res.status).toBe(200);
-    expect(fetchMutation.mock.calls[0]![1]).toEqual({ keyHash: caller.keyHash });
+    expect(fetchMutation.mock.calls[0]![1]).toEqual({ keyHash: caller.keyHash, serverSecret: "server-secret-for-tests" });
     expect(countCall).toHaveBeenCalledTimes(1);
+  });
+
+  it("says the door is shut when the server's secret isn't set, and asks Convex nothing", async () => {
+    vi.stubEnv("API_SERVER_SECRET", "");
+    const res = await listWebhooks(new Request("https://permtracker.app/v1/webhooks"));
+    expect(res.status).toBe(503);
+    expect(fetchMutation).not.toHaveBeenCalled();
+  });
+
+  it("answers 400, not 500, to a watch name that isn't valid percent-encoding", async () => {
+    const res = await removeWatch(new Request("https://permtracker.app/v1/watches/x", { method: "DELETE" }), "%E0%A4%A");
+    expect(res.status).toBe(400);
+    expect(fetchMutation).not.toHaveBeenCalled();
   });
 
   it("refuses a key without the webhooks scope before asking Convex", async () => {
