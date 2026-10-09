@@ -373,6 +373,8 @@ PRECOMPUTED_DOCS = {
     "pwd_day_queue": (3, "the wage-request lookup's estimated day"),
     "h2b_group_timing": (3, "the H-2B lookup's assignment-group timing"),
     "estimator_backtest": (3, "the case page's measured range and the estimate scorecard's backtest, nightly"),
+    # Rebuilt after every PERM sweep; the month pages hide its section without it.
+    "month_detail": (3, "the filing-month pages' decisions per day and initials grid"),
     # Rebuilt after each monthly H-2A, H-2B and CW-1 load (the 10th).
     "seasonal_timing": (45, "the seasonal case page's decision-timing panel"),
 }

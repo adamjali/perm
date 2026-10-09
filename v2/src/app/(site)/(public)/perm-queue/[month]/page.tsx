@@ -31,6 +31,8 @@ import { getDecisionPace } from "@/lib/turso/decisionPace";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { monthEndDate, type MonthEnd } from "@/lib/caseEstimateInputs";
 import { monthMakeup, type MonthMakeup } from "@/lib/monthMakeup";
+import { dolDecisions, weekOnWeek, type MonthDetail } from "@/lib/monthDetail";
+import { getMonthDetail } from "@/lib/turso/monthDetail";
 import { formatShare } from "@/lib/format";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 
@@ -128,7 +130,7 @@ export default async function CohortPage({
   // review" living on this page, and the day those two disagree the queue
   // board and the calculator start quoting different frontiers for one thing.
   // The extra reads are three indexed lookups an hour per month page.
-  const [backlog, ahead, adjacent, estimator, allMonths, pace, sweep] = await Promise.all([
+  const [backlog, ahead, adjacent, estimator, allMonths, pace, sweep, detail] = await Promise.all([
     getMonthBacklog(month),
     getPendingBefore(month),
     getAdjacentMonths(month),
@@ -136,6 +138,7 @@ export default async function CohortPage({
     getLiveBacklog().catch(() => []),
     getDecisionPace().catch(() => null),
     getSweepCoverage().catch(() => null),
+    getMonthDetail(month).catch(() => null),
   ]);
   if (!backlog || backlog.total === 0) notFound();
   const makeup = monthMakeup(backlog.statuses);
@@ -182,7 +185,9 @@ export default async function CohortPage({
         </h1>{" "}
         <MonthHeadline makeup={makeup} label={label} end={end} />{" "}
         <SourceNote className="mt-4 text-base leading-relaxed text-foreground/70" />
-      </header>
+      </header>{" "}
+
+      {detail && dolDecisions(detail.days) >= 50 ? <MonthActivity detail={detail} label={label} month={month} /> : null}{" "}
 
       {!MIRROR_COMPLETE ? (
         <p className="mt-8 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base text-foreground/80">
@@ -639,5 +644,111 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
         </div>
       </dl>
     </div>
+  );
+}
+
+const shortDay = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
+/**
+ * What DOL did with this month lately, from the nightly record
+ * (perm_docs['month_detail']): decisions per day, this week against last,
+ * how far into the month DOL's decisions reach, and how far each employer
+ * initial has got. Shown only once DOL has decided 50 of the month's cases in
+ * the window; before that a chart of zeros and withdrawals says nothing.
+ */
+function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: string; month: string }) {
+  const days = detail.days;
+  const max = Math.max(1, ...days.map((d) => d.certified + d.denied + d.withdrawn));
+  const newest = days[days.length - 1];
+  const wow = weekOnWeek(days, detail.asOf);
+  const monthName = label.replace(/ \d{4}$/, "");
+  const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map((l) => ({ l, v: detail.letters[l] ?? [0, 0] as [number, number] }));
+  return (
+    <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="month-activity">
+      <h2 id="month-activity" className="font-heading text-xl font-black sm:text-2xl">
+        {`What DOL decided from ${label} lately`}
+      </h2>{" "}
+      <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {newest ? (
+          <div>
+            <dt className="text-sm font-bold">{`On ${shortDay(newest.date)}`}</dt>{" "}
+            <dd className="font-heading text-3xl font-black tabular-nums">{formatInt(newest.certified + newest.denied + newest.withdrawn)}</dd>{" "}
+            <dd className="text-sm text-foreground/70">{`decided, ${formatInt(newest.certified)} certified`}</dd>
+          </div>
+        ) : null}{" "}
+        {wow ? (
+          <div>
+            <dt className="text-sm font-bold">The last seven days</dt>{" "}
+            <dd className="font-heading text-3xl font-black tabular-nums">{formatInt(wow.thisWeek)}</dd>{" "}
+            <dd className="text-sm text-foreground/70">{`against ${formatInt(wow.weekBefore)} the seven days before`}</dd>
+          </div>
+        ) : null}{" "}
+        {detail.frontDay !== null ? (
+          <div>
+            <dt className="text-sm font-bold">Where DOL&apos;s decisions reach</dt>{" "}
+            <dd className="font-heading text-3xl font-black">{`${monthName} ${detail.frontDay}`}</dd>{" "}
+            <dd className="text-sm text-foreground/70">{`half of the last ${detail.frontDays} days' decisions went to cases filed by then`}</dd>
+          </div>
+        ) : null}
+      </dl>{" "}
+      <ChartTips label={`Cases filed in ${label} decided each day`} className="mt-6">
+        <div className="flex h-32 items-end gap-[2px] border-b-2 border-border" role="img" aria-label={`Decisions per day for cases filed in ${label}, ${shortDay(days[0]!.date)} to ${shortDay(newest!.date)}`}>
+          {days.map((d) => {
+            const total = d.certified + d.denied + d.withdrawn;
+            return (
+              <span
+                key={d.date}
+                className="flex h-full min-w-0 flex-1 flex-col justify-end"
+                data-tip={`${shortDay(d.date)}\n${formatInt(d.certified)} certified, ${formatInt(d.denied)} denied, ${formatInt(d.withdrawn)} withdrawn`}
+              >
+                <span className="block w-full bg-data-none-ink" style={{ height: `${(d.withdrawn / max) * 100}%` }} />
+                <span className="block w-full bg-data-bad-ink" style={{ height: `${(d.denied / max) * 100}%` }} />
+                <span className="block w-full bg-data-good-ink" style={{ height: `${(d.certified / max) * 100}%` }} />
+                <span className="sr-only">{` ${shortDay(d.date)}: ${formatInt(total)} decided. `}</span>
+              </span>
+            );
+          })}
+        </div>
+      </ChartTips>{" "}
+      <div className="mt-1 flex justify-between font-mono text-sm text-foreground/70">
+        <span>{shortDay(days[0]!.date)}</span>{" "}
+        <span>{shortDay(newest!.date)}</span>
+      </div>{" "}
+      <p className="mt-2 text-sm text-foreground/70">
+        Green certified, red denied, grey withdrawn by the employer. Days are when our sweep first saw each decision,
+        not DOL&apos;s own date.
+      </p>{" "}
+      <h3 className="mt-8 font-heading text-lg font-black">By the employer&apos;s first letter</h3>{" "}
+      <p className="mt-1 max-w-2xl text-base text-foreground/80">
+        {`DOL tends to work a month loosely from A to Z. The share of ${label}'s cases decided, by the first letter of the employer's name.`}
+      </p>{" "}
+      <ol className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-7 lg:grid-cols-9">
+        {letters.map(({ l, v }) => {
+          const share = v[0] ? v[1] / v[0] : 0;
+          return (
+            <Fragment key={l}>{" "}
+            <li
+              className="border-2 border-border bg-background p-2"
+              data-tip={`${l}: ${formatInt(v[1])} of ${formatInt(v[0])} decided`}
+            >
+              <span className="flex items-baseline justify-between gap-1">
+                <span className="font-heading text-lg font-black">{l}</span>{" "}
+                <span className="font-mono text-sm tabular-nums">{v[0] ? formatShare(share) : "none"}</span>
+              </span>{" "}
+              <span className="mt-1 block h-2 border border-border bg-muted" aria-hidden="true">
+                <span className="block h-full bg-data-good-ink" style={{ width: `${Math.round(share * 100)}%` }} />
+              </span>
+            </li>
+            </Fragment>
+          );
+        })}
+      </ol>{" "}
+      <p className="mt-3 text-sm text-foreground/70">
+        <Link href={`/perm-cases?filed=${month}#live`} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          {`Every ${label} case, pending and decided`}
+        </Link>
+      </p>
+    </section>
   );
 }

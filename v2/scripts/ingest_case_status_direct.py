@@ -1379,6 +1379,110 @@ def fold_observed_decisions(
     return days, withheld
 
 
+MONTH_DETAIL_MONTHS = 12   # filing months carried, newest first
+MONTH_DETAIL_DAYS = 30     # days of decisions per month
+FRONT_DAYS = 5             # the recent days the "where DOL is" day is read from
+FRONT_MIN = 20             # fewer decisions than this in those days: no day
+
+
+def fold_month_detail(
+    decisions: list[tuple[str, str, int, str]],
+    letters: list[tuple[str, str, int, int]],
+    publishable: set[str],
+    months: list[str],
+) -> dict:
+    """Per filing month: decisions per observed day, where DOL is inside the
+    month, and how far each employer initial has got. Pure, so it is tested.
+
+    `decisions` rows are (filing month, observed day, filing day of month,
+    final status); `letters` rows are (filing month, initial, cases, decided).
+    Only days in `publishable` count: the same days `daily_decisions` stands
+    behind under `sweep-observed`, so this can't show a day that series
+    withholds (a bulk catch-up, or the current day).
+
+    The "front day" is the median filing day of the month's certifications and
+    denials over the newest FRONT_DAYS publishable days: half of what DOL
+    decided this week for the month was filed by then. Withdrawals are the
+    employer's and say nothing about where DOL is, so they don't count.
+    """
+    out: dict[str, dict] = {m: {"days": {}, "letters": {}, "frontDay": None, "frontFrom": 0} for m in months}
+    newest = sorted(publishable)[-FRONT_DAYS:]
+    front_days: dict[str, list[int]] = {m: [] for m in months}
+    for month, day, filed_day, status in decisions:
+        if month not in out or day not in publishable:
+            continue
+        kind = "withdrawn" if status.startswith("WITHDRAWN") else "denied" if status.startswith("DENIED") else "certified"
+        cell = out[month]["days"].setdefault(day, {"certified": 0, "denied": 0, "withdrawn": 0})
+        cell[kind] += 1
+        if kind != "withdrawn" and day in newest and 1 <= filed_day <= 31:
+            front_days[month].append(filed_day)
+    for month in months:
+        days = out[month]["days"]
+        keep = sorted(days)[-MONTH_DETAIL_DAYS:]
+        out[month]["days"] = [{"date": d, **days[d]} for d in keep]
+        f = sorted(front_days[month])
+        out[month]["frontFrom"] = len(f)
+        if len(f) >= FRONT_MIN:
+            out[month]["frontDay"] = f[len(f) // 2]
+    for month, initial, n, decided in letters:
+        if month in out:
+            key = initial if initial.isalpha() and len(initial) == 1 else "#"
+            cur = out[month]["letters"].get(key, [0, 0])
+            out[month]["letters"][key] = [cur[0] + int(n), cur[1] + int(decided)]
+    return out
+
+
+def write_month_detail(db) -> None:
+    """Precompute perm_docs['month_detail'] for the filing-month pages.
+
+    Two grouped reads: the newest observed final transitions joined to the
+    case's filing date, and the month x employer-initial counts. Runs after
+    `write_observed_decisions`, whose publishable days it reuses.
+    """
+    today = datetime.datetime.now(datetime.timezone.utc).date()
+    months = []
+    y, m = today.year, today.month
+    for _ in range(MONTH_DETAIL_MONTHS):
+        months.append(f"{y:04d}-{m:02d}")
+        y, m = (y - 1, 12) if m == 1 else (y, m - 1)
+    first = f"{months[-1]}-01"
+    publishable = {str(r[0]) for r in query_rows(
+        db, "SELECT date FROM daily_decisions WHERE source = ? AND date >= ?",
+        [OBSERVED_SOURCE, (today - datetime.timedelta(days=MONTH_DETAIL_DAYS + 7)).isoformat()])}
+    if not publishable:
+        log("NOT writing month_detail: no publishable observed day")
+        return
+    since_ms = int(datetime.datetime.combine(
+        today - datetime.timedelta(days=MONTH_DETAIL_DAYS + 7), datetime.time(),
+        datetime.timezone.utc).timestamp() * 1000)
+    finals = sorted(FINAL_STATUSES)
+    raw = query_rows(
+        db,
+        "SELECT substr(s.filing_date, 1, 7), e.changed_at, CAST(substr(s.filing_date, 9, 2) AS INTEGER), e.to_status "
+        "FROM perm_case_events e JOIN perm_case_status s ON s.case_number = e.case_number "
+        f"WHERE e.changed_at >= ? AND e.to_status IN ({','.join('?' * len(finals))}) "
+        "  AND NOT (e.from_status = ? AND e.to_status = ?) AND s.filing_date >= ?",
+        [since_ms, *finals, EXPIRY_FROM, EXPIRY_TO, first])
+    decisions = [(str(mo), observed_day(int(ts)), int(fd or 0), str(st)) for mo, ts, fd, st in raw]
+    letters = [(str(mo), str(l or ""), int(n), int(d or 0)) for mo, l, n, d in query_rows(
+        db,
+        "SELECT substr(filing_date, 1, 7), upper(substr(trim(employer_name), 1, 1)), COUNT(*), SUM(is_final) "
+        "FROM perm_case_status WHERE filing_date >= ? GROUP BY 1, 2",
+        [first])]
+    detail = fold_month_detail(decisions, letters, publishable, months)
+    stamp = int(time.time() * 1000)
+    doc = {
+        "asOf": max(publishable),
+        "dating": "when our sweep first observed the decision, not DOL's own decision date",
+        "frontDays": FRONT_DAYS,
+        "months": detail,
+    }
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
+        key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
+    write_doc(db, "month_detail", doc, stamp)
+    log(f"month_detail: {len(months)} months, {len(decisions):,} observed decisions read")
+
+
 def write_observed_decisions(db) -> None:
     """Rebuild `daily_decisions` under `sweep-observed` from perm_case_events.
 
@@ -1526,6 +1630,8 @@ def tail_steps(db, *, discover: bool, cap: int = DISCOVERY_REQUEST_CAP,
         # only public series here, a failure leaves yesterday's series live
         # rather than half of one.
         ("observed_decisions", lambda: write_observed_decisions(db)),
+        # After observed_decisions: it reuses that series' publishable days.
+        ("month_detail", lambda: write_month_detail(db)),
     ]
     if housekeeping:
         # Once a night (the full pass), after every reader above has run:
