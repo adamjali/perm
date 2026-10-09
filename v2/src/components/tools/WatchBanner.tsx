@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BellIcon } from "@phosphor-icons/react";
+import { BellIcon } from "@phosphor-icons/react/ssr";
 
 /**
  * One quiet line above every data page: the free case alert, said once.
