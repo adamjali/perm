@@ -31,6 +31,14 @@
 
 The PERM Tracker v2 API is built on [Convex](https://convex.dev), providing real-time, reactive database operations with built-in authentication and type safety.
 
+> **This file covers the app's Convex functions** (cases, notifications, the dashboard and the rest of the
+> signed-in app). **The public developer API is documented elsewhere:** the `/v1` JSON API, the `/mcp`
+> server and signed webhooks are described on [`/developers`](https://permtracker.app/developers), whose
+> endpoint and tool lists come from `src/lib/api/openapi.ts`; their Convex halves are `convex/apiKeys.ts`
+> (keys, scopes, plans) and `convex/webhooks.ts` (endpoints and watches), and the paywall switch is
+> `PAYWALL_ENFORCED` in `convex/lib/apiPlans.ts`. Alerts, support mail and the morning report are in
+> `v2/CLAUDE.md`.
+
 ### Function Summary
 
 | Category | Count | Description |

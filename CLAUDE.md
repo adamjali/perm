@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-04
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-09
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **634 files / 9,026 tests across 5 vitest
@@ -550,9 +550,9 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 8 2026 (night)".
 - **The MCP door gets about 1,800 requests a day, almost all directory and uptime bots** found through the MCP Registry; 3 to 30 real tool calls a day.
 - **The lookup challenge stops the scraper label completely** (1 of 2,148 addresses through) and costs a real visitor about 2 to 3 s; whether to loosen it is the owner's call.
 
-## Oct 9 2026, in ten lines
+## Oct 9 2026, in fourteen lines
 
-Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the two "Oct 9 2026" sections.
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the four "Oct 9 2026" sections.
 
 - **`/h1b-employers` and a page per state rank the 100 busiest H-1B employers each fiscal year** two ways: DOL's certified LCAs (FY2020 on, by worksite) and USCIS's approvals (FY2009 on, by petitioner), from `h1b_employer_ranks`, rebuilt after each LCA load and Data Hub read.
 - **A state view shows only the ranked source's figures**: the two sources mean different things by state.
@@ -564,4 +564,8 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the two "Oct 9 2026" sections.
 - **The data pages' Q&A takes live figures** (`PageBasics figures=`); typed counts there had drifted (437,496 LCAs against 3,754,961 held).
 - **The changelog runs to Oct 9** in five new entries, and older ones are in sentence case with one category scheme.
 - **nginx answers PHP and WordPress paths with its own 404** (a scanner's POST made Next answer 500), and PostHog drops errors from a wallet's or an app's in-app bridge.
+- **The developer platform's next phase is live, and free**: key scopes, sandbox keys, exports, live lookups and signed webhooks; `PAYWALL_ENFORCED` is unset, so every account gets Plus, and the webhook functions answer only the site's server (`API_SERVER_SECRET`).
+- **The morning report tries PostHog again after a busy reply and ends long lines at a sentence**: two one-off errors had blanked a section for the day, and Convex keeps only 400 characters of each line.
+- **An outbox row waiting with no attempts is the one-alert-a-day rule at work**: it goes on the first bundle run of the next Eastern day.
+- **Replies to support mail go through `supportEmail:replyToEmail`** (threaded, counted, marked replied), never from the Gmail it's forwarded to.
 

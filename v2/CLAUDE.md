@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-10-04
+> **Status:** Production | **Last Updated:** 2026-10-09
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -440,7 +440,7 @@ Full conventions: [CONVENTIONS.md](../.planning/codebase/CONVENTIONS.md).
 
 - **Sentry** — lazy-loaded client (`SentryClientInit`). Frontend: `captureError` from `@/lib/sentry`. Backend: `recordError` from `convex/lib/errorRecording` (writes DB + admin email + Sentry in one call).
 - **PostHog** — always import `@/lib/analytics` (wrapper with try/catch), never raw `posthog-js`. Client init (`posthog.init`) lives in `src/instrumentation-client.ts` — Next.js loads only that ONE file (a root `instrumentation-client.ts` is silently ignored; a second one is how PostHog once went dark). BotID moved OUT on 2026-09-23 to `components/security/BotIdInit.tsx` in the (authenticated) layout, because it guards only the signed-in chat; `botid-scope.test.ts` keeps it there. Proxied via `/ingest/*` (incl. `/ingest/array` for lazy bundles). Internal opt-out: `POSTHOG_EXCLUDED_EMAILS` Convex env var. See [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md).
-- **Resend Email** — transactional via Resend MCP tools (list/send/contacts), `curl` for threaded replies (needs `In-Reply-To` header which MCP doesn't expose), or `admin.sendAdminEmail` mutation for UI sends (auth-required, auto-renders `AdminEmail` React template). `FROM_EMAIL = notifications@permtracker.app`.
+- **Resend Email** — transactional via Resend MCP tools (list/send/contacts), or `admin.sendAdminEmail` mutation for UI sends (auth-required, auto-renders `AdminEmail` React template). `FROM_EMAIL = notifications@permtracker.app`. **A reply to mail that came to support@** goes through `npx convex run supportEmail:replyToEmail '{"supportEmailId":"<id>","replyBody":"..."}' --prod`: it threads (In-Reply-To and References from the stored row), renders `AdminEmail`, counts in the email ledger and marks the row `replied`. The MCP's `send-email` takes `headers` now and can thread too, but skips the ledger and the replied mark (fix a row by hand with `supportEmail:markReplied`). Never reply from the Gmail the support mail is forwarded to.
 - **AI Chat** — multi-provider fallback (Groq→Mistral→Gemini→OpenRouter→Cerebras) via custom `FallbackModel` in `src/lib/ai/providers.ts`. API route: `src/app/api/chat/route.ts`.
 
 Full env vars, rate limits, webhooks: [INTEGRATIONS.md](../.planning/codebase/INTEGRATIONS.md).
@@ -8884,9 +8884,10 @@ yes, from the persona's accounts.
 - **The morning report** has "The API and assistants": yesterday's keyed calls and accounts, keyless calls by
   bucket, and the week (`api_lines`, tested).
 
-Still to build, none of it billing: sandbox keys, key scopes and expiry, live lookups and exports (for Plus),
-webhooks, OAuth sign-in for assistants and the signed-in MCP tools, bulk snapshots, and `/developers` pages for
-the CLI, the packages and the plugin once they're published.
+Still to build, none of it billing: OAuth sign-in for assistants and the signed-in MCP tools (four options
+against the 2026-07-28 spec in `.planning/`), bulk snapshots, and `/developers` pages for the CLI, the packages
+and the plugin once they're published. *(Sandbox keys, scopes and expiry, live lookups, exports and webhooks
+shipped Oct 9; see "Oct 9 2026 (night): scopes, webhooks and the paywall switch".)*
 
 ## Oct 8 2026 (afternoon): every step timed, and a redeploy that deleted the live release
 
@@ -9081,3 +9082,62 @@ confirmed. PostHog's filter drops errors that name another app's in-app bridge, 
 GitHub's secret-scanning alert 1 (a "Stripe webhook signing secret") was the Python package's made-up
 test key; resolved as used in tests, and the key is split in two in the test so the pattern can't
 match it again.
+
+## Oct 9 2026 (morning, later): the morning report, a waiting alert, the crash evidence
+
+**The report's PostHog sections failed on one bad reply, and now try again.** PostHog's query endpoint
+answered one bad reply on Oct 5 (browser errors) and Oct 9 (traffic); each section read "could not be
+read (HTTPError)" for the day, and the same query answered minutes later. `http_json` in
+`scripts/daily_monitor.py` retries a 429 or 5xx after 5 s and 15 s (or the server's Retry-After, up to
+30 s), and `guarded()` names the HTTP status code in the report, never on stdout.
+
+**Convex keeps 400 characters of each report line and cuts the rest wherever it falls.** `readReport`
+in `convex/lib/dailyReportCompose.ts` bounds the untrusted payload; the scorecard's rival readings
+(headline plus every point on one line) ran past it, and the email ended them mid-word. `section()` now
+passes every line through `fit()`: the sentences that fit, then "More on the admin page." (whole words
+and "..." when no sentence fits). `test_daily_monitor.py` holds `LINE_MAX` to the TypeScript cap. Each
+fix was probed by breaking it; the retry probe made the test crash on the uncaught error instead of
+printing FAIL, so the check now catches it and reports. **A probe's verdict is the exit code: a grep
+for FAIL misses a test that crashed.**
+
+**An outbox row that waits with no attempts and no error is the one-a-day rule.** A subscriber got
+their own case's alert at 10:15 AM EDT Oct 8, so a Microsoft employer alert at 7:15 PM waited; the
+7:30 PM run is the same Eastern day, so it went on the 7:30 AM run (Resend: delivered). Bundles run at
+7:30 AM, 2 PM and 7:30 PM EDT (11:30, 18:00, 23:30 UTC); case-status alerts always go at once.
+
+**The "reading 'call'" evidence so far.** Since the capture went live (11:27 PM EDT Oct 8) one crash
+was recorded: no duplicate chunk ids, no `chrome-extension:` script (only Ahrefs, Cloudflare Insights
+and PostHog's own `/ingest/` bundles), and the live build's `dpl`. That argues against the extension
+theory without ruling it out. The rate fell from about 0.4% of pageviews on Oct 8 to 1 in about 1,700
+overnight, light traffic, so not called fixed. Normalise crashes by `$pageview` per hour before reading
+a drop. The message lives in `properties.$exception_list` (`$exception_message` isn't a property here).
+
+**Resellers find the MCP Registry listing.** An API marketplace asked (Oct 4, again Oct 9) to mirror
+`/mcp` behind paid plans; declined Oct 9, because the API and MCP are free to use directly. Replies to
+support mail go through `supportEmail:replyToEmail` (see the Resend line under Integrations).
+
+## Oct 9 2026 (night): scopes, webhooks and the paywall switch
+
+The developer platform's next phase (merged 2:40 AM EDT, `38365d4f`; Convex deployed first, about 5 AM,
+then the site). Everything is free today: **`PAYWALL_ENFORCED` is unset on Convex, so every account gets
+Plus** (owner, Oct 8: "pay wall coming soon, can be free for now").
+
+| piece | where |
+|---|---|
+| plans, scopes, the paywall decision (`entitlement`, read in Convex only, so flipping it needs no site deploy) | `convex/lib/apiPlans.ts` |
+| keys with scopes (`read`, `export`, `live_lookup`, `webhooks`, `cases_read`; `cases_write` reserved), lifetimes, rotation, last-used | `convex/apiKeys.ts`, `src/lib/api/auth.ts` |
+| a revoked or rotated key stops at once on both web copies (Convex POSTs its public id) | `src/app/api/revalidate-api-key/route.ts` |
+| sandbox keys (`pt_test_`): fixed sample answers, case numbers on day 000, which DOL never issues | `src/lib/api/sandbox.ts` |
+| `/v1/me`, exports past one page (CSV or JSON, capped by plan), live DOL lookups (200 a day on Plus, 20,000 for all accounts) | `src/app/v1/`, `src/lib/api/exports.ts`, `live.ts` |
+| signed webhooks, Standard Webhooks headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), retried for 24 hours, never to a private, loopback or link-local address | `convex/lib/webhookSign.ts`, `convex/webhookDelivery.ts` |
+| events: `case.status_changed`, `employer.moved` (from the account's watches), and the feeds `bulletin.published`, `queue.moved`, `processing_times.updated` | `convex/webhooks.ts`, `webhookSweeps.ts` (crons at :05 and :17 past 7 AM and 7 PM EDT; deliveries every 10 minutes) |
+| Settings > Webhooks, the admin Developers tab (keys by scope, webhook health, live lookups), the SDKs' signature check | `WebhooksSection.tsx`, `DevelopersPanel.tsx`, `sdk/`, `sdk-python/` |
+
+- **The webhook functions answer the site's server only.** A key's holder can compute its hash, so the hash alone
+  would let them call Convex directly past `/v1`'s limits and counting; every call also carries
+  `API_SERVER_SECRET` (16+ characters, the same value in `/srv/permtracker/app/env/production.env` and on Convex
+  prod, piped from the server file and compared by sha256 prefix, never printed). Unset means shut.
+- **A review found 11 defects before the merge**, the worst a watch sweep that rescheduled itself forever once
+  300 watches existed; all fixed, and two real deliveries worked on the DEV deployment.
+- **Known gap left:** a webhook host can change its DNS answer between our address check and the fetch.
+- Plus is meant to be about $5 a month or $50 a year once billing exists (rename, EIN, bank, Stripe first).
