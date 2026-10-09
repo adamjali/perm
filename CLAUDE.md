@@ -550,7 +550,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 8 2026 (night)".
 - **The MCP door gets about 1,800 requests a day, almost all directory and uptime bots** found through the MCP Registry; 3 to 30 real tool calls a day.
 - **The lookup challenge stops the scraper label completely** (1 of 2,148 addresses through) and costs a real visitor about 2 to 3 s; whether to loosen it is the owner's call.
 
-## Oct 9 2026, in nine lines
+## Oct 9 2026, in ten lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the two "Oct 9 2026" sections.
 
@@ -563,4 +563,5 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the two "Oct 9 2026" sections.
 - **next-mdx-remote 6 strips JavaScript expressions by default** (`blockJS`), so every `rows={[...]}` table and step number was missing from 47 articles since Feb 12; the site's own MDX sets `blockJS: false` and keeps `blockDangerousJS`.
 - **The data pages' Q&A takes live figures** (`PageBasics figures=`); typed counts there had drifted (437,496 LCAs against 3,754,961 held).
 - **The changelog runs to Oct 9** in five new entries, and older ones are in sentence case with one category scheme.
+- **nginx answers PHP and WordPress paths with its own 404** (a scanner's POST made Next answer 500), and PostHog drops errors from a wallet's or an app's in-app bridge.
 

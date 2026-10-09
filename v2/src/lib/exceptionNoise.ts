@@ -24,3 +24,15 @@ export function fromServiceWorkerRegister(props: Record<string, unknown> | undef
     }),
   );
 }
+
+/**
+ * True when an exception names a bridge another app puts into its own
+ * in-app browser: a crypto wallet's `window.ethereum`, or the native
+ * `window.webkit.messageHandlers` an iPhone app's web view talks through.
+ * This site uses neither. Seen Oct 9 2026: the wallet error on 3 iPhone visits
+ * overnight (it tripped the new-error-type alert at 3:27 AM EDT), the web-view
+ * one once.
+ */
+export function fromInjectedBridge(msg = ""): boolean {
+  return /\bwindow\.ethereum\b|\bwindow\.webkit\.messageHandlers\b/.test(msg);
+}

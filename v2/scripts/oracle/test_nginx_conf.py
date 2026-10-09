@@ -253,6 +253,25 @@ def run(conf_text: str) -> None:
     check("busy-seen: log records time, status, address, kind and browser",
           fmt is not None and all(v in fmt.group(1) for v in ("$time_iso8601", "$status", "$remote_addr", "$arg_k", "$http_user_agent")))
 
+    # WordPress and PHP probes stop at nginx (Oct 9 2026). The pattern must be
+    # the first regex location (nginx takes the first that matches), answer
+    # itself, and miss every real page, an employer named "WP Engine" included.
+    probe_sel = next((s for s in locs if s.startswith("~*") and "wp-admin" in s), None)
+    probe_body = locs.get(probe_sel, "") if probe_sel else ""
+    first_regex = next((s for s in locs if s.startswith("~")), None)
+    check("php probes: answered 404 by nginx itself",
+          bool(probe_sel) and "return 404;" in probe_body and "proxy_pass" not in probe_body)
+    check("php probes: first of the regex locations", probe_sel is not None and first_regex == probe_sel, str(first_regex))
+    pattern = re.compile(probe_sel.split(None, 1)[1].strip(), re.I) if probe_sel else None
+    hits = ["/index.php", "/index.php/wp-json/batch/v1", "/wp-admin/edit.php", "/wp-json/wp/v2/users",
+            "/xmlrpc.php", "/WP-LOGIN.PHP", "/wordpress/", "/wp-content/plugins/x/readme.txt"]
+    misses = ["/", "/perm-employers/wp-engine-inc", "/perm-wages/php-developer", "/perm-employers/wordpress-vip", "/perm-employers/wordpress", "/perm-employers/wp-content",
+              "/tools/wage-levels", "/_next/static/chunks/main.js", "/api/perm-cases", "/perm-case-status"]
+    check("php probes: every probe path matches", pattern is not None and all(pattern.search(p) for p in hits),
+          str([p for p in hits if not (pattern and pattern.search(p))]))
+    check("php probes: no real page matches", pattern is not None and not any(pattern.search(p) for p in misses),
+          str([p for p in misses if pattern and pattern.search(p)]))
+
     # The automatic defense's log (bin/permtracker-defend reads it every
     # minute). Declared at server level, beside the main log: an access_log
     # there replaces the one nginx.conf sets, so naming only the new one would
@@ -302,6 +321,8 @@ def probe() -> None:
             "        return 204;\n    }", "        limit_conn pt_app 64;\n        return 204;\n    }", 1),
         "main access log dropped for the defense log": good.replace("    access_log /var/log/nginx/access.log;\n", "", 1),
         "defense log loses the network": good.replace("$status $http_x_pt_asn $http_x_pt_verified_bot", "$status $http_x_pt_verified_bot", 1),
+        "php probes sent to the app": good.replace("        return 404;\n    }", "        proxy_pass http://permtracker_app;\n    }", 1),
+        "WordPress folders matched anywhere in the path": good.replace("|^/(wp-admin|", "|/(wp-admin|", 1),
     }
     global failures
     for name, text in mutations.items():

@@ -22,7 +22,7 @@ import {
 } from "@/lib/analytics";
 import { edgeCountry } from "@/lib/edgeCountry";
 import { chunkDiagnostics, isMissingModule } from "@/components/error/recovery";
-import { fromServiceWorkerRegister } from "@/lib/exceptionNoise";
+import { fromInjectedBridge, fromServiceWorkerRegister } from "@/lib/exceptionNoise";
 
 // The live site's security policy has no 'unsafe-eval', so zod must not
 // compile parsers with new Function: its probe would be refused and log a
@@ -224,6 +224,8 @@ function startPostHog(key: string, country: string | null): void {
           if (/Script \S*sw\.js load failed/.test(msg)) return null;
           if (/^\s*Script error\.?\s*$/.test(msg)) return null;
           if (fromServiceWorkerRegister(event.properties, msg)) return null;
+          // A crypto wallet's or an app's in-app browser calling its own bridge.
+          if (fromInjectedBridge(msg)) return null;
         }
         return event;
       },

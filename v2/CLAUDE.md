@@ -9068,3 +9068,16 @@ so a cell can hold `<DolNow />`. Article table headers went from 13px to the 14p
 **The dev server's Turbopack cache filled the old Mac's disk** after about 200 routes were compiled for
 link checks (`ENOSPC`, and then the Bash tool itself couldn't start). `rm -rf .next/dev/cache` freed 8.5
 GB and regenerates. Stop the dev server when a sweep is done.
+
+**Scanner and in-app-browser noise (Oct 9 2026, 5:30 AM EDT).** A WordPress scanner (one address, 14
+requests in 3 seconds on Oct 8) POSTed to `/index.php`, Next answered 500 and Sentry opened two issues.
+nginx now answers `.php` paths and the WordPress folders (`/wp-admin`, `/wp-content`, `/wp-includes`,
+`/wp-json`, `/wordpress`) with its own 404 before the app, as the first regex location (nginx takes the
+first regex that matches), anchored so an employer page like `/perm-employers/wordpress` never matches;
+`test_nginx_conf.py` holds all three, with two probes. Installed by hand and reloaded; new workers
+confirmed. PostHog's filter drops errors that name another app's in-app bridge, a crypto wallet's
+`window.ethereum` or an iPhone web view's `window.webkit.messageHandlers` (`fromInjectedBridge` in
+`src/lib/exceptionNoise.ts`); the wallet one tripped the new-error-type alert at 3:27 AM EDT.
+GitHub's secret-scanning alert 1 (a "Stripe webhook signing secret") was the Python package's made-up
+test key; resolved as used in tests, and the key is split in two in the test so the pattern can't
+match it again.
