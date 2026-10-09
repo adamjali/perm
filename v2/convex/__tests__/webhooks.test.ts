@@ -5,9 +5,15 @@ import { createTestContext } from "../../test-utils/convex";
 
 // Host names resolve without the network: "private.example.com" points at the
 // cloud metadata address, everything else at a public one.
+// "broken.example.com" answers nothing usable, the shape of a lookup that
+// fails below our own error handling.
 vi.mock("node:dns/promises", () => ({
   lookup: async (host: string) =>
-    host === "private.example.com" ? [{ address: "169.254.169.254", family: 4 }] : [{ address: "93.184.216.34", family: 4 }],
+    host === "private.example.com"
+      ? [{ address: "169.254.169.254", family: 4 }]
+      : host === "broken.example.com"
+        ? undefined
+        : [{ address: "93.184.216.34", family: 4 }],
 }));
 import { api, internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
@@ -136,7 +142,9 @@ describe("watches", () => {
       await ctx.db.insert("webhookWatches", { userId: free, account: "acct_free", kind: "case", target: "G-100-26045-111111", createdAt: 0 });
       await ctx.db.insert("webhookWatches", { userId: plus, account: "acct_plus", kind: "case", target: "G-100-26045-222222", createdAt: 0 });
     });
-    expect(await t.query(internal.webhooks.watchedCaseTargets, { limit: 100 })).toEqual(["G-100-26045-222222"]);
+    // The list the server's 5-minute check reads (GET /watched-cases).
+    const list = await t.query(internal.watchedCases.watchedCaseNumbers, {});
+    expect(list.caseNumbers).toEqual(["G-100-26045-222222"]);
   });
 
   it("lands on the server's 5-minute list", async () => {
@@ -388,6 +396,27 @@ describe("delivering safely", () => {
     await t.action(internal.webhookDelivery.deliverDue, {});
     expect(sent.filter((x) => x.url.includes("private.example.com"))).toHaveLength(0);
     expect((await t.run((ctx) => ctx.db.get(d._id)))!.lastError).toMatch(/private address/);
+  });
+
+  it("lets one host's failed lookup cost only that host's rows one attempt, and sends the rest", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId, ["case.status_changed"], "https://broken.example.com/hook");
+    await endpoint(t, userId, ["case.status_changed"], "https://hooks.example.com/perm");
+    await watchedChange(t, userId);
+    sent = [];
+    await t.action(internal.webhookDelivery.deliverDue, {});
+    expect(sent.map((x) => x.url)).toEqual(["https://hooks.example.com/perm"]);
+    const rows = await t.run(async (ctx) => {
+      const out: Record<string, { status: string; attempts: number }> = {};
+      for (const d of await ctx.db.query("webhookDeliveries").collect()) {
+        const e = (await ctx.db.get(d.endpointId))!;
+        out[e.url] = { status: d.status, attempts: d.attempts };
+      }
+      return out;
+    });
+    expect(rows["https://hooks.example.com/perm"]).toEqual({ status: "delivered", attempts: 1 });
+    expect(rows["https://broken.example.com/hook"]).toEqual({ status: "pending", attempts: 1 });
   });
 
   it("sends nothing already queued for an account whose plan has no webhooks once the paywall is on", async () => {

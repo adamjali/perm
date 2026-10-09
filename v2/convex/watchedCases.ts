@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { internalQuery } from "./_generated/server";
+import { entitlement } from "./lib/apiPlans";
 
 /**
  * Every case number someone is waiting to hear about, for the hourly check.
@@ -55,8 +56,21 @@ export const watchedCaseNumbers = internalQuery({
 
     // Case numbers API accounts' webhooks watch (convex/webhooks.ts), so a
     // case.status_changed event reaches them as fast as an alert email does.
+    // Only accounts whose plan, as it applies now, carries webhooks: once the
+    // paywall is on, a Free account's watches cost no DOL request.
+    const allowed = new Map<string, boolean>();
     const hooks = ctx.db.query("webhookWatches").withIndex("by_kind_and_checked", (q) => q.eq("kind", "case"));
     for await (const row of hooks) {
+      let ok = allowed.get(row.account);
+      if (ok === undefined) {
+        const acct = await ctx.db
+          .query("apiAccounts")
+          .withIndex("by_account", (q) => q.eq("account", row.account))
+          .unique();
+        ok = entitlement(acct?.plan).plan.webhookWatches > 0;
+        allowed.set(row.account, ok);
+      }
+      if (!ok) continue;
       out.add(row.target);
       if (out.size >= WATCHED_CAP) return { caseNumbers: [...out].sort(), capped: true };
     }

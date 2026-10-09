@@ -19,7 +19,8 @@
  *
  * WHERE IT SENDS. Only to an https address with a public host name
  * (convex/lib/webhookSign.ts), and only when that name resolves to public
- * addresses, asked in Node at send time (convex/webhookResolve.ts). The fetch
+ * addresses, asked in Node at send time, every host in a batch in one call
+ * (convex/webhookResolve.ts). The fetch
  * resolves the name again, so a name whose owner switches its answer between
  * the two lookups can still get through: checking at connect time needs a
  * lower-level client than this runtime's fetch, and the requests leave from
@@ -49,6 +50,7 @@ import { createLogger } from "./lib/logging";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { MS_PER_DAY, MS_PER_MINUTE } from "./lib/time";
 import { RETRY_WINDOW_MS, nextAttemptAt, webhookHeaders } from "./lib/webhookSign";
+import type { HostVerdict } from "./webhookResolve";
 
 const log = createLogger("WebhookDelivery");
 
@@ -224,6 +226,15 @@ export const recordResult = internalMutation({
 
 type Outcome = { ok: boolean; statusCode?: number; error?: string };
 
+/** An endpoint's host name, as the address check stored it (lower case, no trailing dot). */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
+}
+
 /** One POST, its body never read: only the status counts. */
 async function post(d: Claimed): Promise<Outcome> {
   try {
@@ -257,23 +268,30 @@ export const deliverDue = internalAction({
   returns: v.object({ sent: v.number(), failed: v.number() }),
   handler: async (ctx): Promise<{ sent: number; failed: number }> => {
     const batch: Claimed[] = await ctx.runMutation(internal.webhookDelivery.claimDue, { now: Date.now(), limit: BATCH });
-    // Each host's name is resolved once, in Node, and a name pointing at a
-    // private address is never sent to.
-    const hosts = [...new Set(batch.map((d) => new URL(d.url).hostname))];
+    // Every host in the batch is resolved in one Node call, and a name
+    // pointing at a private address is never sent to. Nothing here may throw
+    // past this point: every claimed row gets its result recorded, so a
+    // failure costs that row one attempt and never strands the batch.
+    const hosts = [...new Set(batch.map((d) => hostOf(d.url)))];
     const verdicts = new Map<string, { ok: true } | { ok: false; reason: string }>();
-    await Promise.all(
-      hosts.map(async (host) => {
-        verdicts.set(host, await ctx.runAction(internal.webhookResolve.publicHost, { host }));
-      }),
-    );
+    if (hosts.length > 0) {
+      try {
+        const answered: HostVerdict[] = await ctx.runAction(internal.webhookResolve.publicHosts, { hosts });
+        for (const a of answered) verdicts.set(a.host, a);
+      } catch (e) {
+        log.error("webhook host check failed", { error: e instanceof Error ? e.message : String(e) });
+      }
+    }
     // The sends run at once, so a batch takes about one timeout.
-    const outcomes = await Promise.all(
+    const settled = await Promise.allSettled(
       batch.map(async (d): Promise<Outcome> => {
-        const verdict = verdicts.get(new URL(d.url).hostname);
-        if (verdict && !verdict.ok) return { ok: false, error: verdict.reason };
+        const verdict = verdicts.get(hostOf(d.url));
+        if (!verdict) return { ok: false, error: "where its host name points couldn't be checked" };
+        if (!verdict.ok) return { ok: false, error: verdict.reason };
         return await post(d);
       }),
     );
+    const outcomes: Outcome[] = settled.map((r) => (r.status === "fulfilled" ? r.value : { ok: false, error: "couldn't be sent" }));
     let sent = 0;
     let failed = 0;
     for (const [i, d] of batch.entries()) {

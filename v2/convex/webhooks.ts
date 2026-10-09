@@ -26,7 +26,6 @@ import { ConvexError, v } from "convex/values";
 import {
   action,
   internalMutation,
-  internalQuery,
   mutation,
   query,
   type ActionCtx,
@@ -664,40 +663,5 @@ export const apiRemoveWatch = mutation({
       .first();
     if (w) await ctx.db.delete(w._id);
     return { ok: true as const, removed: w !== null };
-  },
-});
-
-/* ------------------------------------------------------------------ */
-/* For the sweeps                                                       */
-/* ------------------------------------------------------------------ */
-
-/**
- * Case numbers watched by webhooks, for the server's 5-minute check
- * (convex/watchedCases.ts). Only accounts whose plan, as it applies now,
- * carries webhooks: once the paywall is on, a Free account's watches cost no
- * DOL request.
- */
-export const watchedCaseTargets = internalQuery({
-  args: { limit: v.number() },
-  returns: v.array(v.string()),
-  handler: async (ctx, args) => {
-    const out = new Set<string>();
-    const allowed = new Map<string, boolean>();
-    const rows = ctx.db.query("webhookWatches").withIndex("by_kind_and_checked", (q) => q.eq("kind", "case"));
-    for await (const w of rows) {
-      let ok = allowed.get(w.account);
-      if (ok === undefined) {
-        const acct = await ctx.db
-          .query("apiAccounts")
-          .withIndex("by_account", (q) => q.eq("account", w.account))
-          .unique();
-        ok = entitlement(acct?.plan).plan.webhookWatches > 0;
-        allowed.set(w.account, ok);
-      }
-      if (!ok) continue;
-      out.add(w.target);
-      if (out.size >= args.limit) break;
-    }
-    return [...out];
   },
 });
