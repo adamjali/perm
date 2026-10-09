@@ -334,7 +334,14 @@ export default async function I485ByFieldOfficePage() {
         </ul>
       </section>
 
-      <PageBasics page="i485-by-field-office" />{" "}
+      <PageBasics
+        page="i485-by-field-office"
+        figures={{
+          empPending: total?.empPending != null ? total.empPending.toLocaleString("en-US") : undefined,
+          famPending: total?.famPending != null ? total.famPending.toLocaleString("en-US") : undefined,
+          quarter: data ? quarterLabel(data.fy, data.quarter).replace(/^FY\d+ Q\d \((.*)\)$/, "$1") : undefined,
+        }}
+      />{" "}
       <DataProvenance datasets={["uscis-i485-offices"]} />
     </div>
   );

@@ -20,9 +20,17 @@ import type { ReactNode } from "react";
  * where the sentence stands alone.
  */
 
+/**
+ * Live figures a page hands its answers. An answer that states a count reads
+ * it from here, because a count typed into prose is true only on the day it
+ * was typed: in October 2026 this file still said 437,496 LCAs when the site
+ * held 3,754,961. A missing figure gets an answer that says where to look.
+ */
+export type BasicsFigures = Record<string, string | undefined>;
+
 export interface BasicsEntry {
   q: string;
-  a: ReactNode;
+  a: ReactNode | ((f: BasicsFigures) => ReactNode);
 }
 
 const link =
@@ -37,8 +45,8 @@ export const BASICS: Record<string, BasicsEntry[]> = {
           The annual wage an employer committed to on the ETA-9089 filing, as
           published in the Department of Labor&apos;s own disclosure files. It
           isn&apos;t a survey estimate or a self-report: every figure on this
-          page came off a federal filing, from 259,489 decided cases across
-          FY2024 to FY2026 as of August 2026.
+          page came off a federal filing: every decided case in DOL&apos;s
+          published files from FY2024 on.
         </>
       ),
     },
@@ -202,9 +210,9 @@ export const BASICS: Record<string, BasicsEntry[]> = {
           Labor what the job legally has to pay. That request is form ETA-9141,
           DOL answers with a prevailing wage determination, and the PERM
           offer cannot come in under it. Case numbers start with{" "}
-          <b className="font-bold">P-</b>. PERM Tracker holds 634,638 decided
-          wage requests, covering determinations from October 2023 to June
-          2026.
+          <b className="font-bold">P-</b>. PERM Tracker holds every decided
+          wage request in DOL&apos;s published files, from October 2023 to the
+          end of DOL&apos;s newest file.
         </>
       ),
     },
@@ -253,9 +261,8 @@ export const BASICS: Record<string, BasicsEntry[]> = {
           files before petitioning for an H-1B. It commits them to a wage and a
           named worksite, and DOL certifies it in days rather than months.
           Numbers start with <b className="font-bold">I-200</b> or{" "}
-          <b className="font-bold">I-203</b>. PERM Tracker holds 437,496
-          certified LCAs from DOL&apos;s FY2026 disclosure file, decided
-          October 2025 to June 2026.
+          <b className="font-bold">I-203</b>. PERM Tracker holds every LCA in
+          DOL&apos;s disclosure files from FY2020 to the newest quarter.
         </>
       ),
     },
@@ -510,11 +517,12 @@ export const BASICS: Record<string, BasicsEntry[]> = {
     },
     {
       q: "How many I-485 applications are pending at USCIS?",
-      a: (
+      a: (f) => (
         <>
-          USCIS&apos;s quarterly data for April to June 2026 puts employment-based
-          I-485 applications pending at 268,408 across every office and service
-          center, with 611,067 family-based. Your place inside that pile by
+          {f.empPending && f.quarter
+            ? `USCIS's quarterly data for ${f.quarter} puts employment-based I-485 applications pending at ${f.empPending} across every office and service center${f.famPending ? `, with ${f.famPending} family-based` : ""}.`
+            : "USCIS publishes the count every quarter, and the newest is at the top of this page."}{" "}
+          Your place inside that pile by
           priority date is on the{" "}
           <Link href="/tools/i485-queue-position" className={link}>
             I-485 queue position
@@ -550,11 +558,12 @@ export const BASICS: Record<string, BasicsEntry[]> = {
   "i140-awaiting-visa": [
     {
       q: "How many people are waiting for an EB-2 India green card?",
-      a: (
+      a: (f) => (
         <>
-          USCIS counted 356,360 approved petitions for India-born beneficiaries
-          in EB-2 as of June 2026, 91% of everyone waiting in that category,
-          before dependents. The count, not a wait in years, is what USCIS
+          {f.indiaEb2 && f.asOf
+            ? `USCIS counted ${f.indiaEb2} approved petitions for India-born beneficiaries in EB-2 as of ${f.asOf}${f.indiaEb2Share ? `, ${f.indiaEb2Share} of everyone waiting in that category` : ""}, before dependents.`
+            : "USCIS counts approved petitions for India-born beneficiaries in EB-2 every quarter, before dependents, and the newest count is at the top of this page."}{" "}
+          The count, not a wait in years, is what USCIS
           publishes; the{" "}
           <Link href="/tools/green-card-line" className={link}>
             green card line
@@ -606,7 +615,13 @@ export const BASICS: Record<string, BasicsEntry[]> = {
   ],
 };
 
-export function PageBasics({ page }: { page: keyof typeof BASICS | string }) {
+export function PageBasics({
+  page,
+  figures = {},
+}: {
+  page: keyof typeof BASICS | string;
+  figures?: BasicsFigures;
+}) {
   const entries = BASICS[page];
   if (!entries || entries.length === 0) return null;
   return (
@@ -633,7 +648,7 @@ export function PageBasics({ page }: { page: keyof typeof BASICS | string }) {
               />
             </summary>{" "}
             <p className="max-w-prose border-t-2 border-border/40 px-5 pb-4 pt-3 text-base leading-relaxed text-foreground/70 sm:px-6">
-              {e.a}
+              {typeof e.a === "function" ? e.a(figures) : e.a}
             </p>
           </details>
         ))}

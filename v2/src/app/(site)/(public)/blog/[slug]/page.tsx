@@ -13,4 +13,8 @@ export { generateStaticParams, generateMetadata };
 // outside it is answered with a real 404 status and no render. Without this a
 // junk slug streams a 200 whose body says "not found" - a soft 404.
 export const dynamicParams = false;
+
+// Daily, like the guides: a post can quote DOL's current figures (<DolNow />),
+// and a figure read at build time would be as old as the last deploy.
+export const revalidate = 86400;
 export default Page;

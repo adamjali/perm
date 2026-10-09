@@ -19,6 +19,7 @@
 import { ScrollProgress } from "@/components/home";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { HashScrollHandler } from "@/components/ui/hash-scroll-handler";
+import { RefreshWhenStale } from "@/components/ui/refresh-when-stale";
 import { ViewportDiag } from "@/components/diag/ViewportDiag";
 import { AmbientMurmuration } from "@/components/home/AmbientMurmuration";
 import { DataShell } from "@/components/tools/DataShell";
@@ -38,6 +39,9 @@ export default function PublicLayout({
       {/* Scroll progress indicator */}
       <ScrollProgress />
       <HashScrollHandler />
+      {/* A page left open (a phone tab, a home-screen app) asks for current
+          figures when the reader comes back to it after 30 minutes. */}
+      <RefreshWhenStale />
 
       {/* Main content - grows to fill space, pt accounts for the fixed header
           plus the security banner if visible (--security-banner-h is published

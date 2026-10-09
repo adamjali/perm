@@ -34,6 +34,7 @@ export const DOL_PAGES = [
   "/",
   "/tools",
   "/signup",
+  "/faq",
   "/llms.txt",
   "/perm-queue",
   "/perm-rfi-audit",

@@ -13,6 +13,8 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { FAQPageClient } from "./FAQPageClient";
+import { averagePhrase, dolNow } from "@/lib/dolNow";
+import { getProcessingTimes } from "@/lib/turso/processingTimes";
 
 const START_LINKS = [
   { href: "/perm-processing-times", label: "Processing times", note: "Which month DOL is reviewing now" },
@@ -22,6 +24,12 @@ const START_LINKS = [
 ] as const;
 
 export const dynamic = "force-static";
+// One answer quotes DOL's published average, so the page refreshes daily and
+// whenever DOL republishes (it is on revalidate-dol's list).
+export const revalidate = 86400;
+
+// Replaced at render with DOL's current average and its date (lib/dolNow.ts).
+const DOL_AVERAGE = "{dolAverage}";
 
 export const metadata: Metadata = withSocialCard({
   // Named for what the page answers (it is the main sitelink under a search
@@ -70,7 +78,7 @@ const faqData = [
       {
         question: "How long does the PERM process take?",
         answer:
-          "The complete PERM process typically runs 18 to 36 months end to end: the prevailing wage determination, the recruitment period (2-3 months), the 30-day quiet period, and DOL's processing of the ETA 9089 itself, which DOL's own published average puts at about 372 days as of August 2026. Cases selected for audit take longer. The processing times page carries the live figure, and the case status page reads any specific case number.",
+          "The complete PERM process typically runs 18 to 36 months end to end: the prevailing wage determination, the recruitment period (2-3 months), the 30-day quiet period, and DOL's processing of the ETA 9089 itself, which DOL's own published average puts at {dolAverage}. Cases selected for audit take longer. The processing times page carries the live figure, and the case status page reads any specific case number.",
       },
       {
         question: "What are the main steps in the PERM process?",
@@ -146,10 +154,14 @@ const faqData = [
   },
 ];
 
-// Flatten all FAQ items for structured data
-const allFAQs = faqData.flatMap((section) => section.items);
-
-export default function FAQPage() {
+export default async function FAQPage() {
+  const average = averagePhrase(dolNow(await getProcessingTimes().catch(() => null)));
+  const faq = faqData.map((section) => ({
+    ...section,
+    items: section.items.map((i) => ({ ...i, answer: i.answer.replace(DOL_AVERAGE, average) })),
+  }));
+  // Flatten all FAQ items for structured data
+  const allFAQs = faq.flatMap((section) => section.items);
   const { '@context': _1, ...faqSchema } = getFAQPageSchema(allFAQs);
   const schemas = { '@context': 'https://schema.org', '@graph': [faqSchema] };
 
@@ -188,7 +200,7 @@ export default function FAQPage() {
       </section>{" "}
 
       <div className="mx-auto max-w-[800px] px-4 py-8 sm:px-8 sm:py-12">
-        <FAQPageClient faqData={faqData} />
+        <FAQPageClient faqData={faq} />
 
         <div className="mt-12 border-t-2 border-border pt-8">
           <h2 className="mb-4 font-heading text-xl font-bold">Learn more</h2>{" "}

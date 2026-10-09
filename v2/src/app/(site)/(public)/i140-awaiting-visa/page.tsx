@@ -382,7 +382,14 @@ export default async function I140AwaitingVisaPage() {
         </ul>
       </section>
 
-      <PageBasics page="i140-awaiting-visa" />{" "}
+      <PageBasics
+        page="i140-awaiting-visa"
+        figures={{
+          indiaEb2: indiaEb2 !== null ? indiaEb2.toLocaleString("en-US") : undefined,
+          indiaEb2Share: indiaEb2Share !== null ? `${Math.round(indiaEb2Share * 100)}%` : undefined,
+          asOf: awaiting ? monthLabel(awaiting.asOf) : undefined,
+        }}
+      />{" "}
       <DataProvenance datasets={["uscis-eb-awaiting-visa", "uscis-i140-class-country"]} />
     </div>
   );

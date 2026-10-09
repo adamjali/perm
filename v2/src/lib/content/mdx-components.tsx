@@ -15,6 +15,7 @@ import ScreenshotFigure from "@/components/content/ScreenshotFigure";
 import VideoFigure from "@/components/content/VideoFigure";
 import PrintableChecklist from "@/components/content/PrintableChecklist";
 import { OnHoldNow } from "@/components/content/OnHoldNow";
+import { DolNow } from "@/components/content/DolNow";
 import { Lightbox } from "@/components/ui/lightbox";
 
 /* ------------------------------------------------------------------ */
@@ -144,7 +145,8 @@ function ComparisonTable({
   rows = [],
 }: {
   headers?: string[];
-  rows?: string[][];
+  // A cell may hold a live figure (<DolNow />), so cells are nodes, not strings.
+  rows?: React.ReactNode[][];
 }) {
   if (!headers.length || !rows.length) return null;
 
@@ -166,7 +168,7 @@ function ComparisonTable({
                 key={i}
                 className="border-2 border-border px-4 py-2 text-left font-heading font-bold uppercase tracking-wide"
               >
-                {h}
+                {h}{" "}
               </th>
             ))}
           </tr>
@@ -179,7 +181,7 @@ function ComparisonTable({
             >
               {row.map((cell, ci) => (
                 <td key={ci} className="border-2 border-border px-4 py-2">
-                  {cell}
+                  {cell}{" "}
                 </td>
               ))}
             </tr>
@@ -208,6 +210,8 @@ export const mdxComponents: MDXComponents = {
   // Live figures: an async server component reading the sweep's census, so a
   // guide's count is true on the day it is read (see OnHoldNow's comment).
   OnHoldNow,
+  // DOL's queue month and average, dated, so no article types a figure that ages.
+  DolNow,
 
   // Headings
   //

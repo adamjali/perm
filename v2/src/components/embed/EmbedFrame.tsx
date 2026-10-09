@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { embedBySlug, type EmbedDef } from "@/lib/embeds";
 import { EmbedRuntime } from "./EmbedRuntime";
+import { RefreshWhenStale } from "@/components/ui/refresh-when-stale";
 
 /**
  * The shell every `/embed/<slug>` page renders inside: a title bar, the tool,
@@ -70,6 +71,7 @@ export function EmbedFrame({ slug, children }: { slug: string; children: React.R
           PERM Tracker
         </a>
       </header>
+      <RefreshWhenStale />
       <div className="embed-root flex-1 py-4">{children}</div>
       <footer className="border-t-2 border-border px-4 py-2 text-sm text-foreground/80">
         <a href={def.href} target="_blank" rel="noopener noreferrer" className={link}>
