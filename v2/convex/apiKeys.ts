@@ -35,7 +35,7 @@ import {
   parseApiKey,
   randomBase62,
 } from "./lib/apiKeyFormat";
-import { apiPlan } from "./lib/apiPlans";
+import { entitlement } from "./lib/apiPlans";
 
 const NAME_MAX = 60;
 const randomBytes = (n: number) => crypto.getRandomValues(new Uint8Array(n));
@@ -47,13 +47,19 @@ async function accountFor(ctx: QueryCtx | MutationCtx, userId: Id<"users">): Pro
     .unique();
 }
 
+const planId = v.union(v.literal("free"), v.literal("plus"));
 const planValidator = v.object({
-  id: v.union(v.literal("free"), v.literal("plus")),
+  id: planId,
   label: v.string(),
   keys: v.number(),
+  sandboxKeys: v.number(),
   perMinute: v.number(),
   perDay: v.number(),
   perMonth: v.number(),
+  exportRows: v.number(),
+  liveLookupsPerDay: v.number(),
+  webhookEndpoints: v.number(),
+  webhookWatches: v.number(),
 });
 const failure = v.object({ ok: v.literal(false), message: v.string() });
 
@@ -63,7 +69,11 @@ export const mine = query({
   returns: v.union(
     v.null(),
     v.object({
+      /** The limits and features that apply now (Plus for everyone while the paywall is off). */
       plan: planValidator,
+      /** The plan the account itself is on. */
+      accountPlan: planId,
+      paywall: v.boolean(),
       account: v.union(v.string(), v.null()),
       keys: v.array(v.object({ keyId: v.string(), name: v.string(), createdAt: v.number() })),
     }),
@@ -76,9 +86,11 @@ export const mine = query({
       .query("apiKeys")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
-    const plan = apiPlan(acct?.plan);
+    const ent = entitlement(acct?.plan);
     return {
-      plan,
+      plan: ent.plan,
+      accountPlan: ent.accountPlan,
+      paywall: ent.paywall,
       account: acct?.account ?? null,
       keys: keys
         .filter((k) => k.revokedAt === undefined)
@@ -138,7 +150,7 @@ export const insertKey = internalMutation({
     }
 
     let acct = await accountFor(ctx, args.userId);
-    const plan = apiPlan(acct?.plan);
+    const { plan } = entitlement(acct?.plan);
     const active = (
       await ctx.db
         .query("apiKeys")
@@ -214,7 +226,10 @@ export const verify = query({
       keyId: v.string(),
       revoked: v.literal(false),
       account: v.string(),
-      plan: v.union(v.literal("free"), v.literal("plus")),
+      /** The plan whose limits apply now: Plus for everyone while the paywall is off. */
+      plan: planId,
+      accountPlan: planId,
+      paywall: v.boolean(),
     }),
   ),
   handler: async (ctx, args) => {
@@ -228,11 +243,14 @@ export const verify = query({
     const user = await ctx.db.get(key.userId);
     if (!user || user.deletedAt) return null;
     const acct = await accountFor(ctx, key.userId);
+    const ent = entitlement(acct?.plan);
     return {
       keyId: key.keyId,
       revoked: false as const,
       account: key.account,
-      plan: apiPlan(acct?.plan).id,
+      plan: ent.plan.id,
+      accountPlan: ent.accountPlan,
+      paywall: ent.paywall,
     };
   },
 });

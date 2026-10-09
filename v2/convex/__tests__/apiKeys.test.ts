@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createTestContext } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
@@ -23,6 +23,10 @@ async function makeUser(t: T, email: string, verified = true): Promise<Id<"users
 
 const as = (t: T, userId: Id<"users">) => t.withIdentity({ subject: userId });
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe("API keys", () => {
   it("makes a key once, keeps only its hash, and verifies it by hash", async () => {
     const t = createTestContext();
@@ -38,7 +42,9 @@ describe("API keys", () => {
     expect(stored[0]!.keyHash).toBe(await hashApiKey(made.key));
 
     const v = await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(made.key) });
-    expect(v).toMatchObject({ keyId: made.keyId, revoked: false, plan: "free" });
+    // The paywall is off by default, so the key's limits are Plus's while the
+    // account itself stays on Free.
+    expect(v).toMatchObject({ keyId: made.keyId, revoked: false, plan: "plus", accountPlan: "free", paywall: false });
     expect(v && "account" in v ? v.account : "").toMatch(/^acct_[0-9A-Za-z]{20}$/);
   });
 
@@ -48,11 +54,12 @@ describe("API keys", () => {
     const b = await makeUser(t, "b@example.com");
     await as(t, a).action(api.apiKeys.create, { name: "A" });
     const mine = await as(t, b).query(api.apiKeys.mine, {});
-    expect(mine).toMatchObject({ plan: API_PLANS.free, account: null, keys: [] });
+    expect(mine).toMatchObject({ plan: API_PLANS.plus, accountPlan: "free", paywall: false, account: null, keys: [] });
     expect(await t.query(api.apiKeys.mine, {})).toBeNull();
   });
 
-  it("holds the Free plan to one key, saying how to make room", async () => {
+  it("holds the Free plan to one key once the paywall is on, saying how to make room", async () => {
+    vi.stubEnv("PAYWALL_ENFORCED", "1");
     const t = createTestContext();
     const userId = await makeUser(t, "dev@example.com");
     await as(t, userId).action(api.apiKeys.create, { name: "first" });
@@ -104,14 +111,25 @@ describe("API keys", () => {
     expect(await t.query(api.apiKeys.verify, { keyHash: "not-a-hash" })).toBeNull();
   });
 
+  it("gives every account Plus's three keys while the paywall is off", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    for (const name of ["one", "two", "three"]) {
+      expect((await as(t, userId).action(api.apiKeys.create, { name })).ok).toBe(true);
+    }
+    const fourth = await as(t, userId).action(api.apiKeys.create, { name: "four" });
+    expect(fourth).toEqual({ ok: false, message: "The Plus plan has 3 keys. Revoke one to make a new one." });
+  });
+
   it("raises an account to Plus by hand, and the key reports it within its next check", async () => {
+    vi.stubEnv("PAYWALL_ENFORCED", "1");
     const t = createTestContext();
     const userId = await makeUser(t, "dev@example.com");
     const made = await as(t, userId).action(api.apiKeys.create, { name: "x" });
     if (!made.ok) throw new Error(made.message);
     await t.mutation(internal.apiKeys.setPlan, { email: "dev@example.com", plan: "plus" });
     const v = await t.query(api.apiKeys.verify, { keyHash: await hashApiKey(made.key) });
-    expect(v).toMatchObject({ plan: "plus" });
+    expect(v).toMatchObject({ plan: "plus", accountPlan: "plus", paywall: true });
     expect((await as(t, userId).action(api.apiKeys.create, { name: "second" })).ok).toBe(true);
   });
 

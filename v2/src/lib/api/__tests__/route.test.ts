@@ -16,7 +16,7 @@ vi.mock("../usage", () => ({
 import { apiGet } from "../route";
 import type { ReadResult } from "../reads";
 
-const KEY_CALLER = { kind: "key" as const, keyId: "KEY00001", account: "acct_a", plan: API_PLANS.free };
+const KEY_CALLER = { kind: "key" as const, keyId: "KEY00001", account: "acct_a", plan: API_PLANS.free, accountPlan: "free" as const, paywall: true };
 const meta = { source: "DOL", asOf: "2026-10-01", url: "https://permtracker.app/x" };
 
 function call(read: () => Promise<ReadResult<unknown>>) {

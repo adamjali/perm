@@ -16,10 +16,20 @@ import { fetchQuery } from "convex/nextjs";
 
 import { api } from "@convex/_generated/api";
 import { hashApiKey, parseApiKey } from "@convex/lib/apiKeyFormat";
-import { apiPlan, type ApiPlan } from "@convex/lib/apiPlans";
+import { apiPlan, type ApiPlan, type ApiPlanId } from "@convex/lib/apiPlans";
 
 export type ApiCaller =
-  | { kind: "key"; keyId: string; account: string; plan: ApiPlan }
+  | {
+      kind: "key";
+      keyId: string;
+      account: string;
+      /** The limits that apply now: Plus for everyone while the paywall is off. */
+      plan: ApiPlan;
+      /** The plan the account itself is on. */
+      accountPlan: ApiPlanId;
+      /** Whether the account's own plan decides (the switch is Convex's PAYWALL_ENFORCED). */
+      paywall: boolean;
+    }
   | { kind: "anonymous" };
 
 export type AuthOutcome =
@@ -90,7 +100,17 @@ export async function authenticate(request: Request, now = Date.now()): Promise<
   if (v.revoked) {
     return { ok: false, code: "revoked_key", message: "This key was revoked. Make a new one in Settings, under API keys." };
   }
-  return { ok: true, caller: { kind: "key", keyId: v.keyId, account: v.account, plan: apiPlan(v.plan) } };
+  return {
+    ok: true,
+    caller: {
+      kind: "key",
+      keyId: v.keyId,
+      account: v.account,
+      plan: apiPlan(v.plan),
+      accountPlan: apiPlan(v.accountPlan).id,
+      paywall: v.paywall === true,
+    },
+  };
 }
 
 /** Test seam. */
