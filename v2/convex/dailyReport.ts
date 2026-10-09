@@ -36,6 +36,8 @@ import { RETRY_MAX_ROWS } from "./lib/emailLimits";
 import { countAudiences } from "./lib/audience";
 import { ratingsSince } from "./alertRatings";
 import { waitingForReview } from "./firmClaims";
+import { keyCounts } from "./lib/apiKeyStats";
+import { webhookHealth } from "./webhookDelivery";
 
 const log = loggers.email;
 /** Reports kept for the admin page. */
@@ -149,6 +151,11 @@ export const facts = internalQuery({
       firmReview: { waiting: firmWaiting.map((w) => ({ firmName: w.firmName, kind: w.kind, since: w.since })) },
       // What people said about their alerts, the last week: scores and notes only.
       ratings: await ratingsSince(ctx, now - 7 * MS_PER_DAY),
+      // API keys by scope and webhook health: counts only, no account or address.
+      developers: {
+        keys: keyCounts(await ctx.db.query("apiKeys").take(TABLE_READ), now),
+        webhooks: await webhookHealth(ctx, since),
+      },
     };
   },
 });

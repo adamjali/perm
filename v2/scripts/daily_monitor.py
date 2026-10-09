@@ -495,13 +495,41 @@ def api_lines(rows: list, today: str) -> tuple[str, list[str]]:
     return summary, lines
 
 
+# Live DOL lookups a UTC day for every API account together; the API enforces
+# it (convex/lib/apiPlans.ts API_LIVE_DAILY_CAP), and the test holds the two equal.
+API_LIVE_DAILY_CAP = 20_000
+
+
+def live_lookup_line(doc, ceiling: int) -> tuple[str, bool]:
+    """Pure: the line for yesterday's live lookups from perm_docs['api_live_<day>']
+    ({"all": n, "<account>": n, ...}), and whether it's near the ceiling (80%)."""
+    if not doc or not int(doc.get("all") or 0):
+        return "No live DOL lookups through the API yesterday", False
+    asked = int(doc.get("all") or 0)
+    accounts = sum(1 for k, v in doc.items() if k != "all" and int(v or 0) > 0)
+    line = (f"Live DOL lookups yesterday: {asked:,} of the {ceiling:,} a day every account shares, "
+            f"from {accounts} account{'s' if accounts != 1 else ''}")
+    return line, asked >= ceiling * 0.8
+
+
 def api_section() -> dict:
     from lib_turso import Turso, query_rows  # noqa: PLC0415
 
     db = Turso(os.environ["TURSO_DATABASE_URL"], os.environ["TURSO_AUTH_TOKEN"])
     rows = query_rows(db, "SELECT day, account, key_id, calls FROM api_usage WHERE day >= date('now', '-8 day')", [])
-    summary, lines = api_lines(rows, dt.datetime.now(dt.timezone.utc).date().isoformat())
-    return section("api", "The API and assistants", "ok", summary, lines)
+    today = dt.datetime.now(dt.timezone.utc).date()
+    summary, lines = api_lines(rows, today.isoformat())
+    status = "ok"
+    live = query_rows(db, "SELECT json FROM perm_docs WHERE key = ?", [f"api_live_{(today - dt.timedelta(days=1)).isoformat()}"])
+    try:
+        doc = json.loads(live[0][0]) if live and live[0][0] else None
+    except (ValueError, TypeError):
+        doc = None
+    line, near = live_lookup_line(doc, API_LIVE_DAILY_CAP)
+    lines.append(line)
+    if near:
+        status = "warn"
+    return section("api", "The API and assistants", status, summary, lines)
 
 
 # ── traffic ───────────────────────────────────────────────────────────────

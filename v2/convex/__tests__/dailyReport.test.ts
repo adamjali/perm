@@ -27,12 +27,20 @@ describe("dailyReport.facts", () => {
       await ctx.db.insert("alertOutbox", { ...base, email: "d@x.com", kind: "bulletin", ref: "bulletin:1", status: "queued" });
       await ctx.db.insert("systemErrors", { source: "action", operation: "sweep", message: "m", resolved: false, createdAt: now - 1000 });
       await ctx.db.insert("systemErrors", { source: "action", operation: "sweep", message: "m", resolved: false, createdAt: now - 2 * 86_400_000 });
+      const userId = await ctx.db.insert("users", { email: "dev@x.com", deletedAt: now });
+      await ctx.db.insert("apiKeys", { userId, account: "acct_1", keyHash: "h1", keyId: "AAAAAAAA", name: "ci", createdAt: now, scopes: ["read", "export"] });
+      await ctx.db.insert("apiKeys", { userId, account: "acct_1", keyHash: "h2", keyId: "BBBBBBBB", name: "old", createdAt: now, revokedAt: now });
+      await ctx.db.insert("webhookEndpoints", {
+        userId, account: "acct_1", url: "https://hooks.example.org/perm", events: ["queue.moved"], secretEnc: "x", secretHint: "abcd", createdAt: now,
+      });
     });
     const f = await t.query(internal.dailyReport.facts, {});
     expect(f.users).toBe(1);
     expect(f.outbox).toMatchObject({ sent24h: 1, failed24h: 1, queued: 1 });
     expect(f.errors).toEqual({ count: 1, top: [["sweep", 1]] });
-    expect(JSON.stringify(f)).not.toMatch(/@/);
+    expect(f.developers.keys).toMatchObject({ live: 1, sandbox: 0, byScope: { read: 1, export: 1, webhooks: 0 } });
+    expect(f.developers.webhooks).toMatchObject({ endpoints: 1, paused: 0, watches: 0 });
+    expect(JSON.stringify(f)).not.toMatch(/@|hooks\.example\.org|acct_1/);
   });
 });
 

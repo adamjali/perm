@@ -76,7 +76,13 @@ export function embedProgramOf(input: string): { program: EmbedProgram; caseNumb
   return g ? { program: "perm", caseNumber: g } : null;
 }
 
-async function bump(key: string, field: string, now: Date): Promise<number> {
+/**
+ * Add one to `field` of the JSON map in `perm_docs[key]` and return the new
+ * count (MAX_SAFE_INTEGER when it can't be read back, so a caller treats an
+ * unreadable counter as spent). Shared with the API's live-lookup ceiling
+ * (src/lib/api/live.ts).
+ */
+export async function bumpDocCount(key: string, field: string, now: Date): Promise<number> {
   const path = `$."${field}"`;
   await exec(
     `INSERT INTO perm_docs (key, json, computed_at) VALUES (?, json_set('{}', ?, 1), ?)
@@ -103,8 +109,8 @@ export async function chargeEmbedLive(site: string, now: Date): Promise<"ok" | "
   if (!/^[a-z0-9.-]+$/.test(site) || site === "all") return "error";
   const key = `embed_live_${now.toISOString().slice(0, 10)}`;
   try {
-    if ((await bump(key, "all", now)) > EMBED_ALL_DAILY_LIVE) return "capped";
-    return (await bump(key, site, now)) <= EMBED_SITE_DAILY_LIVE ? "ok" : "capped";
+    if ((await bumpDocCount(key, "all", now)) > EMBED_ALL_DAILY_LIVE) return "capped";
+    return (await bumpDocCount(key, site, now)) <= EMBED_SITE_DAILY_LIVE ? "ok" : "capped";
   } catch (e) {
     console.error("[embedLookup] counter failed:", e);
     return "error";

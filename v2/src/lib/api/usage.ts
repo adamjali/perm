@@ -2,7 +2,8 @@
  * Counting API calls against a plan's day and month allowances.
  *
  * WHERE THE COUNTS LIVE. In the public-data database, table `api_usage`, one
- * row per account, key and UTC day. The account is a random id made with the
+ * row per account, key and UTC day, with the newest call's time (`last_at`,
+ * milliseconds, for "last used" in Settings). The account is a random id made with the
  * account's first key (convex/apiKeys.ts) and the key is its public 8-character
  * id, so the table names nobody: who an account belongs to lives only in
  * Convex. Assistant calls without a key are counted under account "anonymous".
@@ -31,8 +32,12 @@ const CREATE = `CREATE TABLE IF NOT EXISTS api_usage (
   key_id TEXT NOT NULL,
   day TEXT NOT NULL,
   calls INTEGER NOT NULL DEFAULT 0,
+  last_at INTEGER,
   PRIMARY KEY (account, key_id, day)
 )`;
+// CREATE TABLE IF NOT EXISTS never adds a column to a table that exists, so
+// the column the table gained on Oct 8 2026 is added once, here.
+const ADD_LAST_AT = "ALTER TABLE api_usage ADD COLUMN last_at INTEGER";
 
 export function utcDay(now: Date): string {
   return now.toISOString().slice(0, 10);
@@ -54,19 +59,27 @@ interface Totals {
 }
 
 const pending = new Map<string, number>();
+/** The newest call's time for each pending row, same keys as `pending`. */
+const pendingLast = new Map<string, number>();
 const totals = new Map<string, Totals>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 let tableReady: Promise<void> | null = null;
 
 function ensureTable(): Promise<void> {
   if (!tableReady) {
-    tableReady = exec(CREATE).then(
-      () => undefined,
-      (err) => {
-        tableReady = null;
-        throw err;
-      },
-    );
+    tableReady = exec(CREATE)
+      .then(() =>
+        exec(ADD_LAST_AT).catch((err: unknown) => {
+          if (!/duplicate column/i.test(String(err))) throw err;
+        }),
+      )
+      .then(
+        () => undefined,
+        (err) => {
+          tableReady = null;
+          throw err;
+        },
+      );
   }
   return tableReady;
 }
@@ -74,15 +87,17 @@ function ensureTable(): Promise<void> {
 async function flush(): Promise<void> {
   flushTimer = null;
   if (pending.size === 0) return;
-  const batch = [...pending.entries()];
+  const batch = [...pending.entries()].map(([k, n]) => [k, n, pendingLast.get(k) ?? null] as const);
   pending.clear();
+  pendingLast.clear();
   const values: unknown[] = [];
-  for (const [k, n] of batch) values.push(...k.split("\t"), n);
+  for (const [k, n, last] of batch) values.push(...k.split("\t"), n, last);
   try {
     await ensureTable();
     await exec(
-      `INSERT INTO api_usage (account, key_id, day, calls) VALUES ${batch.map(() => "(?,?,?,?)").join(",")}
-       ON CONFLICT (account, key_id, day) DO UPDATE SET calls = calls + excluded.calls`,
+      `INSERT INTO api_usage (account, key_id, day, calls, last_at) VALUES ${batch.map(() => "(?,?,?,?,?)").join(",")}
+       ON CONFLICT (account, key_id, day) DO UPDATE SET calls = calls + excluded.calls,
+         last_at = max(coalesce(last_at, 0), coalesce(excluded.last_at, 0))`,
       values,
     );
     // The written calls are now in the database; carry them into the cached
@@ -98,7 +113,10 @@ async function flush(): Promise<void> {
   } catch (err) {
     // Put them back and try again later. A call is never refused because the
     // counter couldn't be written.
-    for (const [k, n] of batch) pending.set(k, (pending.get(k) ?? 0) + n);
+    for (const [k, n, last] of batch) {
+      pending.set(k, (pending.get(k) ?? 0) + n);
+      if (last !== null) pendingLast.set(k, Math.max(pendingLast.get(k) ?? 0, last));
+    }
     console.error("[apiUsage] flush failed", err instanceof Error ? err.message : err);
     schedule(FLUSH_MS * 6);
   }
@@ -164,6 +182,7 @@ export async function usageFor(account: string, now = new Date()): Promise<{ tod
 export function countCall(account: string, keyId: string, now = new Date()): void {
   const k = `${account}\t${keyId}\t${utcDay(now)}`;
   pending.set(k, (pending.get(k) ?? 0) + 1);
+  pendingLast.set(k, Math.max(pendingLast.get(k) ?? 0, now.getTime()));
   schedule();
 }
 
@@ -197,30 +216,50 @@ export function takeMinute(bucket: string, limit: number, now = new Date()): { o
   return { ok: true, remaining: limit - used - 1, reset };
 }
 
-/** Per-key calls today and this month, for Settings. */
-export async function usageByKey(
-  account: string,
-  now = new Date(),
-): Promise<{ keyId: string; today: number; month: number; lastDay: string | null }[]> {
+export interface KeyUsage {
+  keyId: string;
+  today: number;
+  month: number;
+  /** The newest UTC day with a call. */
+  lastDay: string | null;
+  /** The newest call's time, milliseconds; null for rows written before Oct 8 2026. */
+  lastAt: number | null;
+}
+
+/** Per-key calls today and this month, and when each key was last used, for Settings. */
+export async function usageByKey(account: string, now = new Date()): Promise<KeyUsage[]> {
   const day = utcDay(now);
   const monthStart = `${day.slice(0, 7)}-01`;
   try {
-    const r = await rows<{ key_id: string; today: number; month: number; last_day: string | null }>(
+    const r = await rows<{ key_id: string; today: number; month: number; last_day: string | null; last_at: number | null }>(
       `SELECT key_id,
               sum(CASE WHEN day = ? THEN calls ELSE 0 END) AS today,
               sum(CASE WHEN day >= ? THEN calls ELSE 0 END) AS month,
-              max(day) AS last_day
+              max(day) AS last_day,
+              max(last_at) AS last_at
          FROM api_usage WHERE account = ? GROUP BY key_id`,
       [day, monthStart, account],
     );
-    const u = new Map(r.map((x) => [x.key_id, { today: Number(x.today), month: Number(x.month), lastDay: x.last_day }]));
+    const u = new Map(
+      r.map((x) => [
+        x.key_id,
+        {
+          today: Number(x.today),
+          month: Number(x.month),
+          lastDay: x.last_day,
+          lastAt: x.last_at === null || x.last_at === undefined ? null : Number(x.last_at) || null,
+        },
+      ]),
+    );
     for (const [k, n] of pending) {
       const [a, keyId, d] = k.split("\t");
       if (a !== account) continue;
-      const cur = u.get(keyId!) ?? { today: 0, month: 0, lastDay: null };
+      const cur = u.get(keyId!) ?? { today: 0, month: 0, lastDay: null, lastAt: null };
       if (d === day) cur.today += n;
       if (d! >= monthStart) cur.month += n;
       if (!cur.lastDay || d! > cur.lastDay) cur.lastDay = d!;
+      const last = pendingLast.get(k);
+      if (last !== undefined && (cur.lastAt === null || last > cur.lastAt)) cur.lastAt = last;
       u.set(keyId!, cur);
     }
     return [...u.entries()].map(([keyId, v]) => ({ keyId, ...v }));
@@ -233,6 +272,7 @@ export async function usageByKey(
 /** Test seam: forget every in-memory count. */
 export function resetUsageMemoryForTests(): void {
   pending.clear();
+  pendingLast.clear();
   totals.clear();
   minuteCounts.clear();
   minuteNow = "";

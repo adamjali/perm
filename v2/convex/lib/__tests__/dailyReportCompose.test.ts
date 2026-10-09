@@ -211,3 +211,38 @@ describe("alert ratings", () => {
     expect(convexSections(facts(), RESEND_SEND_ONLY, NOW).map((s) => s.key)).not.toContain("ratings");
   });
 });
+
+describe("API keys and webhooks", () => {
+  const developers = (over: Partial<NonNullable<Facts["developers"]>["webhooks"]> = {}): NonNullable<Facts["developers"]> => ({
+    keys: { live: 4, sandbox: 1, byScope: { read: 5, export: 3, live_lookup: 2, webhooks: 2, cases_read: 0 } },
+    webhooks: { endpoints: 3, paused: 0, pending: 0, held: 0, deliveredSince: 40, failedSince: 0, watches: 12, ...over },
+  });
+
+  it("stays out of the report until someone has a key or an endpoint", () => {
+    const none = { keys: { live: 0, sandbox: 0, byScope: { read: 0, export: 0, live_lookup: 0, webhooks: 0, cases_read: 0 } },
+      webhooks: { endpoints: 0, paused: 0, pending: 0, held: 0, deliveredSince: 0, failedSince: 0, watches: 0 } };
+    expect(convexSections(facts({ developers: none }), RESEND_SEND_ONLY, NOW).map((s) => s.key)).not.toContain("developers");
+    expect(convexSections(facts(), RESEND_SEND_ONLY, NOW).map((s) => s.key)).not.toContain("developers");
+  });
+
+  it("lists working keys by scope and the day's deliveries, ok when nothing failed", () => {
+    const sections = convexSections(facts({ developers: developers() }), RESEND_SEND_ONLY, NOW);
+    const s = sections.find((x) => x.key === "developers")!;
+    expect(s.status).toBe("ok");
+    expect(s.summary).toBe("4 live keys, 3 webhook endpoints, 40 deliveries in 24 h");
+    expect(s.lines).toEqual([
+      "Keys by scope: read 5, export 3, live_lookup 2, webhooks 2 (1 sandbox key besides)",
+      "Webhooks: 12 watches, 0 failed in 24 h, 0 waiting",
+    ]);
+    expect(sections[2]!.key).toBe("errors");
+  });
+
+  it("asks for a look at a paused endpoint, a failed delivery or deliveries held back", () => {
+    const s = convexSections(facts({ developers: developers({ paused: 1, held: 7, failedSince: 2, pending: 3 }) }), RESEND_SEND_ONLY, NOW).find(
+      (x) => x.key === "developers",
+    )!;
+    expect(s.status).toBe("warn");
+    expect(s.lines).toContain("Webhooks: 12 watches, 2 failed in 24 h, 3 waiting");
+    expect(s.lines).toContain("1 endpoint paused after a day of failures, holding 7 deliveries");
+  });
+});

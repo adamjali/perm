@@ -83,7 +83,7 @@ describe("the MCP server at /mcp", () => {
   it("holds a key to its own plan and counts the call to it", async () => {
     authenticate.mockResolvedValue({
       ok: true,
-      caller: { kind: "key", keyId: "KEY00001", account: "acct_a", plan: API_PLANS.free },
+      caller: { kind: "key", keyId: "KEY00001", account: "acct_a", plan: API_PLANS.free, accountPlan: "free", paywall: true },
     });
     checkAllowance.mockResolvedValue({ ok: false, which: "month", today: 1, month: 3000, retryAfter: 99 });
     const { body } = await rpc("tools/call", { name: "queue_status", arguments: {} }, { authorization: "Bearer x" });

@@ -169,6 +169,15 @@ export const refresh = internalAction({
       if (result.stored) {
         const analyst = analystReviewQueue(snapshot.permQueues);
 
+        // Webhook subscribers hear of the same publication (processing_times.updated,
+        // and queue.moved when the analyst-review month moved). Scheduled, so a
+        // webhook can never hold up the alerts below.
+        await ctx.scheduler.runAfter(0, internal.webhookSweeps.processingTimesPublished, {
+          permAsOf: snapshot.permAsOf,
+          ...(snapshot.pwdAsOf ? { pwdAsOf: snapshot.pwdAsOf } : {}),
+          ...(analyst?.priorityDate ? { analystMonth: analyst.priorityDate } : {}),
+        });
+
         // The parser now guarantees this row exists, so reaching either branch
         // below means something changed upstream that we should hear about.
         // Previously this was a bare `if (analyst?.priorityDate)` with no else:

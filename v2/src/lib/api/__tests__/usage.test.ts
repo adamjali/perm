@@ -33,7 +33,9 @@ describe("call counting", () => {
     const upsert = exec.mock.calls.find((c) => String(c[0]).startsWith("INSERT INTO api_usage"));
     expect(upsert).toBeDefined();
     expect(String(upsert![0])).toContain("ON CONFLICT (account, key_id, day) DO UPDATE SET calls = calls + excluded.calls");
-    expect(upsert![1]).toEqual(["acct_a", "KEY00001", "2026-10-02", 2, "acct_b", "KEY00002", "2026-10-02", 1]);
+    expect(String(upsert![0])).toContain("last_at = max(");
+    const t = NOW.getTime();
+    expect(upsert![1]).toEqual(["acct_a", "KEY00001", "2026-10-02", 2, t, "acct_b", "KEY00002", "2026-10-02", 1, t]);
   });
 
   it("keeps the counts when the write fails, and writes them next time", async () => {
@@ -44,8 +46,27 @@ describe("call counting", () => {
     exec.mockReset().mockResolvedValue(1);
     await flushUsageForTests();
     const upsert = exec.mock.calls.find((c) => String(c[0]).startsWith("INSERT INTO api_usage"));
-    expect(upsert![1]).toEqual(["acct_a", "KEY00001", "2026-10-02", 1]);
+    expect(upsert![1]).toEqual(["acct_a", "KEY00001", "2026-10-02", 1, NOW.getTime()]);
     err.mockRestore();
+  });
+
+  it("adds the last-used column to a table made before it, once, and tolerates it being there", async () => {
+    exec.mockImplementation((sql: string) =>
+      sql.startsWith("ALTER") ? Promise.reject(new Error("SQLITE_ERROR: duplicate column name: last_at")) : Promise.resolve(1),
+    );
+    countCall("acct_a", "KEY00001", NOW);
+    await flushUsageForTests();
+    expect(exec.mock.calls.some((c) => String(c[0]).startsWith("ALTER TABLE api_usage ADD COLUMN last_at"))).toBe(true);
+    expect(exec.mock.calls.some((c) => String(c[0]).startsWith("INSERT INTO api_usage"))).toBe(true);
+  });
+
+  it("reports each key's last call, written or still pending", async () => {
+    const { usageByKey } = await import("../usage");
+    rows.mockResolvedValue([{ key_id: "KEY00001", today: 3, month: 9, last_day: "2026-10-02", last_at: NOW.getTime() - 60_000 }]);
+    countCall("acct_a", "KEY00001", NOW);
+    expect(await usageByKey("acct_a", NOW)).toEqual([
+      { keyId: "KEY00001", today: 4, month: 10, lastDay: "2026-10-02", lastAt: NOW.getTime() },
+    ]);
   });
 
   it("adds calls not yet written to the stored totals", async () => {

@@ -1,7 +1,7 @@
 {
   "name": "permtracker",
-  "version": "0.1.0",
-  "description": "The PERM Tracker API from Node and the command line: DOL case status, decision estimates, the PERM queue, visa bulletins, and employer, law firm and occupation records.",
+  "version": "0.2.0",
+  "description": "The PERM Tracker API from Node and the command line: DOL case status, decision estimates, the PERM queue, visa bulletins, employer, law firm and occupation records, exports, live DOL lookups and signed webhooks.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -432,9 +432,11 @@ export async function searchByName(
   if (text.length > 120) return [];
   const needle = text.trim();
   if (needle.length < 2) return [];
-  // 501: the name-search route asks for one over what it shows, so it can
-  // say "more match" instead of implying it found everything.
-  const take = Math.min(Math.max(1, Math.floor(limit)), 501);
+  // 1,001: the API's export asks for one over its 1,000-row cap, and the
+  // name-search route for one over what it shows, so each can say "more
+  // match" instead of implying it found everything. Every caller passes its
+  // own limit; this is the ceiling, not a default.
+  const take = Math.min(Math.max(1, Math.floor(limit)), 1001);
 
   // `%` and `_` are LIKE wildcards, so a visitor typing one would otherwise
   // widen their own search silently. Escaped, with the escape character

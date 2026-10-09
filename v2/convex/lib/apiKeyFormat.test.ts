@@ -9,6 +9,7 @@ import {
   hashApiKey,
   parseApiKey,
   randomBase62,
+  SANDBOX_KEY_PREFIX,
 } from "./apiKeyFormat";
 
 const realRandom = (n: number) => crypto.getRandomValues(new Uint8Array(n));
@@ -65,5 +66,23 @@ describe("API key format", () => {
 
   it("shows a key by its prefix and id only", () => {
     expect(displayKeyId("Ab3kXy9Q")).toBe("pt_live_Ab3kXy9Q…");
+    expect(displayKeyId("Ab3kXy9Q", true)).toBe("pt_test_Ab3kXy9Q…");
+  });
+});
+
+describe("sandbox keys", () => {
+  it("build with pt_test_, parse as sandbox, and keep the live key's length", () => {
+    const key = buildApiKey(realRandom, true);
+    expect(key.startsWith(SANDBOX_KEY_PREFIX)).toBe(true);
+    expect(key).toHaveLength(API_KEY_LENGTH);
+    expect(parseApiKey(key)).toMatchObject({ sandbox: true, keyId: key.slice(8, 16) });
+    expect(parseApiKey(buildApiKey(realRandom))).toMatchObject({ sandbox: false });
+  });
+
+  it("checksum the prefix too, so a live key can't be turned into a sandbox one by its prefix", () => {
+    const live = buildApiKey(realRandom);
+    expect(parseApiKey(`pt_test_${live.slice(8)}`)).toBeNull();
+    const test = buildApiKey(realRandom, true);
+    expect(parseApiKey(`pt_live_${test.slice(8)}`)).toBeNull();
   });
 });

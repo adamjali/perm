@@ -71,7 +71,7 @@ describe("the watched-case routes", () => {
     expect(body, "no address ever leaves Convex").not.toContain("@");
   });
 
-  it("schedule both sweeps on a sweep request", async () => {
+  it("schedule the email, push and webhook sweeps on a sweep request", async () => {
     vi.stubEnv("WATCHED_CASES_SECRET", SECRET);
     const t = createTestContext();
     const res = await t.fetch("/watched-cases/sweep", { method: "POST", headers: { "x-watched-secret": SECRET } });
@@ -80,6 +80,7 @@ describe("the watched-case routes", () => {
     expect(jobs.map((j) => j.name).sort()).toEqual([
       "caseAlerts:sweepCaseChanges",
       "casePushAlertsSweep:sweep",
+      "webhookSweeps:sweepCaseWatches",
     ]);
   });
 });

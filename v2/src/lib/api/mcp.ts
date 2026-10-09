@@ -42,6 +42,9 @@ async function admit(caller: ApiCaller): Promise<string | null> {
       ? null
       : `PERM Tracker is answering many assistants at once. Try again in ${m.reset} seconds, or connect with a free API key for your own limit (permtracker.app/developers).`;
   }
+  if (caller.sandbox) {
+    return "Sandbox keys (pt_test_) answer the /v1 API's sample data only. Connect without a key, or with a live key, for real records.";
+  }
   const plan = caller.plan;
   const m = takeMinute(caller.keyId, plan.perMinute);
   if (!m.ok) return `Your ${plan.label} plan allows ${plan.perMinute} calls a minute. Try again in ${m.reset} seconds.`;
