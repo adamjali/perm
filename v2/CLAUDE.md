@@ -8924,3 +8924,62 @@ release id any slot runs from, first or second copy (`scripts/oracle/test_deploy
 on the server: green with the guard, six failures with it removed), and every run names its release
 `<sha>-<run number>` (and `DEPLOYMENT_ID` likewise). The fixed script was installed by hand
 (`/usr/local/sbin/permtracker-deploy`, after checking the installed copy matched the repo's).
+
+## Oct 8 2026 (night): the scorecard reads waiting cases, a crash narrowed, four page changes
+
+**The head-to-head counted a waiting case only once both dates had passed**, so a rival that answers
+"today" for cases DOL's queue has passed kept every early win while its waiting misses went
+uncounted. `settledWinner` in `src/lib/scorecard/score.ts` counts a waiting case for the later date as
+soon as today is past the midpoint of the two (DOL can only decide today or later, so the earlier date
+can no longer win; on the midpoint itself a decision today would tie). Each side gets a floor
+(`oursAtLeastDays`, `rivalAtLeastDays`) over decided cases plus cases waiting past at least one date,
+and `byKind` splits the comparison by our method: `working` (decision-pace), `passed` (stragglers,
+dol-average), `rfi`. A floor of 0 is never printed: it only means dates not yet due. Retired methods
+(`RETIRED_METHODS`) say so in every reading. The backtest's passed section scores `today` beside the
+rate; `readOurs` prints both. Readings on Oct 9: in DOL's line we beat Rival A 3 to 2 (4 days against
+13), B and C likewise; Rival A leads 10 to 2 on passed cases.
+
+**"Cannot read properties of undefined (reading 'call')"**: about 2.5 to 3% of real desktop Chrome 154
+and Edge 154 sessions, 0.06% of Mobile Safari, 0 of 24,000 headless scraper sessions. It fires 0.3 to
+0.7 s after a full load inside a prefetched route's chunk (the (auth) error chunk via the header's Sign
+in link, the case page via case-number forms), steadily on each build inside its own live window.
+Ruled out, by measurement: release and `shared/` chunks differ (0 of 366), Rocket Loader, an incomplete
+chunk graph (every dependency is in the chunks each entry's `e.O` list waits for and in the RSC row's
+list), the standby slot (no traffic), Ahrefs. Webpack's JSONP callback skips a push whose chunk ids are
+all installed and marks every pushed id installed, and every Next build shares `webpackChunk_N_E`, so a
+foreign push (likely an extension injecting a Next-built bundle) is the one mechanism with nothing
+failing. `chunkDiagnostics()` in `src/components/error/recovery.ts` records duplicate chunk ids,
+non-build scripts (extensions by origin) and the deployment ids on every missing-module event, caught
+or uncaught (`before_send`). If duplicates show, set `output.chunkLoadingGlobal` for the client build,
+after a full build and test.
+
+**Static chunk analysis that worked**: map module ids to files on the server (`[,{](\d+):` followed by
+`function(` or `(params)=>`; single-parameter arrows `e=>{` exist too, so a module "defined nowhere"
+needs a grep before it's believed), then walk a module's requires against the chunks its entry's
+`e.O(0,[...])` list waits for. PostHog's frames come out with
+`JSONExtractArrayRaw(ifNull(JSONExtractRaw(ifNull(toString(properties.$exception_list),'[]'),1,'stacktrace','frames'),'[]'))`.
+
+**Pages.** `/perm-employers/under-review` leads with DOL's newest employer-wide move (`movesByDay`,
+`dayHoldSentence`, `heldRanking` in `src/lib/employerStages.ts`), then who is on hold as bars, then the
+moves by day; the stage table, rankings and full list fold. The case page draws the line ahead by filing
+month (`lineAheadByMonth`, whose rows add up to `casesAheadOfDay`). Data pages carry `WatchBanner`
+(off the lookup, preference and USCIS lookup pages). A filing month leads with its share decided
+(`monthMakeup`), one bar, three tiles, the month's end dated by `monthEndDate` (the case page's own
+`estimateByPace`, no date when it refuses), and `perm_docs['month_detail']`: `write_month_detail` in
+the sweep, after `observed_decisions` whose publishable days it reuses; 0.8 s and 18 KB on production;
+watched by the health check (3 days).
+
+**A server-side file importing `@phosphor-icons/react` fails CI's gate even when only a client
+component renders it**: use `/ssr`. `pnpm check` can't see source-scanning gates that don't name the
+changed file; run `pnpm exec vitest run src/app/__tests__` (58 files, about 2 min) before a push that
+adds files.
+
+**The MCP door**: about 1,700 to 1,900 requests a day since the Registry listing (Oct 3), almost all
+directories, uptime checkers and capability watchers (SentinelOracle every 3 minutes, mcpbeat, rokmcp,
+BrickBlue, ProofBench, MCPWatch); 3 to 30 real tool calls a day, plus Claude-User from Anthropic's
+addresses. No load worth acting on.
+
+**The lookup challenge, measured** (Cloudflare samples, 5 hours): the scraper label 1 of 2,148
+addresses through; other addresses 250 of 831 (iPhones 86 of 137). PostHog: 50 of 54 sessions that
+submitted a case number reached the answer, median 4.1 s against about 0.7 s for the page. Loosening it
+is the owner's call.

@@ -537,3 +537,15 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the two "Oct 8 2026" afternoon 
 - **Every step is timed** (commit 1 s, push 11 s, `pnpm check` 2.2 min, CI 2.2 min, push to live about 10 min) and the morning report prints the CI and deploy figures daily.
 - **A redeploy of the same commit deleted the live release's folder** (2:19 PM EDT, 31 errors, rolled back at 2:21): the deploy now refuses a release id a slot runs from, and each run names its own.
 
+
+## Oct 8 2026 (night), in seven lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 8 2026 (night)".
+
+- **The head-to-head settles a waiting case once today passes the midpoint of the two dates**, gives each side a floor, and splits by kind: in DOL's line we beat all three rivals; Rival A's lead is cases the queue had passed, where it answers "today".
+- **The nightly backtest scores "today" beside our rate** on passed cases; retired methods say so in every reading.
+- **"reading 'call'" hits about 3% of real desktop Chrome and Edge sessions**, at load, inside a prefetched route's chunk, never on the headless scraper; the chunk graph is complete. Each event now records duplicate chunk pushes and foreign scripts (a browser extension sharing `webpackChunk_N_E` is the suspect).
+- **Employers under review leads with DOL's newest move**; the case page draws the line ahead by month; data pages carry one line offering the free alert.
+- **A filing month leads with its share decided** and reads `perm_docs['month_detail']` (decisions per day, where DOL has reached, the initials grid), written after every sweep.
+- **The MCP door gets about 1,800 requests a day, almost all directory and uptime bots** found through the MCP Registry; 3 to 30 real tool calls a day.
+- **The lookup challenge stops the scraper label completely** (1 of 2,148 addresses through) and costs a real visitor about 2 to 3 s; whether to loosen it is the owner's call.

@@ -27,10 +27,10 @@ Oct 7. Wage requests: the 83-day figure mixes in the method retired Oct 3; the c
 
 ## Page changes (owner: "do all")
 
-- [ ] Employers under review: the day's news first
-- [ ] Filing-month page: one number first, three tiles, per-day bars, letter grid, the rest folded
-- [ ] Case answer: the line ahead as bars; method folded
-- [ ] One quiet banner (version A) on queue and data pages
+- [x] Employers under review: the day's news first, then who is on hold as bars, the moves by day; tables folded (678ffae8, 34e69945)
+- [x] Filing-month page: share decided first, one bar, three tiles (fea961c5); decisions per day, where DOL has reached, the initials grid from a new nightly document (c81969d6); the tables folded
+- [x] Case answer: the line ahead as bars by filing month (678ffae8). The method panel is not folded yet: its anchor is linked from the answer card, and a link into a closed details element isn't opened by every browser
+- [x] One quiet line on every data page offering the free alert (678ffae8; off the lookup and preference pages)
 - [ ] Top H-1B employers by year and state (the owner's two screenshots), if the answer is "not well"
 
 ## Developer platform (one agent, own worktree)
@@ -56,3 +56,15 @@ Oct 7. Wage requests: the 83-day figure mixes in the method retired Oct 3; the c
 - Ruled out: chunk files differing between the release and shared/ (0 of 366 differ), Rocket Loader, an incomplete chunk graph (every dependency is in the chunks each entry waits for), the standby slot (no traffic), Ahrefs' script (no webpack).
 - Webpack marks a chunk installed when any script pushes its id into self.webpackChunk_N_E and then skips a later push's modules. Every Next.js build shares that name, so a foreign push (likely a desktop browser extension) is the one mechanism that gives a missing module with nothing failing. Inference from the runtime code; not seen yet.
 - Shipped: every missing-module event now records chunk ids pushed twice, scripts that aren't our build files (extensions by origin), and the deployment ids on our scripts. If foreign pushes show, rename the global for the client build (output.chunkLoadingGlobal) after a full build and test.
+
+## Scorecard, as the readings say it now (Oct 9, 12:15 AM)
+
+- Rival A leads 12 to 5, not clearly (about 1 time in 7 by luck). On cases in DOL's line we were closer 3 to 2 (typical miss 4 days against 13); on cases the queue had passed, Rival A 10 to 2. Rival A has 22 dates already past with no decision against 1 of ours.
+- Rival B: we lead 14 to 1, clearly; ahead on both kinds.
+- Rival C: even, 9 to 9; we lead 4 to 1 in DOL's line (4 days against 17), it leads 8 to 5 on passed cases.
+- Ours on 11,561 real decisions (nightly backtest): typically 4 days off, 80% within a week.
+
+## Found on the way
+
+- CI went red on 678ffae8: WatchBanner imported the icon from the client-only entry; phosphor-server-imports.test.ts caught it, the deploy waited, fixed in 34e69945. pnpm check can't see source-scanning gates that don't name a file, so src/app/__tests__ (58 files) now runs before each push in this batch.
+- Pre-existing, not from this batch: 12px labels and a 40px search box inside the month page's folded census and case browser; 38 to 40px filters on the employer table.
