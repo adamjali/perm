@@ -5,6 +5,7 @@
  * and every route file to a path here.
  */
 import { API_PLANS } from "@convex/lib/apiPlans";
+import { WEBHOOK_EVENTS } from "@convex/lib/webhookSign";
 
 export interface EndpointDoc {
   path: string;
@@ -140,6 +141,74 @@ export const ENDPOINTS: EndpointDoc[] = [
     ],
     counted: true,
     scope: "export",
+    sandboxOwn: true,
+  },
+  {
+    path: "/webhooks",
+    summary:
+      "This account's webhook endpoints (url, events, whether paused, the secret's last four characters) and watches. Needs the webhooks scope.",
+    example: "/webhooks",
+    counted: true,
+    scope: "webhooks",
+    sandboxOwn: true,
+  },
+  {
+    path: "/webhooks",
+    method: "POST",
+    summary:
+      "Add an endpoint: an https address and the events it wants. The answer carries the signing secret, the only time it's shown. Plus has 5 endpoints.",
+    example: "/webhooks",
+    counted: true,
+    scope: "webhooks",
+    sandboxOwn: true,
+    body: {
+      description: `url (public https) and events, any of: ${WEBHOOK_EVENTS.join(", ")}.`,
+      example: { url: "https://example.com/hooks/perm", events: ["case.status_changed", "bulletin.published"] },
+    },
+  },
+  {
+    path: "/webhooks/{id}",
+    method: "DELETE",
+    summary: "Delete an endpoint and its delivery log.",
+    example: "/webhooks/jd7abc123def456ghi789",
+    params: [{ name: "id", in: "path", required: true, description: "The endpoint's id, from GET /webhooks." }],
+    counted: true,
+    scope: "webhooks",
+    sandboxOwn: true,
+  },
+  {
+    path: "/watches",
+    summary: "The case numbers and employers this account's webhooks watch, with its endpoints. Needs the webhooks scope.",
+    example: "/watches",
+    counted: true,
+    scope: "webhooks",
+    sandboxOwn: true,
+  },
+  {
+    path: "/watches",
+    method: "POST",
+    summary:
+      "Watch a case number (case.status_changed when DOL's status for it changes) or an employer's page (employer.moved when DOL moves its cases as a group). Plus watches 100.",
+    example: "/watches",
+    counted: true,
+    scope: "webhooks",
+    sandboxOwn: true,
+    body: {
+      description: "One of caseNumber (as DOL prints it) or employer (its page's slug, from /employers).",
+      example: { caseNumber: "G-100-26045-123456" },
+    },
+  },
+  {
+    path: "/watches/{target}",
+    method: "DELETE",
+    summary: "Stop watching a case number, or an employer with ?kind=employer.",
+    example: "/watches/G-100-26045-123456",
+    params: [
+      { name: "target", in: "path", required: true, description: "The case number, or the employer's slug." },
+      { name: "kind", in: "query", required: false, description: "case (the default) or employer." },
+    ],
+    counted: true,
+    scope: "webhooks",
     sandboxOwn: true,
   },
   {

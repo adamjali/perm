@@ -28,6 +28,8 @@ export type ApiCaller =
   | {
       kind: "key";
       keyId: string;
+      /** The key's SHA-256: the proof of possession Convex's webhook functions take. Never sent anywhere else. */
+      keyHash: string;
       account: string;
       /** The limits that apply now: Plus for everyone while the paywall is off. */
       plan: ApiPlan;
@@ -132,6 +134,7 @@ export async function authenticate(request: Request, now = Date.now()): Promise<
     caller: {
       kind: "key",
       keyId: v.keyId,
+      keyHash,
       account: v.account,
       plan: apiPlan(v.plan),
       accountPlan: apiPlan(v.accountPlan).id,

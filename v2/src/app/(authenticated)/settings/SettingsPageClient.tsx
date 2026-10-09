@@ -17,6 +17,7 @@ import QuietHoursSection from "@/components/settings/QuietHoursSection";
 import CalendarSyncSection from "@/components/settings/CalendarSyncSection";
 import SupportSection from "@/components/settings/SupportSection";
 import ApiKeysSection from "@/components/settings/ApiKeysSection";
+import WebhooksSection from "@/components/settings/WebhooksSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeading } from "../components/PageHeading";
 
@@ -217,7 +218,12 @@ export function SettingsPageClient() {
       case "auto-close":
         return <AutoCloseSection />;
       case "api-keys":
-        return <ApiKeysSection />;
+        return (
+          <>
+            <ApiKeysSection />
+            <WebhooksSection />
+          </>
+        );
       case "support":
         return (
           <SupportSection

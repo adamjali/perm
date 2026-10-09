@@ -19,7 +19,7 @@ import { internalQuery } from "./_generated/server";
  * a hand-run fallback.
  *
  * Email alerts count once confirmed and until unsubscribed or closed; browser
- * push alerts until closed. Numbers are uppercased and deduplicated, and the
+ * push alerts until closed; webhook watches until removed. Numbers are uppercased and deduplicated, and the
  * list is capped so a flood of sign-ups cannot turn an hourly job into a
  * full sweep.
  */
@@ -50,6 +50,14 @@ export const watchedCaseNumbers = internalQuery({
       .withIndex("by_closed", (q) => q.eq("closedAt", undefined));
     for await (const row of push) {
       out.add(row.caseNumber.trim().toUpperCase());
+      if (out.size >= WATCHED_CAP) return { caseNumbers: [...out].sort(), capped: true };
+    }
+
+    // Case numbers API accounts' webhooks watch (convex/webhooks.ts), so a
+    // case.status_changed event reaches them as fast as an alert email does.
+    const hooks = ctx.db.query("webhookWatches").withIndex("by_kind_and_checked", (q) => q.eq("kind", "case"));
+    for await (const row of hooks) {
+      out.add(row.target);
       if (out.size >= WATCHED_CAP) return { caseNumbers: [...out].sort(), capped: true };
     }
 

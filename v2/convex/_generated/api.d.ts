@@ -178,6 +178,8 @@ import type * as lib_userCases from "../lib/userCases.js";
 import type * as lib_userDefaults from "../lib/userDefaults.js";
 import type * as lib_userProfileHelpers from "../lib/userProfileHelpers.js";
 import type * as lib_validation from "../lib/validation.js";
+import type * as lib_webhookQueue from "../lib/webhookQueue.js";
+import type * as lib_webhookSign from "../lib/webhookSign.js";
 import type * as marketingEmail from "../marketingEmail.js";
 import type * as marketingEmailHelpers from "../marketingEmailHelpers.js";
 import type * as marketingWebhook from "../marketingWebhook.js";
@@ -204,6 +206,9 @@ import type * as userCaseOrder from "../userCaseOrder.js";
 import type * as users from "../users.js";
 import type * as watchedCases from "../watchedCases.js";
 import type * as webSearch from "../webSearch.js";
+import type * as webhookDelivery from "../webhookDelivery.js";
+import type * as webhookSweeps from "../webhookSweeps.js";
+import type * as webhooks from "../webhooks.js";
 import type * as welcomeEmail from "../welcomeEmail.js";
 
 import type {
@@ -383,6 +388,8 @@ declare const fullApi: ApiFromModules<{
   "lib/userDefaults": typeof lib_userDefaults;
   "lib/userProfileHelpers": typeof lib_userProfileHelpers;
   "lib/validation": typeof lib_validation;
+  "lib/webhookQueue": typeof lib_webhookQueue;
+  "lib/webhookSign": typeof lib_webhookSign;
   marketingEmail: typeof marketingEmail;
   marketingEmailHelpers: typeof marketingEmailHelpers;
   marketingWebhook: typeof marketingWebhook;
@@ -409,6 +416,9 @@ declare const fullApi: ApiFromModules<{
   users: typeof users;
   watchedCases: typeof watchedCases;
   webSearch: typeof webSearch;
+  webhookDelivery: typeof webhookDelivery;
+  webhookSweeps: typeof webhookSweeps;
+  webhooks: typeof webhooks;
   welcomeEmail: typeof welcomeEmail;
 }>;
 

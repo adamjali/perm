@@ -1751,7 +1751,7 @@ http.route({
   }),
 });
 
-/** A watched case moved: run the email and browser-push sweeps now. Both are idempotent. */
+/** A watched case moved: run the email, browser-push and webhook sweeps now. Each is idempotent. */
 http.route({
   path: "/watched-cases/sweep",
   method: "POST",
@@ -1760,7 +1760,11 @@ http.route({
     if (refused) return refused;
     await ctx.scheduler.runAfter(0, internal.caseAlerts.sweepCaseChanges, {});
     await ctx.scheduler.runAfter(30_000, internal.casePushAlertsSweep.sweep, {});
-    return serverJson({ ok: true, scheduled: ["caseAlerts.sweepCaseChanges", "casePushAlertsSweep.sweep"] }, 202);
+    await ctx.scheduler.runAfter(0, internal.webhookSweeps.sweepCaseWatches, {});
+    return serverJson(
+      { ok: true, scheduled: ["caseAlerts.sweepCaseChanges", "casePushAlertsSweep.sweep", "webhookSweeps.sweepCaseWatches"] },
+      202,
+    );
   }),
 });
 

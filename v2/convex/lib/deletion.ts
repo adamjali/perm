@@ -168,6 +168,25 @@ export async function purgeAllUserData(
     .query("apiAccounts")
     .withIndex("by_user", (q) => q.eq("userId", userId))
     .collect();
+  // The account's webhooks go with it: endpoints (and their secrets),
+  // watches, and the delivery log. Events name no account but a watch's.
+  for (const acct of apiAccounts) {
+    const endpoints = await ctx.db
+      .query("webhookEndpoints")
+      .withIndex("by_account", (q) => q.eq("account", acct.account))
+      .collect();
+    for (const e of endpoints) await ctx.db.delete(e._id);
+    const watches = await ctx.db
+      .query("webhookWatches")
+      .withIndex("by_account", (q) => q.eq("account", acct.account))
+      .collect();
+    for (const w of watches) await ctx.db.delete(w._id);
+    const deliveries = await ctx.db
+      .query("webhookDeliveries")
+      .withIndex("by_account", (q) => q.eq("account", acct.account))
+      .take(4000);
+    for (const d of deliveries) await ctx.db.delete(d._id);
+  }
   for (const acct of apiAccounts) {
     await ctx.db.delete(acct._id);
   }

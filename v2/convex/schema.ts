@@ -2510,4 +2510,95 @@ export default defineSchema({
     .index("by_hash", ["keyHash"])
     .index("by_key_id", ["keyId"])
     .index("by_user", ["userId"]),
+
+  /**
+   * Webhook endpoints an API account registers (convex/webhooks.ts). The
+   * signing secret is shown once and kept encrypted (convex/lib/crypto.ts),
+   * because signing needs it back; `secretHint` is its last four characters.
+   * After 24 hours of failed deliveries an endpoint pauses (`pausedAt`) and
+   * its owner gets one email (`pauseNotifiedAt`).
+   */
+  webhookEndpoints: defineTable({
+    userId: v.id("users"),
+    account: v.string(),
+    url: v.string(),
+    events: v.array(v.string()),
+    secretEnc: v.string(),
+    secretHint: v.string(),
+    createdAt: v.number(),
+    pausedAt: v.optional(v.number()),
+    pauseReason: v.optional(v.string()),
+    pauseNotifiedAt: v.optional(v.number()),
+    lastDeliveryAt: v.optional(v.number()),
+    lastStatusCode: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_account", ["account"]),
+
+  /**
+   * What an account's webhooks watch: a case number (case.status_changed) or
+   * an employer's page slug (employer.moved). The sweeps keep what each watch
+   * last saw, like the email alerts do.
+   */
+  webhookWatches: defineTable({
+    userId: v.id("users"),
+    account: v.string(),
+    kind: v.union(v.literal("case"), v.literal("employer")),
+    target: v.string(),
+    createdAt: v.number(),
+    lastSeenStatus: v.optional(v.string()),
+    toldMoves: v.optional(v.array(v.string())),
+    /** The Eastern day an employer watch began: moves before it aren't news. */
+    followingFrom: v.optional(v.string()),
+    lastCheckedAt: v.optional(v.number()),
+  })
+    .index("by_account", ["account"])
+    .index("by_user", ["userId"])
+    .index("by_kind_and_checked", ["kind", "lastCheckedAt"])
+    .index("by_account_kind_target", ["account", "kind", "target"]),
+
+  /**
+   * One event, its body fixed when it happened so every retry sends the same
+   * bytes. `key` makes a feed event (a bulletin, a queue month) happen once
+   * however many sweeps notice it. `account` is set for a watch's event.
+   */
+  webhookEvents: defineTable({
+    type: v.string(),
+    key: v.string(),
+    payload: v.string(),
+    account: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_key", ["key"])
+    .index("by_created", ["createdAt"]),
+
+  /** One event to one endpoint: the queue, the retries and the log Settings shows. */
+  webhookDeliveries: defineTable({
+    endpointId: v.id("webhookEndpoints"),
+    eventId: v.id("webhookEvents"),
+    account: v.string(),
+    type: v.string(),
+    /** held: waiting for its paused endpoint to resume. */
+    status: v.union(v.literal("pending"), v.literal("delivered"), v.literal("failed"), v.literal("held")),
+    attempts: v.number(),
+    nextAttemptAt: v.number(),
+    firstAttemptAt: v.optional(v.number()),
+    /** Set while a delivery run holds the row, so two runs never send it twice. */
+    leaseUntil: v.optional(v.number()),
+    lastStatusCode: v.optional(v.number()),
+    lastError: v.optional(v.string()),
+    deliveredAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_status_and_next", ["status", "nextAttemptAt"])
+    .index("by_endpoint", ["endpointId"])
+    .index("by_account", ["account"])
+    .index("by_created", ["createdAt"]),
+
+  /** What the feed events last saw (the newest bulletin month), so each publication fires once. */
+  webhookFeedState: defineTable({
+    key: v.string(),
+    value: v.string(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
 });

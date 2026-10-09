@@ -407,6 +407,51 @@ crons.cron(
 );
 
 // ============================================================================
+// WEBHOOKS (convex/webhookSweeps.ts, convex/webhookDelivery.ts)
+// ============================================================================
+
+/**
+ * Watched cases for API webhooks, five minutes after each email sweep. The
+ * server's 5-minute check also runs this the moment a watched case moved
+ * (POST /watched-cases/sweep); these two ticks are the floor.
+ */
+crons.cron(
+  "webhook-case-watches",
+  "5 11,23 * * *",
+  internal.webhookSweeps.sweepCaseWatches,
+  {}
+);
+
+// Employer-wide moves for webhook watches, after the census the employer
+// follows read is written (the same times as employer-alerts, two minutes on).
+crons.cron(
+  "webhook-employer-watches",
+  "17 11,23 * * *",
+  internal.webhookSweeps.sweepEmployerWatches,
+  {}
+);
+
+/**
+ * The delivery queue's floor. A delivery is sent the moment its event is
+ * queued and each retry is scheduled for its own time; this picks up any run
+ * that died holding a lease. An empty queue costs one indexed read.
+ */
+crons.interval(
+  "webhook-deliveries",
+  { minutes: 10 },
+  internal.webhookDelivery.deliverDue,
+  {}
+);
+
+// The delivery log and events past 30 days (held deliveries wait for their endpoint).
+crons.daily(
+  "webhook-prune",
+  { hourUTC: 3, minuteUTC: 40 },
+  internal.webhookDelivery.prune,
+  {}
+);
+
+// ============================================================================
 // OPERATIONAL LOG RETENTION
 // ============================================================================
 
