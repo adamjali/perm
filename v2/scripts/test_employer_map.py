@@ -59,6 +59,10 @@ def seed() -> SqliteTurso:
         "INSERT INTO perm_entities VALUES ('employer', 'salesforce-inc', 'Salesforce, Inc.', 'salesforce', 500)",
         "INSERT INTO perm_entities VALUES ('employer', 'jpmorgan-chase-co', 'JPMorgan Chase & Co.', 'jpmorgan chase', 700)",
         "INSERT INTO perm_entities VALUES ('employer', 'wal-mart-associates-inc', 'WAL-MART ASSOCIATES, INC.', 'wal mart associates', 1595)",
+        "INSERT INTO perm_entities VALUES ('employer', 'tata-consultancy-services-limited', 'Tata Consultancy Services Limited', 'tata consultancy services', 9000)",
+        "INSERT INTO perm_entities VALUES ('employer', 'foo-technology-inc', 'Foo Technology Inc', 'foo technology', 10)",
+        "INSERT INTO perm_entities VALUES ('employer', 'foo-technologies-inc', 'Foo Technologies Inc', 'foo technologies', 12)",
+        "INSERT INTO perm_entities VALUES ('employer', 'bar-technology-inc', 'Bar Technology Inc', 'bar technology', 30)",
         "INSERT INTO perm_entity_alias VALUES ('employer', 'intel-corp-old', 'intel-corporation')",
         "INSERT INTO perm_live_only_index VALUES ('new-perm-filer', 'New PERM Filer', 2)",
         "INSERT INTO seasonal_employer_index VALUES ('green-acres-farm-llc', 2)",
@@ -106,6 +110,12 @@ def seed() -> SqliteTurso:
                ["P-400-25100-000003", "2025-04-10", "Shore Crabs", "shore-crabs", 1790000000000])
     db.execute("INSERT INTO uscis_h1b_employers VALUES ('Old Sponsor Inc', 'old-sponsor-inc')")
     db.execute("INSERT INTO uscis_h1b_employers VALUES ('Intel Corporation', 'intel-corporation')")
+    # USCIS's abbreviations (Oct 9 2026): written out, one page or none.
+    db.execute("INSERT INTO uscis_h1b_employers VALUES ('TATA CONSULTANCY SVCS LTD', 'tata-consultancy-svcs-ltd')")
+    db.execute("INSERT INTO uscis_h1b_employers VALUES ('FOO TECH INC', 'foo-tech-inc')")
+    # An employer that FILES under an abbreviation keeps its own page: its URL exists.
+    db.execute("INSERT INTO lca_cases VALUES (?,?,?,?,?)",
+               ["I-200-25003-000001", "2024-11-01", "2024-11-08", "BAR TECH INC", "bar-tech-inc"])
     return db
 
 
@@ -131,6 +141,11 @@ def main() -> int:
     check("two spellings, one page", (page.get("acme-robotics-llc"), page.get("acme-robotics-l-l-c")),
           (("acme-robotics-llc", "other"), ("acme-robotics-llc", "other")))
     check("USCIS rows alone make no page", "old-sponsor-inc" in page, False)
+    check("a USCIS abbreviation written out reaches its page", page.get("tata-consultancy-svcs-ltd"),
+          ("tata-consultancy-services-limited", "perm"))
+    check("an abbreviation that could be two pages joins neither", "foo-tech-inc" in page, False)
+    check("a spelling that files keeps its own page, abbreviation or not", page.get("bar-tech-inc"),
+          ("bar-tech-inc", "other"))
     check("WALMART reaches the Wal-Mart page (Rule D)", page.get("walmart-associates-inc"),
           ("wal-mart-associates-inc", "perm"))
     own_key = {r[0]: r[3] for r in rows}

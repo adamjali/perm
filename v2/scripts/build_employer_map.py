@@ -53,6 +53,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import pathlib
 import sys
@@ -140,6 +141,39 @@ NAME_SOURCES = [
     ("uscis_h1b_employers", "employer"),
     ("h1b_lottery_employers", "employer"),
 ]
+
+
+# USCIS's Employer Data Hub abbreviates names on older petitions ("TATA
+# CONSULTANCY SVCS LTD", "COGNIZANT TECH SOLNS US CORP", "UNIV OF MICHIGAN").
+# Those spellings matched no page, so their approvals were on no employer's
+# record: measured Oct 9 2026, 4,233 spellings and 413,406 approvals, Tata's
+# 98,271 and Cognizant's 162,388 among them. A spelling that names no filing
+# program and matches nothing is tried again with these words written out,
+# and joins a page only when every way of writing it out reaches the same one.
+# A sample of 25 joins was read by hand and all were the same employer.
+ABBREVIATIONS = {
+    "SVCS": ("SERVICES",), "SVC": ("SERVICE", "SERVICES"), "SERV": ("SERVICES",), "SRVCS": ("SERVICES",),
+    "SOLNS": ("SOLUTIONS",), "SOLN": ("SOLUTION", "SOLUTIONS"), "TECH": ("TECHNOLOGY", "TECHNOLOGIES"),
+    "TECHS": ("TECHNOLOGIES",), "TECHNOL": ("TECHNOLOGY", "TECHNOLOGIES"), "SYS": ("SYSTEMS", "SYSTEM"),
+    "MGMT": ("MANAGEMENT",), "MGT": ("MANAGEMENT",), "INTL": ("INTERNATIONAL",), "NATL": ("NATIONAL",),
+    "ASSOC": ("ASSOCIATES", "ASSOCIATION"), "ASSN": ("ASSOCIATION",), "UNIV": ("UNIVERSITY",),
+    "HOSP": ("HOSPITAL",), "MED": ("MEDICAL",), "CTR": ("CENTER",), "CNTR": ("CENTER",), "GRP": ("GROUP",),
+    "HLDGS": ("HOLDINGS",), "AMER": ("AMERICA", "AMERICAN"), "DEV": ("DEVELOPMENT",), "ENGRG": ("ENGINEERING",),
+    "ENGR": ("ENGINEERING",), "CONSLT": ("CONSULTING",), "CONSULTG": ("CONSULTING",), "COMM": ("COMMUNICATIONS",),
+    "MFG": ("MANUFACTURING",), "INFO": ("INFORMATION",), "SOFTWR": ("SOFTWARE",), "PHARMS": ("PHARMACEUTICALS",),
+    "LABS": ("LABORATORIES",), "SCI": ("SCIENCES", "SCIENCE"), "INST": ("INSTITUTE",), "DEPT": ("DEPARTMENT",),
+    "CO": ("COMPANY",),
+}
+MAX_WRITINGS = 16
+
+
+def written_out(name: str) -> list[str]:
+    """Every way of writing out the name's abbreviations, or [] when it has none."""
+    words = name.upper().replace(",", " ").replace(".", " ").split()
+    choices = [ABBREVIATIONS.get(w, (w,)) for w in words]
+    if not any(w in ABBREVIATIONS for w in words):
+        return []
+    return [" ".join(c) for c in itertools.islice(itertools.product(*choices), MAX_WRITINGS)]
 
 
 def log(msg: str) -> None:
@@ -293,6 +327,21 @@ def plan(slugs: dict[str, dict], pages: dict) -> tuple[list[list], list[list], d
         for name_ in slugs.get(slug, new_slug())["names"]:
             claim(live_keys, match_key(name_), cases, slug)
 
+    def written_out_page(rec: dict) -> tuple[str, str] | None:
+        """The one page every written-out form of the spelling reaches, or None."""
+        perm_hits, live_hits = set(), set()
+        for form in written_out(modal_name(rec["names"]) or ""):
+            k = match_key(form)
+            if k in perm_keys:
+                perm_hits.add(perm_keys[k][1])
+            elif k in live_keys:
+                live_hits.add(live_keys[k][1])
+        if len(perm_hits) == 1:
+            return (next(iter(perm_hits)), "perm")
+        if not perm_hits and len(live_hits) == 1:
+            return (next(iter(live_hits)), "live")
+        return None
+
     rows: list[list] = []
     groups: dict[str, list[str]] = defaultdict(list)
     stats = Counter()
@@ -311,6 +360,10 @@ def plan(slugs: dict[str, dict], pages: dict) -> tuple[list[list], list[list], d
             rows.append([slug, perm_keys[mk][1], "perm", key]); stats["perm_key"] += 1
         elif mk and mk in live_keys:
             rows.append([slug, live_keys[mk][1], "live", key]); stats["live_key"] += 1
+        elif not any(rec["programs"].values()) and (hit := written_out_page(rec)):
+            # USCIS's and the lottery's spellings only: one that files nothing
+            # never had a page of its own, so joining it moves no URL.
+            rows.append([slug, hit[0], hit[1], key]); stats["abbreviation_key"] += 1
         else:
             groups[mk or f"slug:{slug}"].append(slug)
 
