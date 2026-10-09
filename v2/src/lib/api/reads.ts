@@ -387,11 +387,17 @@ export async function readEntity(kind: EntityKind, slug: string): Promise<ReadRe
   };
 }
 
-export async function searchEntities(kind: EntityKind, q: string, limit = 25): Promise<ReadResult<Record<string, unknown>>> {
+/** Search by name; `max` is the most one answer may hold (100 a page, an export's plan cap). */
+export async function searchEntities(
+  kind: EntityKind,
+  q: string,
+  limit = 25,
+  max = 100,
+): Promise<ReadResult<{ results: Record<string, unknown>[]; more: boolean }>> {
   if (!isEntityKind(kind)) return bad("Unknown kind.");
   const needle = q.trim();
   if (needle.length < 2 || needle.length > 120) return bad("Search with 2 to 120 characters.");
-  const take = Math.min(Math.max(1, Math.floor(limit)), 100);
+  const take = Math.min(Math.max(1, Math.floor(limit)), max);
   const page = Object.values(ENTITY_PATHS).find((p) => p.kind === kind)!.page;
   const [found, dates] = await Promise.all([searchByName(kind, needle, take + 1), entityDates()]);
   return {

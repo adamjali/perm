@@ -22,6 +22,8 @@ export interface EndpointDoc {
   scope?: "export" | "live_lookup" | "webhooks";
   /** Its route gives a sandbox key its own answer rather than the shared samples. */
   sandboxOwn?: boolean;
+  /** A POST's JSON body. */
+  body?: { description: string; example: Record<string, unknown> };
 }
 
 export const API_BASE = "https://permtracker.app/v1";
@@ -31,7 +33,16 @@ export const ENDPOINTS: EndpointDoc[] = [
     path: "/cases/{caseNumber}",
     summary: "One case by number: its status, filing date, employer and, once decided, DOL's record. Covers PERM, prevailing wage, H-1B LCA and H-2A, H-2B and CW-1 (applications, job orders and wage requests); a seasonal case adds its workers, work period and worksite, and the job as DOL accepted it.",
     example: "/cases/G-100-26045-123456",
-    params: [{ name: "caseNumber", in: "path", required: true, description: "As DOL prints it, e.g. G-100-26045-123456 or P-100-26045-123456." }],
+    params: [
+      { name: "caseNumber", in: "path", required: true, description: "As DOL prints it, e.g. G-100-26045-123456 or P-100-26045-123456." },
+      {
+        name: "live",
+        in: "query",
+        required: false,
+        description:
+          "1 to ask DOL now when our records don't hold the number yet. Needs the live_lookup scope; Plus has 200 a day, and every account together 20,000.",
+      },
+    ],
     counted: true,
   },
   {
@@ -117,6 +128,21 @@ export const ENDPOINTS: EndpointDoc[] = [
     keyless: true,
   },
   {
+    path: "/exports/{kind}",
+    summary:
+      "A search's whole answer, past one page, as CSV (format=csv) or JSON: cases (the case search's parameters, such as q, firm, state, occupation, from, to, outcome), employers, law-firms or occupations (q). Needs the export scope; Plus exports up to 1,000 rows. Counted as one call.",
+    example: "/exports/employers?q=acme&format=csv",
+    params: [
+      { name: "kind", in: "path", required: true, description: "cases, employers, law-firms or occupations." },
+      { name: "q", in: "query", required: false, description: "The name to search (an employer for cases)." },
+      { name: "format", in: "query", required: false, description: "json (the default) or csv." },
+      { name: "limit", in: "query", required: false, description: "Rows to return, up to the plan's export cap." },
+    ],
+    counted: true,
+    scope: "export",
+    sandboxOwn: true,
+  },
+  {
     path: "/me",
     summary: "Your key's plan, its limits and what you've used today and this month. Not counted.",
     example: "/me",
@@ -145,32 +171,45 @@ export function openApiDocument(): Record<string, unknown> {
   const free = API_PLANS.free;
   const paths: Record<string, unknown> = {};
   for (const e of ENDPOINTS) {
+    const method = (e.method ?? "GET").toLowerCase();
     const errors: Record<string, unknown> = {
       "400": { description: "The request isn't valid. Not counted.", content: { "application/json": { schema: ERROR_SCHEMA } } },
       ...(e.keyless ? {} : { "401": { description: "No key, or a key we don't recognise.", content: { "application/json": { schema: ERROR_SCHEMA } } } }),
+      ...(e.scope || e.method
+        ? { "403": { description: "The key lacks the scope, or the plan lacks the feature. Not counted.", content: { "application/json": { schema: ERROR_SCHEMA } } } }
+        : {}),
       "404": { description: "No such record. Counted.", content: { "application/json": { schema: ERROR_SCHEMA } } },
       "429": { description: "A minute, day or month limit. Retry-After says when it lifts.", content: { "application/json": { schema: ERROR_SCHEMA } } },
     };
-    paths[e.path] = {
-      get: {
-        summary: e.summary,
-        ...(e.keyless ? { security: [] } : {}),
-        parameters: (e.params ?? []).map((p) => ({
-          name: p.name,
-          in: p.in,
-          required: p.required,
-          description: p.description,
-          schema: { type: "string" },
-        })),
-        responses: {
-          "200": {
-            description: "The answer, with `meta.source`, `meta.asOf` and `meta.url` naming where it came from.",
-            content: { "application/json": { schema: { type: "object", properties: { data: {}, meta: { type: "object" } } } } },
-          },
-          ...errors,
+    const op = {
+      summary: e.summary,
+      ...(e.scope ? { description: `Needs a key with the ${e.scope} scope.` } : {}),
+      ...(e.keyless ? { security: [] } : {}),
+      parameters: (e.params ?? []).map((p) => ({
+        name: p.name,
+        in: p.in,
+        required: p.required,
+        description: p.description,
+        schema: { type: "string" },
+      })),
+      ...(e.body
+        ? {
+            requestBody: {
+              required: true,
+              description: e.body.description,
+              content: { "application/json": { schema: { type: "object" }, example: e.body.example } },
+            },
+          }
+        : {}),
+      responses: {
+        "200": {
+          description: "The answer, with `meta.source`, `meta.asOf` and `meta.url` naming where it came from.",
+          content: { "application/json": { schema: { type: "object", properties: { data: {}, meta: { type: "object" } } } } },
         },
+        ...errors,
       },
     };
+    paths[e.path] = { ...((paths[e.path] as Record<string, unknown> | undefined) ?? {}), [method]: op };
   }
   return {
     openapi: "3.1.0",
