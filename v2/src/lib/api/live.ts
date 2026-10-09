@@ -15,10 +15,11 @@
  * 3. the site-wide discovery budget every live ask already charges
  *    (src/lib/turso/caseDiscovery.ts).
  * The first two share one `perm_docs` row a UTC day, `api_live_<date>`, a
- * JSON map of account to count, and the all-accounts count is charged first,
- * so the map holds at most the ceiling's worth of accounts. Refused attempts
- * still count (increment-then-check, like the embed's counter): a flood
- * spends the counter, never DOL.
+ * JSON map of account to count. The account is charged first and the shared
+ * count only when the account was allowed, so an account past its own cap
+ * can't spend the lookups every account shares. Refused attempts still count
+ * against the account (increment-then-check, like the embed's counter): a
+ * flood spends its own counter, never DOL.
  *
  * Every refusal says which ceiling and when it resets, in Eastern time, with
  * the same words the site's case page uses (src/lib/dolMiss.ts).
@@ -52,8 +53,12 @@ export async function chargeLiveLookup(account: string, plan: ApiPlan, now: Date
   if (account === "all" || !/^acct_[0-9A-Za-z]{20}$/.test(account)) return { ok: false, which: "error" };
   const key = counterKey(now);
   try {
-    if ((await bumpDocCount(key, "all", now)) > API_LIVE_DAILY_CAP) return { ok: false, which: "all" };
-    return (await bumpDocCount(key, account, now)) <= plan.liveLookupsPerDay ? { ok: true } : { ok: false, which: "account" };
+    // The account's own count first: an account past its cap is refused
+    // before it touches the ceiling every account shares, so its refused
+    // calls can't spend anybody else's lookups. (A call the shared ceiling
+    // then refuses still counts against the account; it can only cost itself.)
+    if ((await bumpDocCount(key, account, now)) > plan.liveLookupsPerDay) return { ok: false, which: "account" };
+    return (await bumpDocCount(key, "all", now)) <= API_LIVE_DAILY_CAP ? { ok: true } : { ok: false, which: "all" };
   } catch (e) {
     console.error("[apiLive] counter failed:", e instanceof Error ? e.message : e);
     return { ok: false, which: "error" };

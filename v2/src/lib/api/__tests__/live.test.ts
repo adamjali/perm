@@ -33,23 +33,23 @@ beforeEach(() => {
 });
 
 describe("the live-lookup ceilings", () => {
-  it("charges every account together first, then the account, in one row a UTC day", async () => {
+  it("charges the account first, then every account together, in one row a UTC day", async () => {
     expect(await chargeLiveLookup(ACCT, plus, NOW)).toEqual({ ok: true });
     expect(bump.mock.calls.map((c) => [c[0], c[1]])).toEqual([
-      ["api_live_2026-10-09", "all"],
       ["api_live_2026-10-09", ACCT],
+      ["api_live_2026-10-09", "all"],
     ]);
   });
 
-  it("refuses past the API-wide ceiling without charging the account", async () => {
-    bump.mockResolvedValueOnce(API_LIVE_DAILY_CAP + 1);
+  it("refuses past the API-wide ceiling", async () => {
+    bump.mockResolvedValueOnce(5).mockResolvedValueOnce(API_LIVE_DAILY_CAP + 1);
     expect(await chargeLiveLookup(ACCT, plus, NOW)).toEqual({ ok: false, which: "all" });
-    expect(bump).toHaveBeenCalledTimes(1);
   });
 
-  it("refuses past the plan's daily lookups", async () => {
-    bump.mockResolvedValueOnce(5).mockResolvedValueOnce(plus.liveLookupsPerDay + 1);
+  it("refuses past the plan's daily lookups without spending the shared ceiling", async () => {
+    bump.mockResolvedValueOnce(plus.liveLookupsPerDay + 1);
     expect(await chargeLiveLookup(ACCT, plus, NOW)).toEqual({ ok: false, which: "account" });
+    expect(bump.mock.calls.map((c) => c[1])).toEqual([ACCT]);
   });
 
   it("refuses a plan without live lookups before counting anything", async () => {
@@ -117,7 +117,7 @@ describe("a live case lookup", () => {
 
   it("names the limit and its reset in Eastern time when the account's lookups are spent", async () => {
     readCase.mockResolvedValue(missing);
-    bump.mockResolvedValueOnce(1).mockResolvedValueOnce(plus.liveLookupsPerDay + 1);
+    bump.mockResolvedValueOnce(plus.liveLookupsPerDay + 1);
     const r = await readCaseLive("G-100-26270-123456", { account: ACCT, plan: plus }, NOW);
     expect(r).toMatchObject({ ok: false, status: 429, code: "live_daily_limit" });
     expect(r.ok ? "" : r.message).toMatch(/200 live DOL lookups/);
