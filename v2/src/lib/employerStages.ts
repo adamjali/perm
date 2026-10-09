@@ -344,3 +344,50 @@ export function nationalShare(row: EmployerStageRow, status: string, nationwide:
   const mine = row.byStatus[status] ?? 0;
   return total > 0 ? mine / total : 0;
 }
+
+/** One day's employer-wide hold moves, biggest first. */
+export interface HoldDay {
+  date: string;
+  moves: HoldMove[];
+}
+
+/** Hold moves grouped by day, newest day first. */
+export function movesByDay(moves: readonly HoldMove[]): HoldDay[] {
+  const byDate = new Map<string, HoldMove[]>();
+  for (const m of moves) byDate.set(m.date, [...(byDate.get(m.date) ?? []), m]);
+  return [...byDate]
+    .sort((a, b) => (a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0))
+    .map(([date, ms]) => ({ date, moves: [...ms].sort((a, b) => b.n - a.n) }));
+}
+
+const listWords = (xs: string[]) =>
+  xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
+
+/**
+ * A day's moves as one or two plain sentences: the holds first, then the
+ * releases, each naming DOL as the one acting, with no reason (DOL gives none).
+ */
+export function dayHoldSentence(day: HoldDay): string {
+  const on = day.moves.filter((m) => m.dir === "on");
+  const off = day.moves.filter((m) => m.dir === "off");
+  const out: string[] = [];
+  if (on.length === 1) {
+    out.push(`DOL put ${formatInt(on[0]!.n)} of ${on[0]!.name}'s PERM cases on hold.`);
+  } else if (on.length > 1) {
+    out.push(`DOL put PERM cases on hold at ${listWords(on.map((m) => `${m.name} (${formatInt(m.n)})`))}.`);
+  }
+  off.forEach((m, i) => {
+    const lead = i === 0 && on.length === 0 ? "DOL took" : "It took";
+    const where = STATUS_WORDS[m.to] ?? m.to.toLowerCase();
+    out.push(`${lead} ${formatInt(m.n)} of ${m.name}'s cases off hold, ${where}.`);
+  });
+  return out.join(" ");
+}
+
+/** Employers with at least `min` cases on hold, most first. */
+export function heldRanking(rows: readonly EmployerStageRow[], min = 5, take = 10): EmployerStageRow[] {
+  return rows
+    .filter((r) => (r.byStatus[HOLD_STATUS] ?? 0) >= min)
+    .sort((a, b) => (b.byStatus[HOLD_STATUS] ?? 0) - (a.byStatus[HOLD_STATUS] ?? 0))
+    .slice(0, take);
+}

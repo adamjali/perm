@@ -395,7 +395,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
   // Inputs to the decision-pace model, both null-safe, from the SAME helper
   // the daily scorecard records with (see caseEstimateInputs.ts): a graded
   // number must be the number a reader was shown.
-  const { casesAhead, sweepAgeDays } = caseEstimateInputs({
+  const { casesAhead, sweepAgeDays, lineAhead } = caseEstimateInputs({
     backlog,
     filingDate: result?.live?.filingDate ?? null,
     sweepFinishedOn: sweep?.finishedOn ?? null,
@@ -473,6 +473,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       duration={duration}
       estimator={estimator}
       casesAhead={casesAhead}
+      lineAhead={lineAhead}
       decisionPace={decisionPace?.pace ?? null}
       stragglers={stragglers}
       rangeCoverage={rangeCoverage}

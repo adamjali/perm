@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   casesAheadOfDay,
+  lineAheadByMonth,
   deriveActiveRange,
   deriveQueueAhead,
   findVolumeAnomalies,
@@ -296,5 +297,33 @@ describe("inLine: only the ordinary queue is ahead of you", () => {
     const r = aheadOfDay(STAGED, "2026-03-01", { today: "2026-01-31", filingRate: 300 })!;
     expect(r.pending).toBe(600 + 4_800 + 8_950);
     expect(r.projected).toBe(300 * 29);
+  });
+});
+
+describe("lineAheadByMonth", () => {
+  const q = (filingMonth: string, analystReview: number): MonthQueue => ({
+    filingMonth, total: analystReview + 10, pending: analystReview + 5, decided: 5, decidedPct: 50, analystReview,
+  });
+  const months = [
+    q("2025-04", 3), q("2025-05", 0), q("2025-06", 30), q("2025-07", 12), q("2025-08", 41),
+    q("2025-09", 63), q("2025-10", 43), q("2025-11", 463), q("2025-12", 6227),
+  ];
+
+  it("adds up to the same count the date is built from", () => {
+    const rows = lineAheadByMonth(months, "2025-12-16")!;
+    const sum = rows.reduce((a, r) => a + r.n, 0);
+    expect(sum).toBe(casesAheadOfDay(months, "2025-12-16"));
+  });
+
+  it("folds the oldest months into one row and marks the reader's own month", () => {
+    const rows = lineAheadByMonth(months, "2025-12-16", 6)!;
+    expect(rows.map((r) => r.label)).toEqual(["Before Aug 2025", "Aug 2025", "Sep 2025", "Oct 2025", "Nov 2025", "Dec 2025"]);
+    expect(rows[0]!.n).toBe(3 + 30 + 12);
+    expect(rows.at(-1)!.own).toBe(true);
+  });
+
+  it("leaves out the own month on its first day, and is null for a month it doesn't hold", () => {
+    expect(lineAheadByMonth(months, "2025-12-01")!.some((r) => r.own)).toBe(false);
+    expect(lineAheadByMonth(months, "2026-03-10")).toBeNull();
   });
 });

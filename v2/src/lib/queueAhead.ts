@@ -330,3 +330,48 @@ export function findVolumeAnomalies(
   }
   return out;
 }
+
+export interface LineAheadRow {
+  /** "YYYY-MM", or "before:YYYY-MM" for the folded older months. */
+  key: string;
+  /** "Dec 2025", or "Before Jun 2025". */
+  label: string;
+  n: number;
+  /** The reader's own filing month (its earlier days only). */
+  own: boolean;
+}
+
+const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+const monthLabel = (ym: string) => `${MONTH_ABBR[Number(ym.slice(5, 7)) - 1] ?? ""} ${ym.slice(0, 4)}`;
+
+/**
+ * The line ahead of a filing date, month by month: the same count
+ * `casesAheadOfDay` returns, split so a reader can see where it sits. Months
+ * older than the newest `maxRows - 1` with anyone in line fold into one
+ * "Before" row, so the rows always add up to the whole. Null exactly when
+ * `casesAheadOfDay` is.
+ */
+export function lineAheadByMonth(
+  months: readonly MonthQueue[],
+  filingDate: string,
+  maxRows = 8,
+): LineAheadRow[] | null {
+  const total = casesAheadOfDay(months, filingDate);
+  if (total === null) return null;
+  const filingMonth = filingDate.slice(0, 7);
+  const earlier = months
+    .filter((m) => m.filingMonth < filingMonth && inLine(m) > 0)
+    .sort((a, b) => (a.filingMonth < b.filingMonth ? -1 : 1));
+  const own = total - earlier.reduce((a, m) => a + inLine(m), 0);
+  const keepCount = Math.max(1, maxRows - (own > 0 ? 2 : 1));
+  const older = earlier.slice(0, Math.max(0, earlier.length - keepCount));
+  const kept = earlier.slice(older.length);
+  const rows: LineAheadRow[] = [];
+  if (older.length) {
+    const first = kept[0]?.filingMonth ?? filingMonth;
+    rows.push({ key: `before:${first}`, label: `Before ${monthLabel(first)}`, n: older.reduce((a, m) => a + inLine(m), 0), own: false });
+  }
+  for (const m of kept) rows.push({ key: m.filingMonth, label: monthLabel(m.filingMonth), n: inLine(m), own: false });
+  if (own > 0) rows.push({ key: filingMonth, label: monthLabel(filingMonth), n: own, own: true });
+  return rows;
+}

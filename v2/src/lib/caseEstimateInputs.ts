@@ -10,7 +10,7 @@
  * Plain module (no server-only) so the unit project can test it.
  */
 
-import { casesAheadOfDay, type MonthQueue } from "@/lib/queueAhead";
+import { casesAheadOfDay, lineAheadByMonth, type LineAheadRow, type MonthQueue } from "@/lib/queueAhead";
 import { MS_PER_DAY } from "@/lib/time";
 
 export interface BacklogRow {
@@ -28,7 +28,7 @@ export function caseEstimateInputs(input: {
   /** The sweep's own finish date, `YYYY-MM-DD`, or null when unknown. */
   sweepFinishedOn: string | null;
   today: string;
-}): { casesAhead: number | null; sweepAgeDays: number | null } {
+}): { casesAhead: number | null; sweepAgeDays: number | null; lineAhead: LineAheadRow[] | null } {
   const { backlog, filingDate, sweepFinishedOn, today } = input;
   // A MISSING SWEEP RECORD IS NOT TREATED AS STALE: `getDecisionPace` refuses
   // a series whose newest day is more than three days old, and the same sweep
@@ -50,5 +50,7 @@ export function caseEstimateInputs(input: {
     analystReview: m.analystReview,
   }));
   const casesAhead = filingDate ? casesAheadOfDay(months, filingDate) : null;
-  return { casesAhead, sweepAgeDays };
+  // The same count split by month, for the page's bars; its rows add up to it.
+  const lineAhead = filingDate ? lineAheadByMonth(months, filingDate) : null;
+  return { casesAhead, sweepAgeDays, lineAhead };
 }

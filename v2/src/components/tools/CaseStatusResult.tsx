@@ -15,6 +15,8 @@ import {
   ESTIMATE_ANCHOR,
 } from "@/components/tools/CaseEstimate";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
+import { LineAhead } from "@/components/tools/LineAhead";
+import type { LineAheadRow } from "@/lib/queueAhead";
 import { SameDayCases } from "@/components/tools/SameDayCases";
 import { QueueTape } from "@/components/tools/QueueTape";
 import {
@@ -95,6 +97,8 @@ export interface CaseStatusResultProps {
   estimator: Parameters<typeof CaseEstimate>[0]["estimator"];
   /** Undecided cases filed before this one, or null when uncountable. */
   casesAhead?: number | null;
+  /** The same line split by filing month (lineAheadByMonth); drawn for a case in analyst review. */
+  lineAhead?: LineAheadRow[] | null;
   /** DOL's measured decision rate, or null when unmeasurable. */
   decisionPace?: Parameters<typeof CaseEstimate>[0]["decisionPace"];
   sweepAgeDays?: number | null;
@@ -144,6 +148,7 @@ export function CaseStatusResult({
   duration,
   estimator,
   casesAhead = null,
+  lineAhead = null,
   decisionPace = null,
   sweepAgeDays = null,
   stragglers = null,
@@ -306,6 +311,9 @@ export function CaseStatusResult({
           most readers here, answered by the canonical models and adjusted for
           the stage this case is actually at. Renders nothing when no
           defensible estimate exists. */}
+      {!isFinal && status?.trim().toUpperCase() === "ANALYST REVIEW" && lineAhead && lineAhead.length > 0 ? (
+        <LineAhead rows={lineAhead} perDay={decisionPace?.pace ?? null} />
+      ) : null}{" "}
       {estimate ? <CaseEstimatePanel est={estimate} dateShownAbove={!isFinal} /> : null}{" "}
       {/* Only while the case can still change. On a decided one this would
           promise mail that can never arrive. Directly beneath the estimate on
