@@ -13,6 +13,7 @@ import { fetchAction, fetchMutation } from "convex/nextjs";
 import { NextResponse } from "next/server";
 
 import { api } from "@convex/_generated/api";
+import { NO_WEBHOOKS_MESSAGE } from "@convex/lib/apiPlans";
 import { WEBHOOK_EVENTS } from "@convex/lib/webhookSign";
 
 import { admitKeyed, apiError, settle, type Admitted } from "./route";
@@ -47,7 +48,9 @@ function answer(admitted: Admitted, status: number, data: unknown): NextResponse
 }
 
 function refused(admitted: Admitted, message: string): NextResponse {
-  // Convex's own refusals: a plan's room, a bad address, a scope. Not counted.
+  // Convex's own refusals: a plan without webhooks, a plan's room, a bad
+  // address, a scope. Not counted.
+  if (message === NO_WEBHOOKS_MESSAGE) return apiError(403, "plan_feature", message, { headers: settle(admitted, false) });
   const status = /plan has|plan watches/.test(message) ? 403 : /scope|can't manage|Sandbox/.test(message) ? 403 : 400;
   return apiError(status, status === 403 ? "refused" : "bad_request", message, { headers: settle(admitted, false) });
 }

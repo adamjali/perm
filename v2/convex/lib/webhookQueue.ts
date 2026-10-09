@@ -11,7 +11,27 @@
 import type { MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
+import { entitlement } from "./apiPlans";
 import type { WebhookEvent } from "./webhookSign";
+
+/** The endpoints whose account's plan, as it applies now, carries webhooks. */
+async function withWebhooks(ctx: MutationCtx, endpoints: Doc<"webhookEndpoints">[]): Promise<Doc<"webhookEndpoints">[]> {
+  const allowed = new Map<string, boolean>();
+  const out: Doc<"webhookEndpoints">[] = [];
+  for (const e of endpoints) {
+    let ok = allowed.get(e.account);
+    if (ok === undefined) {
+      const acct = await ctx.db
+        .query("apiAccounts")
+        .withIndex("by_account", (q) => q.eq("account", e.account))
+        .unique();
+      ok = entitlement(acct?.plan).plan.webhookEndpoints > 0;
+      allowed.set(e.account, ok);
+    }
+    if (ok) out.push(e);
+  }
+  return out;
+}
 
 /** What every delivery body looks like: Standard Webhooks' type, timestamp and data. */
 export function eventBody(type: WebhookEvent | "ping", data: Record<string, unknown>, at: number): string {
@@ -70,6 +90,10 @@ export async function enqueueEvent(
       if (e.events.includes(args.type)) targets.push(e);
     }
   }
+  // Only accounts whose plan carries webhooks are told: once the paywall is
+  // on, a Free account's endpoints stay listed (so Settings can show and
+  // delete them) and receive nothing.
+  targets = await withWebhooks(ctx, targets);
   if (targets.length === 0 && !args.onlyEndpoint) {
     // Nobody to tell: keep no event, so the table holds only what was sent.
     // A feed's own state (convex/webhookSweeps.ts) still records that it was seen.

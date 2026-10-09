@@ -62,11 +62,10 @@ describe("what each plan allows", () => {
     });
   });
 
-  it("lets every plan hold sandbox keys and at least one webhook endpoint", () => {
-    for (const p of Object.values(API_PLANS)) {
-      expect(p.sandboxKeys).toBeGreaterThan(0);
-      expect(p.webhookEndpoints).toBeGreaterThan(0);
-    }
+  it("lets every plan hold sandbox keys, and keeps webhooks, exports and live lookups for Plus", () => {
+    for (const p of Object.values(API_PLANS)) expect(p.sandboxKeys).toBeGreaterThan(0);
+    expect(API_PLANS.free).toMatchObject({ exportRows: 0, liveLookupsPerDay: 0, webhookEndpoints: 0, webhookWatches: 0 });
+    expect(API_PLANS.plus.webhookEndpoints).toBeGreaterThan(0);
   });
 });
 

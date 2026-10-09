@@ -40,7 +40,7 @@ export interface ApiPlan {
   exportRows: number;
   /** Live DOL lookups a day for the account. 0: none on this plan. */
   liveLookupsPerDay: number;
-  /** Webhook endpoints the account may register. */
+  /** Webhook endpoints the account may register. 0: no webhooks on this plan. */
   webhookEndpoints: number;
   /** Case numbers and employers the account's webhooks may watch. */
   webhookWatches: number;
@@ -57,8 +57,8 @@ export const API_PLANS: Record<ApiPlanId, ApiPlan> = {
     perMonth: 3_000,
     exportRows: 0,
     liveLookupsPerDay: 0,
-    webhookEndpoints: 2,
-    webhookWatches: 10,
+    webhookEndpoints: 0,
+    webhookWatches: 0,
   },
   plus: {
     id: "plus",
@@ -74,6 +74,9 @@ export const API_PLANS: Record<ApiPlanId, ApiPlan> = {
     webhookWatches: 100,
   },
 };
+
+/** The refusal for a plan with no webhooks: one sentence, used by every door. */
+export const NO_WEBHOOKS_MESSAGE = "Webhooks come with the Plus plan.";
 
 export function apiPlan(id: string | null | undefined): ApiPlan {
   return id === "plus" ? API_PLANS.plus : API_PLANS.free;

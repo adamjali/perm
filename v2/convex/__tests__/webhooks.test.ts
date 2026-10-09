@@ -67,7 +67,7 @@ describe("making an endpoint", () => {
     expect((await as(t, userId).action(api.webhooks.createEndpoint, { url: "https://x.example.com", events: ["nope"] })).ok).toBe(false);
   });
 
-  it("holds an account to its plan's endpoints: five while the paywall is off, two on Free once it's on", async () => {
+  it("holds an account to its plan's endpoints: five while the paywall is off, none on Free once it's on", async () => {
     const t = createTestContext();
     const userId = await makeUser(t, "dev@example.com");
     for (let i = 0; i < 5; i++) await endpoint(t, userId, ["queue.moved"], `https://h${i}.example.com/x`);
@@ -76,10 +76,24 @@ describe("making an endpoint", () => {
     vi.stubEnv("PAYWALL_ENFORCED", "1");
     const t2 = createTestContext();
     const other = await makeUser(t2, "free@example.com");
-    await endpoint(t2, other, ["queue.moved"], "https://a.example.com/x");
-    await endpoint(t2, other, ["queue.moved"], "https://b.example.com/x");
-    const third = await as(t2, other).action(api.webhooks.createEndpoint, { url: "https://c.example.com/x", events: ["queue.moved"] });
-    expect(third).toEqual({ ok: false, message: "The Free plan has 2 webhook endpoints. Delete one to add another." });
+    const first = await as(t2, other).action(api.webhooks.createEndpoint, { url: "https://a.example.com/x", events: ["queue.moved"] });
+    expect(first).toEqual({ ok: false, message: "Webhooks come with the Plus plan." });
+    const watch = await as(t2, other).action(api.webhooks.addWatch, { kind: "case", target: "G-100-26045-123456" });
+    expect(watch).toEqual({ ok: false, message: "Webhooks come with the Plus plan." });
+    expect(await t2.run((ctx) => ctx.db.query("webhookEndpoints").collect())).toHaveLength(0);
+  });
+
+  it("stops delivering to a Free account's endpoints once the paywall is on", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId, ["queue.moved"]);
+    vi.stubEnv("PAYWALL_ENFORCED", "1");
+    const r = await t.mutation(internal.webhookSweeps.processingTimesPublished, { permAsOf: "2026-10-01", analystMonth: "2025-12" });
+    expect(r).toEqual({ updated: false, moved: false });
+    await t.mutation(internal.webhookSweeps.processingTimesPublished, { permAsOf: "2026-10-08", analystMonth: "2026-01" });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect(sent).toHaveLength(0);
+    expect(await t.run((ctx) => ctx.db.query("webhookDeliveries").collect())).toHaveLength(0);
   });
 });
 

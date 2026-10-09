@@ -37,7 +37,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { extractUserIdFromAction, getCurrentUserIdOrNull, isEmailVerified } from "./lib/auth";
 import { API_KEY_HASH_RE, randomBase62 } from "./lib/apiKeyFormat";
-import { entitlement, hasScope } from "./lib/apiPlans";
+import { NO_WEBHOOKS_MESSAGE, entitlement, hasScope } from "./lib/apiPlans";
 import { encryptToken } from "./lib/crypto";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { easternDay, MS_PER_HOUR } from "./lib/time";
@@ -274,6 +274,7 @@ export const insertEndpoint = internalMutation({
       throw new Error("insertEndpoint needs a user or a key");
     }
     const { plan } = entitlement(acct?.plan);
+    if (plan.webhookEndpoints === 0) return { ok: false, message: NO_WEBHOOKS_MESSAGE };
     if (acct) {
       const have = await endpointsOf(ctx, acct.account);
       if (have.length >= plan.webhookEndpoints) {
@@ -304,6 +305,15 @@ async function ownEndpoint(ctx: MutationCtx, endpointId: string): Promise<Doc<"w
   const e = id ? await ctx.db.get(id) : null;
   if (!e || e.userId !== userId) throw new ConvexError("That webhook isn't one of yours.");
   return e;
+}
+
+/** Sending, resending and resuming need a plan that carries webhooks; deleting never does. */
+async function requireWebhookPlan(ctx: MutationCtx, account: string): Promise<void> {
+  const acct = await ctx.db
+    .query("apiAccounts")
+    .withIndex("by_account", (q) => q.eq("account", account))
+    .unique();
+  if (entitlement(acct?.plan).plan.webhookEndpoints === 0) throw new ConvexError(NO_WEBHOOKS_MESSAGE);
 }
 
 async function removeEndpoint(ctx: MutationCtx, e: Doc<"webhookEndpoints">): Promise<void> {
@@ -344,6 +354,7 @@ export const resumeEndpoint = mutation({
   returns: v.object({ released: v.number() }),
   handler: async (ctx, args) => {
     const e = await ownEndpoint(ctx, args.endpointId);
+    await requireWebhookPlan(ctx, e.account);
     await ctx.db.patch(e._id, { pausedAt: undefined, pauseReason: undefined, pauseNotifiedAt: undefined });
     const now = Date.now();
     let released = 0;
@@ -375,6 +386,7 @@ export const sendTest = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const e = await ownEndpoint(ctx, args.endpointId);
+    await requireWebhookPlan(ctx, e.account);
     await chargeManualSend(ctx, e.userId);
     await enqueueEvent(ctx, {
       type: "ping",
@@ -398,6 +410,7 @@ export const resend = mutation({
     const e = d ? await ctx.db.get(d.endpointId) : null;
     if (!d || !e || e.userId !== userId) throw new ConvexError("That delivery isn't one of yours.");
     if (!(await ctx.db.get(d.eventId))) throw new ConvexError("That event is past the 30 days the log keeps.");
+    await requireWebhookPlan(ctx, e.account);
     await chargeManualSend(ctx, userId);
     const now = Date.now();
     await ctx.db.insert("webhookDeliveries", {
@@ -467,6 +480,7 @@ export const insertWatch = internalMutation({
     } else {
       throw new Error("insertWatch needs a user or a key");
     }
+    if (entitlement(acct?.plan).plan.webhookWatches === 0) return { ok: false as const, message: NO_WEBHOOKS_MESSAGE };
     if (!acct) {
       const id = await ctx.db.insert("apiAccounts", { userId, account: args.newAccount, plan: "free", createdAt: Date.now() });
       acct = await ctx.db.get(id);

@@ -16,6 +16,7 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import { BinocularsIcon, CopyIcon, WebhooksLogoIcon } from "@phosphor-icons/react/ssr";
 
 import { api } from "@convex/_generated/api";
+import { NO_WEBHOOKS_MESSAGE } from "@convex/lib/apiPlans";
 import { WEBHOOK_EVENTS, WEBHOOK_EVENT_LABELS, type WebhookEvent } from "@convex/lib/webhookSign";
 import { checkedLabel } from "@/lib/time";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,7 @@ export default function WebhooksSection() {
   if (mine === undefined) return <Skeleton className="h-64 w-full" />;
   if (mine === null) return null;
 
+  const noWebhooks = mine.endpointsAllowed === 0;
   const atEndpointLimit = mine.endpoints.length >= mine.endpointsAllowed;
   const atWatchLimit = mine.watches.length >= mine.watchesAllowed;
   const urlById = new Map(mine.endpoints.map((e) => [e.id, e.url]));
@@ -119,7 +121,11 @@ export default function WebhooksSection() {
       <SettingsCard
         icon={WebhooksLogoIcon}
         title="Webhooks"
-        description={`Signed calls to your server when something changes. ${mine.planLabel} plan: ${mine.endpointsAllowed} endpoints.`}
+        description={
+          noWebhooks
+            ? `Signed calls to your server when something changes. ${NO_WEBHOOKS_MESSAGE}`
+            : `Signed calls to your server when something changes. ${mine.planLabel} plan: ${mine.endpointsAllowed} endpoints.`
+        }
       >
         {secret && (
           <div className="mb-6 border-2 border-border bg-primary/15 p-4" role="status">
@@ -187,7 +193,11 @@ export default function WebhooksSection() {
           </ul>
         )}
 
-        {atEndpointLimit ? (
+        {noWebhooks ? (
+          <p className="text-sm text-muted-foreground">
+            {NO_WEBHOOKS_MESSAGE} Endpoints you already have stay here, and receive nothing until then.
+          </p>
+        ) : atEndpointLimit ? (
           <p className="text-sm text-muted-foreground">
             The {mine.planLabel} plan has {mine.endpointsAllowed} endpoints. Delete one to add another.
           </p>
@@ -236,7 +246,11 @@ export default function WebhooksSection() {
       <SettingsCard
         icon={BinocularsIcon}
         title="What your webhooks watch"
-        description={`Case numbers and employers for case.status_changed and employer.moved. ${mine.planLabel} plan: ${mine.watchesAllowed} watches.`}
+        description={
+          noWebhooks
+            ? "Case numbers and employers for case.status_changed and employer.moved."
+            : `Case numbers and employers for case.status_changed and employer.moved. ${mine.planLabel} plan: ${mine.watchesAllowed} watches.`
+        }
       >
         {mine.watches.length > 0 && (
           <ul className="mb-6 divide-y-2 divide-border border-y-2 border-border">
@@ -260,7 +274,9 @@ export default function WebhooksSection() {
             ))}
           </ul>
         )}
-        {atWatchLimit ? (
+        {noWebhooks ? (
+          <p className="text-sm text-muted-foreground">{NO_WEBHOOKS_MESSAGE}</p>
+        ) : atWatchLimit ? (
           <p className="text-sm text-muted-foreground">
             The {mine.planLabel} plan watches {mine.watchesAllowed}. Remove one to add another.
           </p>

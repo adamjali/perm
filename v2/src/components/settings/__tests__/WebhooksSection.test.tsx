@@ -23,6 +23,18 @@ const BASE = {
   deliveries: [] as unknown[],
 };
 
+const ENDPOINT = {
+  id: "e2",
+  url: "https://h.example.com/live",
+  events: ["case.status_changed"],
+  secretHint: "XyZ=",
+  createdAt: 0,
+  pausedAt: null,
+  pauseReason: null,
+  lastDeliveryAt: null,
+  lastStatusCode: null,
+};
+
 beforeEach(() => {
   state = BASE;
   createEndpoint.mockReset();
@@ -74,9 +86,18 @@ describe("WebhooksSection", () => {
   });
 
   it("says when the plan's endpoints are all used", () => {
-    state = { ...BASE, endpointsAllowed: 0 };
+    state = { ...BASE, endpointsAllowed: 1, endpoints: [ENDPOINT] };
     render(<WebhooksSection />);
     expect(screen.getByText(/Delete one to add another/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add the endpoint" })).toBeNull();
+  });
+
+  it("says webhooks come with Plus on a plan that has none, and keeps the delete button", () => {
+    state = { ...BASE, planLabel: "Free", endpointsAllowed: 0, watchesAllowed: 0, endpoints: [ENDPOINT] };
+    render(<WebhooksSection />);
+    expect(screen.getAllByText(/Webhooks come with the Plus plan/).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Add the endpoint" })).toBeNull();
+    expect(screen.queryByText(/Free plan: 0/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
   });
 });
