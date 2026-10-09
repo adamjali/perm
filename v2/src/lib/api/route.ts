@@ -154,7 +154,11 @@ export interface ApiGetOptions<P extends Record<string, string>> {
 
 export function readResponse(result: ReadResult<unknown>, headers: Record<string, string>): NextResponse {
   if (!result.ok) {
-    return apiError(result.status, result.code, result.message, { url: result.url, headers });
+    return apiError(result.status, result.code, result.message, {
+      url: result.url,
+      headers,
+      ...(result.retryAfter !== undefined ? { retryAfter: result.retryAfter } : {}),
+    });
   }
   return NextResponse.json({ data: result.data, meta: result.meta }, { headers: { ...BASE_HEADERS, ...headers } });
 }

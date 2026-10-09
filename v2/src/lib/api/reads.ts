@@ -38,7 +38,7 @@ export interface ApiMeta {
 
 export type ReadResult<T> =
   | { ok: true; data: T; meta: ApiMeta }
-  | { ok: false; status: 400 | 404 | 503; code: string; message: string; url?: string };
+  | { ok: false; status: 400 | 403 | 404 | 429 | 503; code: string; message: string; url?: string; retryAfter?: number };
 
 const DOL_SOURCE = "U.S. Department of Labor, FLAG case status (flag.dol.gov) and OFLC disclosure files";
 const PROGRAM_NAMES: Record<FlagProgram, string> = {
