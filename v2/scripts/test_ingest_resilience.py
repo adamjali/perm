@@ -51,6 +51,7 @@ NOMEM = {"message": "SQLite error: out of memory", "code": "SQLITE_NOMEM"}
 CONSTRAINT = {"message": "UNIQUE constraint failed: t.id", "code": "SQLITE_CONSTRAINT"}
 BLOCKED = {"message": "BLOCKED: SQL write operations are forbidden",
            "code": "BLOCKED"}
+FULL = {"message": "SQLite error: database or disk is full", "code": "SQLITE_FULL"}
 
 
 def _py(cell: dict):
@@ -251,6 +252,43 @@ def main() -> int:
           after - before == 1,
           f"{after - before} rows added - a retried AUTOINCREMENT INSERT "
           f"double-books one run and corrupts the audit trail")
+
+    # record_run says whether its row landed, so a run can go red when the
+    # row that would have told the health check never did (Oct 10 2026: a full
+    # disk refused it and the sweep stayed green).
+    s = FakeHrana()
+    check("record_run reports True when the row is written",
+          lib_turso.record_run(with_server(s), "probe.py", status="ok") is True)
+    s = FakeHrana(fail_posts=99, error=FULL, apply_then_fail=False,
+                  fail_on="INSERT INTO ingest_runs")
+    landed = lib_turso.record_run(with_server(s), "probe.py", status="ok")
+    check("record_run reports False when a full disk refuses the row, without raising",
+          landed is False and s.count("ingest_runs") == 0, f"returned {landed!r}")
+
+    # A step that fails and carries on leaves a line for the workflow's last
+    # step, written before the database is asked, so it lands when the
+    # database is the thing that is down.
+    import os
+    import tempfile
+    import record_ingest_failure as rif
+    with tempfile.TemporaryDirectory() as tmp:
+        saved = {k: os.environ.get(k) for k in ("GITHUB_ACTIONS", "RUNNER_TEMP")}
+        try:
+            os.environ.pop("GITHUB_ACTIONS", None)
+            os.environ["RUNNER_TEMP"] = tmp
+            check("outside GitHub Actions nothing is noted", rif.mark_run_failed("a.py") is False)
+            os.environ["GITHUB_ACTIONS"] = "true"
+            rif.mark_run_failed("sweep_serial_gaps.py")
+            rif.mark_run_failed("build_straggler_rates.py")
+            lines = pathlib.Path(tmp, "pt-failed-steps").read_text().split()
+            check("inside a workflow each failed step is noted for the run",
+                  lines == ["sweep_serial_gaps.py", "build_straggler_rates.py"], str(lines))
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
 
     # record_sweep: same shape, and it is the freshness claim itself.
     s = FakeHrana(fail_posts=1, apply_then_fail=True,

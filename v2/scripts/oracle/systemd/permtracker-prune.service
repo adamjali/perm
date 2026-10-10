@@ -7,5 +7,7 @@ Nice=19
 IOSchedulingClass=idle
 CPUWeight=10
 IOWeight=10
-MemoryMax=512M
-TimeoutStartSec=20min
+# Oct 10 2026: the first pass after the route-cache fix walked 84,000 pages,
+# took 17.8 minutes and peaked at its 512 MB cap. Room for the next catch-up.
+MemoryMax=1G
+TimeoutStartSec=45min

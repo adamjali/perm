@@ -1,0 +1,10 @@
+[Unit]
+Description=PERM Tracker alarm: email the owner at once when the disk, memory, a job or a backup heads into trouble
+[Service]
+Type=oneshot
+# Its memory is in /run and it never writes to the disk, so it keeps working
+# when the disk is full (Oct 10 2026). Root: it reads /etc/permtracker and may
+# delete page caches.
+ExecStart=/usr/local/sbin/permtracker-alarm
+TimeoutStartSec=2min
+Nice=5

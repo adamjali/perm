@@ -32,6 +32,21 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 
+def mark_run_failed(script: str) -> bool:
+    """Append the script's name to $RUNNER_TEMP/pt-failed-steps (in GitHub Actions only)."""
+    import os
+    tmp = os.environ.get("RUNNER_TEMP")
+    if not os.environ.get("GITHUB_ACTIONS") or not tmp:
+        return False
+    try:
+        with open(os.path.join(tmp, "pt-failed-steps"), "a") as fh:
+            fh.write(script.replace("\n", " ") + "\n")
+        return True
+    except OSError as exc:
+        print(f"::warning::could not note the failed step for the run: {exc}")
+        return False
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--script", required=True,
@@ -48,6 +63,12 @@ def main() -> int:
         # exists to feed. Refuse, loudly, without failing the job.
         print("::error::record_ingest_failure refuses to write status 'ok'")
         return 0
+
+    # Inside a workflow, the step's failure is also noted for the run itself,
+    # BEFORE the database is asked: the workflow's last step turns the run red
+    # when this file has a line, so a failure shows the same morning even when
+    # the database refuses the row below (Oct 10 2026, a full disk).
+    mark_run_failed(args.script)
 
     try:
         from lib_turso import Turso, query_rows, record_run

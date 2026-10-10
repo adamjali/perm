@@ -50,6 +50,28 @@ def net_counters():
     return rx, tx
 
 
+def disk_hours_to_full(samples: list, now: float, window_s: int = 6 * 3600):
+    """Hours until free disk reaches zero at the last six hours' rate, or None.
+
+    None when free disk is not falling, or with under two hours of readings.
+    On Oct 9 2026 this would have read about 23 hours with 82 GB still free.
+    """
+    pts = [(s["t"], s["disk"]) for s in samples
+           if s.get("disk") is not None and now - s["t"] <= window_s]
+    if len(pts) < 3 or pts[-1][0] - pts[0][0] < 2 * 3600:
+        return None
+    n = len(pts)
+    mt = sum(t for t, _ in pts) / n
+    mf = sum(f for _, f in pts) / n
+    var = sum((t - mt) ** 2 for t, _ in pts)
+    if not var:
+        return None
+    per_hour = -sum((t - mt) * (f - mf) for t, f in pts) / var * 3600
+    if per_hour <= 0.1:
+        return None
+    return round(pts[-1][1] / per_hour, 1)
+
+
 def meminfo():
     m = {}
     for line in open("/proc/meminfo"):
@@ -169,7 +191,10 @@ def main():
     except (OSError, ValueError):
         pass
     samples = [s for s in samples if now - s["t"] <= WEEK_S]
-    samples.append({"t": round(now), "cpu": cpu, "mem": mem, "net": net})
+    # Free disk in GB per sample since Oct 10 2026, so the report can say when
+    # the disk will be full instead of saying it is full (disk_hours_to_full).
+    samples.append({"t": round(now), "cpu": cpu, "mem": mem, "net": net,
+                    "disk": round(disk.free / 1024 ** 3, 1)})
     tmp = SAMPLES.with_suffix(".tmp")
     tmp.write_text("".join(json.dumps(s) + "\n" for s in samples))
     tmp.replace(SAMPLES)
@@ -256,6 +281,8 @@ def main():
             "cpuPct": cpu, "memPct": mem, "netPct": net,
             "load1": float(open("/proc/loadavg").read().split()[0]),
             "diskPct": round(100 * disk.used / disk.total, 1),
+            "diskFreeGB": round(disk.free / 1024 ** 3, 1),
+            "diskHoursToFull": disk_hours_to_full(samples, now),
             "dbBytes": db_bytes,
             "dbDataBytes": data_bytes,
             "lockedMb": m.get("Mlocked", 0) // 1024,

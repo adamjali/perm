@@ -2377,6 +2377,19 @@ export default defineSchema({
    * itself gave (its `x-resend-daily-quota` header, or its list of sent mail
    * plus a margin for received mail). The day's use is the larger of the two.
    */
+  /**
+   * The off-server check on the server (convex/serverWatch.ts): one row, the
+   * alarm's state, so it emails when trouble starts, every 6 hours while it
+   * lasts, and once on recovery.
+   */
+  serverWatch: defineTable({
+    key: v.string(),
+    down: v.boolean(),
+    since: v.number(),
+    mailedAt: v.number(),
+    reason: v.string(),
+  }).index("by_key", ["key"]),
+
   emailDays: defineTable({
     day: v.string(),
     sent: v.number(),

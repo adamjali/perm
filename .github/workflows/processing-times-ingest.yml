@@ -171,3 +171,18 @@ jobs:
         env:
           CROSS_CHECK_API: ${{ secrets.CROSS_CHECK_API }}
         run: python3 scripts/cross_check_sources.py
+
+      # A step that failed and carried on (each leaves a line in this file,
+      # through record_ingest_failure.py or its own `||` branch) still turns the
+      # run red, so GitHub says so that morning. Oct 10 2026: a full disk failed
+      # ten doc writes and four steps, the run stayed green, and the health
+      # check, which reads rows in the database, had no row to read.
+      - name: Fail the run when a step failed and carried on
+        if: always()
+        run: |
+          f="$RUNNER_TEMP/pt-failed-steps"
+          if [ -s "$f" ]; then
+            echo "::error::these steps failed and the run carried on: $(sort -u "$f" | paste -sd ',' -)"
+            exit 1
+          fi
+          echo "every step that ran finished clean"

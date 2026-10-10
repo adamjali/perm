@@ -1,0 +1,8 @@
+[Unit]
+Description=PERM Tracker alarm, every 5 minutes
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+AccuracySec=10s
+[Install]
+WantedBy=timers.target

@@ -398,14 +398,17 @@ def record_run(
     rows_written: int | None = None,
     note: str = "",
     started_at: float | None = None,
-) -> None:
-    """Append one row to the ingest audit trail.
+) -> bool:
+    """Append one row to the ingest audit trail; True when the row was written.
 
     A freshness stamp is overwritten every run and can't show a history; this
     table is append-only, so "why did this table change, and to what?" has an
     answer after the fact (rows_written makes a sudden drop visible).
 
     Never raises: an audit write that fails must not fail the ingest it audits.
+    It returns False instead, so a caller can go red when the row that would
+    have told the health check about it never landed (Oct 10 2026: a full disk
+    failed 10 of 11 doc writes AND this row, and the run stayed green).
     """
     try:
         db.execute(
@@ -431,8 +434,10 @@ def record_run(
             [script, status, rows_written, note, started_ms, now],
             retry_transient=False,
         )
+        return True
     except Exception as exc:  # noqa: BLE001 - audit must never break the ingest
         print(f"  [record_run] audit write failed (non-fatal): {exc}", flush=True)
+        return False
 
 
 # ---------------------------------------------------------------------------

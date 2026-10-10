@@ -485,4 +485,21 @@ crons.interval(
   {},
 );
 
+// ============================================================================
+// THE SERVER, WATCHED FROM OUTSIDE
+// ============================================================================
+
+/**
+ * Every 15 minutes: the server's health report is fresh, its database
+ * answers, its disk has room (convex/serverWatch.ts). Off the server so it
+ * works when the server cannot report (Oct 10 2026, a full disk). Acts only
+ * where SERVER_WATCH=on.
+ */
+crons.interval(
+  "server-watch",
+  { minutes: 15 },
+  internal.serverWatch.check,
+  {},
+);
+
 export default crons;

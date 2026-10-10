@@ -86,22 +86,22 @@ jobs:
           # The searchable live remainder rebuilds right after, so the case
           # search and the employer pages see today's discoveries. A failure
           # here leaves the band a day staler; it must not fail the sweep.
-          python3 scripts/build_entity_detail.py --live-recent-only || true
+          python3 scripts/build_entity_detail.py --live-recent-only || echo "build_entity_detail.py" >> "$RUNNER_TEMP/pt-failed-steps"
           # Which employer page every spelling in every program belongs to
           # (employer_page_map), and a page for every employer with no PERM
           # record (employer_other_index). It runs after the live-only rebuild
           # because a live-only employer's spellings go to that page, and adds
           # the pages it changed to the expiry list below.
-          timeout 30m python3 scripts/build_employer_map.py || true
+          timeout 30m python3 scripts/build_employer_map.py || echo "build_employer_map.py" >> "$RUNNER_TEMP/pt-failed-steps"
           # Each PERM sponsor's record, ranked part by part against the others
           # (the employer page's profile and the sponsor finder). Reads the map
           # above, so it runs after it.
-          timeout 20m python3 scripts/build_sponsor_index.py || true
+          timeout 20m python3 scripts/build_sponsor_index.py || echo "build_sponsor_index.py" >> "$RUNNER_TEMP/pt-failed-steps"
           # H-1B LCAs by worksite city, for the city pages (and a page for each
           # city with 20+ LCAs and no PERM page). Links employers through the map.
-          timeout 20m python3 scripts/build_lca_cities.py || true
+          timeout 20m python3 scripts/build_lca_cities.py || echo "build_lca_cities.py" >> "$RUNNER_TEMP/pt-failed-steps"
           # Where H-1B prevailing wages come from (the /lca-wage-sources page).
-          timeout 15m python3 scripts/build_wage_sources.py || true
+          timeout 15m python3 scripts/build_wage_sources.py || echo "build_wage_sources.py" >> "$RUNNER_TEMP/pt-failed-steps"
 
       # The walk only moves forward, so this is its second look: it re-asks DOL
       # about the holes in the trailing 90 day codes and writes only what DOL
@@ -223,3 +223,18 @@ jobs:
             --script "ingest_case_status_direct.py --${MODE:-unknown}" \
             --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
             --note "case-status-direct: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+      # A step that failed and carried on (each leaves a line in this file,
+      # through record_ingest_failure.py or its own `||` branch) still turns the
+      # run red, so GitHub says so that morning. Oct 10 2026: a full disk failed
+      # ten doc writes and four steps, the run stayed green, and the health
+      # check, which reads rows in the database, had no row to read.
+      - name: Fail the run when a step failed and carried on
+        if: always()
+        run: |
+          f="$RUNNER_TEMP/pt-failed-steps"
+          if [ -s "$f" ]; then
+            echo "::error::these steps failed and the run carried on: $(sort -u "$f" | paste -sd ',' -)"
+            exit 1
+          fi
+          echo "every step that ran finished clean"

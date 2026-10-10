@@ -71,7 +71,8 @@ def setup(root: pathlib.Path) -> pathlib.Path:
         (bindir / name).write_text(body)
         (bindir / name).chmod(0o755)
     script = root / "watchdog"
-    script.write_text(SCRIPT.read_text().replace("/srv/permtracker", str(srv)))
+    script.write_text(SCRIPT.read_text().replace("/srv/permtracker", str(srv))
+                      .replace("/run/permtracker", str(srv / "run")))
     script.chmod(0o755)
     return srv
 

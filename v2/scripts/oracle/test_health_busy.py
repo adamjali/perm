@@ -77,5 +77,17 @@ check("no log, no answer (never zero)", health.busy_seen(NOW, pathlib.Path("/non
 empty = run([""])
 check("an empty log is zero people", empty is not None and empty["last24h"]["people"] == 0 and empty["days"] == [])
 
+# The disk's trend (Oct 10 2026): Oct 9's 3.5 GB an hour from 82.6 GB reads
+# about 23.6 hours to full; a flat disk or under two hours of readings, none.
+T = 1_791_500_000
+fall = [{"t": T + i * 600, "disk": round(82.6 - 3.5 * i / 6, 2)} for i in range(19)]
+h = health.disk_hours_to_full(fall, T + 18 * 600)
+check("Oct 9's fall reads about 21 hours to full from its last reading", h is not None and 20 < h < 22.5, str(h))
+check("a flat disk has no time to full",
+      health.disk_hours_to_full([{"t": T + i * 600, "disk": 90.0} for i in range(19)], T + 18 * 600) is None)
+check("under two hours of readings gives none", health.disk_hours_to_full(fall[:6], T + 5 * 600) is None)
+check("old samples without a disk reading are skipped",
+      health.disk_hours_to_full([{"t": T, "cpu": 1}] + fall, T + 18 * 600) == h)
+
 print(f"{len(failures)} failure(s)")
 sys.exit(1 if failures else 0)

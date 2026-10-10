@@ -1379,6 +1379,8 @@ def fold_observed_decisions(
     return days, withheld
 
 
+# Doc writes that may fail before the run goes red (see the end of main).
+TAIL_FAILURES_RED = 2
 MONTH_DETAIL_MONTHS = 12   # filing months carried, newest first
 MONTH_DETAIL_DAYS = 30     # days of decisions per month
 FRONT_DAYS = 5             # the recent days the "where DOL is" day is read from
@@ -1865,19 +1867,22 @@ def main() -> int:
         # Keyed with its mode, the shape the workflow's failure hook writes
         # ("ingest_case_status_direct.py --full"), so a clean re-run clears a
         # failed run of the same pass.
-        record_run(db, f"ingest_case_status_direct.py --{mode}", status=status,
-                   rows_written=written["u"], note=note, started_at=started)
+        recorded = record_run(db, f"ingest_case_status_direct.py --{mode}", status=status,
+                              rows_written=written["u"], note=note, started_at=started)
 
         if failed:
             log(f"TAIL: {len(failed)} of {len(steps)} doc writes failed: "
                 + ", ".join(k for k, _ in failed))
-            # Every tail step failing means the database is gone, so the sweep's
-            # own writes are suspect and the run goes red. One or two failing is
-            # a blip: the previous docs stay live, every reader has a fallback,
-            # and the `partial` row above turns the health check red that morning.
-            if len(failed) == len(steps):
-                log("every tail step failed; failing the run")
-                return 1
+        # One tail step failing is a blip: the previous doc stays live, every
+        # reader has a fallback, and the `partial` row above turns the health
+        # check red that morning. Two or more, or a run row that never landed,
+        # is the database refusing writes, and only a red run says so: on Oct
+        # 10 2026 a full disk failed 10 of 11 doc writes and this row, the old
+        # rule (red only when EVERY step failed) kept the run green, and the
+        # health check had no row to read.
+        if not recorded or len(failed) >= TAIL_FAILURES_RED:
+            log("the database refused the run's own record or several doc writes; failing the run")
+            return 1
     else:
         log("NOT stamping freshness: this run checked nothing")
     return 0

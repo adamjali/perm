@@ -732,6 +732,11 @@ def busy_line(doc: dict, now_ms: int, warns: list, lines: list) -> None:
         warns.append(f"people shown \"busy\" {BUSY_STREAK_DAYS} days running: the server is getting too small")
 
 
+# Disk filling: fail when it would be full within a day, warn within three.
+DISK_FULL_FAIL_H = 24
+DISK_FULL_WARN_H = 72
+
+
 def server_verdict(doc: dict | None, now_ms: int) -> dict:
     """Judge perm_docs['server_health'], which the server writes every 10 minutes."""
     title = "The server (Oracle)"
@@ -872,6 +877,14 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
     if swap is not None and swap > SWAP_WARN_MB:
         warns.append(f"{swap:,} MB of swap in use")
     disk = n.get("diskPct")
+    # When the disk will be full at the last six hours' rate (the sampler
+    # computes it). Oct 10 2026: the disk filled overnight from 50%, which a
+    # once-a-day percentage cannot see coming; the rate can.
+    hours = n.get("diskHoursToFull")
+    if isinstance(hours, (int, float)) and hours < DISK_FULL_FAIL_H:
+        fails.append(f"the disk will be full in about {hours:.0f} hours at the last six hours' rate")
+    elif isinstance(hours, (int, float)) and hours < DISK_FULL_WARN_H:
+        warns.append(f"the disk will be full in about {hours:.0f} hours at the last six hours' rate")
     if disk is not None and disk > 90:
         fails.append(f"disk {disk:.0f}% full")
     elif disk is not None and disk > 80:

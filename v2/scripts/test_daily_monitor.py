@@ -210,6 +210,14 @@ def main() -> int:
     check(v(doc(backup={"lastOk": {"at": "2026-09-26T03:00:00Z"}}), now_ms)["status"] == "fail",
           "a 56 h old backup fails")
     check(v(doc(backup={"lastOk": None}), now_ms)["status"] == "fail", "no backup fails")
+    # The disk's trend (Oct 10 2026: full overnight from 50%, which a daily
+    # percentage could not see coming).
+    check(v(doc(now={"diskHoursToFull": 23.6}), now_ms)["status"] == "fail",
+          "the disk full within a day at the current rate fails")
+    check(v(doc(now={"diskHoursToFull": 60}), now_ms)["status"] == "warn",
+          "the disk full within three days warns")
+    check(v(doc(now={"diskHoursToFull": None}), now_ms)["status"] == "ok",
+          "no fall in free disk reads ok")
     # The off-site copy (R2) and the monthly restore test.
     check(v(doc(backup={"offsiteOk": None}), now_ms)["status"] == "fail",
           "no off-site copy fails, so a missing R2 key cannot read as fine")

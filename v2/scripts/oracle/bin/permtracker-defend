@@ -490,10 +490,16 @@ def main() -> int:
             note(f"{act} failed: {exc}")
     state["checkedAt"] = int(now)
     state["last"] = {"people": people, "fullMinutes": full, "pageRequests": len(reqs), "live": live}
-    HEALTH.mkdir(parents=True, exist_ok=True)
-    tmp = STATE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state))
-    tmp.replace(STATE)
+    # A full disk refuses this file (Oct 10 2026: the defense failed every
+    # minute for three hours). The actions above already happened; losing the
+    # state only means the next run starts from what Cloudflare says now.
+    try:
+        HEALTH.mkdir(parents=True, exist_ok=True)
+        tmp = STATE.with_suffix(".tmp")
+        tmp.write_text(json.dumps(state))
+        tmp.replace(STATE)
+    except OSError as exc:
+        print(f"state not saved: {exc}")
     return 0
 
 

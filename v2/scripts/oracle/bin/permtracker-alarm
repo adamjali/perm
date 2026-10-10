@@ -1,0 +1,348 @@
+#!/usr/bin/env python3
+"""Every 5 minutes: email the owner the moment the server heads into trouble,
+and fix what can be fixed first.
+
+WHY. On Oct 10 2026 the 145 GB disk filled (about 5:20 to 8:27 AM EDT). Free
+space had fallen at a steady 3.5 GB an hour for a whole day, but disk was read
+once a day, by the 7:30 AM report, and every monitor on the box (the watchdog,
+the defense, the health sampler) kept its state on the same disk and went
+blind with it. The database refused writes for three hours before anyone knew.
+
+So this job never touches the disk: its own memory is in /run (RAM), it reads
+only what the kernel and systemd report, and it emails through Resend's API
+directly. It runs as root (systemd: permtracker-alarm.timer).
+
+CHECKS. Each is one alarm: emailed when it starts, again every 6 hours while it
+lasts, and once when it clears. At most 12 alarm emails a day (Resend's 100 a
+day is shared with every subscriber's mail).
+
+  disk        under 25 GB free, or full within 24 hours at the last two
+              hours' rate (with at least an hour of readings)
+  disk-crit   under 10 GB free
+  memory      under 500 MB available, or over 2 GB of swap in use
+  units       a PERM Tracker job or service, nginx, cloudflared or the
+              database is in systemd's "failed" state
+  sampler     the health sampler has written nothing for 30 minutes
+  page-cache  the page-cache cap has not finished for 2.5 hours
+  backup      the nightly backup's last success is over 30 hours old
+
+WHAT IT FIXES before it emails:
+  disk        starts the page-cache cap now (it switches to tight budgets
+              under 20 GB free) instead of waiting up to 30 minutes
+  disk-crit   deletes the route cache of every release the live slot does not
+              run from (the standby's too: a rollback renders it again), which
+              takes seconds where the cap's page-by-page walk takes minutes;
+              then starts the cap for the live copies
+
+`--dry-run` prints what it would send and do, and changes nothing.
+"""
+from __future__ import annotations
+
+import json
+import os
+import pathlib
+import shutil
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+APP = pathlib.Path(os.environ.get("PT_APP_ROOT", "/srv/permtracker"))
+RUN = pathlib.Path(os.environ.get("PT_RUN_DIR", "/run/permtracker"))
+STATE = RUN / "alarm.json"
+CONFIG = pathlib.Path("/etc/permtracker/defend.env")      # ALERT_TO, shared with the defense
+APP_ENV = APP / "app" / "env" / "production.env"         # RESEND_API_KEY
+USER_AGENT = "permtracker-alarm/1.0 (+https://permtracker.app)"  # Cloudflare 403s Python's default
+GB = 1024 ** 3
+ET = ZoneInfo("America/New_York")
+
+DISK_LOW_GB = 25
+DISK_CRIT_GB = 10
+FULL_WITHIN_H = 24
+TREND_WINDOW_S = 2 * 3600       # the rate is read over the last two hours
+TREND_MIN_S = 3600              # ... once there is at least an hour of readings
+HISTORY_S = 6 * 3600            # readings kept in /run
+MEM_MIN_MB = 500
+SWAP_MAX_MB = 2048
+SAMPLER_STALE_S = 30 * 60
+PRUNE_STALE_S = int(2.5 * 3600)
+BACKUP_STALE_S = 30 * 3600
+REMIND_S = 6 * 3600
+EMAILS_PER_DAY = 12
+# Units that are ours (or that the site cannot run without). Anything else
+# systemd lists as failed (fwupd, PCP's loggers) is the OS's business.
+OUR_UNITS = ("permtracker", "nginx", "cloudflared", "sqld")
+
+DRY_RUN = "--dry-run" in sys.argv
+
+
+# --------------------------------------------------------------------------
+# Pure parts (tested in scripts/oracle/test_alarm.py)
+# --------------------------------------------------------------------------
+
+def rate_gb_per_hour(points: list[list[float]], now: float) -> float | None:
+    """Free-space change in GB an hour over the trend window; positive = filling.
+
+    None until the window holds at least TREND_MIN_S of readings.
+    """
+    pts = [(t, free) for t, free in points if now - t <= TREND_WINDOW_S]
+    if len(pts) < 3 or pts[-1][0] - pts[0][0] < TREND_MIN_S:
+        return None
+    n = len(pts)
+    mt = sum(t for t, _ in pts) / n
+    mf = sum(f for _, f in pts) / n
+    var = sum((t - mt) ** 2 for t, _ in pts)
+    if var == 0:
+        return None
+    slope = sum((t - mt) * (f - mf) for t, f in pts) / var   # GB per second, free
+    return -slope * 3600
+
+
+def evaluate(snap: dict, rate: float | None) -> dict[str, str]:
+    """The alarms on now, each with its one-line reason."""
+    on: dict[str, str] = {}
+    free = snap["disk_free_gb"]
+    hours = free / rate if rate and rate > 0.2 else None
+    if free < DISK_CRIT_GB:
+        on["disk-crit"] = f"only {free:.1f} GB of the disk is free"
+    if free < DISK_LOW_GB or (hours is not None and hours < FULL_WITHIN_H):
+        why = f"{free:.1f} GB free"
+        if hours is not None:
+            why += f", falling {rate:.1f} GB an hour: full in about {hours:.0f} hours"
+        on["disk"] = why
+    if snap["mem_available_mb"] < MEM_MIN_MB or snap["swap_used_mb"] > SWAP_MAX_MB:
+        on["memory"] = (f"{snap['mem_available_mb']} MB of memory available, "
+                        f"{snap['swap_used_mb']} MB of swap in use")
+    if snap["failed_units"]:
+        on["units"] = "failed: " + ", ".join(sorted(snap["failed_units"]))
+    for key, age, limit, what in (
+            ("sampler", snap.get("sampler_age_s"), SAMPLER_STALE_S, "the health sampler"),
+            ("page-cache", snap.get("prune_age_s"), PRUNE_STALE_S, "the page-cache cap"),
+            ("backup", snap.get("backup_age_s"), BACKUP_STALE_S, "the nightly backup")):
+        if age is None or age > limit:
+            when = "never" if age is None else f"{age / 3600:.1f} hours ago"
+            on[key] = f"{what} last finished {when}"
+    return on
+
+
+def plan(on: dict[str, str], state: dict, now: float) -> tuple[list[tuple[str, str, str]], dict]:
+    """Which emails to send: (key, kind, reason), kind start | still | clear."""
+    alarms = dict(state.get("alarms", {}))
+    out: list[tuple[str, str, str]] = []
+    for key, reason in on.items():
+        a = alarms.get(key)
+        if a is None:
+            out.append((key, "start", reason))
+            alarms[key] = {"since": now, "mailed": now, "reason": reason}
+        elif now - a.get("mailed", 0) >= REMIND_S:
+            out.append((key, "still", reason))
+            alarms[key] = {**a, "mailed": now, "reason": reason}
+        else:
+            alarms[key] = {**a, "reason": reason}
+    for key in list(alarms):
+        if key not in on:
+            out.append((key, "clear", alarms[key].get("reason", "")))
+            del alarms[key]
+    return out, {**state, "alarms": alarms}
+
+
+def under_cap(state: dict, now: float) -> bool:
+    day = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d")
+    return state.get("emails", {}).get(day, 0) < EMAILS_PER_DAY
+
+
+def count_email(state: dict, now: float) -> dict:
+    day = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d")
+    sent = {d: n for d, n in state.get("emails", {}).items() if d >= day}
+    sent[day] = sent.get(day, 0) + 1
+    return {**state, "emails": sent}
+
+
+# --------------------------------------------------------------------------
+# Reading the machine
+# --------------------------------------------------------------------------
+
+def age_of(path: pathlib.Path, now: float) -> float | None:
+    try:
+        return now - path.stat().st_mtime
+    except OSError:
+        return None
+
+
+def snapshot(now: float) -> dict:
+    disk = shutil.disk_usage("/")
+    mem = {}
+    for line in open("/proc/meminfo"):
+        k, v = line.split(":", 1)
+        mem[k] = int(v.split()[0])
+    failed = subprocess.run(["systemctl", "--failed", "--no-legend", "--plain"],
+                            capture_output=True, text=True).stdout.splitlines()
+    units = [ln.split()[0] for ln in failed if ln.strip()]
+    prune_age = None
+    try:
+        prune_age = now - json.loads((APP / "health" / "prune.json").read_text())["at"]
+    except (OSError, ValueError, KeyError):
+        pass
+    return {
+        "disk_free_gb": disk.free / GB,
+        "mem_available_mb": mem.get("MemAvailable", 0) // 1024,
+        "swap_used_mb": (mem.get("SwapTotal", 0) - mem.get("SwapFree", 0)) // 1024,
+        "failed_units": [u for u in units if u.startswith(OUR_UNITS)],
+        "sampler_age_s": age_of(APP / "health" / "samples.jsonl", now),
+        "prune_age_s": prune_age,
+        "backup_age_s": age_of(APP / "backups" / "LAST_OK", now),
+    }
+
+
+# --------------------------------------------------------------------------
+# Fixing what can be fixed
+# --------------------------------------------------------------------------
+
+def live_dirs() -> set[str]:
+    app = APP / "app"
+    try:
+        slot = (app / "active").read_text().strip()
+    except OSError:
+        return set()
+    return {os.path.realpath(app / "slots" / s) for s in (slot, slot + "2")
+            if (app / "slots" / s).exists()}
+
+
+def drop_route_caches() -> list[str]:
+    """Delete the route cache of every release the live slot does not run from."""
+    keep = live_dirs()
+    if not keep:
+        return []          # without knowing the live slot, delete nothing
+    done = []
+    for rel in sorted((APP / "app" / "releases").iterdir()):
+        if os.path.realpath(rel) in keep:
+            continue
+        cache = rel / ".next" / "server" / "route-cache"
+        if cache.is_dir():
+            if not DRY_RUN:
+                shutil.rmtree(cache, ignore_errors=True)
+            done.append(rel.name)
+    return done
+
+
+def start_prune() -> None:
+    if not DRY_RUN:
+        subprocess.run(["systemctl", "start", "--no-block", "permtracker-prune.service"],
+                       capture_output=True)
+
+
+def heal(on: dict[str, str]) -> list[str]:
+    actions = []
+    if "disk-crit" in on:
+        dropped = drop_route_caches()
+        if dropped:
+            actions.append("deleted the page cache of the releases not serving the site: "
+                           + ", ".join(dropped))
+    if "disk" in on or "disk-crit" in on:
+        start_prune()
+        actions.append("started the page-cache cap (it runs tight budgets under 20 GB free)")
+    return actions
+
+
+# --------------------------------------------------------------------------
+# Telling the owner
+# --------------------------------------------------------------------------
+
+TITLES = {
+    "disk": "the disk is filling", "disk-crit": "the disk is nearly full",
+    "memory": "memory is low", "units": "a job or service failed",
+    "sampler": "the health sampler stopped", "page-cache": "the page-cache cap stopped",
+    "backup": "the nightly backup is late",
+}
+
+
+def read_env(path: pathlib.Path) -> dict:
+    out = {}
+    try:
+        for ln in path.read_text().splitlines():
+            if "=" in ln and not ln.lstrip().startswith("#"):
+                k, v = ln.split("=", 1)
+                out[k.strip()] = v.strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return out
+
+
+def send(subject: str, text: str) -> bool:
+    if DRY_RUN:
+        print(f"would email: {subject}\n{text}\n")
+        return True
+    key = read_env(APP_ENV).get("RESEND_API_KEY")
+    to = read_env(CONFIG).get("ALERT_TO")
+    if not key or not to:
+        print("no RESEND_API_KEY or ALERT_TO; cannot email")
+        return False
+    req = urllib.request.Request(
+        "https://api.resend.com/emails", method="POST",
+        data=json.dumps({"from": "PERM Tracker <notifications@permtracker.app>", "to": [to],
+                         "subject": subject, "text": text}).encode(),
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                 "User-Agent": USER_AGENT})
+    try:
+        urllib.request.urlopen(req, timeout=20).read()
+        return True
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"email failed: {exc}")
+        return False
+
+
+def compose(mail: list[tuple[str, str, str]], snap: dict, rate: float | None,
+            actions: list[str], now: float) -> tuple[str, str]:
+    stamp = datetime.fromtimestamp(now, ET).strftime("%A %b %-d, %-I:%M %p %Z")
+    starts = [m for m in mail if m[1] != "clear"]
+    if starts:
+        subject = "PERM Tracker server: " + "; ".join(TITLES.get(k, k) for k, _, _ in starts)
+    else:
+        subject = "PERM Tracker server: back to normal (" + ", ".join(TITLES.get(k, k) for k, _, _ in mail) + ")"
+    lines = [f"Checked {stamp}.", ""]
+    for key, kind, reason in mail:
+        word = {"start": "NEW", "still": "STILL", "clear": "CLEARED"}[kind]
+        lines.append(f"{word}: {TITLES.get(key, key)}. {reason}.")
+    if actions:
+        lines += ["", "Done automatically:"] + [f"- {a}." for a in actions]
+    trend = f", changing {rate:+.1f} GB an hour" if rate is not None else ""
+    lines += ["", f"Disk: {snap['disk_free_gb']:.1f} GB free{trend}. "
+                  f"Memory: {snap['mem_available_mb']} MB available, {snap['swap_used_mb']} MB swap.",
+              "This alarm runs every 5 minutes on the server (permtracker-alarm); it emails again "
+              "every 6 hours while something lasts, and once when it clears."]
+    return subject, "\n".join(lines)
+
+
+def main() -> int:
+    now = time.time()
+    RUN.mkdir(parents=True, exist_ok=True)
+    try:
+        state = json.loads(STATE.read_text())
+    except (OSError, ValueError):
+        state = {}
+    snap = snapshot(now)
+    points = [p for p in state.get("disk", []) if now - p[0] <= HISTORY_S]
+    points.append([now, round(snap["disk_free_gb"], 2)])
+    state["disk"] = points
+    rate = rate_gb_per_hour(points, now)
+    on = evaluate(snap, rate)
+    actions = heal(on)
+    mail, planned = plan(on, state, now)
+    if not mail:
+        state = planned
+    elif under_cap(state, now) and send(*compose(mail, snap, rate, actions, now)):
+        state = count_email(planned, now)
+    # else: nothing is marked sent, so the next run (5 minutes) tries again
+    if not DRY_RUN:
+        STATE.write_text(json.dumps(state))
+    print(f"free {snap['disk_free_gb']:.1f} GB, rate "
+          f"{'n/a' if rate is None else f'{rate:+.2f} GB/h'}, alarms {sorted(on) or 'none'}"
+          + (f", emailed {[(k, kind) for k, kind, _ in mail]}" if mail else ""))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -17,7 +17,13 @@
 # still checked; a marker older than 20 minutes is a deploy that died.
 set -u
 H=/srv/permtracker/health
-STATE=$H/watchdog.state
+# The failure counts live in /run (memory), so they keep counting when the
+# disk is full. On Oct 10 2026 a full disk refused this file every run, the
+# count restarted at zero each time, and no piece could reach the three
+# failed checks a restart needs. A reboot clears /run, which only resets the
+# counts. The repairs log stays on disk (best effort).
+mkdir -p /run/permtracker
+STATE=/run/permtracker/watchdog.state
 LOG=$H/repairs.log
 now=$(date +%s)
 
@@ -79,7 +85,7 @@ repair() { # name, unit
   [ "${fails[$n]:-0}" -ge 3 ] || return 0
   if [ $(( now - ${last[$n]:-0} )) -lt 1800 ]; then return 0; fi
   systemctl restart "$unit"
-  echo "$(date -u +%FT%TZ) $n: restarted $unit after ${fails[$n]} failed checks" >> "$LOG"
+  echo "$(date -u +%FT%TZ) $n: restarted $unit after ${fails[$n]} failed checks" >> "$LOG" 2>/dev/null || true
   last[$n]=$now; fails[$n]=0
 }
 repair db permtracker-db
@@ -98,7 +104,8 @@ repair tunnel cloudflared
 # Keep a week of repairs; the file cannot grow past that.
 if [ -f "$LOG" ]; then
   cutoff=$(date -u -d '7 days ago' +%FT%TZ)
-  awk -v c="$cutoff" '$1 >= c' "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
-  chmod 644 "$LOG"
+  awk -v c="$cutoff" '$1 >= c' "$LOG" > "$LOG.tmp" 2>/dev/null && mv "$LOG.tmp" "$LOG"
+  rm -f "$LOG.tmp"
+  chmod 644 "$LOG" 2>/dev/null || true
 fi
 { declare -p fails; declare -p last; } > "$STATE"
