@@ -24,7 +24,7 @@ Each item below is an account the owner creates. When one exists, its link goes 
 | 3 | GitHub organization, then move the repo into it | Lets the repo go back into `sameAs` without the persona's handle. The cron dispatch token is scoped to the current repo and must be re-scoped; GitHub redirects the old URL. |
 | 4 | Crunchbase profile | Free, and quoted as a source about companies. |
 | 5 | Chrome Web Store, npm and PyPI listings | They qualify once published; all wait on the LLC rename, the EIN and the bank account. The rename also changes `LEGAL_NAME`; the brand name stays. |
-| 6 | Sabrina's state bar profile and firm bio, on her Person node | The strongest proof she's a real attorney, but both link her to her firm in public. Her call, asked together with the photo question. |
+| 6 | Sabrina's state bar profile and firm bio, on her Person node | **Bar record done Oct 10 2026, with her OK**: her D.C. Bar record (it lists no firm) is on her Person node and her About card. The firm bio stays off, since it names her firm. |
 
 **Skip for now: Wikidata.** It keeps entries about things independent sources have written
 about; one made by us without those sources tends to be deleted.
