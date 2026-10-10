@@ -14,6 +14,7 @@
  */
 
 import {
+  DC_BAR_SABRINA_URL,
   LINKEDIN_SABRINA_URL,
   MEDIUM_PROFILE_URL,
   PRODUCT_HUNT_URL,
@@ -37,7 +38,7 @@ export interface AboutPerson {
 export const SABRINA: AboutPerson = {
   name: "Sabrina Soltau",
   jobTitle: "Immigration attorney",
-  sameAs: [LINKEDIN_SABRINA_URL],
+  sameAs: [LINKEDIN_SABRINA_URL, DC_BAR_SABRINA_URL],
   image: "/about/sabrina-soltau.jpg",
   imageSize: [640, 800],
 };

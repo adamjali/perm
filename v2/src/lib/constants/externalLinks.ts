@@ -24,6 +24,12 @@ export const PRODUCT_HUNT_URL = "https://www.producthunt.com/products/perm-track
 /** A personal profile, declared on the Person node, never on the Organization. */
 export const LINKEDIN_SABRINA_URL = "https://www.linkedin.com/in/sabrina-soltau-5b2682171";
 /**
+ * Her D.C. Bar membership record (public, no business details on it), linked
+ * with her consent (Oct 10 2026). The bar's own page is the strongest proof
+ * that the attorney the site names is licensed; it goes on her Person node.
+ */
+export const DC_BAR_SABRINA_URL = "https://my.dcbar.org/directorymemberships?id=001Qr00000ShxeSIAR";
+/**
  * The X account the product posts from. A personal handle, so it is linked
  * (footer, About contact line) and never asserted as the Organization's
  * `sameAs`; `structuredData.test.ts` pins that.

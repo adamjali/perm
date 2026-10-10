@@ -33,6 +33,7 @@ import {
   SABRINA,
 } from "@/lib/constants/about";
 import {
+  DC_BAR_SABRINA_URL,
   LINKEDIN_SABRINA_URL,
   MEDIUM_PROFILE_URL,
   PRODUCT_HUNT_URL,
@@ -228,7 +229,18 @@ export default function AboutPage() {
             priority
           />{" "}
           <p className="mt-4 font-heading text-lg font-bold leading-tight">{SABRINA.name}</p>{" "}
-          <p className="text-sm text-muted-foreground">{SABRINA.jobTitle}</p>
+          <p className="text-sm text-muted-foreground">{SABRINA.jobTitle}</p>{" "}
+          {/* The bar's own record, the same link her Person node carries as
+              sameAs, so the license the schema points at is on the page too.
+              No status is typed here: the record says it, and a typed one
+              would go stale. */}
+          <p className="mt-2 text-sm text-foreground/85">
+            Admitted to the D.C. Bar in 2025.{" "}
+            <a href={DC_BAR_SABRINA_URL} className={link} rel="noopener" target="_blank">
+              Her bar record
+            </a>
+            .
+          </p>
         </div>{" "}
 
         <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">

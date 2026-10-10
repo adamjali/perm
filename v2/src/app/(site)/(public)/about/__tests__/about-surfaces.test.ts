@@ -41,6 +41,24 @@ describe("the About surfaces", () => {
     expect(org.founder.map((f) => f.jobTitle)).toEqual(PEOPLE.map((p) => p.jobTitle));
   });
 
+  it("every profile the Person node claims is linked on the About page, the bar record included", () => {
+    const page = read("src/app/(site)/(public)/about/page.tsx");
+    const links = read("src/lib/constants/externalLinks.ts");
+    const sabrina = PEOPLE[0];
+    expect(sabrina?.sameAs.length).toBeGreaterThan(0);
+    for (const url of sabrina?.sameAs ?? []) {
+      // A claim in the schema with nothing on the page is the mismatch
+      // Google's guidance warns about; the page links each URL by its constant.
+      const name = links.match(new RegExp(`export const (\\w+) = "${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`))?.[1];
+      expect(name, `${url} has no named constant`).toBeTruthy();
+      expect(page).toContain(`href={${name}}`);
+    }
+    // The bar's own record page, never a search or a third-party directory.
+    expect(sabrina?.sameAs).toContainEqual(
+      expect.stringMatching(/^https:\/\/my\.dcbar\.org\/directorymemberships\?id=[A-Za-z0-9%=_-]{8,}$/),
+    );
+  });
+
   it("ships the portrait it declares, at the size it declares", () => {
     for (const p of PEOPLE) {
       const file = path.join(ROOT, "public", p.image);
