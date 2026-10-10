@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-09
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-10
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **634 files / 9,026 tests across 5 vitest
@@ -569,7 +569,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the four "Oct 9 2026" sections.
 - **An outbox row waiting with no attempts is the one-alert-a-day rule at work**: it goes on the first bundle run of the next Eastern day.
 - **Replies to support mail go through `supportEmail:replyToEmail`** (threaded, counted, marked replied), never from the Gmail it's forwarded to.
 
-## Oct 10 2026, in five lines
+## Oct 10 2026, in six lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 10 2026".
 
@@ -578,3 +578,4 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 10 2026".
 - **Convex watches the server from outside** every 15 minutes (`serverWatch`), so a server that can't report is still heard.
 - **A run that fails and carries on ends red**: two failed doc writes or a lost run row, or any step noting a failure.
 - **Each slot's page-cache budget is split between its two copies**; at 60 GB a folder the live slot alone could take 120 of 145 GB.
+- **The disk is 150 GB of Oracle's free 200 on purpose** (owner, Sep 28): the rest is room for a second free server, and a disk never shrinks. The alarms are email only.

@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-10-09
+> **Status:** Production | **Last Updated:** 2026-10-10
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -9176,3 +9176,25 @@ health samples for those three hours. Nothing in the corpus.
 - The watchdog's counts live in `/run`; the defense survives a state file it can't save.
 
 **After any Next upgrade, check where it writes rendered pages**: `find .next/server -newer server.js -name '*.meta' | head`.
+
+**The same morning, after the fix (9:00 to 9:45 AM EDT).** Convex was deployed once the suite passed, and
+`SERVER_WATCH=on` was set on production only; its first check read the live database's health report and found
+nothing wrong. `PRAGMA quick_check` on the database file came back `ok` (938 s, `sudo sqlite3 -readonly` on
+`/srv/permtracker/db/data.sqld/dbs/default/data`, the file sqld serves; reading it beside sqld is safe). The 9:13 AM
+pending pass rewrote the ten summary docs the 4:10 AM run had lost (queue census, review stages, employers under
+review, month detail, the sweep's date and the rest, all by 9:29) and walked to that day's filings (3 PERM, 79
+wage-request and LCA); its new failure step ran and passed. Watched cases weren't checked from 6 to 8 AM, and the
+9:00 check found nothing had moved, so no alert was missed. Sentry 52 was resolved with a note, and the alarm's test
+email arrived at 8:56 AM.
+
+**The disk is 150 GB of Oracle's free 200, on purpose** (owner's call, Sep 28 2026; he had forgotten it by Oct 10,
+and the reasoning was only in a transcript): the free allowance covers every disk on the account and a boot disk is
+at least 50 GB, so the 50 GB left is room for a second free server, for a rebuild with no downtime or to rescue this
+one. A disk can grow while the server runs and never shrink. How to grow it, and when: `scripts/oracle/README.md`,
+"the disk's size". **The alarms are email only** (owner, Oct 10: no phone push).
+
+**Instruments that worked here:** the server's PCP archive for history the health samples lost
+(`pmval -a /var/log/pcp/pmlogger/permtracker-web/<day> -t 1h filesys.avail`); Cloudflare's GraphQL
+`httpRequests1hGroups` through the Cloudflare MCP for what visitors got hour by hour (it answers on the Free plan);
+PostHog's pageviews and exceptions for what people saw. **Never `pkill -f <pattern>` inside an ssh `bash -c` that
+holds the pattern**: it killed its own shell (ssh exit 255) while a `du` was being stopped.
