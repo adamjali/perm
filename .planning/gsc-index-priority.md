@@ -7,6 +7,9 @@ change kept its slot.
 **Sitemap index not resubmitted:** no new child family since the last read (Oct 7); Google counts 307,713
 discovered against 311,398 live.
 
+**Sitemap index resubmitted 2026-10-10, 4:16 AM EDT** (no request slot): Google counted 309,976 discovered
+against 311,398 live, last read Oct 7.
+
 | # | URL | Google's verdict | accepted (EDT) |
 |---|---|---|---|
 | 1 | `/h1b-employers` | unknown to Google (new page) | 5:07 PM |
@@ -26,21 +29,22 @@ first in line next round. Inspected only, crawled after its change: `/` (Oct 9, 
 
 **Queue for the next round** (slots free up from about 5:07 PM EDT Oct 10). Newest changes first. Inspect
 each; request only those last crawled before their change:
-1. `/developers` (refused tonight), `/api-terms` (both changed Oct 9, 12:14 AM)
-2. `/i140-awaiting-visa`, `/i485-by-field-office` (the Q&A reads live figures)
-3. `/changelog/alerts-in-minutes-and-measured-estimates`
-4. `/perm-employers/under-review`, `/perm-case-statuses`, `/perm-rfi-audit` (Oct 8 evening)
-5. `/tools/perm-timeline-calculator`, `/estimate-scorecard` (Oct 8; `/perm-case-status` was done tonight)
-6. `/guides/h2a-case-status-and-timing`, `/guides/h2b-and-cw1-case-status-and-timing`, `/seasonal-cases`,
+1. `/about` (her D.C. Bar record, Oct 10 4:10 AM; last crawled Oct 9, 7:58 PM; refused for quota at 4:18 AM Oct 10)
+2. `/developers` (refused tonight), `/api-terms` (both changed Oct 9, 12:14 AM)
+3. `/i140-awaiting-visa`, `/i485-by-field-office` (the Q&A reads live figures)
+4. `/changelog/alerts-in-minutes-and-measured-estimates`
+5. `/perm-employers/under-review`, `/perm-case-statuses`, `/perm-rfi-audit` (Oct 8 evening)
+6. `/tools/perm-timeline-calculator`, `/estimate-scorecard` (Oct 8; `/perm-case-status` was done tonight)
+7. `/guides/h2a-case-status-and-timing`, `/guides/h2b-and-cw1-case-status-and-timing`, `/seasonal-cases`,
    `/tools/green-card-line`, `/tools/eb2-vs-eb3` (Oct 7 night)
-7. `/tools/i485-queue-position` (refused Oct 7), `/perm-employers/google-llc`, `/perm-cases`, `/pwd-cases`,
+8. `/tools/i485-queue-position` (refused Oct 7), `/perm-employers/google-llc`, `/perm-cases`, `/pwd-cases`,
    `/lca-cases`, `/perm-employers`, `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`, `/methodology`
-8. `/perm-processing-times`, `/visa-bulletin`, `/perm-denial-risk`, `/blog`, `/changelog`,
+9. `/perm-processing-times`, `/visa-bulletin`, `/perm-denial-risk`, `/blog`, `/changelog`,
    `/tools/priority-date-calculator`, `/tools/pwd-calculator` (the Oct 6 afternoon list)
-9. `/guides/read-your-priority-date-history`, `/perm-queue/2025-12`, `/perm-wages/software-developers`,
+10. `/guides/read-your-priority-date-history`, `/perm-queue/2025-12`, `/perm-wages/software-developers`,
    `/perm-cities/new-york-ny`, `/perm-countries/india`, `/perm-industries/541511`,
    `/visa-bulletin/categories/eb2-india`, `/visa-bulletin/categories/eb3-india`
-10. `/calculators`, `/about` (structured data only), then `/privacy` and `/terms` (inspect)
+11. `/calculators` (structured data only), then `/privacy` and `/terms` (inspect)
 
 **Previous run:** Oct 7, 9:12 to 9:42 PM EDT, 11 accepted (`/faq`, `/guides`, `/perm-case-statuses`,
 `/perm-case-status`, `/perm-attorneys`, `/case-search`, `/estimate-scorecard`,
@@ -947,3 +951,7 @@ Listed by `node scripts/gsc_queue.mjs --since b0905d9c`; the pages already in th
 7. `/developers`, `/api-terms` (scopes, sandbox keys, exports, live lookups, webhooks)
 8. `/i140-awaiting-visa`, `/i485-by-field-office` (the Q&A reads live figures)
 9. `/changelog/alerts-in-minutes-and-measured-estimates` (newest of the five new entries; the sitemap carries the rest)
+
+## Queue after the Oct 10 changes (Sabrina's D.C. Bar record)
+
+1. `/about` (her bar record on the card and in her Person node, live 4:10 AM; refused for quota at 4:18 AM)
