@@ -56,7 +56,7 @@ export function OptInBox({
 export function AlertNote({ limit, id, className }: { limit?: string; id?: string; className?: string }) {
   return (
     <p id={id} className={cn("text-sm leading-relaxed text-muted-foreground", className)}>
-      You confirm by email first, and one click turns it off. One alert email a day at most.
+      You confirm by email first, and one click turns it off. A change to a case comes at once; other alerts from one day come in one email.
       {limit ? ` ${limit}` : ""} One confirmation per address every 10 minutes: if none arrives, wait
       that long before trying again.
     </p>

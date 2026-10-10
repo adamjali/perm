@@ -108,9 +108,15 @@ check(true_span(B, "26999") is None, "a day we hold nothing for has no span")
 W = {26160: (900_000, 999_997, 10), 26161: (1, 999_000, 10), 26162: (5_000, 6_000, 10)}
 check(true_span(W, "26161") is None,
       f"a wrap day is SKIPPED, never probed (got {true_span(W, '26161')})")
+# The days beside a wrap keep their own span: None would mean they are never
+# swept, which the old `sp is None or ...` accepted.
+check(true_span(W, "26160") == (900_000, 999_997),
+      f"the day before a wrap keeps its own span (got {true_span(W, '26160')})")
+check(true_span(W, "26162") == (5_000, 6_000),
+      f"the day after a wrap keeps its own span (got {true_span(W, '26162')})")
 for d in ("26160", "26162"):
     sp = true_span(W, d)
-    check(sp is None or sp[1] - sp[0] + 1 <= MAX_PLAUSIBLE_SPAN,
+    check(sp is not None and sp[1] - sp[0] + 1 <= MAX_PLAUSIBLE_SPAN,
           f"day {d} beside a wrap never inherits a million-wide span (got {sp})")
 check(holes([5, 9], None, None) == [6, 7, 8],
       "holes() with no span still falls back to the day's own extent")

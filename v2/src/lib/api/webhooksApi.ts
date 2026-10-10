@@ -61,12 +61,23 @@ function answer(admitted: Admitted, status: number, data: unknown): NextResponse
   return NextResponse.json({ data }, { status, headers: { ...HEADERS, ...settle(admitted, true) } });
 }
 
-function refused(admitted: Admitted, message: string): NextResponse {
+/** Convex's refusal codes (convex/webhooks.ts, FailureCode) as status codes. A refusal with none is bad input. */
+const REFUSAL_STATUS = { plan_feature: 403, plan_room: 403, refused: 403, not_found: 404, misconfigured: 503 } as const;
+
+function refused(admitted: Admitted, message: string, code?: keyof typeof REFUSAL_STATUS): NextResponse {
   // Convex's own refusals: a plan without webhooks, a plan's room, a bad
-  // address, a scope. Not counted.
-  if (message === NO_WEBHOOKS_MESSAGE) return apiError(403, "plan_feature", message, { headers: settle(admitted, false) });
-  const status = /plan has|plan watches/.test(message) ? 403 : /scope|can't manage|Sandbox/.test(message) ? 403 : 400;
-  return apiError(status, status === 403 ? "refused" : "bad_request", message, { headers: settle(admitted, false) });
+  // address, a scope. Not counted. Chosen by code, never by the wording.
+  const headers = settle(admitted, false);
+  if (code === "misconfigured") {
+    console.error("[api] webhooks: Convex refused this server's secret (API_SERVER_SECRET differs)");
+    return apiError(503, "unavailable", "Webhooks can't be managed through the API right now. Try again later, or use Settings.", { headers });
+  }
+  if (code) return apiError(REFUSAL_STATUS[code], code === "not_found" ? "not_found" : code === "plan_feature" ? "plan_feature" : "refused", message, { headers });
+  if (message === NO_WEBHOOKS_MESSAGE) return apiError(403, "plan_feature", message, { headers });
+  // A refusal from a Convex deployed before the codes (the deploy-skew
+  // window): the old reading of the wording.
+  const status = /plan has|plan watches|scope|can't manage|Sandbox/.test(message) ? 403 : 400;
+  return apiError(status, status === 403 ? "refused" : "bad_request", message, { headers });
 }
 
 async function guarded(admitted: Admitted, run: () => Promise<NextResponse>): Promise<NextResponse> {
@@ -86,7 +97,7 @@ export async function listWebhooks(request: Request): Promise<NextResponse> {
   if (admitted instanceof NextResponse) return admitted;
   return guarded(admitted, async () => {
     const r = await fetchMutation(api.webhooks.apiList, { keyHash: admitted.caller.keyHash, serverSecret: serverSecret() ?? "" });
-    if (!r.ok) return refused(admitted, r.message);
+    if (!r.ok) return refused(admitted, r.message, r.code);
     return answer(admitted, 200, { endpoints: r.endpoints, watches: r.watches, events: WEBHOOK_EVENTS });
   });
 }
@@ -107,7 +118,7 @@ export async function createWebhook(request: Request): Promise<NextResponse> {
       url,
       events,
     });
-    if (!r.ok) return refused(admitted, r.message);
+    if (!r.ok) return refused(admitted, r.message, r.code);
     return answer(admitted, 201, {
       id: r.id,
       secret: r.secret,
@@ -127,6 +138,8 @@ export async function deleteWebhook(request: Request, id: string): Promise<NextR
       serverSecret: serverSecret() ?? "",
       endpointId: id,
     });
+    // A missing endpoint is a counted 404; a key or door refusal isn't a 404.
+    if (!r.ok && r.code && r.code !== "not_found") return refused(admitted, r.message, r.code);
     if (!r.ok) return apiError(404, "not_found", r.message, { headers: settle(admitted, true) });
     return answer(admitted, 200, { deleted: id });
   });
@@ -149,7 +162,7 @@ export async function addWatch(request: Request): Promise<NextResponse> {
       kind: caseNumber !== null ? "case" : "employer",
       target: (caseNumber ?? employer ?? "").slice(0, 130),
     });
-    if (!r.ok) return refused(admitted, r.message);
+    if (!r.ok) return refused(admitted, r.message, r.code);
     return answer(admitted, r.already ? 200 : 201, { id: r.id, already: r.already });
   });
 }
@@ -174,7 +187,7 @@ export async function removeWatch(request: Request, target: string): Promise<Nex
       kind,
       target: decoded,
     });
-    if (!r.ok) return refused(admitted, r.message);
+    if (!r.ok) return refused(admitted, r.message, r.code);
     if (!r.removed) return apiError(404, "not_found", "This account doesn't watch that.", { headers: settle(admitted, true) });
     return answer(admitted, 200, { removed: target });
   });

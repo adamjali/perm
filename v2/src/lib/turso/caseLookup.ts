@@ -176,7 +176,13 @@ export async function lookupCase(
               job_title, soc_title, state, wage
          FROM perm_cases_history WHERE case_number = ?`,
       [caseNumber],
-    ).catch(() => null));
+      // Only a missing table is "no record". Any other failure throws, and
+      // the page says our records couldn't be read: caught as null, it spent
+      // a live DOL question on a FY2016 to FY2023 case and showed "none".
+    ).catch((err: unknown) => {
+      if (/no such table/i.test(err instanceof Error ? err.message : String(err))) return null;
+      throw err;
+    }));
 
   if (!live && !dec) {
     // A three-way miss becomes a live DOL question. A real case filed last

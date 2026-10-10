@@ -10,6 +10,10 @@
  *
  * - List mail (confirmations, alerts, digests, reminders, reports) stops at
  *   LIST_CEILING. Past it, a send waits in the retry queue for the next UTC day.
+ * - Mail anyone can set off (confirmations, preference and firm-claim links,
+ *   the contact form, inbound support forwards) stops ALERT_RESERVE sooner, at
+ *   PUBLIC_CEILING, so a flood of sign-ups can't hold a real alert until the
+ *   next UTC day (owner's call, Oct 10 2026: 30 of the 85 kept for alerts).
  * - The last RESEND_DAILY_CAP - LIST_CEILING are kept for sign-in and reset
  *   codes, which lock a person out when they don't arrive.
  *
@@ -27,6 +31,10 @@ import { MS_PER_DAY, MS_PER_MINUTE } from "./time";
 export const RESEND_DAILY_CAP = 100;
 /** List mail stops here; the rest of the day is kept for sign-in codes. */
 export const LIST_CEILING = 85;
+/** Of the list room, this many are kept for alerts and reminders. */
+export const ALERT_RESERVE = 30;
+/** Mail anyone can set off stops here (55). */
+export const PUBLIC_CEILING = LIST_CEILING - ALERT_RESERVE;
 /** Received mail counts toward the quota but isn't in Resend's list of sent mail. */
 export const RECEIVED_MARGIN = 5;
 

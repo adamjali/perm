@@ -1,9 +1,11 @@
 /**
  * Auth Rate Limiting
  *
- * Pre-flight rate check mutations called by auth forms BEFORE
- * triggering signIn. Protects login, signup OTP, and password
- * reset endpoints from brute force.
+ * Rate checks the site's server makes before a POST to /api/auth reaches
+ * Convex Auth (src/lib/auth/authGate.ts): per IP and per email address, each
+ * counted only with the server secret. Protects login, sign-up codes and
+ * password resets from brute force; Convex Auth also limits failed passwords
+ * and codes per account itself (10 an hour).
  *
  * SOC 2 CC6 — Logical Access Controls
  */
@@ -20,6 +22,7 @@ import { getCurrentUserIdOrNull } from "./lib/auth";
 import { internal } from "./_generated/api";
 import { normalizeIp, findActiveBlock } from "./abuseBlocklist";
 import { recordError } from "./lib/errorRecording";
+import { serverDoorOpen } from "./lib/serverDoor";
 import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 
 const ACTION_CONFIG: Record<string, RateLimitConfig> = {
@@ -45,8 +48,12 @@ const IP_ACTION_CONFIG: Record<string, RateLimitConfig> = {
 };
 
 /**
- * Pre-flight rate limit. Call BEFORE signIn() so the counter increments on
- * the attempt itself, not on the response.
+ * The per-email limit, counted on the attempt itself. The site's server calls
+ * it for every POST to /api/auth that carries an email (src/lib/auth/
+ * authGate.ts), with the server secret. A call without it (a stranger naming
+ * someone's address, or an old page's pre-flight) counts nothing and is let
+ * through: otherwise anyone could spend an address's attempts and lock its
+ * owner out of signing in for the window.
  */
 export const checkAuthRateLimit = mutation({
   args: {
@@ -57,8 +64,12 @@ export const checkAuthRateLimit = mutation({
       v.literal("otp_verify"),
       v.literal("password_reset")
     ),
+    serverSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (!serverDoorOpen(args.serverSecret)) {
+      return { allowed: true, remaining: 0, retryAfterMs: 0, message: undefined };
+    }
     const config = ACTION_CONFIG[args.action];
     if (!config) {
       throw new Error(`Unknown auth action: ${args.action}`);
@@ -105,6 +116,13 @@ export const checkAuthRateLimit = mutation({
  *
  * Caller passes the IP explicitly — the mutation context doesn't see headers.
  * Callers should extract it from `x-forwarded-for` on the request side.
+ *
+ * ONLY THE SITE'S SERVER IS COUNTED. This is a public mutation (the proxy and
+ * the chat route call it through fetchMutation), so without the server secret
+ * a stranger could name any address: spend a real visitor's sign-in budget,
+ * get it blocklisted, or write the `ip_strike` rows that abuse detection takes
+ * as corroboration before it suspends an account. A call without the secret
+ * records nothing and is told to go ahead, so it learns nothing either.
  */
 export const checkIpRateLimit = mutation({
   args: {
@@ -113,8 +131,12 @@ export const checkIpRateLimit = mutation({
       v.literal("ip_auth"),
       v.literal("ip_chat"),
     ),
+    serverSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (!serverDoorOpen(args.serverSecret)) {
+      return { allowed: true, remaining: 0, retryAfterMs: 0 };
+    }
     const config = IP_ACTION_CONFIG[args.action];
     if (!config) {
       throw new Error(`Unknown IP rate-limit action: ${args.action}`);

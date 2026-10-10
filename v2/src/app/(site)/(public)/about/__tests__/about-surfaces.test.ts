@@ -49,7 +49,10 @@ describe("the About surfaces", () => {
     for (const url of sabrina?.sameAs ?? []) {
       // A claim in the schema with nothing on the page is the mismatch
       // Google's guidance warns about; the page links each URL by its constant.
-      const name = links.match(new RegExp(`export const (\\w+) = "${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`))?.[1];
+      // Found by plain string search: a URL turned into a pattern matches more
+      // than itself (an unescaped "." is any character).
+      const line = links.split("\n").find((l) => l.startsWith("export const ") && l.endsWith(` = "${url}";`));
+      const name = line?.slice("export const ".length, line.indexOf(" ="));
       expect(name, `${url} has no named constant`).toBeTruthy();
       expect(page).toContain(`href={${name}}`);
     }

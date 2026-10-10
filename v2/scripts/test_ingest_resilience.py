@@ -113,8 +113,15 @@ class FakeHrana:
             if here and not self.apply_then_fail:
                 results.append({"type": "error", "error": self.error})
                 break
-            cur = self.db.execute(stmt["sql"],
-                                  [_py(a) for a in stmt.get("args", [])])
+            try:
+                cur = self.db.execute(stmt["sql"],
+                                      [_py(a) for a in stmt.get("args", [])])
+            except sqlite3.Error as e:
+                # The real server answers a statement SQLite refuses with an
+                # error result inside a 200, never by dropping the connection.
+                results.append({"type": "error", "error": {
+                    "message": f"SQLite error: {e}", "code": "SQLITE_UNKNOWN"}})
+                break
             if here:
                 results.append({"type": "error", "error": self.error})
                 break
@@ -350,6 +357,29 @@ def main() -> int:
     # mistaken for something to retry or to alarm on.
     check("a step that returns falsy without raising is not a failure",
           lib_turso.run_independently([("guard", lambda: False)]) == [])
+
+    # --- two jobs adding the same column at once ----------------------------
+    # Oct 10 2026: the H-2A, H-2B and CW-1 disclosure loads share
+    # seasonal_cases and run at the same time. All three read the table's
+    # columns, CW-1 added the new ones first, and the other two died on
+    # "duplicate column name". Modelled by a column list read before the other
+    # job's ALTER landed.
+    print("add_missing_columns")
+    s = FakeHrana()
+    db = with_server(s)
+    s.db.execute("CREATE TABLE t (a TEXT)")
+    s.db.execute("ALTER TABLE t ADD COLUMN b TEXT")        # the other job's ALTER
+    real_rows = lib_turso.query_rows
+    lib_turso.query_rows = lambda _db, _sql, *a, **k: [(0, "a"), ]  # read before it landed
+    added: list = []
+    err = attempt(lambda: added.extend(lib_turso.add_missing_columns(db, "t", {"b": "TEXT", "c": "TEXT"})))
+    check("a column another job just added is not an error", err is None, repr(err))
+    check("...and only the column this call added is reported", added == ["c"], repr(added))
+    cols = {r[1] for r in s.db.execute("PRAGMA table_info(t)")}
+    check("...and the missing one really was added", cols == {"a", "b", "c"}, repr(cols))
+    err = attempt(lambda: lib_turso.add_missing_columns(db, "t", {"d": "TEXT UNIQUE"}))
+    check("any other refusal still raises", isinstance(err, RuntimeError), repr(err))
+    lib_turso.query_rows = real_rows
 
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0

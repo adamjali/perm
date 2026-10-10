@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTestContext, setupSchedulerTests } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import { BUDGETS, type BudgetName } from "../lib/alertBudgets";
-import { LIST_CEILING, RECEIVED_MARGIN, utcDay } from "../lib/emailLimits";
+import { LIST_CEILING, PUBLIC_CEILING, RECEIVED_MARGIN, utcDay } from "../lib/emailLimits";
 import {
   CLAIM_LEASE_MS,
   EXPIRE_MS,
@@ -24,6 +24,7 @@ import {
   QUEUED_REPLY,
   QUEUE_MAX,
   countSentToday,
+  confirmationRoom,
   drainRoom,
   parseResendTime,
   replayArgs,
@@ -31,6 +32,11 @@ import {
 } from "../confirmationQueue";
 
 type T = ReturnType<typeof createTestContext>;
+
+/** A preference link goes only to an address we hold something for. */
+async function holds(t: T, email: string) {
+  await t.run((ctx) => ctx.db.insert("newsSubscribers", { email, createdAt: Date.now(), confirmedAt: Date.now() }));
+}
 
 async function fillPool(t: T, pool: BudgetName) {
   const b = BUDGETS[pool];
@@ -100,6 +106,7 @@ describe("a full pool queues the request", () => {
   it("every confirmation kind queues the same way", async () => {
     const t = createTestContext();
     for (const p of ["caseConfirm", "queueConfirm", "bulletinConfirm", "prefsLink"] as const) await fillPool(t, p);
+    await holds(t, "p@example.com");
 
     const results = [
       await t.mutation(internal.employerAlerts.subscribe, { email: "e@example.com", slug: "acme-llc", employerName: "ACME LLC" }),
@@ -117,8 +124,9 @@ describe("a full pool queues the request", () => {
 
   it("the day's real count queues a confirmation even when its pool has room", async () => {
     const t = createTestContext();
-    // Resend has sent 85 today: list mail stops there, whatever the pool says.
-    await t.run((ctx) => ctx.db.insert("emailDays", { day: utcDay(Date.now()), sent: 3, reported: LIST_CEILING }));
+    // Resend has sent 55 today: confirmations stop there, whatever the pool
+    // says, and the 30 above it are kept for alerts.
+    await t.run((ctx) => ctx.db.insert("emailDays", { day: utcDay(Date.now()), sent: 3, reported: PUBLIC_CEILING }));
     const r = await t.mutation(internal.caseAlerts.subscribe, { email: "late@example.com", caseNumber: "G-100-25324-425560" });
     expect(r).toEqual({ ok: true, message: QUEUED_REPLY, queued: true });
     // The pool was not charged for a request that didn't send.
@@ -189,10 +197,33 @@ describe("a replay from the queue", () => {
   it("a queued preference link isn't swallowed by the cooldown its own first call recorded", async () => {
     const t = createTestContext();
     await fillPool(t, "prefsLink");
+    await holds(t, "p@example.com");
     const first = await t.mutation(internal.emailPrefs.requestLink, { email: "p@example.com" });
     expect(first.message).toBe(QUEUED_LINK_REPLY);
     await t.mutation(internal.emailPrefs.requestLink, { email: "p@example.com", fromQueue: true });
     expect(await scheduled(t, "emailPrefs:sendLink")).toHaveLength(1);
+  });
+});
+
+describe("a preference link for an address we hold nothing for", () => {
+  setupSchedulerTests();
+
+  it("sends nothing and charges nothing, with the reply a held address gets", async () => {
+    const t = createTestContext();
+    const r = await t.mutation(internal.emailPrefs.requestLink, { email: "stranger@example.com" });
+    await holds(t, "known@example.com");
+    const k = await t.mutation(internal.emailPrefs.requestLink, { email: "known@example.com" });
+    expect(r).toEqual(k);
+    expect(await scheduled(t, "emailPrefs:sendLink")).toHaveLength(1);
+  });
+
+  it("answers as queued when a held address would be queued, and queues nothing", async () => {
+    const t = createTestContext();
+    await fillPool(t, "prefsLink");
+    const r = await t.mutation(internal.emailPrefs.requestLink, { email: "stranger@example.com" });
+    expect(r.message).toBe(QUEUED_LINK_REPLY);
+    expect(await queued(t)).toHaveLength(0);
+    expect(await scheduled(t, "emailPrefs:sendLink")).toHaveLength(0);
   });
 });
 
@@ -293,15 +324,27 @@ describe("drain against Resend's own count", () => {
     process.env.AUTH_RESEND_KEY = "re_test_key";
     const t = createTestContext();
     await queueCases(t, 6);
-    // 76 sent today, plus 5 for received mail: room is 85 - 81 = 4.
-    stubSentToday(76);
+    // 46 sent today, plus 5 for received mail: 51, so confirmations have
+    // 55 - 51 = 4 while alerts and retries still have 85 - 51 = 34.
+    stubSentToday(46);
     const res = await t.action(internal.confirmationQueue.drain, {});
-    expect(res).toEqual({ sent: 4, retried: 0, room: 4 });
+    expect(res).toEqual({ sent: 4, retried: 0, room: 34 });
     expect(await queued(t)).toHaveLength(2);
     expect(await t.run((ctx) => ctx.db.query("caseStatusAlerts").collect())).toHaveLength(4);
     // Resend's own count became part of the day's.
     const day = await t.run((ctx) => ctx.db.query("emailDays").first());
-    expect(day?.reported).toBe(76 + RECEIVED_MARGIN);
+    expect(day?.reported).toBe(46 + RECEIVED_MARGIN);
+  });
+
+  it("past the sign-up line, queued confirmations wait while the alert room stays open", async () => {
+    process.env.AUTH_RESEND_KEY = "re_test_key";
+    const t = createTestContext();
+    await queueCases(t, 2);
+    // 60 counted: over the 55 sign-ups may use, under the 85 alerts may.
+    stubSentToday(60 - RECEIVED_MARGIN);
+    const res = await t.action(internal.confirmationQueue.drain, {});
+    expect(res).toEqual({ sent: 0, retried: 0, room: LIST_CEILING - 60 });
+    expect(await queued(t)).toHaveLength(2);
   });
 
   it("sends nothing once the day is at the line, and nothing when Resend can't be read", async () => {
@@ -343,6 +386,16 @@ describe("pure helpers", () => {
     expect(drainRoom(LIST_CEILING - 2)).toBe(2);
     expect(drainRoom(LIST_CEILING)).toBe(0);
     expect(drainRoom(500)).toBe(0);
+  });
+
+  it("confirmations get what the run leaves, never past the sign-up line", () => {
+    expect(PUBLIC_CEILING).toBe(55);
+    expect(confirmationRoom(0, 0, PER_RUN)).toBe(PUBLIC_CEILING);
+    expect(confirmationRoom(51, 0, 34)).toBe(4);
+    // Retries sent first count toward the line too.
+    expect(confirmationRoom(50, 3, 35)).toBe(2);
+    expect(confirmationRoom(60, 0, 25)).toBe(0);
+    expect(confirmationRoom(10, 40, 60)).toBe(5);
   });
 
   it("counts today's sends across pages and stops at yesterday", async () => {

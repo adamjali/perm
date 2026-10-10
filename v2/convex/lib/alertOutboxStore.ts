@@ -7,6 +7,7 @@
  * is still waiting for the rows it touched.
  */
 
+import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 
 type Kind = "case" | "queue" | "bulletin" | "employer";
@@ -23,6 +24,8 @@ export async function dropQueued(
   ctx: MutationCtx,
   email: string,
   scope: "all" | Kind | `${Kind}:${string}`,
+  /** False for a newer send superseding older items: the retry it just queued is its own. */
+  opts: { retries?: boolean } = {},
 ): Promise<number> {
   let dropped = 0;
   for await (const row of ctx.db
@@ -32,6 +35,30 @@ export async function dropQueued(
       scope === "all" || scope === row.kind || scope === row.ref;
     if (!matches) continue;
     await ctx.db.patch(row._id, { status: "dropped", html: undefined, text: undefined });
+    dropped += 1;
+  }
+  // The same email can be waiting in the retry queue instead (a send that hit
+  // the day's ceiling or failed): an opt-out drops it there too, by its refs.
+  if (opts.retries === false) return dropped;
+  dropped += await dropRetries(ctx, email, (r) =>
+    (r.refs ?? []).some((ref) => scope === "all" || ref === scope || ref.startsWith(`${scope}:`)),
+  );
+  return dropped;
+}
+
+/**
+ * Delete waiting retries addressed to `email` that `matches` picks. Bounded:
+ * one address holds a handful of waiting sends at most.
+ */
+export async function dropRetries(
+  ctx: MutationCtx,
+  email: string,
+  matches: (row: Doc<"emailRetries">) => boolean,
+): Promise<number> {
+  let dropped = 0;
+  for await (const row of ctx.db.query("emailRetries").withIndex("by_to", (q) => q.eq("to", email))) {
+    if (!matches(row)) continue;
+    await ctx.db.delete(row._id);
     dropped += 1;
   }
   return dropped;

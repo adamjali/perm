@@ -35,6 +35,14 @@ export const RETENTION_DAYS = {
 /** Rows one run deletes per table; a longer backlog reschedules itself. */
 const BATCH = 500;
 
+/**
+ * A case-alert sign-up nobody confirmed in this many days is dropped. Such
+ * rows hold an address that never said yes, are never mailed, and sit at the
+ * front of the sweep's index (never checked), so every 5-minute sweep re-read
+ * them. The confirmation link in the email stops working after this.
+ */
+export const UNCONFIRMED_CASE_ALERT_DAYS = 30;
+
 export const pruneOperationalLogs = internalMutation({
   args: { now: v.optional(v.number()) },
   returns: v.object({
@@ -42,10 +50,11 @@ export const pruneOperationalLogs = internalMutation({
     marketingEvents: v.number(),
     apiUsage: v.number(),
     emailDays: v.number(),
+    unconfirmedCaseAlerts: v.number(),
   }),
   handler: async (ctx, args) => {
     const now = args.now ?? Date.now();
-    const out = { systemErrors: 0, marketingEvents: 0, apiUsage: 0, emailDays: 0 };
+    const out = { systemErrors: 0, marketingEvents: 0, apiUsage: 0, emailDays: 0, unconfirmedCaseAlerts: 0 };
     let more = false;
     for (const table of Object.keys(RETENTION_DAYS) as (keyof typeof RETENTION_DAYS)[]) {
       const cutoff = now - RETENTION_DAYS[table] * MS_PER_DAY;
@@ -56,6 +65,26 @@ export const pruneOperationalLogs = internalMutation({
       for (const row of old.slice(0, BATCH)) await ctx.db.delete(row._id);
       out[table] = Math.min(old.length, BATCH);
       if (old.length > BATCH) more = true;
+    }
+    // Never-checked live rows lead the sweep's index; the unconfirmed ones
+    // among them past the horizon go.
+    const staleBefore = now - UNCONFIRMED_CASE_ALERT_DAYS * MS_PER_DAY;
+    let looked = 0;
+    for await (const row of ctx.db
+      .query("caseStatusAlerts")
+      .withIndex("by_alert_sweep", (q) =>
+        q.eq("unsubscribedAt", undefined).eq("caseClosedAt", undefined).eq("lastCheckedAt", undefined),
+      )) {
+      if (++looked > BATCH * 4) {
+        more = true;
+        break;
+      }
+      if (row.confirmedAt !== undefined || row._creationTime >= staleBefore) continue;
+      await ctx.db.delete(row._id);
+      if (++out.unconfirmedCaseAlerts >= BATCH) {
+        more = true;
+        break;
+      }
     }
     // Guarded on progress, so an empty table can never spin a timer.
     if (more) await ctx.scheduler.runAfter(0, internal.retention.pruneOperationalLogs, { now });

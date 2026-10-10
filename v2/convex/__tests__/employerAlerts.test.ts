@@ -307,6 +307,23 @@ describe("the change detector", () => {
     expect(kept[0]).toMatchObject({ to: "f@example.com" });
   });
 
+  it("an opt-out drops the move's email from the retry queue too, and nothing else", async () => {
+    const t = createTestContext();
+    stub({ holdMoves: [hold(1)], resendStatus: 500 });
+    await follow(t, "f@example.com");
+    await t.action(internal.employerAlerts.sweep, {});
+    await t.run(async (ctx) =>
+      ctx.db.insert("emailRetries", {
+        kind: "welcome", to: "f@example.com", payload: "{}", queuedAt: Date.now(),
+        nextAttemptAt: Date.now(), attempts: 0, lastError: "x",
+      }),
+    );
+    const off = await makeUnsubscribeToken("f@example.com", SECRET, "employer-unsubscribe");
+    await t.mutation(internal.employerAlerts.unsubscribeByToken, { token: off });
+    const left = await t.run(async (ctx) => ctx.db.query("emailRetries").collect());
+    expect(left.map((r) => r.kind)).toEqual(["welcome"]);
+  });
+
   it("leaves a move unheard when the send fails for good, so the next sweep retries", async () => {
     const t = createTestContext();
     stub({ holdMoves: [hold(1)], resendStatus: 422 });
@@ -384,6 +401,30 @@ describe("one email a day, whatever the address follows", () => {
     const b = await t.action(internal.alertOutbox.sendBundles, {});
     expect(b).toMatchObject({ emails: 0, held: 1 });
     expect(sends).toHaveLength(0);
+  });
+
+  it("an address already mailed today doesn't take a place in the run (40 of them stalled everyone behind)", async () => {
+    const t = createTestContext();
+    const { sends } = stub({});
+    const day = easternDay(Date.now());
+    const summary = { title: "t", line: "l", url: "https://permtracker.app/x" };
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 40; i++) {
+        const email = `held${i}@example.com`;
+        await ctx.db.insert("alertRecipients", { email, lastSentDay: day, lastSentAt: Date.now(), emailsSent: 1 });
+        await ctx.db.insert("alertOutbox", {
+          email, kind: "employer", ref: `employer:h${i}`, status: "queued",
+          subject: "s", text: "x", summary, createdAt: Date.now() - 60_000 - i,
+        });
+      }
+      await ctx.db.insert("alertOutbox", {
+        email: "fresh@example.com", kind: "employer", ref: "employer:f", status: "queued",
+        subject: "s", text: "x", summary, createdAt: Date.now(),
+      });
+    });
+    const b = await t.action(internal.alertOutbox.sendBundles, {});
+    expect(b).toMatchObject({ emails: 1, held: 40 });
+    expect(sends.map((s) => s.to)).toEqual(["fresh@example.com"]);
   });
 
   it("drops what is waiting when the person opts out before the bundle goes", async () => {

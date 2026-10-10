@@ -173,6 +173,7 @@ export default function DevelopersPage() {
                   ["Live keys", free.keys, plus.keys],
                   ["Sandbox keys", free.sandboxKeys, plus.sandboxKeys],
                   ["Rows in one export", free.exportRows, plus.exportRows],
+                  ["Export rows a day", free.exportRowsPerDay, plus.exportRowsPerDay],
                   ["Live DOL lookups a day", free.liveLookupsPerDay, plus.liveLookupsPerDay],
                   ["Webhook endpoints", free.webhookEndpoints, plus.webhookEndpoints],
                   ["Watched cases and employers", free.webhookWatches, plus.webhookWatches],
@@ -316,7 +317,9 @@ export default function DevelopersPage() {
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/75">
           <code className="font-mono">/v1/exports/cases</code> takes the case search&rsquo;s own parameters and returns
           the whole answer, up to {fmt(plus.exportRows)} rows on Plus, as JSON or CSV (cells a spreadsheet would run as
-          a formula are written as text). When more matched, X-Export-Truncated says so. An export counts as one call.
+          a formula are written as text). When more matched, X-Export-Truncated says so. An export counts as one call,
+          and its rows count toward {fmt(plus.exportRowsPerDay)} export rows a day on Plus; X-Export-Rows-Left-Today
+          says what&rsquo;s left.
         </p>{" "}
         <Code>{`curl -H "Authorization: Bearer YOUR_KEY" \
 "${API_BASE}/exports/cases?q=acme&state=CA&format=csv"`}</Code>{" "}

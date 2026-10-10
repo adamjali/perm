@@ -109,6 +109,11 @@ describe("reference reads", () => {
     expect(got[0]).toEqual({ wageYear: 2026, levels: [null, null, null, null], annual: false, yearly: [null, null, null, null], label: "High Wage" });
   });
 
+  it("throws on a failed wage-history read, so the route can say it couldn't read", async () => {
+    rows.mockRejectedValueOnce(new Error("turso query deadline"));
+    await expect(ref.wageLevelHistory("29-1216", "14460")).rejects.toThrow("turso query deadline");
+  });
+
   it("gives the busiest occupation page for each SOC code", async () => {
     rows.mockResolvedValueOnce([
       { soc: "13-2011", slug: "accountants-and-auditors" },

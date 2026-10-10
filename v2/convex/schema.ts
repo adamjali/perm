@@ -1507,6 +1507,14 @@ export default defineSchema({
     /** Null until the address is confirmed; nothing is ever sent before then. */
     confirmedAt: v.optional(v.number()),
     /**
+     * A sweep is sending the email for this status (`claimAlertSend`), so a
+     * second sweep running at the same moment skips the row instead of
+     * sending it twice. Cleared when the alert is recorded or the send fails;
+     * a claim older than ALERT_SEND_CLAIM_MS is treated as abandoned.
+     */
+    sendingStatus: v.optional(v.string()),
+    sendingAt: v.optional(v.number()),
+    /**
      * A case number requested by an unauthenticated POST, held until the inbox
      * owner clicks a fresh confirm link. Same reasoning as
      * `dolQueueAlerts.pendingFilingMonth`: writing straight to `caseNumber`
@@ -1697,6 +1705,12 @@ export default defineSchema({
   /**
    * One row per PERM entity: employer, law firm, or occupation.
    *
+   * RETIRED (2026-09-06): nothing reads or writes this table. The ingest
+   * steps that filled it were removed and its rows deleted; the definition
+   * stays so the schema matches the deployment. The notes below describe how
+   * it worked.
+   *
+   *
    * These used to live as arrays inside the permDisclosureStats document,
    * capped at the top 100. Measured, the uncapped set is 1.14 MB of
    * employers alone against Convex's 1 MB document limit, so the cap was
@@ -1741,11 +1755,13 @@ export default defineSchema({
     .index("by_kind_rank", ["kind", "rank"]),
 
   /**
-   * Contact-form submissions. Stored first, THEN forwarded by a scheduled
-   * action, so a Resend outage loses nothing - the message is already here.
-   */
-  /**
    * One row per PERM case DOL has published a decision for.
+   *
+   * RETIRED (2026-09-06): nothing reads or writes this table. The ingest
+   * steps that filled it were removed and its rows deleted; the definition
+   * stays so the schema matches the deployment. The notes below describe how
+   * it worked.
+   *
    *
    * Everything else derived from the disclosure files is an aggregate. This
    * is the exception, and it is deliberate: the rival product ships a
@@ -1770,8 +1786,8 @@ export default defineSchema({
    * INDEXES. Every browse index ends in `decisionDate`, which buys the date
    * range filter on all of them for free (Convex allows a range comparison
    * only on the final indexed field). The leading fields are the slice, and
-   * `planCaseQuery` in `convex/permCases.ts` is the only thing that chooses
-   * among them - it is a pure function so the mapping can be tested, because
+   * `planCaseQuery` in `convex/permCases.ts` (deleted with the table's
+   * readers) chose among them - it is a pure function so the mapping can be tested, because
    * picking the wrong index here is the difference between a bounded read
    * and a table scan that dies at 4,096 documents.
    *
@@ -1905,6 +1921,11 @@ export default defineSchema({
 
   /**
    * Wage percentile cells for the salary explorer.
+   *
+   * RETIRED (2026-09-06): nothing reads or writes this table. The ingest
+   * steps that filled it were removed and its rows deleted; the definition
+   * stays so the schema matches the deployment. The notes below describe how
+   * it worked.
    *
    * One row per (partition, key, fiscal year). Three partitions - occupation,
    * state, and occupation-by-state - each emitted per fiscal year and once
@@ -2116,6 +2137,10 @@ export default defineSchema({
     .index("by_endpoint", ["endpointHash"])
     .index("by_endpoint_case", ["endpointHash", "caseNumber"]),
 
+  /**
+   * Contact-form submissions. Stored first, THEN forwarded by a scheduled
+   * action, so a Resend outage loses nothing - the message is already here.
+   */
   contactMessages: defineTable({
     name: v.string(),
     email: v.string(),
@@ -2344,11 +2369,6 @@ export default defineSchema({
     .index("by_created", ["createdAt"]),
 
   /**
-   * How many people a daily email budget turned away, per pool per Eastern
-   * day. The admin panel's "time to move off Resend's free plan" signal; see
-   * convex/lib/alertBudgets.ts. Pruned after 30 days.
-   */
-  /**
    * The daily operator report (convex/dailyReport.ts), one row per Eastern
    * day, kept 60 days for the admin page. `report` is the whole report as the
    * email showed it; `overall` is its worst section status.
@@ -2360,6 +2380,11 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_day", ["day"]),
 
+  /**
+   * How many people a daily email budget turned away, per pool per Eastern
+   * day. The admin panel's "time to move off Resend's free plan" signal; see
+   * convex/lib/alertBudgets.ts. Pruned after 30 days.
+   */
   budgetRefusals: defineTable({
     day: v.string(),
     /** A key of BUDGETS in convex/lib/alertBudgets.ts. */
@@ -2370,13 +2395,6 @@ export default defineSchema({
     queued: v.optional(v.number()),
   }).index("by_day_pool", ["day", "pool"]),
 
-  /**
-   * The day's email count against Resend's free-plan quota (convex/lib/emailLimits.ts).
-   * One row per UTC day, the day Resend counts by. `sent` is this app's own
-   * count after each successful send; `reported` is the highest count Resend
-   * itself gave (its `x-resend-daily-quota` header, or its list of sent mail
-   * plus a margin for received mail). The day's use is the larger of the two.
-   */
   /**
    * The off-server check on the server (convex/serverWatch.ts): one row, the
    * alarm's state, so it emails when trouble starts, every 6 hours while it
@@ -2390,6 +2408,13 @@ export default defineSchema({
     reason: v.string(),
   }).index("by_key", ["key"]),
 
+  /**
+   * The day's email count against Resend's free-plan quota (convex/lib/emailLimits.ts).
+   * One row per UTC day, the day Resend counts by. `sent` is this app's own
+   * count after each successful send; `reported` is the highest count Resend
+   * itself gave (its `x-resend-daily-quota` header, or its list of sent mail
+   * plus a margin for received mail). The day's use is the larger of the two.
+   */
   emailDays: defineTable({
     day: v.string(),
     sent: v.number(),
@@ -2419,9 +2444,15 @@ export default defineSchema({
     attempts: v.number(),
     lastError: v.string(),
     claimedAt: v.optional(v.number()),
+    /**
+     * The alert subscriptions this email carries (`<kind>:<id>` refs), so an
+     * opt-out drops the email here too, not only in the outbox (Oct 10 2026).
+     */
+    refs: v.optional(v.array(v.string())),
   })
     .index("by_next", ["nextAttemptAt"])
-    .index("by_queuedAt", ["queuedAt"]),
+    .index("by_queuedAt", ["queuedAt"])
+    .index("by_to", ["to"]),
 
   /**
    * Confirmation requests a full pool could not send at once (Sep 29 2026).
@@ -2440,6 +2471,8 @@ export default defineSchema({
       v.literal("bulletin"),
       v.literal("prefs"),
       v.literal("firm"),
+      /** A firm's edit-link request: its own kind, so it can't overwrite a waiting claim. */
+      v.literal("firmEdit"),
     ),
     pool: v.string(),
     email: v.string(),

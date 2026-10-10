@@ -29,8 +29,9 @@
  * It claims no new line in the Resend arithmetic (convex/caseAlerts.ts):
  * confirmations share the case confirmations' pool, alerts share the case
  * alerts' pool (`convex/lib/alertBudgets.ts`), and every alert leaves through
- * `deliverAlert`, so a follower gets at most one alert email a day whatever
- * else they follow.
+ * `deliverAlert`, so a follower gets at most one email a day of these and
+ * everything else that waits for the daily bundle (a case's own status change
+ * goes at once).
  *
  * @module convex/employerAlerts
  */
@@ -83,6 +84,7 @@ import {
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { easternDay } from "./lib/time";
+import { isPlausibleEmail } from "./lib/emailShape";
 
 const log = createLogger("EmployerAlerts");
 
@@ -104,10 +106,6 @@ const APPEAL_STATUSES = ["RECONSIDERATION APPEALS", "BALCA APPEALS", "REQUEST FO
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/;
 
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
-
-function isPlausibleEmail(email: string): boolean {
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-}
 
 function unsubscribeSecret(): string {
   const secret = process.env.UNSUBSCRIBE_SECRET;
@@ -325,7 +323,7 @@ export const sendConfirmation = internalAction({
           `You asked to follow ${args.employerName}'s PERM cases.`,
           "",
           "We'll email you when DOL puts five or more of them on hold or takes them off it in a day,",
-          "or decides a batch of them well above its usual pace. Never more than one email a day.",
+          "or decides a batch of them well above its usual pace. Employer updates come at most once a day.",
           "",
           "Confirm here:",
           confirmUrl,

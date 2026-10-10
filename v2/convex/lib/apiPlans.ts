@@ -38,6 +38,12 @@ export interface ApiPlan {
   perMonth: number;
   /** Rows one export may return. 0: no exports on this plan. */
   exportRows: number;
+  /**
+   * Export rows the account may take in a UTC day, all exports together
+   * (src/lib/api/exportQuota.ts). Without it 3,000 calls of 1,000 rows let one
+   * account copy about 30 million rows a month (owner's call, Oct 10 2026).
+   */
+  exportRowsPerDay: number;
   /** Live DOL lookups a day for the account. 0: none on this plan. */
   liveLookupsPerDay: number;
   /** Webhook endpoints the account may register. 0: no webhooks on this plan. */
@@ -56,6 +62,7 @@ export const API_PLANS: Record<ApiPlanId, ApiPlan> = {
     perDay: 300,
     perMonth: 3_000,
     exportRows: 0,
+    exportRowsPerDay: 0,
     liveLookupsPerDay: 0,
     webhookEndpoints: 0,
     webhookWatches: 0,
@@ -69,6 +76,7 @@ export const API_PLANS: Record<ApiPlanId, ApiPlan> = {
     perDay: 3_000,
     perMonth: 30_000,
     exportRows: 1_000,
+    exportRowsPerDay: 20_000,
     liveLookupsPerDay: 200,
     webhookEndpoints: 5,
     webhookWatches: 100,

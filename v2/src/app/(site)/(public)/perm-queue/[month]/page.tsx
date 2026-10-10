@@ -421,18 +421,6 @@ export default async function CohortPage({
  * and "DOL has not reached your month" both look like silence from where the
  * applicant is standing.
  */
-/**
- * "a" or "an" for a month name.
- *
- * The article was hardcoded to "a" and the first page anyone looked at was
- * October, which read "carry a October 2025 filing date". April and August
- * have the same problem and eight other months do not, so it survives every
- * spot check that happens to land on one of the eight.
- */
-function article(label: string): string {
-  return /^[aeiou]/i.test(label) ? "an" : "a";
-}
-
 function FrontierSentence({
   month,
   dolMonth,

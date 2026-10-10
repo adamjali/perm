@@ -38,6 +38,7 @@ function result(over: Record<string, unknown> = {}) {
     windowed: false,
     skipped: { live: false, published: false, because: [] },
     permOnly: [],
+    unread: [],
     order: "filed-desc",
     orderScope: "complete",
     lead: { kind: "employer", value: "acme" },
@@ -255,5 +256,30 @@ describe("format=csv", () => {
     const r = await get("q=acme&format=csv&naics=abc");
     expect(r.status).toBe(400);
     expect(r.headers.get("content-type")).toMatch(/json/);
+  });
+});
+
+describe("a part of the record that couldn't be read", () => {
+  it("is not cached, so the next request reads it again", async () => {
+    unifiedSearch.mockResolvedValue(result({ unread: ["live wage requests"] }));
+    const r = await get("q=acme");
+    expect(r.status).toBe(200);
+    expect(r.headers.get("cache-control")).toBe("no-store");
+    expect(((await r.json()) as { unread: string[] }).unread).toEqual(["live wage requests"]);
+  });
+
+  it("answers 503 when nothing could be read, never an empty 200", async () => {
+    const { SearchUnavailableError } = await vi.importActual<typeof import("@/lib/turso/unifiedSearch")>(
+      "@/lib/turso/unifiedSearch",
+    );
+    unifiedSearch.mockRejectedValue(new SearchUnavailableError(["published PERM cases"]));
+    const r = await get("q=acme");
+    expect(r.status).toBe(503);
+  });
+
+  it("a complete answer keeps its shared cache", async () => {
+    unifiedSearch.mockResolvedValue(result());
+    const r = await get("q=acme");
+    expect(r.headers.get("cache-control")).toMatch(/s-maxage=900/);
   });
 });

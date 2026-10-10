@@ -103,7 +103,10 @@ export const forward = internalAction({
       replyTo: row.email,
       subject: `Contact form: ${row.name}`,
       html: `<p><b>${esc(row.name)}</b> &lt;${esc(row.email)}&gt;</p><p style="white-space:pre-wrap">${esc(row.message)}</p>`,
-    }, { priority: "high" });
+    }, { priority: "public" });
+    // "public" on purpose: strangers can send 25 of these a day, so they stop
+    // where sign-ups do and never use the room kept for alerts or sign-in
+    // codes. The message is stored above, so a wait loses nothing.
     if (result.error) {
       // The message is already stored; log and leave notifiedAt unset so a
       // later manual sweep can see exactly which forwards never went out.

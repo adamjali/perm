@@ -51,7 +51,8 @@ export const metadata: Metadata = withSocialCard({
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178
 // entity pages. A day bounds staleness far below the data's own
-// cadence. The ingest should also revalidate on demand.
+// cadence, and the ingests expire it on demand when its data moves
+// (the /api/revalidate-* routes).
 export const revalidate = 86400;
 
 const FAQS = [
@@ -88,7 +89,7 @@ export default async function PermTimelineCalculatorPage() {
     // How fast DOL is finishing the in-line cases its queue has passed: the
     // answer for a filing month DOL has left behind. Null-safe like the rest.
     getStragglerRates().catch(() => null),
-    // The weekly backtest's measured range coverage, quoted under the range.
+    // The nightly backtest's measured range coverage, quoted under the range.
     getRangeCoverage().catch(() => null),
   ]);
   const pace = businessDayPace(daily, 28);

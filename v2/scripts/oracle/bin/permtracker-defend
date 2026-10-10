@@ -401,12 +401,35 @@ def in_trouble(people: int, full: int) -> bool:
     return people >= PEOPLE_BUSY or full >= FULL_MINUTES
 
 
+def reconcile(cf, now: float) -> dict:
+    """The state to start from when the saved one can't be read, taken from
+    what Cloudflare says now: the automatic rule present means "rule", Under
+    Attack Mode on means "attack". Its 30-calm-minute clock starts now.
+
+    Starting from "off" instead (what this did until Oct 10 2026) left Under
+    Attack Mode or the rule on with nothing that would ever turn it off, and
+    the daily email cap, kept in the same unsaved file, lost its count.
+    """
+    state: dict = {"mode": "off"}
+    has_rule = any(r.get("ref") == RULE_REF for r in cf.entrypoint().get("rules", []))
+    attack = cf.security_level() == "under_attack"
+    if attack:
+        state.update(mode="attack", since=now, restoreLevel="low")
+    elif has_rule:
+        state.update(mode="rule", since=now)
+    if state["mode"] != "off":
+        note(f"state file unreadable; Cloudflare says {state['mode']} is on, so the defense resumes from that")
+    return state
+
+
 def main() -> int:
     now = time.time()
     try:
         state = json.loads(STATE.read_text())
+        saved = True
     except (OSError, ValueError):
         state = {"mode": "off"}
+        saved = False
     reqs = page_requests(tail_lines(DEFEND_LOG), now - max(SOURCE_WINDOW, 60 * FULL_MINUTES))
     people = people_busy(tail_lines(BUSY_LOG, 2 << 20), now)
     deploying = deploying_now(now)
@@ -432,6 +455,12 @@ def main() -> int:
            + (" (a deploy is running, so a full app is not counted)" if deploying else "")
            + (" (the database, not traffic, is using the CPU, so a full app is not counted)" if db_bound else ""))
     cf = Cloudflare(cfg["CF_API_TOKEN"], cfg["CF_ZONE_ID"]) if live else None
+    if cf is not None and not saved:
+        try:
+            state = reconcile(cf, now)
+            acts = decide(state, trouble, source, now)
+        except Exception as exc:  # noqa: BLE001 - Cloudflare unreadable too: start from off, as before
+            note(f"state file unreadable and Cloudflare didn't answer ({exc}); starting from off")
     for act, info in acts:
         if not live:
             # Watching only: say what would have happened once per change of mind.
@@ -492,7 +521,7 @@ def main() -> int:
     state["last"] = {"people": people, "fullMinutes": full, "pageRequests": len(reqs), "live": live}
     # A full disk refuses this file (Oct 10 2026: the defense failed every
     # minute for three hours). The actions above already happened; losing the
-    # state only means the next run starts from what Cloudflare says now.
+    # state means the next run starts from what Cloudflare says now (reconcile).
     try:
         HEALTH.mkdir(parents=True, exist_ok=True)
         tmp = STATE.with_suffix(".tmp")

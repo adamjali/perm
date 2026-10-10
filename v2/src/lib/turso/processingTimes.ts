@@ -40,8 +40,29 @@ export interface ProcessingTimesSnapshot {
   fetchedAt: number;
 }
 
-function hydrate(r: { json: string; fetched_at: number }): ProcessingTimesSnapshot {
-  return { ...(JSON.parse(r.json) as object), fetchedAt: r.fetched_at } as ProcessingTimesSnapshot;
+const SNAPSHOT_LISTS = ["permQueues", "permAverageDays", "pwdQueues", "pwdPermBacklog"] as const;
+
+/**
+ * The stored JSON as a snapshot, its lists checked rather than cast: a field
+ * the Python ingest renamed would otherwise reach every page as undefined and
+ * throw where it maps over it. A missing list becomes empty (the pages show
+ * their empty state) and the gap is logged by name.
+ */
+export function hydrate(r: { json: string; fetched_at: number }): ProcessingTimesSnapshot {
+  const raw = JSON.parse(r.json) as Record<string, unknown>;
+  const missing = SNAPSHOT_LISTS.filter((k) => !Array.isArray(raw[k]));
+  if (missing.length > 0 || typeof raw.permAsOf !== "string") {
+    console.error("[processingTimes] the stored snapshot is missing", [...missing, ...(typeof raw.permAsOf === "string" ? [] : ["permAsOf"])].join(", "));
+  }
+  const lists = Object.fromEntries(SNAPSHOT_LISTS.map((k) => [k, Array.isArray(raw[k]) ? raw[k] : []]));
+  return {
+    ...raw,
+    ...lists,
+    permAsOf: typeof raw.permAsOf === "string" ? raw.permAsOf : "",
+    pwdAsOf: typeof raw.pwdAsOf === "string" ? raw.pwdAsOf : null,
+    sourceUrl: typeof raw.sourceUrl === "string" ? raw.sourceUrl : "",
+    fetchedAt: r.fetched_at,
+  } as ProcessingTimesSnapshot;
 }
 
 /** The newest snapshot, or null if the ingest has never run. */

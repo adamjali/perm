@@ -48,6 +48,13 @@ export const BUDGETS = {
    */
   webhookPause: { key: "webhook_pause_global", limit: 20, label: "Webhook pause notices" },
   /**
+   * Mail sent to permtracker.app addresses, forwarded to the owner's inbox
+   * (convex/supportEmail.ts). A stranger decides how much arrives, so it has
+   * a bound like any form. Past it a message is still stored, and the admin
+   * page lists it; only the forward waits.
+   */
+  supportForward: { key: "support_forward_global", limit: 30, label: "Support mail forwards" },
+  /**
    * Sign-in and password-reset codes (convex/authMail.ts). Not list mail: these
    * are the emails whose absence locks someone out, so the pool sits above the
    * busiest measured day instead of inside the list ledger's remainder. See the
@@ -66,6 +73,7 @@ export const LIST_MAIL_POOLS = [
   "prefsLink",
   "firmClaim",
   "webhookPause",
+  "supportForward",
 ] as const satisfies readonly (keyof typeof BUDGETS)[];
 
 /** Codes to one address, whatever kind: enough for a few resends, not a flood. */

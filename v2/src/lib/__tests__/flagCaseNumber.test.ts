@@ -22,12 +22,16 @@ import {
   type FlagProgram,
 } from "../flagCaseNumber";
 
-/** Read a sibling source file as TEXT, for the drift guards. */
-async function source(relative: string): Promise<string | null> {
+/**
+ * Read a sibling source file as TEXT, for the drift guards. Resolved from the
+ * working directory, and a missing file throws: these guards used to pass
+ * through an "unreadable, skip" branch, and a guard that passes when it can't
+ * read its subject guards nothing.
+ */
+async function source(relative: string): Promise<string> {
   const fs = await import("node:fs/promises");
-  return await fs
-    .readFile(new URL(relative, import.meta.url), "utf8")
-    .catch(() => null);
+  const { resolve } = await import("node:path");
+  return await fs.readFile(resolve(process.cwd(), "src/lib/__tests__", relative), "utf8");
 }
 
 describe("programOf", () => {
@@ -157,15 +161,11 @@ describe("freshnessDatasetFor", () => {
    *
    * A key that no longer matches reads as "we have no freshness date" and
    * quietly drops the as-of from the provenance line, which is exactly the
-   * failure that line exists to prevent. Skipped loudly rather than failed if
-   * the scripts move: a red test nobody can act on gets deleted.
+   * failure that line exists to prevent. A moved script fails the test, since
+   * a guard that skips when it can't read its subject guards nothing.
    */
   it("agrees with the ingests that stamp the rows", async () => {
     const pwd = await source("../../../scripts/ingest_pwd_status_direct.py");
-    if (pwd === null) {
-      expect(true).toBe(true);
-      return;
-    }
     expect(pwd, "the PWD ingest no longer stamps 'pwd-status'").toContain(
       '"freshness": "pwd-status"',
     );
@@ -177,7 +177,6 @@ describe("freshnessDatasetFor", () => {
     );
 
     const perm = await source("../../../scripts/ingest_case_status_direct.py");
-    if (perm === null) return;
     expect(perm, "the PERM ingest no longer stamps 'perm-case-status'").toContain(
       '"perm-case-status"',
     );
@@ -209,10 +208,6 @@ describe("the prefix rules", () => {
     const pwd = await source("../turso/pwdCases.ts");
     const lca = await source("../turso/lcaCases.ts");
     const seasonal = await source("../turso/seasonalCases.ts");
-    if (pwd === null || lca === null || seasonal === null) {
-      expect(true).toBe(true);
-      return;
-    }
     expect(
       seasonal.includes("/^(?:H-300|H-400|P-400|P-500|JO-A-300|C-500)-\\d{5}-\\d+$/"),
       "seasonalCases.ts no longer uses the same prefix pattern as flagCaseNumber.ts",
@@ -300,10 +295,6 @@ describe("isProgramApproval", () => {
   it("only names statuses the ingest already treats as final", async () => {
     const pwd = await source("../turso/pwdCases.ts");
     const lca = await source("../turso/lcaCases.ts");
-    if (pwd === null || lca === null) {
-      expect(true).toBe(true);
-      return;
-    }
     for (const status of [
       "DETERMINATION ISSUED",
       "REDETERMINATION AFFIRMED",

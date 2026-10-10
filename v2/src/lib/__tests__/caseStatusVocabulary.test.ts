@@ -247,22 +247,16 @@ describe("normaliseCaseNumber", () => {
     // A key normalised differently by the subscriber than by the reader is a
     // subscription that can never match its own case. `caseLookup.ts` carries
     // `server-only`, so it cannot be imported here; the rule is duplicated and
-    // this asserts the two copies have not drifted.
-    const source = await import("node:fs/promises").then((fs) =>
-      fs.readFile(
-        new URL("../turso/caseLookup.ts", import.meta.url),
-        "utf8",
-      ).catch(() => null),
-    );
-    if (source === null) {
-      // The file is another agent's and may legitimately be gone or renamed.
-      // Skipping loudly beats a red test nobody can act on.
-      expect(true).toBe(true);
-      return;
-    }
-    const pattern = /\/\^\[A-Z\]-\\d\{3\}-\\d\{5\}-\\d\+\$\//;
+    // this asserts the two copies have not drifted. A missing file fails: a
+    // guard that passes when it can't read its subject guards nothing.
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const read = (rel: string) => readFileSync(join(process.cwd(), rel), "utf8");
+    const rule = /\/\^\(\?:\[A-Z\]\|JO-A\)-\\d\{3\}-\\d\{5\}-\\d\+\$\//;
+    const mine = read("src/lib/caseStatusVocabulary.ts").match(rule)?.[0];
+    expect(mine, "caseStatusVocabulary.ts no longer carries the case-number rule this test reads").toBeDefined();
     expect(
-      pattern.test(source),
+      read("src/lib/turso/caseLookup.ts").includes(mine!),
       "caseLookup.ts no longer uses the same case-number pattern as caseStatusVocabulary.ts",
     ).toBe(true);
   });

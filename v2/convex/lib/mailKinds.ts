@@ -62,7 +62,7 @@ export const MAIL_KINDS: Record<MailKindId, MailKind> = {
   case: {
     name: "Case status alerts",
     one: "Case status alert",
-    what: "When DOL changes the status of a case you watch. Stops once it's decided.",
+    what: "When DOL changes the status of a case you watch, and for a year after it's decided, in case of an appeal or a reversal.",
     when: "When it changes",
     start: { label: "Check a case", href: "/perm-case-status" },
   },
@@ -130,7 +130,7 @@ export const MAIL_KINDS: Record<MailKindId, MailKind> = {
  */
 export const MAIL_RULES = [
   { title: "You confirm first", body: "Nothing is sent until you click the link in a confirmation email." },
-  { title: "One alert email a day", body: "Several alerts on the same day arrive together." },
+  { title: "Case changes come at once", body: "Other alerts from the same day arrive together, in one email." },
   { title: "Off in one click", body: "Every email links here, and turning things off never needs a password." },
 ] as const;
 

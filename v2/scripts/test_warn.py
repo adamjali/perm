@@ -246,6 +246,28 @@ def main() -> int:
     ts = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "lib", "api", "employerLookup.ts")).read()
     for name, val in (("SMALL_EXACT", SMALL_EXACT), ("BUSIER_BY", BUSIER_BY), ("BUSY_FLOOR", BUSY_FLOOR)):
         check(f"export const {name} = {val};" in ts, f"{name} matches the keyless lookup's ({val})", f)
+    # The page map's read: only a missing table means "PERM sponsors only".
+    import ingest_warn as iw
+    real_q = iw.query_rows
+    def q_map_fails(msg):
+        def q(db, sql, *a):
+            if "employer_page_map" in sql:
+                raise RuntimeError(msg)
+            return [("acme", "acme-inc", 50)]
+        return q
+    try:
+        iw.query_rows = q_map_fails("HTTP 503")
+        try:
+            iw.match_employers(None, [{"company": "Acme"}])
+            check(False, "a map read that fails for any other reason fails the run", f)
+        except RuntimeError:
+            check(True, "a map read that fails for any other reason fails the run", f)
+        iw.query_rows = q_map_fails("SQLite error: no such table: employer_page_map")
+        rows = [{"company": "Acme"}]
+        check(iw.match_employers(None, rows) == 1 and rows[0]["employer_slug"] == "acme-inc",
+              "before the map exists, PERM sponsors still match", f)
+    finally:
+        iw.query_rows = real_q
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0
 

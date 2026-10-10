@@ -8,11 +8,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const tables: Record<string, Record<string, Record<string, unknown>>> = {};
 const asked: string[] = [];
+/** A table whose read fails, and how. */
+const broken: Record<string, Error> = {};
 
 vi.mock("./client", () => ({
   one: async (sql: string, args: unknown[] = []) => {
     const table = /FROM (\w+)/.exec(sql)?.[1] ?? "";
     asked.push(table);
+    if (broken[table]) throw broken[table];
     return tables[table]?.[String(args[0])] ?? null;
   },
 }));
@@ -44,6 +47,7 @@ const DECIDED = {
 
 beforeEach(() => {
   for (const k of Object.keys(tables)) delete tables[k];
+  for (const k of Object.keys(broken)) delete broken[k];
   asked.length = 0;
   discoverCase.mockReset().mockResolvedValue(null);
 });
@@ -62,6 +66,18 @@ describe("lookupCase and the FY2020 to FY2023 history", () => {
     tables.perm_cases_history = { [OLD]: DECIDED };
     await lookupCase(OLD);
     expect(asked).not.toContain("perm_cases_history");
+  });
+
+  it("throws when the history can't be read, instead of asking DOL and answering none", async () => {
+    broken.perm_cases_history = new Error("turso query deadline");
+    await expect(lookupCase(OLD)).rejects.toThrow("turso query deadline");
+    expect(discoverCase).not.toHaveBeenCalled();
+  });
+
+  it("treats a history table that doesn't exist yet as no record", async () => {
+    broken.perm_cases_history = new Error("SQLite error: no such table: perm_cases_history");
+    await lookupCase(OLD);
+    expect(discoverCase).toHaveBeenCalledOnce();
   });
 
   it("still asks DOL live when neither table holds the case", async () => {

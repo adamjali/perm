@@ -4,7 +4,8 @@
  *
  * THE PROBLEM THIS SOLVES. The homepage band reads "Live from the Department of
  * Labor · <date>", where the date is DOL's OWN as-of stamp, parsed from their
- * table caption. The ingest refreshes that daily, but the pages carrying it sit
+ * table caption. The ingest refreshes that hourly through the working day on
+ * weekdays and daily otherwise, but the pages carrying it sit
  * on `revalidate = 86400`. So on the day DOL moves, the fresh number can be in
  * Turso while every public page still serves the old one for up to another 24
  * hours: worst case ~48h behind DOL when the two windows stack, on a band whose
@@ -17,7 +18,8 @@
  * through `lib/turso/estimate`), and it changes only when someone adds a page.
  * Taking no input at all means there is no path to validate, no traversal to
  * defend against, and no way to aim this at anything else. A caller either
- * knows the secret and expires these ten paths, or does nothing.
+ * knows the secret and expires these paths (DOL_PAGES in paths.ts), or does
+ * nothing.
  *
  * IT CLEARS PATHS ONLY. getFreshness is a per-request read, not an
  * `unstable_cache` entry (a cached one's window would cap every page reading

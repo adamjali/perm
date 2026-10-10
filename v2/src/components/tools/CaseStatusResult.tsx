@@ -103,7 +103,7 @@ export interface CaseStatusResultProps {
   decisionPace?: Parameters<typeof CaseEstimate>[0]["decisionPace"];
   sweepAgeDays?: number | null;
   stragglers?: Parameters<typeof CaseEstimate>[0]["stragglers"];
-  /** The weekly backtest's measurement of the printed range, quoted under it. */
+  /** The nightly backtest's measurement of the printed range, quoted under it. */
   rangeCoverage?: RangeCoverage | null;
   /** Measured stage ages, so the estimate reads today's numbers not a table. */
   measuredStageAges?: ReadonlyMap<string, number>;

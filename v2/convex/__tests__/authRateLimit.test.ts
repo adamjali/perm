@@ -1,8 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { api } from "../_generated/api";
 
 const IP = "203.0.113.99";
+const SERVER = "server-secret-for-tests-0123456789";
+beforeEach(() => vi.stubEnv("API_SERVER_SECRET", SERVER));
+afterEach(() => vi.unstubAllEnvs());
 
 // ---------------------------------------------------------------------------
 // checkIpRateLimit
@@ -14,6 +17,7 @@ describe("checkIpRateLimit", () => {
     const r = await t.mutation(api.authRateLimit.checkIpRateLimit, {
       ip: IP,
       action: "ip_auth",
+      serverSecret: SERVER,
     });
     expect(r.allowed).toBe(true);
     expect(r.remaining).toBeGreaterThan(0);
@@ -24,6 +28,7 @@ describe("checkIpRateLimit", () => {
     const r = await t.mutation(api.authRateLimit.checkIpRateLimit, {
       ip: "",
       action: "ip_auth",
+      serverSecret: SERVER,
     });
     expect(r.allowed).toBe(true);
     // remaining=0 (not 1) so callers can't cache phantom headroom — see
@@ -48,6 +53,7 @@ describe("checkIpRateLimit", () => {
     const r = await t.mutation(api.authRateLimit.checkIpRateLimit, {
       ip: IP,
       action: "ip_auth",
+      serverSecret: SERVER,
     });
     expect(r.allowed).toBe(false);
     expect(r.remaining).toBe(0);
@@ -71,6 +77,7 @@ describe("checkIpRateLimit", () => {
     const r = await t.mutation(api.authRateLimit.checkIpRateLimit, {
       ip: IP,
       action: "ip_auth",
+      serverSecret: SERVER,
     });
     expect(r.allowed).toBe(true);
   });
@@ -91,8 +98,27 @@ describe("checkIpRateLimit", () => {
     const r = await t.mutation(api.authRateLimit.checkIpRateLimit, {
       ip: `${IP}, 10.0.0.1`,
       action: "ip_auth",
+      serverSecret: SERVER,
     });
     expect(r.allowed).toBe(false);
+  });
+  it("counts nothing for a caller without the server's secret, so nobody can spend another address's budget", async () => {
+    const t = createTestContext();
+    for (const serverSecret of [undefined, "wrong-secret-for-tests-0123456789"]) {
+      for (let i = 0; i < 3; i++) {
+        const r = await t.mutation(api.authRateLimit.checkIpRateLimit, { ip: IP, action: "ip_auth", serverSecret });
+        expect(r).toEqual({ allowed: true, remaining: 0, retryAfterMs: 0 });
+      }
+    }
+    const written = await t.run(async (ctx) => ctx.db.query("rateLimits").collect());
+    expect(written).toHaveLength(0);
+  });
+
+  it("is shut when the deployment has no secret set, whatever the caller sends", async () => {
+    vi.stubEnv("API_SERVER_SECRET", "");
+    const t = createTestContext();
+    await t.mutation(api.authRateLimit.checkIpRateLimit, { ip: IP, action: "ip_auth", serverSecret: "" });
+    expect(await t.run(async (ctx) => ctx.db.query("rateLimits").collect())).toHaveLength(0);
   });
 });
 
@@ -106,6 +132,7 @@ describe("checkAuthRateLimit — per-email", () => {
     const r = await t.mutation(api.authRateLimit.checkAuthRateLimit, {
       email: "fresh@example.com",
       action: "login",
+      serverSecret: SERVER,
     });
     expect(r.allowed).toBe(true);
   });
@@ -119,6 +146,7 @@ describe("checkAuthRateLimit — per-email", () => {
       await t.mutation(api.authRateLimit.checkAuthRateLimit, {
         email,
         action: "signup",
+        serverSecret: SERVER,
       });
     }
     // No auto_fail rows should exist for signup — the carve-out at
@@ -140,6 +168,7 @@ describe("checkAuthRateLimit — per-email", () => {
       await t.mutation(api.authRateLimit.checkAuthRateLimit, {
         email,
         action: "login",
+        serverSecret: SERVER,
       });
     }
     const failRows = await t.run((ctx) =>
@@ -150,6 +179,31 @@ describe("checkAuthRateLimit — per-email", () => {
     );
     // At least one failure should have been recorded once the limit tripped.
     expect(failRows.length).toBeGreaterThan(0);
+  });
+
+  it("counts the site server's calls, and refuses past the login limit", async () => {
+    const t = createTestContext();
+    const email = "counted@example.com";
+    const results = [];
+    for (let i = 0; i < 21; i++) {
+      results.push(await t.mutation(api.authRateLimit.checkAuthRateLimit, { email, action: "login", serverSecret: SERVER }));
+    }
+    expect(results.slice(0, 20).every((r) => r.allowed)).toBe(true);
+    expect(results[20]?.allowed).toBe(false);
+  });
+
+  it("counts nothing for a caller without the server's secret, so nobody can lock an address out", async () => {
+    const t = createTestContext();
+    const email = "victim@example.com";
+    for (let i = 0; i < 30; i++) {
+      const r = await t.mutation(api.authRateLimit.checkAuthRateLimit, { email, action: "login", serverSecret: "wrong" });
+      expect(r.allowed).toBe(true);
+    }
+    await t.mutation(api.authRateLimit.checkAuthRateLimit, { email, action: "login" });
+    const rows = await t.run((ctx) => ctx.db.query("rateLimits").take(100));
+    expect(rows).toHaveLength(0);
+    // The owner's own sign-in, through the site's server, is still allowed.
+    expect((await t.mutation(api.authRateLimit.checkAuthRateLimit, { email, action: "login", serverSecret: SERVER })).allowed).toBe(true);
   });
 });
 
@@ -180,6 +234,7 @@ describe("clearAuthRateLimit — ownership enforcement", () => {
       const r = await t.mutation(api.authRateLimit.checkAuthRateLimit, {
         email,
         action: "login",
+        serverSecret: SERVER,
       });
       lastAllowed = r.allowed;
     }

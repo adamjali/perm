@@ -752,6 +752,10 @@ describe("programForCaseNumber", () => {
     ["H-300-26272-266803", "seasonal"],
     ["H-400-26050-650195", "seasonal"],
     ["P-400-26272-268643", "seasonal"],
+    ["P-500-26272-268644", "seasonal"],
+    ["JO-A-300-26271-264525", "seasonal"],
+    ["C-500-26271-263466", "seasonal"],
+    ["P-200-26232-000010", "pwd"],
   ])("%s is %s", (n, program) => {
     expect(programForCaseNumber(n)).toBe(program);
   });
@@ -790,6 +794,14 @@ describe("lookupUnifiedCase", () => {
     const out = await lookupUnifiedCase("G-100-26125-868956");
     expect(out.program).toBe("perm");
     expect(out.permPublished).toBeNull();
+    // And says so, so a failed read isn't taken for "we don't hold it".
+    expect(out.unread).toEqual(["published"]);
+    expect(out.asked).toBe(2);
+  });
+
+  it("reports nothing unread when both reads answered, found or not", async () => {
+    const out = await lookupUnifiedCase("G-100-26125-868956");
+    expect(out.unread).toEqual([]);
   });
 });
 

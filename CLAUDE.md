@@ -579,3 +579,17 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 10 2026".
 - **A run that fails and carries on ends red**: two failed doc writes or a lost run row, or any step noting a failure.
 - **Each slot's page-cache budget is split between its two copies**; at 60 GB a folder the live slot alone could take 120 of 145 GB.
 - **The disk is 150 GB of Oracle's free 200 on purpose** (owner, Sep 28): the rest is room for a second free server, and a disk never shrinks. The alarms are email only.
+
+## Oct 10 2026 (afternoon), in ten lines
+
+Audit 12 and a full review of everything since Aug 23; detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 10 2026 (afternoon)".
+
+- **A failed read is never "no record"**: the case search names what it couldn't read and answers 503 when it read nothing; debarment, layoff, history, wage-history and identity-map reads throw so a page keeps its last good render.
+- **Two sweeps at once can't send one change twice**: case alerts and browser push claim a send first.
+- **Public Convex functions that take an IP or an email to count answer the site's server only** (`convex/lib/serverDoor.ts`), and the per-IP sign-in limit runs at last: Convex Auth had answered `/api/auth` before it.
+- **Mail anyone can set off stops at 55 of the 85**, so alerts keep 30; **API exports count rows**, 20,000 a day on Plus.
+- **Opting out drops queued retries too**, and a held alert bundle no longer stalls the addresses behind it.
+- **The health check reads a failed run for 40 days**, counts `mismatch`, fails on unreadable tables, and calls a stale self-dated dataset our ingest stopping.
+- **The PERM and wage-request sweeps go red on checking nothing**, as the watched-case check, the alarm and the cross-check now do.
+- **The disk alarm counts what the page-cache cap still allows**: a cache refilling toward its budget isn't the disk filling (it emailed a false "full in 12 hours" on Oct 10).
+- **Push endpoints must be browser push services**, unknown API keys can't flush the real keys' cache, and webhook failures on our side aren't charged to the developer.

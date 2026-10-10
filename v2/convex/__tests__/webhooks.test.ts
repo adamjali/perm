@@ -92,9 +92,9 @@ describe("making an endpoint", () => {
     const t2 = createTestContext();
     const other = await makeUser(t2, "free@example.com");
     const first = await as(t2, other).action(api.webhooks.createEndpoint, { url: "https://a.example.com/x", events: ["queue.moved"] });
-    expect(first).toEqual({ ok: false, message: "Webhooks come with the Plus plan." });
+    expect(first).toEqual({ ok: false, message: "Webhooks come with the Plus plan.", code: "plan_feature" });
     const watch = await as(t2, other).action(api.webhooks.addWatch, { kind: "case", target: "G-100-26045-123456" });
-    expect(watch).toEqual({ ok: false, message: "Webhooks come with the Plus plan." });
+    expect(watch).toEqual({ ok: false, message: "Webhooks come with the Plus plan.", code: "plan_feature" });
     expect(await t2.run((ctx) => ctx.db.query("webhookEndpoints").collect())).toHaveLength(0);
   });
 
@@ -417,6 +417,25 @@ describe("delivering safely", () => {
     });
     expect(rows["https://hooks.example.com/perm"]).toEqual({ status: "delivered", attempts: 1 });
     expect(rows["https://broken.example.com/hook"]).toEqual({ status: "pending", attempts: 1 });
+  });
+
+  it("charges a failure on our side (a secret that won't decrypt) to nobody, and records it as ours", async () => {
+    const t = createTestContext();
+    const userId = await makeUser(t, "dev@example.com");
+    await endpoint(t, userId);
+    await t.run(async (ctx) => {
+      for (const e of await ctx.db.query("webhookEndpoints").collect()) await ctx.db.patch(e._id, { secretEnc: "not-a-sealed-secret" });
+    });
+    await watchedChange(t, userId);
+    sent = [];
+    await t.action(internal.webhookDelivery.deliverDue, {});
+    expect(sent).toHaveLength(0);
+    const [d] = await t.run(async (ctx) => ctx.db.query("webhookDeliveries").collect());
+    expect(d).toMatchObject({ status: "pending", attempts: 0 });
+    expect(d!.firstAttemptAt, "the endpoint's 24 hours haven't started").toBeUndefined();
+    expect(d!.lastError).toMatch(/our side/);
+    const scheduled = await t.run(async (ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    expect(scheduled.some((f) => f.name.includes("systemErrors"))).toBe(true);
   });
 
   it("sends nothing already queued for an account whose plan has no webhooks once the paywall is on", async () => {

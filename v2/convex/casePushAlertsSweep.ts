@@ -4,7 +4,7 @@ import * as webpush from "web-push";
 
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { internalAction } from "./_generated/server";
+import { internalAction, type ActionCtx } from "./_generated/server";
 import { recordError } from "./lib/errorRecording";
 import { createLogger } from "./lib/logging";
 import { placeholders, query, type Statement } from "./lib/publicMirror";
@@ -12,6 +12,7 @@ import { canonicalStatus } from "../src/lib/caseStatusVocabulary";
 import { programOf, statusTableFor, type FlagProgram } from "../src/lib/flagCaseNumber";
 import { v } from "convex/values";
 import { SITE_URL } from "./lib/links";
+import { parseSubscription } from "./casePushAlerts";
 
 /**
  * The browser-push sweep. In its own file because `web-push` needs the Node
@@ -22,6 +23,12 @@ import { SITE_URL } from "./lib/links";
 
 const log = createLogger("CasePushAlertsSweep");
 const SEND_CAP = 500;
+/** Pages of open subscriptions read per run (SWEEP_READ each). */
+const MAX_PAGES = 20;
+
+function readPage(ctx: ActionCtx, cursor: string | null) {
+  return ctx.runQuery(internal.casePushAlerts.activeRows, { cursor });
+}
 
 function vapidReady(): boolean {
   const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -38,7 +45,15 @@ export const sweep = internalAction({
   args: {},
   returns: sweepResult,
   handler: async (ctx): Promise<{ checked: number; seeded: number; sent: number; closed: number; failed: number }> => {
-    const rows = await ctx.runQuery(internal.casePushAlerts.activeRows, {});
+    const rows: Awaited<ReturnType<typeof readPage>>["rows"] = [];
+    let cursor: string | null = null;
+    for (let pages = 0; pages < MAX_PAGES; pages++) {
+      const page = await readPage(ctx, cursor);
+      rows.push(...page.rows);
+      if (page.isDone) break;
+      cursor = page.cursor;
+      if (pages === MAX_PAGES - 1) log.error("push sweep read its page limit; the rest wait for the next run", { read: rows.length });
+    }
     const out = { checked: rows.length, seeded: 0, sent: 0, closed: 0, failed: 0 };
     if (rows.length === 0) return out;
 
@@ -79,12 +94,20 @@ export const sweep = internalAction({
       }
       if (cur.status === r.lastSeenStatus) continue;
       if (out.sent >= SEND_CAP) break;
+      // Another sweep may be sending this one: whoever claims the new status sends.
+      if (!(await ctx.runMutation(internal.casePushAlerts.claimPush, { id: r._id, status: cur.status }))) continue;
       const payload = JSON.stringify({
         title: `${r.caseNumber} moved`,
         body: `DOL's status changed from ${r.lastSeenStatus} to ${cur.status}. Tap to open the case.`,
         tag: `case-${r.caseNumber}`,
         url: `${SITE_URL}/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`,
       });
+      // Rows stored before the push-host check are held to it here too.
+      if (!parseSubscription(r.subscription)) {
+        await ctx.runMutation(internal.casePushAlerts.close, { id: r._id });
+        out.closed++;
+        continue;
+      }
       try {
         await webpush.sendNotification(JSON.parse(r.subscription), payload, { TTL: 24 * 60 * 60 });
         out.sent++;
@@ -97,6 +120,7 @@ export const sweep = internalAction({
           out.closed++;
         } else {
           out.failed++;
+          await ctx.runMutation(internal.casePushAlerts.unclaimPush, { id: r._id, claimed: cur.status, previous: r.lastSeenStatus });
           await ctx.runMutation(internal.casePushAlerts.bumpFailure, { id: r._id });
           await recordError(ctx, "action", "casePushAlerts.sweep.delivery", e).catch(() => undefined);
         }

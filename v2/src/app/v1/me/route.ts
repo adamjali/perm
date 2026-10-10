@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { authenticate } from "@/lib/api/auth";
+import { exportRowsUsed } from "@/lib/api/exportQuota";
 import { liveLookupsUsed } from "@/lib/api/live";
 import { apiError } from "@/lib/api/route";
 import { resetsIn, takeMinute, usageFor } from "@/lib/api/usage";
@@ -31,9 +32,9 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
   const now = new Date();
   // A sandbox key's calls are never counted, so its usage is zero by design.
-  const [used, live] = sandbox
-    ? [{ today: 0, month: 0 }, { account: 0, all: 0 }]
-    : await Promise.all([usageFor(account, now), liveLookupsUsed(account, now)]);
+  const [used, live, exported] = sandbox
+    ? [{ today: 0, month: 0 }, { account: 0, all: 0 }, 0]
+    : await Promise.all([usageFor(account, now), liveLookupsUsed(account, now), exportRowsUsed(account, now)]);
   const resets = resetsIn(now);
   return NextResponse.json(
     {
@@ -53,6 +54,7 @@ export async function GET(request: Request): Promise<NextResponse> {
           keys: plan.keys,
           sandboxKeys: plan.sandboxKeys,
           exportRows: plan.exportRows,
+          exportRowsPerDay: plan.exportRowsPerDay,
           liveLookupsPerDay: plan.liveLookupsPerDay,
           webhookEndpoints: plan.webhookEndpoints,
           webhookWatches: plan.webhookWatches,
@@ -71,6 +73,9 @@ export async function GET(request: Request): Promise<NextResponse> {
           remainingThisMonth: Math.max(0, plan.perMonth - used.month),
           liveLookupsToday: live.account,
           liveLookupsRemainingToday: Math.max(0, plan.liveLookupsPerDay - live.account),
+          // null when today's export count couldn't be read.
+          exportRowsToday: exported,
+          exportRowsRemainingToday: exported === null ? null : Math.max(0, plan.exportRowsPerDay - exported),
           dayResetsInSeconds: resets.day,
           monthResetsInSeconds: resets.month,
           ...(sandbox ? { note: "Sandbox keys aren't counted." } : {}),

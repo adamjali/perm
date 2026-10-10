@@ -68,8 +68,29 @@ def check_order() -> None:
     check(order("prefix /\nnonsense\n", usual) == usual, "a bare / or a malformed line changes nothing")
 
 
+def reload_with(pids_before: str, pids_after: str) -> int:
+    """The deploy's own reload_nginx(), lifted out and run against stubs."""
+    text = SCRIPT.read_text()
+    start = text.index("reload_nginx(){")
+    fn = text[start:text.index("\n}\n", start) + 3]
+    stubs = (
+        "calls=0\n"
+        # The first pgrep is the "before" list (it carries -d,); later ones are after.
+        f'pgrep(){{ if [ "$1" = "-d," ]; then echo "{pids_before}" | tr " " ","; else echo "{pids_after}" | tr " " "\\n"; fi; }}\n'
+        "nginx(){ :; }\nsystemctl(){ :; }\nsleep(){ :; }\nlog(){ echo \"$*\"; }\n"
+    )
+    r = subprocess.run(["bash", "-c", stubs + fn + "reload_nginx"], capture_output=True, text=True, timeout=30)
+    return r.returncode
+
+
+def check_reload() -> None:
+    check(reload_with("101 102", "101 102") == 1, "a reload that leaves the same workers is a refused reload (exit 1)")
+    check(reload_with("101 102", "103 104") == 0, "new workers mean the reload took")
+
+
 def main() -> int:
     check_order()
+    check_reload()
     if platform.system() != "Linux":
         print("skipped the rest: Linux only (CI and the server run it)")
         print(f"\n{len(failures)} failure(s)")
@@ -126,6 +147,23 @@ def main() -> int:
         check(names[0] in left, "a release a slot runs from is kept, however old")
         check(all(n in left for n in names[-10:]), "the ten newest are kept")
         check(names[1] not in left and names[2] not in left and len(left) == 11, f"the rest are deleted (left {len(left)})")
+
+        # A Convex backup is accepted only sealed: a CMS file (DER, first byte
+        # 0x30) over 1,000 bytes. A plaintext export must never reach disk or R2.
+        backups = root / "backups"
+        backups.mkdir()
+        text = SCRIPT.read_text().replace("A=/srv/permtracker/app", f"A={app}", 1).replace(
+            "B=/srv/permtracker/backups", f"B={backups}", 1)
+        bscript = root / "permtracker-deploy-backup"
+        bscript.write_text(text)
+        env = {**os.environ, "PATH": f"{bindir}:{os.environ['PATH']}"}
+        def backup(stamp: str, data: bytes) -> int:
+            return subprocess.run(["bash", str(bscript), f"convex-backup {stamp}"], input=data, capture_output=True,
+                                  env=env, timeout=60).returncode
+        check(backup("20261010-0750", b"PK\x03\x04" + b"x" * 2000) == 3, "a zip (plaintext) is refused with exit 3")
+        check(not list(backups.iterdir()), "and leaves no .cms or .part file behind")
+        check(backup("20261010-0750", b"\x30" + b"x" * 499) == 3, "a sealed-looking file under 1,000 bytes is refused")
+        check(backup("bad", b"\x30" + b"x" * 2000) == 2, "a malformed stamp is refused with exit 2")
     print(f"\n{len(failures)} failure(s)")
     return 1 if failures else 0
 

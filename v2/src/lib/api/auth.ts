@@ -55,6 +55,38 @@ const TTL_MS = 60_000;
 const MAX_CACHED = 10_000;
 const cache = new Map<string, { at: number; value: Verified }>();
 
+/**
+ * Keys Convex didn't recognise, kept apart from the real ones. The checksum is
+ * public, so anyone can mint well-formed keys: each new one costs a Convex
+ * call, and in one shared cache a flood of them would clear the real keys'
+ * answers too. Bounded, oldest out first.
+ */
+const MAX_MISSES = 5_000;
+const misses = new Map<string, number>();
+/** Unrecognised keys one address may have checked a minute; past it, refused without asking Convex. */
+export const MISSES_PER_ADDRESS_PER_MINUTE = 20;
+const MAX_ADDRESSES = 10_000;
+const missesByAddress = new Map<string, { start: number; n: number }>();
+
+function addressOf(request: Request): string {
+  return request.headers.get("x-real-ip")?.trim() || "unknown";
+}
+
+function rememberMiss(keyHash: string, address: string, now: number): void {
+  misses.delete(keyHash);
+  misses.set(keyHash, now);
+  if (misses.size > MAX_MISSES) misses.delete(misses.keys().next().value!);
+  const seen = missesByAddress.get(address);
+  if (!seen || now - seen.start >= 60_000) missesByAddress.set(address, { start: now, n: 1 });
+  else seen.n++;
+  if (missesByAddress.size > MAX_ADDRESSES) missesByAddress.delete(missesByAddress.keys().next().value!);
+}
+
+function addressIsGuessing(address: string, now: number): boolean {
+  const seen = missesByAddress.get(address);
+  return !!seen && now - seen.start < 60_000 && seen.n >= MISSES_PER_ADDRESS_PER_MINUTE;
+}
+
 async function verifyRemote(keyHash: string) {
   return await fetchQuery(api.apiKeys.verify, { keyHash });
 }
@@ -87,8 +119,13 @@ export async function authenticate(request: Request, now = Date.now()): Promise<
   }
 
   const keyHash = await hashApiKey(parsed.key);
+  const unknown = { ok: false as const, code: "invalid_key" as const, message: "This key isn't recognised. Make a new one in Settings, under API keys." };
+  const missedAt = misses.get(keyHash);
+  if (missedAt !== undefined && now - missedAt <= TTL_MS) return unknown;
   let hit = cache.get(keyHash);
   if (!hit || now - hit.at > TTL_MS) {
+    const address = addressOf(request);
+    if (!hit && addressIsGuessing(address, now)) return unknown;
     let value: Verified;
     try {
       value = await verifyRemote(keyHash);
@@ -101,15 +138,19 @@ export async function authenticate(request: Request, now = Date.now()): Promise<
         message: "We couldn't check your key just now. Try again in a minute.",
       };
     }
+    if (!value) {
+      rememberMiss(keyHash, address, now);
+      cache.delete(keyHash);
+      return unknown;
+    }
+    misses.delete(keyHash);
     if (cache.size > MAX_CACHED) cache.clear();
     hit = { at: now, value };
     cache.set(keyHash, hit);
   }
 
   const v = hit.value;
-  if (!v) {
-    return { ok: false, code: "invalid_key", message: "This key isn't recognised. Make a new one in Settings, under API keys." };
-  }
+  if (!v) return unknown;
   if (v.revoked) {
     return { ok: false, code: "revoked_key", message: "This key was revoked. Make a new one in Settings, under API keys." };
   }
@@ -167,4 +208,6 @@ export function forgetKeys(keyIds: readonly string[]): number {
 /** Test seam. */
 export function clearKeyCacheForTests(): void {
   cache.clear();
+  misses.clear();
+  missesByAddress.clear();
 }

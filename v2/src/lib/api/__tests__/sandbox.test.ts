@@ -27,6 +27,17 @@ describe("the sandbox", () => {
       // A sample for each, or a 404 that names what the sandbox holds.
       expect(r.ok || r.status === 404, e.path).toBe(true);
     }
+    // And most answer with a sample: a sandbox that 404'd every read passed
+    // the line above.
+    const answered = reads.filter((e) => sandboxAnswer(new URL(`${BASE}${e.example}`), paramsFor(e.path, e.example)).ok);
+    expect(answered.length, "reads answered with a sample").toBeGreaterThanOrEqual(Math.ceil(reads.length / 2));
+  });
+
+  it("answers its own sample case with the sample, never a 404", () => {
+    for (const n of SANDBOX_CASE_NUMBERS) {
+      const r = sandboxCase(n);
+      expect(r.ok, n).toBe(true);
+    }
   });
 
   it("marks every answer as sample data", () => {

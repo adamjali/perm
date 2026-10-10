@@ -9198,3 +9198,80 @@ one. A disk can grow while the server runs and never shrink. How to grow it, and
 `httpRequests1hGroups` through the Cloudflare MCP for what visitors got hour by hour (it answers on the Free plan);
 PostHog's pageviews and exceptions for what people saw. **Never `pkill -f <pattern>` inside an ssh `bash -c` that
 holds the pattern**: it killed its own shell (ssh exit 255) while a `du` was being stopped.
+
+## Oct 10 2026 (afternoon): the review, and what it changed
+
+Audit 12, then a six-agent review of every commit since d7d0d5d0 (Aug 23). Ledger and reports are session scratch;
+what follows is what stays true.
+
+**A failed read is never an answer.** The rule behind most of the fixes, with where each one now lives:
+- The all-programs search: each source read is caught on its own and named in `unread`; nothing read throws
+  `SearchUnavailableError` (route 503); a partial answer is `no-store`. Case-number point reads report `unread` too.
+- `debarmentsForSlug`, `warnForSlug`, `employerMatch`'s map read, the case lookup's history read and
+  `wageLevelHistory` throw instead of returning empty, because their pages keep a render for up to 30 days and a
+  failed regeneration keeps the last good one. `tableColumns` answers an empty set only for "no such table".
+- The API's case answer throws (a 500 nobody is charged for) rather than 404 when a published half failed.
+- `processing_times` and `estimator_backtest` are checked before use: a missing list becomes empty and is logged by name.
+
+**Concurrency.** Two case-alert sweeps (the cron, the 5-minute check, a self-reschedule) used to send one change
+twice: `claimAlertSend` stamps `sendingStatus`/`sendingAt` before rendering (15-minute expiry), `recordAlert` clears
+it. Browser push claims by writing the new status first (`claimPush`, `unclaimPush` on a transient failure) and
+reads open subscriptions page by page (it read the oldest 2,000 forever).
+
+**The server door, and a sign-in limit that never ran.** `checkIpRateLimit` and `checkAuthRateLimit` were public
+with a caller-supplied IP or email: anyone could spend another address's sign-in budget, blocklist an IP, or write
+the `ip_strike` rows abuse detection takes as corroboration. Both count only calls carrying `API_SERVER_SECRET`
+now (`convex/lib/serverDoor.ts`, shared with the webhook door). **And the per-IP check had never run for a
+sign-in**: Convex Auth's middleware answers `/api/auth` itself before it calls the proxy's handler
+(`convexAuthNextjsMiddleware` in `@convex-dev/auth/dist/nextjs/server/index.js`), and production held no
+`ip_auth` row. `src/proxy.ts` now runs `refuseAuthPost` (`src/lib/auth/authGate.ts`) first: per IP, then per
+email by the form's flow (`authAttemptFromBody`), skipping token refreshes, failing open. The three forms' browser
+pre-checks are gone. `authGate.test.ts` drives the proxy with a stand-in that answers `/api/auth` the way the
+real middleware does, so a check placed back inside the handler fails it.
+
+**Email.** Opt-outs drop the subscription's queued retries (`emailRetries.refs`); account deletion drops all but
+the deletion notice; a preference link for an address we hold nothing for sends nothing; inbound support
+forwards have their own pool (`supportForward`, 30 a day; past it the mail is stored, the admin page lists it);
+the bundle sender skips addresses already mailed today instead of stalling behind them; unconfirmed case-alert
+sign-ups go after 30 days. **Mail anyone can set off stops at 55** (`PUBLIC_CEILING`, owner's call): confirmations,
+preference and firm-claim links (`admitConfirmation`, the drain's `confirmationRoom`), the contact form and
+support forwards (`sendOrQueue` with `priority: "public"`), so alerts always have the 30 between 55 and 85.
+Kept as designed (owner, Sep 29 and Oct 10): queued confirmations skip their pool on replay, bounded by the day's
+count and QUEUE_MAX; and the bundle's and digest's prefs link still opens the full list (a forward shows it).
+
+**Exports count rows** (owner's call): Plus takes 20,000 export rows a day (`exportRowsPerDay`,
+`src/lib/api/exportQuota.ts`, one `perm_docs` row a day); an export is sized to what's left and says so, refused
+at zero (`export_daily_limit`), refused when the count can't be read, and `/v1/me` reports both.
+
+**Ops that read green while broken.** The PERM sweep records `failed` and exits 1 when it checked nothing, and
+`partial` when DOL stopped answering part way; the wage-request sweep mirrors the PERM tail rule; the live
+rebuild says `partial` (was `mismatch`) and counts its facets; the watched-case check records `partial` on a
+refusal and lets code defects crash; the alarm exits 1 when a due email didn't go; the page-cache cap counts
+bytes it actually freed and records `.next/server`'s real size so the alarm sees a cache folder it can't read;
+the defense rebuilds its state from Cloudflare when its file is unreadable; **the alarm counts the page
+cache's headroom** (`cache_headroom` from the cap's report): a fall the cap will stop with 25 GB or more still free
+raises nothing (it emailed "full in about 12 hours" at 11:39 AM EDT Oct 10 while the live cache refilled toward its
+60 GB, which leaves about 36 GB), a blind cap or unknown headroom keeps the plain trend, and its emails say
+"falling" or "rising" where they printed a signed rate; the cross-check skips clean when the
+third party is down and marks the run on a real disagreement; a refused Cloudflare purge fails its step; the
+dispatcher's duplicate guard compares the run's mode (`run-name` carries it); the morning report keeps STALLED,
+MISSING, STALE, DRY and ZERO lines and fails a report with no timer list.
+
+**The health check.** A failed newest run counts for 40 days (`RUN_FAILURE_WINDOW_DAYS`; monthly jobs' failures
+had aged out in 3); `mismatch` is broken; a check that can't read its table fails unless the table doesn't exist;
+a dataset whose `as_of` is its own fetch day going stale means our ingest stopped (the source has nothing to republish);
+`employer_stages` is a watched doc. `main()` is tested to fail on each check alone.
+
+**Smaller.** Webhook refusals carry a code (404 for a missing endpoint, 503 for our own misconfiguration, the old
+wording read as the fallback); our-side webhook failures aren't charged as attempts; private-address checks block
+6to4, IPv4-translated and Teredo forms; unknown API keys live in their own bounded cache and an address that
+keeps guessing stops reaching Convex; push endpoints must be FCM, Mozilla, WNS or Apple (`convex/lib/pushHosts.ts`,
+all 25 open subscriptions passed); the idle sign-out check reads the hook's 30 minutes (it said 15); one email
+shape check (`convex/lib/emailShape.ts`), one program-of-a-number rule, one status anchor. Copy that said one
+email a day, twice a day, every 12 hours, weekly backtest or Monday was corrected where it had stopped being true.
+
+**Tests that couldn't fail.** Drift guards that passed when they couldn't read their file (case-number rules)
+now read by working directory and fail if missing; a wrap-day assertion and the sandbox test lost their
+"or" branches. New: the prune run, the alarm's cache drop, the watchdog's write lock, nginx reload detection,
+the sealed-backup guard (the Linux ones run in CI and passed on the server), the scorecard's rival wins and ties,
+budget-held alerts sent once the budget frees, the retry lease, `/v1/cases?live=1` scope, the server watch.

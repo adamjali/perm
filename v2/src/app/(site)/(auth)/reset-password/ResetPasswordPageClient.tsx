@@ -1,8 +1,8 @@
 "use client";
 
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useAction, useMutation } from "convex/react";
-import { useCallback, useMemo, useState } from "react";
+import { useAction } from "convex/react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,6 @@ type ResetStep = "email" | "reset";
 export function ResetPasswordPageClient() {
   const { signIn } = useAuthActions();
   const router = useRouter();
-  const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const verifyTurnstile = useAction(api.turnstile.verifyTurnstileToken);
 
   const [step, setStep] = useState<ResetStep>("email");
@@ -104,24 +103,6 @@ export function ResetPasswordPageClient() {
     }
   }, [isLoading, resetFirstMissing]);
 
-  const enforceRateLimit = useCallback(
-    async (emailValue: string) => {
-      try {
-        const result = await checkRateLimit({ email: emailValue, action: "password_reset" });
-        if (!result.allowed) {
-          toast.error(result.message || "Too many attempts. Please wait and try again.");
-          return false;
-        }
-        return true;
-      } catch (error) {
-        // Fail open for availability
-        captureError(error, { operation: "enforceRateLimit" });
-        return true;
-      }
-    },
-    [checkRateLimit],
-  );
-
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     authBreadcrumb("reset_email_submit_attempt");
@@ -135,11 +116,6 @@ export function ResetPasswordPageClient() {
     setIsLoading(true);
 
     try {
-      if (!(await enforceRateLimit(email))) {
-        setIsLoading(false);
-        return;
-      }
-
       // Pre-flight Turnstile — same pattern as signup.
       try {
         const verifyResult = await verifyTurnstile({ token: turnstileToken! });

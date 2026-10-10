@@ -460,7 +460,8 @@ http.route({
 // mutates, and 429 is distinguished from 400 so a typo does not read as
 // rate-limiting in monitoring.
 //
-// Every string interpolated into `unsubscribePage` below is either a literal or
+// Every string interpolated into a `messagePage` body below (its body is trusted HTML,
+// convex/lib/mailPages.ts) is either a literal or
 // a case number that has already been through `normaliseCaseNumber`, which
 // admits only `^(?:[A-Z]|JO-A)-\d{3}-\d{5}-\d+$`. That helper does no escaping, so
 // nothing that has not passed that filter may reach it.
@@ -963,7 +964,7 @@ http.route({
     if (!token) return badLinkPage();
     return messagePage(
       "Follow this employer?",
-      "We'll email you when DOL moves five or more of its PERM cases on or off hold in a day, or decides a batch of them well above its usual pace. Never more than one email a day.",
+      "We'll email you when DOL moves five or more of its PERM cases on or off hold in a day, or decides a batch of them well above its usual pace. Employer updates come at most once a day.",
       {
         post: `/employer-alert/confirm?token=${encodeURIComponent(token)}`,
         label: "Confirm",

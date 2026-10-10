@@ -192,9 +192,14 @@ def main() -> int:
                 int(NOW - 2 * H))]) == 0)
     check("'cancelled' is not in the broken set",
           "cancelled" not in health.BROKEN_STATUSES)
-    check("the broken set is exactly failed + partial",
-          health.BROKEN_STATUSES == frozenset({"failed", "partial"}),
+    check("the broken set is failed, partial and the old mismatch",
+          health.BROKEN_STATUSES == frozenset({"failed", "partial", "mismatch"}),
           str(sorted(health.BROKEN_STATUSES)))
+    check("a mismatch row (the live rebuild's old word for a failure) fails the check",
+          run([("build_entity_detail.py --live-recent-only", "mismatch", "x", int(NOW - 2 * H))]) == 1)
+    check("a weekly job's failure still counts five days later",
+          run([("ingest_pwd_status_direct.py --full --program all", "failed", "x",
+                int(NOW - 5 * 24 * H))]) == 1)
 
     # --- recovery, keyed on FILENAME + MODE ---------------------------------
     # `record_run` writes the full argv ("... --pending --program all"). The
@@ -228,10 +233,21 @@ def main() -> int:
           run([("ingest_case_status_direct.py", "ok", "y", int(NOW - 1 * H)),
                ("ingest_pwd_status_direct.py", "failed", "x", int(NOW - 1 * H))]) == 1)
 
+    # --- a dataset that dates itself -----------------------------------------
+    day = datetime.date(2026, 10, 3)
+    noon = int(datetime.datetime(2026, 10, 3, 12, tzinfo=datetime.timezone.utc).timestamp() * 1000)
+    check("a dataset whose as_of is its own fetch day dates itself",
+          health.self_stamped(day, noon))
+    check("a source-dated dataset (DOL's date, fetched days later) does not",
+          not health.self_stamped(datetime.date(2026, 9, 22), noon))
+    check("no fetch time, no claim", not health.self_stamped(day, None))
+    stale_self = [("perm-case-status (has not RUN)", 6, 3, "x")]
+    failing, _watching = health.freshness_verdict(stale_self)
+    check("a stale self-dated dataset fails at once, not after 3x its budget", failing == stale_self)
+
     # --- the window ---------------------------------------------------------
-    # An ingest that failed and never ran again is a STOPPED ingest, and
-    # `data_freshness` is the check that says so. Two red lines for one cause
-    # teach people to skim past the true one sitting next to it.
+    # The newest run per key counts for RUN_FAILURE_WINDOW_DAYS, long enough
+    # for the monthly jobs.
     old = int(NOW - (health.RUN_FAILURE_WINDOW_DAYS + 1) * 24 * H)
     check("a failure older than the window ages out",
           run([("ingest_case_status_direct.py", "failed", "x", old)]) == 0)
@@ -243,6 +259,14 @@ def main() -> int:
     check("the window is pushed into SQL, not filtered in Python",
           db.args is not None and int(db.args[0]) < NOW
           and "finished_at >= ?" in (db.sql or ""), str(db.sql)[:80])
+
+    # --- a check that can't read its subject -----------------------------------
+    class Locked:
+        def execute(self, *_a, **_k):
+            raise RuntimeError("SQLITE_BUSY: database is locked")
+    check("a run table that errors for any reason but a missing table FAILS",
+          health.check_runs(Locked()) == 1)
+    check("so does the gap sweep's", health.check_gap_sweep(Locked()) == 1)
 
     # --- degrading, not failing ---------------------------------------------
     class NoTable:
@@ -489,6 +513,8 @@ def main() -> int:
     check_freshness_verdict()
     check_capped_partial_is_not_broken()
     check_hand_read_figures()
+    check_main_combines_every_check()
+    check_wage_views_rules()
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 
@@ -542,6 +568,71 @@ def check_capped_partial_is_not_broken() -> None:
           run([("sweep_serial_gaps.py", "partial", capped_note, int(NOW) - 3 * 3_600_000)]) == 0)
     check("a partial run WITHOUT the cap phrase still fails",
           run([("sweep_serial_gaps.py", "partial", "probed 2998, found 2113", int(NOW) - 3 * 3_600_000)]) == 1)
+
+
+CHECKS = ("check_runs", "check_frontier", "check_discovery_yield", "check_backfill", "check_gap_sweep",
+          "check_watched", "check_lookup_demand", "check_coverage_stated", "check_precomputed_docs",
+          "check_wage_views")
+
+
+def check_main_combines_every_check() -> None:
+    """main() goes red when any one check does: dropping one from its final
+    `or` used to leave every test green."""
+    import contextlib
+    import io
+
+    class FreshDB:
+        def execute(self, sql, args=None):
+            today = datetime.date.today().isoformat()
+            return {"response": {"result": {"rows": [[
+                {"type": "text", "value": "perm-case-status"}, {"type": "text", "value": today},
+                {"type": "integer", "value": "3"}, {"type": "text", "value": "DOL"},
+                {"type": "text", "value": "Daily"}, {"type": "integer", "value": str(int(NOW))}]]}}}
+
+    saved = {name: getattr(health, name) for name in CHECKS + ("Turso", "check_cap_streak",
+                                                              "check_unclassified_statuses", "check_hand_read_figures")}
+    try:
+        health.Turso = FreshDB
+        for name in ("check_cap_streak", "check_unclassified_statuses", "check_hand_read_figures"):
+            setattr(health, name, lambda *a: 0)
+        for name in CHECKS:
+            setattr(health, name, lambda db: 0)
+        with contextlib.redirect_stdout(io.StringIO()):
+            clean = health.main()
+        check("main: every check clean is a pass", clean == 0, str(clean))
+        for name in CHECKS:
+            for other in CHECKS:
+                setattr(health, other, lambda db: 0)
+            setattr(health, name, lambda db: 1)
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc = health.main()
+            check(f"main: {name} failing alone fails the run", rc == 1, str(rc))
+    finally:
+        for name, fn in saved.items():
+            setattr(health, name, fn)
+
+
+def check_wage_views_rules() -> None:
+    class Views:
+        def __init__(self, rows):
+            self.rows = rows
+
+        def execute(self, sql, args=None):
+            return {"response": {"result": {"rows": [[
+                {"type": "text", "value": p}, {"type": "integer", "value": str(n)},
+                {"type": "integer", "value": str(int(built))}] for p, n, built in self.rows]}}}
+
+    import contextlib
+    import io
+    day_ago = NOW - 24 * H
+    def v(rows):
+        with contextlib.redirect_stdout(io.StringIO()):
+            return health.check_wage_views(Views(rows))
+    check("wage views: both programs current is a pass", v([("perm", 60, day_ago), ("lca", 400, day_ago)]) == 0)
+    check("wage views: a missing program fails", v([("perm", 60, day_ago)]) == 1)
+    check("wage views: too few views fails", v([("perm", 49, day_ago), ("lca", 400, day_ago)]) == 1)
+    check("wage views: a build past its budget fails",
+          v([("perm", 60, NOW - 126 * 24 * H), ("lca", 400, day_ago)]) == 1)
 
 
 if __name__ == "__main__":

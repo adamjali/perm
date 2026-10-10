@@ -254,7 +254,8 @@ export default async function AttorneyPage({
     // An 11-row table, React-cached, on a page that regenerates daily. It is
     // here only so the Dataset can state WHEN its figures were last true.
     getFreshness(),
-    debarmentsForSlug(canonicalSlug).catch(() => []),
+    // No catch: see debarmentsForSlug.
+    debarmentsForSlug(canonicalSlug),
     // Its H-1B LCAs and wage requests, by every printed spelling the nightly
     // firm map assigns this page.
     getFirmPrograms(canonicalSlug).catch(() => null),

@@ -15,12 +15,14 @@
  * - the cheap shape gate runs first and for free: `normaliseLookupCaseNumber`
  *   refuses junk before this module is ever reached;
  * - the budget is GLOBAL, on the shared resource itself (requests we send
- *   DOL), because a per-IP limit cannot stop identity rotation and 2,000
- *   misses a day is far beyond organic use;
+ *   DOL), because a per-IP limit cannot stop identity rotation; its
+ *   100,000 a day (DAILY_DISCOVERY_CAP) is a guard against a runaway, far
+ *   beyond organic use;
  * - the write is `INSERT OR IGNORE` - idempotent, a read-through cache of a
  *   public record, never an act of consent;
- * - a miss, a timeout, or an exhausted budget all degrade to the page's
- *   existing not-found state. Nothing here can take the lookup down.
+ * - a miss, a timeout, or an exhausted budget is each NAMED
+ *   (`discoverCaseOutcome`, src/lib/dolMiss.ts), and only DOL answering
+ *   "none" may read as "no record". Nothing here can take the lookup down.
  *
  * NO EVENT IS WRITTEN. Discovering a case is an observation, not a status
  * transition; fabricating a `perm_case_events` row stamped today is exactly
@@ -185,9 +187,6 @@ export interface DiscoveredCase {
   lastCheckedAt: string;
 }
 
-/**
- * The composite the lookup calls on a miss: budget, fetch, record, return.
- */
 /** The PERM prefixes. Everything else DOL serves belongs in another table. */
 export const PERM_PREFIX_RE = /^[GA]-/;
 
@@ -209,6 +208,7 @@ export interface DiscoveryOutcome {
   miss: DiscoveryMiss | null;
 }
 
+/** The composite the lookup calls on a miss: budget, fetch, record, return. */
 export async function discoverCase(
   caseNumber: string,
   f: typeof fetch = fetch,

@@ -53,6 +53,27 @@
 - **The 7-day `minimumReleaseAge` picks the newest mature version by itself** (Audit 11): `pnpm add motion@^13 svix@^2` resolved 13.4.1 and 2.5.0 while 13.4.6 and 2.6.0 were a day old. Read the changelog up to the version actually installed, not the one the Dependabot PR named.
 - **console.error with a template-literal first argument trips `unsafe-formatstring`** (Audit 11). When every interpolated value is a constant (a config key, a menu label), dismiss as a false positive with that reason; nothing untrusted reaches the format string.
 - **Traffic "clones" counts CI checkouts**: ~4,700 clones in 14 days (435 unique) against 37 page views is every workflow's `actions/checkout`, not people. Not an anomaly.
+- **A local full-suite run stops at the first failure** (`bail: 1` outside CI). For a review-sized change run `pnpm test:run --bail=0`, or one stale assertion hides every failure behind it (Audit 12: the first run stopped at file 329 of 666).
+- **Prove a guard ran by the rows it writes** (Audit 12). The per-IP sign-in limit sat in the proxy's handler, which Convex Auth's middleware never calls for `/api/auth`; production held 0 `ip_auth` rows. A review that reads the guard's code can't see that; a count of its rows can.
+
+## Audit 12 — 2026-10-10
+- **health_before:** 89/100 by rubric (`pnpm audit`: 1 high `braces` and 1 moderate `sprintf-js`, both dev-only with no patched release; 0 Dependabot alerts, 0 secret scanning, protection intact, PR #46 open). Not scored: **43 open code-scanning alerts**.
+- **health_after:** see deployed line; 39 alerts dismissed with a reason each, 4 fixed in code (they close on the next scan), PR #46 superseded.
+- **items_fixed:** the audit's 6 plus a six-agent review of 914 commits since d7d0d5d0 (Aug 23): every finding fixed or decided by the owner · **items_discussed:** 4, by `AskUserQuestion` (alert reserve: yes; forwarded prefs link: leave; export cap: yes; sign-in lock: close) · **prs:** #46 closed as superseded
+- **deployed:** PENDING
+- **duration:** ~11:56 AM to evening EDT
+
+### Changes Made
+- **Audit:** the H-2A/H-2B loads' `add_missing_columns` race (both failed 9:08 AM), six refresh calls that now turn their runs red, the SDK's slash loop, 2 lint errors and 2 leftovers, `claude-code-action` 1.0.241, 39 alerts dismissed individually.
+- **A failed read is never an answer**: the case search names what it couldn't read (503 when nothing), and debarment, layoff, history, wage-history and identity-map reads throw so ISR keeps the last good page.
+- **Alerts and email**: send claims stop two sweeps sending one change twice; opt-outs drop queued retries; held bundles no longer stall others; mail anyone can set off stops at 55 so alerts keep 30.
+- **Security**: the per-IP sign-in limit never ran (Convex Auth answers `/api/auth` before the proxy's handler); the gate runs first now, per IP and per email, and both counters need `API_SERVER_SECRET`. Push endpoints must be push services, unknown keys get their own bounded cache, webhook address checks block 6to4/IPv4-mapped/Teredo, exports count 20,000 rows a day.
+- **Ops that read green while broken**: the sweeps, live rebuild, watched-case check, alarm, cross-check, purge, page-cache cap and defense all report their failures; the health check reads failures for 40 days and fails on unreadable tables.
+
+### Decisions
+- **The bundle and digest prefs link stays** (owner): a forward shows the reader's watched cases; accepted for the one-click convenience.
+- **Queued confirmations still skip their pool on replay** (Sep 29 design, kept): the drain is bounded by the day's count and the 55 line.
+- **Type refactors from the review deferred** (branded case numbers, schema unions, flattened optional groups): no defect, broad churn.
 
 ## Audit 11 — 2026-09-30
 - **health_before:** 100/100 by rubric (0 Dependabot, 0 secret-scanning, CI green, protection intact, 2 Dependabot PRs 23 days old). Not scored: **7 open code-scanning alerts** (Semgrep, all false positives) and **5 `pnpm audit` advisories** (2 high, 3 moderate) Dependabot had not raised.
@@ -107,35 +128,8 @@
 - **106 alerts dismissed individually, not in bulk.** The dismissal API takes reasons with spaces (`"false positive"`, `"used in tests"`); underscored values 422 with no partial effect, which reads exactly like a permissions failure.
 - **The GitHub advisory emails Adam is receiving are for the archived predecessor repository**, not this repo. Archiving stopped its scheduled runs but not its Dependabot alerts, and its lockfile still carries the vulnerable browserslist. Turning alerts off there is a settings change on the personal account and is Adam's call.
 
-## Audit 9 — 2026-09-01
-- **health_before:** 100/100 by rubric; 0 dependabot alerts, 0 secret-scanning, 10 code-scanning "error" (all verified false positives), 8 open Dependabot PRs
-- **health_after:** 100/100; 0 open PRs, 0 lint errors, CI + CodeQL green on the pushed commit
-- **items_fixed:** 1 blocking regression + 8 lint errors + 22 stale action refs + 177-file icon migration
-- **items_discussed:** 4 (all via AskUserQuestion; user expanded scope on two)
-- **prs_merged:** 0 (**8 closed as superseded**, each with its specific reason)
-- **quality_issues_fixed:** 8 eslint errors that no CI gate has ever run
-- **deployed:** yes — `0e774ee1` + `a0614fd6` pushed to main, Vercel READY and verified live. **No Convex deploy** (`convex/` untouched)
-- **duration:** ~3h
-
-### Changes Made
-- **AI SDK v6 → v7.** `ai` 6.0.273 → 7.0.87 plus all five providers and `@openrouter/ai-sdk-provider` 2.10 → 3.0. The real work is that `@ai-sdk/provider` went 3.x → 4.x, i.e. `LanguageModelV3` → `V4`, and `FallbackModel` implements that interface directly. Migrated the class, its `specificationVersion`, and the `wrapMistralModel` middleware. Deprecated APIs moved on the `ai` package only: `system`→`instructions`, `onFinish`→`onEnd`, `generateObject`→`generateText` with `Output.object`. `@ai-sdk/provider` was imported by `providers.ts` while absent from `package.json`; now explicit.
-- **`@sentry/nextjs` pinned to `~10.70.0`** after 10.73.0 broke the suite (see Saved Policies), with a matching `dependabot.yml` ignore.
-- **8 eslint errors fixed.** Five were `react-hooks/refs` in `CaseBrowser`, where a ref was written AND read during render to retain the last non-empty rows; replaced with state set from an effect, provably loop-free because `prevRows` is only read when `shown` is empty.
-- **Every GitHub Action normalized.** `actions/checkout` alone was spread across four majors (v4 ×5, v5 ×1, v7 ×6). All 22 refs now current, with zero exposure to the two real v7 breaking changes.
-- **Phosphor `*Icon` migration: 177 files, 628 specifiers, 559 references**, via a TypeScript AST codemod. 0 bare specifiers remain of 636.
-
-### Decisions
-- **Full AI SDK v7 rather than the three provider PRs** — user's call over my recommendation to defer. Correct in hindsight: the providers alone would have been a silent spec mismatch, since none declares a peer on `ai`.
-- **Fix all 8 lint errors now** — user's call over my recommendation to log them. The `react-hooks/refs` five were genuine concurrent-rendering hazards, not just compiler advice.
-- **`image-size` still ACCEPTED / leave-open**, re-verified rather than inherited: 2.0.2 IS the latest published version and it is the vulnerable one, so no override target exists.
-- **10 CodeQL "error" alerts verified false positives**: 2 × `run-shell-injection` read a `workflow_dispatch` input typed `choice` (GitHub validates server-side), and 7 × `sqlalchemy-execute-raw-query` are libSQL HTTP calls whose f-strings interpolate only `?` placeholders or module constants. SQLAlchemy is not a dependency.
-
-### What went wrong, and what it cost
-- I asserted another session was mid-deploy. **It was my own orphaned watcher**, and the PPID proved it in one command. Two of my pollers had been spinning 12h and 42h; killing them and an orphaned `next-server` freed ~2GB of swap.
-- I trusted `gh pr close --comment`'s exit code; **all 8 comments silently never posted**.
-- The Phosphor codemod's one gap (`vi.mock` factory keys) was caught by the suite, not by typecheck. Two build runs were killed under memory pressure before I applied Audit 6's own foreground-build note.
-
 ## Archived Summaries
+- **Audit 9 — 2026-09-01**: health 100 by rubric; AI SDK v6 to v7 (`LanguageModelV4` in `FallbackModel`), `@sentry/nextjs` pinned `~10.70.0`, 8 eslint errors fixed, 22 action refs normalised, the 177-file Phosphor `*Icon` AST codemod; 8 Dependabot PRs closed as superseded (their close comments silently dropped). Deployed, no Convex.
 - **Audit 8 — 2026-08-22**: health 100 by rubric with 4 HIGH CodeQL alerts it does not score; fixed a real double-unescape in the DOL parser and whitespace-tolerant tag stripping (5 regression tests); enforce_admins and required reviews declined again. Deployed with Convex.
 - **Audit 7 — 2026-08-22 (Search Console driven)**: health n/a. 21 pages listed "not indexed", only 2 real defects; `/register` was a live 404 (308 to `/signup`), robots.txt Disallow lines carried trailing slashes, one guide genuinely un-indexed. 2 Dependabot alerts (nanoid HIGH, dompurify MODERATE) fixed by override floors, which is where the "cap the major" policy came from. 3 commits, 2 Vercel deploys, no Convex.
 - **Audit 6 — 2026-08-03**: health 0→100. 20 Dependabot alerts (2 critical, 11 high) cleared: next 16.2.12, @auth/core 0.41.3, sharp 0.35.3, @vitest/browser 4.1.10, plus override floors (postcss, brace-expansion, dompurify, fast-uri, sharp, undici). Method: caret `pnpm update` then overrides then a full `pnpm install` to re-resolve, because `pnpm update` alone does not re-apply overrides to locked entries. Added `Typecheck + Vitest` to required checks; `enforce_admins` left false so direct pushes to main (the deploy path) keep working. Machine note now promoted to a Saved Policy: backgrounded builds get killed, foreground ones complete.

@@ -16,13 +16,13 @@
  * hundred pages that actually changed and leaves the other twenty thousand on
  * their thirty-day window.
  *
- * WHY NOT A TAG. `revalidateTag` would be a SILENT NO-OP here. Tags attach to
- * data through exactly three mechanisms - `fetch` with `next.tags`,
- * `unstable_cache`, or `cacheTag` inside a `"use cache"` scope - and this app
- * uses none of them: the database is read through a raw libSQL client. A tag
- * call would return 200, log nothing, and leave every prerender in place.
+ * WHY NOT A TAG. Tags attach to data through `fetch` with `next.tags`,
+ * `unstable_cache` or `cacheTag`; the employer pages' own reads go through a
+ * raw libSQL client and carry none, so a tag would leave those renders in
+ * place (the cohort read in entities.ts is tagged "entities", which
+ * /api/revalidate-disclosure clears after a quarterly load).
  *
- * A tag would also be the wrong SHAPE even if it worked. One tag over all of
+ * A tag would also be the wrong SHAPE. One tag over all of
  * those pages expires every one at once, and each becomes a render on its
  * first visit - the exact cost the thirty-day window exists to avoid.
  *

@@ -49,7 +49,8 @@ export const metadata: Metadata = withSocialCard({
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178
 // entity pages. A day bounds staleness far below the data's own
-// cadence. The ingest should also revalidate on demand.
+// cadence, and the ingests expire it on demand when its data moves
+// (the /api/revalidate-* routes).
 // QUARTERLY DATA, WEEKLY WINDOW, AND A TRIGGER. This reads DOL's quarterly
 // disclosure files, which change four times a year; a one-day window meant
 // ~364 expiries a year to express four real changes, and every expiry a

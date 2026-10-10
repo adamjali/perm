@@ -157,7 +157,7 @@ CAP_NOTE = "stopped on the request cap"
 # of them claims is asked again under the rare ones (RARE_PREFIXES) before it
 # counts toward the "unissued" streak that ends a day: a prefix asked under
 # none would answer empty, end the walk there, and hide the serials behind it,
-# every night. Asking all 17 in one request would halve the serials a request
+# every night. Asking all 19 in one request would halve the serials a request
 # covers; the rare ones are under 1% of the counter, and the gap sweep asks
 # every prefix for the holes the walk stepped over. A confirmed hit is stored as
 # PERM when its prefix is a PERM office code (PERM_OFFICE_PREFIXES) and handed
@@ -1588,6 +1588,16 @@ def _int_or_none(v) -> int | None:
     return None if v is None else int(v)
 
 
+def sweep_run_status(*, todo: int, checked: int, truncated: bool, tail_failed: int) -> str:
+    """The run row's status. Cases to check and none answered is a failure
+    (DOL refused from the first batch, or its answers changed shape); a sweep
+    DOL stopped answering part way, or one whose doc writes failed, is partial.
+    """
+    if todo and not checked:
+        return "failed"
+    return "partial" if truncated or tail_failed else "ok"
+
+
 def sweep_is_complete(limit, offset, truncated: bool, failed_batches: int) -> bool:
     """Did this run cover its whole population? `write_review_stages` dates a
     published census on this claim, so it is a named, tested function.
@@ -1650,13 +1660,13 @@ def main() -> int:
     t0 = time.monotonic()          # the discovery budget counts from here
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--pending", action="store_true",
-                    help="Every non-final case (the 12-hourly sweep).")
+                    help="Every non-final case: the afternoon pass daily, and a weekday morning pass.")
     ap.add_argument(
         "--full", action="store_true",
         help="EVERY case, decided ones included. A 'final' status is not "
              "actually final: a CERTIFIED case becomes CERTIFIED - EXPIRED "
              "when the 180-day I-140 window lapses, and nothing tells us "
-             "except looking. Weekly.",
+             "except looking. Daily.",
     )
     ap.add_argument("--limit", type=int, help="Stop after this many cases.")
     ap.add_argument("--offset", type=int, default=0)
@@ -1858,9 +1868,17 @@ def main() -> int:
         failed = run_independently(steps)
 
         # Recorded after the tail, not before it, so a run that dies in its doc
-        # writes can't have already written itself an `ok` row.
-        status = "ok" if not failed else "partial"
+        # writes can't have already written itself an `ok` row. A sweep DOL
+        # stopped answering part way (`truncated`) left cases unchecked, so it
+        # is `partial` too; a few skipped batches are a small hole the next
+        # pass fills, named in the note.
+        status = sweep_run_status(todo=len(todo), checked=checked, truncated=truncated,
+                                  tail_failed=len(failed))
         note = f"{'full' if args.full else 'pending'}: {n:,} cases"
+        if truncated:
+            note += f"; DOL stopped answering after {checked:,} of {asked:,} asked"
+        elif failed_batches:
+            note += f"; {failed_batches} batches skipped after retries"
         if failed:
             note += (f"; {len(failed)}/{len(steps)} tail steps failed: "
                      + ", ".join(k for k, _ in failed))
@@ -1883,8 +1901,19 @@ def main() -> int:
         if not recorded or len(failed) >= TAIL_FAILURES_RED:
             log("the database refused the run's own record or several doc writes; failing the run")
             return 1
-    else:
+    elif todo:
+        # Cases to check and none answered: DOL refused from the first batch,
+        # or its answers changed shape. A run row says so, or the run would be
+        # green and the health check would hear of it days later.
         log("NOT stamping freshness: this run checked nothing")
+        mode = "full" if args.full else "pending"
+        record_run(db, f"ingest_case_status_direct.py --{mode}",
+                   status=sweep_run_status(todo=len(todo), checked=0, truncated=truncated, tail_failed=0),
+                   rows_written=0, started_at=started,
+                   note=f"{mode}: asked {asked:,} in {requests:,} requests and DOL answered none")
+        return 1
+    else:
+        log("nothing to check")
     return 0
 
 

@@ -23,7 +23,7 @@ function call(job: string, auth: string | null = `Bearer ${SECRET}`) {
   return GET(request, { params: Promise.resolve({ job }) });
 }
 
-function githubMock(runs: Array<{ created_at: string; status: string }>, dispatchStatus = 204) {
+function githubMock(runs: Array<{ created_at: string; status: string; display_title?: string }>, dispatchStatus = 204) {
   return vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
     const u = String(url);
     if (u.endsWith("/runs?per_page=5")) {
@@ -112,6 +112,25 @@ describe("GET /api/cron/dispatch/[job]", () => {
     expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
 
+  it("does not skip for a recent run of the same workflow in another mode", async () => {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
+    const fetchMock = githubMock([
+      { created_at: fiveMinutesAgo, status: "in_progress", display_title: "Case status (direct from DOL), discover" },
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await call("case-status-full");
+    await expect(res.json()).resolves.toMatchObject({ dispatched: "case-status-direct.yml" });
+  });
+
+  it("skips for a recent run of the same mode", async () => {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
+    vi.stubGlobal("fetch", githubMock([
+      { created_at: fiveMinutesAgo, status: "in_progress", display_title: "Case status (direct from DOL), full" },
+    ]));
+    const res = await call("case-status-full");
+    await expect(res.json()).resolves.toMatchObject({ skipped: expect.stringContaining("started 5 min ago") });
+  });
+
   it("does not skip for a run older than the window", async () => {
     const old = new Date(Date.now() - RECENT_RUN_WINDOW_MS - 60_000).toISOString();
     const fetchMock = githubMock([{ created_at: old, status: "completed" }]);
@@ -131,6 +150,22 @@ describe("GET /api/cron/dispatch/[job]", () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("getaddrinfo ENOTFOUND"); }));
     const res = await call("processing-times");
     expect(res.status).toBe(502);
+  });
+});
+
+describe("the run titles agree with the workflows", () => {
+  it("names each workflow as its YAML does, and the status sweeps put their mode in run-name", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { CRON_JOBS: jobs, WORKFLOW_NAMES, runTitle } = await import("../jobs");
+    for (const job of Object.values(jobs)) {
+      const yml = readFileSync(join(process.cwd(), "..", ".github", "workflows", job.workflow), "utf8");
+      expect(yml.match(/^name:\s*(.+)$/m)?.[1]?.trim(), job.workflow).toBe(WORKFLOW_NAMES[job.workflow]);
+      if (job.inputs?.mode) {
+        expect(yml, job.workflow).toContain(`run-name: ${WORKFLOW_NAMES[job.workflow]}, \${{ inputs.mode || 'pending' }}`);
+        expect(runTitle(job)).toBe(`${WORKFLOW_NAMES[job.workflow]}, ${job.inputs.mode}`);
+      }
+    }
   });
 });
 

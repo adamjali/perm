@@ -72,8 +72,29 @@ def sweep_heals_stale_flags() -> None:
           any("current_status" in q for q in sqls), False)
 
 
+def run_status_and_exit() -> None:
+    """A pass with cases to check that checked none is failed and red; one DOL
+    stopped answering is partial; two failed docs or a lost run row are red,
+    as in the PERM sweep."""
+    import ingest_pwd_status_direct as m
+
+    clean = {"pwd": {"todo": 900, "checked": 900, "truncated": False},
+             "lca": {"todo": 0, "checked": 0, "truncated": False}}
+    check("a clean pass is ok, an empty LCA pass included", m.pass_status(clean, 0), "ok")
+    check("cases to check and none answered is failed",
+          m.pass_status({"pwd": {"todo": 900, "checked": 0, "truncated": True}}, 0), "failed")
+    check("a pass DOL stopped answering is partial",
+          m.pass_status({"pwd": {"todo": 900, "checked": 300, "truncated": True}}, 0), "partial")
+    check("one failed doc is partial", m.pass_status(clean, 1), "partial")
+    check("one failed doc keeps the run green", m._tail_exit([("pwd", "x")]), 0)
+    check("two failed docs turn the run red", m._tail_exit([("pwd", "x"), ("lca", "y")]), 1)
+    check("a run row that never landed turns the run red", m._tail_exit([], recorded=False), 1)
+    check("a program swept for nothing turns the run red", m._tail_exit([], swept_nothing=True), 1)
+
+
 def main() -> int:
     print("pwd status ingest")
+    run_status_and_exit()
     # The day code is YYDDD from a real date, year boundary included.
     check("day code for 2026-08-28 is 26240", day_code(datetime.date(2026, 8, 28)), "26240")
     check("day code for 2026-01-01 is 26001", day_code(datetime.date(2026, 1, 1)), "26001")

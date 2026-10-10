@@ -20,7 +20,7 @@ import { MS_PER_MINUTE } from "@/lib/time";
 // CONFIGURATION
 // ============================================================================
 
-const TIMEOUT_CONFIG = {
+export const TIMEOUT_CONFIG = {
   /**
    * Total inactivity timeout: 30 minutes (user is logged out after this).
    * OWASP ASVS 4.0.3 requirement 3.3.2, Level 2 ("12 hours or 30 minutes of
@@ -196,7 +196,7 @@ export function useInactivityTimeout({
       onWarningRef.current?.();
     }, TIMEOUT_CONFIG.WARNING_TIME);
 
-    // Logout timer (15 minutes)
+    // Logout timer (TIMEOUT_CONFIG.INACTIVITY_TIMEOUT, 30 minutes)
     logoutTimerRef.current = setTimeout(() => {
       setIsWarningVisible(false);
       onTimeoutRef.current();

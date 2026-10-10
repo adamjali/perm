@@ -191,30 +191,46 @@ export const recordDirect = internalMutation({
     });
     await stampRecipient(ctx, args.email, args.day, now);
     // A direct send supersedes anything older about the same thing still waiting.
-    await dropQueued(ctx, args.email, args.ref as Parameters<typeof dropQueued>[2]);
+    await dropQueued(ctx, args.email, args.ref as Parameters<typeof dropQueued>[2], { retries: false });
     return null;
   },
 });
 
 /** Distinct addresses with something waiting, oldest item first. */
 export const waitingAddresses = internalQuery({
-  args: { limit: v.number() },
-  returns: v.array(v.string()),
+  args: { limit: v.number(), day: v.optional(v.string()) },
+  returns: v.object({ addresses: v.array(v.string()), held: v.number() }),
   handler: async (ctx, args) => {
+    // An address already mailed today (`day`, Eastern) is skipped here, not
+    // in the run: counted against the run's 40, forty such addresses stalled
+    // every address behind them until the next day (Oct 10 2026 review).
     const seen = new Set<string>();
+    const held = new Set<string>();
     for await (const row of ctx.db
       .query("alertOutbox")
       .withIndex("by_status_created", (q) => q.eq("status", "queued"))) {
+      if (seen.has(row.email) || held.has(row.email)) continue;
+      if (args.day) {
+        const r = await ctx.db
+          .query("alertRecipients")
+          .withIndex("by_email", (q) => q.eq("email", row.email))
+          .unique();
+        if (r?.lastSentDay === args.day) {
+          held.add(row.email);
+          continue;
+        }
+      }
       seen.add(row.email);
       if (seen.size >= args.limit) break;
     }
-    return [...seen];
+    return { addresses: [...seen], held: held.size };
   },
 });
 
 const itemValidator = v.object({
   _id: v.id("alertOutbox"),
   kind: kindValidator,
+  ref: v.string(),
   subject: v.string(),
   html: v.optional(v.string()),
   text: v.optional(v.string()),
@@ -248,6 +264,7 @@ export const waitingFor = internalQuery({
       .map((r) => ({
         _id: r._id,
         kind: r.kind,
+        ref: r.ref,
         subject: r.subject,
         html: r.html,
         text: r.text,
@@ -302,6 +319,7 @@ export const markAttempt = internalMutation({
 type Waiting = {
   _id: Id<"alertOutbox">;
   kind: Doc<"alertOutbox">["kind"];
+  ref: string;
   subject: string;
   html?: string;
   text?: string;
@@ -362,13 +380,15 @@ export const sendBundles = internalAction({
   returns: v.object({ emails: v.number(), items: v.number(), failed: v.number(), held: v.number() }),
   handler: async (ctx): Promise<{ emails: number; items: number; failed: number; held: number }> => {
     const day = easternDay(Date.now());
-    const addresses = await ctx.runQuery(internal.alertOutbox.waitingAddresses, {
+    const waitingList = await ctx.runQuery(internal.alertOutbox.waitingAddresses, {
       limit: ADDRESSES_PER_RUN + 1,
+      day,
     });
+    const addresses = waitingList.addresses;
     let emails = 0;
     let itemsSent = 0;
     let failed = 0;
-    let held = 0;
+    let held = waitingList.held;
 
     for (const email of addresses.slice(0, ADDRESSES_PER_RUN)) {
       const waiting = await ctx.runQuery(internal.alertOutbox.waitingFor, { email, day });
@@ -412,7 +432,7 @@ export const sendBundles = internalAction({
           html,
           text,
           ...(stopUrl ? { headers: oneClickHeaders(stopUrl) } : {}),
-        });
+        }, { refs: items.map((i) => i.ref) });
         if (result.error) {
           failed += 1;
           const gaveUp = await ctx.runMutation(internal.alertOutbox.markAttempt, {

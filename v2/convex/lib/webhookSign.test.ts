@@ -90,12 +90,15 @@ describe("addresses a host name may resolve to", () => {
     "0.0.0.0", "10.1.2.3", "100.64.0.1", "127.0.0.1", "169.254.169.254", "172.16.0.1", "172.31.255.255",
     "192.0.0.1", "192.168.1.1", "198.18.0.1", "224.0.0.1", "255.255.255.255",
     "::", "::1", "fc00::1", "fd12:3456::1", "fe80::1", "ff02::1", "::ffff:10.0.0.1", "::ffff:169.254.169.254",
+    // NAT64, 6to4, IPv4-translated and Teredo forms of an internal address.
+    "64:ff9b::a9fe:a9fe", "2002:a9fe:a9fe::1", "2002:0a00:0001::1", "::ffff:0:a00:1", "2001:0:4136:e378:8000:63bf:3fff:fdd2",
     "not an address",
   ])("refuses %s", (ip) => {
     expect(isPrivateAddress(ip)).toBe(true);
   });
 
-  it.each(["93.184.216.34", "8.8.8.8", "172.32.0.1", "100.128.0.1", "2606:4700::1111", "::ffff:93.184.216.34"])("allows %s", (ip) => {
+  it.each(["93.184.216.34", "8.8.8.8", "172.32.0.1", "100.128.0.1", "2606:4700::1111", "::ffff:93.184.216.34",
+    "2002:5db8:d822::1", "64:ff9b::5db8:d822", "2001:4860:4860::8888"])("allows %s", (ip) => {
     expect(isPrivateAddress(ip)).toBe(false);
   });
 });
@@ -111,6 +114,7 @@ describe("retries", () => {
 
   it("backs off 1 minute, 5 minutes, half an hour, then hours", () => {
     expect(nextAttemptAt(t0, 1, t0)).toBe(t0 + RETRY_DELAYS_MS[0]);
+    expect(nextAttemptAt(t0, 0, t0)).toBe(t0 + RETRY_DELAYS_MS[0]);
     expect(nextAttemptAt(t0, 2, t0 + 60_000)).toBe(t0 + 60_000 + 5 * 60_000);
     expect(nextAttemptAt(t0, 3, t0)).toBe(t0 + 30 * 60_000);
   });

@@ -311,7 +311,8 @@ export default async function PermCaseStatusPage({
         <p className="text-sm text-muted-foreground">
           These statuses are read from DOL directly. The FLAG case-status
           search answers a batch lookup, and we run it against every case once a
-          day, against every undecided case twice a day, and against cases with
+          day, against every undecided case at least twice a day (three times on
+          weekdays), and against cases with
           an alert on them every 5 minutes on weekdays (every half hour at night
           and at weekends). DOL publishes no documented API for this,
           so it is the same endpoint their own search page uses rather than a
@@ -381,7 +382,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       getSweepCoverage().catch(() => null),
       // Null when stale or thin; a case behind the queue then gets no date.
       getStragglerRates().catch(() => null),
-      // The weekly backtest's measured range coverage, quoted under the range.
+      // The nightly backtest's measured range coverage, quoted under the range.
       getRangeCoverage().catch(() => null),
       // The RFI clock, for a case at RFI ISSUED.
       getRfiClock().catch(() => null),

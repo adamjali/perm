@@ -650,7 +650,8 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
     log(f"{program}: recorded sweep, asked {asked:,}, {requests:,} requests, "
         f"{'COMPLETE' if complete else 'PARTIAL'}")
     return {"checked": checked, "moved": moved, "missing": missing,
-            "asked": asked, "requests": requests, "complete": complete}
+            "asked": asked, "requests": requests, "complete": complete,
+            "todo": len(todo), "truncated": truncated}
 
 
 # ---------------------------------------------------------------------------
@@ -831,26 +832,39 @@ def programs_from(arg: str) -> list[str]:
     return list(PROGRAMS) if arg == "all" else [arg]
 
 
-def _tail_exit(failed: list[tuple[str, str]]) -> int:
-    """0 when the sweep worked and only some docs did not; 1 when none did.
+# Doc writes that fail before the run itself goes red: the PERM sweep's rule
+# (TAIL_FAILURES_RED in ingest_case_status_direct.py), for the same reason.
+TAIL_FAILURES_RED = 2
 
-    A doc write failing is not a reason to re-run a sweep that already spent
-    an hour being polite to a government host: the previous doc is still live
-    and correct, and every page that reads one has its own fallback. It
-    surfaces through the `partial` row `record_run` just wrote, which
-    check_ingest_health.py turns red the same morning.
 
-    EVERY doc failing is a different claim - that is the database being gone,
-    at which point the sweep's own writes are suspect too and the run should
-    be red now rather than tomorrow.
+def _tail_exit(failed: list[tuple[str, str]], recorded: bool = True, swept_nothing: bool = False) -> int:
+    """0 when the sweep worked and at most one doc did not; 1 otherwise.
+
+    One doc write failing is a blip: the previous doc is still live and
+    correct, every page that reads one has its own fallback, and the `partial`
+    row `record_run` just wrote turns the health check red the same morning.
+    Two or more, or a run row that never landed, is the database refusing
+    writes, and only a red run says so: on Oct 10 2026 a full disk refused
+    the PERM sweep's docs and its run row while the old rule (red only when
+    every doc failed) kept it green. A program with cases to check that
+    checked none (`swept_nothing`) is red too.
     """
-    if failed and len(failed) >= len(PROGRAMS):
-        log(f"every summary doc failed ({len(failed)}); failing the run")
-        return 1
     if failed:
         log(f"TAIL: {len(failed)} doc write(s) failed: "
             + ", ".join(k for k, _ in failed))
+    if not recorded or len(failed) >= TAIL_FAILURES_RED or swept_nothing:
+        log("the run's own record, several doc writes, or a whole program's sweep failed; failing the run")
+        return 1
     return 0
+
+
+def pass_status(results: dict[str, dict], tail_failed: int) -> str:
+    """The run row's status for a pending or full pass over the programs."""
+    if any(r["todo"] and not r["checked"] for r in results.values()):
+        return "failed"
+    if tail_failed or any(r.get("truncated") for r in results.values()):
+        return "partial"
+    return "ok"
 
 
 def main() -> int:
@@ -957,13 +971,13 @@ def main() -> int:
                                            DISCOVERY_SOURCE)
         log(f"discover: {requests} requests, new cases {added}, days done {done}")
         failed = finish_docs(lambda n: f"{added.get(n, 0)} discovered")
-        record_run(db, "ingest_pwd_status_direct.py --discover",
+        recorded = record_run(db, "ingest_pwd_status_direct.py --discover",
                    status="ok" if not failed else "partial",
                    rows_written=sum(added.values()),
                    note=f"{requests} requests in {time.time()-started:.0f}s"
                         + (f"; failed: {', '.join(k for k, _ in failed)}"
                            if failed else ""))
-        return _tail_exit(failed)
+        return _tail_exit(failed, recorded)
 
     if args.backfill:
         if not (args.from_ and args.to):
@@ -1005,13 +1019,13 @@ def main() -> int:
             log(f"backfill: complete through {end}")
         log(f"backfill: {total_req} requests, new cases {total_added}")
         failed = finish_docs()
-        record_run(db, "ingest_pwd_status_direct.py --backfill",
+        recorded = record_run(db, "ingest_pwd_status_direct.py --backfill",
                    status="ok" if not failed else "partial",
                    rows_written=sum(total_added.values()),
                    note=f"{start}..{end}, {total_req} requests"
                         + (f"; failed: {', '.join(k for k, _ in failed)}"
                            if failed else ""))
-        return _tail_exit(failed)
+        return _tail_exit(failed, recorded)
 
     if args.pending or args.full:
         results = {}
@@ -1042,15 +1056,20 @@ def main() -> int:
             return f"{res['checked']:,} checked, {res['moved']:,} moved"
 
         failed = finish_docs(_note)
-        record_run(db, f"ingest_pwd_status_direct.py --{'full' if args.full else 'pending'} "
+        status = pass_status(results, len(failed))
+        unswept = [n for n, r in results.items() if r["todo"] and not r["checked"]]
+        stopped = [n for n, r in results.items() if r.get("truncated")]
+        recorded = record_run(db, f"ingest_pwd_status_direct.py --{'full' if args.full else 'pending'} "
                        f"--program {args.program}",
-                   status="ok" if not failed else "partial",
+                   status=status,
                    rows_written=sum(r["moved"] for r in results.values()),
                    note=f"{sum(r['checked'] for r in results.values()):,} checked in "
                         f"{time.time()-started:.0f}s"
                         + (f"; failed: {', '.join(k for k, _ in failed)}"
-                           if failed else ""))
-        return _tail_exit(failed)
+                           if failed else "")
+                        + (f"; DOL answered none for: {', '.join(unswept)}" if unswept else "")
+                        + (f"; DOL stopped answering part way: {', '.join(stopped)}" if stopped else ""))
+        return _tail_exit(failed, recorded, swept_nothing=bool(unswept))
 
     ap.print_help()
     return 2

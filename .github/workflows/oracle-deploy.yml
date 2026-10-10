@@ -185,7 +185,8 @@ jobs:
       # deploy does not clear it, so a fix shipped here stayed invisible until
       # the copy expired (Oct 5 2026). This drops the copies of exactly the
       # pages the push changed. Skips cleanly without the secrets, on a manual
-      # run (no "before"), and never fails the deploy.
+      # run (no "before"), and never fails the deploy; a refusal fails this
+      # step, so it shows.
       - name: Drop Cloudflare's copies of the pages this push changed
         continue-on-error: true
         env:

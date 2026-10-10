@@ -30,10 +30,9 @@
  *
  * ## Configuration
  *
- * `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` must be set on the Convex
- * deployment. They are the SAME pair the Next.js server already holds, and they
- * are not currently set on Convex, so every caller here throws until they are.
- * That is on purpose: a missing credential that degraded to an empty result set
+ * `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are set on Convex production:
+ * the Oracle server's database, reached through Cloudflare, with a read-only
+ * token. A missing pair throws. That is on purpose: a missing credential that degraded to an empty result set
  * would report "nothing changed" forever, which is indistinguishable from a
  * working sweep with a quiet week.
  *

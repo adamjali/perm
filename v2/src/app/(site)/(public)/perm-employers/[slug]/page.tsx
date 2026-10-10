@@ -250,8 +250,10 @@ async function OtherEmployerPage({ slug, record }: { slug: string; record: Other
       record.lca ? getLcaProfile(slug).catch(() => null) : null,
       getUscisH1bRecord(slug).catch(() => null),
       getEmployerLottery(slug).catch(() => null),
-      debarmentsForSlug(slug).catch(() => []),
-      warnForSlug(slug).catch(() => []),
+      // No catch: a failed read must fail the render (the last good page
+      // stays), not cache a month of "no debarment, no layoffs".
+      debarmentsForSlug(slug),
+      warnForSlug(slug),
     ]);
   const lines = programs ? [programs.pwd, programs.lca, programs.seasonal] : [];
   const open = lines.filter((l) => l && l.pending !== null);
@@ -499,7 +501,9 @@ export default async function EmployerPage({
       return <OtherEmployerPage slug={slug} record={other} />;
     }
     // Its other programs, over the spellings the nightly map gives this page.
-    const liveMatch = await employerMatch(slug).catch(() => null);
+    // No catch: an unreadable map must fail the render (the last good page
+    // stays), not cache a month of an employer with no other programs.
+    const liveMatch = await employerMatch(slug);
     const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal, wageLive, lcaLive, wageDets, lcaDets, lcaProfile, uscisH1b, lottery, liveDebarments, liveWarn] =
       await Promise.all([
         getFreshness(),
@@ -515,8 +519,8 @@ export default async function EmployerPage({
         getLcaProfile(slug).catch(() => null),
         getUscisH1bRecord(slug).catch(() => null),
         getEmployerLottery(slug).catch(() => null),
-        debarmentsForSlug(slug).catch(() => []),
-        warnForSlug(slug).catch(() => []),
+        debarmentsForSlug(slug),
+        warnForSlug(slug),
       ]);
     return (
       <>
@@ -595,7 +599,8 @@ export default async function EmployerPage({
   // The employer's own spellings in the H-1B, wage-request and seasonal
   // tables (employer_page_map, built nightly). Cached, so the program ledger,
   // the LCA panel and the lists below all read the same rows.
-  const match = await employerMatch(canonicalSlug).catch(() => null);
+  // No catch, for the reason at the live-only branch's call.
+  const match = await employerMatch(canonicalSlug);
   const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor] =
     await Promise.all([
       getDisclosureStats(),
@@ -628,8 +633,8 @@ export default async function EmployerPage({
       searchLcaDisclosed({ text: row.name, match, limit: 5 }).catch(() => []),
       getEmployerPrograms(canonicalSlug).catch(() => null),
       getEmployerStages().catch(() => null),
-      debarmentsForSlug(canonicalSlug).catch(() => []),
-      warnForSlug(canonicalSlug).catch(() => []),
+      debarmentsForSlug(canonicalSlug),
+      warnForSlug(canonicalSlug),
       getEmployerWait(canonicalSlug).catch(() => ({ n: 0, p25: null, p50: null, p75: null })),
       getFieldWait().catch(() => null),
       getFiledTodayEstimate().catch(() => null),

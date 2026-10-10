@@ -7,6 +7,7 @@
  * @module
  */
 
+import { dropRetries } from "./alertOutboxStore";
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { recordError } from "./errorRecording";
@@ -234,6 +235,12 @@ export async function purgeAllUserData(
     }
     authRefreshTokensCount += tokens.length;
     await ctx.db.delete(session._id);
+  }
+
+  // Mail waiting in the retry queue for this address goes too (a deadline
+  // reminder carries case details), except the deletion confirmation itself.
+  if (email) {
+    await dropRetries(ctx, email.toLowerCase().trim(), (r) => r.kind !== "notification:sendAccountDeletionEmail");
   }
 
   // Finally delete the user record itself

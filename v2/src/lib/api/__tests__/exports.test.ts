@@ -21,6 +21,7 @@ const searchResult = (rows: unknown[], extra: Record<string, unknown> = {}) => (
   counts: { perm: rows.length, pwd: 0, lca: 0, seasonal: 0 },
   truncated: false,
   capped: false,
+  unread: [],
   ...extra,
 });
 

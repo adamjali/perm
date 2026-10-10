@@ -27,6 +27,13 @@ describe("PermTracker", () => {
     expect(a.usage).toEqual({ perMinute: 10, remainingThisMinute: 9, today: 4, perDay: 300, month: 40, perMonth: 3000 });
   });
 
+  it("takes any number of trailing slashes off the base address", async () => {
+    const f = fakeFetch(200, { data: {}, meta: {} });
+    const pt = new PermTracker({ apiKey: KEY, baseUrl: "http://localhost:3000/v1///", fetch: f as unknown as typeof fetch });
+    await pt.case("G-100-26045-123456");
+    expect(String(f.mock.calls[0]![0])).toBe("http://localhost:3000/v1/cases/G-100-26045-123456");
+  });
+
   it("refuses a malformed case number without calling the API", async () => {
     const f = fakeFetch(200, {});
     const pt = new PermTracker({ apiKey: KEY, fetch: f as unknown as typeof fetch });

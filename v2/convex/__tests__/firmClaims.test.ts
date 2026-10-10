@@ -254,6 +254,41 @@ describe("budgets and cooldowns", () => {
     expect((await claimRow(t, "jane@smithlaw.com"))!.lastConfirmationSentAt).toBe(first);
   });
 
+  it("a queued edit-link request is sent as an edit link when the queue drains", async () => {
+    const t = createTestContext();
+    stub(TIED);
+    await claimOverHttp(t, "jane@smithlaw.com");
+    const token = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-confirm", Date.now() + 60_000);
+    await t.mutation(internal.firmClaims.confirmByToken, { token });
+    const fill = async () =>
+      t.run(async (ctx) => {
+        for (let i = 0; i < BUDGETS.firmClaim.limit; i++) {
+          await ctx.db.insert("rateLimits", {
+            key: `${BUDGETS.firmClaim.key}:all`, identifier: "all", action: BUDGETS.firmClaim.key, timestamp: Date.now() - i * 1000,
+          });
+        }
+      });
+    await fill();
+    const res = await t.mutation(internal.firmClaims.requestEditLink, { email: "jane@smithlaw.com", slug: SLUG });
+    expect(res.message).toBe(QUEUED_REPLY);
+    const rows = await t.run(async (ctx) => ctx.db.query("confirmationQueue").collect());
+    expect(rows.map((r) => r.kind)).toEqual(["firmEdit"]);
+    // Resend's list of today's mail is empty, so the drain has room.
+    const inner = global.fetch;
+    global.fetch = (async (url: unknown, init?: { method?: string; body?: string }) => {
+      if (String(url).includes("api.resend.com/emails") && (!init?.method || init.method === "GET")) {
+        return new Response(JSON.stringify({ object: "list", has_more: false, data: [] }), {
+          status: 200, headers: { "Content-Type": "application/json" },
+        });
+      }
+      return inner(url as never, init as never);
+    }) as unknown as typeof fetch;
+    const drained = await t.action(internal.confirmationQueue.drain, {});
+    expect(drained.sent).toBe(1);
+    expect(await t.run(async (ctx) => ctx.db.query("confirmationQueue").collect())).toHaveLength(0);
+    expect((await claimRow(t, "jane@smithlaw.com"))!.lastEditLinkSentAt).toBeTypeOf("number");
+  });
+
   it("asks for an edit link without spending the pool when there's no claim", async () => {
     const t = createTestContext();
     stub(TIED);
@@ -396,6 +431,28 @@ describe("the admin", () => {
     expect(res?.review).toEqual(["Smith Immigration PLLC"]);
     expect(await t.query(api.firmClaims.publishedProfile, { slug: SLUG })).toBeNull();
   });
+
+  it("keeps the hold on the second and later requests after a revoke", async () => {
+    const t = createTestContext();
+    stub(TIED);
+    await claimOverHttp(t, "jane@smithlaw.com");
+    const token = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-confirm", Date.now() + 60_000);
+    await t.mutation(internal.firmClaims.confirmByToken, { token });
+    const admin = await adminAuth(t);
+    const claim = (await claimRow(t, "jane@smithlaw.com"))!;
+    await admin.mutation(api.firmClaims.revokeClaim, { claimId: claim._id });
+
+    // Two requests past the cooldown: after the first, the status reads
+    // pending_email again, which is what used to clear the hold.
+    for (let i = 0; i < 2; i++) {
+      await t.run(async (ctx) => ctx.db.patch(claim._id, { lastConfirmationSentAt: Date.now() - 3_600_000 }));
+      await claimOverHttp(t, "jane@smithlaw.com");
+    }
+    const again = await makeExpiringToken("jane@smithlaw.com", SECRET, "firm-confirm", Date.now() + 60_000);
+    const res = await t.mutation(internal.firmClaims.confirmByToken, { token: again });
+    expect(res?.review).toEqual(["Smith Immigration PLLC"]);
+    expect((await claimRow(t, "jane@smithlaw.com"))?.status).not.toBe("verified");
+  });
 });
 
 describe("a firm's own words wait for review", () => {
@@ -528,5 +585,35 @@ describe("a firm's own words wait for review", () => {
     const claim = (await claimRow(t, "jane@smithlaw.com"))!;
     await admin.mutation(api.firmClaims.revokeClaim, { claimId: claim._id });
     expect((await admin.query(api.firmClaims.listForAdmin, {})).edits).toEqual([]);
+  });
+});
+
+describe("the firm page refresh", () => {
+  function refusing() {
+    global.fetch = (async () => new Response("busy", { status: 503 })) as unknown as typeof fetch;
+  }
+
+  it("tries again when the site refuses, without recording an error yet", async () => {
+    const t = createTestContext();
+    vi.stubEnv("REVALIDATE_SECRET", "revalidate-secret-for-tests");
+    refusing();
+    await t.action(internal.firmClaims.revalidateFirmPage, { slug: SLUG });
+    const scheduled = await t.run(async (ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    expect(scheduled.some((f) => f.name.includes("revalidateFirmPage"))).toBe(true);
+    expect(scheduled.some((f) => f.name.includes("systemErrors")), "no error recorded yet").toBe(false);
+  });
+
+  it("records the failure once the retries are spent, so the admin hears of it", async () => {
+    const t = createTestContext();
+    vi.stubEnv("REVALIDATE_SECRET", "revalidate-secret-for-tests");
+    refusing();
+    const { REFRESH_RETRY_MS } = await import("../firmClaims");
+    await t.action(internal.firmClaims.revalidateFirmPage, { slug: SLUG, attempt: REFRESH_RETRY_MS.length });
+    // recordError writes through the scheduler.
+    const scheduled = await t.run(async (ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    const recorded = scheduled.filter((f) => f.name.includes("systemErrors"));
+    expect(recorded).toHaveLength(1);
+    expect(JSON.stringify(recorded[0]!.args)).toContain("firmClaims.revalidateFirmPage");
+    expect(scheduled.some((f) => f.name.includes("revalidateFirmPage")), "no more retries").toBe(false);
   });
 });

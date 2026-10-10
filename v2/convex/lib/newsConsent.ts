@@ -23,18 +23,7 @@
  */
 
 import type { MutationCtx } from "../_generated/server";
-
-/**
- * The same conservative address check the alert modules use.
- *
- * The length cap runs FIRST and that ordering is load-bearing, not style.
- * `[^\s@]` matches `.`, so `[^\s@]+\.[^\s@]{2,}$` backtracks quadratically on
- * a long failing input: measured in V8, `"a@" + ".".repeat(80000) + "@"` took
- * 8.2 seconds against this pattern and 0.005 ms with the length check first.
- */
-function isPlausibleEmail(email: string): boolean {
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-}
+import { isPlausibleEmail } from "./emailShape";
 
 /**
  * Record a product-news opt-in for an address, UNCONFIRMED.

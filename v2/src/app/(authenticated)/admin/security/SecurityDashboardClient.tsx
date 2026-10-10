@@ -358,7 +358,7 @@ function BlockedIpsTab() {
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
-            Defaults to 24h. Blocks expire automatically; hourly cron cleans them up.
+            Defaults to 1 hour. Blocks expire automatically; hourly cron cleans them up.
           </p>
         </CardContent>
       </Card>
@@ -531,12 +531,12 @@ function SettingsTab() {
     ["/api/auth POST, per-IP", "500/hr"],
     ["/api/chat POST, per-IP", "120/min"],
     ["Auto-block after", "3 rate-limit rejections in 15 minutes"],
-    ["Auto-block duration", "24 hours"],
+    ["Auto-block duration", "1 hour"],
     ["Per-email, login", "20 per 15 min"],
     ["Per-email, OTP verify", "10 per 15 min"],
     ["Per-email, password reset", "5 per hour"],
     ["Per-user, queryCases (chat tool)", "not rate-limited (auto-cached query)"],
-    ["Per-user, cases.create / .update", "60/min/user (burst 10)"],
+    ["Per-user, cases.create / .update", "60/min/user (burst 30)"],
     ["Per-user, knowledge.searchKnowledge", "20/min/user (burst 5)"],
   ];
   return (

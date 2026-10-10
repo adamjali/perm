@@ -926,16 +926,22 @@ def main() -> int:
         ok = write_live_only_index(db, live, maps) and ok
         # The "filed in the last 12 months" facet reads this column; it moves
         # with the live remainder, so it refreshes here every night.
+        # A failed facet doesn't stop the rebuild, but it is counted: the
+        # 12-month column went stale for 16 days in September 2026 behind a
+        # line that only logged, and it is a column, so no doc check sees it.
+        facets_failed: list[str] = []
         if ok:
             try:
                 refresh_recent_12m(db)
             except Exception as exc:  # noqa: BLE001 - a facet must not fail the rebuild
                 log(f"  recent_12m refresh FAILED: {exc}")
+                facets_failed.append("recent_12m")
         # The all-employers comparison the employer pages' wait section reads.
         try:
             write_recent_wait(db)
         except Exception as exc:  # noqa: BLE001 - a comparison must not fail the rebuild
             log(f"  recent_decision_wait refresh FAILED: {exc}")
+            facets_failed.append("recent_decision_wait")
         # Stamp freshness and audit the run. This table is what makes cases newer
         # than the last disclosure file findable, and the sweep workflow runs it
         # under `|| true`, so a stalled rebuild must turn the health check red
@@ -944,11 +950,15 @@ def main() -> int:
         if ok:
             stamp_freshness(db, "live-recent", source="derived from perm_case_status",
                             cadence="Daily", note=f"{len(live):,} cases", max_age_days=3)
+        clean = ok and pending_ok and not facets_failed
+        # "partial", which the health check counts as broken; this row once
+        # said "mismatch", a status nothing counted.
         record_run(db, "build_entity_detail.py --live-recent-only",
-                   status="ok" if ok and pending_ok else "mismatch", rows_written=len(live),
+                   status="ok" if clean else "partial", rows_written=len(live),
                    note=f"remainder past {boundary}; queue band {len(pending):,} employers"
-                        + ("" if pending_ok else ", perm_entity_pending NOT refreshed"))
-        return 0 if ok and pending_ok else 1
+                        + ("" if pending_ok else ", perm_entity_pending NOT refreshed")
+                        + (f", failed: {', '.join(facets_failed)}" if facets_failed else ""))
+        return 0 if clean else 1
 
     log("PENDING")
     pending = build_pending(db, maps)

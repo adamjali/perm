@@ -270,7 +270,7 @@ export default async function SeasonalCasesPage() {
           <FinePrint summary="Where the rows come from">
             <p>
               DOL numbers every filing, PERM and H-1B included, from one running counter. This
-              site walks it twice a day for new filings and re-checks each one until DOL decides.{" "}
+              site walks it two or three times a day for new filings and re-checks each one until DOL decides.{" "}
             </p>
           </FinePrint>{" "}
           <p>

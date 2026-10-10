@@ -1,7 +1,8 @@
 """Ask DOL about only the cases someone is waiting to hear about.
 
-The full and pending sweeps ask about every case twice a day, so a watched
-case could change and its subscriber hear up to twelve hours later.
+The sweeps ask about every case daily and the undecided ones two or three
+times a day, so a watched case could change and its subscriber hear hours
+later.
 
 Since Oct 7 2026 the server runs this every 5 minutes (`permtracker-watched.
 timer`): `--cadence` lets it through every time on weekdays from 7 AM to 9 PM
@@ -17,8 +18,8 @@ here is the change the sweep would have recorded a few hours later, and every
 downstream reader (decision counts, the RFI funnel, the census) treats it the
 same way.
 
-SAFE BESIDE A RUNNING SWEEP. The workflow skips an hour a sweep is running,
-but a sweep can still start during this run. So every write is conditional:
+SAFE BESIDE A RUNNING SWEEP. The 5-minute timer doesn't wait for a sweep
+(flock only stops it overlapping itself), so every write is conditional:
 the status UPDATE applies only while the row still holds the status this run
 read, and the event row is inserted only when that UPDATE changed a row
 (`changes() > 0` on the same connection). A sweep that already recorded the
@@ -255,7 +256,10 @@ def main() -> int:
             continue
         try:
             results.append(check(db, program, nums, a.dry_run))
-        except Exception as exc:  # noqa: BLE001
+        except RuntimeError as exc:
+            # DOL refusing or the database refusing a write: named and recorded
+            # as partial below. Anything else is a defect in this script and
+            # propagates, so the systemd unit fails and the alarm sees it.
             failed.append(f"{program}: {exc}")
     changed = sum(r["applied"] + r["inserted"] for r in results)
     note = "; ".join(
@@ -273,14 +277,19 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             # The Convex crons still sweep twice a day, so a refused call delays the email, never loses it.
             swept = f"; alert call failed ({exc})"
+            failed.append("the alert call")
         print(swept.lstrip("; "))
     # Every 5 minutes is 288 runs a day: record the ones that changed or
     # failed something, and one an hour so the health check sees it alive.
     on_the_hour = datetime.datetime.now(datetime.timezone.utc).minute < 5
     if not a.dry_run and (changed or failed or swept or on_the_hour or not a.cadence):
-        # A DOL refusal is named but is not a broken ingest: the sweeps cover
-        # every case twice a day anyway, and the next run tries again.
-        record_run(db, SCRIPT, status="ok", rows_written=changed, note=note + swept, started_at=started)
+        # Partial when a program's check or the alert call failed, so the
+        # health check sees it: every one of these was once recorded `ok`
+        # with "FAILED" only in the note, and alerts could quietly fall back
+        # to the twice-daily sweeps for days. A transient refusal clears on
+        # the next recorded run, an hour at most.
+        record_run(db, SCRIPT, status="partial" if failed else "ok", rows_written=changed,
+                   note=note + swept, started_at=started)
     print(f"CHANGED={changed}")
     return 0
 

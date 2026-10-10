@@ -204,6 +204,23 @@ check("an alert email names its own User-Agent, not Python's default",
       bool(_ua) and "urllib" not in _ua.lower(), str(_ua))
 check("and a sent alert is counted against the day's limit", sum(_state.get("emails", {}).values()) == 1)
 
+# A state file that can't be read: resume from what Cloudflare says, so the
+# 30-calm-minute clock can still turn things off (Oct 10 2026, a full disk).
+class _CF:
+    def __init__(self, rule, level):
+        self.rule, self.level = rule, level
+    def entrypoint(self):
+        return {"rules": [{"ref": d.RULE_REF}] if self.rule else []}
+    def security_level(self):
+        return self.level
+check("Under Attack Mode on at Cloudflare resumes as attack", d.reconcile(_CF(False, "under_attack"), NOW)["mode"] == "attack")
+check("the automatic rule present resumes as rule", d.reconcile(_CF(True, "low"), NOW)["mode"] == "rule")
+check("nothing on resumes as off", d.reconcile(_CF(False, "low"), NOW)["mode"] == "off")
+_st = d.reconcile(_CF(False, "under_attack"), NOW)
+d.decide(_st, False, None, NOW)
+check("...and 30 calm minutes later it all goes off",
+      d.decide(_st, False, None, NOW + d.CALM_FOR) == [("all_off", {})])
+
 print()
 print(f"{len(failures)} failure(s)")
 sys.exit(1 if failures else 0)

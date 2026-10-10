@@ -130,7 +130,7 @@ jobs:
           fi
           curl -fsS -X POST https://permtracker.app/api/revalidate-bulletin \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
-            || echo "revalidation call failed"
+            || { echo "::error::revalidation call failed (revalidate-bulletin)"; echo "revalidate-bulletin" >> "$RUNNER_TEMP/pt-failed-steps"; }
 
       # The yearly spillover figures (annual limits, Table V) from the same
       # State host. A PDF is fetched only in the week a new fiscal year appears.
@@ -142,8 +142,8 @@ jobs:
             || python3 scripts/record_ingest_failure.py --script ingest_visa_limits.py --note "visa limits discovery failed"
 
       # Expire the pages that print DOL's figure, only on a day DOL actually
-      # republished (roughly weekly). Never fails the run: the data is already
-      # stored, and a page one window staler is not a failed fetch.
+      # republished (roughly weekly). A failed call doesn't stop the steps after
+      # it (the data is already stored); it turns the run red at the end.
       - name: Expire the DOL pages
         if: steps.ingest.outputs.dol_changed == 'true'
         env:
@@ -158,19 +158,21 @@ jobs:
           echo "DOL published a new as-of ($PERM_AS_OF); expiring the pages that show it"
           curl -fsS -X POST https://permtracker.app/api/revalidate-dol \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
-            || echo "revalidation call failed"
+            || { echo "::error::revalidation call failed (revalidate-dol)"; echo "revalidate-dol" >> "$RUNNER_TEMP/pt-failed-steps"; }
 
       # A second, independent read of the same public sources from a third
       # party, compared rather than imported: a disagreement on a cutoff both
       # sides publish means one side has a parsing bug. Their availability is
-      # not our correctness, so it can't fail the run.
+      # not our correctness: the script skips clean when they don't answer. A
+      # real disagreement marks the run, and the last step turns it red.
       - name: Cross-check against a third-party source
         if: always() && inputs.quick != 'true'
-        continue-on-error: true
         working-directory: v2
         env:
           CROSS_CHECK_API: ${{ secrets.CROSS_CHECK_API }}
-        run: python3 scripts/cross_check_sources.py
+        run: |
+          python3 scripts/cross_check_sources.py \
+            || { echo "::error::the cross-check found a disagreement with the third party"; echo "cross-check" >> "$RUNNER_TEMP/pt-failed-steps"; }
 
       # A step that failed and carried on (each leaves a line in this file,
       # through record_ingest_failure.py or its own `||` branch) still turns the

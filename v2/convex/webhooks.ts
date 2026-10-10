@@ -35,6 +35,7 @@ import {
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { extractUserIdFromAction, getCurrentUserIdOrNull, isEmailVerified } from "./lib/auth";
+import { serverDoorOpen } from "./lib/serverDoor";
 import { API_KEY_HASH_RE, randomBase62 } from "./lib/apiKeyFormat";
 import { NO_WEBHOOKS_MESSAGE, entitlement, hasScope } from "./lib/apiPlans";
 import { encryptToken } from "./lib/crypto";
@@ -51,8 +52,20 @@ export const MANUAL_SENDS_PER_HOUR = 20;
 /** Resumes an owner may make in an hour: each releases up to 2,000 held deliveries at once. */
 export const RESUMES_PER_HOUR = 10;
 
-type Failure = { ok: false; message: string };
-const failure = v.object({ ok: v.literal(false), message: v.string() });
+/**
+ * What kind of refusal, for the API to choose its status code by: chosen from
+ * the message's wording, our own misconfiguration (the door) answered 400 and
+ * a missing endpoint 400 instead of 404. A refusal with no code is a bad input.
+ */
+export type FailureCode = "plan_feature" | "plan_room" | "refused" | "not_found" | "misconfigured";
+type Failure = { ok: false; message: string; code?: FailureCode };
+const failure = v.object({
+  ok: v.literal(false),
+  message: v.string(),
+  code: v.optional(
+    v.union(v.literal("plan_feature"), v.literal("plan_room"), v.literal("refused"), v.literal("not_found"), v.literal("misconfigured")),
+  ),
+});
 
 async function accountOf(ctx: QueryCtx | MutationCtx, userId: Id<"users">): Promise<Doc<"apiAccounts"> | null> {
   return await ctx.db
@@ -67,7 +80,7 @@ async function accountOf(ctx: QueryCtx | MutationCtx, userId: Id<"users">): Prom
  * of a rotation's day.
  */
 async function keyAccount(ctx: MutationCtx, keyHash: string): Promise<{ userId: Id<"users">; account: Doc<"apiAccounts"> } | Failure> {
-  const denied: Failure = { ok: false, message: "This key can't manage webhooks." };
+  const denied: Failure = { ok: false, message: "This key can't manage webhooks.", code: "refused" };
   if (!API_KEY_HASH_RE.test(keyHash)) return denied;
   const key = await ctx.db
     .query("apiKeys")
@@ -77,8 +90,8 @@ async function keyAccount(ctx: MutationCtx, keyHash: string): Promise<{ userId: 
   if (!key || key.revokedAt !== undefined) return denied;
   if (key.expiresAt !== undefined && key.expiresAt <= now) return denied;
   if (key.graceUntil !== undefined && key.graceUntil <= now) return denied;
-  if (key.sandbox) return { ok: false, message: "Sandbox keys can't change webhooks. Use a live key, or send a test event from Settings." };
-  if (!hasScope(key.scopes, "webhooks")) return { ok: false, message: 'This key needs the "webhooks" scope.' };
+  if (key.sandbox) return { ok: false, message: "Sandbox keys can't change webhooks. Use a live key, or send a test event from Settings.", code: "refused" };
+  if (!hasScope(key.scopes, "webhooks")) return { ok: false, message: 'This key needs the "webhooks" scope.', code: "refused" };
   const user = await ctx.db.get(key.userId);
   if (!user || user.deletedAt) return denied;
   const account = await accountOf(ctx, key.userId);
@@ -87,21 +100,16 @@ async function keyAccount(ctx: MutationCtx, keyHash: string): Promise<{ userId: 
 }
 
 /**
- * The API's door is open only to the site's own server, which sends
- * API_SERVER_SECRET (set on this deployment and on the server) with every
- * call. A key's hash alone is not enough: the key's holder could compute it
- * and call these functions directly, skipping /v1's per-minute limit and its
- * call counting. Unset means shut, never open. Compared in time that doesn't
- * depend on where the strings differ.
+ * The API's door is open only to the site's own server (serverDoorOpen). A
+ * key's hash alone is not enough: the key's holder could compute it and call
+ * these functions directly, skipping /v1's per-minute limit and its call
+ * counting.
  */
-const DOOR_SHUT: Failure = { ok: false, message: "These functions answer the PERM Tracker API only. Call https://permtracker.app/v1." };
-function serverDoorOpen(given: string): boolean {
-  const want = process.env.API_SERVER_SECRET ?? "";
-  if (want.length < 16 || given.length !== want.length) return false;
-  let diff = 0;
-  for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ given.charCodeAt(i);
-  return diff === 0;
-}
+const DOOR_SHUT: Failure = {
+  ok: false,
+  message: "These functions answer the PERM Tracker API only. Call https://permtracker.app/v1.",
+  code: "misconfigured",
+};
 
 /* ------------------------------------------------------------------ */
 /* Shapes returned to Settings and the API                             */
@@ -292,11 +300,11 @@ export const insertEndpoint = internalMutation({
       throw new Error("insertEndpoint needs a user or a key");
     }
     const { plan } = entitlement(acct?.plan);
-    if (plan.webhookEndpoints === 0) return { ok: false, message: NO_WEBHOOKS_MESSAGE };
+    if (plan.webhookEndpoints === 0) return { ok: false, message: NO_WEBHOOKS_MESSAGE, code: "plan_feature" };
     if (acct) {
       const have = await endpointsOf(ctx, acct.account);
       if (have.length >= plan.webhookEndpoints) {
-        return { ok: false, message: `The ${plan.label} plan has ${plan.webhookEndpoints} webhook endpoints. Delete one to add another.` };
+        return { ok: false, message: `The ${plan.label} plan has ${plan.webhookEndpoints} webhook endpoints. Delete one to add another.`, code: "plan_room" };
       }
       if (have.some((e) => e.url === args.url)) return { ok: false, message: "That address is already an endpoint. Change its events instead." };
     } else {
@@ -503,7 +511,7 @@ export const insertWatch = internalMutation({
     } else {
       throw new Error("insertWatch needs a user or a key");
     }
-    if (entitlement(acct?.plan).plan.webhookWatches === 0) return { ok: false as const, message: NO_WEBHOOKS_MESSAGE };
+    if (entitlement(acct?.plan).plan.webhookWatches === 0) return { ok: false as const, message: NO_WEBHOOKS_MESSAGE, code: "plan_feature" as const };
     if (!acct) {
       const id = await ctx.db.insert("apiAccounts", { userId, account: args.newAccount, plan: "free", createdAt: Date.now() });
       acct = await ctx.db.get(id);
@@ -517,7 +525,7 @@ export const insertWatch = internalMutation({
     const { plan } = entitlement(acct!.plan);
     const count = (await watchesOf(ctx, account)).length;
     if (count >= plan.webhookWatches) {
-      return { ok: false as const, message: `The ${plan.label} plan watches ${plan.webhookWatches} cases and employers. Remove a watch to add another.` };
+      return { ok: false as const, message: `The ${plan.label} plan watches ${plan.webhookWatches} cases and employers. Remove a watch to add another.`, code: "plan_room" as const };
     }
     const id = await ctx.db.insert("webhookWatches", {
       userId,
@@ -590,7 +598,7 @@ export const apiCreateEndpoint = action({
   returns: v.union(created, failure),
   handler: async (ctx, args): Promise<Created> => {
     if (!serverDoorOpen(args.serverSecret)) return DOOR_SHUT;
-    if (!API_KEY_HASH_RE.test(args.keyHash)) return { ok: false, message: "This key can't manage webhooks." };
+    if (!API_KEY_HASH_RE.test(args.keyHash)) return { ok: false, message: "This key can't manage webhooks.", code: "refused" };
     if (args.events.length > 20) return { ok: false, message: "That's more events than exist." };
     return await buildEndpoint(ctx, { keyHash: args.keyHash }, args.url.slice(0, 4096), args.events);
   },
@@ -605,7 +613,7 @@ export const apiDeleteEndpoint = mutation({
     if ("ok" in k) return k;
     const id = ctx.db.normalizeId("webhookEndpoints", args.endpointId.slice(0, 64));
     const e = id ? await ctx.db.get(id) : null;
-    if (!e || e.account !== k.account.account) return { ok: false as const, message: "No webhook endpoint of yours has that id." };
+    if (!e || e.account !== k.account.account) return { ok: false as const, message: "No webhook endpoint of yours has that id.", code: "not_found" as const };
     await removeEndpoint(ctx, e);
     return { ok: true as const };
   },
@@ -626,7 +634,7 @@ export const apiAddWatch = action({
   returns: v.union(watched, failure),
   handler: async (ctx, args): Promise<Watched> => {
     if (!serverDoorOpen(args.serverSecret)) return DOOR_SHUT;
-    if (!API_KEY_HASH_RE.test(args.keyHash)) return { ok: false, message: "This key can't manage webhooks." };
+    if (!API_KEY_HASH_RE.test(args.keyHash)) return { ok: false, message: "This key can't manage webhooks.", code: "refused" };
     // The key first: resolving an employer reads the public database, and a
     // hash nobody holds must cost nothing.
     const allowed: { ok: true } | Failure = await ctx.runMutation(internal.webhooks.keyMayManage, { keyHash: args.keyHash });

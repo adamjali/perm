@@ -155,7 +155,7 @@ export async function marketPayIn(code: string, areas: string[]): Promise<Market
   const got = await rows<OewsRow>(
     `SELECT ${OEWS_COLS} FROM bls_oews WHERE soc7 = ? AND area IN (${list.map(() => "?").join(",")})`,
     [soc, ...list],
-  ).catch(() => []);
+  );
   return got.map(marketPay);
 }
 
@@ -293,14 +293,18 @@ function levelYear(r: Record<string, unknown>): WageLevelYear {
   return { wageYear: Number(r.wage_year), levels, annual: isAnnual(levels, label), yearly: toYearly(levels, label), label };
 }
 
-/** One occupation's four levels in one area, every wage year held, oldest first. */
+/**
+ * One occupation's four levels in one area, every wage year held, oldest
+ * first. A failed read throws: caught here, the history route's "couldn't be
+ * read" answer could never fire and an empty history was cached for a day.
+ */
 export async function wageLevelHistory(code: string, area: string, collection: "alc" | "edc" = "alc"): Promise<WageLevelYear[]> {
   const soc = soc7(code);
   if (!soc || !/^\d{2,7}$/.test(area)) return [];
   const got = await rows<Record<string, unknown>>(
     "SELECT wage_year, l1, l2, l3, l4, label FROM oflc_wage_levels WHERE soc7 = ? AND area = ? AND collection = ? ORDER BY wage_year",
     [soc, area, collection],
-  ).catch(() => []);
+  );
   return got.map(levelYear);
 }
 

@@ -130,7 +130,7 @@ export interface QueueEstimateInput {
    */
   sweepAgeDays?: number | null;
   /**
-   * How often the printed range has held, as the weekly backtest measured it
+   * How often the printed range has held, as the nightly backtest measured it
    * (scripts/backtest_queue.py -> perm_docs['estimator_backtest']). The
    * caveat quotes it; a figure typed into the copy went stale twice ("about
    * 57%", "about 4 in 10") while the measurement moved to 29%. Omit it and
@@ -553,7 +553,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     // against - is a reason NOT to print a date, and the models below are
     // the honest fallback rather than a second opinion to average in.
     if (paced.kind === 'estimate') {
-      // STATE THE COVERAGE WHEREVER THE BAND IS SHOWN, as the weekly backtest
+      // STATE THE COVERAGE WHEREVER THE BAND IS SHOWN, as the nightly backtest
       // measured it. That is a pace scenario, not a confidence interval, and
       // labelling it as one ("80% confident") is the most checkable false
       // claim a queue estimator can make.

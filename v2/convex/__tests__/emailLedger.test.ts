@@ -139,6 +139,22 @@ describe("the retry queue", () => {
     expect((await day(t))?.lost).toBe(1);
   });
 
+  it("gives a row back once the drain that claimed it has been gone 10 minutes", async () => {
+    const t = createTestContext();
+    await t.mutation(internal.emailLedger.enqueueRetry, { kind: "a", to: "a@x.com", payload: payload(), error: "e", quota: false });
+    vi.advanceTimersByTime(5 * 60 * 1000 + 1);
+    const [claimed] = await t.mutation(internal.emailLedger.claimRetries, { limit: 5 });
+    expect(claimed).toBeDefined();
+    // The drain died: nothing settles the row.
+    vi.advanceTimersByTime(10 * 60 * 1000 - 1000);
+    expect(await t.mutation(internal.emailLedger.claimRetries, { limit: 5 }), "still held inside the lease").toHaveLength(0);
+    vi.advanceTimersByTime(2000);
+    const [again] = await t.mutation(internal.emailLedger.claimRetries, { limit: 5 });
+    expect(again?.id).toBe(claimed!.id);
+    const [row] = await retries(t);
+    expect(row!.attempts).toBe(2);
+  });
+
   it("a retry that sends is removed and counted in the day", async () => {
     const t = createTestContext();
     await t.mutation(internal.emailLedger.enqueueRetry, { kind: "a", to: "a@x.com", payload: payload(), error: "e", quota: false });

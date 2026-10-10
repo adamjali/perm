@@ -6,6 +6,7 @@ import {
   CRON_JOBS,
   RECENT_RUN_WINDOW_MS,
   REPO,
+  runTitle,
 } from "../jobs";
 
 /**
@@ -33,6 +34,8 @@ interface WorkflowRun {
   created_at: string;
   status: string;
   html_url?: string;
+  /** The run's title: the workflow's `run-name`, which carries the mode. */
+  display_title?: string;
 }
 
 function githubHeaders(token: string): HeadersInit {
@@ -76,8 +79,12 @@ export async function GET(
     const recent = await fetch(`${base}/runs?per_page=5`, { headers: githubHeaders(token) });
     if (recent.ok) {
       const body = (await recent.json()) as { workflow_runs?: WorkflowRun[] };
+      // Only a run of this same job counts: same workflow AND same mode.
+      const title = runTitle(spec);
       const fresh = (body.workflow_runs ?? []).find(
-        (r) => now - Date.parse(r.created_at) < RECENT_RUN_WINDOW_MS,
+        (r) =>
+          now - Date.parse(r.created_at) < RECENT_RUN_WINDOW_MS &&
+          (r.display_title === undefined || r.display_title === title),
       );
       if (fresh) {
         const minutes = Math.round((now - Date.parse(fresh.created_at)) / MS_PER_MINUTE);

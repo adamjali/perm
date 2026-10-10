@@ -27,6 +27,7 @@ import type { Lead, Outcome, WageSourceKey } from "@/lib/caseSearchPlan";
 import type { ChangeProgram } from "@/lib/changeProgram";
 import { tableColumns } from "./tableColumns";
 import { FLAG_ANNUAL_WAGE_SQL } from "./lcaWages";
+import { programOf } from "@/lib/flagCaseNumber";
 
 /**
  * Every read the unified case search makes, and the index each one rides.
@@ -1447,15 +1448,9 @@ export async function readFlagPublished(
  * numbers and the rare `G-300-` variants take.
  */
 export function programForCaseNumber(caseNumber: string): "perm" | FlagProgramKey {
-  const head = caseNumber.trim().toUpperCase();
-  // H-2A (`H-300-`, job order `JO-A-300-`), H-2B (`H-400-`), CW-1 (`C-500-`)
-  // and the H-2B and CW-1 wage requests (`P-400-`, `P-500-`) come before the
-  // bare letters: neither wage request is a PERM-queue one.
-  if (/^(H-300|H-400|P-400|P-500|JO-A-300|C-500)-/.test(head)) return "seasonal";
-  const letter = head.charAt(0);
-  if (letter === "P") return "pwd";
-  if (letter === "I") return "lca";
-  return "perm";
+  // One rule for the whole site (src/lib/flagCaseNumber.ts): this had been a
+  // second copy that read any P- as a wage request and any I- as an LCA.
+  return programOf(caseNumber);
 }
 
 export interface CaseLookupResult {
@@ -1464,6 +1459,10 @@ export interface CaseLookupResult {
   permLive: LiveCaseRow | null;
   flagPublished: FlagDisclosedRow | null;
   flagLive: FlagCaseRow | null;
+  /** The halves that couldn't be read ("published", "live"), so a failed read isn't taken for a miss. */
+  unread: ("published" | "live")[];
+  /** How many halves were asked: both, or one where a program has no published table. */
+  asked: number;
 }
 
 /**
@@ -1485,6 +1484,15 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
     permLive: null,
     flagPublished: null,
     flagLive: null,
+    unread: [],
+    asked: 2,
+  };
+  // A point read that fails is recorded, not taken for "we don't hold it".
+  const unread: ("published" | "live")[] = [];
+  const failed = (half: "published" | "live") => (err: unknown) => {
+    console.error("[caseSearch] lookup failed", half, err);
+    if (!unread.includes(half)) unread.push(half);
+    return null;
   };
 
   if (program === "perm") {
@@ -1496,13 +1504,13 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
       one<SearchDbRow>(
         `SELECT ${searchColumns(cur)} FROM perm_cases WHERE case_number = ?`,
         [caseNumber],
-      ).catch(() => null),
+      ).catch(failed("published")),
       one<LiveDbRow>(
         `SELECT case_number, filing_date, current_status AS status, is_final,
                 employer_name, job_title
            FROM perm_case_status WHERE case_number = ?`,
         [caseNumber],
-      ).catch(() => null),
+      ).catch(failed("live")),
     ]);
     // THE FY2016 TO FY2023 DECISIONS, when the current table has no row. A
     // case decided before FY2024 is in `perm_cases_history` or nowhere, and
@@ -1514,7 +1522,7 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
         : await one<SearchDbRow>(
             `SELECT ${searchColumns(hist)} FROM ${HISTORY_TABLE} WHERE case_number = ?`,
             [caseNumber],
-          ).catch(() => null);
+          ).catch(failed("published"));
     return {
       ...blank,
       permPublished: pub
@@ -1523,6 +1531,7 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
           ? toSearchRow(HISTORY_TABLE)(old)
           : null,
       permLive: live ? toLiveRow(live) : null,
+      unread,
     };
   }
 
@@ -1532,16 +1541,18 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
       ? one<DisclosedDbRow>(
           `SELECT ${DISCLOSED_COLS} FROM ${t.published} WHERE case_number = ?`,
           [caseNumber],
-        ).catch(() => null)
+        ).catch(failed("published"))
       : null,
     one<FlagDbRow>(`SELECT ${FLAG_COLS} FROM ${t.live} WHERE case_number = ?`, [
       caseNumber,
-    ]).catch(() => null),
+    ]).catch(failed("live")),
   ]);
   return {
     ...blank,
     flagPublished: pub ? toDisclosed(pub) : null,
     flagLive: live ? toFlagRow(live) : null,
+    unread,
+    asked: t.published ? 2 : 1,
   };
 }
 

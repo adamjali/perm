@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { BUDGETS, LIST_MAIL_POOLS } from "@convex/lib/alertBudgets";
-import { LIST_CEILING, RESEND_DAILY_CAP } from "@convex/lib/emailLimits";
+import { ALERT_RESERVE, LIST_CEILING, PUBLIC_CEILING, RESEND_DAILY_CAP } from "@convex/lib/emailLimits";
 
 /**
  * The budget table the senders enforce and the admin panel reports is held to
@@ -27,11 +27,18 @@ describe("the daily email budget table", () => {
       ["preference-center links", BUDGETS.prefsLink.limit],
       ["firm-page claim emails", BUDGETS.firmClaim.limit],
       ["webhook pause notices", BUDGETS.webhookPause.limit],
+      ["support mail forwards", BUDGETS.supportForward.limit],
       ["sign-in and reset codes", BUDGETS.authMail.limit],
     ] as const) {
       expect(ledger).toMatch(new RegExp(`${line}\\s+${n}/day`));
     }
     expect(ledger).toMatch(new RegExp(`list mail[\\s*]+stops at ${LIST_CEILING} of Resend's ${RESEND_DAILY_CAP}`));
+    expect(ledger).toMatch(new RegExp(`stops at ${PUBLIC_CEILING} \\(PUBLIC_CEILING\\)`));
+  });
+
+  it("keeps room for alerts above everything a stranger can set off", () => {
+    expect(PUBLIC_CEILING).toBe(LIST_CEILING - ALERT_RESERVE);
+    expect(ALERT_RESERVE).toBeGreaterThanOrEqual(30);
   });
 
   it("keeps room for sign-in codes under Resend's daily cap", () => {

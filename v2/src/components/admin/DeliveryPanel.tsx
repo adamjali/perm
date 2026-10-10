@@ -70,7 +70,9 @@ export function BudgetPools({
       {day ? (
         <p className="mt-3 text-sm">
           <span className="font-bold">{`Today: ${formatInt(day.used)} of ${formatInt(day.cap)} sent.`}</span>{" "}
-          {`List mail stops at ${formatInt(day.listCeiling)}; the rest is kept for sign-in codes. Resend's day resets at 8 PM Eastern in summer.`}
+          {day.publicCeiling
+            ? `Sign-ups and other mail anyone can set off stop at ${formatInt(day.publicCeiling)}, alerts at ${formatInt(day.listCeiling)}; the rest is kept for sign-in codes. Resend's day resets at 8 PM Eastern in summer.`
+            : `List mail stops at ${formatInt(day.listCeiling)}; the rest is kept for sign-in codes. Resend's day resets at 8 PM Eastern in summer.`}
           {day.retrying > 0
             ? ` ${formatInt(day.retrying)} failed ${day.retrying === 1 ? "email is" : "emails are"} waiting to retry${day.oldestRetryAt ? `, the oldest since ${new Date(day.oldestRetryAt).toLocaleString("en-US", { timeZone: EASTERN_TIMEZONE, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} Eastern` : ""}.`
             : ""}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { EXPORT_KINDS, isExportKind, runExport, sandboxExport, type ExportResult } from "@/lib/api/exports";
+import { chargeExportRows, exportDayRefusal, exportRowsUsed } from "@/lib/api/exportQuota";
+import { EXPORT_KINDS, exportCap, isExportKind, runExport, sandboxExport, type ExportResult } from "@/lib/api/exports";
 import { admitKeyed, apiError, settle } from "@/lib/api/route";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,8 @@ export const dynamic = "force-dynamic";
 /**
  * A search's whole answer as CSV or JSON: `cases` (the case search's
  * parameters), `employers`, `law-firms` or `occupations` (`q`). Needs the
- * export scope; the plan sets the rows (src/lib/api/exports.ts).
+ * export scope; the plan sets the rows per export (src/lib/api/exports.ts)
+ * and per day (src/lib/api/exportQuota.ts).
  */
 export async function GET(request: Request, context: { params: Promise<{ kind: string }> }): Promise<NextResponse> {
   const { kind } = await context.params;
@@ -24,15 +26,46 @@ export async function GET(request: Request, context: { params: Promise<{ kind: s
   if (admitted instanceof NextResponse) return admitted;
   const { caller } = admitted;
 
+  // The day's rows: what's left sizes this export, and none left refuses it
+  // before anything is read or counted. Sandbox keys answer sample data.
+  let plan = caller.plan;
+  let rowsLeft: number | null = null;
+  if (!caller.sandbox && plan.exportRowsPerDay > 0) {
+    const used = await exportRowsUsed(caller.account);
+    if (used === null) {
+      return apiError(
+        503,
+        "export_unavailable",
+        "We couldn't count today's export rows just now, so nothing was exported or counted. Try again in a minute.",
+        { retryAfter: 60, headers: settle(admitted, false) },
+      );
+    }
+    rowsLeft = plan.exportRowsPerDay - used;
+    if (rowsLeft <= 0) {
+      const r = exportDayRefusal(plan);
+      return apiError(r.status, r.code, r.message, { retryAfter: r.retryAfter, headers: settle(admitted, false) });
+    }
+    if (rowsLeft < exportCap(plan)) plan = { ...plan, exportRows: rowsLeft };
+  }
+
   let result: ExportResult;
   try {
-    result = caller.sandbox ? sandboxExport(kind, caller.plan) : await runExport(kind, url, caller.plan);
+    result = caller.sandbox ? sandboxExport(kind, plan) : await runExport(kind, url, plan);
   } catch (err) {
     console.error("[api] export failed", kind, err instanceof Error ? err.message : err);
     return apiError(500, "internal_error", "Something went wrong on our side. Nothing was counted. Try again shortly.");
   }
   const headers = settle(admitted, result.ok);
   if (!result.ok) return apiError(result.status, result.code, result.message, { headers });
+  if (rowsLeft !== null) {
+    await chargeExportRows(caller.account, result.rows.length);
+    const leftAfter = Math.max(0, rowsLeft - result.rows.length);
+    headers["X-Export-Rows-Left-Today"] = String(leftAfter);
+    if (plan.exportRows < exportCap(caller.plan) && result.truncated) {
+      const day = `This account had ${rowsLeft.toLocaleString("en-US")} export rows left today (${caller.plan.exportRowsPerDay.toLocaleString("en-US")} a day on ${caller.plan.label}), so this export holds that many.`;
+      result = { ...result, note: result.note ? `${day} ${result.note}` : day };
+    }
+  }
 
   const exportHeaders = {
     "X-Export-Rows": String(result.rows.length),

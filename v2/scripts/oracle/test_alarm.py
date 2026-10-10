@@ -63,6 +63,23 @@ check("readings older than two hours are left out",
 on = alarm.evaluate(healthy(disk_free_gb=82.6), 3.5)
 check("Oct 9: the disk alarm fires with 82 GB still free", "disk" in on, str(on))
 check("...and says when it will be full", "full in about 24 hours" in on.get("disk", ""), on.get("disk", ""))
+# Oct 10 2026: the live cache refilling toward its 60 GB budget fell 5.5 GB an
+# hour with 66.9 GB free, which the plain trend read as full in 12 hours. The
+# cap stops it with 36 GB free, so the trend alone raises nothing.
+check("a fall the page-cache cap will stop raises nothing",
+      "disk" not in alarm.evaluate(healthy(disk_free_gb=66.9, cache_headroom_gb=30.6), 5.5))
+check("...but a fall that would pass the low line even with the caches full still does",
+      "disk" in alarm.evaluate(healthy(disk_free_gb=66.9, cache_headroom_gb=50.0), 5.5))
+check("...and Oct 9's blind cap (66 GB of headroom it couldn't see filling) still does",
+      "disk" in alarm.evaluate(healthy(disk_free_gb=82.6, cache_headroom_gb=66.0), 3.5))
+check("...and a cache the cap can't count keeps the plain trend",
+      "disk" in alarm.evaluate(healthy(disk_free_gb=66.9, cache_headroom_gb=30.6, uncounted=["abc-1 (42 GB)"]), 5.5))
+check("...and the low line itself never waits on headroom",
+      "disk" in alarm.evaluate(healthy(disk_free_gb=20.0, cache_headroom_gb=0.0), None))
+check("headroom adds what each release may still grow",
+      alarm.cache_headroom({"releases": [{"budgetGB": 30.0, "gb": 16.2}, {"budgetGB": 30.0, "gb": 13.3},
+                                         {"budgetGB": 3.0, "gb": 3.0}, {"budgetGB": 0.0, "gb": 0.0}]}) == 30.5)
+check("unreadable headroom is None", alarm.cache_headroom({"releases": [{"gb": 1.0}]}) is None)
 check("a healthy server raises nothing", alarm.evaluate(healthy(), None) == {},
       str(alarm.evaluate(healthy(), None)))
 check("a slow fall far from full raises nothing", alarm.evaluate(healthy(), 0.5) == {})
@@ -103,6 +120,54 @@ check("a new day starts the count again", alarm.under_cap(st, T0 + 86_400) is Tr
 subject, text = alarm.compose([("disk", "start", "20.0 GB free")], healthy(disk_free_gb=20.0), 3.5,
                               ["started the page-cache cap"], T0)
 check("the email names the trouble in its subject", "the disk is filling" in subject, subject)
+_, cleared = alarm.compose([("disk", "clear", "66.9 GB free")], healthy(disk_free_gb=66.6, cache_headroom_gb=30.6), 5.4,
+                           [], T0)
+check("a clear says which way the disk is moving, and where the cap stops it",
+      "falling 5.4 GB an hour" in cleared and "leave about 36 GB free" in cleared, cleared)
 check("...and what was done", "Done automatically" in text and "page-cache cap" in text, text)
+
+# A release holding far more than the cap counted is an alarm (Oct 7 to 10 2026).
+blind = alarm.uncounted_releases({"releases": [
+    {"release": "abc-1", "serverGB": 42.0, "gb": 0.0},
+    {"release": "def-2", "serverGB": 20.0, "gb": 18.0}]})
+check("a release with 42 GB on disk and 0 counted is named; one that matches is not",
+      len(blind) == 1 and blind[0].startswith("abc-1"), str(blind))
+check("...and it raises the cap-can't-see alarm",
+      "page-cache-blind" in alarm.evaluate(healthy(uncounted=blind), None))
+
+# The disk-critical cleanup drops other releases' route caches, never the live slot's.
+import tempfile as _tf2
+_t = pathlib.Path(_tf2.mkdtemp())
+for _rel in ("a", "a.w2", "b"):
+    (_t / "app" / "releases" / _rel / ".next" / "server" / "route-cache" / "x").mkdir(parents=True)
+(_t / "app" / "slots").mkdir()
+for _slot, _rel in (("blue", "a"), ("blue2", "a.w2"), ("green", "b")):
+    (_t / "app" / "slots" / _slot).symlink_to(_t / "app" / "releases" / _rel)
+(_t / "app" / "active").write_text("blue")
+_saved_app, _saved_dry = alarm.APP, alarm.DRY_RUN
+alarm.APP, alarm.DRY_RUN = _t, False
+try:
+    dropped = alarm.drop_route_caches()
+    check("only the standby release's cache goes", dropped == ["b"], str(dropped))
+    check("the live slot's two folders keep theirs",
+          (_t / "app/releases/a/.next/server/route-cache").is_dir() and (_t / "app/releases/a.w2/.next/server/route-cache").is_dir())
+    (_t / "app" / "active").unlink()
+    check("without knowing the live slot it deletes nothing", alarm.drop_route_caches() == [])
+finally:
+    alarm.APP, alarm.DRY_RUN = _saved_app, _saved_dry
+
+# An email that was due and couldn't go makes the run fail, so systemd shows it.
+import os as _os, tempfile as _tf
+_d = _tf.mkdtemp()
+alarm.RUN = pathlib.Path(_d)
+alarm.STATE = alarm.RUN / "alarm.json"
+alarm.DRY_RUN = False
+alarm.snapshot = lambda now: healthy(disk_free_gb=5.0)
+alarm.heal = lambda on: []
+alarm.send = lambda subject, text: False
+check("a due email that couldn't be sent exits 1", alarm.main() == 1)
+alarm.send = lambda subject, text: True
+_os.remove(alarm.STATE)
+check("a due email that went exits 0", alarm.main() == 0)
 
 sys.exit(1 if failures else 0)

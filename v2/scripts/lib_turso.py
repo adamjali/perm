@@ -179,9 +179,18 @@ def add_missing_columns(db: "Turso", table: str, columns: dict[str, str]) -> lis
     have = {r[1] for r in query_rows(db, f"PRAGMA table_info({table})")}
     if not have:
         return []
-    added = [c for c in columns if c not in have]
-    for c in added:
-        db.execute(f"ALTER TABLE {table} ADD COLUMN {c} {columns[c]}")
+    added = []
+    for c in (c for c in columns if c not in have):
+        try:
+            db.execute(f"ALTER TABLE {table} ADD COLUMN {c} {columns[c]}")
+            added.append(c)
+        except RuntimeError as e:
+            # Another job added it between our read and our ALTER. The H-2A,
+            # H-2B and CW-1 loads share seasonal_cases and run at once, so on
+            # Oct 10 2026 CW-1 added the new columns first and the other two
+            # died on "duplicate column name". Only that answer is fine.
+            if "duplicate column name" not in str(e):
+                raise
     return added
 
 

@@ -54,6 +54,11 @@ describe("debarments", () => {
     expect(rows).not.toHaveBeenCalled();
   });
 
+  it("throws on a failed read instead of answering that the employer has no debarment", async () => {
+    rows.mockRejectedValue(new Error("turso query deadline"));
+    await expect(debarmentsForSlug("northwind-staffing-group")).rejects.toThrow("turso query deadline");
+  });
+
   it("reads the summary document and refuses a malformed one", async () => {
     one.mockResolvedValue({ json: JSON.stringify({ asOf: "2026-09-08", pdfDate: "2026-08-07", h1bEffective: "2026-09-01", counts: { perm: 2, h1b: 5, h2a: 49, h2b: 49 } }) });
     expect(await getDebarmentsSummary()).toEqual({ asOf: "2026-09-08", pdfDate: "2026-08-07", h1bEffective: "2026-09-01", counts: { perm: 2, h1b: 5, h2a: 49, h2b: 49 } });

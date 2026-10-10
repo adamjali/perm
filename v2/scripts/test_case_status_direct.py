@@ -38,6 +38,20 @@ def main() -> int:
     # quarters of every request and the run reports success.
     check("BATCH is the measured ceiling of 50", csd.BATCH == 50, str(csd.BATCH))
 
+    # --- the run row's status -------------------------------------------------
+    # A sweep with cases to check that checked none used to return 0 with no run
+    # row at all, so the health check heard of it days later through freshness.
+    st = csd.sweep_run_status
+    check("cases to check and none answered is a failed run",
+          st(todo=93_000, checked=0, truncated=False, tail_failed=0) == "failed")
+    check("a sweep DOL stopped answering part way is partial",
+          st(todo=93_000, checked=40_000, truncated=True, tail_failed=0) == "partial")
+    check("a sweep whose doc writes failed is partial",
+          st(todo=93_000, checked=93_000, truncated=False, tail_failed=1) == "partial")
+    check("a clean sweep is ok, and so is one with nothing to check",
+          st(todo=93_000, checked=93_000, truncated=False, tail_failed=0) == "ok"
+          and st(todo=0, checked=0, truncated=False, tail_failed=0) == "ok")
+
     # --- finality ---------------------------------------------------------
     # is_final is derived here rather than taken from anyone else. If
     # CERTIFIED - EXPIRED were missing from the set, an expired certification

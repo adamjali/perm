@@ -119,15 +119,36 @@ def _groups_under(root: str, deployed: float):
 DRY_RUN = "--dry-run" in sys.argv
 
 
-def remove(stem: str) -> None:
+def tree_size(path: str) -> int:
+    """Bytes of every file under `path` (0 when it doesn't exist)."""
+    total = 0
+    for d, _dirs, files in os.walk(path):
+        for f in files:
+            try:
+                total += os.lstat(os.path.join(d, f)).st_size
+            except OSError:
+                pass
+    return total
+
+
+def remove(stem: str) -> int:
+    """Remove one page's pieces; the bytes actually freed. A file that won't
+    go is not counted: a cap counting what it meant to free reads healthy
+    while the disk fills."""
     if DRY_RUN:
-        return
+        return 0
+    freed = 0
     for ext in (".html", ".body", ".rsc", ".meta"):     # the page first
         try:
+            size = os.lstat(stem + ext).st_size
             os.remove(stem + ext)
+            freed += size
         except OSError:
             pass
-    shutil.rmtree(stem + ".segments", ignore_errors=True)
+    seg = stem + ".segments"
+    before = tree_size(seg)
+    shutil.rmtree(seg, ignore_errors=True)
+    return freed + before - tree_size(seg)
 
 
 def main() -> int:
@@ -150,17 +171,23 @@ def main() -> int:
                 "standby" if rel in slots.values() else "old")
         pages = sorted(groups(rel))                     # least recently used first
         total = sum(size for _u, size, _s in pages)
-        removed = freed = 0
+        removed = freed = planned = 0
         for _used, size, stem in pages:
-            if total - freed <= budgets[role]:
+            if total - planned <= budgets[role]:
                 break
-            remove(stem)
+            freed += remove(stem)
             removed += 1
-            freed += size
+            planned += size
+        # What Next really holds, measured apart from the pages counted: when
+        # the two drift apart, Next is writing somewhere the cap doesn't read
+        # (Oct 7 to 10 2026: it counted 0 pages while route-cache grew), and
+        # the alarm says so (UNCOUNTED_GB in permtracker-alarm).
+        server_gb = round(tree_size(os.path.join(rel, ".next", "server")) / GB, 2)
         report["releases"].append({
             "release": name, "role": role, "pages": len(pages) - removed,
             "gb": round((total - freed) / GB, 2), "removed": removed,
-            "freedGB": round(freed / GB, 2), "budgetGB": round(budgets[role] / GB, 1)})
+            "freedGB": round(freed / GB, 2), "budgetGB": round(budgets[role] / GB, 1),
+            "serverGB": server_gb})
         print(f"{name} {role}: {len(pages) - removed} pages, {(total - freed) / GB:.2f} GB"
               f" (removed {removed}, freed {freed / GB:.2f} GB, budget {budgets[role] / GB:.0f} GB)")
     report["freeGBAfter"] = round(shutil.disk_usage("/").free / GB, 1)

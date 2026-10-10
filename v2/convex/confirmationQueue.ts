@@ -20,7 +20,7 @@
  * 2. `drain` counts what Resend has sent since midnight UTC (its free plan's
  *    daily quota is a UTC calendar day, and Resend's own list is the count),
  *    and replays waiting requests through the same subscribe mutation with
- *    `fromQueue`, oldest first, while the day stays under LIST_CEILING. The
+ *    `fromQueue`, oldest first, while the day stays under PUBLIC_CEILING. The
  *    replay re-runs every per-address check; only the per-IP limit and the
  *    pool are skipped (the first call passed the one, and the drain measured
  *    the account instead of the other).
@@ -29,7 +29,8 @@
  *
  * Bounds: QUEUE_MAX rows in all (past that, the old refusal, counted); a row
  * unsent after EXPIRE_MS is dropped and counted as turned away; the drain
- * stops at LIST_CEILING of the 100 so sign-in codes keep the rest. The
+ * sends retries up to LIST_CEILING of the 100 and confirmations up to
+ * PUBLIC_CEILING, so alerts keep ALERT_RESERVE and sign-in codes the rest. The
  * first queued request and the first turn-away of each Eastern day email the
  * admin, which is how the owner hears about a full pool the same day.
  */
@@ -44,8 +45,8 @@ import {
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { BUDGETS, noteQueued, noteRefusal, windowFor, type BudgetName } from "./lib/alertBudgets";
-import { LIST_CEILING, RECEIVED_MARGIN, msToNextUtcDay, usedToday } from "./lib/emailLimits";
-import { checkAndRecordRateLimit } from "./lib/rateLimit";
+import { ALERT_RESERVE, LIST_CEILING, PUBLIC_CEILING, RECEIVED_MARGIN, msToNextUtcDay, usedToday } from "./lib/emailLimits";
+import { checkAndRecordRateLimit, checkRateLimit } from "./lib/rateLimit";
 import { siteThrottleReply } from "./lib/throttleReply";
 import { createLogger } from "./lib/logging";
 import { drainRetries } from "./emailLedger";
@@ -68,7 +69,8 @@ export const PER_RUN = 60;
 
 /**
  * Whether a confirmation may send now. The day's real count comes first: past
- * LIST_CEILING nothing more is sent today, whatever the pool says. Then the
+ * PUBLIC_CEILING no confirmation is sent today, whatever the pool says (the
+ * rest of the list room is kept for alerts). Then the
  * kind's own pool, which bounds abuse of that one form. Read-only until both
  * pass, so a request sent to the queue charges nothing.
  */
@@ -77,9 +79,19 @@ export async function admitConfirmation(
   pool: BudgetName,
 ): Promise<{ allowed: boolean; resetInMs: number }> {
   const now = Date.now();
-  if ((await usedToday(ctx, now)) >= LIST_CEILING) return { allowed: false, resetInMs: msToNextUtcDay(now) };
+  if ((await usedToday(ctx, now)) >= PUBLIC_CEILING) return { allowed: false, resetInMs: msToNextUtcDay(now) };
   const r = await checkAndRecordRateLimit(ctx, "all", BUDGETS[pool].key, windowFor(pool));
   return { allowed: r.allowed, resetInMs: r.resetInMs };
+}
+
+/**
+ * Would admitConfirmation refuse this pool right now? Read-only, charging
+ * nothing: for a request that will send nothing (an address we hold nothing
+ * for), which must still get the reply a real request would get.
+ */
+export async function confirmationWouldWait(ctx: MutationCtx, pool: BudgetName): Promise<boolean> {
+  if ((await usedToday(ctx, Date.now())) >= PUBLIC_CEILING) return true;
+  return !(await checkRateLimit(ctx, "all", BUDGETS[pool].key, windowFor(pool))).allowed;
 }
 
 /** Every address gets these same words, so the reply says nothing about the address. */
@@ -172,7 +184,8 @@ async function alertAdmin(ctx: MutationCtx, what: "queued" | "turnedAway", pool:
   const body =
     what === "queued"
       ? `At ${at} a ${b.label.toLowerCase()} request had to wait: either that pool's ${b.limit} a day were used, or ` +
-        `the whole site reached ${LIST_CEILING} of Resend's 100 for today (the rest are kept for sign-in codes). New ` +
+        `the whole site reached the ${PUBLIC_CEILING} of Resend's 100 that sign-ups may use today (${ALERT_RESERVE} more ` +
+        `are kept for alerts, and the last ${100 - LIST_CEILING} for sign-in codes). New ` +
         `requests wait in a queue and go out as soon as there's room. Nobody has been turned away. The admin page's ` +
         `Alerts and email tab shows the queue. This email comes at most once a day.`
       : `At ${at} a request for the ${b.label.toLowerCase()} pool got no email: the queue already held ${held} ` +
@@ -199,6 +212,14 @@ export function utcDayStart(now: number): number {
 /** How many emails may go now, given what today has used (convex/lib/emailLimits.ts). */
 export function drainRoom(used: number, perRun: number = PER_RUN): number {
   return Math.max(0, Math.min(perRun, LIST_CEILING - used));
+}
+
+/**
+ * How many queued confirmations may go after `retried` retries went: what's
+ * left of the run, but never past PUBLIC_CEILING, so the alert reserve holds.
+ */
+export function confirmationRoom(used: number, retried: number, room: number): number {
+  return Math.max(0, Math.min(room - retried, PUBLIC_CEILING - used - retried));
 }
 
 interface ResendListPage {
@@ -323,6 +344,10 @@ async function replay(
   else if (kind === "queue") await ctx.runMutation(internal.queueAlerts.subscribe, call as never);
   else if (kind === "bulletin") await ctx.runMutation(internal.bulletinAlerts.subscribe, call as never);
   else if (kind === "prefs") await ctx.runMutation(internal.emailPrefs.requestLink, call as never);
+  // An edit-link request has its own kind; rows queued before Oct 10 2026 carry
+  // kind "firm" with editLink set, and go to the same place.
+  else if (kind === "firmEdit" || (kind === "firm" && args.editLink === true))
+    await ctx.runMutation(internal.firmClaims.requestEditLink, call as never);
   else if (kind === "firm") await ctx.runMutation(internal.firmClaims.request, call as never);
   else throw new Error(`unknown queue kind ${kind}`);
 }
@@ -369,7 +394,7 @@ export const drain = internalAction({
     }
 
     const retried: number = retries ? await drainRetries(ctx, resend, room) : 0;
-    const left = room - retried;
+    const left = confirmationRoom(used, retried, room);
     if (!confirmations || left <= 0) return { sent: 0, retried, room };
 
     const rows = await ctx.runMutation(internal.confirmationQueue.claim, { limit: left });

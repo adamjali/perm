@@ -134,7 +134,7 @@ export interface PermTimelineEstimatorProps {
    * such a case; without it, only the case lookup is offered.
    */
   stragglers?: StragglerRates | null;
-  /** The weekly backtest's measurement of the printed range, quoted under it. */
+  /** The nightly backtest's measurement of the printed range, quoted under it. */
   rangeCoverage?: RangeCoverage | null;
   /** Months DOL has started and not finished, from the same series. */
   activeRange?: { from: string; to: string } | null;

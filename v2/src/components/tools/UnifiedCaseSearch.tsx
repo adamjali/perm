@@ -211,6 +211,8 @@ interface SearchResponse {
   permOnly?: string[];
   /** The LCA-only filters set, in words: the answer is published LCAs alone. */
   lcaOnly?: string[];
+  /** Parts of the record that couldn't be read for this answer, in words. */
+  unread?: string[];
   order?: SearchOrder;
   orderScope?: "complete" | "fetched";
 }
@@ -1394,6 +1396,16 @@ export function UnifiedCaseSearch({
                 so the published half has nothing still open to contribute.
               </>
             ) : null}
+          </p>
+        </div>
+      ) : null}
+
+      {data && !data.needsLead && (data.unread?.length ?? 0) > 0 ? (
+        <div role="status" className="border-2 border-border bg-tint-primary p-4">
+          <p className="text-base leading-relaxed">
+            <b className="font-bold">Part of the record couldn&apos;t be read just now:</b>{" "}
+            {data.unread?.join(", ")}. This answer may be missing cases from it.
+            Searching again in a minute usually reaches it.
           </p>
         </div>
       ) : null}

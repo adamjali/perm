@@ -7,10 +7,14 @@
  * the `export` scope, and the plan sets the most rows one export may hold
  * (Plus 1,000; Free none). One export counts as one call.
  *
- * THE SAME ROWS THE SITE WOULD SHOW, NOT MORE. A case export runs the same
- * `unifiedSearch` the page does, capped at the plan's rows and never above
- * the site's own 1,000, so an export can't be a way to read the compilation
- * in bulk (the API terms and the site's Terms, section 4).
+ * THE SAME ROWS THE SITE WOULD SHOW, NOT MORE, PER CALL. A case export runs
+ * the same `unifiedSearch` the page does, capped at the plan's rows and never
+ * above the site's own 1,000. Across calls the only bound is the plan's call
+ * allowance: on Plus (every account while the paywall is off) that is 3,000
+ * calls a day and 30,000 a month, so one account could export up to about 30
+ * million rows a month. The API terms and the site's Terms (section 4) are
+ * what forbid reading the compilation in bulk; this cap doesn't enforce it on
+ * its own. Counting an export by its rows is the change that would.
  *
  * A cell a spreadsheet would run as a formula is written as text, exactly as
  * the site's case-search CSV writes it (csvCell, src/lib/caseSearchCsv.ts).
@@ -125,6 +129,7 @@ export async function runExport(kind: ExportKind, url: URL, plan: ApiPlan): Prom
     const notes = [
       result.truncated ? `More cases matched than this export holds (${limit.toLocaleString("en-US")}); narrow the search to reach the rest.` : null,
       result.capped ? "A source hit its own row limit, so these are the newest of a larger set." : null,
+      result.unread.length ? `Part of the record couldn't be read just now and is missing from this export: ${result.unread.join(", ")}.` : null,
       plan2.dropped.length ? `Filters this search can't carry were left out: ${plan2.dropped.join(", ")}.` : null,
     ].filter((x): x is string => x !== null);
     return {

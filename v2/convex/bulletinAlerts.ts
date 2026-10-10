@@ -3,7 +3,7 @@
  *
  * The question after "has DOL reached my month" is "has my priority date
  * moved". The State Department publishes a new bulletin roughly monthly and
- * keeps no notification channel; we hold the 84-month archive (Turso
+ * keeps no notification channel; we hold every bulletin since June 2005 (Turso
  * `visa_bulletins`, written by scripts/ingest_visa_bulletin.py), so we can
  * answer it the day a new bulletin lands in the archive.
  *
@@ -55,9 +55,9 @@ import { stageNewsFor, stageNewsletterFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
+import { isPlausibleEmail } from "./lib/emailShape";
 
 const log = createLogger("BulletinAlerts");
-
 
 /** Categories as the archive prints them. Country keys as the JSON stores them. */
 export const CATEGORIES = ["EB1", "EB2", "EB3", "EW3", "EB4", "EB5"] as const;
@@ -76,11 +76,6 @@ const countryValidator = v.union(...COUNTRIES.map((c) => v.literal(c)));
 const ALERT_BATCH_LIMIT = 12;
 const ALERT_GLOBAL_BUDGET = windowFor("bulletinAlert");
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
-
-function isPlausibleEmail(email: string): boolean {
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-}
-
 
 function unsubscribeSecret(): string {
   const secret = process.env.UNSUBSCRIBE_SECRET;
@@ -515,8 +510,9 @@ export const recordSeen = internalMutation({
 
 /**
  * Compare every live subscription against the newest bulletin in the archive
- * and mail the ones whose cutoff moved. Runs daily off a cron; cheap when
- * nothing changed (one Turso row read, zero sends).
+ * and mail the ones whose cutoff moved. Runs daily, and hourly through the
+ * working day on weekdays (convex/crons.ts); cheap when nothing changed (one
+ * row read, zero sends).
  */
 export const sweep = internalAction({
   args: {},

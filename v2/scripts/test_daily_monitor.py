@@ -144,6 +144,11 @@ def main() -> int:
     lines = dm.health_lines(out)
     check(lines == ["Watching: i485-inventory is 53 days old against a 45-day budget",
                     "OUR INGEST HAS STOPPED for: lca-status (has not RUN)."], f"health lines kept: {lines}")
+    stalled = dm.health_lines("frontier          : 26280:1 6d  budget 5d  STALLED\n"
+                              "  live_census            MISSING - the case lookup's queue position is being served\n"
+                              "  month_detail           2.1d ago  ok\n")
+    check(len(stalled) == 2 and "STALLED" in stalled[0] and "MISSING" in stalled[1],
+          f"a stalled frontier and a missing doc are kept, an ok row is not: {stalled}")
 
     # stdout: one status word per section, nothing numeric.
     fake = {"day": "2026-09-28", "generatedAt": 1, "sections": [
@@ -177,7 +182,8 @@ def main() -> int:
              "services": {u: "active" for u in ["permtracker-db", "permtracker-dbcache", "permtracker-web@blue",
                                                 "permtracker-web@green", "nginx", "cloudflared"]},
              "failedUnits": [], "slot": {"active": "blue", "release": "abc-1"},
-             "pageCache": {"at": "2026-09-28T11:05:00Z", "liveGB": 3.2, "standbyGB": 4.0, "tight": False}}
+             "pageCache": {"at": "2026-09-28T11:05:00Z", "liveGB": 3.2, "standbyGB": 4.0, "tight": False},
+             "timers": dm.repo_timers()}
         for k, v in over.items():
             d[k] = {**d[k], **v} if isinstance(d.get(k), dict) and isinstance(v, dict) else v
         return d
@@ -185,6 +191,11 @@ def main() -> int:
     v = dm.server_verdict
     check(v(None, now_ms)["status"] == "off", "no doc: the section is off, not a failure")
     check(v(doc(), now_ms)["status"] == "ok", "a healthy server reads ok")
+    check(v(doc(timers=[]), now_ms)["status"] == "fail", "an empty timer list fails: it can't be read as all enabled")
+    check(v(doc(now={"diskPct": 93.0}), now_ms)["status"] == "fail", "a disk over 90% full fails")
+    _no_timers = doc(); _no_timers.pop("timers")
+    check(v(_no_timers, now_ms)["status"] == "fail", "so does a report with no timer list")
+    check(v(doc(timers=dm.repo_timers()[1:]), now_ms)["status"] == "fail", "a timer missing from the list fails")
     check(v(doc(at="2026-09-28T09:00:00Z"), now_ms)["status"] == "fail", "a server silent for 2.5 h fails")
     check(v(doc(services={"nginx": "failed"}), now_ms)["status"] == "fail", "nginx down fails")
     check(v(doc(services={"permtracker-web@blue": "failed"}), now_ms)["status"] == "fail",

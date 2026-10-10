@@ -191,6 +191,26 @@ describe("headToHead", () => {
     expect(h.oursCloser).toBe(1);
   });
 
+  it("settles a waiting case for the rival when the rival's date is the later one", () => {
+    const rows = [
+      r({ caseNumber: "G-5", predicted: "2026-09-05" }),
+      r({ caseNumber: "G-5", source: "rival-b", model: "rival", predicted: "2026-10-20" }),
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-b"]!;
+    expect(h.rivalCloser).toBe(1);
+    expect(h.oursCloser).toBe(0);
+  });
+
+  it("calls the same date on a waiting case a tie once it has passed", () => {
+    const rows = [
+      r({ caseNumber: "G-6", predicted: "2026-09-20" }),
+      r({ caseNumber: "G-6", source: "rival-b", model: "rival", predicted: "2026-09-20" }),
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-b"]!;
+    expect(h.ties).toBe(1);
+    expect(h.oursCloser + h.rivalCloser).toBe(0);
+  });
+
   it("leaves a waiting case alone while the earlier date can still win", () => {
     // Sep 25 and Oct 20 meet at Oct 7-8: a decision on Oct 2 would favour Sep 25.
     const rows = [

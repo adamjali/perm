@@ -91,5 +91,35 @@ check(not _w.keep_watched_list(None, ["P-100-26001-000002", "G-100-26001-000001"
 check(_w.keep_watched_list(None, ["G-100-26001-000001"]), "a changed set is rewritten")
 check("@" not in str(_store), "no address is ever in it")
 
+# ---- what a failed check records (Oct 10 2026) --------------------------------
+import json as _json, tempfile as _tf
+_runs: list = []
+_w.Turso = lambda: None
+_w.record_run = lambda db, script, **kw: _runs.append(kw) or True
+_list = _tf.NamedTemporaryFile("w", suffix=".json", delete=False)
+_json.dump({"caseNumbers": ["G-100-26001-000001"]}, _list); _list.close()
+def _main_with(fn):
+    _runs.clear()
+    _w.check = fn
+    old = sys.argv
+    sys.argv = ["check_watched_cases.py", _list.name]
+    try:
+        return _w.main()
+    finally:
+        sys.argv = old
+def _refused(*_a):
+    raise RuntimeError("HTTP 403")
+_main_with(_refused)
+check(_runs and _runs[0]["status"] == "partial", "a DOL refusal is recorded as partial, not ok")
+def _bug(*_a):
+    raise KeyError("caseStatus")
+try:
+    _main_with(_bug)
+    check(False, "a defect in the check propagates instead of being recorded")
+except KeyError:
+    check(True, "a defect in the check propagates instead of being recorded")
+_main_with(lambda db, program, nums, dry: {"program": program, "watched": len(nums), "moved": 0, "applied": 0, "inserted": 0})
+check(_runs and _runs[0]["status"] == "ok", "a clean check is ok")
+
 print(f"\n{len(fails)} failure(s)")
 sys.exit(1 if fails else 0)

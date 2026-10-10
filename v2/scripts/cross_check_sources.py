@@ -37,10 +37,17 @@ MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
 
+class ThirdPartyDown(Exception):
+    """The third party didn't answer, or answered something unreadable."""
+
+
 def get(path: str):
     req = urllib.request.Request(f"{BASE}/{path}", headers=UA)
-    with urllib.request.urlopen(req, timeout=45) as r:
-        return json.loads(r.read())
+    try:
+        with urllib.request.urlopen(req, timeout=45) as r:
+            return json.loads(r.read())
+    except (OSError, ValueError) as exc:  # URLError, HTTPError and timeouts are OSError; bad JSON is ValueError
+        raise ThirdPartyDown(f"{path}: {exc}") from exc
 
 
 def norm(cell) -> str | None:
@@ -63,6 +70,17 @@ def log(m: str) -> None:
 
 
 def main() -> int:
+    # Their availability is not our correctness: a third party that doesn't
+    # answer skips clean. A real disagreement exits 1, and the workflow turns
+    # that into a red run (it was under continue-on-error, so it never did).
+    try:
+        return compare()
+    except ThirdPartyDown as exc:
+        log(f"cross-check: the third party didn't answer ({exc}); skipping")
+        return 0
+
+
+def compare() -> int:
     db = Turso()
     findings: list[str] = []
 

@@ -20,7 +20,7 @@ describe("FirmClaimEmail", () => {
     const html = await render(FirmClaimEmail({ kind, firmName: "Smith Immigration PLLC", url, validFor: "2 days" }));
     expect(html).toContain("Smith Immigration PLLC");
     expect(html).toContain(button);
-    expect(html).toContain(url.replace("&", "&amp;"));
+    expect(html).toContain(url.replaceAll("&", "&amp;"));
     expect(html).toContain("The link works for 2 days");
     expect(html).not.toContain("/prefs?token=");
     expect(html.toLowerCase()).not.toContain("unsubscribe");

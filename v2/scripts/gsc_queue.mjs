@@ -151,7 +151,7 @@ if (PURGE) {
       body: JSON.stringify(body),
     });
     const j = await res.json().catch(() => ({}));
-    if (!j.success) console.log(`::warning::purge refused (${res.status}): ${JSON.stringify(j.errors ?? []).slice(0, 200)}`);
+    if (!j.success) console.log(`::error::purge refused (${res.status}): ${JSON.stringify(j.errors ?? []).slice(0, 200)}`);
     return j.success === true;
   };
   let ok = true;
@@ -163,8 +163,11 @@ if (PURGE) {
     if (i) await new Promise((r) => setTimeout(r, 13_000));
     ok = (await send({ prefixes: prefixes.slice(i, i + 100) })) && ok;
   }
-  console.log(ok ? "purge: done" : "purge: not done in full (warned above)");
-  process.exit(0);
+  console.log(ok ? "purge: done" : "purge: not done in full (see the errors above)");
+  // A refusal exits 1: the deploy step is continue-on-error, so the deploy
+  // still counts, and the failed step shows that Cloudflare kept its copies
+  // (a revoked token had made every deploy look clean while pages stayed stale).
+  process.exit(ok ? 0 : 1);
 }
 
 // Shallow pages first: hubs and tools carry more searches than the pages under them.

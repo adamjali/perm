@@ -1,4 +1,7 @@
 name: PWD case status (direct from DOL)
+# The mode in the title: the cron dispatcher's duplicate guard compares it
+# (runTitle in v2/src/app/api/cron/dispatch/jobs.ts).
+run-name: PWD case status (direct from DOL), ${{ inputs.mode || 'pending' }}
 
 # Per-case prevailing wage (ETA-9141) and LCA status, straight from
 # flag.dol.gov, with the same discipline as case-status-direct.yml
@@ -105,7 +108,7 @@ jobs:
             echo "REVALIDATE_SECRET not set; skipping"; exit 0
           fi
           curl -fsS -X POST https://permtracker.app/api/revalidate-sweep \
-            -H "x-revalidate-secret: $REVALIDATE_SECRET" || echo "revalidation call failed"
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" || { echo "::error::revalidation call failed (revalidate-sweep)"; echo "revalidate-sweep" >> "$RUNNER_TEMP/pt-failed-steps"; }
 
       # The resumer. A backfill chain can die two ways that nothing restarts:
       # a leg killed before it moved the frontier, and a leg that failed
@@ -175,3 +178,16 @@ jobs:
             --script "ingest_pwd_status_direct.py --${MODE:-unknown}" \
             --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
             --note "pwd-status-direct: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+      # A step that failed and carried on leaves a line in this file, and this
+      # turns the run red (Oct 10 2026: refresh calls that failed said so only
+      # in the log, so changed pages could stay stale for their whole window).
+      - name: Fail the run when a step failed and carried on
+        if: always()
+        run: |
+          f="$RUNNER_TEMP/pt-failed-steps"
+          if [ -s "$f" ]; then
+            echo "::error::these steps failed and the run carried on: $(sort -u "$f" | paste -sd ',' -)"
+            exit 1
+          fi
+          echo "every step that ran finished clean"

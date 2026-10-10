@@ -2,7 +2,7 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAction, useMutation, useConvex } from "convex/react";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,6 @@ export function LoginPageClient() {
   const { signIn } = useAuthActions();
   const convex = useConvex();
   const recordMyLogin = useMutation(api.users.recordMyLogin);
-  const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const clearRateLimitMut = useMutation(api.authRateLimit.clearAuthRateLimit);
   const verifyTurnstile = useAction(api.turnstile.verifyTurnstileToken);
   const router = useRouter();
@@ -76,24 +75,6 @@ export function LoginPageClient() {
     return "Sign in";
   }, [isLoading, emailValidation.state, password]);
 
-  const enforceRateLimit = useCallback(
-    async (emailValue: string, action: "login" | "otp_verify") => {
-      try {
-        const result = await checkRateLimit({ email: emailValue, action });
-        if (!result.allowed) {
-          toast.error(result.message || "Too many attempts. Please wait and try again.");
-          return false;
-        }
-        return true;
-      } catch (error) {
-        // Fail open for availability, but log for observability
-        captureError(error, { operation: "enforceRateLimit" });
-        return true;
-      }
-    },
-    [checkRateLimit],
-  );
-
   // Reset signing-out state when arriving at login (after sign-out completes)
   useEffect(() => {
     completeSignOut();
@@ -119,13 +100,6 @@ export function LoginPageClient() {
     setIsLoading(true);
 
     try {
-      // Pre-flight rate limit check
-      if (!(await enforceRateLimit(email, "login"))) {
-        trackAbuseEvent("rate_limit_429", { surface: "login" });
-        setIsLoading(false);
-        return;
-      }
-
       // Suspension gate — if this account was auto-suspended by abuse
       // detection, block login with a friendly locked message instead of
       // letting Convex Auth return a generic credential error.
@@ -239,11 +213,6 @@ export function LoginPageClient() {
 
     try {
       const formData = new FormData(e.currentTarget);
-
-      if (!(await enforceRateLimit(email, "otp_verify"))) {
-        setIsLoading(false);
-        return;
-      }
 
       await signIn("password", formData);
 

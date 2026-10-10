@@ -89,7 +89,7 @@ export interface CaseEstimateInput {
    * analyst review behind the queue uses it; without it that case gets no date.
    */
   stragglers?: StragglerRates | null;
-  /** The weekly backtest's measurement of the printed range, quoted in its caveat. */
+  /** The nightly backtest's measurement of the printed range, quoted in its caveat. */
   rangeCoverage?: RangeCoverage | null;
   /**
    * For a case at RFI ISSUED: the day our sweep saw it enter RFI, and the RFI
@@ -291,7 +291,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
   // a mean dragged out by audits, and on the day DOL moved past November 2025
   // it dated the 3,194 November cases still in analyst review typically 29
   // days late; the measured rate was typically 6 days off, and level or best
-  // on every origin tested. scripts/backtest_queue.py re-measures it weekly
+  // on every origin tested. scripts/backtest_queue.py re-measures it nightly
   // (its "passed" section).
   const s = input.stragglers;
   if (est.position === "overdue" && canon === "ANALYST REVIEW" && s) {

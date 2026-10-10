@@ -13,6 +13,7 @@ import { isEmailPostHogExcluded } from "./lib/posthog";
 import { formatDateForNotification } from "./lib/formatDate";
 import { CALENDAR_SYNC_PREFERENCES, slotsForPreference } from "./lib/calendarTypes";
 import { MS_PER_DAY } from "./lib/time";
+import { isPushServiceUrl } from "./lib/pushHosts";
 
 const log = loggers.auth;
 
@@ -490,6 +491,11 @@ export const savePushSubscription = mutation({
       const parsed = JSON.parse(subscription);
       if (!parsed.endpoint || !parsed.keys?.p256dh || !parsed.keys?.auth) {
         throw new Error("Invalid push subscription: missing required fields (endpoint, keys.p256dh, keys.auth)");
+      }
+      // Only a browser's own push service (convex/lib/pushHosts.ts): the
+      // deadline sender POSTs to this address.
+      if (typeof parsed.endpoint !== "string" || !isPushServiceUrl(parsed.endpoint)) {
+        throw new Error("Invalid push subscription: the endpoint isn't a browser push service");
       }
     } catch (e) {
       if (e instanceof SyntaxError) {

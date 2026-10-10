@@ -51,8 +51,8 @@ WHY THESE FILES ARE READ THE WAY THEY ARE, each a lesson from a sibling ingest:
   cannot pass that; a plausible-looking wrong number is worse than none.
 
 www.uscis.gov serves residential addresses and 403s GitHub's datacenter
-runners on some days; the workflow tries first and the server's timer retries
-the day after (scripts/oracle/bin/permtracker-uscis quarterly).
+runners, so the server's timer is the only runner
+(scripts/oracle/bin/permtracker-uscis quarterly); no workflow runs it.
 
 Usage:
     python3 scripts/ingest_uscis_quarterly.py                  # discover, load what is new

@@ -1,26 +1,11 @@
 /**
  * Convex Cron Jobs Configuration
  *
- * Scheduled jobs (19 registrations). The count and the list are only useful if they
- * match the registrations below, so both are maintained here:
- * - Daily deadline reminder checks (9 AM EST / 14:00 UTC)
- * - Daily deadline enforcement (6 AM EST / 10:00 UTC)
- * - Hourly cleanup of old read notifications (90+ days, at :30)
- * - Weekly digest emails (Mondays at 9 AM EST / 14:00 UTC)
- * - Hourly account deletion cleanup (safety net, at :45)
- * - Hourly rate limit record cleanup (24h+ old, at :15)
- * - Daily AI conversation TTL cleanup (90+ days, 3:00 AM UTC)
- * - Hourly abuse-blocklist expiry sweep (at :40)
- * - Daily orphaned-profile cleanup (3:30 AM UTC)
- * - Daily re-engagement check (16:00 UTC)
- * - Daily DOL processing-times refresh (15:00 UTC)
- * - Per-case status alert sweep (11:00 and 23:00 UTC)
- * - Its browser-push twin (11:20 and 23:20 UTC)
- * - Employer follow alert sweep (11:15 and 23:15 UTC)
- * - Daily visa-bulletin alert sweep (17:30 UTC)
- * - Alert bundles: one email per address per day (11:30, 18:00, 23:30 UTC)
- * - Alert outbox pruning (04:40 UTC)
- * - Weekly digest build (Tuesdays 13:00 UTC; sends only when enabled)
+ * Scheduled jobs: every `crons.*` call below, each with its own comment
+ * saying when and why. A count and a list kept by hand here drifted (19
+ * listed against 29 registered, a digest hour wrong), so neither is kept;
+ * `grep -E "^crons\.(daily|hourly|weekly|cron|interval)\(" convex/crons.ts`
+ * lists them.
  *
  * IMPORTANT: All cron handlers use `internal` functions for security.
  * Never expose scheduled job handlers to the public API.
@@ -315,10 +300,11 @@ crons.cron(
  * Compare every bulletin subscription against the newest bulletin in the
  * archive and mail the ones whose cutoff moved.
  *
- * Daily because the archive is fed by a monthly ingest whose landing day
- * varies (a saved page or an Archive capture, whenever it arrives); on the
- * ~29 quiet days this is one Turso row read and zero sends. 17:30 UTC sits
- * clear of every bulk email job above.
+ * Daily because a new bulletin lands on a day that varies; the archive is fed
+ * by the direct read of State's own pages (adoption.state.gov), daily and
+ * hourly through the working day on weekdays. On the ~29 quiet days this is
+ * one row read and zero sends. 17:30 UTC sits clear of every bulk email job
+ * above.
  */
 crons.daily(
   "bulletin-alerts",

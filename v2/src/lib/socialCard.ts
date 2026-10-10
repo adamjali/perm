@@ -28,7 +28,8 @@ export const SOCIAL_CARD_CONTENT_TYPE = "image/jpeg" as const;
  *
  * 300 KB, not 600 KB, because reports of the real cutoff vary and a card that
  * sits just under a limit you inferred is a card that breaks on a bad day.
- * Current output is ~204 KB at JPEG q95. Enforced by scripts/verify-og-size.mjs.
+ * Current output is ~204 KB at JPEG q95. Enforced by
+ * src/app/__tests__/social-cards.test.ts.
  */
 export const SOCIAL_CARD_MAX_BYTES = 300 * 1024;
 

@@ -4,11 +4,11 @@ import { internalQuery } from "./_generated/server";
 import { entitlement } from "./lib/apiPlans";
 
 /**
- * Every case number someone is waiting to hear about, for the hourly check.
+ * Every case number someone is waiting to hear about, for the 5-minute check.
  *
- * WHY THIS EXISTS. The full sweep asks DOL about every case twice a day, so
- * without this a watched case could change status and the subscriber not hear
- * about it for up to twelve hours. Since Oct 7 2026 the server asks DOL about
+ * WHY THIS EXISTS. The sweeps ask DOL about every case daily and the
+ * undecided ones two or three times a day, so without this a watched case
+ * could change status and the subscriber not hear about it for hours. Since Oct 7 2026 the server asks DOL about
  * these numbers every 5 minutes on weekdays from 7 AM to 9 PM Eastern, and
  * every 30 minutes otherwise (`permtracker-watched.timer`, running
  * `scripts/check_watched_cases.py --from-convex`). It reads this list through
@@ -21,7 +21,7 @@ import { entitlement } from "./lib/apiPlans";
  *
  * Email alerts count once confirmed and until unsubscribed or closed; browser
  * push alerts until closed; webhook watches until removed. Numbers are uppercased and deduplicated, and the
- * list is capped so a flood of sign-ups cannot turn an hourly job into a
+ * list is capped so a flood of sign-ups cannot turn a 5-minute job into a
  * full sweep.
  */
 export const WATCHED_CAP = 2_000;

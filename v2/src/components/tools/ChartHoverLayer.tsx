@@ -200,7 +200,6 @@ export function ChartHoverLayer({
       <foreignObject x={0} y={0} width={1} height={1} aria-hidden="false">
         <span
           id={liveId}
-          // eslint-disable-next-line react/no-unknown-property
           {...{ xmlns: "http://www.w3.org/1999/xhtml" }}
           role="status"
           aria-live="polite"

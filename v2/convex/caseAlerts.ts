@@ -30,8 +30,10 @@
  *
  * Two halves, and they do different jobs.
  *
- * `scripts/mirror_case_status.py` writes `perm_case_events` on every refresh by
- * comparing the incoming page against the rows it is about to overwrite. That
+ * `scripts/ingest_case_status_direct.py`, `scripts/check_watched_cases.py` and
+ * `scripts/ingest_pwd_status_direct.py` write `perm_case_events` (and their
+ * programs' event tables) on every refresh by
+ * comparing DOL's answer against the rows it is about to overwrite. That
  * is the durable, public record of transitions, and it exists because
  * `INSERT OR REPLACE` destroys the previous status; without it "what did this
  * status resolve to" is unanswerable from our own data forever.
@@ -88,12 +90,15 @@
  *   preference-center links        20/day   (convex/emailPrefs.ts)
  *   firm-page claim emails         10/day   (convex/firmClaims.ts)
  *   webhook pause notices          20/day   (convex/webhookDelivery.ts)
+ *   support mail forwards          30/day   (convex/supportEmail.ts)
  *   sign-in and reset codes        80/day   (convex/authMail.ts)
  *
  * They add up to more than 100 on purpose: the day's real count decides, and a
  * confirmation either limit holds back waits in convex/confirmationQueue.ts
  * instead of being refused. Codes keep the last 15 of every day because list
- * mail stops at 85; per address, 5 codes an hour.
+ * mail stops at 85; per address, 5 codes an hour. And mail anyone can set off
+ * (the confirmations and links above, the contact form, support forwards)
+ * stops at 55 (PUBLIC_CEILING), so alerts always have the 30 between.
  *
  * Every pool is GLOBAL, keyed on the literal string "all". That is the only
  * kind of limit that cannot be rotated around: a per-address cooldown does
@@ -102,8 +107,9 @@
  * employer follows share the case pools. Every limit above lives once in
  * convex/lib/alertBudgets.ts, which the senders enforce and the admin panel
  * reports, and a test holds that table to this one. Every ALERT (not
- * confirmation) leaves through `deliverAlert` (convex/lib/alertDelivery.ts), so
- * one person gets at most one alert email a day.
+ * confirmation) leaves through `deliverAlert` (convex/lib/alertDelivery.ts): a
+ * case's status change goes at once (IMMEDIATE_KINDS), and everything else
+ * waits so one person gets at most one bundled alert email a day.
  *
  * The weekly digest (convex/newsletter.ts) has its own cap,
  * NEWSLETTER_DAILY_CAP (default 30), and goes through `sendOrQueue` like the
@@ -177,7 +183,8 @@ import {
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { formatInt } from "./lib/format";
-import { MS_PER_HOUR } from "./lib/time";
+import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
+import { isPlausibleEmail } from "./lib/emailShape";
 
 const log = createLogger("CaseAlerts");
 
@@ -209,6 +216,8 @@ const ALERT_GLOBAL_BUDGET = CASE_ALERT_BUDGET;
  * emails a day instead of one per sweep.
  */
 const ALERT_COOLDOWN_MS = 6 * MS_PER_HOUR;
+/** A send claim older than this is a sweep that died mid-send; the row is free again. */
+export const ALERT_SEND_CLAIM_MS = 15 * MS_PER_MINUTE;
 
 /**
  * How long a decided case stays watched. A final status still moves (an
@@ -241,7 +250,6 @@ export function isLapse(from: string, to: string): boolean {
  */
 export const MAX_CASES_PER_ADDRESS = 100;
 
-
 /**
  * One reply for every outcome on an existing address.
  *
@@ -249,21 +257,6 @@ export const MAX_CASES_PER_ADDRESS = 100;
  * oracle for checking whether a given person is waiting on a given case.
  */
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
-
-/** The public marketing site, for human-facing links in email copy. */
-
-/**
- * Conservative address check. Rejects the obvious, defers the rest to Resend.
- *
- * The length cap runs FIRST and the ordering is load-bearing. `[^\s@]` matches
- * `.`, so `[^\s@]+\.[^\s@]{2,}$` backtracks quadratically on a long failing
- * input: measured in V8, `"a@" + ".".repeat(80000) + "@"` took 8.2 seconds.
- * `v.string()` accepts about a megabyte, so testing before the length check
- * hands any anonymous caller seconds of server compute per request.
- */
-function isPlausibleEmail(email: string): boolean {
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-}
 
 /**
  * The Convex HTTP domain, which is where confirm and unsubscribe actually run.
@@ -406,7 +399,7 @@ export const subscribe = internalMutation({
       return {
         ok: false,
         message:
-          "That does not look like a DOL case number (G-, A-, P-, I- or H-).",
+          "That does not look like a DOL case number (G-, A-, P-, I-, H-, JO-A- or C-).",
       };
     }
     const caseNumber = parsed.caseNumber;
@@ -588,7 +581,7 @@ export const watchMyCase = mutation({
     if (!parsed) {
       return {
         ok: false,
-        message: "That doesn't look like a DOL case number (G-, A-, P-, I- or H-).",
+        message: "That doesn't look like a DOL case number (G-, A-, P-, I-, H-, JO-A- or C-).",
       };
     }
     const caseNumber = parsed.caseNumber;
@@ -1095,6 +1088,47 @@ export const seedObserved = internalMutation({
   },
 });
 
+/**
+ * Claim the send for one subscriber and one status, before anything is
+ * rendered. Two sweeps can run at once (the cron, the server's 5-minute check,
+ * a sweep rescheduling itself), and both read the same due rows: without a
+ * claim, both email the same change. Mutations are serialised per document,
+ * so exactly one claim wins. False when the subscriber has already heard of
+ * this status, or another sweep holds a fresh claim on it.
+ */
+export const claimAlertSend = internalMutation({
+  args: { id: v.id("caseStatusAlerts"), status: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.id);
+    if (!row || row.confirmedAt === undefined || row.caseClosedAt !== undefined) return false;
+    if (row.lastSeenStatus === args.status) return false;
+    const now = Date.now();
+    if (
+      row.sendingStatus === args.status &&
+      row.sendingAt !== undefined &&
+      now - row.sendingAt < ALERT_SEND_CLAIM_MS
+    ) {
+      return false;
+    }
+    await ctx.db.patch(args.id, { sendingStatus: args.status, sendingAt: now });
+    return true;
+  },
+});
+
+/** A claimed send that didn't go out: free the row for the next sweep. */
+export const releaseAlertSend = internalMutation({
+  args: { id: v.id("caseStatusAlerts") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.id);
+    if (!row) return null;
+    // Patching undefined deletes the fields.
+    await ctx.db.patch(args.id, { sendingStatus: undefined, sendingAt: undefined });
+    return null;
+  },
+});
+
 /** Stamp a subscription AFTER an alert has genuinely been delivered. */
 export const recordAlert = internalMutation({
   args: {
@@ -1112,6 +1146,8 @@ export const recordAlert = internalMutation({
       lastAlertSentAt: now,
       lastCheckedAt: now,
       alertCount: (row.alertCount ?? 0) + 1,
+      sendingStatus: undefined,
+      sendingAt: undefined,
       // A decision starts the year of watching for an appeal or a reopening;
       // a move back out of a final status ends it (patching undefined deletes).
       decidedAt: args.isFinal ? now : undefined,
@@ -1625,6 +1661,9 @@ export const sweepCaseChanges = internalAction({
       : null;
 
     for (const { sub, program, status, isFinal, observedAt } of sending) {
+      // Another sweep is sending this one, or already has.
+      if (!(await ctx.runMutation(internal.caseAlerts.claimAlertSend, { id: sub._id, status }))) continue;
+      let delivered = false;
       try {
         const { slugify } = await import("../src/lib/entitySlug");
         const base = await one(
@@ -1860,6 +1899,7 @@ export const sweepCaseChanges = internalAction({
           status,
           isFinal,
         });
+        delivered = true;
         if (result.status === "sent") sent += 1;
         else queued += 1;
       } catch (error) {
@@ -1867,6 +1907,13 @@ export const sweepCaseChanges = internalAction({
         failed += 1;
         log.error("alert send threw", { caseNumber: sub.caseNumber, error });
         await recordError(ctx, "action", "caseAlerts.sweepCaseChanges", error);
+      } finally {
+        // recordAlert cleared the claim on a delivery; anything else frees it.
+        if (!delivered) {
+          await ctx.runMutation(internal.caseAlerts.releaseAlertSend, { id: sub._id }).catch((e: unknown) => {
+            log.error("releasing a send claim failed; it expires on its own", { caseNumber: sub.caseNumber, error: e });
+          });
+        }
       }
     }
 

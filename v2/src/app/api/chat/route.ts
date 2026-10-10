@@ -41,7 +41,9 @@ import { getPostHogClient } from '@/lib/posthog-server';
 import { chatDebug, createTools, truncateForLog } from './create-tools';
 import { CHAT_MAX_OUTPUT_TOKENS, CHAT_MAX_STEPS, chatIpLimitBody, cutShortFrom } from '@/lib/ai/limits';
 
-// Allow up to 60 seconds for streaming responses (extra time for fallbacks + tool calls)
+// Up to 60 seconds for streaming responses (extra time for fallbacks + tool
+// calls), for platforms that read maxDuration. On our own server `next start`
+// doesn't enforce it; nginx's proxy_read_timeout (300 s) is the real limit.
 export const maxDuration = 60;
 
 /**
@@ -88,6 +90,8 @@ export async function POST(req: Request) {
       const ipCheck = await fetchMutation(api.authRateLimit.checkIpRateLimit, {
         ip: clientIp,
         action: "ip_chat",
+        // Convex counts only calls carrying it (convex/lib/serverDoor.ts).
+        serverSecret: process.env.API_SERVER_SECRET,
       });
       if (!ipCheck.allowed) {
         chatDebug(`[Chat API] [${sessionId}] IP rate limit hit`);

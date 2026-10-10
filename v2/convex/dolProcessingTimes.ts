@@ -98,7 +98,8 @@ const ingestResult = v.object({
 /**
  * Fetch the live page, parse it, and store it if the content changed.
  *
- * Scheduled DAILY at 15:00 UTC (see convex/crons.ts). DOL refreshes PERM in the
+ * Scheduled daily at 15:00 UTC and hourly through the working day on weekdays
+ * (see convex/crons.ts). DOL refreshes PERM in the
  * first work week of each month and prevailing wage on its own cadence, so most
  * runs find no change and report a no-op; polling daily just means we notice
  * the change within a day of it happening rather than on a fixed date DOL does
@@ -246,7 +247,7 @@ export const refresh = internalAction({
  * convex/schema.ts is derived from NOTHING, and TypeScript does not
  * excess-property-check a spread of a non-fresh variable, so an EXTRA field on
  * the validator type-checks green and fails at runtime — in production, on the
- * cron, once a week, on a page DOL keeps no archive of. This assertion is the
+ * cron, on a page DOL keeps no archive of. This assertion is the
  * only thing that catches that direction.
  */
 type StoredMatchesTable =

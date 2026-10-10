@@ -271,7 +271,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
     path: "/estimate-scorecard",
     label: "Estimate scorecard",
-    blurb: "How close the decision-date estimates land: a weekly backtest that rebuilds DOL's queue on a past day and grades thousands of real decisions, a random sample of pending cases recorded every morning before the outcome and graded after, and the hand-recorded worked examples. Never edited.",
+    blurb: "How close the decision-date estimates land: a nightly backtest that rebuilds DOL's queue on a past day and grades thousands of real decisions, a random sample of pending cases recorded every morning before the outcome and graded after, and the hand-recorded worked examples. Never edited.",
   },
   {
     path: "/glossary",

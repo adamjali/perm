@@ -85,6 +85,7 @@ import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { CONFIRMATION_COOLDOWN_MS, SUBSCRIBE_IP_LIMIT, SWEEP_RESUME_DELAY_MS } from "./lib/alertBudgets";
+import { isPlausibleEmail } from "./lib/emailShape";
 
 const log = createLogger("QueueAlerts");
 
@@ -97,17 +98,6 @@ const log = createLogger("QueueAlerts");
 const NOTIFY_BATCH_LIMIT = 40;
 
 /**
- * Global ceiling on confirmation emails, across every caller.
- *
- * The pool is the kind's own bound against abuse (convex/lib/alertBudgets.ts).
- * The thing actually at risk, Resend's 100
- * a day shared with sign-in codes, is guarded once by the day's real count
- * (convex/lib/emailLimits.ts), and a request either limit holds back waits in
- * the queue (convex/confirmationQueue.ts) instead of being refused.
- */
-
-
-/**
  * One reply for every outcome on an existing address.
  *
  * Saying "you are already subscribed" would turn this into an oracle for
@@ -118,8 +108,6 @@ const NOTIFY_BATCH_LIMIT = 40;
  * simply false.
  */
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
-
-/** The public marketing site, used for human-facing links in email copy. */
 
 /** The DOL row whose priority date IS the answer to "have they reached me yet". */
 const ANALYST_REVIEW = /analyst review/i;
@@ -168,20 +156,6 @@ export function frontierFor(
   );
   if (!pwd) return null;
   return queue === "pwd-oews" ? pwd.oewsReceiptDate : pwd.nonOewsReceiptDate;
-}
-
-/**
- * Conservative address check. Rejects the obvious, defers the rest to Resend.
- *
- * The length cap runs FIRST and that ordering is load-bearing, not style.
- * `[^\s@]` matches `.`, so `[^\s@]+\.[^\s@]{2,}$` backtracks quadratically on
- * a long failing input: measured in V8, `"a@" + ".".repeat(80000) + "@"` took
- * 8.2 seconds against this pattern. `v.string()` accepts about a megabyte, so
- * testing before the length check handed any anonymous caller seconds of
- * server compute per request. Guarded first, the same input is 0.005 ms.
- */
-function isPlausibleEmail(email: string): boolean {
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 }
 
 /** Accepts "YYYY-MM" within a sane window around the PERM programme's life. */

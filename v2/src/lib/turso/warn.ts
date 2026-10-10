@@ -68,11 +68,14 @@ function hydrate(r: DbRow): WarnNotice {
   };
 }
 
-/** Notices matched to one sponsor, newest first. Indexed on (employer_slug, notice_date). */
+/**
+ * Notices matched to one sponsor, newest first. Indexed on (employer_slug,
+ * notice_date). A failed read throws rather than answering "no notices", for
+ * the same reason as `debarmentsForSlug`: the employer pages keep a render for
+ * up to 30 days.
+ */
 export const warnForSlug = cache(async (slug: string, limit = 10): Promise<WarnNotice[]> => {
-  const r = await rows<DbRow>(`SELECT ${COLS} FROM warn_notices WHERE employer_slug = ? ORDER BY notice_date DESC LIMIT ?`, [slug, limit]).catch(
-    () => [] as DbRow[],
-  );
+  const r = await rows<DbRow>(`SELECT ${COLS} FROM warn_notices WHERE employer_slug = ? ORDER BY notice_date DESC LIMIT ?`, [slug, limit]);
   return r.map(hydrate);
 });
 

@@ -83,13 +83,11 @@ export interface LookupEmployer {
   wageRequests: number | null;
 }
 
-export interface LookupData {
+export type LookupData = {
   query: string;
-  match: LookupMatch;
-  employer: LookupEmployer | null;
   /** Under this many decided cases no certified share is given. */
   shareFloor: number;
-}
+} & ({ match: "none"; employer: null } | { match: "exact" | "possible"; employer: LookupEmployer });
 
 const num = (v: unknown): number | null => {
   if (v === null || v === undefined || v === "") return null;
@@ -224,7 +222,8 @@ async function describe(slug: string, kind: PageKind): Promise<LookupEmployer | 
   };
 }
 
-type Resolved = { match: LookupMatch; employer: LookupEmployer | null };
+/** A match always carries its employer, and "none" never does. */
+type Resolved = { match: "none"; employer: null } | { match: "exact" | "possible"; employer: LookupEmployer };
 
 export async function resolveEmployer(query: string): Promise<Resolved> {
   let candidates: Awaited<ReturnType<typeof searchByName>> | null = null;
@@ -281,7 +280,7 @@ export async function resolveEmployer(query: string): Promise<Resolved> {
    people costs one set of reads an hour per copy of the site. */
 const TTL_MS = 3_600_000;
 const MAX_REMEMBERED = 5_000;
-const remembered = new Map<string, { at: number; value: { match: LookupMatch; employer: LookupEmployer | null } }>();
+const remembered = new Map<string, { at: number; value: Resolved }>();
 
 export async function lookupEmployer(raw: string, now = Date.now()): Promise<ReadResult<LookupData>> {
   const query = cleanEmployerQuery(raw);
@@ -297,15 +296,14 @@ export async function lookupEmployer(raw: string, now = Date.now()): Promise<Rea
     remembered.set(memo, hit);
   }
   const f = await getFreshness().catch(() => ({}) as Record<string, { asOf: string | null } | undefined>);
-  const { match, employer } = hit.value;
   return {
     ok: true,
-    data: { query, match, employer, shareFloor: MIN_DECIDED_FOR_SHARE },
+    data: { query, ...hit.value, shareFloor: MIN_DECIDED_FOR_SHARE },
     meta: {
       source:
         "U.S. Department of Labor, OFLC PERM and LCA disclosure files (decided cases) and FLAG case status (pending)",
       asOf: day(f["perm-cases"]?.asOf),
-      url: employer ? employer.url : `${SITE_URL}/perm-employers?q=${encodeURIComponent(query)}`,
+      url: hit.value.employer ? hit.value.employer.url : `${SITE_URL}/perm-employers?q=${encodeURIComponent(query)}`,
     },
   };
 }

@@ -446,7 +446,7 @@ export default async function PermRfiAuditPage() {
           TWO KINDS OF CLAIM ON ONE PAGE, AND THE READER HAS TO BE ABLE TO TELL
           THEM APART. The regulation citations are first-party federal text
           from the eCFR API: checkable, permanent, and the strongest material
-          here. The counts are not. The per-case statuses are read from DOL directly, in batches, every 12 hours. DOL publishes no documented API for it. That is worth
+          here. The counts are not. The per-case statuses are read from DOL directly, in batches: every case daily and the undecided ones again during the day. DOL publishes no documented API for it. That is worth
           saying out loud rather than letting a reader discover the chain
           later, which would turn a genuine scoop into a credibility problem.
         */}
@@ -468,7 +468,8 @@ export default async function PermRfiAuditPage() {
             </p>{" "}
             <p>
               Per-case counts from DOL&rsquo;s own case-status search, read in
-              batches every 12 hours. Queue positions and the analyst-review
+              batches: every case daily, and the undecided ones again during
+              the day. Queue positions and the analyst-review
               average come from DOL&rsquo;s{" "}
               <a href="https://flag.dol.gov/processingtimes" rel="noopener noreferrer" target="_blank">
                 processing-times page

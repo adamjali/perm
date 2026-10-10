@@ -36,6 +36,8 @@ import { FROM_EMAIL, getResend, sendOrQueue } from "./email";
 import { easternDay } from "./time";
 
 export type AlertKind = "case" | "queue" | "bulletin" | "employer";
+/** `<kind>:<row id>`: the subscription an alert is about, its kind first. */
+export type AlertRef = `${AlertKind}:${string}`;
 
 /** Kinds that never wait for a bundle. */
 export const IMMEDIATE_KINDS: ReadonlySet<AlertKind> = new Set<AlertKind>(["case"]);
@@ -54,7 +56,7 @@ export interface AlertItem {
   email: string;
   kind: AlertKind;
   /** `<kind>:<row id>`, so an opt-out drops anything still waiting for it. */
-  ref: string;
+  ref: AlertRef;
   subject: string;
   html?: string;
   text: string;
@@ -105,7 +107,7 @@ export async function deliverAlert(ctx: ActionCtx, item: AlertItem): Promise<Del
     html: item.html,
     text: item.text,
     headers: oneClickHeaders(item.listUnsubscribe),
-  });
+  }, { refs: [item.ref] });
   if (result.error) {
     return { status: "failed", error: `${result.error.name}: ${result.error.message}` };
   }

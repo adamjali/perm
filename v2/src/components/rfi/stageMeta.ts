@@ -1,3 +1,4 @@
+import { statusAnchor } from "@/lib/statusDictionary";
 /**
  * The FLAG status strings, and the one distinction the page draws in colour.
  *
@@ -124,10 +125,8 @@ export function isReviewStage(status: string): boolean {
  * than by trying to reverse the transform.
  */
 export function stageSlug(status: string): string {
-  return status
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  // One transliteration for stage pages and the status dictionary's anchors.
+  return statusAnchor(status);
 }
 
 /**

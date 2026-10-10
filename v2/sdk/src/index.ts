@@ -73,8 +73,7 @@ export class PermTrackerError extends Error {
 /** A case as the API returns it. Fields beyond these depend on the program. */
 export interface CaseRecord {
   caseNumber: string;
-  /** perm, pwd, lca or seasonal */
-  program: string;
+  program: "perm" | "pwd" | "lca" | "seasonal";
   programName: string;
   status: string | null;
   isFinal: boolean;
@@ -88,11 +87,25 @@ export interface CaseRecord {
   [field: string]: unknown;
 }
 
+/**
+ * An estimate. `kind` says which fields carry meaning: "date" an estimated
+ * day and its range; "no-date" why there's none (an RFI past its window, an
+ * appeal) with how long the case has waited; "decided" DOL's decision; "none"
+ * a case we don't hold.
+ */
 export interface Estimate {
   kind: "date" | "no-date" | "none" | "decided";
+  status?: string;
+  filingDate?: string | null;
   estimatedDate?: string;
   earliest?: string | null;
   latest?: string | null;
+  /** "decided": DOL's decision day, YYYY-MM-DD. */
+  decisionDate?: string | null;
+  /** "no-date": how long the case has waited, in days. */
+  waitedDays?: number | null;
+  /** Cases in DOL's line ahead of this one. */
+  pendingCasesAhead?: number | null;
   model?: string;
   basis?: string;
   caveats?: string[];
@@ -118,6 +131,8 @@ export interface Me {
     keys: number;
     sandboxKeys: number;
     exportRows: number;
+    /** Export rows the account may take in a UTC day, all exports together. Older servers leave it out. */
+    exportRowsPerDay?: number;
     liveLookupsPerDay: number;
     webhookEndpoints: number;
     webhookWatches: number;
@@ -132,6 +147,9 @@ export interface Me {
     remainingThisMonth: number;
     liveLookupsToday: number;
     liveLookupsRemainingToday: number;
+    /** Export rows taken today, and what's left; null when the server couldn't count. Older servers leave them out. */
+    exportRowsToday?: number | null;
+    exportRowsRemainingToday?: number | null;
     dayResetsInSeconds: number;
     monthResetsInSeconds: number;
   };
@@ -171,8 +189,9 @@ export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
 export interface WebhookEndpoint {
   id: string;
   url: string;
-  events: string[];
+  events: WebhookEvent[];
   secretHint: string;
+  /** Epoch milliseconds, as the API sends it (Me.key.expiresAt is an ISO time). */
   pausedAt: number | null;
   [field: string]: unknown;
 }
@@ -221,7 +240,11 @@ export class PermTracker {
 
   constructor(options: PermTrackerOptions = {}) {
     this.key = options.apiKey?.trim() || undefined;
-    this.base = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+    // Trailing slashes come off by loop: /\/+$/ backtracks across a long run
+    // of slashes followed by anything else (CodeQL js/polynomial-redos).
+    let base = options.baseUrl ?? DEFAULT_BASE_URL;
+    while (base.endsWith("/")) base = base.slice(0, -1);
+    this.base = base;
     this.timeoutMs = options.timeoutMs ?? 20_000;
     const f = options.fetch ?? (globalThis.fetch as typeof fetch | undefined);
     if (!f) throw new Error("No fetch here: pass one in the options, or use Node 18 or later.");
@@ -374,7 +397,7 @@ export class PermTracker {
   }
 
   /** A new endpoint. Its signing secret is in the answer, once: keep it. */
-  createWebhook(endpoint: { url: string; events: readonly string[] }): Promise<Answer<{ id: string; secret: string; note?: string }>> {
+  createWebhook(endpoint: { url: string; events: readonly WebhookEvent[] }): Promise<Answer<{ id: string; secret: string; note?: string }>> {
     return this.request("/webhooks", { method: "POST", body: { url: endpoint.url, events: [...endpoint.events] } });
   }
 

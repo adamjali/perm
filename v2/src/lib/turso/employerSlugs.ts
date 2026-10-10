@@ -81,7 +81,7 @@ export const pageForSpelling = cache(async (slug: string): Promise<{ page: strin
   const row = await one<{ page_slug: string; page_kind: string }>(
     `SELECT page_slug, page_kind FROM ${MAP} WHERE source_slug = ?`,
     [slug],
-  ).catch(() => null);
+  );
   if (!row || String(row.page_slug) === slug) return null;
   return { page: String(row.page_slug), kind: String(row.page_kind) };
 });

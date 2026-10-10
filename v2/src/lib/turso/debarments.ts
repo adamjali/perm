@@ -141,6 +141,10 @@ export function phase(d: Debarment, today: string): DebarmentPhase {
 }
 
 /**
+ * A failed read throws, never answers "no debarment": the pages that ask keep
+ * a render for up to 30 days, and a debarred employer shown as clean for a
+ * month is worse than a render that fails and keeps the last good page.
+ *
  * Debarments whose normalised entity name matches a page's slug: the entity's
  * slug is a prefix of the page slug or the page slug a prefix of it, so
  * "hercules-staffing-llc" finds "hercules-staffing" and the reverse, while a
@@ -154,6 +158,6 @@ export const debarmentsForSlug = cache(async (slug: string): Promise<Debarment[]
     `SELECT ${COLS} FROM debarments INDEXED BY debarments_slug ` +
       `WHERE (entity_slug >= ? AND entity_slug < ?) OR entity_slug = ? ORDER BY start_date DESC`,
     [stem, stem.slice(0, -1) + String.fromCharCode(stem.charCodeAt(stem.length - 1) + 1), slug],
-  ).catch(() => [] as DbRow[]);
+  );
   return r.map(toRow).filter((x): x is Debarment => x !== null);
 });

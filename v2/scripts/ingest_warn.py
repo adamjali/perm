@@ -479,7 +479,12 @@ def match_employers(db: Turso, rows: list[dict]) -> int:
     try:
         other = page_matcher(query_rows(
             db, "SELECT key, page_slug FROM employer_page_map WHERE page_kind IN ('live', 'other')"))
-    except Exception:  # noqa: BLE001 - before the map's first build, PERM sponsors only
+    except RuntimeError as exc:
+        # Before the map's first build there is no table: PERM sponsors only.
+        # Any other error fails the run: matched against an empty map, about
+        # 200 notices would be rewritten with no employer for a week.
+        if "no such table" not in str(exc).lower():
+            raise
         other = page_matcher([])
     n = 0
     for r in rows:

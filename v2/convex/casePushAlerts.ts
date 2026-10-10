@@ -4,6 +4,7 @@ import { internalMutation, internalQuery } from "./_generated/server";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { normaliseFlagCaseNumber } from "../src/lib/flagCaseNumber";
 import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
+import { isPushServiceUrl } from "./lib/pushHosts";
 
 /**
  * Browser push alerts for a case, for people with no account and no wish to
@@ -11,7 +12,8 @@ import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
  *
  * The browser's PushSubscription is the delivery address: it names a browser,
  * carries no identity, and the person can revoke it in the browser or here.
- * The sweep runs twice a day beside the email sweep, reads the same status
+ * The sweep runs twice a day as a floor, and 30 seconds after the 5-minute
+ * watched-case check finds a move (convex/http.ts); it reads the same status
  * tables, and sends one notification per change. A subscription taken out
  * the day after a change is seeded silently, exactly as the email alerts are,
  * so nobody is told about a transition that happened before they asked.
@@ -48,7 +50,7 @@ export function parseSubscription(json: string): { endpoint: string; keys: { p25
   if (typeof parsed !== "object" || parsed === null) return null;
   const o = parsed as Record<string, unknown>;
   const keys = o.keys as Record<string, unknown> | undefined;
-  if (typeof o.endpoint !== "string" || !o.endpoint.startsWith("https://") || o.endpoint.length > 1000) return null;
+  if (typeof o.endpoint !== "string" || o.endpoint.length > 1000 || !isPushServiceUrl(o.endpoint)) return null;
   if (!keys || typeof keys.p256dh !== "string" || typeof keys.auth !== "string" || keys.p256dh.length > 200 || keys.auth.length > 200) return null;
   return { endpoint: o.endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } };
 }
@@ -136,12 +138,24 @@ const activeRow = v.object({
   failures: v.number(),
 });
 
+/**
+ * One page of the open subscriptions. The sweep walks every page: a single
+ * read of the oldest SWEEP_READ rows would leave every newer browser unread
+ * for good once the table passes that size.
+ */
 export const activeRows = internalQuery({
-  args: {},
-  returns: v.array(activeRow),
-  handler: async (ctx) => {
-    const rows = await ctx.db.query("caseStatusPushAlerts").withIndex("by_closed", (q) => q.eq("closedAt", undefined)).take(SWEEP_READ);
-    return rows.map((r) => ({ _id: r._id, caseNumber: r.caseNumber, subscription: r.subscription, lastSeenStatus: r.lastSeenStatus, failures: r.failures }));
+  args: { cursor: v.union(v.string(), v.null()) },
+  returns: v.object({ rows: v.array(activeRow), cursor: v.string(), isDone: v.boolean() }),
+  handler: async (ctx, args) => {
+    const page = await ctx.db
+      .query("caseStatusPushAlerts")
+      .withIndex("by_closed", (q) => q.eq("closedAt", undefined))
+      .paginate({ numItems: SWEEP_READ, cursor: args.cursor });
+    return {
+      rows: page.page.map((r) => ({ _id: r._id, caseNumber: r.caseNumber, subscription: r.subscription, lastSeenStatus: r.lastSeenStatus, failures: r.failures })),
+      cursor: page.continueCursor,
+      isDone: page.isDone,
+    };
   },
 });
 
@@ -150,6 +164,34 @@ export const seed = internalMutation({
   returns: v.null(),
   handler: async (ctx, a) => {
     await ctx.db.patch(a.id, { lastSeenStatus: a.status, lastCheckedAt: Date.now() });
+    return null;
+  },
+});
+
+/**
+ * Claim a notification before it's sent: the row takes the new status now,
+ * so a second sweep running at the same moment finds nothing new and stays
+ * quiet. False when the row already holds this status or was closed.
+ */
+export const claimPush = internalMutation({
+  args: { id: v.id("caseStatusPushAlerts"), status: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, a) => {
+    const row = await ctx.db.get(a.id);
+    if (!row || row.closedAt !== undefined || row.lastSeenStatus === a.status) return false;
+    await ctx.db.patch(a.id, { lastSeenStatus: a.status, lastCheckedAt: Date.now() });
+    return true;
+  },
+});
+
+/** A claimed notification that couldn't be delivered: put the old status back so the next sweep retries it. */
+export const unclaimPush = internalMutation({
+  args: { id: v.id("caseStatusPushAlerts"), claimed: v.string(), previous: v.string() },
+  returns: v.null(),
+  handler: async (ctx, a) => {
+    const row = await ctx.db.get(a.id);
+    if (!row || row.lastSeenStatus !== a.claimed) return null;
+    await ctx.db.patch(a.id, { lastSeenStatus: a.previous });
     return null;
   },
 });

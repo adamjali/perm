@@ -106,6 +106,7 @@ export const enqueueRetry = internalMutation({
     payload: v.string(),
     error: v.string(),
     quota: v.boolean(),
+    refs: v.optional(v.array(v.string())),
   },
   returns: v.object({ ok: v.boolean(), reason: v.optional(v.string()) }),
   handler: async (ctx, args) => {
@@ -129,6 +130,7 @@ export const enqueueRetry = internalMutation({
       nextAttemptAt: nextRetryAt(0, now, args.quota),
       attempts: 0,
       lastError: args.error.slice(0, 500),
+      ...(args.refs ? { refs: args.refs.slice(0, 50) } : {}),
     });
     const row = await countOnDay(ctx, "retried");
     await alertOnce(

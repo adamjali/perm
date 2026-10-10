@@ -30,7 +30,7 @@ export interface FlagStatusEntry {
 const CFR = (part: string, section: string) =>
   `https://www.ecfr.gov/current/title-20/chapter-V/part-${part}/section-${section}`;
 
-/** A URL fragment for a status word. `stageSlug`'s transliteration, so the two agree. */
+/** A URL fragment for a status word. `stageSlug` (src/components/rfi/stageMeta.ts) calls this, so the two can't disagree. */
 export function statusAnchor(status: string): string {
   return status
     .toLowerCase()

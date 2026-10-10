@@ -44,6 +44,7 @@ import type { MutationCtx } from "./_generated/server";
 import { NO_WEBHOOKS_MESSAGE, entitlement } from "./lib/apiPlans";
 import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
 import { decryptToken } from "./lib/crypto";
+import { recordError } from "./lib/errorRecording";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL } from "./lib/links";
 import { createLogger } from "./lib/logging";
@@ -167,6 +168,30 @@ export const claimDue = internalMutation({
   },
 });
 
+/**
+ * A delivery our side couldn't send: back to pending without the attempt the
+ * claim counted, tried again in OUR_SIDE_RETRY_MS. A first attempt also gives
+ * back its start, so the endpoint's 24 hours begin at its first real answer.
+ */
+export const releaseOurs = internalMutation({
+  args: { deliveryId: v.id("webhookDeliveries"), attempt: v.number(), error: v.string(), now: v.number() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const d = await ctx.db.get(args.deliveryId);
+    if (!d || d.status !== "pending" || d.attempts !== args.attempt) return null;
+    const retryAt = args.now + OUR_SIDE_RETRY_MS;
+    await ctx.db.patch(d._id, {
+      attempts: Math.max(0, args.attempt - 1),
+      leaseUntil: undefined,
+      nextAttemptAt: retryAt,
+      lastError: args.error,
+      ...(args.attempt === 1 ? { firstAttemptAt: undefined } : {}),
+    });
+    await ctx.scheduler.runAt(retryAt, internal.webhookDelivery.deliverDue, {});
+    return null;
+  },
+});
+
 export const recordResult = internalMutation({
   args: {
     deliveryId: v.id("webhookDeliveries"),
@@ -224,7 +249,16 @@ export const recordResult = internalMutation({
   },
 });
 
-type Outcome = { ok: boolean; statusCode?: number; error?: string };
+/**
+ * `ours`: the failure was on our side (the secret wouldn't decrypt, signing
+ * threw, the host check couldn't run), so it isn't charged to the endpoint as
+ * an attempt and is recorded as our error. Charged, a day of our own failure
+ * paused a developer's endpoint as unreachable.
+ */
+type Outcome = { ok: boolean; statusCode?: number; error?: string; ours?: boolean };
+
+/** How long a delivery our side couldn't send waits before it's tried again. */
+const OUR_SIDE_RETRY_MS = 10 * MS_PER_MINUTE;
 
 /** An endpoint's host name, as the address check stored it (lower case, no trailing dot). */
 function hostOf(url: string): string {
@@ -237,9 +271,14 @@ function hostOf(url: string): string {
 
 /** One POST, its body never read: only the status counts. */
 async function post(d: Claimed): Promise<Outcome> {
+  let headers: Record<string, string>;
   try {
     const secret = await decryptToken(d.secretEnc);
-    const headers = await webhookHeaders(secret, `msg_${d.eventId}`, Math.floor(Date.now() / 1000), d.payload);
+    headers = await webhookHeaders(secret, `msg_${d.eventId}`, Math.floor(Date.now() / 1000), d.payload);
+  } catch (e) {
+    return { ok: false, ours: true, error: `signing failed on our side: ${e instanceof Error ? e.message : String(e)}` };
+  }
+  try {
     const res = await fetch(d.url, {
       method: "POST",
       headers,
@@ -286,18 +325,31 @@ export const deliverDue = internalAction({
     const settled = await Promise.allSettled(
       batch.map(async (d): Promise<Outcome> => {
         const verdict = verdicts.get(hostOf(d.url));
-        if (!verdict) return { ok: false, error: "where its host name points couldn't be checked" };
+        if (!verdict) return { ok: false, ours: true, error: "where its host name points couldn't be checked on our side" };
         if (!verdict.ok) return { ok: false, error: verdict.reason };
         return await post(d);
       }),
     );
-    const outcomes: Outcome[] = settled.map((r) => (r.status === "fulfilled" ? r.value : { ok: false, error: "couldn't be sent" }));
+    const outcomes: Outcome[] = settled.map((r) =>
+      r.status === "fulfilled" ? r.value : { ok: false, ours: true, error: "couldn't be sent from our side" },
+    );
     let sent = 0;
     let failed = 0;
+    const oursFailed: string[] = [];
     for (const [i, d] of batch.entries()) {
       const o = outcomes[i]!;
       if (o.ok) sent++;
       else failed++;
+      if (!o.ok && o.ours) {
+        oursFailed.push(o.error ?? "unknown");
+        await ctx.runMutation(internal.webhookDelivery.releaseOurs, {
+          deliveryId: d.deliveryId,
+          attempt: d.attempt,
+          error: (o.error ?? "failed on our side").slice(0, 300),
+          now: Date.now(),
+        });
+        continue;
+      }
       await ctx.runMutation(internal.webhookDelivery.recordResult, {
         deliveryId: d.deliveryId,
         attempt: d.attempt,
@@ -306,6 +358,14 @@ export const deliverDue = internalAction({
         ...(o.error !== undefined ? { error: o.error } : {}),
         now: Date.now(),
       });
+    }
+    if (oursFailed.length > 0) {
+      await recordError(
+        ctx,
+        "action",
+        "webhookDelivery.deliverDue",
+        new Error(`${oursFailed.length} webhook deliveries failed on our side and wait to be tried again: ${oursFailed[0]}`),
+      );
     }
     // A full batch means more may be waiting; the next run takes them.
     if (batch.length === BATCH) await ctx.scheduler.runAfter(0, internal.webhookDelivery.deliverDue, {});

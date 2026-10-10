@@ -20,7 +20,7 @@ import { dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 
-import { PermTracker, PermTrackerError, VERSION, WEBHOOK_EVENTS, type Answer, type ExportKind } from "./index.js";
+import { PermTracker, PermTrackerError, VERSION, WEBHOOK_EVENTS, type Answer, type ExportKind, type WebhookEvent } from "./index.js";
 
 const HELP = `permtracker ${VERSION}: DOL case status, estimates and PERM data from permtracker.app
 
@@ -228,7 +228,11 @@ export async function run(argv: string[]): Promise<number> {
       if (sub === "add") {
         const [url, ...events] = rest;
         if (!url || events.length === 0) throw new PermTrackerError(400, "missing_argument", `Give an https address and at least one event: ${WEBHOOK_EVENTS.join(", ")}.`, null, null);
-        answer = await pt.createWebhook({ url, events });
+        const unknown = events.filter((e) => !(WEBHOOK_EVENTS as readonly string[]).includes(e));
+        if (unknown.length > 0) {
+          throw new PermTrackerError(400, "bad_argument", `Not an event: ${unknown.join(", ")}. The events are ${WEBHOOK_EVENTS.join(", ")}.`, null, null);
+        }
+        answer = await pt.createWebhook({ url, events: events as WebhookEvent[] });
       } else if (sub === "remove") {
         answer = await pt.deleteWebhook(need(rest, "an endpoint's id (list them with webhooks)"));
       } else if (sub === undefined) {

@@ -33,7 +33,14 @@ failures: list[str] = []
 FAKE_CURL = r"""#!/bin/bash
 url="${@: -1}"
 case "$url" in
-  *:8080/v2/pipeline) echo '{"results":[{"type":"ok"},{"type":"ok"},{"type":"ok"}]}'; exit 0 ;;
+  *:8080/v2/pipeline)
+    # DB_WRITE=locked: the write lock can't be had (Hrana's 200 with an error
+    # result). DB_READ=down: the read check fails too.
+    case "$*" in
+      *"BEGIN IMMEDIATE"*) [ "${DB_WRITE:-ok}" = locked ] && { echo '{"results":[{"type":"error","error":{"message":"database is locked"}}]}'; exit 0; } ;;
+      *"SELECT 1"*) [ "${DB_READ:-ok}" = down ] && exit 7 ;;
+    esac
+    echo '{"results":[{"type":"ok"},{"type":"ok"},{"type":"ok"}]}'; exit 0 ;;
   *:8081/__pt/nginx-alive) [ "${NGINX_ALIVE:-1}" = 1 ] && exit 0 || exit 7 ;;
   *:8081/*) [ "${APP_VIA_NGINX:-1}" = 1 ] && exit 0 || exit 22 ;;
   *:3001/api/health|*:3011/api/health) exit 0 ;;
@@ -114,6 +121,21 @@ def main() -> int:
         os.utime(stale, (old, old))
         got = run(root, 3, NGINX_ALIVE="0", APP_VIA_NGINX="0")
         check("a marker an hour old is a deploy that died, and is ignored", got == ["nginx"], str(got))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        setup(root)
+        got = run(root, 3, DB_WRITE="locked")
+        check("three locked writes restart the database once", got == ["permtracker-db"], str(got))
+        got = run(root, 3, DB_WRITE="locked")
+        check("...and not again inside 30 minutes", got == ["permtracker-db"], str(got))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        setup(root)
+        got = run(root, 3, DB_WRITE="locked", DB_READ="down")
+        check("with reads failing too, the read check alone counts: one restart, not two",
+              got == ["permtracker-db"], str(got))
 
     print(f"{len(failures)} failure(s)")
     return 1 if failures else 0

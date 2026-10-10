@@ -82,7 +82,7 @@ export const CRON_JOBS: Record<string, CronJob> = {
     workflow: "case-status-direct.yml",
     inputs: { mode: "pending" },
     schedule: "40 19 * * *",
-    description: "pending PERM cases against DOL, the mid-day refresh",
+    description: "pending PERM cases against DOL, the afternoon pass",
   },
   "daily-monitor": {
     workflow: "daily-monitor.yml",
@@ -95,6 +95,34 @@ export const CRON_JOBS: Record<string, CronJob> = {
     description: "a full Convex export, sealed on the runner and copied to R2 by the server, nightly",
   },
 };
+
+/**
+ * Each workflow's `name:`, which GitHub shows as a run's title unless the
+ * workflow sets `run-name`. The dispatch test holds these to the YAML.
+ */
+export const WORKFLOW_NAMES: Record<string, string> = {
+  "processing-times-ingest.yml": "DOL processing times",
+  "case-status-direct.yml": "Case status (direct from DOL)",
+  "pwd-status-direct.yml": "PWD case status (direct from DOL)",
+  "ingest-health.yml": "Ingest health",
+  "daily-monitor.yml": "Daily monitor",
+  "convex-backup.yml": "Convex backup (sealed, to R2)",
+};
+
+/**
+ * The title GitHub gives a run this job dispatches, from each workflow's
+ * `run-name`: the two status sweeps add their mode, the hourly processing-times
+ * pass says "(hourly)". The duplicate guard compares it, so a run of the same
+ * workflow in another mode (a hand-dispatched discover, the hourly pass) never
+ * stands in for this one: a 7:55 AM discover run had been able to skip the
+ * day's full pass.
+ */
+export function runTitle(job: CronJob): string {
+  const name = WORKFLOW_NAMES[job.workflow] ?? job.workflow;
+  if (job.inputs?.mode) return `${name}, ${job.inputs.mode}`;
+  if (job.inputs?.quick === "true") return `${name} (hourly)`;
+  return name;
+}
 
 export const CRON_PATH_PREFIX = "/api/cron/dispatch/";
 

@@ -69,6 +69,9 @@ MEM_MIN_MB = 500
 SWAP_MAX_MB = 2048
 SAMPLER_STALE_S = 30 * 60
 PRUNE_STALE_S = int(2.5 * 3600)
+# A release whose .next/server holds this much more than the cap counted has
+# pages in a folder the cap doesn't read (the cap records both figures).
+UNCOUNTED_GB = 15
 BACKUP_STALE_S = 30 * 3600
 REMIND_S = 6 * 3600
 EMAILS_PER_DAY = 12
@@ -106,6 +109,15 @@ def evaluate(snap: dict, rate: float | None) -> dict[str, str]:
     on: dict[str, str] = {}
     free = snap["disk_free_gb"]
     hours = free / rate if rate and rate > 0.2 else None
+    # A fall the page-cache cap will stop isn't the disk filling: the cached
+    # pages grow until their budgets and no further, so if the disk would
+    # still have DISK_LOW_GB free with every cache at its budget, the trend
+    # alone raises nothing (Oct 10 2026: the live cache refilling toward its
+    # 60 GB read as "full in 12 hours" with 37 GB to spare). Unknown headroom,
+    # or a cache the cap can't see, keeps the plain trend.
+    headroom = snap.get("cache_headroom_gb")
+    if hours is not None and headroom is not None and not snap.get("uncounted") and free - headroom >= DISK_LOW_GB:
+        hours = None
     if free < DISK_CRIT_GB:
         on["disk-crit"] = f"only {free:.1f} GB of the disk is free"
     if free < DISK_LOW_GB or (hours is not None and hours < FULL_WITHIN_H):
@@ -125,7 +137,31 @@ def evaluate(snap: dict, rate: float | None) -> dict[str, str]:
         if age is None or age > limit:
             when = "never" if age is None else f"{age / 3600:.1f} hours ago"
             on[key] = f"{what} last finished {when}"
+    if snap.get("uncounted"):
+        on["page-cache-blind"] = ("Next holds pages the page-cache cap doesn't count: "
+                                  + "; ".join(snap["uncounted"]))
     return on
+
+
+def cache_headroom(report: dict) -> float | None:
+    """GB the page caches may still grow before the cap stops them, or None if unreadable."""
+    total = 0.0
+    for r in report.get("releases", []):
+        budget, gb = r.get("budgetGB"), r.get("gb")
+        if not isinstance(budget, (int, float)) or not isinstance(gb, (int, float)):
+            return None
+        total += max(0.0, budget - gb)
+    return total
+
+
+def uncounted_releases(report: dict) -> list[str]:
+    """Releases holding UNCOUNTED_GB more in .next/server than the cap counted."""
+    out = []
+    for r in report.get("releases", []):
+        server, counted = r.get("serverGB"), r.get("gb")
+        if isinstance(server, (int, float)) and isinstance(counted, (int, float)) and server - counted > UNCOUNTED_GB:
+            out.append(f"{r.get('release')} ({server:.0f} GB on disk, {counted:.0f} GB counted)")
+    return out
 
 
 def plan(on: dict[str, str], state: dict, now: float) -> tuple[list[tuple[str, str, str]], dict]:
@@ -182,9 +218,14 @@ def snapshot(now: float) -> dict:
                             capture_output=True, text=True).stdout.splitlines()
     units = [ln.split()[0] for ln in failed if ln.strip()]
     prune_age = None
+    uncounted: list[str] = []
+    headroom = None
     try:
-        prune_age = now - json.loads((APP / "health" / "prune.json").read_text())["at"]
-    except (OSError, ValueError, KeyError):
+        report = json.loads((APP / "health" / "prune.json").read_text())
+        prune_age = now - report["at"]
+        uncounted = uncounted_releases(report)
+        headroom = cache_headroom(report) if prune_age <= PRUNE_STALE_S else None
+    except (OSError, ValueError, KeyError, TypeError):
         pass
     return {
         "disk_free_gb": disk.free / GB,
@@ -193,6 +234,8 @@ def snapshot(now: float) -> dict:
         "failed_units": [u for u in units if u.startswith(OUR_UNITS)],
         "sampler_age_s": age_of(APP / "health" / "samples.jsonl", now),
         "prune_age_s": prune_age,
+        "uncounted": uncounted,
+        "cache_headroom_gb": headroom,
         "backup_age_s": age_of(APP / "backups" / "LAST_OK", now),
     }
 
@@ -256,6 +299,7 @@ TITLES = {
     "memory": "memory is low", "units": "a job or service failed",
     "sampler": "the health sampler stopped", "page-cache": "the page-cache cap stopped",
     "backup": "the nightly backup is late",
+    "page-cache-blind": "the page-cache cap can't see some pages",
 }
 
 
@@ -308,10 +352,21 @@ def compose(mail: list[tuple[str, str, str]], snap: dict, rate: float | None,
         lines.append(f"{word}: {TITLES.get(key, key)}. {reason}.")
     if actions:
         lines += ["", "Done automatically:"] + [f"- {a}." for a in actions]
-    trend = f", changing {rate:+.1f} GB an hour" if rate is not None else ""
+    # rate is GB an hour the disk is LOSING; say it in that direction.
+    if rate is None:
+        trend = ""
+    elif rate >= 0:
+        trend = f", falling {rate:.1f} GB an hour"
+    else:
+        trend = f", rising {-rate:.1f} GB an hour"
     lines += ["", f"Disk: {snap['disk_free_gb']:.1f} GB free{trend}. "
-                  f"Memory: {snap['mem_available_mb']} MB available, {snap['swap_used_mb']} MB swap.",
-              "This alarm runs every 5 minutes on the server (permtracker-alarm); it emails again "
+                  f"Memory: {snap['mem_available_mb']} MB available, {snap['swap_used_mb']} MB swap."]
+    headroom = snap.get("cache_headroom_gb")
+    if headroom is not None and rate is not None and rate > 0 and not snap.get("uncounted"):
+        floor = snap["disk_free_gb"] - headroom
+        lines.append(f"The page caches may grow {headroom:.1f} GB more before their cap stops them, "
+                     f"which would leave about {floor:.0f} GB free.")
+    lines += ["This alarm runs every 5 minutes on the server (permtracker-alarm); it emails again "
               "every 6 hours while something lasts, and once when it clears."]
     return subject, "\n".join(lines)
 
@@ -331,17 +386,26 @@ def main() -> int:
     on = evaluate(snap, rate)
     actions = heal(on)
     mail, planned = plan(on, state, now)
+    undelivered = False
     if not mail:
         state = planned
-    elif under_cap(state, now) and send(*compose(mail, snap, rate, actions, now)):
-        state = count_email(planned, now)
-    # else: nothing is marked sent, so the next run (5 minutes) tries again
+    elif under_cap(state, now):
+        if send(*compose(mail, snap, rate, actions, now)):
+            state = count_email(planned, now)
+        else:
+            # Nothing is marked sent, so the next run (5 minutes) tries again,
+            # and this run exits 1: a missing key or a refusal had only printed
+            # to the journal, so the unit never showed as failed and nothing
+            # noticed that the last-line alarm couldn't email anyone.
+            undelivered = True
+    # else: over the day's cap; nothing is marked sent, which is the cap working
     if not DRY_RUN:
         STATE.write_text(json.dumps(state))
     print(f"free {snap['disk_free_gb']:.1f} GB, rate "
           f"{'n/a' if rate is None else f'{rate:+.2f} GB/h'}, alarms {sorted(on) or 'none'}"
-          + (f", emailed {[(k, kind) for k, kind, _ in mail]}" if mail else ""))
-    return 0
+          + (f", emailed {[(k, kind) for k, kind, _ in mail]}" if mail and not undelivered else "")
+          + (", an email was due and could NOT be sent" if undelivered else ""))
+    return 1 if undelivered else 0
 
 
 if __name__ == "__main__":

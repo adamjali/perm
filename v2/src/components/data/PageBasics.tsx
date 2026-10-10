@@ -135,7 +135,7 @@ export const BASICS: Record<string, BasicsEntry[]> = {
       a: (
         <>
           A case DOL has received and not yet decided, counted from the
-          per-case status feed PERM Tracker reads from DOL twice a day. The
+          per-case status feed PERM Tracker reads from DOL at least twice a day. The
           front of the queue - the filing month DOL is working now - is on the{" "}
           <Link href="/perm-processing-times" className={link}>
             processing times page

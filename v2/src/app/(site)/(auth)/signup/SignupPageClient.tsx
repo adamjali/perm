@@ -51,7 +51,6 @@ export function SignupPageClient() {
   const { signIn } = useAuthActions();
   const router = useRouter();
   const recordMyLogin = useMutation(api.users.recordMyLogin);
-  const checkRateLimit = useMutation(api.authRateLimit.checkAuthRateLimit);
   const verifyTurnstile = useAction(api.turnstile.verifyTurnstileToken);
 
   const [step, setStep] = useState<SignupStep>("credentials");
@@ -162,24 +161,6 @@ export function SignupPageClient() {
     [fieldConfig, reportIfNewInvalid],
   );
 
-  const enforceRateLimit = useCallback(
-    async (emailValue: string, action: "signup" | "otp_verify") => {
-      try {
-        const result = await checkRateLimit({ email: emailValue, action });
-        if (!result.allowed) {
-          toast.error(result.message || "Too many attempts. Please wait and try again.");
-          return false;
-        }
-        return true;
-      } catch (error) {
-        // Fail open for availability, but log for observability
-        captureError(error, { operation: "enforceRateLimit" });
-        return true;
-      }
-    },
-    [checkRateLimit],
-  );
-
   const handleCredentialsSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     authBreadcrumb("signup_submit_attempt");
@@ -198,12 +179,6 @@ export function SignupPageClient() {
     setIsLoading(true);
 
     try {
-      // Pre-flight rate limit check
-      if (!(await enforceRateLimit(email, "signup"))) {
-        setIsLoading(false);
-        return;
-      }
-
       // Pre-flight Turnstile verification — must pass before signIn.
       // We already know turnstileToken is non-null here (firstMissing guarded it).
       let turnstilePass: string | undefined;
@@ -313,11 +288,6 @@ export function SignupPageClient() {
 
     try {
       const formData = new FormData(e.currentTarget);
-
-      if (!(await enforceRateLimit(verificationEmail, "otp_verify"))) {
-        setIsLoading(false);
-        return;
-      }
 
       await signIn("password", formData);
 

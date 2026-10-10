@@ -72,12 +72,17 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
 
     const result = await unifiedSearch(plan.args);
+    // An answer missing a part of the record that failed to read isn't kept:
+    // the next request should try that part again.
+    const cache = result.unread.length > 0
+      ? "no-store"
+      : "public, s-maxage=900, stale-while-revalidate=3600";
     if (plan.csv) {
       return new NextResponse(casesToCsv(result.rows), {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
           "Content-Disposition": `attachment; filename="permtracker-case-search.csv"`,
-          "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+          "Cache-Control": cache,
         },
       });
     }
@@ -91,7 +96,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       {
         // The corpus changes twice a day. A short shared cache absorbs the
         // repeat of an identical search without letting a day-old answer stand.
-        headers: { "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600" },
+        headers: { "Cache-Control": cache },
       },
     );
   } catch (err) {

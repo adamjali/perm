@@ -412,6 +412,21 @@ describe("unifiedSearch", () => {
     expect(rows.map((r) => r.caseNumber)).toEqual(["G-100-25010-000001"]);
   });
 
+  it("names the part of the record it couldn't read, so a failed read isn't taken for no match", async () => {
+    readFlagLive.mockRejectedValue(new Error("turso query deadline"));
+    readPermPublished.mockResolvedValue(slice([permPub("G-100-25010-000001")]));
+    const { unread } = await unifiedSearch({ lead: employerLead });
+    expect(unread).toEqual(expect.arrayContaining(["live wage requests", "live H-1B LCAs"]));
+    expect(unread).not.toContain("published PERM cases");
+  });
+
+  it("throws when no part of the record could be read, instead of answering 'nothing matched'", async () => {
+    for (const fn of [readPermPublished, readPermLive, readFlagLive, readFlagPublished]) {
+      fn.mockRejectedValue(new Error("database is locked"));
+    }
+    await expect(unifiedSearch({ lead: employerLead })).rejects.toThrow(/no source could be read/);
+  });
+
   it("reports `capped` when a source returned a full page", async () => {
     readFlagLive.mockResolvedValue(
       slice(
@@ -474,6 +489,16 @@ describe("unifiedSearch with a case number", () => {
     });
     expect(rows[0]).toMatchObject({ program: "pwd", half: "live" });
     expect(counts).toEqual({ perm: 0, pwd: 1, lca: 0, seasonal: 0 });
+  });
+
+  it("throws when both halves of a case number's tables failed to read", async () => {
+    lookupUnifiedCase.mockResolvedValue({
+      program: "perm", permPublished: null, permLive: null, flagPublished: null, flagLive: null,
+      unread: ["published", "live"], asked: 2,
+    });
+    await expect(unifiedSearch({ lead: { kind: "case", value: "G-100-25010-000001" } })).rejects.toThrow(
+      /no source could be read/,
+    );
   });
 
   it("returns nothing rather than erroring when we do not hold the case", async () => {

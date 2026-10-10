@@ -18,7 +18,8 @@ run-name: FLAG disclosure ingest${{ inputs.program && format(' ({0})', inputs.pr
 # row count, and a run that sees the same hash with the rows present skips the
 # write and re-stamps freshness. Dispatch with `force` to override that.
 #
-# Manual run, from a home connection (www.dol.gov 403s some addresses):
+# Dispatch this workflow: GitHub's runners are answered by www.dol.gov, which
+# has refused this laptop and the server on some days. By hand, if it answers:
 #   python3 v2/scripts/ingest_flag_disclosure.py --program pw
 #   python3 v2/scripts/ingest_flag_disclosure.py --program lca
 
@@ -269,4 +270,4 @@ jobs:
           fi
           curl -fsS -X POST https://permtracker.app/api/revalidate-disclosure \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
-            || echo "revalidation call failed"
+            || { echo "::error::revalidation call failed: the pages keep the previous quarter until their window"; exit 1; }

@@ -74,7 +74,7 @@ import {
   verifyUnsubscribeToken,
 } from "./lib/unsubscribeToken";
 import { recordError } from "./lib/errorRecording";
-import { dropQueued } from "./lib/alertOutboxStore";
+import { dropQueued, dropRetries } from "./lib/alertOutboxStore";
 
 /**
  * Render the React template, or fall back to text only.
@@ -102,26 +102,28 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
-import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
+import {
+  QUEUED_LINK_REPLY,
+  admitConfirmation,
+  confirmationWouldWait,
+  queueConfirmation,
+  replayArgs,
+} from "./confirmationQueue";
 import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
+import { isPlausibleEmail } from "./lib/emailShape";
 
 const log = createLogger("EmailPrefs");
 
-
 /**
- * Global daily budget for preference-link emails. Part of the documented
- * Resend 100/day arithmetic in convex/caseAlerts.ts - every list-mail budget
- * is enumerated there and the total leaves 25/day for auth mail.
+ * Preference-link requests per connection per hour. The daily pool is
+ * BUDGETS.prefsLink (convex/lib/alertBudgets.ts, held to the ledger in
+ * convex/caseAlerts.ts).
  */
 const PREFS_IP_LIMIT = { limit: 30, windowMs: MS_PER_HOUR };
 const PREFS_COOLDOWN_MS = 10 * MS_PER_MINUTE;
 
 const NEUTRAL_REPLY =
   "If we send anything to that address, a preferences link is on its way.";
-
-function isPlausibleEmail(email: string): boolean {
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-}
 
 function unsubscribeSecret(): string {
   const secret = process.env.UNSUBSCRIBE_SECRET;
@@ -262,6 +264,18 @@ export const requestLink = internalMutation({
         return { ok: true, message: NEUTRAL_REPLY };
       }
 
+      // An address we hold nothing for gets no email and charges no pool: a
+      // link would only show an empty page, and sending it let a script mail
+      // any address under our name. The reply is the one a held address gets
+      // at this moment, so it still says nothing about the address. (The one
+      // gap: a queue holding all 1,000 waiting requests refuses a held
+      // address and not this one.)
+      if (!(await holdsAnything(ctx, email))) {
+        return (await confirmationWouldWait(ctx, "prefsLink"))
+          ? { ok: true, message: QUEUED_LINK_REPLY, queued: true }
+          : { ok: true, message: NEUTRAL_REPLY };
+      }
+
       // A full pool queues the request (convex/confirmationQueue.ts).
       const budget = await admitConfirmation(ctx, "prefsLink");
       if (!budget.allowed) {
@@ -379,6 +393,18 @@ const stateValidator = v.object({
   /** Null when no account exists for the address. */
   weeklyDigest: v.union(v.boolean(), v.null()),
 });
+
+/** Does any alert, digest, news or account row exist for this address? */
+async function holdsAnything(ctx: QueryCtx, email: string): Promise<boolean> {
+  for (const table of ["dolQueueAlerts", "caseStatusAlerts", "bulletinAlerts", "employerAlerts"] as const) {
+    if (await ctx.db.query(table).withIndex("by_email", (q) => q.eq("email", email)).first()) return true;
+  }
+  for (const table of ["newsSubscribers", "newsletterSubscribers"] as const) {
+    if (await ctx.db.query(table).withIndex("by_email", (q) => q.eq("email", email)).first()) return true;
+  }
+  const user = await getUserByEmail(ctx, email);
+  return user !== null && !user.deletedAt;
+}
 
 async function stateForEmail(ctx: QueryCtx, email: string) {
   const queueRows = await ctx.db
@@ -567,10 +593,12 @@ async function disableForEmail(
     if (row && row.unsubscribedAt === undefined) {
       await ctx.db.patch(row._id, { unsubscribedAt: now });
     }
+    if (kind === "newsletter") await dropRetries(ctx, email, (r) => r.kind === "digest");
     return;
   }
   if (kind === "digest") {
     await ctx.runMutation(internal.notifications.unsubscribeWeeklyByEmail, { email });
+    await dropRetries(ctx, email, (r) => r.kind === "notification:sendWeeklyDigestEmail");
     return;
   }
   if (kind === "alerts") {

@@ -201,11 +201,17 @@ export function isPrivateAddress(ip: string): boolean {
   if (v4) return privateIpv4(v4);
   const g = ipv6Groups(ip);
   if (!g) return true;
-  const [g0 = 0, g1 = 0, , , , g5 = 0, g6 = 0, g7 = 0] = g;
+  const [g0 = 0, g1 = 0, g2 = 0, , g4 = 0, g5 = 0, g6 = 0, g7 = 0] = g;
   const embedded = [g6 >> 8, g6 & 0xff, g7 >> 8, g7 & 0xff];
   if (g.slice(0, 7).every((x) => x === 0)) return true; // :: and ::1 (and the old IPv4-compatible form)
   if (g.slice(0, 5).every((x) => x === 0) && g5 === 0xffff) return privateIpv4(embedded); // ::ffff:a.b.c.d
+  if (g.slice(0, 4).every((x) => x === 0) && g4 === 0xffff && g5 === 0) return privateIpv4(embedded); // ::ffff:0:a.b.c.d (IPv4-translated)
   if (g0 === 0x64 && g1 === 0xff9b && g.slice(2, 6).every((x) => x === 0)) return privateIpv4(embedded); // NAT64
+  // 6to4 (2002::/16) carries an IPv4 address in its second and third groups:
+  // 2002:a9fe:a9fe::1 reaches 169.254.169.254, the cloud metadata address.
+  if (g0 === 0x2002) return privateIpv4([g1 >> 8, g1 & 0xff, g2 >> 8, g2 & 0xff]);
+  // Teredo (2001:0::/32) hides its IPv4 address; no webhook host needs it.
+  if (g0 === 0x2001 && g1 === 0) return true;
   if ((g0 & 0xfe00) === 0xfc00) return true; // unique local
   if ((g0 & 0xffc0) === 0xfe80) return true; // link-local
   if ((g0 & 0xff00) === 0xff00) return true; // multicast
@@ -233,6 +239,7 @@ export const RETRY_WINDOW_MS = 24 * HOUR;
 export function nextAttemptAt(firstAttemptAt: number, attempts: number, now: number): number | null {
   const end = firstAttemptAt + RETRY_WINDOW_MS;
   if (now >= end) return null;
-  const delay = RETRY_DELAYS_MS[Math.min(attempts - 1, RETRY_DELAYS_MS.length - 1)]!;
+  // Clamped at both ends: 0 attempts read index -1, and the `!` hid the NaN.
+  const delay = RETRY_DELAYS_MS[Math.max(0, Math.min(attempts - 1, RETRY_DELAYS_MS.length - 1))]!;
   return Math.min(now + delay, end);
 }

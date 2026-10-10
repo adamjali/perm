@@ -143,16 +143,28 @@ export async function readCase(input: string): Promise<ReadResult<CaseRecord>> {
 
   const program = FLAG_PROGRAMS[ref.program];
   const isSeasonal = ref.program === "seasonal";
+  // The published halves may fail on their own and the answer still stands on
+  // what was read, but a failure is never a 404: with nothing found and a read
+  // failed, this throws (a 500 the caller isn't charged for).
+  const failed: unknown[] = [];
+  const soft = <T,>(p: Promise<T>): Promise<T | null> =>
+    p.catch((err: unknown) => {
+      failed.push(err);
+      return null;
+    });
   const [row, disc, extra, posting] = await Promise.all([
     program.lookup(ref.caseNumber, { discover: false }),
-    program.lookupDisclosed(ref.caseNumber).catch(() => null),
+    soft(program.lookupDisclosed(ref.caseNumber)),
     // The seasonal record adds what the shared reader doesn't select (the
     // workers, the work period, the county) and covers the H-2B and CW-1 wage
     // requests, which DOL publishes in its prevailing wage file instead.
-    isSeasonal ? lookupSeasonalRecord(ref.caseNumber).catch(() => null) : Promise.resolve(null),
-    isSeasonal ? lookupSeasonalPosting(ref.caseNumber).catch(() => null) : Promise.resolve(null),
+    isSeasonal ? soft(lookupSeasonalRecord(ref.caseNumber)) : Promise.resolve(null),
+    isSeasonal ? soft(lookupSeasonalPosting(ref.caseNumber)) : Promise.resolve(null),
   ]);
-  if (!row && !disc && !extra && !posting) return notFound;
+  if (!row && !disc && !extra && !posting) {
+    if (failed.length > 0) throw failed[0];
+    return notFound;
+  }
   return {
     ok: true,
     data: {
@@ -440,7 +452,10 @@ export async function readEstimate(args: { caseNumber?: string | null; filed?: s
     if (!r || (!r.live && !r.decided)) {
       return { ok: false, status: 404, code: "not_found", message: "No record of this case yet, so no estimate. Try again tomorrow, or pass filed=YYYY-MM-DD.", url };
     }
-    if ((r.live ? r.live.isFinal : true) || r.decided) {
+    // DOL's live status decides when there is one: an appealed case is in the
+    // published file as decided and pending again live, and the case page
+    // gives it the no-date answer, so this must too.
+    if (r.live ? r.live.isFinal : Boolean(r.decided)) {
       return {
         ok: true,
         data: { kind: "decided", status: r.live?.status ?? r.decided?.status ?? null, decisionDate: r.decided?.decisionDate ?? null },

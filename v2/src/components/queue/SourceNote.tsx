@@ -5,7 +5,8 @@
  * numbers to an unauthenticated endpoint and answers with the statuses,
  * fifty at a time; the endpoint's PATH is named `recaptcha`, which is not
  * evidence of anything. `scripts/ingest_case_status_direct.py` sweeps every
- * case daily and the undecided ones twice a day.
+ * case daily and the undecided ones at least twice a day (three times on
+ * weekdays).
  *
  * WHAT IS STILL TRUE AND STILL WORTH SAYING: this is a snapshot, not a live
  * reading. Between sweeps a case can be decided and still read as pending
@@ -42,8 +43,8 @@ export function SourceNote({ className }: { className?: string }) {
           <a href={DOL_CASE_STATUS_URL} rel="noopener">
             DOL&rsquo;s own case-status search
           </a>
-          , in batches, every 12 hours. That page is also the authority for any
-          single case.
+          , in batches: every case daily, and the undecided ones at least twice
+          a day. That page is also the authority for any single case.
         </p>
       </FinePrint>
     </div>

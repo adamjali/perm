@@ -61,10 +61,51 @@ with tempfile.TemporaryDirectory() as tmp:
     sizes = [s for _u, s, _st in prune.groups(str(rel))]
     check("a page's size includes its segments", sizes == [4000, 4000], str(sizes))
 
-    for _u, _s, stem in prune.groups(str(rel)):
-        prune.remove(stem)
+    check("the tree size counts every file under .next/server",
+          prune.tree_size(str(rel / ".next" / "server")) == 8000, str(prune.tree_size(str(rel / ".next" / "server"))))
+    freed = [prune.remove(stem) for _u, _s, stem in prune.groups(str(rel))]
     left = [p for p in rel.rglob("*") if p.is_file() and p.name != "server.js"]
     check("removing frees both folders", left == [], str(left))
+    check("remove reports the bytes it actually freed", freed == [4000, 4000], str(freed))
+    check("a page that's already gone frees nothing", prune.remove(str(rel / ".next/server/app/perm-queue")) == 0)
+
+# The whole run: roles from the slots, least recently used out first, the
+# budget per role, the report on disk.
+import json as _json, os as _os, time as _time
+with tempfile.TemporaryDirectory() as tmp:
+    app = pathlib.Path(tmp) / "app"
+    for rel in ("a", "a.w2", "b", "c"):
+        r = app / "releases" / rel
+        (r / ".next" / "server").mkdir(parents=True)
+        (r / "server.js").write_text("")
+        for i in range(5):
+            stem = r / f".next/server/route-cache/APP_PAGE/h{i}/$/p{i}"
+            page(stem)
+            t = _time.time() - 1000 + i * 100       # p4 newest
+            for ext in (".html", ".meta"):
+                _os.utime(str(stem) + ext, (t, t))
+    (app / "slots").mkdir()
+    for slot, rel in (("blue", "a"), ("blue2", "a.w2"), ("green", "b")):
+        (app / "slots" / slot).symlink_to(app / "releases" / rel)
+    (app / "active").write_text("blue")
+    saved = (prune.APP, prune.HEALTH, prune.BUDGET, prune.TIGHT, prune.FREE_FLOOR)
+    try:
+        prune.APP, prune.HEALTH = str(app), str(pathlib.Path(tmp) / "prune.json")
+        prune.BUDGET = {"live": 12_000, "standby": 4_000, "old": 0}   # 3 pages, 1 page, none
+        prune.FREE_FLOOR = 0
+        prune.main()
+        report = {r["release"]: r for r in _json.loads(pathlib.Path(prune.HEALTH).read_text())["releases"]}
+        check("both live folders keep their 3 newest pages", report["a"]["pages"] == 3 and report["a.w2"]["pages"] == 3,
+              str({k: v["pages"] for k, v in report.items()}))
+        check("the standby slot keeps 1, an old release none", report["b"]["pages"] == 1 and report["c"]["pages"] == 0,
+              str({k: v["pages"] for k, v in report.items()}))
+        check("roles come from the slots", (report["a"]["role"], report["b"]["role"], report["c"]["role"]) == ("live", "standby", "old"))
+        kept = sorted(pp.name for pp in (app / "releases" / "a").rglob("*.meta"))
+        check("the least recently used went first", kept == ["p2.meta", "p3.meta", "p4.meta"], str(kept))
+        check("the report records what Next really holds beside what was counted",
+              all("serverGB" in r for r in report.values()))
+    finally:
+        prune.APP, prune.HEALTH, prune.BUDGET, prune.TIGHT, prune.FREE_FLOOR = saved
 
 # Every slot runs two copies, each in its own folder with the slot's role, so
 # a folder's budget is half the slot's: two live folders must fit 60 GB.

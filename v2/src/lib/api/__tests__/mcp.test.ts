@@ -92,6 +92,18 @@ describe("the MCP server at /mcp", () => {
     expect(takeMinute).toHaveBeenCalledWith("KEY00001", API_PLANS.free.perMinute);
   });
 
+  it("refuses a sandbox key's tool call, reading and counting nothing", async () => {
+    authenticate.mockResolvedValue({
+      ok: true,
+      caller: { kind: "key", keyId: "TEST0001", account: "acct_a", plan: API_PLANS.plus, accountPlan: "free", paywall: false, sandbox: true },
+    });
+    const { body } = await rpc("tools/call", { name: "queue_status", arguments: {} }, { authorization: "Bearer x" });
+    expect(body.result.isError).toBe(true);
+    expect(body.result.content[0].text).toContain("Sandbox keys");
+    expect(readQueue).not.toHaveBeenCalled();
+    expect(takeMinute).not.toHaveBeenCalled();
+  });
+
   it("returns a not-found as an answer, not an error", async () => {
     readCase.mockResolvedValue({ ok: false, status: 404, code: "not_found", message: "No record of this case yet.", url: "u" });
     const { body } = await rpc("tools/call", { name: "lookup_case", arguments: { case_number: "G-100-26045-123456" } });

@@ -22,7 +22,7 @@
  * Calls are counted in the public-data database (src/lib/api/usage.ts), keyed
  * by the account's random id and the key's public id, never by user.
  */
-import { ConvexError, v } from "convex/values";
+import { ConvexError, v, type Infer } from "convex/values";
 
 import {
   action,
@@ -45,7 +45,7 @@ import {
   parseApiKey,
   randomBase62,
 } from "./lib/apiKeyFormat";
-import { DEFAULT_SCOPES, entitlement, normaliseScopes } from "./lib/apiPlans";
+import { DEFAULT_SCOPES, entitlement, normaliseScopes, type ApiPlan } from "./lib/apiPlans";
 import { SITE_URL } from "./lib/links";
 import { createLogger } from "./lib/logging";
 import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
@@ -94,10 +94,21 @@ const planValidator = v.object({
   perDay: v.number(),
   perMonth: v.number(),
   exportRows: v.number(),
+  exportRowsPerDay: v.number(),
   liveLookupsPerDay: v.number(),
   webhookEndpoints: v.number(),
   webhookWatches: v.number(),
 });
+// The validator is a second copy of ApiPlan (convex/lib/apiPlans.ts). A field
+// added to one alone would typecheck, then fail Convex's return check for
+// every caller of `mine`; this fails the typecheck instead.
+type PlanMatches = ApiPlan extends Infer<typeof planValidator>
+  ? Infer<typeof planValidator> extends ApiPlan
+    ? true
+    : never
+  : never;
+const _planMatches: PlanMatches = true;
+void _planMatches;
 const failure = v.object({ ok: v.literal(false), message: v.string() });
 const keyRow = v.object({
   keyId: v.string(),

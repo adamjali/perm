@@ -47,6 +47,28 @@ describe("operational log retention", () => {
   });
 });
 
+describe("unconfirmed case-alert sign-ups", () => {
+  setupSchedulerTests();
+
+  it("drops a sign-up nobody confirmed past the horizon, and keeps confirmed and recent ones", async () => {
+    const t = createTestContext();
+    const { UNCONFIRMED_CASE_ALERT_DAYS } = await import("../retention");
+    await t.run(async (ctx) => {
+      const base = { caseNumber: "G-100-25324-425560", createdAt: Date.now() };
+      await ctx.db.insert("caseStatusAlerts", { ...base, email: "never@example.com" });
+      await ctx.db.insert("caseStatusAlerts", { ...base, email: "yes@example.com", confirmedAt: Date.now() });
+    });
+    await t.mutation(internal.retention.pruneOperationalLogs, { now: Date.now() + 10 * DAY });
+    expect(await t.run(async (ctx) => (await ctx.db.query("caseStatusAlerts").collect()).length)).toBe(2);
+    const res = await t.mutation(internal.retention.pruneOperationalLogs, {
+      now: Date.now() + (UNCONFIRMED_CASE_ALERT_DAYS + 1) * DAY,
+    });
+    expect(res.unconfirmedCaseAlerts).toBe(1);
+    const left = await t.run(async (ctx) => (await ctx.db.query("caseStatusAlerts").collect()).map((r) => r.email));
+    expect(left).toEqual(["yes@example.com"]);
+  });
+});
+
 describe("tool cache cleanup", () => {
   setupSchedulerTests();
 

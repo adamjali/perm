@@ -51,7 +51,7 @@ export function EmployerAlertConfirm({
         You asked to follow this employer&rsquo;s PERM cases. Confirm and
         we&rsquo;ll email you when DOL puts five or more of them on hold or
         takes them off it in a day, or decides a batch of them well above its
-        usual pace. Never more than one email a day.
+        usual pace. Employer updates come at most once a day.
       </Text>
 
       {includesNews ? (

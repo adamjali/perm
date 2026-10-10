@@ -82,14 +82,14 @@ export function embedProgramOf(input: string): { program: EmbedProgram; caseNumb
  * unreadable counter as spent). Shared with the API's live-lookup ceiling
  * (src/lib/api/live.ts).
  */
-export async function bumpDocCount(key: string, field: string, now: Date): Promise<number> {
+export async function bumpDocCount(key: string, field: string, now: Date, by = 1): Promise<number> {
   const path = `$."${field}"`;
   await exec(
-    `INSERT INTO perm_docs (key, json, computed_at) VALUES (?, json_set('{}', ?, 1), ?)
+    `INSERT INTO perm_docs (key, json, computed_at) VALUES (?, json_set('{}', ?, ?), ?)
      ON CONFLICT(key) DO UPDATE SET
-       json = json_set(json, ?, COALESCE(json_extract(json, ?), 0) + 1),
+       json = json_set(json, ?, COALESCE(json_extract(json, ?), 0) + ?),
        computed_at = excluded.computed_at`,
-    [key, path, now.getTime(), path, path],
+    [key, path, by, now.getTime(), path, path, by],
   );
   const row = await one<{ n: number | string | null }>(
     `SELECT json_extract(json, ?) AS n FROM perm_docs WHERE key = ?`,

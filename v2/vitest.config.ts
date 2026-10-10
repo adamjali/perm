@@ -46,6 +46,15 @@ const sharedConfig = {
 // module registry (the cause of historical CI-only flakiness under shuffle).
 // They run in the "unit-isolated" project; the "unit" project excludes them.
 const ISOLATED_UNIT_FILES = [
+  // Added 2026-10-10: each mocks the database client (or Convex and Convex
+  // Auth, for the sign-in gate) per test.
+  "src/lib/turso/__tests__/warnForSlug.test.ts",
+  "src/lib/turso/__tests__/tableColumns.test.ts",
+  "src/lib/turso/__tests__/processingTimesHydrate.test.ts",
+  "src/lib/turso/__tests__/storedMs.test.ts",
+  "src/lib/turso/__tests__/debarments.test.ts",
+  "src/lib/turso/__tests__/reference.test.ts",
+  "src/lib/auth/__tests__/authGate.test.ts",
   // Added 2026-10-02. The API layer's tests mock the database client, the
   // key check and the reads; isolated so no neighbour inherits those mocks.
   "src/lib/api/__tests__/usage.test.ts",

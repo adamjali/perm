@@ -166,4 +166,4 @@ jobs:
           fi
           curl -fsS -X POST https://permtracker.app/api/revalidate-disclosure \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
-            || echo "revalidation call failed"
+            || { echo "::error::revalidation call failed: the pages keep the previous quarter until their window"; exit 1; }

@@ -1,10 +1,14 @@
 name: Case status (direct from DOL)
+# The mode in the title: the cron dispatcher's duplicate guard compares it
+# (runTitle in v2/src/app/api/cron/dispatch/jobs.ts).
+run-name: Case status (direct from DOL), ${{ inputs.mode || 'pending' }}
 
 # Per-case PERM status, straight from flag.dol.gov's open batch endpoint
 # (scripts/ingest_case_status_direct.py has the details).
 #
-#   full      daily 04:10 ET  every case, plus the discovery walk and the gap sweep
-#   pending   daily 15:40 ET  the undecided cases, plus the discovery walk
+#   full      daily 04:10 ET     every case, plus the discovery walk and the gap sweep
+#   pending   weekdays 10:40 ET  the undecided cases, plus the discovery walk
+#   pending   daily 15:40 ET     the same, the afternoon pass
 #   discover  dispatch only   the serial walk on its own, to recover a gap
 #
 # The full pass is daily because "final" is not final: a CERTIFIED case
@@ -46,10 +50,14 @@ concurrency:
 jobs:
   sweep:
     runs-on: ubuntu-24.04
-    # Above the main step's `timeout 105m`, the gap sweep's 25m, the published
-    # sync's 15m, the nightly backtests' 20m + 10m and the Monday backtests' 10m + 5m. The step-level
-    # `timeout` commands are what catch a hang (see below).
-    timeout-minutes: 200
+    # Above the sum of every step's own bound on the longest day (a Monday full
+    # pass): the main step's 105m; the builders inside it (employer map 30m,
+    # sponsor index 20m, LCA cities 20m, wage sources 15m, the live rebuild
+    # 45m); the gap sweep's 25m; the published sync's 15m; the straggler
+    # rates' 5m; the nightly backtests' 20m + 10m and the Monday ones' 10m +
+    # 5m. About 325m. The step-level `timeout` commands are what catch a hang
+    # (see below); this is the backstop under GitHub's 360.
+    timeout-minutes: 350
     env:
       TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
       TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
@@ -85,8 +93,8 @@ jobs:
           fi
           # The searchable live remainder rebuilds right after, so the case
           # search and the employer pages see today's discoveries. A failure
-          # here leaves the band a day staler; it must not fail the sweep.
-          python3 scripts/build_entity_detail.py --live-recent-only || echo "build_entity_detail.py" >> "$RUNNER_TEMP/pt-failed-steps"
+          # here doesn't stop the steps after it; it turns the run red at the end.
+          timeout 45m python3 scripts/build_entity_detail.py --live-recent-only || echo "build_entity_detail.py" >> "$RUNNER_TEMP/pt-failed-steps"
           # Which employer page every spelling in every program belongs to
           # (employer_page_map), and a page for every employer with no PERM
           # record (employer_other_index). It runs after the live-only rebuild
@@ -119,7 +127,8 @@ jobs:
       # Every case DOL's published files hold goes into the live tables where
       # it can still change (every new-form PERM case; wage requests and LCAs
       # inside their re-check windows), confirmed with DOL first. A night with
-      # nothing to sync asks nothing. A failure is recorded, never fatal.
+      # nothing to sync asks nothing. A failure doesn't stop the steps after it;
+      # it turns the run red at the end.
       - name: Sync published cases into the live tables
         if: env.MODE == 'full'
         working-directory: v2
@@ -174,7 +183,7 @@ jobs:
       # Employer pages cache for 30 days, right for their quarterly figures and
       # too long for the live band, so the pages whose live rows moved are
       # expired by path. The rebuild above writes the list, busiest first. A
-      # page staying a day staler is not a reason to fail the sweep.
+      # failed call doesn't stop the steps after it; it turns the run red at the end.
       - name: Expire changed employer pages
         if: always()
         working-directory: v2
@@ -197,7 +206,7 @@ jobs:
           curl -fsS -X POST https://permtracker.app/api/revalidate-live-employers \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
             -H "content-type: application/json" \
-            --data @changed-employer-slugs.json || echo "revalidation call failed"
+            --data @changed-employer-slugs.json || { echo "::error::revalidation call failed (revalidate-live-employers)"; echo "revalidate-live-employers" >> "$RUNNER_TEMP/pt-failed-steps"; }
 
       # The pages that print the sweep's own figures (the daily decisions, the
       # census, the review stages) move when the record does. Fixed list, no
@@ -211,7 +220,7 @@ jobs:
             echo "REVALIDATE_SECRET not set; skipping"; exit 0
           fi
           curl -fsS -X POST https://permtracker.app/api/revalidate-sweep \
-            -H "x-revalidate-secret: $REVALIDATE_SECRET" || echo "revalidation call failed"
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" || { echo "::error::revalidation call failed (revalidate-sweep)"; echo "revalidate-sweep" >> "$RUNNER_TEMP/pt-failed-steps"; }
 
       # A cancelled or killed run leaves no other record; this one is what the
       # daily health check reads (see scripts/record_ingest_failure.py).

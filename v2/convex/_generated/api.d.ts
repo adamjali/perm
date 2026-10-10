@@ -94,6 +94,7 @@ import type * as lib_dolProcessingTimes from "../lib/dolProcessingTimes.js";
 import type * as lib_email from "../lib/email.js";
 import type * as lib_emailBlocklist from "../lib/emailBlocklist.js";
 import type * as lib_emailLimits from "../lib/emailLimits.js";
+import type * as lib_emailShape from "../lib/emailShape.js";
 import type * as lib_errorRecording from "../lib/errorRecording.js";
 import type * as lib_expiringToken from "../lib/expiringToken.js";
 import type * as lib_firmClaimPages from "../lib/firmClaimPages.js";
@@ -161,6 +162,7 @@ import type * as lib_perm_validators_validateCase from "../lib/perm/validators/v
 import type * as lib_posthog from "../lib/posthog.js";
 import type * as lib_prefsLink from "../lib/prefsLink.js";
 import type * as lib_publicMirror from "../lib/publicMirror.js";
+import type * as lib_pushHosts from "../lib/pushHosts.js";
 import type * as lib_rag_appGuideKnowledge from "../lib/rag/appGuideKnowledge.js";
 import type * as lib_rag_index from "../lib/rag/index.js";
 import type * as lib_rag_ingest from "../lib/rag/ingest.js";
@@ -169,6 +171,7 @@ import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_reminderDigest from "../lib/reminderDigest.js";
 import type * as lib_sampleCase from "../lib/sampleCase.js";
 import type * as lib_sentry from "../lib/sentry.js";
+import type * as lib_serverDoor from "../lib/serverDoor.js";
 import type * as lib_serverWatch from "../lib/serverWatch.js";
 import type * as lib_supportEmailForward from "../lib/supportEmailForward.js";
 import type * as lib_suspension from "../lib/suspension.js";
@@ -308,6 +311,7 @@ declare const fullApi: ApiFromModules<{
   "lib/email": typeof lib_email;
   "lib/emailBlocklist": typeof lib_emailBlocklist;
   "lib/emailLimits": typeof lib_emailLimits;
+  "lib/emailShape": typeof lib_emailShape;
   "lib/errorRecording": typeof lib_errorRecording;
   "lib/expiringToken": typeof lib_expiringToken;
   "lib/firmClaimPages": typeof lib_firmClaimPages;
@@ -375,6 +379,7 @@ declare const fullApi: ApiFromModules<{
   "lib/posthog": typeof lib_posthog;
   "lib/prefsLink": typeof lib_prefsLink;
   "lib/publicMirror": typeof lib_publicMirror;
+  "lib/pushHosts": typeof lib_pushHosts;
   "lib/rag/appGuideKnowledge": typeof lib_rag_appGuideKnowledge;
   "lib/rag/index": typeof lib_rag_index;
   "lib/rag/ingest": typeof lib_rag_ingest;
@@ -383,6 +388,7 @@ declare const fullApi: ApiFromModules<{
   "lib/reminderDigest": typeof lib_reminderDigest;
   "lib/sampleCase": typeof lib_sampleCase;
   "lib/sentry": typeof lib_sentry;
+  "lib/serverDoor": typeof lib_serverDoor;
   "lib/serverWatch": typeof lib_serverWatch;
   "lib/supportEmailForward": typeof lib_supportEmailForward;
   "lib/suspension": typeof lib_suspension;

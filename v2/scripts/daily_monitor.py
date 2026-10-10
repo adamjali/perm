@@ -349,6 +349,12 @@ def health_lines(out: str) -> list[str]:
         elif s.startswith(("FAIL", "OUR INGEST HAS STOPPED", "THE SOURCE HAS BEEN SILENT",
                            "RUNS BROKEN")) or " BROKEN" in s[:40]:
             keep.append(s)
+        # The verdicts the other checks print: a stalled frontier, a missing,
+        # empty or stale doc, a dry walk, a sweep that probed nothing. Without
+        # them the email said only "the health check failed".
+        elif any(w in s for w in (" STALLED", " MISSING", " EMPTY", " STALE", " DRY", " ZERO")) \
+                or s.startswith(("STALLED", "STALE", "Discovery has not")):
+            keep.append(s)
     return keep[:12]
 
 
@@ -855,9 +861,15 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
     # Every timer the repo defines must be enabled on the server: the backups,
     # the page-cache cap and the cron clock are all timers, and a disabled one
     # just stops, with nothing else to say so.
-    missing_timers = sorted(set(repo_timers()) - set(doc.get("timers") or repo_timers()))
-    if missing_timers:
-        fails.append("timers not enabled on the server: " + ", ".join(missing_timers))
+    # An empty or missing list is the server failing to list them, which
+    # used to read as every timer enabled.
+    listed = doc.get("timers")
+    if not listed:
+        fails.append("the server's report lists no timers, so whether they run can't be read")
+    else:
+        missing_timers = sorted(set(repo_timers()) - set(listed))
+        if missing_timers:
+            fails.append("timers not enabled on the server: " + ", ".join(missing_timers))
     pc = doc.get("pageCache")
     if not pc:
         warns.append("the page-cache cap has no result on record (permtracker-prune)")

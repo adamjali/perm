@@ -53,11 +53,12 @@ import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { PermPulse } from "@/components/pulse/PermPulse";
 import { SITE_URL } from "@/lib/constants/site";
 
-// One live DOL figure on the page: hourly ISR, same as the data pages.
+// One live DOL figure on the page: a day's window, expired on demand.
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178
 // entity pages. A day bounds staleness far below the data's own
-// cadence. The ingest should also revalidate on demand.
+// cadence, and the ingests expire it on demand when its data moves
+// (the /api/revalidate-* routes).
 export const revalidate = 86400;
 
 export const metadata: Metadata = withSocialCard({

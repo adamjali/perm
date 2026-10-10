@@ -18,6 +18,7 @@ import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import {
   LIST_CEILING,
+  PUBLIC_CEILING,
   RESEND_DAILY_CAP,
   isQuotaError,
   isRetryableSendError,
@@ -151,7 +152,8 @@ export type SendOutcome =
  * Send one email through the day's count and the retry queue. Use this for
  * every send except sign-in codes.
  *
- * 1. At the day's ceiling (85 of Resend's 100 for list mail; the full 100 for
+ * 1. At the day's ceiling (85 of Resend's 100 for list mail; 55 for
+ *    `priority: "public"`, mail a stranger can set off; the full 100 for
  *    `priority: "high"` admin mail), it doesn't try: the email waits for the
  *    next UTC day in the retry queue.
  * 2. A success records the send (and Resend's own count, when it gave one).
@@ -166,7 +168,7 @@ export async function sendOrQueue(
   kind: string,
   resend: Resend,
   params: SendEmailParams,
-  opts: { priority?: "high" } = {},
+  opts: { priority?: "high" | "public"; refs?: string[] } = {},
 ): Promise<SendOutcome> {
   const recipients = [...toRecipientArray(params.to), ...toRecipientArray(params.cc), ...toRecipientArray(params.bcc)];
   const firstTo = recipients[0] ?? "";
@@ -177,13 +179,15 @@ export async function sendOrQueue(
       payload: JSON.stringify(params),
       error: `${error.name}: ${error.message}`,
       quota,
+      ...(opts.refs?.length ? { refs: opts.refs } : {}),
     });
     return r.ok ? { queued: true } : null;
   };
 
   if (!recipients.some(isEmailBlocked)) {
     const used: number = await ctx.runQuery(internal.emailLedger.accountUsed, {});
-    const ceiling = opts.priority === "high" ? RESEND_DAILY_CAP : LIST_CEILING;
+    const ceiling =
+      opts.priority === "high" ? RESEND_DAILY_CAP : opts.priority === "public" ? PUBLIC_CEILING : LIST_CEILING;
     if (used >= ceiling) {
       const kept = await keep({ name: "daily_ceiling", message: `today's count is ${used} of ${ceiling}` }, true);
       if (kept) return kept;

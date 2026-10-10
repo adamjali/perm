@@ -79,7 +79,7 @@ import { CONFIRMATION_COOLDOWN_MS } from "./lib/alertBudgets";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { getAdminEmail, requireAdmin } from "./lib/admin";
 import { createLogger } from "./lib/logging";
-import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
+import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 import type { FirmClaimEmailKind } from "../src/emails/FirmClaimEmail";
 import {
   ROLE_MAX,
@@ -306,8 +306,16 @@ export const request = internalMutation({
     if (existing) {
       // A claim the admin rejected or revoked can be made again, but it never
       // verifies itself a second time: it goes to review whatever the domain says.
-      const held = existing.status === "rejected" || existing.status === "revoked";
-      await ctx.db.patch(existing._id, { ...fields, ...(held ? { domainReason: existing.status } : {}) });
+      // The mark is the stored reason, kept on every later request: a status
+      // test alone let the SECOND request after a rejection (status back to
+      // pending_email by then) clear it and verify by domain.
+      const mark =
+        existing.status === "rejected" || existing.status === "revoked"
+          ? existing.status
+          : existing.domainReason === "rejected" || existing.domainReason === "revoked"
+            ? existing.domainReason
+            : undefined;
+      await ctx.db.patch(existing._id, { ...fields, ...(mark ? { domainReason: mark } : {}) });
       claimId = existing._id;
     } else {
       claimId = await ctx.db.insert("firmClaims", { ...fields, slug: args.slug, email, createdAt: now });
@@ -827,7 +835,7 @@ export const requestEditLink = internalMutation({
       const budget = await admitConfirmation(ctx, "firmClaim");
       if (!budget.allowed) {
         return queueConfirmation(ctx, {
-          kind: "firm",
+          kind: "firmEdit",
           pool: "firmClaim",
           email,
           args: { ...replayArgs(args), editLink: true },
@@ -939,30 +947,51 @@ export const publishedProfile = query({
 // The page refresh
 // ============================================================================
 
+/** Waits before each retry of a refused refresh; after the last, the failure is recorded. */
+export const REFRESH_RETRY_MS = [MS_PER_MINUTE, 5 * MS_PER_MINUTE, 30 * MS_PER_MINUTE] as const;
+
 /**
  * Refresh the firm's page now rather than at the end of its 30-day window.
  * Needs REVALIDATE_SECRET on the deployment; without it the profile shows when
- * the page next regenerates, and a warning says so.
+ * the page next regenerates, and a warning says so. A refused or failed call
+ * is retried (REFRESH_RETRY_MS), then recorded with `recordError`, which
+ * emails the admin: the admin's approve, decline or take-down otherwise looked
+ * done while the page kept the old words for its 30-day window.
  */
 export const revalidateFirmPage = internalAction({
-  args: { slug: v.string() },
+  args: { slug: v.string(), attempt: v.optional(v.number()) },
   returns: v.null(),
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const key = process.env.REVALIDATE_SECRET;
     if (!key) {
       log.warn("REVALIDATE_SECRET isn't set; the firm page shows the change when it next regenerates", { slug: args.slug });
       return null;
     }
+    let failure: string | null = null;
     try {
       const res = await fetch(`${SITE_URL}/api/revalidate-firm`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-revalidate-secret": key },
         body: JSON.stringify({ slug: args.slug }),
       });
-      if (!res.ok) log.warn("firm page refresh refused", { slug: args.slug, status: res.status });
+      if (!res.ok) failure = `HTTP ${res.status}`;
     } catch (error) {
-      log.warn("firm page refresh failed", { slug: args.slug, error: error instanceof Error ? error.message : String(error) });
+      failure = error instanceof Error ? error.message : String(error);
     }
+    if (failure === null) return null;
+    const attempt = args.attempt ?? 0;
+    const wait = REFRESH_RETRY_MS[attempt];
+    if (wait !== undefined) {
+      log.warn("firm page refresh failed; trying again", { slug: args.slug, attempt, failure });
+      await ctx.scheduler.runAfter(wait, internal.firmClaims.revalidateFirmPage, { slug: args.slug, attempt: attempt + 1 });
+      return null;
+    }
+    await recordError(
+      ctx,
+      "action",
+      "firmClaims.revalidateFirmPage",
+      new Error(`The firm page /perm-attorneys/${args.slug} wasn't refreshed after ${attempt + 1} tries (${failure}); it shows the change when it next regenerates.`),
+    );
     return null;
   },
 });

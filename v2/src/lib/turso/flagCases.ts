@@ -395,8 +395,9 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     f: typeof fetch = fetch,
     now: Date = new Date(),
   ): Promise<{ row: FlagCaseRow | null; miss: DiscoveryMiss | null }> => {
-    // Every failure below is caught and NAMED in the logs; the page renders
-    // an ordinary miss, never an error, and never a silent one.
+    // Every failure below is caught and NAMED, in the logs and in the miss it
+    // returns (src/lib/dolMiss.ts), so the page says why; never an error, and
+    // never a silent one.
     try {
       if (!(await underDailyBudget(now, config.budgetPrefix))) {
         logBudgetRefusal(`${config.key}Discovery`, caseNumber, now);

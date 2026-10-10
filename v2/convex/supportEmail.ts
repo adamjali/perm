@@ -20,6 +20,8 @@ import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 import { shouldForwardInbound } from "./lib/supportEmailForward";
 import { SITE_URL } from "./lib/links";
+import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
+import { checkAndRecordRateLimit } from "./lib/rateLimit";
 
 const log = loggers.email;
 
@@ -62,6 +64,21 @@ export const storeSupportEmail = internalMutation({
       ...args,
       createdAt: Date.now(),
     });
+  },
+});
+
+/**
+ * Charge the day's forward pool for one inbound message. False past it: the
+ * message stays stored (status "received", listed on the admin page) and the
+ * refusal is counted, so a flood of inbound spam can't spend the day's email.
+ */
+export const admitForward = internalMutation({
+  args: {},
+  returns: v.boolean(),
+  handler: async (ctx) => {
+    const r = await checkAndRecordRateLimit(ctx, "all", BUDGETS.supportForward.key, windowFor("supportForward"));
+    if (!r.allowed) await noteRefusal(ctx, "supportForward");
+    return r.allowed;
   },
 });
 
@@ -149,7 +166,9 @@ export const processInboundEmail = internalAction({
     // Forward inbound human mail to the catch-all inbox. DMARC machine reports
     // (dmarc@) and the forward target itself are excluded — see shouldForwardInbound.
     // DMARC reports are still stored above for the record.
-    if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO)) {
+    if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO) && !(await ctx.runMutation(internal.supportEmail.admitForward, {}))) {
+      log.warn("Forward pool spent for today; the email is stored, not forwarded", { to: toEmail });
+    } else if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO)) {
       try {
         const { error } = await sendOrQueue(ctx, "support-forward", resend, {
           from: FROM_EMAIL,
@@ -160,7 +179,7 @@ export const processInboundEmail = internalAction({
           html: bodyHtml
             ? `<div style="padding:12px;background:#f4f4f5;border-radius:8px;margin-bottom:16px;font-size:13px;color:#71717a"><strong>Forwarded Email</strong><br/>From: ${args.fromName ? `${escapeHtml(args.fromName)} &lt;${escapeHtml(args.fromEmail)}&gt;` : escapeHtml(args.fromEmail)}<br/>To: ${escapeHtml(toEmail)}<br/>Subject: ${escapeHtml(args.subject)}</div>${bodyHtml}`
             : undefined,
-        });
+        }, { priority: "public" });
 
         if (error) {
           log.error("Failed to forward email", {

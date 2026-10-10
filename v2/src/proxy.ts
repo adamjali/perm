@@ -3,12 +3,8 @@ import {
   createRouteMatcher,
   nextjsMiddlewareRedirect,
 } from "@convex-dev/auth/nextjs/server";
-import { NextResponse } from "next/server";
-import { fetchMutation } from "convex/nextjs";
-import { MS_PER_MINUTE } from "@/lib/time";
-import { api } from "@convex/_generated/api";
-import { addBreadcrumb } from "@/lib/sentry";
-import { getClientIp } from "@/lib/net/getClientIp";
+import type { NextFetchEvent, NextRequest } from "next/server";
+import { refuseAuthPost } from "@/lib/auth/authGate";
 
 // Protected routes (auth required) — unknown routes fall through to Next.js (404 naturally)
 const isProtectedRoute = createRouteMatcher([
@@ -40,8 +36,8 @@ const isAuthRoute = createRouteMatcher(["/login", "/signup"]);
 // by reading the package source — shouldProxyAuthAction matches only exact path
 // with/without trailing slash). All flows (signUp, signIn, reset, OTP verify,
 // signOut) go through this one endpoint, distinguished by body.action + body.flow.
-// Token refresh happens INSIDE this proxy (no additional POST), so the rate
-// limit here does NOT throttle normal page navigation.
+// A token refresh is a POST here too (auth:signIn with a refreshToken); the
+// sign-in limits skip it, so they never throttle normal page use.
 const isConvexAuthApiRoute = createRouteMatcher(["/api/auth", "/api/auth/"]);
 
 /**
@@ -55,50 +51,8 @@ const isConvexAuthApiRoute = createRouteMatcher(["/api/auth", "/api/auth/"]);
  * path while `Collecting build traces` looks for `proxy.js.nft.json`, and a
  * clean build fails with ENOENT after compiling successfully.
  */
-const handler = convexAuthNextjsMiddleware(
+const auth = convexAuthNextjsMiddleware(
   async (request, { convexAuth }) => {
-    // Per-IP rate-limit gate on Convex Auth API route (defense-in-depth
-    // alongside the per-email limit inside Convex). Only POSTs matter —
-    // the sign-in/up flow is POST-only.
-    if (request.method === "POST" && isConvexAuthApiRoute(request)) {
-      // getClientIp() reads the address nginx set from Cloudflare's own
-      // header, never a client-sent one. "unknown" only when no IP
-      // is resolvable (local dev); checkIpRateLimit treats that literal as a
-      // per-request fail-open so unknown-IP traffic never shares one real
-      // rate-limit bucket.
-      const ip = getClientIp(request) || "unknown";
-      try {
-        const check = await fetchMutation(api.authRateLimit.checkIpRateLimit, {
-          ip,
-          action: "ip_auth",
-        });
-        if (!check.allowed) {
-          const retryMs = check.retryAfterMs ?? 0;
-          const retryMin = Math.ceil(retryMs / MS_PER_MINUTE);
-          const retrySec = Math.ceil(retryMs / 1000);
-          return NextResponse.json(
-            {
-              error:
-                check.message ||
-                `Too many requests from your IP. Please try again in ${retryMin} minute${retryMin === 1 ? "" : "s"}.`,
-            },
-            { status: 429, headers: { "Retry-After": String(retrySec) } },
-          );
-        }
-      } catch (error) {
-        // Fail open — availability over strictness on infrastructure glitches.
-        // Emit a Sentry breadcrumb so sustained fail-open events show up in
-        // the auth error report instead of vanishing. Not captureError:
-        // would be too noisy during any Convex outage.
-        addBreadcrumb({
-          category: "middleware.rate_limit",
-          message: "ip_auth check failed, falling open",
-          level: "warning",
-          data: { error: error instanceof Error ? error.message : String(error) },
-        });
-      }
-    }
-
     const needsAuth = isProtectedRoute(request);
     const isAuth = isAuthRoute(request);
 
@@ -132,6 +86,19 @@ const handler = convexAuthNextjsMiddleware(
     },
   }
 );
+
+/**
+ * Sign-in limits first: Convex Auth's middleware answers /api/auth itself
+ * before it calls the handler above, so a check placed inside that handler
+ * never ran for a sign-in (src/lib/auth/authGate.ts).
+ */
+async function handler(request: NextRequest, event: NextFetchEvent) {
+  if (request.method === "POST" && isConvexAuthApiRoute(request)) {
+    const refused = await refuseAuthPost(request);
+    if (refused) return refused;
+  }
+  return auth(request, event);
+}
 
 export default handler;
 export const proxy = handler;

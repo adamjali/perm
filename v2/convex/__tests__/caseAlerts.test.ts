@@ -637,6 +637,36 @@ describe("the change detector", () => {
     expect(alerts()).toHaveLength(1);
   });
 
+  it("skips a row another sweep is already sending, and frees a claim that went stale", async () => {
+    const t = createTestContext();
+    const { alerts } = stubMirrorAndResend({
+      cases: { [CASE]: { status: "RFI ISSUED", isFinal: false } },
+    });
+    const id = await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
+    await t.run(async (ctx) => ctx.db.patch(id, { sendingStatus: "RFI ISSUED", sendingAt: Date.now() }));
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(alerts(), "the other sweep owns this send").toHaveLength(0);
+
+    const { ALERT_SEND_CLAIM_MS } = await import("../caseAlerts");
+    await t.run(async (ctx) =>
+      ctx.db.patch(id, { sendingAt: Date.now() - ALERT_SEND_CLAIM_MS - 1, lastCheckedAt: 0 }),
+    );
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(alerts(), "a claim older than the limit is a sweep that died").toHaveLength(1);
+    const row = await t.run(async (ctx) => ctx.db.get(id));
+    expect(row?.sendingStatus).toBeUndefined();
+  });
+
+  it("lets exactly one of two claims on the same status win", async () => {
+    const t = createTestContext();
+    const id = await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
+    const first = await t.mutation(internal.caseAlerts.claimAlertSend, { id, status: "RFI ISSUED" });
+    const second = await t.mutation(internal.caseAlerts.claimAlertSend, { id, status: "RFI ISSUED" });
+    expect([first, second]).toEqual([true, false]);
+    await t.mutation(internal.caseAlerts.releaseAlertSend, { id });
+    expect(await t.mutation(internal.caseAlerts.claimAlertSend, { id, status: "RFI ISSUED" })).toBe(true);
+  });
+
   it("sends a moved case at once, even to an address already mailed today that follows more", async () => {
     // Owner's call, Oct 7 2026: a status change never waits for the daily
     // bundle. Without IMMEDIATE_KINDS this address (mailed today, two live
@@ -956,6 +986,29 @@ describe("the global alert budget", () => {
     expect(alerts().length).toBeLessThanOrEqual(BUDGETS.caseAlert.limit);
     expect(alerts().length).toBeGreaterThan(0);
   });
+
+  it("sends what the budget held back once it frees, each change exactly once", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const t = createTestContext();
+      const n = BUDGETS.caseAlert.limit + 15;
+      const number = (i: number) => `G-100-2613${i % 10}-7689${String(i).padStart(2, "0")}`;
+      const { alerts } = stubMirrorAndResend({
+        cases: Object.fromEntries(Array.from({ length: n }, (_, i) => [number(i), { status: "CERTIFIED", isFinal: true }])),
+      });
+      for (let i = 0; i < n; i++) await seededSubscription(t, `held${i}@example.com`, "ANALYST REVIEW", number(i));
+      for (let i = 0; i < 8; i++) await t.action(internal.caseAlerts.sweepCaseChanges, {});
+      expect(alerts().length, "the day's budget, exactly").toBe(BUDGETS.caseAlert.limit);
+      // A day later the budget has room again.
+      vi.setSystemTime(Date.now() + 24 * 60 * 60 * 1000 + 60_000);
+      for (let i = 0; i < 4; i++) await t.action(internal.caseAlerts.sweepCaseChanges, {});
+      const to = alerts().map((a) => String(Array.isArray(a.to) ? a.to[0] : a.to));
+      expect(to.length, "every held change went out").toBe(n);
+      expect(new Set(to).size, "and none twice").toBe(n);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -1172,7 +1225,7 @@ describe("the three FLAG programs", () => {
       // The refusal names every prefix the endpoint takes. Saying "PERM case
       // number" to someone holding a P- number is a correct-looking rejection
       // of a number that works.
-      expect(res.message).toContain("G-, A-, P-, I- or H-");
+      expect(res.message).toContain("G-, A-, P-, I-, H-, JO-A- or C-");
       expect(res.message).not.toContain("PERM case number");
     }
   });

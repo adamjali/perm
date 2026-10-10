@@ -103,6 +103,20 @@ describe("the webhook doors", () => {
     expect(countCall).not.toHaveBeenCalled();
   });
 
+  it("chooses the status by Convex's refusal code, not its wording", async () => {
+    fetchMutation.mockResolvedValue({ ok: false, message: "No webhook endpoint of yours has that id.", code: "not_found" });
+    expect((await deleteWebhook(new Request("https://permtracker.app/v1/webhooks/jd7abc0000", { method: "DELETE" }), "jd7abc0000")).status).toBe(404);
+    fetchMutation.mockResolvedValue({ ok: false, message: "This key can't manage webhooks.", code: "refused" });
+    expect((await deleteWebhook(new Request("https://permtracker.app/v1/webhooks/jd7abc0000", { method: "DELETE" }), "jd7abc0000")).status).toBe(403);
+    countCall.mockClear();
+    fetchAction.mockResolvedValue({ ok: false, message: "Reworded, but still the plan's room.", code: "plan_room" });
+    expect((await createWebhook(post({ url: "https://example.com/h", events: ["queue.moved"] }))).status).toBe(403);
+    fetchAction.mockResolvedValue({ ok: false, message: "These functions answer the PERM Tracker API only.", code: "misconfigured" });
+    const shut = await createWebhook(post({ url: "https://example.com/h", events: ["queue.moved"] }));
+    expect(shut.status, "our own misconfiguration is ours, never the caller's bad request").toBe(503);
+    expect(countCall).not.toHaveBeenCalled();
+  });
+
   it("wants exactly one of a case number and an employer to watch", async () => {
     const req = (b: unknown) => new Request("https://permtracker.app/v1/watches", { method: "POST", body: JSON.stringify(b) });
     expect((await addWatch(req({}))).status).toBe(400);

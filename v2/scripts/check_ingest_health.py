@@ -61,11 +61,14 @@ def parse_as_of(raw: str) -> datetime.date | None:
 
 NOW_MS = time.time() * 1000
 
-# How far back a failed run still counts. Matched to the daily ingests' own
-# `max_age_days=3` so the two checks agree about what "recent" means. An older
-# failure ages out on purpose: if the script never ran again, that is a
-# STOPPED ingest, and `data_freshness` is the check that says so.
-RUN_FAILURE_WINDOW_DAYS = 3
+# How far back the newest run of each ingest is read. A failed newest run counts
+# until a clean run of the same key replaces it. Long enough for the monthly
+# jobs (the disclosure loads, the H-1B ranks, the firm domains) and Sunday's
+# full PWD pass, whose failures used to age out after 3 days and read green
+# until their next scheduled run with nothing fixed; and a daily ingest that
+# failed and stopped stays red here from day 0, where freshness only catches
+# it past twice its budget.
+RUN_FAILURE_WINDOW_DAYS = 40
 
 # Which outcomes are a break. `cancelled` is deliberately not: the DOL
 # workflows never cancel an older run, so a cancellation is almost always a
@@ -73,7 +76,7 @@ RUN_FAILURE_WINDOW_DAYS = 3
 # the alert. It is still recorded and printed. A genuine hang is not a
 # cancellation either: the workflows wrap each sweep in a `timeout` below the
 # job cap, so a hang exits 124 and lands as `failed`.
-BROKEN_STATUSES = frozenset({"failed", "partial"})
+BROKEN_STATUSES = frozenset({"failed", "partial", "mismatch"})
 # A run that stops on its own request cap records `ok` and names the cap in its
 # note. Byte-identical to CAP_NOTE in sweep_serial_gaps.py and
 # ingest_case_status_direct.py (test_ingest_health pins it), so a `partial` row
@@ -82,6 +85,18 @@ SWEEP_CAP_NOTE = "stopped on the request cap"
 # The walk's other designed stop, its time budget. Byte-identical to
 # ingest_case_status_direct.BUDGET_NOTE; test_ingest_health.py pins it.
 BUDGET_NOTE = "stopped on its time budget"
+
+
+def unreadable(label: str, exc: Exception) -> int:
+    """A check that can't read its subject: a pass only when the table doesn't
+    exist yet (a database that has never run that job). Any other error is a
+    failure: a check that passes when it can't see what it checks is how a
+    broken database reads as healthy."""
+    if "no such table" in str(exc).lower():
+        print(f"{label:18s}: no table yet ({str(exc)[:100]})")
+        return 0
+    print(f"{label:18s}: FAIL, unreadable ({str(exc)[:120]})")
+    return 1
 
 
 def check_runs(db) -> int:
@@ -102,8 +117,7 @@ def check_runs(db) -> int:
         # A database that has never run an ingest has no such table. That is
         # not a failure, and it must not read as one - but say so out loud,
         # because "no rows" and "no table" look identical from a pass.
-        print(f"ingest_runs      : unreadable ({str(exc)[:120]})")
-        return 0
+        return unreadable("ingest_runs", exc)
     rows = rows_of(res)
 
     newest: dict[str, tuple[str, str, int]] = {}
@@ -186,6 +200,25 @@ FRONTIER_MAX_DAYS = 5
 # budget, when the page may have moved or the parser may be reading a stale
 # element, and a human should look.
 SOURCE_PAUSED_GRACE = 3
+
+
+def self_stamped(as_of: datetime.date, fetched_at_ms) -> bool:
+    """True when a dataset's `as_of` is the day it was fetched.
+
+    Those datasets date themselves (stamp_freshness's default `as_of` is the
+    run's own date: the PERM sweeps, the live remainder), so a stale one means
+    our ingest stopped; the source has nothing to republish. Read as a source
+    pause, it sat in "watching" for up to 3x its budget while the morning email
+    said "our ingest is fine". Both the UTC and the local date count, since
+    runners and the server keep different clocks.
+    """
+    if fetched_at_ms is None:
+        return False
+    t = int(fetched_at_ms) / 1000
+    return as_of in {
+        datetime.datetime.fromtimestamp(t, datetime.timezone.utc).date(),
+        datetime.datetime.fromtimestamp(t).date(),
+    }
 
 
 def freshness_verdict(stale):
@@ -274,8 +307,7 @@ def check_discovery_yield(db) -> int:
             ["ingest_case_status_direct.py --discover", DISCOVERY_DRY_RUNS])
         rows = rows_of(res)
     except RuntimeError as exc:
-        print(f"discovery yield   : unreadable ({str(exc)[:120]})")
-        return 0
+        return unreadable("discovery yield", exc)
     if len(rows) < DISCOVERY_DRY_RUNS:
         print(f"discovery yield   : {len(rows)} walk(s) on record; {DISCOVERY_DRY_RUNS} needed to judge")
         return 0
@@ -306,8 +338,7 @@ def check_backfill(db) -> int:
         res = db.execute("SELECT json FROM perm_docs WHERE key = ?", ["flag_backfill_progress"])
         rows = res["response"]["result"]["rows"]
     except RuntimeError as exc:
-        print(f"backfill          : unreadable ({str(exc)[:120]})")
-        return 0
+        return unreadable("backfill", exc)
     if not rows:
         print("backfill          : none on record")
         return 0
@@ -375,6 +406,10 @@ PRECOMPUTED_DOCS = {
     "pwd_day_queue": (3, "the wage-request lookup's estimated day"),
     "h2b_group_timing": (3, "the H-2B lookup's assignment-group timing"),
     "estimator_backtest": (3, "the case page's measured range and the estimate scorecard's backtest, nightly"),
+    # Rebuilt after every PERM sweep. Employer follows read it for their moves
+    # (convex/employerAlerts.ts), so a doc the reconciliation guard keeps
+    # declining means followers quietly stop hearing anything.
+    "employer_stages": (3, "employer follow alerts and the employers-under-review page"),
     # Rebuilt after every PERM sweep; the month pages hide its section without it.
     "month_detail": (3, "the filing-month pages' decisions per day and initials grid"),
     # Rebuilt after each monthly H-2A, H-2B and CW-1 load (the 10th).
@@ -478,8 +513,7 @@ def check_gap_sweep(db) -> int:
             ["sweep_serial_gaps.py"])
         rows = rows_of(res)
     except RuntimeError as exc:
-        print(f"gap sweep         : unreadable ({str(exc)[:120]})")
-        return 0
+        return unreadable("gap sweep", exc)
     if not rows:
         print("gap sweep         : never run")
         return 0
@@ -519,8 +553,7 @@ def check_watched(db) -> int:
             ["check_watched_cases.py"])
         rows = rows_of(res)
     except RuntimeError as exc:
-        print(f"watched cases     : unreadable ({str(exc)[:120]})")
-        return 0
+        return unreadable("watched cases", exc)
     if not rows or rows[0][0] is None:
         print("watched cases     : never run")
         return 0
@@ -609,8 +642,7 @@ def check_lookup_demand(db) -> int:
         rows = query_rows(db, "SELECT key, json FROM perm_docs WHERE key LIKE 'discovery_budget_%' "
                               "ORDER BY key DESC LIMIT ?", [LOOKUP_DEMAND_HISTORY + 1])
     except RuntimeError as exc:
-        print(f"lookup demand     : unreadable ({str(exc)[:120]})")
-        return 0
+        return unreadable("lookup demand", exc)
     counts = []
     for key, raw in rows:
         try:
@@ -748,7 +780,11 @@ def main() -> int:
         # the month before), so it alone could never trip. `fetched_at` answers
         # "is our ingest still running". Check both, and let either trip.
         run_age = None
-        if fetched_at is not None:
+        if data_stale and self_stamped(d, fetched_at):
+            # The dataset dates itself, so stale data IS our ingest stopping.
+            stale.append((dataset + " (has not RUN)", age, budget, source))
+            data_stale = False  # one line for one cause
+        elif fetched_at is not None:
             run_age = (NOW_MS - int(fetched_at)) / 86_400_000
             # A run budget of twice the data budget, floored at a week: an ingest
             # may be idle between publications, but not forever.

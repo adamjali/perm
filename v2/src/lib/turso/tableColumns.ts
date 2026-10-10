@@ -23,7 +23,10 @@ import { rows } from "./client";
  * "unknown"; every caller treats unknown as "assume nothing beyond the base".
  *
  * A failed read is not cached: a transient error must not hide a table for the
- * next ten minutes.
+ * next ten minutes. And only "no such table" answers an empty set; any other
+ * error throws. Answered empty, one failed read sent the employer pages back
+ * to the retired name-prefix match (three other firms' 8,219 LCAs on Intel's
+ * page) or to a 404, and served that as the real page for its window.
  */
 
 const TTL_MS = 10 * MS_PER_MINUTE;
@@ -35,9 +38,10 @@ export function tableColumns(table: string): Promise<Set<string>> {
   if (hit && Date.now() - hit.at < TTL_MS) return hit.cols;
   const cols = rows<Record<string, unknown>>(`SELECT * FROM ${table} LIMIT 1`)
     .then((r) => new Set(r[0] ? Object.keys(r[0]) : []))
-    .catch(() => {
+    .catch((err: unknown) => {
       cache.delete(table);
-      return new Set<string>();
+      if (/no such table/i.test(String(err instanceof Error ? err.message : err))) return new Set<string>();
+      throw err;
     });
   cache.set(table, { at: Date.now(), cols });
   return cols;

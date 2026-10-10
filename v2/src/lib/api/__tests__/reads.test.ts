@@ -16,7 +16,8 @@ vi.mock("@/lib/turso/publicData", () => ({
 }));
 vi.mock("@/lib/turso/entityDetail", () => ({ entityPending: (...a: unknown[]) => entityPending(...a) }));
 vi.mock("@/lib/turso/entities", () => ({ searchByName: (...a: unknown[]) => searchByName(...a) }));
-vi.mock("@/lib/turso/caseLookup", () => ({ lookupCase: vi.fn() }));
+const lookupCase = vi.fn();
+vi.mock("@/lib/turso/caseLookup", () => ({ lookupCase: (...a: unknown[]) => lookupCase(...a) }));
 vi.mock("@/lib/turso/client", () => ({ one: vi.fn() }));
 vi.mock("@/lib/turso/processingTimes", () => ({ getProcessingTimes: vi.fn() }));
 vi.mock("@/lib/turso/pwdCases", () => ({ pwd: {} }));
@@ -33,9 +34,13 @@ vi.mock("@/lib/turso/seasonalCases", () => ({
   lookupSeasonalRecord: (...a: unknown[]) => seasonalRecord(...a),
   lookupSeasonalPosting: (...a: unknown[]) => seasonalPosting(...a),
 }));
-vi.mock("@/lib/turso/permEstimate", () => ({ estimatePermCase: vi.fn(), loadPermEstimateContext: vi.fn() }));
+const estimatePermCase = vi.fn();
+vi.mock("@/lib/turso/permEstimate", () => ({
+  estimatePermCase: (...a: unknown[]) => estimatePermCase(...a),
+  loadPermEstimateContext: vi.fn(async () => ({})),
+}));
 
-import { readCase, readEntity, searchEntities } from "../reads";
+import { readCase, readEntity, readEstimate, searchEntities } from "../reads";
 
 const adobe = {
   slug: "adobe-inc",
@@ -190,5 +195,53 @@ describe("readCase, H-2A, H-2B and CW-1", () => {
   it("is not found only when no source holds the case", async () => {
     const out = await readCase("C-500-26271-263466");
     expect(out.ok).toBe(false);
+  });
+
+  it("throws, never answers not found, when nothing was found and a published read failed", async () => {
+    seasonalDisclosed.mockRejectedValue(new Error("turso query deadline"));
+    await expect(readCase("C-500-26271-263466")).rejects.toThrow("turso query deadline");
+  });
+
+  it("still answers from what was read when one published half failed", async () => {
+    seasonalDisclosed.mockRejectedValue(new Error("turso query deadline"));
+    seasonalLookup.mockResolvedValue({
+      caseNumber: "H-300-26272-266803", status: "IN PROCESS", isFinal: false, filingDate: "2026-09-29",
+      employerName: "MCRP Farms", jobTitle: "Farmworker", lastCheckedAt: "2026-10-03T12:00:00Z",
+    });
+    const out = await readCase("H-300-26272-266803");
+    expect(out.ok).toBe(true);
+  });
+});
+
+describe("readEstimate", () => {
+  beforeEach(() => {
+    lookupCase.mockReset();
+    estimatePermCase.mockReset().mockReturnValue({ estimate: { kind: "no-date", note: "An appeal.", age: 270 }, casesAhead: null });
+  });
+
+  it("gives an appealed case the no-date answer, never 'decided' (live status wins over the published row)", async () => {
+    lookupCase.mockResolvedValue({
+      live: { isFinal: false, status: "RECONSIDERATION APPEALS", filingDate: "2025-01-10", lastCheckedAt: "2026-10-10T08:00:00Z" },
+      decided: { status: "DENIED", decisionDate: "2025-09-01" },
+    });
+    const out = await readEstimate({ caseNumber: "G-100-25010-123456" });
+    expect(out.ok).toBe(true);
+    expect(out.ok && out.data.kind).toBe("no-date");
+    expect(estimatePermCase).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ status: "RECONSIDERATION APPEALS" }), expect.any(String));
+  });
+
+  it("answers 'decided' for a case DOL has decided", async () => {
+    lookupCase.mockResolvedValue({
+      live: { isFinal: true, status: "CERTIFIED", filingDate: "2025-01-10", lastCheckedAt: "2026-10-10T08:00:00Z" },
+      decided: { status: "CERTIFIED", decisionDate: "2025-09-01" },
+    });
+    const out = await readEstimate({ caseNumber: "G-100-25010-123456" });
+    expect(out.ok && out.data.kind).toBe("decided");
+  });
+
+  it("answers 'decided' from the published row when DOL's live record has none", async () => {
+    lookupCase.mockResolvedValue({ live: null, decided: { status: "CERTIFIED", decisionDate: "2025-09-01" } });
+    const out = await readEstimate({ caseNumber: "G-100-25010-123456" });
+    expect(out.ok && out.data.kind).toBe("decided");
   });
 });

@@ -370,7 +370,7 @@ export function ScorecardPanel() {
             <div className="overflow-x-auto border-2 border-border">
               <table className="w-full min-w-[960px] text-sm">
                 <caption className="p-2 text-left text-sm text-muted-foreground">
-                  Head to head: only cases both sides dated the same day, then split by the kind of case. A waiting case counts once DOL can no longer decide nearer the earlier date; "waiting counted" puts each waiting case at the days it is late so far.
+                  Head to head: only cases both sides dated the same day, then split by the kind of case. A waiting case counts once DOL can no longer decide nearer the earlier date; &ldquo;waiting counted&rdquo; puts each waiting case at the days it is late so far.
                 </caption>
                 <thead className="bg-muted">
                   <tr>

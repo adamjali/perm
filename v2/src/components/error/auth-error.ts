@@ -6,7 +6,7 @@
  * - Stale deployment: reload to pick up new Server Action hashes
  */
 
-import { MS_PER_MINUTE } from "@/lib/time";
+import { TIMEOUT_CONFIG } from "@/hooks/useInactivityTimeout";
 
 /** Errors that indicate session expiry, not real crashes */
 export const AUTH_ERROR_PATTERN = /not authenticated|User profile not found|Unauthenticated|could not verify identity/i;
@@ -22,16 +22,18 @@ export function isAuthError(message: string): boolean {
  *
  * When a laptop sleeps, JS timers freeze. On wake, Convex reconnects and
  * queries may throw before the inactivity timeout handler runs. This
- * catches that race: if last activity was >15 min ago, treat the error
- * as a session timeout and redirect gracefully.
+ * catches that race: if last activity was at least the idle sign-out's time
+ * ago (TIMEOUT_CONFIG.INACTIVITY_TIMEOUT), treat the error as a session
+ * timeout and redirect gracefully. Read from the hook so the two can't
+ * disagree: a copy of the old 15 minutes sent people to the sign-in page for
+ * errors 15 to 30 minutes into an idle session that was still signed in.
  */
 export function isLikelySessionTimeout(): boolean {
   try {
     const stored = localStorage.getItem("perm-tracker-last-activity");
     if (!stored) return false;
     const elapsed = Date.now() - parseInt(stored, 10);
-    // 15 minutes = inactivity timeout
-    return elapsed >= 15 * MS_PER_MINUTE;
+    return elapsed >= TIMEOUT_CONFIG.INACTIVITY_TIMEOUT;
   } catch {
     return false;
   }

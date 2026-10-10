@@ -77,6 +77,26 @@ describe("authenticate", async () => {
     expect(r).toMatchObject({ ok: true, caller: { sandbox: true } });
   });
 
+  it("remembers an unknown key apart from the real ones, and stops asking Convex for an address that keeps guessing", async () => {
+    clearKeyCacheForTests();
+    verify.mockReset();
+    verify.mockResolvedValue(null as never);
+    const fromGuesser = (key: string) =>
+      authenticate(req({ authorization: `Bearer ${key}`, "x-real-ip": "198.51.100.7" }));
+    const { MISSES_PER_ADDRESS_PER_MINUTE } = await import("../auth");
+    const keys = Array.from({ length: MISSES_PER_ADDRESS_PER_MINUTE + 5 }, () => buildApiKey(random));
+    for (const k of keys) expect((await fromGuesser(k)).ok).toBe(false);
+    expect(verify, "past the address's limit nothing more reaches Convex").toHaveBeenCalledTimes(MISSES_PER_ADDRESS_PER_MINUTE);
+    // The same unknown key again is answered from memory.
+    verify.mockClear();
+    await fromGuesser(keys[0]!);
+    expect(verify).not.toHaveBeenCalled();
+    // A real key from another address still gets checked.
+    verify.mockResolvedValue(live() as never);
+    const real = await authenticate(req({ authorization: `Bearer ${buildApiKey(random)}`, "x-real-ip": "203.0.113.9" }));
+    expect(real.ok).toBe(true);
+  });
+
   it("asks Convex again once a key is forgotten, as a revoke does", async () => {
     clearKeyCacheForTests();
     verify.mockReset();

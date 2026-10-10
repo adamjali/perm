@@ -545,6 +545,18 @@ export async function recordPredictions(recordedOn: string, preds: NewPrediction
 export const easternDate = (ms: number): string => easternDay(ms);
 
 /**
+ * A stored time as epoch milliseconds, or null. The status tables write
+ * `fetched_at` as integer milliseconds and libSQL hands integers back as
+ * strings, so `Date.parse("1760000000000")` is NaN and formatting it throws:
+ * a digits-only value is read as a number first.
+ */
+export function storedMs(v: string | number | null | undefined): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const ms = typeof v === "number" || /^\d+$/.test(v.trim()) ? Number(v) : Date.parse(v);
+  return Number.isFinite(ms) && ms > 0 ? ms : null;
+}
+
+/**
  * Grade every open prediction whose case DOL has since finished.
  *
  * The decision day is the first final event the sweep logged for the case,
@@ -581,7 +593,7 @@ export async function gradeOpenPredictions(): Promise<{ graded: number; open: nu
     for (let i = 0; i < nums.length; i += 200) {
       const chunk = nums.slice(i, i + 200);
       const q = chunk.map(() => "?").join(",");
-      const finals = await rows<{ case_number: string; current_status: string; fetched_at: string | null }>(
+      const finals = await rows<{ case_number: string; current_status: string; fetched_at: string | number | null }>(
         `SELECT case_number, current_status, fetched_at FROM ${statusTable}
           WHERE case_number IN (${q}) AND is_final = 1`,
         chunk,
@@ -613,8 +625,8 @@ export async function gradeOpenPredictions(): Promise<{ graded: number; open: nu
           ? easternDate(ms!)
           : filed?.decided
             ? filed.decided.slice(0, 10)
-            : f.fetched_at
-              ? easternDate(Date.parse(f.fetched_at))
+            : storedMs(f.fetched_at) !== null
+              ? easternDate(storedMs(f.fetched_at)!)
               : null;
         graded += await exec(
           `UPDATE estimate_predictions SET decided_on = ?, outcome = ?, scored_at = ?
@@ -805,7 +817,15 @@ export async function getEstimatorBacktest(): Promise<EstimatorBacktest | null> 
   );
   if (!r) return null;
   try {
-    return { ...(JSON.parse(r.json) as Omit<EstimatorBacktest, "computedAt">), computedAt: Number(r.computed_at) };
+    const doc = JSON.parse(r.json) as Partial<Omit<EstimatorBacktest, "computedAt">>;
+    // Checked, not cast: a renamed field from the Python backtest would
+    // otherwise reach the case page as undefined. Null shows the reader the
+    // no-backtest state, which is true.
+    if (typeof doc.t0 !== "string" || typeof doc.end !== "string" || typeof doc.current !== "object" || doc.current === null) {
+      console.error("[estimatorBacktest] the stored doc isn't the shape the site reads; treating it as absent");
+      return null;
+    }
+    return { ...(doc as Omit<EstimatorBacktest, "computedAt">), computedAt: Number(r.computed_at) };
   } catch {
     return null;
   }

@@ -2,7 +2,7 @@
  * Reading the wage-request day estimate's two docs: the sweep's count of PERM
  * wage requests in process with DOL's measured pace
  * (perm_docs['pwd_day_queue'], written after every PWD pass), and the range
- * the weekly backtest measured for each distance (perm_docs['pwd_backtest']
+ * the nightly backtest measured for each distance (perm_docs['pwd_backtest']
  * .day). Plain module so the unit project tests it; the reader is
  * src/lib/turso/pwdDayQueue.ts.
  */

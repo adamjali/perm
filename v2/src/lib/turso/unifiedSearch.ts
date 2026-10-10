@@ -366,6 +366,14 @@ export interface UnifiedSearchResult {
   permOnly: string[];
   /** The LCA-only filters set (a prevailing wage source), in words: the answer is LCAs alone. */
   lcaOnly: string[];
+  /**
+   * The parts of the record that couldn't be read for this answer, in words
+   * ("published PERM cases", "live wage requests"). A read that fails narrows
+   * the answer instead of blanking the page, and this is how the page says so:
+   * without it a failed read and "nothing matched" look the same. When every
+   * part asked fails, the search throws instead.
+   */
+  unread: string[];
   /** The order the rows are in, and whether it covers everything that matched. */
   order: SearchOrder;
   /**
@@ -473,6 +481,41 @@ export function skippedSources(narrow: UnifiedNarrow, lead: Lead): SkippedSource
 
 const none = <T,>(): Promise<SliceResult<T>> => Promise.resolve({ rows: [], windowed: false });
 
+/** Each source in words, for the answer's `unread` list. */
+const SOURCE_WORDS: Record<Program, string> = {
+  perm: "PERM cases",
+  pwd: "wage requests",
+  lca: "H-1B LCAs",
+  seasonal: "H-2A, H-2B and CW-1 filings",
+};
+
+/** Every part of the record asked for an answer was unreadable. */
+export class SearchUnavailableError extends Error {
+  constructor(readonly unread: string[]) {
+    super(`case search: no source could be read (${unread.join(", ")})`);
+    this.name = "SearchUnavailableError";
+  }
+}
+
+/**
+ * Reads for one answer, each caught on its own: a failed read becomes an empty
+ * slice, is logged, and is named in `unread`.
+ */
+function sourceReads() {
+  const asked: string[] = [];
+  const unread: string[] = [];
+  function read<T>(program: Program, half: "published" | "live", run: () => Promise<SliceResult<T>>) {
+    const label = `${half} ${SOURCE_WORDS[program]}`;
+    asked.push(label);
+    return run().catch((err: unknown) => {
+      console.error("[caseSearch] source failed", label, err);
+      unread.push(label);
+      return { rows: [] as T[], windowed: false };
+    });
+  }
+  return { read, asked, unread };
+}
+
 /**
  * Newest filing first, then case number, so the order is total and a page of
  * results cannot shuffle between identical requests.
@@ -556,6 +599,7 @@ async function finish(
   skipped: SkippedSources,
   permOnly: string[] = [],
   lcaOnly: string[] = [],
+  unread: string[] = [],
 ): Promise<UnifiedSearchResult> {
   const all = dedupeToOnePerCase(collected);
   const order = args.order ?? "filed-desc";
@@ -580,6 +624,7 @@ async function finish(
     skipped,
     permOnly,
     lcaOnly,
+    unread,
     order,
     orderScope: capped || all.length > take ? "fetched" : "complete",
     lead: args.lead,
@@ -602,7 +647,9 @@ async function searchOneCase(args: UnifiedSearchArgs): Promise<UnifiedSearchResu
   if (found.permLive) collected.push(fromPermLive(found.permLive));
   if (found.flagPublished) collected.push(fromFlagDisclosed(found.flagPublished, found.program));
   if (found.flagLive) collected.push(fromFlagLive(found.flagLive, found.program));
-  return await finish(collected, args, false, false, { live: false, published: false, because: [] });
+  const unread = (found.unread ?? []).map((half) => `${half} ${SOURCE_WORDS[found.program]}`);
+  if (unread.length > 0 && unread.length >= (found.asked ?? 2)) throw new SearchUnavailableError(unread);
+  return await finish(collected, args, false, false, { live: false, published: false, because: [] }, [], [], unread);
 }
 
 export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSearchResult> {
@@ -643,37 +690,38 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   const askLive = (p: Program) => wanted(p) && !skipped.live && (employer !== null || stage !== null);
 
 
+  const reads = sourceReads();
   const flagLive = (p: FlagProgramKey) =>
     askLive(p) && stage !== null && employer === null
-      ? readFlagStage(p, stage.status, narrow, stageLimit(args.limit)).catch(none<FlagCaseRow>)
+      ? reads.read(p, "live", () => readFlagStage(p, stage.status, narrow, stageLimit(args.limit)))
       : askLive(p) && stage !== null && employer !== null
-        ? readFlagEmployerStage(p, employer, stage.status, narrow, stageLimit(args.limit)).catch(none<FlagCaseRow>)
+        ? reads.read(p, "live", () => readFlagEmployerStage(p, employer, stage.status, narrow, stageLimit(args.limit)))
         : askLive(p) && employer
-          ? readFlagLive(p, employer, narrow, PER_SOURCE).catch(none<FlagCaseRow>)
+          ? reads.read(p, "live", () => readFlagLive(p, employer, narrow, PER_SOURCE))
           : none<FlagCaseRow>();
   // EVERY LEAD THAT REACHES HERE REACHES THE FLAG TABLES: the types rule out
   // a case-number lead arriving at all, so no guard is needed.
   const flagPublished = (p: FlagProgramKey) =>
     askPublished(p)
-      ? readFlagPublished(p, args.lead, narrow, PER_SOURCE).catch(none<FlagDisclosedRow>)
+      ? reads.read(p, "published", () => readFlagPublished(p, args.lead, narrow, PER_SOURCE))
       : none<FlagDisclosedRow>();
 
   // Every read is caught individually: one program's table being unavailable
-  // should narrow the answer, never blank the page.
+  // narrows the answer and is named in `unread`; it never blanks the page.
   const [permPub, permLive, pwdLive, pwdPub, lcaLive, lcaPub, seasonalLive, seasonalPub] = await Promise.all([
     askPublished("perm")
-      ? readPermPublished({ lead: args.lead, narrow, limit: PER_SOURCE }).catch(none<PermSearchRow>)
+      ? reads.read("perm", "published", () => readPermPublished({ lead: args.lead, narrow, limit: PER_SOURCE }))
       : none<PermSearchRow>(),
     // Three shapes of the live PERM read: a stage on its own, an employer
     // narrowed to a stage, or the employer's whole live slice.
     // A stage search has one source, so it may fill the whole answer rather
     // than one source's share of it.
     askLive("perm") && stage !== null && employer === null
-      ? readPermStage(stage.status, narrow, stageLimit(args.limit)).catch(none<LiveCaseRow>)
+      ? reads.read("perm", "live", () => readPermStage(stage.status, narrow, stageLimit(args.limit)))
       : askLive("perm") && stage !== null && employer !== null
-        ? readPermEmployerStage(employer, stage.status, narrow, stageLimit(args.limit)).catch(none<LiveCaseRow>)
+        ? reads.read("perm", "live", () => readPermEmployerStage(employer, stage.status, narrow, stageLimit(args.limit)))
         : askLive("perm") && employer
-          ? readPermLive(employer, narrow, PER_SOURCE).catch(none<LiveCaseRow>)
+          ? reads.read("perm", "live", () => readPermLive(employer, narrow, PER_SOURCE))
           : none<LiveCaseRow>(),
     flagLive("pwd"),
     flagPublished("pwd"),
@@ -703,6 +751,10 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // employer's newest filings rather than over everything they have filed.
   // Different claim from `capped`, and a much more important one to print.
   const windowed = halves.some((half) => half.windowed);
+  // Nothing could be read: that's an outage, not an empty answer.
+  if (reads.asked.length > 0 && reads.unread.length === reads.asked.length) {
+    throw new SearchUnavailableError(reads.unread);
+  }
 
-  return await finish(collected, args, capped, windowed, skipped, permOnly, lcaOnly);
+  return await finish(collected, args, capped, windowed, skipped, permOnly, lcaOnly, reads.unread);
 }
