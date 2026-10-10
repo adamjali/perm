@@ -2,8 +2,9 @@
 """Keep the website's page cache inside a disk budget. Runs every 30 minutes.
 
 WHY. Next stores every page it renders after a deploy inside that release's
-.next/server/app (an .html, .meta and .rsc file and a .segments folder per
-page), and nothing ever removes them. With 106,000 URLs at 400 to 650 KB each,
+.next/server/app, and since Next 16.3 in .next/server/route-cache (an .html,
+.meta and .rsc file and a .segments folder per page; see ROOTS), and nothing
+ever removes them. With 106,000 URLs at 400 to 650 KB each,
 one release can reach about 69 GB once crawlers have walked the site, and two
 releases that size fill the 145 GB disk, which stops the database with it.
 Measured Sep 29 2026: the release that served for 7 hours held 13 GB.
@@ -16,11 +17,11 @@ renders it again on the next visit (file-system-cache.js returns null from its
 catch). The .html goes first, so a reader in between sees a miss, not half a
 page.
 
-BUDGETS, per release:
-  live copy       60 GB of rendered pages
-  standby copy     6 GB (it serves only after a rollback)
+BUDGETS, per slot (each slot's two copies split it, see COPIES):
+  live slot       60 GB of rendered pages (30 GB per copy)
+  standby slot     6 GB (it serves only after a rollback)
   older releases   0    (kept for their build; they serve nothing)
-Below 20 GB of free disk the live budget drops to 8 GB and the standby's to 0.
+Below 20 GB of free disk the live slot's budget drops to 8 GB and the standby's to 0.
 The live budget was 20 GB until Sep 29 2026 and was raised on the owner's
 "highest reasonable" call: a cached page answers in about 10 ms and an evicted
 one takes 0.1 to 2.6 s to build again, so every GB kept is speed. The disk held
@@ -41,8 +42,13 @@ import time
 APP = "/srv/permtracker/app"
 HEALTH = "/srv/permtracker/health/prune.json"
 GB = 1024 ** 3
-BUDGET = {"live": 60 * GB, "standby": 6 * GB, "old": 0}
-TIGHT = {"live": 8 * GB, "standby": 0, "old": 0}
+# Per FOLDER. Since Oct 2 2026 every slot runs two copies (<release> and
+# <release>.w2), and both folders of a slot share its role, so the slot's
+# budget is split between them: 30 + 30 GB keeps the live slot's 60 GB. At
+# 60 GB a folder the two live copies alone could take 120 GB of the 145 GB disk.
+COPIES = 2
+BUDGET = {"live": 60 * GB // COPIES, "standby": 6 * GB // COPIES, "old": 0}
+TIGHT = {"live": 8 * GB // COPIES, "standby": 0, "old": 0}
 FREE_FLOOR = 20 * GB
 # A page group: the .meta file names it; these are its other pieces.
 PIECES = (".html", ".rsc", ".body", ".meta")
@@ -59,13 +65,26 @@ def read(path: str) -> str:
         return ""
 
 
+# Where Next writes rendered pages. Next 16.3 moved them from server/app into
+# server/route-cache/<KIND>/<hash>/ (same .html/.meta/.rsc/.segments pieces);
+# with server/app alone this cap read "0 pages" from Oct 7 2026 while the
+# route cache grew, and on Oct 10 the disk filled to 100%. A missing
+# route-cache file is a cache miss (file-system-cache.js), so either folder's
+# pages can go.
+ROOTS = (("server", "app"), ("server", "route-cache"))
+
+
 def groups(release: str):
     """Yield (last_used, size, stem) for every page written after the deploy."""
-    root = os.path.join(release, ".next", "server", "app")
     try:
         deployed = os.stat(os.path.join(release, "server.js")).st_ctime + MARGIN_S
     except OSError:
         return
+    for parts in ROOTS:
+        yield from _groups_under(os.path.join(release, ".next", *parts), deployed)
+
+
+def _groups_under(root: str, deployed: float):
     for d, _dirs, files in os.walk(root):
         for f in files:
             if not f.endswith(".meta"):
