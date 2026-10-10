@@ -9141,3 +9141,38 @@ Plus** (owner, Oct 8: "pay wall coming soon, can be free for now").
   300 watches existed; all fixed, and two real deliveries worked on the DEV deployment.
 - **Known gap left:** a webhook host can change its DNS answer between our address check and the fetch.
 - Plus is meant to be about $5 a month or $50 a year once billing exists (rename, EIN, bank, Stripe first).
+
+## Oct 10 2026: the disk filled, and what now watches it
+
+**What happened.** Next 16.3 (live Oct 7) writes rendered pages to `.next/server/route-cache/<KIND>/<hash>/$/`
+instead of `.next/server/app`. `permtracker-prune` walked only the old folder, reported "0 pages", and every
+release kept its cache; deploys deleting old releases hid the growth until a day without one. Free disk fell a
+steady 3.5 GB an hour (PCP's archive, `pmval -a <archive> filesys.avail`): 87.6 GB at 3:10 AM EDT Oct 9, 0 at
+about 5:20 AM Oct 10. The morning report read 50% on Oct 9 and 100% on Oct 10.
+
+**Who it touched (5:20 to 8:27 AM EDT).** Pages kept serving: Cloudflare counted 38,000 to 48,000 successful
+responses an hour and one 500; PostHog's pageviews held with no browser errors; busy replies rose to about 400 to
+500 an hour (no page could be cached, so every visit rendered). The database refused writes: the 4:10 AM sweep's
+1,189 status changes had landed at 5:27, but its walk, gap sweep, ten summary docs and rebuilds failed after, and
+the run stayed green; the 5:40 AM wage-request sweep failed (`SQLITE_FULL`); the scorecard, backtests and seasonal
+jobs failed; a lookup of a case we didn't hold couldn't charge its DOL budget, so it answered "couldn't check DOL"
+(182 case-page views from 163 people in the window, most of them cases we hold). Reads that need temporary space
+failed too (Sentry 52, `/perm-rfi-audit`), and Next kept the last good page. The watchdog, the defense and the
+sampler all failed while writing state, and nginx couldn't write its log. Lost for good: nginx's log and the
+health samples for those three hours. Nothing in the corpus.
+
+**What changed.**
+- `ROOTS` in `permtracker-prune` names both folders, and each slot's budget is split between its two copies
+  (30 + 30 live, 3 + 3 standby); `test_prune.py`. The cap has 1 GB and 45 minutes.
+- **`permtracker-alarm`** (every 5 minutes, memory in `/run`, never writes to disk): emails the owner at once
+  for low or fast-falling disk, memory, failed units, a silent sampler, a stalled cap or a late backup, and fixes
+  what it can first; `test_alarm.py`. Runbook: `scripts/oracle/README.md`.
+- **`convex/serverWatch.ts`** (every 15 minutes, `SERVER_WATCH=on` on production only): the same server watched
+  from outside, so a server that can't speak is still heard.
+- The sampler records free disk and hours to full; the morning report fails under a day, warns under three.
+- **A run that fails and carries on ends red**: the sweep when two doc writes or its own run row fail
+  (`record_run` returns whether it landed), and the status-sweep and processing-times workflows when any step
+  noted a failure in `$RUNNER_TEMP/pt-failed-steps`.
+- The watchdog's counts live in `/run`; the defense survives a state file it can't save.
+
+**After any Next upgrade, check where it writes rendered pages**: `find .next/server -newer server.js -name '*.meta' | head`.

@@ -569,3 +569,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under the four "Oct 9 2026" sections.
 - **An outbox row waiting with no attempts is the one-alert-a-day rule at work**: it goes on the first bundle run of the next Eastern day.
 - **Replies to support mail go through `supportEmail:replyToEmail`** (threaded, counted, marked replied), never from the Gmail it's forwarded to.
 
+## Oct 10 2026, in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 10 2026".
+
+- **The disk filled (about 5:20 to 8:27 AM EDT)**: Next 16.3 writes pages to `.next/server/route-cache`, which the page-cache cap couldn't see; pages kept serving, the database refused writes, nothing in the corpus was lost.
+- **`permtracker-alarm` emails the owner within 5 minutes** for disk, memory, failed jobs, a silent sampler, a stalled cap or a late backup, and fixes the disk first; it never writes to the disk it watches.
+- **Convex watches the server from outside** every 15 minutes (`serverWatch`), so a server that can't report is still heard.
+- **A run that fails and carries on ends red**: two failed doc writes or a lost run row, or any step noting a failure.
+- **Each slot's page-cache budget is split between its two copies**; at 60 GB a folder the live slot alone could take 120 of 145 GB.
