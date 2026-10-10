@@ -14,7 +14,8 @@ type T = ReturnType<typeof createTestContext>;
 
 function stubResend() {
   const sends = vi.fn(async (input: RequestInfo | URL) => {
-    if (!String(input).includes("api.resend.com")) throw new Error(`unexpected fetch ${String(input)}`);
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    if (url.hostname !== "api.resend.com") throw new Error(`unexpected fetch ${url.href}`);
     return new Response(JSON.stringify({ id: "sent-1" }), { status: 200, headers: { "Content-Type": "application/json" } });
   });
   vi.stubGlobal("fetch", sends);

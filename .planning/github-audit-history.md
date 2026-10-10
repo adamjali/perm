@@ -58,10 +58,10 @@
 
 ## Audit 12 — 2026-10-10
 - **health_before:** 89/100 by rubric (`pnpm audit`: 1 high `braces` and 1 moderate `sprintf-js`, both dev-only with no patched release; 0 Dependabot alerts, 0 secret scanning, protection intact, PR #46 open). Not scored: **43 open code-scanning alerts**.
-- **health_after:** see deployed line; 39 alerts dismissed with a reason each, 4 fixed in code (they close on the next scan), PR #46 superseded.
+- **health_after:** 89/100 by rubric, unchanged: `braces` and `sprintf-js` still have no patched release. 39 alerts dismissed with a reason each; the 4 fixed in code closed on e706b8fc's scan; CodeQL then raised 1 on a new test's fake fetch (a substring host check), fixed in the follow-up push. PR #46 closed as superseded (same v1.0.241 commit).
 - **items_fixed:** the audit's 6 plus a six-agent review of 914 commits since d7d0d5d0 (Aug 23): every finding fixed or decided by the owner · **items_discussed:** 4, by `AskUserQuestion` (alert reserve: yes; forwarded prefs link: leave; export cap: yes; sign-in lock: close) · **prs:** #46 closed as superseded
-- **deployed:** PENDING
-- **duration:** ~11:56 AM to evening EDT
+- **deployed:** yes. e706b8fc pushed 3:37 PM EDT; CI suite green; Oracle build and deploy green; Convex deployed about 3:42 PM EDT (new index `emailRetries.by_to`). Server scripts installed by hand (alarm, prune, defend). H-2A and H-2B loads re-run green, one after the other. Production then held its first `ip_auth` row (a credential-free probe, 3:47 PM EDT).
+- **duration:** ~11:56 AM to 4:00 PM EDT
 
 ### Changes Made
 - **Audit:** the H-2A/H-2B loads' `add_missing_columns` race (both failed 9:08 AM), six refresh calls that now turn their runs red, the SDK's slash loop, 2 lint errors and 2 leftovers, `claude-code-action` 1.0.241, 39 alerts dismissed individually.
@@ -69,6 +69,7 @@
 - **Alerts and email**: send claims stop two sweeps sending one change twice; opt-outs drop queued retries; held bundles no longer stall others; mail anyone can set off stops at 55 so alerts keep 30.
 - **Security**: the per-IP sign-in limit never ran (Convex Auth answers `/api/auth` before the proxy's handler); the gate runs first now, per IP and per email, and both counters need `API_SERVER_SECRET`. Push endpoints must be push services, unknown keys get their own bounded cache, webhook address checks block 6to4/IPv4-mapped/Teredo, exports count 20,000 rows a day.
 - **Ops that read green while broken**: the sweeps, live rebuild, watched-case check, alarm, cross-check, purge, page-cache cap and defense all report their failures; the health check reads failures for 40 days and fails on unreadable tables.
+- **A false disk alarm, found while installing**: the alarm emailed "full in about 12 hours" at 11:39 AM EDT while the live page cache refilled toward its 60 GB cap (stopping with about 36 GB free). It now subtracts the cap's headroom from the trend, and cleared with an explanation at 3:37 PM EDT.
 
 ### Decisions
 - **The bundle and digest prefs link stays** (owner): a forward shows the reader's watched cases; accepted for the one-click convenience.
