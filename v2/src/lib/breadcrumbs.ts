@@ -13,6 +13,7 @@
  */
 
 import { OVERVIEW, SECTIONS, isDataPath, sectionForPath } from "@/components/tools/dataSections";
+import { detailName } from "@/lib/breadcrumbNames";
 import { SITE_URL } from "@/lib/constants/site";
 import {
   CONTENT_NAV_LINKS,
@@ -37,6 +38,12 @@ const DATA: Crumb = { name: "Data", href: OVERVIEW.href };
  */
 const OWN_NAMES: Record<string, string> = {
   "/visa-bulletin": "Visa bulletin",
+  // The side menu files these under a group heading (Queue, USCIS), which a
+  // trail doesn't carry, so the trail names the agency; two pages both called
+  // "Processing times" read as one.
+  "/perm-processing-times": "PERM processing times",
+  "/uscis-processing-times": "USCIS processing times",
+  "/uscis-case-status": "USCIS case status",
   "/perm-employers/browse": "Browse A to Z",
   "/perm-attorneys/browse": "Browse A to Z",
   "/perm-wages/browse": "Browse A to Z",
@@ -105,14 +112,26 @@ export function breadcrumbTrail(pathname: string): Crumb[] {
   for (let i = 1; i <= segments.length; i++) {
     const prefix = `/${segments.slice(0, i).join("/")}`;
     const last = i === segments.length;
-    push(prefix, NAMES.get(prefix) ?? (last ? segmentName(segments[i - 1]!) : null));
+    push(prefix, NAMES.get(prefix) ?? (last ? segmentName(segments[i - 1]!) ?? detailName(path) : null));
   }
 
   return trail.length > 1 ? trail : [];
 }
 
-/** Whether the trail for a path ends at the page itself (it has a name the menus give). */
+/**
+ * Whether the bar emits the BreadcrumbList for this page: its trail ends at the
+ * page under a name the menus or the URL's own month or letter give. A detail
+ * page named from its slug (a state, a bulletin line, a review stage) shows its
+ * name in the bar too, but emits its own list with the name it renders, so a
+ * page never carries two.
+ */
 export function trailNamesPage(pathname: string): boolean {
+  const path = normalise(pathname);
+  return breadcrumbTrail(path).at(-1)?.href === path && detailName(path) === null;
+}
+
+/** Whether the visible trail ends on the page itself. */
+export function trailEndsAtPage(pathname: string): boolean {
   return breadcrumbTrail(pathname).at(-1)?.href === normalise(pathname);
 }
 

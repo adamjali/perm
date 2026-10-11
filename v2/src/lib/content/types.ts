@@ -24,8 +24,19 @@ export interface PostMeta {
   author: string;
   image?: string; // Featured image path (relative to /public)
   imageAlt?: string;
+  /**
+   * Who made the picture and under what licence, printed under it: "Photo: U.S.
+   * Department of State", "Photo: G. Edward Johnson / Wikimedia Commons, CC BY
+   * 4.0". Required for any picture this site didn't make (topics.test.ts).
+   */
+  imageCredit?: string;
+  /** The picture's own page (its Commons, Library of Congress or agency page). */
+  imageSource?: string;
+  /** CSS object-position for the crop, e.g. "50% 20%" to keep a form's title in frame. */
+  imagePosition?: string;
   tags: string[];
-  category?: string; // Sub-category within content type
+  /** The topic (lib/content/topics.ts) for guides and blog; Release, Feature or Correction for the changelog. */
+  category?: string;
   readingTime: string; // e.g. "5 min read"
   published: boolean;
   featured?: boolean; // Pin to top of listings
@@ -64,7 +75,7 @@ export const CONTENT_TYPE_CONFIG: Record<
     plural: "Blog posts",
     byline: "PERM Tracker team",
     description:
-      "Insights on PERM labor certification, immigration practice, and industry trends.",
+      "Data notes, explainers and practice notes on PERM, written from the Labor Department's own records.",
     icon: "FileText",
   },
   guides: {
@@ -72,7 +83,7 @@ export const CONTENT_TYPE_CONFIG: Record<
     plural: "Guides",
     byline: "PERM Tracker data desk",
     description:
-      "How-tos, references, checklists and comparisons for the PERM process and for PERM Tracker itself.",
+      "Plain-English guides to a PERM case, from the case number to the green card, grouped by where you are in it.",
     icon: "BookOpen",
   },
   changelog: {

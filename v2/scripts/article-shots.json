@@ -1,13 +1,5 @@
 [
  {
-  "name": "home",
-  "url": "https://permtracker.app/",
-  "wait": "main",
-  "width": 1280,
-  "height": 820,
-  "settle": 1500
- },
- {
   "name": "case-status-entry",
   "url": "https://permtracker.app/perm-case-status",
   "wait": "main",
@@ -195,13 +187,6 @@
   "width": 414,
   "height": 820,
   "settle": 1500
- },
- {
-  "name": "pwd-result-mobile",
-  "url": "https://permtracker.app/perm-case-status?case=P-100-26092-751498",
-  "clip": "main section",
-  "wait": "main",
-  "width": 414
  },
   {"name": "uscis-case-status-entry", "url": "https://permtracker.app/uscis-case-status", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
   {"name": "uscis-case-status-result", "url": "https://permtracker.app/uscis-case-status", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},

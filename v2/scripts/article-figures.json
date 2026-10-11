@@ -1,0 +1,27 @@
+{
+ "guides/ultimate-perm-guide-2026/pwd-form": {
+  "pdf": {
+   "file": "eta9141.pdf",
+   "page": 1,
+   "top": 0.0,
+   "height": 0.62
+  },
+  "credit": "Form ETA-9141, page 2. U.S. Department of Labor",
+  "alt": "Page 2 of Form ETA-9141: the wage source and the job offer, the answers that set the wage level"
+ },
+ "guides/ultimate-perm-guide-2026/perkins": {
+  "photo": {
+   "file": "frances-perkins-at-desk-harris-ewing.jpg"
+  },
+  "credit": "Photo: Harris & Ewing, Library of Congress",
+  "alt": "Frances Perkins, Secretary of Labor from 1933 to 1945, at her desk"
+ },
+ "blog/what-is-perm-labor-certification/stages": {
+  "capture": {
+   "url": "/glossary",
+   "scroll": "text:Where each term comes up"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The stages from a prevailing wage request to a green card, each with the terms that come up at it"
+ }
+}

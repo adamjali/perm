@@ -42,10 +42,10 @@ const LINK =
 
 export default function AccessibilityPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
-      <div className="card-brutalist p-8">
-        <h1 className="font-heading text-4xl font-black">Accessibility</h1>{" "}
-        <p className="mt-3 mb-8 text-foreground/60">
+    <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+      <div>
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Accessibility</h1>{" "}
+        <p className="mb-8 mt-4 text-lg text-foreground/70">
           Statement dated {STATEMENT_DATE}. Operated by {LEGAL_NAME}.
         </p>{" "}
 

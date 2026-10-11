@@ -18,15 +18,15 @@ import Link from "next/link";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = withSocialCard({
-  title: "Privacy Policy",
+  title: "Privacy policy",
   description:
-    "Privacy Policy for PERM Tracker. Learn how we protect your immigration case data with bank-level encryption and row-level security.",
+    "Privacy policy for PERM Tracker. Learn how we protect your immigration case data with bank-level encryption and row-level security.",
   alternates: {
     canonical: "/privacy",
   },
   openGraph: {
     ...openGraphBase,
-    title: "Privacy Policy | PERM Tracker",
+    title: "Privacy policy | PERM Tracker",
     description:
       "How PERM Tracker collects, uses and protects immigration case data.",
     url: "/privacy",
@@ -58,10 +58,10 @@ const SECTIONS = [
 
 export default function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
-      <div className="card-brutalist p-8">
-        <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>{" "}
-        <p className="text-foreground/60 mb-8">
+    <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+      <div>
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Privacy policy</h1>{" "}
+        <p className="mb-8 mt-4 text-lg text-foreground/70">
           Effective Date: February 17, 2026 | Last Updated: October 2, 2026
         </p>{" "}
 

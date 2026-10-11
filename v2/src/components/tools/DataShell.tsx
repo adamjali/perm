@@ -52,7 +52,12 @@ export function DataShell({ children }: { children: React.ReactNode }) {
           minimum is its content, so one wide table or a long unbroken case
           number would push the column past the viewport and take the whole
           page into horizontal scroll - with the rail dragged off screen. */}
-      <div className="min-w-0 lg:flex-1">
+      {/* Pages set their own measure (max-w-2xl to max-w-7xl) with mx-auto,
+          which centres a narrow page in the column, so the heading sat at a
+          different distance from the rail on every page (304 to 372px at 1440,
+          more on a wide screen). Beside the rail every page starts at the same
+          edge; only its width differs. */}
+      <div className="min-w-0 lg:flex-1 lg:[&>.mx-auto]:ml-0 lg:[&>*>.mx-auto]:ml-0">
         {children}
       </div>
     </div>

@@ -8,12 +8,12 @@
  * Motion whileHover lift + image zoom.
  */
 
-import { Fragment } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { CalendarIcon, CircleNotchIcon, ClockIcon } from "@phosphor-icons/react";
 import type { PostSummary } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
+import { topicFor } from "@/lib/content/topics";
 import { NavLink, useNavigationContext } from "@/components/ui/nav-link";
 
 interface ContentCardProps {
@@ -43,6 +43,7 @@ export default function ContentCard({
   const { slug, type, meta } = post;
   const href = `/${type}/${slug}`;
   const config = CONTENT_TYPE_CONFIG[type];
+  const topic = topicFor(type, meta.category);
   const revised = Boolean(meta.updated && meta.updated > meta.date);
   const shown = revised ? meta.updated! : meta.date;
   const context = useNavigationContext();
@@ -74,47 +75,35 @@ export default function ContentCard({
                 src={meta.image}
                 alt={meta.imageAlt ?? meta.title}
                 fill
-                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                className="object-cover"
+                style={{ objectPosition: meta.imagePosition ?? "center" }}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
               {/* Type badge overlay */}
               {showType && (
-                <span className="absolute left-3 top-3 border-2 border-black bg-primary px-2 py-0.5 font-heading text-sm font-bold uppercase tracking-wide text-black">
-                  {config.label}
+                <span className="absolute left-3 top-3 border-2 border-black bg-primary px-2 py-0.5 font-heading text-sm font-bold text-black">
+                  {config.label}{" "}
                 </span>
               )}
             </div>
-          )}
+          )}{" "}
 
           {/* Content */}
           <div className="p-4 sm:p-5">
-            {/* Tags */}
-            {meta.tags.length > 0 && (
-              <div className="mb-2 flex flex-wrap gap-1.5">
-                {meta.tags.slice(0, 3).map((tag) => (
-                  // Mapped siblings arrive in the DOM with nothing between
-                  // them, so the chips read as "toolscase-managementimmigration"
-                  // to any extractor. A whitespace-only text node between flex
-                  // items is not rendered as a flex item, so it costs nothing.
-                  <Fragment key={tag}>
-                    {" "}
-                    <span className="border border-border bg-muted px-1.5 py-0.5 font-mono text-sm uppercase tracking-wider text-muted-foreground">
-                      {tag}
-                    </span>
-                  </Fragment>
-                ))}
-              </div>
-            )}
+            {/* The topic it's filed under, in words (lib/content/topics.ts). */}
+            {topic ? (
+              <p className="mb-2 text-sm font-semibold text-primary-text">{topic.label}</p>
+            ) : null}{" "}
 
             {/* Title */}
-            <Heading className="mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200 group-hover:text-primary sm:text-lg">
+            <Heading className="mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200 group-hover:text-primary-text sm:text-lg">
               {meta.title}
             </Heading>{" "}
 
             {/* Description */}
             <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
               {meta.description}
-            </p>
+            </p>{" "}
 
             {/* Meta row */}
             <div className="flex items-center gap-4 text-sm text-muted-foreground">

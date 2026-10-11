@@ -67,7 +67,7 @@ export default function PublicDataError({
       <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
         Data unavailable
       </p>{" "}
-      <h1 className="mt-3 font-heading text-3xl font-black sm:text-4xl">
+      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl mt-3">
         This page&rsquo;s figures didn&rsquo;t load
       </h1>{" "}
       <p className="mt-4 text-base leading-relaxed text-foreground/80">

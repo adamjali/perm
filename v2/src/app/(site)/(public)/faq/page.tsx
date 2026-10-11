@@ -171,7 +171,7 @@ export default async function FAQPage() {
 
       <section className="border-b-2 border-border bg-card">
         <div className="mx-auto max-w-[800px] px-4 py-10 sm:px-8 sm:py-14">
-          <h1 className="mb-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl mb-3">
             Frequently asked questions
           </h1>{" "}
           <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">

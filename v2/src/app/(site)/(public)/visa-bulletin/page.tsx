@@ -175,7 +175,7 @@ export default async function VisaBulletinPage() {
   if (series.length === 0 || !board) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
-        <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl">The next visa bulletin</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">The next visa bulletin</h1>{" "}
         <p className="mt-4 text-base text-foreground/80">
           The bulletin archive is not available right now. The State Department publishes the current bulletin at{" "}
           <a href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html" className="font-semibold underline" rel="noopener" target="_blank">travel.state.gov</a>.
@@ -223,7 +223,7 @@ export default async function VisaBulletinPage() {
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-8 sm:px-6 sm:pb-24">
       <JsonLdScript schema={faqSchema} />
 
-      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
         The {monthLabel(next)} visa bulletin, from the last {series.length}
       </h1>{" "}
       <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/85">

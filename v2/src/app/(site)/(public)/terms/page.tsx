@@ -18,15 +18,15 @@ import Link from "next/link";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = withSocialCard({
-  title: "Terms of Service",
+  title: "Terms of service",
   description:
-    "Terms of Service for PERM Tracker: the public PERM, prevailing wage and LCA data, the case manager, and what you may do with the compiled dataset.",
+    "Terms of service for PERM Tracker: the public PERM, prevailing wage and LCA data, the case manager, and what you may do with the compiled dataset.",
   alternates: {
     canonical: "/terms",
   },
   openGraph: {
     ...openGraphBase,
-    title: "Terms of Service | PERM Tracker",
+    title: "Terms of service | PERM Tracker",
     description:
       "The terms that govern use of PERM Tracker.",
     url: "/terms",
@@ -56,10 +56,10 @@ const SECTIONS = [
 
 export default function TermsPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
-      <div className="card-brutalist p-8">
-        <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>{" "}
-        <p className="text-foreground/60 mb-8">
+    <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+      <div>
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Terms of service</h1>{" "}
+        <p className="mb-8 mt-4 text-lg text-foreground/70">
           Effective Date: February 17, 2026 | Last Updated: October 2, 2026
         </p>{" "}
 

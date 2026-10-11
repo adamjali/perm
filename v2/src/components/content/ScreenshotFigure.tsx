@@ -4,7 +4,8 @@
  * ScreenshotFigure
  *
  * Neobrutalist-styled screenshot display for MDX articles.
- * Shows app screenshots with optional step badges and captions.
+ * Shows a picture inside an article (a capture of the site, a page of a
+ * form, a photograph) with an optional step badge, caption and credit.
  * Motion whileInView fade-up entrance animation.
  */
 
@@ -26,6 +27,10 @@ interface ScreenshotFigureProps {
   maxWidth?: number;
   /** Aspect ratio (width/height). Defaults to 16/9. */
   aspectRatio?: number;
+  /** Who made the picture, printed after the caption ("Photo: Harris & Ewing, Library of Congress") */
+  credit?: string;
+  /** Where the picture comes from; the credit links to it */
+  creditHref?: string;
 }
 
 export default function ScreenshotFigure({
@@ -35,6 +40,8 @@ export default function ScreenshotFigure({
   step,
   maxWidth = 800,
   aspectRatio = 16 / 9,
+  credit,
+  creditHref,
 }: ScreenshotFigureProps) {
   return (
     <motion.figure
@@ -65,11 +72,21 @@ export default function ScreenshotFigure({
         </div>
       </Lightbox>
 
-      {caption && (
-        <figcaption className="mt-2 font-mono text-sm text-muted-foreground">
+      {caption || credit ? (
+        <figcaption className="mt-2 text-sm text-muted-foreground">
           {caption}
+          {caption && credit ? " " : null}
+          {credit ? (
+            creditHref ? (
+              <a href={creditHref} rel="noopener" target="_blank" className="underline underline-offset-4">
+                {credit}
+              </a>
+            ) : (
+              <span>{credit}</span>
+            )
+          ) : null}
         </figcaption>
-      )}
+      ) : null}
     </motion.figure>
   );
 }

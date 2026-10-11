@@ -99,7 +99,7 @@ export default function AboutPage() {
     <div className="mx-auto w-full max-w-[1400px] px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
       <JsonLdScript schema={aboutSchema} />
 
-      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
         About PERM Tracker
       </h1>{" "}
       <div className="mt-6 grid gap-12 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16">

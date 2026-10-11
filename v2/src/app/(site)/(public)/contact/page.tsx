@@ -43,7 +43,7 @@ export default function ContactPage() {
     // the form on the right, staying in view. Below `lg` it stacks in source
     // order, routes first and the catch-all form last.
     <div className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
-      <h1 className="font-heading text-4xl font-black sm:text-5xl">Contact us</h1>{" "}
+      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Contact us</h1>{" "}
       <p className="mt-3 max-w-2xl text-lg text-foreground/70">
         Questions, feature requests and bug reports all land in the same inbox.
       </p>{" "}

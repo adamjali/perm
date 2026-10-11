@@ -147,7 +147,7 @@ function staticIndex(): { label: string; href: string; group: string; keywords: 
     group: "Go to",
     keywords: "api developer developers key json mcp claude cursor chatgpt assistant connector openapi integration",
   });
-  out.push({ label: "API Terms", href: "/api-terms", group: "Go to", keywords: "api terms license licence rules" });
+  out.push({ label: "API terms", href: "/api-terms", group: "Go to", keywords: "api terms license licence rules" });
   out.push({
     label: "Browser extension",
     href: "/extension",

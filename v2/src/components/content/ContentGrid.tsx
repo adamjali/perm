@@ -15,9 +15,11 @@ import ContentCard from "./ContentCard";
 interface ContentGridProps {
   posts: PostSummary[];
   showType?: boolean;
+  /** 3 under a topic heading on the sectioned listings, 2 where the grid is the page. */
+  headingLevel?: 2 | 3;
 }
 
-export default function ContentGrid({ posts, showType }: ContentGridProps) {
+export default function ContentGrid({ posts, showType, headingLevel = 2 }: ContentGridProps) {
   if (posts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -54,7 +56,7 @@ export default function ContentGrid({ posts, showType }: ContentGridProps) {
               ease: [0.4, 0, 0.2, 1],
             }}
           >
-            <ContentCard headingLevel={2} post={post} showType={showType} />
+            <ContentCard headingLevel={headingLevel} post={post} showType={showType} />
           </motion.div>
         ))}
       </AnimatePresence>

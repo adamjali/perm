@@ -584,8 +584,8 @@ export async function GET() {
   lines.push(
     "## Legal",
     "",
-    `- [Terms of Service](${BASE_URL}/terms)`,
-    `- [Privacy Policy](${BASE_URL}/privacy)`,
+    `- [Terms of service](${BASE_URL}/terms)`,
+    `- [Privacy policy](${BASE_URL}/privacy)`,
     `- [Security](${BASE_URL}/security)`,
     `- [Accessibility](${BASE_URL}/accessibility)`,
     "",

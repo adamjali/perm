@@ -15,11 +15,15 @@ describe("breadcrumbTrail", () => {
     ["/perm-employers/browse/a", ["Home", "Data", "Employers", "Browse A to Z", "A"]],
     ["/perm-queue/2025-11", ["Home", "Data", "Queue backlog", "November 2025"]],
     ["/visa-bulletin/2026-10", ["Home", "Data", "Visa bulletin", "October 2026"]],
-    ["/visa-bulletin/categories/eb2-india", ["Home", "Data", "Visa bulletin", "By category and country"]],
+    ["/visa-bulletin/categories/eb2-india", ["Home", "Data", "Visa bulletin", "By category and country", "EB-2, India"]],
+    ["/perm-rfi-audit/rfi-issued", ["Home", "Data", "RFI and audits", "RFI issued"]],
+    ["/perm-processing-times", ["Home", "Data", "PERM processing times"]],
+    ["/uscis-processing-times", ["Home", "Data", "USCIS processing times"]],
     ["/tools/perm-timeline-calculator", ["Home", "Data", "Calculators", "PERM processing time"]],
     ["/tools/priority-date-calculator", ["Home", "Data", "Priority dates"]],
+    // An article's own page renders the bar with its title (SiteBreadcrumbs pageName).
     ["/guides/what-emma-told-you", ["Home", "Guides"]],
-    ["/privacy/", ["Home", "Privacy Policy"]],
+    ["/privacy/", ["Home", "Privacy policy"]],
   ])("%s", (path, want) => {
     expect(names(path)).toEqual(want);
   });

@@ -119,7 +119,7 @@ function KindGroup({ title, ids }: { title: string; ids: readonly MailKindId[] }
 export default function EmailPreferencesPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16">
-      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-5xl">
+      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
         Your email, in one place
       </h1>{" "}
       <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/75">

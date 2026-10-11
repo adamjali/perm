@@ -3,75 +3,109 @@
 /**
  * ContentListing
  *
- * Client-side content listing with search and tag filtering.
- * Used by all listing pages (blog, tutorials, guides, resources).
+ * The guides and blog listings: one section per topic (lib/content/topics.ts),
+ * in the topics' order, with a row of topic buttons that narrows the page to
+ * one topic and a search box that narrows by words. Both keep the sections,
+ * so a card title is always an <h3> under its topic's <h2>.
  */
 
 import * as React from "react";
-import type { PostSummary } from "@/lib/content/types";
+import { Fragment } from "react";
+import type { ContentType, PostSummary } from "@/lib/content/types";
+import { topicsFor } from "@/lib/content/topics";
+import { cn } from "@/lib/utils";
 import ContentGrid from "./ContentGrid";
-import CategoryFilter from "./CategoryFilter";
 import ContentSearch from "./ContentSearch";
 
 interface ContentListingProps {
   posts: PostSummary[];
-  tags: string[];
-  showType?: boolean;
+  type: ContentType;
 }
 
-export default function ContentListing({
-  posts,
-  tags,
-  showType,
-}: ContentListingProps) {
+export default function ContentListing({ posts, type }: ContentListingProps) {
+  const topics = topicsFor(type);
   const [search, setSearch] = React.useState("");
-  const [activeTag, setActiveTag] = React.useState<string | null>(null);
+  const [active, setActive] = React.useState<string | null>(null);
 
-  const filtered = React.useMemo(() => {
-    let result = posts;
+  const matches = React.useMemo(() => {
+    if (!search) return posts;
+    const q = search.toLowerCase();
+    return posts.filter(
+      (p) =>
+        p.meta.title.toLowerCase().includes(q) ||
+        p.meta.description.toLowerCase().includes(q) ||
+        p.meta.tags.some((t) => t.toLowerCase().includes(q)),
+    );
+  }, [posts, search]);
 
-    if (activeTag) {
-      result = result.filter((p) => p.meta.tags.includes(activeTag));
-    }
-
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.meta.title.toLowerCase().includes(q) ||
-          p.meta.description.toLowerCase().includes(q) ||
-          p.meta.tags.some((t) => t.toLowerCase().includes(q))
-      );
-    }
-
-    return result;
-  }, [posts, activeTag, search]);
+  const sections = topics
+    .filter((t) => !active || t.id === active)
+    .map((t) => ({ topic: t, posts: matches.filter((p) => p.meta.category === t.id) }))
+    .filter((s) => s.posts.length > 0);
+  const shown = sections.reduce((n, s) => n + s.posts.length, 0);
+  const counts = new Map(topics.map((t) => [t.id, posts.filter((p) => p.meta.category === t.id).length]));
 
   return (
-    <div className="space-y-6">
-      {/* Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <CategoryFilter
-          tags={tags}
-          activeTag={activeTag}
-          onTagChange={setActiveTag}
-        />
-        <div className="w-full sm:max-w-xs">
+    <div className="space-y-10">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div role="group" aria-label="Topics" className="flex flex-wrap gap-2">
+          <TopicButton pressed={active === null} onClick={() => setActive(null)} label="All topics" count={posts.length} />{" "}
+          {topics.map((t) => (
+            <Fragment key={t.id}>
+              {" "}
+              <TopicButton
+                pressed={active === t.id}
+                onClick={() => setActive(active === t.id ? null : t.id)}
+                label={t.label}
+                count={counts.get(t.id) ?? 0}
+              />
+            </Fragment>
+          ))}
+        </div>{" "}
+        <div className="w-full shrink-0 lg:max-w-xs">
           <ContentSearch value={search} onChange={setSearch} />
         </div>
       </div>
 
-      {/* Results */}
-      <ContentGrid posts={filtered} showType={showType} />
+      {sections.map(({ topic, posts: list }) => (
+        <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-h`} className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
+          <div className="mb-5 border-b-2 border-border pb-3">
+            <h2 id={`${topic.id}-h`} className="font-heading text-2xl font-black sm:text-3xl">
+              {topic.label}
+            </h2>{" "}
+            <p className="mt-1 text-base text-foreground/75">{topic.blurb}</p>
+          </div>
+          <ContentGrid posts={list} headingLevel={3} />
+        </section>
+      ))}
 
-      {/* Result count */}
-      {(search || activeTag) && (
-        <p className="text-center font-mono text-sm text-muted-foreground">
-          Showing {filtered.length} of {posts.length} articles
-          {activeTag && ` tagged "${activeTag}"`}
-          {search && ` matching "${search}"`}
+      {shown === 0 ? (
+        <p className="py-16 text-center text-base text-foreground/75">
+          Nothing matches &ldquo;{search}&rdquo;. Try a shorter word, or show all topics.
         </p>
-      )}
+      ) : search || active ? (
+        <p className="text-center text-sm text-foreground/70">
+          Showing {shown} of {posts.length}
+          {search ? ` matching "${search}"` : null}
+        </p>
+      ) : null}
     </div>
+  );
+}
+
+function TopicButton({ pressed, onClick, label, count }: { pressed: boolean; onClick: () => void; label: string; count: number }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onClick}
+      className={cn(
+        "inline-flex min-h-11 items-center gap-2 border-2 border-border px-3 text-sm font-semibold transition-colors",
+        pressed ? "bg-foreground text-background" : "bg-card text-foreground hover:bg-muted",
+      )}
+    >
+      {label}{" "}
+      <span className={cn("font-mono text-sm", pressed ? "text-background/75" : "text-foreground/60")}>{count}</span>
+    </button>
   );
 }

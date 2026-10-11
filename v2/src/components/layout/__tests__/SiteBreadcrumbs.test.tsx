@@ -20,7 +20,7 @@ describe("SiteBreadcrumbs", () => {
     const html = render("/about");
     expect(html).toContain('aria-label="Breadcrumb"');
     expect(html).toContain('href="/"');
-    expect(html).toMatch(/aria-current="page"[^>]*>About</);
+    expect(html).toMatch(/aria-current="page"[^>]*><span class="truncate">About</);
     expect(html).toContain('"@type":"BreadcrumbList"');
   });
 

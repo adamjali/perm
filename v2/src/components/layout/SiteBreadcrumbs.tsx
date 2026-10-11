@@ -7,7 +7,8 @@ import { CaretRightIcon } from "@phosphor-icons/react";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { isDataPath } from "@/components/tools/dataSections";
 import { WatchLink, showsWatchBanner } from "@/components/tools/WatchBanner";
-import { breadcrumbSchema, breadcrumbTrail, trailNamesPage } from "@/lib/breadcrumbs";
+import { isArticlePath } from "@/lib/breadcrumbNames";
+import { breadcrumbSchema, breadcrumbTrail, trailEndsAtPage, trailNamesPage } from "@/lib/breadcrumbs";
 import { cn } from "@/lib/utils";
 
 /**
@@ -20,12 +21,19 @@ import { cn } from "@/lib/utils";
  * It also emits the BreadcrumbList for pages the menus name. A detail page
  * emits its own with its name through `breadcrumbSchema(path, name)`, so a
  * page never carries two.
+ *
+ * An article renders its own copy with `pageName` (its title), in the same
+ * place: articles have no data rail, so the page's first element sits exactly
+ * where the layout's bar would. The layout's copy steps aside on those paths.
  */
-export function SiteBreadcrumbs() {
+export function SiteBreadcrumbs({ pageName }: { pageName?: string } = {}) {
   const pathname = usePathname();
-  const trail = breadcrumbTrail(pathname);
+  if (!pageName && isArticlePath(pathname)) return null;
+  const base = breadcrumbTrail(pathname);
+  const trail = pageName && base.length > 0 ? [...base, { name: pageName, href: pathname }] : base;
   if (trail.length === 0) return null;
-  const endsAtPage = trailNamesPage(pathname);
+  const endsAtPage = Boolean(pageName) || trailEndsAtPage(pathname);
+  const emitsList = !pageName && trailNamesPage(pathname);
 
   const watch = isDataPath(pathname) && showsWatchBanner(pathname);
 
@@ -41,7 +49,7 @@ export function SiteBreadcrumbs() {
       )}
     >
       <nav aria-label="Breadcrumb" className="min-w-0">
-        {endsAtPage ? <JsonLdScript schema={breadcrumbSchema(pathname)} /> : null}
+        {emitsList ? <JsonLdScript schema={breadcrumbSchema(pathname)} /> : null}
         <ol className="flex flex-wrap items-center gap-x-1.5 text-sm">
           {trail.map((crumb, i) => {
             const current = endsAtPage && i === trail.length - 1;
@@ -49,8 +57,11 @@ export function SiteBreadcrumbs() {
               <li key={crumb.href} className="flex items-center gap-1.5">
                 {i > 0 ? <CaretRightIcon aria-hidden="true" className="size-3.5 text-muted-foreground" /> : null}{" "}
                 {current ? (
-                  <span aria-current="page" className="inline-flex min-h-[44px] items-center font-semibold text-foreground">
-                    {crumb.name}
+                  <span
+                    aria-current="page"
+                    className="inline-flex min-h-[44px] max-w-[min(60ch,70vw)] items-center font-semibold text-foreground"
+                  >
+                    <span className="truncate">{crumb.name}</span>
                   </span>
                 ) : (
                   <Link

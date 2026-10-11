@@ -39,13 +39,13 @@ export const metadata: Metadata = withSocialCard({
 
 export default function SecurityPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
-      <div className="card-brutalist p-8">
+    <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+      <div>
         <div className="flex items-center gap-3 mb-3">
           <ShieldIcon className="h-8 w-8 text-primary" aria-hidden="true" />
-          <h1 className="font-heading text-4xl font-black">Security</h1>
+          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Security</h1>
         </div>{" "}
-        <p className="text-foreground/60 mb-8">
+        <p className="mb-8 mt-4 text-lg text-foreground/70">
           Security posture and public incident record for permtracker.app
         </p>{" "}
 

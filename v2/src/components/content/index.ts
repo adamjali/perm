@@ -10,7 +10,6 @@ export { default as TableOfContents } from "./TableOfContents";
 export { default as ShareButtons } from "./ShareButtons";
 export { default as RelatedPosts } from "./RelatedPosts";
 export { default as ContentCTA } from "./ContentCTA";
-export { default as CategoryFilter } from "./CategoryFilter";
 export { default as ContentSearch } from "./ContentSearch";
 export { default as ReadingProgress } from "./ReadingProgress";
 export { default as ContentListing } from "./ContentListing";

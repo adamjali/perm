@@ -13,6 +13,7 @@ import { getPostBySlug, getPostSlugs, getRelatedPosts, extractHeadings, extractV
 import { mdxComponents } from "@/lib/content/mdx-components";
 import { ArticleLayout } from "@/components/content";
 import StructuredData from "@/components/content/StructuredData";
+import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { openGraphBase } from "@/lib/openGraphBase";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
@@ -104,6 +105,9 @@ export function createContentDetailPage(type: ContentType) {
 
     return (
       <>
+        {/* The layout's bar steps aside on article paths; this one ends on the
+            title, in the same place (no data rail on an article). */}
+        <SiteBreadcrumbs pageName={post.meta.title} />
         <StructuredData
           type={type}
           slug={slug}

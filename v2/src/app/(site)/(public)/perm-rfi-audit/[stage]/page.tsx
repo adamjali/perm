@@ -195,7 +195,7 @@ export default async function StagePage({
         schema={breadcrumbSchema(`/perm-rfi-audit/${stage}`, meta.label)}
       />
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-        <h1 className="font-heading text-3xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           <span
             className="mr-3 inline-block h-4 w-4 shrink-0 border-2 border-border align-middle"
             style={{ backgroundColor: GROUP_STYLE[meta.group].fill }}

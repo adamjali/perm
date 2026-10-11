@@ -19,10 +19,10 @@ const DESCRIPTION =
 
 export const metadata: Metadata = withSocialCard(
   {
-    title: "API Terms",
+    title: "API terms",
     description: DESCRIPTION,
     alternates: { canonical: "/api-terms" },
-    openGraph: { ...openGraphBase, title: "API Terms | PERM Tracker", description: DESCRIPTION, url: "/api-terms" },
+    openGraph: { ...openGraphBase, title: "API terms | PERM Tracker", description: DESCRIPTION, url: "/api-terms" },
   },
   "api-terms",
 );
@@ -45,10 +45,10 @@ function Section({ id, title, children }: { id: string; title: string; children:
 export default function ApiTermsPage() {
   const free = API_PLANS.free;
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
-      <div className="card-brutalist p-8">
-        <h1 className="mb-2 font-heading text-4xl font-black">API Terms</h1>{" "}
-        <p className="mb-6 text-foreground/60">Effective Date: October 9, 2026</p>
+    <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+      <div>
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">API terms</h1>{" "}
+        <p className="mb-8 mt-4 text-lg text-foreground/70">Effective Date: October 9, 2026</p>
 
         <Section id="agreement" title="1. Agreement">
           <p>

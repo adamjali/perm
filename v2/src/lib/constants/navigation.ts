@@ -239,9 +239,9 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
     title: "Legal",
     ariaLabel: "Legal links",
     links: [
-      { href: "/privacy", label: "Privacy Policy" },
-      { href: "/terms", label: "Terms of Service" },
-      { href: "/api-terms", label: "API Terms" },
+      { href: "/privacy", label: "Privacy policy" },
+      { href: "/terms", label: "Terms of service" },
+      { href: "/api-terms", label: "API terms" },
       { href: "/security", label: "Security" },
       { href: "/accessibility", label: "Accessibility" },
       { href: "/contact", label: "Contact" },

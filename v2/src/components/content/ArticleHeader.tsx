@@ -1,153 +1,99 @@
-"use client";
-import { Fragment } from "react";
-
 /**
  * ArticleHeader
  *
- * Animated article header with breadcrumb, metadata, tags, and featured image.
- * Renders at rest: no entrance animation (see the note in the body).
+ * The top of every guide, blog post and changelog entry: the topic it's filed
+ * under, the title, the summary and the byline on the left; its picture beside
+ * them on a wide screen and under them on a phone, with who made the picture.
+ *
+ * The picture used to run as a 21:9 banner the full width of the page under
+ * the title, which cropped a form or a portrait to a strip and put the first
+ * paragraph a screen and a half down. Beside the title it keeps its shape and
+ * the article starts on the first screen. Rendered at rest: nothing above the
+ * fold animates in.
  */
 
 import Image from "next/image";
-import { motion } from "motion/react";
-import { CalendarIcon, ClockIcon, UserIcon } from "@phosphor-icons/react";
+import Link from "next/link";
+import { CalendarIcon, ClockIcon, UserIcon } from "@phosphor-icons/react/ssr";
 import type { PostMeta, ContentType } from "@/lib/content/types";
-import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
-import { stagger, fadeUp } from "@/lib/content/animations";
+import { topicFor } from "@/lib/content/topics";
 
 interface ArticleHeaderProps {
   meta: PostMeta;
   type: ContentType;
 }
 
+const LONG_DATE: Intl.DateTimeFormatOptions = { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" };
+
 export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
-  // No entrance animation, on any load (initial={false}). This sits above the
-  // fold: on a hard load a fade hid server markup until hydration, and after
-  // a client navigation it replayed over a page that had just replaced its
-  // skeleton, so readers saw skeleton, blank, then a fade. The whileInView
-  // reveals in this directory stay: hiding below-the-fold content until it
-  // is scrolled to is what those are for.
-  const config = CONTENT_TYPE_CONFIG[type];
+  const topic = topicFor(type, meta.category);
+  const revised = Boolean(meta.updated && meta.updated !== meta.date);
 
   return (
     <header className="border-b-2 border-border bg-card">
-      <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
-        <motion.div
-          variants={stagger}
-          initial={false}
-          animate="show"
-        >
-
-          {/* Type badge */}
-          <motion.span
-            variants={fadeUp}
-            className="mb-3 inline-block border-2 border-border bg-primary px-2 py-0.5 font-heading text-sm font-bold uppercase tracking-wider text-black"
-          >
-            {config.label}
-          </motion.span>{" "}
-
-          {/* Title */}
-          <motion.h1
-            variants={fadeUp}
-            className="mb-4 font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl"
-          >
-            {meta.title}
-          </motion.h1>{" "}
-
-          {/* Description */}
-          <motion.p
-            variants={fadeUp}
-            className="article-description mb-5 max-w-3xl text-base leading-relaxed text-muted-foreground"
-          >
-            {meta.description}
-          </motion.p>
-
-          {/* Meta row */}
-          <motion.div
-            variants={fadeUp}
-            className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground"
-          >
+      <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-8 px-4 pb-10 pt-10 sm:px-6 sm:pt-14 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-center lg:gap-12 [&>*]:min-w-0">
+        <div>
+          {topic ? (
+            <Link
+              href={`/${type}#${topic.id}`}
+              className="inline-flex min-h-11 items-center text-base font-semibold text-primary-text underline-offset-4 hover:underline"
+            >
+              {topic.label}
+            </Link>
+          ) : type === "changelog" && meta.category ? (
+            <p className="inline-flex min-h-11 items-center text-base font-semibold text-primary-text">{meta.category}</p>
+          ) : null}{" "}
+          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">{meta.title}</h1>{" "}
+          <p className="article-description mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">{meta.description}</p>{" "}
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground/70">
             <span className="flex items-center gap-1.5">
-              <UserIcon className="h-4 w-4" />
+              <UserIcon aria-hidden="true" className="size-4" />
               {meta.author}
             </span>{" "}
             <span className="flex items-center gap-1.5">
-              <CalendarIcon className="h-4 w-4" />
-              <time dateTime={meta.date}>
-                {new Date(meta.date).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                  timeZone: "UTC",
-                })}
-              </time>
+              <CalendarIcon aria-hidden="true" className="size-4" />
+              <time dateTime={meta.date}>{new Date(meta.date).toLocaleDateString("en-US", LONG_DATE)}</time>
             </span>{" "}
-            {meta.updated && meta.updated !== meta.date && (
-              <span className="flex items-center gap-1.5 text-sm">
+            {revised ? (
+              <span>
                 Updated{" "}
-                <time dateTime={meta.updated}>
-                  {new Date(meta.updated).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                    timeZone: "UTC",
-                  })}
-                </time>
+                <time dateTime={meta.updated}>{new Date(meta.updated!).toLocaleDateString("en-US", LONG_DATE)}</time>
               </span>
-            )}{" "}
+            ) : null}{" "}
             <span className="flex items-center gap-1.5">
-              <ClockIcon className="h-4 w-4" />
+              <ClockIcon aria-hidden="true" className="size-4" />
               {meta.readingTime}
             </span>
-          </motion.div>
+          </div>
+        </div>{" "}
 
-          {/* Tags */}
-          {meta.tags.length > 0 && (
-            <motion.div
-              variants={fadeUp}
-              className="mt-4 flex flex-wrap gap-1.5"
-            >
-              {/* React renders array items with NOTHING between them, so a
-                  bare map glues every chip into one word for any extractor
-                  that walks the DOM: five tags came out as
-                  "checklistrecruitmentcompliancerequirementsreference" on
-                  every article. A keyed Fragment carrying a real space costs
-                  nothing visually inside a flex row with a gap. */}
-              {meta.tags.map((tag) => (
-                <Fragment key={tag}>
-                  {" "}
-                  <span className="border border-border bg-muted px-2 py-0.5 font-mono text-sm uppercase tracking-wider text-muted-foreground">
-                    {tag}
-                  </span>
-                </Fragment>
-              ))}
-            </motion.div>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Featured image */}
-      {meta.image && (
-        <div className="border-t-2 border-border">
-          <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
-            <motion.div
-              className="relative -mt-2 aspect-[21/9] overflow-hidden border-2 border-border shadow-hard-lg"
-              initial={false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3, ease: [0.4, 0, 0.2, 1] as const }}
-            >
+        {meta.image ? (
+          <figure className="m-0">
+            <div className="relative aspect-[4/3] overflow-hidden border-2 border-border bg-muted shadow-hard-lg">
               <Image
                 src={meta.image}
-                alt={meta.imageAlt ?? meta.title}
+                alt={meta.imageAlt ?? ""}
                 fill
-                className="object-cover"
                 priority
-                sizes="(max-width: 1400px) 100vw, 1400px"
+                className="object-cover"
+                style={{ objectPosition: meta.imagePosition ?? "center" }}
+                sizes="(max-width: 1024px) 100vw, 560px"
               />
-            </motion.div>
-          </div>
-        </div>
-      )}
+            </div>{" "}
+            {meta.imageCredit ? (
+              <figcaption className="mt-2 text-sm text-foreground/70">
+                {meta.imageSource ? (
+                  <a href={meta.imageSource} rel="noopener" target="_blank" className="underline-offset-4 hover:underline">
+                    {meta.imageCredit}
+                  </a>
+                ) : (
+                  meta.imageCredit
+                )}
+              </figcaption>
+            ) : null}
+          </figure>
+        ) : null}
+      </div>
     </header>
   );
 }
