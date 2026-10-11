@@ -77,8 +77,12 @@ export const ORGANIZATION_SAME_AS: readonly string[] = [
 export const LEGAL_NAME = "PERM Tracker LLC";
 export const LEGAL_FORM = "a Florida limited liability company";
 
-/** Where reporters write (the Zoho mailbox on press.permtracker.app). Printed on /press. */
-export const PRESS_EMAIL = "adam@press.permtracker.app";
+/**
+ * Where reporters write. Printed on /press. Inbound mail to any permtracker.app
+ * address is stored and forwarded (convex/supportEmail.ts), and a reply sent
+ * with supportEmail:replyToEmail goes out from the address it came to.
+ */
+export const PRESS_EMAIL = "press@permtracker.app";
 
 /**
  * What tells this site apart from others with similar names, for schema.org's

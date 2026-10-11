@@ -20,6 +20,8 @@ export const SWEEP_PAGES = [
   "/perm-case-statuses",
   "/perm-rfi-audit",
   "/perm-employers/under-review",
+  // Opens with today's holds, from the same document as the page above.
+  "/press",
   "/tools/perm-timeline-calculator",
   "/estimate-scorecard",
   // The wage-request, LCA and H-2A/H-2B summaries, written by

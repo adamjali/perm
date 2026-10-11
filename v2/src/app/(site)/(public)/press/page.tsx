@@ -1,22 +1,29 @@
 /**
- * Press: what a reporter can take from this site, how to credit it, and who
- * to write to.
+ * Press: what a reporter can take from this site, shown rather than listed.
  *
- * Prose only. It names what each page holds and never types a figure: the
- * pages carry the figures with their dates, and a number typed here would be
- * wrong within the week.
+ * The opening is the record itself, today's PERM holds by employer, read from
+ * the same document as /perm-employers/under-review, so a reporter sees the
+ * kind of figure on offer before reading a word about it. The topics are the
+ * pages' own social cards, which are screenshots of the pages. No figure is
+ * typed: the live one carries its date, the rest live on their pages.
  */
 
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import { BuildingsIcon, EnvelopeSimpleIcon, FileCsvIcon, GlobeHemisphereWestIcon, IdentificationCardIcon } from "@phosphor-icons/react/ssr";
 
 import { CopyButton } from "@/components/badges/BadgeCatalogue";
+import { BarRows, type BarRow } from "@/components/data/BarRows";
 import { PRESS_EMAIL } from "@/lib/constants/about";
 import { SITE_URL } from "@/lib/constants/site";
+import { HOLD_STATUS, heldRanking, longDate } from "@/lib/employerStages";
+import { formatInt, formatShare } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { OPEN_DATA_LICENSE } from "@/lib/openData";
+import { PAGE_CARD_ALT, pageCardUrl, type PageCardSlug } from "@/lib/pageCards";
 import { pressCreditHtml } from "@/lib/pressCredit";
 import { withSocialCard } from "@/lib/socialCard";
+import { getEmployerStages } from "@/lib/turso/employerStages";
 
 const TITLE = "Press and Data for Journalists";
 const DESCRIPTION =
@@ -32,100 +39,185 @@ export const metadata: Metadata = withSocialCard(
   "press",
 );
 
-// Prose only, no data reads: prerendered once per deploy.
-export const dynamic = "force-static";
+// The same window as the holds page the opening figure comes from.
+export const revalidate = 21600;
 
-const link =
-  "font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary";
-
-/** What a reporter can ask this site, each with the page that answers it. */
-const ANSWERS: { q: string; href: string; page: string }[] = [
-  { q: "Which employers' PERM cases DOL has put on hold, and the day it moved them", href: "/perm-employers/under-review", page: "Employers under review" },
-  { q: "How many PERM cases DOL decides each day, and how that compares with its usual pace", href: "/perm-decision-activity", page: "Decision activity" },
-  { q: "How long DOL takes, and which filing month it is working on", href: "/perm-processing-times", page: "Processing times" },
-  { q: "Any employer's PERM, H-1B and wage-request record", href: "/perm-employers", page: "Employers" },
-  { q: "Any law firm's PERM record", href: "/perm-attorneys", page: "Law firms" },
-  { q: "The busiest H-1B employers by year and state", href: "/h1b-employers", page: "H-1B employers" },
-  { q: "Every visa bulletin cutoff back to 2005", href: "/visa-bulletin", page: "Visa bulletin" },
-  { q: "DOL's live status for one case number", href: "/perm-case-status", page: "Case lookup" },
+/** The pages a reporter is most likely to quote, each shown by its own card. */
+const TOPICS: { slug: PageCardSlug; href: string; name: string; line: string }[] = [
+  { slug: "perm-employers-under-review", href: "/perm-employers/under-review", name: "Holds by employer", line: "Whose cases DOL put on hold, and the day it did" },
+  { slug: "perm-decision-activity", href: "/perm-decision-activity", name: "Decisions per day", line: "DOL's pace, day by day, back to 2015" },
+  { slug: "perm-processing-times", href: "/perm-processing-times", name: "The PERM queue", line: "Which month DOL is working, and how fast" },
+  { slug: "perm-employers", href: "/perm-employers", name: "Any employer's record", line: "PERM, H-1B and wage requests in one place" },
+  { slug: "h1b-employers", href: "/h1b-employers", name: "Top H-1B employers", line: "By fiscal year and by state" },
+  { slug: "visa-bulletin", href: "/visa-bulletin", name: "Visa bulletin history", line: "Every cutoff back to 2005" },
 ];
 
-export default function PressPage() {
-  const credit = pressCreditHtml(SITE_URL);
-  return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">{TITLE}</h1>{" "}
-      <p className="mt-6 max-w-3xl text-lg leading-relaxed text-foreground/90 sm:text-xl">
-        PERM Tracker reads the Department of Labor&apos;s case records every day. Quote any figure on the site with
-        credit and a link; the files under{" "}
-        <Link href="/open-data" className={link}>
-          Open data
-        </Link>{" "}
-        are free to reuse under {OPEN_DATA_LICENSE.short}.
-      </p>{" "}
+const SOURCES = [
+  { icon: BuildingsIcon, name: "Department of Labor", what: "Case status for every pending case, and the quarterly disclosure files" },
+  { icon: GlobeHemisphereWestIcon, name: "State Department", what: "Every monthly visa bulletin" },
+  { icon: IdentificationCardIcon, name: "USCIS", what: "Quarterly processing and inventory data" },
+];
 
-      <section aria-labelledby="press-answers" className="mt-12">
-        <h2 id="press-answers" className="font-heading text-2xl font-black">
-          What the record can tell you
+const link = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
+
+export default async function PressPage() {
+  const doc = await getEmployerStages().catch(() => null);
+  const held = doc ? heldRanking(doc.employers, 5, 5) : [];
+  const onHold = doc ? doc.nationwide[HOLD_STATUS] ?? 0 : 0;
+  const rows: BarRow[] = held.map((r) => ({
+    key: r.slug ?? r.name,
+    label: r.name,
+    value: r.byStatus[HOLD_STATUS] ?? 0,
+    text: formatInt(r.byStatus[HOLD_STATUS] ?? 0),
+    tone: "ink",
+  }));
+  const credit = pressCreditHtml(SITE_URL);
+
+  return (
+    <div className="mx-auto w-full max-w-[1200px] px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] [&>*]:min-w-0">
+        <div>
+          <h1 className="font-heading text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+            Data for journalists
+          </h1>{" "}
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-foreground/80 sm:text-xl">
+            The Department of Labor&apos;s own case records, read every day. Quote any figure with credit and a link.
+          </p>{" "}
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a
+              href={`mailto:${PRESS_EMAIL}`}
+              className="inline-flex min-h-12 items-center gap-2 border-2 border-border bg-primary px-5 font-heading text-base font-black text-primary-foreground shadow-hard transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            >
+              <EnvelopeSimpleIcon size={20} weight="bold" aria-hidden="true" />
+              {PRESS_EMAIL}
+            </a>{" "}
+            <Link
+              href="/open-data"
+              className="inline-flex min-h-12 items-center gap-2 border-2 border-border bg-background px-5 font-heading text-base font-black shadow-hard transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            >
+              <FileCsvIcon size={20} weight="bold" aria-hidden="true" />
+              Download the data
+            </Link>
+          </div>
+        </div>{" "}
+
+        {doc && rows.length > 0 ? (
+          <figure className="border-3 border-border bg-card p-5 shadow-hard sm:p-6">
+            <p className="font-mono text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
+              Today&apos;s record, {longDate(doc.asOf)}
+            </p>{" "}
+            <p className="mt-2 font-heading text-3xl font-black tabular-nums sm:text-4xl">
+              {formatInt(onHold)} PERM cases on hold
+            </p>{" "}
+            <p className="mt-1 text-base text-foreground/75">
+              {formatShare(doc.pendingTotal ? onHold / doc.pendingTotal : 0)} of the {formatInt(doc.pendingTotal)} DOL has pending. The biggest:
+            </p>{" "}
+            <BarRows rows={rows} label="PERM cases on hold, by employer" className="mt-5" />
+            <figcaption className="mt-5 text-base">
+              <Link href="/perm-employers/under-review" className={link}>
+                Every employer, and the day DOL moved it
+              </Link>
+            </figcaption>
+          </figure>
+        ) : null}
+      </div>{" "}
+
+      <section aria-labelledby="press-topics" className="mt-20">
+        <h2 id="press-topics" className="font-heading text-2xl font-black sm:text-3xl">
+          What you can report on
         </h2>{" "}
-        <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
-          {ANSWERS.map((a) => (
-            <li key={a.href} className="border-2 border-border bg-card p-4 shadow-hard-sm">
-              <p className="text-base leading-relaxed text-foreground/85">{a.q}</p>{" "}
-              <Link href={a.href} className={`mt-2 inline-flex min-h-[44px] items-center ${link}`}>
-                {a.page}
+        <ul className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+          {TOPICS.map((t) => (
+            <li key={t.slug}>
+              <Link
+                href={t.href}
+                className="group block h-full border-2 border-border bg-card shadow-hard-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              >
+                <Image
+                  src={pageCardUrl(t.slug)}
+                  alt={PAGE_CARD_ALT[t.slug]}
+                  width={1200}
+                  height={630}
+                  sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
+                  className="block h-auto w-full border-b-2 border-border"
+                />{" "}
+                <span className="block p-4">
+                  <span className="block font-heading text-lg font-black group-hover:underline group-hover:decoration-primary group-hover:decoration-2 group-hover:underline-offset-4">
+                    {t.name}
+                  </span>{" "}
+                  <span className="mt-1 block text-base text-foreground/75">{t.line}</span>
+                </span>
               </Link>{" "}
             </li>
           ))}
         </ul>
       </section>{" "}
 
-      <section aria-labelledby="press-credit" className="mt-12 border-3 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 id="press-credit" className="font-heading text-2xl font-black">
-          How to credit it
-        </h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
-          Name PERM Tracker and link to the page you took the figure from. Every data page has a &ldquo;Cite this
-          page&rdquo; line under its sources with the date the data runs to. On a web page, with that page&apos;s address in
-          the link:
-        </p>{" "}
-        <div className="mt-4 flex flex-wrap items-start gap-3">
-          <code className="block min-w-0 flex-1 break-all border-2 border-border bg-muted px-4 py-3 font-mono text-sm">
-            {credit}
-          </code>{" "}
-          <CopyButton text={credit} />
+      <section aria-labelledby="press-credit" className="mt-20 grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] [&>*]:min-w-0">
+        <div>
+          <h2 id="press-credit" className="font-heading text-2xl font-black sm:text-3xl">
+            Credit it like this
+          </h2>{" "}
+          <p className="mt-3 max-w-md text-lg leading-relaxed text-foreground/80">
+            Name PERM Tracker and link the page the figure came from. Every data page has a &ldquo;Cite this page&rdquo;
+            line under its sources.
+          </p>{" "}
+          <div className="mt-5 flex flex-wrap items-start gap-3">
+            <code className="block min-w-0 flex-1 break-all border-2 border-border bg-muted px-3 py-2 font-mono text-sm">
+              {credit}
+            </code>{" "}
+            <CopyButton text={credit} />
+          </div>
+        </div>{" "}
+        {/* A specimen of the credit in running text: what it looks like in a story. */}
+        <div aria-hidden="true" className="border-3 border-border bg-background p-6 shadow-hard sm:p-8">
+          <div className="h-3 w-24 bg-foreground/80" />
+          <div className="mt-4 h-5 w-11/12 bg-foreground" />
+          <div className="mt-2 h-5 w-3/4 bg-foreground" />
+          <div className="mt-6 space-y-2.5">
+            <div className="h-2.5 w-full bg-foreground/15" />
+            <div className="h-2.5 w-full bg-foreground/15" />
+            <div className="h-2.5 w-5/6 bg-foreground/15" />
+          </div>
+          <p className="mt-5 font-serif text-lg leading-relaxed text-foreground/90">
+            &hellip; were on hold as of Friday, according to{" "}
+            <span className="underline decoration-primary decoration-[3px] underline-offset-4">PERM Tracker</span>, which
+            reads the Labor Department&apos;s case records daily.
+          </p>
+          <div className="mt-5 space-y-2.5">
+            <div className="h-2.5 w-full bg-foreground/15" />
+            <div className="h-2.5 w-2/3 bg-foreground/15" />
+          </div>
         </div>
       </section>{" "}
 
-      <section aria-labelledby="press-method" className="mt-12">
-        <h2 id="press-method" className="font-heading text-2xl font-black">
-          Where the figures come from
+      <section aria-labelledby="press-sources" className="mt-20">
+        <h2 id="press-sources" className="font-heading text-2xl font-black sm:text-3xl">
+          Federal records only
         </h2>{" "}
-        <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
-          Every figure is read from a federal source: DOL&apos;s case-status service and disclosure files, the State
-          Department&apos;s visa bulletins and USCIS&apos;s published data. Each page names its sources and the date
-          they run to.{" "}
+        <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
+          {SOURCES.map((s) => (
+            <li key={s.name} className="flex items-start gap-4 border-2 border-border bg-card p-5 shadow-hard-sm">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-border bg-primary text-primary-foreground">
+                <s.icon size={26} weight="bold" aria-hidden="true" />
+              </span>{" "}
+              <span>
+                <span className="block font-heading text-lg font-black">{s.name}</span>{" "}
+                <span className="mt-1 block text-base text-foreground/75">{s.what}</span>
+              </span>{" "}
+            </li>
+          ))}
+        </ul>{" "}
+        <p className="mt-5 text-base">
           <Link href="/methodology" className={link}>
-            Methodology
-          </Link>{" "}
-          explains how each figure is built, and{" "}
+            How each figure is built
+          </Link>
+          <span aria-hidden="true" className="mx-3 text-muted-foreground">
+            {" / "}
+          </span>
           <Link href="/about" className={link}>
-            About
-          </Link>{" "}
-          says who runs the site.
-        </p>
-      </section>{" "}
-
-      <section aria-labelledby="press-contact" className="mt-12">
-        <h2 id="press-contact" className="font-heading text-2xl font-black">
-          Write to us
-        </h2>{" "}
-        <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
-          For a figure we haven&apos;t published, a check on one we have, or how a number is built:{" "}
-          <a href={`mailto:${PRESS_EMAIL}`} className={link}>
-            {PRESS_EMAIL}
-          </a>
-          .
+            Who runs the site
+          </Link>
         </p>
       </section>
     </div>
