@@ -2,14 +2,15 @@ import { Fragment } from "react";
 import Link from "next/link";
 
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
+import { FromDolLive } from "@/components/entities/FromDolLive";
 import type { UnifiedFlagRow } from "@/lib/flagMerge";
 import { formatWage } from "@/lib/wageFormat";
 
 /**
  * One employer's newest wage requests and H-1B LCAs, two columns of five.
  *
- * Pending ones come from DOL's daily check; decided ones carry the wage from
- * its quarterly file. Shared by the PERM employer page (where these are the
+ * Every row comes from DOL's case-status service; decided ones also carry the
+ * wage from its quarterly file. Shared by the PERM employer page (where these are the
  * steps before the PERM) and the page for an employer with no PERM record
  * (where they are the record). Absent when the employer has neither.
  */
@@ -34,13 +35,12 @@ export function WageAndLcaFilings({
     <section className={`${className} border-2 border-border bg-card p-6 shadow-hard sm:p-8`}>
       <h2 className="font-heading text-xl font-black sm:text-2xl">{heading}</h2>{" "}
       <p className="mt-2 text-base leading-relaxed text-foreground/70">
-        Filed by {name}. Pending ones are DOL&apos;s daily check; decided ones carry the wage from DOL&apos;s
-        quarterly files.
+        Filed by {name}, newest first. Decided ones carry the wage from DOL&apos;s quarterly files.
       </p>{" "}
       <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 [&>*]:min-w-0">
         {[
-          { label: "Wage requests", rows: wageReqs, href: `/pwd-cases?q=${encodeURIComponent(name)}` },
-          { label: "H-1B LCAs", rows: lcas, href: `/lca-cases?q=${encodeURIComponent(name)}` },
+          { label: "Wage requests", all: "All wage requests", rows: wageReqs, href: `/pwd-cases?q=${encodeURIComponent(name)}` },
+          { label: "H-1B LCAs", all: "All H-1B LCAs", rows: lcas, href: `/lca-cases?q=${encodeURIComponent(name)}` },
         ].map((col) => (
           <Fragment key={col.label}>
             {" "}
@@ -78,13 +78,14 @@ export function WageAndLcaFilings({
               )}{" "}
               <p className="mt-2 text-sm">
                 <Link href={col.href} className={LINK}>
-                  All {col.label.toLowerCase()} by this employer
+                  {col.all} by this employer
                 </Link>
               </p>
             </div>
           </Fragment>
         ))}
-      </div>
+      </div>{" "}
+      <FromDolLive />
     </section>
   );
 }

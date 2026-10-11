@@ -147,7 +147,7 @@ export default async function SeasonalCasesPage() {
           ) : (
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
               <div className="border-2 border-border bg-card p-4 shadow-hard">
-                <dt className="text-sm font-bold text-foreground/70">Confirmed by DOL&apos;s daily check</dt>{" "}
+                <dt className="text-sm font-bold text-foreground/70">Confirmed in DOL&apos;s case status</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-black">{formatInt(summary.total)}</dd>
               </div>{" "}
               <div className="border-2 border-border bg-card p-4 shadow-hard">

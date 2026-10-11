@@ -324,7 +324,7 @@ export default async function CohortPage({
             {formatInt(liveMonth.total)} of the {formatInt(backlog.total)} {label} filings{" "}
             {liveMonth.total === 1 ? "isn't" : "aren't"} in DOL&apos;s published
             files yet: {formatInt(liveMonth.pending)} still waiting, {formatInt(liveMonth.decided)}{" "}
-            decided since the last file. DOL&apos;s daily check gives the employer,
+            decided since the last file. DOL&apos;s case-status service gives the employer,
             job title and status. Everything else arrives when DOL publishes the
             case.
           </p>

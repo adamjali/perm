@@ -88,8 +88,8 @@ export default async function CaseSearchPage() {
           : null,
       href: "/perm-cases",
       note: firstYear
-        ? `Decided cases DOL has published since FY${firstYear}, plus everything still open from the daily check.`
-        : "Decided cases DOL has published, plus everything still open from the daily check.",
+        ? `Decided cases DOL has published since FY${firstYear}, plus everything still open from DOL's case-status service.`
+        : "Decided cases DOL has published, plus everything still open from DOL's case-status service.",
     },
     {
       label: "Wage requests",

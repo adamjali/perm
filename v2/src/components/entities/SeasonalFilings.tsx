@@ -29,7 +29,7 @@ export function SeasonalFilings({
     <section className={`${className} border-2 border-border bg-card p-6 shadow-hard sm:p-8`}>
       <h2 className="font-heading text-xl font-black sm:text-2xl">Seasonal work: H-2A, H-2B and CW-1</h2>{" "}
       <p className="mt-2 text-base leading-relaxed text-foreground/70">
-        Filed by {name}, as DOL&apos;s daily check shows them.
+        Filed by {name}, as DOL&apos;s case-status service shows them.
       </p>{" "}
       <ul className="mt-4 divide-y divide-border/60">
         {rows.map((r) => (

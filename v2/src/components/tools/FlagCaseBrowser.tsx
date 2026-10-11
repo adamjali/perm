@@ -787,7 +787,7 @@ export function FlagCaseBrowser({
         ) : null}
         {!withheld && !listFailed && shownPage && shownPage.rows.length > 0 && (page === undefined || page.rows.length > 0) ? (
           <div className={listBusy ? "opacity-60 transition-opacity" : "transition-opacity"} aria-busy={listBusy}>
-            <Rows rows={shownPage.rows} caption={`${program.nouns} from DOL's daily check`} showForm={program.showForm} />
+            <Rows rows={shownPage.rows} caption={`${program.nouns} from DOL's case-status service`} showForm={program.showForm} />
           </div>
         ) : null}
         {!withheld && !listFailed ? (

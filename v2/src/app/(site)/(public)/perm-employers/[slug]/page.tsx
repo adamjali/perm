@@ -106,6 +106,7 @@ import { otherEmployerRecord, type OtherEmployerRecord } from "@/lib/turso/other
 import { programsMix, programsShort } from "@/lib/otherEmployers";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { WageAndLcaFilings } from "@/components/entities/WageAndLcaFilings";
+import { FromDolLive } from "@/components/entities/FromDolLive";
 import { ProfileHeader, type ProfileFact, type ProfileTag } from "@/components/entities/ProfileHeader";
 import { Chapter } from "@/components/entities/Chapter";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
@@ -846,7 +847,7 @@ export default async function EmployerPage({
               Its newest filings
             </h3>{" "}
             <p className="mt-2 text-base leading-relaxed text-foreground/70">
-              Newer than DOL&apos;s published files, so the wage and law firm aren&apos;t known yet.
+              Filed since DOL&apos;s last quarterly file, so the wage and law firm aren&apos;t published yet.
             </p>{" "}
             <ul className="mt-4 divide-y divide-border/60">
               {/* Keyed Fragment + space: mapped siblings glue their text for every extractor. */}
@@ -878,7 +879,8 @@ export default async function EmployerPage({
                 Every filing by this employer
               </Link>{" "}
               is in the case search, live and published together.
-            </p>
+            </p>{" "}
+            <FromDolLive />
           </section>
         ) : null}{" "}
         <WarnNoticeBand rows={warn} pageName={row.name} />

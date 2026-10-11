@@ -73,7 +73,7 @@ export default async function PwdCasesPage() {
         </p>{" "}
         <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
           <div className="border-2 border-border bg-card p-4 shadow-hard">
-            <dt className="text-sm font-bold text-foreground/70">Pending, from DOL&apos;s daily check</dt>{" "}
+            <dt className="text-sm font-bold text-foreground/70">Pending, from DOL&apos;s case status</dt>{" "}
             <dd className="mt-1 font-heading text-3xl font-black">{summary ? summary.pending.toLocaleString("en-US") : "—"}</dd>
           </div>{" "}
           <div className="border-2 border-border bg-card p-4 shadow-hard">

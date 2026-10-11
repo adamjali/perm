@@ -162,7 +162,7 @@ export function LiveCaseBrowser({
           Newer than DOL&apos;s published files
         </p>{" "}
         <h2 className="mt-2 font-heading text-2xl font-black sm:text-3xl">
-          Live from DOL&apos;s daily check
+          Live from DOL&apos;s case-status service
         </h2>{" "}
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
           {cohort ? (
@@ -265,7 +265,7 @@ export function LiveCaseBrowser({
           >
             <table className="w-full min-w-[820px] border-collapse text-left text-base">
               <caption className="sr-only">
-                Live cases from DOL&apos;s daily check, newest filing first
+                Live cases from DOL&apos;s case-status service, newest filing first
               </caption>
               <thead className="bg-foreground text-background">
                 <tr>

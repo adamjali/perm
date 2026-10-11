@@ -1670,7 +1670,7 @@ export function UnifiedCaseSearch({
             ))}
           </dl>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/80">
-            Each one is shown twice over: what DOL&apos;s daily check confirms
+            Each one is shown twice over: what DOL&apos;s case-status service confirms
             while it is open, and what DOL publishes with the wage once it is
             decided. One row per case, whichever half it came from.
           </p>
