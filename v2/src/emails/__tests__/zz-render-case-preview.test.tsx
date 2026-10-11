@@ -76,7 +76,7 @@ describe("render case-alert previews for a test send", () => {
           { label: "Pending cases filed earlier", value: "63,603" },
         ],
         contextProvenance:
-          "Counted across our mirror of DOL case status, as of August 26, 2026.",
+          "Counted from DOL's own case status, checked daily, as of August 26, 2026.",
         rfiRows: [
           { label: "Resolved RFIs observed", value: "2,151" },
           { label: "Of those, ended certified", value: "1,799" },
@@ -115,7 +115,7 @@ describe("render case-alert previews for a test send", () => {
           { label: "Pending cases filed earlier", value: "1,128" },
         ],
         contextProvenance:
-          "Counted across our mirror of DOL case status, as of August 26, 2026.",
+          "Counted from DOL's own case status, checked daily, as of August 26, 2026.",
         rfiRows: null,
         rfiProvenance: null,
         employerRows: [

@@ -23,5 +23,715 @@
   },
   "credit": "Screenshot of permtracker.app, October 11, 2026",
   "alt": "The stages from a prevailing wage request to a green card, each with the terms that come up at it"
+ },
+ "blog/what-an-employers-perm-record-shows/firms": {
+  "capture": {
+   "url": "/perm-employers/microsoft-corporation",
+   "clip": "h:What they file, and where"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Microsoft Corporation's page: the jobs it files for, the industry it declared, where the jobs are, and the law firms that filed its cases"
+ },
+ "blog/what-law-firm-volume-tells-you/practice": {
+  "capture": {
+   "url": "/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp",
+   "clip": "h:The practice, in their own filings"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Fragomen's page: the employers it files for, led by Apple, Intel and Tata Consultancy Services, with the jobs and the states its cases are in"
+ },
+ "guides/read-the-denial-and-audit-rates/by-occupation": {
+  "capture": {
+   "url": "/perm-denial-risk",
+   "clip": "h:By occupation"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Denial rates by occupation for jobs with at least 100 decided cases, each bar marked against the field rate"
+ },
+ "blog/what-to-do-while-you-wait/watch": {
+  "capture": {
+   "url": "/perm-case-status?case=G-100-26283-292804",
+   "clip": "sel:#watch",
+   "maxHeight": 900
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The form under a pending case: an email address for changes to DOL's status, with a browser notification as the other choice"
+ },
+ "guides/find-your-dol-case-number/december-case": {
+  "capture": {
+   "url": "/perm-case-status?case=G-200-25335-445745",
+   "clip": "sel:main div.bg-foreground.text-background"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The answer for a PERM case filed December 1, 2025: in analyst review, 670 cases ahead of it in DOL's normal queue, estimated decision around October 12, 2026"
+ },
+ "guides/look-up-a-perm-case-by-number/neighbours": {
+  "capture": {
+   "url": "/perm-case-status?case=G-100-26283-292804",
+   "clip": "h:Filed the same day"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The PERM cases filed the same day as one case: 60 on October 10, 2026, none decided yet, with the case numbers next to it"
+ },
+ "guides/look-up-a-sponsor/before-perm": {
+  "capture": {
+   "url": "/perm-employers/microsoft-corporation",
+   "clip": "h:Before the PERM"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Microsoft's newest wage requests and H-1B LCAs, each with its case number, job, date and status"
+ },
+ "guides/look-up-an-lca-by-number/pending-lca": {
+  "capture": {
+   "url": "/perm-case-status?case=I-200-26283-293024",
+   "clip": "h:I-200-26283-293024",
+   "maxHeight": 800
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The record for LCA I-200-26283-293024: Google LLC, Staff Software Engineer, filed October 10, 2026, in process"
+ },
+ "guides/the-data-pages-and-what-each-answers/case-search": {
+  "capture": {
+   "url": "/case-search"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The case search: counts of PERM applications, wage requests, H-1B LCAs and H-2A, H-2B and CW-1 filings above one box for an employer or a case number"
+ },
+ "guides/track-a-prevailing-wage-request/pending-request": {
+  "capture": {
+   "url": "/perm-case-status?case=P-100-26282-289980",
+   "clip": "h:P-100-26282-289980",
+   "maxHeight": 800
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The record for wage request P-100-26282-289980: Google LLC, filed October 9, 2026, in process"
+ },
+ "guides/tracking-a-case-without-an-account/on-hold-case": {
+  "capture": {
+   "url": "/perm-case-status?case=G-100-26280-285707",
+   "clip": "sel:main div.bg-foreground.text-background"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The answer for a PERM case filed October 7, 2026 that DOL shows as Application On Hold"
+ },
+ "guides/what-an-lca-is/decided-lca": {
+  "capture": {
+   "url": "/perm-case-status?case=I-200-26142-940926",
+   "clip": "h:I-200-26142-940926",
+   "maxHeight": 800
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "A certified LCA for Microsoft Corporation, Software Engineering, filed May 22, 2026"
+ },
+ "blog/what-to-do-while-you-wait/under-review": {
+  "capture": {
+   "url": "/perm-employers/under-review"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Employers with PERM cases on hold, at RFI or under appeal, led by DOL's newest employer-wide move on October 9, 2026"
+ },
+ "blog/why-perm-cases-are-denied/wage-bands": {
+  "capture": {
+   "url": "/perm-denial-risk",
+   "clip": "hp:By offered wage"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Denial rates by offered wage band, from 4.96% under $40,000 to 1.35% between $130,000 and $160,000"
+ },
+ "blog/is-my-company-still-filing-perm/years": {
+  "capture": {
+   "url": "/perm-employers/microsoft-corporation",
+   "clip": "h:Year by year since 2008"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Microsoft Corporation's PERM decisions by fiscal year since FY2008: certified, denied and withdrawn"
+ },
+ "blog/what-an-employers-perm-record-shows/compare": {
+  "capture": {
+   "url": "/perm-employers/microsoft-corporation",
+   "clip": "h:How it compares with other sponsors"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "How Microsoft compares with other sponsors on six separate measures, from its PERM approval rate to its USCIS H-1B approvals"
+ },
+ "blog/what-law-firm-volume-tells-you/firm-other-work": {
+  "capture": {
+   "url": "/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp",
+   "clip": "h:Beyond PERM"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Fragomen's work beyond PERM: H-1B LCAs, prevailing wage requests and H-2A, H-2B and CW-1 applications, with the employers it filed the most for"
+ },
+ "blog/what-an-employers-perm-record-shows/live-filings": {
+  "capture": {
+   "url": "/perm-employers/microsoft-corporation",
+   "clip": "h:Latest filings, live from DOL"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Microsoft's newest PERM filings from DOL's daily check, each with its case number, job and status"
+ },
+ "guides/the-data-pages-and-what-each-answers/sponsor-finder": {
+  "capture": {
+   "url": "/sponsor-finder"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The sponsor finder: filters for state, industry, recent PERM filings and approval rate above a table of matching sponsors"
+ },
+ "guides/tracking-a-case-without-an-account/open-data": {
+  "capture": {
+   "url": "/open-data"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The open data page: the visa bulletin archive and DOL's processing-times readings, each as CSV or JSON"
+ },
+ "guides/find-a-dol-case-number-by-employer/lca-search": {
+  "capture": {
+   "url": "/lca-cases?q=Google",
+   "clip": "h:Find an LCA by employer",
+   "wait": 9000,
+   "maxHeight": 1100
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The LCA search for Google: newest filings first, each with its case number, status, job title and the day it was filed"
+ },
+ "guides/what-an-lca-is/h1b-employers": {
+  "capture": {
+   "url": "/h1b-employers"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The busiest H-1B employers for FY2025: 531,108 certified H-1B LCAs from 59,740 employers"
+ },
+ "guides/what-an-lca-is/e3-lca": {
+  "capture": {
+   "url": "/perm-case-status?case=I-203-26283-292932",
+   "clip": "h:I-203-26283-292932",
+   "maxHeight": 800
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The record for I-203-26283-292932: Google LLC, Staff Software Engineer, in process"
+ },
+ "guides/check-perm-received-without-receipt/employer-search": {
+  "capture": {
+   "url": "/perm-cases",
+   "clip": "from:Live from DOL's daily check",
+   "maxHeight": 1000,
+   "wait": 4000,
+   "fill": [
+    {
+     "sel": "input[placeholder*=\"Case number or employer\"]",
+     "text": "Adobe",
+     "wait": 5000
+    }
+   ]
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The live list of PERM filings newer than DOL's published files, searched for Adobe: case numbers, statuses, job titles and filing dates"
+ },
+ "guides/look-up-a-law-firm/firm-search": {
+  "capture": {
+   "url": "/perm-cases?firm=fragomen-del-rey-bernsen-loewy-llp",
+   "clip": "from:Browse the cases",
+   "wait": 12000,
+   "maxHeight": 1100
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The case search narrowed to one law firm, listing its decided cases with employer, job, state, wage and filing date"
+ },
+ "blog/what-dol-publishes-about-perm/certified-case": {
+  "capture": {
+   "url": "/perm-case-status?case=G-100-26138-922734",
+   "clip": "sel:main div.bg-foreground.text-background"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The answer for a PERM case DOL has certified, filed May 18, 2026"
+ },
+ "guides/how-the-perm-queue-works/where-it-sits": {
+  "capture": {
+   "url": "/perm-case-status?case=G-100-26283-292804",
+   "clip": "h:Where it sits"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Where one PERM case filed in October 2026 sits: DOL processed through December 2025, with the undecided cases of every month between drawn as bars"
+ },
+ "guides/read-your-priority-date-history/rfi-case": {
+  "capture": {
+   "url": "/perm-case-status?case=G-100-25353-499268",
+   "clip": "sel:main div.bg-foreground.text-background"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The answer for a PERM case filed December 18, 2025 that DOL shows as RFI Issued"
+ },
+ "guides/tracking-a-case-without-an-account/answer": {
+  "capture": {
+   "url": "/perm-case-status?case=G-100-26283-292804",
+   "clip": "sel:main div.bg-foreground.text-background"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The answer for a PERM case filed October 10, 2026: in analyst review, with the cases ahead of it and an estimated decision around February 28, 2027"
+ },
+ "guides/waiting-on-your-green-card/status-meaning": {
+  "capture": {
+   "url": "/perm-case-status?case=G-100-26283-292804",
+   "clip": "h:What “Analyst Review” means"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "What Analyst Review means: the ordinary queue, worked in filing order, with how many cases carry the status today"
+ },
+ "guides/what-perm-case-statuses-mean/dictionary": {
+  "capture": {
+   "url": "/perm-case-statuses"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Every case status, explained: a page of every status DOL shows on a PERM, wage request, LCA, H-2A or H-2B case"
+ },
+ "blog/how-perm-wage-data-is-published/determination": {
+  "capture": {
+   "url": "/perm-case-status?case=P-100-26184-078466",
+   "clip": "h:P-100-26184-078466",
+   "maxHeight": 800
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The record for wage request P-100-26184-078466: Google LLC, Senior Software Engineer, determination issued"
+ },
+ "guides/compute-every-perm-deadline/determination": {
+  "capture": {
+   "url": "/perm-case-status?case=P-100-26079-718229",
+   "clip": "from:P-100-26079-718229",
+   "maxHeight": 640
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "A published wage determination for Apple: $140,496 a year, determined June 22, 2026 and valid until September 20, 2026"
+ },
+ "guides/how-dol-sets-a-prevailing-wage/wage-queue": {
+  "capture": {
+   "url": "/perm-processing-times",
+   "clip": "h:Prevailing wage requests still pending"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Prevailing wage requests still pending by the month DOL received them, as of September 30, 2026"
+ },
+ "guides/track-a-prevailing-wage-request/wage-queue-day": {
+  "capture": {
+   "url": "/perm-case-status?case=P-100-26282-290103",
+   "clip": "h:Where it sits in DOL's wage queue"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Where one pending wage request sits: the requests ahead of it and an estimated determination around January 8, 2027"
+ },
+ "guides/how-the-visa-bulletin-works/line-page": {
+  "capture": {
+   "url": "/visa-bulletin/categories/eb3-rest-of-world",
+   "clip": "h:A fiscal year at a time"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "EB-3 Rest of World final action cutoffs, each fiscal year's first bulletin against its last, FY2011 to FY2027"
+ },
+ "blog/what-dol-publishes-about-perm/movement": {
+  "capture": {
+   "url": "/perm-processing-times",
+   "clip": "h:Movement on record"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Every DOL reading of its analyst review position since August 20, 2026, drawn as steps from September to December 2025"
+ },
+ "blog/why-perm-cases-are-denied/every-queue": {
+  "capture": {
+   "url": "/perm-processing-times",
+   "clip": "h:Every PERM queue DOL publishes"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Every PERM queue DOL publishes, with the month each is working: analyst review, audit review and reconsideration"
+ },
+ "guides/look-up-a-law-firm/pace": {
+  "capture": {
+   "url": "/perm-processing-times",
+   "clip": "h:How fast the queue advances"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "How fast the PERM queue advances: 1.80 filing months cleared per calendar month, drawn from October 2023 to June 2026"
+ },
+ "guides/where-your-filing-month-sits/monthly": {
+  "capture": {
+   "url": "/perm-processing-times",
+   "clip": "h:How much DOL decides in a month"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "How many PERM decisions DOL issued each month since October 2023, from its quarterly files"
+ },
+ "blog/what-to-do-while-you-wait/month-top": {
+  "capture": {
+   "url": "/perm-queue/2025-12"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The page for PERM cases filed December 2025: 59% decided, with the cases still in DOL's line and those outside it"
+ },
+ "guides/how-the-perm-queue-works/letters": {
+  "capture": {
+   "url": "/perm-queue/2025-12",
+   "clip": "h:What DOL decided from December 2025"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "What DOL decided from December 2025 lately, day by day, and the share decided for each employer's first letter"
+ },
+ "guides/how-the-visa-bulletin-works/october-did": {
+  "capture": {
+   "url": "/visa-bulletin",
+   "clip": "from:What the October 2026 bulletin did",
+   "maxHeight": 900
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "What the October 2026 bulletin did to each employment-based final action cutoff, by category and country, against September"
+ },
+ "guides/look-up-a-perm-case-by-number/rfi-queue": {
+  "capture": {
+   "url": "/perm-case-status?case=G-100-25353-499268",
+   "clip": "h:Which queue the rest of December 2025"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Which queue the rest of December 2025 is in: 5,727 of the 6,207 cases still open in analyst review and 480 out of filing order"
+ },
+ "guides/the-data-pages-and-what-each-answers/pulse": {
+  "capture": {
+   "url": "/perm-decision-activity"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "PERM decisions day by day: 615 on Friday, October 9, 2026, the last 30 days as bars and a typical week"
+ },
+ "blog/why-perm-cases-are-denied/rfi-stage": {
+  "capture": {
+   "url": "/perm-rfi-audit/rfi-issued"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The RFI issued page: 735 cases at the stage, a typical wait so far of 325 days, and the filing months they come from"
+ },
+ "guides/what-perm-case-statuses-mean/hold-months": {
+  "capture": {
+   "url": "/perm-rfi-audit/application-on-hold",
+   "clip": "h:Which filing months these come from"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "PERM cases on hold by the month they were filed, most from January 2026"
+ },
+ "blog/common-perm-audit-triggers/stage-ages": {
+  "capture": {
+   "url": "/perm-rfi-audit",
+   "clip": "h:When each stage happens"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "How old cases are at each review stage, from analyst review to BALCA appeals, as bars of days since filing"
+ },
+ "guides/compute-every-perm-deadline/scorecard": {
+  "capture": {
+   "url": "/estimate-scorecard",
+   "clip": "h:Typical miss, real decisions",
+   "maxHeight": 1000
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The estimate scorecard's typical miss on real DOL decisions: 4 days"
+ },
+ "blog/how-perm-wage-data-is-published/occupation": {
+  "capture": {
+   "url": "/perm-wages/software-developers"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The Software Developers page: a $139,128 median offered wage across 76,524 PERM filings, with the job's place in the field"
+ },
+ "guides/how-dol-sets-a-prevailing-wage/levels": {
+  "capture": {
+   "url": "/perm-wages/software-developers",
+   "clip": "h:DOL's levels for this job"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "DOL's four wage levels for software developers in San Jose, year by year from 2022-23 to 2026-27"
+ },
+ "blog/what-law-firm-volume-tells-you/form-factors": {
+  "capture": {
+   "url": "/perm-denial-risk",
+   "clip": "hp:By what the form declares"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Denial rates by what the application declares: a layoff in the occupation, the worker's ownership interest, and a job that isn't full time, each against the field"
+ },
+ "guides/how-the-visa-bulletin-works/final-action-chart": {
+  "pdf": {
+   "file": "visabulletin_October2026.pdf",
+   "page": 3,
+   "top": 0.29,
+   "height": 0.44
+  },
+  "credit": "Visa Bulletin for October 2026, U.S. Department of State",
+  "alt": "The final action dates chart for employment-based cases in the October 2026 visa bulletin, by category and country"
+ },
+ "guides/the-perm-deadlines-that-matter/section-g": {
+  "pdf": {
+   "file": "eta9141.pdf",
+   "page": 4,
+   "top": 0.12,
+   "height": 0.65
+  },
+  "credit": "Form ETA-9141, Section G, U.S. Department of Labor",
+  "alt": "Section G of Form ETA-9141, the part DOL fills in, ending with the determination date and the expiration date"
+ },
+ "guides/waiting-on-your-green-card/eb2-india": {
+  "capture": {
+   "url": "/visa-bulletin/categories/eb2-india",
+   "clip": "h:Is my priority date current?",
+   "maxHeight": 1000
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The EB-2 India line page: a priority date check and the final action cutoff drawn bulletin by bulletin"
+ },
+ "guides/what-perm-case-statuses-mean/what-cases-doing": {
+  "capture": {
+   "url": "/perm-queue",
+   "clip": "h:What those",
+   "maxHeight": 1100
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "What the 91,125 pending PERM cases were doing: 83,842 in analyst review, 3,696 out of filing order and 3,587 under appeal or review"
+ },
+ "guides/reading-the-perm-data/wall": {
+  "capture": {
+   "url": "/perm-queue",
+   "clip": "h:The wall, by filing month",
+   "maxHeight": 1000
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Cases still waiting by filing month, each month split across the three queues, with DOL's December 2025 position marked"
+ },
+ "guides/waiting-on-your-green-card/awaiting-visa": {
+  "capture": {
+   "url": "/i140-awaiting-visa"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "Approved, and waiting for a visa number: 856,662 approved petitions waiting in every category, 356,360 of them India-born in EB-2"
+ },
+ "blog/how-perm-wage-data-is-published/thin-job": {
+  "capture": {
+   "url": "/perm-wages/compliance-officers"
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The Compliance Officers page: 87 PERM filings, a $100,922 median wage, and a note that its approval rate can't be told apart from the field"
+ },
+ "guides/the-perm-deadlines-that-matter/calculator-result": {
+  "capture": {
+   "url": "/tools/perm-deadline-calculator",
+   "clip": "from:Your PERM deadlines",
+   "maxHeight": 1100,
+   "fill": [
+    {
+     "sel": ":nth-match(main input[type=\"date\"], 1)",
+     "text": "2026-08-03"
+    },
+    {
+     "sel": ":nth-match(main input[type=\"date\"], 2)",
+     "text": "2026-08-23"
+    },
+    {
+     "sel": ":nth-match(main input[type=\"date\"], 3)",
+     "text": "2026-09-20"
+    }
+   ]
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The deadline calculator with a determination on August 3, 2026 and recruitment from August 23 to September 20: wage validity, recruitment, quiet period and filing window drawn to scale"
+ },
+ "guides/how-the-perm-queue-works/dol-page": {
+  "capture": {
+   "url": "https://flag.dol.gov/processingtimes",
+   "wait": 6000,
+   "clip": "cap:PERM Processing Times",
+   "css": "#header, .usa-banner, .usa-header, .usa-overlay { display: none !important; } body { padding-top: 0 !important; }"
+  },
+  "credit": "Screenshot of flag.dol.gov, U.S. Department of Labor, October 11, 2026",
+  "source": "https://flag.dol.gov/processingtimes",
+  "alt": "DOL's own PERM processing times table on flag.dol.gov: analyst review and audit review at December 2025, reconsideration at May 2026, and 336 days on average for August's decisions"
+ },
+ "guides/getting-started/recent-activity": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--dashboard",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "clip": "h:Recent activity",
+   "maxHeight": 800
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "The dashboard's recent activity: the latest changes across a firm's cases, each tagged with its stage"
+ },
+ "guides/getting-started/timeline": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=home-attorney-hero-timeline--hero-timeline",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root > *",
+   "wait": 2500,
+   "clip": "sel:#storybook-root",
+   "width": 1300,
+   "maxHeight": 1000
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "Every case on one timeline from April 2026 to March 2027, each stage drawn as a bar, with today marked"
+ },
+ "guides/getting-started/settings-notifications": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--settings-notifications",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "clip": "fromm:Email notifications",
+   "maxHeight": 700
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "Settings, email notifications: switches for deadline reminders, case updates and the weekly case summary"
+ },
+ "guides/getting-started/assistant": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--assistant",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "clip": "sel:#tour-capture",
+   "maxHeight": 700,
+   "css": "#tour-capture .fixed { display: flex !important; position: relative !important; inset: auto !important; }"
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "The assistant answering which cases have something due in the next two weeks: an RFI response and an I-140 deadline"
+ },
+ "blog/best-immigration-case-management-tools/case-detail": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--case-detail",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "clip": "fromm:Juniper Biologics",
+   "maxHeight": 1000,
+   "width": 1440
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "A case's own page: its stage, the next thing due, a timeline of every date entered, and the prevailing wage details"
+ },
+ "blog/what-is-perm-labor-certification/pwd-section": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--edit-case",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 8000,
+   "clip": "fromm:PWD (Prevailing Wage Determination)",
+   "maxHeight": 440
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "The prevailing wage part of a case form: filing date, determination date, and the expiration worked out from it"
+ },
+ "guides/complete-perm-filing-guide/next-30-days": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--dashboard",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "clip": "fromm:Next 30 days",
+   "maxHeight": 700
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "The dashboard's next 30 days: an RFI response, an I-140 filing deadline and a filing window opening, each with its days left"
+ },
+ "guides/complete-perm-filing-guide/eta9089-section": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--edit-case",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 8000,
+   "clip": "fromm:ETA 9089 (PERM Application)",
+   "maxHeight": 900,
+   "settle": 4000
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "The ETA 9089 part of a case form: the filing window open from September 24, 2026 to January 23, 2027, with 114 days left"
+ },
+ "guides/manual-vs-automated-tracking/reminder-settings": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--settings-notifications",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "clip": "fromm:Reminder settings",
+   "maxHeight": 800
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "Reminder settings: reminders 1, 3, 7, 14 and 30 days before a deadline, and a 7-day urgent threshold"
+ },
+ "guides/manual-vs-automated-tracking/calendar-sync": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--settings-calendar",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "clip": "fromm:Google Calendar sync",
+   "maxHeight": 800
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "Settings, Google Calendar sync: connected, with a switch for each kind of deadline sent to the calendar"
+ },
+ "guides/tracking-perm-deadlines/cases-phone": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--cases",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "width": 430,
+   "clip": "fromm:Juniper Biologics",
+   "maxHeight": 900
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "Case cards on a phone: an RFI due in 7 days in red, an I-140 deadline in 14 days in amber"
+ },
+ "guides/ultimate-perm-guide-2026/case-detail-phone": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--case-detail",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "width": 430
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "A case's page on a phone: its stage, its tags and the next thing due, an RFI response in 7 days"
+ },
+ "blog/best-immigration-case-management-tools/recruitment-form": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--edit-case",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 8000,
+   "clip": "fromm:Recruitment",
+   "maxHeight": 900,
+   "settle": 3000,
+   "scroll": "text:PWD (Prevailing Wage Determination)"
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "The recruitment part of a case form, its deadline worked out: 84 days left to finish by December 24, 2026"
+ },
+ "guides/tracking-perm-deadlines/calendar-phone": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--calendar",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "clip": "fromm:Oct 4 - Oct 10, 2026",
+   "maxHeight": 540,
+   "width": 430
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "The calendar on a phone as a list by week: an RFI response due October 8 and an expiry on October 15"
+ },
+ "guides/ultimate-perm-guide-2026/notifications": {
+  "capture": {
+   "url": "/iframe.html?viewMode=story&id=tour-app-pages--notifications",
+   "clock": "2026-10-01T15:00:00Z",
+   "ready": "#storybook-root main, #tour-capture",
+   "wait": 2500,
+   "clip": "sel:#storybook-root main",
+   "maxHeight": 800
+  },
+  "credit": "The PERM Tracker app, drawn from a sample firm's cases",
+  "alt": "Notifications: an I-140 filing due in 14 days and an RFI response due in 7 days, with earlier reminders this month below"
  }
 }

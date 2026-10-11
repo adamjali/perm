@@ -42,7 +42,7 @@ const subscriberMail: Array<[string, (over?: { prefsUrl?: string }) => React.Rea
         isFinal: false,
         observedAt: "August 5, 2026",
         contextRows: [{ label: "Cases now at this status", value: "906" }],
-        contextProvenance: "Our mirror of DOL per-case status, as of August 26, 2026.",
+        contextProvenance: "Counted from DOL's own case status, checked daily, as of August 26, 2026.",
         rfiRows: [],
         rfiProvenance: null,
         caseUrl: "https://permtracker.app/perm-case-status?case=G-100-26001-000001",

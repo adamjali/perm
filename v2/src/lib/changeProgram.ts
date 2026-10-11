@@ -42,6 +42,6 @@ export const PROGRAM_LABEL: Record<ChangeProgram, string> = {
 export const PROGRAM_PREFIX: Record<ChangeProgram, string> = {
   perm: "G-100, G-200, G-300, G-400",
   pwd: "P-100",
-  lca: "I-200, I-203",
+  lca: "I-200 to I-203",
   seasonal: "H-300, H-400, C-500, P-400, P-500, JO-A-300",
 };

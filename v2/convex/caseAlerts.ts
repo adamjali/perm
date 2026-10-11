@@ -1647,7 +1647,7 @@ export const sweepCaseChanges = internalAction({
       const asOf = await mirrorAsOf(program);
       provenanceByProgram.set(
         program,
-        `Counted across our mirror of DOL case status${asOf ? `, as of ${asOf}` : ""}.`,
+        `Counted from DOL's own case status, checked daily${asOf ? `, as of ${asOf}` : ""}.`,
       );
     }
 
@@ -1704,7 +1704,7 @@ export const sweepCaseChanges = internalAction({
         // where the provenance should be.
         const contextProvenance =
           provenanceByProgram.get(program) ??
-          "Counted across our mirror of DOL case status.";
+          "Counted from DOL's own case status, checked daily.";
         // PERM ONLY, and this is a correctness floor rather than a style
         // choice. Every gloss in `statusMeaning` cites PERM regulation - the
         // CERTIFIED one promises a 180-day window to file the I-140, which is

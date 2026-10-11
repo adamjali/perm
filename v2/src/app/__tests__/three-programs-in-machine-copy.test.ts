@@ -6,7 +6,7 @@ import path from "node:path";
  * The surfaces a MACHINE reads must not describe this as PERM-only.
  *
  * The site takes case numbers for all three DOL programs - PERM (`G-`),
- * prevailing wage requests (`P-`) and H-1B LCAs (`I-200`/`I-203`) - and will
+ * prevailing wage requests (`P-`) and labor condition applications (`I-200` to `I-203`) - and will
  * also find a case by employer name when the reader has no number at all.
  *
  * An audit in September 2026 fixed 41 places where a reader would form the

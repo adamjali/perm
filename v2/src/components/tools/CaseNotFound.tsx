@@ -226,7 +226,7 @@ export function CaseNotFound({
             <Cell
               label="Filed that month"
               value={formatInt(cohort.total)}
-              note="cases in the mirror"
+              note="cases checked against DOL"
             />
             <Cell
               label="Still undecided"
@@ -261,8 +261,8 @@ export function CaseNotFound({
               }
               source={
                 publishedAsOf
-                  ? `Per-case statuses via a third-party mirror of DOL's FLAG · DOL queue position as of ${formatAsOf(publishedAsOf)}`
-                  : "Per-case statuses via a third-party mirror of DOL's FLAG"
+                  ? `Per-case statuses from DOL's own case status system, checked daily · DOL queue position as of ${formatAsOf(publishedAsOf)}`
+                  : "Per-case statuses from DOL's own case status system, checked daily"
               }
             >
               {/* Not "Yours": the case was not found, so this column is the

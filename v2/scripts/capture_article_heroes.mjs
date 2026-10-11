@@ -47,12 +47,26 @@ try {
   });
   const page = await ctx.newPage();
   for (const [slug, s] of jobs) {
-    const { url, scroll, wait } = s.capture;
+    const { url, scroll, wait, clip, width, maxHeight, fill, css, clock, ready, settle } = s.capture;
     try {
-      const res = await page.goto(base + url, { waitUntil: "load", timeout: 180000 });
+      await page.setViewportSize({ width: width ?? 1200, height: 900 });
+      // A Storybook capture of the app runs on the day its sample firm was
+      // recorded, so "due in 12 days" says what it said then.
+      if (clock) await page.clock.setFixedTime(new Date(clock));
+      const res = await page.goto(url.startsWith("http") ? url : base + url, { waitUntil: "load", timeout: 180000 });
+      if (ready) await page.waitForSelector(ready, { timeout: 240000 });
       if (!res || res.status() !== 200) throw new Error(`status ${res?.status()}`);
-      await page.addStyleTag({ content: HIDE });
+      await page.addStyleTag({ content: HIDE + (css ?? "") });
       await page.waitForTimeout(wait ?? 1500);
+      // Type into boxes on the page (a list's own search, a calculator's
+      // dates), then let it answer.
+      for (const f of fill ? [fill].flat() : []) {
+        const box = page.locator(f.sel).first();
+        await box.fill(f.text);
+        await box.blur();
+        await page.waitForTimeout(f.wait ?? 600);
+      }
+      if (fill) await page.waitForTimeout(3000);
       if (scroll) {
         await page.evaluate((sel) => {
           // "text:Case number" scrolls to the element whose own text is exactly that.
@@ -65,7 +79,70 @@ try {
         await page.waitForTimeout(600);
       }
       fs.mkdirSync(`${out}/${slug}`.replace(/\/[^/]+$/, ""), { recursive: true });
-      await page.screenshot({ path: `${out}/${slug}.png` });
+      if (clip) {
+        // "h:Heading" clips to the section that heading opens (its nearest
+        // <section>, else its parent); "hp:Heading" to the heading's parent;
+        // "from:Heading" from the heading down; "cap:Caption" to a table by its
+        // caption and the table after it; "sel:css" to that element. A tall
+        // section is cut at maxHeight so a figure stays one screen of reading.
+        const box = await page.evaluate((c) => {
+          let el;
+          if (c.startsWith("cap:")) {
+            // A table found by its caption, down through the table after it:
+            // for an agency page that marks its sections with captions only.
+            const t = [...document.querySelectorAll("table")].find((e) => e.caption?.textContent?.trim().startsWith(c.slice(4)));
+            if (!t) throw new Error(`no element ${c}`);
+            let next = t.nextElementSibling;
+            while (next && next.tagName !== "TABLE") next = next.nextElementSibling;
+            t.scrollIntoView({ block: "start" });
+            const a = t.getBoundingClientRect();
+            const b = (next ?? t).getBoundingClientRect();
+            // Clipped from the screen, not the full page: an agency page can
+            // reflow when the screenshot stretches it to its full height.
+            return { x: a.left, y: a.top, width: a.width, height: b.bottom - a.top, onScreen: true };
+          }
+          if (c.startsWith("from:") || c.startsWith("fromm:")) {
+            // From a heading down, as wide as its container ("fromm:" as wide as
+            // the page's <main>): for a section that isn't wrapped in an
+            // element of its own.
+            const want = c.slice(c.indexOf(":") + 1);
+            const h = [...document.querySelectorAll("main h1, main h2, main h3")].find((e) => e.textContent?.trim().startsWith(want));
+            if (!h) throw new Error(`no element ${c}`);
+            h.scrollIntoView({ block: "start" });
+            const r = h.getBoundingClientRect();
+            const p = (c.startsWith("fromm:") ? h.closest("main") ?? h.parentElement : h.parentElement).getBoundingClientRect();
+            return { x: p.left + window.scrollX, y: r.top + window.scrollY - 28, width: p.width, height: 4000 };
+          }
+          if (c.startsWith("h:") || c.startsWith("hp:")) {
+            // "hp:" takes the heading's own block (its parent) where a section
+            // holds two side by side.
+            const want = c.slice(c.indexOf(":") + 1);
+            const h = [...document.querySelectorAll("main h1, main h2, main h3")].find((e) => e.textContent?.trim().startsWith(want));
+            el = h ? (c.startsWith("hp:") ? h.parentElement : h.closest("section") ?? h.parentElement) : null;
+          } else {
+            el = document.querySelector(c.slice(4));
+          }
+          if (!el) throw new Error(`no element ${c}`);
+          el.scrollIntoView({ block: "start" });
+          const r = el.getBoundingClientRect();
+          return { x: r.left + window.scrollX, y: r.top + window.scrollY, width: r.width, height: r.height };
+        }, clip);
+        // A section that mounts its contents when scrolled into view needs a moment.
+        await page.waitForTimeout(settle ?? 800);
+        const pad = 16;
+        await page.screenshot({
+          path: `${out}/${slug}.png`,
+          fullPage: !box.onScreen,
+          clip: {
+            x: Math.max(0, box.x - pad),
+            y: Math.max(0, box.y - pad),
+            width: Math.min(box.width + 2 * pad, (width ?? 1200) - Math.max(0, box.x - pad)),
+            height: Math.min(box.height + 2 * pad, maxHeight ?? 1000),
+          },
+        });
+      } else {
+        await page.screenshot({ path: `${out}/${slug}.png` });
+      }
       console.log(`ok ${slug} ${url}`);
     } catch (e) {
       failed++;

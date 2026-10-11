@@ -799,8 +799,8 @@ function Position({
           }
           source={
             publishedAsOf
-              ? `Per-case statuses via a third-party mirror of DOL's FLAG · DOL queue position as of ${formatAsOf(publishedAsOf)}`
-              : "Per-case statuses via a third-party mirror of DOL's FLAG"
+              ? `Per-case statuses from DOL's own case status system, checked daily · DOL queue position as of ${formatAsOf(publishedAsOf)}`
+              : "Per-case statuses from DOL's own case status system, checked daily"
           }
         >
           <CaseWall wall={wall} publishedFront={publishedFront} />

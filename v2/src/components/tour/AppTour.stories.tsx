@@ -13,6 +13,7 @@ import { CaseDetailPageClient } from "../../app/(authenticated)/cases/[id]/CaseD
 import { EditCasePageClient } from "../../app/(authenticated)/cases/[id]/edit/EditCasePageClient";
 import { CalendarPageClient } from "../../app/(authenticated)/calendar/CalendarPageClient";
 import { NotificationsPageClient } from "../../app/(authenticated)/notifications/NotificationsPageClient";
+import { SettingsPageClient } from "../../app/(authenticated)/settings/SettingsPageClient";
 import { TOUR_CASE_IDS, TourConvex } from "./fakeConvex";
 import fixtures from "./tour-fixtures.json";
 
@@ -122,6 +123,28 @@ export const Notifications: Story = {
   render: () => (
     <AppShell>
       <NotificationsPageClient />
+    </AppShell>
+  ),
+};
+
+/** Settings, open at the notification preferences (the tab comes from the URL, as on the site). */
+export const SettingsNotifications: Story = {
+  name: "Settings, notifications",
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/settings", query: { tab: "notifications" } } } },
+  render: () => (
+    <AppShell>
+      <SettingsPageClient />
+    </AppShell>
+  ),
+};
+
+/** Settings, open at Google Calendar sync. */
+export const SettingsCalendar: Story = {
+  name: "Settings, calendar sync",
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/settings", query: { tab: "calendar-sync" } } } },
+  render: () => (
+    <AppShell>
+      <SettingsPageClient />
     </AppShell>
   ),
 };

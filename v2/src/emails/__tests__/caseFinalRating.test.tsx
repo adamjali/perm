@@ -22,7 +22,7 @@ const base: CaseStatusChangedProps = {
   isFinal: true,
   observedAt: "October 5, 2026",
   contextRows: [{ label: "Cases now at this status", value: "1" }],
-  contextProvenance: "Counted across our mirror of DOL case status.",
+  contextProvenance: "Counted from DOL's own case status, checked daily.",
   caseUrl: "https://permtracker.app/perm-case-status?case=G-100-25338-459202",
   unsubscribeUrl: "https://permtracker.app/case-alert/unsubscribe?token=abc",
   ratingUrl: RATE,

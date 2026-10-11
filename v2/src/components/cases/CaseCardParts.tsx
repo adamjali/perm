@@ -21,7 +21,9 @@ interface FolderTabProps {
 }
 
 export function FolderTab({ caseStatus, isClosed }: FolderTabProps) {
-  const label = caseStatus === "eta9089" ? "ETA 9089" : caseStatus.toUpperCase();
+  // The stage's own name from the shared table: upper-casing the internal id
+  // printed "I140" on a case card.
+  const label = STAGE_VISUALS[caseStatus]?.label ?? caseStatus;
   return (
     <div
       className={cn(

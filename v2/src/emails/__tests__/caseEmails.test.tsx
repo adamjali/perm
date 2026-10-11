@@ -53,7 +53,7 @@ const liveProps: CaseStatusChangedProps = {
     { label: "Pending cases filed earlier", value: "63,603" },
   ],
   contextProvenance:
-    "Our mirror of DOL per-case status, as of August 26, 2026.",
+    "Counted from DOL's own case status, checked daily, as of August 26, 2026.",
   rfiRows: [
     { label: "Resolved RFIs observed", value: "2,151" },
     { label: "Of those, ended certified", value: "1,799" },
@@ -370,7 +370,7 @@ describe("case email templates", () => {
     expect(hits("We checked your case this morning.")).toBe(true);
     // The corrected one, and ordinary copy that must stay clean.
     expect(hits("DOL showed this status when the case was last checked, on August 5, 2026.")).toBe(false);
-    expect(hits("Counted across our mirror of DOL case status, as of August 26, 2026.")).toBe(false);
+    expect(hits("Counted from DOL's own case status, checked daily, as of August 26, 2026.")).toBe(false);
   });
 
   it("dates the observation, and says so when it cannot", async () => {

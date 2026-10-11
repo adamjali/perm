@@ -61,10 +61,31 @@ describe("article pictures", () => {
     expect(Object.keys(heroes).filter((k) => !keys.has(k))).toEqual([]);
   });
 
+  it("uses no picture or recording twice, inline or as a header", () => {
+    const seen = new Map<string, string[]>();
+    for (const p of posts) {
+      const used = [p.meta.image ?? "", ...[...p.body.matchAll(/<(?:ScreenshotFigure|VideoFigure)\b[^>]*?\bsrc="([^"]+)"/g)].map((m) => m[1]!)];
+      for (const src of used.filter(Boolean)) seen.set(src, [...(seen.get(src) ?? []), p.key]);
+    }
+    const repeats = [...seen].filter(([, keys]) => keys.length > 1).map(([src, keys]) => `${src}: ${keys.join(", ")}`);
+    expect(repeats).toEqual([]);
+  });
+
+  it("credits every figure made for an article", () => {
+    const bare: string[] = [];
+    for (const p of posts) {
+      for (const m of p.body.matchAll(/<(?:ScreenshotFigure|VideoFigure)\b([\s\S]*?)\/>/g)) {
+        const attrs = m[1]!;
+        if (/src="\/(?:images\/content\/figures|videos\/guides)\//.test(attrs) && !/\bcredit="/.test(attrs)) bare.push(`${p.key}: ${attrs.match(/src="([^"]+)"/)?.[1]}`);
+      }
+    }
+    expect(bare).toEqual([]);
+  });
+
   it("names only pictures that exist inside the articles", () => {
     const missing: string[] = [];
     for (const p of posts) {
-      for (const m of p.body.matchAll(/\bsrc="(\/images\/[^"]+)"/g)) {
+      for (const m of p.body.matchAll(/\b(?:src|poster)="(\/(?:images|videos)\/[^"]+)"/g)) {
         if (!existsSync(join(ROOT, "public", m[1]!))) missing.push(`${p.key}: ${m[1]}`);
       }
     }

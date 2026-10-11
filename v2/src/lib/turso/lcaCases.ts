@@ -3,8 +3,9 @@ import { makeFlagProgram } from "./flagCases";
 
 /**
  * Labor condition applications (ETA-9035), the H-1B, H-1B1 and E-3 wage
- * attestation. FLAG numbers them `I-200-` (H-1B) and `I-203-`, with
- * `I-201-`/`I-202-` rare enough that no sampled window held one. DOL's
+ * attestation. FLAG numbers them by visa: `I-200-` H-1B, `I-201-` H-1B1
+ * Chile, `I-202-` H-1B1 Singapore, `I-203-` E-3 Australian (the visa class
+ * DOL's own disclosure file prints for each prefix). DOL's
  * stated target is a decision within seven business days, so the pending
  * set is small and the interesting half is the record itself: who filed,
  * for what title, when. Same factory as the PWD program.

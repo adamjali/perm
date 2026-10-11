@@ -260,8 +260,9 @@ export const BASICS: Record<string, BasicsEntry[]> = {
           A Labor Condition Application, form ETA-9035, is what an employer
           files before petitioning for an H-1B. It commits them to a wage and a
           named worksite, and DOL certifies it in days rather than months.
-          Numbers start with <b className="font-bold">I-200</b> or{" "}
-          <b className="font-bold">I-203</b>. PERM Tracker holds every LCA in
+          An H-1B number starts with <b className="font-bold">I-200</b>;{" "}
+          <b className="font-bold">I-201</b> and <b className="font-bold">I-202</b> are the H-1B1 for Chile and
+          Singapore, and <b className="font-bold">I-203</b> the E-3 for Australians. PERM Tracker holds every LCA in
           DOL&apos;s disclosure files from FY2020 to the newest quarter.
         </>
       ),

@@ -44,9 +44,15 @@ describe("CaseCard - Rendering", () => {
     expect(screen.getByText("Jane Smith")).toBeInTheDocument();
   });
 
-  it("renders folder tab with uppercase stage label", () => {
+  it("renders the folder tab with the stage's name (CSS sets the capitals)", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ caseStatus: "recruitment" })} />);
-    expect(screen.getByText("RECRUITMENT")).toBeInTheDocument();
+    expect(screen.getByText("Recruitment")).toBeInTheDocument();
+  });
+
+  it("writes I-140 with its hyphen on the tab, not the internal id", () => {
+    renderWithProviders(<CaseCard case={createMockCaseCardData({ caseStatus: "i140" })} />);
+    expect(screen.getAllByText("I-140").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/^I140$/i)).not.toBeInTheDocument();
   });
 });
 

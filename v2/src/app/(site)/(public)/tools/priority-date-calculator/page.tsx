@@ -161,8 +161,8 @@ const FAQS = [
     a: "For an employment-based case it’s the date DOL received the PERM application, or the date USCIS received the I-140 where no labor certification was required. It’s your place in the queue for a visa number, and it stays with you across most category changes.",
   },
   {
-    q: "Why is this behind the current bulletin?",
-    a: "The State Department publishes the bulletin on a site that refuses automated requests, so these figures come from a public archive of the same pages plus a second mirror for the months the archive missed. In mid-July 2026 travel.state.gov began refusing the archive's crawler as well, so nothing here reaches this page directly from the source. Every figure is labelled with the bulletin it came from, the page states how far behind the live bulletin it is, and the current bulletin is one click away on the State Department's own site.",
+    q: "Where do these cutoffs come from?",
+    a: "From the State Department's own bulletin pages, read from the Department's site every hour on weekdays, with bulletins back to June 2005. A new bulletin shows here the day State publishes it. Every figure is labelled with the bulletin it came from, and each bulletin is one click away on the State Department's own site.",
   },
   {
     q: "What does it mean when a category shows U?",

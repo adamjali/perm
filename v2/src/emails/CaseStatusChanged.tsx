@@ -401,7 +401,7 @@ CaseStatusChanged.PreviewProps = {
     { label: "Pending cases filed earlier", value: "63,603" },
   ],
   contextProvenance:
-    "Our mirror of DOL per-case status, 412,865 cases, as of August 26, 2026.",
+    "Counted from DOL's own case status, checked daily, as of August 26, 2026.",
   rfiRows: [
     { label: "Resolved RFIs observed", value: "2,151" },
     { label: "Of those, ended certified", value: "1,799" },

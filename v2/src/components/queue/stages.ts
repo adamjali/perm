@@ -126,18 +126,21 @@ export interface StageMeta {
 }
 
 export const STAGE_META: Record<QueueStage, StageMeta> = {
+  // The ordinary line is ink and everything pulled out of it is amber, the
+  // same two colours a filing month's page uses for "in DOL's line" and "on
+  // hold, at an RFI or on appeal", so one colour never means both.
   analyst: {
     label: "Analyst review",
     gloss: "the ordinary queue, worked in filing order",
-    fill: "bg-data-warn-ink",
-    ink: "text-data-warn-ink",
+    fill: "bg-foreground",
+    ink: "text-foreground",
   },
   held: {
     label: "Out of filing order",
     gloss:
       "an information request, an audit, supervised recruitment or a hold takes a case off the ordinary queue",
-    fill: "bg-data-none-ink",
-    ink: "text-data-none-ink",
+    fill: "bg-data-warn-ink",
+    ink: "text-data-warn-ink",
   },
   appeal: {
     label: "Under appeal or review",
