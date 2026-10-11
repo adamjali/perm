@@ -495,10 +495,80 @@ export function SalaryExplorer({
               <div className="mt-10">
                 <h3 className="font-heading text-xl font-black">By worksite state</h3>{" "}
                 <p className="mt-2 text-base text-foreground/70">
-                  States with at least {MIN_FOR_MEDIAN} matching {nounPlural}, most first.
+                  States with at least {MIN_FOR_MEDIAN} matching {nounPlural}, most first. Each bar runs from the 5th
+                  to the 95th percentile on one shared scale; the black mark is the median.
                 </p>
-                <div className="mt-4 overflow-x-auto">
-                  <table className="w-full min-w-[36rem] border-2 border-border text-left text-sm">
+                {/* THE SPREAD, DRAWN. Fifty-five rows of five numbers each made
+                    a reader compare figures column by column; on one scale the
+                    states' ranges and medians compare at a glance. The busiest
+                    fifteen are drawn and every state stays in the table below. */}
+                {(() => {
+                  // A range only where the state has 100 filings and both ends; a
+                  // state with no median isn't drawn (it stays in the table).
+                  const drawn = data.byState
+                    .slice(0, 15)
+                    .flatMap((r) =>
+                      r.p50 === null
+                        ? []
+                        : [{ ...r, p50: r.p50, ends: r.n >= 100 && r.p5 !== null && r.p95 !== null ? { p5: r.p5, p95: r.p95 } : null }],
+                    );
+                  if (drawn.length === 0) return null;
+                  const ranged = drawn.filter((r) => r.ends !== null);
+                  const lo = Math.min(...drawn.map((r) => r.ends?.p5 ?? r.p50));
+                  const hi = Math.max(...drawn.map((r) => r.ends?.p95 ?? r.p50));
+                  const span = Math.max(1, hi - lo);
+                  const at = (v: number) => `${((v - lo) / span) * 100}%`;
+                  return (
+                    <ChartTips label={`Offered wages by worksite state, the busiest ${drawn.length}`} className="mt-5">
+                      <ol className="space-y-1.5">
+                        {drawn.map((r) => (
+                          <Fragment key={r.state}>
+                            <li
+                              data-tip={`${r.state}\n${formatInt(r.n)} ${nounPlural}\nMedian ${usd(r.p50)}\nAverage ${usd(r.avg)}${r.ends ? `\n5th ${usd(r.ends.p5)}, 95th ${usd(r.ends.p95)}` : ""}`}
+                              className="grid grid-cols-[2.5rem_minmax(0,1fr)_5.5rem] items-center gap-3 [&>*]:min-w-0"
+                            >
+                              <span className="font-mono text-sm font-bold">{r.state}</span>{" "}
+                              <span className="relative block h-5">
+                                {r.ends ? (
+                                  <span
+                                    aria-hidden="true"
+                                    className="absolute inset-y-0.5 border-2 border-border bg-tint-primary"
+                                    style={{ left: at(r.ends.p5), width: `${((r.ends.p95 - r.ends.p5) / span) * 100}%` }}
+                                  />
+                                ) : null}
+                                <span
+                                  aria-hidden="true"
+                                  className="absolute inset-y-0 w-1.5 -translate-x-1/2 bg-foreground"
+                                  style={{ left: at(r.p50) }}
+                                />
+                              </span>{" "}
+                              <span className="text-right text-sm font-bold tabular-nums">{usd(r.p50)}</span>
+                            </li>{" "}
+                          </Fragment>
+                        ))}
+                      </ol>
+                      <div aria-hidden="true" className="mt-2 grid grid-cols-[2.5rem_minmax(0,1fr)_5.5rem] gap-3 text-sm tabular-nums text-foreground/70 [&>*]:min-w-0">
+                        <span />{" "}
+                        <span className="flex justify-between">
+                          <span>{usd(lo)}</span>{" "}
+                          <span>{usd(hi)}</span>
+                        </span>{" "}
+                        <span className="text-right">median</span>
+                      </div>
+                      {ranged.length < drawn.length ? (
+                        <p className="mt-2 text-sm text-foreground/70">
+                          A state with fewer than 100 {nounPlural} shows its median alone.
+                        </p>
+                      ) : null}
+                    </ChartTips>
+                  );
+                })()}
+                <details className="mt-5 border-2 border-border">
+                  <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
+                    {`All ${formatInt(data.byState.length)} states, as a table`}
+                  </summary>
+                <div className="overflow-x-auto border-t-2 border-border">
+                  <table className="w-full min-w-[36rem] text-left text-sm">
                     <thead className="bg-foreground text-background">
                       <tr>
                         {["State", "Cases", "5th", "Median", "Average", "95th"].map((h, i) => (
@@ -538,6 +608,7 @@ export function SalaryExplorer({
                     </tbody>
                   </table>
                 </div>
+                </details>
               </div>
             ) : null}
           </>
