@@ -601,11 +601,22 @@ export function PermTimelineEstimator({
           on DOL's current frontier month and show a complete answer for a
           month nobody had picked - a date, a window, a queue position - which
           reads as "your estimate" rather than "an example". */}
+      {/* BEFORE A DATE, THE ANSWER'S OWN SHAPE, hatched: the date line, the
+          window under it and the bar that fills from filing to decision, so
+          the empty band says what it will hold instead of reading as a page
+          that failed to load. Nothing in it is a figure. */}
       {!hasDate ? (
         <div className="border-b-2 border-border p-6 sm:p-8">
-          <p className="text-base text-foreground/70">
-            Pick a date above and this fills in: when DOL is likely to decide,
-            the range around it, and where the case sits in the queue.
+          <p className="text-sm font-bold text-foreground/70">Most likely</p>{" "}
+          <div aria-hidden="true" className="mt-2 h-11 w-80 max-w-full bg-foreground/10 sm:h-14" />{" "}
+          <div aria-hidden="true" className="mt-3 h-6 w-[26rem] max-w-full bg-foreground/[0.07]" />{" "}
+          <div className="relative mt-6 flex h-12 items-center justify-center border-2 border-dashed border-foreground/40 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]">
+            <span className="bg-background px-2 text-center text-sm font-bold text-foreground/70">
+              Pick a date above and this fills in
+            </span>
+          </div>{" "}
+          <p className="mt-3 text-base text-foreground/70">
+            When DOL is likely to decide, the range around it, and where the case sits in the queue.
           </p>
         </div>
       ) : null}

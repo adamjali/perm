@@ -424,7 +424,7 @@ export default async function DecisionActivityPage() {
         <FigurePlate
           n="03"
           title="What happened to them"
-          subject="Share of decided cases, by federal quarter"
+          subject="Share of decided cases, by calendar quarter"
           caption="Denial and withdrawal have moved in opposite directions. Neither is explained here: a share of decisions cannot separate a change in how DOL adjudicates from a change in who is filing."
           source="DOL PERM disclosure files and flag.dol.gov"
           className="mt-10"

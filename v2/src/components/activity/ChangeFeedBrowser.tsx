@@ -51,7 +51,11 @@ import { RequestFailed } from "@/components/tools/RequestFailed";
  * "DOL did nothing", which is false.
  */
 
-/** Rows per page. 50 matches the case browsers. */
+/**
+ * Rows per page. It opens at 25: the day's table sits mid-page above three
+ * figures, and fifty rows put two thousand pixels between the reader and them.
+ * The control still offers 50 to 250.
+ */
 const PAGE_SIZES = [25, 50, 100, 250] as const;
 
 const CONTROL =
@@ -161,7 +165,7 @@ export function ChangeFeedBrowser({
     dir: -1,
   });
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState<number>(50);
+  const [pageSize, setPageSize] = useState<number>(25);
   // The decided half's own filters, over the rows already loaded.
   const [decidedFilters, setDecidedFilters] = useState<DecidedFilterState>({});
 
