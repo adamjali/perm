@@ -685,43 +685,63 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
           ) : undefined
         }
         chart={
+          // COLUMNS, NOT ROWS. Thirty-three horizontal bars ran over a thousand
+          // pixels down the page; as columns the whole record sits in one
+          // view, and a month that collapsed reads as the gap it was. The
+          // dashed line is the median month, so "a normal month" has a height.
           <ChartTips label="PERM decisions per month">
-          <ol className="space-y-2">
-            {shown.map((p) => {
-              const c = changes.get(p.month) ?? null;
-              return (
-              <Fragment key={p.month}>
-                {" "}
-                <li
-                  data-tip={[
-                    formatMonth(p.month) ?? p.month,
-                    `${p.decisions.toLocaleString("en-US")} decisions`,
-                    c === null ? null : `${c > 0 ? "+" : ""}${c.toLocaleString("en-US")} on the month before`,
-                    windowTotal > 0 ? `${((p.decisions / windowTotal) * 100).toFixed(1)}% of the window` : null,
-                  ]
-                    .filter(Boolean)
-                    .join("\n")}
-                  className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[9rem_1fr_5.5rem]"
-                >
-                  <span className="text-sm text-foreground/70">
-                    {formatMonth(p.month)}
-                  </span>{" "}
-                  <span className="h-6 w-full border-2 border-border bg-muted">
-                    <span
-                      className="block h-full bg-primary"
-                      style={{
-                        width: `${Math.max((p.decisions / max) * 100, 1.5)}%`,
-                      }}
+            <div className="relative">
+              <div className="flex h-60 items-end gap-[2px] sm:gap-1">
+                {shown.map((p) => {
+                  const c = changes.get(p.month) ?? null;
+                  return (
+                    <div
+                      key={p.month}
+                      data-tip={[
+                        formatMonth(p.month) ?? p.month,
+                        `${p.decisions.toLocaleString("en-US")} decisions`,
+                        c === null ? null : `${c > 0 ? "+" : ""}${c.toLocaleString("en-US")} on the month before`,
+                        windowTotal > 0 ? `${((p.decisions / windowTotal) * 100).toFixed(1)}% of the window` : null,
+                      ]
+                        .filter(Boolean)
+                        .join("\n")}
+                      className="min-w-0 flex-1 border border-border bg-primary"
+                      style={{ height: `${Math.max((p.decisions / max) * 100, 1)}%` }}
                     />
-                  </span>{" "}
-                  <span className="text-right text-sm tabular-nums text-foreground/70">
-                    {p.decisions.toLocaleString("en-US")}
+                  );
+                })}
+              </div>
+              {med > 0 && med <= max ? (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-foreground/60"
+                  style={{ bottom: `${(med / max) * 100}%` }}
+                >
+                  <span className="absolute -top-6 right-0 bg-background px-1 text-sm font-bold tabular-nums">
+                    Median {Math.round(med).toLocaleString("en-US")}
                   </span>
-                </li>
-              </Fragment>
-              );
-            })}
-          </ol>
+                </div>
+              ) : null}
+            </div>
+            {/* Years under their Januaries, and the first month when no
+                January is close enough to crowd it. */}
+            <div aria-hidden="true" className="mt-1.5 flex gap-[2px] sm:gap-1">
+              {shown.map((p, i) => {
+                const firstJan = shown.findIndex((q) => q.month.endsWith("-01"));
+                const label = p.month.endsWith("-01")
+                  ? p.month.slice(0, 4)
+                  : i === 0 && (firstJan < 0 || firstJan >= 5)
+                    ? (formatMonth(p.month) ?? p.month).replace(/ (\d{2})(\d{2})$/, " \u2019$2")
+                    : "";
+                return (
+                  <Fragment key={p.month}>
+                    <span className="min-w-0 flex-1 overflow-visible whitespace-nowrap text-sm tabular-nums text-foreground/70">
+                      {label}
+                    </span>{" "}
+                  </Fragment>
+                );
+              })}
+            </div>
           </ChartTips>
         }
         table={

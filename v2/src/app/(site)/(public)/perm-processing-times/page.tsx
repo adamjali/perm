@@ -55,6 +55,8 @@ import { api } from "@convex/_generated/api";
 import { getEstimatorData } from "@/lib/turso/estimate";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { Chapter } from "@/components/entities/Chapter";
+import { ChapterNav } from "@/components/entities/Chapters";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FaqList } from "@/components/tools/FaqList";
 import { SITE_URL } from "@/lib/constants/site";
@@ -306,6 +308,16 @@ export default async function PermProcessingTimesPage() {
     })),
   };
 
+  // The parts the bar jumps to, in page order; a part with nothing to draw is left off both.
+  const chapters = [
+    ...(historyPoints.length >= 2 ? [{ id: "movement", label: "Movement" }] : []),
+    ...(advance && reconstructedPoints.length >= 2 ? [{ id: "pace", label: "Pace" }] : []),
+    ...(decisionsByMonth.length >= 2 ? [{ id: "decisions", label: "Decisions per month" }] : []),
+    { id: "queues", label: "Every queue" },
+    { id: "your-case", label: "Your case" },
+    { id: "questions", label: "Questions" },
+  ];
+
   return (
     <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-8 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
@@ -334,9 +346,7 @@ export default async function PermProcessingTimesPage() {
         <>
           {/* The headline. This one sentence is what the whole search cluster asks for. */}
           <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard sm:p-8">
-            <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              Analyst review queue
-            </p>{" "}
+            <p className="text-sm font-bold text-foreground/70">The analyst review queue</p>{" "}
             <p className="mt-3 font-heading text-3xl font-black leading-tight sm:text-4xl">
               {analystMonth
                 ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
@@ -403,43 +413,39 @@ export default async function PermProcessingTimesPage() {
             </section>
           ) : null}
 
-          {/* Measured movement. Only shown once we hold two snapshots that differ,
-              because a velocity from a single observation would be invented. */}
-          {hasVelocity ? (
-            <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard">
-              <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                Observed movement
-              </p>{" "}
-              <p className="mt-2 text-base leading-relaxed">
-                Across the {observedDays} days between the two DOL publications on record
-                here, the analyst review queue advanced{" "}
-                <strong>
-                  {movedMonths} month{movedMonths === 1 ? "" : "s"}
-                </strong>
-                .
-              </p>
-            </section>
-          ) : null}
+          <ChapterNav items={chapters} className="mt-12" />{" "}
 
+          {/* Measured movement goes in the dek only once two snapshots differ,
+              because a velocity from a single observation would be invented. */}
           {historyPoints.length >= 2 ? (
-            <section className="mt-8">
-              <h2 className="font-heading text-2xl font-black">Movement on record</h2>{" "}
-              <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-                Every reading since we started keeping them.
-              </p>
+            <Chapter
+              id="movement"
+              title="How the queue has moved"
+              dek={
+                hasVelocity ? (
+                  <>
+                    Across the {observedDays} days between the two DOL publications on record here, the analyst
+                    review queue advanced{" "}
+                    <strong className="text-foreground">
+                      {movedMonths} month{movedMonths === 1 ? "" : "s"}
+                    </strong>
+                    .
+                  </>
+                ) : (
+                  "Every reading DOL has published since this site started keeping them."
+                )
+              }
+            >
               <QueueHistoryChart points={historyPoints} className="mt-6" />
-            </section>
+            </Chapter>
           ) : null}
 
           {advance && reconstructedPoints.length >= 2 ? (
-            <section className="mt-12">
-              <h2 className="font-heading text-2xl font-black">
-                How fast the queue advances
-              </h2>{" "}
-              <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-                DOL publishes where the queue stands and overwrites it, so its
-                own pages can never say how fast it is moving.
-              </p>{" "}
+            <Chapter
+              id="pace"
+              title="How fast it advances"
+              dek="DOL publishes where the queue stands and overwrites it, so its own pages can never say how fast it is moving."
+            >
               {/* Method, not correction: it says how the series was built
                   rather than changing how the rate reads, so it collapses.
                   `<details>` keeps every word in the DOM. */}
@@ -453,9 +459,7 @@ export default async function PermProcessingTimesPage() {
               </FinePrint>
 
               <div className="mt-6 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-                <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
-                  Measured advance
-                </p>{" "}
+                <p className="text-sm font-bold text-background/75">Measured advance</p>{" "}
                 <p className="mt-3 font-heading text-4xl font-black leading-none tabular-nums sm:text-5xl">
                   {advance.rate.toFixed(2)}
                 </p>{" "}
@@ -488,34 +492,28 @@ export default async function PermProcessingTimesPage() {
                   {reconstructedSpread.min.toLocaleString("en-US")} decisions
                   and the fullest over{" "}
                   {reconstructedSpread.max.toLocaleString("en-US")}. Every
-                  month&apos;s count is in the next section.
+                  month&apos;s count is in the next part.
                 </p>
               </FinePrint>
-            </section>
+            </Chapter>
           ) : null}
 
           {decisionsByMonth.length >= 2 ? (
-            <section className="mt-12">
-              <h2 className="font-heading text-2xl font-black">
-                How much DOL decides in a month
-              </h2>{" "}
-              <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-                Every determination in DOL&apos;s quarterly disclosure files,
-                counted by the month it was issued.
-              </p>{" "}
-              <FinePrint summary="How far back, and how fresh" className="mt-3">
-                <p>
-                  Those files lag the weekly queue page by a quarter and carry a
-                  year and a half of history.
-                </p>
-              </FinePrint>
+            <Chapter
+              id="decisions"
+              title="How much DOL decides in a month"
+              dek="Every determination in DOL's quarterly disclosure files, counted by the month it was issued. Those files run a quarter behind the queue page."
+            >
               <DecisionsByMonth points={decisionsByMonth} className="mt-6" />
-            </section>
+            </Chapter>
           ) : null}
 
-          <section className="mt-12">
-            <h2 className="font-heading text-2xl font-black">Every PERM queue DOL publishes</h2>
-            <div className="mt-4 overflow-x-auto">
+          <Chapter
+            id="queues"
+            title="Every queue DOL publishes"
+            dek={`DOL's figures as of ${permAsOf}: the filing month each PERM queue is working, and the wage requests still waiting.`}
+          >
+            <div className="mt-6 overflow-x-auto">
               <table className="w-full border-2 border-border text-left text-sm">
                 <thead className="bg-muted">
                   <tr>
@@ -537,22 +535,20 @@ export default async function PermProcessingTimesPage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-sm text-foreground/60">DOL figures as of {permAsOf}.</p>
-          </section>
-
           {snapshot.pwdPermBacklog.length > 0 ? (
-            <section className="mt-12">
-              <h2 className="font-heading text-2xl font-black">
+            <div className="mt-10">
+              <h3 className="font-heading text-xl font-black">
                 Prevailing wage requests still pending
-              </h2>{" "}
+              </h3>{" "}
               <p className="mt-2 max-w-2xl text-foreground/70">
                 Requests DOL hasn&apos;t decided yet, by the month it received
                 them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}.
                 Each month&apos;s running total is how many sit ahead of it.
               </p>
               <PwdBacklogChart backlog={snapshot.pwdPermBacklog} className="mt-6" />
-            </section>
+            </div>
           ) : null}
+          </Chapter>
         </>
       ) : (
         <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard">
@@ -574,8 +570,13 @@ export default async function PermProcessingTimesPage() {
       {/* Links to the calculator rather than embedding it. Two live estimators
           on one page would compete for the same question, and this page's job
           is the reference figures. */}
-      <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">Where does your case sit?</h2>{" "}
+      <Chapter
+        id="your-case"
+        title="Where your case sits"
+        dek="Your own filing month against these figures, the steps after PERM as people report them, and an email when DOL reaches your month."
+      >
+      <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+        <h3 className="font-heading text-2xl font-black">Your filing month, against the queue</h3>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
           The calculator reads your own filing month against these figures.
         </p>
@@ -593,7 +594,7 @@ export default async function PermProcessingTimesPage() {
           the I-140, I-485 and card steps; it says which half is checked. */}
       {board ? (
         <section aria-labelledby="after-perm-h" className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h2 id="after-perm-h" className="font-heading text-2xl font-black">After PERM, as people report it</h2>{" "}
+          <h3 id="after-perm-h" className="font-heading text-2xl font-black">After PERM, as people report it</h3>{" "}
           {afterPerm.length > 0 ? (
             <>
               <p className="mt-2 max-w-2xl text-base text-foreground/70">
@@ -629,14 +630,13 @@ export default async function PermProcessingTimesPage() {
           frontierMonth={analyst?.priorityDate ?? undefined}
         />
       </section>
+      </Chapter>
 
-      <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
+      <Chapter id="questions" title="Common questions">
         <FaqList items={FAQ.map((item) => ({ q: item.question, a: item.answer }))} openFirst={false} />
-      </section>
 
       <section className="mt-12 border-2 border-border bg-muted p-6">
-        <h2 className="font-heading text-xl font-black">Where these numbers come from</h2>{" "}
+        <h3 className="font-heading text-xl font-black">Where these numbers come from</h3>{" "}
         {/* The absence rule changes how a blank cell reads, so it stays in
             the open. The provenance behind it collapses. */}
         <p className="mt-3 leading-relaxed text-foreground/70">
@@ -657,9 +657,9 @@ export default async function PermProcessingTimesPage() {
       </section>
 
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">
+        <h3 className="font-heading text-2xl font-black">
           The deadlines you control
-        </h2>{" "}
+        </h3>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
           The recruitment window, the quiet period and the filing window are
           fixed arithmetic on your prevailing wage determination date. PERM
@@ -680,6 +680,7 @@ export default async function PermProcessingTimesPage() {
           for the deadline math itself.
         </p>
       </section>
+      </Chapter>
       <DataProvenance datasets={["processing-times"]} />
     </div>
   );
