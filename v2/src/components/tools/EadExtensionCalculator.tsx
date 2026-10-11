@@ -4,6 +4,7 @@ import { useId, useMemo, useState } from "react";
 
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { DateRuler } from "@/components/tools/DateRuler";
 import { EAD_CATEGORIES, EXTENSION_DAYS, eadExtension, type EadVerdict } from "@/lib/eadExtension";
 
 /**
@@ -15,6 +16,12 @@ import { EAD_CATEGORIES, EXTENSION_DAYS, eadExtension, type EadVerdict } from "@
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const long = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+/** The reader's own calendar date. `toISOString()` is UTC, which after about 8 PM Eastern is already tomorrow. */
+const localToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 function verdictText(v: EadVerdict, expires: string): { head: string; body: string; ok: boolean } {
   switch (v.kind) {
@@ -83,7 +90,7 @@ export function EadExtensionCalculator() {
         sameCategory: same,
         i94Until: DATE_RE.test(i94) ? i94 : null,
       });
-      return verdictText(v, expires);
+      return { ...verdictText(v, expires), through: v.kind === "extended" ? v.through : null };
     } catch {
       return null;
     }
@@ -131,10 +138,29 @@ export function EadExtensionCalculator() {
         {result ? (
           <>
             <p className={`font-heading text-2xl font-black ${result.ok ? "" : "text-data-warn-ink"}`}>{result.head}</p>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">{result.body}</p>
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">{result.body}</p>{" "}
+            {result.through ? (
+              <DateRuler
+                className="mt-5"
+                from={expires}
+                to={result.through}
+                fromLabel="The card expires"
+                toLabel="Still valid with the receipt through"
+                today={localToday()}
+                emptyHint=""
+              />
+            ) : null}
           </>
         ) : (
-          <p className="text-base text-foreground/70">Enter the date on the card to see the answer.</p>
+          // Before a date, the answer's own shape: the card's date at one end,
+          // the extended date at the other, hatched.
+          <DateRuler
+            from={null}
+            to={null}
+            fromLabel="The card expires"
+            toLabel="Still valid with the receipt through"
+            emptyHint="Enter the date on the card to see the answer"
+          />
         )}
       </div>
     </div>

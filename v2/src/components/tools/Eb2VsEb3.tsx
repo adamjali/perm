@@ -99,11 +99,24 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
       </div>
 
       {!cmp ? (
+        // BEFORE A DATE, THE TWO LINES SIDE BY SIDE as they will be filled:
+        // each with its cutoff and the people ahead, hatched.
         <div className="p-6 sm:p-8">
           <p className="text-base text-foreground/70">
             Pick a priority date and this sets EB-2 and EB-3 next to each other: what this month&apos;s bulletin prints
             for each, and how many people stand ahead of you in each line.
-          </p>
+          </p>{" "}
+          <div aria-hidden="true" className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
+            {["EB-2", "EB-3"].map((line) => (
+              <div key={line} className="border-2 border-dashed border-foreground/40 p-4">
+                <p className="font-heading text-xl font-black text-foreground/70">{line}</p>{" "}
+                <p className="mt-3 text-sm text-foreground/70">This month&apos;s cutoff</p>{" "}
+                <div className="mt-1 h-6 w-32 bg-foreground/10" />{" "}
+                <p className="mt-3 text-sm text-foreground/70">People ahead of you</p>{" "}
+                <div className="mt-1 h-9 w-40 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <>
