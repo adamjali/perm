@@ -61,6 +61,7 @@ export const PAGE_CARD_ALT = {
   "ead-extension": "Was my work permit extended? Whether a renewal automatically extended an expiring EAD, and to when, from 8 CFR 274a.13.",
   "wage-levels": "Prevailing wage levels by occupation and area. DOL's four wage levels for an occupation in a metro or non-metro area, read live from the OFLC wage search.",
   "about": "About PERM Tracker. A free, independent site on DOL's own data, run by an immigration attorney who files these cases.",
+  "press": "Press and data for journalists. What DOL's records can tell a reporter, and how to credit PERM Tracker.",
   "blog": "PERM Tracker blog. What DOL's own files show about processing times, denials, wages and the queue.",
   "calculators": "PERM calculators. Seven calculators for your case and two explorers for the field, all free, on data the government publishes.",
   "case-search": "Search every DOL case an employer filed. PERM, prevailing wage and H-1B LCA, open and decided, in one search.",

@@ -11,6 +11,7 @@
 import type { Metadata } from "next";
 import { DownloadSimpleIcon, FileCsvIcon, BracketsCurlyIcon } from "@phosphor-icons/react/ssr";
 
+import { CopyButton } from "@/components/badges/BadgeCatalogue";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { SITE_URL } from "@/lib/constants/site";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -21,6 +22,7 @@ import {
   OPEN_DATA_LICENSE,
   OPEN_DATA_PATHS,
   bulletinRows,
+  openDataCreditHtml,
   dolRows,
   type BulletinRow,
   type DolRow,
@@ -201,6 +203,13 @@ export default async function OpenDataPage() {
         <p className="mt-4 border-2 border-border bg-muted px-4 py-3 font-mono text-sm break-words">
           Source: {OPEN_DATA_CREDIT}, from U.S. Department of State and Department of Labor records. {OPEN_DATA_LICENSE.short}.
         </p>{" "}
+        <p className="mt-4 text-base text-foreground/75">On a web page, with the link:</p>{" "}
+        <div className="mt-2 flex flex-wrap items-start gap-3">
+          <code className="block min-w-0 flex-1 break-all border-2 border-border bg-muted px-4 py-3 font-mono text-sm">
+            {openDataCreditHtml(SITE_URL)}
+          </code>{" "}
+          <CopyButton text={openDataCreditHtml(SITE_URL)} />
+        </div>{" "}
         <details className="group mt-5">
           <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center font-heading text-base font-bold underline decoration-primary decoration-2 underline-offset-4 [&::-webkit-details-marker]:hidden">
             What the licence covers

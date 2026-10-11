@@ -14,6 +14,10 @@
 
 import { useId, useState } from "react";
 
+import { CopyButton } from "@/components/badges/BadgeCatalogue";
+import { SITE_URL } from "@/lib/constants/site";
+import { firmBadgeSnippet } from "@/lib/firmBadge";
+
 import {
   CITY_MAX,
   DESCRIPTION_MAX,
@@ -257,6 +261,32 @@ function EditLinkForm({ slug }: { slug: string }) {
   );
 }
 
+/**
+ * The verified firm's badge and the code to paste it (src/lib/firmBadge.ts).
+ * Shown only on a page with a verified claim, the one case the badge says
+ * "Verified firm".
+ */
+function FirmBadge({ slug, firmName }: { slug: string; firmName: string }) {
+  const snippet = firmBadgeSnippet(SITE_URL, slug, firmName);
+  return (
+    <div className="mb-8 border-b-2 border-border pb-6">
+      <h3 className="font-heading text-base font-black">A badge for your firm&apos;s site</h3>{" "}
+      <p className="mt-1 max-w-3xl text-base leading-relaxed text-foreground/80">
+        It says &ldquo;Verified firm&rdquo; and links to this page. Paste the code where your site lists the firm&apos;s
+        other credentials.
+      </p>{" "}
+      {/* eslint-disable-next-line @next/next/no-img-element -- the badge is the SVG a firm's site will load, shown as it will look */}
+      <img src={`/badge/firm/${slug}.svg`} alt={`${firmName} on PERM Tracker`} height={20} className="mt-3 h-5 w-auto" />{" "}
+      <div className="mt-3 flex flex-wrap items-start gap-3">
+        <code className="block min-w-0 flex-1 break-all border-2 border-border bg-background px-3 py-2 font-mono text-sm">
+          {snippet}
+        </code>{" "}
+        <CopyButton text={snippet} />
+      </div>
+    </div>
+  );
+}
+
 /** The fold at the foot of a firm's page. */
 export function FirmClaimPanel({ slug, firmName, claimed }: { slug: string; firmName: string; claimed: boolean }) {
   return (
@@ -274,7 +304,9 @@ export function FirmClaimPanel({ slug, firmName, claimed }: { slug: string; firm
           <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
             Add the firm&apos;s website, a short description, languages, offices and what it handles. Once we&apos;ve read
             it, it shows on this page apart from DOL&apos;s figures, marked as the firm&apos;s own words.
+            {claimed ? null : " A verified firm also gets a badge for its own site that links here."}
           </p>{" "}
+          {claimed ? <FirmBadge slug={slug} firmName={firmName} /> : null}
           <ClaimForm slug={slug} />
           <div className="mt-8 border-t-2 border-border pt-5">
             <h3 className="font-heading text-base font-black">Already claimed it?</h3>{" "}

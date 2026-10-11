@@ -5,6 +5,7 @@ import { StakesSection, SecuritySection, CTASection } from "@/components/home";
 import { SectionDivider } from "@/components/home/SectionDivider";
 import { AttorneyHero } from "@/components/home/AttorneyHero";
 import { AttorneyTour } from "@/components/home/AttorneyTour";
+import { FirmSiteSection } from "@/components/home/FirmSiteSection";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -37,6 +38,7 @@ export default function ForAttorneysPage() {
     <>
       <AttorneyHero />
       <AttorneyTour />
+      <FirmSiteSection />
       <StakesSection />
       <SectionDivider kind="ledger" fill="var(--muted)" />
       <SecuritySection />

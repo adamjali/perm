@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 
+import { CiteThis } from "@/components/data/CiteThis";
 import { FinePrint } from "@/components/data/FinePrint";
 import { getFreshness, type DatasetFreshness } from "@/lib/turso/publicData";
 import { coverageFor, datasetLabel } from "@/lib/datasetCoverage";
@@ -53,9 +54,17 @@ export async function DataProvenance({ datasets, className }: { datasets: string
             </p>
           ))}
         </FinePrint>
-      ) : null}
+      ) : null}{" "}
+      <CiteThis dataThrough={latest(rows)} />
     </div>
   );
+}
+
+/** The newest date any of the page's datasets runs to, as the lines print it. */
+function latest(rows: DatasetFreshness[]): string | null {
+  const dates = rows.map((r) => r.asOf).filter((d): d is string => !!d && /^\d{4}-\d{2}/.test(d));
+  if (dates.length === 0) return null;
+  return fmt(dates.reduce((a, b) => (a > b ? a : b)));
 }
 
 /**

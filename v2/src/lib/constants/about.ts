@@ -77,6 +77,9 @@ export const ORGANIZATION_SAME_AS: readonly string[] = [
 export const LEGAL_NAME = "PERM Tracker LLC";
 export const LEGAL_FORM = "a Florida limited liability company";
 
+/** Where reporters write (the Zoho mailbox on press.permtracker.app). Printed on /press. */
+export const PRESS_EMAIL = "adam@press.permtracker.app";
+
 /**
  * What tells this site apart from others with similar names, for schema.org's
  * `disambiguatingDescription` ("a short description of the item used to

@@ -109,7 +109,9 @@ describe("DataProvenance", () => {
 
   it("draws no fold when no dataset has a coverage sentence", async () => {
     await renderProvenance({ "not-a-dataset": row({ dataset: "not-a-dataset" }) });
-    expect(screen.queryByRole("group")).not.toBeInTheDocument();
+    // The one fold left is the citation, which every source block carries.
+    expect(screen.getAllByRole("group")).toHaveLength(1);
+    expect(screen.getByText("Cite this page")).toBeInTheDocument();
     expect(screen.queryByText(/includes$/)).not.toBeInTheDocument();
   });
 

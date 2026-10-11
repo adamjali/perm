@@ -26,6 +26,15 @@ export const OPEN_DATA_LICENSE = {
 /** The credit line CC BY asks for, ready to paste. */
 export const OPEN_DATA_CREDIT = "PERM Tracker (permtracker.app)";
 
+/**
+ * The same credit for a web page, with the link a reader can follow back to
+ * the files. CC BY asks for the source; a link is how a reader finds it.
+ */
+export function openDataCreditHtml(siteUrl: string): string {
+  const base = siteUrl.replace(/\/$/, "");
+  return `Source: <a href="${base}/open-data">PERM Tracker</a>, from U.S. Department of State and Department of Labor records. <a href="${OPEN_DATA_LICENSE.url}">${OPEN_DATA_LICENSE.short}</a>.`;
+}
+
 export const OPEN_DATA_PATHS = {
   bulletinCsv: "/open-data/visa-bulletins.csv",
   bulletinJson: "/open-data/visa-bulletins.json",
