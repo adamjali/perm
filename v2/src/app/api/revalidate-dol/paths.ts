@@ -40,6 +40,8 @@ export const DOL_PAGES = [
   "/perm-rfi-audit",
   "/perm-processing-times",
   "/tools/pwd-calculator",
+  // Prints the month DOL is issuing wage determinations on, and flags it on its chart.
+  "/pwd-cases",
   "/tools/green-card-timeline",
   "/tools/perm-timeline-calculator",
   // The catalogue page reads the snapshot ITSELF: it prints federal figures
