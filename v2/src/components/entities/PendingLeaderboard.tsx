@@ -60,13 +60,8 @@ export function PendingLeaderboard({
       subject={`${formatInt(leaders.length)} sponsors, live tracker`}
       caption={
         <>
-          A different list from the one above, and deliberately so. Volume
-          counts a decade of decided filings; this counts what is sitting in
-          the queue today, which DOL&apos;s disclosure files cannot show
-          because every row in them already has a decision. Read each figure
-          against the sponsor&apos;s own tracked total beside it: everything
-          filed and still waiting is a very different position from a long
-          steady record with a slice outstanding.
+          What&apos;s sitting in DOL&apos;s queue today, which the disclosure files can&apos;t show: every row in
+          them already has a decision. Read each beside the sponsor&apos;s own tracked total.
         </>
       }
       source={when ? `Live case tracker, as of ${when}` : "Live case tracker"}

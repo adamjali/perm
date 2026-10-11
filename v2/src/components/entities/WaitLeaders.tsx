@@ -66,11 +66,9 @@ export function WaitLeaders({ field, className }: { field: FieldWait | null; cla
   if (!field || field.p50 == null || !field.fastest?.length || !field.slowest?.length) return null;
   const max = Math.max(field.p50, ...field.slowest.map((r) => r.p50));
   return (
-    <section aria-labelledby="wait-leaders-h" className={cn("border-2 border-border bg-card p-6 shadow-hard sm:p-8", className)}>
-      <h2 id="wait-leaders-h" className="font-heading text-2xl font-black">
-        Whose cases DOL is deciding fastest, and slowest
-      </h2>{" "}
-      <MoreText gist={"Median days from filing to decision, last 90 days, busier sponsors only."} className="mt-2">
+    // The page's own part heading names this ("Whose cases DOL decides fastest, and slowest").
+    <section aria-label="Sponsors whose cases DOL decides fastest and slowest" className={cn("border-2 border-border bg-card p-6 shadow-hard sm:p-8", className)}>
+      <MoreText gist={"Median days from filing to decision, last 90 days, busier sponsors only."}>
         <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
           Filing to decision, median, over the last {field.windowDays} days, for the {formatInt(field.employersRanked ?? 0)}{" "}
           sponsors with at least {field.minDecisions ?? 20} decisions in that time. A sponsor well under the

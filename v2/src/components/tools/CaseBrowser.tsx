@@ -188,9 +188,12 @@ function compareRows(a: CaseRow, b: CaseRow, key: SortKey, asc: boolean): number
 export function CaseBrowser({
   meta,
   occupations,
+  showLookup = true,
 }: {
   meta: CaseMeta | null;
   occupations: OccupationOption[];
+  /** The page's header carries its own case-number box; a `?case=` link still opens this one. */
+  showLookup?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -503,6 +506,7 @@ export function CaseBrowser({
       {/* ---------------------------------------------------------------- */}
       {/* Look up one case                                                  */}
       {/* ---------------------------------------------------------------- */}
+      {showLookup || caseQuery !== "" ? (
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <h2 className="font-heading text-xl font-black">Look up a case number</h2>{" "}
         <form
@@ -612,6 +616,7 @@ export function CaseBrowser({
           </div>
         ) : null}
       </section>
+      ) : null}
 
       {/* ---------------------------------------------------------------- */}
       {/* Filters                                                           */}

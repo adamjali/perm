@@ -27,6 +27,9 @@ import { listByKind } from "@/lib/turso/entities";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
+import { IndexHeader, IndexSearch, type IndexFigure } from "@/components/data/IndexHeader";
+import { Chapter } from "@/components/entities/Chapter";
+import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { withSocialCard } from "@/lib/socialCard";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { formatInt } from "@/lib/format";
@@ -61,15 +64,10 @@ export const metadata: Metadata = withSocialCard({
 // trigger that never fires bounds the staleness instead of stranding the page.
 export const revalidate = 604800;
 
-/** `2026-06-30` to `30 June 2026`, in the reader's language rather than ISO. */
-function longDate(iso: string): string {
+/** `2026-06-30` to `June 2026`. */
+function monthYear(iso: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
-  return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
+  return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", timeZone: "UTC" });
 }
 
 export default async function PermCasesPage() {
@@ -110,166 +108,138 @@ export default async function PermCasesPage() {
       : {}),
   });
 
+  const figures: IndexFigure[] = [
+    ...(meta
+      ? [{ label: "Decided, in DOL's published files", value: formatInt(meta.totalCases), note: `${monthYear(meta.firstDecisionDate)} to ${monthYear(meta.lastDecisionDate)}` }]
+      : []),
+    ...(liveSummary
+      ? [{ label: "Newer, from DOL's live service", value: formatInt(liveSummary.total), href: "#live", note: `${formatInt(liveSummary.pending)} still waiting` }]
+      : []),
+    { label: "Not only PERM", value: "Search every program", href: "/case-search", note: "Wage requests, H-1B, H-2A and H-2B too" },
+  ];
+  const chapters: ChapterItem[] = [
+    { id: "by-day", label: "Decisions" },
+    { id: "decided", label: "Decided cases" },
+    { id: "live", label: "Newer cases, live" },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={datasetSchema} />
 
-      <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Every decided case
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          {meta ? (
-            <>
-              {formatInt(meta.totalCases)} PERM cases decided between{" "}
-              {longDate(meta.firstDecisionDate)} and{" "}
-              {longDate(meta.lastDecisionDate)}, filed as far back as{" "}
-              {longDate(meta.firstReceivedDate)}. Anything newer than{" "}
-              {longDate(meta.lastDecisionDate)} isn&apos;t in DOL&apos;s
-              published files yet. Those cases, decided and still waiting, are
-              in the{" "}
-              <Link
-                href="#live"
-                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-              >
-                live list
-              </Link>{" "}
-              below.
-            </>
-          ) : (
-            <>
-              The case table lands with the quarterly disclosure ingest.
-            </>
-          )}
-        </p>{" "}
-        {/* This page is PERM's published half. Somebody who does not know a
-            wage request is a different DOL programme cannot know to leave, so
-            the way out is named here rather than only in the nav. */}
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          Looking for everything one employer has filed, open cases included?{" "}
-          <Link
-            href="/case-search"
-            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-          >
-            Search every DOL program at once
-          </Link>
-          .
-        </p>
-      </header>
-
-      {/* The one thing a visitor has to read before searching. A pending case
-          is in none of DOL's files, so "not found" is the ordinary answer for
-          the people most likely to be searching. */}
-      <section className="pop mt-8 max-w-3xl">
-        <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
-          <h2 className="font-heading text-lg font-black">What’s in here, and what isn’t</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            DOL publishes only cases it has decided. A case still waiting on a
-            determination isn’t in these files, however recently it was filed.
-          </p>{" "}
-          {meta ? (
-            /* The four .xlsx filenames were printed in full on the page, under a
-               heading, above a link to the page that explains them. Provenance,
-               so it collapses; `<details>` keeps every word crawlable. */
-            <FinePrint summary="Source files" className="mt-3">
-              <p>
-              {meta.sourceFiles.join(", ") || "DOL PERM disclosure files"}.
-              Counts cover every row in the files, including the ones off screen.
-              A filtered count covers only that filter.{" "}
-              <Link
-                href="/methodology"
-                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-              >
-                How every figure is built
-              </Link>
-              .
-              </p>
-            </FinePrint>
-          ) : null}
-        </div>
-      </section>
-
-      <div className="mt-10">
-        {meta ? (
-          // THE CHART SITS OUTSIDE THE BOUNDARY, and that is the point.
-          //
-          // `CaseBrowser` calls useSearchParams, which needs a Suspense
-          // boundary or the whole route opts out of static rendering. But a
-          // boundary emits its FALLBACK into the static shell, so everything
-          // inside it is absent from the prerendered HTML and arrives only
-          // after hydration. Inside it, the chart would exist on this page
-          // only in the escaped RSC payload: no <polyline>, no <polygon> and
-          // no chart aria-label in the served HTML.
-          //
-          // It has no reason to be in there. It takes server-computed props and
-          // reads no search params. Outside, it is in the HTML a crawler gets
-          // and paints before the JS lands.
+      <IndexHeader
+        title="Every PERM case, decided and waiting"
+        lede={
           <>
-            <DailyDecisionsChart points={daily} className="mb-10" />
-            <SearchParamsBoundary>
-            <CaseBrowser meta={meta} occupations={occupations} />
-
-            <div className="mt-12">
-              <LiveCaseBrowser
-                summary={liveSummary}
-                publishedThrough={meta.lastDecisionDate}
-              />
-            </div>
-            </SearchParamsBoundary>
+            DOL&apos;s published decisions, with the wage and the days each took, and every newer case from
+            DOL&apos;s own case-status service, still waiting or not.
           </>
-        ) : (
-          <section className="border-2 border-border bg-card p-8 text-center shadow-hard">
-            <p className="text-lg text-foreground/70">
-              The case-level table is written by the quarterly disclosure
-              ingest. Until it has run, the{" "}
-              <Link
-                href="/perm-processing-times"
-                className="underline decoration-primary decoration-2 underline-offset-2"
-              >
-                processing times page
-              </Link>{" "}
-              carries the live queue and the{" "}
-              <Link
-                href="/perm-employers"
-                className="underline decoration-primary decoration-2 underline-offset-2"
-              >
-                sponsor table
-              </Link>{" "}
-              carries the per-employer totals.
-            </p>
-          </section>
-        )}
-      </div>
+        }
+        figures={figures}
+        aside={
+          <IndexSearch
+            title="Look up a case number"
+            action="/perm-case-status"
+            name="case"
+            button="Look it up"
+            placeholder="G-100-26125-868956"
+            note="DOL's status today, the published record once there is one, and an estimated date."
+            footer={
+              <>
+                Don&apos;t have the number?{" "}
+                <Link href="/case-search" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  Find the case by employer
+                </Link>
+              </>
+            }
+          />
+        }
+      />
 
-      <section className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Your case isn’t in here?</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            A pending case is in none of DOL&apos;s files. The{" "}
-            <Link
-              href="/tools/perm-timeline-calculator"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+      {meta ? (
+        <>
+          <ChapterNav items={chapters} className="mt-10" />
+
+          {/* THE CHART SITS OUTSIDE THE SEARCH-PARAMS BOUNDARY, and that is the
+              point: it takes server-computed props and reads no search params,
+              so outside the boundary it is in the HTML a crawler gets and paints
+              before the JS lands. Inside, it would exist only in the escaped RSC
+              payload. */}
+          <Chapter id="by-day" title="How many cases DOL decides" dek="Every decision in DOL's published files, counted by month.">
+            <DailyDecisionsChart points={daily} />
+          </Chapter>
+
+          <SearchParamsBoundary>
+            <Chapter
+              id="decided"
+              title="Decided cases, from DOL's files"
+              dek={
+                <>
+                  Each with its wage, law firm, worksite and the days it took. Cases still waiting aren&apos;t in
+                  these files, however recently they were filed; they&apos;re in the{" "}
+                  <Link href="#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                    live list
+                  </Link>
+                  .
+                </>
+              }
             >
+              <FinePrint summary="Source files" className="-mt-2 mb-6">
+                <p>
+                  {meta.sourceFiles.join(", ") || "DOL PERM disclosure files"}. Counts cover every row in the files,
+                  including the ones off screen. A filtered count covers only that filter.{" "}
+                  <Link href="/methodology" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                    How every figure is built
+                  </Link>
+                  .
+                </p>
+              </FinePrint>{" "}
+              <CaseBrowser meta={meta} occupations={occupations} showLookup={false} />
+            </Chapter>
+
+            {/* The live browser carries its own heading and the #live anchor; this
+                is the part's rule. */}
+            <div className="mt-16 border-t-4 border-border pt-8">
+              <LiveCaseBrowser summary={liveSummary} publishedThrough={meta.lastDecisionDate} />
+            </div>
+          </SearchParamsBoundary>
+        </>
+      ) : (
+        <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">
+          <p className="text-lg text-foreground/70">
+            The case-level table is written by the quarterly disclosure ingest. Until it has run, the{" "}
+            <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
+              processing times page
+            </Link>{" "}
+            carries the live queue and the{" "}
+            <Link href="/perm-employers" className="underline decoration-primary decoration-2 underline-offset-2">
+              sponsor table
+            </Link>{" "}
+            carries the per-employer totals.
+          </p>
+        </section>
+      )}
+
+      <section className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
+        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
+          <h2 className="font-heading text-lg font-black">Waiting on a case?</h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+            Its number gives DOL&apos;s status today and an estimated date. With only a filing month, the{" "}
+            <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator
             </Link>{" "}
-            reads your filing month against where DOL is working now.
+            reads it against where DOL is working now.
           </p>
         </div>
         <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Comparing a whole docket?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
             Per-firm and per-sponsor totals sit on the{" "}
-            <Link
-              href="/perm-attorneys"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
+            <Link href="/perm-attorneys" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               law firm table
             </Link>{" "}
             and the{" "}
-            <Link
-              href="/perm-employers"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
+            <Link href="/perm-employers" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               sponsor table
             </Link>
             , and each one links straight back into these cases.

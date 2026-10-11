@@ -27,6 +27,9 @@ import { getFreshness } from "@/lib/turso/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
+import { IndexHeader, IndexSearch, type IndexFigure } from "@/components/data/IndexHeader";
+import { Chapter } from "@/components/entities/Chapter";
+import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { formatInt } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
 const TITLE = "Every PERM Employer, Ranked";
@@ -81,28 +84,69 @@ export default async function PermEmployersPage() {
     url: `${SITE_URL}/perm-employers`,
   });
 
+  const busiest = topTen[0];
+  const mostWaiting = leaders[0];
+  const figures: IndexFigure[] = [
+    { label: "Sponsors in DOL's published files", value: formatInt(employerCount), note: "Each with its own page" },
+    ...(busiest
+      ? [{ label: "Files the most", value: busiest.name, href: `/perm-employers/${busiest.slug}`, note: `${formatInt(busiest.total)} filings` }]
+      : []),
+    ...(mostWaiting
+      ? [{ label: "Most cases waiting now", value: mostWaiting.name, href: `/perm-employers/${mostWaiting.slug}`, note: `${formatInt(mostWaiting.pending)} waiting on DOL` }]
+      : []),
+  ];
+  const chapters: ChapterItem[] = [
+    { id: "busiest", label: "Busiest" },
+    { id: "speed", label: "Fastest and slowest" },
+    { id: "all", label: "Every sponsor" },
+    { id: "a-z", label: "A to Z" },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={datasetSchema} />
 
-      <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Who sponsors the most
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          Every employer that filed a PERM case in the current disclosure
-          window, all {employerCount.toLocaleString("en-US")} of them. Filings
-          still working through DOL, and so not in a published file yet, appear
-          in search under the table.
-        </p>
-      </header>
+      <IndexHeader
+        title="Who sponsors the most"
+        lede={
+          <>
+            Every employer that filed a PERM case in DOL&apos;s current disclosure window, ranked, with what
+            each has waiting today.
+          </>
+        }
+        figures={figures}
+        aside={
+          <IndexSearch
+            title="Find an employer"
+            action="/perm-employers#all"
+            placeholder="Microsoft, Infosys, a hospital"
+            note="Searches every sponsor, including ones whose cases DOL hasn't published yet."
+            footer={
+              <>
+                Have a case number?{" "}
+                <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  Look the case up
+                </Link>
+              </>
+            }
+          />
+        }
+      />
 
       {employers.length > 0 ? (
         <>
+          <ChapterNav items={chapters} className="mt-10" />
+
+          <Chapter
+            id="busiest"
+            title="The busiest sponsors"
+            dek="By everything filed in the published window, and by what's sitting in DOL's queue today. Two different lists, on purpose."
+          >
+          <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 xl:grid-cols-2">
           {/* The drawing first: the top ten as a volume ladder. */}
-          <section className="pop mt-10">
-            <div className="border-2 border-border bg-card p-6 sm:p-8">
-              <h2 className="font-heading text-xl font-black">The top ten, by filings</h2>
+          <section className="pop h-full">
+            <div className="flex h-full flex-col border-2 border-border bg-card p-6 sm:p-8">
+              <h3 className="font-heading text-xl font-black">The top ten, by filings</h3>
               <ChartTips label="The top ten sponsors, by filings" className="mt-6">
               {/* Each name opens its employer page: visitors clicked the plain
                   names over and over expecting it (PostHog, Oct 2026). */}
@@ -144,25 +188,29 @@ export default async function PermEmployersPage() {
                 ))}
               </div>
               </ChartTips>
-              <p className="mt-5 text-sm text-foreground/60">
+              <p className="mt-auto pt-5 text-sm text-foreground/70">
                 DOL works one national queue, oldest first, whoever filed the
                 case.
               </p>
             </div>
           </section>
 
-          <PendingLeaderboard leaders={leaders} asOf={mirrorAsOf} n="01" className="mt-10" />
+          <PendingLeaderboard leaders={leaders} asOf={mirrorAsOf} n="01" />
+          </div>
+          </Chapter>
 
-          <WaitLeaders field={fieldWait} className="mt-10" />
+          <Chapter id="speed" title="Whose cases DOL decides fastest, and slowest">
+            <WaitLeaders field={fieldWait} />
+          </Chapter>
 
-          <section className="mt-12">
+          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-border pt-8">
             {/* "All N sponsors" was true of the published files and reads as
                 a claim about every sponsor that exists. It is now actively
                 misleading on this page: searching here also surfaces employers
                 we hold only from DOL's live feed, 21,495 of which have never
                 appeared in a disclosure file. The heading says which corpus the
                 TABLE is, and the sentence under it says where the rest are. */}
-            <h2 className="font-heading text-2xl font-black">
+            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">
               All {employerCount.toLocaleString("en-US")} sponsors in the
               published files
             </h2>{" "}
@@ -189,7 +237,11 @@ export default async function PermEmployersPage() {
               filtered in the browser, so a crawler sees the 54 server-rendered
               seed links and none of the other 16,255 pages. The A-Z strip is
               the crawlable path to all of them. */}
-          <BrowseTeaser kind="employer" className="mt-12" />
+          {/* The teaser carries its own heading ("Browse A to Z"), so this is the
+              part's rule and anchor only. */}
+          <div id="a-z" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-border pt-8">
+            <BrowseTeaser kind="employer" />
+          </div>
         </>
       ) : (
         <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">
