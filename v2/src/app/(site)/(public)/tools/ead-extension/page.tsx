@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import ScreenshotFigure from "@/components/content/ScreenshotFigure";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { EadExtensionCalculator } from "@/components/tools/EadExtensionCalculator";
 import { FaqList } from "@/components/tools/FaqList";
@@ -72,6 +73,19 @@ export default function EadExtensionPage() {
       <div className="mt-8">
         <EadExtensionCalculator />
       </div>
+
+      <section className="mt-10 max-w-4xl">
+        <h2 className="font-heading text-2xl font-black">Where the card prints them</h2>{" "}
+        <ScreenshotFigure
+          src="/images/tools/ead-cards.webp"
+          alt="USCIS sample work permits, the older design and the 2023 redesign, each showing a Category code and a Card Expires date"
+          caption="USCIS's sample cards, the older design on the left and the 2023 redesign on the right. The date the tool needs is the one after Card Expires, and the category prints as a letter and a number: C11 is (c)(11). The red rings are USCIS's own, marking the redesign's new security features."
+          credit="Image: U.S. Citizenship and Immigration Services"
+          creditHref="https://www.uscis.gov/sites/default/files/document/guides/EAD_Comparison_EN.pdf"
+          aspectRatio={1520 / 530}
+          maxWidth={960}
+        />
+      </section>
 
       <section className="mt-10 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">The rules, from the source</h2>{" "}

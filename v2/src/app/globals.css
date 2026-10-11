@@ -242,6 +242,13 @@
 @layer utilities {
   .text-primary { color: var(--primary-text); }
   .text-destructive { color: var(--destructive-text); }
+  /* The same colour reached on hover, on a group's hover or on focus: 312 uses
+     of hover:text-primary turned a link bright lime on paper (2.05:1) while
+     the reader pointed at it. Same selectors as Tailwind generates, later in
+     the same layer, so they win on order. */
+  .hover\:text-primary:hover,
+  .group-hover\:text-primary:is(:where(.group):hover *),
+  .focus-visible\:text-primary:focus-visible { color: var(--primary-text); }
   /* Icons inherit via currentColor, so stroke/fill follow automatically. */
   .fill-primary { fill: var(--primary-text); }
   .stroke-primary { stroke: var(--primary-text); }

@@ -39,6 +39,21 @@ describe("in-article link contrast", () => {
     expect(rule).not.toMatch(/\bcolor:\s*var\(--primary\)/);
   });
 
+  it("hover, group-hover and focus lime text paint with the text-safe token too", () => {
+    // Tailwind generates these with var(--primary); without the remap a link
+    // under hover:text-primary turns 2.05:1 lime on paper while it's pointed at.
+    for (const selector of [
+      ".hover\\:text-primary:hover",
+      ".group-hover\\:text-primary:is(:where(.group):hover *)",
+      ".focus-visible\\:text-primary:focus-visible",
+    ]) {
+      const at = css.indexOf(selector);
+      expect(at, selector).toBeGreaterThan(-1);
+      const rule = css.slice(at, css.indexOf("}", at));
+      expect(rule, selector).toMatch(/\bcolor:\s*var\(--primary-text\)/);
+    }
+  });
+
   it("the light theme's --primary-text clears 4.5:1 on the light page", () => {
     const start = css.indexOf(":root {");
     const root = css.slice(start, css.indexOf("\n}", start));

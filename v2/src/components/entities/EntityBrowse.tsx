@@ -200,8 +200,8 @@ export function BrowseList({
       className={cn(
         "list-none columns-1 gap-x-8 p-0 sm:columns-2 lg:columns-3 xl:columns-4",
         "[&>li]:flex [&>li]:break-inside-avoid [&>li]:items-center [&>li]:justify-between [&>li]:gap-3 [&>li]:border-b [&>li]:border-border/40",
-        "[&_a]:inline-flex [&_a]:min-h-[44px] [&_a]:min-w-0 [&_a]:items-center [&_a]:text-base [&_a]:font-bold [&_a]:leading-snug [&_a]:underline [&_a]:decoration-primary [&_a]:decoration-2 [&_a]:underline-offset-2 [&_a]:hover:text-primary",
-        "[&_span]:shrink-0 [&_span]:font-mono [&_span]:text-xs [&_span]:font-bold [&_span]:tabular-nums [&_span]:text-foreground/70",
+        "[&_a]:inline-flex [&_a]:min-h-[44px] [&_a]:min-w-0 [&_a]:items-center [&_a]:text-base [&_a]:font-bold [&_a]:leading-snug [&_a]:underline [&_a]:decoration-primary [&_a]:decoration-2 [&_a]:underline-offset-2 [&_a]:hover:text-primary-text",
+        "[&_span]:shrink-0 [&_span]:font-mono [&_span]:text-sm [&_span]:font-bold [&_span]:tabular-nums [&_span]:text-foreground/70",
         className,
       )}
     >
