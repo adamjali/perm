@@ -50,7 +50,9 @@ const COLUMNS: StatColumn<StageCase>[] = [
     label: "Case number",
     sortValue: (r) => r.caseNumber,
     render: (r) => (
-      <Link href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`} className={`font-mono text-sm font-bold ${LINK}`}>
+      // Whole: a number broken at its hyphen reads as two (it broke in the
+      // table at every desktop width).
+      <Link href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`} className={`whitespace-nowrap font-mono text-sm font-bold ${LINK}`}>
         {r.caseNumber}
       </Link>
     ),
@@ -139,7 +141,9 @@ export function StageCaseBrowser({ slug, status, seed, totalCount, asOf }: Stage
       noun="cases"
       facets={FACETS}
       csv={csv}
-      pageSize={50}
+      // 25 to a page: the stage's month chart and the other stages sit below
+      // the table, and fifty rows put them two screens further down.
+      pageSize={25}
     />
   );
 }

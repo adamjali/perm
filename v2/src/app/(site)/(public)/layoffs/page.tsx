@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getFreshness } from "@/lib/turso/publicData";
 import { matchedWarn, warnTotals } from "@/lib/turso/warn";
 import { WarnTable } from "@/components/warn/WarnTable";
+import { WarnOverview } from "@/components/warn/WarnOverview";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
@@ -64,6 +65,8 @@ export default async function LayoffsPage() {
           <p className="mt-1 font-heading text-3xl font-black tabular-nums">{totals.employees.toLocaleString("en-US")}</p>
         </div>
       </section>
+
+      {matched.length > 0 ? <WarnOverview rows={matched} /> : null}{" "}
 
       <section className="mt-10">
         {matched.length === 0 ? (

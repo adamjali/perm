@@ -120,6 +120,22 @@ function cutoffLabel(c: Cutoff | null): string {
   return `${monthName(Number(m)).slice(0, 3)} ${Number(d)}, ${y}`;
 }
 
+/** A cell's ground by what the line did: forward lime, back red, the rest plain. */
+function moveTone(m: SameMonthMove | null | undefined): string {
+  switch (m?.kind) {
+    case "advanced":
+    case "went-current":
+    case "opened":
+      return "bg-primary/20";
+    case "retrogressed":
+    case "retrogressed-from-current":
+    case "shut":
+      return "bg-data-bad/15";
+    default:
+      return "";
+  }
+}
+
 function moveLabel(m: SameMonthMove): string {
   switch (m.kind) {
     case "advanced": return `+${m.movedDays} days`;
@@ -318,8 +334,19 @@ export default async function VisaBulletinPage() {
           </h2>{" "}
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
             Final action dates, each measured against {monthLabel(monthBefore(last.bulletinMonth))}.
-          </p>
-          <div className="mt-5 overflow-x-auto overscroll-x-none">
+          </p>{" "}
+          <ul aria-hidden="true" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+            <li className="inline-flex items-center gap-1.5">
+              <span className="size-3 border-2 border-border bg-primary/20" /> Moved forward
+            </li>{" "}
+            <li className="inline-flex items-center gap-1.5">
+              <span className="size-3 border-2 border-border bg-data-bad/15" /> Moved back or shut
+            </li>{" "}
+            <li className="inline-flex items-center gap-1.5">
+              <span className="size-3 border-2 border-border bg-card" /> Unchanged or current
+            </li>
+          </ul>
+          <div className="mt-3 overflow-x-auto overscroll-x-none">
             <table className="w-full min-w-[640px] border-2 border-border text-sm">
               <thead className="bg-foreground text-background">
                 <tr>
@@ -334,7 +361,7 @@ export default async function VisaBulletinPage() {
                   <tr key={s.key} className="border-t-2 border-border">
                     <td className="p-3 font-semibold">{s.label}{" "}</td>
                     {s.rows.map((r) => (
-                      <td key={r.country} className="p-3">
+                      <td key={r.country} className={`p-3 ${moveTone(r.move)}`}>
                         {r.move ? <span className="font-mono">{moveLabel(r.move)}</span> : <span className="text-muted-foreground">not listed</span>}{" "}
                         {r.move?.to ? <span className="block text-sm text-muted-foreground">now {cutoffLabel(r.move.to)}</span> : null}
                       {" "}</td>
