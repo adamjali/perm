@@ -131,6 +131,20 @@ def run(conf_text: str) -> None:
     cdn = re.search(r"map \$upstream_http_cache_control \$pt_cdn_cc\s*\{([^}]*)\}", head)
     check("shareable pages may be served stale while refreshing and when the server errors",
           cdn is not None and "stale-while-revalidate=" in cdn.group(1) and "stale-if-error=" in cdn.group(1))
+    browser = re.search(r"map \$upstream_http_cache_control \$pt_browser_cc\s*\{([^}]*)\}", head)
+    check("browsers revalidate shareable pages and their navigation data",
+          browser is not None and re.search(r'"~\*s-maxage"\s+"public, max-age=0, must-revalidate";', browser.group(1)) is not None
+          and "stale-while-revalidate" not in browser.group(1))
+    check("browsers get the rewritten Cache-Control, the app's own is hidden",
+          "proxy_hide_header Cache-Control;" in server.split("location", 1)[0]
+          and "add_header Cache-Control $pt_browser_cc always;" in server.split("location", 1)[0])
+    # A location that hides headers of its own drops the server's hide, and one
+    # that adds headers of its own drops the server's add: it must then set its
+    # own Cache-Control, or browsers get two or none.
+    for sel, b in locs.items():
+        if "proxy_pass" in b and ("proxy_hide_header" in b or "add_header" in b):
+            check(f"{sel}: sets its own Cache-Control", "add_header Cache-Control" in b,
+                  "proxies and sets headers of its own, so it inherits neither the hide nor the add")
     ups = re.findall(r"upstream (permtracker_\w+)\s*\{([^}]*)\}", head)
     check("every app upstream closes idle connections before Node does (under 5 s)",
           len(ups) >= 3 and all(re.search(r"keepalive_timeout\s+[1-4]s;", b) for _, b in ups), str([n for n, _ in ups]))
@@ -310,6 +324,10 @@ def probe() -> None:
         "email links forward Cloudflare's headers": good.replace("        proxy_pass_request_headers off;\n", "", 1),
         "email-link pages stored again": good.replace('        add_header Cache-Control "private, no-store" always;\n', "", 1),
         "edge no longer serves stale on errors": good.replace(", stale-if-error=86400", "", 1),
+        "browsers keep reusing stored navigation data": good.replace('"public, max-age=0, must-revalidate";', '"public, s-maxage=604800, stale-while-revalidate=30931200";', 1),
+        "browsers still get the app's Cache-Control": good.replace("    proxy_hide_header Cache-Control;\n    add_header Cache-Control $pt_browser_cc always;\n", "", 1),
+        "a header-setting location left without a Cache-Control": good.replace(
+            '        proxy_hide_header Cache-Control;\n        add_header Cache-Control "private, no-store" always;\n', "        proxy_hide_header Cache-Control;\n", 1),
         "upstream keeps idle connections past Node's": good.replace("    keepalive_timeout 4s;\n", "", 1),
         "Meta's allowance dropped from a page": good.replace("        limit_req zone=pt_meta burst=15 nodelay;\n", "", 1),
         "refusal views no longer logged": good.replace("        access_log /var/log/permtracker-busy/seen.log pt_busy_seen;\n", "", 1),

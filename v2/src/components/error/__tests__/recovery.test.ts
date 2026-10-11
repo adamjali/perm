@@ -115,13 +115,23 @@ describe("reportCaughtError", () => {
     const e = new Error("y");
     reportCaughtError("GlobalError", e);
     await vi.waitFor(() => expect(Sentry.captureException).toHaveBeenCalledWith(e, expect.anything()));
+    expect(Sentry.captureException).toHaveBeenLastCalledWith(e, expect.not.objectContaining({ fingerprint: expect.anything() }));
+  });
+
+  it("files every missing-module crash under one Sentry issue, whatever the build", async () => {
+    const Sentry = await import("@sentry/nextjs");
+    const e = new TypeError("Cannot read properties of undefined (reading 'call')");
+    reportCaughtError("PublicDataError", e);
+    await vi.waitFor(() =>
+      expect(Sentry.captureException).toHaveBeenCalledWith(e, expect.objectContaining({ fingerprint: ["webpack-missing-module"] })),
+    );
   });
 });
 
 describe("chunkDiagnostics", () => {
-  const w = window as unknown as { webpackChunk_N_E?: unknown };
+  const w = window as unknown as Record<string, unknown>;
   afterEach(() => {
-    delete w.webpackChunk_N_E;
+    for (const k of Object.keys(w)) if (k.startsWith("webpackChunk_N_E")) delete w[k];
     document.querySelectorAll("script[data-test]").forEach((n) => n.remove());
   });
 
@@ -152,7 +162,16 @@ describe("chunkDiagnostics", () => {
 
   it("is empty-handed, not broken, when nothing was pushed", () => {
     const d = chunkDiagnostics()!;
-    expect(d).toMatchObject({ pushes: 0, duplicateIds: [] });
+    expect(d).toMatchObject({ pushes: 0, duplicateIds: [], lists: {} });
+  });
+
+  it("names a second deployment's chunk list, and doesn't call ids shared across lists duplicates", () => {
+    w.webpackChunk_N_E_e706b8fcb07b1859f1cca2b5b6bc423cec51a569_99 = [[[8456], {}], [[6353], {}]];
+    w.webpackChunk_N_E_87cd0b41c5c804591f198685785a7a24f5c3b6bb_1 = [[[8456], {}]];
+    const d = chunkDiagnostics()!;
+    expect(d.pushes).toBe(3);
+    expect(d.lists).toEqual({ e706b8fcb07b: 2, "87cd0b41c5c8": 1 });
+    expect(d.duplicateIds).toEqual([]);
   });
 });
 

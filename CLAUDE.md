@@ -593,3 +593,14 @@ Audit 12 and a full review of everything since Aug 23; detailed in [`v2/CLAUDE.m
 - **The PERM and wage-request sweeps go red on checking nothing**, as the watched-case check, the alarm and the cross-check now do.
 - **The disk alarm counts what the page-cache cap still allows**: a cache refilling toward its budget isn't the disk filling (it emailed a false "full in 12 hours" on Oct 10).
 - **Push endpoints must be browser push services**, unknown API keys can't flush the real keys' cache, and webhook failures on our side aren't charged to the developer.
+
+## Oct 10 2026 (night), in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 10 2026 (night)".
+
+- **The "reading 'call'" crash was old navigation data in the browser**: nginx passed Next's year-long
+  `stale-while-revalidate` to browsers, and Next loads the chunks a response names before checking its deployment.
+- **Browsers now get `public, max-age=0, must-revalidate`** for shareable responses (nginx); Cloudflare's own copy is unchanged.
+- **Each deployment's scripts register in their own list** (`chunkLoadingGlobal`), so files from another build can't touch the live page.
+- **Cloudflare does store navigation data** (`?_rsc=` answers MISS, then HIT); the Oct 5 note saying BYPASS had measured a redirect.
+

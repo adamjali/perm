@@ -8168,8 +8168,8 @@ changed (`scripts/lib_reference.py`: `sync_rows`, `seen_before`, `sheet_rows`). 
   `node scripts/gsc_queue.mjs --since <push's before> --purge` after the switch: the same page list, sent to
   Cloudflare's purge API, the homepage by its exact URL and everything else by prefix (a family's prefix covers every
   page in it, query strings included). It compares commits only, because the build has already rewritten tracked
-  files by then. Cloudflare never stores click data (`?_rsc=` answers `cf-cache-status: BYPASS`), so HTML is all
-  there is to drop. Free plan: 5 prefix requests a minute, 100 prefixes each; chunks wait 13 s. It needs
+  files by then. Cloudflare DOES store click data (corrected Oct 10 2026: the BYPASS this said was measured on a
+  307; a real `?_rsc=` answers MISS, then HIT), and a prefix purge drops it with the page. Free plan: 5 prefix requests a minute, 100 prefixes each; chunks wait 13 s. It needs
   `CF_PURGE_TOKEN` (Zone > Cache Purge on permtracker.app only) and `CF_ZONE_ID` (set Oct 5) as repo secrets;
   without the token, on a manual run, or when Cloudflare refuses, it says so and the deploy carries on.
   `--dry-run` prints the list and sends nothing. Its first run in CI (the deploy of `452c3281`, Oct 5) compared against
@@ -9275,3 +9275,43 @@ now read by working directory and fail if missing; a wrap-day assertion and the 
 "or" branches. New: the prune run, the alarm's cache drop, the watchdog's write lock, nginx reload detection,
 the sealed-backup guard (the Linux ones run in CI and passed on the server), the scorecard's rival wins and ties,
 budget-held alerts sent once the budget frees, the retry lease, `/v1/cases?live=1` scope, the server watch.
+
+## Oct 10 2026 (night): the "reading 'call'" crash, found
+
+A Sentry email (issue 53, a signed-in visitor on an employer page, 3:55 PM EDT) carried the stack that settled it.
+The page ran today's webpack runtime, and one chunk it loaded carried `?dpl=87cd0b41…-1`: a build from Sep 29.
+Module 36243 in that old file asked for a module the live build doesn't have. Sentry decoded the old frame with the
+old build's source map, which is why it named `motion-dom@12.43.0` (we've shipped 13.4.1 since Sep 30).
+
+**The mechanism.** Next decodes navigation data, loading every chunk it names, and only THEN compares the
+response's deployment with its own (`fetch-server-response.js`, `segment-cache/cache.js`). Every build's files stay
+downloadable from `shared/`. Webpack's chunk and module numbers repeat between builds, and all builds pushed into
+one global list, `webpackChunk_N_E`. So stored navigation data from an older build put old chunks into the live
+page: an old file could claim a chunk number the live build later needed (that chunk never loads; its modules are
+missing), or old code ran and asked for old modules.
+
+**Where the old data came from.** The browser: Next labels every shareable response `s-maxage=…,
+stale-while-revalidate=30931200`, nginx passed it to browsers unchanged, and Chrome and Edge reuse a stored response
+under that label for up to a year. An 11-day-old payload can only be the browser (Cloudflare's own copy lives 10
+minutes plus an hour, from `Cloudflare-CDN-Cache-Control`). This is why it hit returning desktop Chrome and Edge,
+almost never Safari, never a headless scraper (empty cache every visit), about half a second after load
+(prefetches), and why it began after the move off Vercel, which rewrote that header for browsers.
+
+**The fixes.**
+- **nginx sends browsers `public, max-age=0, must-revalidate`** for every response the app marks shareable
+  (`$pt_browser_cc`, installed 7:56 PM EDT; Vercel's header). Cloudflare still reads its own header: pages and
+  navigation data showed HIT on a second request after the change. Private answers pass through unchanged.
+  `test_nginx_conf.py` holds it, with three probes.
+- **Each deployment has its own chunk list** (`chunkLoadingGlobal` in `next.config.ts`, from `DEPLOYMENT_ID`), so
+  an old build's files register where the live runtime never looks, whatever route they arrive by (the browser,
+  Cloudflare's copy in the hour after a deploy, a tab left open across one). Cost: every chunk's name changes on
+  every deploy, so returning visitors download the scripts again once per deploy, and `shared/` grows by about
+  11 MB a deploy (210 MB on Oct 10; nothing prunes it yet).
+- **The crash recorder reads every chunk list** (`lists` in `chunkDiagnostics`): a second list on a page is an
+  older build's files, named by its deployment. **Sentry files every missing-module crash as one issue**
+  (`fingerprint`), where each build's new minified names had opened a new one (4Y, then 53).
+
+**Ruled out on the way:** the duplicate chunk ids the recorder kept reporting ([823, 3204, 6061, 8442] and others)
+are the same chunk emitted under several names in one build (same code, different minified parameter names);
+an overlap scan found no pair of files in the live release that could drop a module.
+

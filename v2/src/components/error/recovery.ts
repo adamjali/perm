@@ -85,8 +85,14 @@ export function isMissingModule(message: string): boolean {
 }
 
 export interface ChunkDiagnostics {
-  /** Entries in webpack's chunk list, `self.webpackChunk_N_E`. */
+  /** Entries in webpack's chunk lists (`self.webpackChunk_N_E…`), all of them. */
   pushes: number;
+  /**
+   * Each chunk list on the page and its entries, named by what follows
+   * `webpackChunk_N_E`. One build makes one list, so a second list is files
+   * from another deployment loaded into this page.
+   */
+  lists: Record<string, number>;
   /** Chunk ids pushed more than once: one build never does that. */
   duplicateIds: string[];
   /** Scripts that aren't our build files: an origin, or a same-site path. */
@@ -96,29 +102,40 @@ export interface ChunkDiagnostics {
 }
 
 /**
- * Evidence for the missing-module crash (Oct 8 2026). It fires on desktop
- * Chrome and Edge about half a second after a fresh load, inside a chunk the
- * page prefetched, with no failed request and a chunk graph that checks out.
- * Webpack marks a chunk installed when any script pushes its id into
- * `webpackChunk_N_E`, and skips the modules of a later push of the same id;
- * every Next.js build shares that global name. So a foreign push (a browser
- * extension injecting another Next-built bundle) is the one way to get a
- * missing module with nothing failing. A duplicate id or a foreign script
- * here would show it; none, with the crash, rules it out.
+ * Evidence for the missing-module crash. It came from navigation data a
+ * previous build had sent, kept by the browser or Cloudflare: Next loads the
+ * chunks such data names before it checks the deployment, and webpack's chunk
+ * and module numbers repeat between builds (Oct 10 2026). Each deployment now
+ * has its own chunk list (`chunkLoadingGlobal` in next.config.ts), so a second
+ * list here is an older build's files on the page, and a duplicate id inside
+ * one list is a build loading the same chunk twice.
  */
 export function chunkDiagnostics(): ChunkDiagnostics | null {
   try {
-    const global = (window as unknown as { webpackChunk_N_E?: unknown }).webpackChunk_N_E;
     const counts = new Map<string, number>();
+    const lists: Record<string, number> = {};
     let pushes = 0;
-    if (Array.isArray(global)) {
-      for (const entry of global) {
+    for (const name of Object.keys(window)) {
+      if (!name.startsWith("webpackChunk_N_E")) continue;
+      const list = (window as unknown as Record<string, unknown>)[name];
+      if (!Array.isArray(list)) continue;
+      let entries = 0;
+      for (const entry of list) {
         if (!Array.isArray(entry) || !Array.isArray(entry[0])) continue;
-        pushes += 1;
-        for (const id of entry[0] as unknown[]) counts.set(String(id), (counts.get(String(id)) ?? 0) + 1);
+        entries += 1;
+        // Ids are counted per list: two lists sharing an id is two builds, not a duplicate.
+        for (const id of entry[0] as unknown[]) {
+          const key = `${name}:${String(id)}`;
+          counts.set(key, (counts.get(key) ?? 0) + 1);
+        }
       }
+      pushes += entries;
+      lists[name.slice("webpackChunk_N_E".length).replace(/^_/, "").slice(0, 12) || "default"] = entries;
     }
-    const duplicateIds = [...counts].filter(([, n]) => n > 1).map(([id]) => id).slice(0, 10);
+    const duplicateIds = [...counts]
+      .filter(([, n]) => n > 1)
+      .map(([key]) => key.slice(key.lastIndexOf(":") + 1))
+      .slice(0, 10);
     const foreign = new Set<string>();
     const dpl = new Set<string>();
     for (const script of Array.from(document.scripts)) {
@@ -138,7 +155,7 @@ export function chunkDiagnostics(): ChunkDiagnostics | null {
       const ext = /-extension:$/.test(u.protocol);
       foreign.add(ext || u.origin !== window.location.origin ? `${u.protocol}//${u.host}` : u.pathname.slice(0, 60));
     }
-    return { pushes, duplicateIds, foreignScripts: [...foreign].slice(0, 10), dpl: [...dpl] };
+    return { pushes, lists, duplicateIds, foreignScripts: [...foreign].slice(0, 10), dpl: [...dpl] };
   } catch {
     return null;
   }
@@ -169,6 +186,9 @@ export function reportCaughtError(
     .then((Sentry) => {
       Sentry.captureException(error, {
         tags: { component: boundary, ...(error.digest && { digest: error.digest }) },
+        // One issue across builds: the minified frame names change with every
+        // deploy, and each new name opened a new issue (4Y, then 53).
+        ...(isMissingModule(String(error?.message ?? "")) && { fingerprint: ["webpack-missing-module"] }),
       });
     })
     .catch(() => {

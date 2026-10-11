@@ -94,6 +94,26 @@ function contentSecurityPolicy(frameAncestors: "'none'" | "*"): string {
   ].join("; ");
 }
 
+/**
+ * The global array each client chunk pushes itself into, one per deployment.
+ *
+ * Webpack numbers chunks and modules, and the numbers repeat from build to
+ * build. Every build's files stay downloadable (old tabs need them), and Next
+ * decodes navigation data, loading the chunks it names, BEFORE it checks which
+ * deployment sent it. So a stored response from an older build (a browser's
+ * copy, Cloudflare's copy in the hour after a deploy, or a tab left open across
+ * one) pushed old chunks into the live runtime under numbers the live build
+ * also uses, and a later require found the wrong module or none: "Cannot read
+ * properties of undefined (reading 'call')" (Sentry 4Y and 53, Oct 2026). With
+ * one array per deployment an old file registers where the live runtime never
+ * looks; Next's own check then reloads the page. Unset (dev, tests) keeps
+ * webpack's default name.
+ */
+function chunkLoadingGlobal(deploymentId: string | undefined): string {
+  const token = (deploymentId || "").replace(/[^A-Za-z0-9_]/g, "_");
+  return token ? `webpackChunk_N_E_${token}` : "webpackChunk_N_E";
+}
+
 /*
  * The site runs on its own server (Oracle, built on GitHub's ARM runners): a
  * standalone server bundle and a deployment id, so a visitor mid-session
@@ -161,6 +181,9 @@ const nextConfig: NextConfig = {
   webpack: (config, { isServer }) => {
     if (!isServer && config.optimization) {
       config.optimization.concatenateModules = false;
+    }
+    if (!isServer && config.output) {
+      config.output.chunkLoadingGlobal = chunkLoadingGlobal(process.env.DEPLOYMENT_ID);
     }
     return config;
   },
