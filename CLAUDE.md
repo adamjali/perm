@@ -616,3 +616,14 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (early morning)".
 - **Status meanings and the RFI page show each count as the row's number**, with a bar (status page) or its own date (RFI glossary); methodology draws its six readings as bars; the RFI page draws 325 vs 336 days.
 - **/press and the firm's-site section stay as they were** (owner's call, after a redesign he undid), with two bug fixes kept and today's real hold count in the newspaper specimen.
 - **Tonight's before/after boards** are on the Design canvas "PERM Tracker page redesigns"; prose share per page is on the dashboard "PERM Tracker redesign tracker".
+
+## Oct 11 2026, in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026".
+
+- **Guides and blog posts are filed by topic** (`src/lib/content/topics.ts`), listed one section per topic, titles in sentence case.
+- **Every article picture and recording is its own and credited**: 84 headers, 81 inline figures and 5 app recordings, made by scripts from recorded sources; a test fails on any repeat.
+- **Breadcrumbs name detail pages and end on an article's title**; legal pages share one frame; data pages start at one left edge.
+- **Statuses come from DOL directly, I-203 is the E-3 LCA**: two wrong claims corrected on the site and in alert emails.
+- **Hovered lime text uses the lime ink in light mode** (it was 2.05:1 on paper across 151 files).
+

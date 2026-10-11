@@ -9355,3 +9355,49 @@ Dashboard "PERM Tracker redesign tracker".
   against production before calling a finding new (several were). `audit_glued_text.glued_pairs()`
   on each changed page's HTML. The homepage FAQ hides answers with CSS rows, so
   `audit_visible_text.py` counts them as visible: its homepage prose share overstates.
+
+## Oct 11 2026: every article picture its own, articles by topic
+
+**Topics.** Guides and blog posts are filed by `category` under `src/lib/content/topics.ts` (guides:
+start, case-status, queue, deadlines, wages, employers, green-card, seasonal; blog: data-notes,
+explainers, practice). The listings are one section per topic with topic buttons and a search box
+(`ContentListing`); the article header names the topic and links to its section. Changelog keeps
+Release, Feature or Correction. `article-topics.test.ts` holds both, and titles are sentence case
+(`seoTitle` stays Title Case for search).
+
+**Pictures.** Every article's header picture and every picture or recording inside it is its own;
+`article-pictures.test.ts` fails on any repeat and on an uncredited figure. Where they come from:
+
+| file | what it says |
+|---|---|
+| `scripts/article-heroes.json` | each article's header: a licensed photo, a page of the form it explains, an app tour picture, or a capture of the site |
+| `scripts/article-figures.json` | pictures inside an article, keyed `<type>/<slug>/<name>`, kept at their own shape |
+| `scripts/capture_article_heroes.mjs` | one Chrome, one page at a time. Clips: `h:` (the heading's section), `hp:` (its parent), `from:` / `fromm:` (from the heading down, as wide as its parent / the page's main), `cap:` (an agency table by its caption, clipped on screen), `sel:`. Options: `fill` (type into boxes), `css`, `clock` (Storybook runs on the tour's recording day), `ready`, `settle` |
+| `scripts/make_article_heroes.py` | 1600x1200 WebP headers, figures at their own shape |
+| `scripts/record_tour_videos.mjs` | 5 app recordings from the Storybook tour: dates typed, deadlines worked out. Frames from Chrome's own screencast, put together by the conda ffmpeg (Playwright's video recorder needs its own ffmpeg download, an install) |
+
+- **Run the site captures against the local dev server on production data**; production answers a
+  script's `?case=` lookup with Cloudflare's challenge. Real case numbers come from the read-only
+  database; pick large employers' cases, never a small business's denial.
+- **The capture hides `.fixed`** (site header, floating buttons), which also hides the tour's chat
+  panel: that capture overrides it with `css`.
+- **Tour app sections put their heading in a header block**, so `h:` catches only the heading; use
+  `fromm:`. The edit form mounts a section's fields when it scrolls into view: scroll to the section
+  above first (`scroll`), or the clip is an empty box.
+- **Storybook's first load after a lockfile change re-bundles dependencies for minutes** and every
+  story shows "No Preview" meanwhile: wait for `#storybook-root` to hold text.
+- **An agency page can reflow when a screenshot stretches to full height** (flag.dol.gov's clip came
+  out one table low): `cap:` clips from the screen after scrolling the table to the top.
+- **The articles' remaining February screenshots are in old changelog entries**, where showing the
+  interface as it shipped is the point.
+
+**Fixed on the way:** case pages and alert emails said statuses came "via a third-party mirror"
+(DOL directly since Aug 27); a priority-date FAQ said nothing reached the page from State (read daily
+since Sep 26); **I-203 is the E-3 LCA** (DOL's file: I-200 H-1B, I-201 and I-202 H-1B1 Chile and
+Singapore, I-203 E-3 Australian), not an H-1B one; the case card tab printed "I140" (it now uses
+`STAGE_VISUALS[...].label`); the queue stage colours match the month page (line ink, out of order
+amber, appeals red); `hover:text-primary` and its group-hover and focus forms paint the lime ink in
+light mode (they were 2.05:1 on paper, in 151 files).
+
+**A stale Turbopack cache makes every nested route 404 on the dev server**: stop it, `rm -rf
+.next/dev`, start again.
