@@ -1794,6 +1794,17 @@ before and after: 5 URLs then, 13,758 across five child sitemaps now.
 dropped to 1 - the walk and the 10,000-URL batching handled it unchanged, which
 is the check that the fix generalised rather than fitting one shape.
 
+**Changed pages only, since Oct 11 2026.** Every deploy had resent all
+311,450 sitemap URLs (eight deploys that day). IndexNow's own FAQ: "Submit only
+when content has changed. Do not resubmit unchanged URLs", and each URL counts
+toward the site's crawl quota. A deploy now sends the pages it changed
+(`gsc_queue.mjs --indexnow-list`: static pages, articles, a changed family's
+sample pages) and the nightly sweep sends the employer pages whose live rows
+moved (`changed-employer-slugs.json`). A manual run still sends everything,
+which the FAQ allows after a migration. `indexnow-script.test.ts` holds the
+file mode. The same fix found `gsc_queue.mjs` dropping every changed article
+missing from `known-routes.json` (44 of 55 guides); articles count by their file now.
+
 **Where to check this, not the workflow log:**
 `bing.com/webmasters/indexnow` lists every URL Bing received and when.
 

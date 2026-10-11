@@ -21,6 +21,7 @@
  *   node scripts/gsc_queue.mjs --since 043d1653
  *   node scripts/gsc_queue.mjs --since <before> --purge [--dry-run]   # drop Cloudflare's copies
  *   node scripts/gsc_queue.mjs --since <before> --warm-list           # what the deploy warms first
+ *   node scripts/gsc_queue.mjs --since <before> --indexnow-list       # what IndexNow is told changed
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -62,7 +63,9 @@ const PURGE = process.argv.includes("--purge");
 // --warm-list reads the same commit range as --purge, so the deploy warms
 // first exactly the pages it then tells Cloudflare to forget.
 const WARM = process.argv.includes("--warm-list");
-const COMMITS_ONLY = PURGE || WARM;
+// --indexnow-list: the same pages, as the paths a deploy tells IndexNow about.
+const INDEXNOW = process.argv.includes("--indexnow-list");
+const COMMITS_ONLY = PURGE || WARM || INDEXNOW;
 const range = COMMITS_ONLY ? [since, "HEAD"] : [since];
 const diff = (filter) =>
   git(["diff", "--name-only", "--relative", `--diff-filter=${filter}`, ...range, "--", "src", "content"])
@@ -96,11 +99,14 @@ for (const { file, route, inputs } of pages) {
   else if (route !== "/" && !KNOWN.has(route)) console.error(`note: ${route} changed but isn't in scripts/known-routes.json (not public, or not registered)`);
   else (isNew ? fresh : edited).push(route);
 }
+// An article is public when its file is (a changed file here was added,
+// copied, modified or renamed, so it exists). known-routes.json lists only the
+// articles other gates link to, 11 of 55 guides, and filtering on it dropped
+// every other changed article from the queue without a word.
 for (const file of changed) {
   const m = CONTENT.exec(file);
   if (!m) continue;
   const route = `/${m[1]}/${m[2]}`;
-  if (!KNOWN.has(route)) continue;
   (added.has(file) ? fresh : edited).push(route);
 }
 
@@ -115,6 +121,20 @@ if (WARM) {
     ...[...new Set(families)].map((f) => `prefix ${f.slice(0, f.indexOf("["))}`),
   ];
   if (lines.length) console.log(lines.join("\n"));
+  process.exit(0);
+}
+
+// --indexnow-list: one path per line for IndexNow (scripts/indexnow.mjs
+// --urls): every static page and article the push changed, and for a changed
+// family its sample pages only. IndexNow's FAQ: "Submit only when content has
+// changed. Do not resubmit unchanged URLs", and every URL sent counts toward
+// the site's crawl quota. A family's other pages carry the change in their
+// sitemap lastmod, which Bing reads too.
+if (INDEXNOW) {
+  const paths = [
+    ...new Set([...fresh, ...edited, ...[...new Set(families)].flatMap((f) => SAMPLE[f] ?? [])]),
+  ];
+  if (paths.length) console.log(paths.join("\n"));
   process.exit(0);
 }
 
@@ -157,8 +177,9 @@ if (PURGE) {
   let ok = true;
   if (files.length) ok = (await send({ files })) && ok;
   // Free plan: 100 prefixes a request, 5 prefix requests a minute (Cloudflare's
-  // purge limits page). Page click data (?_rsc=) is never stored at the edge
-  // (cf-cache-status: BYPASS), so the HTML copies are all there is to drop.
+  // purge limits page). Cloudflare stores a page's click data (?_rsc=) under
+  // the same path (MISS, then HIT, measured Oct 10 2026), so a prefix purge
+  // drops it with the HTML.
   for (let i = 0; i < prefixes.length; i += 100) {
     if (i) await new Promise((r) => setTimeout(r, 13_000));
     ok = (await send({ prefixes: prefixes.slice(i, i + 100) })) && ok;

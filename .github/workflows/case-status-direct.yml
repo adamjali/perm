@@ -208,6 +208,18 @@ jobs:
             -H "content-type: application/json" \
             --data @changed-employer-slugs.json || { echo "::error::revalidation call failed (revalidate-live-employers)"; echo "revalidate-live-employers" >> "$RUNNER_TEMP/pt-failed-steps"; }
 
+      # The same employer pages, told to IndexNow: their live rows just moved,
+      # and IndexNow asks for changed pages only (deploys send the pages they
+      # change; indexnow.yml). A refusal is a warning: the sweep's data is fine.
+      - name: Tell IndexNow which employer pages changed
+        if: always()
+        working-directory: v2
+        run: |
+          [ -s changed-employer-slugs.json ] || { echo "no slug list written"; exit 0; }
+          python3 -c "import json;[print('/perm-employers/'+s) for s in json.load(open('changed-employer-slugs.json'))['slugs']]" > "$RUNNER_TEMP/employer-urls.txt" || { echo "::warning::could not read the slug list"; exit 0; }
+          [ -s "$RUNNER_TEMP/employer-urls.txt" ] || { echo "no employer pages changed"; exit 0; }
+          node scripts/indexnow.mjs --urls "$RUNNER_TEMP/employer-urls.txt" || echo "::warning::IndexNow refused the changed employer pages"
+
       # The pages that print the sweep's own figures (the daily decisions, the
       # census, the review stages) move when the record does. Fixed list, no
       # input: src/app/api/revalidate-sweep/paths.ts.

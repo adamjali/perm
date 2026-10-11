@@ -1,9 +1,14 @@
 name: IndexNow
 
-# Pings IndexNow (Bing, Yandex, Seznam and others) with every sitemap URL after
-# each successful production deploy, so search and AI engines recrawl quickly.
-# Bing's index feeds several AI search products. Manual run any time:
-# `node v2/scripts/indexnow.mjs`.
+# Tells IndexNow (Bing, Yandex, Seznam and others) which pages a successful
+# production deploy changed, so search and AI engines recrawl them quickly.
+# Bing's index feeds several AI search products.
+#
+# CHANGED PAGES ONLY. IndexNow's FAQ: "Submit only when content has changed.
+# Do not resubmit unchanged URLs", and every URL sent counts toward the site's
+# crawl quota. Until Oct 11 2026 each deploy sent all 311,450 sitemap URLs. A
+# manual run (workflow_dispatch) still sends every URL, which the FAQ allows
+# after a migration or a site-wide redesign.
 
 on:
   workflow_run:
@@ -14,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: indexnow
@@ -28,9 +34,34 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # The commit the deploy shipped, with history, so the pages it changed
+          # can be read off the commits since the one live before it.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+          filter: blob:none
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24.x
-      - name: Submit sitemap URLs to IndexNow
+      - name: List the pages this deploy changed
+        if: github.event_name == 'workflow_run'
+        working-directory: v2
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          # Live before this deploy: the newest successful deploy of another
+          # commit this one descends from; else the commit before this one.
+          PREV=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow oracle-deploy.yml --status success --limit 10 --json headSha -q '.[].headSha' | grep -vx "$HEAD_SHA" | head -1 || true)
+          if [ -z "$PREV" ] || ! git merge-base --is-ancestor "$PREV" HEAD 2>/dev/null; then PREV=$(git rev-parse HEAD~1); fi
+          echo "pages changed since $PREV"
+          node scripts/gsc_queue.mjs --since "$PREV" --indexnow-list > "$RUNNER_TEMP/indexnow-urls.txt"
+          echo "$(wc -l < "$RUNNER_TEMP/indexnow-urls.txt" | tr -d ' ') page(s)"
+      - name: Submit the changed pages to IndexNow
+        if: github.event_name == 'workflow_run'
+        working-directory: v2
+        run: node scripts/indexnow.mjs --urls "$RUNNER_TEMP/indexnow-urls.txt"
+      - name: Submit every sitemap URL (a manual run)
+        if: github.event_name == 'workflow_dispatch'
         working-directory: v2
         run: node scripts/indexnow.mjs

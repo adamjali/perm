@@ -7,15 +7,28 @@
  * cheapest way to be current in AI answers. Runs after every production deploy
  * (.github/workflows/indexnow.yml).
  *
- * Usage:   node scripts/indexnow.mjs
+ * Usage:   node scripts/indexnow.mjs                 every URL in the sitemap (a manual run, after a migration)
+ *          node scripts/indexnow.mjs --urls <file>   only the URLs or paths in the file, one per line
+ *
+ * IndexNow's own FAQ (indexnow.org/faq, read Oct 11 2026): "Submit only when
+ * content has changed. Do not resubmit unchanged URLs", and every URL sent
+ * counts toward the site's crawl quota. Until Oct 11 2026 every deploy sent all
+ * 311,450 URLs, eight times that day. The automatic runs now send changes: the
+ * pages a deploy changed (indexnow.yml, from gsc_queue.mjs --indexnow-list) and
+ * the employer pages a nightly sweep moved (case-status-direct.yml).
+ *
  * Requires the ownership key file to be live first:
  *          https://<host>/387bc5d78cc17c7049731cf74644a70e.txt
  */
+
+import { readFileSync } from "node:fs";
 
 const HOST = process.env.INDEXNOW_HOST || "permtracker.app";
 const KEY = process.env.INDEXNOW_KEY || "387bc5d78cc17c7049731cf74644a70e";
 const KEY_LOCATION = `https://${HOST}/${KEY}.txt`;
 const SITEMAP_URL = `https://${HOST}/sitemap.xml`;
+// Overridden only by the script's test, which catches what would be sent.
+const ENDPOINT = process.env.INDEXNOW_ENDPOINT || "https://api.indexnow.org/indexnow";
 
 const locs = (xml) =>
   [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1].trim()).filter(Boolean);
@@ -56,7 +69,8 @@ const BATCH = 10000;
 // The site has far more pages than this; fewer means the walk itself broke.
 const MIN_URLS = 100;
 
-async function main() {
+/** Every page URL in the sitemap, read out of each child sitemap. */
+async function sitemapUrls() {
   // `/sitemap.xml` is a sitemap INDEX: its entries are child sitemaps, not
   // pages. IndexNow accepts a sitemap URL with a 200 and learns nothing from
   // it, so the pages are read out of every child.
@@ -92,11 +106,31 @@ async function main() {
   console.log(
     `Found ${urlList.length} page URLs across ${children.length} child sitemap(s) for ${HOST}`,
   );
+  return urlList;
+}
+
+/** The URLs in a file, one per line: full URLs on this host, or paths. */
+function fileUrls(file) {
+  const lines = readFileSync(file, "utf8").split("\n").map((l) => l.trim()).filter(Boolean);
+  const urls = lines.map((l) => (l.startsWith("/") ? `https://${HOST}${l}` : l));
+  const foreign = urls.filter((u) => !u.startsWith(`https://${HOST}/`));
+  if (foreign.length) throw new Error(`not on ${HOST}: ${foreign.slice(0, 3).join(", ")}`);
+  return [...new Set(urls)];
+}
+
+async function main() {
+  const i = process.argv.indexOf("--urls");
+  const urlList = i > 0 ? fileUrls(process.argv[i + 1]) : await sitemapUrls();
+  if (urlList.length === 0) {
+    console.log("No changed pages to submit; nothing sent.");
+    return;
+  }
+  if (i > 0) for (const u of urlList.slice(0, 20)) console.log(`  ${u}`);
 
   let sent = 0;
   for (let i = 0; i < urlList.length; i += BATCH) {
     const batch = urlList.slice(i, i + BATCH);
-    const res = await fetch("https://api.indexnow.org/indexnow", {
+    const res = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({ host: HOST, key: KEY, keyLocation: KEY_LOCATION, urlList: batch }),
