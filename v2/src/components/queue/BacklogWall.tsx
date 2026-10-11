@@ -167,20 +167,20 @@ function Header() {
       className="grid grid-cols-[5rem_1fr_3.5rem_3rem] items-end gap-2 border-b-2 border-border pb-2 [&>*]:min-w-0 sm:grid-cols-[7rem_1fr_5rem_4rem] sm:gap-3"
       aria-hidden="true"
     >
-      <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
+      <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
         Filed
       </span>{" "}
       {/* "Still pending" everywhere, not "Still waiting". One vocabulary for
           one state: the queue tape legend, the month page heading and this
           column header all describe the same cases, and three wordings for one
           idea is drift a reader has to translate. */}
-      <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
+      <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
         Still pending
       </span>{" "}
-      <span className="text-right font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
+      <span className="text-right font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
         Cases
       </span>{" "}
-      <span className="text-right font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
+      <span className="text-right font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
         Decided
       </span>
     </div>

@@ -47,13 +47,13 @@ export function PendingCensus({
         <tr>
           <th
             scope="col"
-            className="border-b-2 border-border pb-2 font-mono text-xs font-bold uppercase tracking-wider text-foreground/80"
+            className="border-b-2 border-border pb-2 font-mono text-sm font-bold uppercase tracking-wider text-foreground/80"
           >
             DOL status{" "}
           </th>
           <th
             scope="col"
-            className="border-b-2 border-border pb-2 text-right font-mono text-xs font-bold uppercase tracking-wider text-foreground/80"
+            className="border-b-2 border-border pb-2 text-right font-mono text-sm font-bold uppercase tracking-wider text-foreground/80"
           >
             Cases{" "}
           </th>

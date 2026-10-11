@@ -33,7 +33,7 @@ export function AlphabetEffect({ data }: { data: Alphabet }) {
 
   return (
     <div>
-      <ul className="m-0 mb-5 flex list-none flex-wrap items-center gap-x-6 gap-y-2 p-0 text-xs text-foreground/70">
+      <ul className="m-0 mb-5 flex list-none flex-wrap items-center gap-x-6 gap-y-2 p-0 text-sm text-foreground/70">
         <li className="flex items-center gap-2">
           <span aria-hidden="true" className="h-3 w-8 border-2 border-border bg-data-good-ink" />{" "}
           <span>Decided faster than average</span>
@@ -66,7 +66,7 @@ export function AlphabetEffect({ data }: { data: Alphabet }) {
                     }
                   />
                 </span>{" "}
-                <span className="text-right font-mono text-xs tabular-nums text-foreground/70">
+                <span className="text-right font-mono text-sm tabular-nums text-foreground/70">
                   {l.deltaDays > 0 ? "+" : ""}
                   {l.deltaDays.toFixed(1)}d
                 </span>

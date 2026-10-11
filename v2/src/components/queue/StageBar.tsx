@@ -164,7 +164,7 @@ export function StageLegend({
                   className={`inline-block h-3 w-3 shrink-0 border-2 border-border ${meta.fill}`}
                   aria-hidden="true"
                 />{" "}
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
+                <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
                   {meta.label}
                 </span>
               </span>{" "}
