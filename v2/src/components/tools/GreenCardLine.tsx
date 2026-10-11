@@ -183,8 +183,26 @@ export function GreenCardLine({
       </div>
 
       {!result ? (
+        // BEFORE A DATE, THE ANSWER'S SHAPE: the count of people ahead, then
+        // the line split into the three places they wait, hatched, with the
+        // sentence that says what fills it in. Nothing in it is a figure.
         <div className="p-6 sm:p-8">
-          <p className="text-base text-foreground/70">
+          <p className="text-sm font-bold text-foreground/70">People ahead of you</p>{" "}
+          <div aria-hidden="true" className="mt-2 h-12 w-56 max-w-full bg-foreground/10" />{" "}
+          <div
+            aria-hidden="true"
+            className="mt-5 flex h-8 border-2 border-dashed border-foreground/40 text-foreground/15 [&>*]:min-w-0"
+          >
+            <span className="w-1/4 border-r-2 border-dashed border-foreground/30 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+            <span className="w-2/5 border-r-2 border-dashed border-foreground/30 bg-[repeating-linear-gradient(45deg,currentColor_0_2px,transparent_2px_8px)]" />
+            <span className="flex-1 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+          </div>{" "}
+          <ul aria-hidden="true" className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-foreground/70">
+            <li>Current, not finished</li>{" "}
+            <li>Approved, waiting for the bulletin</li>{" "}
+            <li>Waiting for I-140 approval</li>
+          </ul>{" "}
+          <p className="mt-4 text-base text-foreground/70">
             Pick a priority date and this fills in: how many people stand ahead of you in
             this line, where they sit, and how long that is at the pace the line last moved.
           </p>

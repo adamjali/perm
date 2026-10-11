@@ -49,10 +49,22 @@ function Movement({ cell }: { cell: BoardCell | null }) {
     cell.movedDays === null || cell.spanMonths === null
       ? null
       : `${cell.movedDays >= 0 ? "+" : ""}${Math.round(cell.movedDays)} days over ${cell.spanMonths} months`;
+  // The pace, drawn: days the cutoff moved per calendar day held. A full bar
+  // kept up with the calendar; a short one fell behind; red went backward.
+  const pace =
+    cell.movedDays === null || !cell.spanMonths ? null : cell.movedDays / (cell.spanMonths * 30.44);
   return (
     <>
-      <span className="font-mono">{cutoffLabel(cell.latest)}</span>
-      {moved ? <span className="block text-sm text-muted-foreground">{moved}</span> : null}
+      <span className="font-mono">{cutoffLabel(cell.latest)}</span>{" "}
+      {pace !== null ? (
+        <span aria-hidden="true" className="mt-1.5 block h-2 w-full max-w-[9rem] border border-border bg-background">
+          <span
+            className={`block h-full ${pace < 0 ? "bg-data-bad-ink" : "bg-primary"}`}
+            style={{ width: `${Math.max(3, Math.min(100, Math.abs(pace) * 100))}%` }}
+          />
+        </span>
+      ) : null}{" "}
+      {moved ? <span className="block text-sm text-muted-foreground">{moved}</span> : null}{" "}
       {cell.retrogressions.length > 0 ? (
         <span className="block text-sm text-muted-foreground">
           {cell.retrogressions.length} {cell.retrogressions.length === 1 ? "retrogression" : "retrogressions"}
@@ -67,6 +79,10 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
     <section className="mt-10">
       <h2 className="font-heading text-2xl font-black tracking-tight">{title}</h2>{" "}
       <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">{note}</p>{" "}
+      <p className="mt-2 max-w-3xl text-sm text-foreground/70">
+        Each bar is the cutoff&apos;s pace: full means it kept up with the calendar, half means it moved six months
+        a year, red means it ended further back than it started.
+      </p>{" "}
       <div className="mt-4 overflow-x-auto overscroll-x-none">
         <table className="w-full min-w-[720px] border-2 border-border text-sm">
           <thead className="bg-foreground text-background">
