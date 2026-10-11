@@ -145,23 +145,41 @@ export default async function CompareEmployersPage({
         />
       </div>{" "}
 
-      {!slugA && !slugB ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          Or start from a pair:{" "}
-          {EXAMPLES.map((e, i) => (
-            <Fragment key={e.label}>
-              {i > 0 ? ", " : ""}
-              <Link
-                href={`/perm-employers/compare?a=${e.a}&b=${e.b}`}
-                rel="nofollow"
-                className="font-semibold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text"
-              >
-                {e.label}
-              </Link>
-            </Fragment>
-          ))}
-          .
-        </p>
+      {/* BEFORE A PAIR, THE PAIRS AND THE SHAPE OF THE ANSWER: three
+          comparisons to open in one tap, then the rows a comparison fills in,
+          hatched, so the page says what it does before anything is picked. */}
+      {!both ? (
+        <section aria-label="Start a comparison" className="mt-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-bold">Try a pair</span>{" "}
+            {EXAMPLES.map((e) => (
+              <Fragment key={e.label}>
+                <Link
+                  href={`/perm-employers/compare?a=${e.a}&b=${e.b}`}
+                  rel="nofollow"
+                  className="inline-flex min-h-11 items-center border-2 border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint-primary"
+                >
+                  {e.label}
+                </Link>{" "}
+              </Fragment>
+            ))}
+          </div>{" "}
+          <figure className="mt-6 border-2 border-dashed border-foreground/40 p-4 sm:p-5">
+            <figcaption className="font-heading text-lg font-black">What a comparison lines up</figcaption>{" "}
+            <dl aria-hidden="true" className="mt-4 divide-y divide-border/30">
+              {rows.slice(0, 8).map((r) => (
+                <div
+                  key={r.label}
+                  className="grid grid-cols-[minmax(0,1fr)_5rem_5rem] items-center gap-3 py-2 sm:grid-cols-[minmax(0,16rem)_8rem_8rem] [&>*]:min-w-0"
+                >
+                  <dt className="text-sm text-foreground/70">{r.label}{" "}</dt>{" "}
+                  <dd className="h-4 bg-foreground/10" />{" "}
+                  <dd className="h-4 bg-foreground/10" />
+                </div>
+              ))}
+            </dl>
+          </figure>
+        </section>
       ) : null}{" "}
 
       {(slugA && !left) || (slugB && !right) ? (
