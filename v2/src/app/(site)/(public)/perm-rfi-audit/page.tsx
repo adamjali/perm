@@ -175,21 +175,15 @@ export default async function PermRfiAuditPage() {
             <InsightLede
               verdict={`${rfi.cases.toLocaleString()} open RFIs`}
               direction="flat"
+              actions={<RfiTiming rfiDay={rfiMedian} decideDay={analystDays} />}
               source={
                 analystQueue
                   ? `Live case scan of flag.dol.gov, ${rfi.seenTo ?? "latest"} · DOL FLAG processing times, ${dol?.permAsOf ?? ""}`
                   : undefined
               }
             >
-              An RFI doesn&rsquo;t arrive at a random point in the wait. The
-              median case sitting at one today was filed {rfiMedian} days ago
-              {analystDays !== null ? (
-                <>
-                  , and DOL&rsquo;s own figure for an analyst-review
-                  determination is {analystDays} calendar days
-                </>
-              ) : null}
-              . It shows up when a human finally opens the file.
+              An RFI doesn&rsquo;t arrive at a random point in the wait. It
+              shows up when a human finally opens the file.
             </InsightLede>
           </div>
         ) : null}
@@ -714,4 +708,38 @@ function monthName(ym: string): string {
   const names = ["January","February","March","April","May","June","July",
     "August","September","October","November","December"];
   return `${names[Number(m[2]) - 1] ?? ym} ${m[1]}`;
+}
+
+/**
+ * Where an RFI lands in the wait, drawn: filing at the left, a fill to the day
+ * the median open RFI case was filed, and DOL's own average for an analyst
+ * decision marked beside it. The two sit close, which is the finding.
+ */
+function RfiTiming({ rfiDay, decideDay }: { rfiDay: number; decideDay: number | null }) {
+  const end = Math.max(rfiDay, decideDay ?? 0) * 1.06;
+  const at = (d: number) => `${(d / end) * 100}%`;
+  return (
+    <figure className="m-0 mt-6 max-w-3xl">
+      <figcaption className="sr-only">
+        The median case at an RFI today was filed {rfiDay} days ago
+        {decideDay !== null ? `; DOL's own figure for an analyst-review determination is ${decideDay} calendar days` : ""}.
+      </figcaption>{" "}
+      <div aria-hidden="true" className="relative h-[4.5rem] font-mono text-sm">
+        <span className="absolute left-0 top-0 text-background/80">Filed</span>{" "}
+        <span className="absolute top-0 -translate-x-full whitespace-nowrap pr-2 font-bold text-background" style={{ left: at(rfiDay) }}>
+          Open RFIs: day {rfiDay}
+        </span>{" "}
+        <span className="absolute inset-x-0 top-7 h-3 bg-background/20" />{" "}
+        <span className="absolute left-0 top-7 h-3 bg-primary" style={{ width: at(rfiDay) }} />{" "}
+        {decideDay !== null ? (
+          <>
+            <span className="absolute top-5 h-7 w-[3px] bg-background" style={{ left: at(decideDay) }} />{" "}
+            <span className="absolute bottom-0 -translate-x-full whitespace-nowrap pr-2 text-background" style={{ left: `calc(${at(decideDay)} + 3px)` }}>
+              DOL decides: day {decideDay}
+            </span>
+          </>
+        ) : null}
+      </div>
+    </figure>
+  );
 }

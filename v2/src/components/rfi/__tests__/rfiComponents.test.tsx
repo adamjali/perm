@@ -360,8 +360,11 @@ describe("StageGlossary counts", () => {
         asOfByStatus={{ "RFI ISSUED": "2026-08-27" }}
       />,
     );
-    expect(screen.getByText(/965 now, as of August 27, 2026/)).toBeInTheDocument();
+    // Read aloud whole; shown as the number with its short date under it.
+    expect(screen.getByRole("link", { name: "965 cases, as of August 27, 2026" })).toBeInTheDocument();
+    expect(screen.getByText("Aug 27")).toBeInTheDocument();
     expect(screen.queryByText(/August 30, 2026/)).toBeNull();
+    expect(screen.queryByText("Aug 30")).toBeNull();
   });
 
   it("falls back to the census date for a stage with no observation of its own", () => {
@@ -375,7 +378,8 @@ describe("StageGlossary counts", () => {
         asOfByStatus={{}}
       />,
     );
-    expect(screen.getByText(/0 now, as of August 30, 2026/)).toBeInTheDocument();
+    expect(screen.getByText("0").parentElement?.textContent).toContain("0 cases, as of August 30, 2026");
+    expect(screen.getByText("Aug 30")).toBeInTheDocument();
   });
 
   it("links a count only where that stage has a page", () => {
@@ -387,7 +391,7 @@ describe("StageGlossary counts", () => {
       />,
     );
     // The link target must be the route `generateStaticParams` produces.
-    expect(screen.getByText(/965 now/).closest("a")).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^965 cases/ })).toHaveAttribute(
       "href",
       "/perm-rfi-audit/rfi-issued",
     );

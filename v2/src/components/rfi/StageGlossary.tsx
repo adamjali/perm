@@ -22,27 +22,35 @@ function CountBadge({
   asOf: string | null;
 }) {
   const shown = asOf ? formatAsOf(asOf) : null;
-  const label = `${n.toLocaleString("en-US")} now`;
-  const dated = shown ? `${label}, as of ${shown}` : label;
   const slug = stageSlug(status);
   const hasPage = stageFromSlug(slug) !== null;
+  // The count is the row's number; its date stays with it, short, under it.
+  const short = asOf
+    ? new Date(`${asOf.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })
+    : null;
+  const figure = (
+    <>
+      <span className="block font-heading text-xl font-black tabular-nums sm:text-2xl">
+        {n.toLocaleString("en-US")}
+        <span className="sr-only">{`${n === 1 ? " case" : " cases"}${shown ? `, as of ${shown}` : ""}`}</span>
+      </span>{" "}
+      {short ? (
+        <span aria-hidden="true" className="block font-mono text-sm text-muted-foreground">
+          {short}
+        </span>
+      ) : null}
+    </>
+  );
 
   if (!hasPage) {
-    return (
-      <span
-        className="font-mono text-sm font-semibold text-foreground/70"
-        title={shown ? `As of ${shown}` : undefined}
-      >
-        {dated}
-      </span>
-    );
+    return <span className="shrink-0 text-right">{figure}</span>;
   }
   return (
     <Link
       href={`/perm-rfi-audit/${slug}`}
-      className="font-mono text-sm font-semibold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+      className="-my-1 inline-flex min-h-11 shrink-0 flex-col items-end justify-center text-right decoration-primary decoration-2 underline-offset-4 hover:underline [&>span:first-child]:underline [&>span:first-child]:decoration-primary [&>span:first-child]:decoration-2 [&>span:first-child]:underline-offset-4"
     >
-      {dated}
+      {figure}
     </Link>
   );
 }
@@ -295,7 +303,7 @@ export function StageGlossary({
           return (
             <details key={label} className="group bg-card">
               <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                     {meta ? (
                       <span
@@ -310,25 +318,22 @@ export function StageGlossary({
                         {e.status}
                       </code>
                     ) : null}{" "}
-                    {/* THE COUNT, BESIDE THE DEFINITION, and it stays visible
-                        when the entry is shut - a reader scanning for "how many
-                        are in this" should not have to open ten doors. The date
-                        travels with it: a bare count is a claim about now.
-                        Only stages that HAVE a page get a link; the queue group
-                        does not, because /perm-queue is the honest destination
-                        for 93,219 cases and this is not it. */}
-                    {e.status && counts && counts[e.status] !== undefined ? (
-                      <CountBadge
-                        status={e.status}
-                        n={counts[e.status]!}
-                        asOf={asOfByStatus?.[e.status] ?? asOf ?? null}
-                      />
-                    ) : null}
                   </span>{" "}
                   <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
                     {e.gloss}
                   </span>
                 </span>{" "}
+                {/* THE COUNT, BESIDE THE DEFINITION, visible while the entry
+                    is shut, with its own date: stages are read on their own
+                    days. Only stages that HAVE a page link; the queue group
+                    goes to /perm-queue instead. */}
+                {e.status && counts && counts[e.status] !== undefined ? (
+                  <CountBadge
+                    status={e.status}
+                    n={counts[e.status]!}
+                    asOf={asOfByStatus?.[e.status] ?? asOf ?? null}
+                  />
+                ) : null}{" "}
                 <CaretDownIcon
                   className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
                   aria-hidden="true"
@@ -367,7 +372,7 @@ export function StageGlossary({
                   </p>
                 ) : null}{" "}
                 {e.unsourced ? (
-                  <p className="text-[13px] leading-relaxed text-muted-foreground">
+                  <p className="text-sm leading-relaxed text-muted-foreground">
                     <b className="font-bold">No published definition.</b>{" "}
                     {e.unsourced}
                   </p>
