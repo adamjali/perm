@@ -98,7 +98,7 @@ function Chip({
   );
 }
 
-export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
+export function CopyButton({ text }: { text: string }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const copy = useCallback(async () => {
     try {
@@ -121,7 +121,7 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
       className="flex min-h-11 shrink-0 items-center gap-2 border-2 border-border bg-background px-3 font-heading text-sm font-black shadow-hard-sm transition-transform duration-150 hover:-translate-y-[1px] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       {state === "copied" ? <CheckIcon size={16} weight="bold" aria-hidden="true" /> : <CopyIcon size={16} weight="bold" aria-hidden="true" />}
-      {state === "copied" ? "Copied" : state === "failed" ? "Select it below" : label}
+      {state === "copied" ? "Copied" : state === "failed" ? "Select it below" : "Copy"}
     </button>
   );
 }

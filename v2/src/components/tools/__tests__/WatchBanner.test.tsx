@@ -4,16 +4,25 @@ import { render, screen } from "@testing-library/react";
 const path = { current: "/perm-queue" };
 vi.mock("next/navigation", () => ({ usePathname: () => path.current }));
 
+import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { DataShell } from "../DataShell";
 import { showsWatchBanner } from "../WatchBanner";
 
-describe("the free-alert line on data pages", () => {
-  it("sits above a data page, one line with one link to the case lookup", () => {
+describe("the free-alert offer on data pages", () => {
+  it("sits at the end of a data page's breadcrumb bar, one link to the case lookup", () => {
+    path.current = "/perm-queue";
+    render(<SiteBreadcrumbs />);
+    const link = screen.getByRole("link", { name: "Watch my case" });
+    expect(link.getAttribute("href")).toBe("/perm-case-status");
+    expect(document.body.textContent).toContain("Get a free email within minutes of DOL moving it.");
+    // Outside the breadcrumb list: the trail stays a trail.
+    expect(screen.getByRole("navigation", { name: "Breadcrumb" }).contains(link)).toBe(false);
+  });
+
+  it("no longer adds a box above the page's heading", () => {
     path.current = "/perm-queue";
     render(<DataShell><h1>Queue</h1></DataShell>);
-    const banner = screen.getByRole("complementary", { name: "Free case alerts" });
-    expect(banner.textContent).toContain("Get a free email within minutes of DOL moving it.");
-    expect(screen.getByRole("link", { name: "Watch my case" }).getAttribute("href")).toBe("/perm-case-status");
+    expect(screen.queryByRole("link", { name: "Watch my case" })).toBeNull();
   });
 
   it("stays off the pages that already carry a lookup or an alert form", () => {
@@ -22,9 +31,9 @@ describe("the free-alert line on data pages", () => {
     expect(showsWatchBanner("/perm-employers/under-review")).toBe(true);
   });
 
-  it("is not added to pages outside the data shell", () => {
+  it("is not shown outside the data pages", () => {
     path.current = "/about";
-    render(<DataShell><h1>About</h1></DataShell>);
-    expect(screen.queryByRole("complementary", { name: "Free case alerts" })).toBeNull();
+    render(<SiteBreadcrumbs />);
+    expect(screen.queryByRole("link", { name: "Watch my case" })).toBeNull();
   });
 });

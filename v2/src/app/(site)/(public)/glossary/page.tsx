@@ -6,6 +6,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
 import { GLOSSARY, glossaryLetters, glossarySorted } from "@/lib/glossary";
+import { GLOSSARY_STAGES, type GlossaryStage } from "@/lib/glossaryStages";
 
 /**
  * The first sentence, and everything after it.
@@ -52,6 +53,7 @@ export const dynamic = "force-static";
 export default function GlossaryPage() {
   const terms = glossarySorted();
   const letters = glossaryLetters();
+  const names = new Map(GLOSSARY.map((t) => [t.slug, t.term]));
   const base = SITE_URL;
   const termSet = {
     "@context": "https://schema.org",
@@ -87,9 +89,8 @@ export default function GlossaryPage() {
           Glossary
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          Every term this site uses, in the order a dictionary would. Each one
-          says where it comes from, and where on the site it meets real data.
-          The status words DOL prints on a case have{" "}
+          Every term this site uses, placed where it comes up on the way to a
+          green card, then A to Z. The status words DOL prints on a case have{" "}
           <Link
             href="/perm-case-statuses"
             className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -100,7 +101,10 @@ export default function GlossaryPage() {
         </p>
       </header>
 
-      <nav aria-label="Jump to a letter" className="mt-8 flex flex-wrap gap-2">
+      <TermMap names={names} />
+
+      <h2 className="mt-14 font-heading text-2xl font-black sm:text-3xl">A to Z</h2>{" "}
+      <nav aria-label="Jump to a letter" className="mt-5 flex flex-wrap gap-2">
         {letters.map((l) => (
           // Mapped siblings arrive with nothing between them; the space is part
           // of each iteration or it does not exist, and a whitespace-only node
@@ -120,19 +124,19 @@ export default function GlossaryPage() {
       <div className="mt-10">
         {groups.map((g) => (
           <section key={g.letter} aria-labelledby={`letter-${g.letter}`}>
-            <h2
+            <h3
               id={`letter-${g.letter}`}
               className="mt-10 scroll-mt-28 border-b-2 border-border pb-2 font-heading text-2xl font-black first:mt-0"
             >
               {g.letter}
-            </h2>{" "}
+            </h3>{" "}
             {/* A DICTIONARY INDEX, NOT A WALL. Uncollapsed, this page is
                 almost all prose, several times the words of a comparable
                 gov.uk service page. The
                 definitions are the content and stay in the DOM whether open
                 or shut - <details> keeps its body for every crawler - so the
                 first sentence of each is the row a reader scans and the rest
-                opens on demand. The A-Z nav targets the <h2>s above, which
+                opens on demand. The A-Z nav targets the letter headings above, which
                 sit outside any <details>; the per-term id sits on the
                 <details> itself so a shared link lands on the visible row. */}
             <div className="divide-y divide-border/40">
@@ -202,5 +206,78 @@ export default function GlossaryPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+/** One term as a jump link to its entry below. */
+function TermChips({ slugs, names }: { slugs: readonly string[]; names: Map<string, string> }) {
+  return (
+    <ul className="flex flex-wrap gap-2">
+      {slugs.map((slug) => (
+        <li key={slug}>
+          <a
+            href={`#${slug}`}
+            className="inline-flex min-h-11 items-center border-2 border-border bg-card px-3 text-base font-semibold hover:bg-tint-primary"
+          >
+            {names.get(slug) ?? slug}
+          </a>{" "}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function StageName({ stage }: { stage: GlossaryStage }) {
+  return (
+    <span className="block">
+      <span className="block font-heading text-lg font-black leading-tight">{stage.name}</span>{" "}
+      <span className="block text-sm text-muted-foreground">{stage.who}</span>
+    </span>
+  );
+}
+
+/**
+ * The terms placed on the road to a green card: six numbered stops joined by
+ * a line, then the groups beside the road. Each term jumps to its entry.
+ */
+function TermMap({ names }: { names: Map<string, string> }) {
+  const road = GLOSSARY_STAGES.filter((s) => s.onRoad);
+  const beside = GLOSSARY_STAGES.filter((s) => !s.onRoad);
+  return (
+    <section aria-labelledby="glossary-map" className="mt-10">
+      <h2 id="glossary-map" className="font-heading text-2xl font-black sm:text-3xl">
+        Where each term comes up
+      </h2>{" "}
+      <ol className="mt-6">
+        {road.map((stage, i) => (
+          <li
+            key={stage.id}
+            className="relative grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-4 gap-y-3 pb-7 last:pb-0 md:grid-cols-[2.75rem_13rem_minmax(0,1fr)]"
+          >
+            {/* The line joining one stop to the next. */}
+            {i < road.length - 1 ? (
+              <span aria-hidden="true" className="absolute bottom-0 left-[1.3rem] top-11 w-[3px] bg-border" />
+            ) : null}
+            <span className="relative flex h-11 w-11 items-center justify-center border-2 border-border bg-primary font-heading text-lg font-black text-primary-foreground">
+              {i + 1}
+            </span>{" "}
+            <StageName stage={stage} />{" "}
+            <div className="col-start-2 md:col-start-3 md:row-start-1">
+              <TermChips slugs={stage.slugs} names={names} />
+            </div>
+          </li>
+        ))}
+      </ol>{" "}
+      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 [&>*]:min-w-0">
+        {beside.map((stage) => (
+          <div key={stage.id} className="border-2 border-dashed border-border p-4">
+            <StageName stage={stage} />{" "}
+            <div className="mt-3">
+              <TermChips slugs={stage.slugs} names={names} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

@@ -51,7 +51,7 @@ function railMinHeightPx(selector: string): number | null {
 
 /**
  * Everything in the rail that is not a group header or a leaf, measured in a
- * browser on 2026-09-09 at `lg`: the collapse button and its margin (40), the
+ * browser on 2026-09-09 at `lg`: the collapse button (40: 44px, less the nav's 4px top padding it sits in), the
  * Overview row (32), the nav's own vertical padding (8), and the "Track a
  * case" block with its desktop padding and its sentence hidden (~89).
  */

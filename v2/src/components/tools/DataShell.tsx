@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 
 import { isDataPath } from "./dataSections";
 import { DataRail } from "./DataRail";
-import { WatchBanner, showsWatchBanner } from "./WatchBanner";
 
 /**
  * Puts the data rail beside the data pages, and stays out of the way anywhere
@@ -54,7 +53,6 @@ export function DataShell({ children }: { children: React.ReactNode }) {
           number would push the column past the viewport and take the whole
           page into horizontal scroll - with the rail dragged off screen. */}
       <div className="min-w-0 lg:flex-1">
-        {showsWatchBanner(pathname) ? <WatchBanner /> : null}
         {children}
       </div>
     </div>

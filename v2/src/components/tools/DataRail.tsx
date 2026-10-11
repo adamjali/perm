@@ -13,6 +13,7 @@ import {
   HourglassMediumIcon,
   HouseIcon,
   MagnifyingGlassIcon,
+  SidebarSimpleIcon,
   StampIcon,
   WarningIcon,
   type Icon,
@@ -307,33 +308,31 @@ export function DataRail() {
         >
           {railOpen ? (
             <>
-              {/* The collapse control, drawn as a tab sitting ON the rail's
-                  right border so it reads as part of that edge rather than a
-                  button placed near it - the same reasoning as the mobile
-                  handle, which is the shape it turns into when collapsed. */}
+              {/* The collapse control: a plain icon button in the rail's top
+                  right corner, inside the rail. It used to hang off the
+                  rail's border as a tab, which notched the bar above it and
+                  sat on the page's first line (Oct 11 2026). */}
               <button
                 type="button"
                 id="rail-collapse"
                 aria-expanded={true}
                 aria-controls="data-rail-desktop"
+                title="Hide the data sections"
                 onClick={() => {
                   focusAfterToggle.current = "rail-expand";
                   setRailOpen(false);
                 }}
                 className={cn(
-                  // Sits on the rail's right border with no left border of its
-                  // own: its left edge overlaps the rail's 2px border, so the
-                  // two outlines join into one shape (the mobile handle does
-                  // the same).
-                  "-mr-[36px] mb-1 flex size-9 shrink-0 items-center justify-center self-end",
-                  "border-y-2 border-r-2 border-border bg-background text-primary",
-                  "transition-colors duration-150 hover:bg-tint-primary",
-                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                  // `-mt-1` takes the nav's 4px top padding, so the 44px button costs
+                  // the rail the 40px the old tab did (rail-fits.test.ts).
+                  "-mt-1 flex size-11 shrink-0 items-center justify-center self-end text-foreground/65",
+                  "transition-colors duration-150 hover:bg-tint-primary hover:text-foreground",
+                  "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
                   "motion-reduce:transition-none",
                 )}
               >
                 <span className="sr-only">Collapse data sections</span>
-                <CaretRightIcon className="size-4 rotate-180" weight="bold" aria-hidden="true" />
+                <SidebarSimpleIcon className="size-5" weight="bold" aria-hidden="true" />
               </button>
               <div id="data-rail-desktop" className="flex flex-1 flex-col">
                 {renderBody("rail")}
@@ -351,20 +350,15 @@ export function DataRail() {
                 id="rail-expand"
                 aria-expanded={false}
                 aria-controls="data-rail-desktop"
+                title="Show the data sections"
                 onClick={() => {
                   focusAfterToggle.current = "rail-collapse";
                   setRailOpen(true);
                 }}
-                className={cn(
-                  "-mr-[36px] mb-1 flex size-9 shrink-0 items-center justify-center self-end",
-                  "border-y-2 border-r-2 border-border bg-background text-primary",
-                  "transition-colors duration-150 hover:bg-tint-primary",
-                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-                  "motion-reduce:transition-none",
-                )}
+                className="rail-square text-foreground/65 hover:bg-tint-primary hover:text-foreground"
               >
                 <span className="sr-only">Expand data sections</span>
-                <CaretRightIcon className="size-4" weight="bold" aria-hidden="true" />
+                <SidebarSimpleIcon className="size-5" weight="bold" aria-hidden="true" />
               </button>{" "}
               <Link
                 href={OVERVIEW.href}

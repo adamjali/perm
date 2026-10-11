@@ -169,22 +169,33 @@ export default async function PressPage() {
             <CopyButton text={credit} />
           </div>
         </div>{" "}
-        {/* Today's figure, written up with the credit: what a cited line looks
-            like, from the record itself rather than a mock-up. */}
-        {doc && onHold > 0 ? (
-          <figure className="m-0 border-3 border-border bg-card p-6 shadow-hard sm:p-8">
-            <blockquote className="m-0 font-heading text-2xl font-black leading-snug sm:text-3xl">
-              DOL had {formatInt(onHold)} PERM cases on hold on {longDate(doc.asOf)}, according to{" "}
-              <Link href="/perm-employers/under-review" className="underline decoration-primary decoration-[3px] underline-offset-4">
-                PERM Tracker
-              </Link>
-              .
-            </blockquote>{" "}
-            <figcaption className="mt-5 border-t-2 border-border pt-4 text-base text-foreground/75">
-              Source: PERM Tracker, from U.S. Department of Labor and other federal records.
-            </figcaption>
-          </figure>
-        ) : null}
+        {/* A specimen of the credit in running text: what it looks like in a story. */}
+        <div aria-hidden="true" className="border-3 border-border bg-background p-6 shadow-hard sm:p-8">
+          <div className="h-3 w-24 bg-foreground/80" />
+          <div className="mt-4 h-5 w-11/12 bg-foreground" />
+          <div className="mt-2 h-5 w-3/4 bg-foreground" />
+          <div className="mt-6 space-y-2.5">
+            <div className="h-2.5 w-full bg-foreground/15" />
+            <div className="h-2.5 w-full bg-foreground/15" />
+            <div className="h-2.5 w-5/6 bg-foreground/15" />
+          </div>
+          <p className="mt-5 font-serif text-lg leading-relaxed text-foreground/90">
+            {/* Today's figure, so the specimen shows a real cited line. */}
+            {doc && onHold > 0 ? (
+              <>
+                &hellip; the Labor Department had {formatInt(onHold)} PERM cases on hold on {longDate(doc.asOf)}, according to{" "}
+              </>
+            ) : (
+              <>&hellip; were on hold this week, according to{" "}</>
+            )}
+            <span className="underline decoration-primary decoration-[3px] underline-offset-4">PERM Tracker</span>, which
+            reads the Labor Department&apos;s case records daily.
+          </p>
+          <div className="mt-5 space-y-2.5">
+            <div className="h-2.5 w-full bg-foreground/15" />
+            <div className="h-2.5 w-2/3 bg-foreground/15" />
+          </div>
+        </div>
       </section>{" "}
 
       <section aria-labelledby="press-sources" className="mt-20">
