@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PROGRAM_LABEL, isActive, phase, type Debarment } from "@/lib/turso/debarments";
+import { cn } from "@/lib/utils";
 
 /**
  * A dated notice on an employer or law-firm page when a name on DOL's
@@ -22,7 +23,18 @@ import { PROGRAM_LABEL, isActive, phase, type Debarment } from "@/lib/turso/deba
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
 
-export function DebarmentNotice({ rows, pageName, today }: { rows: Debarment[]; pageName: string; today: string }) {
+export function DebarmentNotice({
+  rows,
+  pageName,
+  today,
+  className = "mt-8",
+}: {
+  rows: Debarment[];
+  pageName: string;
+  today: string;
+  /** Spacing from what sits around it; a page placing it first passes its own. */
+  className?: string;
+}) {
   if (rows.length === 0) return null;
   const active = rows.filter((d) => isActive(d, today));
   const upcoming = rows.filter((d) => phase(d, today) === "upcoming");
@@ -35,7 +47,7 @@ export function DebarmentNotice({ rows, pageName, today }: { rows: Debarment[]; 
         ? `A name matching ${pageName} is barred from filing from ${day(upcoming[0]!.startDate)}. The period has not started yet.`
         : `A name matching ${pageName} was barred from filing in the past; the period has ended.`;
   return (
-    <aside className="mt-8 border-2 border-foreground bg-card p-5 shadow-hard sm:p-6" aria-label="Debarment notice">
+    <aside id="debarment" className={cn(className, "scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-2 border-foreground bg-card p-5 shadow-hard sm:p-6")} aria-label="Debarment notice">
       <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
         On DOL&apos;s debarment list
       </p>{" "}

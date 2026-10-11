@@ -44,6 +44,7 @@ export function EmployerFollow({
   logFrom,
   asOf,
   docMissing = false,
+  showPending = true,
 }: {
   slug: string;
   name: string;
@@ -59,6 +60,8 @@ export function EmployerFollow({
    * "Nothing employer-wide" over a stale document would be a false statement.
    */
   docMissing?: boolean;
+  /** False where the page already draws its pending cases (the employer page's queue band). */
+  showPending?: boolean;
 }) {
   const parts = row ? ribbonParts(row) : null;
   const legend = parts ? ribbonLegend(parts) : [];
@@ -70,7 +73,7 @@ export function EmployerFollow({
         An email when DOL moves its cases as a group: five or more on or off hold in a day, or a batch decided well above its usual pace.
       </p>
 
-      {parts && parts.pending > 0 ? (
+      {showPending && parts && parts.pending > 0 ? (
         <div className="mt-6">
           <p className="text-base font-bold">
             {`Its ${formatInt(parts.pending)} pending PERM cases${asOf ? `, as of ${longDate(asOf)}` : ""}`}
@@ -95,7 +98,7 @@ export function EmployerFollow({
           employer census couldn&apos;t be read or is more than eight days old. It&apos;s
           rewritten every night, so this usually clears by the next day.
         </p>
-      ) : (
+      ) : !showPending ? null : (
         <p className="mt-6 text-base text-foreground/80">
           {`Fewer than five of its PERM cases are pending${asOf ? ` as of ${longDate(asOf)}` : ""}, and the census that draws this bar starts at five.`}
         </p>

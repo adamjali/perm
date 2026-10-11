@@ -71,26 +71,21 @@ export interface StatCard {
   k: string;
   v: string;
   sub: string;
-  /** Span both columns on a phone, so an odd last card doesn't leave a hole. */
-  wide?: boolean;
 }
 
 /** One row from `sm` up. Tailwind only builds classes written out in full. */
-const SM_COLUMNS: Record<number, string> = { 4: "sm:grid-cols-4", 5: "sm:grid-cols-5" };
+const SM_COLUMNS: Record<number, string> = { 3: "sm:grid-cols-3", 4: "sm:grid-cols-4", 5: "sm:grid-cols-5" };
 
 /** The figure cards, one bordered grid. The page places it, below its ReliabilityBand. */
-export function EntityStatCards({ cards }: { cards: StatCard[] }) {
+export function EntityStatCards({ cards: given }: { cards: (StatCard | null)[] }) {
+  const cards = given.filter((c): c is StatCard => c !== null);
   return (
     <div
-      className={`grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border ${SM_COLUMNS[cards.length] ?? ""}`}
+      // A lone last tile on a phone spans the row: a spanning tile mid-grid left two black holes.
+      className={`grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 ${SM_COLUMNS[cards.length] ?? ""}`}
     >
       {cards.map((d) => (
-        <div
-          key={d.k}
-          className={
-            d.wide ? "bg-card p-5 col-span-2 sm:col-span-1" : "bg-card p-5"
-          }
-        >
+        <div key={d.k} className="bg-card p-5">
           <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
             {d.k}
           </p>{" "}
@@ -131,13 +126,13 @@ export function approvalCard(reliability: RateReliability, baselineDenialPct: nu
   };
 }
 
-/** The median offered wage; wide, because it's the fifth card. */
-export function medianWageCard(medianAnnualWage: number | null): StatCard {
+/** The median offered wage, or no card at all: a tile reading "not on file" says nothing. */
+export function medianWageCard(medianAnnualWage: number | null): StatCard | null {
+  if (medianAnnualWage == null) return null;
   return {
     k: "Median wage",
-    v: medianAnnualWage == null ? "—" : formatDollars(medianAnnualWage),
-    sub: medianAnnualWage == null ? "not on file" : "offered, per year",
-    wide: true,
+    v: formatDollars(medianAnnualWage),
+    sub: "offered, per year",
   };
 }
 

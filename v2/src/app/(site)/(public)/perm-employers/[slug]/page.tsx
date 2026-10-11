@@ -106,6 +106,12 @@ import { otherEmployerRecord, type OtherEmployerRecord } from "@/lib/turso/other
 import { programsMix, programsShort } from "@/lib/otherEmployers";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { WageAndLcaFilings } from "@/components/entities/WageAndLcaFilings";
+import { ProfileHeader, type ProfileFact, type ProfileTag } from "@/components/entities/ProfileHeader";
+import { Chapter } from "@/components/entities/Chapter";
+import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
+import { groupIndustries } from "@/components/entities/FilingMakeup";
+import { HOLD_STATUS } from "@/lib/employerStages";
+import { phase } from "@/lib/turso/debarments";
 import { comparables, fieldDistribution } from "@/lib/turso/entities";
 
 /**
@@ -122,6 +128,13 @@ import { comparables, fieldDistribution } from "@/lib/turso/entities";
  */
 /** Newest live filings shown on the page; the case search holds the rest. */
 const RECENT_LIVE_SHOWN = 8;
+
+/** "Oct 8", or "Nov 1, 2027" when the year isn't this one. */
+function shortDate(iso: string): string {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+  const sameYear = d.getUTCFullYear() === new Date().getUTCFullYear();
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }), timeZone: "UTC" });
+}
 
 export const revalidate = 2592000;
 
@@ -695,208 +708,304 @@ export default async function EmployerPage({
     sponsors: [],
   }));
 
+  // What the header says before any chapter: the hold, an appeal, layoff and
+  // debarment notices, each a tag that jumps to where it is shown in full.
+  const stageRow = stagesDoc?.employers.find((e) => e.slug === canonicalSlug) ?? null;
+  const today = new Date().toISOString().slice(0, 10);
+  const tags: ProfileTag[] = [];
+  if (stageRow) {
+    const at = (st: string) => stageRow.byStatus[st] ?? 0;
+    const held = at(HOLD_STATUS);
+    if (held > 0) {
+      tags.push({
+        text: `${formatInt(held)} on hold${stageRow.holdSince ? ` since ${shortDate(stageRow.holdSince)}` : ""}`,
+        href: "#now",
+        tone: "warn",
+      });
+    }
+    if (at("RFI ISSUED") > 0) tags.push({ text: `${formatInt(at("RFI ISSUED"))} at RFI`, href: "#now", tone: "warn" });
+    const appeals = at("RECONSIDERATION APPEALS") + at("BALCA APPEALS") + at("REQUEST FOR REVIEW");
+    if (appeals > 0) tags.push({ text: `${formatInt(appeals)} under appeal`, href: "#now", tone: "bad" });
+  }
+  if (debarments.length > 0) {
+    const barredNow = debarments.some((d) => phase(d, today) === "in-force");
+    const barredSoon = debarments.find((d) => phase(d, today) === "upcoming");
+    tags.push({
+      text: barredNow ? "On DOL's debarment list" : barredSoon ? `Debarred from ${shortDate(barredSoon.startDate)}` : "A past debarment",
+      href: "#debarment",
+      tone: barredNow || barredSoon ? "bad" : "ink",
+    });
+  }
+  if (warn.length > 0) {
+    tags.push({ text: `${formatInt(warn.length)} layoff notice${warn.length === 1 ? "" : "s"}`, href: "#layoffs", tone: "ink" });
+  }
+
+  // What the sponsor is, in three cells: the job it files for most, where, and its industry.
+  const topCity = facets.city?.[0];
+  const topIndustry = facets.industry ? groupIndustries(facets.industry)[0] : undefined;
+  const share = (n: number) => `${Math.round((n / Math.max(row.total, 1)) * 100)}% of its filings`;
+  const facts: ProfileFact[] = ([
+    topOcc ? { label: "Main job", value: topOcc.label, href: topOcc.key ? `/perm-wages/${topOcc.key}` : undefined, note: share(topOcc.n) } : null,
+    topCity
+      ? { label: "Main worksite", value: topCity.label, note: share(topCity.n) }
+      : topState
+        ? { label: "Main worksite state", value: topState.label, note: share(topState.n) }
+        : null,
+    topIndustry ? { label: "Industry", value: topIndustry.label, note: `NAICS ${topIndustry.codes[0]}` } : null,
+  ] as (ProfileFact | null)[]).filter((f): f is ProfileFact => f !== null);
+
+  const hasWork = Boolean(facets.occupation || facets.state || facets.attorney || facets.city || facets.industry);
+  const hasHistory = years.length > 0 || historyCases.length > 0 || Object.values(workers).some((r) => (r?.length ?? 0) > 0);
+  const chapters: ChapterItem[] = [
+    { id: "now", label: "Right now" },
+    { id: "wait", label: "How long" },
+    { id: "programs", label: "Every program" },
+    { id: "compare", label: "Against others" },
+    ...(hasWork ? [{ id: "work", label: "The work" }] : []),
+    ...(hasHistory ? [{ id: "history", label: "History" }] : []),
+    { id: "notes", label: "Notes" },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={schema} />
 
-      <header className="max-w-3xl">
-        <h1 translate="no" className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          {row.name}
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          {formatInt(row.total)} PERM filings in DOL&apos;s current disclosure window,{" "}
-          {formatInt(row.certified)} certified and {formatInt(row.denied)} denied. Name as
-          DOL prints it, which is the legal entity on the form.
-        </p>
-      </header>
-
-      {/* The doubt goes ABOVE the figures. A caveat under a number reads as a
-          footnote to a fact; over it, the number arrives already qualified. */}
-      <DebarmentNotice rows={debarments} pageName={row.name} today={new Date().toISOString().slice(0, 10)} />{" "}
-      <WarnNoticeBand rows={warn} pageName={row.name} />{" "}
       {/* Most people who land here work for this sponsor and came for their
-          own case, so the way to it comes before the sponsor's figures. */}
-      <CaseNextStep
-        question={`Waiting on a case with ${row.name}?`}
-        searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
-        searchLabel="Find it among their filings"
-        extra={{ href: "#follow", label: "Or follow this employer by email" }}
-        source="employer-page"
-        className="mt-8"
-      />{" "}
-      <ReliabilityBand
-        reliability={reliability}
-        baselineDenialPct={baselineDenialPct}
-        subject="sponsor"
-        unit="filings"
-        className="mt-8"
-      />
-
-      <section className="pop mt-8">
-        <EntityStatCards
-          cards={[
-            volumeCard("Filings", row, kindTotal),
-            certifiedCard(row),
-            approvalCard(reliability, baselineDenialPct),
-            medianWageCard(row.medianAnnualWage),
-            medianDaysCard(row.medianDays, standing),
-          ]}
-        />
-      </section>
-
-      {/* The live queue, before the history. Every figure above this point
-          comes from decided cases; this is the only module that can see a
-          case that is still waiting, and it is the thing a reader with a
-          case at this sponsor came for. */}
-      {pending ? (
-        <LiveQueueBand
-          pending={pending}
-          subject="sponsor"
-          n="01"
-          asOf={mirrorAsOf}
-          className="mt-10"
-        />
-      ) : null}{" "}
-      <EmployerWait name={row.name} mine={empWait} field={fieldWait} today={filedToday} className="mt-10" />{" "}
-      <EmployerPrograms
+          own case, so the way to it sits beside the name, before the figures. */}
+      <ProfileHeader
+        eyebrow={`PERM sponsor, #${formatInt(row.rank)} of ${formatInt(kindTotal)} by filings`}
         name={row.name}
-        perm={
-          programs
-            ? { ...programs.perm, pending: pending ? pending.pending : programs.perm.pending }
-            : {
-                program: "perm",
-                published: row.total,
-                pending: pending ? pending.pending : null,
-                medianAnnualWage: row.medianAnnualWage,
-                wageN: row.certified + row.denied,
-              }
+        facts={facts}
+        tags={tags}
+        aside={
+          <CaseNextStep
+            question={`Waiting on a case with ${row.name}?`}
+            searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
+            searchLabel="Find it among their filings"
+            extra={{ href: "#follow", label: "Or follow this employer by email" }}
+            source="employer-page"
+          />
         }
-        pwd={programs?.pwd ?? null}
-        lca={programs?.lca ?? null}
-        seasonal={programs?.seasonal ?? null}
-        stages={stagesDoc?.employers.find((e) => e.slug === canonicalSlug) ?? null}
-        logFrom={stagesDoc?.logFrom ?? null}
-        searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
-        spellings={programs?.match.basis === "map" ? programs.match.spellings : null}
-      />{" "}
-      <SponsorProfile parts={sponsor?.parts ?? []} facts={(sponsor?.facts ?? []).filter((f) => f.id === "dependent" || f.id === "willful")} />{" "}
-      <EmployerFollow
-        slug={canonicalSlug}
-        name={row.name}
-        row={stagesDoc?.employers.find((e) => e.slug === canonicalSlug) ?? null}
-        moves={stagesDoc ? employerMoves(stagesDoc).filter((m) => m.slug === canonicalSlug) : []}
-        logFrom={stagesDoc?.logFrom ?? null}
-        asOf={stagesDoc?.asOf ?? null}
-        docMissing={!stagesDoc}
-      />
-
-      {/* The newest individual filings, live from DOL - visible here months
-          before the disclosure files publish them. Firm and wage arrive
-          with publication; until then the case number carries the reader
-          to its own live status. */}
-      {recentLive.length > 0 ? (
-        <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h2 className="font-heading text-xl font-black sm:text-2xl">
-            Latest filings, live from DOL
-          </h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            Newer than DOL&apos;s published files, so the wage and law firm
-            aren&apos;t known yet. Each case links to its live status.
-          </p>{" "}
-          <ul className="mt-4 divide-y divide-border/60">
-            {/* Keyed Fragment + space: mapped siblings glue their text for
-                every extractor. Third instance of this class tonight. */}
-            {recentLive.slice(0, RECENT_LIVE_SHOWN).map((c) => (
-              <Fragment key={c.caseNumber}>{" "}
-              <li
-                className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base"
-              >
-                <Link
-                  href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                  className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  {c.caseNumber}
-                </Link>{" "}
-                {c.jobTitle ? (
-                  <span className="text-foreground/70">{c.jobTitle}</span>
-                ) : null}{" "}
-                <span className="ml-auto text-sm text-foreground/70">
-                  {c.filingDate ? `filed ${c.filingDate}` : ""}
-                  {c.status ? ` · ${c.status}` : ""}
-                </span>
-              </li>
-              </Fragment>
-            ))}
-          </ul>{" "}
-          <p className="mt-3 text-sm">
-            {recentLive.length > RECENT_LIVE_SHOWN
-              ? `The ${RECENT_LIVE_SHOWN} newest. `
-              : ""}
-            <Link
-              href={`/case-search?q=${encodeURIComponent(row.name)}`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              Every filing by this employer
-            </Link>{" "}
-            is in the case search, live and published together.
-          </p>
-        </section>
-      ) : null}
-
-      {/* The two filings that come BEFORE a PERM, from the same daily DOL
-          check: the wage request and, for H-1B holders, the LCA. Five each,
-          newest first; every number links to its live status. */}
-      <WageAndLcaFilings
-        name={row.name}
-        wageReqs={wageReqs}
-        lcas={lcas}
-        heading="Before the PERM: wage requests and LCAs"
-      />
-
-      <CapExemptNote industry={facets.industry} />{" "}
-      <LcaProfile name={row.name} profile={lcaProfile} />{" "}
-      <UscisH1bRecord record={uscisH1b} through={freshness["uscis-h1b-hub"]?.asOf ?? null} />{" "}
-      <H1bLotteryHistory years={lottery} />{" "}
-      <SeasonalFilings name={row.name} rows={seasonalRows} />{" "}
-
-      {/* Where does this sponsor sit in the field? A stat card states a
-          number; only the distribution says whether that number is unusual. The population is every sponsor whose
-          case count can carry a rate, which is the only denominator these two
-          measures can honestly be read against. */}
-      <FieldPositionPlate
-        n={pending ? "02" : "01"}
-        singular="sponsor"
-        plural="sponsors"
-        dist={dist}
-        standing={standing}
-        medianDays={row.medianDays}
-        lead={
+        figures={
           <>
-            Each bar counts sponsors at that value. Sponsors with fewer than{" "}
-            {dist.minDecided} decided cases are left out of the population
-            rather than plotted, because a rate over a handful of cases lands
-            wherever the handful landed.
+            {/* The doubt goes ABOVE the figures it qualifies: a debarment
+                changes how every figure should be read, and a rate on too few
+                cases must not read as more certain than the warning about it. */}
+            <DebarmentNotice rows={debarments} pageName={row.name} today={today} className="mb-6" />{" "}
+            <ReliabilityBand
+              reliability={reliability}
+              baselineDenialPct={baselineDenialPct}
+              subject="sponsor"
+              unit="filings"
+              className="mb-6"
+            />{" "}
+            <section className="pop" aria-label="Its record in five figures">
+            <EntityStatCards
+              cards={[
+                volumeCard("Filings", row, kindTotal),
+                certifiedCard(row),
+                approvalCard(reliability, baselineDenialPct),
+                // The program table's own median (perm_cases), so the two figures can't disagree.
+                medianWageCard(programs?.perm.medianAnnualWage ?? row.medianAnnualWage),
+                medianDaysCard(row.medianDays, standing),
+              ]}
+            />
+            </section>
           </>
         }
-        outOfCohortNote={`This sponsor has ${formatInt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}
       />
 
-      {facets.occupation || facets.state || facets.attorney || facets.city || facets.industry ? (
-        <section className="mt-12">
-          <h2 className="font-heading text-2xl font-black">
-            What they file, and where
-          </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base text-foreground/70">
-            A rank says how much. It says nothing about what the work is, which
-            is the part a job offer from this sponsor actually turns on.
-          </p>
+      <ChapterNav items={chapters} className="mt-10" />
+
+      <Chapter id="now" title="Right now" dek="DOL's live record of its cases, read every day, and what it has done to them as a group.">
+        {/* The live queue first: every figure in the header comes from decided
+            cases, and this is the only part that sees a case still waiting. */}
+        <div className="grid grid-cols-1 gap-x-8 [&>*]:min-w-0 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:items-start">
+          {pending ? (
+            <LiveQueueBand pending={pending} subject="sponsor" n="01" asOf={mirrorAsOf} className="mt-8" />
+          ) : null}{" "}
+          <EmployerFollow
+            slug={canonicalSlug}
+            name={row.name}
+            row={stageRow}
+            moves={stagesDoc ? employerMoves(stagesDoc).filter((m) => m.slug === canonicalSlug) : []}
+            logFrom={stagesDoc?.logFrom ?? null}
+            asOf={stagesDoc?.asOf ?? null}
+            docMissing={!stagesDoc}
+            showPending={!pending}
+          />
+        </div>
+
+        {/* The newest individual filings, live from DOL - visible here months
+            before the disclosure files publish them. Firm and wage arrive
+            with publication; until then the case number carries the reader
+            to its own live status. */}
+        {recentLive.length > 0 ? (
+          <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="latest-live">
+            <h3 id="latest-live" className="font-heading text-xl font-black sm:text-2xl">
+              Its newest filings
+            </h3>{" "}
+            <p className="mt-2 text-base leading-relaxed text-foreground/70">
+              Newer than DOL&apos;s published files, so the wage and law firm aren&apos;t known yet.
+            </p>{" "}
+            <ul className="mt-4 divide-y divide-border/60">
+              {/* Keyed Fragment + space: mapped siblings glue their text for every extractor. */}
+              {recentLive.slice(0, RECENT_LIVE_SHOWN).map((c) => (
+                <Fragment key={c.caseNumber}>
+                  {" "}
+                  <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
+                    <Link
+                      href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
+                      className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    >
+                      {c.caseNumber}
+                    </Link>{" "}
+                    {c.jobTitle ? <span className="text-foreground/70">{c.jobTitle}</span> : null}{" "}
+                    <span className="ml-auto text-sm text-foreground/70">
+                      {c.filingDate ? `filed ${c.filingDate}` : ""}
+                      {c.status ? ` · ${c.status}` : ""}
+                    </span>
+                  </li>
+                </Fragment>
+              ))}
+            </ul>{" "}
+            <p className="mt-3 text-sm">
+              {recentLive.length > RECENT_LIVE_SHOWN ? `The ${RECENT_LIVE_SHOWN} newest. ` : ""}
+              <Link
+                href={`/case-search?q=${encodeURIComponent(row.name)}`}
+                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              >
+                Every filing by this employer
+              </Link>{" "}
+              is in the case search, live and published together.
+            </p>
+          </section>
+        ) : null}{" "}
+        <WarnNoticeBand rows={warn} pageName={row.name} />
+      </Chapter>
+
+      <Chapter id="wait" title="How long it takes">
+        <EmployerWait name={row.name} mine={empWait} field={fieldWait} today={filedToday} className="mt-8" />
+      </Chapter>
+
+      <Chapter id="programs" title="Every program">
+        <EmployerPrograms
+          name={row.name}
+          perm={
+            programs
+              ? { ...programs.perm, pending: pending ? pending.pending : programs.perm.pending }
+              : {
+                  program: "perm",
+                  published: row.total,
+                  pending: pending ? pending.pending : null,
+                  medianAnnualWage: row.medianAnnualWage,
+                  wageN: row.certified + row.denied,
+                }
+          }
+          pwd={programs?.pwd ?? null}
+          lca={programs?.lca ?? null}
+          seasonal={programs?.seasonal ?? null}
+          stages={stageRow}
+          logFrom={stagesDoc?.logFrom ?? null}
+          searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
+          spellings={programs?.match.basis === "map" ? programs.match.spellings : null}
+        />{" "}
+        {/* The two filings that come BEFORE a PERM, from the same daily DOL
+            check: the wage request and, for H-1B holders, the LCA. Five each,
+            newest first; every number links to its live status. */}
+        <WageAndLcaFilings name={row.name} wageReqs={wageReqs} lcas={lcas} heading="Its newest wage requests and LCAs" />{" "}
+        <CapExemptNote industry={facets.industry} />{" "}
+        <LcaProfile name={row.name} profile={lcaProfile} />{" "}
+        <UscisH1bRecord record={uscisH1b} through={freshness["uscis-h1b-hub"]?.asOf ?? null} />{" "}
+        <H1bLotteryHistory years={lottery} />{" "}
+        <SeasonalFilings name={row.name} rows={seasonalRows} />
+      </Chapter>
+
+      <Chapter
+        id="compare"
+        title="Against other sponsors"
+        dek={
+          <>
+            Where it sits among {formatInt(kindTotal)} sponsors. The{" "}
+            <Link href={BASE} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              full ranking
+            </Link>{" "}
+            sorts every column.
+          </>
+        }
+      >
+        <SponsorProfile parts={sponsor?.parts ?? []} facts={(sponsor?.facts ?? []).filter((f) => f.id === "dependent" || f.id === "willful")} />{" "}
+        {/* Where does this sponsor sit in the field? A stat card states a
+            number; only the distribution says whether that number is unusual. */}
+        <FieldPositionPlate
+          n={pending ? "02" : "01"}
+          singular="sponsor"
+          plural="sponsors"
+          dist={dist}
+          standing={standing}
+          medianDays={row.medianDays}
+          lead={
+            <>
+              Each bar counts sponsors at that value. Sponsors with fewer than{" "}
+              {dist.minDecided} decided cases are left out of the population
+              rather than plotted, because a rate over a handful of cases lands
+              wherever the handful landed.
+            </>
+          }
+          outOfCohortNote={`This sponsor has ${formatInt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}
+        />{" "}
+        {band ? (
+          <SizeBandNote band={band} subjectMedianDays={row.medianDays} subject="sponsors" unit="filings" className="mt-10" />
+        ) : null}{" "}
+        <RankLadder
+          rank={row.rank}
+          kindTotal={kindTotal}
+          above={near.above}
+          below={near.below}
+          hrefBase={BASE}
+          unit="filings"
+          className="mt-10"
+        />{" "}
+        <PeerList
+          heading="Sponsors filing at the same rate"
+          note={<>Ranked either side of this one: they file about as many PERM cases.</>}
+          items={near.peers}
+          hrefBase={BASE}
+          unit="filings"
+          className="mt-12"
+        />{" "}
+        {similar.occupation && similar.sponsors.length > 0 ? (
+          <PeerList
+            heading="Sponsors hiring for the same work"
+            note={
+              <>
+                The employers filing the most PERM cases for{" "}
+                <Link
+                  href={`/perm-wages/${similar.occupation.slug}`}
+                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  {similar.occupation.label}
+                </Link>
+                , the occupation this sponsor files for most.
+              </>
+            }
+            items={similar.sponsors}
+            hrefBase={BASE}
+            unit="filings"
+            className="mt-12"
+          />
+        ) : null}
+      </Chapter>
+
+      {hasWork ? (
+        <Chapter
+          id="work"
+          title="What they file, and where"
+          dek="A rank says how much. It says nothing about what the work is, which is the part a job offer from this sponsor turns on."
+        >
           <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
             {facets.occupation ? (
-              <OccupationMix
-                rows={facets.occupation}
-                total={row.total}
-                className="lg:row-span-2"
-              />
+              <OccupationMix rows={facets.occupation} total={row.total} className="lg:row-span-2" />
             ) : null}
             {facets.industry ? <IndustryMix rows={facets.industry} /> : null}
             {facets.state ? <StateMix rows={facets.state} total={row.total} /> : null}
@@ -911,179 +1020,85 @@ export default async function EmployerPage({
               />
             ) : null}
           </div>
-        </section>
+        </Chapter>
       ) : null}
 
-      <EmployerYears
-        years={years}
-        cases={historyCases}
-        lastYearPartial={throughMonth ? `DOL's newest file runs through ${throughMonth}` : undefined}
-      />
+      {hasHistory ? (
+        <Chapter id="history" title="History">
+          <EmployerYears
+            years={years}
+            cases={historyCases}
+            lastYearPartial={throughMonth ? `DOL's newest file runs through ${throughMonth}` : undefined}
+          />{" "}
+          <WorkerMix facets={workers} subject="employer" />
+        </Chapter>
+      ) : null}
 
-      <WorkerMix facets={workers} subject="employer" />
-
-      {band ? (
-        <SizeBandNote
-          band={band}
-          subjectMedianDays={row.medianDays}
-          subject="sponsors"
-          unit="filings"
+      <Chapter id="notes" title="Notes on these numbers">
+        <NameSpellings variants={variants} absorbed={absorbed} subject="sponsor" hrefBase={BASE} rank={row.rank} className="mt-8" />{" "}
+        <LimitsPanel
           className="mt-10"
-        />
-      ) : null}
-
-      <RankLadder
-        rank={row.rank}
-        kindTotal={kindTotal}
-        above={near.above}
-        below={near.below}
-        hrefBase={BASE}
-        unit="filings"
-        className="mt-10"
-      />
-
-      <PeerList
-        heading="Sponsors filing at the same rate"
-        note={
-          <>
-            Ranked either side of this one: they file about as many PERM cases.
-          </>
-        }
-        items={near.peers}
-        hrefBase={BASE}
-        unit="filings"
-        className="mt-12"
-      />
-
-      {similar.occupation && similar.sponsors.length > 0 ? (
-        <PeerList
-          heading="Sponsors hiring for the same work"
-          note={
-            <>
-              The employers filing the most PERM cases for{" "}
-              <Link
-                href={`/perm-wages/${similar.occupation.slug}`}
-                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-              >
-                {similar.occupation.label}
-              </Link>
-              , the occupation this sponsor files for most.
-            </>
-          }
-          items={similar.sponsors}
-          hrefBase={BASE}
-          unit="filings"
-          className="mt-12"
-        />
-      ) : null}
-
-      <NameSpellings
-        variants={variants}
-        absorbed={absorbed}
-        subject="sponsor"
-        hrefBase={BASE}
-        rank={row.rank}
-        className="mt-12"
-      />
-
-      <LimitsPanel
-        className="mt-12"
-        items={[
-          wageIsTheJobLimit({ topOccupation: topOcc, total: row.total, filers: "they" }),
-          {
-            head: "Volume doesn’t change the wait",
-            body: (
-              <>
-                DOL works a single national queue, oldest first, whoever filed
-                the case, so these {formatInt(row.total)} filings bought no priority:
-                a company with four thousand waits exactly as long as one with
-                three.
-              </>
-            ),
-          },
-          {
-            head: "The name is a legal entity",
-            body: (
-              <>
-                DOL prints whatever went on the form, and here that name ranks{" "}
-                {formatInt(row.rank)}. A group that files
-                through several subsidiaries appears as several rows, and one
-                that files everything through a parent appears once, so a rank
-                is a rank among printed names rather than among companies.
-              </>
-            ),
-          },
-          {
-            head: `A median over ${formatInt(reliability.decided)} decided cases`,
-            body: (
-              <>
-                {thinMedian
-                  ? "That’s a middle of a handful, and it moves entirely with which months those few cases were filed in."
-                  : "The queue is national and first in, first out, so this figure follows when the cases were filed as much as it follows the sponsor."}
-              </>
-            ),
-          },
-          {
-            head: "Two sources, and they do not add up",
-            body: (
-              <>
-                The filing counts come from DOL&apos;s disclosure files, where
-                every row already carries a decision date, so nothing pending
-                is in them. The queue figures come from a live per-case
-                tracker with its own coverage and its own as-of date.
-                Subtracting one from the other gives a number that means
-                nothing.{topState ? ` The worksite on most of these is ${topState.label}.` : ""}{" "}
-                Where the queue stands overall is on the{" "}
-                <Link
-                  href="/perm-processing-times"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  processing times page
-                </Link>
-                .
-              </>
-            ),
-          },
-        ]}
-      />
-
-      <DisclosureNote
-        sourceFiles={stats?.sourceFiles ?? []}
-        uniqueCases={stats?.uniqueCases ?? null}
-        className="mt-8"
-      />
-
-      {/* The case-number box sits near the top now, so the old bottom card
-          that only pointed at the calculator is gone. */}
-      <section className="mt-10 max-w-2xl">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Comparing sponsors?</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            The{" "}
-            <Link
-              href={BASE}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              full ranking
-            </Link>{" "}
-            sorts every column, and{" "}
-            <Link
-              href="/perm-wages"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              wages by occupation
-            </Link>{" "}
-            covers what the roles pay.
-          </p>
-        </div>
-      </section>
-      <DataProvenance
-        datasets={
-          pending
-            ? ["perm-cases", "entities", "perm-case-status"]
-            : ["perm-cases", "entities"]
-        }
-      />
+          items={[
+            wageIsTheJobLimit({ topOccupation: topOcc, total: row.total, filers: "they" }),
+            {
+              head: "Volume doesn’t change the wait",
+              body: (
+                <>
+                  DOL works a single national queue, oldest first, whoever filed
+                  the case, so these {formatInt(row.total)} filings bought no priority:
+                  a company with four thousand waits exactly as long as one with
+                  three.
+                </>
+              ),
+            },
+            {
+              head: "The name is a legal entity",
+              body: (
+                <>
+                  DOL prints whatever went on the form, and here that name ranks{" "}
+                  {formatInt(row.rank)}. A group that files
+                  through several subsidiaries appears as several rows, and one
+                  that files everything through a parent appears once, so a rank
+                  is a rank among printed names rather than among companies.
+                </>
+              ),
+            },
+            {
+              head: `A median over ${formatInt(reliability.decided)} decided cases`,
+              body: (
+                <>
+                  {thinMedian
+                    ? "That’s a middle of a handful, and it moves entirely with which months those few cases were filed in."
+                    : "The queue is national and first in, first out, so this figure follows when the cases were filed as much as it follows the sponsor."}
+                </>
+              ),
+            },
+            {
+              head: "Two sources, and they do not add up",
+              body: (
+                <>
+                  The filing counts come from DOL&apos;s disclosure files, where
+                  every row already carries a decision date, so nothing pending
+                  is in them. The queue figures come from a live per-case
+                  tracker with its own coverage and its own as-of date.
+                  Subtracting one from the other gives a number that means
+                  nothing.{topState ? ` The worksite on most of these is ${topState.label}.` : ""}{" "}
+                  Where the queue stands overall is on the{" "}
+                  <Link
+                    href="/perm-processing-times"
+                    className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  >
+                    processing times page
+                  </Link>
+                  .
+                </>
+              ),
+            },
+          ]}
+        />{" "}
+        <DisclosureNote sourceFiles={stats?.sourceFiles ?? []} uniqueCases={stats?.uniqueCases ?? null} className="mt-8" />{" "}
+        <DataProvenance datasets={pending ? ["perm-cases", "entities", "perm-case-status"] : ["perm-cases", "entities"]} />
+      </Chapter>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { CaretRightIcon } from "@phosphor-icons/react/ssr";
+
 import type { EmployerYear, HistoryCase } from "@/lib/turso/employerHistory";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
@@ -76,49 +78,72 @@ export function EmployerYears({
             Case numbers from these years start with A-; look one up for
             DOL&apos;s full record.
           </p>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[560px] border-collapse text-left text-sm tabular-nums">
-              <thead>
-                <tr className="border-b-2 border-border">
-                  <th className="py-1.5 pr-4 font-bold">Case </th>
-                  <th className="py-1.5 pr-4 font-bold">Decided </th>
-                  <th className="py-1.5 pr-4 font-bold">Outcome </th>
-                  <th className="py-1.5 pr-4 font-bold">Job </th>
-                  <th className="py-1.5 text-right font-bold">Offered wage </th>
-                </tr>
-              </thead>
-              <tbody>
-                {cases.map((c) => (
-                  <tr
-                    key={c.caseNumber}
-                    className="border-b border-border/30 align-top"
-                  >
-                    <td className="py-1.5 pr-4 font-mono">
-                      <a
-                        href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                        className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                      >
-                        {c.caseNumber}
-                      </a>{" "}
-                    </td>
-                    <td className="py-1.5 pr-4">{c.decisionDate ?? "n/a"} </td>
-                    <td className="py-1.5 pr-4 capitalize">{c.status} </td>
-                    <td className="py-1.5 pr-4">
-                      {c.jobTitle ?? "n/a"}
-                      {c.state ? `, ${c.state}` : ""}{" "}
-                    </td>
-                    <td className="py-1.5 text-right">
-                      {c.wage != null
-                        ? `$${formatInt(Math.round(c.wage))}`
-                        : "n/a"}{" "}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <CaseTable cases={cases.slice(0, SHOWN_CASES)} />{" "}
+          {cases.length > SHOWN_CASES ? (
+            <details className="group mt-3">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-bold [&::-webkit-details-marker]:hidden">
+                <CaretRightIcon aria-hidden="true" className="size-4 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" />
+                The other {formatInt(cases.length - SHOWN_CASES)}{" "}
+              </summary>
+              <CaseTable cases={cases.slice(SHOWN_CASES)} head={false} />
+            </details>
+          ) : null}
         </div>
       ) : null}
     </section>
+  );
+}
+
+/** Rows shown before the fold: the newest decisions, then the rest on a click. */
+const SHOWN_CASES = 8;
+
+function CaseTable({ cases, head = true }: { cases: HistoryCase[]; head?: boolean }) {
+  return (
+    <div className="mt-4 overflow-x-auto">
+      {/* Fixed columns, so the folded rows line up under the shown ones. */}
+      <table className="w-full min-w-[44rem] table-fixed border-collapse text-left text-sm tabular-nums">
+        <colgroup>
+          <col className="w-[9.5rem]" />
+          <col className="w-[7rem]" />
+          <col className="w-[6.5rem]" />
+          <col />
+          <col className="w-[7rem]" />
+        </colgroup>
+        {head ? (
+          <thead>
+            <tr className="border-b-2 border-border">
+              <th className="py-1.5 pr-4 font-bold">Case </th>
+              <th className="py-1.5 pr-4 font-bold">Decided </th>
+              <th className="py-1.5 pr-4 font-bold">Outcome </th>
+              <th className="py-1.5 pr-4 font-bold">Job </th>
+              <th className="py-1.5 text-right font-bold">Offered wage </th>
+            </tr>
+          </thead>
+        ) : null}
+        <tbody>
+          {cases.map((c) => (
+            <tr key={c.caseNumber} className="border-b border-border/30 align-top">
+              <td className="py-1.5 pr-4 font-mono">
+                <a
+                  href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
+                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  {c.caseNumber}
+                </a>{" "}
+              </td>
+              <td className="py-1.5 pr-4">{c.decisionDate ?? "n/a"} </td>
+              <td className="py-1.5 pr-4 capitalize">{c.status} </td>
+              <td className="py-1.5 pr-4">
+                {c.jobTitle ?? "n/a"}
+                {c.state ? `, ${c.state}` : ""}{" "}
+              </td>
+              <td className="py-1.5 text-right">
+                {c.wage != null ? `$${formatInt(Math.round(c.wage))}` : "n/a"}{" "}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

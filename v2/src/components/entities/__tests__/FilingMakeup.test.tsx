@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import type { FacetRow } from "@/lib/turso/entityDetail";
 
-import { OccupationMix, PartyMix, StateMix } from "../FilingMakeup";
+import { groupIndustries, IndustryMix, OccupationMix, PartyMix, StateMix } from "../FilingMakeup";
 
 function facet(over: Partial<FacetRow> = {}): FacetRow {
   return {
@@ -124,5 +124,28 @@ describe("PartyMix", () => {
     );
     expect(screen.queryByRole("link", { name: "SOME EMPLOYER" })).not.toBeInTheDocument();
     expect(screen.getByText("SOME EMPLOYER")).toBeInTheDocument();
+  });
+});
+
+describe("IndustryMix", () => {
+  // Microsoft's rows, Oct 11 2026: four NAICS editions of one industry.
+  const rows = [
+    facet({ key: "513210", label: "Software Publishers", code: null, n: 4432 }),
+    facet({ key: "51121", label: "Software Publishers", code: null, n: 1801 }),
+    facet({ key: "511210", label: "Software Publishers", code: null, n: 556 }),
+    facet({ key: "541511", label: "Custom Computer Programming Services", code: null, n: 40 }),
+    facet({ key: "51321", label: "Software Publishers", code: null, n: 70 }),
+  ];
+
+  it("lists an industry once, with every code it was filed under", () => {
+    const g = groupIndustries(rows);
+    expect(g.map((r) => r.label)).toEqual(["Software Publishers", "Custom Computer Programming Services"]);
+    expect(g[0]).toEqual({ label: "Software Publishers", codes: ["513210", "51121", "511210", "51321"], n: 6859 });
+  });
+
+  it("renders the title once", () => {
+    render(<IndustryMix rows={rows} />);
+    expect(screen.getAllByText("Software Publishers")).toHaveLength(1);
+    expect(screen.getByText(/NAICS 513210, 51121, 511210, 51321/)).toBeInTheDocument();
   });
 });

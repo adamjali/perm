@@ -362,13 +362,31 @@ export function CityMix({
  * employers file under one code, so the lead is set large and any others sit
  * under it with their counts.
  */
+/**
+ * One row per industry title. DOL's files carry the NAICS code from whichever
+ * edition the form used (2007, 2012, 2017, 2022), so one industry arrives as
+ * 51121, 511210, 51321 and 513210, each titled "Software Publishers" and
+ * listed five times. The codes stay, busiest first, beside one count.
+ */
+export function groupIndustries(rows: readonly FacetRow[]): { label: string; codes: string[]; n: number }[] {
+  const by = new Map<string, { label: string; codes: string[]; n: number }>();
+  for (const r of rows) {
+    const g = by.get(r.label) ?? { label: r.label, codes: [], n: 0 };
+    if (r.key) g.codes.push(r.key);
+    g.n += r.n;
+    by.set(r.label, g);
+  }
+  return [...by.values()].sort((x, y) => y.n - x.n);
+}
+
 export function IndustryMix({
-  rows,
+  rows: given,
   className,
 }: {
   rows: FacetRow[];
   className?: string;
 }) {
+  const rows = groupIndustries(given);
   const lead = rows[0];
   if (!lead) return null;
   const rest = rows.slice(1);
@@ -386,17 +404,17 @@ export function IndustryMix({
     >
       <p className="font-heading text-xl font-black leading-tight">{lead.label}</p>{" "}
       <p className="mt-1.5 font-mono text-sm tabular-nums text-foreground/70">
-        NAICS {lead.key} &middot; {formatInt(lead.n)} filings
+        NAICS {lead.codes.join(", ")} &middot; {formatInt(lead.n)} filings
       </p>
       {rest.length > 0 ? (
         <ul className="mt-4 space-y-2 border-t-2 border-border pt-3">
           {rest.map((r) => (
-            <Fragment key={r.key ?? r.label}>
+            <Fragment key={r.label}>
               {" "}
               <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
                 <span className="min-w-0 flex-1 text-sm font-bold leading-snug">{r.label}</span>{" "}
                 <span className="font-mono text-sm tabular-nums text-foreground/70">
-                  <span className="mr-2 font-normal text-muted-foreground">{r.key}</span>
+                  <span className="mr-2 font-normal text-muted-foreground">{r.codes.join(", ")}</span>
                   {formatInt(r.n)}
                 </span>
               </li>

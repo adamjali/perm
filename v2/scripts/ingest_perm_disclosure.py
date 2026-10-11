@@ -815,6 +815,8 @@ def parse_file(
                 at = acc["byAttorney"][attorney.upper()]
                 at[outcome] += 1
                 at["days"].append(days)
+                if wage is not None:
+                    at["wages"].append(wage)
                 if not at["name"]:
                     at["name"] = attorney
                 if not at["state"]:
@@ -826,6 +828,8 @@ def parse_file(
                 em = acc["byEmployer"][employer.upper()]
                 em[outcome] += 1
                 em["days"].append(days)
+                if wage is not None:
+                    em["wages"].append(wage)
                 if not em["name"]:
                     em["name"] = employer
 
@@ -1058,6 +1062,7 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
             "certified": d["certified"],
             "denied": d["denied"],
             "medianDays": percentile(d["days"], 50),
+            "medianAnnualWage": percentile(d.get("wages", []), 50),
         }
         for d in sorted(
             merge_entities(acc["byEmployer"], lambda x: x["name"], "employer", employer_aliases),
@@ -1074,6 +1079,7 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
             "certified": d["certified"],
             "denied": d["denied"],
             "medianDays": percentile(d["days"], 50),
+            "medianAnnualWage": percentile(d.get("wages", []), 50),
         }
         for d in sorted(
             merge_entities(acc["byAttorney"], lambda x: x["name"], "attorney", attorney_aliases),
@@ -1317,8 +1323,8 @@ def main() -> int:
         "frontier": defaultdict(Counter),
         "byState": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "wages": []}),
         "bySoc": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "wages": [], "title": ""}),
-        "byEmployer": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "name": ""}),
-        "byAttorney": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "name": "", "state": ""}),
+        "byEmployer": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "wages": [], "name": ""}),
+        "byAttorney": defaultdict(lambda: {"certified": 0, "denied": 0, "withdrawn": 0, "days": [], "wages": [], "name": "", "state": ""}),
         # Denial-risk dimensions. Each holds [decided, denied].
         "riskWage": defaultdict(lambda: [0, 0]),
         "riskYear": defaultdict(lambda: [0, 0]),
