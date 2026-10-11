@@ -3,6 +3,9 @@ import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
 import { PageBasics } from "@/components/data/PageBasics";
+import { IndexHeader, IndexSearch } from "@/components/data/IndexHeader";
+import { FilingMonthBars } from "@/components/data/FilingMonthBars";
+import { formatInt } from "@/lib/format";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, LCA_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -46,63 +49,75 @@ function longDate(iso: string | null): string | null {
 
 export default async function LcaCasesPage() {
   const [summary, disclosure] = await Promise.all([getLcaSummary(), getLcaDisclosureSummary()]);
-  const earliest = summary?.byMonth.length
-    ? [...summary.byMonth].map((m) => m.month).sort()[0] ?? null
-    : null;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
-
-      <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Find an H-1B LCA
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The employer files it with DOL before the H-1B petition. Search the
-          employer to get the number, title, filing date and status.{" "}
-        </p>{" "}
-        <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
-          <div className="border-2 border-border bg-card p-4 shadow-hard">
-            <dt className="text-sm font-bold text-foreground/70">Confirmed in DOL&apos;s case status</dt>{" "}
-            <dd className="mt-1 font-heading text-3xl font-black">{summary ? summary.total.toLocaleString("en-US") : "—"}</dd>
-          </div>{" "}
-          <div className="border-2 border-border bg-card p-4 shadow-hard">
-            <dt className="text-sm font-bold text-foreground/70">Decided, with the wage offered</dt>{" "}
-            <dd className="mt-1 font-heading text-3xl font-black">{disclosure ? disclosure.rows.toLocaleString("en-US") : "—"}</dd>
-          </div>{" "}
-          <div className="border-2 border-border bg-tint-primary p-4 shadow-hard">
-            <dt className="text-sm font-bold text-foreground/70">Decisions through</dt>{" "}
-            <dd className="mt-1 font-heading text-2xl font-black">{longDate(disclosure?.latestDecision ?? null) ?? "—"}</dd>
-          </div>
-        </dl>{" "}
-        {summary && earliest ? (
-          <p className="mt-3 text-sm text-foreground/70">
-            Live rows reach back to filings from {longDate(`${earliest}-01`) ?? earliest}; the backfill keeps walking earlier days.
-          </p>
-        ) : null}
-      </header>
-
-      <section className="pop mt-8 max-w-3xl">
-        <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
-          <h2 className="font-heading text-lg font-black">What&apos;s in here, and what isn&apos;t</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            Pending LCAs come from DOL&apos;s case system, checked daily.
-            Decided ones come from DOL&apos;s quarterly files, with the wage
-            offered and the worksite.
-          </p>{" "}
-          <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-            Have the number? The{" "}
-            <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              status lookup
-            </Link>{" "}
-            takes I- numbers, asks DOL directly, and can email you when the status changes.
-          </p>
-        </div>
-      </section>
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <IndexHeader
+        title="Find an H-1B LCA"
+        lede="The employer files it with DOL before the H-1B petition. Search the employer to get the number, the job title, the filing date and the status."
+        figures={[
+          {
+            label: "Waiting at DOL now",
+            value: summary ? formatInt(summary.pending) : "—",
+            note: "DOL has seven working days to decide one",
+          },
+          {
+            label: "Decided, with the wage offered",
+            value: disclosure ? formatInt(disclosure.rows) : "—",
+            ...(longDate(disclosure?.latestDecision ?? null)
+              ? { note: `Published through ${longDate(disclosure?.latestDecision ?? null)}` }
+              : {}),
+          },
+          {
+            label: "In DOL's case-status service",
+            value: summary ? formatInt(summary.total) : "—",
+            note: "Every LCA this site has confirmed there",
+          },
+        ]}
+        aside={
+          <IndexSearch
+            title="Have the number?"
+            note="DOL is asked live, and the case page can email you when it moves."
+            action="/perm-case-status"
+            name="case"
+            button="Look it up"
+            placeholder="I-200-26188-123456"
+            footer={
+              <Link
+                href="/h1b-employers"
+                className="font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
+              >
+                The busiest H-1B employers, year by year
+              </Link>
+            }
+          />
+        }
+      />{" "}
 
       <div className="mt-10">
         <SearchParamsBoundary>
-          <FlagCaseBrowser summary={summary} disclosure={disclosure} program={LCA_PROGRAM} />
+          <FlagCaseBrowser
+            summary={summary}
+            disclosure={disclosure}
+            program={LCA_PROGRAM}
+            between={
+              summary ? (
+                <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+                  <h2 className="font-heading text-xl font-black">LCAs by the month they were filed</h2>{" "}
+                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-foreground/70">
+                    DOL has seven working days to certify an LCA (20 CFR 655.740), so only the newest
+                    filings are still waiting.
+                  </p>{" "}
+                  <FilingMonthBars
+                    className="mt-5"
+                    months={summary.byMonth}
+                    nouns="LCAs"
+                    label="LCAs by filing month, decided and still waiting"
+                  />
+                </section>
+              ) : null
+            }
+          />
         </SearchParamsBoundary>
       </div>
 
@@ -113,9 +128,10 @@ export default async function LcaCasesPage() {
             <p>DOL numbers every filing from one running counter. This site walks it two or three times a day for new filings, then re-checks each LCA until DOL decides. {" "}</p>
           </FinePrint>{" "}
           <p>
-            <b className="font-bold">Why one might be missing.</b> Watching started
-            in September 2026 and is working backwards through earlier filings. A
-            filing from today appears after the next nightly check.
+            <b className="font-bold">Why one might be missing.</b> The live record
+            is walking backwards through earlier filings, so an old one may not be
+            in it yet. A filing from today appears after the next check, which runs
+            at least twice a day.
           </p>
         </div>
       </section>

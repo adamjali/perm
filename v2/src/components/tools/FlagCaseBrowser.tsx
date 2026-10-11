@@ -165,9 +165,19 @@ function Rows({
     return cols;
   }, [withWage, wageLabel, wages, showForm]);
   const ordered = useMemo(() => sortRows(rows, columns, sort), [rows, columns, sort]);
+  // ON A PHONE EACH ROW IS A CARD. As a table, a phone saw the case number and
+  // half a status chip, then scrolled sideways past rows made tall by text it
+  // couldn't see. Below `sm` the same cells stack, one to a line: number,
+  // status, employer, title, then the dates, each with its word.
+  // CSS only, so the rows exist once and the table is unchanged from `sm` up.
   return (
-    <div className="mt-4 overflow-x-auto">
-      <table className={"w-full border-collapse text-left text-base " + (withWage ? "min-w-[1100px]" : "min-w-[820px]")}>
+    <div className="mt-4 sm:overflow-x-auto">
+      <table
+        className={
+          "w-full border-collapse text-left text-base max-sm:block max-sm:[&_thead]:hidden " +
+          (withWage ? "sm:min-w-[1100px]" : "sm:min-w-[820px]")
+        }
+      >
         <caption className="sr-only">{caption}</caption>
         <SortableHeader
           columns={columns}
@@ -175,10 +185,14 @@ function Rows({
           onSort={(k) => setSort((cur) => nextSort(cur, k, columns))}
           leading={["Case"]}
         />
-        <tbody translate="no" className="bg-card">
+        <tbody translate="no" className="bg-card max-sm:block">
           {ordered.map((r) => (
-            <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
+            <tr
+              key={r.caseNumber}
+              className="border-t-2 border-border/30 align-top max-sm:grid max-sm:grid-cols-1 max-sm:gap-y-1 max-sm:py-3 max-sm:[&>td]:p-0 max-sm:[&>td]:whitespace-normal"
+            >
+              {/* `whitespace-nowrap!`: the row's phone rule lets every other cell wrap, and a case number broken at a hyphen reads as two. */}
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-base max-sm:whitespace-nowrap! max-sm:text-sm">
                 {/* PendingLink, not Link: /perm-case-status is dynamic, and a
                     number this site does not hold is asked of DOL live at
                     around 3.5 seconds. A bare link there is three seconds of
@@ -201,26 +215,30 @@ function Rows({
                 </span>
               {" "}</td>
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
-              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-foreground/80 max-sm:text-sm">{r.jobTitle ?? ""}{" "}</td>
               {withWage ? (
-                <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
+                <td className="whitespace-nowrap px-3 py-3 font-mono text-sm max-sm:empty:hidden">
                   {formatWage(wages?.get(r.caseNumber)?.wage ?? null, wages?.get(r.caseNumber)?.wageUnit ?? null) ?? ""}{" "}
                   <YearlyPayNote wage={wages?.get(r.caseNumber)?.wage} unit={wages?.get(r.caseNumber)?.wageUnit} short />
                 {" "}</td>
               ) : null}
               {withWage ? (
-                <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
+                <td className="whitespace-nowrap px-3 py-3 font-mono text-sm max-sm:hidden">
                   {wages?.get(r.caseNumber)?.worksiteState ?? ""}
                 {" "}</td>
               ) : null}
               {withWage ? (
-                <td className="px-3 py-3 text-sm text-foreground/80">
+                <td className="px-3 py-3 text-sm text-foreground/80 max-sm:hidden">
                   {wages?.get(r.caseNumber)?.attorneyName ?? ""}
                 {" "}</td>
               ) : null}
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.filingDate ?? ""}{" "}</td>
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
-                {r.lastCheckedAt?.slice(0, 10) ?? ""}
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm max-sm:mt-1 max-sm:font-sans max-sm:text-foreground/70">
+                <span className="sm:hidden">Filed</span>{" "}
+                <span>{r.filingDate ?? ""}</span>
+              {" "}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80 max-sm:font-sans max-sm:text-foreground/70">
+                <span className="sm:hidden">Checked</span>{" "}
+                <span>{r.lastCheckedAt?.slice(0, 10) ?? ""}</span>
               {" "}</td>
             </tr>
           ))}
@@ -412,11 +430,18 @@ export function FlagCaseBrowser({
   summary,
   disclosure,
   program,
+  between,
 }: {
   summary: FlagSummary | null;
   /** The quarterly file's summary, for the "through <date>" line. */
   disclosure?: FlagDisclosureSummary | null;
   program: FlagBrowserProgram;
+  /**
+   * Drawn between the employer search and the browse list: the page's own
+   * picture of the record, below the box most visitors came for and above
+   * the long list.
+   */
+  between?: React.ReactNode;
 }) {
   const KIND_LABEL: Record<FlagKind, string> = {
     all: "All",
@@ -716,6 +741,7 @@ export function FlagCaseBrowser({
         for the PERM, the wage request, the LCA and any H-2A, H-2B or CW-1 filing side by side.
       </p>
 
+      {between}{" "}
       <section id="browse" ref={browseTop} className="scroll-mt-28 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <h2 className="font-heading text-xl font-black">Browse every {program.noun} DOL has confirmed</h2>{" "}
         {summary ? (

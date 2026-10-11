@@ -3,6 +3,11 @@ import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
 import { PageBasics } from "@/components/data/PageBasics";
+import { IndexHeader, IndexSearch } from "@/components/data/IndexHeader";
+import { FilingMonthBars } from "@/components/data/FilingMonthBars";
+import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { dolPwdNow } from "@/lib/dolNow";
+import { formatInt } from "@/lib/format";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, PWD_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -53,70 +58,86 @@ function longDate(iso: string | null): string | null {
 }
 
 export default async function PwdCasesPage() {
-  const [summary, disclosure] = await Promise.all([getPwdSummary(), getPwdDisclosureSummary()]);
-  // byMonth is busiest-first from the doc; the earliest month is the oldest
-  // filing the table has reached, which is what "since when" means here.
-  const earliest = summary?.byMonth.length
-    ? [...summary.byMonth].map((m) => m.month).sort()[0] ?? null
-    : null;
+  const [summary, disclosure, times] = await Promise.all([
+    getPwdSummary(),
+    getPwdDisclosureSummary(),
+    getProcessingTimes().catch(() => null),
+  ]);
+  // DOL's own position in the PERM wage-request line: the month it is issuing
+  // determinations on, from its processing-times page.
+  const now = dolPwdNow(times);
+  const frontier = (times?.pwdQueues ?? []).find((q) => q.program.toUpperCase() === "PERM")?.oewsReceiptDate ?? null;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
-
-      <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Find a prevailing wage request
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The employer files it months before the PERM and you rarely see its
-          number. Search the employer to get it.
-        </p>{" "}
-        <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
-          <div className="border-2 border-border bg-card p-4 shadow-hard">
-            <dt className="text-sm font-bold text-foreground/70">Pending, from DOL&apos;s case status</dt>{" "}
-            <dd className="mt-1 font-heading text-3xl font-black">{summary ? summary.pending.toLocaleString("en-US") : "—"}</dd>
-          </div>{" "}
-          <div className="border-2 border-border bg-card p-4 shadow-hard">
-            <dt className="text-sm font-bold text-foreground/70">Decided, with the wage set</dt>{" "}
-            <dd className="mt-1 font-heading text-3xl font-black">{disclosure ? disclosure.rows.toLocaleString("en-US") : "—"}</dd>
-          </div>{" "}
-          <div className="border-2 border-border bg-tint-primary p-4 shadow-hard">
-            <dt className="text-sm font-bold text-foreground/70">Decisions through</dt>{" "}
-            <dd className="mt-1 font-heading text-2xl font-black">{longDate(disclosure?.latestDecision ?? null) ?? "—"}</dd>
-          </div>
-        </dl>{" "}
-        {summary && earliest ? (
-          <p className="mt-3 text-sm text-foreground/70">
-            Live rows reach back to filings from {longDate(`${earliest}-01`) ?? earliest}; the backfill keeps walking earlier days.
-          </p>
-        ) : null}
-      </header>
-
-      <section className="pop mt-8 max-w-3xl">
-        <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
-          <h2 className="font-heading text-lg font-black">What&apos;s in here, and what isn&apos;t</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            Pending requests come from DOL&apos;s case system, checked daily.
-            Decided ones come from DOL&apos;s quarterly files, with the wage.
-            H-1B and H-2B wage requests are left out; this is the PERM queue.
-          </p>{" "}
-          <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-            Have the number?{" "}
-            <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              status lookup
-            </Link>{" "}
-            takes P- numbers, asks DOL directly, and can email you when the status changes. The{" "}
-            <Link href="/tools/pwd-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              PWD queue calculator
-            </Link>{" "}
-            shows DOL&apos;s position month by month.
-          </p>
-        </div>
-      </section>
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <IndexHeader
+        title="Find a prevailing wage request"
+        lede="The employer files it months before the PERM, and you rarely see its number. Search the employer to find it."
+        figures={[
+          {
+            label: "Waiting at DOL now",
+            value: summary ? formatInt(summary.pending) : "—",
+            note: "From DOL's case-status service",
+          },
+          {
+            label: "Decided, with the wage set",
+            value: disclosure ? formatInt(disclosure.rows) : "—",
+            ...(longDate(disclosure?.latestDecision ?? null)
+              ? { note: `Published through ${longDate(disclosure?.latestDecision ?? null)}` }
+              : {}),
+          },
+          {
+            label: "DOL is deciding requests filed in",
+            value: now.frontier ?? "—",
+            href: "/tools/pwd-calculator",
+            ...(now.asOf ? { note: `As of ${now.asOf}` } : {}),
+          },
+        ]}
+        aside={
+          <IndexSearch
+            title="Have the number?"
+            note="DOL is asked live, and the case page can email you when it moves."
+            action="/perm-case-status"
+            name="case"
+            button="Look it up"
+            placeholder="P-100-26140-123456"
+            footer={
+              <Link
+                href="/case-search"
+                className="font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
+              >
+                Every filing an employer has made, in one search
+              </Link>
+            }
+          />
+        }
+      />{" "}
 
       <div className="mt-10">
         <SearchParamsBoundary>
-          <FlagCaseBrowser summary={summary} disclosure={disclosure} program={PWD_PROGRAM} />
+          <FlagCaseBrowser
+            summary={summary}
+            disclosure={disclosure}
+            program={PWD_PROGRAM}
+            between={
+              summary ? (
+                <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+                  <h2 className="font-heading text-xl font-black">Where DOL is in the line</h2>{" "}
+                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-foreground/70">
+                    Wage requests by the month they were filed, from DOL&apos;s case-status service.
+                    {now.frontier ? ` DOL is issuing determinations on ${now.frontier}.` : ""}
+                  </p>{" "}
+                  <FilingMonthBars
+                    className="mt-5"
+                    months={summary.byMonth}
+                    frontier={frontier}
+                    nouns="wage requests"
+                    label="Wage requests by filing month, decided and still waiting"
+                  />
+                </section>
+              ) : null
+            }
+          />
         </SearchParamsBoundary>
       </div>
 
@@ -125,7 +146,7 @@ export default async function PwdCasesPage() {
         <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
           <p>
             <b className="font-bold">Why a request might be missing.</b> One filed
-            today appears after tonight&apos;s check. A pending one from before the
+            today appears after the next check, which runs at least twice a day. A pending one from before the
             backfill&apos;s reach is absent until the walk gets there. A decided one
             outside the quarterly files loaded here has no wage yet.
           </p>{" "}
