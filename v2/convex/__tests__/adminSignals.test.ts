@@ -105,7 +105,7 @@ describe("adminSignals.getSignals", () => {
     // "1 subscriber" for a typo'd address that never confirmed would be
     // reading a number that is not true.
     expect(s.subscriptions.queueAlerts[0]).toMatchObject({
-      subject: "PWD OEWS · 2025-11",
+      subject: "Wage requests (OEWS), November 2025",
       status: "pending",
     });
     expect(s.subscriptions.news[0]).toMatchObject({ status: "unsubscribed", unsubscribedAt: now });

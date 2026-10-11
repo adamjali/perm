@@ -17,6 +17,7 @@
  */
 
 import { v } from "convex/values";
+import { monthLabel } from "./lib/newsletterCompose";
 import { summarizeNewsletter } from "./lib/newsletterSummary";
 import { adminSummaryValidator } from "./lib/newsletterValidators";
 
@@ -151,7 +152,7 @@ export const getSignals = query({
     const queueAlerts = (await ctx.db.query("dolQueueAlerts").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
       (r): SignalSub => ({
         email: r.email,
-        subject: `${r.queue === "pwd-oews" ? "PWD OEWS" : r.queue === "pwd-nonoews" ? "PWD non-OEWS" : "PERM queue"} · ${r.filingMonth}`,
+        subject: `${r.queue === "pwd-oews" ? "Wage requests (OEWS)" : r.queue === "pwd-nonoews" ? "Wage requests (non-OEWS)" : "PERM queue"}, ${monthLabel(r.filingMonth)}`,
         status: status(r),
         createdAt: r._creationTime,
         lastNotifiedAt: r.notifiedAt ?? null,
@@ -163,7 +164,7 @@ export const getSignals = query({
     const bulletinAlerts = (await ctx.db.query("bulletinAlerts").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
       (r): SignalSub => ({
         email: r.email,
-        subject: `Bulletin ${r.category} · ${r.country}`,
+        subject: `Visa bulletin, ${r.category} ${r.country}`,
         status: status(r),
         createdAt: r._creationTime,
         lastNotifiedAt: r.lastAlertSentAt ?? null,

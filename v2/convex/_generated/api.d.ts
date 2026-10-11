@@ -84,6 +84,7 @@ import type * as lib_dashboardHelpers from "../lib/dashboardHelpers.js";
 import type * as lib_dashboardTypes from "../lib/dashboardTypes.js";
 import type * as lib_dateTypes from "../lib/dateTypes.js";
 import type * as lib_dateValidation from "../lib/dateValidation.js";
+import type * as lib_deadlineDigestWords from "../lib/deadlineDigestWords.js";
 import type * as lib_deadlineEnforcementHelpers from "../lib/deadlineEnforcementHelpers.js";
 import type * as lib_deadlineTypeMapping from "../lib/deadlineTypeMapping.js";
 import type * as lib_deletion from "../lib/deletion.js";
@@ -301,6 +302,7 @@ declare const fullApi: ApiFromModules<{
   "lib/dashboardTypes": typeof lib_dashboardTypes;
   "lib/dateTypes": typeof lib_dateTypes;
   "lib/dateValidation": typeof lib_dateValidation;
+  "lib/deadlineDigestWords": typeof lib_deadlineDigestWords;
   "lib/deadlineEnforcementHelpers": typeof lib_deadlineEnforcementHelpers;
   "lib/deadlineTypeMapping": typeof lib_deadlineTypeMapping;
   "lib/deletion": typeof lib_deletion;

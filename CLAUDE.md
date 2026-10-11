@@ -627,3 +627,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026".
 - **Statuses come from DOL directly, I-203 is the E-3 LCA**: two wrong claims corrected on the site and in alert emails.
 - **Hovered lime text uses the lime ink in light mode** (it was 2.05:1 on paper across 151 files).
 
+
+## Oct 11 2026 (morning), in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (morning)".
+
+- **Every email, notification, toast and confirmation reads in one voice**, gated by `email-voice.test.ts`; times in emails are Eastern.
+- **DOL's wage-request wait is read live** in articles (`<DolNow show="pwd" />`); the typed "4 to 7 months" is gone and gated.
+- **The health check lists units stopped after an error**, judges the database folder by sqld's own rules, and warns on swap only when it moves.
+- **The demo account's alerts no longer loop through the support forward**; the contact form still reaches support.

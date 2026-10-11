@@ -9401,3 +9401,47 @@ light mode (they were 2.05:1 on paper, in 151 files).
 
 **A stale Turbopack cache makes every nested route 404 on the dev server**: stop it, `rm -rf
 .next/dev`, start again.
+
+## Oct 11 2026 (morning): everything that goes out, and server checks that tell the truth
+
+**Every email, notification, toast and confirmation reads in one voice** (owner: "ANY and any and all notis
+and anything that would go out"). Commit 5ce5781f.
+- **24 email templates**: sentence-case subjects, previews and buttons, no emoji, shouting or exclamation
+  marks. `src/emails/__tests__/email-voice.test.ts` renders every template and fails on any of them, and on
+  a Convex subject in title case; probed red with each. **A template's sample props never cover every
+  branch**: the weekly digest's empty message lives in `convex/lib/digestHelpers.ts`, which the gate can't see.
+- **The deadline digest's subject and preview** come from `convex/lib/deadlineDigestWords.ts` ("1 PERM
+  deadline needs your attention", "3 PERM deadlines need attention, 1 overdue"); its first version printed
+  "1 PERM 1 deadline", caught by its test.
+- **Times in emails are Eastern** (`emailStamp` in `convex/lib/time.ts`): Convex runs on UTC, and admin
+  notices had printed UTC with no zone.
+- **The demo account's deadline alerts stopped looping through support**: `shouldForwardInbound` drops mail
+  from `notifications@` unless it was sent to `support@` on purpose (the contact form does exactly that,
+  so a blanket own-sender rule would have silenced it; tested).
+- **In-app text**: errors say "Couldn't save the case. Try again." (one form, with the article), successes
+  drop "successfully", the chat's delete confirmations stop shouting, the reopen toast names the progress
+  label (`formatProgressStatus`, never a raw key). **Rewrite user-facing strings only in their user-facing
+  context** (`toast.*(`, `userMessage:`, the `caseWriteErrorMessage` fallback): a repo-wide `Failed to`
+  replace also hit developer log lines and Sentry's filter for the browser's own "Failed to fetch".
+
+**DOL's wage-request wait is read live** (`dolPwdNow`, `pwdSentence`, `pwdWaitPhrase` in `lib/dolNow.ts`;
+`<DolNow show="pwd" | "pwdWait" | "pwdMonth" />`). Seven places typed "4 to 7 months"; on Sep 30 2026 DOL was
+deciding PERM wage requests filed in June 2026, 3 to 4 months on (the wait is measured from the first and
+the last day of DOL's month to its date). `no-typed-dol-average.test.ts` catches a typed wage-request range,
+with a recruitment-period range as its must-not-match control. Article callouts take a live figure in
+`stat=`, use Phosphor icons for their type, and their titles are sentence case.
+
+**Server checks** (installed by hand, each server copy's sha checked against the repo):
+- **`permtracker-health` lists units stopped after an error** (`stoppedUnits`): `Restart=always` with
+  systemd's default start limit leaves a unit `inactive (Result: exit-code)`, which `systemctl --failed`
+  misses. pmlogger sat like that from Oct 10 5:31 AM to Oct 11 8:58 AM EDT, so the PCP archive has a gap
+  there. The PCP drop-in now restarts every 60 s with no start limit.
+- **The database folder is judged by sqld's own rules**, not a ratio to the data file: snapshots are merged
+  at twice the data, the log is compacted at 4.1 GB (`--max-log-size 4096`), so up to about 3x the data
+  plus one log is normal. The morning report prints each part.
+- **Swap warns only when it's moving** (pages a second from `/proc/vmstat`) or memory is short; idle swap
+  is a line, not a warning.
+- **The alarm's all-clear says what cleared** ("the disk is no longer on course to fill"), and the defense's
+  emails open with their Eastern time.
+- **The morning report scores wage-request dates per live method** (`pwd-day`, `pwd-queue`), leaving out
+  retired ones (`RETIRED_METHODS`, held to `src/lib/scorecard/verdict.ts` by its test).
