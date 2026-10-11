@@ -1,6 +1,7 @@
-import { Fragment } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
+import { TapeReveal } from "@/components/tools/TapeReveal";
 import { cn } from "@/lib/utils";
 
 /**
@@ -26,6 +27,8 @@ export interface QueueTapeProps {
   /** Months to draw before the frontier. Cleared territory. */
   monthsBehind?: number;
   className?: string;
+  /** Fill the cleared months in, once, when the tape first scrolls into view (TapeReveal). */
+  reveal?: boolean;
 }
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -67,6 +70,7 @@ export function QueueTape({
   monthsAhead = 10,
   monthsBehind = 8,
   className,
+  reveal = false,
 }: QueueTapeProps) {
   const months: string[] = [];
   for (let i = -monthsBehind; i <= monthsAhead; i += 1) {
@@ -93,6 +97,7 @@ export function QueueTape({
       {/* The tooltip sits outside the scrolling strip, which would clip it. */}
       <ChartTips label="DOL's PERM queue by filing month">
       <div className={cn("-mx-1 overflow-x-auto px-1", flagsCollide ? "pt-14" : "pt-7")}>
+        <Reveal on={reveal}>
         <div
           className="relative grid min-w-[560px] border-2 border-border shadow-hard-sm"
           style={{ gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))` }}
@@ -107,11 +112,18 @@ export function QueueTape({
                 data-tip={tipFor(m, months.indexOf(m) - frontierAt, isYou)}
                 className={cn(
                   "relative flex h-16 items-end justify-center border-r border-border/30 pb-1 last:border-r-0",
-                  cleared && "bg-primary",
-                  isFrontier && "bg-primary/80",
-                  !cleared && !isFrontier && "bg-card",
+                  !reveal && cleared && "bg-primary",
+                  !reveal && isFrontier && "bg-primary/80",
+                  (reveal || (!cleared && !isFrontier)) && "bg-card",
                 )}
               >
+                {reveal && (cleared || isFrontier) ? (
+                  <span
+                    aria-hidden="true"
+                    className={cn("qt-fill absolute inset-0", isFrontier ? "bg-primary/80" : "bg-primary")}
+                    style={{ "--i": months.indexOf(m) } as CSSProperties}
+                  />
+                ) : null}
                 {/* Tick */}
                 <span
                   aria-hidden="true"
@@ -122,7 +134,7 @@ export function QueueTape({
                 />
                 <span
                   className={cn(
-                    "font-mono text-sm font-bold leading-none",
+                    "relative font-mono text-sm font-bold leading-none",
                     cleared || isFrontier ? "text-black/80" : "text-muted-foreground",
                     // Room is tight: label every other month, ends always.
                     months.indexOf(m) % 2 !== 0 &&
@@ -135,7 +147,13 @@ export function QueueTape({
                     and would glue for every DOM extractor. */}
                 {" "}
                 {isFrontier ? (
-                  <span className="absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-foreground px-1.5 py-0.5 font-mono text-sm font-bold uppercase tracking-wider text-background">
+                  <span
+                    className={cn(
+                      "absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-foreground px-1.5 py-0.5 font-mono text-sm font-bold uppercase tracking-wider text-background",
+                      reveal && "qt-flag",
+                    )}
+                    style={reveal ? ({ "--i": frontierAt } as CSSProperties) : undefined}
+                  >
                     DOL is here
                   </span>
                 ) : null}
@@ -162,6 +180,7 @@ export function QueueTape({
             );
           })}
         </div>
+        </Reveal>
       </div>
       </ChartTips>
       <figcaption className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground/70">
@@ -176,4 +195,9 @@ export function QueueTape({
       </figcaption>
     </figure>
   );
+}
+
+/** The reveal wrapper only where asked for, so other pages keep a plain tape. */
+function Reveal({ on, children }: { on: boolean; children: ReactNode }) {
+  return on ? <TapeReveal>{children}</TapeReveal> : <>{children}</>;
 }

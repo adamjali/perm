@@ -184,6 +184,7 @@ export function LiveDataBand({
           className="mt-8"
           monthsBehind={6}
           monthsAhead={8}
+          reveal
         />{" "}
         {children ? <div className="mt-8">{children}</div> : null}
 

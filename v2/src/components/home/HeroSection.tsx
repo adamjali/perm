@@ -1,5 +1,6 @@
 import { ABOUT_ONE_LINER } from "@/lib/constants/about";
 import Link from "next/link";
+import { CalendarCheckIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 import { Fragment } from "react";
 import type { ReactNode } from "react";
 
@@ -209,11 +210,20 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
             )}
           </h1>{" "}
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80 sm:text-lg">
-            {ABOUT_ONE_LINER}{" "}
-            Free on both sides: a lookup of any PERM, wage request, LCA, H-2A
-            or H-2B case, and a case-management app for attorneys, paralegals and
-            HR teams.
+            {ABOUT_ONE_LINER}
           </p>{" "}
+          {/* The two halves as two short lines, so both audiences are named
+              under the H1 without a paragraph pushing the lookup down. */}
+          <ul aria-label="Free on both sides" className="mt-3 flex max-w-2xl flex-col gap-1.5 text-base font-semibold sm:text-lg">
+            <li className="flex items-start gap-2.5">
+              <MagnifyingGlassIcon size={20} weight="bold" aria-hidden="true" className="mt-[0.2em] shrink-0 text-primary-text" />
+              <span>A lookup of any PERM, wage request, LCA, H-2A or H-2B case{" "}</span>
+            </li>{" "}
+            <li className="flex items-start gap-2.5">
+              <CalendarCheckIcon size={20} weight="bold" aria-hidden="true" className="mt-[0.2em] shrink-0 text-primary-text" />
+              <span>A case-management app for attorneys, paralegals and HR teams{" "}</span>
+            </li>
+          </ul>{" "}
           <form
             action="/perm-case-status"
             method="get"

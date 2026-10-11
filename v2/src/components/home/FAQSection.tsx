@@ -10,9 +10,9 @@
  */
 
 import * as React from "react";
-import { CaretDownIcon, QuestionIcon as HelpCircle } from "@phosphor-icons/react";
+import Link from "next/link";
+import { ArrowRightIcon, CaretDownIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { HOME_FAQS, type HomeFaqItem } from "./faqData";
 
 
@@ -81,7 +81,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
       >
         <div ref={contentRef} className="overflow-hidden">
           <div className="border-t-2 border-border px-5 pb-5 pt-5">
-            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base sm:leading-7">
+            <p className="text-base leading-7 text-foreground/80">
               {item.rich}
             </p>
           </div>
@@ -100,22 +100,26 @@ export function FAQSection() {
   };
 
   return (
-    <section id="faq" className="relative bg-card py-16 sm:py-24">
-      {/* Content container */}
-      <div className="mx-auto max-w-[800px] px-4 sm:px-8">
-        {/* Section header */}
-        <ScrollReveal direction="up" className="mb-10 text-center sm:mb-12">
-          <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
-            <HelpCircle className="h-3.5 w-3.5" />
-            Common Questions
-          </div>{" "}
-          <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
-            FAQ
-          </h2>
-        </ScrollReveal>
-
-        {/* FAQ accordion list - single stagger container */}
-        <ScrollReveal direction="up" stagger className="flex flex-col gap-4">
+    <section id="faq" aria-labelledby="faq-h" className="relative bg-card py-16 sm:py-24">
+      {/* Two columns from lg: the heading and the way to every other
+          question on the left, the answers on the right. */}
+      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-8 px-4 [&>*]:min-w-0 sm:px-8 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-14">
+        <div>
+          <h2 id="faq-h" className="font-heading text-3xl font-black tracking-tight sm:text-4xl">
+            Questions about PERM Tracker
+          </h2>{" "}
+          <p className="mt-3 max-w-sm text-base leading-relaxed text-foreground/80 sm:text-lg">
+            About the site and the app. How PERM itself works has its own page.
+          </p>{" "}
+          <Link
+            href="/faq"
+            className="mt-5 inline-flex min-h-11 items-center gap-2 font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary-text"
+          >
+            Every question about PERM
+            <ArrowRightIcon size={18} weight="bold" aria-hidden="true" />
+          </Link>
+        </div>{" "}
+        <div className="flex flex-col gap-4">
           {HOME_FAQS.map((item, index) => (
             <FAQAccordionItem
               key={index}
@@ -125,7 +129,7 @@ export function FAQSection() {
               onToggle={() => handleToggle(index)}
             />
           ))}
-        </ScrollReveal>
+        </div>
       </div>
     </section>
   );
