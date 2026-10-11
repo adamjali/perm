@@ -397,11 +397,29 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           ))}
         </div>
       ) : (
+        // BEFORE A DATE, THE DATES IT WILL FILL: each deadline the calculator
+        // works out, named, with a hatched space where its date goes. The
+        // sentence says which box unlocks which rows.
         <div className="p-6 sm:p-8">
           <p className="text-base leading-relaxed text-foreground/70">
             Enter the prevailing wage determination date to see the dates it
             fixes. Add the first recruitment step for the full set.
-          </p>
+          </p>{" "}
+          <ol aria-hidden="true" className="mt-5 divide-y-2 divide-dashed divide-foreground/20 border-2 border-dashed border-foreground/30">
+            {[
+              "Prevailing wage determination expires",
+              "Notice of filing must be posted by",
+              "State job order must start by",
+              "First Sunday advertisement by",
+              "ETA-9089 filing window opens",
+              "ETA-9089 filing window closes",
+            ].map((label) => (
+              <li key={label} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
+                <span className="text-sm font-bold text-foreground/70">{label}</span>{" "}
+                <span className="h-6 w-36 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+              </li>
+            ))}
+          </ol>
         </div>
       )}
 

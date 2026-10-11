@@ -42,6 +42,45 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
   const span = Math.ceil(top / 60) * 60;
   const pct = (d: number) => `${Math.min(100, (d / span) * 100)}%`;
 
+  // NO STEP MEASURED YET: one chain of the steps, each with how many reports
+  // it holds of the five a median needs, instead of the same sentence once a
+  // step. Every row is still listed, so a reader sees what will be measured.
+  if (measured.length === 0) {
+    return (
+      <div className="border-2 border-dashed border-foreground/40 p-4 sm:p-5">
+        <p className="text-base text-foreground/70">
+          {`No step has the ${METRIC_MIN_N} reports a median needs yet. Each fills in as timelines arrive.`}
+        </p>{" "}
+        <ol className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+          {metrics.map((m, i) => (
+            <Fragment key={m.id}>
+              {" "}
+              <li className="flex items-start gap-3 border-2 border-border bg-card p-3">
+                <span className="flex size-7 shrink-0 items-center justify-center border-2 border-border font-mono text-sm font-bold">
+                  {i + 1}
+                </span>{" "}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold">{m.label}</span>{" "}
+                  <span aria-hidden="true" className="mt-2 flex gap-1">
+                    {Array.from({ length: METRIC_MIN_N }, (_, k) => (
+                      <span
+                        key={k}
+                        className={cn("h-2 flex-1 border border-border", k < m.n ? "bg-primary" : "bg-foreground/10")}
+                      />
+                    ))}
+                  </span>{" "}
+                  <span className="mt-1 block text-sm text-foreground/70">
+                    {`${Math.min(m.n, METRIC_MIN_N)} of ${METRIC_MIN_N} reports`}
+                  </span>
+                </span>
+              </li>
+            </Fragment>
+          ))}
+        </ol>
+      </div>
+    );
+  }
+
   return (
     <ChartTips label="Days each stage took, the median and the middle half">
     <ul className="grid grid-cols-1 gap-3">
