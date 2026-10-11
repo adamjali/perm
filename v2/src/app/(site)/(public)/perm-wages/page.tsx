@@ -38,6 +38,9 @@ import { DenialByWageBand } from "@/components/wages/DenialByWageBand";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
+import { formatInt } from "@/lib/format";
+import { IndexHeader, IndexSearch } from "@/components/data/IndexHeader";
+import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { formatDollars } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
 const TITLE = "PERM Salaries by Occupation";
@@ -98,6 +101,14 @@ export default async function PermWagesPage() {
     occupations.filter((o) => o.code).map((o) => [o.code as string, o.slug]),
   );
 
+  const chapters: ChapterItem[] = [
+    ...(ladder ? [{ id: "ladder", label: "The ladder" }] : []),
+    ...(ladders.length > 0 ? [{ id: "by-job", label: "By job" }] : []),
+    ...(bandsPooled.length > 0 ? [{ id: "denials", label: "Denials by wage" }] : []),
+    { id: "all", label: `All ${formatInt(occupationCount)}` },
+    { id: "a-z", label: "A to Z" },
+  ];
+
   const datasetSchema = getDatasetSchema(SITE_URL, {
     name: "PERM offered wages by occupation",
     description: DESCRIPTION,
@@ -105,22 +116,50 @@ export default async function PermWagesPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={datasetSchema} />
 
-      <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          What PERM cases pay
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          What each employer committed to pay, on the federal filing itself.
-        </p>
-      </header>
+      <IndexHeader
+        title="What PERM cases pay"
+        lede="What each employer committed to pay, on the federal filing itself."
+        figures={[
+          ...(ladder?.p50 != null
+            ? [{ label: "The median certified offer", value: formatDollars(ladder.p50), note: `of ${formatInt(ladder.count)} cases` }]
+            : []),
+          { label: "Occupations", value: formatInt(occupationCount) },
+          ...(overallMedian != null
+            ? [
+                {
+                  label: "The middle occupation",
+                  value: formatDollars(overallMedian),
+                  note: "Lower: most jobs are small, and the biggest pay best",
+                },
+              ]
+            : []),
+        ]}
+        aside={
+          <IndexSearch
+            title="Find a job"
+            action="/perm-wages#all"
+            placeholder="Software developer, nurse"
+            note="Each occupation's page has its wage ladder, its employers and BLS's market pay."
+            footer={
+              <>
+                Have an offer?{" "}
+                <Link href="/tools/compare-my-offer" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  See where it falls
+                </Link>
+              </>
+            }
+          />
+        }
+      />
 
       {occupations.length > 0 ? (
         <>
+          <ChapterNav items={chapters} className="mt-10" />
           {ladder ? (
-            <section className="mt-10 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
+            <section id="ladder" className="mt-10 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
               <h2 className="font-heading text-2xl font-black">
                 The whole wage ladder
               </h2>{" "}
@@ -168,7 +207,8 @@ export default async function PermWagesPage() {
                 </>
               }
               source="DOL PERM disclosure files, certified cases only"
-              className="mt-10"
+              className="mt-10 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]"
+              id="by-job"
             >
               <LadderCombViews
                 label="Wage ladder by occupation"
@@ -189,30 +229,15 @@ export default async function PermWagesPage() {
               subject="Certified and denied cases, by fiscal year"
               caption="Measured rates, each with the decided cases behind it. Nothing here says what a particular wage does to a particular case."
               source="DOL PERM disclosure files"
-              className="mt-10"
+              className="mt-10 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]"
+              id="denials"
             >
               <DenialByWageBand byYear={bandsByYear} pooled={bandsPooled} />
             </FigurePlate>
           ) : null}
 
-          {overallMedian != null ? (
-            <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-              <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-                <p className="font-heading text-4xl font-black tabular-nums sm:text-5xl">
-                  {formatDollars(overallMedian)}
-                </p>{" "}
-                <p className="max-w-md text-base leading-relaxed text-foreground/70">
-                  Median of the occupation medians, across all{" "}
-                  {occupationCount.toLocaleString("en-US")} occupations. It sits
-                  well below the median case: most occupations are small, and
-                  the largest are the best paid.
-                </p>
-              </div>
-            </section>
-          ) : null}
-
-          <section className="mt-12">
-            <h2 className="font-heading text-2xl font-black">
+          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-foreground pt-4">
+            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">
               All {occupationCount.toLocaleString("en-US")} occupations
             </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
@@ -227,7 +252,9 @@ export default async function PermWagesPage() {
               filtered in the browser, so a crawler sees the server-rendered
               seed links and none of the other occupation pages. The A-Z strip
               is the crawlable path to all of them. */}
-          <BrowseTeaser kind="occupation" className="mt-12" />
+          <div id="a-z" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+            <BrowseTeaser kind="occupation" />
+          </div>
         </>
       ) : (
         <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">

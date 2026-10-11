@@ -22,6 +22,9 @@ import { fetchEntitySeed } from "@/lib/entitySeed";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
+import { IndexHeader, IndexSearch } from "@/components/data/IndexHeader";
+import { Chapter } from "@/components/entities/Chapter";
+import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { formatInt } from "@/lib/format";
 import { SITE_URL } from "@/lib/constants/site";
 const TITLE = "PERM Law Firms by Cases and Approval Rate";
@@ -59,6 +62,13 @@ export default async function PermAttorneysPage() {
 
   const topTen = attorneys.slice(0, 10);
   const maxTotal = Math.max(1, ...topTen.map((a) => a.total));
+  const topTenTotal = topTen.reduce((n, a) => n + a.total, 0);
+  const leader = topTen[0] ?? null;
+  const chapters: ChapterItem[] = [
+    { id: "busiest", label: "Busiest" },
+    { id: "all", label: `All ${formatInt(firmCount)}` },
+    { id: "a-z", label: "A to Z" },
+  ];
 
   const datasetSchema = getDatasetSchema(SITE_URL, {
     name: "PERM labor certification filings by law firm",
@@ -67,25 +77,58 @@ export default async function PermAttorneysPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={datasetSchema} />
 
-      <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Who files the most PERM cases
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          Every PERM filing names the firm that made it. All
-          {" "}{firmCount.toLocaleString("en-US")} of them.
-        </p>
-      </header>
+      <IndexHeader
+        title="Who files the most PERM cases"
+        lede="Every PERM filing names the firm that made it, so DOL's published files rank the whole field."
+        figures={[
+          { label: "Firms in DOL's files", value: formatInt(firmCount) },
+          ...(leader
+            ? [
+                {
+                  label: "Files the most",
+                  value: leader.name,
+                  ...(leader.slug ? { href: `/perm-attorneys/${leader.slug}` } : {}),
+                  note: `${formatInt(leader.total)} filings`,
+                },
+              ]
+            : []),
+          ...(topTen.length === 10
+            ? [{ label: "The ten busiest, together", value: formatInt(topTenTotal), note: "filings" }]
+            : []),
+        ]}
+        aside={
+          <IndexSearch
+            title="Find a law firm"
+            action="/perm-attorneys#all"
+            placeholder="Fragomen, Berry Appleman"
+            note="The start of the name is enough; a firm DOL spells several ways counts once."
+            footer={
+              <>
+                Looking for a sponsor instead?{" "}
+                <Link href="/perm-employers" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  Every employer
+                </Link>
+              </>
+            }
+          />
+        }
+      />
 
       {attorneys.length > 0 ? (
         <>
-          <section className="pop mt-10">
+          <ChapterNav items={chapters} className="mt-10" />
+
+          <Chapter
+            id="busiest"
+            title="The ten busiest firms"
+            dek="Approval rates cluster above 99% across every firm on this list, so the ranking is by volume alone."
+          >
+          <section className="pop mt-6">
             <div className="border-2 border-border bg-card p-6 sm:p-8">
-              <h2 className="font-heading text-xl font-black">The ten busiest firms</h2>
-              <ChartTips label="The ten busiest firms, by filings" className="mt-6">
+              <ChartTips label="The ten busiest firms, by filings">
               <div className="space-y-3">
                 {topTen.map((a) => (
                   <div
@@ -121,15 +164,12 @@ export default async function PermAttorneysPage() {
                 ))}
               </div>
               </ChartTips>
-              <p className="mt-5 text-sm text-foreground/60">
-                Approval rates cluster above 99% across every firm on this
-                list, so the ranking is by volume alone.
-              </p>
             </div>
           </section>
+          </Chapter>
 
-          <section className="mt-12">
-            <h2 className="font-heading text-2xl font-black">
+          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-foreground pt-4">
+            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">
               All {firmCount.toLocaleString("en-US")} firms
             </h2>{" "}
             {/* The consequence stays visible because it changes how a row is
@@ -154,7 +194,9 @@ export default async function PermAttorneysPage() {
               filtered in the browser, so a crawler sees the server-rendered
               seed links and none of the other firm pages. The A-Z strip is
               the crawlable path to all of them. */}
-          <BrowseTeaser kind="attorney" className="mt-12" />
+          <div id="a-z" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+            <BrowseTeaser kind="attorney" />
+          </div>
         </>
       ) : (
         <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">

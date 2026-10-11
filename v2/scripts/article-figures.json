@@ -35,7 +35,7 @@
  "blog/what-law-firm-volume-tells-you/practice": {
   "capture": {
    "url": "/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp",
-   "clip": "h:The practice, in their own filings"
+   "clip": "h:The practice"
   },
   "credit": "Screenshot of permtracker.app, October 11, 2026",
   "alt": "Fragomen's page: the employers it files for, led by Apple, Intel and Tata Consultancy Services, with the jobs and the states its cases are in"
@@ -76,7 +76,7 @@
  "guides/look-up-a-sponsor/before-perm": {
   "capture": {
    "url": "/perm-employers/microsoft-corporation",
-   "clip": "h:Before the PERM"
+   "clip": "h:Its newest wage requests and LCAs"
   },
   "credit": "Screenshot of permtracker.app, October 11, 2026",
   "alt": "Microsoft's newest wage requests and H-1B LCAs, each with its case number, job, date and status"
@@ -165,10 +165,10 @@
  "blog/what-an-employers-perm-record-shows/live-filings": {
   "capture": {
    "url": "/perm-employers/microsoft-corporation",
-   "clip": "h:Latest filings, live from DOL"
+   "clip": "h:Its newest filings"
   },
   "credit": "Screenshot of permtracker.app, October 11, 2026",
-  "alt": "Microsoft's newest PERM filings from DOL's daily check, each with its case number, job and status"
+  "alt": "Microsoft's newest PERM filings from DOL's case-status service, each with its case number, job and status"
  },
  "guides/the-data-pages-and-what-each-answers/sponsor-finder": {
   "capture": {
@@ -213,7 +213,7 @@
  "guides/check-perm-received-without-receipt/employer-search": {
   "capture": {
    "url": "/perm-cases",
-   "clip": "from:Live from DOL's daily check",
+   "clip": "from:Live from DOL's case-status service",
    "maxHeight": 1000,
    "wait": 4000,
    "fill": [
@@ -305,7 +305,7 @@
  "guides/how-dol-sets-a-prevailing-wage/wage-queue": {
   "capture": {
    "url": "/perm-processing-times",
-   "clip": "h:Prevailing wage requests still pending"
+   "clip": "hp:Prevailing wage requests still pending"
   },
   "credit": "Screenshot of permtracker.app, October 11, 2026",
   "alt": "Prevailing wage requests still pending by the month DOL received them, as of September 30, 2026"
@@ -329,7 +329,7 @@
  "blog/what-dol-publishes-about-perm/movement": {
   "capture": {
    "url": "/perm-processing-times",
-   "clip": "h:Movement on record"
+   "clip": "h:How the queue has moved"
   },
   "credit": "Screenshot of permtracker.app, October 11, 2026",
   "alt": "Every DOL reading of its analyst review position since August 20, 2026, drawn as steps from September to December 2025"
@@ -337,7 +337,8 @@
  "blog/why-perm-cases-are-denied/every-queue": {
   "capture": {
    "url": "/perm-processing-times",
-   "clip": "h:Every PERM queue DOL publishes"
+   "clip": "h:Every queue DOL publishes",
+   "maxHeight": 335
   },
   "credit": "Screenshot of permtracker.app, October 11, 2026",
   "alt": "Every PERM queue DOL publishes, with the month each is working: analyst review, audit review and reconsideration"
@@ -345,7 +346,7 @@
  "guides/look-up-a-law-firm/pace": {
   "capture": {
    "url": "/perm-processing-times",
-   "clip": "h:How fast the queue advances"
+   "clip": "h:How fast it advances"
   },
   "credit": "Screenshot of permtracker.app, October 11, 2026",
   "alt": "How fast the PERM queue advances: 1.80 filing months cleared per calendar month, drawn from October 2023 to June 2026"
@@ -733,5 +734,15 @@
   },
   "credit": "The PERM Tracker app, drawn from a sample firm's cases",
   "alt": "Notifications: an I-140 filing due in 14 days and an RFI response due in 7 days, with earlier reminders this month below"
+ },
+ "guides/where-your-filing-month-sits/transitions": {
+  "capture": {
+   "url": "/perm-decision-activity",
+   "clip": "from:The cases DOL moved, day by day",
+   "maxHeight": 1000,
+   "wait": 5000
+  },
+  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "alt": "The cases DOL moved on one day, counted by the status each moved from and to: certified to withdrawn, RFI issued back to analyst review, denied to pending appeal"
  }
 }

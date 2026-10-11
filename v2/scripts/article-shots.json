@@ -48,14 +48,6 @@
   "settle": 1500
  },
  {
-  "name": "decision-activity",
-  "url": "https://permtracker.app/perm-decision-activity",
-  "wait": "main",
-  "width": 1280,
-  "height": 820,
-  "settle": 1500
- },
- {
   "name": "employer-page",
   "url": "https://permtracker.app/perm-employers/google-llc",
   "wait": "main",

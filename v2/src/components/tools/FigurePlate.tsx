@@ -33,6 +33,8 @@ export interface FigurePlateProps {
   /** Where the numbers came from. Always name it. */
   source?: ReactNode;
   tone?: "paper" | "ink";
+  /** An anchor, for a page's list of parts to jump to. */
+  id?: string;
   className?: string;
   children: ReactNode;
 }
@@ -44,12 +46,14 @@ export function FigurePlate({
   caption,
   source,
   tone = "paper",
+  id,
   className,
   children,
 }: FigurePlateProps) {
   const ink = tone === "ink";
   return (
     <figure
+      id={id}
       className={cn(
         "relative m-0 border-2 border-border shadow-hard",
         ink ? "bg-foreground text-background" : "bg-card",

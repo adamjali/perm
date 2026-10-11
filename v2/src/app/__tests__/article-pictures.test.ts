@@ -13,6 +13,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 import matter from "gray-matter";
+import { webpSize } from "../../../test-utils/image-size";
 import { describe, expect, it } from "vitest";
 
 type Meta = { image?: string; imageAlt?: string; imageCredit?: string };
@@ -80,6 +81,30 @@ describe("article pictures", () => {
       }
     }
     expect(bare).toEqual([]);
+  });
+
+  // A figure states its shape (aspectRatio) so the page reserves its height
+  // before the picture loads. Re-capturing a page changes the picture's height
+  // and nothing else noticed: seven figures sat in boxes of their old shape
+  // after the Oct 11 2026 re-captures.
+  it("states each figure's shape as its file has it", () => {
+    const off: string[] = [];
+    let checked = 0;
+    for (const p of posts) {
+      for (const m of p.body.matchAll(/<ScreenshotFigure\b([\s\S]*?)\/>/g)) {
+        const attrs = m[1]!;
+        const src = attrs.match(/src="([^"]+\.webp)"/)?.[1];
+        const ar = attrs.match(/aspectRatio=\{\s*(\d+)\s*\/\s*(\d+)\s*\}/);
+        if (!src || !ar) continue;
+        const file = join(ROOT, "public", src);
+        if (!existsSync(file)) continue;
+        const { w, h } = webpSize(file);
+        checked++;
+        if (Math.abs(Number(ar[1]) / Number(ar[2]) - w / h) > 0.01) off.push(`${p.key}: ${src} says ${ar[1]}/${ar[2]}, file is ${w}x${h}`);
+      }
+    }
+    expect(checked).toBeGreaterThan(20);
+    expect(off).toEqual([]);
   });
 
   it("names only pictures that exist inside the articles", () => {

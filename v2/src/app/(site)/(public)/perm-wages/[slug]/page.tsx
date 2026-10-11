@@ -58,6 +58,9 @@ import { workerFacets } from "@/lib/turso/employerHistory";
 import { aliasTarget, entityFacets } from "@/lib/turso/entityDetail";
 import { comparables, fieldDistribution, getBySlug } from "@/lib/turso/entities";
 import { OccupationReference } from "@/components/reference/OccupationReference";
+import { ProfileHeader, type ProfileFact, type ProfileTag } from "@/components/entities/ProfileHeader";
+import { Chapter } from "@/components/entities/Chapter";
+import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -265,41 +268,80 @@ export default async function OccupationPage({
   // crawled, and 721 words of every entity page were byte-identical.
   const topEmp = facets.employer?.[0];
   const topState = facets.state?.[0];
+  const shareOf = (n: number) => `${Math.round((n / Math.max(row.total, 1)) * 100)}% of its filings`;
+  const facts: ProfileFact[] = ([
+    topEmp
+      ? { label: "Biggest sponsor", value: topEmp.label, href: topEmp.key ? `/perm-employers/${topEmp.key}` : undefined, note: shareOf(topEmp.n) }
+      : null,
+    topState ? { label: "Busiest state", value: topState.label, note: shareOf(topState.n) } : null,
+    group ? { label: "Major group", value: group, note: row.code ? `SOC ${row.code.trim().slice(0, 2)}` : undefined } : null,
+  ] as (ProfileFact | null)[]).filter((f): f is ProfileFact => f !== null);
   const wageInCohort = inCohort && row.medianAnnualWage != null;
   const peers = near.peers;
   // The query falls back to volume peers when the major group matched nothing,
   // so the heading reads what came BACK rather than what was asked for.
   const peersAreGroup = near.matched === "facet" && group != null;
 
+  const tags: ProfileTag[] = [];
+  if (h1b && h1b.n > 0 && row.code) tags.push({ text: `${formatInt(h1b.n)} H-1B LCAs`, href: "#h1b", tone: "ink" });
+  const chapters: ChapterItem[] = [
+    { id: "pay", label: "What it pays" },
+    { id: "who", label: "Who files it" },
+    { id: "the-job", label: "The job" },
+    { id: "compare", label: "Against other jobs" },
+    ...(h1b && h1b.n > 0 && row.code ? [{ id: "h1b", label: "H-1B" }] : []),
+    { id: "notes", label: "Notes" },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={schema} />
 
-      <header className="max-w-3xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          {name}
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          {row.code ? `SOC ${row.code}` : "No SOC code on file"}
-          {group ? `, in the ${group.toLowerCase()} major group` : ""}.{" "}
-          {formatInt(row.total)} PERM filings in DOL&apos;s current disclosure window,{" "}
-          {formatInt(row.certified)} certified and {formatInt(row.denied)} denied.
-          {row.title === UNUSABLE_TITLE
-            ? " DOL's job-title cell is unusable on these rows, so the code is the only name they have."
-            : ""}
-        </p>
-      </header>
-
-      {/* The doubt goes ABOVE the figures. */}
-      <ReliabilityBand
-        reliability={reliability}
-        baselineDenialPct={baselineDenialPct}
-        subject="occupation"
-        unit="filings"
-        className="mt-8"
-      />
-
-      <section className="pop mt-8">
+      <ProfileHeader
+        eyebrow={`PERM occupation${row.code ? `, SOC ${row.code}` : ""}, #${formatInt(row.rank)} of ${formatInt(kindTotal)} by filings`}
+        name={name}
+        facts={facts}
+        tags={tags}
+        aside={
+          <div className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+            <p className="font-heading text-xl font-black leading-tight">Weighing an offer for this job?</p>{" "}
+            <p className="mt-1.5 text-sm leading-relaxed text-foreground/70">
+              Where it falls among certified offers, and the four wage levels DOL sets for it by area.
+            </p>{" "}
+            <div className="mt-4 flex flex-col gap-2">
+              <Link
+                href="/tools/compare-my-offer"
+                className="inline-flex min-h-11 items-center justify-center border-2 border-border bg-primary px-4 font-bold text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-[1px] motion-reduce:transition-none"
+              >
+                Compare my offer
+              </Link>{" "}
+              {row.code ? (
+                <Link
+                  href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
+                  className="inline-flex min-h-11 items-center justify-center border-2 border-border bg-background px-4 font-bold hover:bg-tint-primary"
+                >
+                  DOL&apos;s wage levels for this job
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        }
+        figures={
+          <>
+            {row.title === UNUSABLE_TITLE ? (
+              <p className="mb-6 max-w-3xl text-base text-foreground/70">
+                DOL&apos;s job-title cell is unusable on these rows, so the code is the only name they have.
+              </p>
+            ) : null}{" "}
+            {/* The doubt goes ABOVE the figures. */}
+            <ReliabilityBand
+              reliability={reliability}
+              baselineDenialPct={baselineDenialPct}
+              subject="occupation"
+              unit="filings"
+              className="mb-6"
+            />{" "}
+            <section className="pop" aria-label="Its record in four figures">
         <EntityStatCards
           cards={[
             {
@@ -312,8 +354,18 @@ export default async function OccupationPage({
             medianDaysCard(row.medianDays, standing),
           ]}
         />
-      </section>
+            </section>
+          </>
+        }
+      />
 
+      <ChapterNav items={chapters} className="mt-10" />
+
+      <Chapter
+        id="pay"
+        title="What it pays"
+        dek="Where its median offer sits among every occupation, then the whole ladder of certified offers by year and by state."
+      >
       <FieldPositionPlate
         n="01"
         singular="occupation"
@@ -377,17 +429,19 @@ export default async function OccupationPage({
         </FigurePlate>
       ) : null}
 
+      </Chapter>
+
       {/* Who is on the other side of these wages. The ladders above answer
           what the job pays; a reader weighing an offer also wants to know
           who files it and where the work is. */}
+      <Chapter
+        id="who"
+        title="Who files it"
+        dek="The sponsors and firms with the most PERM filings under this code, the places the work sits, and who the workers were."
+      >
       {facets.employer || facets.attorney || facets.state || facets.city ? (
-        <section className="mt-12">
-          <h2 className="font-heading text-2xl font-black">Who files this job</h2>{" "}
-          <p className="mt-2 max-w-2xl text-base text-foreground/70">
-            The sponsors and firms with the most PERM filings under this code,
-            and the states the work sits in.
-          </p>
-          <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
+        <section className="mt-6">
+          <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
             {facets.employer ? (
               <PartyMix
                 rows={facets.employer}
@@ -416,6 +470,10 @@ export default async function OccupationPage({
         </section>
       ) : null}
 
+      <WorkerMix facets={workers} subject="occupation" />
+      </Chapter>
+
+      <Chapter id="the-job" title="The job itself" dek="What O*NET says the work is, what the market pays it by BLS's survey, its outlook, and DOL's wage levels year by year.">
       <OccupationReference
         code={row.code}
         name={name}
@@ -423,8 +481,9 @@ export default async function OccupationPage({
         cities={facets.city ?? []}
       />
 
-      <WorkerMix facets={workers} subject="occupation" />
+      </Chapter>
 
+      <Chapter id="compare" title="Against other jobs">
       <RankLadder
         rank={row.rank}
         kindTotal={kindTotal}
@@ -461,13 +520,12 @@ export default async function OccupationPage({
         unit="filings"
         className="mt-12"
       />
+      </Chapter>
 
       {h1b && h1b.n > 0 && row.code ? (
-        <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="occ-h1b">
-          <h2 id="occ-h1b" className="font-heading text-xl font-black sm:text-2xl">
-            The same job on H-1B
-          </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+        <Chapter id="h1b" title="The same job on H-1B">
+        <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+          <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
             <span className="font-heading text-2xl font-black tabular-nums">{formatInt(h1b.n)}</span> certified H-1B
             labor condition applications for this occupation since FY2020
             {h1b.p50 != null ? `, offering a median of ${formatDollars(h1b.p50)} a year` : ""}
@@ -484,11 +542,13 @@ export default async function OccupationPage({
             .
           </p>
         </section>
+        </Chapter>
       ) : null}
 
+      <Chapter id="notes" title="Notes on these numbers">
       {/* ONE LINE AND A LINK, THE READING FOLDED. */}
-      <section className="mt-12 border-2 border-border bg-tint-primary p-6 shadow-hard-sm sm:p-8">
-        <h2 className="font-heading text-xl font-black">Reading the wage</h2>{" "}
+      <section className="mt-6 border-2 border-border bg-tint-primary p-6 shadow-hard-sm sm:p-8">
+        <h3 className="font-heading text-xl font-black">Reading the wage</h3>{" "}
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
           A floor, not a salary survey: every level and metro mixed.
           {row.code ? (
@@ -598,7 +658,7 @@ export default async function OccupationPage({
 
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Weighing an offer?</h2>{" "}
+          <h3 className="font-heading text-lg font-black">Weighing an offer?</h3>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
             Compare it against this median, then check the{" "}
             <Link
@@ -611,7 +671,7 @@ export default async function OccupationPage({
           </p>
         </div>
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Setting one?</h2>{" "}
+          <h3 className="font-heading text-lg font-black">Setting one?</h3>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
             All {kindTotal > 0 ? formatInt(kindTotal) : ""} occupations sort together
             on the{" "}
@@ -632,6 +692,7 @@ export default async function OccupationPage({
           </p>
         </div>
       </section>
+      </Chapter>
       <UnpublishedFilingsNote subject="occupation" />{" "}
       <DataProvenance datasets={["perm-cases", "entities", "onet", "bls-oews", "bls-projections", "oflc-wage-levels"]} />
     </div>
