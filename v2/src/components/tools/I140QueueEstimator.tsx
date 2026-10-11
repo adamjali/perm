@@ -156,7 +156,7 @@ export function I140QueueEstimator({
         </div>
       </div>
 
-      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2">
+      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
         <div className="bg-tint-primary p-6 sm:p-8">
           <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
             Petitions waiting
@@ -187,7 +187,7 @@ export function I140QueueEstimator({
           headlined the result as "N months" - an inventory-turnover figure
           that reads as a personal wait time. It answered a question nobody
           asks with a number experts read as wrong, so it is gone. */}
-      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2">
+      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
         {published ? (
           <div className="bg-card p-6 sm:p-8">
             <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">

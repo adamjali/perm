@@ -37,6 +37,9 @@ export function embedCss(slug: string): string {
     `.embed-root ${m} { margin-top: 0 !important; }`,
     // The site's film grain is page decoration, not part of a tool.
     `.grain-overlay { display: none !important; }`,
+    // A tool heading that repeats the title bar (marked data-embed-hide on the tool).
+    `.embed-root [data-embed-hide] { display: none !important; }`,
+    `.embed-root [data-embed-hide] + * { margin-top: 0 !important; }`,
   ].join("\n");
 }
 

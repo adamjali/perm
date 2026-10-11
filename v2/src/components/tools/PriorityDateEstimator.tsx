@@ -558,15 +558,16 @@ export function PriorityDateEstimator({
   return (
     <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
       <div className="border-b-2 border-border p-6 sm:p-8">
-        <div className="flex items-center gap-3">
+        {/* data-embed-hide: the embed's own title bar already says this. */}
+        <div data-embed-hide className="flex items-center gap-3">
           <CalendarRange className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-black leading-tight">
             Is my priority date current?
           </h2>
         </div>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          And which way the cutoff has been moving. Cutoffs go backwards as
-          well as forwards.
+          It also shows which way the cutoff has been moving. Cutoffs go
+          backwards as well as forwards.
         </p>{" "}
 
         <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">

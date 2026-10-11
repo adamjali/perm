@@ -230,7 +230,8 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
-        <div className="flex items-center gap-3">
+        {/* data-embed-hide: the embed's own title bar already says this. */}
+        <div data-embed-hide className="flex items-center gap-3">
           <CalendarCheckIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-black leading-tight">
             Your PERM deadlines

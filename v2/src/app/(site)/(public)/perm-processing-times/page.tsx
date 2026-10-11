@@ -58,6 +58,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FaqList } from "@/components/tools/FaqList";
 import { SITE_URL } from "@/lib/constants/site";
+import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
@@ -157,9 +158,7 @@ export default async function PermProcessingTimesPage() {
 
   const decisionsByMonth = disclosure?.clearanceByMonth ?? [];
   const disclosureWindow = disclosure?.sourceFiles?.length
-    ? disclosure.sourceFiles
-        .map((f) => f.replace(/^PERM_Disclosure_Data_/, "").replace(/\.xlsx$/, ""))
-        .join(" + ")
+    ? describeDisclosureFiles(disclosure.sourceFiles)
     : null;
 
   const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
@@ -482,7 +481,7 @@ export default async function PermProcessingTimesPage() {
               <FinePrint summary="Which files, and how solid each point is" className="mt-3">
                 <p>
                   Reconstructed from{" "}
-                  {disclosureWindow ?? "the quarterly disclosure files"}, so it
+                  {disclosureWindow ? `DOL's disclosure files for ${disclosureWindow}` : "the quarterly disclosure files"}, so it
                   ends where those files end and is a quarter behind the
                   readings above. Its points aren&apos;t equally solid either:
                   the thinnest month in the series is a median over{" "}

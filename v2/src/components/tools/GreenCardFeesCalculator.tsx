@@ -75,44 +75,45 @@ export function GreenCardFeesCalculator() {
         <Count id={travelId} label="Advance parole (I-131)" value={travel} onChange={setTravel} note="One per adult who wants one; capped at the adult count." />
       </div>{" "}
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b-2 border-border">
-              <th scope="col" className="py-2 pr-3 font-bold">Form{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">What it is{" "}</th>
-              <th scope="col" className="py-2 pr-3 text-right font-bold">Each{" "}</th>
-              <th scope="col" className="py-2 pr-3 text-right font-bold">Count{" "}</th>
-              <th scope="col" className="py-2 text-right font-bold">Total{" "}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.lines.map((l) => (
-              <tr key={`${l.form}-${l.label}`} className="border-b border-border/40">
-                <td className="py-2 pr-3 font-mono text-sm font-bold">{l.form}{" "}</td>
-                <td className="py-2 pr-3">{l.label}{" "}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{usd(l.each)}{" "}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{l.count}{" "}</td>
-                <td className="py-2 text-right font-bold tabular-nums">{usd(l.total)}{" "}</td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-border">
-              <td colSpan={4} className="py-2 pr-3">Petition stage (I-140){" "}</td>
-              <td className="py-2 text-right tabular-nums">{usd(result.petitionTotal)}{" "}</td>
-            </tr>
-            <tr>
-              <td colSpan={4} className="py-2 pr-3">Adjustment stage (I-485 and what rides it){" "}</td>
-              <td className="py-2 text-right tabular-nums">{usd(result.adjustmentTotal)}{" "}</td>
-            </tr>
-            <tr className="border-t-2 border-border">
-              <td colSpan={4} className="py-3 pr-3 font-heading text-lg font-black">USCIS fees, total{" "}</td>
-              <td className="py-3 text-right font-heading text-xl font-black tabular-nums">{usd(result.total)}{" "}</td>
-            </tr>
-          </tfoot>
-        </table>
+      <div className="mt-6 border-2 border-border bg-background p-4" aria-live="polite">
+        <p className="text-sm font-bold">USCIS fees, total{" "}</p>
+        <p className="mt-1 font-heading text-4xl font-black tabular-nums">{usd(result.total)}</p>{" "}
+        <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+          <div className="flex items-baseline justify-between gap-3 border-t border-border/40 pt-2">
+            <dt>Petition stage (I-140){" "}</dt>
+            <dd className="font-bold tabular-nums">{usd(result.petitionTotal)}</dd>
+          </div>{" "}
+          <div className="flex items-baseline justify-between gap-3 border-t border-border/40 pt-2">
+            <dt>Adjustment stage (I-485 and what rides it){" "}</dt>
+            <dd className="font-bold tabular-nums">{usd(result.adjustmentTotal)}</dd>
+          </div>
+        </dl>
       </div>{" "}
+
+      <table className="mt-4 w-full border-collapse text-left text-sm">
+        <caption className="sr-only">Each USCIS fee in the total{" "}</caption>
+        <thead>
+          <tr className="border-b-2 border-border">
+            <th scope="col" className="py-2 pr-3 font-bold">Form{" "}</th>
+            <th scope="col" className="py-2 pr-3 font-bold">What it is{" "}</th>
+            <th scope="col" className="py-2 text-right font-bold">Total{" "}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {result.lines.map((l) => (
+            <tr key={`${l.form}-${l.label}`} className="border-b border-border/40 align-top">
+              <td className="py-2 pr-3 font-mono text-sm font-bold">{l.form}{" "}</td>
+              <td className="py-2 pr-3">
+                {l.label}{" "}
+                <span className="block text-muted-foreground tabular-nums">
+                  {usd(l.each)} × {l.count}
+                </span>{" "}
+              </td>
+              <td className="py-2 text-right font-bold tabular-nums">{usd(l.total)}{" "}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
         Every figure is from USCIS Form G-1055, edition {result.edition}, read at{" "}
         <a href={result.source} className="underline underline-offset-2 hover:text-primary" rel="noopener">

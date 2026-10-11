@@ -4,6 +4,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { MoreText, firstSentence, plainText, wordCount } from "@/components/data/MoreText";
 import { formatInt } from "@/lib/format";
+import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 
 /**
  * The context modules the 16,210 entity detail pages are built out of.
@@ -489,14 +490,12 @@ export function DisclosureNote({
   uniqueCases: number | null;
   className?: string;
 }) {
-  const files = sourceFiles
-    .map((f) => f.replace(/^PERM_Disclosure_Data_/, "").replace(/\.xlsx$/, "").replace(/_/g, " "))
-    .join(" and ");
+  const files = sourceFiles.length ? describeDisclosureFiles(sourceFiles) : "";
   return (
     // ONE LINE: the window and the method link, no panel.
     <p className={cn("max-w-3xl text-sm leading-relaxed text-foreground/75", className)}>
       <span className="font-bold text-foreground">The window these figures cover: </span>
-      {files ? `DOL's ${files} PERM disclosure files` : "DOL's PERM disclosure files"}
+      {files ? `DOL's PERM disclosure files for ${files}` : "DOL's PERM disclosure files"}
       {uniqueCases ? `, ${formatInt(uniqueCases)} decided cases` : ""}. Nothing pending
       is counted here.{" "}
       <Link

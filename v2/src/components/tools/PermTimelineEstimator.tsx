@@ -28,6 +28,7 @@ import {
   type MeasuredPace,
   type RangeCoverage,
 } from "@/lib/perm";
+import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 import type { Pace } from "@/lib/dolPace";
 import type { StragglerRates } from "@/lib/stragglerRates";
 import { formatMonth } from "@/lib/dolFormat";
@@ -525,7 +526,8 @@ export function PermTimelineEstimator({
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
-        <div className="flex items-center gap-3">
+        {/* data-embed-hide: the embed's own title bar already says this. */}
+        <div data-embed-hide className="flex items-center gap-3">
           <CalendarClock className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-black leading-tight">
             When will DOL decide my PERM?
@@ -1003,7 +1005,7 @@ export function PermTimelineEstimator({
           <InfoIcon className="mr-2 inline h-4 w-4 align-text-bottom" aria-hidden="true" />
           Cohort figures are computed from{" "}
           {disclosure.uniqueCases.toLocaleString("en-US")} decided cases in DOL&apos;s
-          disclosure files ({disclosure.sourceFiles.join(", ")}).
+          disclosure files for {describeDisclosureFiles(disclosure.sourceFiles)}.
           {frontierAdvance
             ? ` Queue movement is measured across ${frontierAdvance.pointsUsed} months of determinations, ${formatMonth(frontierAdvance.fromMonth)} to ${formatMonth(frontierAdvance.toMonth)}.`
             : ""}

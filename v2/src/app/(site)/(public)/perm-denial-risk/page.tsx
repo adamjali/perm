@@ -37,6 +37,8 @@ import {
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { SITE_URL } from "@/lib/constants/site";
+import { describeDisclosureFiles } from "@/lib/disclosureFiles";
+
 const TITLE = "PERM Denial Rates";
 // 147 characters. Anything past ~155 is truncated mid-sentence in the SERP,
 // and the entity-escaped source string is six characters per apostrophe, so
@@ -104,9 +106,7 @@ export default async function PermDenialRiskPage() {
   const risk = stats?.risk ?? null;
   const baseline = risk?.baseline ?? null;
   const sourceWindow = stats?.sourceFiles?.length
-    ? stats.sourceFiles
-        .map((f) => f.replace(/^PERM_Disclosure_Data_/, "").replace(/\.xlsx$/, ""))
-        .join(" + ")
+    ? describeDisclosureFiles(stats.sourceFiles)
     : "the current window";
   // The single strongest correlate, named. A page that makes the reader find
   // the biggest number themselves has not finished its job.

@@ -363,14 +363,14 @@ describe("RankLadder", () => {
 });
 
 describe("DisclosureNote", () => {
-  it("names the source files and links the methodology", () => {
+  it("names the years the files cover and links the methodology", () => {
     render(
       <DisclosureNote
         sourceFiles={["PERM_Disclosure_Data_FY2026_Q3.xlsx", "PERM_Disclosure_Data_FY2025_Q4.xlsx"]}
         uniqueCases={259489}
       />,
     );
-    expect(screen.getByText(/FY2026 Q3 and FY2025 Q4/)).toBeInTheDocument();
+    expect(screen.getByText(/disclosure files for fiscal years 2025 to 2026, through the third quarter of 2026/)).toBeInTheDocument();
     expect(screen.getByText(/259,489 decided cases/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /how each figure is built/i })).toHaveAttribute(
       "href",

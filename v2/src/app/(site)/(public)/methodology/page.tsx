@@ -18,6 +18,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { MoreText } from "@/components/data/MoreText";
+import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 
 const TITLE = "How PERM Tracker's Estimates Work";
 const DESCRIPTION =
@@ -232,9 +233,7 @@ export default async function MethodologyPage() {
   const stats = await getDisclosureStats();
   const corpus = stats?.uniqueCases ?? null;
   const window = stats?.sourceFiles?.length
-    ? stats.sourceFiles
-        .map((f) => f.replace(/^PERM_Disclosure_Data_/, "").replace(/\.xlsx$/, ""))
-        .join(" + ")
+    ? `DOL's disclosure files for ${describeDisclosureFiles(stats.sourceFiles)}`
     : null;
 
 
