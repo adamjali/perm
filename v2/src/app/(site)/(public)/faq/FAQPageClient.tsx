@@ -12,6 +12,8 @@ interface FAQItem {
 
 interface FAQSection {
   category: string;
+  /** The section's anchor, for the page's list of groups. */
+  id?: string;
   items: FAQItem[];
 }
 
@@ -43,7 +45,11 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
   return (
     <div className="space-y-10">
       {faqData.map((section, sectionIndex) => (
-        <div key={section.category}>
+        <div
+          key={section.category}
+          id={section.id}
+          className="scroll-mt-[calc(var(--site-header-h,71px)+1.5rem)]"
+        >
           <Reveal on={sectionIndex > 0} direction="up">
             <h2 className="mb-4 font-heading text-lg font-bold tracking-tight sm:text-xl">
               {section.category}

@@ -9,6 +9,7 @@ import { Fragment } from "react";
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
+import { BriefcaseIcon, CalculatorIcon, ChartBarIcon, ClockIcon } from "@phosphor-icons/react/ssr";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -17,11 +18,15 @@ import { averagePhrase, dolNow } from "@/lib/dolNow";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 
 const START_LINKS = [
-  { href: "/perm-processing-times", label: "Processing times", note: "Which month DOL is reviewing now" },
-  { href: "/tools", label: "Live PERM data", note: "The queue and the wage backlog, from DOL's figures" },
-  { href: "/calculators", label: "Calculators", note: "Deadlines and decision estimates" },
-  { href: "/for-attorneys", label: "For attorneys", note: "Free case and deadline tracking" },
+  { href: "/perm-processing-times", label: "Processing times", note: "Which month DOL is reviewing now", Icon: ClockIcon },
+  { href: "/tools", label: "Live PERM data", note: "The queue and the wage backlog, from DOL's figures", Icon: ChartBarIcon },
+  { href: "/calculators", label: "Calculators", note: "Deadlines and decision estimates", Icon: CalculatorIcon },
+  { href: "/for-attorneys", label: "For attorneys", note: "Free case and deadline tracking", Icon: BriefcaseIcon },
 ] as const;
+
+/** A question group's anchor, from its heading. */
+const groupId = (category: string) =>
+  `faq-${category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
 
 export const dynamic = "force-static";
 // One answer quotes DOL's published average, so the page refreshes daily and
@@ -162,6 +167,7 @@ export default async function FAQPage() {
   }));
   // Flatten all FAQ items for structured data
   const allFAQs = faq.flatMap((section) => section.items);
+  const groups = faq.map((section) => ({ ...section, id: groupId(section.category) }));
   const { '@context': _1, ...faqSchema } = getFAQPageSchema(allFAQs);
   const schemas = { '@context': 'https://schema.org', '@graph': [faqSchema] };
 
@@ -170,28 +176,36 @@ export default async function FAQPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
 
       <section className="border-b-2 border-border bg-card">
-        <div className="mx-auto max-w-[800px] px-4 py-10 sm:px-8 sm:py-14">
-          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl mb-3">
-            Frequently asked questions
-          </h1>{" "}
-          <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            What applicants and attorneys ask about PERM Tracker and
-            the PERM labor certification process.
-          </p>{" "}
-          {/* Most visits here come from a search for the site's name, and
-              the pages people open next are the lookup, processing times
-              and the data (PostHog, 30 days to Oct 6 2026). */}
-          <CaseLookupForm className="mt-8 max-w-2xl" />{" "}
-          <nav aria-label="Main tools" className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-10 sm:px-8 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:items-start [&>*]:min-w-0">
+          <div>
+            <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl mb-3">
+              Frequently asked questions
+            </h1>{" "}
+            <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              What applicants and attorneys ask about PERM Tracker and
+              the PERM labor certification process.
+            </p>{" "}
+            {/* Most visits here come from a search for the site's name, and
+                the pages people open next are the lookup, processing times
+                and the data (PostHog, 30 days to Oct 6 2026). */}
+            <CaseLookupForm className="mt-8 max-w-2xl" />
+          </div>{" "}
+          <nav aria-label="Main tools" className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
             {START_LINKS.map((l) => (
               <Fragment key={l.href}>
                 {" "}
                 <Link
                   href={l.href}
-                  className="border-2 border-border bg-background p-4 transition-shadow hover:shadow-hard"
+                  className="group flex flex-col border-2 border-border bg-background p-4 shadow-hard-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none"
                 >
-                  <span className="font-heading text-sm font-bold">{l.label}</span>{" "}
-                  <p className="mt-1 text-sm text-muted-foreground">{l.note}</p>
+                  <span
+                    aria-hidden="true"
+                    className="inline-flex size-10 items-center justify-center border-2 border-border bg-primary text-black"
+                  >
+                    <l.Icon className="size-5" weight="bold" />
+                  </span>{" "}
+                  <span className="mt-3 font-heading text-base font-black leading-tight">{l.label}</span>{" "}
+                  <span className="mt-1 text-sm leading-snug text-muted-foreground">{l.note}</span>
                 </Link>
               </Fragment>
             ))}
@@ -199,8 +213,29 @@ export default async function FAQPage() {
         </div>
       </section>{" "}
 
-      <div className="mx-auto max-w-[800px] px-4 py-8 sm:px-8 sm:py-12">
-        <FAQPageClient faqData={faq} />
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-8 sm:px-8 sm:py-12 lg:grid-cols-[14rem_minmax(0,1fr)] [&>*]:min-w-0">
+        {/* The groups, with how many questions each holds: a contents list
+            that stays beside the questions on a wide screen. */}
+        <nav aria-label="Question groups" className="max-lg:hidden">
+          <ol className="sticky top-[calc(var(--site-header-h,71px)+1.5rem)] space-y-1 border-l-4 border-foreground pl-4">
+            {groups.map((g) => (
+              <Fragment key={g.id}>
+                {" "}
+                <li>
+                  <a
+                    href={`#${g.id}`}
+                    className="flex min-h-11 items-center justify-between gap-3 text-sm font-bold hover:text-primary-text"
+                  >
+                    <span>{g.category}</span>{" "}
+                    <span className="font-mono text-sm tabular-nums text-muted-foreground">{g.items.length}</span>
+                  </a>
+                </li>
+              </Fragment>
+            ))}
+          </ol>
+        </nav>{" "}
+        <div className="max-w-[820px]">
+        <FAQPageClient faqData={groups} />
 
         <div className="mt-12 border-t-2 border-border pt-8">
           <h2 className="mb-4 font-heading text-xl font-bold">Learn more</h2>{" "}
@@ -234,6 +269,7 @@ export default async function FAQPage() {
               <p className="mt-1 text-sm text-muted-foreground">Set up your first case in minutes</p>
             </Link>
           </div>
+        </div>
         </div>
       </div>
     </>

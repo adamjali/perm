@@ -8,17 +8,9 @@
   "settle": 1800
  },
  {
-  "name": "rfi-stages",
-  "url": "https://permtracker.app/perm-rfi-audit",
-  "clip": "main section:nth-of-type(2)",
-  "wait": "main",
-  "width": 1280,
-  "settle": 1800
- },
- {
   "name": "case-search-form",
-  "url": "https://permtracker.app/perm-cases",
-  "clip": "main section:nth-of-type(2)",
+  "url": "https://permtracker.app/case-search",
+  "clip": "main section:has(> form)",
   "wait": "main",
   "width": 1280,
   "settle": 1800
