@@ -22,9 +22,13 @@ import {
 import {
   AttestationStackMini,
   BulletinStepsMini,
+  DailyBarsMini,
+  DetourMini,
   QueueDepthMini,
   RecordMatchMini,
   ScaleBarsMini,
+  ShareBarsMini,
+  TapeMini,
   UnionMini,
   TwoBarsMini,
   WageLevelsMini,
@@ -253,7 +257,7 @@ export default async function ToolsPage() {
               label: "Denial rates",
               blurb: "What gets denied, by wage, by year, and by what the form declares.",
               tone: "tint",
-              viz: "steps" as const,
+              viz: "shares" as const,
             },
             {
               href: "/perm-cases",
@@ -307,7 +311,7 @@ export default async function ToolsPage() {
                 {c.viz === "twobars" ? <TwoBarsMini /> : null}
                 {c.viz === "queue" ? <QueueDepthMini /> : null}
                 {c.viz === "spans" ? <WindowSpansMini /> : null}
-                {c.viz === "steps" ? <BulletinStepsMini /> : null}
+                {c.viz === "shares" ? <ShareBarsMini /> : null}
                 {c.viz === "union" ? <UnionMini /> : null}
                 {c.viz === "records" ? <RecordMatchMini /> : null}
                 {c.viz === "levels" ? <WageLevelsMini /> : null}
@@ -349,10 +353,10 @@ export default async function ToolsPage() {
         <h2 className="font-heading text-2xl font-black">The queue, day by day</h2>{" "}
         <div className="mt-6 flex flex-wrap gap-4 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:basis-64">
           {[
-            { href: "/perm-queue", label: "Queue backlog", blurb: "Every filing month's pending cases, by DOL queue." },
-            { href: "/perm-decision-activity", label: "Daily activity", blurb: "How many cases DOL decides each day." },
-            { href: "/perm-rfi-audit", label: "RFI and audits", blurb: "How often cases leave filing order, and what follows." },
-            { href: "/tools/priority-date-calculator", label: "Visa bulletin", blurb: "Every cutoff since October 2014, and whether your date is current." },
+            { href: "/perm-queue", label: "Queue backlog", blurb: "Every filing month's pending cases, by DOL queue.", viz: <TapeMini /> },
+            { href: "/perm-decision-activity", label: "Daily activity", blurb: "How many cases DOL decides each day.", viz: <DailyBarsMini /> },
+            { href: "/perm-rfi-audit", label: "RFI and audits", blurb: "How often cases leave filing order, and what follows.", viz: <DetourMini /> },
+            { href: "/tools/priority-date-calculator", label: "Visa bulletin", blurb: "Every cutoff since October 2014, and whether your date is current.", viz: <BulletinStepsMini /> },
           ].map((c) => (
             <Link
               key={c.href}
@@ -360,6 +364,8 @@ export default async function ToolsPage() {
               className="group flex flex-col border-2 border-border bg-card p-5 shadow-hard transition-all duration-150 hover:-translate-y-[2px] hover:shadow-hard-lg active:translate-y-0"
             >
               <h3 className="font-heading text-lg font-black">{c.label}</h3>{" "}
+              {/* The page's subject, drawn, as on the tiles above. */}
+              <div className="mt-3 max-w-[150px] text-foreground">{c.viz}</div>{" "}
               <p className="mt-2 flex-1 text-sm leading-relaxed text-foreground/70">{c.blurb}</p>{" "}
               <span className="mt-3 font-mono text-sm font-bold uppercase tracking-wider text-foreground/60 group-hover:text-primary">
                 Open →

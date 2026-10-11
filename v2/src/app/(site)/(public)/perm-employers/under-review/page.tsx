@@ -142,15 +142,36 @@ export default async function EmployersUnderReviewPage() {
       <ul className="space-y-1 text-base [overflow-wrap:anywhere]">
         {d.moves.map((m) => (
           <Fragment key={`${m.slug ?? m.name}-${m.dir}-${m.to}`}>{" "}
-          <li>
-            {m.slug ? (
-              <Link href={`/perm-employers/${m.slug}`} className={`font-bold ${LINK}`}>
-                {m.name}
-              </Link>
-            ) : (
-              <span className="font-bold">{m.name}</span>
-            )}
-            {`: ${holdSentence(m)}`}
+          <li className="flex items-baseline gap-2.5">
+            {/* The day's move as a count chip: amber for cases put on hold,
+                lime for cases released or certified, red for denials. The
+                sentence beside it carries the same figure in words. */}
+            <span
+              aria-hidden="true"
+              className={
+                "inline-flex min-w-[4.5rem] shrink-0 justify-center border-2 border-border px-1.5 font-mono text-sm font-bold tabular-nums " +
+                (m.dir === "on"
+                  ? "bg-data-warn-ink text-background"
+                  : m.to === "DENIED"
+                    ? "bg-data-bad-ink text-background"
+                    : m.to === "ANALYST REVIEW" || m.to === "CERTIFIED"
+                      ? "bg-primary text-black"
+                      : "bg-card")
+              }
+            >
+              {m.dir === "on" ? "+" : "\u2212"}
+              {formatInt(m.n)}
+            </span>{" "}
+            <span className="min-w-0">
+              {m.slug ? (
+                <Link href={`/perm-employers/${m.slug}`} className={`font-bold ${LINK}`}>
+                  {m.name}
+                </Link>
+              ) : (
+                <span className="font-bold">{m.name}</span>
+              )}
+              {`: ${holdSentence(m)}`}
+            </span>
           </li>
           </Fragment>
         ))}

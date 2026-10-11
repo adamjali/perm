@@ -535,3 +535,58 @@ export function UnionMini() {
     </svg>
   );
 }
+
+/** DOL's days: tall weekdays, near-empty weekends, the newest day lit. */
+export function DailyBarsMini() {
+  const days = [30, 34, 28, 36, 32, 7, 5, 31, 35, 30, 38, 33, 6, 4];
+  const last = 11;
+  return (
+    <svg viewBox="0 0 120 52" className={FRAME} aria-hidden="true">
+      <line x1="4" y1="46" x2="116" y2="46" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
+      {days.map((h, i) => (
+        <rect
+          key={i}
+          x={4 + i * 8}
+          y={46 - h}
+          width={6}
+          height={h}
+          fill={i === last ? "var(--primary)" : "currentColor"}
+          opacity={i === last ? 1 : 0.2}
+          stroke={i === last ? "currentColor" : "none"}
+          strokeWidth="1"
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** A case leaving filing order for an RFI or an audit, and coming back to the line. */
+export function DetourMini() {
+  const stops = [10, 26, 42, 90, 106];
+  return (
+    <svg viewBox="0 0 120 52" className={FRAME} aria-hidden="true">
+      <line x1="4" y1="38" x2="116" y2="38" stroke="currentColor" strokeWidth="2" opacity="0.35" />
+      {stops.map((x) => (
+        <circle key={x} cx={x} cy={38} r="3.5" fill="currentColor" opacity="0.35" />
+      ))}
+      <path d="M50 38 V14 H80 V38" fill="none" stroke="var(--primary)" strokeWidth="2.5" />
+      <circle cx="50" cy="38" r="4.5" fill="var(--primary)" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="80" cy="14" r="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+/** Denial rates: whole bars of decisions, the denied share of each in red. */
+export function ShareBarsMini() {
+  const denied = [6, 15, 9, 24];
+  return (
+    <svg viewBox="0 0 120 52" className={FRAME} aria-hidden="true">
+      {denied.map((d, i) => (
+        <g key={i}>
+          <rect x={4} y={4 + i * 12} width={112} height={8} fill="currentColor" opacity="0.18" />
+          <rect x={116 - d} y={4 + i * 12} width={d} height={8} fill="var(--data-bad)" stroke="currentColor" strokeWidth="1" />
+        </g>
+      ))}
+    </svg>
+  );
+}
