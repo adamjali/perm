@@ -7,7 +7,6 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { stageFromSlug } from "@/components/rfi/stageMeta";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { KIND_LABEL } from "@/lib/permStatus";
 import {
   dictionaryAnchors,
   KIND_HEADING,
@@ -52,17 +51,39 @@ export const metadata: Metadata = withSocialCard({
 
 export const revalidate = 21600;
 
-function Count({ n, asOf, href }: { n: number | null; asOf: string | null; href?: string }) {
+/**
+ * A status's live count, as the row's number. The date sits once in the
+ * section's opening line, not on every row.
+ */
+function Count({ n, href }: { n: number | null; href?: string }) {
   if (n === null) return null;
-  const shown = asOf ? formatAsOf(asOf) : null;
-  const text = `${formatInt(n)} now${shown ? `, as of ${shown}` : ""}`;
-  const cls = "font-mono text-sm font-semibold";
+  const cls = "font-heading text-xl font-black tabular-nums sm:text-2xl";
+  const body = (
+    <>
+      {formatInt(n)}
+      <span className="sr-only">{n === 1 ? " case" : " cases"}</span>
+    </>
+  );
   return href ? (
-    <Link href={href} className={`${cls} underline decoration-primary decoration-2 underline-offset-2 hover:text-primary`}>
-      {text}
+    // A 44px target that doesn't grow the row: the negative margin takes back
+    // what the height adds.
+    <Link href={href} className={`${cls} -my-2 inline-flex min-h-11 items-center underline decoration-primary decoration-2 underline-offset-4 hover:text-primary-text`}>
+      {body}
     </Link>
   ) : (
-    <span className={`${cls} text-foreground/70`}>{text}</span>
+    <span className={cls}>{body}</span>
+  );
+}
+
+/** A thin bar along the row's foot: this status against the busiest in its group. */
+function ShareBar({ n, max }: { n: number | null; max: number }) {
+  if (!n || max <= 0) return null;
+  return (
+    <span
+      aria-hidden="true"
+      className="absolute bottom-0 left-0 h-1 bg-primary"
+      style={{ width: `${Math.max(1.5, (n / max) * 100)}%` }}
+    />
   );
 }
 
@@ -104,19 +125,20 @@ const PROGRAMS = [
  * DefinedTermSet @ids both point at it, and a fragment jump lands on the
  * visible row whether or not the browser auto-expands the body.
  */
-function FlagEntry({ e, anchor, n, asOf }: { e: FlagStatusEntry; anchor: string; n: number | null; asOf: string | null }) {
+function FlagEntry({ e, anchor, n, max }: { e: FlagStatusEntry; anchor: string; n: number | null; max: number }) {
   const [lead, rest] = splitLead(e.summary);
   return (
     <details id={anchor} className="group scroll-mt-28 bg-card">
-      <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
-        <span className="min-w-0">
+      <summary className="relative flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">
           <h3 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
             <span className="font-heading text-base font-black">{e.label}</span>{" "}
-            <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">{e.status}</code>{" "}
-            <Count n={n} asOf={asOf} />
+            <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">{e.status}</code>
           </h3>{" "}
           <span className="mt-1 block text-sm leading-relaxed text-foreground/80">{lead}</span>
         </span>{" "}
+        <Count n={n} />{" "}
+        <ShareBar n={n} max={max} />
         <CaretDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
       </summary>{" "}
       <div className="max-w-3xl border-t-2 border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
@@ -139,6 +161,8 @@ export default async function PermCaseStatusesPage() {
   const permCount = (status: string): number | null => (census ? statusTotalFrom(census.matrix, status) : null);
   const flagCount = (s: { byStatus: Record<string, number> } | null, status: string): number | null =>
     s ? (s.byStatus[status] ?? 0) : null;
+  const programMax = (s: { byStatus: Record<string, number> } | null, list: readonly { status: string }[]): number =>
+    Math.max(0, ...list.map((e) => flagCount(s, e.status) ?? 0));
 
   const groups = permStatusGroups();
   const anchors = dictionaryAnchors();
@@ -265,22 +289,23 @@ export default async function PermCaseStatusesPage() {
             <h3 className="font-heading text-xl font-black">{KIND_HEADING[g.kind].title}</h3>{" "}
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">{KIND_HEADING[g.kind].lede}</p>{" "}
             <div className="mt-4 grid gap-px border-2 border-border bg-border">
-              {g.entries.map((m) => {
+              {g.entries.map((m, _i, all) => {
+                const groupMax = Math.max(0, ...all.map((x) => permCount(x.status) ?? 0));
                 const anchor = statusAnchor(m.status);
                 const stagePage = stageFromSlug(anchor) ? `/perm-rfi-audit/${anchor}` : undefined;
                 const [lead, rest] = splitLead(m.summary);
                 return (
                   <details key={m.status} id={anchor} className="group scroll-mt-28 bg-card">
-                    <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
-                      <span className="min-w-0">
+                    <summary className="relative flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
+                      <span className="min-w-0 flex-1">
                         <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                           <span className="font-heading text-base font-black">{m.label}</span>{" "}
-                          <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">{m.status}</code>{" "}
-                          <span className="font-mono text-sm text-foreground/60">{KIND_LABEL[m.kind]}</span>{" "}
-                          <Count n={permCount(m.status)} asOf={permAsOf} href={stagePage} />
+                          <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">{m.status}</code>
                         </span>{" "}
                         <span className="mt-1 block text-sm leading-relaxed text-foreground/80">{lead}</span>
                       </span>{" "}
+                      <Count n={permCount(m.status)} href={stagePage} />{" "}
+                      <ShareBar n={permCount(m.status)} max={groupMax} />
                       <CaretDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
                     </summary>{" "}
                     <div className="max-w-3xl border-t-2 border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
@@ -315,7 +340,7 @@ export default async function PermCaseStatusesPage() {
         </p>{" "}
         <div className="mt-4 grid gap-px border-2 border-border bg-border">
           {PWD_STATUSES.map((e) => (
-            <FlagEntry key={e.status} e={e} anchor={`pwd-${statusAnchor(e.status)}`} n={flagCount(pwd, e.status)} asOf={pwd?.asOf ?? null} />
+            <FlagEntry key={e.status} e={e} anchor={`pwd-${statusAnchor(e.status)}`} n={flagCount(pwd, e.status)} max={programMax(pwd, PWD_STATUSES)} />
           ))}
         </div>
       </section>
@@ -330,7 +355,7 @@ export default async function PermCaseStatusesPage() {
         </p>{" "}
         <div className="mt-4 grid gap-px border-2 border-border bg-border">
           {LCA_STATUSES.map((e) => (
-            <FlagEntry key={e.status} e={e} anchor={`lca-${statusAnchor(e.status)}`} n={flagCount(lca, e.status)} asOf={lca?.asOf ?? null} />
+            <FlagEntry key={e.status} e={e} anchor={`lca-${statusAnchor(e.status)}`} n={flagCount(lca, e.status)} max={programMax(lca, LCA_STATUSES)} />
           ))}
         </div>
       </section>
@@ -351,7 +376,7 @@ export default async function PermCaseStatusesPage() {
               e={{ ...e, summary: `${e.summary} On: ${e.forms}.` }}
               anchor={`h2-${statusAnchor(e.status)}`}
               n={flagCount(seasonal, e.status)}
-              asOf={seasonal?.asOf ?? null}
+              max={programMax(seasonal, SEASONAL_STATUSES)}
             />
           ))}
         </div>

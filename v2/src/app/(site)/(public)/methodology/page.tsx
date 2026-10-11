@@ -8,6 +8,7 @@
  */
 
 import type { Metadata } from "next";
+import { BarRows } from "@/components/data/BarRows";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { DisclosureList } from "@/components/tools/FaqList";
@@ -59,13 +60,14 @@ export const revalidate = 604800;
  * point, and a live comparison would put us in the business of monitoring
  * other sites rather than DOL.
  */
+/** `days` draws the bar; a range is drawn at its middle and printed whole. */
 const SPREAD = [
-  { source: "DOL's own published average", value: "372 days" },
-  { source: "Crowd-sourced tracker", value: "335 days" },
-  { source: "Queue estimator A", value: "387 days" },
-  { source: "Queue estimator B", value: "462-480 days" },
-  { source: "Analytics site", value: "467 days" },
-  { source: "Stale calculator (March data)", value: "503 days" },
+  { source: "DOL's own published average", value: "372 days", days: 372 },
+  { source: "Crowd-sourced tracker", value: "335 days", days: 335 },
+  { source: "Queue estimator A", value: "387 days", days: 387 },
+  { source: "Queue estimator B", value: "462-480 days", days: 471 },
+  { source: "Analytics site", value: "467 days", days: 467 },
+  { source: "Stale calculator (March data)", value: "503 days", days: 503 },
 ] as const;
 
 /**
@@ -257,27 +259,21 @@ export default async function MethodologyPage() {
           Readings taken 2026-08-24, all describing average PERM processing
           time. Most of the spread has a mechanical cause.
         </p>
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full border-2 border-border text-left text-sm shadow-hard-sm">
-            <thead className="bg-foreground text-background">
-              <tr>
-                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
-                  Source
-                {" "}</th>
-                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
-                  Reported{" "}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-card">
-              {SPREAD.map((row) => (
-                <tr key={row.source} className="border-t border-border/40">
-                  <td className="p-3">{row.source}{" "}</td>
-                  <td className="p-3 font-mono font-bold tabular-nums">{row.value}{" "}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Six readings of one figure on one scale, shortest first, DOL's own
+            in ink: the spread is the point. */}
+        <div className="mt-6 max-w-3xl border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
+          <BarRows
+            rows={[...SPREAD]
+              .sort((a, b) => a.days - b.days)
+              .map((row) => ({
+                key: row.source,
+                label: row.source,
+                value: row.days,
+                text: row.value,
+                tone: row.source.startsWith("DOL") ? ("ink" as const) : ("primary" as const),
+              }))}
+            label="Average PERM processing time, as six sources reported it on 2026-08-24"
+          />
         </div>
         <MoreText gist={"Four choices explain nearly every difference between tools' numbers."} className="mt-4">
           <p className="max-w-2xl text-base leading-relaxed text-foreground/70">
