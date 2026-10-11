@@ -660,3 +660,4 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (evening)".
 - **Charts replaced long row lists**: decisions per month and quarterly outcomes as columns, state wages as ranges, the bulletin archive as a calendar, layoffs by publishing state (not by month: the states' windows differ).
 - **Article cards lie on their side on a phone** (/guides 25,443 to 12,368 px).
 - **The dev server's Turbopack cache filled the disk again** (5.9 GB, 36 MB free): stop it and `rm -rf .next/dev/cache` between long QA runs.
+- **Bulk captures of production helped trip Under Attack Mode** (6:37 PM EDT): 795 page loads in 45 minutes from one Mac beside a challenged crawler. Capture the dev server instead.

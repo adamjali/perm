@@ -9506,4 +9506,6 @@ minutes) before pushing new components.
 
 **Two charts that would have lied.** Layoffs by month climbed where each state's coverage began (Texas back to 2019, New York this year), so `/layoffs` draws by publishing state with each state's window. Monthly decisions were 33 horizontal rows; as columns with a dashed median, October 2025's 21 decisions read as the gap they were.
 
+**Capturing production can trip the defense.** Headless page captures of production from this Mac (two widths a page, many pages, plus the 119-page glued-text sweep) made this address the busiest on the site: 795 page requests in 45 minutes, 19 answered busy. With an Amazon-hosted crawler already challenged, the app ran full and the automatic defense put Under Attack Mode on at 6:37 PM EDT Oct 11, so every visitor met a browser check until it stood down. Capture the dev server on production data; capture production only a few pages at a time, and never during a deploy.
+
 **Disk.** The dev server's `.next/dev/cache` grew to 5.9 GB and the disk reached 36 MB free mid-capture (ENOSPC). Stop the dev server and delete `.next/dev/cache` and old capture folders between long QA runs.
