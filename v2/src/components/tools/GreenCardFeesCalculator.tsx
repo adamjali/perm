@@ -76,15 +76,15 @@ export function GreenCardFeesCalculator() {
       </div>{" "}
 
       <div className="mt-6 border-2 border-border bg-background p-4" aria-live="polite">
-        <p className="text-sm font-bold">USCIS fees, total{" "}</p>
+        <p className="text-sm font-bold">USCIS fees, total{" "}</p>{" "}
         <p className="mt-1 font-heading text-4xl font-black tabular-nums">{usd(result.total)}</p>{" "}
-        <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+        <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 [&>*]:min-w-0">
           <div className="flex items-baseline justify-between gap-3 border-t border-border/40 pt-2">
-            <dt>Petition stage (I-140){" "}</dt>
+            <dt>Petition stage (I-140){" "}</dt>{" "}
             <dd className="font-bold tabular-nums">{usd(result.petitionTotal)}</dd>
           </div>{" "}
           <div className="flex items-baseline justify-between gap-3 border-t border-border/40 pt-2">
-            <dt>Adjustment stage (I-485 and what rides it){" "}</dt>
+            <dt>Adjustment stage (I-485 and what rides it){" "}</dt>{" "}
             <dd className="font-bold tabular-nums">{usd(result.adjustmentTotal)}</dd>
           </div>
         </dl>

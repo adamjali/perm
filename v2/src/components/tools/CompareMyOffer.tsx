@@ -38,6 +38,45 @@ const field =
   "min-h-11 w-full border-2 border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const label = "block font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground";
 
+/**
+ * One population as a strip: the middle half as a block, the median as a
+ * rule, the offer as a marker above. Hatched before an offer is placed, so
+ * the frame shows the shape of the answer.
+ */
+function OfferStrip({ placed, offer }: { placed: Placed | null; offer: number | null }) {
+  const ok = placed && placed.p25 !== null && placed.p50 !== null && placed.p75 !== null && offer !== null;
+  if (!ok) {
+    return (
+      <div aria-hidden="true" className="relative mt-3 h-12">
+        <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground/20" />
+        <span className="absolute inset-y-1 left-[30%] w-[38%] border-2 border-dashed border-foreground/30 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]" />
+        <span className="absolute inset-y-0 left-[48%] w-0.5 bg-foreground/30" />
+      </div>
+    );
+  }
+  const { p25, p50, p75 } = placed as { p25: number; p50: number; p75: number };
+  const spread = Math.max(1, p75 - p25);
+  const lo = Math.min(offer, p25 - spread);
+  const hi = Math.max(offer, p75 + spread);
+  const at = (v: number) => ((v - lo) / (hi - lo)) * 100;
+  const mark = at(offer);
+  return (
+    <div className="mt-3">
+      <div aria-hidden="true" className="relative h-12">
+        <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground/30" />
+        <span className="absolute inset-y-1 border-2 border-border bg-primary/70" style={{ left: `${at(p25)}%`, width: `${at(p75) - at(p25)}%` }} />
+        <span className="absolute inset-y-0 w-1 -translate-x-1/2 bg-foreground" style={{ left: `${at(p50)}%` }} />
+        <span className="absolute -top-1 bottom-[-4px] w-1.5 -translate-x-1/2 bg-data-warn-ink" style={{ left: `${mark}%` }} />
+      </div>{" "}
+      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-data-warn-ink align-middle" />Your offer <b className="tabular-nums">{usd(offer)}</b>{" "}</li>{" "}
+        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-foreground align-middle" />Median <b className="tabular-nums">{usd(p50)}</b>{" "}</li>{" "}
+        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 border-2 border-border bg-primary/70 align-middle" />Middle half <b className="tabular-nums">{usd(p25)} to {usd(p75)}</b>{" "}</li>
+      </ul>
+    </div>
+  );
+}
+
 interface Props {
   occupations: readonly WageOption[];
   states: readonly WageOption[];
@@ -156,6 +195,18 @@ export function CompareMyOffer({ occupations, states }: Props) {
         <p role="alert" className="mt-5 border-2 border-border bg-background p-3 text-sm font-bold">{error}</p>
       ) : null}{" "}
 
+      {!results ? (
+        <div className="mt-8 grid grid-cols-1 gap-5 [&>*]:min-w-0 md:grid-cols-2" aria-hidden="true">
+          {(Object.keys(PROGRAM) as Program[]).map((p) => (
+            <div key={p} className="border-2 border-dashed border-foreground/30 bg-background p-5">
+              <p className={label}>{PROGRAM[p].name} </p>{" "}
+              <OfferStrip placed={null} offer={null} />{" "}
+              <p className="mt-2 text-sm text-foreground/70">Where the offer falls among {PROGRAM[p].noun} for the job.</p>
+            </div>
+          ))}
+        </div>
+      ) : null}{" "}
+
       {results && annual !== null ? (
         <div className="mt-8 grid grid-cols-1 gap-5 [&>*]:min-w-0 md:grid-cols-2" aria-live="polite">
           {(Object.keys(PROGRAM) as Program[]).map((p) => {
@@ -173,10 +224,10 @@ export function CompareMyOffer({ occupations, states }: Props) {
                     <p className="mt-3 font-heading text-4xl font-black tracking-tight">
                       {ordinal(r.percentile)} <span className="text-lg font-bold text-muted-foreground">percentile</span>
                     </p>{" "}
-                    <p className="mt-2 text-base leading-relaxed">
-                      {usd(annual)} a year sits at about the {ordinal(r.percentile)} percentile of{" "}
-                      {r.n.toLocaleString("en-US")} {meta.noun} for {occupationLabel}
-                      {state ? ` in ${state}` : ""}. Median {usd(r.p50)}; the middle half runs {usd(r.p25)} to {usd(r.p75)}.
+                    <OfferStrip placed={r} offer={annual} />{" "}
+                    <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+                      Against {r.n.toLocaleString("en-US")} {meta.noun} for {occupationLabel}
+                      {state ? ` in ${state}` : ""}, each as a yearly wage.
                     </p>{" "}
                     <Link
                       href={`${meta.explorer}?soc=${encodeURIComponent(soc)}${state ? `&state=${encodeURIComponent(state)}` : ""}`}

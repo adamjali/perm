@@ -5,6 +5,8 @@ import { WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { DateRuler } from "@/components/tools/DateRuler";
+import { RuleNotes } from "@/components/tools/RuleNotes";
 import { calculatePWDExpiration } from "@/lib/perm";
 import { daysBetween } from "@/lib/time";
 
@@ -25,8 +27,6 @@ const localToday = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-const long = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
 function whichRule(determination: string): string {
   const month = Number(determination.slice(5, 7));
@@ -61,28 +61,30 @@ export function PwdValidityCalculator() {
         </div>
       </div>{" "}
 
+      <DateRuler
+        className="mt-6"
+        from={result ? det : null}
+        to={result ? result.expires : null}
+        fromLabel="Determination issued"
+        toLabel="Determination expires"
+        today={today}
+        emptyHint="Enter the determination date"
+      />{" "}
+
       {result ? (
-        <div className="mt-6">
+        <div className="mt-4">
           {result.left < 0 ? (
             <p className="mb-4 flex items-start gap-2 border-2 border-border bg-background p-3 text-sm">
-              <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> This determination expired {Math.abs(result.left)}{" "}
-              {Math.abs(result.left) === 1 ? "day" : "days"} ago. A PERM that did not start recruitment or file inside the window needs a new
-              wage request.
+              <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> A PERM that didn&apos;t start
+              recruitment or file inside the window needs a new wage request.
             </p>
           ) : null}{" "}
-          <dl className="border-t-2 border-border">
-            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
-              <dt className="text-base">
-                Determination expires ({result.valid} days of validity)
-                {result.left >= 0 ? <span className="text-foreground/70"> · {result.left} {result.left === 1 ? "day" : "days"} from today</span> : null}
-              </dt>{" "}
-              <dd className="font-heading text-xl font-black tabular-nums">{long(result.expires)}</dd>
-            </div>
-          </dl>{" "}
-          <p className="mt-3 text-sm leading-relaxed text-foreground/70">{result.rule}</p>{" "}
-          <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
-            <li>20 CFR 656.40(c): a determination is valid for no less than 90 days and no more than one year, and the employer must file the application or begin recruitment inside that period.</li>
-          </ul>
+          <p className="text-base leading-relaxed">{result.rule}</p>{" "}
+          <RuleNotes
+            items={[
+              "20 CFR 656.40(c): a determination is valid for no less than 90 days and no more than one year, and the employer must file the application or begin recruitment inside that period.",
+            ]}
+          />
         </div>
       ) : null}
     </div>

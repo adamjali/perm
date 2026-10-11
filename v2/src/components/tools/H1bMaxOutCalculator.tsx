@@ -5,6 +5,8 @@ import { WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { DateRuler } from "@/components/tools/DateRuler";
+import { RuleNotes } from "@/components/tools/RuleNotes";
 import { calculateH1bMaxOut, PERM_ADVANCE_DAYS, type H1bMaxOutResult } from "@/lib/perm";
 import { formatInt } from "@/lib/format";
 
@@ -90,6 +92,26 @@ export function H1bMaxOutCalculator() {
         </div>
       </div>{" "}
 
+      <DateRuler
+        className="mt-6"
+        from={result?.kind === "ok" ? start : null}
+        to={result?.kind === "ok" ? result.r.maxOutDate : null}
+        fromLabel="H-1B status began"
+        toLabel={Number(outside) > 0 ? "Six years end, with days recaptured" : "Six years end"}
+        today={today}
+        marks={
+          result?.kind === "ok"
+            ? [
+                { at: result.r.permFileBy, label: "File the PERM by", tone: "warn" as const },
+                ...(result.r.perm
+                  ? [{ at: result.r.perm.filed, label: "PERM filed", tone: result.r.perm.qualifies ? ("good" as const) : ("warn" as const) }]
+                  : []),
+              ]
+            : []
+        }
+        emptyHint="Enter the first day of H-1B status"
+      />{" "}
+
       {result?.kind === "error" ? (
         <p className="mt-5 flex items-start gap-2 border-2 border-border bg-background p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.error}
@@ -97,7 +119,7 @@ export function H1bMaxOutCalculator() {
       ) : null}{" "}
 
       {result?.kind === "ok" ? (
-        <div className="mt-6">
+        <div className="mt-4">
           {result.warnings.length > 0 ? (
             <ul className="mb-4 space-y-2">
               {result.warnings.map((w) => (
@@ -107,21 +129,8 @@ export function H1bMaxOutCalculator() {
               ))}
             </ul>
           ) : null}{" "}
-          <dl className="border-t-2 border-border">
-            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
-              <dt className="text-base">Last day in H-1B status (six-year limit{Number(outside) > 0 ? `, plus ${formatInt(Math.floor(Number(outside)))} recaptured days` : ""})</dt>{" "}
-              <dd className="font-heading text-xl font-black tabular-nums">{long(result.r.maxOutDate)}</dd>
-            </div>{" "}
-            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
-              <dt className="text-base">
-                Last day to file the PERM for the 365-day rule
-                {result.r.daysOfMargin !== null && result.r.daysOfMargin >= 0 ? (
-                  <span className="text-foreground/70"> · {formatInt(result.r.daysOfMargin)} days from today</span>
-                ) : null}
-              </dt>{" "}
-              <dd className="font-heading text-xl font-black tabular-nums">{long(result.r.permFileBy)}</dd>
-            </div>{" "}
-            {result.r.perm ? (
+          {result.r.perm ? (
+            <dl className="mb-2 border-y-2 border-border">
               <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">
                   A PERM filed {long(result.r.perm.filed)} is {formatInt(result.r.perm.daysBeforeMaxOut)} days before the limit
@@ -130,13 +139,9 @@ export function H1bMaxOutCalculator() {
                   {result.r.perm.qualifies ? "Meets the 365-day rule" : `Short by ${formatInt(PERM_ADVANCE_DAYS - result.r.perm.daysBeforeMaxOut)} days`}
                 </dd>
               </div>
-            ) : null}
-          </dl>{" "}
-          <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
-            {result.r.citations.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
+            </dl>
+          ) : null}{" "}
+          <RuleNotes items={result.r.citations} />
         </div>
       ) : null}
     </div>

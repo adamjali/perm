@@ -5,6 +5,8 @@ import { WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { DateRuler } from "@/components/tools/DateRuler";
+import { RuleNotes } from "@/components/tools/RuleNotes";
 import { calculatePriorityDateRetention, RETENTION_DAYS, type RetentionResult } from "@/lib/perm";
 import { formatInt } from "@/lib/format";
 
@@ -21,6 +23,12 @@ type Outcome = { kind: "error"; error: string } | { kind: "ok"; r: RetentionResu
  */
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The reader's own calendar date. `toISOString()` is UTC, which after about 8 PM Eastern is already tomorrow. */
+const localToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 const long = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
@@ -31,6 +39,7 @@ export function PriorityDateRetentionCalculator() {
   const [approved, setApproved] = useState("");
   const [i485, setI485] = useState("");
   const [withdrew, setWithdrew] = useState("");
+  const today = useMemo(() => localToday(), []);
 
   const result = useMemo((): Outcome | null => {
     if (!DATE_RE.test(approved)) return null;
@@ -65,6 +74,22 @@ export function PriorityDateRetentionCalculator() {
         </div>
       </div>{" "}
 
+      <DateRuler
+        className="mt-6"
+        from={result?.kind === "ok" ? approved : null}
+        to={result?.kind === "ok" ? result.r.withdrawalSafeFrom : null}
+        fromLabel="I-140 approved"
+        toLabel={`A withdrawal can't revoke it (day ${RETENTION_DAYS})`}
+        today={today}
+        leftWord="to go"
+        marks={
+          result?.kind === "ok" && result.r.withdrawal
+            ? [{ at: result.r.withdrawal.on, label: "Employer withdrew", tone: result.r.withdrawal.autoRevokes ? "warn" : "good" }]
+            : []
+        }
+        emptyHint="Enter the I-140 approval date"
+      />{" "}
+
       {result?.kind === "error" ? (
         <p className="mt-5 flex items-start gap-2 border-2 border-border bg-background p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.error}
@@ -72,17 +97,13 @@ export function PriorityDateRetentionCalculator() {
       ) : null}{" "}
 
       {result?.kind === "ok" ? (
-        <div className="mt-6">
+        <div className="mt-4">
           {result.warnings.map((w) => (
             <p key={w} className="mb-3 flex items-start gap-2 border-2 border-border bg-background p-3 text-sm">
               <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {w}
             </p>
           ))}{" "}
           <dl className="border-t-2 border-border">
-            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
-              <dt className="text-base">An employer withdrawal no longer revokes the I-140 from ({RETENTION_DAYS} days after approval)</dt>{" "}
-              <dd className="font-heading text-xl font-black tabular-nums">{long(result.r.withdrawalSafeFrom)}</dd>
-            </div>{" "}
             {result.r.portableFrom ? (
               <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">The job can change to a same-or-similar one under 204(j) from ({RETENTION_DAYS} days after the I-485 was filed)</dt>{" "}
@@ -109,11 +130,7 @@ export function PriorityDateRetentionCalculator() {
             labor certification, which the dates cannot tell. Whether a new job is &ldquo;same or similar&rdquo; is USCIS&apos;s
             finding on Supplement J, not arithmetic.
           </p>{" "}
-          <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
-            {result.r.citations.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
+          <RuleNotes items={result.r.citations} />
         </div>
       ) : null}
     </div>

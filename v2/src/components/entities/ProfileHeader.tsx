@@ -72,7 +72,7 @@ export function ProfileHeader({
             >
               {facts.map((f) => (
                 <div key={f.label} className="bg-card px-4 py-3">
-                  <dt className="text-sm text-foreground/70">{f.label}{" "}</dt>
+                  <dt className="text-sm text-foreground/70">{f.label}{" "}</dt>{" "}
                   <dd className="mt-0.5 font-heading text-lg font-black leading-snug [overflow-wrap:anywhere]">
                     {f.href ? (
                       <Link

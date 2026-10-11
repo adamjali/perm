@@ -2,6 +2,9 @@ import { headers } from "next/headers";
 
 import { EmbedFrame, embedMetadata } from "@/components/embed/EmbedFrame";
 import { prettyStatus } from "@/components/queue/stages";
+import { CaseNumberAnatomy } from "@/components/tools/CaseNumberAnatomy";
+import { dolNow, type DolNow } from "@/lib/dolNow";
+import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { embedSiteFor } from "@/lib/embeds";
 import { getStatusMeaning } from "@/lib/permStatus";
 import { lookupForEmbed, type EmbedCaseAnswer } from "@/lib/turso/embedLookup";
@@ -116,6 +119,30 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
   );
 }
 
+/** DOL's own position and average, dated, in two cells. Nothing when DOL's figures can't be read. */
+function QueueNow({ now }: { now: DolNow | null }) {
+  if (!now || (now.frontier === null && now.days === null)) return null;
+  return (
+    <div className="mt-5 border-2 border-border bg-card shadow-hard-sm">
+      <dl className="grid grid-cols-2 gap-px bg-border [&>*]:min-w-0 [&>*:last-child:nth-child(odd)]:col-span-2">
+        {now.frontier ? (
+          <div className="bg-card p-3">
+            <dt className="text-sm text-foreground/70">DOL is deciding PERMs filed in{" "}</dt>{" "}
+            <dd className="mt-0.5 font-heading text-xl font-black">{now.frontier}</dd>
+          </div>
+        ) : null}{" "}
+        {now.days !== null ? (
+          <div className="bg-card p-3">
+            <dt className="text-sm text-foreground/70">Its average, filing to decision{" "}</dt>{" "}
+            <dd className="mt-0.5 font-heading text-xl font-black tabular-nums">{now.days} days</dd>
+          </div>
+        ) : null}
+      </dl>{" "}
+      {now.asOf ? <p className="border-t-2 border-border px-3 py-2 text-sm text-foreground/70">As DOL published them on {now.asOf}.</p> : null}
+    </div>
+  );
+}
+
 export default async function CaseStatusEmbed({
   searchParams,
 }: {
@@ -125,6 +152,9 @@ export default async function CaseStatusEmbed({
   const site = embedSiteFor((await headers()).get("referer"), sp.site);
   const typed = (sp.case ?? "").trim().slice(0, 40);
   const answer = typed ? await lookupForEmbed(typed, site).catch(() => null) : null;
+  // Before anything is typed, where DOL stands: the frame carries a live figure
+  // rather than a lone box. A failed read shows nothing, never a stale guess.
+  const now = typed ? null : dolNow(await getProcessingTimes().catch(() => null));
 
   return (
     <EmbedFrame slug="case-status">
@@ -151,14 +181,18 @@ export default async function CaseStatusEmbed({
               Check
             </button>
           </div>{" "}
-          <input type="hidden" name="site" value={site} />{" "}
-          <p className="text-sm text-foreground/70">PERM (G-), prevailing wage (P-) or H-1B LCA (I-) numbers.</p>
-        </form>
+          <input type="hidden" name="site" value={site} />
+        </form>{" "}
         {typed ? (
           <div className="mt-4">
             <Answer typed={typed} answer={answer} />
           </div>
-        ) : null}
+        ) : (
+          <>
+            <CaseNumberAnatomy id="embed-case-anatomy" employerName={false} />{" "}
+            <QueueNow now={now} />
+          </>
+        )}
       </div>
     </EmbedFrame>
   );

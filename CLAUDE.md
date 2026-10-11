@@ -636,3 +636,14 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (morning)".
 - **DOL's wage-request wait is read live** in articles (`<DolNow show="pwd" />`); the typed "4 to 7 months" is gone and gated.
 - **The health check lists units stopped after an error**, judges the database folder by sqld's own rules, and warns on swap only when it moves.
 - **The demo account's alerts no longer loop through the support forward**; the contact form still reaches support.
+
+## Oct 11 2026 (afternoon), in six lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (afternoon)".
+
+- **Employer pages come in named parts**: a profile header (main job, worksite, industry, what changed as tags, the case box beside the name), a sticky bar of seven parts, one heading each (`ProfileHeader`, `Chapter`, `ChapterNav`).
+- **A 70,000-view X thread quoted our Microsoft and TCS LCA lists**; DOL's live service matched 10 of 10, and 100 of 100 sampled held Microsoft cases.
+- **Every pending-filing list names DOL's case-status service inside its own box** (`FromDolLive`), so a screenshot carries its source; no copy says "DOL's daily check".
+- **The small calculators show the answer's shape before any input**: date tools draw a ruler (`DateRuler`), wage levels a ladder, offers a strip, lottery odds the level chart; the lookup embed shows the case-number diagram and DOL's figures.
+- **`pnpm check` misses gates that scan the whole tree** (glued text, grid tracks): two pushes went red on them. Run `pnpm exec vitest run src/app/__tests__` before pushing a new component.
+- **Chrome repeats the page top past 16,384 px in a full-page capture**: capture long phone pages in viewport steps.

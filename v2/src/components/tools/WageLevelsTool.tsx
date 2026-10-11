@@ -41,6 +41,51 @@ interface History {
   market: { series: string; median: number | null; p25: number | null; p75: number | null; employment: number | null } | null;
 }
 
+/** DOL's guidance names each level by the experience it describes. */
+const LEVEL_WORDS: Record<WageLevel["level"], string> = { I: "Entry", II: "Qualified", III: "Experienced", IV: "Fully competent" };
+const GHOST_WIDTHS = [52, 66, 82, 100];
+
+/**
+ * The four levels as a ladder of bars, each as long as its yearly figure
+ * against Level IV. Before a lookup it is drawn hatched, so the frame shows
+ * what the tool answers rather than an empty form.
+ */
+function WageLadder({ levels }: { levels: WageLevel[] | null }) {
+  const top = levels ? Math.max(...levels.map((l) => l.yearly)) : 0;
+  const rows = levels ?? (["I", "II", "III", "IV"] as const).map((level) => ({ level, hourly: 0, yearly: 0 }));
+  return (
+    <ol className="space-y-2" aria-label={levels ? "DOL's four wage levels" : "The four levels, once looked up"}>
+      {rows.map((l, i) => (
+        <li key={l.level} className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-3 [&>*]:min-w-0">
+          <span className="leading-tight">
+            <span className="block font-heading text-base font-black">Level {l.level}</span>{" "}
+            <span className="block text-sm text-foreground/70">{LEVEL_WORDS[l.level]}</span>
+          </span>{" "}
+          {levels ? (
+            <span className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="h-9 shrink-0 border-2 border-border bg-primary"
+                style={{ width: `${Math.max(8, (l.yearly / top) * 70)}%` }}
+              />{" "}
+              <span className="whitespace-nowrap">
+                <span className="block font-heading text-lg font-black tabular-nums">{usd(l.yearly)}</span>{" "}
+                <span className="block font-mono text-sm tabular-nums text-foreground/70">{usd(l.hourly, 2)} an hour</span>
+              </span>
+            </span>
+          ) : (
+            <span
+              aria-hidden="true"
+              className="block h-9 border-2 border-dashed border-foreground/30 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]"
+              style={{ width: `${GHOST_WIDTHS[i]}%` }}
+            />
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 const yearLabel = (y: number) => `${y}-${String((y + 1) % 100).padStart(2, "0")}`;
 
 function YearTable({ years, caption }: { years: StoredYear[]; caption: string }) {
@@ -219,20 +264,23 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
         </p>
       ) : null}
 
+      {result.kind === "idle" || result.kind === "loading" ? (
+        <div className="mt-6 border-t-2 border-border pt-5">
+          <WageLadder levels={null} />{" "}
+          <p className="mt-3 text-sm text-foreground/70">
+            {result.kind === "loading" ? "Asking DOL for the four figures." : "Pick an occupation and an area: DOL's four levels for that job draw here, with the yearly and hourly figure for each."}
+          </p>
+        </div>
+      ) : null}{" "}
+
       {result.kind === "levels" ? (
         <div className="mt-6">
           <p className="text-sm text-foreground/70">
             SOC {result.soc}, {result.areaLabel}, the July {result.seriesYear} to June {result.seriesYear + 1} series. DOL&apos;s figures, read just now.
           </p>{" "}
-          <dl className="mt-3 border-t-2 border-border">
-            {result.levels.map((l) => (
-              <div key={l.level} className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-baseline sm:gap-x-6">
-                <dt className="text-base">Level {l.level}</dt>{" "}
-                <dd className="font-mono text-sm tabular-nums text-foreground/70">{usd(l.hourly, 2)} an hour</dd>{" "}
-                <dd className="font-heading text-xl font-black tabular-nums">{usd(l.yearly)} a year</dd>
-              </div>
-            ))}
-          </dl>{" "}
+          <div className="mt-4">
+            <WageLadder levels={result.levels} />
+          </div>{" "}
           <p className="mt-3 text-sm text-muted-foreground">
             Source:{" "}
             <a href={result.source} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">

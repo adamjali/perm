@@ -9445,3 +9445,40 @@ with a recruitment-period range as its must-not-match control. Article callouts 
   emails open with their Eastern time.
 - **The morning report scores wage-request dates per live method** (`pwd-day`, `pwd-queue`), leaving out
   retired ones (`RETIRED_METHODS`, held to `src/lib/scorecard/verdict.ts` by its test).
+
+## Oct 11 2026 (afternoon): employer pages in parts, sources on screenshots, answers before input
+
+**The employer page** (`perm-employers/[slug]`, published branch) is a `ProfileHeader` and seven `Chapter`s under a
+sticky `ChapterNav`: right now (live queue, follow, newest filings, layoffs), how long, every program, against others,
+the work, history, notes. The bar sits at `--site-header-h` and marks the part on screen (IntersectionObserver,
+`-25% 0px -65% 0px`); below `lg` it pads past the data rail's fixed 44px handle. Debarment and the too-few-cases band
+sit inside the header ABOVE the stat grid (`EntityContext.test.tsx` reads the page source for that order). The median
+wage card drops out when there's no median; `ingest_perm_disclosure.py` now writes `medianAnnualWage` per employer and
+law firm, which fills at the next disclosure load. Law firm and other entity pages still use the old layout; the three
+parts are built to be reused there.
+
+**Where pending data comes from, inside the box.** On Oct 10 and 11 an X account (70K views on one post) posted
+screenshots of Microsoft's and TCS's newest LCAs from our employer pages; replies asked where the data came from,
+since DOL hadn't published its next quarterly file. Checked first: the ten LCAs in the screenshots matched DOL's live
+service exactly (status, employer, title, filing time), and so did 100 of 100 sampled held Microsoft PERM cases. The
+gap was ours: the boxes didn't say. `FromDolLive` ends both pending-filing lists with DOL's case-status service and a
+link to flag.dol.gov, and every "DOL's daily check" in visible copy now names the service. **Never reply on X for the
+site without the owner's yes**; a reply text was offered, not posted.
+
+**Answers before input.** An embed sits in someone else's page at a fixed height, and a bare form in a blank frame
+reads as unfinished. `DateRuler` draws a deadline as a ruler (ink for days gone, lime for days left, today, ticks with a
+keyed list under the bar so no label can run off a phone screen) and draws it hatched before a date is entered: RFI
+deadline, wage determination validity, priority date retention, H-1B six years. Citations fold under "The rules behind
+it" (`RuleNotes`). Wage levels draw a four-step ladder (DOL's guidance names: entry, qualified, experienced, fully
+competent), offers a box strip (middle half, median, the offer), lottery odds show DHS's chart before a lookup, and the
+lookup embed shows `CaseNumberAnatomy` (moved out of the homepage hero) and DOL's queue month and average. No pulse on
+a loading ghost: the house rule bars looping animation.
+
+**Two pushes went red on whole-tree gates that `pnpm check` doesn't run**: `responsive-grid-tracks` (a grid holding
+form controls needs `[&>*]:min-w-0`) and `no-glued-jsx-text` (`</p>` then `<p` on the next line needs `{" "}` even when
+the paragraph ends with a space). The deploy waited for the suite as designed, so nothing broken shipped, but the widget
+fixes from the morning sat undeployed until the next green push. Run `pnpm exec vitest run src/app/__tests__` (about two
+minutes) before pushing new components.
+
+**Capturing**: Chrome's full-page screenshot tiles past 16,384 px and repeats the top of the page; `seg-shot.mjs`
+(scratch, `node_modules/.cache/qa/`) scrolls in 1,400 px steps instead.

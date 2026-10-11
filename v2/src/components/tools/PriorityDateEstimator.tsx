@@ -566,8 +566,8 @@ export function PriorityDateEstimator({
           </h2>
         </div>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          It also shows which way the cutoff has been moving. Cutoffs go
-          backwards as well as forwards.
+          Checked against the newest bulletin, with which way the cutoff has
+          been moving: cutoffs go backwards as well as forwards.
         </p>{" "}
 
         <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">

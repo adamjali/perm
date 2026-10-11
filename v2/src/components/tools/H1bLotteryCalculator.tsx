@@ -308,6 +308,16 @@ export function H1bLotteryCalculator() {
         </p>
       ) : null}
 
+      {!done ? (
+        <div className="mt-6 border-t-2 border-border pt-5">
+          <p className="mb-3 text-sm font-bold text-foreground/70">
+            DHS&apos;s estimated chance at each wage level, against {WEIGHTED_ESTIMATE.randomPercent}% for everyone under
+            the old random draw (the dashed line). The lookup marks the level your job lands on.
+          </p>{" "}
+          <LevelOdds />
+        </div>
+      ) : null}{" "}
+
       {done && assigned && odds && limitingSite ? (
         <div className="mt-6 space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
@@ -322,34 +332,7 @@ export function H1bLotteryCalculator() {
               <p className="mt-1 text-base">Against {WEIGHTED_ESTIMATE.randomPercent}% for everyone under the old random draw (the dashed line).</p>
             </div>
           </div>{" "}
-          <ChartTips label="DHS's estimated chance at each wage level">
-          <ul className="space-y-3" aria-label="DHS's estimate at each level">
-            {WEIGHTED_ESTIMATE.levels.map((l) => (
-              <Fragment key={l.level}>
-                {" "}
-                <li
-                  data-tip={`Level ${l.level}${l.level === assigned.level ? ", the level the rule assigns" : ""}\n${l.percent.toFixed(1)}% estimated chance\nEntered in the draw ${timesWord(l.entries)}\n${WEIGHTED_ESTIMATE.randomPercent}% under the old random draw`}
-                  className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3 [&>*]:min-w-0"
-                >
-                  <span className={l.level === assigned.level ? "font-heading text-lg font-black" : "text-base font-bold text-foreground/70"}>
-                    Level {l.level}
-                  </span>{" "}
-                  <span className="relative block h-7 border-2 border-border bg-background" aria-hidden="true">
-                    <span
-                      className={`absolute inset-y-0 left-0 ${l.level === assigned.level ? "bg-foreground" : "bg-foreground/30"}`}
-                      style={{ width: `${l.percent}%` }}
-                    />
-                    <span
-                      className="absolute inset-y-0 border-l-2 border-dashed border-data-info-ink"
-                      style={{ left: `${WEIGHTED_ESTIMATE.randomPercent}%` }}
-                    />
-                  </span>{" "}
-                  <span className="text-right font-bold tabular-nums">{l.percent.toFixed(1)}%</span>
-                </li>
-              </Fragment>
-            ))}
-          </ul>
-          </ChartTips>{" "}
+          <LevelOdds assigned={assigned.level} />{" "}
           <div className="overflow-x-auto border-2 border-border">
             <table className="w-full min-w-[560px] text-left text-base">
               <thead className="border-b-2 border-border bg-muted/40">
@@ -408,4 +391,42 @@ function assignedNote(level: LotteryLevel, at: SiteLevel, siteCount: number): st
   if (at.belowLevelI) parts.push("The offer is under DOL's level I figure, which the rule allows when the wage comes from another source, and enters as level I.");
   if (siteCount > 1) parts.push(`With several worksites the rule takes the lowest level the offer meets, here level ${level}.`);
   return parts.join(" ");
+}
+
+/**
+ * DHS's estimated chance at each wage level, as bars against the old random
+ * draw. It doesn't depend on the reader's input, so it shows before a lookup
+ * too; the lookup only marks the level the rule assigns.
+ */
+function LevelOdds({ assigned }: { assigned?: string }) {
+  return (
+    <ChartTips label="DHS's estimated chance at each wage level">
+    <ul className="space-y-3" aria-label="DHS's estimate at each level">
+      {WEIGHTED_ESTIMATE.levels.map((l) => (
+        <Fragment key={l.level}>
+          {" "}
+          <li
+            data-tip={`Level ${l.level}${l.level === assigned ? ", the level the rule assigns" : ""}\n${l.percent.toFixed(1)}% estimated chance\nEntered in the draw ${timesWord(l.entries)}\n${WEIGHTED_ESTIMATE.randomPercent}% under the old random draw`}
+            className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3 [&>*]:min-w-0"
+          >
+            <span className={l.level === assigned ? "font-heading text-lg font-black" : "text-base font-bold text-foreground/70"}>
+              Level {l.level}
+            </span>{" "}
+            <span className="relative block h-7 border-2 border-border bg-background" aria-hidden="true">
+              <span
+                className={`absolute inset-y-0 left-0 ${l.level === assigned ? "bg-foreground" : "bg-foreground/30"}`}
+                style={{ width: `${l.percent}%` }}
+              />
+              <span
+                className="absolute inset-y-0 border-l-2 border-dashed border-data-info-ink"
+                style={{ left: `${WEIGHTED_ESTIMATE.randomPercent}%` }}
+              />
+            </span>{" "}
+            <span className="text-right font-bold tabular-nums">{l.percent.toFixed(1)}%</span>
+          </li>
+        </Fragment>
+      ))}
+    </ul>
+    </ChartTips>
+  );
 }
