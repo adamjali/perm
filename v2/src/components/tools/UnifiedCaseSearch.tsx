@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 
 import { STAGE_PROGRAM_LABEL, searchStages } from "@/lib/searchStages";
-import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { usePublicQuery } from "@/hooks/usePublicQuery";
 import { formatWage } from "@/lib/wageFormat";
@@ -344,6 +344,67 @@ const NO_FIELD_OPTIONS: CaseFieldOptions = {
 /** The per-control form of the no-lead reason; the full sentence prints once. */
 const NO_LEAD_SHORT = "Search by employer, case number, law firm, state or occupation first.";
 
+/**
+ * The answer's shape before any search: one invented-looking but real-shaped
+ * number per program, each with the way a status reads. Serials end in zeros
+ * so none can be taken for somebody's actual case.
+ */
+const GHOST_ROWS: { program: Program; number: string; open: boolean }[] = [
+  { program: "perm", number: "G-100-26201-000000", open: true },
+  { program: "pwd", number: "P-100-26140-000000", open: false },
+  { program: "lca", number: "I-200-26188-000000", open: false },
+  { program: "seasonal", number: "H-400-26170-000000", open: true },
+];
+
+/**
+ * Searches a first visit can run in one tap: three of the busiest sponsors,
+ * each filed under a spelling the employer search finds by its first word.
+ */
+const EXAMPLES = ["Microsoft", "Infosys", "Amazon"] as const;
+
+/**
+ * One fold of the form. The search used to show all twenty controls at once,
+ * so the one most people need (an employer's name) sat on top of a wall of
+ * boxes; each group now folds under a line that says what it holds and how
+ * many of its filters are set, and stays in the HTML either way.
+ */
+function FilterGroup({
+  title,
+  holds,
+  count,
+  initiallyOpen,
+  children,
+}: {
+  title: string;
+  /** What the group holds, said in the summary beside its title. */
+  holds: string;
+  count: number;
+  initiallyOpen: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <details open={initiallyOpen || undefined} className="group border-2 border-border bg-card">
+      <summary className="flex min-h-[52px] cursor-pointer list-none items-center gap-3 px-4 py-2 hover:bg-tint-primary focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+        <CaretRightIcon
+          className="size-4 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none"
+          weight="bold"
+          aria-hidden="true"
+        />{" "}
+        <span className="min-w-0 flex-1">
+          <span className="font-heading text-base font-black">{title}</span>{" "}
+          <span className="block text-sm text-foreground/70 sm:ml-2 sm:inline">{holds}</span>
+        </span>{" "}
+        {count > 0 ? (
+          <span className="shrink-0 border-2 border-border bg-primary px-2 py-0.5 text-sm font-bold text-black">
+            {count} set
+          </span>
+        ) : null}
+      </summary>
+      <div className="border-t-2 border-border p-4 sm:p-5">{children}</div>
+    </details>
+  );
+}
+
 function Field({
   label,
   state,
@@ -585,6 +646,29 @@ export function UnifiedCaseSearch({
 
   const droppedList = data?.dropped ?? [];
 
+  /** One of the example searches, run as though it had been typed and submitted. */
+  const runExample = (name: string) => {
+    setTextInput(name);
+    setSort(orderToSort(orderInput));
+    setSubmitted(buildParams({ q: name }));
+    setQuery((cur) => ({ search: name, n: cur.n + 1 }));
+  };
+
+  // How many filters each fold holds, said on its closed summary so a set
+  // filter is never hidden from the reader who set it.
+  const narrowCount =
+    [outcome, stageInput, titleInput.trim(), fromInput, toInput, fyInput, dFromInput, dToInput, wMinInput.trim(), wMaxInput.trim()].filter(
+      Boolean,
+    ).length +
+    (programs.length < ALL_PROGRAMS.length ? 1 : 0) +
+    (orderInput !== "filed-desc" ? 1 : 0);
+  const placeCount = [industryInput || naicsInput.trim(), cityInput.trim(), ...WORKER_KEYS.map((k) => worker[k].trim())].filter(
+    Boolean,
+  ).length;
+  // Read once: a stage page's link opens the fold its stage is in, and after
+  // that the fold is the reader's to open and shut.
+  const [narrowOpen] = useState(Boolean(initialStage));
+
   /**
    * Date boxes holding something that is not a month.
    *
@@ -617,17 +701,10 @@ export function UnifiedCaseSearch({
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <form onSubmit={submit} className="space-y-6">
           <fieldset className="min-w-0">
-            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              What to search by
-            </legend>{" "}
-            <p className="mb-3 mt-1 text-sm leading-relaxed text-foreground/70">
-              Fill in any one of these. An employer reaches every program, live
-              and published; a firm, a state or an occupation reads
-              DOL&apos;s published files, the only place those fields exist.
-            </p>{" "}
+            <legend className="sr-only">What to search by</legend>{" "}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] [&>*]:min-w-0">
               <div className="block min-w-0">
-                <label className="mb-1 block text-sm font-bold" htmlFor={`${uid}-q`}>
+                <label className="mb-2 block font-heading text-xl font-black leading-tight" htmlFor={`${uid}-q`}>
                   Employer or case number
                 </label>{" "}
                 <input
@@ -662,10 +739,26 @@ export function UnifiedCaseSearch({
                 of the input and read as though it had fallen out of the row.
                 Out here it spans the full width and the button lines up with
                 the field it submits. */}
-            <p id={`${uid}-q-hint`} className="mt-1 text-sm leading-snug text-foreground/70">
-              The start of an employer&apos;s name, or any case number: G- or A- (PERM), P-100 to P-203 (wage request),
-              I- (H-1B LCA), H-300, JO-A-300, H-400, P-400, C-500 or P-500 (H-2A, H-2B, CW-1). Or leave it empty and search by law firm,
-              state or occupation.
+            <p id={`${uid}-q-hint`} className="mt-2 text-sm leading-snug text-foreground/70">
+              The start of the name it files under, or a case number from any of the four programs.
+            </p>{" "}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-sm font-bold">Try</span>{" "}
+              {EXAMPLES.map((name) => (
+                <Fragment key={name}>
+                  <button
+                    type="button"
+                    onClick={() => runExample(name)}
+                    disabled={pending}
+                    className="min-h-[44px] border-2 border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"
+                  >
+                    {name}
+                  </button>{" "}
+                </Fragment>
+              ))}
+            </div>{" "}
+            <p className="mt-6 border-t-2 border-border pt-4 text-sm font-bold">
+              Or start from a law firm, a worksite state or a job, from DOL&apos;s published files
             </p>{" "}
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
               <Field
@@ -726,10 +819,15 @@ export function UnifiedCaseSearch({
             </div>
           </fieldset>
 
+          <div className="space-y-3">
+          <FilterGroup
+            title="Narrow the answer"
+            holds="Outcome, review stage, dates, wage, programs and order"
+            count={narrowCount}
+            initiallyOpen={narrowOpen}
+          >
           <fieldset className="min-w-0">
-            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              Narrow it
-            </legend>{" "}
+            <legend className="sr-only">Narrow the answer</legend>{" "}
             {can.outcome.why === "no-lead" ? (
               <p className="mt-2 text-sm leading-snug text-foreground/70">{refusalText("no-lead")}</p>
             ) : null}{" "}
@@ -1047,13 +1145,49 @@ export function UnifiedCaseSearch({
                 <p className="mt-2 text-sm text-foreground/70">Pick at least one program to search.</p>
               ) : null}
             </div>
-          </fieldset>
+          </fieldset>{" "}
+            <div className="mt-5 grid grid-cols-1 gap-3 border-t-2 border-border/30 pt-4 sm:grid-cols-2 [&>*]:min-w-0">
+              <div className="block min-w-0">
+                <label className="mb-1 block text-sm font-bold" htmlFor={`${uid}-order`}>
+                  Order the answer by
+                </label>{" "}
+                <select
+                  id={`${uid}-order`}
+                  value={orderInput}
+                  onChange={(e) => {
+                    const v = e.target.value as SearchOrder;
+                    setOrderInput(v);
+                    // Rows already on screen take the new order at once; the
+                    // next search asks the server for it.
+                    setSort(orderToSort(v));
+                  }}
+                  aria-describedby={`${uid}-order-hint`}
+                  className={CONTROL + " min-w-0"}
+                >
+                  {SEARCH_ORDERS.map((o) => (
+                    <option key={o} value={o}>
+                      {ORDER_LABEL[o]}
+                    </option>
+                  ))}
+                </select>
+              </div>{" "}
+              <p id={`${uid}-order-hint`} className="text-sm leading-snug text-foreground/70 sm:self-end">
+                Oldest decision first reads the published PERM file from its
+                first case{publishedFrom ? ` in FY${publishedFrom}` : ""}. Every
+                other order arranges the newest matches the search fetched.
+              </p>
+            </div>
+          </FilterGroup>{" "}
 
+          <FilterGroup
+            title="Industry, city and the worker"
+            holds="From DOL's published files: decided cases only"
+            count={placeCount}
+            initiallyOpen={false}
+          >
           <fieldset className="min-w-0">
-            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              Industry, city, worker and job
-            </legend>{" "}
-            <p className="mb-3 mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">
+            <legend className="sr-only">Industry, city, worker and job</legend>{" "}
+            <p className="mb-4 max-w-3xl text-sm leading-relaxed text-foreground/70">
               Industry and city come from every program&apos;s published file, so they leave out filings still
               open. The worker&apos;s details are fields of DOL&apos;s published PERM file alone, so setting one
               also leaves out wage requests, LCAs and H-2A, H-2B and CW-1 filings.{" "}
@@ -1138,11 +1272,16 @@ export function UnifiedCaseSearch({
             </div>
           </fieldset>
 
+          </FilterGroup>{" "}
+          <FilterGroup
+            title="Where an H-1B wage came from"
+            holds="The prevailing wage source on a published LCA"
+            count={wageSourceInput ? 1 : 0}
+            initiallyOpen={false}
+          >
           <fieldset className="min-w-0">
-            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              H-1B prevailing wage
-            </legend>{" "}
-            <p className="mb-3 mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">
+            <legend className="sr-only">H-1B prevailing wage</legend>{" "}
+            <p className="mb-4 max-w-3xl text-sm leading-relaxed text-foreground/70">
               Where the employer&apos;s prevailing wage came from is a field of DOL&apos;s
               published LCA file alone, so setting it reads published LCAs only.{" "}
               <Link href="/lca-wage-sources" className="font-semibold underline underline-offset-2">
@@ -1169,37 +1308,7 @@ export function UnifiedCaseSearch({
               </Field>
             </div>
           </fieldset>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
-            <div className="block min-w-0">
-              <label className="mb-1 block text-sm font-bold" htmlFor={`${uid}-order`}>
-                Order the answer by
-              </label>{" "}
-              <select
-                id={`${uid}-order`}
-                value={orderInput}
-                onChange={(e) => {
-                  const v = e.target.value as SearchOrder;
-                  setOrderInput(v);
-                  // Rows already on screen take the new order at once; the
-                  // next search asks the server for it.
-                  setSort(orderToSort(v));
-                }}
-                aria-describedby={`${uid}-order-hint`}
-                className={CONTROL + " min-w-0"}
-              >
-                {SEARCH_ORDERS.map((o) => (
-                  <option key={o} value={o}>
-                    {ORDER_LABEL[o]}
-                  </option>
-                ))}
-              </select>
-            </div>{" "}
-            <p id={`${uid}-order-hint`} className="text-sm leading-snug text-foreground/70 sm:self-end">
-              Oldest decision first reads the published PERM file from its
-              first case{publishedFrom ? ` in FY${publishedFrom}` : ""}. Every
-              other order arranges the newest matches the search fetched.
-            </p>
+          </FilterGroup>
           </div>
         </form>
       </section>
@@ -1652,29 +1761,35 @@ export function UnifiedCaseSearch({
         </section>
       ) : null}
 
+      {/* BEFORE A SEARCH, THE SHAPE OF ITS ANSWER. The box that stood here
+          restated the four programs the page's header already counts; what a
+          first visit can't see is what comes back, so the answer is drawn
+          ahead of it: one row per case, from any program, open or decided. */}
       {!searching ? (
-        <div className="border-2 border-border bg-tint-primary p-5">
-          <h2 className="font-heading text-lg font-black">What one search covers</h2>{" "}
-          <dl className="mt-3 space-y-2 text-base leading-relaxed">
-            {ALL_PROGRAMS.map((p) => (
-              <Fragment key={p}>
-                {/* The `{" "}` is load-bearing, not cosmetic: JSX drops the
-                    newline between two tags, so `</dt><dd>` reaches every
-                    extractor as "PERM:The labor certification". Google has
-                    reproduced that shape verbatim in a search listing. */}
-                <div>
-                  <dt className="inline font-bold">{PROGRAM_LABEL[p]}:</dt>{" "}
-                  <dd className="inline text-foreground/80">{PROGRAM_BLURB[p]}</dd>
-                </div>{" "}
-              </Fragment>
+        <figure className="border-2 border-dashed border-foreground/40 p-4 sm:p-5">
+          <figcaption className="font-heading text-lg font-black">One row per case, from every program</figcaption>{" "}
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-foreground/70">
+            Open filings come from DOL&apos;s case-status service; decided ones carry the wage from its quarterly
+            files. A case in both shows once.
+          </p>{" "}
+          <div aria-hidden="true" className="mt-4 space-y-2">
+            {GHOST_ROWS.map((g) => (
+              <div key={g.program} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:grid-cols-[11rem_8rem_6.5rem_minmax(0,1fr)] [&>*]:min-w-0">
+                <span className="truncate font-mono text-sm font-bold text-foreground/70">{g.number}</span>{" "}
+                <span className="hidden text-sm text-foreground/70 sm:block">{PROGRAM_LABEL[g.program]}</span>{" "}
+                <span
+                  className={
+                    "inline-block w-fit border-2 border-border px-2 py-0.5 text-sm font-bold " +
+                    (g.open ? "bg-card" : "bg-tint-primary")
+                  }
+                >
+                  {g.open ? "Still open" : "Decided"}
+                </span>{" "}
+                <span className="hidden h-3 bg-foreground/10 sm:block" />
+              </div>
             ))}
-          </dl>{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/80">
-            Each one is shown twice over: what DOL&apos;s case-status service confirms
-            while it is open, and what DOL publishes with the wage once it is
-            decided. One row per case, whichever half it came from.
-          </p>
-        </div>
+          </div>
+        </figure>
       ) : null}
     </div>
   );

@@ -3,19 +3,21 @@ import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
 import { PageBasics } from "@/components/data/PageBasics";
+import { IndexHeader } from "@/components/data/IndexHeader";
+import { RecordShares, type RecordShare } from "@/components/data/RecordShares";
 import { FinePrint } from "@/components/data/FinePrint";
 import { UnifiedCaseSearch } from "@/components/tools/UnifiedCaseSearch";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { naicsSectors } from "@/lib/naicsTitles";
 import { getMeta } from "@/lib/turso/cases";
-import { getCaseFieldOptions, getPermHistoryYears } from "@/lib/turso/caseSearchReads";
+import { SLICE_CAP, getCaseFieldOptions, getPermHistoryYears } from "@/lib/turso/caseSearchReads";
+import { formatInt } from "@/lib/format";
 import { getLiveRemainderSummary } from "@/lib/turso/liveCases";
 import { getPwdSummary, getPwdDisclosureSummary } from "@/lib/turso/pwdCases";
 import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
 import { getSeasonalPublishedSummary, getSeasonalSummary } from "@/lib/turso/seasonalCases";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { MoreText } from "@/components/data/MoreText";
-import { formatInt } from "@/lib/format";
 
 /**
  * One search over every DOL filing this site holds.
@@ -74,42 +76,48 @@ export default async function CaseSearchPage() {
   // single total across the three would be the more impressive number and the
   // less useful one: they are different programs and a reader deciding whether
   // this covers their case needs the breakdown, not the sum.
-  const bands: { label: string; n: number | null; href: string; note: string }[] = [
+  const bands: RecordShare[] = [
     {
+      key: "perm",
       label: "PERM applications",
+      prefixes: ["G-100 to G-400", "A-"],
       // The published file plus the live remainder, which is exactly what the
       // search reads. `perm_live_recent` holds only cases `perm_cases` does
-      // not, so the two cannot double-count.
-      // The history table's rows are cases decided before the current table's
-      // first file, so the three cannot double-count either.
+      // not, and the history table's rows are cases decided before the
+      // current table's first file, so the three cannot double-count.
       n:
         permMeta || permLive || historyTotal
           ? (permMeta?.totalCases ?? 0) + (permLive?.total ?? 0) + historyTotal
           : null,
       href: "/perm-cases",
-      note: firstYear
-        ? `Decided cases DOL has published since FY${firstYear}, plus everything still open from DOL's case-status service.`
-        : "Decided cases DOL has published, plus everything still open from DOL's case-status service.",
+      swatch: "bg-foreground",
     },
     {
+      key: "pwd",
       label: "Wage requests",
+      prefixes: ["P-100 to P-203"],
       n: pwd && pwdFile ? pwd.total + pwdFile.rows : (pwd?.total ?? pwdFile?.rows ?? null),
       href: "/pwd-cases",
-      note: "The ETA-9141 that sets the wage, filed months before the PERM.",
+      // The wage request is the timeline's PWD stage, and wears its colour.
+      swatch: "bg-stage-pwd",
     },
     {
+      key: "lca",
       label: "H-1B LCAs",
+      prefixes: ["I-200 to I-203"],
       n: lca && lcaFile ? lca.total + lcaFile.rows : (lca?.total ?? lcaFile?.rows ?? null),
       href: "/lca-cases",
-      note: "The ETA-9035 an employer files to sponsor or extend an H-1B.",
+      swatch: "text-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_7px)]",
     },
     {
+      key: "seasonal",
       label: "H-2A, H-2B and CW-1",
+      prefixes: ["H-300", "JO-A-300", "H-400", "P-400", "C-500", "P-500"],
       n: seasonal || seasonalFiles.length
         ? (seasonal?.total ?? 0) + seasonalFiles.reduce((n, f) => n + f.summary.rows, 0)
         : null,
       href: "/seasonal-cases",
-      note: "Seasonal farm and non-farm work and Northern Mariana Islands jobs, with their wage requests and job orders.",
+      swatch: "bg-data-none",
     },
   ];
 
@@ -133,47 +141,17 @@ export default async function CaseSearchPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <div className="pt-10 sm:pt-12" />
-
-      <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Search every case an employer has filed
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          Four DOL programs, four kinds of case number, one employer name:
-          every filing, open and decided.
-        </p>
-      </header>
-
-      <dl className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
-        {bands.map((b, i) => (
-          <div
-            key={b.label}
-            className={
-              "border-2 border-border p-4 shadow-hard " + (i === 1 ? "bg-tint-primary" : "bg-card")
-            }
-          >
-            <dt className="text-sm font-bold text-foreground/70">{b.label}</dt>{" "}
-            <dd className="mt-1 font-heading text-3xl font-black tabular-nums">
-              {b.n === null ? "—" : formatInt(b.n)}
-            </dd>{" "}
-            {/* More <dd>s, not <p>s: a <div> inside a <dl> may hold only dt and dd
-                elements, and the two <p>s here failed axe's definition-list rule
-                (outside audit, 2026-09-23). A dt may take several dds. */}
-            <dd className="mt-2 text-sm leading-relaxed text-foreground/70">{b.note}</dd>{" "}
-            <dd className="mt-2 text-sm">
-              <Link
-                href={b.href}
-                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-              >
-                Browse just this program
-              </Link>
-            </dd>
-          </div>
-        ))}
-      </dl>
-
-      <div className="mt-10">
+      <IndexHeader
+        title="Search every case an employer has filed"
+        lede={
+          <>
+            PERM, wage requests, H-1B LCAs and seasonal work in one search, open and decided
+            {firstYear ? `, back to FY${firstYear} for PERM` : ""}.
+          </>
+        }
+        aside={<RecordShares rows={bands} />}
+      />{" "}
+      <div className="mt-8">
         <SearchParamsBoundary>
           {/* The state and fiscal-year lists come from the same `perm_docs`
               row the header counts do, so the options and the totals beside
@@ -220,7 +198,7 @@ export default async function CaseSearchPage() {
           </p>{" "}
           <p>
             <b className="font-bold">Two records per case, merged.</b> An open
-            filing exists only in DOL&apos;s case system, checked here daily. A
+            filing exists only in DOL&apos;s case system, checked here at least twice a day. A
             decided one is published with its wage in a quarterly file. A case
             in both is shown once, using the published version.
           </p>{" "}
@@ -240,21 +218,17 @@ export default async function CaseSearchPage() {
               way rather than changing how a result reads, so it collapses. */}
           <FinePrint summary="Why a name works differently from a number">
             <p>
-              Every lookup underneath runs on an index, and which index depends
-              on which field leads. An equality on a firm, a state or an
-              occupation lets the index hand back the rows already in date
-              order, so the row cap stops the read at a hundred rows: the
-              largest firm in the corpus answers in 0.67 seconds that way. A
-              filter the index does not carry has to walk the whole slice
-              instead, which for California is 67,742 cases and 44.7 seconds
-              measured. That is why those searches take an outcome and a
-              decision date and say no to the rest, on the control, rather than
-              quietly costing a fortune.
+              A name, a firm, a state or a job is answered from this site&apos;s
+              copy, through an index that hands back that lead&apos;s filings
+              newest first. Every other filter then narrows the newest{" "}
+              {formatInt(SLICE_CAP)} of them, and the answer says when that window
+              was full, so an older case needs a filing month or the employer&apos;s
+              full name to come into reach.
             </p>{" "}
             <p>
-              A search on a job title or a wage with nothing leading it has no
-              index to sit on at all and would read the whole corpus for every
-              visitor.
+              A job title or a wage on its own has no index to start from and
+              would read the whole record for every visitor, which is why one of
+              the leads has to be filled.
             </p>{" "}
             <p>
               DOL&apos;s case system answers numbers, not employers, and no
