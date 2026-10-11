@@ -20,6 +20,7 @@ import { Text, Section, Link, Hr } from "@react-email/components";
 import * as React from "react";
 import { EmailLayout } from "./components";
 import type { DigestContent, DigestDeadline, DigestCaseUpdate } from "../../convex/lib/digestHelpers";
+import { formatRelativeDays } from "../../convex/lib/digestHelpers";
 import { MS_PER_DAY } from "../../convex/lib/time";
 import { SITE_URL } from "../../convex/lib/links";
 
@@ -68,18 +69,18 @@ export function WeeklyDigest({
     });
   };
 
-  const weekRange = `${formatWeekDate(weekStartDate)} - ${formatWeekDate(weekEndDate)}`;
+  const weekRange = `${formatWeekDate(weekStartDate)} to ${formatWeekDate(weekEndDate)}`;
 
   const previewText = isEmpty
     ? "Your weekly case summary: all clear this week"
-    : `Your weekly case summary: ${stats.overdueCount} overdue, ${stats.urgentCount} urgent deadlines`;
+    : `Your weekly case summary: ${stats.overdueCount} overdue, ${stats.urgentCount} due this week`;
 
   return (
     <EmailLayout previewText={previewText} settingsUrl={settingsUrl}>
       {/* Greeting */}
       <Section style={styles.greeting}>
         <Text className="em-text" style={styles.greetingText}>
-          Good morning, {userName}!
+          Hi {userName},
         </Text>
         <Text className="em-text-secondary" style={styles.weekRange}>
           Week of {weekRange}
@@ -115,69 +116,39 @@ export function WeeklyDigest({
       {/* Empty State */}
       {isEmpty && (
         <Section className="em-alert-green" style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>&#127881;</Text>
           <Text className="em-alert-green-title" style={styles.emptyTitle}>All clear</Text>
           <Text className="em-alert-green-text" style={styles.emptyMessage}>{emptyMessage}</Text>
           <Section style={styles.ctaSection}>
             <Link href={`${baseUrl}/cases`} className="em-cta-button" style={styles.ctaButton}>
-              View Your Cases
+              View your cases
             </Link>
           </Section>
         </Section>
       )}
 
-      {/* Overdue Deadlines */}
-      {overdueDeadlines.length > 0 && (
-        <Section style={styles.deadlineSection}>
-          <Section className="em-banner" style={getDeadlineHeaderStyle("#991B1B")}>
-            <Text className="em-text-white" style={styles.deadlineHeaderText}>
-              &#128680; OVERDUE ({overdueDeadlines.length})
-            </Text>
+      {/* Deadlines by urgency: the banner's colour carries it, the label is plain words. */}
+      {([
+        { key: "overdue", label: "Overdue", color: "#991B1B", list: overdueDeadlines },
+        { key: "week", label: "This week", color: "#DC2626", list: next7DaysDeadlines },
+        { key: "next", label: "Next week", color: "#F97316", list: next14DaysDeadlines },
+      ] as const).map(({ key, label, color, list }) =>
+        list.length === 0 ? null : (
+          <Section key={key} style={styles.deadlineSection}>
+            <Section className="em-banner" style={getDeadlineHeaderStyle(color)}>
+              <Text className="em-text-white" style={styles.deadlineHeaderText}>
+                {`${label} (${list.length})`}
+              </Text>
+            </Section>
+            {list.map((deadline, i) => (
+              <DeadlineRow
+                key={`${key}-${deadline.caseId}-${deadline.deadlineType}`}
+                deadline={deadline}
+                baseUrl={baseUrl}
+                last={i === list.length - 1}
+              />
+            ))}
           </Section>
-          {overdueDeadlines.map((deadline) => (
-            <DeadlineRow
-              key={`overdue-${deadline.caseId}-${deadline.deadlineType}`}
-              deadline={deadline}
-              baseUrl={baseUrl}
-            />
-          ))}
-        </Section>
-      )}
-
-      {/* Next 7 Days */}
-      {next7DaysDeadlines.length > 0 && (
-        <Section style={styles.deadlineSection}>
-          <Section className="em-banner" style={getDeadlineHeaderStyle("#DC2626")}>
-            <Text className="em-text-white" style={styles.deadlineHeaderText}>
-              &#9888;&#65039; THIS WEEK ({next7DaysDeadlines.length})
-            </Text>
-          </Section>
-          {next7DaysDeadlines.map((deadline) => (
-            <DeadlineRow
-              key={`week-${deadline.caseId}-${deadline.deadlineType}`}
-              deadline={deadline}
-              baseUrl={baseUrl}
-            />
-          ))}
-        </Section>
-      )}
-
-      {/* Days 8-14 */}
-      {next14DaysDeadlines.length > 0 && (
-        <Section style={styles.deadlineSection}>
-          <Section className="em-banner" style={getDeadlineHeaderStyle("#F97316")}>
-            <Text className="em-text-white" style={styles.deadlineHeaderText}>
-              &#128197; NEXT WEEK ({next14DaysDeadlines.length})
-            </Text>
-          </Section>
-          {next14DaysDeadlines.map((deadline) => (
-            <DeadlineRow
-              key={`next-${deadline.caseId}-${deadline.deadlineType}`}
-              deadline={deadline}
-              baseUrl={baseUrl}
-            />
-          ))}
-        </Section>
+        ),
       )}
 
       {/* Recent Activity */}
@@ -210,7 +181,7 @@ export function WeeklyDigest({
       {!isEmpty && (
         <Section style={styles.ctaSection}>
           <Link href={`${baseUrl}/cases`} className="em-cta-button" style={styles.ctaButton}>
-            View All Cases
+            View all cases
           </Link>
         </Section>
       )}
@@ -235,9 +206,11 @@ export function WeeklyDigest({
 function DeadlineRow({
   deadline,
   baseUrl,
+  last,
 }: {
   deadline: DigestDeadline;
   baseUrl: string;
+  last: boolean;
 }) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + "T00:00:00Z");
@@ -248,15 +221,8 @@ function DeadlineRow({
     });
   };
 
-  const formatDays = (days: number) => {
-    if (days < 0) return `${Math.abs(days)}d overdue`;
-    if (days === 0) return "Today";
-    if (days === 1) return "Tomorrow";
-    return `in ${days}d`;
-  };
-
   return (
-    <Section className="em-deadline-row" style={styles.deadlineRow}>
+    <Section className="em-deadline-row" style={last ? { ...styles.deadlineRow, ...styles.deadlineRowLast } : styles.deadlineRow}>
       <table width="100%" cellPadding="0" cellSpacing="0">
         <tbody>
           <tr>
@@ -273,7 +239,7 @@ function DeadlineRow({
                 {formatDate(deadline.deadlineDate)}
               </Text>
               <Text className={deadline.urgency === 'overdue' || deadline.urgency === 'urgent' ? 'em-days-overdue' : 'em-days-warning'} style={getDeadlineDaysStyle(deadline.urgency)}>
-                {formatDays(deadline.daysUntil)}
+                {formatRelativeDays(deadline.daysUntil)}
               </Text>
             </td>
             <td style={styles.deadlineAction}>
@@ -437,11 +403,6 @@ const styles = {
     border: "3px solid #22c55e",
     marginBottom: "24px",
   },
-  emptyIcon: {
-    fontSize: "48px",
-    margin: "0 0 16px 0",
-    lineHeight: "1",
-  },
   emptyTitle: {
     color: "#166534",
     fontSize: "24px",
@@ -458,10 +419,8 @@ const styles = {
   },
   deadlineHeaderText: {
     color: "#fffffe",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: "700" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     margin: "0",
   },
   deadlineRow: {
@@ -471,6 +430,8 @@ const styles = {
     borderRight: "3px solid #000001",
     borderBottom: "2px solid #e4e4e7",
   },
+  // The last row closes the card the banner opened.
+  deadlineRowLast: { borderBottom: "3px solid #000001" },
   deadlineContent: {
     verticalAlign: "top" as const,
     paddingRight: "12px",
@@ -522,10 +483,8 @@ const styles = {
   },
   activityHeader: {
     color: "#18181b",
-    fontSize: "14px",
+    fontSize: "16px",
     fontWeight: "700" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
     margin: "0 0 16px 0",
   },
   activityRow: {

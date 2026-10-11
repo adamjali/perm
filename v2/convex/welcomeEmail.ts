@@ -19,7 +19,7 @@ import { recordError } from "./lib/errorRecording";
 
 const log = createLogger("WelcomeEmail");
 
-const WELCOME_SUBJECT = "Welcome: let's get your first case tracked";
+const WELCOME_SUBJECT = "Welcome to PERM Tracker: your account is ready";
 
 /** Shared logic for rendering and sending the welcome email. */
 async function renderAndSend(

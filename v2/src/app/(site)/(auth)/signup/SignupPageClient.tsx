@@ -276,7 +276,7 @@ export function SignupPageClient() {
       // Genuinely unexpected — Sentry capture + user toast
       captureError(error, { operation: "signUp" });
       console.warn("[Signup] Unhandled error type:", message);
-      toast.error("Failed to create account. Please try again or contact support.");
+      toast.error("Couldn’t create your account. Try again, or contact support.");
     } finally {
       setIsLoading(false);
     }
@@ -341,7 +341,7 @@ export function SignupPageClient() {
       } else {
         captureError(error, { operation: "googleSignUp" });
         console.warn("[Google Sign Up] Unhandled error type:", message);
-        toast.error("Failed to sign up with Google. Please try again or contact support.");
+        toast.error("Couldn’t sign up with Google. Try again, or contact support.");
       }
       setIsGoogleLoading(false);
     }

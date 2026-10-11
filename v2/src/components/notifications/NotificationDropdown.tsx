@@ -273,7 +273,7 @@ function EmptyState() {
         No notifications
       </p>{" "}
       <p className="text-sm text-muted-foreground mt-1">
-        You&apos;re all caught up!
+        You&apos;re all caught up
       </p>
     </div>
   );
@@ -327,7 +327,7 @@ export default function NotificationDropdown() {
       await markAsRead({ notificationId });
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to mark notification as read",
+        userMessage: "Couldn’t mark the notification as read. Try again.",
         context: { operation: "markNotificationRead" },
       });
     }
@@ -338,7 +338,7 @@ export default function NotificationDropdown() {
       await markAllAsRead({});
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to mark all notifications as read",
+        userMessage: "Couldn’t mark all notifications as read. Try again.",
         context: { operation: "markAllNotificationsRead" },
       });
     }
@@ -355,7 +355,7 @@ export default function NotificationDropdown() {
       await deleteNotification({ notificationId });
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to delete notification",
+        userMessage: "Couldn’t delete the notification. Try again.",
         context: { operation: "deleteNotification" },
       });
     }

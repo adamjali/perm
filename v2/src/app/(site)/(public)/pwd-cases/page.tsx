@@ -132,8 +132,8 @@ export default async function PwdCasesPage() {
           <FinePrint summary="Where the rows come from">
             <p>
               DOL numbers wage requests and PERM cases from one running counter.
-              This site walks it nightly for new filings, then re-checks each
-              request daily until DOL decides.
+              This site walks it two or three times a day for new filings, then
+              re-checks each request until DOL decides.
             </p>
           </FinePrint>
         </div>

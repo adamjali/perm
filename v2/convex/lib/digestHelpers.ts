@@ -316,9 +316,9 @@ export function buildDigestContent(params: {
   let emptyMessage = "";
   if (isEmpty) {
     if (totalActiveCases === 0) {
-      emptyMessage = "You have no active cases. Get started by adding your first case!";
+      emptyMessage = "You have no active cases yet. Add your first case to start tracking its deadlines.";
     } else {
-      emptyMessage = "No urgent deadlines this week! Your cases are on track.";
+      emptyMessage = "No urgent deadlines this week. Your cases are on track.";
     }
   }
 

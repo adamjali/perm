@@ -162,7 +162,7 @@ export function ImportModal({
       console.error("[ImportModal] Failed to parse file:", error);
       captureError(error, { operation: "parseImportFile" });
       const message = error instanceof Error ? error.message : "Unknown error parsing file";
-      toast.error(`Failed to parse file: ${message}`);
+      toast.error(`Couldn’t read the file: ${message}`);
       setParseResult(null);
     } finally {
       setIsParsing(false);

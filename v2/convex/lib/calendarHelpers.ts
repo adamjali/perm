@@ -18,6 +18,7 @@ import type {
 import { CALENDAR_EVENT_LABELS } from "./calendarTypes";
 import { isValidISODate } from "./dateTypes";
 import { loggers } from "./logging";
+import { SITE_URL } from "./links";
 
 const log = loggers.calendar;
 
@@ -139,7 +140,7 @@ export function formatEventTitle(input: CalendarEventInput): string {
  * //  Beneficiary: John D.
  * //  Case Number: A-12345-67890
  * //
- * //  PERM Tracker"
+ * //  Open the case in PERM Tracker: https://permtracker.app/cases/<id>"
  */
 export function formatEventDescription(input: CalendarEventInput): string {
   const lines: string[] = [];
@@ -167,9 +168,9 @@ export function formatEventDescription(input: CalendarEventInput): string {
     lines.push(`${typeLabel} entry ID: ${input.entryId}`);
   }
 
-  // Footer
+  // Footer: the way back to the case, which a bare "PERM Tracker" never gave.
   lines.push("");
-  lines.push("PERM Tracker");
+  lines.push(`Open the case in PERM Tracker: ${SITE_URL}/cases/${input.caseId}`);
 
   return lines.join("\n");
 }

@@ -1,4 +1,5 @@
 import { query, mutation, internalQuery } from "./_generated/server";
+import { emailStamp } from "./lib/time";
 import type { MutationCtx } from "./_generated/server";
 import { v, ConvexError, type ObjectType } from "convex/values";
 import type { WithoutSystemFields } from "convex/server";
@@ -20,7 +21,7 @@ import {
 import { filterBySearch, projectCaseForCard, sortCases, determineReopenStatus } from "./lib/caseListHelpers";
 import { calculateDerivedDates, resolveEta9089ExpirationDate } from "./lib/derivedCalculations";
 import { validateCase, mapToValidatorFormat, calculateAutoStatus } from "./lib/perm";
-import { shouldSendEmail, formatCaseStatus, buildUserNotificationPrefs } from "./lib/notificationHelpers";
+import { shouldSendEmail, formatCaseStatus, formatProgressStatus, buildUserNotificationPrefs } from "./lib/notificationHelpers";
 import { scheduleCalendarSync, scheduleCalendarSyncBulk } from "./lib/calendarSyncHelpers";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
@@ -535,7 +536,7 @@ export const create = mutation({
           caseId: caseId,
           type: "status_change",
           title: "New case created",
-          message: `Case for ${args.beneficiaryIdentifier || "beneficiary"} at ${args.employerName} has been created.`,
+          message: `A case for ${args.beneficiaryIdentifier || "a beneficiary"} at ${args.employerName} was added.`,
           priority: "normal",
         });
 
@@ -549,16 +550,10 @@ export const create = mutation({
               to: user.email,
               beneficiaryName: args.beneficiaryIdentifier || "Beneficiary",
               companyName: args.employerName,
-              previousStatus: "N/A",
-              newStatus: "Created",
+              previousStatus: "",
+              newStatus: formatCaseStatus(effectiveCaseStatus),
               changeType: "stage",
-              changedAt: new Date().toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
+              changedAt: emailStamp(),
               caseId: caseId.toString(),
               caseNumber: args.internalCaseNumber,
             });
@@ -832,7 +827,7 @@ export const update = mutation({
 
     // Build case label: "Employer - Position" format (fallback to just employer)
     const caseLabel = oldDoc!.positionTitle
-      ? `${oldDoc!.employerName} - ${oldDoc!.positionTitle}`
+      ? `${oldDoc!.positionTitle} at ${oldDoc!.employerName}`
       : oldDoc!.employerName;
 
     // Detect what actually changed
@@ -857,7 +852,7 @@ export const update = mutation({
             caseId: args.id,
             type: "status_change",
             title: "Case status updated",
-            message: `Case for ${caseLabel} status changed from ${formatCaseStatus(oldDoc!.caseStatus)} to ${formatCaseStatus(actualNewCaseStatus)}.`,
+            message: `${caseLabel} moved from ${formatCaseStatus(oldDoc!.caseStatus)} to ${formatCaseStatus(actualNewCaseStatus)}.`,
             priority: "normal",
           });
 
@@ -868,18 +863,12 @@ export const update = mutation({
               await ctx.scheduler.runAfter(0, internal.notificationActions.sendStatusChangeEmail, {
                 notificationId,
                 to: user.email,
-                beneficiaryName: oldDoc!.positionTitle || oldDoc!.beneficiaryIdentifier || "Beneficiary",
+                beneficiaryName: oldDoc!.beneficiaryIdentifier || "Beneficiary",
                 companyName: oldDoc!.employerName,
                 previousStatus: formatCaseStatus(oldDoc!.caseStatus),
                 newStatus: formatCaseStatus(actualNewCaseStatus),
                 changeType: "stage",
-                changedAt: new Date().toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
+                changedAt: emailStamp(),
                 caseId: args.id.toString(),
                 caseNumber: oldDoc!.internalCaseNumber,
               });
@@ -896,7 +885,7 @@ export const update = mutation({
             caseId: args.id,
             type: "status_change",
             title: "Case progress updated",
-            message: `Case for ${caseLabel} progress changed from ${oldDoc!.progressStatus} to ${actualNewProgressStatus}.`,
+            message: `${caseLabel}: progress moved from ${formatProgressStatus(oldDoc!.progressStatus)} to ${formatProgressStatus(actualNewProgressStatus)}.`,
             priority: "low",
           });
           // Note: Not sending email for progress-only changes to reduce noise
@@ -910,7 +899,7 @@ export const update = mutation({
           caseId: args.id,
           type: "system",
           title: "Job description updated",
-          message: `Job description for ${caseLabel} has been updated.`,
+          message: `The job description for ${caseLabel} was updated.`,
           priority: "low",
         });
         // Note: Not sending email for job description changes to reduce noise
@@ -1367,7 +1356,7 @@ export const bulkUpdateStatus = mutation({
               caseId: id,
               type: "status_change",
               title: "Case status updated",
-              message: `Case for ${oldDoc.beneficiaryIdentifier || "beneficiary"} status changed from ${oldDoc.caseStatus} to ${args.status}.`,
+              message: `${oldDoc.beneficiaryIdentifier || "A case"} at ${oldDoc.employerName} moved from ${formatCaseStatus(oldDoc.caseStatus)} to ${formatCaseStatus(args.status)}.`,
               priority: "normal",
             });
 
@@ -1385,13 +1374,7 @@ export const bulkUpdateStatus = mutation({
                   previousStatus: formatCaseStatus(oldDoc.caseStatus),
                   newStatus: formatCaseStatus(args.status),
                   changeType: "stage",
-                  changedAt: new Date().toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }),
+                  changedAt: emailStamp(),
                   caseId: id.toString(),
                   caseNumber: oldDoc.internalCaseNumber,
                 });

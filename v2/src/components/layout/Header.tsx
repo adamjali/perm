@@ -61,7 +61,7 @@ function UserMenu({ userName }: UserMenuProps) {
       window.location.href = "/login";
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to sign out. Please try again.",
+        userMessage: "Couldn’t sign out. Try again.",
         context: { operation: "signOut" },
       });
       cancelSignOut();
@@ -152,7 +152,7 @@ export default function Header(): React.ReactElement {
       window.location.href = "/login";
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to sign out. Please try again.",
+        userMessage: "Couldn’t sign out. Try again.",
         context: { operation: "mobileSignOut" },
       });
       cancelSignOut();

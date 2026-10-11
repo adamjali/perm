@@ -217,7 +217,7 @@ export function composeSubject(d: DigestData): string {
       d.bulletinRepeat
         ? `${mon} bulletin, same as last week`
         : d.bulletinMoves.advanced > 0
-          ? `${d.bulletinMoves.advanced} cutoffs moved (${mon} bulletin)`
+          ? `${d.bulletinMoves.advanced} ${d.bulletinMoves.advanced === 1 ? "cutoff" : "cutoffs"} moved (${mon} bulletin)`
           : `${mon} bulletin unchanged`,
     );
   }

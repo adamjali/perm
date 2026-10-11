@@ -17,7 +17,7 @@ import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
 import type { I140Category } from "@/lib/processing-times/i140ProcessingTimes";
-import { CheckCircleIcon as CheckCircle2, InfoIcon } from "@phosphor-icons/react";
+import { CheckCircleIcon as CheckCircle2, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 import { CharLimit } from "@/components/ui/char-limit";
 
 // ============================================================================
@@ -475,8 +475,8 @@ export function I140Section(props: I140SectionProps) {
 
         {/* ========== WARNINGS ========== */}
         {warnings?.i140FilingDate && (
-          <div className="rounded-lg border-2 border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
-            <p className="font-semibold">⚠ Warning</p>{" "}
+          <div role="status" className="flex items-start gap-2 border-2 border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
+            <WarningIcon aria-hidden className="mt-0.5 size-4 shrink-0" weight="bold" />
             <p>{warnings.i140FilingDate}</p>
           </div>
         )}

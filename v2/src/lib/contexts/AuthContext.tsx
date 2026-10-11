@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  *     await signOut();
  *   } catch (error) {
  *     cancelSignOut();
- *     toast.error("Failed to sign out");
+ *     toast.error("Couldn’t sign out. Try again.");
  *   }
  * };
  */

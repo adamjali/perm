@@ -107,7 +107,7 @@ export function OverviewTab({
       await jobDescProps.onSave(editPositionTitle.trim(), editDescription.trim(), selectedTemplateId);
       setIsEditingJobDesc(false);
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to update job description." });
+      handleOperationError(error, { userMessage: "Couldn’t save the job description. Try again." });
     } finally {
       setIsSavingJobDesc(false);
     }
@@ -120,7 +120,7 @@ export function OverviewTab({
       await jobDescProps.onClear();
       setIsEditingJobDesc(false);
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to clear job description." });
+      handleOperationError(error, { userMessage: "Couldn’t clear the job description. Try again." });
     } finally {
       setIsClearingJobDesc(false);
     }
@@ -167,7 +167,7 @@ export function OverviewTab({
       if (msg.startsWith("TEMPLATE_EXISTS:")) {
         setPendingTemplateUpdate({ name: editPositionTitle.trim(), description: editDescription.trim() });
       } else {
-        handleOperationError(error, { userMessage: "Failed to save template." });
+        handleOperationError(error, { userMessage: "Couldn’t save the template. Try again." });
       }
     } finally {
       setIsSavingTemplate(false);
@@ -186,7 +186,7 @@ export function OverviewTab({
         await jobDescProps.onSaveAsNewTemplate(pendingTemplateUpdate.name, pendingTemplateUpdate.description);
         toast.success(`Template "${pendingTemplateUpdate.name}" saved`);
       } catch (error) {
-        handleOperationError(error, { userMessage: "Failed to save template." });
+        handleOperationError(error, { userMessage: "Couldn’t save the template. Try again." });
       }
       return;
     }
@@ -195,7 +195,7 @@ export function OverviewTab({
       await jobDescProps.onUpdateTemplate(match._id, pendingTemplateUpdate.name, pendingTemplateUpdate.description);
       toast.success(`Template "${pendingTemplateUpdate.name}" updated`);
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to update template." });
+      handleOperationError(error, { userMessage: "Couldn’t update the template. Try again." });
     } finally {
       setIsSavingTemplate(false);
       setPendingTemplateUpdate(null);
@@ -211,7 +211,7 @@ export function OverviewTab({
       toast.success("Copied to clipboard");
       setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to copy." });
+      handleOperationError(error, { userMessage: "Couldn’t copy. Select the text and copy it yourself." });
     }
   }, [isEditingJobDesc, editDescription, caseData.jobDescription]);
 

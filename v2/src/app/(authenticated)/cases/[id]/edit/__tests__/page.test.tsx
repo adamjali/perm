@@ -223,7 +223,7 @@ describe('EditCasePage', () => {
       saveButton.click();
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith('Case updated successfully');
+        expect(toast.success).toHaveBeenCalledWith('Case updated');
       });
     });
   });

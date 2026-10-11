@@ -110,7 +110,7 @@ export default async function LcaCasesPage() {
         <h2 className="font-heading text-2xl font-black">How this works</h2>{" "}
         <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
           <FinePrint summary="Where the rows come from">
-            <p>DOL numbers every filing from one running counter. This site checks it nightly for new filings, then re-checks each LCA until DOL decides. {" "}</p>
+            <p>DOL numbers every filing from one running counter. This site walks it two or three times a day for new filings, then re-checks each LCA until DOL decides. {" "}</p>
           </FinePrint>{" "}
           <p>
             <b className="font-bold">Why one might be missing.</b> Watching started

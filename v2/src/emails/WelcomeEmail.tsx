@@ -3,9 +3,9 @@
  * Sent after signup (post-verification / OAuth completion).
  *
  * Features:
- * - Green welcome banner with wave emoji
+ * - Green welcome banner
  * - 3 feature highlights with green square markers
- * - Tutorial + Guide links
+ * - Guide links, and a line for anyone waiting on a case of their own
  * - CTA button to create first case
  * - Senja review ask
  * - A team sign-off
@@ -34,32 +34,31 @@ export function WelcomeEmail({
   baseUrl = SITE_URL,
 }: WelcomeEmailProps) {
   return (
-    <EmailLayout previewText="PERM Tracker helps you manage and monitor your cases in one place.">
+    <EmailLayout
+      previewText="Your account is ready: every PERM deadline on your cases, worked out in one place."
+      footerText="You're receiving this email because a PERM Tracker account was created with this address."
+      hideSettingsLink
+    >
       {/* Welcome Banner */}
       <Section className="em-alert-green" style={styles.welcomeBanner}>
-        <Text style={styles.waveEmoji}>&#128075;</Text>
         <Text className="em-alert-green-title" style={styles.welcomeTitle}>
-          Welcome!
+          Welcome to PERM Tracker
         </Text>
       </Section>
 
       {/* Greeting */}
       <Section style={styles.greeting}>
         <Text className="em-text" style={styles.greetingText}>
-          Good Morning, {userName}!
+          Hi {userName},
         </Text>
         <Text className="em-text-body" style={styles.bodyText}>
-          Welcome to PERM Tracker. We&apos;re glad you&apos;re here.
-        </Text>
-        <Text className="em-text-body" style={styles.bodyText}>
-          PERM Tracker helps you manage and monitor your cases in one place.
-          Here&apos;s what you can do right now:
+          Your account is ready. It keeps every PERM case in one place and works out each
+          deadline from the dates you enter. Here&apos;s what it does from your first case:
         </Text>
       </Section>
 
       {/* Feature Highlights */}
       <Section style={styles.featuresSection}>
-        {/* Feature 1 */}
         <Section className="em-card" style={styles.featureCard}>
           <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
             <tbody>
@@ -69,18 +68,16 @@ export function WelcomeEmail({
                 </td>
                 <td style={styles.featureContent}>
                   <Text className="em-text" style={styles.featureTitle}>
-                    Job Description Database
+                    Every deadline, worked out
                   </Text>
                   <Text className="em-text-body" style={styles.featureDesc}>
-                    Pull job descriptions from previous cases into new ones
+                    Wage expiration, the recruitment clocks, the ETA 9089 filing window and the I-140 cutoff, with reminders before each one
                   </Text>
                 </td>
               </tr>
             </tbody>
           </table>
         </Section>
-
-        {/* Feature 2 */}
         <Section className="em-card" style={styles.featureCard}>
           <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
             <tbody>
@@ -90,18 +87,16 @@ export function WelcomeEmail({
                 </td>
                 <td style={styles.featureContent}>
                   <Text className="em-text" style={styles.featureTitle}>
-                    Recruitment Results
+                    Job descriptions you can reuse
                   </Text>
                   <Text className="em-text-body" style={styles.featureDesc}>
-                    Get automated recruitment result summaries based on your inputs
+                    Pull a job description from an earlier case into a new one
                   </Text>
                 </td>
               </tr>
             </tbody>
           </table>
         </Section>
-
-        {/* Feature 3 */}
         <Section className="em-card" style={styles.featureCard}>
           <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
             <tbody>
@@ -111,10 +106,10 @@ export function WelcomeEmail({
                 </td>
                 <td style={styles.featureContent}>
                   <Text className="em-text" style={styles.featureTitle}>
-                    AI Assistant
+                    An assistant for your caseload
                   </Text>
                   <Text className="em-text-body" style={styles.featureDesc}>
-                    Ask AI to review your cases and help identify potential issues
+                    Ask it to review your cases and point out what needs attention
                   </Text>
                 </td>
               </tr>
@@ -123,26 +118,37 @@ export function WelcomeEmail({
         </Section>
       </Section>
 
-      {/* Tutorial / Guide Links */}
+      {/* Guide links */}
       <Section style={styles.linksSection}>
         <Text className="em-text-body" style={styles.bodyText}>
-          Creating your first case takes less than one minute. Check out our{" "}
           <Link
             href={`${baseUrl}/guides/getting-started`}
             className="em-link-blue"
             style={styles.inlineLink}
           >
-            Tutorial
+            Getting started with PERM Tracker
           </Link>{" "}
-          for a quick walkthrough, or browse our{" "}
+          walks through a first case, and{" "}
           <Link
             href={`${baseUrl}/guides/ultimate-perm-guide-2026`}
             className="em-link-blue"
             style={styles.inlineLink}
           >
-            Ultimate PERM Guide
+            the PERM guide for 2026
           </Link>{" "}
-          for tips and tricks.
+          covers the whole process.
+        </Text>
+        {/* The other half of the site, for anyone who signed up while waiting on their own case. */}
+        <Text className="em-text-body" style={styles.bodyText}>
+          Waiting on a case of your own? You don&apos;t need the app for that:{" "}
+          <Link
+            href={`${baseUrl}/perm-case-status`}
+            className="em-link-blue"
+            style={styles.inlineLink}
+          >
+            look up its case number
+          </Link>{" "}
+          for DOL&apos;s status and an estimate, and get an email when it changes.
         </Text>
       </Section>
 
@@ -153,7 +159,7 @@ export function WelcomeEmail({
           className="em-cta-button"
           style={styles.ctaButton}
         >
-          Create Your First Case
+          Create your first case
         </Link>
       </Section>
 
@@ -163,9 +169,8 @@ export function WelcomeEmail({
       {/* Review Ask */}
       <Section style={styles.reviewSection}>
         <Text className="em-text-body" style={styles.bodyText}>
-          We&apos;re constantly improving based on what immigration attorneys
-          actually need. What features are working well? What would you like to
-          see next?{" "}
+          PERM Tracker changes with what people tell us. What&apos;s working,
+          and what would you like next?{" "}
           <Link
             href={REVIEW_URL}
             className="em-link-blue"
@@ -194,11 +199,6 @@ const styles = {
     backgroundColor: "#f0fdf4",
     border: "3px solid #22c55e",
     marginBottom: "24px",
-  },
-  waveEmoji: {
-    fontSize: "36px",
-    margin: "0 0 8px 0",
-    lineHeight: "1",
   },
   welcomeTitle: {
     color: "#166534",
@@ -274,8 +274,6 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
     border: "3px solid #000001",
     boxShadow: "4px 4px 0 #22c55e",
   },

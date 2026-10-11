@@ -52,7 +52,6 @@ export function AutoClosure({
         title="Case closed automatically"
         subtitle={caseNumber ? `Case #${caseNumber}` : undefined}
         urgency="urgent"
-        icon="🚨"
       />
 
       <Section style={detailsSectionStyle}>

@@ -201,7 +201,7 @@ export default function QuietHoursSection({
       setTimeout(() => setJustSaved(false), 1500);
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to update quiet hours. Please try again.",
+        userMessage: "Couldn’t save quiet hours. Try again.",
       });
     } finally {
       setIsSaving(false);
@@ -223,7 +223,7 @@ export default function QuietHoursSection({
       // Revert on error
       setQuietHoursEnabled(previousValue);
       handleOperationError(error, {
-        userMessage: "Failed to update settings",
+        userMessage: "Couldn’t save your settings. Try again.",
       });
     } finally {
       setIsToggling(false);
@@ -406,7 +406,7 @@ export default function QuietHoursSection({
                     >
                       <CheckIcon className="w-4 h-4" />
                     </motion.span>
-                    Saved!
+                    Saved
                   </motion.span>
                 ) : (
                   <motion.span

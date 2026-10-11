@@ -38,6 +38,17 @@ export function easternDay(at: Date | number = new Date()): string {
   return ISO_DAY.format(at);
 }
 
+const LONG_DAY = new Intl.DateTimeFormat("en-US", { timeZone: EASTERN_TIMEZONE, month: "long", day: "numeric", year: "numeric" });
+
+/**
+ * "October 11, 2026, 9:20 AM ET": when something happened, in an email. Convex
+ * runs on UTC, so a bare toLocaleDateString printed UTC hours with no zone
+ * (a 9:20 AM change read "01:20 PM") until Oct 11 2026.
+ */
+export function emailStamp(at: Date | number = new Date()): string {
+  return `${LONG_DAY.format(at)}, ${CLOCK.format(at)} ET`;
+}
+
 /** "5:25 AM ET, Oct 1": when something was checked, as a reader can check it. */
 export function checkedLabel(ms: number): string {
   return `${CLOCK.format(ms)} ET, ${SHORT_DAY.format(ms)}`;

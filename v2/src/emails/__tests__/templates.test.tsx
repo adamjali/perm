@@ -127,10 +127,7 @@ describe("StatusChange", () => {
   describe("Preview Text", () => {
     it("generates correct preview text", async () => {
       const html = await render(StatusChange(baseProps));
-      // Check for preview text components (arrow may be HTML encoded)
-      expect(html).toContain("Case status changed");
-      expect(html).toContain("PWD");
-      expect(html).toContain("Recruitment");
+      expect(html).toContain("John Doe at Acme Corp moved from PWD to Recruitment");
     });
   });
 });

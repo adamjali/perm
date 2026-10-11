@@ -39,7 +39,7 @@ export function VerificationCode({
       {/* Header */}
       <Section style={styles.headerSection}>
         <Text className="em-text" style={styles.title}>
-          Verify Your Email
+          Verify your email
         </Text>
         <Text className="em-text-body" style={styles.subtitle}>
           Enter this code to complete your sign-in to PERM Tracker.
@@ -151,8 +151,6 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
     border: "3px solid #000001",
     boxShadow: "4px 4px 0 #22c55e",
   },

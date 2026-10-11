@@ -72,6 +72,16 @@ def disk_hours_to_full(samples: list, now: float, window_s: int = 6 * 3600):
     return round(pts[-1][1] / per_hour, 1)
 
 
+def swap_counters():
+    """Pages moved in and out of swap since boot (/proc/vmstat)."""
+    v = {}
+    for line in open("/proc/vmstat"):
+        k, _, n = line.partition(" ")
+        if k in ("pswpin", "pswpout"):
+            v[k] = int(n)
+    return v.get("pswpin", 0) + v.get("pswpout", 0)
+
+
 def meminfo():
     m = {}
     for line in open("/proc/meminfo"):
@@ -154,6 +164,24 @@ def busy_seen(now: float, log: pathlib.Path = BUSY_LOG) -> dict | None:
     }
 
 
+def stopped_after_error(show: str) -> list[str]:
+    """Services that are switched on yet stopped after an error, from the
+    output of `systemctl show -p Id -p ActiveState -p Result -p UnitFileState`.
+
+    `systemctl --failed` misses these: a unit with Restart= that crashes five
+    times in ten seconds hits systemd's start limit and is left "inactive",
+    not "failed". PCP's pmlogger did exactly that on Oct 10 2026 when the disk
+    filled, and stayed down for a day with every check reading clean.
+    """
+    out = []
+    for block in show.split("\n\n"):
+        f = dict(ln.split("=", 1) for ln in block.splitlines() if "=" in ln)
+        if (f.get("ActiveState") == "inactive" and f.get("Result", "success") != "success"
+                and f.get("UnitFileState", "").startswith("enabled")):
+            out.append(f["Id"])
+    return sorted(out)
+
+
 def p95(xs):
     if not xs:
         return None
@@ -166,20 +194,27 @@ def main():
     now = time.time()
     total, idle = cpu_counters()
     rx, tx = net_counters()
+    swapped = swap_counters()
     prev = {}
     try:
         prev = json.loads(STATE.read_text())
     except (OSError, ValueError):
         pass
-    STATE.write_text(json.dumps({"t": now, "total": total, "idle": idle, "rx": rx, "tx": tx}))
+    STATE.write_text(json.dumps({"t": now, "total": total, "idle": idle, "rx": rx, "tx": tx, "swapped": swapped}))
 
-    cpu = net = None
+    cpu = net = swap_rate = None
     dt = now - prev.get("t", now)
     if 60 < dt < 3_600 and total > prev.get("total", total):
         cpu = round(100 * (1 - (idle - prev["idle"]) / (total - prev["total"])), 1)
         if rx >= prev.get("rx", rx) and tx >= prev.get("tx", tx):
             mbps = 8 * max(rx - prev["rx"], tx - prev["tx"]) / dt / 1e6
             net = round(100 * mbps / NIC_MBPS, 3)
+        # Pages a second moved to or from swap since the last sample. Swap
+        # that holds pages set aside long ago costs nothing; swap being
+        # used now is what slows the site (Oct 11 2026: 1.25 GB in swap from
+        # the disk-full day, 2 pages moved in a minute, 7 GB of memory free).
+        if "swapped" in prev and swapped >= prev["swapped"]:
+            swap_rate = round((swapped - prev["swapped"]) / dt, 2)
 
     m = meminfo()
     mem = round(100 * (m["MemTotal"] - m["MemAvailable"]) / m["MemTotal"], 1)
@@ -245,9 +280,22 @@ def main():
                             capture_output=True, text=True).stdout.split("\n")
     timers = subprocess.run(["systemctl", "list-timers", "--no-legend", "--plain", "permtracker*"],
                             capture_output=True, text=True).stdout
+    units = subprocess.run(["systemctl", "list-units", "--type=service", "--all", "--no-legend", "--plain"],
+                           capture_output=True, text=True).stdout.splitlines()
+    names = [ln.split()[0] for ln in units if ln.strip() and ln.split()[0].endswith(".service")]
+    stopped = stopped_after_error(subprocess.run(
+        ["systemctl", "show", "-p", "Id", "-p", "ActiveState", "-p", "Result", "-p", "UnitFileState", *names],
+        capture_output=True, text=True).stdout) if names else []
     db_bytes = sum(p.stat().st_size for p in (APP / "db" / "data.sqld").rglob("*") if p.is_file())
-    data_file = APP / "db" / "data.sqld" / "dbs" / "default" / "data"
+    db_dir = APP / "db" / "data.sqld" / "dbs" / "default"
+    data_file = db_dir / "data"
     data_bytes = data_file.stat().st_size if data_file.exists() else None
+    # sqld's own two parts beside the data file, each with its own rule (the
+    # morning report holds them to it): the replication log, compacted into a
+    # snapshot once it passes --max-log-size, and the snapshots, merged into
+    # one once they add up to twice the database's pages.
+    snapshot_bytes = sum(p.stat().st_size for p in (db_dir / "snapshots").glob("*") if p.is_file())
+    log_bytes = (db_dir / "wallog").stat().st_size if (db_dir / "wallog").exists() else None
 
     # The watchdog's repairs (bin/permtracker-watchdog), last 24 hours.
     repairs = []
@@ -285,8 +333,11 @@ def main():
             "diskHoursToFull": disk_hours_to_full(samples, now),
             "dbBytes": db_bytes,
             "dbDataBytes": data_bytes,
+            "dbSnapshotBytes": snapshot_bytes,
+            "dbLogBytes": log_bytes,
             "lockedMb": m.get("Mlocked", 0) // 1024,
             "swapUsedMb": (m.get("SwapTotal", 0) - m.get("SwapFree", 0)) // 1024,
+            "swapPagesPerS": swap_rate,
             "memAvailableMb": m.get("MemAvailable", 0) // 1024,
             "uptimeH": round(float(open("/proc/uptime").read().split()[0]) / 3600, 1),
         },
@@ -304,6 +355,7 @@ def main():
         # slot's second copy is stopped on purpose and not listed.
         "services": {u: active(u) for u in SERVICES + ([f"permtracker-web@{slot}2"] if slot else [])},
         "failedUnits": [ln.split()[0] for ln in failed if ln.strip()],
+        "stoppedUnits": stopped,
         # The defense writes to the same log; it is not a restart, so it is
         # counted apart (the Oct 3 report called five defense on/off pairs
         # "the watchdog restarted something 10 times").

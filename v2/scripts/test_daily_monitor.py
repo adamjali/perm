@@ -22,8 +22,8 @@ import daily_monitor as dm  # noqa: E402
 FAILS: list[str] = []
 
 
-def check(ok: bool, msg: str) -> None:
-    print(("PASS " if ok else "FAIL ") + msg)
+def check(ok: bool, msg: str, detail: str = "") -> None:
+    print(("PASS " if ok else "FAIL ") + msg + ("" if ok or not detail else f"\n    {detail[:600]}"))
     if not ok:
         FAILS.append(msg)
 
@@ -260,8 +260,59 @@ def main() -> int:
           "the defense is reported as the defense, never as restarts")
     check(v(doc(now={"dbBytes": 7_000_000_000, "dbDataBytes": 3_300_000_000}), now_ms)["status"] == "ok",
           "a database folder at 2.1x its data file is normal (one snapshot)")
-    check(v(doc(now={"dbBytes": 11_000_000_000, "dbDataBytes": 3_300_000_000}), now_ms)["status"] == "warn",
-          "past 3x its data file, the folder is growing and warns")
+    # Oct 11 2026, the morning that read "3.1x ... not being trimmed": sqld
+    # inside both of its own rules. Judged by its parts and by the old total.
+    oct11 = {"dbBytes": 20_300_000_000, "dbDataBytes": 6_471_090_176,
+             "dbSnapshotBytes": 11_600_000_000, "dbLogBytes": 2_386_543_024}
+    healthy_db = v(doc(now=oct11), now_ms)
+    check(healthy_db["status"] == "ok", "sqld inside its own log and merge rules is ok (Oct 11: 3.1x)",
+          str(healthy_db.get("lines")))
+    check(any(ln.startswith("Database parts: data 6.5 GB, snapshots 11.6 GB") for ln in healthy_db["lines"]),
+          "the report names the database's parts", str(healthy_db["lines"]))
+    old_doc = {"dbBytes": 20_300_000_000, "dbDataBytes": 6_471_090_176}
+    check(v(doc(now=old_doc), now_ms)["status"] == "ok", "an older report with only the total reads 3.1x as ok")
+    check(v(doc(now={"dbBytes": 25_000_000_000, "dbDataBytes": 3_300_000_000}), now_ms)["status"] == "warn",
+          "an older report past the summed ceiling still warns")
+    unmerged = v(doc(now={**oct11, "dbSnapshotBytes": 25_000_000_000}), now_ms)
+    check(unmerged["status"] == "warn" and any("isn't merging" in w for w in unmerged.get("warns", unmerged["lines"])),
+          "snapshots past 3x the data plus one log warn that sqld isn't merging", str(unmerged))
+    stuck_log = v(doc(now={**oct11, "dbLogBytes": 6_000_000_000}), now_ms)
+    check(stuck_log["status"] == "warn" and any("isn't compacting" in w for w in stuck_log.get("warns", stuck_log["lines"])),
+          "a log past its cap warns that sqld isn't compacting", str(stuck_log))
+    cap = int(re.search(r"--max-log-size (\d+)", (HERE / "oracle/systemd/permtracker-db.service").read_text()).group(1))
+    check(dm.SQLD_LOG_CAP_BYTES == cap * 1_000_000, "the report's log cap is the server's --max-log-size",
+          f"{dm.SQLD_LOG_CAP_BYTES} vs {cap}")
+    # Swap judged by use (Oct 11 2026: 1,253 MB held, 7,171 MB free, idle).
+    held = v(doc(now={"swapUsedMb": 1253, "memAvailableMb": 7171, "swapPagesPerS": 0.03}), now_ms)
+    check(held["status"] == "ok" and any(ln.startswith("Swap: 1,253 MB holds pages set aside earlier") for ln in held["lines"]),
+          "swap holding old pages with memory free is a line, not a warning", str(held))
+    check(v(doc(now={"swapUsedMb": 1253, "memAvailableMb": 7171}), now_ms)["status"] == "ok",
+          "an older report with no swap rate and memory free is ok")
+    moving = v(doc(now={"swapUsedMb": 1253, "memAvailableMb": 7171, "swapPagesPerS": 450.0}), now_ms)
+    check(moving["status"] == "warn" and "pages a second moving" in (moving.get("summary") or ""),
+          "swap pages moving fast warns", str(moving))
+    short = v(doc(now={"swapUsedMb": 1500, "memAvailableMb": 1800}), now_ms)
+    check(short["status"] == "warn" and "1,800 MB of memory available" in (short.get("summary") or ""),
+          "swap held while memory is short warns", str(short))
+    # Oct 11 2026: the wage-request line summed every method, the retired
+    # one included, and read 83 days where the method in use missed by 8.
+    priv = {"pwd": {"bySource": {"ours": {"all": {"recorded": 306, "graded": 52, "typicalMissDays": 83}, "byModel": {
+        "pwd-day": {"recorded": 54, "graded": 0, "typicalMissDays": None},
+        "pwd-queue": {"recorded": 108, "graded": 15, "typicalMissDays": 8},
+        "pwd-queue-request-month": {"recorded": 144, "graded": 37, "typicalMissDays": 84}}}}},
+        "bulletin": {"bySource": {"ours": {"all": {"recorded": 4, "graded": 0}}}}}
+    est = dm.estimate_lines(priv)
+    check(est == ["Scorecard, wage-request days: 54 recorded, 0 graded",
+                  "Scorecard, wage-request months: 108 recorded, 15 graded, typical miss 8 days",
+                  "Scorecard, visa bulletin release days: 4 recorded, 0 graded"],
+          "the wage-request lines read each method in use, never the retired one", str(est))
+    verdict_ts = (HERE.parent / "src/lib/scorecard/verdict.ts").read_text()
+    ts_retired = set(re.findall(r'^\s+"([\w-]+)": "[A-Z][a-z]+ \d{1,2}, \d{4}",$', verdict_ts.split("RETIRED_METHODS")[1].split("};")[0], re.M))
+    check(ts_retired == dm.RETIRED_METHODS and len(ts_retired) >= 2,
+          "the report's retired methods are the site's", f"{ts_retired} vs {dm.RETIRED_METHODS}")
+    stopped = v(doc(stoppedUnits=["pmlogger.service"]), now_ms)
+    check(stopped["status"] == "warn" and "pmlogger.service" in " ".join(stopped.get("warns", []) + stopped["lines"]),
+          "a service stopped after an error (not marked failed) warns by name", str(stopped))
     check(v(doc(backup={"convexOk": None}), now_ms)["status"] == "warn", "no sealed Convex copy on record warns")
     check(v(doc(backup={"serverOk": {"at": "2026-09-26T03:00:00Z"}}), now_ms)["status"] == "fail",
           "a sealed server copy 56 h old fails")
@@ -280,7 +331,8 @@ def main() -> int:
     check(v(doc(pageCache={"tight": True}), now_ms)["status"] == "fail",
           "free disk below the cap's floor fails")
     check(v(doc(now={"memAvailableMb": 700}), now_ms)["status"] == "warn", "under 1 GB of memory available warns")
-    check(v(doc(now={"swapUsedMb": 1800}), now_ms)["status"] == "warn", "1.8 GB of swap in use warns")
+    check(v(doc(now={"swapUsedMb": 1800, "memAvailableMb": 1500}), now_ms)["status"] == "warn",
+          "1.8 GB of swap held with 1.5 GB of memory available warns")
     check(v(doc(now={"memAvailableMb": 5300, "swapUsedMb": 20}), now_ms)["status"] == "ok",
           "a roomy machine reads ok")
 
@@ -360,7 +412,8 @@ def data_section_reads_the_scorecard_alarms() -> None:
 
     priv = {
         "alarms": ["Wage-request months: no case graded yet, though 12 predicted dates passed a week ago or more."],
-        "pwd": {"bySource": {"ours": {"all": {"recorded": 234, "graded": 12, "typicalMissDays": 9}}}},
+        "pwd": {"bySource": {"ours": {"all": {"recorded": 234, "graded": 12, "typicalMissDays": 9},
+                                      "byModel": {"pwd-queue": {"recorded": 234, "graded": 12, "typicalMissDays": 9}}}}},
         "seasonal": {"bySource": {"ours": {"all": {"recorded": 30, "graded": 0, "typicalMissDays": None}}}},
     }
 

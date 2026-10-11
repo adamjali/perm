@@ -22,7 +22,7 @@ export function ExportButton({ users }: ExportButtonProps) {
       toast.success(`Exported ${users.length} user${users.length !== 1 ? "s" : ""} to CSV`);
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to export CSV",
+        userMessage: "Couldn’t export the CSV. Try again.",
         context: { operation: "exportUsersCSV" },
       });
     }

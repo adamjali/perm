@@ -66,7 +66,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     toast.success("Copied to clipboard");
     return true;
   } catch {
-    toast.error("Failed to copy");
+    toast.error("Couldn’t copy. Select the text and copy it yourself.");
     return false;
   }
 }

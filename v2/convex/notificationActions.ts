@@ -39,6 +39,7 @@ import type { DeadlineDigestItem } from "./lib/reminderDigest";
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
 import { extractUserIdFromAction } from "./lib/auth";
 import { SITE_URL } from "./lib/links";
+import { deadlineDigestWords } from "./lib/deadlineDigestWords";
 
 // App URL for generating links (falls back to production URL)
 function getAppUrl(): string {
@@ -173,7 +174,10 @@ export const sendStatusChangeEmail = internalAction({
     );
 
     const changeLabel = args.changeType === "stage" ? "stage" : "progress";
-    const subject = `${args.beneficiaryName}: ${changeLabel} changed from ${args.previousStatus} to ${args.newStatus}`;
+    const isNew = !args.previousStatus || args.previousStatus === "N/A";
+    const subject = isNew
+      ? `New case: ${args.beneficiaryName} at ${args.companyName}`
+      : `${args.beneficiaryName} at ${args.companyName}: ${changeLabel} moved from ${args.previousStatus} to ${args.newStatus}`;
 
     await sendNotificationEmail(ctx, {
       to: args.to,
@@ -512,13 +516,7 @@ export const sendDeadlineDigestEmail = internalAction({
       })
     );
 
-    const total = items.length;
-    const overdue = items.filter((i) => i.urgency === "overdue").length;
-    const plural = total !== 1 ? "s" : "";
-    const subject =
-      overdue > 0
-        ? `${total} PERM deadline${plural} need attention, ${overdue} overdue`
-        : `${total} PERM deadline${plural} need your attention`;
+    const { subject } = deadlineDigestWords(items.length, items.filter((i) => i.urgency === "overdue").length);
 
     const resend = getResend();
     const { error } = await sendOrQueue(ctx, "notification:sendDeadlineDigestEmail", resend, {
@@ -534,7 +532,7 @@ export const sendDeadlineDigestEmail = internalAction({
       throw new Error(`Email failed: ${error.message}`);
     }
 
-    log.info('Deadline digest email sent', { to: args.to, count: total });
+    log.info('Deadline digest email sent', { to: args.to, count: items.length });
   },
 });
 
@@ -580,7 +578,7 @@ export const sendTestEmail = action({
     const { error } = await sendOrQueue(ctx, "notification:sendTestEmail", resend, {
       from: FROM_EMAIL,
       to: [args.email],
-      subject: "PERM Tracker: Test email successful",
+      subject: "PERM Tracker: your test email arrived",
       html,
     });
 
@@ -634,6 +632,7 @@ export const sendAdminNotificationEmail = internalAction({
         recipientName: name,
         subject: args.subject,
         body: args.body,
+        kind: "notice",
       })
     );
 

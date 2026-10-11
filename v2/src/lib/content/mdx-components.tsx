@@ -17,6 +17,7 @@ import PrintableChecklist from "@/components/content/PrintableChecklist";
 import { OnHoldNow } from "@/components/content/OnHoldNow";
 import { DolNow } from "@/components/content/DolNow";
 import { Lightbox } from "@/components/ui/lightbox";
+import { InfoIcon, LightbulbIcon, WarningIcon, WarningOctagonIcon } from "@phosphor-icons/react/ssr";
 
 /* ------------------------------------------------------------------ */
 /* Custom MDX blocks                                                   */
@@ -30,7 +31,8 @@ function Callout({
 }: {
   type?: "info" | "warning" | "tip" | "important" | "stat";
   title?: string;
-  stat?: string;
+  /** A short figure, or a live one (`stat={<DolNow show="pwdMonth" />}`). */
+  stat?: React.ReactNode;
   children: React.ReactNode;
 }) {
   // Stat variant: neobrutalist card with large stat badge
@@ -38,15 +40,13 @@ function Callout({
     return (
       <div className="not-prose my-6 flex flex-col gap-4 border-2 border-border p-4 shadow-hard-sm sm:flex-row sm:items-center sm:gap-5 sm:p-5">
         {stat && (
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center border-2 border-border bg-primary font-heading text-xl font-bold text-black sm:h-20 sm:w-20 sm:text-2xl">
+          <div className="flex min-h-16 min-w-16 max-w-[10rem] flex-shrink-0 items-center justify-center self-start border-2 border-border bg-primary px-3 py-2 text-center font-heading text-xl font-bold leading-tight text-black sm:min-h-20 sm:min-w-20 sm:self-auto sm:text-2xl">
             {stat}
           </div>
         )}
         <div className="min-w-0 flex-1">
           {title && (
-            <p className="mb-1 font-heading text-sm font-bold uppercase tracking-wide text-foreground">
-              {title}
-            </p>
+            <p className="mb-1 font-heading text-base font-bold text-foreground">{title}</p>
           )}
           <div className="text-sm leading-relaxed text-muted-foreground">
             {children}
@@ -64,17 +64,19 @@ function Callout({
   };
 
   const icons = {
-    info: "💡",
-    warning: "⚠️",
-    tip: "💡",
-    important: "🚨",
+    info: { Icon: InfoIcon, tone: "text-primary-text" },
+    warning: { Icon: WarningIcon, tone: "text-data-warn-ink" },
+    tip: { Icon: LightbulbIcon, tone: "text-data-info-ink" },
+    important: { Icon: WarningOctagonIcon, tone: "text-data-bad-ink" },
   };
+  const { Icon, tone } = icons[type];
 
   return (
     <div className={cn("my-6 p-4 border-2 border-border", styles[type])}>
       {title && (
-        <p className="mb-2 font-heading text-sm font-bold uppercase tracking-wide">
-          {icons[type]} {title}
+        <p className="mb-2 flex items-start gap-2 font-heading text-base font-bold">
+          <Icon aria-hidden className={cn("mt-0.5 size-5 shrink-0", tone)} weight="bold" />
+          <span>{title}</span>
         </p>
       )}
       <div className="text-sm leading-relaxed text-muted-foreground">

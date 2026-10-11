@@ -1,5 +1,6 @@
 "use client";
 
+import { formatProgressStatus } from "@convex/lib/notificationHelpers";
 import { use, useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
@@ -353,7 +354,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     try {
       await updateMutation({ id: caseId, notes: updatedNotes });
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to save note changes. Please try again." });
+      handleOperationError(error, { userMessage: "Couldn’t save the note. Try again." });
     }
   }, [updateMutation, caseId]);
 
@@ -362,7 +363,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       await updateMutation({ id: caseId, recruitmentSummaryCustom: text });
       toast.success(text ? "Recruitment summary saved" : "Reverted to auto-generated text");
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to save recruitment summary." });
+      handleOperationError(error, { userMessage: "Couldn’t save the recruitment summary. Try again." });
     }
   }, [updateMutation, caseId]);
 
@@ -426,7 +427,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       );
     } catch (error) {
       handleOperationError(error, {
-        userMessage: caseWriteErrorMessage(error, "Failed to upload document. Please try again."),
+        userMessage: caseWriteErrorMessage(error, "Couldn’t upload the document. Try again."),
       });
     }
   }, [generateUploadUrlMutation, saveDocumentMutation, caseId, caseData.documents?.length]);
@@ -437,7 +438,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       toast.success("Document deleted");
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to delete document. Please try again.",
+        userMessage: "Couldn’t delete the document. Try again.",
       });
     }
   }, [removeDocumentMutation, caseId]);
@@ -449,7 +450,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       router.push("/cases");
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to delete case. Please try again.",
+        userMessage: "Couldn’t delete the case. Try again.",
       });
       setIsDeleting(false);
     }
@@ -459,10 +460,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     setIsUpdating(true);
     try {
       await updateMutation({ id: caseId, caseStatus: "closed" });
-      toast.success("Case archived successfully");
+      toast.success("Case archived");
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to archive case. Please try again.",
+        userMessage: "Couldn’t archive the case. Try again.",
       });
     } finally {
       setIsUpdating(false);
@@ -480,10 +481,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         if (status === "pwd") return "PWD";
         return status.charAt(0).toUpperCase() + status.slice(1);
       };
-      toast.success(`Case reopened as ${formatStatus(result.newCaseStatus)} - ${result.newProgressStatus.replace(/_/g, " ")}`);
+      toast.success(`Case reopened: ${formatStatus(result.newCaseStatus)} (${formatProgressStatus(result.newProgressStatus)})`);
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to reopen case. Please try again.",
+        userMessage: "Couldn’t reopen the case. Try again.",
       });
     } finally {
       setIsUpdating(false);
@@ -502,7 +503,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       }
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to update timeline. Please try again.",
+        userMessage: "Couldn’t update the timeline. Try again.",
       });
     } finally {
       setIsUpdating(false);
@@ -516,7 +517,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       await toggleFavoriteMutation({ id: caseId });
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to update favorite status. Please try again.",
+        userMessage: "Couldn’t update the favorite. Try again.",
       });
     } finally {
       setIsTogglingFavorite(false);
@@ -550,7 +551,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       await toggleCalendarSyncMutation({ id: caseId });
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to update calendar sync. Please try again.",
+        userMessage: "Couldn’t update calendar sync. Try again.",
       });
     } finally {
       setIsTogglingCalendarSync(false);
@@ -576,7 +577,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       });
       toast.success("Job description updated");
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to update job description." });
+      handleOperationError(error, { userMessage: "Couldn’t save the job description. Try again." });
     }
   };
 
@@ -585,7 +586,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       await clearJobDescriptionMutation({ id: caseId });
       toast.success("Job description cleared");
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to clear job description." });
+      handleOperationError(error, { userMessage: "Couldn’t clear the job description. Try again." });
     }
   };
 

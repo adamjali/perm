@@ -494,12 +494,12 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
     setIsDeleting(true);
     try {
       await removeMutation({ id: caseId });
-      toast.success("Case deleted successfully");
+      toast.success("Case deleted");
       setDeleteDialogOpen(false);
       router.push("/cases");
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to delete case. Please try again.",
+        userMessage: "Couldn’t delete the case. Try again.",
       });
       setIsDeleting(false);
     }

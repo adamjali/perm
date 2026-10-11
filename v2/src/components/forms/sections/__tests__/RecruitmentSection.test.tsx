@@ -70,7 +70,7 @@ describe('RecruitmentSection', () => {
       // First Sunday shows "Must be a Sunday"
       expect(screen.getAllByText(/Must be a Sunday/i).length).toBeGreaterThanOrEqual(1);
       // Second Sunday shows success when valid
-      expect(screen.getByText(/Valid Sunday \(7 days after first ad\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/A Sunday, 7 days after the first ad/i)).toBeInTheDocument();
     });
 
     it('shows requirement hint when second Sunday is empty', () => {

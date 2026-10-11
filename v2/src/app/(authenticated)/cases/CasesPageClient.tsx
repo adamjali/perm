@@ -504,7 +504,7 @@ export function CasesPageClient() {
         toast.success("Order saved");
       } catch (error) {
         handleOperationError(error, {
-          userMessage: "Failed to save order",
+          userMessage: "Couldn’t save the order. Try again.",
         });
         setLocalOrder([]); // Reset on error
       }
@@ -677,7 +677,7 @@ export function CasesPageClient() {
         }
         if (result.failedCount > 0) {
           toast.error(
-            `Failed to ${enable ? "sync" : "unsync"} ${result.failedCount} case${result.failedCount !== 1 ? "s" : ""}`
+            `Couldn’t ${enable ? "sync" : "unsync"} ${result.failedCount} case${result.failedCount !== 1 ? "s" : ""}. Try again.`
           );
         }
 
@@ -686,7 +686,7 @@ export function CasesPageClient() {
         setSelectionMode(false);
       } catch (error) {
         handleOperationError(error, {
-          userMessage: `Failed to ${enable ? "sync" : "unsync"} cases`,
+          userMessage: `Couldn’t ${enable ? "sync" : "unsync"} the cases. Try again.`,
         });
       } finally {
         setBulkOperationLoading(false);
@@ -709,7 +709,7 @@ export function CasesPageClient() {
           toast.success(`Deleted ${result.successCount} case${result.successCount !== 1 ? "s" : ""}`);
         }
         if (result.failedCount > 0) {
-          toast.error(`Failed to delete ${result.failedCount} case${result.failedCount !== 1 ? "s" : ""}`);
+          toast.error(`Couldn’t delete ${result.failedCount} case${result.failedCount !== 1 ? "s" : ""}. Try again.`);
         }
       } else if (confirmDialog.type === "archive") {
         const result = await bulkUpdateStatusMutation({ ids, status: "closed" });
@@ -718,16 +718,16 @@ export function CasesPageClient() {
           toast.success(`Archived ${result.successCount} case${result.successCount !== 1 ? "s" : ""}`);
         }
         if (result.failedCount > 0) {
-          toast.error(`Failed to archive ${result.failedCount} case${result.failedCount !== 1 ? "s" : ""}`);
+          toast.error(`Couldn’t archive ${result.failedCount} case${result.failedCount !== 1 ? "s" : ""}. Try again.`);
         }
       } else if (confirmDialog.type === "reopen") {
         // Re-open sets status back to 'pwd' (initial stage)
         const result = await bulkUpdateStatusMutation({ ids, status: "pwd" });
         if (result.successCount > 0) {
-          toast.success(`Re-opened ${result.successCount} case${result.successCount !== 1 ? "s" : ""}`);
+          toast.success(`Reopened ${result.successCount} case${result.successCount !== 1 ? "s" : ""}`);
         }
         if (result.failedCount > 0) {
-          toast.error(`Failed to re-open ${result.failedCount} case${result.failedCount !== 1 ? "s" : ""}`);
+          toast.error(`Couldn’t reopen ${result.failedCount} case${result.failedCount !== 1 ? "s" : ""}. Try again.`);
         }
       }
 
@@ -779,11 +779,11 @@ export function CasesPageClient() {
       if (singleCaseConfirm.type === "delete") {
         await removeMutation({ id: caseId });
         analytics.capture("case_deleted", { case_id: caseId, bulk: false });
-        toast.success("Case deleted successfully");
+        toast.success("Case deleted");
       } else if (singleCaseConfirm.type === "archive") {
         await updateMutation({ id: caseId, caseStatus: "closed" });
         analytics.capture("case_archived", { case_id: caseId, bulk: false });
-        toast.success("Case archived successfully");
+        toast.success("Case archived");
       }
 
       // Close dialog
@@ -858,7 +858,7 @@ export function CasesPageClient() {
         };
       } catch (error) {
         handleOperationError(error, {
-          userMessage: "Failed to import cases",
+          userMessage: "Couldn’t import the cases. Try again.",
         });
         throw error;
       }

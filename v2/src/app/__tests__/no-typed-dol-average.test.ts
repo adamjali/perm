@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * DOL's published average and its queue month are read live (lib/dolNow.ts,
+ * DOL's published average, its queue month and its wage-request wait are read live (lib/dolNow.ts,
  * <DolNow /> in articles), never typed into prose. Five articles and the FAQ
  * said "about 372 days as of August 2026" in October, when DOL said 336 and
  * its queue had moved three months.
@@ -22,6 +22,8 @@ const DATED_RECORDS = new Set([
 const TYPED = [
   /\b(?:about|averages?|average of|average is|average puts it at)\s+(?:about\s+)?\*{0,2}3\d\d\*{0,2}\s+days/i,
   /working cases filed (?:around|in)\s+\*{0,2}(?:January|February|March|April|May|June|July|August|September|October|November|December) 20\d\d/i,
+  // DOL's wage-request wait: "NPWC processing takes 4-7 months", "Processing time**: Currently 4-7 months"
+  /\b(?:NPWC|PWD|prevailing wage|processing time)\b[^.,;()\n|]{0,40}?\b\d+\s*(?:-|to|–)\s*\d+\s*(?:months|mo)\b/i,
 ];
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -47,6 +49,11 @@ describe("DOL's figures are read live, not typed", () => {
     expect(typedDolFigures("As of August 2026 DOL is working cases filed around September 2025.")).toHaveLength(1);
     expect(typedDolFigures("an average of about **372 days** from filing")).toHaveLength(1);
     expect(typedDolFigures("<DolNow show=\"average\" /> on DOL's published average")).toHaveLength(0);
+    expect(typedDolFigures("Current NPWC processing takes 4-7 months per OFLC.")).toHaveLength(1);
+    expect(typedDolFigures("- **Processing time**: Currently 4-7 months (check OFLC)")).toHaveLength(1);
+    expect(typedDolFigures("NPWC processing times currently range from 4 to 7 months")).toHaveLength(1);
+    expect(typedDolFigures("- **Processing time**: <DolNow show=\"pwdWait\" /> on DOL’s queue")).toHaveLength(0);
+    expect(typedDolFigures("the prevailing wage determination, the recruitment period (2-3 months)")).toHaveLength(0);
   });
 
   it("no page or article types DOL's average or queue month", () => {

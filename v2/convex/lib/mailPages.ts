@@ -111,10 +111,13 @@ export function messagePage(
  * subscription that's gone. Status 400, with a way forward instead of a bare
  * line of text.
  */
-export function badLinkPage(reason = "This link is incomplete or out of date."): Response {
+export function badLinkPage(
+  reason = "This link is incomplete or out of date.",
+  next = "Ask for a fresh link to your email preferences, or set up the alert again from the site.",
+): Response {
   return htmlPage(
     "This link doesn't work",
-    `<h1>This link doesn't work</h1><p class="muted">${escapeHtml(reason)} Ask for a fresh link to your email preferences, or set up the alert again from the site.</p><p class="actions"><a class="btn go" href="${PREFERENCES_URL}">Email preferences</a></p>`,
+    `<h1>This link doesn't work</h1><p class="muted">${escapeHtml(reason)} ${escapeHtml(next)}</p><p class="actions"><a class="btn go" href="${PREFERENCES_URL}">Email preferences</a></p>`,
     400,
   );
 }

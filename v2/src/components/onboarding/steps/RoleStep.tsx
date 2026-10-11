@@ -53,7 +53,7 @@ export function RoleStep({ onNext }: RoleStepProps) {
       onNext();
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to save role. Please try again.",
+        userMessage: "Couldn’t save your role. Try again.",
       });
     } finally {
       setIsSaving(false);

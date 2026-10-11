@@ -149,7 +149,7 @@ export function RecruitmentResultsCard({
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
       handleOperationError(err, {
-        userMessage: "Failed to copy text to clipboard.",
+        userMessage: "Couldn’t copy. Select the text and copy it yourself.",
       });
     }
   }, [displayText]);
@@ -173,7 +173,7 @@ export function RecruitmentResultsCard({
       setIsEditing(false);
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to save recruitment summary.",
+        userMessage: "Couldn’t save the recruitment summary. Try again.",
       });
     } finally {
       setIsSaving(false);
@@ -193,7 +193,7 @@ export function RecruitmentResultsCard({
       setIsEditing(false);
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to revert recruitment summary.",
+        userMessage: "Couldn’t revert the recruitment summary. Try again.",
       });
     } finally {
       setIsSaving(false);

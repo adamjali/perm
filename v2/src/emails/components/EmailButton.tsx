@@ -79,8 +79,6 @@ const styles = {
     display: "inline-block",
     border: "3px solid #000001",
     boxShadow: "4px 4px 0 #000001",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
   },
   /**
    * The site's primary button: brand fill, ink label, ink offset.

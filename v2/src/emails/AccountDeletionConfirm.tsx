@@ -44,7 +44,11 @@ export function AccountDeletionConfirm({
     : `Your PERM Tracker account is scheduled for deletion on ${deletionDate}`;
 
   return (
-    <EmailLayout previewText={previewText}>
+    <EmailLayout
+      previewText={previewText}
+      footerText="You're receiving this email because deleting the PERM Tracker account at this address was requested."
+      hideSettingsLink
+    >
       {/* Warning Banner */}
       <Section className="em-banner" style={immediate ? styles.bannerImmediate : styles.banner}>
         <Text className="em-text-white" style={styles.bannerText}>
@@ -134,7 +138,7 @@ export function AccountDeletionConfirm({
         <Section style={styles.cta}>
           <Text className="em-text-secondary" style={styles.ctaText}>Changed your mind?</Text>
           <EmailButton href={cancelUrl} variant="default">
-            Cancel Account Deletion
+            Cancel the deletion
           </EmailButton>
         </Section>
       )}
@@ -175,8 +179,6 @@ const styles = {
     color: "#fffffe",
     fontSize: "16px",
     fontWeight: "700" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     margin: "0",
   },
   details: {

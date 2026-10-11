@@ -798,7 +798,7 @@ AUTONOMOUS: No confirmation needed.`,
 
         // DESTRUCTIVE — always requires confirmation
         return buildConfirmationResponse('deleteCase', toolCallId, params,
-          `PERMANENTLY DELETE case ${params.caseId}. This action CANNOT be undone!`,
+          `Delete case ${params.caseId} for good. This can't be undone.`,
           {
             permissionType: 'destructive',
             warning: 'This will permanently remove the case and all associated data. Consider using archiveCase instead if you might need this data later.',
@@ -1195,10 +1195,10 @@ AUTONOMOUS: No confirmation needed.`,
 
         // HIGHLY DESTRUCTIVE — always requires confirmation
         return buildConfirmationResponse('bulkDeleteCases', toolCallId, { ...params, caseIds },
-          `PERMANENTLY delete ${caseIds.length} cases`,
+          `Delete ${caseIds.length} case${caseIds.length === 1 ? '' : 's'} for good`,
           {
             permissionType: 'destructive',
-            warning: 'This action cannot be undone! All case data will be permanently removed.',
+            warning: 'This can\'t be undone. Every record in these cases will be removed.',
             preview: { count: caseIds.length, filter: params.filterByStatus || 'all' },
           });
       },

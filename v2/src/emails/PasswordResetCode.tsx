@@ -39,7 +39,7 @@ export function PasswordResetCode({
       {/* Header */}
       <Section style={styles.headerSection}>
         <Text className="em-text" style={styles.title}>
-          Reset Your Password
+          Reset your password
         </Text>
         <Text className="em-text-body" style={styles.subtitle}>
           Enter this code to set a new password for your PERM Tracker account.
@@ -72,7 +72,7 @@ export function PasswordResetCode({
           className="em-cta-button"
           style={styles.ctaButton}
         >
-          Reset Password
+          Reset password
         </Link>
       </Section>
 
@@ -156,8 +156,6 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
     border: "3px solid #000001",
     boxShadow: "4px 4px 0 #22c55e",
   },

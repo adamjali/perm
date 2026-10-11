@@ -20,7 +20,7 @@ PERM has a fixed set of steps and a much smaller set of decisions that change th
 
 This guide covers all of it in the order a case meets it: the regulation everything answers to, the five stages, what each one takes, and the deadlines that end a case if they pass. If you’re waiting on a case rather than filing one, the same stages describe what the employer’s attorney is working through, and [PERM case status](/perm-case-status) shows where DOL has your own case right now.
 
-<Callout type="stat" stat="18-36 mo" title="Total PERM Timeline">
+<Callout type="stat" stat="18-36 mo" title="The whole PERM timeline">
   The full PERM process from PWD request through I-140 approval typically takes 18 to 36 months, and strategic decisions at every stage can shave months off that timeline.
 </Callout>
 
@@ -76,8 +76,8 @@ The choice is as much strategic as legal. An EB-2 case with a Level 4 wage might
 
 The prevailing wage determination (PWD) is your foundation. Get it wrong, and every downstream decision is compromised. The DOL's [National Prevailing Wage Center (NPWC)](https://www.dol.gov/agencies/eta/foreign-labor/wages) determines the wage based on three factors: the SOC code, the geographic area, and the wage level.
 
-<Callout type="stat" stat="4-7 mo" title="PWD Processing Time">
-  Current NPWC processing times range from 4 to 7 months as of early 2026, per [OFLC processing time data](https://flag.dol.gov/processingtimes). File early. This is dead time you can’t recover. Once it’s in, the request has its own `P-` case number, and [case status](/perm-case-status) looks it up while it’s still pending and emails you when DOL decides.
+<Callout type="stat" stat={<DolNow show="pwdMonth" />} title="The wage requests DOL is deciding">
+  <DolNow show="pwd" /> That figure comes from [OFLC](https://flag.dol.gov/processingtimes). File early. This is dead time you can’t recover. Once it’s in, the request has its own `P-` case number, and [case status](/perm-case-status) looks it up while it’s still pending and emails you when DOL decides.
 </Callout>
 
 ### SOC Code Selection
@@ -107,7 +107,7 @@ For a detailed walkthrough of the filing mechanics, see our [complete PERM filin
 
 Recruitment is where PERM cases are won or lost. [20 CFR 656.17](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-C/section-656.17) prescribes the exact recruitment steps, and there’s zero margin for error. Miss a single requirement, and your case will be denied or audited.
 
-<Callout type="stat" stat="No rate" title="How Often DOL Audits">
+<Callout type="stat" stat="No rate" title="How often DOL audits">
   DOL publishes no PERM audit rate, and figures circulating in the 30-40% range trace to no primary source we can find. What DOL does publish, on its [processing times page](https://flag.dol.gov/processingtimes), is a live Audit Review queue with its own filing-month position, which is the only official measure of the audit backlog. Audits also include cases picked at random for quality control under 20 CFR 656.20(a).
 </Callout>
 
@@ -175,7 +175,7 @@ The top reasons PERM cases get [audited](/blog/common-perm-audit-triggers) durin
 
 The ETA Form 9089 is your PERM application itself, filed electronically through the [DOL FLAG system](https://flag.dol.gov/programs/perm). This is where everything comes together, and where small errors create big problems.
 
-<Callout type="stat" stat="30-180 days" title="Filing Window">
+<Callout type="stat" stat="30-180 days" title="The filing window">
   You must file the ETA 9089 between 30 and 180 days after recruitment ends. Miss this window and you must restart recruitment from scratch.
 </Callout>
 
@@ -213,7 +213,7 @@ See our guide on [processing times](/blog/perm-processing-times-2026) for curren
 
 After filing, DOL reviews the application. <DolNow /> Both figures come from [OFLC](https://flag.dol.gov/processingtimes) and both move, so read them live on the [processing times page](/perm-processing-times). A case can be selected for audit at any point during review.
 
-<Callout type="stat" stat="30 days" title="Audit Response Deadline">
+<Callout type="stat" stat="30 days" title="The audit response deadline">
   When the DOL issues an audit letter, you have **30 calendar days** to respond with all requested documentation. This deadline is strict: extensions are rare and discretionary.
 </Callout>
 
@@ -246,7 +246,7 @@ For the full list, read the analysis of [common PERM audit triggers](/blog/commo
 
 PERM certification starts the next clock: it’s the starting gun for the [I-140 Immigrant Petition](https://www.uscis.gov/i-140) filed with USCIS.
 
-<Callout type="stat" stat="180 days" title="I-140 Filing Deadline">
+<Callout type="stat" stat="180 days" title="The I-140 filing deadline">
   The PERM labor certification expires if the I-140 isn’t filed within **180 days** of certification. This is a hard deadline: no extensions, no exceptions. Miss it and you refile the entire PERM.
 </Callout>
 
@@ -275,7 +275,7 @@ The PERM process has long built-in waiting periods, and planning can cut the dea
 
 | Phase | Typical Duration | Optimization |
 |-------|-----------------|-------------|
-| PWD Request | 4-7 months | File as early as possible; this is pure wait time |
+| PWD request | <DolNow show="pwdWait" /> | File as early as possible; this is pure wait time |
 | Recruitment | 2-3 months | Run steps concurrently when allowed |
 | Cooling Period | 30 days | Use for ETA 9089 preparation |
 | DOL Review | <DolNow show="average" /> on DOL's average | No control. [Read it live](/perm-processing-times) |

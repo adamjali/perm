@@ -51,6 +51,7 @@ import urllib.error
 import urllib.request
 from collections import Counter
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 HEALTH = pathlib.Path(os.environ.get("PT_HEALTH_DIR", "/srv/permtracker/health"))
 STATE = HEALTH / "defend.json"
@@ -328,10 +329,12 @@ def email(state: dict, cfg: dict, subject: str, text: str) -> None:
     key, to = read_env(APP_ENV).get("RESEND_API_KEY"), cfg.get("ALERT_TO")
     if not key or not to:
         return
+    # When it happened, first, as the server alarm's emails do (they had no time at all).
+    stamp = datetime.now(ZoneInfo("America/New_York")).strftime("%A %b %-d, %-I:%M %p %Z")
     req = urllib.request.Request(
         "https://api.resend.com/emails", method="POST",
         data=json.dumps({"from": "PERM Tracker <notifications@permtracker.app>", "to": [to],
-                         "subject": subject, "text": text}).encode(),
+                         "subject": subject, "text": f"At {stamp}.\n\n{text}"}).encode(),
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
                  "User-Agent": USER_AGENT})
     try:

@@ -334,7 +334,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
   const secondSundayHint = (() => {
     if (sundaySecondDisabled?.disabled) return sundaySecondDisabled.reason;
     if (daysDiff !== null && daysDiff >= 7) {
-      return `✓ Valid Sunday (${daysDiff} days after first ad)`;
+      return `A Sunday, ${daysDiff} days after the first ad`;
     }
     return sundaySecondHint || "Must be a Sunday, after first ad";
   })();

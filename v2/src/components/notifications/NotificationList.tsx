@@ -452,7 +452,7 @@ export default function NotificationList({
     try {
       await markAsRead({ notificationId });
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to mark as read." });
+      handleOperationError(error, { userMessage: "Couldn’t mark as read. Try again." });
     }
   };
 
@@ -460,7 +460,7 @@ export default function NotificationList({
     try {
       await deleteNotification({ notificationId });
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to delete notification." });
+      handleOperationError(error, { userMessage: "Couldn’t delete the notification. Try again." });
     }
   };
 

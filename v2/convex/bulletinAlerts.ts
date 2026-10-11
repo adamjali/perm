@@ -622,7 +622,7 @@ export const sweep = internalAction({
           email: sub.email,
           kind: "bulletin",
           ref: `bulletin:${sub._id}`,
-          subject: `${label} moved in the ${latest.month} visa bulletin`,
+          subject: `${label} moved in the ${monthLabel(latest.month)} visa bulletin`,
           html,
           listUnsubscribe: unsubUrl,
           summary: {
@@ -632,7 +632,7 @@ export const sweep = internalAction({
             tone: "neutral",
           },
           text: [
-            `The State Department's ${latest.month} visa bulletin changed the final-action cutoff for ${label}.`,
+            `The State Department's ${monthLabel(latest.month)} visa bulletin changed the final-action cutoff for ${label}.`,
             "",
             `Before: ${fromWords}`,
             `Now: ${toWords}`,

@@ -26,7 +26,7 @@ export function TestEmail({
 }: TestEmailProps) {
   return (
     <EmailLayout
-      previewText="PERM Tracker: Test email successful!"
+      previewText="PERM Tracker: your test email arrived"
       footerText="This is a test email from PERM Tracker. You received this because you requested a test email."
       hideSettingsLink
       settingsUrl={settingsUrl}
@@ -34,7 +34,7 @@ export function TestEmail({
       {/* Header */}
       <Section style={styles.headerSection}>
         <Text className="em-text" style={styles.title}>
-          Test Email Successful!
+          Your test email arrived
         </Text>
         <Text className="em-text-body" style={styles.subtitle}>
           Your email notifications are working correctly. You will receive
@@ -58,7 +58,7 @@ export function TestEmail({
           className="em-cta-button"
           style={styles.ctaButton}
         >
-          Manage Notification Settings
+          Manage notification settings
         </Link>
       </Section>
     </EmailLayout>
@@ -111,8 +111,6 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
     border: "3px solid #000001",
     boxShadow: "4px 4px 0 #22c55e",
   },

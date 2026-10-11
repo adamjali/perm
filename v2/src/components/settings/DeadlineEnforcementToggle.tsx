@@ -54,7 +54,7 @@ export default function DeadlineEnforcementToggle() {
       analytics.capture("deadline_enforcement_toggled", { enabled: checked });
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to update enforcement setting",
+        userMessage: "Couldn’t save the deadline enforcement setting. Try again.",
       });
     } finally {
       setIsUpdating(false);

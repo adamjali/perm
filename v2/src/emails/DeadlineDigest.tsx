@@ -27,6 +27,7 @@ import {
 } from "../../convex/lib/digestHelpers";
 import type { DeadlineDigestItem } from "../../convex/lib/reminderDigest";
 import { SITE_URL } from "../../convex/lib/links";
+import { deadlineDigestWords } from "../../convex/lib/deadlineDigestWords";
 
 export interface DeadlineDigestProps {
   /** First name (or display name) of the recipient. */
@@ -41,12 +42,13 @@ export interface DeadlineDigestProps {
 
 type Urgency = DeadlineDigestItem["urgency"];
 
-/** Section order, severity emoji, and banner color — matches the WeeklyDigest section styling. */
-const SECTIONS: ReadonlyArray<{ key: Urgency; label: string; icon: string; color: string }> = [
-  { key: "overdue", label: "Overdue", icon: "🚨", color: "#991B1B" },
-  { key: "urgent", label: "This week", icon: "⚠️", color: "#DC2626" },
-  { key: "upcoming", label: "Next week", icon: "📅", color: "#F97316" },
-  { key: "later", label: "Coming up", icon: "🗓️", color: "#2563EB" },
+/** Section order, label and banner colour, the WeeklyDigest's sections. The
+ * colour carries the urgency; the label is in sentence case with no emoji. */
+const SECTIONS: ReadonlyArray<{ key: Urgency; label: string; color: string }> = [
+  { key: "overdue", label: "Overdue", color: "#991B1B" },
+  { key: "urgent", label: "This week", color: "#DC2626" },
+  { key: "upcoming", label: "Next week", color: "#F97316" },
+  { key: "later", label: "Coming up", color: "#2563EB" },
 ];
 
 export function DeadlineDigest({
@@ -55,19 +57,9 @@ export function DeadlineDigest({
   baseUrl = SITE_URL,
   settingsUrl = `${SITE_URL}/settings`,
 }: DeadlineDigestProps) {
-  const total = items.length;
-  const overdueCount = items.filter((i) => i.urgency === "overdue").length;
-  const plural = total !== 1 ? "s" : "";
-
-  const headline =
-    overdueCount > 0
-      ? `${total} deadline${plural} need attention, ${overdueCount} overdue`
-      : `${total} deadline${plural} need your attention`;
-
-  const previewText =
-    overdueCount > 0
-      ? `${overdueCount} overdue and ${total} total PERM deadline${plural} need attention`
-      : `${total} PERM deadline${plural} coming up`;
+  const words = deadlineDigestWords(items.length, items.filter((i) => i.urgency === "overdue").length);
+  const headline = words.headline;
+  const previewText = words.preview;
 
   return (
     <EmailLayout previewText={previewText} settingsUrl={settingsUrl}>
@@ -80,21 +72,22 @@ export function DeadlineDigest({
         </Text>
       </Section>
 
-      {SECTIONS.map(({ key, label, icon, color }) => {
+      {SECTIONS.map(({ key, label, color }) => {
         const sectionItems = items.filter((i) => i.urgency === key);
         if (sectionItems.length === 0) return null;
         return (
           <Section key={key} style={styles.section}>
             <Section className="em-banner" style={getSectionHeaderStyle(color)}>
               <Text className="em-text-white" style={styles.sectionHeaderText}>
-                {icon} {label.toUpperCase()} ({sectionItems.length})
+                {`${label} (${sectionItems.length})`}
               </Text>
             </Section>
-            {sectionItems.map((item) => (
+            {sectionItems.map((item, i) => (
               <DeadlineRow
                 key={`${item.caseId}-${item.deadlineType}`}
                 item={item}
                 baseUrl={baseUrl}
+                last={i === sectionItems.length - 1}
               />
             ))}
           </Section>
@@ -111,14 +104,14 @@ export function DeadlineDigest({
 }
 
 /** A single deadline row — beneficiary at employer, type, date, days-left, View. */
-function DeadlineRow({ item, baseUrl }: { item: DeadlineDigestItem; baseUrl: string }) {
+function DeadlineRow({ item, baseUrl, last }: { item: DeadlineDigestItem; baseUrl: string; last: boolean }) {
   const daysClass =
     item.urgency === "overdue" || item.urgency === "urgent"
       ? "em-days-overdue"
       : "em-days-warning";
 
   return (
-    <Section className="em-deadline-row" style={styles.row}>
+    <Section className="em-deadline-row" style={last ? { ...styles.row, ...styles.rowLast } : styles.row}>
       <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
         <tbody>
           <tr>
@@ -177,10 +170,8 @@ const styles = {
   section: { marginBottom: "24px" },
   sectionHeaderText: {
     color: "#fffffe",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: "700" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     margin: "0",
   },
   row: {
@@ -190,6 +181,8 @@ const styles = {
     borderRight: "3px solid #000001",
     borderBottom: "2px solid #e4e4e7",
   },
+  // The last row closes the card the banner opened.
+  rowLast: { borderBottom: "3px solid #000001" },
   rowContent: { verticalAlign: "top" as const, paddingRight: "12px" },
   caseName: {
     color: "#18181b",

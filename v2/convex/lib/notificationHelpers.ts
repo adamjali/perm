@@ -137,6 +137,19 @@ export type NotificationIcon =
  * formatCaseStatus("pwd"); // "PWD"
  * formatCaseStatus("eta9089"); // "ETA 9089"
  */
+/** A case's progress in words, the labels the case list and its badges use. */
+export function formatProgressStatus(status: string): string {
+  const labels: Record<string, string> = {
+    working: "Working on it",
+    waiting_intake: "Waiting for intake",
+    filed: "Filed",
+    approved: "Approved",
+    under_review: "Under review",
+    rfi_rfe: "RFI/RFE",
+  };
+  return labels[status] || status;
+}
+
 export function formatCaseStatus(status: string): string {
   const statusMap: Record<string, string> = {
     pwd: "PWD",

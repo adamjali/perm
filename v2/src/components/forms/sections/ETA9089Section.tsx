@@ -1,5 +1,6 @@
 "use client";
 
+import { WarningIcon } from "@phosphor-icons/react";
 import * as React from "react";
 import { FormSection } from "@/components/forms/FormSection";
 import { FormField } from "@/components/forms/FormField";
@@ -369,8 +370,8 @@ export function ETA9089Section(props: ETA9089SectionProps) {
 
         {/* ========== WARNINGS ========== */}
         {warnings?.eta9089FilingDate && (
-          <div className="rounded-lg border-2 border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
-            <p className="font-semibold">⚠ Warning</p>{" "}
+          <div role="status" className="flex items-start gap-2 border-2 border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
+            <WarningIcon aria-hidden className="mt-0.5 size-4 shrink-0" weight="bold" />
             <p>{warnings.eta9089FilingDate}</p>
           </div>
         )}

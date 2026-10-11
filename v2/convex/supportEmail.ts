@@ -164,11 +164,11 @@ export const processInboundEmail = internalAction({
     });
 
     // Forward inbound human mail to the catch-all inbox. DMARC machine reports
-    // (dmarc@) and the forward target itself are excluded — see shouldForwardInbound.
+    // (dmarc@), the forward target itself and our own outbound mail are excluded — see shouldForwardInbound.
     // DMARC reports are still stored above for the record.
-    if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO) && !(await ctx.runMutation(internal.supportEmail.admitForward, {}))) {
+    if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO, args.fromEmail) && !(await ctx.runMutation(internal.supportEmail.admitForward, {}))) {
       log.warn("Forward pool spent for today; the email is stored, not forwarded", { to: toEmail });
-    } else if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO)) {
+    } else if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO, args.fromEmail)) {
       try {
         const { error } = await sendOrQueue(ctx, "support-forward", resend, {
           from: FROM_EMAIL,

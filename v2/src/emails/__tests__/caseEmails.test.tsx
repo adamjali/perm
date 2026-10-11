@@ -389,11 +389,16 @@ describe("case email templates", () => {
     expect(undated).not.toContain("last checked, on");
   });
 
-  it("tells a new subscriber that alerts lag", async () => {
+  it("tells a new subscriber how often the case is checked, and for how long", async () => {
     const { confirm } = await renderAll();
-    // Silence on a stale case reads as "nothing happened", which is worse than
-    // no product. The expectation is set where expectations are set.
-    expect(confirm).toContain("re-checked in batches");
+    // The expectation is set where expectations are set, and it must be the
+    // true one: since Oct 7 2026 watched cases are asked about every 5 minutes
+    // on weekdays and watched for a year after DOL decides (scripts/
+    // check_watched_cases.py, caseAlerts.ts WATCH_AFTER_DECISION_MS). It had
+    // said "re-checked in batches ... a few days" and "until it's decided".
+    expect(confirm).toContain("every 5 minutes on weekdays from 7 AM");
+    expect(confirm).toContain("for a year after");
+    expect(confirm).not.toContain("re-checked in batches");
     expect(confirm).toContain("when the status was last checked");
   });
 
@@ -405,7 +410,7 @@ describe("case email templates", () => {
     expect(html).toContain("not going to guess");
   });
 
-  it("renders a confirmation for a case the mirror does not hold", async () => {
+  it("renders a confirmation for a case we don't hold yet", async () => {
     const html = await render(
       CaseAlertConfirm({
         caseNumber: CASE,
@@ -415,7 +420,7 @@ describe("case email templates", () => {
         confirmUrl: CONFIRM_URL,
       }),
     );
-    expect(html).toContain("Not in our mirror yet");
+    expect(html).toContain("Not in our records yet");
     // It must not promise an alert the moment the case appears: our first sight
     // cannot tell an arrival from a long-standing status.
     expect(html).toContain("first time its status moves");

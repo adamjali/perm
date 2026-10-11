@@ -12,6 +12,7 @@
  * Handles all mutation operations for CaseCard component with consistent error handling.
  */
 
+import { formatProgressStatus } from "@convex/lib/notificationHelpers";
 import { useMutation } from "convex/react";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
@@ -53,7 +54,7 @@ export function useCardMutations({
       await toggleFavoriteMutation({ id: caseId });
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to update favorite status. Please try again.",
+        userMessage: "Couldn’t update the favorite. Try again.",
         context: { operation: "toggleFavorite" },
       });
     } finally {
@@ -67,7 +68,7 @@ export function useCardMutations({
       await togglePinnedMutation({ id: caseId });
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to update pin status. Please try again.",
+        userMessage: "Couldn’t update the pin. Try again.",
         context: { operation: "togglePinned" },
       });
     } finally {
@@ -81,11 +82,10 @@ export function useCardMutations({
     try {
       const result = await reopenCaseMutation({ id: caseId });
       const statusLabel = formatCaseStatus(result.newCaseStatus as CaseStatus);
-      const progressLabel = result.newProgressStatus.replace(/_/g, " ");
-      toast.success(`Case reopened as ${statusLabel} - ${progressLabel}`);
+      toast.success(`Case reopened: ${statusLabel} (${formatProgressStatus(result.newProgressStatus)})`);
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to reopen case. Please try again.",
+        userMessage: "Couldn’t reopen the case. Try again.",
         context: { operation: "reopenCase" },
       });
     } finally {

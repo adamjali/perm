@@ -199,7 +199,7 @@ export const sendTestPush = action({
     // Build test push notification payload
     const payload = JSON.stringify({
       title: "Test push notification",
-      body: "Your push notifications are working correctly! You will receive deadline reminders and alerts.",
+      body: "Push notifications work on this device. Deadline reminders and alerts will arrive here.",
       url: "/settings",
       tag: "perm-tracker-test",
       icon: "/icon-192.png",

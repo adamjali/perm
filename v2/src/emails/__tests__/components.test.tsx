@@ -307,19 +307,8 @@ describe("EmailHeader", () => {
     });
   });
 
-  describe("Icon Display", () => {
-    it("contains icon when provided", async () => {
-      const html = await render(
-        EmailHeader({
-          title: "Alert",
-          icon: "🚨",
-        })
-      );
-      // Emoji may be HTML encoded
-      expect(html.length).toBeGreaterThan(0);
-    });
-
-    it("renders without icon when not provided", async () => {
+  describe("No icon slot", () => {
+    it("renders the title alone (the slot only ever held an emoji)", async () => {
       const html = await render(
         EmailHeader({
           title: "No Icon Header",

@@ -189,12 +189,12 @@ export function EditCasePageClient() {
             : {}),
         });
 
-        toast.success("Case updated successfully");
+        toast.success("Case updated");
         await router.push(`/cases/${caseId}`);
       } catch (error) {
         console.error("Failed to update case:", error);
         captureError(error);
-        toast.error(caseWriteErrorMessage(error, "Failed to update case. Please try again."));
+        toast.error(caseWriteErrorMessage(error, "Couldn’t update the case. Try again."));
       } finally {
         setIsUpdating(false);
       }

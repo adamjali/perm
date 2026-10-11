@@ -6,8 +6,8 @@
  * the weekly digest auto-suppresses server-side (the in-app banner explains how
  * to turn it back on). Weekly-only unsubscribe link is included.
  *
- * Matches the shared EmailLayout neobrutalist system. Greeting wave 👋 mirrors
- * the WelcomeEmail.
+ * Matches the shared EmailLayout neobrutalist system and greets like every
+ * other account email ("Hi Name,").
  */
 
 import { Text, Section, Link } from "@react-email/components";
@@ -43,7 +43,7 @@ export function ReengagementNudge({
     <EmailLayout previewText={previewText} settingsUrl={settingsUrl}>
       <Section style={styles.intro}>
         <Text className="em-text" style={styles.greeting}>
-          Hi {userName}, &#128075;
+          Hi {userName},
         </Text>
         <Text className="em-text-secondary" style={styles.lead}>
           It&#39;s been a while since you last checked in. Good news: {caseLine}

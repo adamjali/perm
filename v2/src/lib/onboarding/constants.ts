@@ -54,7 +54,7 @@ export const CHECKLIST_ITEMS: ChecklistItem[] = [
   {
     id: "create_case",
     label: "Create your first case",
-    description: "Already done during setup!",
+    description: "Done during setup",
   },
   {
     id: "add_dates",
@@ -174,7 +174,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
         element: "[data-tour='chat-bubble']",
         title: "Your AI assistant",
         description:
-          "Click this bubble to open the AI assistant. Ask about PERM deadlines, get case status summaries, or learn about the immigration process. Try saying \"What are my upcoming deadlines?\" to get started!",
+          "Click this bubble to open the AI assistant. Ask about PERM deadlines, get case status summaries, or learn about the immigration process. Try saying \"What are my upcoming deadlines?\" to start.",
       },
     ],
   },

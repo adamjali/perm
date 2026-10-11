@@ -156,13 +156,13 @@ export default function ProfileSection({
 
       await updateProfile(updates);
       analytics.capture("profile_updated");
-      toast.success("Profile updated successfully");
+      toast.success("Profile updated");
       // Show success animation briefly
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 1500);
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to update profile. Please try again.",
+        userMessage: "Couldn’t save your profile. Try again.",
         context: { operation: "updateProfile" },
       });
     } finally {

@@ -228,7 +228,7 @@ export default function NotificationPreferencesSection({
     } catch (error) {
       setMarketingSubscribed(!value);
       captureError(error, { operation: "updateMarketingSubscription" });
-      toast.error("Failed to update subscription. Please try again.");
+      toast.error("Couldn’t update the subscription. Try again.");
     }
   }, [updateMarketingSub, userEmail]);
 
@@ -301,7 +301,7 @@ export default function NotificationPreferencesSection({
       setLocal(!value);
       console.error("Failed to update notification setting:", error);
       captureError(error, { operation: "updateNotificationSetting" });
-      toast.error("Failed to update settings");
+      toast.error("Couldn’t save your settings. Try again.");
     }
   }, [updateProfile]);
 
@@ -315,7 +315,7 @@ export default function NotificationPreferencesSection({
       setDeadlineTypes(prev => ({ ...prev, [key]: !value }));
       console.error("Failed to update deadline type setting:", error);
       captureError(error, { operation: "updateDeadlineTypeSetting" });
-      toast.error("Failed to update settings");
+      toast.error("Couldn’t save your settings. Try again.");
     }
   }, [updateProfile]);
 
@@ -329,7 +329,7 @@ export default function NotificationPreferencesSection({
       setEmailEnabled(!value);
       console.error("Failed to update email notifications:", error);
       captureError(error, { operation: "toggleEmailNotifications" });
-      toast.error("Failed to update settings");
+      toast.error("Couldn’t save your settings. Try again.");
     }
   }, [updateProfile]);
 
@@ -382,7 +382,7 @@ export default function NotificationPreferencesSection({
     } catch (error) {
       console.error("Failed to send test email:", error);
       captureError(error, { operation: "sendTestEmail" });
-      toast.error("Failed to send test email. Please try again.");
+      toast.error("Couldn’t send the test email. Try again.");
     } finally {
       setIsSendingTestEmail(false);
     }
@@ -428,7 +428,7 @@ export default function NotificationPreferencesSection({
       setReminderDays(previousDays);
       console.error("Failed to update reminder days:", error);
       captureError(error, { operation: "updateReminderDays" });
-      toast.error("Failed to update reminder days");
+      toast.error("Couldn’t save the reminder days. Try again.");
     }
   }, [reminderDays, updateProfile]);
 
@@ -446,7 +446,7 @@ export default function NotificationPreferencesSection({
       setUrgentDays(previousValue);
       console.error("Failed to update urgent threshold:", error);
       captureError(error, { operation: "updateUrgentThreshold" });
-      toast.error("Failed to update urgent threshold");
+      toast.error("Couldn’t save the urgent threshold. Try again.");
     } finally {
       setIsUpdatingUrgentDays(false);
     }

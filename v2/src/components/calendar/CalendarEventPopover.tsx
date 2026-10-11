@@ -216,7 +216,7 @@ export function CalendarEventPopover({
       onClose();
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to hide case from calendar",
+        userMessage: "Couldn’t hide the case from the calendar. Try again.",
       });
     } finally {
       setIsHiding(false);

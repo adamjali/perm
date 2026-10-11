@@ -488,14 +488,11 @@ def data_section(now_ms: int) -> dict:
         # the line that says what is compared.
         for line in (readings.get("priorityDate") or [])[:2]:
             lines.append(f"Scorecard, priority dates: {line}")
-        # The other estimates, one line each, from the same doc.
-        for key, label in (("pwd", "wage-request months"), ("seasonal", "H-2A, H-2B and CW-1 dates"),
-                           ("bulletin", "visa bulletin release days")):
-            cell = ((priv.get(key) or {}).get("bySource") or {}).get("ours", {}).get("all") or {}
-            if cell.get("recorded"):
-                miss = cell.get("typicalMissDays")
-                lines.append(f"Scorecard, {label}: {cell['recorded']} recorded, {cell.get('graded') or 0} graded"
-                             + (f", typical miss {miss} days" if miss is not None and cell.get("graded") else ""))
+        # The other estimates, from the same doc. Wage requests are read per
+        # method, without the retired ones: their sum had carried the 144
+        # predictions recorded with the Oct 3 2026 bug and read "typical miss
+        # 83 days" while the method in use missed by 8 (Oct 11 2026).
+        lines.extend(estimate_lines(priv))
         # The alarms the site works out with the summaries (scorecard/alarms.ts):
         # each needs a person, so each turns the section amber.
         for alarm in priv.get("alarms") or []:
@@ -690,7 +687,21 @@ BACKUP_WARN_H, BACKUP_FAIL_H = 30, 54
 R2_WARN_GB, R2_FAIL_GB = 8.0, 9.5
 RESTORE_WARN_D = 40  # the restore test runs monthly; a missed month shows in about ten days
 MUST_RUN = ["permtracker-db", "nginx", "cloudflared"]
-DB_DIR_RATIO = 3.0
+# sqld's two growing parts, each held to the rule sqld itself follows (read
+# from libsql-server's source, src/replication/primary/logger.rs and
+# snapshot.rs, for sqld 0.24.33, Oct 11 2026). The replication log is
+# compacted into a snapshot once it passes --max-log-size (4096 on the
+# server's permtracker-db.service; sqld counts it as millions of bytes). The
+# snapshots are merged into one once they add up to twice the database's
+# pages or number more than 32, checked when a new one arrives. So they can sit
+# just under twice the data file, plus the snapshot that tips them over (at
+# most one log's worth), plus the merged copy being written beside them
+# (at most the data file): three times the data file plus one log. Past that,
+# sqld isn't merging. A fixed "3x the data file" for the whole folder fired on
+# a healthy engine (Oct 11 2026: 6.1 GB of data, 2.3 GB of log, 11 GB of
+# snapshots).
+SQLD_LOG_CAP_BYTES = 4096 * 1_000_000
+SQLD_LOG_SLACK = 1.25
 # The page-cache cap (permtracker-prune) runs every 30 minutes; two hours
 # without a run means it stopped, and the disk fills at crawl speed without it.
 PAGE_CACHE_STALE_MIN = 120
@@ -703,7 +714,16 @@ BUSY_STREAK_DAYS, BUSY_STREAK_MIN = 3, 3
 # Memory the machine can still hand out. Under 1 GB, the next big render or a
 # job's burst reaches swap or the out-of-memory killer.
 MEM_AVAILABLE_WARN_MB = 1024
+# Swap is judged by use, not by what it holds. Linux leaves pages in swap
+# until something needs them, so after one tight hour the figure can sit at a
+# gigabyte for days with memory to spare (Oct 11 2026: 1,253 MB held, 7 GB
+# free, 2 pages moved in a minute), which read as "to watch" every morning.
+# It warns when pages are moving (over 100 a second, about 400 KB a second,
+# averaged over the sampler's 10 minutes) or when it holds over 1 GB while
+# memory is short too.
 SWAP_WARN_MB = 1024
+SWAP_ACTIVE_PAGES_S = 100
+SWAP_SHORT_MEM_MB = 2048
 
 
 def repo_timers() -> list[str]:
@@ -742,6 +762,59 @@ def busy_line(doc: dict, now_ms: int, warns: list, lines: list) -> None:
 DISK_FULL_FAIL_H = 24
 DISK_FULL_WARN_H = 72
 
+
+
+def db_folder_warnings(n: dict) -> list[str]:
+    """What the database folder says about sqld's own housekeeping (see
+    SQLD_LOG_CAP_BYTES). Reports written before Oct 11 2026 carry only the
+    folder's total, judged against the same ceiling summed."""
+    data = n.get("dbDataBytes")
+    if not data:
+        return []
+    out = []
+    snap_cap = 3 * data + SQLD_LOG_CAP_BYTES
+    log_cap = SQLD_LOG_SLACK * SQLD_LOG_CAP_BYTES
+    snaps, log = n.get("dbSnapshotBytes"), n.get("dbLogBytes")
+    if snaps is None and log is None:
+        total = n.get("dbBytes") or 0
+        if total > data + log_cap + snap_cap:
+            out.append(f"database folder is {total / data:.1f}x its data file, past what sqld's own "
+                       "log and snapshot rules allow")
+        return out
+    if snaps is not None and snaps > snap_cap:
+        out.append(f"database snapshots hold {snaps / 1e9:.1f} GB, {snaps / data:.1f}x the data file: "
+                   "sqld merges them at 2x, so it isn't merging")
+    if log is not None and log > log_cap:
+        out.append(f"database replication log is {log / 1e9:.1f} GB, past its "
+                   f"{SQLD_LOG_CAP_BYTES / 1e9:.1f} GB cap: sqld isn't compacting it")
+    return out
+
+
+# Methods the case page no longer uses: the keys of RETIRED_METHODS in
+# src/lib/scorecard/verdict.ts (test_daily_monitor.py holds the two equal).
+RETIRED_METHODS = {"dol-average", "pwd-queue-request-month"}
+# The wage-request methods in use, in the words the report prints.
+WAGE_METHODS = (("pwd-day", "wage-request days"), ("pwd-queue", "wage-request months"))
+
+
+def estimate_lines(priv: dict) -> list[str]:
+    """One line per estimate besides PERM's: each wage-request method in use,
+    then the seasonal dates and the bulletin release days as wholes."""
+    def line(label: str, cell: dict) -> str | None:
+        if not cell.get("recorded"):
+            return None
+        miss = cell.get("typicalMissDays")
+        return (f"Scorecard, {label}: {cell['recorded']} recorded, {cell.get('graded') or 0} graded"
+                + (f", typical miss {miss} days" if miss is not None and cell.get("graded") else ""))
+
+    def ours(key: str) -> dict:
+        return ((priv.get(key) or {}).get("bySource") or {}).get("ours") or {}
+
+    out = [line(label, (ours("pwd").get("byModel") or {}).get(model) or {})
+           for model, label in WAGE_METHODS if model not in RETIRED_METHODS]
+    out += [line("H-2A, H-2B and CW-1 dates", ours("seasonal").get("all") or {}),
+            line("visa bulletin release days", ours("bulletin").get("all") or {})]
+    return [x for x in out if x]
 
 def server_verdict(doc: dict | None, now_ms: int) -> dict:
     """Judge perm_docs['server_health'], which the server writes every 10 minutes."""
@@ -852,12 +925,9 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
         lines.append(f"{what[0].upper() + what[1:]}: {et_time(at)}")
 
     n = doc.get("now") or {}
-    # The database folder holds the data file plus the engine's own log and
-    # snapshots; the engine is meant to merge those, and this is the check that
-    # it does. Past 3x the data file, something is growing that should not be.
-    if n.get("dbDataBytes") and (n.get("dbBytes") or 0) > DB_DIR_RATIO * n["dbDataBytes"]:
-        warns.append(f"database folder is {n['dbBytes'] / n['dbDataBytes']:.1f}x its data file: "
-                     "the engine's log or snapshots are not being trimmed")
+    warns.extend(db_folder_warnings(n))
+    if doc.get("stoppedUnits"):
+        warns.append("stopped after an error and not restarted: " + ", ".join(doc["stoppedUnits"][:5]))
     # Every timer the repo defines must be enabled on the server: the backups,
     # the page-cache cap and the cron clock are all timers, and a disabled one
     # just stops, with nothing else to say so.
@@ -885,9 +955,15 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
     avail = n.get("memAvailableMb")
     if avail is not None and avail < MEM_AVAILABLE_WARN_MB:
         warns.append(f"only {avail:,} MB of memory available")
-    swap = n.get("swapUsedMb")
-    if swap is not None and swap > SWAP_WARN_MB:
-        warns.append(f"{swap:,} MB of swap in use")
+    swap, swap_rate = n.get("swapUsedMb"), n.get("swapPagesPerS")
+    if swap_rate is not None and swap_rate > SWAP_ACTIVE_PAGES_S:
+        warns.append(f"swap is in use: {swap_rate:,.0f} pages a second moving, {swap or 0:,} MB held")
+    elif swap is not None and swap > SWAP_WARN_MB and avail is not None and avail < SWAP_SHORT_MEM_MB:
+        warns.append(f"{swap:,} MB of swap held with only {avail:,} MB of memory available")
+    elif swap is not None and swap > SWAP_WARN_MB:
+        moving_now = "" if swap_rate is None else f", {swap_rate:g} pages a second moving"
+        lines.append(f"Swap: {swap:,} MB holds pages set aside earlier; {avail or 0:,} MB of memory is "
+                     f"available{moving_now}")
     disk = n.get("diskPct")
     # When the disk will be full at the last six hours' rate (the sampler
     # computes it). Oct 10 2026: the disk filled overnight from 50%, which a
@@ -910,6 +986,10 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
     if mem is not None:
         lines.insert(1, f"Idle-rule window ({idle.get('hours')} h): CPU p95 {pct(cpu)}, memory p95 {pct(mem)}, "
                         f"memory low {pct(idle.get('memMin'))}")
+    if n.get("dbSnapshotBytes") is not None and n.get("dbDataBytes"):
+        lines.append(f"Database parts: data {n['dbDataBytes'] / 1e9:.1f} GB, snapshots "
+                     f"{n['dbSnapshotBytes'] / 1e9:.1f} GB (merged at 2x the data), log "
+                     f"{(n.get('dbLogBytes') or 0) / 1e9:.1f} GB (compacted at {SQLD_LOG_CAP_BYTES / 1e9:.1f} GB)")
     if slot:
         lines.append(f"Live copy: {slot} ({(doc.get('slot') or {}).get('release')})")
     busy_line(doc, now_ms, warns, lines)

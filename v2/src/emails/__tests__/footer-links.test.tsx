@@ -1,4 +1,7 @@
 // @vitest-environment jsdom
+import { WelcomeEmail } from "../WelcomeEmail";
+import { AdminEmail } from "../AdminEmail";
+import { AccountDeletionConfirm } from "../AccountDeletionConfirm";
 import { describe, expect, it } from "vitest";
 import { render } from "@react-email/render";
 
@@ -174,6 +177,18 @@ describe("every email has a way out", () => {
       StatusChange({ employerName: "Acme Corp", beneficiaryName: "A. Person", caseUrl: "https://permtracker.app/cases/123", oldStatus: "pwd_pending", newStatus: "pwd_received" } as Parameters<typeof StatusChange>[0]),
     );
     expect(status).toContain("https://permtracker.app/settings");
+  });
+
+  it("mail that isn't a notification never says it is (Oct 11 2026: the welcome, deletion and admin emails did)", async () => {
+    const welcome = await render(WelcomeEmail({ userName: "Jordan" }));
+    const admin = await render(AdminEmail({ recipientName: "Jordan", subject: "Re: a question", body: "Thanks for writing." }));
+    const deletion = await render(AccountDeletionConfirm({ ...AccountDeletionConfirm.PreviewProps }));
+    for (const html of [welcome, admin, deletion]) {
+      expect(html).not.toContain("notifications enabled");
+      expect(html).not.toContain("Manage notification settings");
+    }
+    expect(welcome).toContain("account was created with this address");
+    expect(admin).toContain("wrote this to you directly");
   });
 
   it("a confirmation carries no opt-out: nothing exists to manage until the person confirms", async () => {

@@ -281,7 +281,7 @@ describe("BulkActions - Mark All Read", () => {
     await user.click(markAllButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Failed to mark all as read");
+      expect(toast.error).toHaveBeenCalledWith("Couldn’t mark all as read. Try again.");
     });
   });
 
@@ -447,7 +447,7 @@ describe("BulkActions - Delete All Read", () => {
     await user.click(confirmButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Failed to delete notifications");
+      expect(toast.error).toHaveBeenCalledWith("Couldn’t delete the notifications. Try again.");
     });
   });
 

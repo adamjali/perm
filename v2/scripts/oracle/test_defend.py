@@ -203,6 +203,9 @@ _ua = _sent[0].get_header("User-agent") if _sent else None
 check("an alert email names its own User-Agent, not Python's default",
       bool(_ua) and "urllib" not in _ua.lower(), str(_ua))
 check("and a sent alert is counted against the day's limit", sum(_state.get("emails", {}).values()) == 1)
+_body = json.loads(_sent[0].data.decode())["text"] if _sent else ""
+check("an alert says when, in Eastern time, before anything else",
+      _body.startswith("At ") and (" EDT." in _body.split("\n")[0] or " EST." in _body.split("\n")[0]), _body[:80])
 
 # A state file that can't be read: resume from what Cloudflare says, so the
 # 30-calm-minute clock can still turn things off (Oct 10 2026, a full disk).

@@ -19,9 +19,12 @@ day is shared with every subscriber's mail).
   disk        under 25 GB free, or full within 24 hours at the last two
               hours' rate (with at least an hour of readings)
   disk-crit   under 10 GB free
-  memory      under 500 MB available, or over 2 GB of swap in use
+  memory      under 500 MB available, or over 2 GB of swap in use while
+              under 2 GB of memory is available
   units       a PERM Tracker job or service, nginx, cloudflared or the
-              database is in systemd's "failed" state
+              database is in systemd's "failed" state, or is switched on but
+              stopped after an error (a crash into systemd's start limit
+              leaves a unit "inactive", which --failed never lists)
   sampler     the health sampler has written nothing for 30 minutes
   page-cache  the page-cache cap has not finished for 2.5 hours
   backup      the nightly backup's last success is over 30 hours old
@@ -67,6 +70,7 @@ TREND_MIN_S = 3600              # ... once there is at least an hour of readings
 HISTORY_S = 6 * 3600            # readings kept in /run
 MEM_MIN_MB = 500
 SWAP_MAX_MB = 2048
+SWAP_SHORT_MEM_MB = 2048
 SAMPLER_STALE_S = 30 * 60
 PRUNE_STALE_S = int(2.5 * 3600)
 # A release whose .next/server holds this much more than the cap counted has
@@ -125,11 +129,19 @@ def evaluate(snap: dict, rate: float | None) -> dict[str, str]:
         if hours is not None:
             why += f", falling {rate:.1f} GB an hour: full in about {hours:.0f} hours"
         on["disk"] = why
-    if snap["mem_available_mb"] < MEM_MIN_MB or snap["swap_used_mb"] > SWAP_MAX_MB:
+    # Swap that only holds pages set aside earlier costs nothing; it counts
+    # when memory is short too (see daily_monitor.py's SWAP_WARN_MB).
+    if snap["mem_available_mb"] < MEM_MIN_MB or (snap["swap_used_mb"] > SWAP_MAX_MB
+                                                 and snap["mem_available_mb"] < SWAP_SHORT_MEM_MB):
         on["memory"] = (f"{snap['mem_available_mb']} MB of memory available, "
                         f"{snap['swap_used_mb']} MB of swap in use")
+    down = []
     if snap["failed_units"]:
-        on["units"] = "failed: " + ", ".join(sorted(snap["failed_units"]))
+        down.append("failed: " + ", ".join(sorted(snap["failed_units"])))
+    if snap.get("stopped_units"):
+        down.append("stopped after an error: " + ", ".join(sorted(snap["stopped_units"])))
+    if down:
+        on["units"] = "; ".join(down)
     for key, age, limit, what in (
             ("sampler", snap.get("sampler_age_s"), SAMPLER_STALE_S, "the health sampler"),
             ("page-cache", snap.get("prune_age_s"), PRUNE_STALE_S, "the page-cache cap"),
@@ -208,6 +220,20 @@ def age_of(path: pathlib.Path, now: float) -> float | None:
         return None
 
 
+def stopped_after_error(show: str) -> list[str]:
+    """Services switched on yet stopped after an error, from `systemctl show
+    -p Id -p ActiveState -p Result -p UnitFileState`. A unit that crashes into
+    systemd's start limit is left "inactive", which `systemctl --failed` never
+    lists (PCP's pmlogger, Oct 10 2026). Same rule as permtracker-health's."""
+    out = []
+    for block in show.split("\n\n"):
+        f = dict(ln.split("=", 1) for ln in block.splitlines() if "=" in ln)
+        if (f.get("ActiveState") == "inactive" and f.get("Result", "success") != "success"
+                and f.get("UnitFileState", "").startswith("enabled")):
+            out.append(f["Id"])
+    return sorted(out)
+
+
 def snapshot(now: float) -> dict:
     disk = shutil.disk_usage("/")
     mem = {}
@@ -217,6 +243,12 @@ def snapshot(now: float) -> dict:
     failed = subprocess.run(["systemctl", "--failed", "--no-legend", "--plain"],
                             capture_output=True, text=True).stdout.splitlines()
     units = [ln.split()[0] for ln in failed if ln.strip()]
+    ours = subprocess.run(["systemctl", "list-units", "--type=service", "--all", "--no-legend", "--plain",
+                           *(f"{u}*" for u in OUR_UNITS)], capture_output=True, text=True).stdout.splitlines()
+    names = [ln.split()[0] for ln in ours if ln.strip()]
+    stopped = stopped_after_error(subprocess.run(
+        ["systemctl", "show", "-p", "Id", "-p", "ActiveState", "-p", "Result", "-p", "UnitFileState", *names],
+        capture_output=True, text=True).stdout) if names else []
     prune_age = None
     uncounted: list[str] = []
     headroom = None
@@ -232,6 +264,7 @@ def snapshot(now: float) -> dict:
         "mem_available_mb": mem.get("MemAvailable", 0) // 1024,
         "swap_used_mb": (mem.get("SwapTotal", 0) - mem.get("SwapFree", 0)) // 1024,
         "failed_units": [u for u in units if u.startswith(OUR_UNITS)],
+        "stopped_units": [u for u in stopped if u.startswith(OUR_UNITS)],
         "sampler_age_s": age_of(APP / "health" / "samples.jsonl", now),
         "prune_age_s": prune_age,
         "uncounted": uncounted,
@@ -301,6 +334,16 @@ TITLES = {
     "backup": "the nightly backup is late",
     "page-cache-blind": "the page-cache cap can't see some pages",
 }
+# What each alarm clearing means, said as the good news. The Oct 10 2026 clear
+# was titled "back to normal (the disk is filling)" and repeated the old
+# "full in about 12 hours" under CLEARED, which read as the disk still filling.
+CLEARED = {
+    "disk": "the disk is no longer on course to fill", "disk-crit": "the disk has room again",
+    "memory": "memory has recovered", "units": "no job or service is down",
+    "sampler": "the health sampler is running again", "page-cache": "the page-cache cap is running again",
+    "backup": "the nightly backup has run",
+    "page-cache-blind": "the page-cache cap can see every page again",
+}
 
 
 def read_env(path: pathlib.Path) -> dict:
@@ -345,11 +388,14 @@ def compose(mail: list[tuple[str, str, str]], snap: dict, rate: float | None,
     if starts:
         subject = "PERM Tracker server: " + "; ".join(TITLES.get(k, k) for k, _, _ in starts)
     else:
-        subject = "PERM Tracker server: back to normal (" + ", ".join(TITLES.get(k, k) for k, _, _ in mail) + ")"
+        subject = "PERM Tracker server: back to normal, " + "; ".join(CLEARED.get(k, k) for k, _, _ in mail)
     lines = [f"Checked {stamp}.", ""]
     for key, kind, reason in mail:
-        word = {"start": "NEW", "still": "STILL", "clear": "CLEARED"}[kind]
-        lines.append(f"{word}: {TITLES.get(key, key)}. {reason}.")
+        if kind == "clear":
+            lines.append(f"CLEARED: {CLEARED.get(key, key)}. (It had said: {reason}.)")
+        else:
+            word = {"start": "NEW", "still": "STILL"}[kind]
+            lines.append(f"{word}: {TITLES.get(key, key)}. {reason}.")
     if actions:
         lines += ["", "Done automatically:"] + [f"- {a}." for a in actions]
     # rate is GB an hour the disk is LOSING; say it in that direction.

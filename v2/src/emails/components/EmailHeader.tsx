@@ -5,7 +5,6 @@
  * Features:
  * - Bold styling matching neobrutalist design
  * - Urgency color bars
- * - Icon support (emoji-based for email compatibility)
  * - Dark mode via CSS classes
  */
 
@@ -18,8 +17,6 @@ export interface EmailHeaderProps {
   subtitle?: string;
   /** Urgency level for color bar */
   urgency?: "normal" | "high" | "urgent" | "overdue";
-  /** Optional emoji icon */
-  icon?: string;
 }
 
 /**
@@ -30,7 +27,6 @@ export function EmailHeader({
   title,
   subtitle,
   urgency = "normal",
-  icon,
 }: EmailHeaderProps) {
   const urgencyBarStyle = {
     ...styles.urgencyBar,
@@ -46,11 +42,6 @@ export function EmailHeader({
       <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
         <tbody>
           <tr>
-            {icon && (
-              <td style={styles.iconCell}>
-                <Text style={styles.icon}>{icon}</Text>
-              </td>
-            )}
             <td style={styles.titleCell}>
               <Text className="em-text" style={styles.title}>{title}</Text>
               {subtitle && <Text className="em-text-secondary" style={styles.subtitle}>{subtitle}</Text>}
@@ -84,18 +75,8 @@ const styles = {
     width: "100%",
     marginBottom: "16px",
   },
-  iconCell: {
-    verticalAlign: "top" as const,
-    width: "40px",
-    paddingTop: "2px",
-  },
   titleCell: {
     verticalAlign: "top" as const,
-  },
-  icon: {
-    fontSize: "28px",
-    margin: "0",
-    lineHeight: "1",
   },
   title: {
     color: "#18181b",

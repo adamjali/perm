@@ -143,7 +143,7 @@ export function JobDescriptionDetailView({
       await onClear();
       toast.success("Job description cleared");
     } catch {
-      toast.error("Failed to clear job description");
+      toast.error("Couldn’t clear the job description. Try again.");
     } finally {
       setIsClearing(false);
     }
@@ -176,7 +176,7 @@ export function JobDescriptionDetailView({
       setIsEditing(false);
       toast.success("Job description updated");
     } catch {
-      toast.error("Failed to update job description");
+      toast.error("Couldn’t save the job description. Try again.");
     } finally {
       setIsSaving(false);
     }
@@ -270,7 +270,7 @@ export function JobDescriptionDetailView({
       toast.success("Copied to clipboard");
       setTimeout(() => setIsCopied(false), 2000);
     } catch {
-      toast.error("Failed to copy");
+      toast.error("Couldn’t copy. Select the text and copy it yourself.");
     }
   }, [isEditing, editDescription, description]);
 

@@ -13,6 +13,7 @@
  * @module
  */
 
+import { emailStamp } from "./lib/time";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
@@ -178,13 +179,7 @@ export const checkAndEnforceDeadlines = mutation({
                 companyName: caseDoc.employerName,
                 violationType: formatDeadlineType(VIOLATION_TO_DEADLINE_TYPE[violation.type]),
                 reason: violation.reason,
-                closedAt: new Date(now).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
+                closedAt: emailStamp(now),
                 caseId: caseDoc._id.toString(),
                 caseNumber: caseDoc.internalCaseNumber,
               });

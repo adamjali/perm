@@ -261,7 +261,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
       caseId: args.caseId,
       ...caseDetails,
       action: 'permanently_deleted',
-      message: `PERMANENTLY DELETED case "${caseLabel} (${caseDetails.positionTitle})". This action cannot be undone.`,
+      message: `Deleted case "${caseLabel} (${caseDetails.positionTitle})" for good. This can't be undone.`,
     };
   },
 
@@ -445,7 +445,7 @@ const toolExecutors: Record<string, ToolExecutor> = {
       successCount: result.successCount,
       totalCount: caseIds.length,
       action: 'bulk_permanently_deleted',
-      message: `PERMANENTLY DELETED ${result.successCount} of ${caseIds.length} case${caseIds.length !== 1 ? 's' : ''}. This action cannot be undone.`,
+      message: `Deleted ${result.successCount} of ${caseIds.length} case${caseIds.length !== 1 ? 's' : ''} for good. This can't be undone.`,
     };
   },
 

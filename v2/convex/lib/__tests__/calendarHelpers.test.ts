@@ -259,7 +259,7 @@ describe("formatEventDescription", () => {
     expect(desc).toContain("Beneficiary: John D.");
     expect(desc).toContain("Case number: A-12345-67890");
     expect(desc).toContain("Internal reference: INT-001");
-    expect(desc).toContain("PERM Tracker");
+    expect(desc).toContain("Open the case in PERM Tracker: https://permtracker.app/cases/case123");
   });
 
   it("omits case number when not provided", () => {
@@ -323,7 +323,7 @@ describe("formatEventDescription", () => {
     const lines = desc.split("\n");
 
     expect(lines.length).toBeGreaterThanOrEqual(5); // Header, blank, employer, beneficiary, blank, footer
-    expect(lines[lines.length - 1]).toBe("PERM Tracker");
+    expect(lines[lines.length - 1]).toBe("Open the case in PERM Tracker: https://permtracker.app/cases/case123");
   });
 });
 

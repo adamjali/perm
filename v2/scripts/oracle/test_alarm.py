@@ -124,6 +124,42 @@ _, cleared = alarm.compose([("disk", "clear", "66.9 GB free")], healthy(disk_fre
                            [], T0)
 check("a clear says which way the disk is moving, and where the cap stops it",
       "falling 5.4 GB an hour" in cleared and "leave about 36 GB free" in cleared, cleared)
+# Oct 10 2026, 3:37 PM EDT: "back to normal (the disk is filling)" with
+# "CLEARED: the disk is filling. ... full in about 12 hours" read as still filling.
+clear_subject, _ = alarm.compose([("disk", "clear", "66.5 GB free, falling 5.4 GB an hour: full in about 12 hours")],
+                                 healthy(disk_free_gb=66.2, cache_headroom_gb=30.6), 5.3, [], T0)
+check("a clear's subject says the good news, never the alarm's name",
+      clear_subject == "PERM Tracker server: back to normal, the disk is no longer on course to fill", clear_subject)
+_, clear_text = alarm.compose([("disk", "clear", "66.5 GB free, falling 5.4 GB an hour: full in about 12 hours")],
+                              healthy(disk_free_gb=66.2, cache_headroom_gb=30.6), 5.3, [], T0)
+check("...and the body marks the old reason as what it had said",
+      "CLEARED: the disk is no longer on course to fill. (It had said: 66.5 GB free" in clear_text, clear_text)
+check("every alarm has its cleared wording", set(alarm.CLEARED) == set(alarm.TITLES), str(set(alarm.TITLES) ^ set(alarm.CLEARED)))
+mixed_subject, _ = alarm.compose([("disk", "clear", "x"), ("memory", "start", "300 MB")], healthy(), None, [], T0)
+check("a mixed email's subject names only what is wrong now", mixed_subject == "PERM Tracker server: memory is low", mixed_subject)
+
+# Swap that only holds old pages, with memory to spare, is no alarm (Oct 11 2026).
+check("2.5 GB of swap with 7 GB of memory free is no alarm",
+      "memory" not in alarm.evaluate(healthy(swap_used_mb=2500, mem_available_mb=7000), None))
+check("...but with under 2 GB free it is", "memory" in alarm.evaluate(healthy(swap_used_mb=2500, mem_available_mb=1500), None))
+check("under 500 MB available is an alarm whatever swap holds",
+      "memory" in alarm.evaluate(healthy(swap_used_mb=0, mem_available_mb=400), None))
+
+# Our services stopped after an error without being marked failed (a crash
+# into systemd's start limit leaves a unit "inactive").
+SHOW = ("Id=permtracker-web@blue2.service\nActiveState=inactive\nUnitFileState=enabled\nResult=exit-code\n\n"
+        "Id=permtracker-web@green2.service\nActiveState=inactive\nUnitFileState=enabled\nResult=success\n\n"
+        "Id=permtracker-cron@scorecard.service\nActiveState=inactive\nUnitFileState=static\nResult=exit-code\n")
+check("a switched-on unit left inactive after an error is caught",
+      alarm.stopped_after_error(SHOW) == ["permtracker-web@blue2.service"], str(alarm.stopped_after_error(SHOW)))
+check("...and raises the units alarm, named as stopped",
+      "stopped after an error: permtracker-web@blue2.service"
+      in alarm.evaluate(healthy(stopped_units=["permtracker-web@blue2.service"]), None).get("units", ""))
+import importlib.machinery as _m, importlib.util as _u
+_l = _m.SourceFileLoader("pt_health_for_alarm", str(HERE / "bin" / "permtracker-health"))
+_h = _u.module_from_spec(_u.spec_from_loader("pt_health_for_alarm", _l)); _l.exec_module(_h)
+check("the alarm and the morning report's sampler read stopped units the same way",
+      _h.stopped_after_error(SHOW) == alarm.stopped_after_error(SHOW))
 check("...and what was done", "Done automatically" in text and "page-cache cap" in text, text)
 
 # A release holding far more than the cap counted is an alarm (Oct 7 to 10 2026).

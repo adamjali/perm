@@ -206,7 +206,7 @@ export function JobDescriptionField({
       toast.success("Copied to clipboard");
       setTimeout(() => setIsCopied(false), 2000);
     } catch {
-      toast.error("Failed to copy");
+      toast.error("Couldn’t copy. Select the text and copy it yourself.");
     }
   }, [description]);
 

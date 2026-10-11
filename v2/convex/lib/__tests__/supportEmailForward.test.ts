@@ -33,4 +33,14 @@ describe("shouldForwardInbound", () => {
     expect(shouldForwardInbound("support@permtracker.app", legacy)).toBe(false);
     expect(shouldForwardInbound("perm@permtracker.app", legacy)).toBe(true);
   });
+
+  it("does NOT forward this site's own mail to its own inboxes (the demo account's reminders, Oct 2026)", () => {
+    expect(shouldForwardInbound("demo@permtracker.app", FWD, "PERM Tracker <notifications@permtracker.app>")).toBe(false);
+    expect(shouldForwardInbound("demo@permtracker.app", FWD, "NOTIFICATIONS@permtracker.app")).toBe(false);
+    // a person writing to support from anywhere else still forwards
+    expect(shouldForwardInbound("support@permtracker.app", FWD, "Jordan <jordan@example.com>")).toBe(true);
+    expect(shouldForwardInbound("support@permtracker.app", FWD, "")).toBe(true);
+    // ...and the contact form, which the site sends to support@ itself, still reaches the owner
+    expect(shouldForwardInbound("support@permtracker.app", FWD, "PERM Tracker <notifications@permtracker.app>")).toBe(true);
+  });
 });

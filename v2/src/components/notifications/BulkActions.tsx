@@ -73,7 +73,7 @@ export default function BulkActions({ className }: BulkActionsProps) {
       }
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to mark all as read",
+        userMessage: "Couldn’t mark all as read. Try again.",
         context: { operation: "bulkMarkAllRead" },
       });
     } finally {
@@ -93,7 +93,7 @@ export default function BulkActions({ className }: BulkActionsProps) {
       }
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to delete notifications",
+        userMessage: "Couldn’t delete the notifications. Try again.",
         context: { operation: "bulkDeleteReadNotifications" },
       });
     } finally {

@@ -52,7 +52,7 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
         userId: user.userId,
       });
 
-      toast.success(`User ${user.email} deleted successfully`);
+      toast.success(`User ${user.email} deleted`);
       onClose();
     } catch (error) {
       console.error("Failed to delete user:", error);

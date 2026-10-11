@@ -251,7 +251,7 @@ export default function CalendarSyncSection({
 
     if (connected === "true") {
       analytics.capture("calendar_sync_enabled");
-      toast.success("Google Calendar connected successfully");
+      toast.success("Google Calendar connected");
       // Clean up URL params
       router.replace("/settings?tab=calendar-sync", { scroll: false });
     } else if (error) {
@@ -481,7 +481,7 @@ export default function CalendarSyncSection({
       setMasterEnabled(!value);
       console.error("Failed to update calendar sync:", error);
       captureError(error, { operation: "toggleCalendarSync" });
-      toast.error("Failed to update settings");
+      toast.error("Couldn’t save your settings. Try again.");
     } finally {
       setIsUpdatingMaster(false);
     }
@@ -501,7 +501,7 @@ export default function CalendarSyncSection({
       setDeadlineToggles((prev) => ({ ...prev, [field]: !value }));
       console.error("Failed to update deadline sync setting:", error);
       captureError(error, { operation: "toggleDeadlineSync" });
-      toast.error("Failed to update settings");
+      toast.error("Couldn’t save your settings. Try again.");
     } finally {
       setUpdatingDeadlineId(null);
     }

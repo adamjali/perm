@@ -96,7 +96,7 @@ export default function AutoClosureAlertBanner() {
       await dismissOne({ notificationId });
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to dismiss alert",
+        userMessage: "Couldn’t dismiss the alert. Try again.",
         context: { operation: "dismissAutoClosureAlert" },
       });
     }
@@ -107,7 +107,7 @@ export default function AutoClosureAlertBanner() {
       await dismissAll({});
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to dismiss alerts",
+        userMessage: "Couldn’t dismiss the alerts. Try again.",
         context: { operation: "dismissAllAutoClosureAlerts" },
       });
     }

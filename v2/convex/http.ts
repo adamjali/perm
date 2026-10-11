@@ -629,7 +629,7 @@ http.route({
   handler: httpAction(async (_ctx, req) => {
     const url = new URL(req.url);
     const target = await ratingTarget(url);
-    if (!target) return badLinkPage("This rating link is incomplete or out of date.");
+    if (!target) return badLinkPage("This rating link is incomplete or out of date.", "Nothing was recorded. The rating boxes are in the last email about the case.");
     return ratingPage(ratingAction(target), parseScore(url.searchParams.get("r")));
   }),
 });
@@ -640,7 +640,7 @@ http.route({
   handler: httpAction(async (ctx, req) => {
     const url = new URL(req.url);
     const target = await ratingTarget(url);
-    if (!target) return badLinkPage("This rating link is incomplete or out of date.");
+    if (!target) return badLinkPage("This rating link is incomplete or out of date.", "Nothing was recorded. The rating boxes are in the last email about the case.");
     let form: FormData;
     try {
       form = await req.formData();
@@ -659,7 +659,7 @@ http.route({
       note: typeof note === "string" ? note.slice(0, 4000) : undefined,
       anonymous: form.get("anon") === "1",
     });
-    if (!saved) return badLinkPage("This rating link doesn't match a case this address was watching.");
+    if (!saved) return badLinkPage("This rating link doesn't match a case this address was watching.", "Nothing was recorded. The rating boxes are in the last email about the case.");
     return ratingThanksPage({
       score: saved.score,
       caseNumber: saved.caseNumber,
@@ -1205,7 +1205,7 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, req) => {
     const email = await editEmail(req);
-    if (!email) return firmBadLinkPage("This edit link has expired. Ask for a fresh one from the firm's page.");
+    if (!email) return firmBadLinkPage("This edit link has expired.");
     const token = new URL(req.url).searchParams.get("token")!;
     const firms = await ctx.runQuery(internal.firmClaims.editStateFor, { email });
     return firmEditPage(firms, token);
@@ -1217,7 +1217,7 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const email = await editEmail(req);
-    if (!email) return firmBadLinkPage("This edit link has expired. Ask for a fresh one from the firm's page.");
+    if (!email) return firmBadLinkPage("This edit link has expired.");
     const url = new URL(req.url);
     const token = url.searchParams.get("token")!;
     const slug = (url.searchParams.get("slug") ?? "").slice(0, 120);

@@ -47,9 +47,14 @@ export function StatusChange({
   caseUrl,
   caseNumber,
 }: StatusChangeProps) {
-  const previewText = `Case status changed: ${previousStatus} → ${newStatus} - ${beneficiaryName}`;
-  const title =
-    changeType === "stage" ? "Case stage updated" : "Case progress updated";
+  // A new case has no previous stage: it says so instead of "N/A to Created".
+  const isNew = !previousStatus || previousStatus === "N/A";
+  const previewText = isNew
+    ? `New case: ${beneficiaryName} at ${companyName}, starting at ${newStatus}`
+    : `${beneficiaryName} at ${companyName} moved from ${previousStatus} to ${newStatus}`;
+  const title = isNew
+    ? "New case added"
+    : changeType === "stage" ? "Case stage updated" : "Case progress updated";
 
   return (
     <EmailLayout previewText={previewText}>
@@ -57,7 +62,6 @@ export function StatusChange({
         title={title}
         subtitle={caseNumber ? `Case #${caseNumber}` : undefined}
         urgency="normal"
-        icon="📋"
       />
 
       <Section style={detailsSectionStyle}>
@@ -73,15 +77,19 @@ export function StatusChange({
         <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
           <tbody>
             <tr>
+              {!isNew && (
+                <td style={styles.statusBox}>
+                  <Text className="em-text-secondary" style={styles.statusLabel}>Previous</Text>
+                  <Text className="em-status-prev" style={styles.statusValue}>{previousStatus}</Text>
+                </td>
+              )}
+              {!isNew && (
+                <td style={styles.arrowCell}>
+                  <Text className="em-arrow" style={styles.arrow}>→</Text>
+                </td>
+              )}
               <td style={styles.statusBox}>
-                <Text className="em-text-secondary" style={styles.statusLabel}>Previous</Text>
-                <Text className="em-status-prev" style={styles.statusValue}>{previousStatus}</Text>
-              </td>
-              <td style={styles.arrowCell}>
-                <Text className="em-arrow" style={styles.arrow}>→</Text>
-              </td>
-              <td style={styles.statusBox}>
-                <Text className="em-text-secondary" style={styles.statusLabel}>Current</Text>
+                <Text className="em-text-secondary" style={styles.statusLabel}>{isNew ? "Starting stage" : "Current"}</Text>
                 <Text className="em-status-new" style={styles.statusValueNew}>{newStatus}</Text>
               </td>
             </tr>
@@ -90,7 +98,7 @@ export function StatusChange({
       </Section>
 
       <Section style={styles.timestamp}>
-        <Text className="em-text-secondary" style={styles.timestampText}>Changed on {changedAt}</Text>
+        <Text className="em-text-secondary" style={styles.timestampText}>{isNew ? "Added" : "Changed"} on {changedAt}</Text>
       </Section>
 
       <Section style={ctaSectionStyle}>

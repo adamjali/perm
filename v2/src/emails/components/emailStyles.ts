@@ -106,15 +106,3 @@ export function formatEmailDate(dateStr: string): string {
   });
 }
 
-/**
- * Get urgency icon emoji.
- */
-export function getUrgencyIcon(urgency: 'normal' | 'high' | 'urgent' | 'overdue'): string {
-  const icons = {
-    overdue: '🚨',
-    urgent: '⚠️',
-    high: '⏰',
-    normal: '📅',
-  };
-  return icons[urgency];
-}

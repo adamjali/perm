@@ -217,7 +217,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       try {
         await completeItem({ itemId });
       } catch (error) {
-        handleOperationError(error, { userMessage: "Failed to complete checklist item." });
+        handleOperationError(error, { userMessage: "Couldn’t complete the checklist item. Try again." });
       }
     },
     [completeItem]
@@ -227,7 +227,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     try {
       await dismissMutation({});
     } catch (error) {
-      handleOperationError(error, { userMessage: "Failed to dismiss checklist." });
+      handleOperationError(error, { userMessage: "Couldn’t dismiss the checklist. Try again." });
     }
   }, [dismissMutation]);
 
@@ -239,7 +239,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setTourPhase("dashboard");
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to restart tour",
+        userMessage: "Couldn’t restart the tour. Try again.",
         context: { operation: "restartTour" },
       });
     }

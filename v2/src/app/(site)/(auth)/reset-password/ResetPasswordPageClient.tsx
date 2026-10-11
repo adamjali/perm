@@ -219,7 +219,7 @@ export function ResetPasswordPageClient() {
       } else {
         captureError(error, { operation: "resetPassword" });
         console.warn("[Reset Password] Unhandled error type:", message);
-        toast.error("Failed to reset password. Please try again or contact support.");
+        toast.error("Couldn’t reset your password. Try again, or contact support.");
       }
     } finally {
       setIsLoading(false);

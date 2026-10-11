@@ -424,7 +424,7 @@ describe("ProfileSection", () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(mockToastSuccess).toHaveBeenCalledWith("Profile updated successfully");
+        expect(mockToastSuccess).toHaveBeenCalledWith("Profile updated");
       });
     });
 
@@ -467,7 +467,7 @@ describe("ProfileSection", () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith("Failed to update profile. Please try again.");
+        expect(mockToastError).toHaveBeenCalledWith("Couldn’t save your profile. Try again.");
       });
     });
 

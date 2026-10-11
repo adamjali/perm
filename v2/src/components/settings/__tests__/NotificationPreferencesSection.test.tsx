@@ -675,7 +675,7 @@ describe("NotificationPreferencesSection", () => {
       await user.click(testButton);
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith("Failed to send test email. Please try again.");
+        expect(mockToastError).toHaveBeenCalledWith("Couldn’t send the test email. Try again.");
       });
     });
   });

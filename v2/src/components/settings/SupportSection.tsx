@@ -168,7 +168,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       toast.success("Account deletion cancelled");
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to cancel deletion",
+        userMessage: "Couldn’t cancel the deletion. Try again.",
       });
     }
   };
@@ -196,10 +196,10 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success("Account data exported successfully");
+      toast.success("Account data exported");
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to export account data",
+        userMessage: "Couldn’t export your account data. Try again.",
       });
     } finally {
       setIsExporting(false);

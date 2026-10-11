@@ -75,7 +75,7 @@ export function AddCasePageClient() {
           case_id: caseId,
           is_duplicate_override: !!duplicateOf,
         });
-        toast.success("Case created successfully");
+        toast.success("Case created");
         await router.push(`/cases/${caseId}`);
       } catch (error) {
         console.error("Failed to create case:", error);
@@ -88,7 +88,7 @@ export function AddCasePageClient() {
         } else if (errorMessage.includes("validation") || errorMessage.includes("Validation")) {
           toast.error("Validation error. Please check your input and try again.");
         } else {
-          toast.error("Failed to create case. Please try again.");
+          toast.error("Couldn’t create the case. Try again.");
         }
       } finally {
         setIsCreating(false);

@@ -270,7 +270,7 @@ export function LoginPageClient() {
         toast.error("Network error. Please check your connection and try again.");
       } else {
         console.warn("[Google Sign In] Unhandled error type:", message);
-        toast.error("Failed to sign in with Google. Please try again or contact support.");
+        toast.error("Couldn’t sign in with Google. Try again, or contact support.");
       }
       setIsGoogleLoading(false);
     }

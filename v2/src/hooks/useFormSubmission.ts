@@ -170,7 +170,7 @@ export function useFormSubmission({
           });
 
           analytics.capture("case_updated", { case_id: caseId });
-          toast.success("Case updated successfully");
+          toast.success("Case updated");
           try {
             markNavigating();
             await onSuccess(caseId);
@@ -239,7 +239,7 @@ export function useFormSubmission({
           } else {
             // The write limit and any stated refusal say what happened; only
             // an unexplained failure gets the generic line.
-            toast.error(caseWriteErrorMessage(error, "Failed to save case. Please try again."));
+            toast.error(caseWriteErrorMessage(error, "Couldn’t save the case. Try again."));
           }
         }
       } finally {

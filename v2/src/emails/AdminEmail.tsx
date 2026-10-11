@@ -21,6 +21,13 @@ export interface AdminEmailProps {
   body: string;
   /** URL to open the app */
   appUrl?: string;
+  /**
+   * "message" (default): the team writing to a person, a support reply or a
+   * note from the admin page. "notice": an automatic notice to the admin
+   * address (errors, queues, the server watch), with no greeting or sign-off
+   * and a button to the admin page.
+   */
+  kind?: "message" | "notice";
 }
 
 /**
@@ -32,27 +39,38 @@ export function AdminEmail({
   subject,
   body,
   appUrl = SITE_URL,
+  kind = "message",
 }: AdminEmailProps) {
-  const previewText = `Message from PERM Tracker: ${subject}`;
+  const notice = kind === "notice";
+  const previewText = notice ? subject : `Message from PERM Tracker: ${subject}`;
 
   // Split body into paragraphs on double newlines, preserve single newlines within
   const paragraphs = body.split(/\n\n+/);
 
   return (
-    <EmailLayout previewText={previewText}>
+    <EmailLayout
+      previewText={previewText}
+      footerText={
+        notice
+          ? "An automatic notice from PERM Tracker, sent to the admin address only."
+          : "The PERM Tracker team wrote this to you directly. Reply to this email to answer."
+      }
+      hideSettingsLink
+    >
       <EmailHeader
         title={subject}
-        subtitle="Message from PERM Tracker Admin"
+        subtitle={notice ? "Automatic notice" : "From the PERM Tracker team"}
         urgency="normal"
-        icon="✉️"
       />
 
       {/* Greeting */}
-      <Section style={styles.greetingSection}>
-        <Text className="em-text" style={styles.greeting}>
-          Hi {recipientName},
-        </Text>
-      </Section>
+      {!notice && (
+        <Section style={styles.greetingSection}>
+          <Text className="em-text" style={styles.greeting}>
+            Hi {recipientName},
+          </Text>
+        </Section>
+      )}
 
       {/* Body */}
       <Section style={styles.bodySection}>
@@ -68,22 +86,24 @@ export function AdminEmail({
         ))}
       </Section>
 
-      <Hr className="em-divider" style={styles.divider} />
+      {!notice && <Hr className="em-divider" style={styles.divider} />}
 
       {/* Sign-off */}
-      <Section style={styles.signOffSection}>
-        <Text className="em-text-secondary" style={styles.signOff}>
-          Best regards,
-        </Text>
-        <Text className="em-text" style={styles.signOffName}>
-          The PERM Tracker Team
-        </Text>
-      </Section>
+      {!notice && (
+        <Section style={styles.signOffSection}>
+          <Text className="em-text-secondary" style={styles.signOff}>
+            Best regards,
+          </Text>
+          <Text className="em-text" style={styles.signOffName}>
+            The PERM Tracker team
+          </Text>
+        </Section>
+      )}
 
       {/* CTA */}
       <Section style={styles.ctaSection}>
-        <EmailButton href={appUrl}>
-          Open PERM Tracker
+        <EmailButton href={notice ? `${appUrl}/admin` : appUrl}>
+          {notice ? "Open the admin page" : "Open PERM Tracker"}
         </EmailButton>
       </Section>
     </EmailLayout>

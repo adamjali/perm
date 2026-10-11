@@ -210,7 +210,7 @@ describe("QuietHoursSection", () => {
       await user.click(toggle);
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith("Failed to update settings");
+        expect(mockToastError).toHaveBeenCalledWith("Couldn’t save your settings. Try again.");
       });
     });
   });

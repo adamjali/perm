@@ -96,7 +96,7 @@ describe("AddCasePage", () => {
     submitButton.click();
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith("Case created successfully");
+      expect(toast.success).toHaveBeenCalledWith("Case created");
       expect(mockPush).toHaveBeenCalledWith("/cases/test-case-id");
     });
   });

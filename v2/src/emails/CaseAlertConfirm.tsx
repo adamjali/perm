@@ -21,7 +21,7 @@
  *
  * ## The case we do not hold
  *
- * A freshly filed case is not in the mirror yet, and that person is precisely
+ * A freshly filed case is not in our records yet, and that person is precisely
  * the one who wants alerts most, so the subscription is allowed. What this
  * email must not do is promise an alert the moment it appears: our first sight
  * of a case cannot distinguish "it just arrived" from "it has been sitting in
@@ -116,7 +116,7 @@ export function CaseAlertConfirm({
           </>
         ) : (
           <Text className="em-text-secondary" style={styles.provenance}>
-            Not in our mirror yet
+            Not in our records yet
           </Text>
         )}
       </QueueStamp>
@@ -125,13 +125,14 @@ export function CaseAlertConfirm({
         <>
           <Text className="em-text-body" style={styles.body}>
             If that&rsquo;s your case, confirm below and we&rsquo;ll email you
-            every time DOL&rsquo;s status for it changes, until it&rsquo;s
-            decided. If it isn&rsquo;t, ignore this and enter the number again.
+            every time DOL&rsquo;s status for it changes, and for a year after
+            it&rsquo;s decided, in case it&rsquo;s appealed or reopened. If it
+            isn&rsquo;t your case, ignore this and enter the number again.
           </Text>
           <Text className="em-text-secondary" style={styles.lag}>
-            Cases are re-checked in batches, so a change can take a few days to
-            reach you. Every alert says when the status was last checked, so you
-            can see how fresh it is.
+            We ask DOL about watched cases every 5 minutes on weekdays from 7 AM
+            to 9 PM Eastern, and every half hour otherwise, and email a change as
+            soon as we see it. Every alert says when the status was last checked.
           </Text>
         </>
       ) : (
