@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { ChartTips } from "@/components/data/ChartTips";
+import { IndexHeader, IndexSearch } from "@/components/data/IndexHeader";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import { firstThatFits } from "@/lib/describe";
@@ -39,6 +42,14 @@ interface KindCopy {
   detailH1: (label: string) => string;
   coverage: string;
 }
+
+/** What a reader types into each list's search box. */
+const SEARCH_TITLE: Record<GroupKind, string> = { city: "Find a city", industry: "Find an industry", country: "Find a country" };
+const SEARCH_HINT: Record<GroupKind, string> = {
+  city: "Seattle, Austin",
+  industry: "Software, poultry, hospitals",
+  country: "India, Brazil",
+};
 
 const COPY: Record<GroupKind, KindCopy> = {
   city: {
@@ -117,13 +128,33 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
     fyTo: g.fyTo,
     facet: kind === "city" ? g.key.split("|")[1] ?? null : kind === "industry" ? naicsSectorTitle(g.key) : null,
   }));
+  const all = rows.reduce((n, r) => n + r.total, 0);
+  const top = rows.slice(0, 12);
+  const topMax = Math.max(1, ...top.map((r) => r.total));
+  const leader = rows[0] ?? null;
+  const tenShare = all > 0 ? Math.round((rows.slice(0, 10).reduce((n, r) => n + r.total, 0) / all) * 100) : null;
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <div className="pt-10 sm:pt-12" />
-      <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">{c.indexH1}</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">{c.indexLede}</p>
-      </header>
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <IndexHeader
+        title={c.indexH1}
+        lede={c.indexLede}
+        figures={
+          rows.length > 0
+            ? [
+                { label: `${c.noun[0]!.toUpperCase()}${c.noun.slice(1)} with a page`, value: formatInt(rows.length) },
+                ...(leader
+                  ? [{ label: "The busiest", value: leader.label, href: `${path}/${leader.slug}`, note: `${formatInt(leader.total)} decisions` }]
+                  : []),
+                ...(tenShare !== null ? [{ label: "The ten busiest hold", value: `${tenShare}%`, note: `of ${formatInt(all)} decisions` }] : []),
+              ]
+            : []
+        }
+        aside={
+          rows.length > 0 ? (
+            <IndexSearch title={SEARCH_TITLE[kind]} action={`${path}#all`} placeholder={SEARCH_HINT[kind]} />
+          ) : undefined
+        }
+      />{" "}
       {rows.length === 0 ? (
         <p className="mt-10 max-w-2xl text-base text-foreground/80">
           This breakdown hasn&apos;t been built yet. DOL&apos;s case files are on the{" "}
@@ -133,15 +164,64 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
           .
         </p>
       ) : (
-        <div className="mt-8">
-          <GroupIndexTable
-            rows={rows}
-            basePath={path}
-            noun={c.noun}
-            facetLabel={c.facetLabel}
-            caption={`${formatInt(rows.length)} ${c.noun}, busiest first`}
-          />
-        </div>
+        <>
+          <section className="pop mt-10">
+            <div className="border-2 border-border bg-card p-6 sm:p-8">
+              <h2 className="font-heading text-xl font-black">{`The ${top.length} busiest, by decisions`}</h2>{" "}
+              <ChartTips label={`The ${top.length} busiest ${c.noun}, by PERM decisions`} className="mt-5">
+                <ol className="space-y-2.5">
+                  {top.map((r) => {
+                    const decided = r.certified + r.denied;
+                    return (
+                      <Fragment key={r.slug}>
+                      {" "}
+                      <li
+                        data-tip={[
+                          r.label,
+                          `${formatInt(r.total)} decisions`,
+                          decided > 0 ? `${((r.certified / decided) * 100).toFixed(1)}% approved` : null,
+                          r.medianWage ? `Median wage $${formatInt(r.medianWage)}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join("\n")}
+                        // On a phone the name sits above its bar; side by side, a
+                        // long name took the whole row and the bar vanished.
+                        className="grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_5rem] [&>*]:min-w-0"
+                      >
+                        <Link
+                          href={`${path}/${r.slug}`}
+                          className="col-span-2 truncate text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary sm:col-span-1"
+                        >
+                          {r.label}
+                        </Link>{" "}
+                        <span aria-hidden="true" className="block h-5">
+                          <span
+                            className="block h-full border-2 border-border bg-primary"
+                            style={{ width: `${Math.max(3, (r.total / topMax) * 100)}%` }}
+                          />
+                        </span>{" "}
+                        <span className="text-right text-sm font-bold tabular-nums">{formatInt(r.total)}</span>
+                      </li>
+                      </Fragment>
+                    );
+                  })}
+                </ol>
+              </ChartTips>
+            </div>
+          </section>{" "}
+          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-foreground pt-4">
+            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">{`All ${formatInt(rows.length)} ${c.noun}`}</h2>{" "}
+            <div className="mt-6">
+              <GroupIndexTable
+                rows={rows}
+                basePath={path}
+                noun={c.noun}
+                facetLabel={c.facetLabel}
+                caption={`${formatInt(rows.length)} ${c.noun}, busiest first`}
+              />
+            </div>
+          </section>
+        </>
       )}
       <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">{c.coverage}</p>
       <DataProvenance datasets={["perm-cases"]} />

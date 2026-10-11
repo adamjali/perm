@@ -99,6 +99,8 @@ export function GroupIndexTable({
       columns={columns}
       searchText={(r) => r.label}
       searchPlaceholder={`Search ${noun}`}
+      // The header's search box submits here with ?q=, so the table opens filtered.
+      queryFromUrl
       initialSort="total"
       caption={caption}
       noun={noun}
