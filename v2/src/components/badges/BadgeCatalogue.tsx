@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { CheckIcon, CopyIcon } from "@phosphor-icons/react";
 
 import { BADGE_THEMES, type BadgeStyle, type BadgeTheme } from "@/lib/badge";
@@ -121,8 +121,125 @@ export function CopyButton({ text }: { text: string }) {
       className="flex min-h-11 shrink-0 items-center gap-2 border-2 border-border bg-background px-3 font-heading text-sm font-black shadow-hard-sm transition-transform duration-150 hover:-translate-y-[1px] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       {state === "copied" ? <CheckIcon size={16} weight="bold" aria-hidden="true" /> : <CopyIcon size={16} weight="bold" aria-hidden="true" />}
-      {state === "copied" ? "Copied" : state === "failed" ? "Select it below" : "Copy"}
+      {state === "copied" ? "Copied" : state === "failed" ? "Select the line to copy" : "Copy"}
     </button>
+  );
+}
+
+/**
+ * A group whose labels read "<category> <place>" (the visa bulletin's EB1 to
+ * EB3 by country) as one matrix: categories down, places across, each cell the
+ * badge itself. Picking a cell fills ONE copy line under the matrix. As cards,
+ * fifteen badges repeated one sentence fifteen times and ran a phone past
+ * 5,000 px; the matrix says it once and keeps the grid the data already has.
+ * Null when the labels don't split cleanly, so the caller falls back to cards.
+ */
+function matrixOf(rows: BadgeRow[]): { cats: string[]; places: string[]; at: (c: string, p: string) => BadgeRow | null } | null {
+  const parts = rows.map((r) => {
+    const m = /^(\S+)\s+(.+)$/.exec(r.label);
+    return m ? { row: r, cat: m[1]!, place: m[2]! } : null;
+  });
+  if (parts.some((p) => p === null) || rows.length < 6) return null;
+  const ok = parts as { row: BadgeRow; cat: string; place: string }[];
+  const cats = [...new Set(ok.map((p) => p.cat))];
+  const places = [...new Set(ok.map((p) => p.place))];
+  // Only a real grid: at least two of each, and most cells filled.
+  if (cats.length < 2 || places.length < 2 || ok.length < cats.length * places.length * 0.75) return null;
+  return {
+    cats,
+    places,
+    at: (c, p) => ok.find((x) => x.cat === c && x.place === p)?.row ?? null,
+  };
+}
+
+function MatrixGroup({
+  rows,
+  variantFor,
+  format,
+  origin,
+  theme,
+}: {
+  rows: BadgeRow[];
+  variantFor: (row: BadgeRow) => BadgeVariant | null;
+  format: SnippetFormat;
+  origin: string;
+  theme: BadgeTheme;
+}) {
+  const grid = matrixOf(rows)!;
+  const [picked, setPicked] = useState(rows[0]!.kind);
+  const row = rows.find((r) => r.kind === picked) ?? rows[0]!;
+  const v = variantFor(row);
+  const code = v ? snippet(row, v, format, origin) : "";
+  const ground = theme === "dark" ? "bg-black" : "bg-white";
+  return (
+    <div className="mt-5 border-2 border-border bg-card shadow-hard">
+      <p className="border-b-2 border-border p-4 text-sm leading-relaxed text-foreground/75">
+        {`The final action cutoff the State Department published for each category and country. A priority date earlier than its cutoff has a visa number available. Pick a badge for its line.`}
+      </p>{" "}
+      <div className="overflow-x-auto overscroll-x-none">
+        {/* Fixed columns, and each badge scales down to its cell (the SVGs
+            carry a viewBox), so five places fit a desktop column; a phone
+            scrolls the table inside its own box. */}
+        <table className="w-full min-w-[44rem] table-fixed border-collapse text-sm">
+          <caption className="sr-only">{`Visa bulletin badges by category and country. Pick one to copy its line.`}</caption>
+          <thead>
+            <tr className="border-b-2 border-border">
+              <th scope="col" className="w-24 p-3 text-left font-heading font-black">Category{" "}</th>
+              {grid.places.map((place) => (
+                <th key={place} scope="col" className="p-3 text-left font-heading font-black">
+                  {`${place.charAt(0).toUpperCase()}${place.slice(1)} `}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {grid.cats.map((cat) => (
+              <tr key={cat} className="border-b-2 border-border last:border-b-0">
+                <th scope="row" className="p-3 text-left font-heading text-base font-black">
+                  {cat}{" "}
+                </th>
+                {grid.places.map((place) => {
+                  const cell = grid.at(cat, place);
+                  const cv = cell ? variantFor(cell) : null;
+                  if (!cell || !cv) {
+                    return (
+                      <td key={place} className="p-3 text-muted-foreground">
+                        {"Not published "}
+                      </td>
+                    );
+                  }
+                  const on = cell.kind === row.kind;
+                  return (
+                    <td key={place} className="p-2">
+                      <button
+                        type="button"
+                        aria-pressed={on}
+                        aria-label={`${cell.label}${on ? ", picked" : ""}`}
+                        onClick={() => setPicked(cell.kind)}
+                        className={
+                          `flex min-h-11 w-full items-center justify-center border-2 px-1.5 py-2 [&_svg]:h-auto [&_svg]:max-w-full ${ground} ` +
+                          (on ? "border-primary outline outline-2 outline-offset-2 outline-primary" : "border-border")
+                        }
+                        /* Our own string from the renderer; the trailing space
+                           keeps one cell's words off the next. */
+                        dangerouslySetInnerHTML={{ __html: `${cv.svg} ` }}
+                      />{" "}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>{" "}
+      <div className="flex flex-col gap-2 border-t-2 border-border p-4 sm:flex-row sm:items-stretch [&>*]:min-w-0">
+        <p className="shrink-0 self-center font-heading text-base font-black sm:w-40">{row.label}</p>{" "}
+        <pre className="flex-1 overflow-x-auto whitespace-nowrap border-2 border-border bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
+          <code>{code}</code>
+        </pre>{" "}
+        <CopyButton text={code} />
+      </div>
+    </div>
   );
 }
 
@@ -201,7 +318,21 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
       {groups.map((group) => (
         <section key={group} className="mt-12">
           <h2 className="font-heading text-2xl font-black">{group}</h2>{" "}
-          <ul className="mt-5 space-y-5">
+          {matrixOf(rows.filter((r) => r.group === group)) ? (
+            <MatrixGroup
+              rows={rows.filter((r) => r.group === group)}
+              variantFor={variantFor}
+              format={format}
+              origin={origin}
+              theme={theme}
+            />
+          ) : (
+          /* A GRID OF CARDS, the embed gallery's shape below. One badge per
+              full-width row ran the page past 13,000 px on a desktop for
+              thirty-five small pictures. Each card leads with the badge as it
+              will render, on the ground chosen above, then what the figure
+              means, then the one line to copy. */
+          <ul className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
             {rows.filter((r) => r.group === group).map((row) => {
               const v = variantFor(row);
               // A figure with no renderable variant at all is not shown. It
@@ -212,17 +343,23 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
               const code = snippet(row, v, format, origin);
               const substituted = !row.styles.includes(style);
               return (
-                <li key={row.kind} className="border-2 border-border bg-card p-4 shadow-hard sm:p-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div
-                        className="inline-block max-w-full overflow-x-auto align-top"
-                        /* Our own string from the renderer, which escapes its
-                           content; every value comes from a published table. */
-                        dangerouslySetInnerHTML={{ __html: v.svg }}
-                      />
-                      <p className="mt-3 font-heading text-lg font-black">{row.label}</p>{" "}
-                      <p className="mt-1 max-w-prose text-sm leading-relaxed text-foreground/75">{row.meaning}</p>{" "}
+                <Fragment key={row.kind}>
+                  {" "}
+                  <li className="flex flex-col border-2 border-border bg-card shadow-hard">
+                    <div
+                      className={
+                        "flex min-h-[4.5rem] items-center justify-center overflow-x-auto border-b-2 border-border px-4 py-4 " +
+                        (theme === "dark" ? "bg-black" : "bg-white")
+                      }
+                      /* Our own string from the renderer, which escapes its
+                         content; every value comes from a published table.
+                         The trailing space keeps this badge's last word off
+                         the label that follows in the page's text. */
+                      dangerouslySetInnerHTML={{ __html: `${v.svg} ` }}
+                    />{" "}
+                    <div className="flex flex-1 flex-col p-4">
+                      <p className="font-heading text-lg font-black">{row.label}</p>{" "}
+                      <p className="mt-1 text-sm leading-relaxed text-foreground/75">{row.meaning}</p>{" "}
                       {substituted ? (
                         <p className="mt-2 text-sm text-muted-foreground">
                           Shown as {STYLE_LABELS[v.style].toLowerCase()}: {STYLE_LABELS[style].toLowerCase()} needs a
@@ -230,21 +367,24 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
                         </p>
                       ) : null}{" "}
                       {row.unavailable ? (
-                        <p className="mt-2 max-w-prose text-sm font-bold text-foreground/60">
+                        <p className="mt-2 text-sm font-bold text-foreground/60">
                           Nothing was published for this one today, so the badge says so rather than showing an old
                           number.
                         </p>
-                      ) : null}
+                      ) : null}{" "}
+                      <div className="mt-auto flex items-stretch gap-2 pt-4 [&>*]:min-w-0">
+                        <pre className="flex-1 overflow-x-auto whitespace-nowrap border-2 border-border bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
+                          <code>{code}</code>
+                        </pre>{" "}
+                        <CopyButton text={code} />
+                      </div>
                     </div>
-                    <CopyButton text={code} />
-                  </div>
-                  <pre className="mt-4 overflow-x-auto border-2 border-border bg-background p-3 font-mono text-sm leading-relaxed">
-                    <code>{code}</code>
-                  </pre>
-                </li>
+                  </li>
+                </Fragment>
               );
             })}
           </ul>
+          )}
         </section>
       ))}
     </>

@@ -16,8 +16,16 @@ import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
-import { CheckCircleIcon as CheckCircle2, ShieldIcon } from "@phosphor-icons/react/ssr";
-import { MoreText } from "@/components/data/MoreText";
+import { Fragment } from "react";
+import {
+  CheckCircleIcon as CheckCircle2,
+  CloudIcon,
+  EnvelopeSimpleIcon,
+  KeyIcon,
+  LockKeyIcon,
+  PlusIcon,
+  ShieldIcon,
+} from "@phosphor-icons/react/ssr";
 
 export const dynamic = "force-static";
 
@@ -37,176 +45,200 @@ export const metadata: Metadata = withSocialCard({
   },
 }, "security");
 
+
+/** How the site is run, in the words the page has carried since Sep 30 2026. */
+const POSTURE = [
+  {
+    Icon: CloudIcon,
+    title: "Audited hosts",
+    body: "Convex (accounts and case data), Oracle Cloud (the website's server) and Cloudflare (the network in front of it), each with a SOC 2 Type II report.",
+  },
+  { Icon: LockKeyIcon, title: "Encrypted", body: "User data is encrypted at rest and in transit." },
+  {
+    Icon: KeyIcon,
+    title: "Sign-in",
+    body: "Emailed one-time codes or Google. Passwords are salted and hashed with industry-standard algorithms.",
+  },
+  {
+    Icon: EnvelopeSimpleIcon,
+    title: "Signed mail",
+    body: "Every message we send is authenticated with DKIM, SPF and DMARC, so a forgery can be told apart.",
+  },
+] as const;
+
+/** The April 2026 incident's figures, each from its own account below. */
+const INCIDENT_FACTS = [
+  { value: "139", label: "Addresses that got a message" },
+  { value: "2 h 35 min", label: "From the first request to the stop" },
+  { value: "None", label: "Customer data accessed" },
+] as const;
+
 export default function SecurityPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
-      <div>
-        <div className="flex items-center gap-3 mb-3">
-          <ShieldIcon className="h-8 w-8 text-primary" aria-hidden="true" />
+    <div className="mx-auto max-w-4xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+      <header className="max-w-2xl">
+        <div className="flex items-center gap-3">
+          <ShieldIcon className="h-9 w-9 text-primary-text" weight="bold" aria-hidden="true" />
           <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Security</h1>
         </div>{" "}
-        <p className="mb-8 mt-4 text-lg text-foreground/70">
-          Security posture and public incident record for permtracker.app
+        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+          How permtracker.app is run, how to report a problem, and every security incident on the record.
+        </p>
+      </header>{" "}
+
+      {/* THE POSTURE AS FOUR FACTS, each one a sentence the page already made.
+          It had been one paragraph behind a "More" link. */}
+      <section aria-labelledby="posture" className="mt-10">
+        <h2 id="posture" className="font-heading text-2xl font-black">
+          How it&apos;s run
+        </h2>{" "}
+        <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
+          {POSTURE.map(({ Icon, title, body }) => (
+            <Fragment key={title}>
+              {" "}
+              <li className="flex gap-4 border-2 border-border bg-card p-5 shadow-hard-sm">
+                <span className="flex size-11 shrink-0 items-center justify-center border-2 border-border bg-primary text-black">
+                  <Icon size={22} weight="bold" aria-hidden="true" />
+                </span>{" "}
+                <span className="min-w-0">
+                  <span className="block font-heading text-lg font-black">{title}</span>{" "}
+                  <span className="mt-1 block text-sm leading-relaxed text-foreground/75">{body}</span>
+                </span>
+              </li>
+            </Fragment>
+          ))}
+        </ul>
+      </section>{" "}
+
+      <section aria-labelledby="report" className="mt-12 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
+        <h2 id="report" className="font-heading text-2xl font-black">
+          Report a vulnerability
+        </h2>{" "}
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
+          Email the issue, the steps to reproduce it and any proof of concept. We acknowledge every report within 72
+          hours and agree on disclosure timing with you. There&apos;s no paid bug bounty yet; reporters who want to be
+          named are credited in the record below.
+        </p>{" "}
+        <a
+          href="mailto:security@permtracker.app"
+          className="mt-5 inline-flex min-h-11 items-center gap-2 border-2 border-background bg-primary px-4 font-heading text-base font-black text-black shadow-hard-sm"
+        >
+          <EnvelopeSimpleIcon size={18} weight="bold" aria-hidden="true" />
+          security@permtracker.app
+        </a>
+      </section>{" "}
+
+      <section aria-labelledby="incidents" className="mt-12">
+        <h2 id="incidents" className="font-heading text-2xl font-black">
+          Incident record
+        </h2>{" "}
+        <p className="mt-2 text-base leading-relaxed text-foreground/70">
+          Every security-relevant incident, kept permanently. One so far.
         </p>{" "}
 
-        <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
-
-          {/* Security posture overview */}
-          <section>
-            <h2 className="font-heading text-2xl font-bold mt-2 mb-4">
-              Overview
-            </h2>{" "}
-            <MoreText gist={"Hosted on SOC 2 Type II providers; data encrypted at rest and in transit."}>
-              <p className="text-foreground/80 leading-relaxed">
-                Infrastructure runs on providers that hold SOC&nbsp;2 Type&nbsp;II
-                reports: Convex (accounts and case data), Oracle Cloud
-                Infrastructure (the website&apos;s server) and Cloudflare (the
-                network in front of it). User data is encrypted at
-                rest and in transit. Authentication uses email-verified one-time codes
-                or Google OAuth; all passwords are salted and hashed using industry-standard
-                algorithms. Outbound transactional mail is DKIM-, SPF-, and DMARC-authenticated.
-              </p>
-            </MoreText>
-          </section>
-
-          {/* Reporting vulnerabilities */}
-          <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              Reporting a Vulnerability
-            </h2>{" "}
-            <p className="text-foreground/80 leading-relaxed">
-              If you believe you have discovered a security vulnerability in PERM
-              Tracker, please report it privately by emailing{" "}
-              <a
-                href="mailto:security@permtracker.app"
-                className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-              >
-                security@permtracker.app
-              </a>
-              . Include a description of the issue, steps to reproduce, and any
-              proof-of-concept details. We’ll acknowledge your report within 72
-              hours and coordinate on disclosure timing. We don’t operate a paid
-              bug-bounty program at this time, but we credit reporters who wish to
-              be named in the incident record below.
-            </p>
-          </section>
-
-          {/* Incident history */}
-          <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
-              Incident Record
-            </h2>{" "}
-            <p className="text-foreground/80 leading-relaxed mb-6">
-              Public-facing summaries of security-relevant incidents. Entries are
-              kept permanently.
-            </p>
-
-            {/* Incident: April 19-20, 2026 signup abuse */}
-            <article
-              id="2026-04-19-signup-abuse"
-              className="border-2 border-border bg-muted/30 p-6 mt-6 shadow-hard"
-            >
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <h3 className="font-heading text-xl font-bold">
-                    Unauthorized use of signup form to transmit unsolicited email
-                  </h3>{" "}
-                  <p className="text-sm text-foreground/60 mono mt-1">
-                    April 19-20, 2026 &nbsp;·&nbsp; Status: resolved
-                  </p>
-                </div>{" "}
-                <div className="shrink-0 flex items-center gap-2 rounded-full border-2 border-green-600 bg-green-50 dark:bg-green-950/30 px-3 py-1">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />
-                  <span className="text-sm mono font-bold uppercase tracking-wider text-green-800 dark:text-green-400">
-                    Resolved
-                  </span>
+        <article id="2026-04-19-signup-abuse" className="mt-6 border-2 border-border bg-card shadow-hard">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-border p-5 sm:p-6">
+            <div className="min-w-0">
+              <h3 className="font-heading text-xl font-black">
+                The sign-up form was used to send unsolicited email
+              </h3>{" "}
+              <p className="mt-1 font-mono text-sm text-foreground/70">April 19 to 20, 2026</p>
+            </div>{" "}
+            <span className="inline-flex shrink-0 items-center gap-1.5 border-2 border-border bg-primary px-2.5 py-1 font-heading text-sm font-black text-black">
+              <CheckCircle2 size={16} weight="bold" aria-hidden="true" />
+              Resolved
+            </span>
+          </div>{" "}
+          <dl className="grid grid-cols-1 border-b-2 border-border sm:grid-cols-3 [&>*]:min-w-0">
+            {INCIDENT_FACTS.map(({ value, label }, i) => (
+              <Fragment key={label}>
+                {" "}
+                <div className={`p-5 ${i > 0 ? "border-t-2 border-border sm:border-l-2 sm:border-t-0" : ""}`}>
+                  <dt className="text-sm text-foreground/70">{label}</dt>{" "}
+                  <dd className="mt-1 font-heading text-2xl font-black">{value}</dd>
                 </div>
-              </div>{" "}
-
-              <div className="space-y-4 text-foreground/80 leading-relaxed">
+              </Fragment>
+            ))}
+          </dl>{" "}
+          <div className="p-5 sm:p-6">
+            <p className="text-base leading-relaxed text-foreground/80">
+              An automated script sent sign-up requests with marketing text in the name field, so that text reached the
+              addresses it supplied inside our welcome email. Three safeguards went in the same day.
+            </p>{" "}
+            <details className="group mt-4 border-2 border-border">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 font-heading text-base font-black [&::-webkit-details-marker]:hidden">
+                The full account{" "}
+                <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+              </summary>
+              <div className="space-y-4 border-t-2 border-border p-4 text-base leading-relaxed text-foreground/80">
                 <p>
                   <strong>What happened.</strong> Between approximately{" "}
-                  <span className="mono text-sm">2026-04-19 22:38 UTC</span> and{" "}
-                  <span className="mono text-sm">2026-04-20 01:13 UTC</span>, an
-                  unauthorized third party submitted a high volume of automated
-                  requests to the PERM Tracker public signup endpoint. The attacker
-                  placed unsolicited Turkish-language marketing content inside the
-                  submitted &quot;name&quot; field, causing that content to appear
-                  in standard transactional emails generated for the attacker-
-                  supplied recipient addresses.
+                  <span className="font-mono text-sm">2026-04-19 22:38 UTC</span> and{" "}
+                  <span className="font-mono text-sm">2026-04-20 01:13 UTC</span>, an unauthorized third party submitted a
+                  high volume of automated requests to the PERM Tracker public signup endpoint. The attacker placed
+                  unsolicited Turkish-language marketing content inside the submitted &quot;name&quot; field, causing
+                  that content to appear in standard transactional emails generated for the attacker-supplied recipient
+                  addresses.
                 </p>{" "}
                 <p>
-                  <strong>What was affected.</strong> Approximately 139
-                  attacker-chosen third-party email addresses received one or more
-                  messages. Upstream rate limits imposed by our email provider
-                  significantly constrained the volume that was actually
-                  transmitted. No customer data was accessed, viewed, exported,
+                  <strong>What was affected.</strong> Approximately 139 attacker-chosen third-party email addresses
+                  received one or more messages. Upstream rate limits imposed by our email provider significantly
+                  constrained the volume that was actually transmitted. No customer data was accessed, viewed, exported,
                   or modified. No existing PERM Tracker user accounts were affected.
                 </p>{" "}
                 <p>
-                  <strong>Immediate action.</strong> The activity was identified
-                  and stopped on <span className="mono text-sm">2026-04-20 01:13 UTC</span>.
-                  Additional safeguards were deployed the same day:
+                  <strong>Immediate action.</strong> The activity was identified and stopped on{" "}
+                  <span className="font-mono text-sm">2026-04-20 01:13 UTC</span>. Additional safeguards were deployed
+                  the same day:
                 </p>{" "}
-                <ul className="list-disc list-inside space-y-2 ml-4">
+                <ul className="ml-5 list-disc space-y-2">
                   <li>
-                    Server-side input validation on the affected endpoint, rejecting
-                    requests containing external URLs, non-alphabetic abuse patterns,
-                    or excessive length.
+                    Server-side input validation on the affected endpoint, rejecting requests containing external URLs,
+                    non-alphabetic abuse patterns, or excessive length.
                   </li>{" "}
                   <li>
-                    Transactional messages (welcome email and administrative
-                    notifications) are now generated only after email-verification
-                    is completed, preventing automated requests from triggering
-                    outbound email.
+                    Transactional messages (welcome email and administrative notifications) are now generated only after
+                    email-verification is completed, preventing automated requests from triggering outbound email.
                   </li>{" "}
                   <li>
-                    Cloudflare Turnstile anti-automation challenge added to the
-                    signup endpoint with server-side token verification.
+                    Cloudflare Turnstile anti-automation challenge added to the signup endpoint with server-side token
+                    verification.
                   </li>
                 </ul>{" "}
-                <MoreText gist={"Got an unexpected email naming permtracker.app? Don't click its links."}>
-                  <p>
-                    <strong>If you received an unexpected email.</strong> If you
-                    received a message referencing permtracker.app that you didn’t expect, particularly one containing a link or promotional content in Turkish, <strong>please don’t click any links</strong>{" "}
-                    in that message. The content wasn’t authorized by PERM Tracker,
-                    wasn’t directed to you by us, and doesn’t reflect our product
-                    or services. You may safely delete the email. You won’t
-                    receive further messages from us unless you choose to sign up
-                    for an account directly at{" "}
-                    <Link href="/" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-                      permtracker.app
-                    </Link>
-                    .
-                  </p>
-                </MoreText>{" "}
                 <p>
-                  <strong>Coordinating with downstream providers.</strong> The
-                  phishing URL used in the attack has been reported to Google Safe
-                  Browsing, PhishTank, Netcraft, APWG, Bitly Trust &amp; Safety, and
-                  Turkey&apos;s national CERT. Our email service provider has been
-                  notified proactively.
+                  <strong>If you received an unexpected email.</strong> If you received a message referencing
+                  permtracker.app that you didn’t expect, particularly one containing a link or promotional content in
+                  Turkish, <strong>please don’t click any links</strong> in that message. The content wasn’t authorized
+                  by PERM Tracker, wasn’t directed to you by us, and doesn’t reflect our product or services. You may
+                  safely delete the email. You won’t receive further messages from us unless you choose to sign up for
+                  an account directly at{" "}
+                  <Link href="/" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text">
+                    permtracker.app
+                  </Link>
+                  .
+                </p>{" "}
+                <p>
+                  <strong>Coordinating with downstream providers.</strong> The phishing URL used in the attack has been
+                  reported to Google Safe Browsing, PhishTank, Netcraft, APWG, Bitly Trust &amp; Safety, and
+                  Turkey&apos;s national CERT. Our email service provider has been notified proactively.
                 </p>
               </div>
-            </article>
-          </section>
+            </details>
+          </div>
+        </article>
+      </section>{" "}
 
-          {/* Footer */}
-          <section className="mt-10 pt-8 border-t-2 border-border">
-            <p className="text-sm text-foreground/60 leading-relaxed">
-              Last updated: April 20, 2026. This page will be amended when new
-              security-relevant events occur. For questions about this page, contact{" "}
-              <a
-                href="mailto:security@permtracker.app"
-                className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-              >
-                security@permtracker.app
-              </a>
-              .
-            </p>
-          </section>
-        </div>
-      </div>
+      <p className="mt-10 border-t-2 border-border pt-6 text-sm leading-relaxed text-foreground/70">
+        The incident record was last amended on April 20, 2026, and is amended whenever a security-relevant event occurs.
+        Questions about this page go to{" "}
+        <a
+          href="mailto:security@permtracker.app"
+          className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text"
+        >
+          security@permtracker.app
+        </a>
+        .
+      </p>
     </div>
   );
 }

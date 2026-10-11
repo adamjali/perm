@@ -8,8 +8,10 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 
 import { API_PLANS } from "@convex/lib/apiPlans";
+import { SectionIndex, type LegalSection } from "@/components/legal/SectionIndex";
 import { LEGAL_FORM, LEGAL_NAME } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
@@ -31,14 +33,38 @@ export const dynamic = "force-static";
 
 const link = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
+/** The sections in order: the index and the headings both read this list. */
+const SECTIONS: readonly LegalSection[] = [
+  { id: "agreement", title: "1. Agreement" },
+  { id: "keys", title: "2. API keys" },
+  { id: "limits", title: "3. Limits" },
+  { id: "permitted-use", title: "4. What you may do" },
+  { id: "restrictions", title: "5. What you may not do" },
+  { id: "the-data", title: "6. The data" },
+  { id: "availability", title: "7. Availability and changes" },
+  { id: "fees", title: "8. Fees" },
+  { id: "suspension", title: "9. Suspension and termination" },
+  { id: "liability", title: "10. Liability and indemnification" },
+  { id: "changes", title: "11. Changes to these terms" },
+  { id: "contact", title: "12. Contact" },
+];
+
+/**
+ * One section, folded under its heading like the Terms of Service and the
+ * privacy policy: every clause stays in the page, and the index above opens
+ * the one a reader came for.
+ */
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section aria-labelledby={id} className="border-b-2 border-border py-6 last:border-b-0">
-      <h2 id={id} className="font-heading text-2xl font-bold">
-        {title}
-      </h2>{" "}
-      <div className="mt-3 space-y-3 leading-relaxed text-foreground/80">{children}</div>
-    </section>
+    <details className="legal-section group border-b-2 border-border">
+      <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+        <h2 id={id} className="m-0 scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold">
+          {title}
+        </h2>{" "}
+        <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+      </summary>{" "}
+      <div className="space-y-3 pb-6 leading-relaxed text-foreground/80">{children}</div>
+    </details>
   );
 }
 
@@ -48,7 +74,11 @@ export default function ApiTermsPage() {
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
       <div>
         <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">API terms</h1>{" "}
-        <p className="mb-8 mt-4 text-lg text-foreground/70">Effective Date: October 9, 2026</p>
+        <p className="mb-8 mt-4 text-lg text-foreground/70">Effective Date: October 9, 2026</p>{" "}
+
+        <SectionIndex sections={SECTIONS} />{" "}
+
+        <div className="mt-6">
 
         <Section id="agreement" title="1. Agreement">
           <p>
@@ -210,6 +240,7 @@ export default function ApiTermsPage() {
             .
           </p>
         </Section>
+        </div>
       </div>
     </div>
   );
