@@ -647,3 +647,16 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (afternoon)".
 - **The small calculators show the answer's shape before any input**: date tools draw a ruler (`DateRuler`), wage levels a ladder, offers a strip, lottery odds the level chart; the lookup embed shows the case-number diagram and DOL's figures.
 - **`pnpm check` misses gates that scan the whole tree** (glued text, grid tracks): two pushes went red on them. Run `pnpm exec vitest run src/app/__tests__` before pushing a new component.
 - **Chrome repeats the page top past 16,384 px in a full-page capture**: capture long phone pages in viewport steps.
+
+## Oct 11 2026 (evening), in eight lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (evening)".
+
+- **List pages open with their answer**: `IndexHeader`/`IndexSearch` (figures beside a search box that lands in the table filtered) on employers, firms, wages, PERM cases, wage requests and LCAs; occupation pages get the employer page's named parts.
+- **IndexNow is told what changed, not all 311,450 URLs every deploy**: `gsc_queue.mjs --indexnow-list` after a deploy, the moved employer pages after the nightly sweep; a manual run still sends everything.
+- **`gsc_queue.mjs` had dropped every changed article missing from `known-routes.json`** (44 of 55 guides); articles count by their file now.
+- **Article pictures are re-shot when the page they picture changes**, and `article-pictures.test.ts` checks each figure's stated aspect ratio against its file (seven were off).
+- **A screenshot captioned as live is a claim**: the on-hold guide's Sep 3 stage counts said "updated daily" under a live table with other numbers; removed.
+- **Charts replaced long row lists**: decisions per month and quarterly outcomes as columns, state wages as ranges, the bulletin archive as a calendar, layoffs by publishing state (not by month: the states' windows differ).
+- **Article cards lie on their side on a phone** (/guides 25,443 to 12,368 px).
+- **The dev server's Turbopack cache filled the disk again** (5.9 GB, 36 MB free): stop it and `rm -rf .next/dev/cache` between long QA runs.

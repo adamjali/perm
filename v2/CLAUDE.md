@@ -9493,3 +9493,17 @@ minutes) before pushing new components.
 
 **Capturing**: Chrome's full-page screenshot tiles past 16,384 px and repeats the top of the page; `seg-shot.mjs`
 (scratch, `node_modules/.cache/qa/`) scrolls in 1,400 px steps instead.
+
+## Oct 11 2026 (evening): list pages, IndexNow, and pictures that drifted
+
+**List pages open with their answer.** `src/components/data/IndexHeader.tsx` (`IndexHeader`, `IndexSearch`) puts a list's headline figures beside a search box. The box is a plain GET form into the table's anchor with `?q=`, which `FilterableStatTable` reads on load, so it works before any script and the address can be shared. Used on `/perm-employers`, `/perm-attorneys`, `/perm-wages`, `/perm-cases` (its box goes to `/perm-case-status?case=`), `/pwd-cases` and `/lca-cases`. Occupation pages use the employer page's `ProfileHeader`/`Chapter`/`ChapterNav`; `/perm-processing-times` and `/perm-denial-risk` got the part bar.
+
+**IndexNow: changed pages only.** IndexNow's FAQ (indexnow.org/faq, read Oct 11 2026): "Submit only when content has changed. Do not resubmit unchanged URLs", and every URL counts toward the crawl quota. Each deploy had sent all 311,450 sitemap URLs. Now `indexnow.yml` lists the pages the deploy changed since the commit live before it (`gsc_queue.mjs --indexnow-list`: static pages, articles, a changed family's sample pages) and sends those with `indexnow.mjs --urls`; `case-status-direct.yml` sends the employer pages whose live rows moved (`changed-employer-slugs.json`). A manual dispatch still sends everything. Verified on the first live run: 2 pages sent, 200 OK. `indexnow-script.test.ts` holds the file mode (exact pages, nothing for an empty list, nothing off the site), probed red.
+
+**`gsc_queue.mjs` dropped changed articles.** It filtered articles through `scripts/known-routes.json`, which lists only 11 of 55 guides, so most article edits never reached the Search Console queue, the warm list or the Cloudflare purge. An article counts by its file now.
+
+**Pictures drift when their page changes.** 47 article pictures were captured from pages redesigned today. Re-shoot with `scripts/capture_article_heroes.mjs <base> <out> <slugs>` (dev server on production data) then `make_article_heroes.py --captures <out>`, and `shoot.mjs` + `optimize-shots.py` for the page shots. Check each `h:` clip heading still exists: several were renamed. `article-pictures.test.ts` now fails a figure whose `aspectRatio` differs from its file. Read each caption against the new picture: five described something the shot never showed (`shoot.mjs` can't type into a form).
+
+**Two charts that would have lied.** Layoffs by month climbed where each state's coverage began (Texas back to 2019, New York this year), so `/layoffs` draws by publishing state with each state's window. Monthly decisions were 33 horizontal rows; as columns with a dashed median, October 2025's 21 decisions read as the gap they were.
+
+**Disk.** The dev server's `.next/dev/cache` grew to 5.9 GB and the disk reached 36 MB free mid-capture (ENOSPC). Stop the dev server and delete `.next/dev/cache` and old capture folders between long QA runs.
