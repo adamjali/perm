@@ -3,7 +3,7 @@
  *
  * `/perm-wages` leads with the wage distribution and a ranked table; 1,137
  * occupations have a page. This is the door to all of them: 27 letter pages,
- * every one of which links every occupation DOL names three times or more, so
+ * every one of which links every occupation DOL names at all (the page floor is one case since Sep 10 2026), so
  * nothing in the corpus is more than two crawlable clicks from its own hub.
  *
  * A static `browse` segment beside the existing `[slug]` one. Next resolves

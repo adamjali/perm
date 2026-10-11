@@ -35,6 +35,7 @@ import {
 } from "@/lib/turso/wageBands";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { FinePrint } from "@/components/data/FinePrint";
 import { SITE_URL } from "@/lib/constants/site";
 import { describeDisclosureFiles } from "@/lib/disclosureFiles";
@@ -370,11 +371,26 @@ export default async function PermDenialRiskPage() {
             </FinePrint>
           </section>
 
+          <ChapterNav
+            className="mt-10"
+            items={
+              [
+                ...(flagShare !== null && topWageByShare && topWageShare !== null && topWageReach !== null
+                  ? [{ id: "where", label: "Where they are" }]
+                  : []),
+                { id: "factors", label: "Form and wage" },
+                { id: "years", label: "By year" },
+                ...(occupationRows.length > 0 ? [{ id: "jobs", label: "By job" }] : []),
+                ...(stateRows.length > 0 ? [{ id: "states", label: "By state" }] : []),
+              ] satisfies ChapterItem[]
+            }
+          />{" "}
+
           {/* The reframe. Every rate on this page is a rate; none of them says
               how much of the denial pile it accounts for, and the two answers
               point in opposite directions. */}
           {flagShare !== null && topWageByShare && topWageShare !== null && topWageReach !== null ? (
-            <section className="mt-12">
+            <section id="where" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
               <h2 className="font-heading text-2xl font-black">
                 Where the denials actually are
               </h2>{" "}
@@ -436,7 +452,7 @@ export default async function PermDenialRiskPage() {
             </section>
           ) : null}
 
-          <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2">
+          <section id="factors" className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
             <div>
               <h2 className="font-heading text-2xl font-black">
                 By what the form declares
@@ -513,7 +529,7 @@ export default async function PermDenialRiskPage() {
             </div>
           </section>
 
-          <section className="mt-12">
+          <section id="years" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
             <h2 className="font-heading text-2xl font-black">By fiscal year</h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
               The rate moves year to year.
@@ -545,7 +561,7 @@ export default async function PermDenialRiskPage() {
           </section>
 
           {occupationRows.length > 0 ? (
-            <section className="mt-12">
+            <section id="jobs" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
               <h2 className="font-heading text-2xl font-black">By occupation</h2>{" "}
               <p className="mt-2 max-w-2xl text-base text-foreground/70">
                 Denials cluster in a handful of job families and are close to
@@ -578,7 +594,7 @@ export default async function PermDenialRiskPage() {
           ) : null}
 
           {stateRows.length > 0 ? (
-            <section className="mt-12">
+            <section id="states" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
               <h2 className="font-heading text-2xl font-black">By worksite state</h2>{" "}
               <p className="mt-2 max-w-2xl text-base text-foreground/70">
                 DOL works one national queue, so this ranks where denials land.

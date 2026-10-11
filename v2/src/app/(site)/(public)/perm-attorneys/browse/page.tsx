@@ -3,7 +3,7 @@
  *
  * `/perm-attorneys` links a ranked head of the field; 3,514 firms have a page.
  * This is the door to the rest of them: 27 letter pages, every one of which
- * links every firm DOL names three times or more, so nothing in the corpus is
+ * links every firm DOL names at all (the page floor is one case since Sep 10 2026), so nothing in the corpus is
  * more than two crawlable clicks from its own hub.
  *
  * A static `browse` segment beside the existing `[slug]` one. Next resolves

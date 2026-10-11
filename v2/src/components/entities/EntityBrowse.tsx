@@ -125,6 +125,9 @@ export function BrowseIndexGrid({
   plural: string;
   className?: string;
 }) {
+  // Each tile carries a bar of its letter's size against the biggest letter,
+  // so the grid reads as a distribution before any count is read.
+  const max = Math.max(1, ...BROWSE_BUCKETS.map((b) => counts[b] ?? 0));
   return (
     <ul
       className={cn(
@@ -161,6 +164,9 @@ export function BrowseIndexGrid({
                   </span>{" "}
                   <span className="mt-1 font-mono text-sm font-bold tabular-nums text-foreground/70">
                     {formatInt(n)} {plural}
+                  </span>{" "}
+                  <span aria-hidden="true" className="mt-2 block h-1.5 bg-foreground/10">
+                    <span className="block h-full bg-primary" style={{ width: `${Math.max(3, (n / max) * 100)}%` }} />
                   </span>
                 </Link>
               )}

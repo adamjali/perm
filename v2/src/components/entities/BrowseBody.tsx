@@ -211,10 +211,8 @@ export async function BrowseIndexBody({ kind }: { kind: EntityKind }) {
           Pick a letter
         </h2>{" "}
         <p className="mt-2 max-w-2xl text-base text-foreground/70">
-          A {cfg.singular} reaches this index once DOL&apos;s disclosure files
-          name it three times or more. Below that it stays searchable on the
-          main page and takes no page of its own, because a record of one case
-          is not a page.
+          Every {cfg.singular} DOL&apos;s published files name has a page of its
+          own, even one with a single case.
         </p>{" "}
         <p className="mt-3 max-w-2xl text-base text-foreground/70">
           {BROWSE_NOTE[kind]}
@@ -330,8 +328,8 @@ export async function BrowseLetterBody({
         ) : (
           <p className="mt-4 text-lg leading-relaxed text-foreground/70">
             DOL&apos;s disclosure files name no {cfg.singular} beginning with{" "}
-            {phrase} three times or more, so there is nothing to list under{" "}
-            {label}. Every other letter is one click away.
+            {phrase}, so there is nothing to list under {label}. Every other
+            letter is one click away.
           </p>
         )}
       </header>
