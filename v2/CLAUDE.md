@@ -9315,3 +9315,43 @@ almost never Safari, never a headless scraper (empty cache every visit), about h
 are the same chunk emitted under several names in one build (same code, different minified parameter names);
 an overlap scan found no pair of files in the live release that could drop a module.
 
+
+## Oct 11 2026 (early morning): a visual pass, and what the owner kept
+
+Commits 92c3a199, d2665337, f87729f0, c777a395, 28d22c4e. Before and after captures are on the
+Design canvas "PERM Tracker page redesigns" (claude.ai artifact); the prose measurements on the
+Dashboard "PERM Tracker redesign tracker".
+
+- **Film posters.** `public/videos/explainer-*-thumb.webp` are the films' play buttons (FilmPlayer
+  draws nothing over them), so they carry the title, the audience, Play with the running time, and a
+  real product frame. The Oct 7 re-cut replaced them with the end card. `node scripts/make-film-posters.mjs`
+  rebuilds them (ffmpeg, ffprobe, Chrome): each film's `at` second and `crop` sit in its `FILMS` entry,
+  chosen clear of the burned-in caption. Re-run after any re-cut.
+- **Homepage.** The definition under the H1 stays word for word (`about-surfaces.test.ts`); the two
+  halves are two short icon lines. Questions are two columns, 16px answers, no eyebrow or fade-in.
+- **One motion moment: `TapeReveal`** (`components/tools/TapeReveal.tsx`, CSS in `globals.css`,
+  `[data-tape]`). `QueueTape reveal` (homepage only) fills the cleared months left to right, then
+  lands "DOL is here". The server renders the tape filled; the client arms it only when it starts
+  below the fold, never under reduced motion or without IntersectionObserver. Animate the flag with
+  `transform`, never `translate`: Tailwind's `-translate-x-1/2` is the `translate` property, and
+  animating it knocks the flag off-centre.
+- **The data pages' top.** `WatchLink` (`components/tools/WatchBanner.tsx`) renders inside
+  `SiteBreadcrumbs` on data pages (`isDataPath && showsWatchBanner`), outside the breadcrumb `<nav>`:
+  a lime tab flush right, a 44px bell square below `sm`, the pitch beside it from `xl`. The rail's
+  collapse control is a 44px `SidebarSimpleIcon` button in the rail's top corner (`-mt-1` takes the
+  nav's 4px top padding so `rail-fits.test.ts` keeps its 40px), and the first square of the strip.
+- **Glossary map.** `GLOSSARY_STAGES` (`lib/glossaryStages.ts`): six stops in order plus two groups
+  beside the road; `glossaryStages.test.ts` fails on a term placed twice, missing, or unknown. Letter
+  headings are `<h3>` under "A to Z".
+- **Counts as numbers.** Status meanings: the count is the row's number (`Count`) with a bar against
+  the busiest status in its group (`ShareBar`); the date is said once per section. The RFI page's
+  stage glossary keeps a short date under each count (stages are read on their own days). Count
+  links are 44px with a negative margin so rows don't grow.
+- **Owner's calls.** He undid a re-layout of /press and the firm's-site section ("i actually like the
+  old press and firm pages"): both are back at 3c5eb93d with two fixes kept (`break-words` on the
+  credit box, the checker iframe `h-[18.5rem] sm:h-[15rem]`), and the newspaper specimen quotes the
+  live hold count. A recheck proposes; it doesn't redo an approved layout.
+- **Instruments.** `node scripts/phone_sweep.mjs <base> <paths>` for 390/320; compare its counts
+  against production before calling a finding new (several were). `audit_glued_text.glued_pairs()`
+  on each changed page's HTML. The homepage FAQ hides answers with CSS rows, so
+  `audit_visible_text.py` counts them as visible: its homepage prose share overstates.

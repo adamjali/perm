@@ -604,3 +604,15 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 10 2026 (night)".
 - **Each deployment's scripts register in their own list** (`chunkLoadingGlobal`), so files from another build can't touch the live page.
 - **Cloudflare does store navigation data** (`?_rsc=` answers MISS, then HIT); the Oct 5 note saying BYPASS had measured a redirect.
 
+
+## Oct 11 2026 (early morning), in seven lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (early morning)".
+
+- **The films' posters show the product again**: the Oct 7 re-cut had left both as the same logo slide with no Play control; `scripts/make-film-posters.mjs` rebuilds them from the films' frames.
+- **Data pages: the alert offer is a lime "Watch my case" tab in the breadcrumb bar** (a bell square on phones), and the rail's toggle is an icon inside the rail; the box above every heading and the tab hanging off the rail are gone (owner: "weird and awk").
+- **The homepage queue tape fills in once** when it first scrolls into view (`TapeReveal`): drawn filled on the server, armed only below the fold, off under reduced motion.
+- **The glossary opens with a map of its terms** along the six stops to a green card (`glossaryStages.ts`, every term placed once by test).
+- **Status meanings and the RFI page show each count as the row's number**, with a bar (status page) or its own date (RFI glossary); methodology draws its six readings as bars; the RFI page draws 325 vs 336 days.
+- **/press and the firm's-site section stay as they were** (owner's call, after a redesign he undid), with two bug fixes kept and today's real hold count in the newspaper specimen.
+- **Tonight's before/after boards** are on the Design canvas "PERM Tracker page redesigns"; prose share per page is on the dashboard "PERM Tracker redesign tracker".

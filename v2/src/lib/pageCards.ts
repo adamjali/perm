@@ -63,7 +63,7 @@ export const PAGE_CARD_ALT = {
   "about": "About PERM Tracker. A free, independent site on DOL's own data, run by an immigration attorney who files these cases.",
   "press": "Press and data for journalists. What DOL's records can tell a reporter, and how to credit PERM Tracker.",
   "blog": "PERM Tracker blog. What DOL's own files show about processing times, denials, wages and the queue.",
-  "calculators": "PERM calculators. Seven calculators for your case and two explorers for the field, all free, on data the government publishes.",
+  "calculators": "PERM calculators. A calculator for each question about your case, all free, on data the government publishes, beside the table that matches a situation to its calculator.",
   "case-search": "Search every DOL case an employer filed. PERM, prevailing wage and H-1B LCA, open and decided, in one search.",
   "changelog": "What changed. Every release, dated, with the data and features it added.",
   "contact": "Get in touch. Questions, bugs and ideas land in one inbox: support@permtracker.app or the form on the contact page.",
