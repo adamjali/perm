@@ -61,7 +61,10 @@ import { queryStatic } from "@/lib/convexStatic";
 import { FirmProfileBlock } from "@/components/entities/FirmProfileBlock";
 import { FirmClaimPanel } from "@/components/entities/FirmClaimPanel";
 import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
-import { debarmentsForSlug } from "@/lib/turso/debarments";
+import { ProfileHeader, type ProfileFact, type ProfileTag } from "@/components/entities/ProfileHeader";
+import { Chapter } from "@/components/entities/Chapter";
+import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
+import { debarmentsForSlug, phase } from "@/lib/turso/debarments";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
@@ -298,86 +301,83 @@ export default async function AttorneyPage({
   // six firms from anywhere "other Wyoming firms" is a caption that lies.
   const peersAreLocal = near.matched === "facet" && where != null;
 
+  const today = new Date().toISOString().slice(0, 10);
+  const share = (n: number) => `${Math.round((n / Math.max(row.total, 1)) * 100)}% of its cases`;
+  const topClient = facets.employer?.[0];
+  const facts: ProfileFact[] = ([
+    topClient
+      ? { label: "Biggest client", value: topClient.label, href: topClient.key ? `/perm-employers/${topClient.key}` : undefined, note: share(topClient.n) }
+      : null,
+    topOcc ? { label: "Main job", value: topOcc.label, href: topOcc.key ? `/perm-wages/${topOcc.key}` : undefined, note: share(topOcc.n) } : null,
+    where ? { label: "Filed from", value: where, note: "The address on its filings" } : null,
+  ] as (ProfileFact | null)[]).filter((f): f is ProfileFact => f !== null);
+
+  const tags: ProfileTag[] = [];
+  if (debarments.some((d) => phase(d, today) !== "ended")) tags.push({ text: "Debarred", href: "#debarment", tone: "bad" });
+  if (programs?.lca) tags.push({ text: `${formatInt(programs.lca.filings)} H-1B LCAs`, href: "#programs", tone: "ink" });
+  if (programs?.pwd) tags.push({ text: `${formatInt(programs.pwd.filings)} wage requests`, href: "#programs", tone: "ink" });
+  if (firmProfile) tags.push({ text: "In the firm's own words", href: "#firm", tone: "ink" });
+
+  const hasPractice = Boolean(facets.employer || facets.occupation || facets.state);
+  const hasPrograms = Boolean(programs && (programs.lca || programs.pwd || programs.seasonal));
+  const chapters: ChapterItem[] = [
+    ...(hasPractice ? [{ id: "practice", label: "The practice" }] : []),
+    ...(hasPrograms ? [{ id: "programs", label: "Every program" }] : []),
+    { id: "compare", label: "Against others" },
+    { id: "firm", label: firmProfile ? "From the firm" : "For the firm" },
+    { id: "notes", label: "Notes" },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={schema} />
 
-      <header className="max-w-3xl">
-        <h1 translate="no" className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          {row.name}
-        </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          {formatInt(row.total)} PERM cases in DOL&apos;s current disclosure window,{" "}
-          {formatInt(row.certified)} certified and {formatInt(row.denied)} denied.
-          {where ? ` Filed from ${where}.` : ""} Firm name as filed.
-        </p>
-      </header>
-
-      {/* The doubt goes ABOVE the figures, so a number computed from thin
-          input cannot read as more authoritative than the doubt about it. */}
-      <DebarmentNotice rows={debarments} pageName={row.name} today={new Date().toISOString().slice(0, 10)} />{" "}
       {/* Many who land here are a client of this firm waiting on their own
           case. DOL names the firm only once a case is published, so a pending
-          case is found by its employer rather than by the firm. */}
-      <CaseNextStep
-        question={`Is ${row.name} handling your case?`}
-        source="firm-page"
-        className="mt-8"
-      />{" "}
-      <ReliabilityBand
-        reliability={reliability}
-        baselineDenialPct={baselineDenialPct}
-        subject="firm"
-        unit="cases"
-        className="mt-8"
-      />
-
-      <section className="pop mt-8">
-        <EntityStatCards
-          cards={[
-            volumeCard("Cases", row, kindTotal),
-            certifiedCard(row),
-            approvalCard(reliability, baselineDenialPct),
-            medianWageCard(row.medianAnnualWage),
-            medianDaysCard(row.medianDays, standing),
-          ]}
-        />
-      </section>
-
-      <FieldPositionPlate
-        n="01"
-        singular="firm"
-        plural="firms"
-        dist={dist}
-        standing={standing}
-        medianDays={row.medianDays}
-        lead={
+          case is found by its employer rather than by the firm: the case box
+          sits beside the name. */}
+      <ProfileHeader
+        eyebrow={`PERM law firm, #${formatInt(row.rank)} of ${formatInt(kindTotal)} by cases`}
+        name={row.name}
+        facts={facts}
+        tags={tags}
+        aside={<CaseNextStep question={`Is ${row.name} handling your case?`} source="firm-page" />}
+        figures={
           <>
-            Each bar counts firms at that value. Firms with fewer than{" "}
-            {dist.minDecided} decided cases are left out of the population
-            rather than plotted, because a rate over a handful of cases lands
-            wherever the handful landed.
+            {/* The doubt goes ABOVE the figures, so a number computed from thin
+                input cannot read as more authoritative than the doubt about it. */}
+            <DebarmentNotice rows={debarments} pageName={row.name} today={today} className="mb-6" />{" "}
+            <ReliabilityBand
+              reliability={reliability}
+              baselineDenialPct={baselineDenialPct}
+              subject="firm"
+              unit="cases"
+              className="mb-6"
+            />{" "}
+            <section className="pop" aria-label="Its record in five figures">
+              <EntityStatCards
+                cards={[
+                  volumeCard("Cases", row, kindTotal),
+                  certifiedCard(row),
+                  approvalCard(reliability, baselineDenialPct),
+                  medianWageCard(row.medianAnnualWage),
+                  medianDaysCard(row.medianDays, standing),
+                ]}
+              />
+            </section>
           </>
         }
-        inCohortNote="The line marks this one. Approval rates pile up against 100%, so read the ties in the label rather than the position of the line."
-        outOfCohortNote={`This firm has ${formatInt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}
       />
 
-      {/* The client list is the module a firm page has and an employer page
+      <ChapterNav items={chapters} className="mt-10" />
+
+      {/* The client list is the part a firm page has and an employer page
           does not. "Who do they file for" is the question an attorney
           benchmarking a competitor and a beneficiary checking their own firm
           both arrive with, and it is a fact rather than an opinion. */}
-      {facets.employer || facets.occupation || facets.state ? (
-        <section className="mt-12">
-          <h2 className="font-heading text-2xl font-black">
-            The practice, in their own filings
-          </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base text-foreground/70">
-            Who they file for, what the jobs are, and where the work sits. All
-            of it is the employer, occupation and worksite named on their own
-            applications.
-          </p>
-          <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
+      {hasPractice ? (
+        <Chapter id="practice" title="The practice" dek="Who they file for, what the jobs are and where the work sits, from the employer, occupation and worksite on their own applications.">
+          <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 lg:grid-cols-2">
             {facets.employer ? (
               <PartyMix
                 rows={facets.employer}
@@ -387,183 +387,193 @@ export default async function AttorneyPage({
                 hrefBase="/perm-employers"
               />
             ) : null}
-            {facets.occupation ? (
-              <OccupationMix rows={facets.occupation} total={row.total} />
-            ) : null}
-            {facets.state ? (
-              <StateMix rows={facets.state} total={row.total} className="lg:col-span-2" />
-            ) : null}
+            {facets.occupation ? <OccupationMix rows={facets.occupation} total={row.total} /> : null}
+            {facets.state ? <StateMix rows={facets.state} total={row.total} className="lg:col-span-2" /> : null}
           </div>
-        </section>
+        </Chapter>
       ) : null}
 
-      {band ? (
-        <SizeBandNote
-          band={band}
-          subjectMedianDays={row.medianDays}
-          subject="firms"
+      {hasPrograms ? (
+        <Chapter id="programs" title="Every program">
+          <FirmPrograms name={row.name} data={programs} className="mt-0" />
+        </Chapter>
+      ) : null}
+
+      <Chapter
+        id="compare"
+        title="Against other firms"
+        dek={
+          <>
+            Where it sits among {formatInt(kindTotal)} firms. The{" "}
+            <Link href={BASE} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              full ranking
+            </Link>{" "}
+            sorts every column.
+          </>
+        }
+      >
+        <FieldPositionPlate
+          n="01"
+          singular="firm"
+          plural="firms"
+          dist={dist}
+          standing={standing}
+          medianDays={row.medianDays}
+          lead={
+            <>
+              Each bar counts firms at that value. Firms with fewer than{" "}
+              {dist.minDecided} decided cases are left out of the population
+              rather than plotted, because a rate over a handful of cases lands
+              wherever the handful landed.
+            </>
+          }
+          inCohortNote="The line marks this one. Approval rates pile up against 100%, so read the ties in the label rather than the position of the line."
+          outOfCohortNote={`This firm has ${formatInt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}
+        />
+        {band ? (
+          <SizeBandNote band={band} subjectMedianDays={row.medianDays} subject="firms" unit="cases" className="mt-10" />
+        ) : null}
+        <RankLadder
+          rank={row.rank}
+          kindTotal={kindTotal}
+          above={near.above}
+          below={near.below}
+          hrefBase={BASE}
           unit="cases"
           className="mt-10"
         />
-      ) : null}
-
-      <FirmPrograms name={row.name} data={programs} />{" "}
-      <FirmProfileBlock firmName={row.name} profile={firmProfile} />{" "}
-
-      <RankLadder
-        rank={row.rank}
-        kindTotal={kindTotal}
-        above={near.above}
-        below={near.below}
-        hrefBase={BASE}
-        unit="cases"
-        className="mt-10"
-      />
-
-      <PeerList
-        heading={
-          peersAreLocal ? `Other ${where} firms at this volume` : "Firms at this volume"
-        }
-        note={
-          peersAreLocal ? (
-            <>
-              Practices filing from {where} at a similar rate, taken from the
-              ranks nearest this one. State is the address on the filing, so a
-              national firm appears under whichever office signed the form.
-            </>
-          ) : (
-            <>
-              The firms ranked either side of this one, which is the same as
-              saying they file about as many PERM cases a year.{" "}
-              {where
-                ? `No other ${where} firm files at a comparable rate, so these come from anywhere.`
-                : "DOL's cell for this firm's state was unusable, so these are volume peers from anywhere."}
-            </>
-          )
-        }
-        items={peers}
-        hrefBase={BASE}
-        unit="cases"
-        className="mt-12"
-      />
-
-      <NameSpellings
-        variants={variants}
-        absorbed={absorbed}
-        subject="firm"
-        hrefBase={BASE}
-        rank={row.rank}
-        className="mt-12"
-      />
-
-      <LimitsPanel
-        className="mt-12"
-        items={[
-          wageIsTheJobLimit({ topOccupation: topOcc, total: row.total, filers: "their clients" }),
-          {
-            head: "Nothing here is waiting",
-            body: (
+        <PeerList
+          heading={
+            peersAreLocal ? `Other ${where} firms at this volume` : "Firms at this volume"
+          }
+          note={
+            peersAreLocal ? (
               <>
-                All {formatInt(row.total)} of the cases on this page carry a
-                decision date, because every row in DOL&apos;s disclosure files
-                does, so a case still in the queue is in none of these counts.
-                The live tracker that does see pending cases records the
-                employer on each one and not the firm, so a firm&apos;s
-                current queue cannot be broken out at all. Where the queue
-                stands overall is on the{" "}
-                <Link
-                  href="/perm-processing-times"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  processing times page
-                </Link>
-                .
+                Practices filing from {where} at a similar rate, taken from the
+                ranks nearest this one. State is the address on the filing, so a
+                national firm appears under whichever office signed the form.
               </>
-            ),
-          },
-          {
-            head: "The approval rate barely separates firms",
-            body: (
+            ) : (
               <>
-                {reliability.ratePct !== null ? (
-                  <>This firm is at {reliability.ratePct.toFixed(1)}%. </>
-                ) : null}
-                Across every firm with enough decided cases to carry a rate the
-                median is above 99%, and hundreds have no denials at all.
-                Placing near the top of that axis mostly means being level with
-                the rest of it.
+                The firms ranked either side of this one, which is the same as
+                saying they file about as many PERM cases a year.{" "}
+                {where
+                  ? `No other ${where} firm files at a comparable rate, so these come from anywhere.`
+                  : "DOL's cell for this firm's state was unusable, so these are volume peers from anywhere."}
               </>
-            ),
-          },
-          {
-            head: "None of this measures the advice",
-            body: (
-              <>
-                It measures filings that DOL approved or denied. Whether the
-                case was worth filing, what it cost, and how the firm handled
-                an audit aren’t in these files.
-              </>
-            ),
-          },
-          {
-            head: `A median over ${formatInt(reliability.decided)} decided cases`,
-            body: (
-              <>
-                {thinMedian
-                  ? "That’s a middle of a handful, and it moves with which months those few cases were filed in rather than with the firm."
-                  : "DOL works one national queue, oldest first, whoever filed the case, so this says when the firm's cases were filed at least as much as anything about the firm."}{" "}
-                Where the queue stands today is on the{" "}
-                <Link
-                  href="/perm-processing-times"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  processing times page
-                </Link>
-                .
-              </>
-            ),
-          },
-        ]}
-      />
+            )
+          }
+          items={peers}
+          hrefBase={BASE}
+          unit="cases"
+          className="mt-12"
+        />
+      </Chapter>
 
-      <DisclosureNote
-        sourceFiles={stats?.sourceFiles ?? []}
-        uniqueCases={stats?.uniqueCases ?? null}
-        className="mt-8"
-      />
-
-      <section className="mt-10 max-w-2xl">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Running the practice?</h2>{" "}
+      <Chapter id="firm" title={firmProfile ? "From the firm" : "For the firm"}>
+        <FirmProfileBlock firmName={row.name} profile={firmProfile} />{" "}
+        <FirmClaimPanel slug={canonicalSlug} firmName={row.name} claimed={firmProfile != null} />{" "}
+        <div className="mt-8 max-w-2xl border-2 border-border bg-card p-6 shadow-hard-sm">
+          <h3 className="font-heading text-lg font-black">Running the practice?</h3>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
             The{" "}
-            <Link
-              href={BASE}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              full ranking
-            </Link>{" "}
-            sorts every column, and the{" "}
-            <Link
-              href="/signup"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
+            <Link href="/signup" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               free tracker
             </Link>{" "}
-            carries the deadlines on every case.
+            carries the deadlines on every case, from the wage request to the I-140.
           </p>
         </div>
-      </section>
-      <FirmClaimPanel slug={canonicalSlug} firmName={row.name} claimed={firmProfile != null} />{" "}
-      <UnpublishedFilingsNote subject="firm" />{" "}
-      <DataProvenance
-        datasets={[
-          "perm-cases",
-          "entities",
-          ...(programs?.lca ? ["lca-disclosure"] : []),
-          ...(programs?.pwd ? ["pw-disclosure"] : []),
-        ]}
-      />
+      </Chapter>
+
+      <Chapter id="notes" title="Notes on these numbers">
+        <NameSpellings
+          variants={variants}
+          absorbed={absorbed}
+          subject="firm"
+          hrefBase={BASE}
+          rank={row.rank}
+          className="mt-0"
+        />
+        <LimitsPanel
+          className="mt-12"
+          items={[
+            wageIsTheJobLimit({ topOccupation: topOcc, total: row.total, filers: "their clients" }),
+            {
+              head: "Nothing here is waiting",
+              body: (
+                <>
+                  All {formatInt(row.total)} of the cases on this page carry a
+                  decision date, because every row in DOL&apos;s disclosure files
+                  does, so a case still in the queue is in none of these counts.
+                  The live tracker that does see pending cases records the
+                  employer on each one and not the firm, so a firm&apos;s
+                  current queue cannot be broken out at all. Where the queue
+                  stands overall is on the{" "}
+                  <Link
+                    href="/perm-processing-times"
+                    className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  >
+                    processing times page
+                  </Link>
+                  .
+                </>
+              ),
+            },
+            {
+              head: "The approval rate barely separates firms",
+              body: (
+                <>
+                  {reliability.ratePct !== null ? (
+                    <>This firm is at {reliability.ratePct.toFixed(1)}%. </>
+                  ) : null}
+                  Across every firm with enough decided cases to carry a rate the
+                  median is above 99%, and hundreds have no denials at all.
+                  Placing near the top of that axis mostly means being level with
+                  the rest of it.
+                </>
+              ),
+            },
+            {
+              head: "None of this measures the advice",
+              body: (
+                <>
+                  It measures filings that DOL approved or denied. Whether the
+                  case was worth filing, what it cost, and how the firm handled
+                  an audit aren’t in these files.
+                </>
+              ),
+            },
+            {
+              head: `A median over ${formatInt(reliability.decided)} decided cases`,
+              body: (
+                <>
+                  {thinMedian
+                    ? "That’s a middle of a handful, and it moves with which months those few cases were filed in rather than with the firm."
+                    : "DOL works one national queue, oldest first, whoever filed the case, so this says when the firm's cases were filed at least as much as anything about the firm."}{" "}
+                  Where the queue stands today is on the{" "}
+                  <Link
+                    href="/perm-processing-times"
+                    className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  >
+                    processing times page
+                  </Link>
+                  .
+                </>
+              ),
+            },
+          ]}
+        />
+        <DisclosureNote sourceFiles={stats?.sourceFiles ?? []} uniqueCases={stats?.uniqueCases ?? null} className="mt-8" />{" "}
+        <UnpublishedFilingsNote subject="firm" />{" "}
+        <DataProvenance
+          datasets={[
+            "perm-cases",
+            "entities",
+            ...(programs?.lca ? ["lca-disclosure"] : []),
+            ...(programs?.pwd ? ["pw-disclosure"] : []),
+          ]}
+        />
+      </Chapter>
     </div>
   );
 }
