@@ -8,6 +8,7 @@
  */
 
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 
 import { API_LIVE_DAILY_CAP, API_PLANS, GRANTABLE_SCOPES, SCOPE_LABELS } from "@convex/lib/apiPlans";
@@ -279,10 +280,13 @@ export default function DevelopersPage() {
         </p>{" "}
         <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
           {GRANTABLE_SCOPES.map((sc) => (
-            <li key={sc} className="border-2 border-border bg-card px-4 py-3">
-              <p className="font-mono text-sm font-bold">{sc}</p>{" "}
-              <p className="mt-1 text-sm text-foreground/75">{SCOPE_LABELS[sc]}</p>
-            </li>
+            <Fragment key={sc}>
+              {" "}
+              <li className="border-2 border-border bg-card px-4 py-3">
+                <p className="font-mono text-sm font-bold">{sc}</p>{" "}
+                <p className="mt-1 text-sm text-foreground/75">{SCOPE_LABELS[sc]}</p>
+              </li>
+            </Fragment>
           ))}
         </ul>{" "}
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/75">
@@ -343,10 +347,13 @@ export default function DevelopersPage() {
         </p>{" "}
         <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
           {WEBHOOK_EVENTS.map((ev) => (
-            <li key={ev} className="border-2 border-border bg-card px-4 py-3">
-              <p className="font-mono text-sm font-bold">{ev}</p>{" "}
-              <p className="mt-1 text-sm text-foreground/75">{WEBHOOK_EVENT_LABELS[ev]}</p>
-            </li>
+            <Fragment key={ev}>
+              {" "}
+              <li className="border-2 border-border bg-card px-4 py-3">
+                <p className="font-mono text-sm font-bold">{ev}</p>{" "}
+                <p className="mt-1 text-sm text-foreground/75">{WEBHOOK_EVENT_LABELS[ev]}</p>
+              </li>
+            </Fragment>
           ))}
         </ul>{" "}
         <details className="mt-4 border-2 border-border bg-card px-4 py-3">
