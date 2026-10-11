@@ -55,7 +55,15 @@ export default function ContentCard({
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <NavLink href={href} className="group block" showLoading={false}>
-        <div className="relative border-2 border-border bg-card shadow-hard transition-shadow duration-150 group-hover:shadow-hard-lg">
+        {/* ON A PHONE THE CARD LIES ON ITS SIDE: the picture a square at the
+            left, the topic, title and date beside it, the excerpt left out.
+            Stacked, each card ran about 430 px and the guides index 25,000. */}
+        <div
+          className={
+            "relative border-2 border-border bg-card shadow-hard transition-shadow duration-150 group-hover:shadow-hard-lg" +
+            (meta.image ? " max-sm:grid max-sm:grid-cols-[7rem_minmax(0,1fr)]" : "")
+          }
+        >
           {/* Loading overlay */}
           {/* Held back 150ms (fill-mode-both keeps it invisible through the
               delay), so a prefetched article that opens in a frame never
@@ -70,7 +78,7 @@ export default function ContentCard({
           )}
           {/* Image */}
           {meta.image && (
-            <div className="relative aspect-[16/9] overflow-hidden border-b-2 border-border">
+            <div className="relative aspect-[16/9] overflow-hidden border-b-2 border-border max-sm:aspect-auto max-sm:min-h-28 max-sm:border-b-0 max-sm:border-r-2">
               <Image
                 src={meta.image}
                 alt={meta.imageAlt ?? meta.title}
@@ -81,7 +89,7 @@ export default function ContentCard({
               />
               {/* Type badge overlay */}
               {showType && (
-                <span className="absolute left-3 top-3 border-2 border-black bg-primary px-2 py-0.5 font-heading text-sm font-bold text-black">
+                <span className="absolute left-3 top-3 border-2 border-black bg-primary px-2 py-0.5 font-heading text-sm font-bold text-black max-sm:hidden">
                   {config.label}{" "}
                 </span>
               )}
@@ -89,7 +97,7 @@ export default function ContentCard({
           )}{" "}
 
           {/* Content */}
-          <div className="p-4 sm:p-5">
+          <div className="min-w-0 p-3 sm:p-5">
             {/* The topic it's filed under, in words (lib/content/topics.ts). */}
             {topic ? (
               <p className="mb-2 text-sm font-semibold text-primary-text">{topic.label}</p>
@@ -101,12 +109,12 @@ export default function ContentCard({
             </Heading>{" "}
 
             {/* Description */}
-            <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+            <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground max-sm:hidden">
               {meta.description}
             </p>{" "}
 
             {/* Meta row */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               {/* The newest date the article carries: a revision outranks the
                   publish date, said as "Updated" so the two can't be confused. */}
               <span className="flex items-center gap-1">
