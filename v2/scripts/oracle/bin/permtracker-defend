@@ -68,6 +68,9 @@ DEPLOYING = HEALTH / "deploying"   # written by permtracker-deploy while it warm
 DEPLOY_GRACE = 1200                # a marker older than this is a deploy that died; ignore it
 CONFIG = pathlib.Path(os.environ.get("PT_DEFEND_CONFIG", "/etc/permtracker/defend.env"))
 APP_ENV = pathlib.Path("/srv/permtracker/app/env/production.env")
+# The mail Worker on Cloudflare (workers/mail/): free mail to the owner, outside
+# Resend's 100 a day. OWNER_MAIL_URL and OWNER_MAIL_KEY; Resend when unset or down.
+OWNER_MAIL = pathlib.Path("/etc/permtracker/owner-mail.env")
 # Resend sits behind Cloudflare, which refuses Python's default User-Agent
 # ("Python-urllib/3.x") with HTTP 403 and "error code: 1010". Every alert this
 # script sent failed that way until Oct 3 2026; a named agent gets through.
@@ -384,15 +387,29 @@ def email(state: dict, cfg: dict, subject: str, text: str) -> None:
     sent = state.setdefault("emails", {})
     if sent.get(day, 0) >= EMAILS_PER_DAY:
         return
+    # When it happened, first, as the server alarm's emails do (they had no time at all).
+    stamp = datetime.now(ZoneInfo("America/New_York")).strftime("%A %b %-d, %-I:%M %p %Z")
+    body = f"At {stamp}.\n\n{text}"
+    worker = read_env(OWNER_MAIL)
+    if worker.get("OWNER_MAIL_URL") and worker.get("OWNER_MAIL_KEY"):
+        req = urllib.request.Request(
+            worker["OWNER_MAIL_URL"], method="POST", data=json.dumps({"subject": subject, "text": body}).encode(),
+            headers={"x-owner-mail-key": worker["OWNER_MAIL_KEY"], "Content-Type": "application/json",
+                     "User-Agent": USER_AGENT})
+        try:
+            urllib.request.urlopen(req, timeout=15).read()
+            sent[day] = sent.get(day, 0) + 1
+            state["emails"] = {d: n for d, n in sent.items() if d >= day}
+            return
+        except (urllib.error.URLError, OSError) as exc:
+            print(f"mail Worker failed, using Resend: {exc}")
     key, to = read_env(APP_ENV).get("RESEND_API_KEY"), cfg.get("ALERT_TO")
     if not key or not to:
         return
-    # When it happened, first, as the server alarm's emails do (they had no time at all).
-    stamp = datetime.now(ZoneInfo("America/New_York")).strftime("%A %b %-d, %-I:%M %p %Z")
     req = urllib.request.Request(
         "https://api.resend.com/emails", method="POST",
         data=json.dumps({"from": "PERM Tracker <notifications@permtracker.app>", "to": [to],
-                         "subject": subject, "text": f"At {stamp}.\n\n{text}"}).encode(),
+                         "subject": subject, "text": body}).encode(),
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
                  "User-Agent": USER_AGENT})
     try:

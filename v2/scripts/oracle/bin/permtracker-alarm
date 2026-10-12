@@ -58,6 +58,9 @@ RUN = pathlib.Path(os.environ.get("PT_RUN_DIR", "/run/permtracker"))
 STATE = RUN / "alarm.json"
 CONFIG = pathlib.Path("/etc/permtracker/defend.env")      # ALERT_TO, shared with the defense
 APP_ENV = APP / "app" / "env" / "production.env"         # RESEND_API_KEY
+# The mail Worker on Cloudflare (workers/mail/): free mail to the owner, outside
+# Resend's 100 a day. OWNER_MAIL_URL and OWNER_MAIL_KEY; Resend when unset or down.
+OWNER_MAIL = pathlib.Path("/etc/permtracker/owner-mail.env")
 USER_AGENT = "permtracker-alarm/1.0 (+https://permtracker.app)"  # Cloudflare 403s Python's default
 GB = 1024 ** 3
 ET = ZoneInfo("America/New_York")
@@ -358,9 +361,28 @@ def read_env(path: pathlib.Path) -> dict:
     return out
 
 
+def via_worker(subject: str, text: str) -> bool:
+    """Send through the mail Worker. False when it isn't set up or didn't take it."""
+    cfg = read_env(OWNER_MAIL)
+    url, key = cfg.get("OWNER_MAIL_URL"), cfg.get("OWNER_MAIL_KEY")
+    if not url or not key:
+        return False
+    req = urllib.request.Request(
+        url, method="POST", data=json.dumps({"subject": subject, "text": text}).encode(),
+        headers={"x-owner-mail-key": key, "Content-Type": "application/json", "User-Agent": USER_AGENT})
+    try:
+        urllib.request.urlopen(req, timeout=15).read()
+        return True
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"mail Worker failed, using Resend: {exc}")
+        return False
+
+
 def send(subject: str, text: str) -> bool:
     if DRY_RUN:
         print(f"would email: {subject}\n{text}\n")
+        return True
+    if via_worker(subject, text):
         return True
     key = read_env(APP_ENV).get("RESEND_API_KEY")
     to = read_env(CONFIG).get("ALERT_TO")

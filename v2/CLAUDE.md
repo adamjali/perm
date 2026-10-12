@@ -9764,3 +9764,15 @@ or Wednesday, three crons) instead of all on Monday; empty summaries were alread
 test and demo accounts (every `@permtracker.app` address but support@) counts as done and isn't sent or counted
 (`isOwnTestAddress` in `sendOrQueue`); sign-in codes and resets still go.
 
+**Inbound mail and owner mail moved to Cloudflare (live 5:24 to 5:42 PM EDT Oct 12 2026).** Resend counts received
+mail and every alert to the owner against its 100 a day; Cloudflare Email Routing does neither. The root MX now
+points at Cloudflare; its catch-all rule hands every message to the Worker `permtracker-mail` (`workers/mail/`),
+which forwards it to the owner's verified Gmail and posts it to Convex `POST /inbound-email` (stored in
+`supportEmails` as before, one row per Message-ID). Owner mail (`convex/lib/ownerMail.ts`: admin notices, the
+morning report; the server's alarm and defense) posts to the Worker's `/owner`, whose send binding can only reach
+the owner, with Resend as the fallback. The Worker's two keys sit in its KV store, set once from the Mac by
+`POST /provision` so they never passed through the Cloudflare API in plain text; rotation and the DNS records are
+in `workers/mail/README.md`. Proven by a test message to support@ from the press mailbox (stored, "forwarded",
+accented text intact), a direct `/owner` send, and an admin notice from Convex with no fallback logged.
+`postal-mime` bundled to 74 KB (an HTML entity table), too big to upload cleanly, so `mime.mjs` reads the text.
+

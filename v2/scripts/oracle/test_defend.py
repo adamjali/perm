@@ -255,6 +255,36 @@ _body = json.loads(_sent[0].data.decode())["text"] if _sent else ""
 check("an alert says when, in Eastern time, before anything else",
       _body.startswith("At ") and (" EDT." in _body.split("\n")[0] or " EST." in _body.split("\n")[0]), _body[:80])
 
+# With the mail Worker set up, an alert goes there (free) and not to Resend;
+# when the Worker fails, Resend still carries it (Oct 12 2026).
+def _alert_with(worker_fails: bool):
+    sent = []
+    def _open(req, timeout=None):
+        sent.append(req)
+        if worker_fails and req.full_url.startswith("https://mail.example"):
+            raise d.urllib.error.URLError("down")
+        return _Resp()
+    envs = {str(d.OWNER_MAIL): {"OWNER_MAIL_URL": "https://mail.example/owner", "OWNER_MAIL_KEY": "k"},
+            str(d.APP_ENV): {"RESEND_API_KEY": "re_test"}}
+    real_open, real_env = d.urllib.request.urlopen, d.read_env
+    d.urllib.request.urlopen = _open
+    d.read_env = lambda path: envs.get(str(path), {})
+    try:
+        state = {}
+        d.email(state, {"ALERT_TO": "owner@example.com"}, "subject", "text")
+    finally:
+        d.urllib.request.urlopen, d.read_env = real_open, real_env
+    return sent, state
+
+_w, _ws = _alert_with(worker_fails=False)
+check("with the Worker set up, the alert goes there with its key, and Resend isn't called",
+      len(_w) == 1 and _w[0].full_url == "https://mail.example/owner" and _w[0].get_header("X-owner-mail-key") == "k",
+      [r.full_url for r in _w])
+check("and it's counted against the day's limit", sum(_ws.get("emails", {}).values()) == 1)
+_f, _fs = _alert_with(worker_fails=True)
+check("when the Worker fails, Resend carries the alert",
+      [r.full_url for r in _f] == ["https://mail.example/owner", "https://api.resend.com/emails"], [r.full_url for r in _f])
+
 # A state file that can't be read: resume from what Cloudflare says, so the
 # 30-calm-minute clock can still turn things off (Oct 10 2026, a full disk).
 class _CF:

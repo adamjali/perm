@@ -50,3 +50,12 @@ export function ownerMessage(body) {
 
 /** Messages larger than this are forwarded and stored with headers only (CPU on the free plan). */
 export const PARSE_MAX_BYTES = 1_000_000;
+
+/** A key as it's provisioned: 64 hex characters (openssl rand -hex 32). */
+export const KEY_PATTERN = /^[0-9a-f]{64}$/;
+
+/** The first 8 hex of a key's SHA-256: enough to confirm which key is set, nothing more. */
+export async function keyTag(key) {
+  const d = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key)));
+  return Array.from(d.slice(0, 4), (b) => b.toString(16).padStart(2, "0")).join("");
+}

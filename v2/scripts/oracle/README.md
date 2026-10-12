@@ -101,6 +101,7 @@ journalctl -u permtracker-web@blue -f            # a copy's log
 | database tokens | `/srv/permtracker/secrets/db_ro.jwt`, `db_rw.jwt`; signing key in `/root/permtracker-jwt/` |
 | `CRON_SECRET`, `REVALIDATE_SECRET` | `/srv/permtracker/secrets/` (new values; GitHub's `REVALIDATE_SECRET` is updated on switch day) |
 | `GITHUB_DISPATCH_TOKEN` | `/srv/permtracker/secrets/github_dispatch_token` |
+| the mail Worker's owner key (`OWNER_MAIL_URL`, `OWNER_MAIL_KEY`), read by `permtracker-alarm` and `permtracker-defend` | `/etc/permtracker/owner-mail.env` (root 600); the same key on Convex and the owner's Mac (`~/.config/permtracker-mail/`). Unset or down, both scripts mail through Resend as before. See `workers/mail/README.md` |
 | deploy key, host, known hosts, read-only DB token for builds | GitHub secrets `ORACLE_*` |
 | backup key, PRIVATE half (opens the sealed server and Convex copies) | only the owner's Mac, `~/.config/permtracker-backup/backup-key.pem` (600), plus the owner's own safe copy; never on this server, GitHub or R2. The public half is `conf/backup-recipient.pem` here and `/etc/permtracker/backup-recipient.pem` |
 

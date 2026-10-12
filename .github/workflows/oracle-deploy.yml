@@ -18,6 +18,7 @@ on:
     paths-ignore:
       - "**/*.md"
       - "v2/scripts/**"
+      - "v2/workers/**"
       - ".planning/**"
       - "docs/**"
       - "v2/docs/**"

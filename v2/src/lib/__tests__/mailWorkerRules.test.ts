@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error: a plain ES module the Worker bundles; no type declarations.
-import { keyMatches, ownerMessage, shouldForward } from '../../../workers/mail/rules.mjs';
+import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, shouldForward } from '../../../workers/mail/rules.mjs';
 import { shouldForwardInbound } from '@convex/lib/supportEmailForward';
 
 const OWNER = 'owner@example.com';
@@ -41,5 +41,16 @@ describe('ownerMessage', () => {
     expect(ownerMessage({ subject: 's' }).error).toBeTruthy();
     expect(ownerMessage({ subject: 's'.repeat(301), text: 'x' }).error).toBeTruthy();
     expect(ownerMessage(null).error).toBeTruthy();
+  });
+});
+
+describe('provisioned keys', () => {
+  it('accept only 64 hex characters, and tag a key by its hash, never the key', async () => {
+    expect(KEY_PATTERN.test('a'.repeat(64))).toBe(true);
+    expect(KEY_PATTERN.test('a'.repeat(63))).toBe(false);
+    expect(KEY_PATTERN.test('A'.repeat(64))).toBe(false);
+    const tag = await keyTag('a'.repeat(64));
+    expect(tag).toMatch(/^[0-9a-f]{8}$/);
+    expect('a'.repeat(64)).not.toContain(tag);
   });
 });

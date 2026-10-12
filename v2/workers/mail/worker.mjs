@@ -8,18 +8,29 @@
  *    address. It forwards the message to the owner's inbox (free, the original
  *    sender kept) unless rules.mjs says not to, then posts it to Convex
  *    (/inbound-email) to be stored for a threaded reply, as Resend-received
- *    mail was. A message too big to parse within the free plan's CPU is
- *    stored with its headers only.
+ *    mail was (mime.mjs reads its text). A message too big to read within the
+ *    free plan's CPU is stored with its headers only.
  * 2. `fetch` POST /owner: alerts, the morning report and admin notices, to the
  *    owner's own verified address. The OWNER binding can send only to that
  *    address, so the key, if it leaked, could mail no one else.
  *
- * Bindings (set at upload, scripts/mail-worker-deploy.md): OWNER (send_email,
- * destination_address = the owner), OWNER_EMAIL, FROM_EMAIL, CONVEX_SITE, and
- * the secrets OWNER_MAIL_KEY and INBOUND_KEY.
+ * Bindings: OWNER (send_email, destination_address = the owner), OWNER_EMAIL,
+ * FROM_EMAIL, CONVEX_SITE, and KEYS (a KV namespace holding the two keys).
+ *
+ * The keys live in KV, not in Worker secrets, so they never pass through the
+ * Cloudflare API in plain text from anyone's terminal: POST /provision sets
+ * both, once, from a machine that reads them from its own files, and answers
+ * with their SHA-256 tags so the caller can confirm. It refuses once keys are
+ * set; to rotate, delete the two KV entries and provision again.
  */
-import PostalMime from "postal-mime";
-import { keyMatches, ownerMessage, PARSE_MAX_BYTES, shouldForward } from "./rules.mjs";
+import { readMessage } from "./mime.mjs";
+import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, PARSE_MAX_BYTES, shouldForward } from "./rules.mjs";
+
+/** The two keys, from KV (see above). */
+async function keys(env) {
+  const [owner, inbound] = await Promise.all([env.KEYS.get("owner_mail_key"), env.KEYS.get("inbound_key")]);
+  return { owner, inbound };
+}
 
 const json = (body, status) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -43,9 +54,9 @@ const worker = {
     let parsed = null;
     if (message.rawSize <= PARSE_MAX_BYTES) {
       try {
-        parsed = await PostalMime.parse(message.raw);
+        parsed = readMessage(new Uint8Array(await new Response(message.raw).arrayBuffer()));
       } catch (e) {
-        console.error("parse failed", e && e.message);
+        console.error("read failed", e && e.message);
       }
     }
     const h = (name) => message.headers.get(name) || undefined;
@@ -67,7 +78,7 @@ const worker = {
     ctx.waitUntil(
       fetch(`${env.CONVEX_SITE}/inbound-email`, {
         method: "POST",
-        headers: { "content-type": "application/json", "x-inbound-key": env.INBOUND_KEY },
+        headers: { "content-type": "application/json", "x-inbound-key": (await keys(env)).inbound || "" },
         body: JSON.stringify(record),
       })
         .then((r) => {
@@ -79,8 +90,24 @@ const worker = {
 
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (request.method === "POST" && url.pathname === "/provision") {
+      const current = await keys(env);
+      if (current.owner || current.inbound) return json({ ok: false, message: "Keys are already set." }, 409);
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return json({ ok: false, message: "Bad JSON." }, 400);
+      }
+      if (!KEY_PATTERN.test(body?.owner ?? "") || !KEY_PATTERN.test(body?.inbound ?? "")) {
+        return json({ ok: false, message: "Two 64-hex keys: { owner, inbound }." }, 400);
+      }
+      await env.KEYS.put("owner_mail_key", body.owner);
+      await env.KEYS.put("inbound_key", body.inbound);
+      return json({ ok: true, owner: await keyTag(body.owner), inbound: await keyTag(body.inbound) }, 200);
+    }
     if (request.method !== "POST" || url.pathname !== "/owner") return json({ ok: false, message: "Not found." }, 404);
-    if (!(await keyMatches(request.headers.get("x-owner-mail-key"), env.OWNER_MAIL_KEY))) {
+    if (!(await keyMatches(request.headers.get("x-owner-mail-key"), (await keys(env)).owner))) {
       return json({ ok: false, message: "Not allowed." }, 401);
     }
     if (Number(request.headers.get("content-length") || 0) > 1_000_000) return json({ ok: false, message: "Too large." }, 413);

@@ -31,6 +31,7 @@ spec = importlib.util.spec_from_loader("alarm", loader)
 assert spec
 alarm = importlib.util.module_from_spec(spec)
 loader.exec_module(alarm)
+_real_send = alarm.send  # tests below replace alarm.send
 
 failures: list[str] = []
 
@@ -205,5 +206,38 @@ check("a due email that couldn't be sent exits 1", alarm.main() == 1)
 alarm.send = lambda subject, text: True
 _os.remove(alarm.STATE)
 check("a due email that went exits 0", alarm.main() == 0)
+
+
+# With the mail Worker set up, an alarm goes there (free); when it fails,
+# Resend carries it (Oct 12 2026).
+class _R:
+    def read(self):
+        return b"{}"
+
+def _send_with(worker_fails: bool):
+    sent = []
+    def _open(req, timeout=None):
+        sent.append(req.full_url)
+        if worker_fails and req.full_url.startswith("https://mail.example"):
+            raise alarm.urllib.error.URLError("down")
+        return _R()
+    envs = {str(alarm.OWNER_MAIL): {"OWNER_MAIL_URL": "https://mail.example/owner", "OWNER_MAIL_KEY": "k"},
+            str(alarm.APP_ENV): {"RESEND_API_KEY": "re_test"},
+            str(alarm.CONFIG): {"ALERT_TO": "owner@example.com"}}
+    real_open, real_env, real_dry = alarm.urllib.request.urlopen, alarm.read_env, alarm.DRY_RUN
+    alarm.urllib.request.urlopen = _open
+    alarm.read_env = lambda path: envs.get(str(path), {})
+    alarm.DRY_RUN = False
+    try:
+        ok = _real_send("subject", "text")
+    finally:
+        alarm.urllib.request.urlopen, alarm.read_env, alarm.DRY_RUN = real_open, real_env, real_dry
+    return ok, sent
+
+_ok, _sent = _send_with(worker_fails=False)
+check("with the Worker set up, an alarm goes there and not to Resend", _ok and _sent == ["https://mail.example/owner"], str(_sent))
+_ok, _sent = _send_with(worker_fails=True)
+check("when the Worker fails, Resend carries the alarm",
+      _ok and _sent == ["https://mail.example/owner", "https://api.resend.com/emails"], str(_sent))
 
 sys.exit(1 if failures else 0)
