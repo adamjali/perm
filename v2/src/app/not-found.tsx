@@ -1,82 +1,108 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
-import { HouseIcon as Home, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
+import {
+  ArrowRightIcon,
+  BuildingsIcon,
+  CalculatorIcon,
+  CalendarIcon,
+  ClockIcon,
+  HouseIcon,
+  NewspaperIcon,
+} from "@phosphor-icons/react/ssr";
 
 /**
  * A 404 must not be indexable. Without this it inherits the site default and
  * serves `index, follow`, which invites Google to index every mistyped URL
  * and to treat links FROM this page as real inbound links — that is how a
  * page ends up "reachable" only from the error page and counted as linked.
+ *
+ * Most people who land here were looking for a case or a figure, so the page
+ * offers the case-number box itself (a plain GET form: it works before any
+ * script loads) and the six places people most often mean.
  */
 export const metadata: Metadata = {
   title: "Page not found",
   robots: { index: false, follow: false },
 };
 
+const DOORS = [
+  { href: "/", label: "Home", Icon: HouseIcon },
+  { href: "/perm-processing-times", label: "Processing times", Icon: ClockIcon },
+  { href: "/perm-employers", label: "Find an employer", Icon: BuildingsIcon },
+  { href: "/visa-bulletin", label: "The visa bulletin", Icon: CalendarIcon },
+  { href: "/calculators", label: "Calculators", Icon: CalculatorIcon },
+  { href: "/guides", label: "Guides", Icon: NewspaperIcon },
+] as const;
+
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      {/* Dot pattern background */}
-      <div
-        className="bg-dots pointer-events-none fixed inset-0 opacity-30"
-        aria-hidden="true"
-      />
+    <main className="relative min-h-screen bg-background">
+      <div className="bg-dots pointer-events-none fixed inset-0 opacity-30" aria-hidden="true" />
 
-      <div className="relative w-full max-w-lg">
-        {/* 404 number — oversized, clipped by card */}
-        <div className="relative bg-card border-2 border-border shadow-hard overflow-hidden">
-          {/* Giant 404 watermark */}
+      <div className="relative mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-20">
+        <Link href="/" className="inline-flex min-h-[44px] items-center font-heading text-xl font-black">
+          <span className="text-primary-text">PERM</span>&nbsp;Tracker
+        </Link>{" "}
+
+        <div className="relative mt-10 overflow-hidden border-2 border-border bg-card p-6 shadow-hard sm:p-10">
+          {/* An oversized 404 clipped by the card. */}
           <div
-            className="absolute -top-8 -right-4 font-heading font-bold text-[12rem] sm:text-[16rem] leading-none text-muted/20 select-none pointer-events-none"
+            className="pointer-events-none absolute -right-4 -top-10 select-none font-heading text-[11rem] font-black leading-none text-foreground/[0.07] sm:text-[15rem]"
             aria-hidden="true"
           >
             404
           </div>
-
-          <div className="relative p-8 sm:p-10">
-            {/* Status badge */}
-            <div className="inline-block bg-destructive/10 border-2 border-destructive/30 px-3 py-1 mb-6">
-              <span className="mono text-sm font-bold uppercase tracking-widest text-destructive">
-                Page not found
-              </span>
-            </div>
-
-            {/* Heading */}
-            <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl mb-3">
-              Dead end
-            </h1>{" "}
-
-            {/* Description */}
-            <p className="text-muted-foreground mb-8 max-w-sm">
-              This page doesn&apos;t exist or has moved. Check the address, or
-              start again from home.
+          <div className="relative">
+            <p className="inline-block border-2 border-destructive/40 bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive">
+              Page not found
             </p>{" "}
-
-            {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-heading font-bold text-sm uppercase tracking-wide px-6 py-3 border-2 border-border shadow-hard hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-150"
+            <h1 className="mt-5 font-heading text-5xl font-black leading-none sm:text-6xl">Dead end</h1>{" "}
+            <p className="mt-4 max-w-md text-lg leading-relaxed text-foreground/75">
+              This page doesn&apos;t exist or has moved. If you were after a case, put its number in here.
+            </p>{" "}
+            <form action="/perm-case-status" method="get" className="mt-7 flex max-w-xl flex-col gap-3 sm:flex-row">
+              <label htmlFor="nf-case" className="sr-only">
+                Case number
+              </label>
+              <input
+                id="nf-case"
+                name="case"
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="G-100-26125-868956"
+                className="min-h-[48px] w-full min-w-0 flex-1 border-2 border-border bg-background px-4 font-mono text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              />{" "}
+              <button
+                type="submit"
+                className="inline-flex min-h-[48px] items-center justify-center gap-2 border-2 border-border bg-primary px-6 font-heading font-black text-black shadow-hard-sm transition-transform hover:-translate-y-[1px] active:translate-y-0 motion-reduce:transition-none"
               >
-                <Home className="w-4 h-4" />
-                Home
-              </Link>
-              <Link
-                href="/perm-case-status"
-                className="inline-flex items-center justify-center gap-2 bg-card text-foreground font-heading font-bold text-sm uppercase tracking-wide px-6 py-3 border-2 border-border shadow-hard hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-150"
-              >
-                <MagnifyingGlassIcon className="w-4 h-4" />
                 Check a case
-              </Link>
-            </div>
+              </button>
+            </form>
           </div>
-        </div>
+        </div>{" "}
 
-        {/* Bottom branding */}
-        <p className="text-center text-muted-foreground text-sm mt-6 mono uppercase tracking-widest">
-          PERM Tracker
-        </p>
+        <h2 className="mt-12 font-heading text-xl font-black">Or go to</h2>{" "}
+        <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
+          {DOORS.map((d) => (
+            <Fragment key={d.href}>
+              <li>
+                <Link
+                  href={d.href}
+                  className="flex min-h-[56px] items-center gap-3 border-2 border-border bg-card px-4 font-bold transition-colors hover:bg-tint-primary"
+                >
+                  <d.Icon aria-hidden="true" className="size-5 shrink-0" weight="bold" />{" "}
+                  <span className="flex-1">{d.label}</span>{" "}
+                  <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
+                </Link>
+              </li>{" "}
+            </Fragment>
+          ))}
+        </ul>
       </div>
-    </div>
+    </main>
   );
 }

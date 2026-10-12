@@ -203,8 +203,8 @@ export default async function StagePage({
           />{" "}
           {meta.label}
         </h1>{" "}
-        <p className="mt-2 font-mono text-sm uppercase tracking-wide text-muted-foreground">
-          {status}
+        <p className="mt-2 text-base text-foreground/70">
+          DOL&apos;s record prints it as <span className="font-mono text-sm font-bold text-foreground">{status}</span>
         </p>
 
         {entry ? (
@@ -248,7 +248,7 @@ export default async function StagePage({
           ].map((d) => (
             <Fragment key={d.k}>{" "}
             <div className="bg-card p-5">
-              <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+              <p className="text-sm font-bold text-foreground/70">
                 {d.k}
               </p>{" "}
               <p className="mt-1.5 font-heading text-2xl font-black tabular-nums">
@@ -407,7 +407,7 @@ export default async function StagePage({
               </details>
             </>
           ) : null}
-          <p className="mt-5 border-t-2 border-border pt-3 font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+          <p className="mt-5 border-t-2 border-border pt-3 text-sm text-foreground/70">
             {asOf
               ? `DOL live case record, as of ${formatAsOf(asOf) ?? asOf}`
               : "DOL live case record"}
