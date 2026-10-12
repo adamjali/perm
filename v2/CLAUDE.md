@@ -9509,3 +9509,67 @@ minutes) before pushing new components.
 **Capturing production can trip the defense.** Headless page captures of production from this Mac (two widths a page, many pages, plus the 119-page glued-text sweep) made this address the busiest on the site: 795 page requests in 45 minutes, 19 answered busy. With an Amazon-hosted crawler already challenged, the app ran full and the automatic defense put Under Attack Mode on at 6:37 PM EDT Oct 11, so every visitor met a browser check until it stood down. Capture the dev server on production data; capture production only a few pages at a time, and never during a deploy.
 
 **Disk.** The dev server's `.next/dev/cache` grew to 5.9 GB and the disk reached 36 MB free mid-capture (ENOSPC). Stop the dev server and delete `.next/dev/cache` and old capture folders between long QA runs.
+
+## Oct 11 2026 (night): "did you mean" everywhere, the About page, the 404
+
+**One matcher, `src/lib/fuzzy.ts`.** `fuzzyScore(query, candidate)` is the best of two readings:
+word by word (exact, prefix, or within an edit allowance set by the word's length: none for 3
+letters or fewer, 1 to 3 above; swapped neighbours count as one edit) and letters only (spaces
+taken out, so "walmart" finds Wal-Mart and "j p morgan" finds JPMorgan). A query at the start of
+a word scores above both, and one ending on a word boundary above that, so "intel" ranks Intel
+Corporation over Intellectt. `rankFuzzy` ranks a short list; `FuzzyIndex` serves a long one,
+picking candidates by letter triplets (rare ones first) and weighting equally close names by
+filings (`0.85 + 0.15 * min(1, log10(1 + n) / 3.5)`), so "amazn" means Amazon. Tests:
+`src/lib/__tests__/fuzzy.test.ts`, each probed red. On 298,000 real employer names it answered
+in 1 to 200 ms.
+
+**`GET /api/suggest?kind=employer|attorney|occupation|all&q=`** (`src/lib/turso/nameSuggest.ts`):
+every employer with a page (published, live-only, no-PERM), law firm and occupation, held in each
+web process for six hours. 400 for a bad kind or a query outside 2 to 80 characters, 503 when the
+names can't be read, `s-maxage=3600` when complete. Types live in `src/lib/search/suggestTypes.ts`
+(the reader is server-only). `published` says a name has a PERM entity page (the comparison picker
+offers only those).
+
+**A large read starves inside a busy web process.** The first deploy loaded 20,000-row windows and
+every one missed the read layer's 20-second deadline in production, while the database returned
+the window (2.6 MB) in 0.19 s and a bare `@libsql/client` read it in 0.65 s on the same server.
+The web copy was rendering pages. Now: 5,000-row windows, one source at a time, the event loop let
+go between windows, the index built in slices (`FuzzyIndex.build`), and a search waits at most 2 s
+per kind (`indexReady`) before answering with what's ready, naming the rest in `warming` (not
+cached); `useNameSuggestions` asks once more 4 s later. Measure a slow read in a bare process
+before blaming the database: `ssh` and import `lib-esm/http.js` from the release's pnpm store.
+
+**Where "did you mean" shows** (`DidYouMean`, `useNameSuggestions`, `nameSuggestionChips` in
+`src/components/search/DidYouMean.tsx`): the 404 (`NotFoundSuggestions` + `suggestForPath` in
+`src/lib/search/didYouMean.ts`, which recognises a family address even with its name mistyped);
+the palette (cmdk's `filter` is the site's matcher, and a forced-mount "Did you mean" group of
+names); `FilterableStatTable` (server names with `suggestKind`, else its own rows by
+`suggestText`); the case search, the PERM and wage-request/LCA browsers and the comparison picker
+(a chip re-runs the search under that name); and, as the closest items shown in place of nothing,
+the article listings, policy documents, debarments, the change feed and the app's timeline picker.
+The page index the palette and the 404 share is `src/lib/search/siteIndex.ts`.
+
+**The 404 page** is prerendered, so it reads the address in the browser
+(`useSyncExternalStore` for mounted, no state set in an effect); it keeps answering 404 and
+noindex. Inside the site layout (an entity page's `notFound()`) it renders under the site header.
+
+**The About page** is built in one frame per section: the definition beside the portrait on a lime
+slab with the live-since date stamped on it, who runs it with her bar record, both halves as the
+app's real pages (`AppWindow`), the sources as an HTML flow, the homepage's record ledger
+(`RecordStrip`, so the page moved from force-static to a daily window and joined
+`api/revalidate-sweep/paths.ts`), the changelog's dated milestones, three refusals, one contact
+band. Ink panels are `bg-foreground text-background dark:bg-card dark:text-foreground` with lime
+as `text-primary-on-ink dark:text-primary-text`. "Nothing is modeled or crowd-sourced" was false
+(estimates, people's own timelines) and now says estimates are graded on the scorecard.
+
+**Smaller:** OPT employer tables show 25 rows and fold the rest, each total printed by its bar on a
+phone; the scorecard shows its first two readings and folds the rest; the bulletin board says the
+33 "open to every date" lines once as chips; the bulletin matrix tints Current and Unavailable;
+the RFI stage line reads "DOL's record prints it as ..."; calculators and About lose their
+all-caps labels. `svg-title-single-child.test.ts`'s floor is 3 (the About diagram's `<title>` left
+with it).
+
+**Capturing:** `node_modules/.cache/qa/` holds `top-shot.mjs` (1440 and 390), `dark-shot.mjs`,
+`embed-shot.mjs` (560 and 360) and `load-shot.mjs` (waits for load, for /login and other pages
+with sign-in widgets that never go network-idle). A PIL crop past an image's bottom fills black:
+not a page defect. A dev capture right after an edit can beat the recompile.

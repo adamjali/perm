@@ -661,3 +661,16 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (evening)".
 - **Article cards lie on their side on a phone** (/guides 25,443 to 12,368 px).
 - **The dev server's Turbopack cache filled the disk again** (5.9 GB, 36 MB free): stop it and `rm -rf .next/dev/cache` between long QA runs.
 - **Bulk captures of production helped trip Under Attack Mode** (6:37 PM EDT): 795 page loads in 45 minutes from one Mac beside a challenged crawler. Capture the dev server instead.
+
+## Oct 11 2026 (night), in eight lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (night)".
+
+- **"Did you mean" wherever a search can come up empty**: one matcher (`src/lib/fuzzy.ts`: typos by word length, swapped letters, spacing, whole words first), and `/api/suggest` over every employer, law firm and occupation name.
+- **Equally close names give way to the busier one**: "amazn" means Amazon, not a two-filing "AmazngCleaning".
+- **The 404 reads the address that missed** (a mistyped page or article, or a missing employer, firm or occupation turned into a search of that family) and has For attorneys and Search every filing doors.
+- **A 2.6 MB read starved inside a busy web process** (20 s+ where the database took 0.19 s): big loads go in small windows with the event loop let go between them, and a search never waits out a first load.
+- **About is rebuilt** around the person, both halves as the app's real pages, the sources as a flow, the dated record, and one contact band; "nothing is modeled or crowd-sourced" was false and is gone.
+- **Long lists fold**: OPT employers (23,693 to 5,173 px), the scorecard's readings, 33 identical bulletin sentences as four chips.
+- **A table cell's fill can say its state**: the bulletin matrix tints Current and Unavailable, with a key.
+- **The dev capture scripts live in `node_modules/.cache/qa/`**: `top-shot.mjs`, `dark-shot.mjs`, `embed-shot.mjs`, `load-shot.mjs` (for pages that never go network-idle).
