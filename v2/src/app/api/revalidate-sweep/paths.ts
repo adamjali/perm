@@ -16,6 +16,8 @@
  */
 export const SWEEP_PAGES = [
   "/",
+  // The About page prints the homepage's record ledger, its "checked" date included.
+  "/about",
   "/perm-decision-activity",
   "/perm-case-statuses",
   "/perm-rfi-audit",

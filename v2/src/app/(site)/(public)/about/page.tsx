@@ -10,22 +10,42 @@
  * Every fact here is read from `src/lib/constants/about.ts`, the same module
  * the homepage block and the Organization schema read, so the three surfaces
  * cannot drift apart. Nothing on this page is a claim the site owner has not
- * approved in writing.
+ * approved in writing; the dated milestones are the changelog's own entries.
+ *
+ * THE LAYOUT. Every section is the same frame (a heading, at most one line
+ * under it, then the picture or figure that answers it), so the page reads
+ * as one system: the person over a lime slab, the two halves as the app's
+ * real pages, the sources as a flow into the pages they feed, the record as
+ * the homepage's ledger, the dates as a line, and the contact as one band.
  */
 
 import type { Metadata } from "next";
-import { withSocialCard } from "@/lib/socialCard";
+import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { ArrowRightIcon, BriefcaseIcon, HourglassIcon } from "@phosphor-icons/react/ssr";
+import {
+  ArrowDownIcon,
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  BankIcon,
+  BriefcaseIcon,
+  FileXIcon,
+  HourglassIcon,
+  ScalesIcon,
+} from "@phosphor-icons/react/ssr";
 
+import { RecordStrip } from "@/components/home/RecordStrip";
+import { AppWindow, type WindowShots } from "@/components/marketing/AppWindow";
+import { TOUR_SHOTS } from "@/components/marketing/tourShots";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { withSocialCard } from "@/lib/socialCard";
+import { cn } from "@/lib/utils";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { SCHEMA_IDS } from "@/lib/structuredData";
+import { getRecordCounts } from "@/lib/turso/recordCounts";
 import {
   ABOUT_ONE_LINER,
-  ABOUT_TWO_HALVES,
   FOUNDED,
   LEGAL_FORM,
   LEGAL_NAME,
@@ -58,8 +78,9 @@ export const metadata: Metadata = withSocialCard({
   },
 }, "about");
 
-// Prose only, no data reads: prerendered once per deploy.
-export const dynamic = "force-static";
+// The record's ledger is read from the sweep's docs, which also expire this
+// page when they move (api/revalidate-sweep/paths.ts).
+export const revalidate = 86400;
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -72,13 +93,110 @@ function monthLabel(ym: string): string {
   return `${MONTHS[Number(m) - 1]} ${y}`;
 }
 
-const link =
-  "font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary";
-const h2 = "mt-12 font-heading text-xl font-bold tracking-tight sm:text-2xl";
-const p = "mt-4 text-base leading-relaxed text-foreground/90";
+const LINK =
+  "font-semibold underline decoration-primary decoration-2 underline-offset-[3px] transition-colors hover:text-primary";
 
-export default function AboutPage() {
+/** The public case lookup, as the guide's header picture captured it. */
+const CASE_PAGE: WindowShots = {
+  light: { src: "/images/content/heroes/guides/check-perm-case-status.webp", width: 1600, height: 1200 },
+  dark: { src: "/images/content/heroes/guides/check-perm-case-status.webp", width: 1600, height: 1200 },
+};
+
+const HALVES = [
+  {
+    key: "waiting",
+    Icon: HourglassIcon,
+    title: "Waiting on a case",
+    line: "Look up a PERM, wage request, LCA, H-2A or H-2B number, pending ones included, and get an email when DOL moves it. No account needed.",
+    url: "permtracker.app/perm-case-status",
+    shots: CASE_PAGE,
+    alt: "A PERM case looked up on permtracker.app: DOL's status in plain English and the estimated decision date",
+    caption: "A real case, looked up on October 11, 2026.",
+    links: [
+      { href: "/perm-case-status", label: "Look up a case" },
+      { href: "/case-search", label: "Find one by employer" },
+    ],
+  },
+  {
+    key: "practice",
+    Icon: BriefcaseIcon,
+    title: "Running a practice",
+    line: "A free deadline app for attorneys, paralegals and HR teams: every date under 20 CFR 656 worked out per case, with reminders and calendar sync.",
+    url: "permtracker.app/dashboard",
+    shots: TOUR_SHOTS.hub,
+    alt: "The deadline hub in the PERM Tracker app: each case's next date, sorted into overdue, this week, this month and later",
+    caption: "Sample cases. The employers are invented.",
+    links: [
+      { href: "/for-attorneys", label: "See the app" },
+      { href: "/signup", label: "Start free" },
+    ],
+  },
+] as const;
+
+const SOURCES = [
+  { agency: "Department of Labor", what: "Every case's status, pending included, and the quarterly files with the wage" },
+  { agency: "USCIS", what: "I-140 and I-485 counts and processing times" },
+  { agency: "State Department", what: "Every visa bulletin since June 2005" },
+] as const;
+
+const PAGES = [
+  { href: "/perm-case-status", label: "Case status" },
+  { href: "/perm-processing-times", label: "Processing times" },
+  { href: "/perm-wages", label: "Wages by occupation" },
+  { href: "/perm-decision-activity", label: "Decisions, day by day" },
+  { href: "/visa-bulletin", label: "The visa bulletin" },
+] as const;
+
+/** The domain's own two dates, then the changelog's entries, each linked. */
+const MILESTONES: readonly { when: string; what: string; href?: string }[] = [
+  { when: FOUNDED, what: "The domain is registered" },
+  { when: LIVE_SINCE, what: "The site goes live" },
+  { when: "2026-08", what: "Every case number checked against DOL directly", href: "/changelog/case-status-and-first-party-data" },
+  { when: "2026-09", what: "USCIS's own numbers, and following an employer", href: "/changelog/uscis-data-and-following-employers" },
+  { when: "2026-10", what: "Open data, a free API, and H-2A, H-2B and CW-1", href: "/changelog/open-data-api-and-seasonal-visas" },
+];
+
+const NOT_THIS = [
+  {
+    Icon: ScalesIcon,
+    title: "Not a law firm",
+    line: "Nothing here is legal advice, and using it doesn't make you anyone's client.",
+  },
+  {
+    Icon: BankIcon,
+    title: "Not the government",
+    line: "It reads what DOL, USCIS and the State Department publish, and can't see inside DOL beyond that.",
+  },
+  {
+    Icon: FileXIcon,
+    title: "Not your file",
+    line: "It doesn't file anything. Your attorney has the file; this site shows where the queue is.",
+  },
+] as const;
+
+const ELSEWHERE = [
+  { href: X_PROFILE_URL, label: "X" },
+  { href: MEDIUM_PROFILE_URL, label: "Medium" },
+  { href: PRODUCT_HUNT_URL, label: "Product Hunt" },
+] as const;
+
+const BUTTON =
+  "inline-flex min-h-[48px] items-center gap-2 border-2 border-border px-5 font-heading text-base font-black shadow-hard-sm transition-transform hover:-translate-y-[1px] active:translate-y-0 motion-reduce:transition-none";
+
+function SectionHead({ id, title, line }: { id: string; title: string; line?: string }) {
+  return (
+    <>
+      <h2 id={id} className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+        {title}
+      </h2>{" "}
+      {line ? <p className="mt-3 max-w-2xl text-lg leading-relaxed text-foreground/70">{line}</p> : null}
+    </>
+  );
+}
+
+export default async function AboutPage() {
   const baseUrl = SITE_URL;
+  const record = await getRecordCounts();
   // AboutPage whose subject is the Organization node every page already
   // carries, by @id, so Google attaches these facts to the same entity rather
   // than to a second, inline copy of it.
@@ -93,190 +211,257 @@ export default function AboutPage() {
   };
 
   return (
-    // The site's full-width frame, with a reading column at a book measure
-    // and an aside beside it for the person, dates and contact links. Below
-    // `lg` the aside follows the prose.
-    <div className="mx-auto w-full max-w-[1400px] px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
+    <div className="mx-auto w-full max-w-6xl px-4 pb-20 pt-10 sm:px-6 sm:pb-28 sm:pt-14">
       <JsonLdScript schema={aboutSchema} />
 
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-        About PERM Tracker
-      </h1>{" "}
-      <div className="mt-6 grid gap-12 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16">
-      <div className="min-w-0 max-w-[52rem]">
-      <p className="max-w-3xl text-lg leading-relaxed text-foreground/90 sm:text-xl">
-        {ABOUT_ONE_LINER} It&apos;s not a law firm, it isn&apos;t affiliated with
-        the Department of Labor, and nothing on it is legal advice.
-      </p>{" "}
-      {/* Both halves, side by side and equal. */}
-      <h2 className="mt-10 font-heading text-xl font-black">Two halves, both free</h2>{" "}
-      <ul className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 [&>*]:min-w-0">
-        <li className="border-2 border-border bg-card p-5 shadow-hard-sm">
-          <HourglassIcon aria-hidden="true" className="size-8 text-primary" weight="bold" />{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/85">{ABOUT_TWO_HALVES.waiting}</p>
-        </li>{" "}
-        <li className="border-2 border-border bg-foreground p-5 text-background shadow-hard-sm">
-          <BriefcaseIcon aria-hidden="true" className="size-8 text-primary-on-ink" weight="bold" />{" "}
-          <p className="mt-3 text-base leading-relaxed text-background/85">{ABOUT_TWO_HALVES.practice}</p>
-        </li>
-      </ul>{" "}
-
-      <figure className="mt-10 overflow-x-auto overscroll-x-none border-2 border-border bg-card p-4 shadow-hard sm:p-6">
-        <svg viewBox="0 0 760 300" className="w-full min-w-[640px] text-foreground" role="img" aria-labelledby="data-flow-title">
-          <title id="data-flow-title">How the site works: DOL&apos;s case index is asked every night and on every lookup, DOL&apos;s disclosure files are read each quarter, USCIS and the State Department each month; all of it lands in the pages: case status, processing times, wages and deadlines.</title>
-          <text x="20" y="28" fontSize="13" fontWeight="700" fill="currentColor">Federal sources</text>
-          <rect x="20" y="44" width="200" height="56" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
-          <text x="32" y="68" fontSize="14" fontWeight="700" fill="#000000">DOL case-status index</text>
-          <text x="32" y="88" fontSize="13" fill="#000000">every case, pending included</text>
-          <rect x="20" y="118" width="200" height="56" fill="none" stroke="currentColor" strokeWidth="3" />
-          <text x="32" y="142" fontSize="14" fontWeight="700" fill="currentColor">DOL disclosure files</text>
-          <text x="32" y="162" fontSize="13" fill="currentColor">decided cases and the wage</text>
-          <rect x="20" y="192" width="200" height="56" fill="none" stroke="currentColor" strokeWidth="3" />
-          <text x="32" y="216" fontSize="14" fontWeight="700" fill="currentColor">USCIS and State Dept</text>
-          <text x="32" y="236" fontSize="13" fill="currentColor">I-140, I-485, the visa bulletin</text>
-          <line x1="220" y1="72" x2="300" y2="140" stroke="currentColor" strokeWidth="3" />
-          <line x1="220" y1="146" x2="300" y2="146" stroke="currentColor" strokeWidth="3" />
-          <line x1="220" y1="220" x2="300" y2="152" stroke="currentColor" strokeWidth="3" />
-          <text x="300" y="28" fontSize="13" fontWeight="700" fill="currentColor">Read by us</text>
-          <rect x="300" y="100" width="180" height="92" fill="var(--card)" stroke="currentColor" strokeWidth="3" />
-          <text x="314" y="126" fontSize="14" fontWeight="700" fill="currentColor">Nightly sweep</text>
-          <text x="314" y="146" fontSize="13" fill="currentColor">plus a live ask on every</text>
-          <text x="314" y="164" fontSize="13" fill="currentColor">case lookup, and monthly</text>
-          <text x="314" y="182" fontSize="13" fill="currentColor">and quarterly loads</text>
-          <line x1="480" y1="146" x2="540" y2="146" stroke="currentColor" strokeWidth="3" />
-          <polygon points="540,138 556,146 540,154" fill="currentColor" />
-          <text x="560" y="28" fontSize="13" fontWeight="700" fill="currentColor">What you read</text>
-          <rect x="560" y="44" width="180" height="40" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
-          <text x="572" y="69" fontSize="14" fontWeight="700" fill="#000000">Case status</text>
-          <rect x="560" y="96" width="180" height="40" fill="none" stroke="currentColor" strokeWidth="3" />
-          <text x="572" y="121" fontSize="14" fontWeight="700" fill="currentColor">Processing times</text>
-          <rect x="560" y="148" width="180" height="40" fill="none" stroke="currentColor" strokeWidth="3" />
-          <text x="572" y="173" fontSize="14" fontWeight="700" fill="currentColor">Wages and employers</text>
-          <rect x="560" y="200" width="180" height="40" fill="none" stroke="currentColor" strokeWidth="3" />
-          <text x="572" y="225" fontSize="14" fontWeight="700" fill="currentColor">Your deadlines</text>
-          <text x="20" y="284" fontSize="13" fill="currentColor">Every figure carries its source and the date it was measured. Estimates say so.</text>
-        </svg>
-      </figure>
-
-      <h2 className={h2}>What it does</h2>{" "}
-      <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {[
-          { href: "/perm-case-status", label: "Look up a case number" },
-          { href: "/case-search", label: "Search every filing by employer or firm" },
-          { href: "/perm-processing-times", label: "DOL's processing times" },
-          { href: "/perm-wages", label: "Wages by occupation" },
-          { href: "/perm-decision-activity", label: "Decisions, day by day" },
-          { href: "/for-attorneys", label: "Track a caseload's deadlines" },
-        ].map((l) => (
-          <li key={l.href}>
-            <Link href={l.href} className={`${link} inline-flex min-h-[44px] items-center gap-2`}>
-              <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
-              {l.label}
-            </Link>{" "}
-          </li>
-        ))}
-      </ul>{" "}
-
-      <h2 className={h2}>Who&apos;s behind it</h2>{" "}
-      <p className={p}>
-        {/* The brand name links home: the homepage is the page that should own the name. */}
-        <strong className="font-semibold">{SABRINA.name}</strong> runs{" "}
-        <Link href="/" className={link}>PERM Tracker</Link>.
-        She&apos;s an immigration attorney who files these cases, and she started
-        it because the people she files for had no way to see where a case stood
-        between the filing and the decision. She still files them, and her
-        clients&apos; questions shape what the site answers first.
-      </p>{" "}
-      <p className={p}>
-        She brings both sides of a filing to the site: the attorney&apos;s
-        deadlines and audits, and her clients&apos; wait with nothing to check.
-        She&apos;s also the voice of the site&apos;s email.
-      </p>{" "}
-
-      <h2 className={h2}>Where the data comes from</h2>{" "}
-      <p className={p}>
-        Every figure comes from a named federal source: DOL&apos;s FLAG system and
-        disclosure files, USCIS&apos;s published counts, and the State
-        Department&apos;s visa bulletin. An estimated date is labelled as one and graded
-        in public on the{" "}
-        <Link href="/estimate-scorecard" className={link}>estimate scorecard</Link>, and
-        shared timelines are what people reported about their own cases.{" "}
-        <Link href="/methodology" className={link}>The methodology page</Link>{" "}
-        traces every number.
-      </p>{" "}
-
-      <h2 className={h2}>What it isn&apos;t</h2>{" "}
-      <p className={p}>
-        PERM Tracker doesn&apos;t give legal advice, doesn&apos;t file anything for
-        you, and can&apos;t see inside DOL beyond what DOL publishes. A pending case
-        shows the status DOL reports and nothing more. Your attorney has the file;
-        this site tells you where the queue is.
-      </p>
-      </div>
-
-      {/* The aside: the person, the dates, the ways in. Sticky on desktop so
-          the face and the contact stay beside whatever paragraph is being
-          read; a normal block below `lg`. */}
-      <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <div className="border-2 border-border bg-card p-5 shadow-hard">
-          {/* Her portrait, cropped to the card by object-fit rather than by a
-              second file, with the source's real 640x800 declared so the box
-              is reserved at the right aspect before the bytes arrive. */}
-          <Image
-            src={SABRINA.image}
-            alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
-            width={SABRINA.imageSize[0]}
-            height={SABRINA.imageSize[1]}
-            sizes="(min-width: 1024px) 20rem, 100vw"
-            className="aspect-[4/5] w-full border-2 border-border object-cover object-top"
-            priority
-          />{" "}
-          <p className="mt-4 font-heading text-lg font-bold leading-tight">{SABRINA.name}</p>{" "}
-          <p className="text-sm text-muted-foreground">{SABRINA.jobTitle}</p>{" "}
-          {/* The bar's own record, the same link her Person node carries as
-              sameAs, so the license the schema points at is on the page too.
-              No status is typed here: the record says it, and a typed one
-              would go stale. */}
-          <p className="mt-2 text-sm text-foreground/85">
-            Admitted to the D.C. Bar in 2025.{" "}
-            <a href={DC_BAR_SABRINA_URL} className={link} rel="noopener" target="_blank">
-              Her bar record
-            </a>
-            .
-          </p>
-        </div>{" "}
-
-        <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">
-          <h2 className="font-heading text-base font-black">Since when</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/85">
-            Domain registered {monthLabel(FOUNDED)}. Live since {monthLabel(LIVE_SINCE)}.
-            Reads DOL&apos;s quarterly disclosure files and asks DOL&apos;s own
-            case-status system every day.
+      {/* The definition beside the person who runs it. */}
+      <section className="grid grid-cols-1 items-center gap-12 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
+        <div>
+          <h1 className="font-heading text-5xl font-black leading-[1.02] sm:text-6xl">About PERM Tracker</h1>{" "}
+          <p className="mt-6 max-w-xl text-xl leading-relaxed">{ABOUT_ONE_LINER}</p>{" "}
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-foreground/70">
+            It&apos;s free on both sides: for the person waiting on a case, and for the attorney who filed it.
           </p>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/85">
-            Operated by {LEGAL_NAME}, {LEGAL_FORM}. That is the party named in the{" "}
-            <Link href="/terms" className="underline underline-offset-2 hover:text-primary">
-              terms
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/perm-case-status" className={cn(BUTTON, "bg-primary text-black")}>
+              Check a case <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
+            </Link>{" "}
+            <Link href="/for-attorneys" className={cn(BUTTON, "bg-card")}>
+              For attorneys
             </Link>
-            .
+          </div>
+        </div>{" "}
+        <figure className="relative mx-auto w-full max-w-sm lg:mr-0">
+          <div aria-hidden="true" className="absolute inset-0 translate-x-4 translate-y-4 border-2 border-border bg-primary" />
+          <div className="relative border-2 border-border bg-card p-3">
+            <Image
+              src={SABRINA.image}
+              alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
+              width={SABRINA.imageSize[0]}
+              height={SABRINA.imageSize[1]}
+              sizes="(min-width: 1024px) 24rem, 90vw"
+              className="aspect-[4/5] w-full border-2 border-border object-cover object-top"
+              priority
+            />{" "}
+            <figcaption className="px-1 pb-1 pt-3">
+              <span className="block font-heading text-xl font-black leading-tight">{SABRINA.name}</span>{" "}
+              <span className="block text-base text-foreground/70">{SABRINA.jobTitle}, runs PERM Tracker</span>
+            </figcaption>
+          </div>
+          {/* The site's own date, stamped across the card's edge. */}
+          <p className="absolute -left-3 top-6 border-2 border-border bg-foreground px-3 py-2 font-mono text-sm font-bold text-background shadow-hard-sm dark:bg-card dark:text-foreground sm:-left-6">
+            Live since {monthLabel(LIVE_SINCE)}
+          </p>
+        </figure>
+      </section>
+
+      {/* Who runs it: the words beside the record that backs them. */}
+      <section aria-labelledby="who" className="mt-24 grid grid-cols-1 gap-8 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-16">
+        <div>
+          <SectionHead id="who" title="Who runs it" />{" "}
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed">
+            {SABRINA.name} is an immigration attorney who files these cases. She started PERM Tracker because the
+            people she files for had no way to see where a case stood between the filing and the decision, and her
+            clients&apos; questions still shape what the site answers first.
           </p>
         </div>{" "}
+        <dl className="grid grid-cols-1 gap-px self-start border-2 border-border bg-border">
+          <div className="bg-card px-5 py-4">
+            <dt className="text-sm text-foreground/70">Admitted</dt>{" "}
+            <dd className="mt-0.5 font-heading text-lg font-black">
+              D.C. Bar, 2025.{" "}
+              <a href={DC_BAR_SABRINA_URL} className={LINK} rel="noopener" target="_blank">
+                Her bar record
+              </a>
+            </dd>
+          </div>{" "}
+          <div className="bg-card px-5 py-4">
+            <dt className="text-sm text-foreground/70">Also on</dt>{" "}
+            <dd className="mt-0.5 font-heading text-lg font-black">
+              <a href={LINKEDIN_SABRINA_URL} className={LINK} rel="me noopener" target="_blank">
+                LinkedIn
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </section>
 
-        <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">
-          <h2 className="font-heading text-base font-black">Contact</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/85">
-            <a href="mailto:support@permtracker.app" className={link}>support@permtracker.app</a>.
-            PERM Tracker is also on{" "}
-            <a href={X_PROFILE_URL} className={link} rel="me noopener" target="_blank">X</a>,{" "}
-            <a href={MEDIUM_PROFILE_URL} className={link} rel="me noopener" target="_blank">Medium</a>{" "}
-            and{" "}
-            <a href={PRODUCT_HUNT_URL} className={link} rel="me noopener" target="_blank">Product Hunt</a>,
-            and {SABRINA.name} is on{" "}
-            <a href={LINKEDIN_SABRINA_URL} className={link} rel="me noopener" target="_blank">LinkedIn</a>.
+      {/* The two halves, as the pages each one actually gets. */}
+      <section aria-labelledby="halves" className="mt-24">
+        <SectionHead id="halves" title="Two halves, both free" line="The same federal record, read for two different people." />{" "}
+        <div className="mt-10 grid grid-cols-1 gap-16 [&>*]:min-w-0 lg:grid-cols-2 lg:gap-12">
+          {HALVES.map((h) => (
+            <article key={h.key} className="flex flex-col">
+              <div className="flex items-center gap-3">
+                <span className="grid size-11 shrink-0 place-items-center border-2 border-border bg-foreground text-primary-on-ink dark:bg-card dark:text-primary-text">
+                  <h.Icon aria-hidden="true" className="size-6" weight="bold" />
+                </span>{" "}
+                <h3 className="font-heading text-2xl font-black">{h.title}</h3>
+              </div>{" "}
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-foreground/80">{h.line}</p>{" "}
+              <ul className="mt-5 flex flex-wrap gap-3">
+                {h.links.map((l) => (
+                  <Fragment key={l.href}>
+                    <li>
+                      <Link href={l.href} className={cn(BUTTON, "min-h-[44px] bg-card px-4 font-sans font-bold")}>
+                        {l.label} <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
+                      </Link>
+                    </li>{" "}
+                  </Fragment>
+                ))}
+              </ul>{" "}
+              <AppWindow url={h.url} shots={h.shots} alt={h.alt} caption={h.caption} className="mt-8" />
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Where the figures come from: sources, the reading, the pages. */}
+      <section aria-labelledby="sources" className="mt-24">
+        <SectionHead
+          id="sources"
+          title="Where every figure comes from"
+          line="Three federal agencies, read several times a day and live on every case lookup. Each figure carries its source and its date."
+        />{" "}
+        <div className="mt-10 grid grid-cols-1 items-stretch gap-4 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.2fr)_auto_minmax(0,0.8fr)_auto_minmax(0,1fr)]">
+          <ol className="grid grid-cols-1 gap-3">
+            {SOURCES.map((s) => (
+              <Fragment key={s.agency}>
+                <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
+                  <span className="block font-heading text-lg font-black">{s.agency}</span>{" "}
+                  <span className="mt-1 block text-sm leading-snug text-foreground/70">{s.what}</span>
+                </li>{" "}
+              </Fragment>
+            ))}
+          </ol>{" "}
+          <span aria-hidden="true" className="grid place-items-center py-1">
+            <ArrowRightIcon className="hidden size-8 lg:block" weight="bold" />
+            <ArrowDownIcon className="size-8 lg:hidden" weight="bold" />
+          </span>{" "}
+          <div className="grid content-center border-2 border-border bg-foreground p-5 text-background shadow-hard dark:bg-card dark:text-foreground">
+            <span className="block font-heading text-xl font-black text-primary-on-ink dark:text-primary-text">PERM Tracker</span>{" "}
+            <span className="mt-2 block text-sm leading-relaxed opacity-80">
+              Checks DOL several times a day, loads each new file the day it lands, and asks DOL again whenever a
+              case is looked up.
+            </span>
+          </div>{" "}
+          <span aria-hidden="true" className="grid place-items-center py-1">
+            <ArrowRightIcon className="hidden size-8 lg:block" weight="bold" />
+            <ArrowDownIcon className="size-8 lg:hidden" weight="bold" />
+          </span>{" "}
+          <ul className="grid grid-cols-1 content-center gap-2">
+            {PAGES.map((pg) => (
+              <Fragment key={pg.href}>
+                <li>
+                  <Link
+                    href={pg.href}
+                    className="flex min-h-[44px] items-center justify-between gap-3 border-2 border-border bg-card px-4 font-bold transition-colors hover:bg-tint-primary"
+                  >
+                    {pg.label} <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
+                  </Link>
+                </li>{" "}
+              </Fragment>
+            ))}
+          </ul>
+        </div>{" "}
+        <div className="mt-12 max-w-3xl">
+          <RecordStrip record={record} />{" "}
+          <p className="mt-4 text-base text-foreground/70">
+            Estimated dates are labelled as estimates and graded in public on the{" "}
+            <Link href="/estimate-scorecard" className={LINK}>estimate scorecard</Link>.{" "}
+            <Link href="/methodology" className={LINK}>The methodology page</Link> traces every number.
           </p>
         </div>
-      </aside>
-      </div>
+      </section>
+
+      {/* Since when: the domain's own dates, then the changelog's. */}
+      <section aria-labelledby="since" className="mt-24">
+        <SectionHead id="since" title="Since when" />{" "}
+        <ol className="relative mt-10 grid grid-cols-1 gap-6 [&>*]:min-w-0 lg:grid-cols-5 lg:gap-4">
+          {MILESTONES.map((m, i) => (
+            <Fragment key={`${m.when} ${m.what}`}>
+              <li className="relative pl-10 lg:pl-0 lg:pt-10">
+                {/* The line runs from each marker to the next. */}
+                {i < MILESTONES.length - 1 ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-[9px] top-5 -bottom-6 w-0.5 bg-border lg:left-5 lg:-right-4 lg:top-[9px] lg:bottom-auto lg:h-0.5 lg:w-auto"
+                  />
+                ) : null}
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-0 top-0.5 size-5 border-2 border-border lg:top-0 ${i === MILESTONES.length - 1 ? "bg-primary" : "bg-card"}`}
+                />{" "}
+                <span className="block font-mono text-sm font-bold">{monthLabel(m.when)}</span>{" "}
+                <span className="mt-1 block text-base leading-snug">
+                  {m.href ? (
+                    <Link href={m.href} className={LINK}>
+                      {m.what}
+                    </Link>
+                  ) : (
+                    m.what
+                  )}
+                </span>
+              </li>{" "}
+            </Fragment>
+          ))}
+        </ol>{" "}
+        <p className="mt-8 text-base text-foreground/70">
+          Every change since is on the <Link href="/changelog" className={LINK}>changelog</Link>, corrections included.
+        </p>
+      </section>
+
+      {/* What it isn't, in three plain refusals. */}
+      <section aria-labelledby="isnt" className="mt-24">
+        <SectionHead id="isnt" title="What it isn't" />{" "}
+        <ul className="mt-10 grid grid-cols-1 gap-5 [&>*]:min-w-0 md:grid-cols-3">
+          {NOT_THIS.map((n) => (
+            <Fragment key={n.title}>
+              <li className="border-2 border-border bg-card p-6">
+                <n.Icon aria-hidden="true" className="size-9" weight="bold" />{" "}
+                <span className="mt-4 block font-heading text-xl font-black">{n.title}</span>{" "}
+                <span className="mt-2 block text-base leading-relaxed text-foreground/75">{n.line}</span>
+              </li>{" "}
+            </Fragment>
+          ))}
+        </ul>
+      </section>
+
+      {/* One band for every way to reach it. */}
+      <section aria-labelledby="contact" className="mt-24 border-2 border-border bg-foreground p-6 text-background shadow-hard dark:bg-card dark:text-foreground sm:p-12">
+        <h2 id="contact" className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+          Write to us
+        </h2>{" "}
+        <a
+          href="mailto:support@permtracker.app"
+          className="mt-5 inline-block font-heading text-xl font-black text-primary-on-ink underline decoration-2 dark:text-primary-text underline-offset-[6px] [overflow-wrap:anywhere] hover:decoration-4 sm:text-3xl lg:text-4xl"
+        >
+          support@permtracker.app
+        </a>{" "}
+        <ul className="mt-8 flex flex-wrap gap-3">
+          {ELSEWHERE.map((e) => (
+            <Fragment key={e.label}>
+              <li>
+                <a
+                  href={e.href}
+                  rel="me noopener"
+                  target="_blank"
+                  className="inline-flex min-h-[44px] items-center gap-2 border-2 border-current px-4 font-bold transition-colors hover:bg-background hover:text-foreground dark:hover:bg-foreground dark:hover:text-background"
+                >
+                  {e.label} <ArrowUpRightIcon aria-hidden="true" className="size-4" weight="bold" />
+                </a>
+              </li>{" "}
+            </Fragment>
+          ))}
+        </ul>{" "}
+        <p className="mt-8 max-w-2xl text-base leading-relaxed opacity-80">
+          Operated by {LEGAL_NAME}, {LEGAL_FORM}, the party named in the{" "}
+          <Link href="/terms" className="underline underline-offset-2 hover:text-primary-on-ink dark:hover:text-primary-text">
+            terms
+          </Link>
+          . The domain was registered in {monthLabel(FOUNDED)}.
+        </p>
+      </section>
     </div>
   );
 }
