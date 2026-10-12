@@ -294,6 +294,15 @@ def main():
             sealed[key] = {"at": at, "bytes": int(size), "file": name}
         except (OSError, ValueError):
             sealed[key] = None
+    # The daily copy of the boot disk in Oracle (bin/permtracker-disk-copies):
+    # when it last made one, how many it holds, and whether Oracle marked the
+    # new one free.
+    disk_copy = None
+    try:
+        at, count, free = (APP / "backups" / "DISKCOPY_OK").read_text().split()
+        disk_copy = {"at": at, "count": int(count), "free": free}
+    except (OSError, ValueError):
+        pass
 
     slot = (APP / "app" / "active").read_text().strip() if (APP / "app" / "active").exists() else None
     release = None
@@ -375,7 +384,7 @@ def main():
             "netP95": p95([s["net"] for s in week if s.get("net") is not None]),
         },
         "backup": {"lastOk": last_ok, "count": len(backups), "offsiteOk": offsite_ok, "restoreOk": restore_ok,
-                   **sealed},
+                   "diskCopy": disk_copy, **sealed},
         # The live slot's second copy (one per CPU) is a service too; the old
         # slot's second copy is stopped on purpose and not listed.
         "services": {u: active(u) for u in SERVICES + ([f"permtracker-web@{slot}2"] if slot else [])},

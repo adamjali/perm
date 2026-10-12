@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily copy of the boot disk in Oracle, 3:45 AM Eastern (after the 3:15 AM database backup, before the 4:10 AM sweep)
+[Timer]
+OnCalendar=*-*-* 03:45:00 America/New_York
+Persistent=true
+RandomizedDelaySec=5m
+[Install]
+WantedBy=timers.target

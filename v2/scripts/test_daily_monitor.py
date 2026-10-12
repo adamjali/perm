@@ -178,7 +178,8 @@ def main() -> int:
              "backup": {"lastOk": {"at": "2026-09-28T07:16:00Z"}, "count": 7,
                         "offsiteOk": {"at": "2026-09-28T07:18:00Z"},
                         "serverOk": {"at": "2026-09-28T07:35:00Z"}, "convexOk": {"at": "2026-09-28T07:52:00Z"},
-                        "restoreOk": {"at": "2026-09-02T09:40:00Z", "tables": 44, "rows": 6_509_035}},
+                        "restoreOk": {"at": "2026-09-02T09:40:00Z", "tables": 44, "rows": 6_509_035},
+                        "diskCopy": {"at": "2026-09-28T07:50:00Z", "count": 4, "free": "yes"}},
              "services": {u: "active" for u in ["permtracker-db", "permtracker-dbcache", "permtracker-web@blue",
                                                 "permtracker-web@green", "nginx", "cloudflared"]},
              "failedUnits": [], "slot": {"active": "blue", "release": "abc-1"},
@@ -329,6 +330,15 @@ def main() -> int:
     check(v(doc(backup={"convexOk": {"at": "2026-09-27T03:00:00Z"}}), now_ms)["status"] == "warn",
           "a sealed Convex copy 32 h old warns")
     check(any("Convex copy" in ln for ln in v(doc(), now_ms)["lines"]), "the report names the Convex copy")
+    check(v(doc(backup={"diskCopy": None}), now_ms)["status"] == "warn", "no Oracle disk copy on record warns")
+    check(v(doc(backup={"diskCopy": {"at": "2026-09-26T03:00:00Z", "count": 4, "free": "yes"}}), now_ms)["status"]
+          == "fail", "an Oracle disk copy 56 h old fails")
+    check(v(doc(backup={"diskCopy": {"at": "2026-09-28T07:50:00Z", "count": 4, "free": "no"}}), now_ms)["status"]
+          == "fail", "a disk copy Oracle didn't mark free fails")
+    check(v(doc(backup={"diskCopy": {"at": "2026-09-28T07:50:00Z", "count": 6, "free": "yes"}}), now_ms)["status"]
+          == "fail", "six disk copies, over the free five, fails")
+    check(any("Oracle disk copies: 4 held" in ln and "all free" in ln for ln in v(doc(), now_ms)["lines"]),
+          "the report names the disk copies")
     all_timers = dm.repo_timers()
     check(len(all_timers) >= 20 and "permtracker-prune.timer" in all_timers, "the repo's timers are found")
     check(v(doc(timers=all_timers), now_ms)["status"] == "ok", "every repo timer enabled reads ok")

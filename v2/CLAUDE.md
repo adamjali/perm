@@ -9620,3 +9620,29 @@ URLs the census once linked answered 404 and redirect now (`next.config.ts`).
 **Smaller:** the 404's brand link hides under the site header (`[body:has([data-site-header])_&]:hidden`);
 the admin and security pages read in sentence case, and a security event of kind `rate_limit` reads
 "Counted": every attempt is a row in the limits table, refused or let through.
+
+## Oct 12 2026 (late morning): Oracle's disk copies, kept inside the free five
+
+**Oracle billed us for disk copies on an Always Free account** (the any-spend alarm, $0.08 then about
+$0.10, drawn from the trial's $300 credit, never the card). Oracle's own schedule
+(`permtracker-daily-keep3`, daily, 3-day expiry) never deleted a copy once it expired: the Oct 4 copy
+expired Oct 7 and was still held on Oct 12, nine were held, and Oracle bills every volume backup past
+the five it marks free. The schedule is unassigned (the policy stays defined), and the owner deleted the
+four billed copies.
+- **Oracle marks a free copy with the system tag `orcl-cloud.free-tier-retained: "true"`**; the billed
+  ones carried no system tags at all, so no tag means billed. Read through the API on Oct 12.
+- **`permtracker-disk-copies`** (3:45 AM Eastern, `scripts/oracle/bin/`, `test_disk_copies.py`): deletes
+  this disk's oldest copies until 3 remain, then makes one, so there are never more than 4 and a fifth
+  free slot stays spare for a copy made by hand before a risky change. Deleting first means a new copy is
+  never the sixth. It fails, so `permtracker-alarm` emails, when the new copy lacks the free tag (it waits
+  10 minutes for the tag first) or more than 5 are held; a copy stuck six hours fails; one being made
+  skips the night. `--dry-run` and `--list` change nothing.
+- **The server signs in to Oracle as itself** (an instance principal): dynamic group `permtracker-server`
+  (rule: the instance's ID) and policy `permtracker-disk-copies` (`manage boot-volume-backups`, `use
+  volumes`; Oracle's policy reference lists `BOOT_VOLUME_BACKUP_CREATE` and `VOLUME_WRITE` for a copy).
+  No key is stored. Granting account permissions is the owner's click: my safety check refused to type
+  the rule, and the owner created both. Oracle's Python library lives in `/opt/permtracker-oci` (534 MB;
+  Ubuntu 26.04 needed `python3-venv` for it); the disk's ID is in `/etc/permtracker/disk-copies.env`,
+  kept off this public repo.
+- **The morning report reads `backups/DISKCOPY_OK`** through `server_health.backup.diskCopy`: warns past
+  30 hours or with no copy on record, fails past 54 hours, on a copy not marked free, or past 5 held.

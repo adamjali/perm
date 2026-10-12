@@ -1,0 +1,13 @@
+[Unit]
+Description=PERM Tracker daily copy of the boot disk in Oracle, kept inside the free five
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=permtracker
+# Making a copy takes minutes; a hung run stops here instead of holding its slot.
+TimeoutStartSec=2h
+Nice=19
+# The disk's ID (BOOT_VOLUME_ID); an identifier, not a secret, kept off the public repo.
+EnvironmentFile=/etc/permtracker/disk-copies.env
+ExecStart=/usr/local/bin/permtracker-disk-copies

@@ -685,6 +685,7 @@ IDLE_MARGIN = 25.0
 SERVER_STALE_MIN = 45
 BACKUP_WARN_H, BACKUP_FAIL_H = 30, 54
 R2_WARN_GB, R2_FAIL_GB = 8.0, 9.5
+DISK_COPY_FREE = 5  # Oracle's Always Free allowance of volume backups
 RESTORE_WARN_D = 40  # the restore test runs monthly; a missed month shows in about ten days
 MUST_RUN = ["permtracker-db", "nginx", "cloudflared"]
 # sqld's two growing parts, each held to the rule sqld itself follows (read
@@ -924,6 +925,24 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
         elif h > BACKUP_WARN_H:
             warns.append(f"{what} {h:.0f} h old")
         lines.append(f"{what[0].upper() + what[1:]}: {et_time(at)}")
+
+    # The daily copy of the boot disk in Oracle (oracle/bin/permtracker-disk-copies),
+    # held inside Oracle's free five. A copy Oracle didn't mark free is billed.
+    disk = b.get("diskCopy") or {}
+    if not disk.get("at"):
+        warns.append("no Oracle disk copy on record (permtracker-disk-copies)")
+    else:
+        h = (now_ms / 1000 - dt.datetime.fromisoformat(disk["at"].replace("Z", "+00:00")).timestamp()) / 3600
+        if h > BACKUP_FAIL_H:
+            fails.append(f"Oracle disk copy {h:.0f} h old")
+        elif h > BACKUP_WARN_H:
+            warns.append(f"Oracle disk copy {h:.0f} h old")
+        if disk.get("free") != "yes":
+            fails.append("the newest Oracle disk copy isn't marked Always free, so Oracle bills it")
+        if (disk.get("count") or 0) > DISK_COPY_FREE:
+            fails.append(f"Oracle holds {disk['count']} disk copies, over the free {DISK_COPY_FREE}")
+        lines.append(f"Oracle disk copies: {disk.get('count')} held, newest {et_time(disk['at'])}"
+                     + (", all free" if disk.get("free") == "yes" else ""))
 
     n = doc.get("now") or {}
     warns.extend(db_folder_warnings(n))

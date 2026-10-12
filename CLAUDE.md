@@ -675,7 +675,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (night)".
 - **A table cell's fill can say its state**: the bulletin matrix tints Current and Unavailable, with a key.
 - **The dev capture scripts live in `node_modules/.cache/qa/`**: `top-shot.mjs`, `dark-shot.mjs`, `embed-shot.mjs`, `load-shot.mjs` (for pages that never go network-idle).
 
-## Oct 12 2026, in five lines
+## Oct 12 2026, in six lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 
@@ -684,3 +684,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 - **The build-file prune no longer takes files the live site still uses**: each deploy dates the files it ships.
 - **The cron dispatcher waits out a busy site** instead of failing on the first 503.
 - **Alert ratings are on**: a case's final alert asks for 1 to 5.
+- **Oracle's disk copies are kept inside the free five by our own job** (`permtracker-disk-copies`, 3:45 AM ET):
+  Oracle's schedule never deleted expired copies and billed the extras; the job deletes the oldest first, keeps 4, and
+  emails when a copy isn't tagged free.
