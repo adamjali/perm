@@ -23,6 +23,14 @@ crawled after its own change was skipped.
 Refused: `/tools` (indexed, last crawled Oct 8, 3:28 PM) at 7:14 PM; first in line next round. Inspected
 only, crawled after their own change: `/press` (Oct 11, 6:51 AM) and `/` (Oct 11, 11:29 AM).
 
+**Round of Oct 12, 5:45 AM EDT: no requests** (the quota window from the Oct 11 run reopens about 6:55 PM EDT).
+The page-indexing emails of 1:13 and 1:37 AM EDT named two new reasons, read on the report (dated Oct 8):
+"Duplicate, Google chose different canonical than user" (5 pages, all spellings the Oct 5 merges folded; each now
+answers 308 to its survivor, validation started Oct 12) and "Alternate page with proper canonical tag" (233, the
+`?q=` search links and `?ref=producthunt`, which point at their clean page on purpose). The two
+`/perm-rfi-audit/` stage URLs Google holds as 404s redirect from this commit. Sitemap index not resubmitted: last
+read Oct 10, 310,921 discovered against 311,568 live.
+
 **Queue for the next round** (slots free up from about 6:55 PM EDT Oct 12): first `/about` (rebuilt the night
 of Oct 11; the page meant to carry the brand query), then the rest of the Oct 11 section from item 4's `/tools`
 and items 5 to 8, then the "Oct 11 (night)" section at the end of this file. Inspect each; request only those
@@ -978,4 +986,10 @@ Listed by `node scripts/gsc_queue.mjs` (since `b957239b`) at 11:40 PM EDT Oct 11
 3. `/visa-bulletin` (33 sentences to four chips), `/visa-bulletin/categories` (cells tinted by state)
 4. `/calculators`, `/badges`, `/security`, `/api-terms`, `/tools/green-card-fees`
 5. Everything else on the script's list: the sitemap's lastmod carries it. The 404 is noindex and never requested.
+
+## Queue after the Oct 12 (early morning) changes
+
+1. `/tools/i485-queue-position` (its limits box folds after the first)
+2. `/for-attorneys` and `/about` carry re-shot app pictures (the dashboard and alerts pages lost a label); their
+   HTML changed only in image sizes, so request them only if a slot is spare.
 
