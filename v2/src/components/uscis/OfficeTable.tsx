@@ -45,6 +45,7 @@ export function OfficeTable({ rows }: { rows: OfficeRow[] }) {
       rows={rows}
       columns={OFFICE_COLUMNS}
       searchText={(r) => `${r.office} ${r.state} ${r.code}`}
+      suggestText={(r) => r.office}
       searchPlaceholder="Office, state or code"
       initialSort="pending"
       caption="Every USCIS field office and service center, employment-based I-485 counts for the quarter"

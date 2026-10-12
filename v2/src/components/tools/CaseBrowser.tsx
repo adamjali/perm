@@ -19,6 +19,7 @@ import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 // would otherwise fail at runtime instead of at compile time.
 import type { CasePage } from "@/lib/turso/cases";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
 
@@ -475,6 +476,13 @@ export function CaseBrowser({
 
   const searching = nameQuery.length >= 2;
   const shown: CaseRow[] = searching ? (nameHits ?? EMPTY_ROWS) : sorted;
+  // A name search that found nothing: the closest employer or law firm names
+  // on file, each running the search again under that name.
+  const { suggestions: nameSuggestions } = useNameSuggestions(
+    nameField === "attorney" ? "attorney" : "employer",
+    nameQuery,
+    searching && nameHits !== undefined && nameHits.length === 0 && nameQuery.length >= 3,
+  );
 
   // Hold the last non-empty result set so a page change or a new search dims
   // the current rows in place instead of collapsing to nothing and jumping the
@@ -1044,7 +1052,19 @@ export function CaseBrowser({
           <div className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm">
             <p className="text-base text-foreground/70">
               Nothing matches that combination in this disclosure window.
-            </p>
+            </p>{" "}
+            <DidYouMean
+              className="mt-4"
+              label={nameField === "attorney" ? "Law firms with a name close to it" : "Employers with a name close to it"}
+              suggestions={nameSuggestions.map((e) => ({
+                label: e.name,
+                onPick: () => {
+                  setNameInput(e.name);
+                  setNameQuery(e.name);
+                  setNameSubmit((n) => n + 1);
+                },
+              }))}
+            />
           </div>
         ) : null}
 

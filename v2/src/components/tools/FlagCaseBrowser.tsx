@@ -27,6 +27,7 @@ import {
 } from "@/lib/flagFilter";
 import { nextSort, sortRows, type SortColumn, type SortState } from "@/lib/tableSort";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { seasonalForm } from "@/lib/seasonalForms";
 import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
@@ -490,6 +491,13 @@ export function FlagCaseBrowser({
     [search],
   );
   const found = search ? search.cases.length + (halves?.fileOnly.length ?? 0) : 0;
+  // No filing under that name: the closest employer names on file, each
+  // running the search again under that name.
+  const { suggestions: employerSuggestions } = useNameSuggestions(
+    "employer",
+    query.employer,
+    searching && Boolean(search) && found === 0 && query.employer.trim().length >= 3,
+  );
   const filterItems = useMemo<FlagFilterItem[]>(() => {
     if (!search || !halves) return [];
     return [
@@ -678,6 +686,20 @@ export function FlagCaseBrowser({
             </Link>{" "}
             asks DOL directly.
           </p>
+        ) : null}
+        {searching && search && found === 0 ? (
+          <DidYouMean
+            className="mt-4"
+            label="Employers with a name close to it"
+            suggestions={employerSuggestions.map((e) => ({
+              label: e.name,
+              onPick: () => {
+                setEmployerInput(e.name);
+                setQuery((q) => ({ ...q, employer: e.name, n: q.n + 1 }));
+                setFilters({});
+              },
+            }))}
+          />
         ) : null}
         {searching && search && found > 1 ? (
           <FlagSearchFilters items={filterItems} value={filters} onChange={setFilters} />

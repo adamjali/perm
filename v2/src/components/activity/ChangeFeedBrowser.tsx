@@ -3,7 +3,9 @@
 import { Fragment, useId, useMemo, useState } from "react";
 import Link from "next/link";
 
+import { DidYouMean } from "@/components/search/DidYouMean";
 import { usePublicQuery } from "@/hooks/usePublicQuery";
+import { rankFuzzy } from "@/lib/fuzzy";
 import { nextSort, sortRows, type SortState } from "@/lib/tableSort";
 import { CHANGE_PROGRAMS, PROGRAM_LABEL, type ChangeProgram } from "@/lib/changeProgram";
 import { formatInt } from "@/lib/format";
@@ -274,6 +276,21 @@ export function ChangeFeedBrowser({
     });
     return sortRows(kept, DECIDED_COLUMNS, decidedSort);
   }, [decided, search, program, toStatus, decidedSort, decidedFilters]);
+
+  // An employer name the day holds, close to a search that matched nothing:
+  // DOL prints each employer its own way, and a typo would otherwise read as
+  // "DOL did nothing for them".
+  const nameSuggestions = useMemo(() => {
+    const q = search.trim();
+    if (q.length < 3 || (ordered.length > 0 && decidedRows.length > 0)) return [];
+    const names = new Set<string>();
+    for (const c of feed?.changes ?? []) if (c.employerName) names.add(c.employerName);
+    for (const c of decided?.cases ?? []) if (c.employerName) names.add(c.employerName);
+    return rankFuzzy(q, [...names], (n) => n, { limit: 5 }).map((r) => ({
+      label: r.item,
+      onPick: () => setSearch(r.item),
+    }));
+  }, [search, ordered.length, decidedRows.length, feed, decided, setSearch]);
 
   const pages = Math.max(1, Math.ceil(ordered.length / pageSize));
   // Clamped rather than reset by an effect: a filter that shrinks the result
@@ -733,12 +750,15 @@ export function ChangeFeedBrowser({
                 />
               ) : null}
               {decidedRows.length === 0 && decided.cases.length > 0 ? (
-                <p className="mt-4 border-2 border-border bg-card p-4 text-base">
-                  None of the {formatInt(decided.cases.length)} decisions loaded for
-                  these dates match
-                  {anyDecidedFilter(decidedFilters) ? " those filters" : " that search"}.
-                  Clearing them brings the rows back.
-                </p>
+                <div className="mt-4 border-2 border-border bg-card p-4 text-base">
+                  <p>
+                    None of the {formatInt(decided.cases.length)} decisions loaded for
+                    these dates match
+                    {anyDecidedFilter(decidedFilters) ? " those filters" : " that search"}.
+                    Clearing them brings the rows back.
+                  </p>{" "}
+                  <DidYouMean className="mt-3" suggestions={nameSuggestions} />
+                </div>
               ) : decidedRows.length === 0 ? (
                 <p className="mt-4 border-2 border-border bg-card p-4 text-base">
                   DOL published no decisions for these dates. That is a real
@@ -880,11 +900,14 @@ export function ChangeFeedBrowser({
             </p>
           ) : null}
           {ordered.length === 0 && ready ? (
-            <p className="mt-4 border-2 border-border bg-card p-4 text-base">
-              Nothing on {longDate(feed.date)} matches that. The day itself
-              holds {formatInt(feed.total)} changes, so clearing the filters will
-              bring them back.
-            </p>
+            <div className="mt-4 border-2 border-border bg-card p-4 text-base">
+              <p>
+                Nothing on {longDate(feed.date)} matches that. The day itself
+                holds {formatInt(feed.total)} changes, so clearing the filters will
+                bring them back.
+              </p>{" "}
+              <DidYouMean className="mt-3" suggestions={nameSuggestions} />
+            </div>
           ) : (
             <ChangeTable
               rows={rows}

@@ -13,6 +13,7 @@ import * as React from "react";
 import { Fragment } from "react";
 import type { ContentType, PostSummary } from "@/lib/content/types";
 import { topicsFor } from "@/lib/content/topics";
+import { rankFuzzy } from "@/lib/fuzzy";
 import { cn } from "@/lib/utils";
 import ContentGrid from "./ContentGrid";
 import ContentSearch from "./ContentSearch";
@@ -27,15 +28,22 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
   const [search, setSearch] = React.useState("");
   const [active, setActive] = React.useState<string | null>(null);
 
-  const matches = React.useMemo(() => {
-    if (!search) return posts;
+  // Words first; when no article holds them, the closest articles by title,
+  // tags and description, so a misspelt search still lands somewhere.
+  const { matches, closest } = React.useMemo(() => {
+    if (!search) return { matches: posts, closest: false };
     const q = search.toLowerCase();
-    return posts.filter(
+    const exact = posts.filter(
       (p) =>
         p.meta.title.toLowerCase().includes(q) ||
         p.meta.description.toLowerCase().includes(q) ||
         p.meta.tags.some((t) => t.toLowerCase().includes(q)),
     );
+    if (exact.length > 0 || search.trim().length < 3) return { matches: exact, closest: false };
+    const near = rankFuzzy(search, posts, (p) => [p.meta.title, ...p.meta.tags, p.meta.description], {
+      limit: 12,
+    }).map((r) => r.item);
+    return { matches: near, closest: near.length > 0 };
   }, [posts, search]);
 
   const sections = topics
@@ -67,6 +75,12 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
         </div>
       </div>
 
+      {closest ? (
+        <p role="status" className="border-l-4 border-primary bg-tint-primary px-4 py-3 text-base">
+          No article holds &ldquo;{search}&rdquo; exactly. These are the closest.
+        </p>
+      ) : null}
+
       {sections.map(({ topic, posts: list }) => (
         <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-h`} className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
           <div className="mb-5 border-b-2 border-border pb-3">
@@ -86,7 +100,7 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
       ) : search || active ? (
         <p className="text-center text-sm text-foreground/70">
           Showing {shown} of {posts.length}
-          {search ? ` matching "${search}"` : null}
+          {search ? (closest ? ` close to "${search}"` : ` matching "${search}"`) : null}
         </p>
       ) : null}
     </div>

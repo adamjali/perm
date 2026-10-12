@@ -15,6 +15,7 @@ import { SelectInput, type SelectOption } from "@/components/forms/SelectInput";
 import { CaseSelectionItem, type CaseForSelection } from "./CaseSelectionItem";
 import { cn } from "@/lib/utils";
 import type { CaseStatus } from "@/lib/perm";
+import { rankFuzzy } from "@/lib/fuzzy";
 
 // Re-export for consumers
 export type { CaseForSelection };
@@ -101,11 +102,17 @@ export function CaseSelectionModal({
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = result.filter(
+      const exact = result.filter(
         (c) =>
           c.employerName.toLowerCase().includes(query) ||
           c.positionTitle.toLowerCase().includes(query)
       );
+      // A misspelt name still finds its case: the closest by employer or
+      // job title when no case holds the words exactly.
+      result =
+        exact.length > 0 || query.length < 3
+          ? exact
+          : rankFuzzy(query, result, (c) => [c.employerName, c.positionTitle], { limit: 25 }).map((r) => r.item);
     }
 
     // Apply status filter

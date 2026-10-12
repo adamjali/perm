@@ -12,7 +12,7 @@ import { SECTIONS } from "@/components/tools/dataSections";
  */
 describe("the palette's section keywords", () => {
   it("are keyed by real rail sections", () => {
-    const src = readFileSync(join(import.meta.dirname, "..", "SearchPalette.tsx"), "utf8");
+    const src = readFileSync(join(import.meta.dirname, "..", "..", "..", "lib", "search", "siteIndex.ts"), "utf8");
     const block = src.slice(src.indexOf("const SECTION_KEYWORDS"), src.indexOf("function staticIndex"));
     const keys = [...block.matchAll(/^\s+"?([a-z-]+)"?:\s*"/gm)].map((m) => m[1]);
     expect(keys.length, "keyword map looks empty").toBeGreaterThan(5);

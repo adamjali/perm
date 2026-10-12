@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { EntityRow } from "@/lib/entityPayload";
+import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { searchEntities } from "@/lib/fetchEntities";
 
 /**
@@ -31,6 +32,7 @@ function Picker({
   const [hits, setHits] = useState<EntityRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [chosen, setChosen] = useState<Chosen | null>(initial);
+  const [searchedFor, setSearchedFor] = useState("");
 
   useEffect(() => {
     if (chosen && text === chosen.name) return;
@@ -44,8 +46,10 @@ function Picker({
       try {
         const { rows } = await searchEntities("employer", q, { onlyLive: false });
         setHits(rows.slice(0, 8));
+        setSearchedFor(q);
       } catch {
         setHits([]);
+        setSearchedFor("");
       } finally {
         setBusy(false);
       }
@@ -53,9 +57,23 @@ function Picker({
     return () => clearTimeout(t);
   }, [text, chosen]);
 
+  // Nothing published under that spelling: the closest published sponsors,
+  // the only ones the comparison can draw.
+  const { suggestions } = useNameSuggestions(
+    "employer",
+    text,
+    !chosen && !busy && hits.length === 0 && searchedFor !== "" && searchedFor === text.trim() && text.trim().length >= 3,
+  );
+  const pick = (c: Chosen) => {
+    setChosen(c);
+    setText(c.name);
+    setHits([]);
+    onChoose(c);
+  };
+
   return (
     <div className="min-w-0">
-      <label htmlFor={id} className="block font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <label htmlFor={id} className="block text-sm font-bold text-foreground/75">
         {label}
       </label>{" "}
       <input
@@ -77,13 +95,7 @@ function Picker({
             <li key={h.slug}>
               <button
                 type="button"
-                onClick={() => {
-                  const c = { slug: h.slug, name: h.name };
-                  setChosen(c);
-                  setText(h.name);
-                  setHits([]);
-                  onChoose(c);
-                }}
+                onClick={() => pick({ slug: h.slug, name: h.name })}
                 className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-tint-primary"
               >
                 <span className="font-semibold">{h.name}</span>{" "}
@@ -94,7 +106,17 @@ function Picker({
             </li>
           ))}
         </ul>
-      ) : null}
+      ) : null}{" "}
+      <DidYouMean
+        className="mt-3 text-sm"
+        suggestions={suggestions
+          .filter((s) => s.published)
+          .map((s) => ({
+            label: s.name,
+            note: `${s.cases.toLocaleString("en-US")} filings`,
+            onPick: () => pick({ slug: s.href.slice(s.href.lastIndexOf("/") + 1), name: s.name }),
+          }))}
+      />
     </div>
   );
 }

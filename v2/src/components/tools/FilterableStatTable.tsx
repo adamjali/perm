@@ -3,8 +3,11 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
+import { DidYouMean, nameSuggestionChips, useNameSuggestions } from "@/components/search/DidYouMean";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { failureFromError, type FetchFailure } from "@/lib/fetchFailure";
+import { rankFuzzy } from "@/lib/fuzzy";
+import type { SuggestKind } from "@/lib/search/suggestTypes";
 
 /**
  * The searchable, filterable, paged table every entity index stands on.
@@ -106,6 +109,14 @@ export interface FilterableStatTableProps<T> {
    * search palette link to "every employer matching this" instead of five.
    */
   queryFromUrl?: boolean;
+  /**
+   * The entity kind behind the rows, when there is one: an empty search then
+   * asks /api/suggest for the closest names across the whole corpus. Without
+   * it, the closest rows already loaded are offered instead.
+   */
+  suggestKind?: SuggestKind;
+  /** The name a row goes by, for a "did you mean" chip; the search text when unset. */
+  suggestText?: (row: T) => string;
 }
 
 /** `0` means every row on one page: the "show all" a reader asks for when a cohort is a few thousand rows. */
@@ -163,6 +174,8 @@ export function FilterableStatTable<T>({
   pageSize: initialPageSize = 50,
   searchRemote,
   queryFromUrl = false,
+  suggestKind,
+  suggestText,
 }: FilterableStatTableProps<T>) {
   const [query, setQuery] = useState("");
   useEffect(() => {
@@ -327,6 +340,31 @@ export function FilterableStatTable<T>({
   };
 
   const activeFacets = facets.filter((f) => facetValues[f.key]);
+
+  // "Did you mean", only for a search that found nothing with no filter set:
+  // a filter that empties the table isn't a misspelling.
+  const askSuggestions =
+    pageRows.length === 0 && !remoteBusy && !remoteFailure && !remoteExtra && q.length >= 3 && activeFacets.length === 0;
+  const { suggestions: nameSuggestions } = useNameSuggestions(
+    suggestKind ?? "all",
+    q,
+    askSuggestions && suggestKind !== undefined,
+  );
+  const localSuggestions = useMemo(() => {
+    if (!askSuggestions || suggestKind !== undefined) return [];
+    const label = suggestText ?? searchText;
+    const seen = new Set<string>();
+    const out: { label: string; onPick: () => void }[] = [];
+    for (const r of rankFuzzy(q, working, (row) => label(row), { limit: 12 })) {
+      const l = label(r.item).trim();
+      if (!l || seen.has(l)) continue;
+      seen.add(l);
+      out.push({ label: l, onPick: () => setQuery(l) });
+      if (out.length === 5) break;
+    }
+    return out;
+  }, [askSuggestions, suggestKind, suggestText, searchText, q, working]);
+  const didYouMean = suggestKind !== undefined ? nameSuggestionChips(nameSuggestions) : localSuggestions;
   const filtersOn = query.trim() !== "" || activeFacets.length > 0;
 
   return (
@@ -553,7 +591,12 @@ export function FilterableStatTable<T>({
                         // PUBLISHED corpus; the block below holds the rest.
                         `Nothing in the published files matches that. There is more below.`
                       : `Nothing matches that. Clear the search and the filters to see the full list.`}
-                {" "}</td>
+                {" "}
+                <DidYouMean
+                  className="mx-auto mt-4 max-w-2xl text-foreground [&_ul]:justify-center"
+                  suggestions={didYouMean}
+                />{" "}
+                </td>
               </tr>
             ) : null}
           </tbody>

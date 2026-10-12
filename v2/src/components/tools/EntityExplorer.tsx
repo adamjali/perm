@@ -127,6 +127,7 @@ export function EntityExplorer({
       loadAll={loadAll}
       searchRemote={searchRemote}
       queryFromUrl
+      suggestKind={kind}
     />
   );
 }

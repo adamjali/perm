@@ -3,13 +3,18 @@ import { Fragment } from "react";
 import Link from "next/link";
 import {
   ArrowRightIcon,
+  BriefcaseIcon,
   BuildingsIcon,
   CalculatorIcon,
   CalendarIcon,
   ClockIcon,
   HouseIcon,
+  MagnifyingGlassIcon,
   NewspaperIcon,
 } from "@phosphor-icons/react/ssr";
+
+import { NotFoundSuggestions } from "@/components/search/NotFoundSuggestions";
+import { getAllPosts } from "@/lib/content";
 
 /**
  * A 404 must not be indexable. Without this it inherits the site default and
@@ -19,7 +24,8 @@ import {
  *
  * Most people who land here were looking for a case or a figure, so the page
  * offers the case-number box itself (a plain GET form: it works before any
- * script loads) and the six places people most often mean.
+ * script loads), a "did you mean" read from the address that missed, and
+ * the places people most often mean.
  */
 export const metadata: Metadata = {
   title: "Page not found",
@@ -28,6 +34,8 @@ export const metadata: Metadata = {
 
 const DOORS = [
   { href: "/", label: "Home", Icon: HouseIcon },
+  { href: "/for-attorneys", label: "For attorneys", Icon: BriefcaseIcon },
+  { href: "/case-search", label: "Search every filing", Icon: MagnifyingGlassIcon },
   { href: "/perm-processing-times", label: "Processing times", Icon: ClockIcon },
   { href: "/perm-employers", label: "Find an employer", Icon: BuildingsIcon },
   { href: "/visa-bulletin", label: "The visa bulletin", Icon: CalendarIcon },
@@ -36,6 +44,9 @@ const DOORS = [
 ] as const;
 
 export default function NotFound() {
+  // Every article by title and address, so a mistyped article link can be
+  // matched against them. Read from the content folder when the page is built.
+  const articles = getAllPosts().map((p) => ({ title: p.meta.title, href: `/${p.type}/${p.slug}`, kind: p.type }));
   return (
     <main className="relative min-h-screen bg-background">
       <div className="bg-dots pointer-events-none fixed inset-0 opacity-30" aria-hidden="true" />
@@ -81,7 +92,8 @@ export default function NotFound() {
               >
                 Check a case
               </button>
-            </form>
+            </form>{" "}
+            <NotFoundSuggestions articles={articles} />
           </div>
         </div>{" "}
 

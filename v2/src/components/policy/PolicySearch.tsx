@@ -2,6 +2,8 @@
 
 import { useId, useMemo, useState, type ReactNode } from "react";
 
+import { rankFuzzy } from "@/lib/fuzzy";
+
 /**
  * One document for the search: prepared on the server, so the browser gets
  * strings and a flag rather than the Register's whole record.
@@ -62,6 +64,14 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
   const anyOpen = items.some((i) => i.commentsOpen);
   const active = q.text.trim() !== "" || q.kind !== "" || q.year !== "" || q.openOnly;
   const hits = useMemo(() => (active ? filterPolicy(items, q) : []), [items, q, active]);
+  // No document holds every word: the closest titles instead, within the kind
+  // and year chosen, so a misspelt word still finds the rule.
+  const near = useMemo(() => {
+    if (!active || hits.length > 0 || q.text.trim().length < 3) return [];
+    const pool = filterPolicy(items, { ...q, text: "" });
+    return rankFuzzy(q.text, pool, (i) => [i.title, i.agencies], { limit: 8 }).map((r) => r.item);
+  }, [items, q, active, hits.length]);
+  const list = hits.length > 0 ? hits : near;
 
   return (
     <>
@@ -118,13 +128,15 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
       {active ? (
         <section className="mt-6">
           <p className="text-base text-foreground/80" role="status">
-            {hits.length === 0
-              ? `None of the ${items.length.toLocaleString("en-US")} documents here match that.`
-              : `${hits.length.toLocaleString("en-US")} of ${items.length.toLocaleString("en-US")} documents match, newest first.`}
+            {hits.length > 0
+              ? `${hits.length.toLocaleString("en-US")} of ${items.length.toLocaleString("en-US")} documents match, newest first.`
+              : near.length > 0
+                ? `No document holds \u201c${q.text.trim()}\u201d exactly. These are the closest.`
+                : `None of the ${items.length.toLocaleString("en-US")} documents here match that.`}
           </p>{" "}
-          {hits.length > 0 ? (
+          {list.length > 0 ? (
             <ul className="mt-4 divide-y-2 divide-border border-y-2 border-border">
-              {hits.map((i) => (
+              {list.map((i) => (
                 <li key={i.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-4">
                   <span className="shrink-0 font-mono text-sm text-muted-foreground sm:w-32">{day(i.date)}{" "}</span>{" "}
                   <span className="shrink-0 font-mono text-sm font-bold uppercase sm:w-32">{i.kind}{" "}</span>{" "}

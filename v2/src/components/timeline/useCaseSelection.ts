@@ -3,6 +3,7 @@
 import { useState, useMemo, useDeferredValue } from "react";
 import type { CaseForSelection } from "./CaseSelectionItem";
 import type { CaseStatus } from "@/lib/perm";
+import { rankFuzzy } from "@/lib/fuzzy";
 
 /**
  * Sort options for case list
@@ -105,11 +106,17 @@ export default function useCaseSelection({
     // Apply search filter (case-insensitive on employerName OR positionTitle)
     if (deferredSearchQuery.trim()) {
       const query = deferredSearchQuery.toLowerCase().trim();
-      result = result.filter(
+      const exact = result.filter(
         (c) =>
           c.employerName.toLowerCase().includes(query) ||
           c.positionTitle.toLowerCase().includes(query)
       );
+      // A misspelt name still finds its case: the closest by employer or
+      // job title when no case holds the words exactly.
+      result =
+        exact.length > 0 || query.length < 3
+          ? exact
+          : rankFuzzy(query, result, (c) => [c.employerName, c.positionTitle], { limit: 25 }).map((r) => r.item);
     }
 
     // Apply status filter

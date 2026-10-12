@@ -49,7 +49,10 @@ function indexedHrefs(): Set<string> {
     ...read("src/components/tools/dataSections.ts").matchAll(/href:\s*"([^"]+)"/g),
   ].map((m) => m[1] ?? "");
   // Destinations the palette adds itself (email preferences, the browse hubs).
-  const fromPalette = [...read("src/components/search/SearchPalette.tsx").matchAll(/"(\/[a-z0-9/-]+)"/g)]
+  const fromPalette = [
+    ...read("src/components/search/SearchPalette.tsx").matchAll(/"(\/[a-z0-9/-]+)"/g),
+    ...read("src/lib/search/siteIndex.ts").matchAll(/"(\/[a-z0-9/-]+)"/g),
+  ]
     .map((m) => m[1] ?? "");
   return new Set([...fromConstants, ...fromPalette]);
 }

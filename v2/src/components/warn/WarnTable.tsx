@@ -88,6 +88,7 @@ export function WarnTable({ rows }: { rows: WarnNotice[] }) {
       rows={rows}
       columns={WARN_COLUMNS}
       searchText={(r) => `${r.company} ${r.site ?? ""} ${r.county ?? ""}`}
+      suggestText={(r) => r.company}
       searchPlaceholder="Employer, site or county"
       initialSort="notice"
       caption="WARN notices filed by PERM sponsors, as each state published them"

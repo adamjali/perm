@@ -357,6 +357,7 @@ export function StateLeaders({ states, className }: StateProfilesProps) {
         rows={rows}
         columns={columns}
         searchText={(r) => `${r.name} ${r.state} ${r.occupation} ${r.employer}`}
+        suggestText={(r) => r.name}
         searchPlaceholder="Georgia, Software Developers, Microsoft…"
         initialSort="total"
         caption="Every state's biggest occupation and biggest employer, with each one's share of the state"

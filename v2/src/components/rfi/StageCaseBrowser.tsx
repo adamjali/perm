@@ -135,6 +135,7 @@ export function StageCaseBrowser({ slug, status, seed, totalCount, asOf }: Stage
       loadAll={loadAll}
       columns={COLUMNS}
       searchText={(r) => `${r.caseNumber} ${r.employer ?? ""} ${r.jobTitle ?? ""}`}
+      suggestText={(r) => r.employer ?? r.caseNumber}
       searchPlaceholder="Search by case number, employer or job title"
       initialSort="days"
       caption={`Every PERM case at ${status.toLowerCase()}, from DOL's live record${asOf ? ` as of ${asOf}` : ""}`}

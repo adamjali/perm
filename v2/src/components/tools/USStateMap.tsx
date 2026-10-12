@@ -669,6 +669,7 @@ export function StateStatTable({ states }: { states: StateStat[] }) {
       ]}
       csv={csv}
       searchText={(s) => `${s.name} ${s.state} ${s.region ?? ""}`}
+      suggestText={(s) => s.name}
       searchPlaceholder="California, TX, Midwest…"
       initialSort="total"
       caption="Every state and territory with PERM filings, certifications, denials, withdrawals, approval rate, median days and median offered wage"

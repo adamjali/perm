@@ -4,7 +4,9 @@ import { Fragment, useId, useMemo, useState } from "react";
 
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
 import type { Debarment, DebarmentPhase, DebarmentProgram } from "@/lib/turso/debarments";
+import { DidYouMean } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
+import { rankFuzzy } from "@/lib/fuzzy";
 
 export type DebarmentView = Debarment & { phase: DebarmentPhase };
 
@@ -165,6 +167,14 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
             ? "Nothing on DOL's lists matches that. Try part of the name: DOL prints each entity its own way."
             : `${formatInt(shown.length)} of ${formatInt(rows.length)} entries match.`}
         </p>
+      ) : null}
+      {shown.length === 0 && q.text.trim().length >= 3 ? (
+        <DidYouMean
+          className="mt-3"
+          suggestions={[...new Set(rankFuzzy(q.text, rows, (d) => d.entity, { limit: 8 }).map((r) => r.item.entity))]
+            .slice(0, 5)
+            .map((name) => ({ label: name, onPick: () => setQ({ ...q, text: name }) }))}
+        />
       ) : null}
       {sections.map((s) => {
         const all = rows.filter((d) => d.program === s.program);

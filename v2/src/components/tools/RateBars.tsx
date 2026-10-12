@@ -544,6 +544,7 @@ export function RankedRateViews({
           facets={facets}
           csv={csv}
           searchText={(r) => `${r.label} ${r.group ?? ""}`}
+          suggestText={(r) => r.label}
           searchPlaceholder={searchPlaceholder}
           initialSort="rate"
           caption={`${unitLabel} denial rates with their decided-case counts and 95% ranges`}

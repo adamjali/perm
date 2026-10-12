@@ -43,6 +43,7 @@ import {
 import type { Program, UnifiedCase } from "@/lib/turso/unifiedSearch";
 import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/turso/caseSearchReads";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
 import { seasonalForm } from "@/lib/seasonalForms";
@@ -653,6 +654,12 @@ export function UnifiedCaseSearch({
     setSubmitted(buildParams({ q: name }));
     setQuery((cur) => ({ search: name, n: cur.n + 1 }));
   };
+
+  // An employer search that found nothing: the closest employer names on
+  // file, each running the search again under that name.
+  const emptyNameSearch =
+    searching && Boolean(data) && !data?.needsLead && data?.rows.length === 0 && query.search.trim().length >= 3;
+  const { suggestions: employerSuggestions } = useNameSuggestions("employer", query.search, emptyNameSearch);
 
   // How many filters each fold holds, said on its closed summary so a set
   // filter is never hidden from the reader who set it.
@@ -1548,6 +1555,15 @@ export function UnifiedCaseSearch({
             one company several ways, and the search matches the start of the
             name it was filed under.
           </p>{" "}
+          <DidYouMean
+            className="mt-4"
+            label="Employers with a name close to it"
+            suggestions={employerSuggestions.map((e) => ({
+              label: e.name,
+              note: `${formatInt(e.cases)} ${e.cases === 1 ? "filing" : "filings"}`,
+              onPick: () => runExample(e.name),
+            }))}
+          />{" "}
           <p className="mt-3 text-base leading-relaxed">
             Have a case number instead?{" "}
             <Link
