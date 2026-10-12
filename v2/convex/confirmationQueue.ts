@@ -159,7 +159,7 @@ export async function queueConfirmation(
     queuedAt: now,
   });
   const first = await noteQueued(ctx, req.pool);
-  if (first) await alertAdmin(ctx, "queued", req.pool, held.length + 1);
+  if (first) await alertAdmin(ctx, "queued", req.pool, held.length + 1, await usedToday(ctx, now));
   await ctx.scheduler.runAfter(0, internal.confirmationQueue.drain, {});
   return { ok: true, message: reply, queued: true };
 }
@@ -173,25 +173,57 @@ function easternTime(ms: number): string {
   }).format(new Date(ms));
 }
 
-/** The once-a-day admin email for a full pool (queued) or a lost request (turnedAway). */
-async function alertAdmin(ctx: MutationCtx, what: "queued" | "turnedAway", pool: BudgetName, held: number) {
+/**
+ * The once-a-day admin email for a full pool (queued) or a lost request
+ * (turnedAway). A request waits for one of two limits, and the email names the
+ * one that held: the kind's own pool, or the site's daily count past
+ * PUBLIC_CEILING (Oct 12 2026: the day reached 59 on the Monday summaries and
+ * an email said "today's 40 are used" for a pool that had sent none).
+ */
+async function alertAdmin(ctx: MutationCtx, what: "queued" | "turnedAway", pool: BudgetName, held: number, used = 0) {
+  const words = adminNoticeWords(what, pool, held, used, Date.now());
+  await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, words);
+}
+
+/** The admin email's subject and body, pure so the tests can read them. */
+export function adminNoticeWords(
+  what: "queued" | "turnedAway",
+  pool: BudgetName,
+  held: number,
+  used: number,
+  now: number,
+): { subject: string; body: string } {
   const b = BUDGETS[pool];
-  const at = easternTime(Date.now());
-  const subject =
-    what === "queued"
-      ? `${b.label}: today's ${b.limit} are used; new requests are queued`
-      : `${b.label}: someone got no email`;
-  const body =
-    what === "queued"
-      ? `At ${at} a ${b.label.toLowerCase()} request had to wait: either that pool's ${b.limit} a day were used, or ` +
-        `the whole site reached the ${PUBLIC_CEILING} of Resend's 100 that sign-ups may use today (${ALERT_RESERVE} more ` +
-        `are kept for alerts, and the last ${100 - LIST_CEILING} for sign-in codes). New ` +
-        `requests wait in a queue and go out as soon as there's room. Nobody has been turned away. The admin page's ` +
-        `Alerts and email tab shows the queue. This email comes at most once a day.`
-      : `At ${at} a request for the ${b.label.toLowerCase()} pool got no email: the queue already held ${held} ` +
+  const at = easternTime(now);
+  if (what === "turnedAway") {
+    return {
+      subject: `${b.label}: someone got no email`,
+      body:
+        `At ${at} a request for the ${b.label.toLowerCase()} pool got no email: the queue already held ${held} ` +
         `(its limit is ${QUEUE_MAX}), or a queued request waited more than seven days. That person was told to try ` +
-        `again later. The admin page's Alerts and email tab has the counts. This email comes at most once a day.`;
-  await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, { subject, body });
+        `again later. The admin page's Alerts and email tab has the counts. This email comes at most once a day.`,
+    };
+  }
+  const tail =
+    `Nobody has been turned away. The admin page's Alerts and email tab shows the queue. ` +
+    `This email comes at most once a day.`;
+  if (used >= PUBLIC_CEILING) {
+    const reset = easternTime(now + msToNextUtcDay(now));
+    return {
+      subject: `Sign-up emails wait until ${reset}: the site has sent ${used} of Resend's 100 today`,
+      body:
+        `At ${at} a ${b.label.toLowerCase()} request had to wait. Its own pool wasn't the limit: the whole site had ` +
+        `sent ${used} emails today, and sign-up emails stop at ${PUBLIC_CEILING} of Resend's 100 so ${ALERT_RESERVE} ` +
+        `stay for alerts and the last ${100 - LIST_CEILING} for sign-in codes. Resend counts a UTC day, so waiting ` +
+        `requests go out at ${reset}, when its count starts again. ${tail}`,
+    };
+  }
+  return {
+    subject: `${b.label}: today's ${b.limit} are used; new requests are queued`,
+    body:
+      `At ${at} a ${b.label.toLowerCase()} request had to wait: that pool's ${b.limit} a day were used. New ` +
+      `requests wait in a queue and go out as soon as the pool has room. ${tail}`,
+  };
 }
 
 // ---------------------------------------------------------------------------

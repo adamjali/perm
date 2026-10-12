@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import {
+  ChunkNotListed,
   entityEntries,
   groupEntries,
   liveEmployerEntries,
@@ -32,9 +33,15 @@ export async function GET(
       // An unparseable name is a 404, not an empty sitemap. An empty urlset
       // for a typo would be indexed as a legitimately empty section.
       if (!parsed) notFound();
-      if (parsed.kind === "live-employer") return liveEmployerEntries(parsed.chunk);
-      if (parsed.kind === "other-employer") return otherEmployerEntries(parsed.chunk);
-      return entityEntries(parsed.kind, parsed.chunk);
+      try {
+        if (parsed.kind === "live-employer") return await liveEmployerEntries(parsed.chunk);
+        if (parsed.kind === "other-employer") return await otherEmployerEntries(parsed.chunk);
+        return await entityEntries(parsed.kind, parsed.chunk);
+      } catch (e) {
+        // A chunk past the family's last one was never listed: a 404.
+        if (e instanceof ChunkNotListed) notFound();
+        throw e;
+      }
     })();
 
   return new Response(urlsetXml(entries), {

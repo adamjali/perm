@@ -23,6 +23,7 @@ import {
   QUEUED_LINK_REPLY,
   QUEUED_REPLY,
   QUEUE_MAX,
+  adminNoticeWords,
   countSentToday,
   confirmationRoom,
   drainRoom,
@@ -138,6 +139,18 @@ describe("a full pool queues the request", () => {
     );
     expect(spent).toHaveLength(0);
     expect(await queued(t)).toHaveLength(1);
+  });
+
+  it("the admin email names the limit that held, not always the pool", () => {
+    // Monday Oct 12 2026, 11:47 AM EDT: the site had sent 59, the pool none.
+    const now = Date.UTC(2026, 9, 12, 15, 47);
+    const site = adminNoticeWords("queued", "queueConfirm", 1, 59, now);
+    expect(site.subject).toBe("Sign-up emails wait until 8:00 PM EDT: the site has sent 59 of Resend's 100 today");
+    expect(site.body).toContain("Its own pool wasn't the limit");
+    expect(site.subject).not.toContain(String(BUDGETS.queueConfirm.limit));
+    const pool = adminNoticeWords("queued", "queueConfirm", 1, 12, now);
+    expect(pool.subject).toBe(`${BUDGETS.queueConfirm.label}: today's ${BUDGETS.queueConfirm.limit} are used; new requests are queued`);
+    expect(pool.body).not.toContain("whole site");
   });
 
   it("a full queue refuses, and counts the person as turned away", async () => {

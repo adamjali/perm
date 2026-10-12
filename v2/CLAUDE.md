@@ -441,7 +441,7 @@ Full conventions: [CONVENTIONS.md](../.planning/codebase/CONVENTIONS.md).
 - **Sentry** — lazy-loaded client (`SentryClientInit`). Frontend: `captureError` from `@/lib/sentry`. Backend: `recordError` from `convex/lib/errorRecording` (writes DB + admin email + Sentry in one call).
 - **PostHog** — always import `@/lib/analytics` (wrapper with try/catch), never raw `posthog-js`. Client init (`posthog.init`) lives in `src/instrumentation-client.ts` — Next.js loads only that ONE file (a root `instrumentation-client.ts` is silently ignored; a second one is how PostHog once went dark). BotID moved OUT on 2026-09-23 to `components/security/BotIdInit.tsx` in the (authenticated) layout, because it guards only the signed-in chat; `botid-scope.test.ts` keeps it there. Proxied via `/ingest/*` (incl. `/ingest/array` for lazy bundles). Internal opt-out: `POSTHOG_EXCLUDED_EMAILS` Convex env var. See [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md).
 - **Resend Email** — transactional via Resend MCP tools (list/send/contacts), or `admin.sendAdminEmail` mutation for UI sends (auth-required, auto-renders `AdminEmail` React template). `FROM_EMAIL = notifications@permtracker.app`. **A reply to mail that came to support@** goes through `npx convex run supportEmail:replyToEmail '{"supportEmailId":"<id>","replyBody":"..."}' --prod`: it threads (In-Reply-To and References from the stored row), renders `AdminEmail`, counts in the email ledger and marks the row `replied`. The MCP's `send-email` takes `headers` now and can thread too, but skips the ledger and the replied mark (fix a row by hand with `supportEmail:markReplied`). Never reply from the Gmail the support mail is forwarded to.
-- **AI Chat** — multi-provider fallback (Groq→Mistral→Gemini→OpenRouter→Cerebras) via custom `FallbackModel` in `src/lib/ai/providers.ts`. API route: `src/app/api/chat/route.ts`.
+- **AI Chat** — free-tier fallback chain (three Gemini models, then GPT-OSS on Groq, Mistral, Nemotron on OpenRouter; checked live Oct 12 2026) via custom `FallbackModel` in `src/lib/ai/providers.ts`; a retired model reaches Sentry on first sight (`ai.fallback.modelGone`). Before changing a model id, read the provider's own model list. API route: `src/app/api/chat/route.ts`.
 
 Full env vars, rate limits, webhooks: [INTEGRATIONS.md](../.planning/codebase/INTEGRATIONS.md).
 
@@ -9668,3 +9668,42 @@ charges anyone.
 - **Open, the owner's call:** PostHog autocapture records the text of clicked elements and nothing
   masks it (`mask_all_text` is unset), so in the signed-in app a click can carry a client's name and on
   public pages a case number (`redactCaseParam` cleans URLs only).
+
+## Oct 12 2026 (afternoon): the chat's models had retired, a notice named the wrong limit, a sitemap 404
+
+**The assistant failed every reply from about 11:40 AM EDT** (Sentry 4K and 4J, production): three of
+its five models no longer existed (Gemini 2.0 Flash answered 404, OpenRouter's free GLM 4.5 Air 404,
+Groq's Llama 3.3 70B gone from Groq's list), Gemini 2.5 Flash had spent its free day, and Mistral
+answered 429. Each provider's own model list was read, then every candidate was put through a
+two-step tool call with this SDK and the production keys piped from the server (never printed):
+
+| | |
+|---|---|
+| answered the tool call | Gemini 2.5 Flash (on days with quota), Gemini 3.5 Flash Lite (1.4 s), Gemini 3.8 Flash (14 s, a small free allowance), GPT-OSS 120B on Groq, Nemotron 3 Super free on OpenRouter |
+| refused | Mistral: `x-ratelimit-limit-req-minute: 0`, the account itself; Cerebras: 402, its free tier needs billing; Gemini 2.5 Flash Lite answered without calling the tool |
+
+- **The chain is six**: Gemini 2.5 Flash, Gemini 3.5 Flash Lite, Gemini 3.8 Flash, GPT-OSS 120B (Groq,
+  capped at 5,000 estimated input tokens and 2,000 output: Groq's free 8,000 tokens a minute counts both),
+  Mistral Small (kept for when the account is restored), Nemotron 3 Super. Gemini's free tier counts per
+  model, so three Gemini models are three daily allowances.
+- **A retired model is reported on first sight** (`reportModelGone`, `ai.fallback.modelGone`, once per
+  process per model): a 404, a 402 or "unavailable for free". Before, a dead model hid behind any later
+  model that answered, and Sentry heard only when all of them failed.
+- **The summarizer** extracts facts with GPT-OSS 20B on Groq (structured output checked) and writes prose
+  with Gemini 3.5 Flash Lite, then GPT-OSS 120B. Its Cerebras and Mistral models were dead too.
+  `@ai-sdk/cerebras` is removed.
+- **`SUPPORTED_MODELS` is held to the chain** (`CHAT_MODEL_NAMES`), and a test names the retired ids.
+- **Check a provider's own model list before trusting a model id**: Google's
+  `v1beta/models`, Groq's and Cerebras's `/v1/models`, OpenRouter's `/api/v1/models` (`:free` plus
+  `tools` in `supported_parameters`). Groq and Cerebras refuse Python's default User-Agent (403).
+
+**The "today's 40 are used" email** (11:47 AM EDT) fired for the site's daily count. The queue-alert
+pool wasn't the limit: Resend had sent 59 by then (Monday's 29 weekly case summaries at 11 AM, about 13 admin notices),
+past the 55 sign-up emails may use, while the pool had sent none. `adminNoticeWords` now names the limit
+that held: "Sign-up emails wait until 8:00 PM EDT: the site has sent 59 of Resend's 100 today", or the
+pool's own wording when the pool is full. The one waiting request goes at 8 PM EDT.
+
+**A sitemap file past the last chunk answered 500** (Sentry 54): someone asked for `employer-16.xml`
+while the index lists 15 (70,985 employers, ranks dense, checked read-only). A window that comes back
+empty is now checked against the family's count: past the last listed chunk it's a 404
+(`ChunkNotListed`), still a loud failure when the chunk is listed or the count can't be read.

@@ -2,11 +2,11 @@
  * Conversation Summarization Module
  *
  * Two-phase background pipeline:
- *   Phase 1, Entity extraction (Cerebras llama3.1-8b, ~200ms):
+ *   Phase 1, Entity extraction (GPT-OSS 20B on Groq, about a second):
  *     Extracts structured facts (cases, people, dates, preferences, openActions)
  *     as JSON. Merged losslessly with existing facts. Survives unlimited compactions.
  *
- *   Phase 2, Prose summary (Mistral Small, fallback: Groq 70B):
+ *   Phase 2, Prose summary (Gemini 3.5 Flash Lite, fallback: GPT-OSS 120B on Groq):
  *     Generates a single replacement prose summary bounded at ~1000 tokens.
  *     Never stacks, each cycle replaces the prior prose summary.
  *
@@ -29,16 +29,24 @@ import {
   parseFacts,
   type CompactionFacts,
 } from "./compaction";
-import { cerebras, groq, mistral } from "./providers";
+import { google } from "@ai-sdk/google";
+import { groq } from "./providers";
 
-/** Cerebras is ideal for extraction: fast, cheap, structured-output capable. */
-const entityExtractionModel = cerebras("llama3.1-8b");
+/**
+ * Fact extraction: GPT-OSS 20B on Groq, fast and structured-output capable
+ * (checked Oct 12 2026; Cerebras's free llama3.1-8b, used before, is gone).
+ */
+const entityExtractionModel = groq("openai/gpt-oss-20b");
 
-/** Primary prose summarizer — Mistral Small. */
-const prosePrimaryModel = mistral("mistral-small-latest");
+/**
+ * Prose summary: Gemini 3.5 Flash Lite (1M context, so a long conversation
+ * fits), then GPT-OSS 120B on Groq. Mistral answered "0 requests a minute"
+ * on Oct 12 2026.
+ */
+const prosePrimaryModel = google("gemini-3.5-flash-lite");
 
-/** Fallback prose summarizer — Groq 70B. Used if Mistral fails. */
-const proseFallbackModel = groq("llama-3.3-70b-versatile");
+/** Fallback prose summarizer, used if Gemini fails. */
+const proseFallbackModel = groq("openai/gpt-oss-120b");
 
 /**
  * Message type for summarization (matches Convex return shape).
@@ -146,7 +154,7 @@ async function extractEntities(
 }
 
 /**
- * Phase 2, generate a prose summary with Mistral, falling back to Groq on failure.
+ * Phase 2, generate a prose summary with Gemini, falling back to Groq on failure.
  * Returns null on double failure (caller logs and skips saving).
  */
 async function generateProseSummary(
@@ -165,11 +173,11 @@ async function generateProseSummary(
     return text;
   } catch (primaryError) {
     console.warn(
-      `[Summarization] Mistral prose failed, falling back to Groq:`,
+      `[Summarization] Gemini prose failed, falling back to Groq:`,
       primaryError instanceof Error ? primaryError.message : primaryError,
     );
     captureError(primaryError, {
-      operation: "summarization.prose.mistral",
+      operation: "summarization.prose.primary",
     });
 
     try {
@@ -197,8 +205,8 @@ async function generateProseSummary(
  * Summarize a conversation's history.
  *
  * Two-phase:
- *   1. Entity extraction (Cerebras), merged with existing facts
- *   2. Prose summary (Mistral → Groq fallback), replaces existing prose
+ *   1. Entity extraction (Groq), merged with existing facts
+ *   2. Prose summary (Gemini, then Groq), replaces existing prose
  *
  * Atomic lock via beginSummarizing prevents concurrent summarization of the
  * same conversation. Errors never propagate, chat flow is always preserved.

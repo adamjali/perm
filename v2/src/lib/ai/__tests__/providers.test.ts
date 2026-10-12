@@ -23,8 +23,9 @@ vi.mock('@ai-sdk/mistral', () => ({
   createMistral: vi.fn(() => vi.fn(makeMockModel('mistral'))),
 }));
 
-vi.mock('@ai-sdk/cerebras', () => ({
-  createCerebras: vi.fn(() => vi.fn(makeMockModel('cerebras'))),
+vi.mock('@/lib/sentry', () => ({
+  captureError: vi.fn(),
+  addBreadcrumb: vi.fn(),
 }));
 
 vi.mock('@openrouter/ai-sdk-provider', () => ({
@@ -43,36 +44,32 @@ describe('AI Providers', { timeout: 15_000 }, () => {
     expect(typeof PRIMARY_MODEL_NAME).toBe('string');
   });
 
-  it('exports SUPPORTED_MODELS list with 5 models', async () => {
-    const { SUPPORTED_MODELS } = await import('../providers');
-    expect(SUPPORTED_MODELS).toBeDefined();
-    expect(SUPPORTED_MODELS.length).toBe(5);
-
-    expect(SUPPORTED_MODELS[0]).toHaveProperty('id');
-    expect(SUPPORTED_MODELS[0]).toHaveProperty('name');
-    expect(SUPPORTED_MODELS[0]).toHaveProperty('provider');
-    expect(SUPPORTED_MODELS[0]).toHaveProperty('tier');
-    expect(SUPPORTED_MODELS[0]).toHaveProperty('toolCalling');
-
-    // Chain: 2 Tier 1 (Gemini 2.5 + 2.0), 2 Tier 2 (Groq + Mistral), 1 Tier 3 (GLM)
-    const tier1 = SUPPORTED_MODELS.filter(m => m.tier === 1);
-    const tier2 = SUPPORTED_MODELS.filter(m => m.tier === 2);
-    const tier3 = SUPPORTED_MODELS.filter(m => m.tier === 3);
-    expect(tier1.length).toBe(2);
-    expect(tier2.length).toBe(2);
-    expect(tier3.length).toBe(1);
+  it('lists the same models, in order, as the chain itself', async () => {
+    const { SUPPORTED_MODELS, CHAT_MODEL_NAMES } = await import('../providers');
+    expect(SUPPORTED_MODELS.length).toBe(CHAT_MODEL_NAMES.length);
+    // SUPPORTED_MODELS names drop the "(Provider)" suffix the chain carries.
+    SUPPORTED_MODELS.forEach((m, i) => {
+      expect(CHAT_MODEL_NAMES[i]!.startsWith(m.name)).toBe(true);
+    });
+    for (const m of SUPPORTED_MODELS) {
+      expect(m).toHaveProperty('id');
+      expect(m).toHaveProperty('provider');
+      expect(m).toHaveProperty('tier');
+    }
   });
 
-  it('exports 4 providers in SUPPORTED_MODELS (Cerebras is utility-only, not in chat chain)', async () => {
+  it('spans four providers, so one provider failing leaves others', async () => {
     const { SUPPORTED_MODELS } = await import('../providers');
     const providers = new Set(SUPPORTED_MODELS.map(m => m.provider));
-    expect(providers).toContain('Google');
-    expect(providers).toContain('OpenRouter');
-    expect(providers).toContain('Mistral');
-    expect(providers).toContain('Groq');
-    // Cerebras is NOT in the chat chain (its 6k budget can't fit tools+system prompt).
-    // It is exported separately for summarize.ts background entity extraction.
-    expect(providers).not.toContain('Cerebras');
+    expect([...providers].sort()).toEqual(['Google', 'Groq', 'Mistral', 'OpenRouter']);
+  });
+
+  it('names none of the models retired on Oct 12 2026', async () => {
+    const { SUPPORTED_MODELS } = await import('../providers');
+    const ids = SUPPORTED_MODELS.map(m => m.id as string);
+    for (const gone of ['gemini-2.0-flash', 'llama-3.3-70b-versatile', 'z-ai/glm-4.5-air:free']) {
+      expect(ids).not.toContain(gone);
+    }
   });
 
   it('primary model is Gemini 2.5 Flash', async () => {
@@ -486,8 +483,51 @@ describe('FallbackModel', () => {
   });
 
   it('keeps Groq at its lower output cap in the real chain', async () => {
-    const { MODEL_OUTPUT_CAPS } = await import('../providers');
-    expect(MODEL_OUTPUT_CAPS['Llama 3.3 70B (Groq)']).toBe(4000);
+    const { MODEL_OUTPUT_CAPS, CHAT_MODEL_NAMES } = await import('../providers');
+    expect(MODEL_OUTPUT_CAPS['GPT-OSS 120B (Groq)']).toBe(2000);
+    // Every capped name is a model in the chain, or the cap never applies.
+    for (const name of Object.keys(MODEL_OUTPUT_CAPS)) {
+      expect(CHAT_MODEL_NAMES).toContain(name);
+    }
+  });
+
+  it('reports a retired model once, even when a later model answers', async () => {
+    const { FallbackModel, resetReportedGone } = await import('../providers');
+    const { captureError } = await import('@/lib/sentry');
+    resetReportedGone();
+    vi.mocked(captureError).mockClear();
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const gone = Object.assign(new Error('This model models/x is no longer available.'), { statusCode: 404 });
+    const retired = {
+      specificationVersion: 'v4' as const, provider: 'test', modelId: 'retired', supportedUrls: {},
+      doGenerate: vi.fn(), doStream: vi.fn().mockRejectedValue(gone),
+    };
+    const live = {
+      specificationVersion: 'v4' as const, provider: 'test', modelId: 'live', supportedUrls: {},
+      doGenerate: vi.fn(), doStream: vi.fn().mockResolvedValue({ stream: 'ok' }),
+    };
+    const fallback = new FallbackModel([
+      { model: retired, name: 'Retired' },
+      { model: live, name: 'Live' },
+    ]);
+    await fallback.doStream({ prompt: [] } as any);
+    await fallback.doStream({ prompt: [] } as any);
+    const reports = vi.mocked(captureError).mock.calls.filter(
+      ([, ctx]) => (ctx as { operation?: string } | undefined)?.operation === 'ai.fallback.modelGone',
+    );
+    expect(reports).toHaveLength(1);
+    expect(String((reports[0]![0] as Error).message)).toContain('Retired');
+  });
+
+  it('tells a retired model from a busy one', async () => {
+    const { isModelGone } = await import('../providers');
+    expect(isModelGone(Object.assign(new Error('gone'), { statusCode: 404 }))).toBe(true);
+    expect(isModelGone(Object.assign(new Error('Payment required'), { statusCode: 402 }))).toBe(true);
+    expect(isModelGone(new Error('This model is unavailable for free. The paid version is available now'))).toBe(true);
+    expect(isModelGone(Object.assign(new Error('Rate limit exceeded'), { statusCode: 429 }))).toBe(false);
+    expect(isModelGone(Object.assign(new Error('high demand'), { statusCode: 503 }))).toBe(false);
+    expect(isModelGone(Object.assign(new Error('You exceeded your current quota'), { statusCode: 429 }))).toBe(false);
   });
 });
 

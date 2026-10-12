@@ -1,28 +1,27 @@
 /**
  * AI Provider Configuration
  *
- * 5-model free fallback chain with automatic failover. Tries each in order;
+ * 6-model free fallback chain with automatic failover. Tries each in order;
  * if one fails (503, rate limit, quota, auth, 404, any error), moves to the next.
  *
- * Chain:
+ * Chain (each checked live on Oct 12 2026, see MODEL_CONFIGS):
  *
- *   Tier 1, Google Gemini (primary, 1M context):
- *     1. Gemini 2.5 Flash (20 RPD free tier per model)
- *     2. Gemini 2.0 Flash (independent free-tier quota bucket)
+ *   Tier 1, Google Gemini (primary, 1M context, a daily free allowance per model):
+ *     1. Gemini 2.5 Flash
+ *     2. Gemini 3.5 Flash Lite
+ *     3. Gemini 3.8 Flash
  *
- *   Tier 2, High-quota mid-size fallbacks (100k+ context):
- *     3. Groq Llama 3.3 70B Versatile (30 RPM, 10k TPM free tier)
- *     4. Mistral Small (generous free tier, wrapped with tool-call-ID sanitizer)
+ *   Tier 2, other providers:
+ *     4. GPT-OSS 120B on Groq (8k tokens a minute free, so short conversations only)
+ *     5. Mistral Small (wrapped with the tool-call-ID sanitizer)
  *
- *   Tier 3, Free large-context emergency fallback:
- *     5. GLM 4.5 Air via OpenRouter (131k context, verified reliable multi-turn tool calling)
+ *   Tier 3, free large-context emergency fallback:
+ *     6. Nemotron 3 Super via OpenRouter (262k context, free models: 50 requests a day)
  *
- * Cerebras llama3.1-8b is intentionally NOT in this chain, its 6k context budget
- * cannot fit our tool definitions + system prompt. It IS exported for use by
- * `summarize.ts` for fast background entity extraction.
+ * The summarizer (summarize.ts) uses Groq's GPT-OSS models directly.
  *
  * All providers use NATIVE AI SDK packages (@ai-sdk/google, @ai-sdk/groq,
- * @ai-sdk/mistral, @ai-sdk/cerebras, @openrouter/ai-sdk-provider).
+ * @ai-sdk/mistral, @openrouter/ai-sdk-provider).
  * Native providers handle each API's streaming format correctly, including
  * tool call parsing. Using createOpenAI() as a generic wrapper causes
  * "Expected 'function' type." errors on streaming tool calls (vercel/ai#5350).
@@ -41,7 +40,6 @@
 import { google } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
 import { createMistral } from '@ai-sdk/mistral';
-import { createCerebras } from '@ai-sdk/cerebras';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { wrapLanguageModel } from 'ai';
 import type {
@@ -78,10 +76,6 @@ export const groq = createGroq({
 
 export const mistral = createMistral({
   apiKey: getApiKey('MISTRAL_API_KEY'),
-});
-
-export const cerebras = createCerebras({
-  apiKey: getApiKey('CEREBRAS_API_KEY'),
 });
 
 const openrouter = createOpenRouter({
@@ -196,12 +190,13 @@ interface ModelConfig {
 
 /**
  * The route asks for CHAT_MAX_OUTPUT_TOKENS (8,000, src/lib/ai/limits.ts).
- * Groq keeps the old 4,000: its free tier counts the requested maximum against
- * a 12,000 tokens-a-minute budget shared with the input, so 8,000 would leave
- * room for only about 4,000 tokens of conversation.
+ * Groq's free tier counts the requested maximum against an 8,000
+ * tokens-a-minute budget shared with the input (its own rate-limit headers,
+ * Oct 12 2026), so it asks for 2,000 and takes conversations under about
+ * 5,000 estimated tokens.
  */
 export const MODEL_OUTPUT_CAPS: Record<string, number> = {
-  'Llama 3.3 70B (Groq)': 4000,
+  'GPT-OSS 120B (Groq)': 2000,
 };
 
 /** The call options for one model, with its own output cap applied. */
@@ -224,34 +219,41 @@ function estimateInputTokens(options: LanguageModelV4CallOptions): number {
 }
 
 /**
- * Fallback chain (5 models). Each request tries from index 0.
+ * Fallback chain (6 models). Each request tries from index 0.
  * No shared state between requests, every request gets a fresh attempt.
  *
- * maxInputTokens reflects the realistic usable budget including tools:
- *   - Groq free tier: 12k TPM total → cap at 10k
- *   - Others: 100k+ context, no cap needed for typical requests
+ * Every model here answered a two-step tool call through this SDK on
+ * Oct 12 2026 with the production keys, except Mistral, whose account
+ * answered "0 requests a minute" that day and stays in the chain for when the
+ * account is restored. Retired that day: Gemini 2.0 Flash (404), Groq's Llama
+ * 3.3 70B (gone from Groq's model list), OpenRouter's free GLM 4.5 Air (404);
+ * Cerebras's free tier now answers 402. A model that's gone is reported on
+ * first sight (reportModelGone), not only when every model fails.
+ *
+ * Gemini's free tier counts requests per model, so three Gemini models give
+ * three separate daily allowances. maxInputTokens is the realistic usable
+ * budget including tools:
+ *   - Groq free tier: 8k tokens a minute, input plus requested output
+ *   - Others: 128k to 1M context, no cap needed
  */
 const MODEL_CONFIGS: ModelConfig[] = [
-  // Tier 1: Google Gemini — 1M context, best quality, 20 RPD per model free tier
+  // Tier 1: Google Gemini, 1M context
   { model: google('gemini-2.5-flash'), name: 'Gemini 2.5 Flash' },
-  { model: google('gemini-2.0-flash'), name: 'Gemini 2.0 Flash' },
+  { model: google('gemini-3.5-flash-lite'), name: 'Gemini 3.5 Flash Lite' },
+  { model: google('gemini-3.8-flash'), name: 'Gemini 3.8 Flash' },
 
-  // Tier 2: High-quota mid-size fallbacks
+  // Tier 2: other providers' fallbacks
   {
-    model: groq('llama-3.3-70b-versatile'),
-    name: 'Llama 3.3 70B (Groq)',
-    maxInputTokens: 10000,
-    maxOutputTokens: MODEL_OUTPUT_CAPS['Llama 3.3 70B (Groq)'],
+    model: groq('openai/gpt-oss-120b'),
+    name: 'GPT-OSS 120B (Groq)',
+    maxInputTokens: 5000,
+    maxOutputTokens: MODEL_OUTPUT_CAPS['GPT-OSS 120B (Groq)'],
   },
   { model: wrapMistralModel(mistral('mistral-small-latest')), name: 'Mistral Small' },
 
-  // Tier 3: Free large-context emergency
-  { model: openrouter('z-ai/glm-4.5-air:free'), name: 'GLM 4.5 Air (OpenRouter)' },
+  // Tier 3: free large-context emergency
+  { model: openrouter('nvidia/nemotron-3-super-120b-a12b:free'), name: 'Nemotron 3 Super (OpenRouter)' },
 ];
-
-// =============================================================================
-// Simple Fallback Model
-// =============================================================================
 
 /**
  * Format error for logging: extract message, status code, and type.
@@ -266,6 +268,39 @@ function formatError(error: unknown): string {
   const msg = (e.message ?? 'unknown').slice(0, 300);
   return status ? `[${name} ${status}] ${msg}` : `[${name}] ${msg}`;
 }
+
+/**
+ * A model the provider no longer serves (404) or no longer serves free
+ * (402, or OpenRouter's "unavailable for free") fails every request until the
+ * chain is edited, and the chain hides it while a later model answers. Report
+ * each one once per process, so it reaches Sentry the first time it's seen.
+ */
+const reportedGone = new Set<string>();
+
+export function isModelGone(error: unknown): boolean {
+  const e = error as ErrorLike | undefined;
+  const status = Number(e?.statusCode ?? e?.status);
+  const msg = String((e as Error | undefined)?.message ?? '');
+  return status === 404 || status === 402 || /no longer available|unavailable for free|model.+not found|decommissioned/i.test(msg);
+}
+
+function reportModelGone(name: string, error: unknown): void {
+  if (reportedGone.has(name) || !isModelGone(error)) return;
+  reportedGone.add(name);
+  captureError(new Error(`AI model unavailable: ${name}. ${formatError(error)}`), {
+    operation: 'ai.fallback.modelGone',
+    tags: { model: name },
+  });
+}
+
+/** Test hook: forget which models were reported. */
+export function resetReportedGone(): void {
+  reportedGone.clear();
+}
+
+// =============================================================================
+// Simple Fallback Model
+// =============================================================================
 
 /**
  * Simple sequential fallback model. Tries each model in order for every request.
@@ -362,6 +397,7 @@ export class FallbackModel implements LanguageModelV4 {
       } catch (error) {
         const errorStr = formatError(error);
         errors.push({ name: config.name, error: errorStr });
+        reportModelGone(config.name, error);
         console.warn(`[Fallback] ${config.name} FAILED (${mode}): ${errorStr}`);
         addBreadcrumb({ category: 'ai.fallback', message: `${config.name} FAILED (${mode})`, level: 'warning', data: { modelIndex: i, error: errorStr } });
       }
@@ -433,22 +469,26 @@ export function reportMidStreamFailure(
 // =============================================================================
 
 /**
- * Chat model with automatic fallback across 5 models / 5 providers.
+ * Chat model with automatic fallback across 6 models / 4 providers.
  * Every request starts from model #1 (Gemini 2.5 Flash).
  */
 export const chatModel = new FallbackModel(MODEL_CONFIGS);
 
 export const PRIMARY_MODEL_NAME = MODEL_CONFIGS[0]!.name;
 
+/** The chain's names in order, so SUPPORTED_MODELS can be held to it. */
+export const CHAT_MODEL_NAMES = MODEL_CONFIGS.map((c) => c.name);
+
 export const SUPPORTED_MODELS = [
   // Tier 1: Google Gemini
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', tier: 1, toolCalling: '~90%' },
-  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', tier: 1, toolCalling: '~85%' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', tier: 1 },
+  { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', provider: 'Google', tier: 1 },
+  { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', provider: 'Google', tier: 1 },
 
-  // Tier 2: High-quota fallbacks
-  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', provider: 'Groq', tier: 2, toolCalling: '77.3%' },
-  { id: 'mistral-small-latest', name: 'Mistral Small', provider: 'Mistral', tier: 2, toolCalling: '~70%' },
+  // Tier 2: other providers
+  { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B', provider: 'Groq', tier: 2 },
+  { id: 'mistral-small-latest', name: 'Mistral Small', provider: 'Mistral', tier: 2 },
 
-  // Tier 3: Free large-context emergency
-  { id: 'z-ai/glm-4.5-air:free', name: 'GLM 4.5 Air', provider: 'OpenRouter', tier: 3, toolCalling: '~80%' },
+  // Tier 3: free large-context emergency
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free', name: 'Nemotron 3 Super', provider: 'OpenRouter', tier: 3 },
 ] as const;

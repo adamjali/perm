@@ -145,6 +145,7 @@ import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { BROWSE_BUCKETS, type BrowseBucket } from "@/lib/entityBrowse";
 import {
+  ChunkNotListed,
   childNames,
   entityEntries,
   groupEntries,
@@ -689,6 +690,37 @@ describe("sitemap index and chunking", () => {
     for (const k of ["employer", "attorney", "occupation"]) {
       expect(names.filter((n) => n.startsWith(`${k}-`))).toHaveLength(1);
     }
+  });
+
+  it("a chunk past the last listed one is not listed, and isn't reported as a failed read", async () => {
+    // Oct 12 2026: employer-16.xml, one past the 15 listed, answered 500 and paged Sentry.
+    vi.mocked(countEntityRanks).mockResolvedValue(70985);
+    vi.mocked(getEntitySlugWindow).mockResolvedValue([]);
+    vi.mocked(captureError).mockClear();
+    expect((await childNames()).filter((n) => n.startsWith("employer-"))).toHaveLength(15);
+    await expect(entityEntries("employer", 15)).rejects.toBeInstanceOf(ChunkNotListed);
+    expect(captureError).not.toHaveBeenCalled();
+
+    // A LISTED chunk that comes back empty is still a failed read, and loud.
+    await expect(entityEntries("employer", 14)).rejects.not.toBeInstanceOf(ChunkNotListed);
+    expect(captureError).toHaveBeenCalledTimes(1);
+
+    // So is any empty chunk when the count itself can't be read.
+    vi.mocked(countEntityRanks).mockRejectedValue(new Error("read failed"));
+    await expect(entityEntries("employer", 15)).rejects.not.toBeInstanceOf(ChunkNotListed);
+
+    vi.mocked(countLiveOnlyRanks).mockResolvedValue(22000);
+    vi.mocked(getLiveOnlySlugWindow).mockResolvedValue([]);
+    await expect(liveEmployerEntries(5)).rejects.toBeInstanceOf(ChunkNotListed);
+    vi.mocked(countOtherEmployerRanks).mockResolvedValue(200000);
+    vi.mocked(getOtherEmployerSlugWindow).mockResolvedValue([]);
+    await expect(otherEmployerEntries(40)).rejects.toBeInstanceOf(ChunkNotListed);
+
+    // Put back the file's defaults: clearAllMocks keeps implementations, and
+    // CI shuffles test order.
+    arrangeEntities({ employer: 600, attorney: 200, occupation: 200 });
+    vi.mocked(countLiveOnlyRanks).mockResolvedValue(0);
+    vi.mocked(countOtherEmployerRanks).mockResolvedValue(0);
   });
 
   it("parses child names and refuses anything else", async () => {

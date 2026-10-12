@@ -473,6 +473,26 @@ async function browseEntries(dol: string | null): Promise<Entry[]> {
 }
 
 /**
+ * A chunk past a family's last one. The index never lists it, so a request
+ * for it (a crawler holding an old index, or someone guessing the next
+ * number) is a 404, not a failed read: on Oct 12 2026 a request for
+ * employer-16.xml, one past the 15 listed, answered 500 and paged Sentry.
+ */
+export class ChunkNotListed extends Error {}
+
+/**
+ * Whether `chunk` lies past the family's last listed chunk. Asked only after
+ * a window came back empty. Chunk 0 is always listed (childNames lists one
+ * child per entity kind even at zero), and a count that can't be read
+ * answers no, so a real read failure still reports as one.
+ */
+async function pastLastChunk(chunk: number, count: () => Promise<number>): Promise<boolean> {
+  if (chunk === 0) return false;
+  const n = await count().catch(() => null);
+  return n !== null && chunk >= Math.ceil(n / SITEMAP_CHUNK);
+}
+
+/**
  * One chunk of one entity kind.
  *
  * Slugs come from the entity TABLE, the same source the pages and index
@@ -494,6 +514,9 @@ export async function entityEntries(kind: EntityKind, chunk: number): Promise<En
   // kind is legitimately a remainder (occupations hold 1,410 rows in total).
   const floor = chunk === 0 ? MIN_ROWS_PER_KIND : 1;
   if (slugs.length < floor) {
+    if (await pastLastChunk(chunk, () => countEntityRanks(kind))) {
+      throw new ChunkNotListed(`${kind}-${chunk + 1}.xml is past the last listed chunk`);
+    }
     const detail =
       `Sitemap child ${kind} chunk ${chunk} built with only ${slugs.length} rows. ` +
       `The Turso read failed or returned almost nothing.`;
@@ -534,6 +557,9 @@ export async function liveEmployerEntries(chunk: number): Promise<Entry[]> {
   const slugs = await getLiveOnlySlugWindow(chunk, SITEMAP_CHUNK);
   const floor = chunk === 0 ? MIN_ROWS_PER_KIND : 1;
   if (slugs.length < floor) {
+    if (await pastLastChunk(chunk, countLiveOnlyRanks)) {
+      throw new ChunkNotListed(`live-employer-${chunk + 1}.xml is past the last listed chunk`);
+    }
     const detail =
       `Sitemap child live-employer chunk ${chunk} built with only ${slugs.length} rows. ` +
       `The Turso read failed or the nightly table is empty.`;
@@ -582,6 +608,9 @@ export async function otherEmployerEntries(chunk: number): Promise<Entry[]> {
   const slugs = await getOtherEmployerSlugWindow(chunk, SITEMAP_CHUNK);
   const floor = chunk === 0 ? MIN_ROWS_PER_KIND : 1;
   if (slugs.length < floor) {
+    if (await pastLastChunk(chunk, countOtherEmployerRanks)) {
+      throw new ChunkNotListed(`other-employer-${chunk + 1}.xml is past the last listed chunk`);
+    }
     const detail =
       `Sitemap child other-employer chunk ${chunk} built with only ${slugs.length} rows. ` +
       `The read failed or the nightly table is empty.`;

@@ -291,7 +291,7 @@ export async function POST(req: Request) {
     }
 
     try {
-      chatDebug(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (fallback across 5 models)`);
+      chatDebug(`[Chat API] [${sessionId}] Streaming with ${PRIMARY_MODEL_NAME} (fallback across the chain)`);
 
       // Per-request model instance to isolate lastUsedModel/lastAttemptCount
       // from concurrent requests (singleton chatModel would race)

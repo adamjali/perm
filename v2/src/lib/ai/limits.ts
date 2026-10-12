@@ -18,10 +18,11 @@ import { EASTERN_TIMEZONE, MS_PER_HOUR, MS_PER_MINUTE } from "@/lib/time";
 export const CHAT_MAX_STEPS = 10;
 
 /**
- * Output tokens per reply. 8,000 sits under the smallest limit in the model
- * chain: Gemini 2.0 Flash's "Output token limit: 8,192" (ai.google.dev).
- * Groq keeps its own lower cap in providers.ts, because its free
- * tier counts the requested maximum against a 12,000 tokens-a-minute budget.
+ * Output tokens per reply. 8,000 sits well under every model's own output
+ * limit in the chain (Gemini's 65,536, read from Google's model list on
+ * Oct 12 2026). Groq keeps its own lower cap in providers.ts, because its
+ * free tier counts the requested maximum against an 8,000 tokens-a-minute
+ * budget.
  */
 export const CHAT_MAX_OUTPUT_TOKENS = 8000;
 

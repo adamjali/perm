@@ -675,7 +675,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (night)".
 - **A table cell's fill can say its state**: the bulletin matrix tints Current and Unavailable, with a key.
 - **The dev capture scripts live in `node_modules/.cache/qa/`**: `top-shot.mjs`, `dark-shot.mjs`, `embed-shot.mjs`, `load-shot.mjs` (for pages that never go network-idle).
 
-## Oct 12 2026, in eight lines
+## Oct 12 2026, in eleven lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 
@@ -689,3 +689,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   emails when a copy isn't tagged free.
 - **The Terms say Settings deletes an account** (30-day grace), as the Privacy Policy did; they had said "by contacting us".
 - **Signed-in users can switch usage analytics off** in Settings > Support; the account's browsers then send PostHog nothing.
+- **The assistant's models had retired** (Gemini 2.0 Flash, Groq's Llama 3.3, OpenRouter's free GLM; Mistral and Cerebras refuse
+  free requests): the chain is six models checked live on Oct 12, and a retired model now reaches Sentry the first time it fails.
+- **The budget email names the limit that held**: the site's 55 sign-up emails a day, or the pool's own count.
+- **A sitemap file past the last one answers 404**, not a 500 that pages Sentry.

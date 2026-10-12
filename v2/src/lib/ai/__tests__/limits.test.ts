@@ -45,9 +45,9 @@ describe('cutShortNotice', () => {
 });
 
 describe('caps', () => {
-  it('keeps the output cap under the smallest model limit in the chain (Gemini 2.0 Flash, 8,192)', () => {
+  it("keeps the output cap under every chain model's own limit (Gemini's 65,536)", () => {
     expect(CHAT_MAX_OUTPUT_TOKENS).toBeGreaterThan(4000);
-    expect(CHAT_MAX_OUTPUT_TOKENS).toBeLessThanOrEqual(8192);
+    expect(CHAT_MAX_OUTPUT_TOKENS).toBeLessThanOrEqual(65536);
   });
 });
 
