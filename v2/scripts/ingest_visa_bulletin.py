@@ -164,6 +164,9 @@ DIRECT_SOURCE = (
     "adoption.state.gov (the State Department's own page, served to scripts; "
     "travel.state.gov refuses them)"
 )
+# What the pages print as the bulletin's source: a readable name, never a
+# bare host or a sentence (a source line is read beside every chart).
+FRESHNESS_SOURCE = "the State Department's own bulletin pages"
 DIRECT_LINK = re.compile(
     r"/content/travel/en/legal/visa-law0/visa-bulletin/(\d{4})/"
     r"visa-bulletin-for-([a-z]+)-(\d{4})\.html"
@@ -555,8 +558,15 @@ def ingest_direct(limit: int, dry_run: bool = False, skip_bad: bool = False) -> 
     if skipped:
         log(f"skipped {len(skipped)}: {', '.join(sorted(skipped))}")
     if stored:
-        stamp_bulletin_freshness(db, DIRECT_SOURCE)
         note_stored()
+    # STAMP ON EVERY REAL RUN, not only one that stored a month. The freshness
+    # row's source is what every bulletin page prints as its provenance, and
+    # stamping only on a new month left an older archive run's wording ("via
+    # Internet Archive") on the pages for weeks after this route took over.
+    # The row's as_of is State's newest month either way, so a run that found
+    # nothing new changes nothing the health check judges.
+    if not dry_run:
+        stamp_bulletin_freshness(db, FRESHNESS_SOURCE)
     if not dry_run:
         note = f"direct: stored {stored}" + (f", skipped {', '.join(sorted(skipped))}" if skipped else "")
         record_run(db, run_name, status="ok", rows_written=stored, note=note[:300])

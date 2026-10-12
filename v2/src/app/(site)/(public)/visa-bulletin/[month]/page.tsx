@@ -188,6 +188,50 @@ function tallySentence(name: string, t: ReturnType<typeof tally>): string {
   return `${name}: ${parts.join(", ")}.`;
 }
 
+/** The tally's parts in the order a reader scans them, coloured as the cells are. */
+const TALLY_PARTS: { key: keyof ReturnType<typeof tally>; word: string; fill: string }[] = [
+  { key: "advanced", word: "advanced", fill: "bg-primary" },
+  { key: "opened", word: "reopened", fill: "bg-data-good-ink" },
+  { key: "held", word: "unchanged", fill: "bg-muted" },
+  { key: "back", word: "went backwards", fill: "bg-destructive" },
+  { key: "shut", word: "became unavailable", fill: "bg-foreground" },
+];
+
+/**
+ * One chart's month as a single bar: every cell, split by what it did. The
+ * counts had been one sentence; drawn, a month that moved mostly backwards
+ * reads as red before a word is read. The sentence stays for screen readers.
+ */
+function TallyBar({ name, t }: { name: string; t: ReturnType<typeof tally> }) {
+  const total = TALLY_PARTS.reduce((n, p) => n + t[p.key], 0);
+  if (total === 0) return null;
+  const parts = TALLY_PARTS.filter((p) => t[p.key] > 0);
+  return (
+    <div className="mt-5">
+      <p className="font-heading text-base font-black">{name}</p>{" "}
+      <p className="sr-only">{tallySentence(name, t)}</p>{" "}
+      <div aria-hidden="true" className="mt-2 flex h-7 border-2 border-border">
+        {parts.map((p, i) => (
+          <span
+            key={p.key}
+            className={`h-full ${p.fill} ${i > 0 ? "border-l-2 border-border" : ""}`}
+            style={{ width: `${(t[p.key] / total) * 100}%` }}
+          />
+        ))}
+      </div>{" "}
+      <ul aria-hidden="true" className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        {parts.map((p) => (
+          <li key={p.key} className="flex items-center gap-1.5">
+            <span className={`size-3 border-2 border-border ${p.fill}`} />{" "}
+            <span className="font-bold tabular-nums">{t[p.key]}</span>{" "}
+            <span className="text-foreground/75">{`${p.word} `}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ChartTable({
   title,
   rows,
@@ -305,15 +349,16 @@ export default async function BulletinMonthPage({
       </p>{" "}
 
       {prev ? (
-        <div className="mt-6 border-2 border-border bg-card p-4 shadow-hard-sm sm:p-5">
-          <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            What moved, {categories.length * BOARD_COUNTRIES.length} cells per chart
+        <section aria-labelledby="moved" className="mt-8 border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
+          <h2 id="moved" className="font-heading text-xl font-black">
+            {`What moved since ${sinceLabel ?? "the bulletin before"}`}
+          </h2>{" "}
+          <p className="mt-1 text-sm text-foreground/70">
+            {`Every one of the ${categories.length * BOARD_COUNTRIES.length} cells on each chart, by what it did.`}
           </p>{" "}
-          <p className="mt-2 text-base leading-relaxed">
-            {tallySentence("Final action dates", faTally)}{" "}
-            {noFilingChart || !prevHasFiling ? null : tallySentence("Dates for filing", dffTally)}
-          </p>
-        </div>
+          <TallyBar name="Final action dates" t={faTally} />{" "}
+          {noFilingChart || !prevHasFiling ? null : <TallyBar name="Dates for filing" t={dffTally} />}
+        </section>
       ) : null}{" "}
 
       <ChartTable title="Final action dates" rows={fa} since={sinceLabel} />{" "}

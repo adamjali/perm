@@ -63,6 +63,24 @@ function Ranked({
 
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
+/**
+ * A title that repeats in one list carries its code. Agencies reuse a title
+ * across code vintages (SOC 2010's 15-1121 and SOC 2018's 15-1211 are both
+ * "Computer Systems Analysts"; NAICS 2017's 454110 and 2022's 45411 are both
+ * "Electronic Shopping and Mail-Order Houses"), so two rows would otherwise
+ * read as one name with two counts.
+ */
+function codedWhereRepeated<T>(
+  rows: readonly T[],
+  title: (r: T) => string,
+  code: (r: T) => string,
+  kind: string,
+): (r: T) => string {
+  const seen = new Map<string, number>();
+  for (const r of rows) seen.set(title(r), (seen.get(title(r)) ?? 0) + 1);
+  return (r) => ((seen.get(title(r)) ?? 0) > 1 ? `${title(r)} (${kind} ${code(r)})` : title(r));
+}
+
 export const KIND_NOUN: Record<GroupKind, string> = {
   city: "city",
   industry: "industry",
@@ -105,6 +123,7 @@ export function GroupView({
     );
   }
   if (d.occupations.length > 0) {
+    const occName = codedWhereRepeated(d.occupations, (o) => o.title, (o) => o.code, "SOC");
     boxes.push(
       <Box key="occ" title="Top occupations">
         <Ranked label="Top occupations"
@@ -113,10 +132,10 @@ export function GroupView({
             n: o.n,
             label: o.slug ? (
               <Link href={`/perm-wages/${o.slug}`} className={LINK}>
-                {o.title}
+                {occName(o)}
               </Link>
             ) : (
-              o.title
+              occName(o)
             ),
           }))}
         />
@@ -151,6 +170,7 @@ export function GroupView({
     );
   }
   if (d.industries.length > 0) {
+    const named = codedWhereRepeated(d.industries, (i) => i.title, (i) => i.code, "NAICS");
     boxes.push(
       <Box key="ind" title="Industries">
         <Ranked label="Industries"
@@ -160,10 +180,10 @@ export function GroupView({
             label:
               i.n >= FLOOR && i.code.length === 6 ? (
                 <Link href={`${GROUP_PATH.industry}/${i.code}`} className={LINK}>
-                  {i.title}
+                  {named(i)}
                 </Link>
               ) : (
-                i.title
+                named(i)
               ),
           }))}
         />

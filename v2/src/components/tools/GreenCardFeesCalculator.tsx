@@ -15,6 +15,9 @@ import { calculateGreenCardFees, FEE_SCHEDULE, type FeeInput } from "@/lib/perm"
  * under it, because a total that reads as the whole cost is worse than none.
  */
 
+/** One fill per fee line, in the order the schedule lists them. */
+const FEE_FILLS = ["bg-primary", "bg-foreground", "bg-stage-pwd", "bg-data-warn-ink", "bg-stage-recruitment", "bg-data-info"] as const;
+
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const NUMBER = "mt-1.5 min-h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
@@ -78,6 +81,32 @@ export function GreenCardFeesCalculator() {
       <div className="mt-6 border-2 border-border bg-background p-4" aria-live="polite">
         <p className="text-sm font-bold">USCIS fees, total{" "}</p>{" "}
         <p className="mt-1 font-heading text-4xl font-black tabular-nums">{usd(result.total)}</p>{" "}
+        {/* THE TOTAL, SPLIT BY FORM, at the share each fee takes. The table
+            below lists the same lines; this shows at a glance that the
+            adjustment stage is the larger half and which form drives it. */}
+        {result.total > 0 ? (
+          <>
+            <div aria-hidden="true" className="mt-4 flex h-6 border-2 border-border">
+              {result.lines.map((l, i) => (
+                <span
+                  key={`${l.form}-${l.label}`}
+                  title={`${l.form}: ${usd(l.total)}`}
+                  className={`h-full ${FEE_FILLS[i % FEE_FILLS.length]} ${i > 0 ? "border-l-2 border-border" : ""}`}
+                  style={{ width: `${(l.total / result.total) * 100}%` }}
+                />
+              ))}
+            </div>{" "}
+            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              {result.lines.map((l, i) => (
+                <li key={`${l.form}-${l.label}`} className="flex items-center gap-1.5">
+                  <span aria-hidden="true" className={`size-3 border-2 border-border ${FEE_FILLS[i % FEE_FILLS.length]}`} />{" "}
+                  <span className="font-mono font-bold">{l.form}</span>{" "}
+                  <span className="tabular-nums text-foreground/75">{`${usd(l.total)} `}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}{" "}
         <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 [&>*]:min-w-0">
           <div className="flex items-baseline justify-between gap-3 border-t border-border/40 pt-2">
             <dt>Petition stage (I-140){" "}</dt>{" "}

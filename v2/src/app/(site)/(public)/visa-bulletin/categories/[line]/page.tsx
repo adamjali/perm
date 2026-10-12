@@ -130,6 +130,9 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
     lineIssuance(category, country).catch(() => null),
   ]);
   const years = fiscalYearMoves(fa.states);
+  // One scale for every year's bar, so a year that moved four times as far
+  // draws four times as long.
+  const maxMove = Math.max(1, ...years.map((y) => Math.abs(y.movedDays ?? 0)));
   const path = `/visa-bulletin/categories/${slug}`;
 
   const breadcrumb = breadcrumbSchema(path, `${cat} ${where}`);
@@ -228,7 +231,22 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
                   </th>
                   <td className="px-4 py-3 tabular-nums">{cutoffLabel(y.start.cutoff)}{" "}</td>
                   <td className="px-4 py-3 tabular-nums">{cutoffLabel(y.end.cutoff)}{" "}</td>
-                  <td className="px-4 py-3 tabular-nums">{movedLabel(y.movedDays)}{" "}</td>
+                  <td className="px-4 py-3 tabular-nums">
+                    {/* The year's move, drawn from a centre line: forward to
+                        the right in lime, backwards to the left in red. */}
+                    <span className="flex items-center gap-3">
+                      <span aria-hidden="true" className="relative block h-3 w-28 shrink-0 bg-muted sm:w-40">
+                        <span className="absolute inset-y-[-3px] left-1/2 w-0.5 -translate-x-1/2 bg-foreground" />
+                        {y.movedDays ? (
+                          <span
+                            className={`absolute inset-y-0 ${y.movedDays > 0 ? "left-1/2 bg-primary" : "right-1/2 bg-destructive"}`}
+                            style={{ width: `${Math.max(2, (Math.abs(y.movedDays) / maxMove) * 50)}%` }}
+                          />
+                        ) : null}
+                      </span>{" "}
+                      <span>{movedLabel(y.movedDays)}</span>
+                    </span>{" "}
+                  </td>
                   <td className="px-4 py-3 tabular-nums">{y.backwards}{" "}</td>
                 </tr>
               ))}
