@@ -32,6 +32,18 @@ export const metadata: Metadata = withSocialCard({
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
 }, "visa-bulletin-categories");
 
+/** A final action cell's fill says its state before its words do. */
+const STATE_FILL: Record<string, string> = {
+  current: "bg-primary/20 hover:bg-primary/35",
+  unavailable: "bg-foreground/10 hover:bg-foreground/20",
+};
+
+const MATRIX_KEY = [
+  { label: "Current", means: "every priority date qualifies", fill: "bg-primary/20" },
+  { label: "A date", means: "priority dates before it qualify", fill: "bg-card" },
+  { label: "Unavailable", means: "no numbers this month", fill: "bg-foreground/10" },
+];
+
 export default async function BulletinCategoriesPage() {
   const raw = await getVisaBulletins().catch(() => []);
   const board = summariseBulletins(
@@ -90,7 +102,7 @@ export default async function BulletinCategoriesPage() {
                           {fa ? (
                             <Link
                               href={`/visa-bulletin/categories/${lineSlug(cat, country)}`}
-                              className="block min-h-[44px] px-2 py-2 hover:bg-muted"
+                              className={`block min-h-[44px] px-2 py-2 ${STATE_FILL[fa.latest.kind] ?? "hover:bg-muted"}`}
                               aria-label={`${LINE_CATEGORY_SHORT[cat]} ${LINE_COUNTRY_SHORT[country]}: final action ${cutoffLabel(fa.latest)}`}
                             >
                               <span className="block font-bold tabular-nums underline underline-offset-2">{cutoffLabel(fa.latest)}</span>{" "}
@@ -109,10 +121,19 @@ export default async function BulletinCategoriesPage() {
               </tbody>
             </table>
           </div>{" "}
+          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            {MATRIX_KEY.map((k) => (
+              <li key={k.label} className="flex items-center gap-2">
+                <span aria-hidden="true" className={`size-4 shrink-0 border-2 border-border ${k.fill}`} />{" "}
+                <span>
+                  <span className="font-bold">{k.label}</span>: {k.means}
+                </span>{" "}
+              </li>
+            ))}
+          </ul>{" "}
           <p className="mt-3 text-base text-foreground/70">
-            Top: the final action date, when a green card can be approved. Under it: the dates for filing, when USCIS
-            allows it for filing an I-485. &ldquo;Current&rdquo; means every priority date qualifies; &ldquo;Unavailable&rdquo;
-            means no numbers this month.
+            Top of each cell: the final action date, when a green card can be approved, which sets the cell&apos;s fill.
+            Under it: the dates for filing, when USCIS allows it for filing an I-485.
           </p>
         </section>
       ) : null}

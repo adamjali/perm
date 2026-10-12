@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
 
+import { PlusIcon } from "@phosphor-icons/react/ssr";
+
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
+import { IndexHeader, type IndexFigure } from "@/components/data/IndexHeader";
 import { AsPrinted, SevpEmployerTable } from "@/components/data/SevpEmployerTable";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { getSevpLists } from "@/lib/turso/sevpEmployers";
+import { formatInt } from "@/lib/format";
+import { getSevpLists, type SevpList } from "@/lib/turso/sevpEmployers";
 
 /**
  * ICE's yearly top-200 lists of employers of F-1 students on OPT, STEM OPT
@@ -33,6 +37,55 @@ export const revalidate = 604800;
 
 const SOURCE = "https://www.ice.gov/sevis/whats-new";
 
+/** Rows each table shows before the rest of its 200 fold. */
+const OPEN_ROWS = 25;
+const LEADERS = 10;
+
+/**
+ * How much of one list's count its ten busiest employers hold. A student who
+ * worked for two employers on the list is counted at each, so this is a share
+ * of the list's count, never of students.
+ */
+function leaderShare(list: SevpList) {
+  const sum = (rows: SevpList["rows"]) => rows.reduce((t, r) => t + r.total, 0);
+  const all = sum(list.rows);
+  const lead = sum(list.rows.slice(0, LEADERS));
+  return { all, lead, rest: all - lead, share: all > 0 ? lead / all : 0 };
+}
+
+function LeaderBar({ list }: { list: SevpList }) {
+  const s = leaderShare(list);
+  if (s.all === 0) return null;
+  const pct = Math.round(s.share * 100);
+  return (
+    <figure className="m-0 border-2 border-border bg-card p-5 shadow-hard">
+      <figcaption className="font-heading text-lg font-black leading-snug">
+        The {LEADERS} busiest hold {pct}% of the {list.year} list
+      </figcaption>{" "}
+      <span className="sr-only">{`The ${LEADERS} busiest employers: ${formatInt(s.lead)}. The other ${list.rows.length - LEADERS}: ${formatInt(s.rest)}.`}</span>
+      <div aria-hidden="true" className="mt-4 flex h-6 border-2 border-border">
+        <span className="block h-full bg-primary" style={{ width: `${s.share * 100}%` }} />
+        <span className="block h-full flex-1 bg-muted" />
+      </div>{" "}
+      <dl aria-hidden="true" className="mt-3 grid grid-cols-2 gap-3 text-sm [&>*]:min-w-0">
+        <div>
+          <dt className="flex items-center gap-2 text-foreground/70">
+            <span className="size-3 shrink-0 border-2 border-border bg-primary" /> The {LEADERS} busiest{" "}
+          </dt>{" "}
+          <dd className="mt-0.5 font-bold tabular-nums">{formatInt(s.lead)}</dd>
+        </div>{" "}
+        <div>
+          <dt className="flex items-center gap-2 text-foreground/70">
+            <span className="size-3 shrink-0 border-2 border-border bg-muted" /> The other {list.rows.length - LEADERS}{" "}
+          </dt>{" "}
+          <dd className="mt-0.5 font-bold tabular-nums">{formatInt(s.rest)}</dd>
+        </div>
+      </dl>{" "}
+      <p className="mt-3 text-sm text-foreground/70">A student at two of these employers counts at each.</p>
+    </figure>
+  );
+}
+
 export default async function OptEmployersPage() {
   const lists = await getSevpLists();
   const newest = lists[0]?.year ?? null;
@@ -40,17 +93,30 @@ export default async function OptEmployersPage() {
   const earlier = lists.filter((l) => l.year !== newest);
   const years = [...new Set(lists.map((l) => l.year))];
   const label = (l: { list: string }) => (l.list === "opt" ? "OPT and STEM OPT" : "CPT");
+  const optNewest = current.find((l) => l.list === "opt") ?? current[0] ?? null;
+  const leader = optNewest?.rows[0];
+  const figures: IndexFigure[] = [
+    ...(optNewest && leader
+      ? [
+          {
+            label: `Busiest in ${optNewest.year}, ${label(optNewest)}`,
+            value: leader.employer,
+            note: `${formatInt(leader.total)} students`,
+            href: `/perm-employers?q=${encodeURIComponent(leader.employer)}`,
+          },
+        ]
+      : []),
+    ...(years.length > 0 ? [{ label: "Years ICE published", value: years.join(", ") }] : []),
+  ];
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <div className="pt-10 sm:pt-12" />
-      <header className="max-w-3xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Who hires students on OPT and CPT</h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The 200 employers with the most F-1 students on practical training each year, as ICE lists them.
-          {years.length > 0 ? ` Years ICE published: ${years.join(", ")}.` : ""}
-        </p>
-      </header>
+      <IndexHeader
+        title="Who hires students on OPT and CPT"
+        lede="The 200 employers with the most F-1 students on practical training each year, as ICE lists them."
+        figures={figures}
+        aside={optNewest ? <LeaderBar list={optNewest} /> : undefined}
+      />
 
       {lists.length === 0 ? (
         <p className="mt-10 border-2 border-border bg-card p-5 text-base">
@@ -73,7 +139,7 @@ export default async function OptEmployersPage() {
               : "Students on Curricular Practical Training in the year: work that's part of a degree program."}
           </p>
           <div className="mt-4">
-            <SevpEmployerTable list={l} />
+            <SevpEmployerTable list={l} open={OPEN_ROWS} />
           </div>
           <AsPrinted notes={l.asPrinted} />
         </section>
@@ -89,11 +155,14 @@ export default async function OptEmployersPage() {
               <Fragment key={`${l.year}-${l.list}`}>
                 {" "}
                 <details className="group border-2 border-border">
-                  <summary className="flex min-h-[44px] cursor-pointer list-none items-center px-4 font-heading text-lg font-black [&::-webkit-details-marker]:hidden">
-                    {l.year}: {label(l)}, led by {l.rows[0]?.employer ?? "nobody"}
+                  <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-lg font-black [&::-webkit-details-marker]:hidden">
+                    <span>
+                      {l.year}: {label(l)}, led by {l.rows[0]?.employer ?? "nobody"}
+                    </span>{" "}
+                    <PlusIcon aria-hidden="true" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
                   </summary>
                   <div className="p-4 pt-0">
-                    <SevpEmployerTable list={l} />
+                    <SevpEmployerTable list={l} open={OPEN_ROWS} />
                     <AsPrinted notes={l.asPrinted} />
                   </div>
                 </details>

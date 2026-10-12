@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 
 import { BarRows } from "@/components/data/BarRows";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -38,6 +39,9 @@ const TITLE = "PERM Estimate Scorecard";
 const DESCRIPTION =
   "How close our PERM decision dates land: a nightly backtest over thousands of real DOL decisions, and a daily sample recorded before the outcome.";
 const PATH = "/estimate-scorecard";
+
+/** The verdict (the backtest, then which way our dates lean) shows; the rest folds. */
+const LEAD_READINGS = 2;
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -140,18 +144,31 @@ export default async function EstimateScorecardPage() {
       {shortAnswer.length > 0 ? (
         <section aria-labelledby="short-h" className="mt-8 max-w-3xl border-l-4 border-primary pl-5">
           <h2 id="short-h" className="font-heading text-2xl font-black">The short answer</h2>{" "}
-          <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/85">
-            {shortAnswer.map((line) => (
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-lg leading-relaxed">
+            {shortAnswer.slice(0, LEAD_READINGS).map((line) => (
               <li key={line}>{line}</li>
             ))}
-          </ul>
+          </ul>{" "}
+          {shortAnswer.length > LEAD_READINGS ? (
+            <details className="group mt-4 border-2 border-border bg-card">
+              <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 font-heading text-base font-black [&::-webkit-details-marker]:hidden">
+                {shortAnswer.length - LEAD_READINGS} more {shortAnswer.length - LEAD_READINGS === 1 ? "reading" : "readings"}{" "}
+                <PlusIcon aria-hidden="true" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+              </summary>{" "}
+              <ul className="list-disc space-y-2 px-4 pb-4 pl-9 text-base leading-relaxed text-foreground/85">
+                {shortAnswer.slice(LEAD_READINGS).map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </section>
       ) : null}
 
       {backtest && cur && cur.typicalMissDays !== null ? (
         <section aria-labelledby="backtest-h" className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h2 id="backtest-h" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Typical miss, real decisions
+          <h2 id="backtest-h" className="text-base font-bold text-foreground/70">
+            Typical miss on real decisions
           </h2>{" "}
           <p className="mt-2 font-heading text-6xl font-black leading-none tabular-nums sm:text-7xl">
             {days(cur.typicalMissDays)}

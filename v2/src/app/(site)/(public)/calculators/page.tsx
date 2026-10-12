@@ -307,9 +307,9 @@ export default function CalculatorsPage() {
           <table className="w-full border-2 border-border text-left text-sm shadow-hard-sm">
             <thead className="bg-foreground text-background">
               <tr>
-                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">Your situation{" "}</th>
-                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">Ask{" "}</th>
-                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">Use{" "}</th>
+                <th scope="col" className="p-3 text-sm font-bold">Your situation{" "}</th>
+                <th scope="col" className="p-3 text-sm font-bold">Ask{" "}</th>
+                <th scope="col" className="p-3 text-sm font-bold">Use{" "}</th>
               </tr>
             </thead>
             <tbody className="bg-card">
@@ -369,7 +369,7 @@ export default function CalculatorsPage() {
                   <Icon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
                   <span
                     className={
-                      "font-mono text-sm font-bold uppercase tracking-wider " +
+                      "text-sm font-bold " +
                       (t.tone === "ink" ? "text-background/60" : "text-muted-foreground")
                     }
                   >
@@ -449,7 +449,7 @@ export default function CalculatorsPage() {
               >
                 <Icon className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
-                  <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-sm font-bold text-muted-foreground">
                     {t.kind}
                   </span>{" "}
                   <h3 className="mt-1 font-heading text-xl font-black leading-tight">

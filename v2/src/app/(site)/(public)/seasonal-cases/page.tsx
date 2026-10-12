@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { PageBasics } from "@/components/data/PageBasics";
@@ -168,44 +169,49 @@ export default async function SeasonalCasesPage() {
         </section>
       ) : null}
 
+      {/* The way in for someone holding a number stays in view; where the
+          figures come from folds under one line. It had been a tinted block
+          of five paragraphs above the search. */}
       <section className="mt-8 max-w-3xl">
-        <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
-          <h2 className="font-heading text-lg font-black">What&apos;s in here, and what isn&apos;t</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            Every status comes from DOL&apos;s case system, pending ones included. The wage, the
-            workers and the worksite come from DOL&apos;s quarterly H-2A, H-2B and CW-1 files once
-            a case is decided, and, for an application DOL has accepted but not yet decided, from
-            its SeasonalJobs feed.
-          </p>{" "}
-          {published.length > 0 ? (
-            <ul className="mt-3 space-y-1 text-sm text-foreground/75">
-              {published.map(({ visa, summary: pub }) => (
-                <li key={visa}>
-                  <span className="font-bold">{visa}:</span> {formatInt(pub.rows)} decided cases in DOL&apos;s file
-                  {pub.latestDecision ? `, decided through ${longDate(pub.latestDecision) ?? pub.latestDecision}` : ""}.
-                </li>
-              ))}
-            </ul>
-          ) : null}{" "}
-          <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-            Have the number? The{" "}
-            <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              status lookup
-            </Link>{" "}
-            takes H-300, JO-A-300, H-400, P-400, C-500 and P-500 numbers, asks DOL directly, and can email you when the status changes.
-          </p>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            What each status means, and when DOL decides:{" "}
-            <Link href="/guides/h2a-case-status-and-timing" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              H-2A
-            </Link>{" "}
-            and{" "}
-            <Link href="/guides/h2b-and-cw1-case-status-and-timing" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              H-2B and CW-1
-            </Link>
-            .
-          </p>
-        </div>
+        <p className="text-base leading-relaxed text-foreground/80">
+          Have the number? The{" "}
+          <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text">
+            status lookup
+          </Link>{" "}
+          takes H-300, JO-A-300, H-400, P-400, C-500 and P-500 numbers, asks DOL directly, and can email you when the
+          status changes. What each status means, and when DOL decides:{" "}
+          <Link href="/guides/h2a-case-status-and-timing" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text">
+            H-2A
+          </Link>{" "}
+          and{" "}
+          <Link href="/guides/h2b-and-cw1-case-status-and-timing" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text">
+            H-2B and CW-1
+          </Link>
+          .
+        </p>{" "}
+        <details className="group mt-4 border-2 border-border bg-card">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 font-heading text-base font-black [&::-webkit-details-marker]:hidden">
+            Where these figures come from{" "}
+            <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+          </summary>
+          <div className="border-t-2 border-border p-4">
+            <p className="text-base leading-relaxed text-foreground/80">
+              Every status comes from DOL&apos;s case system, pending ones included. The wage, the workers and the
+              worksite come from DOL&apos;s quarterly H-2A, H-2B and CW-1 files once a case is decided, and, for an
+              application DOL has accepted but not yet decided, from its SeasonalJobs feed.
+            </p>{" "}
+            {published.length > 0 ? (
+              <ul className="mt-3 space-y-1 text-sm text-foreground/75">
+                {published.map(({ visa, summary: pub }) => (
+                  <li key={visa}>
+                    <span className="font-bold">{visa}:</span> {formatInt(pub.rows)} decided cases in DOL&apos;s file
+                    {pub.latestDecision ? `, decided through ${longDate(pub.latestDecision) ?? pub.latestDecision}` : ""}.
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </details>
       </section>
 
       <div className="mt-10">

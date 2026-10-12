@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import type { SevpList } from "@/lib/turso/sevpEmployers";
@@ -14,13 +15,9 @@ import { formatInt } from "@/lib/format";
 
 const fmt = (n: number | null) => (n === null ? "" : formatInt(n));
 
-export function SevpEmployerTable({ list, limit }: { list: SevpList; limit?: number }) {
-  const shown = limit ? list.rows.slice(0, limit) : list.rows;
-  const top = list.rows[0]?.total ?? 1;
+function RowsTable({ list, rows, top }: { list: SevpList; rows: SevpList["rows"]; top: number }) {
   const opt = list.list === "opt";
   return (
-    // The tooltip sits outside the scrolling table, which would clip it.
-    <ChartTips label={`ICE's top employers for ${opt ? "OPT and STEM OPT" : "CPT"}, ${list.year}`}>
     <div className="overflow-x-auto border-2 border-border">
       <table className="w-full min-w-[560px] text-left text-base">
         <thead className="border-b-2 border-border bg-muted/40">
@@ -33,7 +30,7 @@ export function SevpEmployerTable({ list, limit }: { list: SevpList; limit?: num
           </tr>
         </thead>
         <tbody className="tabular-nums">
-          {shown.map((r) => (
+          {rows.map((r) => (
             <tr key={r.rank} className="border-b border-border last:border-b-0">
               <td className="px-3 py-2 font-mono text-sm">{r.rank}{" "}</td>
               <th scope="row" className="px-3 py-2 font-normal">
@@ -43,9 +40,11 @@ export function SevpEmployerTable({ list, limit }: { list: SevpList; limit?: num
                 >
                   {r.employer}
                 </Link>{" "}
+                {/* The counts sit to the right, off a phone's screen; the
+                    total is printed by the bar there too. */}
+                <span className="mt-1 flex max-w-xs items-center gap-2" aria-hidden="true">
                 <span
-                  className="mt-1 block h-2 w-full max-w-xs bg-muted"
-                  aria-hidden="true"
+                  className="block h-2 min-w-0 flex-1 bg-muted"
                   data-tip={[
                     r.employer,
                     `#${r.rank} of ${list.rows.length}`,
@@ -57,7 +56,9 @@ export function SevpEmployerTable({ list, limit }: { list: SevpList; limit?: num
                     .join("\n")}
                 >
                   <span className="block h-full bg-foreground" style={{ width: `${Math.max(1, (r.total / top) * 100)}%` }} />
-                </span>
+                </span>{" "}
+                <span className="shrink-0 text-sm font-bold tabular-nums sm:hidden">{fmt(r.total)}</span>
+                </span>{" "}
               </th>
               <td className="px-3 py-2 text-right font-bold">{fmt(r.total)}{" "}</td>
               {opt ? <td className="px-3 py-2 text-right">{fmt(r.opt)}{" "}</td> : null}
@@ -67,6 +68,33 @@ export function SevpEmployerTable({ list, limit }: { list: SevpList; limit?: num
         </tbody>
       </table>
     </div>
+  );
+}
+
+/**
+ * `open` rows show; the rest of the list sits in a fold below, in the HTML
+ * either way, on the same bar scale as the rows above it.
+ */
+export function SevpEmployerTable({ list, open }: { list: SevpList; open?: number }) {
+  const top = list.rows[0]?.total ?? 1;
+  const shown = open ? list.rows.slice(0, open) : list.rows;
+  const rest = open ? list.rows.slice(open) : [];
+  const opt = list.list === "opt";
+  return (
+    // The tooltip sits outside the scrolling table, which would clip it.
+    <ChartTips label={`ICE's top employers for ${opt ? "OPT and STEM OPT" : "CPT"}, ${list.year}`}>
+      <RowsTable list={list} rows={shown} top={top} />{" "}
+      {rest.length > 0 ? (
+        <details className="group mt-3 border-2 border-border">
+          <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 font-heading text-base font-black [&::-webkit-details-marker]:hidden">
+            Ranks {rest[0]!.rank} to {rest[rest.length - 1]!.rank}{" "}
+            <PlusIcon aria-hidden="true" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+          </summary>{" "}
+          <div className="p-3 pt-0">
+            <RowsTable list={list} rows={rest} top={top} />
+          </div>
+        </details>
+      ) : null}
     </ChartTips>
   );
 }

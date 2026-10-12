@@ -124,7 +124,7 @@ export default function AboutPage() {
       <figure className="mt-10 overflow-x-auto overscroll-x-none border-2 border-border bg-card p-4 shadow-hard sm:p-6">
         <svg viewBox="0 0 760 300" className="w-full min-w-[640px] text-foreground" role="img" aria-labelledby="data-flow-title">
           <title id="data-flow-title">How the site works: DOL&apos;s case index is asked every night and on every lookup, DOL&apos;s disclosure files are read each quarter, USCIS and the State Department each month; all of it lands in the pages: case status, processing times, wages and deadlines.</title>
-          <text x="20" y="28" fontSize="13" fontWeight="700" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">FEDERAL SOURCES</text>
+          <text x="20" y="28" fontSize="13" fontWeight="700" fill="currentColor">Federal sources</text>
           <rect x="20" y="44" width="200" height="56" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
           <text x="32" y="68" fontSize="14" fontWeight="700" fill="#000000">DOL case-status index</text>
           <text x="32" y="88" fontSize="13" fill="#000000">every case, pending included</text>
@@ -137,7 +137,7 @@ export default function AboutPage() {
           <line x1="220" y1="72" x2="300" y2="140" stroke="currentColor" strokeWidth="3" />
           <line x1="220" y1="146" x2="300" y2="146" stroke="currentColor" strokeWidth="3" />
           <line x1="220" y1="220" x2="300" y2="152" stroke="currentColor" strokeWidth="3" />
-          <text x="300" y="28" fontSize="13" fontWeight="700" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">READ BY US</text>
+          <text x="300" y="28" fontSize="13" fontWeight="700" fill="currentColor">Read by us</text>
           <rect x="300" y="100" width="180" height="92" fill="var(--card)" stroke="currentColor" strokeWidth="3" />
           <text x="314" y="126" fontSize="14" fontWeight="700" fill="currentColor">Nightly sweep</text>
           <text x="314" y="146" fontSize="13" fill="currentColor">plus a live ask on every</text>
@@ -145,7 +145,7 @@ export default function AboutPage() {
           <text x="314" y="182" fontSize="13" fill="currentColor">and quarterly loads</text>
           <line x1="480" y1="146" x2="540" y2="146" stroke="currentColor" strokeWidth="3" />
           <polygon points="540,138 556,146 540,154" fill="currentColor" />
-          <text x="560" y="28" fontSize="13" fontWeight="700" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">WHAT YOU READ</text>
+          <text x="560" y="28" fontSize="13" fontWeight="700" fill="currentColor">What you read</text>
           <rect x="560" y="44" width="180" height="40" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
           <text x="572" y="69" fontSize="14" fontWeight="700" fill="#000000">Case status</text>
           <rect x="560" y="96" width="180" height="40" fill="none" stroke="currentColor" strokeWidth="3" />
@@ -154,7 +154,7 @@ export default function AboutPage() {
           <text x="572" y="173" fontSize="14" fontWeight="700" fill="currentColor">Wages and employers</text>
           <rect x="560" y="200" width="180" height="40" fill="none" stroke="currentColor" strokeWidth="3" />
           <text x="572" y="225" fontSize="14" fontWeight="700" fill="currentColor">Your deadlines</text>
-          <text x="20" y="284" fontSize="13" fill="currentColor">Every figure carries its source and the date it was measured. Nothing is modeled or crowd-sourced.</text>
+          <text x="20" y="284" fontSize="13" fill="currentColor">Every figure carries its source and the date it was measured. Estimates say so.</text>
         </svg>
       </figure>
 
@@ -197,7 +197,10 @@ export default function AboutPage() {
       <p className={p}>
         Every figure comes from a named federal source: DOL&apos;s FLAG system and
         disclosure files, USCIS&apos;s published counts, and the State
-        Department&apos;s visa bulletin. Nothing is modeled or crowd-sourced.{" "}
+        Department&apos;s visa bulletin. An estimated date is labelled as one and graded
+        in public on the{" "}
+        <Link href="/estimate-scorecard" className={link}>estimate scorecard</Link>, and
+        shared timelines are what people reported about their own cases.{" "}
         <Link href="/methodology" className={link}>The methodology page</Link>{" "}
         traces every number.
       </p>{" "}
@@ -244,9 +247,7 @@ export default function AboutPage() {
         </div>{" "}
 
         <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">
-          <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            Since when
-          </p>{" "}
+          <h2 className="font-heading text-base font-black">Since when</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/85">
             Domain registered {monthLabel(FOUNDED)}. Live since {monthLabel(LIVE_SINCE)}.
             Reads DOL&apos;s quarterly disclosure files and asks DOL&apos;s own
@@ -262,9 +263,7 @@ export default function AboutPage() {
         </div>{" "}
 
         <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">
-          <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            Contact
-          </p>{" "}
+          <h2 className="font-heading text-base font-black">Contact</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/85">
             <a href="mailto:support@permtracker.app" className={link}>support@permtracker.app</a>.
             PERM Tracker is also on{" "}
