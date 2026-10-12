@@ -229,6 +229,16 @@ def main() -> int:
           "the disk full within three days warns")
     check(v(doc(now={"diskHoursToFull": None}), now_ms)["status"] == "ok",
           "no fall in free disk reads ok")
+    # A cache refilling toward its cap isn't the disk filling (Oct 12 2026:
+    # "full in about 47 hours" with 81 GB free and 45 GB of cache headroom).
+    _refill = v(doc(now={"diskHoursToFull": 47, "diskFreeGB": 81.4}, pageCache={"headroomGB": 45.0}), now_ms)
+    check(_refill["status"] == "ok", "a fall the cache cap stops with 25 GB to spare is no warning")
+    check(any("leaves about 36 GB" in ln for ln in _refill.get("lines", [])),
+          "and the report says what the cap leaves", str(_refill.get("lines")))
+    check(v(doc(now={"diskHoursToFull": 47, "diskFreeGB": 60.0}, pageCache={"headroomGB": 45.0}), now_ms)["status"] == "warn",
+          "a fall that would leave under 25 GB with every cache full still warns")
+    check(v(doc(now={"diskHoursToFull": 47, "diskFreeGB": 81.4}, pageCache={"headroomGB": None}), now_ms)["status"] == "warn",
+          "unknown headroom keeps the plain trend")
     # The off-site copy (R2) and the monthly restore test.
     check(v(doc(backup={"offsiteOk": None}), now_ms)["status"] == "fail",
           "no off-site copy fails, so a missing R2 key cannot read as fine")

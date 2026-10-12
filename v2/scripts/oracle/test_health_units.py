@@ -72,5 +72,18 @@ pcp = (HERE / "systemd" / "dropins" / "resources-pcp.conf").read_text()
 check("PCP's drop-in lifts systemd's start limit", "StartLimitIntervalSec=0" in pcp)
 check("...and waits between tries so a full disk can't make it spin", "RestartSec=60" in pcp)
 
+# How much the page caches may still grow (the morning report needs it to tell
+# a cache refilling after a deploy from the disk filling; Oct 12 2026).
+_rel = [{"role": "live", "gb": 8.2, "budgetGB": 30.0, "serverGB": 9.0},
+        {"role": "live", "gb": 6.9, "budgetGB": 30.0, "serverGB": 7.5},
+        {"role": "standby", "gb": 3.0, "budgetGB": 3.0}, {"role": "old", "gb": 0.0, "budgetGB": 0.0}]
+check("headroom adds what each cache may still grow", health.cache_headroom(_rel) == 44.9, str(health.cache_headroom(_rel)))
+check("a cache over its budget adds nothing, never a negative",
+      health.cache_headroom([{"gb": 33.0, "budgetGB": 30.0}, {"gb": 1.0, "budgetGB": 3.0}]) == 2.0)
+check("an unreadable budget makes the headroom unknown", health.cache_headroom([{"gb": 1.0}]) is None)
+check("pages the cap can't see make it unknown",
+      health.cache_headroom([{"gb": 2.0, "budgetGB": 30.0, "serverGB": 40.0}]) is None)
+check("no releases on record is unknown, never zero", health.cache_headroom([]) is None)
+
 print(f"\n{len(failures)} failure(s)" if failures else "\nall passed")
 sys.exit(1 if failures else 0)

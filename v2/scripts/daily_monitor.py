@@ -761,6 +761,7 @@ def busy_line(doc: dict, now_ms: int, warns: list, lines: list) -> None:
 # Disk filling: fail when it would be full within a day, warn within three.
 DISK_FULL_FAIL_H = 24
 DISK_FULL_WARN_H = 72
+DISK_FREE_AT_CAP_GB = 25   # the alarm's DISK_LOW_GB (bin/permtracker-alarm)
 
 
 
@@ -969,6 +970,18 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
     # computes it). Oct 10 2026: the disk filled overnight from 50%, which a
     # once-a-day percentage cannot see coming; the rate can.
     hours = n.get("diskHoursToFull")
+    # A fall the page-cache cap will stop isn't the disk filling: after a
+    # deploy the new copies' caches refill toward their budgets and no further.
+    # The alarm's rule (bin/permtracker-alarm): with every cache at its budget
+    # and 25 GB still free, the trend alone is no warning. Oct 12 2026: this
+    # report warned "full in about 47 hours" with 81 GB free and 45 GB of
+    # headroom. Unknown headroom keeps the plain trend.
+    free, headroom = n.get("diskFreeGB"), (pc or {}).get("headroomGB")
+    if (isinstance(hours, (int, float)) and isinstance(free, (int, float)) and isinstance(headroom, (int, float))
+            and free - headroom >= DISK_FREE_AT_CAP_GB):
+        lines.append(f"Disk: {free:.0f} GB free and falling as the page caches refill; they may grow "
+                     f"{headroom:.0f} GB more before their cap stops them, which leaves about {free - headroom:.0f} GB")
+        hours = None
     if isinstance(hours, (int, float)) and hours < DISK_FULL_FAIL_H:
         fails.append(f"the disk will be full in about {hours:.0f} hours at the last six hours' rate")
     elif isinstance(hours, (int, float)) and hours < DISK_FULL_WARN_H:

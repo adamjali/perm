@@ -72,6 +72,30 @@ def disk_hours_to_full(samples: list, now: float, window_s: int = 6 * 3600):
     return round(pts[-1][1] / per_hour, 1)
 
 
+# A release whose .next/server holds this much more than the cap counted is a
+# cache the cap can't see, so its headroom says nothing (bin/permtracker-alarm).
+UNCOUNTED_GB = 15
+
+
+def cache_headroom(releases: list) -> float | None:
+    """GB the page caches may still grow before the cap stops them, or None
+    when a release's budget is unreadable or it holds pages the cap can't see.
+    The morning report needs it to tell a cache refilling toward its budget
+    from the disk filling (the alarm learned this on Oct 10 2026; the report
+    still warned "full in about 47 hours" with 36 GB to spare on Oct 12)."""
+    if not releases:
+        return None
+    total = 0.0
+    for r in releases:
+        budget, gb, server = r.get("budgetGB"), r.get("gb"), r.get("serverGB")
+        if not isinstance(budget, (int, float)) or not isinstance(gb, (int, float)):
+            return None
+        if isinstance(server, (int, float)) and server - gb > UNCOUNTED_GB:
+            return None
+        total += max(0.0, budget - gb)
+    return round(total, 1)
+
+
 def swap_counters():
     """Pages moved in and out of swap since boot (/proc/vmstat)."""
     v = {}
@@ -318,6 +342,7 @@ def main():
             "standbyGB": (by_role.get("standby") or {}).get("gb"),
             "freedGB": round(sum(r.get("freedGB", 0) for r in pr.get("releases", [])), 2),
             "tight": bool(pr.get("tight")),
+            "headroomGB": cache_headroom(pr.get("releases", [])),
         }
     except (OSError, ValueError, KeyError):
         pass
