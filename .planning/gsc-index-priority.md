@@ -23,6 +23,8 @@ crawled after its own change was skipped.
 Refused: `/tools` (indexed, last crawled Oct 8, 3:28 PM) at 7:14 PM; first in line next round. Inspected
 only, crawled after their own change: `/press` (Oct 11, 6:51 AM) and `/` (Oct 11, 11:29 AM).
 
+**Round of Oct 12, 3:35 PM EDT: no requests**, the window from the Oct 11 run reopens about 6:55 PM EDT. Sitemap: 311,578 live URLs; the index was last read Oct 10, under 3 days, so not resubmitted. Added the "Oct 12 (midday)" section at the end (`/terms`, `/privacy`).
+
 **Round of Oct 12, 5:45 AM EDT: no requests** (the quota window from the Oct 11 run reopens about 6:55 PM EDT).
 The page-indexing emails of 1:13 and 1:37 AM EDT named two new reasons, read on the report (dated Oct 8):
 "Duplicate, Google chose different canonical than user" (5 pages, all spellings the Oct 5 merges folded; each now
@@ -993,3 +995,10 @@ Listed by `node scripts/gsc_queue.mjs` (since `b957239b`) at 11:40 PM EDT Oct 11
 2. `/for-attorneys` and `/about` carry re-shot app pictures (the dashboard and alerts pages lost a label); their
    HTML changed only in image sizes, so request them only if a slot is spare.
 
+## Queue after the Oct 12 (midday) changes (Terms: deletion from Settings; Privacy: the analytics switch)
+
+Listed by `node scripts/gsc_queue.mjs` (since `9a624740`) at 3:35 PM EDT Oct 12. Legal pages, low search value:
+request only when a slot is spare after the Oct 11 sections.
+
+1. `/terms`
+2. `/privacy`
