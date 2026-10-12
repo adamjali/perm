@@ -31,7 +31,7 @@
 import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
-import { UsersIcon, InfoIcon } from "@phosphor-icons/react";
+import { UsersIcon, InfoIcon, PlusIcon } from "@phosphor-icons/react";
 
 import { pairKey,
   certaintySplit,
@@ -678,22 +678,24 @@ export function I485QueuePosition({
             <h3 className="font-heading text-base font-black">
               What this can’t tell you
             </h3>{" "}
-            <ul className="mt-3 space-y-2">
-              {[
-                "When you'll be reached. That depends on how many visa numbers your category and country receive, which the visa bulletin governs and this inventory doesn't.",
-                "This counts applications already filed. Someone with an earlier priority date who could file and hasn't is ahead of you and isn't in this figure, and USCIS publishes nothing that would size that group.",
-                "The queue is a snapshot taken once a month. Applications ahead of you leave it by being approved, denied or withdrawn, and new ones can arrive with earlier priority dates when someone transfers an approved petition.",
-                "Every family member files their own adjustment application, so a household appears here more than once. These are applications, not cases.",
-                `Priority dates earlier than ${FIRST_YEAR} sit in a single "prior years" column, so a date before then counts as the front of the queue.`,
-              ].map((c) => (
-                <Fragment key={c}>
-                  {" "}
-                  <li className="text-base leading-relaxed text-foreground/70">
-                    {c}
-                  </li>
-                </Fragment>
-              ))}
-            </ul>{" "}
+            {/* The one that matters most stays in view; the rest fold. */}
+            <p className="mt-3 text-base leading-relaxed text-foreground/70">{LIMITS[0]}</p>{" "}
+            <details className="group mt-3">
+              <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center gap-2 font-bold [&::-webkit-details-marker]:hidden">
+                {LIMITS.length - 1} more limits{" "}
+                <PlusIcon aria-hidden="true" className="size-4 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+              </summary>{" "}
+              <ul className="mt-2 space-y-2">
+                {LIMITS.slice(1).map((c) => (
+                  <Fragment key={c}>
+                    {" "}
+                    <li className="text-base leading-relaxed text-foreground/70">
+                      {c}
+                    </li>
+                  </Fragment>
+                ))}
+              </ul>
+            </details>{" "}
             {asOfLabel ? (
               <p className="mt-4 text-sm text-foreground/60">
                 USCIS employment-based pending inventory, as of {asOfLabel}.
@@ -705,6 +707,15 @@ export function I485QueuePosition({
     </div>
   );
 }
+
+/** What the inventory can't say, the first kept in view. */
+const LIMITS = [
+  "When you'll be reached. That depends on how many visa numbers your category and country receive, which the visa bulletin governs and this inventory doesn't.",
+  "This counts applications already filed. Someone with an earlier priority date who could file and hasn't is ahead of you and isn't in this figure, and USCIS publishes nothing that would size that group.",
+  "The queue is a snapshot taken once a month. Applications ahead of you leave it by being approved, denied or withdrawn, and new ones can arrive with earlier priority dates when someone transfers an approved petition.",
+  "Every family member files their own adjustment application, so a household appears here more than once. These are applications, not cases.",
+  `Priority dates earlier than ${FIRST_YEAR} sit in a single "prior years" column, so a date before then counts as the front of the queue.`,
+];
 
 /**
  * "If the supply were": the reader picks a number of visas a year and the
