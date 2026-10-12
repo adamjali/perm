@@ -60,7 +60,7 @@ export default function TermsPage() {
       <div>
         <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Terms of service</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-foreground/70">
-          Effective Date: February 17, 2026 | Last Updated: October 2, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 12, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -166,7 +166,10 @@ export default function TermsPage() {
               Account Termination
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              You may delete your account at any time by contacting us. We reserve
+              You may delete your account at any time from Settings, or by
+              contacting us. Deletion begins a 30-day grace period during which
+              you may cancel it; after that, your account and its data are
+              permanently deleted, as described in our Privacy Policy. We reserve
               the right to suspend or terminate accounts that violate these Terms.
             </p>
           </details>{" "}
@@ -573,8 +576,9 @@ export default function TermsPage() {
               domain (permtracker.app/ingest) rather than directly to a
               third-party domain. If you aren’t signed in, PostHog runs in
               cookie-free mode and stores nothing in your browser; if you’re
-              signed in, your analytics events are linked to your account.
-              Session replay is switched off. If we turn it back on, it will
+              signed in, your analytics events are linked to your account
+              unless you switch usage analytics off in Settings, in which case
+              your browser sends no analytics at all. Session replay is switched off. If we turn it back on, it will
               cover only the signed-in app, mask form inputs and on-screen
               text, and our Privacy Policy will say so first. We never use
               session replays for advertising and never sell them, and we honor

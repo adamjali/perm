@@ -9646,3 +9646,25 @@ four billed copies.
   kept off this public repo.
 - **The morning report reads `backups/DISKCOPY_OK`** through `server_health.backup.diskCopy`: warns past
   30 hours or with no copy on record, fails past 54 hours, on a copy not marked free, or past 5 held.
+
+## Oct 12 2026 (midday): a 20-point legal checklist, the Terms, and an analytics switch
+
+Checked against a 20-item "don't get sued" list from a video, item by item in the code and live
+settings. Done already: privacy, terms, cookie section, form consents (double opt-in, unticked news
+boxes), data kept small, third parties listed (PostHog's `session_recording_opt_in` read false, so
+replay is off as the Terms say), no dark patterns, real reviews (5.0 from 2 on Senja, shown at the
+`MIN_REVIEWS_TO_ADVERTISE` of 2), claims audits, alt text (every image), contrast, business details,
+18+ in the Terms and under-13 in the Privacy Policy, unsubscribe links, licensed fonts and credited
+pictures, self-serve deletion. Not applicable yet: refund and cancellation terms, needed before Plus
+charges anyone.
+- **The Terms said an account is deleted "by contacting us"**; Settings deletes it after a 30-day grace
+  period, as the Privacy Policy said. Fixed; both legal pages read Last Updated October 12, 2026.
+- **Signed-in users can switch usage analytics off** (Settings > Support, `AnalyticsToggle`):
+  `userProfiles.analyticsOff`, `users.setAnalyticsOff`, and `users.isPostHogExcluded` is true for it,
+  so `LoginTracker` turns the browser off through the staff path (`analytics.optOut`, dropped in
+  `before_send`) on every browser the account signs in on. The switch acts on its own browser before
+  the save and rolls back if the save fails; under GPC it shows off and disabled.
+  `AnalyticsToggle.test.tsx`, `convex/__tests__/analyticsOff.test.ts` (probed by removing the check).
+- **Open, the owner's call:** PostHog autocapture records the text of clicked elements and nothing
+  masks it (`mask_all_text` is unset), so in the signed-in app a click can carry a client's name and on
+  public pages a case number (`redactCaseParam` cleans URLs only).

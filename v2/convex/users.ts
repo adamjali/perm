@@ -52,9 +52,11 @@ export const isAdmin = query({
 });
 
 /**
- * Check if the current user should be excluded from PostHog analytics.
- * Exclusion list stored in POSTHOG_EXCLUDED_EMAILS env var (comma-separated).
- * Entries starting with "@" match email domains; others are exact matches.
+ * Check if the current user should be excluded from PostHog analytics: a staff
+ * address in POSTHOG_EXCLUDED_EMAILS (comma-separated; entries starting with
+ * "@" match email domains, others are exact matches), or an account that
+ * switched usage analytics off in Settings. Either way LoginTracker turns the
+ * browser off (analytics.optOut) and it sends PostHog nothing.
  */
 export const isPostHogExcluded = query({
   args: {},
@@ -63,7 +65,37 @@ export const isPostHogExcluded = query({
     if (!userId) return false;
 
     const user = await ctx.db.get(userId);
-    return isEmailPostHogExcluded(user?.email, process.env.POSTHOG_EXCLUDED_EMAILS);
+    if (isEmailPostHogExcluded(user?.email, process.env.POSTHOG_EXCLUDED_EMAILS)) return true;
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .unique();
+    return profile?.analyticsOff === true;
+  },
+});
+
+/**
+ * Switch usage analytics off (or back on) for the signed-in account. Stored on
+ * the profile so it follows the account to every browser it signs in on.
+ */
+export const setAnalyticsOff = mutation({
+  args: { off: v.boolean() },
+  handler: async (ctx, { off }) => {
+    const userId = await getCurrentUserId(ctx);
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .unique();
+    if (profile) {
+      await ctx.db.patch(profile._id, { analyticsOff: off });
+      return null;
+    }
+    const user = await ctx.db.get(userId);
+    await ctx.db.insert("userProfiles", {
+      ...buildDefaultProfile(userId, { fullName: user?.name, profilePhotoUrl: user?.image }),
+      analyticsOff: off,
+    });
+    return null;
   },
 });
 

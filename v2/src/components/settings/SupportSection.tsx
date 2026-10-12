@@ -48,6 +48,7 @@ import { handleOperationError } from "@/lib/errors";
 import { LEGAL_NAME } from "@/lib/constants/about";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import DeleteNowDialog from "./DeleteNowDialog";
+import AnalyticsToggle from "./AnalyticsToggle";
 import {
   BUG_REPORT_URL,
   FEATURE_REQUEST_URL,
@@ -346,6 +347,8 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           Download everything (.json)
         </Button>
       </div>
+
+      <AnalyticsToggle />{" "}
 
       {/* Account Deletion Section */}
       <div

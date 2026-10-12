@@ -22,7 +22,8 @@
  * (debounced to match the login recording).
  *
  * Users listed in POSTHOG_EXCLUDED_EMAILS env var are opted out of all
- * PostHog capturing to preserve quota.
+ * PostHog capturing to preserve quota, and so is any account that switched
+ * usage analytics off in Settings (users.isPostHogExcluded covers both).
  */
 
 "use client";

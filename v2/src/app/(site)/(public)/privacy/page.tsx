@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-foreground/70">
-          Effective Date: February 17, 2026 | Last Updated: October 2, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 12, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -463,6 +463,12 @@ export default function PrivacyPage() {
               cookie and local storage to keep that link. Your identity is
               reset when you sign out, and analytics goes back to cookie-free
               mode.
+            </p>{" "}
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              You can switch usage analytics off at any time in Settings, under
+              Support. While it’s off, your browser sends PostHog nothing at
+              all, signed in or not, and the setting follows your account to
+              every device you sign in on.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">

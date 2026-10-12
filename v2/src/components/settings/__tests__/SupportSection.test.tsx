@@ -33,6 +33,8 @@ vi.mock("convex/react", () => ({
     return mockRequestDeletion;
   },
   useAction: () => mockImmediateDelete,
+  // The usage-analytics switch (AnalyticsToggle) reads the profile.
+  useQuery: () => ({ analyticsOff: false }),
   useConvex: () => ({ query: vi.fn().mockResolvedValue({}) }),
 }));
 

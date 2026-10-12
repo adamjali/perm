@@ -164,6 +164,9 @@ export default defineSchema({
     ),
     darkModeEnabled: v.boolean(),
     privacyModeEnabled: v.optional(v.boolean()),
+    // Usage analytics switched off in Settings: the account's browsers send
+    // PostHog nothing (users.isPostHogExcluded, src/lib/analytics.ts).
+    analyticsOff: v.optional(v.boolean()),
 
     // Chatbot action mode
     /**

@@ -28,21 +28,23 @@ import posthog from "posthog-js";
  *
  * In "on_reject" mode `opt_out_capturing()` does NOT stop capture; it only
  * falls back to cookie-free counting. The two cases that must send nothing at
- * all, Global Privacy Control and staff accounts in POSTHOG_EXCLUDED_EMAILS,
- * are dropped in before_send instead (isGpcEnabled, isAnalyticsOff).
+ * all, Global Privacy Control and accounts switched off (staff in
+ * POSTHOG_EXCLUDED_EMAILS, and anyone who turned usage analytics off in
+ * Settings), are dropped in before_send instead (isGpcEnabled, isAnalyticsOff).
  */
 
 /**
  * localStorage key that turns PostHog off completely on this browser. Set only
- * by `optOut()`, which runs only for a signed-in staff account, so a visitor
- * who never signs in never gets it.
+ * by `optOut()`, which runs for a signed-in staff account or an account that
+ * switched usage analytics off in Settings, so a visitor who never signs in
+ * never gets it.
  */
 export const ANALYTICS_OFF_KEY = "pt_analytics_off";
 
 /** Fired on window once a signed-in account has switched to persistence. */
 export const ANALYTICS_CONSENT_EVENT = "pt:analytics-consent";
 
-/** True when this browser has been switched off (a staff account). */
+/** True when this browser has been switched off (staff, or analytics off in Settings). */
 export function isAnalyticsOff(): boolean {
   try {
     return window.localStorage.getItem(ANALYTICS_OFF_KEY) === "1";
@@ -186,7 +188,8 @@ function consentForAccount(): void {
 }
 
 /**
- * Turn PostHog off completely on this browser (staff accounts). The flag is
+ * Turn PostHog off completely on this browser (staff accounts, and accounts
+ * that switched usage analytics off in Settings). The flag is
  * what before_send checks; opt_out_capturing() alone would only fall back to
  * cookie-free counting in "on_reject" mode.
  */
@@ -206,7 +209,8 @@ function optOut(): void {
 }
 
 /**
- * Reverse a previous optOut (an account that is no longer excluded). Leaves
+ * Reverse a previous optOut (an account that is no longer excluded, or that
+ * switched usage analytics back on). Leaves
  * consent pending; the next consentForAccount() switches persistence back on.
  */
 function optIn(): void {
