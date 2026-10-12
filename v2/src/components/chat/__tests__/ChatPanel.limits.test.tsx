@@ -93,3 +93,28 @@ describe('ChatPanel long conversations', () => {
     expect(divider.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
+
+// The panel is a labelled dialog that Escape closes, and an interrupted reply
+// whose action ran says Try again won't run it again (Oct 12 2026).
+describe('ChatPanel as a dialog', () => {
+  it('is named PERM Assistant and closes on Escape', () => {
+    const onClose = vi.fn();
+    render(<ChatPanel {...base} onClose={onClose} status="ready" messages={convo({})} />);
+    const dialog = screen.getByRole('dialog', { name: 'PERM Assistant' });
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('says the actions in a failed reply already ran', () => {
+    const ran = convo({ toolCalls: [{ tool: 'createCase', arguments: '{}', status: 'success' }] });
+    render(<ChatPanel {...base} status="error" messages={ran} error={new Error('Failed to fetch')} onRetry={() => {}} />);
+    expect(screen.getByText(/The actions above already ran\. Try again carries on from them/)).toBeInTheDocument();
+  });
+
+  it('locks the mode switch while a reply runs', () => {
+    render(
+      <ChatPanel {...base} status="streaming" messages={convo({})} actionMode="confirm" onActionModeChange={() => {}} />
+    );
+    for (const radio of screen.getAllByRole('radio')) expect(radio).toBeDisabled();
+  });
+});
