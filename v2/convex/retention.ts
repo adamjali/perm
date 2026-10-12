@@ -1,8 +1,8 @@
 /**
  * Retention for the backend's operational logs.
  *
- * Three tables have no other cleanup: systemErrors, marketingEvents and
- * apiUsage. They're records of what the machinery did, not anyone's data,
+ * These tables have no other cleanup: systemErrors, marketingEvents,
+ * apiUsage, emailDays and chatConfirmations. They're records of what the machinery did, not anyone's data,
  * and none is read past a few
  * weeks: the admin panel shows recent errors, the morning report reads one
  * day of usage. So each keeps a margin well past its readers and the rest goes,
@@ -30,6 +30,8 @@ export const RETENTION_DAYS = {
   apiUsage: 90,
   /** One row per UTC day of email counts (convex/emailLedger.ts); a year and a bit of history. */
   emailDays: 400,
+  /** The chat's confirmation cards (convex/chatConfirmations.ts); each expires after a day. */
+  chatConfirmations: 30,
 } as const;
 
 /** Rows one run deletes per table; a longer backlog reschedules itself. */
@@ -50,11 +52,12 @@ export const pruneOperationalLogs = internalMutation({
     marketingEvents: v.number(),
     apiUsage: v.number(),
     emailDays: v.number(),
+    chatConfirmations: v.number(),
     unconfirmedCaseAlerts: v.number(),
   }),
   handler: async (ctx, args) => {
     const now = args.now ?? Date.now();
-    const out = { systemErrors: 0, marketingEvents: 0, apiUsage: 0, emailDays: 0, unconfirmedCaseAlerts: 0 };
+    const out = { systemErrors: 0, marketingEvents: 0, apiUsage: 0, emailDays: 0, chatConfirmations: 0, unconfirmedCaseAlerts: 0 };
     let more = false;
     for (const table of Object.keys(RETENTION_DAYS) as (keyof typeof RETENTION_DAYS)[]) {
       const cutoff = now - RETENTION_DAYS[table] * MS_PER_DAY;

@@ -42,6 +42,10 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   // Chat/conversation creation (mutations)
   conversationCreate: { kind: "token bucket", rate: 20, period: MINUTE, capacity: 10 },
 
+  // Confirmation cards the chat shows (convex/chatConfirmations.ts), one per
+  // write the assistant proposes; a turn proposes a few at most.
+  chatConfirmationIssue: { kind: "token bucket", rate: 60, period: MINUTE, capacity: 30 },
+
   // Notifications bulk operations (mutations)
   notificationsMarkAllRead: { kind: "token bucket", rate: 20, period: MINUTE, capacity: 5 },
 

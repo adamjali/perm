@@ -19,6 +19,7 @@
  * @module
  */
 
+import { sendOwnerMail } from "./lib/ownerMail";
 import { action, internalAction, type ActionCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { render } from "@react-email/render";
@@ -636,13 +637,13 @@ export const sendAdminNotificationEmail = internalAction({
       })
     );
 
-    const resend = getResend();
-    const { error } = await sendOrQueue(ctx, "notification:sendAdminNotificationEmail", resend, {
-      from: FROM_EMAIL,
-      to: [toEmail],
+    // The owner's own address goes through the free mail Worker, Resend as
+    // the fallback (convex/lib/ownerMail.ts).
+    const { error } = await sendOwnerMail(ctx, "notification:sendAdminNotificationEmail", getResend(), {
+      to: toEmail,
       subject: args.subject,
       html,
-    }, { priority: "high" });
+    });
 
     if (error) {
       log.error("Failed to send admin notification email", {

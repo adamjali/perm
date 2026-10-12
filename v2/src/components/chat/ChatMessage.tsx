@@ -25,6 +25,8 @@ interface ChatMessageProps {
   getConfirmation?: (toolCallId: string) => ToolConfirmationState | undefined;
   /** Approve a pending tool confirmation */
   onApproveConfirmation?: (toolCallId: string) => Promise<void>;
+  /** A reply is streaming: cards can't be approved or cancelled until it ends */
+  confirmationsBusy?: boolean;
   /** Deny a pending tool confirmation */
   onDenyConfirmation?: (toolCallId: string) => void;
 }
@@ -97,6 +99,7 @@ export function ChatMessage({
   toolCalls,
   getConfirmation,
   onApproveConfirmation,
+  confirmationsBusy = false,
   onDenyConfirmation,
 }: ChatMessageProps) {
   const isUser = role === 'user';
@@ -158,6 +161,7 @@ export function ChatMessage({
             getConfirmation={getConfirmation}
             onApproveConfirmation={onApproveConfirmation}
             onDenyConfirmation={onDenyConfirmation}
+            busy={confirmationsBusy}
           />
         </div>
       )}

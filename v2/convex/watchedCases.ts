@@ -85,7 +85,11 @@ export const watchedCaseNumbers = internalQuery({
  * the routes are off, never open.
  */
 export async function watchedSecretOk(given: string | null): Promise<"ok" | "denied" | "off"> {
-  const want = process.env.WATCHED_CASES_SECRET;
+  return sharedSecretOk(given, process.env.WATCHED_CASES_SECRET);
+}
+
+/** A shared secret compared as SHA-256 digests. Unset (`want` empty) means off. */
+export async function sharedSecretOk(given: string | null, want: string | undefined): Promise<"ok" | "denied" | "off"> {
   if (!want) return "off";
   if (!given) return "denied";
   const digest = async (x: string) =>

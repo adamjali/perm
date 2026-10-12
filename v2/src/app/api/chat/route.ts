@@ -34,6 +34,7 @@ import { chatModel, PRIMARY_MODEL_NAME, reportMidStreamFailure } from '@/lib/ai/
 import { compactToFit, compactAt, parseFacts } from '@/lib/ai/compaction';
 import { getClientIp } from '@/lib/net/getClientIp';
 import { getSystemPrompt } from '@/lib/ai/system-prompt';
+import { nowInZone, stepShowedCard } from '@/lib/ai/chatTurn';
 import type { ActionMode } from '@/lib/ai/tool-permissions';
 import { createCacheStats } from '@/lib/ai/cache';
 import { captureError } from '@/lib/sentry';
@@ -192,7 +193,7 @@ export async function POST(req: Request) {
 
           // Convert raw message history to ModelMessage[] (full fidelity — no hard truncation).
           // Let the compaction module walk L0→L4 to fit the target budget.
-          const fullMessages = await convertToModelMessages(messages);
+          const fullMessages = await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true });
 
           // Target budget: ~10k tokens — fits Groq (the tightest model in the chain that
           // doesn't get skipped). Gemini (1M) and Mistral/GLM (~100k) handle this easily
@@ -228,15 +229,15 @@ export async function POST(req: Request) {
           }
         } else {
           chatDebug(`[Chat API] [${sessionId}] No summary available, using full history`);
-          convertedMessages = await convertToModelMessages(messages);
+          convertedMessages = await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true });
         }
       } catch (error) {
         console.warn(`[Chat API] [${sessionId}] Failed to get context, using full history:`, error);
         captureError(error);
-        convertedMessages = await convertToModelMessages(messages);
+        convertedMessages = await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true });
       }
     } else {
-      convertedMessages = await convertToModelMessages(messages);
+      convertedMessages = await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true });
     }
 
     // Create cache stats tracker for this request
@@ -258,18 +259,9 @@ export async function POST(req: Request) {
     const posthogUserId = userProfile?._id || "anonymous";
 
     // Build system prompt WITH action mode AND current date context
-    const now = new Date();
-    const currentDate = now.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    const currentTime = now.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
+    // "Today" in the person's own time zone (Eastern if unset). The server
+    // runs on UTC, which put the evening on tomorrow's date.
+    const { currentDate, currentTime } = nowInZone(userProfile?.timezone);
     const systemPrompt = getSystemPrompt({
       actionMode,
       currentDate: `${currentDate} at ${currentTime}`,
@@ -306,6 +298,10 @@ export async function POST(req: Request) {
         // reason rides the message metadata below, and the panel shows why
         // the reply stopped with a Continue button (src/lib/ai/limits.ts).
         stopWhen: stepCountIs(CHAT_MAX_STEPS),
+        // Once a step has shown a confirmation card, the rest of the reply is
+        // words only: a second call of the same tool had put two cards for one
+        // change in front of the person, and both ran.
+        prepareStep: ({ steps }) => (steps.some(stepShowedCard) ? { toolChoice: 'none' as const } : undefined),
         maxOutputTokens: CHAT_MAX_OUTPUT_TOKENS,
         maxRetries: 0, // Disable per-model retries; FallbackModel handles model-to-model fallback
         onError({ error }) {

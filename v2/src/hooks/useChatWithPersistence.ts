@@ -454,16 +454,38 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
    * An internal message for the model (the orchestrator's continuation after a
    * confirmation). Carries the conversation like any send, and is never shown.
    */
+  // A continuation sent while a reply is still streaming waits for it to end:
+  // two requests at once pushed the first reply twice and saved the card as
+  // still waiting, so it could be approved again after a reload.
+  const statusRef = useRef(status);
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+  const queuedContinuation = useRef<{ text: string; conversationId: Id<'conversations'> } | null>(null);
+
   const sendContinuation = useCallback(
     (options?: { text?: string }) => {
       const activeConversationId = conversationIdRef.current;
       if (!options?.text || !activeConversationId) return;
+      if (statusRef.current === 'submitted' || statusRef.current === 'streaming') {
+        queuedContinuation.current = { text: options.text, conversationId: activeConversationId };
+        return;
+      }
       ensureHistory();
       streamStartTime.current = Date.now();
       sendMessage({ text: options.text }, { body: requestBody(activeConversationId) });
     },
     [ensureHistory, sendMessage, requestBody]
   );
+
+  useEffect(() => {
+    const queued = queuedContinuation.current;
+    if (!queued || (status !== 'ready' && status !== 'error')) return;
+    queuedContinuation.current = null;
+    // Only into the conversation it was meant for.
+    if (queued.conversationId !== conversationIdRef.current) return;
+    sendContinuation({ text: queued.text });
+  }, [status, sendContinuation]);
 
   /** Stop the reply: keep what streamed, marked as stopped (never saved). */
   const handleStop = useCallback(() => {

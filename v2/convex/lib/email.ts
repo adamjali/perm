@@ -13,7 +13,7 @@
  */
 import { Resend } from "resend";
 import { createLogger } from "./logging";
-import { isEmailBlocked } from "./emailBlocklist";
+import { isEmailBlocked, isOwnTestAddress } from "./emailBlocklist";
 import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import {
@@ -183,6 +183,14 @@ export async function sendOrQueue(
     });
     return r.ok ? { queued: true } : null;
   };
+
+  // The site's own test and demo accounts: nothing to deliver, so nothing is
+  // sent or counted, and the caller treats it as done (an error here would
+  // become an admin error email, spending the same allowance).
+  if (recipients.length > 0 && recipients.every(isOwnTestAddress)) {
+    log.info(`Not sending ${kind}: every recipient is one of the site's own test accounts`);
+    return { data: { id: "skipped:own-test-account" } };
+  }
 
   if (!recipients.some(isEmailBlocked)) {
     const used: number = await ctx.runQuery(internal.emailLedger.accountUsed, {});

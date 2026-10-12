@@ -35,6 +35,10 @@ export interface PermissionRequestResult {
   toolCallId: string;
   arguments: Record<string, unknown>;
   description: string;
+  /** Shown above the buttons, e.g. "This can't be undone." */
+  warning?: string;
+  /** What the card changes, a line each, in plain words. */
+  preview?: { changes?: string[]; [key: string]: unknown };
 }
 
 /**
@@ -75,6 +79,11 @@ interface ToolConfirmationBase {
   arguments: Record<string, unknown>;
   description: string;
   permissionType: PermissionLevel;
+  warning?: string;
+  /** What the card changes, a line each. */
+  changes?: string[];
+  /** After it ran: what the data says now, read back by the server. */
+  resultMessage?: string;
 }
 
 /**

@@ -94,6 +94,8 @@ export interface UseToolOrchestratorOptions {
   onToolComplete?: (toolCallId: string, result: unknown) => void;
   /** Callback when tool execution fails */
   onToolError?: (toolCallId: string, error: string) => void;
+  /** Tells the server a card was cancelled */
+  onCancel?: (toolCallId: string) => Promise<void>;
   /** Callback to persist tool result to database (for page refresh resilience) */
   onPersistResult?: (
     toolCallId: string,
@@ -151,6 +153,7 @@ export function useToolOrchestrator(
     onToolComplete,
     onToolError,
     onPersistResult,
+    onCancel,
   } = options;
 
   // Track which tool calls have been processed to prevent duplicates
@@ -181,10 +184,11 @@ export function useToolOrchestrator(
     onExecutionComplete: (toolCallId, result) => {
       onToolComplete?.(toolCallId, result);
 
-      // Feed result back to AI by sending a continuation message
-      // The AI will see the tool result in its context and respond appropriately
+      // Feed the result back with what the data says now (read back by the
+      // server), so the model reports that and not what it asked for.
+      const message = (result as { message?: unknown } | null)?.message;
       sendMessage({
-        text: `[Tool execution completed for ${toolCallId}]`,
+        text: `[Tool execution completed for ${toolCallId}${typeof message === 'string' ? `: ${message.slice(0, 1500)}` : ''}]`,
       });
     },
     onExecutionError: (toolCallId, error) => {
@@ -197,13 +201,14 @@ export function useToolOrchestrator(
     },
     // Persist results to database for page refresh resilience
     onPersistResult,
+    onCancel,
   });
 
   /**
    * Process a tool call - extract clientAction or permission request
    */
   const processToolCall = useCallback(
-    (toolCall: ToolCall, index: number, message: ChatMessage) => {
+    (toolCall: ToolCall, index: number, message: ChatMessage, isLatest: boolean) => {
       // The card's fallback id (ToolCallList): name + position in the message.
       const toolCallKey = `${toolCall.tool}-${index}`;
       // Processed-ness is per MESSAGE. Keyed on name + position alone, the
@@ -239,8 +244,9 @@ export function useToolOrchestrator(
 
       // Check for clientAction (navigation) - execute immediately
       if (hasClientAction(parsedResult)) {
-        // History: the action already ran when the message was new.
-        if (message.isLive === false) return;
+        // History: the action already ran when the message was new. Only the
+        // newest reply's navigation runs.
+        if (message.isLive === false || !isLatest) return;
         const actionKey = `${processedKey}-${parsedResult.clientAction.type}`;
 
         // Prevent duplicate execution
@@ -255,7 +261,9 @@ export function useToolOrchestrator(
 
       // Check for permission request - register for confirmation
       const permissionRequest = extractPermissionRequest(toolCall.result);
-      if (permissionRequest) {
+      // Only a card still waiting: one that ran or was cancelled is saved with
+      // that status and must not come back with live buttons.
+      if (permissionRequest && toolCall.status === 'pending') {
         const confirmationId = permissionRequest.toolCallId || toolCallKey;
         registerConfirmation(confirmationId, toolCall.result);
         return;
@@ -278,18 +286,15 @@ export function useToolOrchestrator(
       return;
     }
 
-    // Find the last assistant message
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage || lastMessage.role !== 'assistant') {
-      return;
-    }
-
-    // Process each tool call
-    if (lastMessage.toolCalls) {
-      lastMessage.toolCalls.forEach((tc, index) => {
-        processToolCall(tc, index, lastMessage);
+    // Every assistant message: a card in an earlier reply that is still
+    // waiting can be approved too (the server decides whether it still can).
+    messages.forEach((message, i) => {
+      if (message.role !== 'assistant' || !message.toolCalls) return;
+      const isLatest = i === messages.length - 1;
+      message.toolCalls.forEach((tc, index) => {
+        processToolCall(tc, index, message, isLatest);
       });
-    }
+    });
   }, [messages, status, processToolCall]);
 
   /**
@@ -313,7 +318,7 @@ export function useToolOrchestrator(
   const denyConfirmation = useCallback(
     async (toolCallId: string) => {
       await internalDeny(toolCallId);
-      sendMessage({ text: `[User denied tool execution: ${toolCallId}]` });
+      sendMessage({ text: `[User denied tool execution: ${toolCallId}. Nothing was changed.]` });
     },
     [internalDeny, sendMessage]
   );

@@ -93,6 +93,7 @@ const LIMIT_ACTIONS: Record<string, string> = {
   caseCreate: 'new cases',
   caseUpdate: 'case changes',
   conversationCreate: 'new conversations',
+  chatConfirmationIssue: 'proposed changes',
   notificationsMarkAllRead: 'notification changes',
   userCaseOrderSave: 'reorders',
   jobTemplateCreate: 'new templates',

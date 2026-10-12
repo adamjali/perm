@@ -42,10 +42,13 @@ vi.mock('next/navigation', () => ({
  * Create a mock tool call
  */
 function createToolCall(overrides: Partial<ToolCall> = {}): ToolCall {
+  // A card waiting for approval is stored as 'pending', as the chat hook
+  // marks it (determineToolStatus); any other result as 'success'.
+  const isCard = typeof overrides.result === 'string' && overrides.result.includes('"requiresPermission":true');
   return {
     tool: 'testTool',
     arguments: '{}',
-    status: 'success',
+    status: isCard ? 'pending' : 'success',
     ...overrides,
   };
 }
@@ -193,6 +196,31 @@ describe('useToolOrchestrator', { timeout: 30_000 }, () => {
 
       await waitFor(() => {
         expect(result.current.confirmations.size).toBe(1);
+      });
+    });
+
+    it('does not re-arm a card that already ran (saved as success)', async () => {
+      const { useToolOrchestrator } = await import('../useToolOrchestrator');
+      const messages: ChatMessage[] = [
+        createMessage({
+          toolCalls: [createToolCall({ result: createPermissionRequest('updateCase', 'tc-ran', 'Update'), status: 'success' })],
+        }),
+      ];
+      const { result } = renderHook(() => useToolOrchestrator(createDefaultOptions({ messages, status: 'ready' })));
+      await new Promise((r) => setTimeout(r, 20));
+      expect(result.current.confirmations.size).toBe(0);
+    });
+
+    it('registers a card still waiting in an earlier reply, not only the newest', async () => {
+      const { useToolOrchestrator } = await import('../useToolOrchestrator');
+      const messages: ChatMessage[] = [
+        createMessage({ id: 'old', toolCalls: [createToolCall({ result: createPermissionRequest('updateCase', 'tc-old', 'Update') })] }),
+        createMessage({ id: 'u1', role: 'user', content: 'and another thing' }),
+        createMessage({ id: 'new', content: 'Sure.' }),
+      ];
+      const { result } = renderHook(() => useToolOrchestrator(createDefaultOptions({ messages, status: 'ready' })));
+      await waitFor(() => {
+        expect(result.current.confirmations.has('tc-old')).toBe(true);
       });
     });
 

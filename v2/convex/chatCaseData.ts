@@ -14,6 +14,7 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getCurrentUserIdOrNull } from "./lib/auth";
 import { readUserCases } from "./lib/userCases";
+import { dayInZone } from "./lib/time";
 import { buildDeadlineInput, extractActiveDeadlines, type LooseDeadlineCaseData } from "./lib/perm/deadlines";
 
 /**
@@ -78,16 +79,39 @@ function hasActiveRfe(caseData: CaseDoc): boolean {
   return rfeEntries.some((entry) => !entry.responseSubmittedDate);
 }
 
+/** Lower case, every run of punctuation or space as one space. */
+function words(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
 /**
- * Check if text matches search query (case-insensitive)
- *
- * @param text - Text to search in
- * @param query - Search query
- * @returns True if text contains query
+ * Whether a case matches what someone typed, ignoring case and punctuation:
+ * "Acme Inc" finds "ACME, Inc.", "G-100-26282-123456" finds the number written
+ * without its dashes, and "acme devops" finds an Acme case whose title says
+ * DevOps. Searches the employer, the worker, both job titles, the SOC title,
+ * every case number the case carries, and the notes.
  */
-function matchesSearch(text: string | undefined | null, query: string): boolean {
-  if (!text) return false;
-  return text.toLowerCase().includes(query.toLowerCase());
+export function caseMatchesSearch(c: CaseDoc, query: string): boolean {
+  const q = words(query);
+  if (q.length === 0) return true;
+  const fields = [
+    c.employerName,
+    c.beneficiaryIdentifier,
+    c.positionTitle,
+    c.jobTitle,
+    c.socTitle,
+    c.caseNumber,
+    c.internalCaseNumber,
+    c.pwdCaseNumber,
+    c.eta9089CaseNumber,
+    c.i140ReceiptNumber,
+    ...(c.notes ?? []).filter((n) => n.status !== "deleted").map((n) => n.content),
+  ].filter((f): f is string => typeof f === "string" && f.length > 0);
+  const haystack = ` ${fields.map(words).join(" | ")} `;
+  if (q.split(" ").every((token) => haystack.includes(token))) return true;
+  // A number or name typed with its spaces and dashes left out.
+  const compact = q.replace(/ /g, "");
+  return compact.length >= 4 && haystack.replace(/[ |]/g, "").includes(compact);
 }
 
 /**
@@ -99,6 +123,8 @@ function matchesSearch(text: string | undefined | null, query: string): boolean 
  * @param returnAllFields - If true, return all fields regardless of fields array
  * @returns Projected case data
  */
+const HIDDEN_FIELDS = new Set(["userId", "employerFein", "calendarEventIds"]);
+
 function projectFields(
   caseData: CaseDoc,
   fields: string[] | undefined,
@@ -110,14 +136,15 @@ function projectFields(
   };
 
   if (returnAllFields || !fields || fields.length === 0) {
-    // Return all fields (excluding internal fields like userId)
-    const { userId: _userId, ...rest } = caseData;
+    // Every field but the owner, the calendar's own ids, and the employer's
+    // FEIN: it's stored encrypted, and the assistant has no use for a tax id.
+    const { userId: _userId, employerFein: _fein, calendarEventIds: _events, ...rest } = caseData;
     return { ...result, ...rest };
   }
 
   // Return only requested fields
   for (const field of fields) {
-    if (field in caseData && field !== "userId") {
+    if (field in caseData && !HIDDEN_FIELDS.has(field)) {
       result[field] = (caseData as Record<string, unknown>)[field];
     }
   }
@@ -138,7 +165,7 @@ function projectFields(
  * - `hasRfe`: Filter for cases with active RFE requests
  * - `hasOverdueDeadline`: Filter for cases with any overdue deadline
  * - `deadlineWithinDays`: Filter for cases with deadlines within N days
- * - `searchText`: Text search across employer name, position title, beneficiary identifier, and notes
+ * - `searchText`: Text search (see caseMatchesSearch): employer, worker, job titles, every case number, notes; case and punctuation ignored
  * - `isProfessionalOccupation`: Filter for cases marked as professional occupation (requires Bachelor's degree)
  *
  * ## Projection Options
@@ -236,7 +263,13 @@ export const queryCases = query({
     const accountTruncated = read.truncated;
 
     // Get today's date for deadline comparisons
-    const todayISO = new Date().toISOString().split("T")[0] as string;
+    // "Today" in the person's own time zone (Eastern if unset): a UTC date is
+    // already tomorrow in the evening, which moved "due today" by a day.
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+    const todayISO = dayInZone(profile?.timezone);
 
     // Apply filters
     let filteredCases = read.cases;
@@ -296,16 +329,7 @@ export const queryCases = query({
     // Apply text search filter
     if (args.searchText !== undefined && args.searchText.length > 0) {
       const searchQuery = args.searchText;
-      filteredCases = filteredCases.filter((c) => {
-        // Search across key text fields
-        return (
-          matchesSearch(c.employerName, searchQuery) ||
-          matchesSearch(c.positionTitle, searchQuery) ||
-          matchesSearch(c.beneficiaryIdentifier, searchQuery) ||
-          // Search in notes array content
-          (c.notes ?? []).some((note) => matchesSearch(note.content, searchQuery))
-        );
-      });
+      filteredCases = filteredCases.filter((c) => caseMatchesSearch(c, searchQuery));
     }
 
     // Apply professional occupation filter
@@ -353,8 +377,11 @@ export const queryCases = query({
         "employerName",
         "beneficiaryIdentifier",
         "positionTitle",
+        "internalCaseNumber",
+        "eta9089CaseNumber",
         "caseStatus",
         "progressStatus",
+        "progressStatusOverride",
         "priorityLevel",
         "isFavorite",
         "isPinned",
@@ -364,7 +391,10 @@ export const queryCases = query({
         "pwdExpirationDate",
         "eta9089FilingDate",
         "eta9089CertificationDate",
+        "filingWindowOpens",
+        "filingWindowCloses",
         "i140FilingDate",
+        "i140ApprovalDate",
         "createdAt",
         "updatedAt",
       ];

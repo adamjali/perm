@@ -119,6 +119,13 @@ export async function purgeAllUserData(
     await ctx.db.delete(conv._id);
   }
 
+  // Delete the chat's confirmation cards (their arguments hold case data)
+  for await (const card of ctx.db
+    .query("chatConfirmations")
+    .withIndex("by_user_tool_call", (q) => q.eq("userId", userId))) {
+    await ctx.db.delete(card._id);
+  }
+
   // Delete audit logs
   const auditLogs = await ctx.db
     .query("auditLogs")

@@ -209,7 +209,7 @@ export const QueryCasesInputSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Text search across employer name, position title, foreign worker ID, and notes. Case-insensitive partial match'
+      'Find cases by employer, foreign worker, job title, SOC title, any case number (DOL, internal, PWD, ETA 9089, I-140 receipt) or note text. Case and punctuation are ignored, so "acme inc" finds "ACME, Inc." and a case number works with or without its dashes. Several words must all match.'
     ),
 
   isProfessionalOccupation: z
@@ -652,10 +652,11 @@ export const UpdateSettingsInputSchema = z.object({
       // Preference settings
       darkModeEnabled: z.boolean().optional(),
       urgentDeadlineDays: z.number().int().min(1).max(30).optional(),
-      reminderDaysBefore: z.number().int().min(1).max(14).optional(),
+      reminderDaysBefore: z.array(z.number().int().min(1).max(90)).min(1).max(10).optional()
+        .describe('Days before each deadline to send a reminder, e.g. [30, 14, 7, 1]'),
       quietHoursEnabled: z.boolean().optional(),
-      quietHoursStart: z.string().optional(),
-      quietHoursEnd: z.string().optional(),
+      quietHoursStart: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:MM, 24-hour').optional(),
+      quietHoursEnd: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:MM, 24-hour').optional(),
     })
     .describe('Settings to update (only include fields to change)'),
 });
@@ -683,10 +684,12 @@ export type GetSettingsInput = z.infer<typeof GetSettingsInputSchema>;
  * When `all: true`, these filters determine which cases are affected
  */
 const BulkFilterSchema = z.object({
-  all: z.boolean().optional().describe('Set to true to apply to ALL matching cases (no need to list IDs)'),
-  caseIds: z.array(z.string()).optional().describe('Specific case IDs (only needed if all is not true)'),
+  caseIds: z.array(z.string()).max(500).optional()
+    .describe('The cases to change. For "the selected cases" use selectedCaseIds from getPageContext.'),
+  all: z.boolean().optional()
+    .describe('Only when the person means every case they have (optionally narrowed by filterByStatus). Ignored when caseIds is sent.'),
   filterByStatus: z.enum(CASE_STATUSES).optional()
-    .describe('When all=true, only affect cases with this status'),
+    .describe('With all=true, only cases at this stage'),
 });
 
 /**
@@ -750,37 +753,50 @@ const PriorityLevelEnum = z.enum(['low', 'normal', 'high', 'urgent']);
 /**
  * I-140 category enum matching Convex schema
  */
-const I140CategoryEnum = z.enum(['EB-1', 'EB-2', 'EB-3']);
+const I140CategoryEnum = z.enum(['EB-1', 'EB-2', 'EB-2-NIW', 'EB-3']);
 
 /**
  * ISO date string pattern (YYYY-MM-DD)
  */
 const ISODateString = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD format');
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD format')
+  .refine((d) => {
+    const t = Date.parse(`${d}T00:00:00Z`);
+    return Number.isFinite(t) && new Date(t).toISOString().slice(0, 10) === d;
+  }, 'Not a real calendar date');
+
+/** The recruitment method keys the case form uses (20 CFR 656.17(e)). */
+const RECRUITMENT_METHOD_KEYS = [
+  'local_newspaper',
+  'radio_ad',
+  'tv_ad',
+  'job_fair',
+  'campus_placement',
+  'trade_organization',
+  'private_employment_firm',
+  'employee_referral',
+  'employer_website',
+  'job_website_ad',
+  'on_campus_recruitment',
+] as const;
+
+/** Wage in US dollars a year, cents allowed (the case form's "Annual wage in USD"). */
+const WageDollars = z
+  .number()
+  .min(0)
+  .max(10_000_000)
+  .describe('Annual wage in US dollars, e.g. 137000 for $137,000 a year');
 
 /**
  * Additional recruitment method schema
  */
 const AdditionalRecruitmentMethodSchema = z.object({
-  method: z.string().describe('Name of the recruitment method'),
-  date: z.string().describe('Date of the recruitment activity (YYYY-MM-DD)'),
-  description: z.string().optional().describe('Optional description'),
+  method: z.enum(RECRUITMENT_METHOD_KEYS).describe('Which recruitment method'),
+  date: ISODateString.describe('The date it ran, or the first day for a posting that runs over a period (YYYY-MM-DD)'),
+  endDate: ISODateString.optional().describe('Last day, for job_website_ad, employer_website and private_employment_firm'),
+  description: z.string().max(500).optional().describe('Where it ran, e.g. the newspaper or website name'),
 });
-
-/**
- * Closure reason enum matching Convex schema
- */
-const ClosureReasonEnum = z.enum([
-  'pwd_expired',
-  'recruitment_window_missed',
-  'filing_window_missed',
-  'eta9089_expired',
-  'withdrawn',
-  'denied',
-  'manual',
-  'other',
-]);
 
 // =============================================================================
 // RFI/RFE/Notes Array Schemas
@@ -790,7 +806,7 @@ const ClosureReasonEnum = z.enum([
  * RFI Entry Schema (Request for Information from DOL)
  *
  * IMPORTANT: responseDueDate is AUTO-CALCULATED (+30 days from receivedDate)
- * per 20 CFR 656.20. Do NOT allow manual editing of this field.
+ * (DOL's 30-day response window). Do NOT allow manual editing of this field.
  */
 const RfiEntrySchema = z.object({
   id: z.string().describe('Unique ID for this RFI entry'),
@@ -874,12 +890,13 @@ export const CreateCaseInputSchema = z.object({
     .min(1)
     .describe('Job position title (required)'),
 
-  // Optional status fields
+  // Stage: follows the dates given, unless set by hand
   caseStatus: CaseStatusEnum.optional().describe(
-    'Case stage: pwd, recruitment, eta9089, i140, closed (default: pwd)'
+    'The stage the person asked for. The new case\'s stage follows its dates; send the dates that put it there.'
   ),
-  progressStatus: ProgressStatusEnum.optional().describe(
-    'Progress status: working, waiting_intake, filed, approved, under_review, rfi_rfe (default: working)'
+  progressStatus: ProgressStatusEnum.optional(),
+  setStageByHand: z.boolean().optional().describe(
+    'Only when the person explicitly says to set the stage by hand without the dates'
   ),
   priorityLevel: PriorityLevelEnum.optional().describe(
     'Priority: low, normal, high, urgent (default: normal)'
@@ -903,7 +920,8 @@ export const CreateCaseInputSchema = z.object({
   ),
   pwdExpirationDate: ISODateString.optional().describe('PWD expiration date (YYYY-MM-DD)'),
   pwdCaseNumber: z.string().optional().describe('PWD case number'),
-  pwdWageLevel: z.string().optional().describe('Wage level (e.g., "Level 2")'),
+  pwdWageLevel: z.string().optional().describe('Wage level (e.g., "Level II")'),
+  pwdWageAmount: WageDollars.optional(),
 
   // Optional recruitment dates
   jobOrderStartDate: ISODateString.optional().describe(
@@ -956,198 +974,180 @@ export const CreateCaseInputSchema = z.object({
 
 export type CreateCaseInput = z.infer<typeof CreateCaseInputSchema>;
 
+/** Text fields updateCase can clear (set to nothing). */
+export const CLEARABLE_CASE_FIELDS = [
+  'jobTitle',
+  'caseNumber',
+  'internalCaseNumber',
+  'pwdCaseNumber',
+  'eta9089CaseNumber',
+  'i140ReceiptNumber',
+  'pwdFilingDate',
+  'pwdDeterminationDate',
+  'pwdExpirationDate',
+  'pwdWageLevel',
+  'jobOrderStartDate',
+  'jobOrderEndDate',
+  'jobOrderState',
+  'sundayAdFirstDate',
+  'sundayAdSecondDate',
+  'sundayAdNewspaper',
+  'noticeOfFilingStartDate',
+  'noticeOfFilingEndDate',
+  'recruitmentNotes',
+  'recruitmentSummaryCustom',
+  'eta9089FilingDate',
+  'eta9089AuditDate',
+  'eta9089CertificationDate',
+  'eta9089ExpirationDate',
+  'i140FilingDate',
+  'i140ReceiptDate',
+  'i140ApprovalDate',
+  'i140DenialDate',
+  'i140ServiceCenter',
+  'i140Category',
+  'employerFein',
+  'socCode',
+  'socTitle',
+] as const;
+
 /**
- * Schema for updateCase tool input
+ * Schema for updateCase tool input.
  *
- * COMPREHENSIVE field support for ALL case fields.
- * Includes array operations for RFI/RFE/notes with proper validation.
+ * Every field is optional; only what's sent changes. Lists are never sent
+ * whole: they're changed by the add and remove fields below, so adding one
+ * recruitment method can't erase the others. The case's stage follows its
+ * dates unless `setStageByHand` is true.
  */
 export const UpdateCaseInputSchema = z.object({
-  // ==========================================================================
-  // REQUIRED
-  // ==========================================================================
-  caseId: z.string().describe('The Convex ID of the case to update (required)'),
+  caseId: z.string().describe('The case id (_id from queryCases)'),
 
-  // ==========================================================================
-  // CORE IDENTITY FIELDS
-  // ==========================================================================
-  employerName: z.string().min(1).optional().describe('Update employer name'),
-  foreignWorkerId: z
-    .string()
-    .optional()
-    .describe('Update foreign worker ID'),
-  positionTitle: z.string().min(1).optional().describe('Update position title'),
-  jobTitle: z.string().optional().describe('Update job title'),
+  // Identity
+  employerName: z.string().min(1).max(500).optional(),
+  foreignWorkerId: z.string().max(500).optional().describe("The foreign worker's name or initials"),
+  positionTitle: z.string().min(1).max(500).optional(),
+  jobTitle: z.string().max(500).optional(),
 
-  // ==========================================================================
-  // STATUS FIELDS
-  // ==========================================================================
-  caseStatus: CaseStatusEnum.optional().describe('Update case stage: pwd, recruitment, eta9089, i140, closed'),
-  progressStatus: ProgressStatusEnum.optional().describe('Update progress status: working, waiting_intake, filed, approved, under_review, rfi_rfe'),
-  progressStatusOverride: z.boolean().optional().describe('Set to true to prevent auto-calculation of progressStatus'),
-  priorityLevel: PriorityLevelEnum.optional().describe('Update priority level: low, normal, high, urgent'),
+  // Stage
+  caseStatus: CaseStatusEnum.optional().describe(
+    'The stage the person asked for. The stage follows the dates: to move a case to a stage, send the date that gets it there (e.g. eta9089FilingDate for "ETA 9089 filed"). Only sent alone if setStageByHand is true.'
+  ),
+  progressStatus: ProgressStatusEnum.optional().describe('Progress within the stage; follows the dates like caseStatus'),
+  setStageByHand: z.boolean().optional().describe(
+    'Only when the person explicitly says to set the stage by hand without the date: the stage then stops following the dates'
+  ),
+  stageFollowsDates: z.boolean().optional().describe('true to let the dates set the stage again after it was set by hand'),
+  priorityLevel: PriorityLevelEnum.optional(),
 
-  // ==========================================================================
-  // FLAGS / BOOLEANS
-  // ==========================================================================
-  isProfessionalOccupation: z.boolean().optional().describe("Update professional occupation flag (requires Bachelor's degree)"),
-  isFavorite: z.boolean().optional().describe('Update favorite status'),
-  isPinned: z.boolean().optional().describe('Update pinned status (pinned cases appear at top of list)'),
-  calendarSyncEnabled: z.boolean().optional().describe('Update calendar sync setting'),
-  showOnTimeline: z.boolean().optional().describe('Update timeline visibility'),
+  // Flags
+  isProfessionalOccupation: z.boolean().optional().describe("Requires a bachelor's degree or higher"),
+  isFavorite: z.boolean().optional(),
+  isPinned: z.boolean().optional(),
+  calendarSyncEnabled: z.boolean().optional(),
+  showOnTimeline: z.boolean().optional(),
 
-  // ==========================================================================
-  // CASE NUMBERS
-  // ==========================================================================
-  caseNumber: z.string().optional().describe('Update DOL case number'),
-  internalCaseNumber: z.string().optional().describe('Update internal case/matter number'),
-  pwdCaseNumber: z.string().optional().describe('Update PWD case number'),
-  eta9089CaseNumber: z.string().optional().describe('Update ETA 9089 case number'),
-  i140ReceiptNumber: z.string().optional().describe('Update I-140 receipt number'),
+  // Case numbers
+  caseNumber: z.string().max(100).optional().describe('DOL case number'),
+  internalCaseNumber: z.string().max(100).optional().describe('The firm\'s own matter number'),
+  pwdCaseNumber: z.string().max(100).optional(),
+  eta9089CaseNumber: z.string().max(100).optional(),
+  i140ReceiptNumber: z.string().max(100).optional(),
 
-  // ==========================================================================
-  // PWD FIELDS
-  // ==========================================================================
-  pwdFilingDate: ISODateString.optional().describe('Update PWD filing date (YYYY-MM-DD)'),
-  pwdDeterminationDate: ISODateString.optional().describe('Update PWD determination date (auto-calculates expiration)'),
-  pwdExpirationDate: ISODateString.optional().describe('Update PWD expiration date (usually auto-calculated)'),
-  pwdWageLevel: z.string().optional().describe('Update wage level (e.g., "Level 2")'),
-  pwdWageAmount: z.number().int().min(0).optional().describe('Update wage amount in cents (e.g., 7500000 = $75,000)'),
+  // Prevailing wage
+  pwdFilingDate: ISODateString.optional(),
+  pwdDeterminationDate: ISODateString.optional().describe('Sets the PWD expiration too'),
+  pwdExpirationDate: ISODateString.optional().describe('Usually worked out from the determination date'),
+  pwdWageLevel: z.string().max(50).optional().describe('e.g. "Level II"'),
+  pwdWageAmount: WageDollars.optional(),
 
-  // ==========================================================================
-  // RECRUITMENT DATES
-  // ==========================================================================
-  jobOrderStartDate: ISODateString.optional().describe('Update job order start date (YYYY-MM-DD)'),
-  jobOrderEndDate: ISODateString.optional().describe('Update job order end date (auto-extends to +30 days)'),
-  jobOrderState: z.string().optional().describe('Update job order state (2-letter code, e.g., "CA")'),
-
-  sundayAdFirstDate: ISODateString.optional().describe('Update first Sunday ad date (must be Sunday)'),
-  sundayAdSecondDate: ISODateString.optional().describe('Update second Sunday ad date (must be Sunday after first)'),
-  sundayAdNewspaper: z.string().optional().describe('Update newspaper name for Sunday ads'),
-
-  noticeOfFilingStartDate: ISODateString.optional().describe('Update Notice of Filing start date'),
-  noticeOfFilingEndDate: ISODateString.optional().describe('Update Notice of Filing end date (auto-extends to +10 business days)'),
-
-  additionalRecruitmentStartDate: ISODateString.optional().describe('Update additional recruitment start date'),
-  additionalRecruitmentEndDate: ISODateString.optional().describe('Update additional recruitment end date'),
-  additionalRecruitmentMethods: z
+  // Recruitment
+  jobOrderStartDate: ISODateString.optional(),
+  jobOrderEndDate: ISODateString.optional(),
+  jobOrderState: z.string().max(2).optional().describe('Two-letter state code'),
+  sundayAdFirstDate: ISODateString.optional().describe('Must be a Sunday'),
+  sundayAdSecondDate: ISODateString.optional().describe('Must be a later Sunday'),
+  sundayAdNewspaper: z.string().max(500).optional(),
+  noticeOfFilingStartDate: ISODateString.optional(),
+  noticeOfFilingEndDate: ISODateString.optional(),
+  addRecruitmentMethods: z
     .array(AdditionalRecruitmentMethodSchema)
+    .max(20)
     .optional()
-    .describe('Update additional recruitment methods (3+ required for professional occupations). Full array replacement.'),
+    .describe('Recruitment methods to ADD; the ones already on the case stay'),
+  removeRecruitmentMethods: z
+    .array(z.object({ method: z.enum(RECRUITMENT_METHOD_KEYS), date: ISODateString }))
+    .max(20)
+    .optional()
+    .describe('Recruitment methods to remove, matched by method and date'),
+  recruitmentApplicantsCount: z.number().int().min(0).max(100_000).optional(),
+  recruitmentNotes: z.string().max(INPUT_LIMITS.MEDIUM).optional(),
+  recruitmentSummaryCustom: z.string().max(INPUT_LIMITS.MEDIUM).optional(),
 
-  // ==========================================================================
-  // RECRUITMENT METADATA
-  // ==========================================================================
-  recruitmentApplicantsCount: z.number().int().min(0).optional().describe('Update count of recruitment applicants'),
-  recruitmentNotes: z.string().optional().describe('Update recruitment notes'),
-  recruitmentSummaryCustom: z.string().optional().describe('Update custom recruitment summary'),
+  // ETA 9089
+  eta9089FilingDate: ISODateString.optional(),
+  eta9089AuditDate: ISODateString.optional(),
+  eta9089CertificationDate: ISODateString.optional().describe('Sets the ETA 9089 expiration too (certification + 179 days)'),
+  eta9089ExpirationDate: ISODateString.optional(),
 
-  // ==========================================================================
-  // ETA 9089 FIELDS
-  // ==========================================================================
-  eta9089FilingDate: ISODateString.optional().describe('Update ETA 9089 filing date'),
-  eta9089AuditDate: ISODateString.optional().describe('Update ETA 9089 audit date'),
-  eta9089CertificationDate: ISODateString.optional().describe('Update ETA 9089 certification date (auto-calculates expiration)'),
-  eta9089ExpirationDate: ISODateString.optional().describe('Update ETA 9089 expiration date (usually auto-calculated)'),
+  // I-140
+  i140FilingDate: ISODateString.optional(),
+  i140ReceiptDate: ISODateString.optional(),
+  i140ApprovalDate: ISODateString.optional(),
+  i140DenialDate: ISODateString.optional(),
+  i140Category: I140CategoryEnum.optional(),
+  i140PremiumProcessing: z.boolean().optional(),
+  i140ServiceCenter: z.string().max(100).optional(),
 
-  // ==========================================================================
-  // I-140 FIELDS
-  // ==========================================================================
-  i140FilingDate: ISODateString.optional().describe('Update I-140 filing date'),
-  i140ReceiptDate: ISODateString.optional().describe('Update I-140 receipt date'),
-  i140ApprovalDate: ISODateString.optional().describe('Update I-140 approval date'),
-  i140DenialDate: ISODateString.optional().describe('Update I-140 denial date'),
-  i140Category: I140CategoryEnum.optional().describe('Update I-140 category: EB-1, EB-2, EB-3'),
-  i140PremiumProcessing: z.boolean().optional().describe('Update premium processing flag'),
-  i140ServiceCenter: z.string().optional().describe('Update I-140 service center'),
+  // Job description and position
+  jobDescription: z.string().max(JOB_DESCRIPTION_MAX).optional(),
+  jobDescriptionPositionTitle: z.string().max(500).optional(),
+  employerFein: z.string().max(20).optional(),
+  socCode: z.string().max(20).optional(),
+  socTitle: z.string().max(500).optional(),
 
-  // ==========================================================================
-  // JOB DESCRIPTION
-  // ==========================================================================
-  jobDescription: z.string().max(JOB_DESCRIPTION_MAX).optional().describe('Update job description text (max 50,000 characters)'),
-  jobDescriptionPositionTitle: z.string().optional().describe('Update job description position title'),
+  // RFI (DOL) and RFE (USCIS)
+  addRfi: z
+    .object({
+      receivedDate: ISODateString,
+      title: z.string().max(200).optional(),
+      description: z.string().max(2000).optional(),
+    })
+    .optional()
+    .describe('A new RFI from DOL. Its due date is worked out (received + 30 days). Only one open RFI at a time.'),
+  rfiResponseSubmittedDate: ISODateString.optional().describe('Marks the open RFI as answered on this date'),
+  addRfe: z
+    .object({
+      receivedDate: ISODateString,
+      responseDueDate: ISODateString.describe('From the USCIS notice; ask for it'),
+      title: z.string().max(200).optional(),
+      description: z.string().max(2000).optional(),
+    })
+    .optional()
+    .describe('A new RFE from USCIS. Only one open RFE at a time.'),
+  rfeResponseSubmittedDate: ISODateString.optional().describe('Marks the open RFE as answered on this date'),
 
-  // ==========================================================================
-  // POSITION / EMPLOYER DETAILS
-  // ==========================================================================
-  employerFein: z.string().optional().describe('Update employer FEIN'),
-  socCode: z.string().optional().describe('Update SOC code'),
-  socTitle: z.string().optional().describe('Update SOC title'),
+  // Notes and tags
+  addNote: z
+    .object({
+      content: z.string().min(1).max(5000),
+      priority: z.enum(['high', 'medium', 'low']).optional(),
+      category: z.enum(['follow-up', 'document', 'client', 'internal', 'deadline', 'other']).optional(),
+      dueDate: ISODateString.optional(),
+    })
+    .optional(),
+  noteChanges: z
+    .array(z.object({ id: z.string(), status: z.enum(['pending', 'done', 'deleted']) }))
+    .max(50)
+    .optional()
+    .describe('Mark notes done or deleted by their id'),
+  addTags: z.array(z.string().min(1).max(50)).max(20).optional(),
+  removeTags: z.array(z.string().min(1).max(50)).max(20).optional(),
 
-  // ==========================================================================
-  // CLOSURE TRACKING
-  // ==========================================================================
-  closureReason: ClosureReasonEnum.optional().describe('Update closure reason (only for closed cases)'),
-
-  // ==========================================================================
-  // SIMPLE ARRAYS (Full Replacement)
-  // ==========================================================================
-  tags: z.array(z.string()).optional().describe('Update case tags (full array replacement)'),
-
-  // ==========================================================================
-  // COMPLEX ARRAYS: RFI/RFE/NOTES
-  // ==========================================================================
-  /**
-   * RFI Entries (Request for Information from DOL)
-   *
-   * IMPORTANT:
-   * - responseDueDate is AUTO-CALCULATED as receivedDate + 30 days (strict per 20 CFR 656.20)
-   * - Only ONE active RFI allowed (without responseSubmittedDate)
-   * - To add: Include new entry in array with receivedDate
-   * - To update: Include full entry with changes
-   * - To remove: Exclude the entry from array
-   * - To clear all: Pass empty array []
-   *
-   * When adding new RFI:
-   * - Generate unique ID: `rfi_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-   * - Set createdAt: Date.now()
-   * - responseDueDate will be auto-calculated from receivedDate
-   */
-  rfiEntries: z.array(RfiEntrySchema).optional().describe(
-    'Update RFI entries. Auto-calculates due date (+30 days from receivedDate). Only one active RFI allowed. Pass [] to clear all.'
-  ),
-
-  /**
-   * RFE Entries (Request for Evidence from USCIS)
-   *
-   * IMPORTANT:
-   * - responseDueDate is USER-PROVIDED (varies by case complexity)
-   * - Only ONE active RFE allowed (without responseSubmittedDate)
-   * - Similar CRUD semantics as RFI entries
-   *
-   * When adding new RFE:
-   * - Generate unique ID: `rfe_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-   * - Set createdAt: Date.now()
-   * - responseDueDate MUST be provided by user (check USCIS notice)
-   */
-  rfeEntries: z.array(RfeEntrySchema).optional().describe(
-    'Update RFE entries. Due date is user-editable (varies by case). Only one active RFE allowed. Pass [] to clear all.'
-  ),
-
-  /**
-   * Case Notes / Journal
-   *
-   * Notes support priority, category, and optional due dates for follow-ups.
-   * Use status: "deleted" for soft delete (preserves history).
-   *
-   * When adding new note:
-   * - Generate unique ID: `note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-   * - Set createdAt: Date.now()
-   * - Set status: "pending" for active notes
-   */
-  notes: z.array(NoteSchema).optional().describe(
-    'Update case notes/journal. Use status "deleted" for soft delete. Pass [] to clear all.'
-  ),
-
-  /**
-   * Document Attachments
-   *
-   * Note: Documents require file upload via separate endpoint.
-   * This field is for managing existing document metadata.
-   */
-  documents: z.array(DocumentSchema).optional().describe(
-    'Update document attachments. Note: Files must be uploaded separately.'
-  ),
+  clearFields: z
+    .array(z.enum(CLEARABLE_CASE_FIELDS))
+    .max(40)
+    .optional()
+    .describe('Fields to empty, when the person asks to remove a value'),
 });
 
 export type UpdateCaseInput = z.infer<typeof UpdateCaseInputSchema>;
@@ -1156,11 +1156,11 @@ export type UpdateCaseInput = z.infer<typeof UpdateCaseInputSchema>;
  * Schema for archiveCase tool input (soft delete)
  */
 export const ArchiveCaseInputSchema = z.object({
-  caseId: z.string().describe('The Convex ID of the case to archive (required)'),
+  caseId: z.string().describe('The case id (_id from queryCases)'),
   reason: z
-    .string()
+    .enum(['withdrawn', 'denied', 'other'])
     .optional()
-    .describe('Reason for archiving (for confirmation message)'),
+    .describe('Why it is closing, if the person said: withdrawn, denied, or other'),
 });
 
 export type ArchiveCaseInput = z.infer<typeof ArchiveCaseInputSchema>;
@@ -1457,110 +1457,30 @@ All dates should be YYYY-MM-DD format. See input schema for full list.
  * Only include fields that need to change.
  */
 export const updateCaseTool = tool({
-  description: `Update an existing PERM case with new information.
+  description: `Change an existing PERM case. Send only the fields that change.
 
-## COMPREHENSIVE FIELD SUPPORT
+## BEFORE YOU CALL IT
+- You need the case's _id: find it with queryCases (search by employer, worker, job title or any case number).
+- Never invent or assume a date. If the person didn't give the date, ask for it ("What date was the ETA 9089 filed?"). Never use today's date unless they say today.
 
-This tool supports updating ALL case fields including:
-- Core identity (employer, foreign worker, position)
-- Status fields (caseStatus, progressStatus, priority)
-- All dates (PWD, recruitment, ETA 9089, I-140)
-- Flags (favorite, pinned, professional, calendar sync)
-- Case numbers (PWD, ETA, I-140, internal)
-- RFI/RFE entries (add, update, remove, or clear)
-- Case notes/journal (add, update, soft delete)
-- Tags (full array replacement)
+## THE STAGE FOLLOWS THE DATES
+The case's stage (caseStatus, progressStatus) is worked out from its dates. To move a case, send the date that gets it there:
+- PWD filed: pwdFilingDate. Recruitment: pwdDeterminationDate.
+- ETA 9089 filed: eta9089FilingDate. Certified (I-140 stage): eta9089CertificationDate.
+- I-140 filed: i140FilingDate. Approved: i140ApprovalDate.
+If you send only a stage, the tool answers with the date it needs; ask the person for it. Set setStageByHand only when they explicitly want the stage set without the date. To close a case use archiveCase.
 
-## WHEN TO USE:
-- User asks to change case data: "Update the TechCorp case status to recruitment"
-- User provides new dates: "Set the PWD determination date to 2024-06-15"
-- User wants to correct information: "Change the employer name to TechCorp Inc"
-- User advances case stage: "Mark this case as filed"
-- User manages RFI/RFE: "Add an RFI received today", "Clear the RFI", "Mark RFI as responded"
-- User manages notes: "Add a note about client meeting", "Mark that note as done"
-- User updates progress: "Remove the RFI/RFE status", "Change progress to working"
+## LISTS ARE CHANGED, NEVER REPLACED
+addRecruitmentMethods / removeRecruitmentMethods, addRfi / rfiResponseSubmittedDate, addRfe / rfeResponseSubmittedDate, addNote / noteChanges, addTags / removeTags. Everything already on the case stays.
 
-## WHEN NOT TO USE:
-- User wants to create a new case (use createCase)
-- User wants to delete/archive a case (use archiveCase)
-- You don't have the caseId (use queryCases first to find it)
-- User is asking about case data (use queryCases)
+## WHAT IT DOES FOR YOU
+- PWD expiration from the determination date; ETA 9089 expiration (certification + 179 days); RFI due date (received + 30 days).
+- Checks the change against the PERM rules first and tells you what's wrong instead of saving something else.
 
-## REQUIRED:
-- caseId: Must have the Convex ID of the case to update
+## THE RESULT
+The result lists what was saved and the stage afterwards, read back from the case. Tell the person exactly that. If a field shows under notSaved, say so; never say it saved.
 
-## RFI/RFE MANAGEMENT
-
-### RFI (Request for Information from DOL):
-- responseDueDate is AUTO-CALCULATED (+30 days from receivedDate, strict per 20 CFR 656.20)
-- Only ONE active RFI allowed (without responseSubmittedDate)
-- To add: Include new entry in rfiEntries array
-- To clear all: Pass rfiEntries: []
-- To mark as responded: Update responseSubmittedDate
-
-When adding new RFI entry:
-\`\`\`json
-{
-  "id": "rfi_1234567890_abc123",  // Generate unique ID
-  "receivedDate": "2024-08-15",   // Required
-  "responseDueDate": "2024-09-14", // Auto-calculated: receivedDate + 30 days
-  "title": "Documentation Request", // Optional
-  "createdAt": 1723747200000       // Date.now()
-}
-\`\`\`
-
-### RFE (Request for Evidence from USCIS):
-- responseDueDate is USER-PROVIDED (varies by case)
-- Only ONE active RFE allowed
-- Same CRUD semantics as RFI
-
-## NOTES/JOURNAL MANAGEMENT
-
-Add case notes with priority and category:
-\`\`\`json
-{
-  "id": "note_1234567890_xyz789",
-  "content": "Call client about documents",
-  "status": "pending",
-  "priority": "high",
-  "category": "follow-up",
-  "dueDate": "2024-08-20",
-  "createdAt": 1723747200000
-}
-\`\`\`
-
-Use status: "deleted" for soft delete (preserves history).
-
-## AUTO-CALCULATIONS
-
-These fields trigger automatic calculations:
-- pwdDeterminationDate → pwdExpirationDate (per 20 CFR 656.40)
-- eta9089CertificationDate → eta9089ExpirationDate (+179 days, the date DOL prints)
-- jobOrderStartDate → jobOrderEndDate (extends to +30 days)
-- noticeOfFilingStartDate → noticeOfFilingEndDate (extends to +10 business days)
-- RFI receivedDate → responseDueDate (+30 days strict)
-
-## EXAMPLES
-
-### Basic Updates:
-- "Update case status": { caseId: "abc123", caseStatus: "recruitment" }
-- "Set PWD date": { caseId: "abc123", pwdDeterminationDate: "2024-06-15" }
-- "Update multiple fields": { caseId: "abc123", progressStatus: "filed", eta9089FilingDate: "2024-07-01" }
-
-### RFI Management:
-- "Add RFI": { caseId: "abc123", rfiEntries: [{ id: "rfi_...", receivedDate: "2024-08-15", responseDueDate: "2024-09-14", createdAt: Date.now() }] }
-- "Clear RFI": { caseId: "abc123", rfiEntries: [], progressStatus: "working" }
-- "Mark RFI responded": Fetch current entries, update responseSubmittedDate, send full array
-
-### Notes:
-- "Add note": { caseId: "abc123", notes: [...existingNotes, { id: "note_...", content: "Follow up", status: "pending", createdAt: Date.now() }] }
-
-## NOTES:
-- Only include fields you want to change
-- Use queryCases first if you need to find the case ID
-- Dates must be YYYY-MM-DD format
-- For arrays (rfiEntries, rfeEntries, notes), send the FULL updated array
-- pwdWageAmount is in cents (e.g., 7500000 = $75,000)`,
+pwdWageAmount is annual US dollars (137000 = $137,000).`,
 
   inputSchema: UpdateCaseInputSchema,
 });
@@ -1571,30 +1491,11 @@ These fields trigger automatic calculations:
  * Closes a case by setting caseStatus to "closed".
  */
 export const archiveCaseTool = tool({
-  description: `Close/archive a PERM case by setting its status to "closed".
+  description: `Close (archive) a PERM case. The case and all its data stay, and reopenCase opens it again.
 
-## WHEN TO USE:
-- User wants to close a case: "Close the TechCorp case"
-- User wants to archive a case: "Archive this case"
-- Case is complete or no longer active
-
-## WHEN NOT TO USE:
-- User wants to permanently delete a case (use deleteCase)
-- You don't have the caseId (use queryCases first)
-- Case is already closed (check status first)
-
-## BEHAVIOR:
-- Sets caseStatus to "closed"
-- Case remains in database and can be reopened with reopenCase
-- Case still appears in queries but with closed status
-
-## EXAMPLES:
-- "Close the TechCorp case": { caseId: "abc123" }
-- "Archive this case": { caseId: "xyz789", reason: "No longer active" }
-
-## NOTES:
-- Always confirm with user before closing
-- Can be reopened with reopenCase if needed`,
+Use it when the person says close, archive, withdraw, or the case is finished. Use deleteCase only when they explicitly want it removed for good.
+Needs the case's _id (queryCases). If it's already closed, the tool says so.
+reason: withdrawn, denied or other, only if the person said why.`,
 
   inputSchema: ArchiveCaseInputSchema,
 });
@@ -1614,7 +1515,7 @@ export const reopenCaseTool = tool({
 
 ## WHEN NOT TO USE:
 - Case is not closed (already active)
-- Case is archived/deleted (use restoreCase)
+- The case was deleted: a deleted case can't be brought back from the chat
 - You don't have the caseId
 
 ## BEHAVIOR:

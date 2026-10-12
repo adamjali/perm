@@ -62,6 +62,14 @@ export interface InChatConfirmationCardProps {
   duration?: number;
   /** Error message (shown when status is error) */
   error?: string;
+  /** What the card changes, a line each, in plain words */
+  changes?: string[];
+  /** Shown above the buttons, e.g. "This can't be undone." */
+  warning?: string;
+  /** After it ran: what was saved, read back by the server */
+  resultMessage?: string;
+  /** A reply is streaming: the buttons wait until it ends */
+  busy?: boolean;
 }
 
 // ============================================================================
@@ -149,10 +157,15 @@ export function InChatConfirmationCard({
   onDeny,
   duration,
   error,
+  changes,
+  warning,
+  resultMessage,
+  busy = false,
 }: InChatConfirmationCardProps) {
   const toolColor = getToolColor(toolName);
   const displayName = getToolDisplayName(toolName);
-  const argEntries = Object.entries(args).slice(0, 4); // Limit displayed args
+  // A card that lists its changes shows those instead of raw arguments.
+  const argEntries = changes && changes.length > 0 ? [] : Object.entries(args).slice(0, 4);
 
   // Show buttons only in pending state
   const showButtons = status === 'pending';
@@ -250,9 +263,28 @@ export function InChatConfirmationCard({
         )}
 
         {/* Description */}
-        <p className="text-sm text-foreground leading-relaxed [overflow-wrap:anywhere]">
-          &ldquo;{description}&rdquo;
+        <p className="text-sm font-medium text-foreground leading-relaxed [overflow-wrap:anywhere]">
+          {description}
         </p>
+
+        {/* What changes, a line each */}
+        {changes && changes.length > 0 && (
+          <ul className="space-y-1 border-2 border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
+            {changes.map((line, i) => (
+              <li key={i} className="[overflow-wrap:anywhere]">
+                {line}{" "}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Warning (destructive cards) */}
+        {warning && status === 'pending' && (
+          <p className="flex items-start gap-2 border-2 border-destructive bg-destructive/10 px-3 py-2 text-sm text-foreground">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" aria-hidden="true" />{" "}
+            <span className="[overflow-wrap:anywhere]">{warning}</span>
+          </p>
+        )}
 
         {/* Error message */}
         <AnimatePresence>
@@ -277,7 +309,7 @@ export function InChatConfirmationCard({
               exit={{ opacity: 0 }}
               className="text-sm text-muted-foreground italic"
             >
-              Executing action...
+              Saving…
             </motion.div>
           )}
           {status === 'approved' && (
@@ -287,7 +319,7 @@ export function InChatConfirmationCard({
               exit={{ opacity: 0 }}
               className="text-sm text-primary font-medium"
             >
-              Action approved
+              Approved
             </motion.div>
           )}
           {status === 'denied' && (
@@ -297,7 +329,7 @@ export function InChatConfirmationCard({
               exit={{ opacity: 0 }}
               className="text-sm text-muted-foreground"
             >
-              Action denied by user
+              Cancelled. Nothing was changed.
             </motion.div>
           )}
           {status === 'done' && (
@@ -307,7 +339,7 @@ export function InChatConfirmationCard({
               exit={{ opacity: 0 }}
               className="text-sm text-primary font-medium"
             >
-              Action completed successfully
+              {resultMessage || 'Done.'}
             </motion.div>
           )}
         </AnimatePresence>
@@ -322,10 +354,16 @@ export function InChatConfirmationCard({
               transition={{ delay: 0.1, ...springConfig }}
               className="flex items-center justify-end gap-2 pt-2 border-t border-border"
             >
+              {busy && (
+                <span className="mr-auto text-sm text-muted-foreground" role="status">
+                  Waiting for the reply to finish
+                </span>
+              )}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onDeny}
+                disabled={busy}
                 className="gap-1.5 h-11 md:h-9 px-4"
               >
                 <XIcon className="h-3.5 w-3.5" />
@@ -335,6 +373,7 @@ export function InChatConfirmationCard({
                 variant={isDestructive ? 'destructive' : 'default'}
                 size="sm"
                 onClick={onApprove}
+                disabled={busy}
                 className="gap-1.5 h-11 md:h-9 px-4"
               >
                 <CheckIcon className="h-3.5 w-3.5" />

@@ -28,6 +28,8 @@ interface UseToolConfirmationsOptions {
   onExecutionComplete?: (toolCallId: string, result: unknown) => void;
   /** Called when a tool execution fails */
   onExecutionError?: (toolCallId: string, error: string) => void;
+  /** Tells the server the card was cancelled, so it can't be approved later. */
+  onCancel?: (toolCallId: string) => Promise<void>;
   /** Called to persist tool result to database (for page refresh resilience) */
   onPersistResult?: (
     toolCallId: string,
@@ -58,6 +60,13 @@ interface UseToolConfirmationsReturn {
 // ============================================================================
 // Constants
 // ============================================================================
+
+/** The card's change lines, kept to strings and a sane number. */
+function changeLines(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const lines = raw.filter((x): x is string => typeof x === 'string' && x.length > 0).slice(0, 40);
+  return lines.length ? lines : undefined;
+}
 
 /**
  * Delay (ms) before transitioning from 'approved' to 'executing' state.
@@ -109,7 +118,7 @@ const APPROVAL_TO_EXECUTING_DELAY_MS = 100;
 export function useToolConfirmations(
   options: UseToolConfirmationsOptions = {}
 ): UseToolConfirmationsReturn {
-  const { onExecutionComplete, onExecutionError, onPersistResult } = options;
+  const { onExecutionComplete, onExecutionError, onPersistResult, onCancel } = options;
 
   // State: Map of toolCallId -> ToolConfirmationState
   const [confirmations, setConfirmations] = useState<Map<string, ToolConfirmationState>>(
@@ -160,6 +169,8 @@ export function useToolConfirmations(
           arguments: request.arguments,
           description: request.description,
           permissionType: request.permissionType,
+          warning: request.warning,
+          changes: changeLines(request.preview?.changes),
           status: 'pending',
         });
         return next;
@@ -188,6 +199,8 @@ export function useToolConfirmations(
           arguments: data.arguments,
           description: data.description,
           permissionType: data.permissionType,
+          warning: data.warning,
+          changes: changeLines(data.preview?.changes),
           status: 'pending',
         });
         return next;
@@ -207,7 +220,7 @@ export function useToolConfirmations(
     (
       toolCallId: string,
       status: ConfirmationStatus,
-      extra?: { error?: string; endTime?: number; startTime?: number }
+      extra?: { error?: string; endTime?: number; startTime?: number; resultMessage?: string }
     ): void => {
       setConfirmations((prev) => {
         const existing = prev.get(toolCallId);
@@ -222,6 +235,8 @@ export function useToolConfirmations(
           arguments: existing.arguments,
           description: existing.description,
           permissionType: existing.permissionType,
+          warning: existing.warning,
+          changes: existing.changes,
           status,
           ...extra,
         } as ToolConfirmationState;
@@ -254,21 +269,34 @@ export function useToolConfirmations(
       }, APPROVAL_TO_EXECUTING_DELAY_MS);
 
       try {
-        // Call the execute endpoint
+        // The server runs the change it recorded for this card; only the
+        // card's id is sent (src/app/api/chat/execute-tool/route.ts).
         const response = await fetch('/api/chat/execute-tool', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            toolCallId: state.toolCallId,
-            toolName: state.toolName,
-            arguments: state.arguments,
-          }),
+          body: JSON.stringify({ toolCallId: state.toolCallId }),
         });
 
-        const result = await response.json();
+        const result = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+          success?: boolean;
+          refused?: string;
+          previousResult?: string;
+        };
 
-        if (!response.ok || result.error) {
-          const errorMsg = result.error || 'Execution failed';
+        if (response.status === 409 && result.refused === 'already_done') {
+          // Made already (another tab, an identical card): the card says so.
+          const message = result.previousResult ?? result.error ?? 'This change was already made.';
+          updateStatus(toolCallId, 'done', { startTime, endTime: Date.now(), resultMessage: message });
+          try {
+            await onPersistResult?.(state.toolCallId, JSON.stringify({ alreadyDone: true, message }), 'success');
+          } catch (persistErr) {
+            captureError(persistErr, { operation: 'persistAlreadyDone' });
+          }
+          onExecutionComplete?.(toolCallId, { message });
+        } else if (!response.ok || result.error || result.success === false) {
+          const errorMsg = result.message || result.error || 'Execution failed';
           updateStatus(toolCallId, 'error', {
             error: errorMsg,
             startTime,
@@ -289,7 +317,7 @@ export function useToolConfirmations(
 
           onExecutionError?.(toolCallId, errorMsg);
         } else {
-          updateStatus(toolCallId, 'done', { startTime, endTime: Date.now() });
+          updateStatus(toolCallId, 'done', { startTime, endTime: Date.now(), resultMessage: result.message });
 
           // Persist success result to database - await to ensure it's saved before any refresh
           try {
@@ -344,6 +372,14 @@ export function useToolConfirmations(
 
       updateStatus(toolCallId, 'denied');
 
+      // The server's record of the card is cancelled too, so it can't be
+      // approved from another tab or after a reload.
+      try {
+        await onCancel?.(state.toolCallId);
+      } catch (cancelErr) {
+        captureError(cancelErr, { operation: 'cancelConfirmation' });
+      }
+
       // Persist denial to database - await to ensure it's saved before any refresh
       // Using 'error' status since 'denied' isn't a valid DB status
       try {
@@ -357,7 +393,7 @@ export function useToolConfirmations(
         captureError(persistErr, { operation: 'persistDenial' });
       }
     },
-    [confirmations, updateStatus, onPersistResult]
+    [confirmations, updateStatus, onPersistResult, onCancel]
   );
 
   /**

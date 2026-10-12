@@ -524,6 +524,55 @@ describe("queryCases", () => {
       expect(resultPosition.count).toBe(1);
     });
 
+    it("search ignores punctuation, finds case numbers without dashes, and needs every word", async () => {
+      const t = createTestContext();
+      const asUser = await createAuthenticatedContext(t, "Test User");
+      await asUser.run(async (ctx) => {
+        await ctx.db.insert("cases", {
+          ...createCaseData({ employerName: "Brightline, INC.", positionTitle: "Senior DevOps Engineer" }),
+          eta9089CaseNumber: "G-100-26282-123456",
+          internalCaseNumber: "NV-0042",
+          userId: asUser.userId,
+        });
+        await ctx.db.insert("cases", {
+          ...createCaseData({ employerName: "Brightline Labs", positionTitle: "Data Analyst" }),
+          userId: asUser.userId,
+        });
+        await ctx.db.insert("cases", {
+          ...createCaseData({ employerName: "Other", positionTitle: "Engineer" }),
+          notes: [{ id: "n9", content: "Brightline devops follow-up", createdAt: Date.now(), status: "deleted" }],
+          userId: asUser.userId,
+        });
+      });
+      const count = async (searchText: string) =>
+        (await asUser.query(api.chatCaseData.queryCases, { searchText, countOnly: true })).count;
+
+      expect(await count("brightline inc")).toBe(1);
+      expect(await count("Brightline")).toBe(2);
+      expect(await count("G-100-26282-123456")).toBe(1);
+      expect(await count("G10026282123456")).toBe(1);
+      expect(await count("26282 123456")).toBe(1);
+      expect(await count("nv 0042")).toBe(1);
+      expect(await count("brightline devops")).toBe(1);
+      expect(await count("brightline marketing")).toBe(0);
+    });
+
+    it("never hands the employer's FEIN to the assistant", async () => {
+      const t = createTestContext();
+      const asUser = await createAuthenticatedContext(t, "Test User");
+      await asUser.run(async (ctx) => {
+        await ctx.db.insert("cases", {
+          ...createCaseData({ employerName: "Fein Co" }),
+          employerFein: "enc:secret",
+          userId: asUser.userId,
+        });
+      });
+      const all = await asUser.query(api.chatCaseData.queryCases, { returnAllFields: true });
+      expect(getCases(all)[0]).not.toHaveProperty("employerFein");
+      const asked = await asUser.query(api.chatCaseData.queryCases, { fields: ["employerFein", "employerName"] });
+      expect(getCases(asked)[0]).not.toHaveProperty("employerFein");
+    });
+
     it("multiple filters combine correctly", async () => {
       const t = createTestContext();
       const asUser = await createAuthenticatedContext(t, "Test User");

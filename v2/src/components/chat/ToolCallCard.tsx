@@ -267,6 +267,12 @@ interface ToolCallWithConfirmationProps {
   onDeny: () => void;
   confirmationDuration?: number;
   confirmationError?: string;
+  confirmation?: ToolConfirmationState;
+  busy?: boolean;
+}
+
+function stringLines(raw: unknown): string[] | undefined {
+  return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string').slice(0, 40) : undefined;
 }
 
 /**
@@ -280,6 +286,8 @@ function ToolCallWithConfirmation({
   onDeny,
   confirmationDuration,
   confirmationError,
+  confirmation,
+  busy,
 }: ToolCallWithConfirmationProps) {
   // If this is a permission request, render the confirmation card
   if (permissionRequest && confirmationStatus) {
@@ -295,6 +303,10 @@ function ToolCallWithConfirmation({
         onDeny={onDeny}
         duration={confirmationDuration}
         error={confirmationError}
+        changes={confirmation?.changes ?? stringLines(permissionRequest.preview?.changes)}
+        warning={confirmation?.warning ?? permissionRequest.warning}
+        resultMessage={confirmation?.resultMessage}
+        busy={busy}
       />
     );
   }
@@ -323,6 +335,8 @@ interface ToolCallListProps {
   onApproveConfirmation: (toolCallId: string) => Promise<void>;
   /** Deny a pending confirmation */
   onDenyConfirmation: (toolCallId: string) => void;
+  /** A reply is streaming: buttons wait until it ends */
+  busy?: boolean;
 }
 
 /**
@@ -340,6 +354,7 @@ export function ToolCallList({
   getConfirmation,
   onApproveConfirmation,
   onDenyConfirmation,
+  busy = false,
 }: ToolCallListProps) {
   if (!toolCalls || toolCalls.length === 0) return null;
 
@@ -398,6 +413,8 @@ export function ToolCallList({
               onDeny={() => onDenyConfirmation(toolCallId)}
               confirmationDuration={getConfirmationDuration(confirmation)}
               confirmationError={getConfirmationError(confirmation)}
+              confirmation={confirmation}
+              busy={busy}
             />
           </motion.div>
         );

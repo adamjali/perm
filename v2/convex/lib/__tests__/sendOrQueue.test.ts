@@ -122,6 +122,19 @@ describe("sendOrQueue", () => {
       vi.unstubAllEnvs();
     }
   });
+
+  it("treats mail to the site's own test accounts as done: nothing sent, nothing counted, no error", async () => {
+    const { ctx, calls } = fakeCtx(10);
+    const { resend, send } = fakeResend(() => ({ data: { id: "e1" }, error: null }));
+    const out = await sendOrQueue(ctx, "digest", resend, { ...params, to: "demo@permtracker.app" });
+    expect(out.error).toBeUndefined();
+    expect(send).not.toHaveBeenCalled();
+    expect(calls).toHaveLength(0);
+    // support@ is a real inbox and still gets mail.
+    const support = await sendOrQueue(ctx, "contact", resend, { ...params, to: "support@permtracker.app" });
+    expect(support.error).toBeUndefined();
+    expect(send).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("the limits' arithmetic", () => {

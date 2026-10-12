@@ -326,6 +326,118 @@ type CaseArgsFitTable = false extends
 const _caseArgsFitTable: CaseArgsFitTable = true;
 void _caseArgsFitTable;
 
+type CaseCreateArgs = ObjectType<typeof caseCreateArgs>;
+
+/**
+ * What `create` would store, worked out without writing: derived dates,
+ * validation, and the stage the dates put the new case at. `create` writes from
+ * it and `previewCreate` reports it, so they can't disagree.
+ */
+function planCaseCreate(args: CaseCreateArgs) {
+  // Calculate derived dates for queryability
+  const isProfessionalOccupation = args.isProfessionalOccupation ?? false;
+  const derivedDates = calculateDerivedDates({
+    sundayAdFirstDate: args.sundayAdFirstDate,
+    sundayAdSecondDate: args.sundayAdSecondDate,
+    jobOrderStartDate: args.jobOrderStartDate,
+    jobOrderEndDate: args.jobOrderEndDate,
+    noticeOfFilingStartDate: args.noticeOfFilingStartDate,
+    noticeOfFilingEndDate: args.noticeOfFilingEndDate,
+    additionalRecruitmentEndDate: args.additionalRecruitmentEndDate,
+    additionalRecruitmentMethods: args.additionalRecruitmentMethods,
+    pwdExpirationDate: args.pwdExpirationDate,
+    isProfessionalOccupation,
+  });
+
+  // Validate case data before inserting
+  // A certified case always carries its expiration (see the helper).
+  const eta9089ExpirationDate = resolveEta9089ExpirationDate(
+    args.eta9089CertificationDate,
+    args.eta9089ExpirationDate
+  );
+  const validationInput = mapToValidatorFormat({
+    ...args,
+    eta9089ExpirationDate,
+    recruitmentStartDate: derivedDates.recruitmentStartDate,
+    recruitmentEndDate: derivedDates.recruitmentEndDate,
+  });
+  const validationResult = validateCase(validationInput);
+  const validationErrors = validationResult.valid
+    ? []
+    : validationResult.errors.map((e) => `[${e.ruleId}] ${e.field}: ${e.message}`);
+
+  // Auto-calculate status from dates unless explicitly overridden
+  // This ensures status is always consistent with the case data
+  const autoStatus = calculateAutoStatus({
+    // RFI/RFE entries
+    rfiEntries: args.rfiEntries,
+    rfeEntries: args.rfeEntries,
+    // I-140 dates
+    i140ApprovalDate: args.i140ApprovalDate,
+    i140DenialDate: args.i140DenialDate,
+    i140FilingDate: args.i140FilingDate,
+    // ETA 9089 dates
+    eta9089CertificationDate: args.eta9089CertificationDate,
+    eta9089FilingDate: args.eta9089FilingDate,
+    // PWD dates
+    pwdDeterminationDate: args.pwdDeterminationDate,
+    pwdFilingDate: args.pwdFilingDate,
+    // Recruitment dates
+    jobOrderStartDate: args.jobOrderStartDate,
+    jobOrderEndDate: args.jobOrderEndDate,
+    sundayAdFirstDate: args.sundayAdFirstDate,
+    sundayAdSecondDate: args.sundayAdSecondDate,
+    noticeOfFilingStartDate: args.noticeOfFilingStartDate,
+    noticeOfFilingEndDate: args.noticeOfFilingEndDate,
+    // Professional occupation
+    isProfessionalOccupation,
+    additionalRecruitmentMethods: args.additionalRecruitmentMethods,
+    additionalRecruitmentEndDate: args.additionalRecruitmentEndDate,
+  });
+
+  // Use auto-calculated status unless progressStatusOverride is explicitly true
+  // When override is true, use the passed values (or defaults if not passed)
+  const effectiveCaseStatus = args.progressStatusOverride
+    ? (args.caseStatus ?? "pwd")
+    : autoStatus.caseStatus;
+  const effectiveProgressStatus = args.progressStatusOverride
+    ? (args.progressStatus ?? "working")
+    : autoStatus.progressStatus;
+
+  return {
+    isProfessionalOccupation,
+    derivedDates,
+    eta9089ExpirationDate,
+    validationErrors,
+    effectiveCaseStatus,
+    effectiveProgressStatus,
+  };
+}
+
+/**
+ * What `create` would do with these arguments, without writing: whether they
+ * pass validation, and the stage the new case would start at.
+ */
+export const previewCreate = query({
+  args: caseCreateArgs,
+  returns: v.object({
+    valid: v.boolean(),
+    errors: v.array(v.string()),
+    caseStatus: v.string(),
+    progressStatus: v.string(),
+  }),
+  handler: async (ctx, args) => {
+    await getCurrentUserId(ctx);
+    const plan = planCaseCreate(args);
+    return {
+      valid: plan.validationErrors.length === 0,
+      errors: plan.validationErrors,
+      caseStatus: plan.effectiveCaseStatus,
+      progressStatus: plan.effectiveProgressStatus,
+    };
+  },
+});
+
 /**
  * Create a new case
  * Sets defaults for all optional fields
@@ -350,78 +462,17 @@ export const create = mutation({
 
     const now = Date.now();
 
-    // Calculate derived dates for queryability
-    const isProfessionalOccupation = args.isProfessionalOccupation ?? false;
-    const derivedDates = calculateDerivedDates({
-      sundayAdFirstDate: args.sundayAdFirstDate,
-      sundayAdSecondDate: args.sundayAdSecondDate,
-      jobOrderStartDate: args.jobOrderStartDate,
-      jobOrderEndDate: args.jobOrderEndDate,
-      noticeOfFilingStartDate: args.noticeOfFilingStartDate,
-      noticeOfFilingEndDate: args.noticeOfFilingEndDate,
-      additionalRecruitmentEndDate: args.additionalRecruitmentEndDate,
-      additionalRecruitmentMethods: args.additionalRecruitmentMethods,
-      pwdExpirationDate: args.pwdExpirationDate,
+    const {
       isProfessionalOccupation,
-    });
-
-    // Validate case data before inserting
-    // A certified case always carries its expiration (see the helper).
-    const eta9089ExpirationDate = resolveEta9089ExpirationDate(
-      args.eta9089CertificationDate,
-      args.eta9089ExpirationDate
-    );
-    const validationInput = mapToValidatorFormat({
-      ...args,
+      derivedDates,
       eta9089ExpirationDate,
-      recruitmentStartDate: derivedDates.recruitmentStartDate,
-      recruitmentEndDate: derivedDates.recruitmentEndDate,
-    });
-    const validationResult = validateCase(validationInput);
-    if (!validationResult.valid) {
-      const errorMessages = validationResult.errors
-        .map((e) => `[${e.ruleId}] ${e.field}: ${e.message}`)
-        .join('; ');
-      throw new ConvexError(`Validation failed: ${errorMessages}`);
+      validationErrors,
+      effectiveCaseStatus,
+      effectiveProgressStatus,
+    } = planCaseCreate(args);
+    if (validationErrors.length > 0) {
+      throw new ConvexError(`Validation failed: ${validationErrors.join("; ")}`);
     }
-
-    // Auto-calculate status from dates unless explicitly overridden
-    // This ensures status is always consistent with the case data
-    const autoStatus = calculateAutoStatus({
-      // RFI/RFE entries
-      rfiEntries: args.rfiEntries,
-      rfeEntries: args.rfeEntries,
-      // I-140 dates
-      i140ApprovalDate: args.i140ApprovalDate,
-      i140DenialDate: args.i140DenialDate,
-      i140FilingDate: args.i140FilingDate,
-      // ETA 9089 dates
-      eta9089CertificationDate: args.eta9089CertificationDate,
-      eta9089FilingDate: args.eta9089FilingDate,
-      // PWD dates
-      pwdDeterminationDate: args.pwdDeterminationDate,
-      pwdFilingDate: args.pwdFilingDate,
-      // Recruitment dates
-      jobOrderStartDate: args.jobOrderStartDate,
-      jobOrderEndDate: args.jobOrderEndDate,
-      sundayAdFirstDate: args.sundayAdFirstDate,
-      sundayAdSecondDate: args.sundayAdSecondDate,
-      noticeOfFilingStartDate: args.noticeOfFilingStartDate,
-      noticeOfFilingEndDate: args.noticeOfFilingEndDate,
-      // Professional occupation
-      isProfessionalOccupation,
-      additionalRecruitmentMethods: args.additionalRecruitmentMethods,
-      additionalRecruitmentEndDate: args.additionalRecruitmentEndDate,
-    });
-
-    // Use auto-calculated status unless progressStatusOverride is explicitly true
-    // When override is true, use the passed values (or defaults if not passed)
-    const effectiveCaseStatus = args.progressStatusOverride
-      ? (args.caseStatus ?? "pwd")
-      : autoStatus.caseStatus;
-    const effectiveProgressStatus = args.progressStatusOverride
-      ? (args.progressStatus ?? "working")
-      : autoStatus.progressStatus;
 
     const caseId = await ctx.db.insert("cases", {
       userId: userId,
@@ -607,6 +658,175 @@ const METADATA_FIELDS = new Set([
  * Update an existing case
  * Verifies ownership before allowing updates
  */
+type CaseUpdateArgs = ObjectType<typeof caseUpdateArgs>;
+
+/**
+ * What an update would do to a case, worked out without writing anything: the
+ * merged dates, the derived recruitment dates, the validation result and the
+ * stage the dates put the case at. `update` writes from it and `previewUpdate`
+ * reports it, so the chat can say what a change will do before anyone approves
+ * it, and the two can't disagree.
+ */
+function planCaseUpdate(caseDoc: Doc<"cases">, args: CaseUpdateArgs) {
+  const { id: _id, ...rawUpdates } = args;
+
+  // Resolve a field value for update merge:
+  // - string value → use the new value
+  // - null → clear the field (returns undefined)
+  // - undefined (absent from args) → keep existing DB value
+  const resolve = (
+    argVal: string | null | undefined,
+    dbVal: string | undefined,
+  ): string | undefined => {
+    if (argVal !== undefined) return argVal === null ? undefined : argVal;
+    return dbVal;
+  };
+
+  // Merge existing case data with updates to calculate derived dates
+  // Uses resolve() so null signals "clear this field" instead of falling back to old value
+  const mergedData = {
+    sundayAdFirstDate: resolve(args.sundayAdFirstDate, caseDoc.sundayAdFirstDate),
+    sundayAdSecondDate: resolve(args.sundayAdSecondDate, caseDoc.sundayAdSecondDate),
+    jobOrderStartDate: resolve(args.jobOrderStartDate, caseDoc.jobOrderStartDate),
+    jobOrderEndDate: resolve(args.jobOrderEndDate, caseDoc.jobOrderEndDate),
+    noticeOfFilingStartDate: resolve(args.noticeOfFilingStartDate, caseDoc.noticeOfFilingStartDate),
+    noticeOfFilingEndDate: resolve(args.noticeOfFilingEndDate, caseDoc.noticeOfFilingEndDate),
+    additionalRecruitmentEndDate: resolve(args.additionalRecruitmentEndDate, caseDoc.additionalRecruitmentEndDate),
+    additionalRecruitmentMethods: args.additionalRecruitmentMethods ?? caseDoc.additionalRecruitmentMethods,
+    pwdExpirationDate: resolve(args.pwdExpirationDate, caseDoc.pwdExpirationDate),
+    isProfessionalOccupation: args.isProfessionalOccupation ?? caseDoc.isProfessionalOccupation,
+  };
+
+  // Recalculate derived dates based on merged data
+  const derivedDates = calculateDerivedDates(mergedData);
+
+  // Skip full validation for status-only updates (archive/close/reopen).
+  // Every other status-change path (bulkUpdateStatus, reopenCase, deadlineEnforcement)
+  // already skips validation — this brings cases:update in line.
+  const updateKeys = Object.keys(rawUpdates);
+  const isMetadataOnlyUpdate = updateKeys.length > 0 &&
+    updateKeys.every((k) => STATUS_ONLY_FIELDS.has(k) || METADATA_FIELDS.has(k));
+
+  // Merge case data (always needed for auto-status calculation)
+  const fullCaseData = {
+    // PWD dates
+    pwdFilingDate: resolve(args.pwdFilingDate, caseDoc.pwdFilingDate),
+    pwdDeterminationDate: resolve(args.pwdDeterminationDate, caseDoc.pwdDeterminationDate),
+    pwdExpirationDate: resolve(args.pwdExpirationDate, caseDoc.pwdExpirationDate),
+    // Recruitment dates
+    sundayAdFirstDate: mergedData.sundayAdFirstDate,
+    sundayAdSecondDate: mergedData.sundayAdSecondDate,
+    jobOrderStartDate: mergedData.jobOrderStartDate,
+    jobOrderEndDate: mergedData.jobOrderEndDate,
+    noticeOfFilingStartDate: mergedData.noticeOfFilingStartDate,
+    noticeOfFilingEndDate: mergedData.noticeOfFilingEndDate,
+    additionalRecruitmentMethods: mergedData.additionalRecruitmentMethods,
+    additionalRecruitmentEndDate: mergedData.additionalRecruitmentEndDate,
+    isProfessionalOccupation: mergedData.isProfessionalOccupation,
+    recruitmentStartDate: derivedDates.recruitmentStartDate,
+    recruitmentEndDate: derivedDates.recruitmentEndDate,
+    // ETA 9089 dates
+    eta9089FilingDate: resolve(args.eta9089FilingDate, caseDoc.eta9089FilingDate),
+    eta9089CertificationDate: resolve(args.eta9089CertificationDate, caseDoc.eta9089CertificationDate),
+    eta9089ExpirationDate: resolveEta9089ExpirationDate(
+      resolve(args.eta9089CertificationDate, caseDoc.eta9089CertificationDate),
+      resolve(args.eta9089ExpirationDate, caseDoc.eta9089ExpirationDate)
+    ),
+    // I-140 dates
+    i140FilingDate: resolve(args.i140FilingDate, caseDoc.i140FilingDate),
+    i140ApprovalDate: resolve(args.i140ApprovalDate, caseDoc.i140ApprovalDate),
+    i140DenialDate: resolve(args.i140DenialDate, caseDoc.i140DenialDate),
+    // RFI/RFE entries
+    rfiEntries: args.rfiEntries ?? caseDoc.rfiEntries,
+    rfeEntries: args.rfeEntries ?? caseDoc.rfeEntries,
+    // Status
+    caseStatus: args.caseStatus ?? caseDoc.caseStatus,
+    progressStatus: args.progressStatus ?? caseDoc.progressStatus,
+  };
+  const validationErrors: string[] = [];
+  if (!isMetadataOnlyUpdate) {
+    const validationResult = validateCase(mapToValidatorFormat(fullCaseData));
+    if (!validationResult.valid) {
+      for (const e of validationResult.errors) {
+        validationErrors.push(`[${e.ruleId}] ${e.field}: ${e.message}`);
+      }
+    }
+  }
+
+  // Auto-calculate status from merged dates unless explicitly overridden
+  // Check both passed override flag and existing override flag
+  const isOverridden = args.progressStatusOverride ?? caseDoc.progressStatusOverride ?? false;
+  const autoStatus = calculateAutoStatus({
+    // RFI/RFE entries (merged)
+    rfiEntries: fullCaseData.rfiEntries,
+    rfeEntries: fullCaseData.rfeEntries,
+    // I-140 dates (merged)
+    i140ApprovalDate: fullCaseData.i140ApprovalDate,
+    i140DenialDate: fullCaseData.i140DenialDate,
+    i140FilingDate: fullCaseData.i140FilingDate,
+    // ETA 9089 dates (merged)
+    eta9089CertificationDate: fullCaseData.eta9089CertificationDate,
+    eta9089FilingDate: fullCaseData.eta9089FilingDate,
+    // PWD dates (merged)
+    pwdDeterminationDate: fullCaseData.pwdDeterminationDate,
+    pwdFilingDate: fullCaseData.pwdFilingDate,
+    // Recruitment dates (merged)
+    jobOrderStartDate: fullCaseData.jobOrderStartDate,
+    jobOrderEndDate: fullCaseData.jobOrderEndDate,
+    sundayAdFirstDate: fullCaseData.sundayAdFirstDate,
+    sundayAdSecondDate: fullCaseData.sundayAdSecondDate,
+    noticeOfFilingStartDate: fullCaseData.noticeOfFilingStartDate,
+    noticeOfFilingEndDate: fullCaseData.noticeOfFilingEndDate,
+    // Professional occupation (merged)
+    isProfessionalOccupation: fullCaseData.isProfessionalOccupation ?? false,
+    additionalRecruitmentMethods: fullCaseData.additionalRecruitmentMethods,
+    additionalRecruitmentEndDate: fullCaseData.additionalRecruitmentEndDate,
+  });
+
+  return {
+    derivedDates,
+    fullCaseData,
+    validationErrors,
+    isOverridden,
+    autoStatus,
+    resolvedCaseStatus: isOverridden ? (args.caseStatus ?? caseDoc.caseStatus) : autoStatus.caseStatus,
+    resolvedProgressStatus: isOverridden
+      ? (args.progressStatus ?? caseDoc.progressStatus)
+      : autoStatus.progressStatus,
+  };
+}
+
+/**
+ * What `update` would do with these arguments, without writing: whether the
+ * change passes validation, and the stage the case would be at afterwards.
+ * The chat calls it before it shows a confirmation card or makes a change, so
+ * a request the dates don't support is answered with what's missing instead of
+ * a card that saves something else.
+ */
+export const previewUpdate = query({
+  args: caseUpdateArgs,
+  returns: v.object({
+    valid: v.boolean(),
+    errors: v.array(v.string()),
+    caseStatus: v.string(),
+    progressStatus: v.string(),
+    stageFollowsDates: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const caseDoc = await ctx.db.get(args.id);
+    await verifyOwnership(ctx, caseDoc, "case");
+    if (caseDoc!.deletedAt !== undefined) throw new ConvexError("Cannot update deleted case");
+    const plan = planCaseUpdate(caseDoc!, args);
+    return {
+      valid: plan.validationErrors.length === 0,
+      errors: plan.validationErrors,
+      caseStatus: plan.resolvedCaseStatus,
+      progressStatus: plan.resolvedProgressStatus,
+      stageFollowsDates: !plan.isOverridden,
+    };
+  },
+});
+
 export const update = mutation({
   args: caseUpdateArgs,
   handler: async (ctx, args) => {
@@ -650,118 +870,11 @@ export const update = mutation({
       updates.employerFein = await encryptFein(updates.employerFein as string);
     }
 
-    // Resolve a field value for update merge:
-    // - string value → use the new value
-    // - null → clear the field (returns undefined)
-    // - undefined (absent from args) → keep existing DB value
-    const resolve = (
-      argVal: string | null | undefined,
-      dbVal: string | undefined,
-    ): string | undefined => {
-      if (argVal !== undefined) return argVal === null ? undefined : argVal;
-      return dbVal;
-    };
-
-    // Merge existing case data with updates to calculate derived dates
-    // Uses resolve() so null signals "clear this field" instead of falling back to old value
-    const mergedData = {
-      sundayAdFirstDate: resolve(args.sundayAdFirstDate, caseDoc!.sundayAdFirstDate),
-      sundayAdSecondDate: resolve(args.sundayAdSecondDate, caseDoc!.sundayAdSecondDate),
-      jobOrderStartDate: resolve(args.jobOrderStartDate, caseDoc!.jobOrderStartDate),
-      jobOrderEndDate: resolve(args.jobOrderEndDate, caseDoc!.jobOrderEndDate),
-      noticeOfFilingStartDate: resolve(args.noticeOfFilingStartDate, caseDoc!.noticeOfFilingStartDate),
-      noticeOfFilingEndDate: resolve(args.noticeOfFilingEndDate, caseDoc!.noticeOfFilingEndDate),
-      additionalRecruitmentEndDate: resolve(args.additionalRecruitmentEndDate, caseDoc!.additionalRecruitmentEndDate),
-      additionalRecruitmentMethods: args.additionalRecruitmentMethods ?? caseDoc!.additionalRecruitmentMethods,
-      pwdExpirationDate: resolve(args.pwdExpirationDate, caseDoc!.pwdExpirationDate),
-      isProfessionalOccupation: args.isProfessionalOccupation ?? caseDoc!.isProfessionalOccupation,
-    };
-
-    // Recalculate derived dates based on merged data
-    const derivedDates = calculateDerivedDates(mergedData);
-
-    // Skip full validation for status-only updates (archive/close/reopen).
-    // Every other status-change path (bulkUpdateStatus, reopenCase, deadlineEnforcement)
-    // already skips validation — this brings cases:update in line.
-    const updateKeys = Object.keys(rawUpdates);
-    const isMetadataOnlyUpdate = updateKeys.length > 0 &&
-      updateKeys.every((k) => STATUS_ONLY_FIELDS.has(k) || METADATA_FIELDS.has(k));
-
-    // Merge case data (always needed for auto-status calculation)
-    const fullCaseData = {
-      // PWD dates
-      pwdFilingDate: resolve(args.pwdFilingDate, caseDoc!.pwdFilingDate),
-      pwdDeterminationDate: resolve(args.pwdDeterminationDate, caseDoc!.pwdDeterminationDate),
-      pwdExpirationDate: resolve(args.pwdExpirationDate, caseDoc!.pwdExpirationDate),
-      // Recruitment dates
-      sundayAdFirstDate: mergedData.sundayAdFirstDate,
-      sundayAdSecondDate: mergedData.sundayAdSecondDate,
-      jobOrderStartDate: mergedData.jobOrderStartDate,
-      jobOrderEndDate: mergedData.jobOrderEndDate,
-      noticeOfFilingStartDate: mergedData.noticeOfFilingStartDate,
-      noticeOfFilingEndDate: mergedData.noticeOfFilingEndDate,
-      additionalRecruitmentMethods: mergedData.additionalRecruitmentMethods,
-      additionalRecruitmentEndDate: mergedData.additionalRecruitmentEndDate,
-      isProfessionalOccupation: mergedData.isProfessionalOccupation,
-      recruitmentStartDate: derivedDates.recruitmentStartDate,
-      recruitmentEndDate: derivedDates.recruitmentEndDate,
-      // ETA 9089 dates
-      eta9089FilingDate: resolve(args.eta9089FilingDate, caseDoc!.eta9089FilingDate),
-      eta9089CertificationDate: resolve(args.eta9089CertificationDate, caseDoc!.eta9089CertificationDate),
-      eta9089ExpirationDate: resolveEta9089ExpirationDate(
-        resolve(args.eta9089CertificationDate, caseDoc!.eta9089CertificationDate),
-        resolve(args.eta9089ExpirationDate, caseDoc!.eta9089ExpirationDate)
-      ),
-      // I-140 dates
-      i140FilingDate: resolve(args.i140FilingDate, caseDoc!.i140FilingDate),
-      i140ApprovalDate: resolve(args.i140ApprovalDate, caseDoc!.i140ApprovalDate),
-      // RFI/RFE entries
-      rfiEntries: args.rfiEntries ?? caseDoc!.rfiEntries,
-      rfeEntries: args.rfeEntries ?? caseDoc!.rfeEntries,
-      // Status
-      caseStatus: args.caseStatus ?? caseDoc!.caseStatus,
-      progressStatus: args.progressStatus ?? caseDoc!.progressStatus,
-    };
-    if (!isMetadataOnlyUpdate) {
-      const validationInput = mapToValidatorFormat(fullCaseData);
-      const validationResult = validateCase(validationInput);
-      if (!validationResult.valid) {
-        const errorMessages = validationResult.errors
-          .map((e) => `[${e.ruleId}] ${e.field}: ${e.message}`)
-          .join('; ');
-        throw new ConvexError(`Validation failed: ${errorMessages}`);
-      }
+    const plan = planCaseUpdate(caseDoc!, args);
+    if (plan.validationErrors.length > 0) {
+      throw new ConvexError(`Validation failed: ${plan.validationErrors.join("; ")}`);
     }
-
-    // Auto-calculate status from merged dates unless explicitly overridden
-    // Check both passed override flag and existing override flag
-    const isOverridden = args.progressStatusOverride ?? caseDoc!.progressStatusOverride ?? false;
-    const autoStatus = calculateAutoStatus({
-      // RFI/RFE entries (merged)
-      rfiEntries: fullCaseData.rfiEntries,
-      rfeEntries: fullCaseData.rfeEntries,
-      // I-140 dates (merged)
-      i140ApprovalDate: fullCaseData.i140ApprovalDate,
-      i140DenialDate: resolve(args.i140DenialDate, caseDoc!.i140DenialDate),
-      i140FilingDate: fullCaseData.i140FilingDate,
-      // ETA 9089 dates (merged)
-      eta9089CertificationDate: fullCaseData.eta9089CertificationDate,
-      eta9089FilingDate: fullCaseData.eta9089FilingDate,
-      // PWD dates (merged)
-      pwdDeterminationDate: fullCaseData.pwdDeterminationDate,
-      pwdFilingDate: fullCaseData.pwdFilingDate,
-      // Recruitment dates (merged)
-      jobOrderStartDate: fullCaseData.jobOrderStartDate,
-      jobOrderEndDate: fullCaseData.jobOrderEndDate,
-      sundayAdFirstDate: fullCaseData.sundayAdFirstDate,
-      sundayAdSecondDate: fullCaseData.sundayAdSecondDate,
-      noticeOfFilingStartDate: fullCaseData.noticeOfFilingStartDate,
-      noticeOfFilingEndDate: fullCaseData.noticeOfFilingEndDate,
-      // Professional occupation (merged)
-      isProfessionalOccupation: fullCaseData.isProfessionalOccupation ?? false,
-      additionalRecruitmentMethods: fullCaseData.additionalRecruitmentMethods,
-      additionalRecruitmentEndDate: fullCaseData.additionalRecruitmentEndDate,
-    });
+    const { derivedDates, fullCaseData, isOverridden, autoStatus } = plan;
 
     // Build updates with auto-calculated status if not overridden
     const statusUpdates = isOverridden
@@ -773,16 +886,24 @@ export const update = mutation({
 
     // If correcting dates takes the case out of "closed", clear the auto-closure
     // trail (reason/date + the dashboard alert) so it doesn't look still-closed.
-    const resolvedCaseStatus = isOverridden
-      ? (args.caseStatus ?? caseDoc!.caseStatus)
-      : autoStatus.caseStatus;
+    // A case entering "closed" gets the trail: when, and why if the denial date
+    // closed it. A manual close set from the form reads "manual".
+    const resolvedCaseStatus = plan.resolvedCaseStatus;
     const leavingClosed =
       caseDoc!.caseStatus === "closed" && resolvedCaseStatus !== "closed";
+    const enteringClosed =
+      caseDoc!.caseStatus !== "closed" && resolvedCaseStatus === "closed";
 
     await ctx.db.patch(args.id, {
       ...updates,
       ...statusUpdates,
       ...(leavingClosed ? { closureReason: undefined, closedAt: undefined } : {}),
+      ...(enteringClosed
+        ? {
+            closedAt: Date.now(),
+            closureReason: fullCaseData.i140DenialDate && !isOverridden ? ("denied" as const) : ("manual" as const),
+          }
+        : {}),
       // A certified case always carries its expiration (see the helper).
       eta9089ExpirationDate: fullCaseData.eta9089ExpirationDate,
       // Always recalculate derived dates on update
@@ -1262,11 +1383,18 @@ export const bulkRemove = mutation({
 });
 
 /**
- * Bulk update case status (close/archive or re-open)
+ * Bulk change of stage: close (archive), reopen, or set a stage by hand.
  *
- * @param ids - Array of case IDs to update
- * @param status - New status to set
- * @returns Object with counts of successful and failed updates
+ * - "closed" closes the case: the closure trail (when, "manual") and the
+ *   override flag, so a later edit of the case's dates doesn't reopen it.
+ * - Any other stage on a CLOSED case reopens it at the stage its dates support
+ *   (the same rule as reopenCase), never blindly at the stage asked for: the
+ *   cases page's "Reopen" sends "pwd", which had put certified cases back at PWD.
+ * - Any other stage on an open case sets that stage by hand (the override flag),
+ *   as choosing a stage in the case form does.
+ *
+ * A case already at the target stage is counted as unchanged, not failed.
+ * `results` says the stage each changed case ended at.
  */
 export const bulkUpdateStatus = mutation({
   args: {
@@ -1278,15 +1406,28 @@ export const bulkUpdateStatus = mutation({
       v.literal("i140"),
       v.literal("closed")
     ),
+    /** Why the cases are being closed; only read when status is "closed". */
+    closureReason: v.optional(v.union(
+      v.literal("withdrawn"),
+      v.literal("denied"),
+      v.literal("manual"),
+      v.literal("other"),
+    )),
   },
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
     const now = Date.now();
+    if (args.ids.length > USER_CASES_MAX) {
+      throw new ConvexError(`At most ${USER_CASES_MAX} cases at a time.`);
+    }
+    await rateLimiter.limit(ctx, "caseUpdate", { key: userId, throws: true });
 
     let successCount = 0;
     let failedCount = 0;
+    let unchangedCount = 0;
     const errors: string[] = [];
     const successfulCaseIds: Id<"cases">[] = [];
+    const results: { id: Id<"cases">; caseStatus: string; progressStatus: string }[] = [];
 
     for (const id of args.ids) {
       try {
@@ -1313,19 +1454,42 @@ export const bulkUpdateStatus = mutation({
           continue;
         }
 
-        // Skip if already at target status
+        // Already at the target stage: nothing to do, and not a failure.
         if (caseDoc.caseStatus === args.status) {
-          failedCount++;
-          errors.push(`Case ${id} already has status ${args.status}`);
+          unchangedCount++;
           continue;
         }
 
         const oldDoc = caseDoc;
+        let newStatus: { caseStatus: Doc<"cases">["caseStatus"]; progressStatus: Doc<"cases">["progressStatus"] };
 
-        await ctx.db.patch(id, {
-          caseStatus: args.status,
-          updatedAt: now,
-        });
+        if (args.status === "closed") {
+          newStatus = { caseStatus: "closed", progressStatus: caseDoc.progressStatus };
+          await ctx.db.patch(id, {
+            caseStatus: "closed",
+            progressStatusOverride: true,
+            closureReason: args.closureReason ?? "manual",
+            closedAt: now,
+            updatedAt: now,
+          });
+        } else if (caseDoc.caseStatus === "closed") {
+          newStatus = determineReopenStatus(caseDoc);
+          await ctx.db.patch(id, {
+            ...newStatus,
+            progressStatusOverride: false,
+            closureReason: undefined,
+            closedAt: undefined,
+            updatedAt: now,
+          });
+          await dismissAutoClosureAlerts(ctx, id);
+        } else {
+          newStatus = { caseStatus: args.status, progressStatus: caseDoc.progressStatus };
+          await ctx.db.patch(id, {
+            caseStatus: args.status,
+            progressStatusOverride: true,
+            updatedAt: now,
+          });
+        }
 
         // Audit log
         try {
@@ -1356,7 +1520,7 @@ export const bulkUpdateStatus = mutation({
               caseId: id,
               type: "status_change",
               title: "Case status updated",
-              message: `${oldDoc.beneficiaryIdentifier || "A case"} at ${oldDoc.employerName} moved from ${formatCaseStatus(oldDoc.caseStatus)} to ${formatCaseStatus(args.status)}.`,
+              message: `${oldDoc.beneficiaryIdentifier || "A case"} at ${oldDoc.employerName} moved from ${formatCaseStatus(oldDoc.caseStatus)} to ${formatCaseStatus(newStatus.caseStatus)}.`,
               priority: "normal",
             });
 
@@ -1372,7 +1536,7 @@ export const bulkUpdateStatus = mutation({
                   beneficiaryName: oldDoc.beneficiaryIdentifier || "Beneficiary",
                   companyName: oldDoc.employerName,
                   previousStatus: formatCaseStatus(oldDoc.caseStatus),
-                  newStatus: formatCaseStatus(args.status),
+                  newStatus: formatCaseStatus(newStatus.caseStatus),
                   changeType: "stage",
                   changedAt: emailStamp(),
                   caseId: id.toString(),
@@ -1388,6 +1552,7 @@ export const bulkUpdateStatus = mutation({
 
         successCount++;
         successfulCaseIds.push(id);
+        results.push({ id, ...newStatus });
       } catch (error) {
         failedCount++;
         errors.push(`Case ${id}: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -1413,6 +1578,8 @@ export const bulkUpdateStatus = mutation({
     return {
       successCount,
       failedCount,
+      unchangedCount,
+      results,
       errors: errors.length > 0 ? errors : undefined,
     };
   },
@@ -2565,6 +2732,8 @@ export const reopenCase = mutation({
     await ctx.db.patch(args.id, {
       caseStatus: newCaseStatus,
       progressStatus: newProgressStatus,
+      // The stage follows the dates again: a manual close set the override.
+      progressStatusOverride: false,
       // Clear the closure trail now that the case is open again.
       closureReason: undefined,
       closedAt: undefined,

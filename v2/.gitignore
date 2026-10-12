@@ -102,3 +102,6 @@ changed-employer-slugs.json
 /sdk/dist/
 /sdk-python/build/
 /sdk-python/*.egg-info/
+
+# The mail Worker bundle (node workers/mail/build.mjs)
+workers/mail/dist/

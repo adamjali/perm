@@ -71,6 +71,8 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/api/__tests__/webhooksApi.test.ts",
   "src/lib/turso/__tests__/openDataArchive.test.ts",
   "src/lib/ai/__tests__/page-context.test.tsx",
+  // Added 2026-10-12: mocks convex/nextjs per test.
+  "src/lib/ai/__tests__/caseActions.test.ts",
   "src/lib/__tests__/toast.test.ts",
   // Mocks posthog-js; in the shared pool the mock would leak into every
   // file that imports @/lib/analytics after it.

@@ -136,6 +136,15 @@ export function ChatWidgetConnected() {
     [conversationId, updateToolCallResult]
   );
 
+  // A cancelled card is cancelled on the server too (convex/chatConfirmations.ts).
+  const cancelConfirmationMutation = useMutation(api.chatConfirmations.cancel);
+  const handleCancelConfirmation = useCallback(
+    async (toolCallId: string): Promise<void> => {
+      await cancelConfirmationMutation({ toolCallId });
+    },
+    [cancelConfirmationMutation]
+  );
+
   // Memoize orchestrator messages to prevent unnecessary re-renders
   const orchestratorMessages = useMemo(() => messages.map(m => ({
     id: m.id,
@@ -158,6 +167,7 @@ export function ChatWidgetConnected() {
     status,
     sendMessage: sendContinuation,
     onPersistResult: handlePersistToolResult,
+    onCancel: handleCancelConfirmation,
   });
 
   // Clear confirmations when conversation changes

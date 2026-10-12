@@ -28,7 +28,7 @@ import { verifyExpiringToken } from "./lib/expiringToken";
 import { firmBadLinkPage, firmEditPage, type EditNotice } from "./lib/firmClaimPages";
 import { profileFromForm, type ProfileInput } from "../src/lib/firmProfile";
 import { SITE_URL } from "./lib/links";
-import { watchedSecretOk } from "./watchedCases";
+import { watchedSecretOk, sharedSecretOk } from "./watchedCases";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
@@ -1739,6 +1739,47 @@ async function watchedGate(req: Request): Promise<Response | null> {
   if (verdict === "denied") return serverJson({ ok: false, message: "Not allowed." }, 401);
   return null;
 }
+
+// ============================================================================
+// Inbound mail from Cloudflare Email Routing (workers/mail/)
+// ============================================================================
+
+/**
+ * The mail Worker posts each message it received here, after forwarding it to
+ * the owner's inbox itself, so it's stored for a threaded reply
+ * (supportEmail:replyToEmail) as Resend-received mail was. Gated by
+ * INBOUND_EMAIL_SECRET (header x-inbound-key); unset means off.
+ */
+http.route({
+  path: "/inbound-email",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const gate = await sharedSecretOk(req.headers.get("x-inbound-key"), process.env.INBOUND_EMAIL_SECRET);
+    if (gate === "off") return serverJson({ ok: false, message: "This route is off." }, 503);
+    if (gate === "denied") return serverJson({ ok: false, message: "Not allowed." }, 401);
+    let body: Record<string, unknown>;
+    try {
+      body = (await req.json()) as Record<string, unknown>;
+    } catch {
+      return serverJson({ ok: false, message: "Bad JSON." }, 400);
+    }
+    const text = (x: unknown, max: number) => (typeof x === "string" && x.length > 0 ? x.slice(0, max) : undefined);
+    const messageId = text(body.messageId, 500) ?? `cloudflare-${Date.now()}`;
+    const stored = await ctx.runMutation(internal.supportEmail.storeCloudflareInbound, {
+      fromEmail: text(body.from, 254) ?? "",
+      fromName: text(body.fromName, 200),
+      toEmail: text(body.to, 254) ?? "",
+      subject: text(body.subject, 500) ?? "(No subject)",
+      bodyHtml: text(body.html, 300_000),
+      bodyText: text(body.text, 200_000),
+      messageId,
+      inReplyTo: text(body.inReplyTo, 1000),
+      references: text(body.references, 4000),
+      forwarded: body.forwarded === true,
+    });
+    return serverJson({ ok: true, stored }, 200);
+  }),
+});
 
 /** Case numbers only: never an address, a name or an endpoint. */
 http.route({

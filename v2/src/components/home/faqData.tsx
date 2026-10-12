@@ -82,7 +82,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
   {
     question: "What does the case-management app do for attorneys and HR teams?",
     answer:
-      "Enter a case's dates once and every deadline comes out computed under 20 CFR 656: prevailing wage expiration, recruitment clocks, the 30-180 day ETA 9089 filing window, audit and RFI response dates, and the I-140 filing cutoff. Change one date and the downstream dates recalculate. Email and push reminders run 1 to 30 days out with quiet hours and calendar sync, a weekly case summary arrives every Monday, and an AI assistant answers questions over your own cases.",
+      "Enter a case's dates once and every deadline comes out computed under 20 CFR 656: prevailing wage expiration, recruitment clocks, the 30-180 day ETA 9089 filing window, audit and RFI response dates, and the I-140 filing cutoff. Change one date and the downstream dates recalculate. Email and push reminders run 1 to 30 days out with quiet hours and calendar sync, a weekly case summary arrives on the same day each week, and an AI assistant answers questions over your own cases.",
     rich: (
       <>
         Enter a case&apos;s dates once and every deadline comes out computed
@@ -90,7 +90,8 @@ export const HOME_FAQS: HomeFaqItem[] = [
         30-180 day ETA 9089 filing window, audit and RFI response dates, and the
         I-140 filing cutoff. Change one date and the downstream dates
         recalculate. Email and push reminders run 1 to 30 days out with quiet
-        hours and calendar sync, a weekly case summary arrives every Monday, and an
+        hours and calendar sync, a weekly case summary arrives on the same day each
+        week, and an
         AI assistant answers questions over your own cases.{" "}
         <Link href="/for-attorneys" className={faqLink}>How the software works &rarr;</Link>
       </>

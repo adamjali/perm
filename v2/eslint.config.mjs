@@ -26,6 +26,8 @@ const eslintConfig = defineConfig([
     "public/sw.js",
     // Local scratch dir for the "remember" feature (gitignored, not source)
     ".remember/**",
+    // The mail Worker's bundle (workers/mail/build.mjs)
+    "workers/mail/dist/**",
   ]),
   // eslint-plugin-react v7.37.5's detectReactVersion() calls the old
   // contextOrFilename.getFilename() API that ESLint v10 removed, crashing

@@ -51,6 +51,10 @@ export function summarizeToolResult(tool: string, result?: string): string {
         : parsed.error;
     }
 
+    // A write that needs a date or a detail first changed nothing.
+    if (parsed && parsed.needsInfo === true) return 'Needs a detail first; nothing changed';
+    if (parsed && parsed.changed === false && typeof parsed.message === 'string') return truncate(parsed.message, 60);
+
     switch (tool) {
       case 'queryCases': {
         // A list that stopped at its cap says so ("Showing 100 of 340").
@@ -72,22 +76,18 @@ export function summarizeToolResult(tool: string, result?: string): string {
       }
 
       case 'createCase': {
-        if (parsed.error) return 'Creation failed';
-        return `Created: ${parsed.employerName || 'case'}`;
+        if (parsed.error) return 'Not created';
+        return parsed.stage ? `Case created, ${parsed.stage}` : 'Case created';
       }
 
       case 'updateCase': {
-        if (parsed.error) return 'Update failed';
-        if (parsed.success === false) return 'Update failed';
-        const fields = Object.keys(parsed.updates || {}).length;
-        if (fields > 0) {
-          return `Updated ${fields} field${fields !== 1 ? 's' : ''}`;
-        }
-        return 'Case updated';
+        if (parsed.error) return 'Not saved';
+        if (parsed.success === false) return Array.isArray(parsed.notSaved) && parsed.notSaved.length ? 'Partly saved' : 'Not saved';
+        return parsed.stage ? `Saved, stage ${parsed.stage}` : 'Saved';
       }
 
       case 'archiveCase':
-        return parsed.success ? 'Case archived' : 'Archive failed';
+        return parsed.success ? 'Case closed' : 'Not closed';
 
       case 'reopenCase':
         return parsed.success ? 'Case reopened' : 'Reopen failed';
@@ -148,12 +148,12 @@ export function summarizeToolResult(tool: string, result?: string): string {
 
       // Bulk operation tools
       case 'bulkUpdateStatus': {
-        const r = parsed as { successCount?: number; status?: string };
-        return `Updated ${r.successCount || 0} cases to "${r.status || 'new status'}"`;
+        const r = parsed as { successCount?: number };
+        return `Changed ${r.successCount || 0} case${r.successCount === 1 ? '' : 's'}`;
       }
       case 'bulkArchiveCases': {
         const r = parsed as { successCount?: number };
-        return `Deleted ${r.successCount || 0} cases`;
+        return `Closed ${r.successCount || 0} case${r.successCount === 1 ? '' : 's'}`;
       }
       case 'bulkDeleteCases': {
         const r = parsed as { successCount?: number };

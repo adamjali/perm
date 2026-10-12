@@ -386,6 +386,7 @@ export function ChatPanel({
                         getConfirmation={getConfirmation}
                         onApproveConfirmation={onApproveConfirmation}
                         onDenyConfirmation={onDenyConfirmation}
+                        confirmationsBusy={isProcessing}
                       />
                       {/* A cap ended this reply: say which, and offer to go on
                           while it is still the latest turn. */}

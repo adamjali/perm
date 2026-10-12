@@ -675,7 +675,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (night)".
 - **A table cell's fill can say its state**: the bulletin matrix tints Current and Unavailable, with a key.
 - **The dev capture scripts live in `node_modules/.cache/qa/`**: `top-shot.mjs`, `dark-shot.mjs`, `embed-shot.mjs`, `load-shot.mjs` (for pages that never go network-idle).
 
-## Oct 12 2026, in eleven lines
+## Oct 12 2026, in fifteen lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 
@@ -693,3 +693,9 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   free requests): the chain is six models checked live on Oct 12, and a retired model now reaches Sentry the first time it fails.
 - **The budget email names the limit that held**: the site's 55 sign-up emails a day, or the pool's own count.
 - **A sitemap file past the last one answers 404**, not a 500 that pages Sentry.
+- **The chat's changes are checked before they're shown and approved once** (`src/lib/ai/caseActions.ts`,
+  `convex/chatConfirmations.ts`): a stage the dates don't support asks for the date; a card runs the change the server
+  stored, once; the result is read back from the case. Archive closes and never deletes.
+- **Closing sets the override and the closure trail; reopening hands the stage back to the dates**, from the cases page too.
+- **The weekly case summary goes out on each account's own day** (Monday, Tuesday or Wednesday, `convex/lib/digestDay.ts`).
+- **The site's own test accounts get no notification mail** (`isOwnTestAddress`: every `@permtracker.app` address but support@).

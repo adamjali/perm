@@ -38,6 +38,19 @@ export function easternDay(at: Date | number = new Date()): string {
   return ISO_DAY.format(at);
 }
 
+/**
+ * The calendar day of an instant in a person's own time zone, "YYYY-MM-DD".
+ * Falls back to Eastern when the zone is missing or not one Intl knows.
+ */
+export function dayInZone(timeZone: string | undefined, at: Date | number = new Date()): string {
+  if (!timeZone) return easternDay(at);
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(at);
+  } catch {
+    return easternDay(at);
+  }
+}
+
 const LONG_DAY = new Intl.DateTimeFormat("en-US", { timeZone: EASTERN_TIMEZONE, month: "long", day: "numeric", year: "numeric" });
 
 /**

@@ -18,6 +18,7 @@ import { DailyReport as DailyReportEmail } from "../src/emails/DailyReport";
 import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery, query } from "./_generated/server";
 import { getSecurityAlertEmail, requireAdmin } from "./lib/admin";
+import { sendOwnerMail } from "./lib/ownerMail";
 import {
   type DailyReport,
   type Facts,
@@ -29,7 +30,7 @@ import {
   reportText,
   worstStatus,
 } from "./lib/dailyReportCompose";
-import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
+import { getResend } from "./lib/email";
 import { loggers } from "./lib/logging";
 import { easternDay, MS_PER_DAY } from "./lib/time";
 import { RETRY_MAX_ROWS } from "./lib/emailLimits";
@@ -253,13 +254,13 @@ export const send = internalAction({
       return { overall, emailed: false };
     }
     const html = await render(DailyReportEmail({ report }));
-    const { error } = await sendOrQueue(ctx, "daily-report", getResend(), {
-      from: FROM_EMAIL,
-      to: [to],
+    // Free through the mail Worker, Resend as the fallback (convex/lib/ownerMail.ts).
+    const { error } = await sendOwnerMail(ctx, "daily-report", getResend(), {
+      to,
       subject: reportSubject(report),
       html,
       text: reportText(report),
-    }, { priority: "high" });
+    });
     if (error) {
       log.error("daily report: send failed", { error: error.message });
       return { overall, emailed: false };

@@ -32,6 +32,14 @@ describe('summarizeToolResult and limits', () => {
   it('leaves ordinary results as they were', () => {
     expect(summarizeToolResult('queryCases', JSON.stringify({ cases: [{}, {}], count: 2 }))).toBe('2 cases found');
     expect(summarizeToolResult('searchWeb', JSON.stringify({ source: 'tavily', results: [] }))).toBe('No results found');
-    expect(summarizeToolResult('updateCase', JSON.stringify({ error: 'Failed to update case' }))).toBe('Update failed');
+    expect(summarizeToolResult('updateCase', JSON.stringify({ error: 'Failed to update case' }))).toBe('Not saved');
+  });
+
+  it("says what a write did, from the server's read-back", () => {
+    expect(summarizeToolResult('updateCase', JSON.stringify({ success: true, stage: 'ETA 9089, filed' }))).toBe('Saved, stage ETA 9089, filed');
+    expect(summarizeToolResult('updateCase', JSON.stringify({ success: false, notSaved: ['Stage'] }))).toBe('Partly saved');
+    expect(summarizeToolResult('updateCase', JSON.stringify({ needsInfo: true, message: 'Need the date' }))).toBe('Needs a detail first; nothing changed');
+    // A bulk close closes; it had read "Deleted".
+    expect(summarizeToolResult('bulkArchiveCases', JSON.stringify({ successCount: 2 }))).toBe('Closed 2 cases');
   });
 });

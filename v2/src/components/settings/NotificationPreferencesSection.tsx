@@ -456,7 +456,7 @@ export default function NotificationPreferencesSection({
   const handleWeeklyDigestToggle = useCallback((value: boolean): void => {
     if (!value) {
       toast(`${MAIL_KINDS.digest.name} turned off`, {
-        description: "It won’t arrive on Mondays any more.",
+        description: "It won’t arrive any more.",
         action: {
           label: "Undo",
           onClick: () => handleToggle("emailWeeklyDigest", true, setWeeklyDigest),

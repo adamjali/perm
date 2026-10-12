@@ -68,6 +68,43 @@ export const storeSupportEmail = internalMutation({
 });
 
 /**
+ * Store a message Cloudflare Email Routing received (the Worker in
+ * workers/mail/ has already forwarded it to the owner's inbox, free, outside
+ * Resend's allowance). Once per Message-ID: a delivery Cloudflare retries is
+ * not stored twice. Returns whether it was new.
+ */
+export const storeCloudflareInbound = internalMutation({
+  args: {
+    fromEmail: v.string(),
+    fromName: v.optional(v.string()),
+    toEmail: v.string(),
+    subject: v.string(),
+    bodyHtml: v.optional(v.string()),
+    bodyText: v.optional(v.string()),
+    messageId: v.string(),
+    inReplyTo: v.optional(v.string()),
+    references: v.optional(v.string()),
+    forwarded: v.boolean(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("supportEmails")
+      .withIndex("by_message_id", (q) => q.eq("messageId", args.messageId))
+      .first();
+    if (existing) return false;
+    const { forwarded, ...fields } = args;
+    await ctx.db.insert("supportEmails", {
+      ...fields,
+      resendEmailId: `cloudflare:${args.messageId}`.slice(0, 600),
+      status: forwarded ? "forwarded" : "received",
+      createdAt: Date.now(),
+    });
+    return true;
+  },
+});
+
+/**
  * Charge the day's forward pool for one inbound message. False past it: the
  * message stays stored (status "received", listed on the admin page) and the
  * refusal is counted, so a flood of inbound spam can't spend the day's email.

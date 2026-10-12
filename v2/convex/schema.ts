@@ -857,6 +857,42 @@ export default defineSchema({
     .index("by_expires", ["expiresAt"]),
 
   /**
+   * Confirmation cards the chat has shown. Approving one runs the action stored
+   * here, once: the browser sends only the card's id, so it can't change what
+   * runs, replay an approval from another tab, or approve a card nobody issued.
+   * A single-case card keeps the case's updatedAt from when it was shown and is
+   * refused if the case has changed since. Cards expire after a day; the daily
+   * retention run deletes rows after 30 days.
+   */
+  chatConfirmations: defineTable({
+    userId: v.id("users"),
+    toolCallId: v.string(),
+    toolName: v.string(),
+    args: v.string(), // JSON of the arguments that will run
+    argsHash: v.string(), // sha256 of toolName + canonical args, for duplicate cards
+    description: v.string(),
+    caseId: v.optional(v.id("cases")),
+    caseUpdatedAt: v.optional(v.number()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("running"),
+      v.literal("done"),
+      v.literal("failed"),
+      v.literal("cancelled"),
+    ),
+    // An identical card still waiting when this one was shown: approving
+    // either runs the action once.
+    sameAs: v.optional(v.string()),
+    result: v.optional(v.string()), // one-line summary of what happened
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    claimedAt: v.optional(v.number()),
+    finishedAt: v.optional(v.number()),
+  })
+    .index("by_user_tool_call", ["userId", "toolCallId"])
+    .index("by_user_hash", ["userId", "argsHash"]),
+
+  /**
    * Job Description Templates
    *
    * Reusable job description templates for PERM cases.
@@ -937,6 +973,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_status", ["status"])
+    // A message Cloudflare delivers twice (a retry) is stored once.
+    .index("by_message_id", ["messageId"])
     .index("by_created_at", ["createdAt"])
     .index("by_from_email", ["fromEmail"]),
 

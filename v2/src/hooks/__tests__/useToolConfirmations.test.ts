@@ -392,11 +392,9 @@ describe('useToolConfirmations', () => {
       expect(mockFetch).toHaveBeenCalledWith('/api/chat/execute-tool', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          toolCallId: 'tool-call-123',
-          toolName: 'updateCase',
-          arguments: { caseId: 'case-1', status: 'in_progress' },
-        }),
+        // Only the card's id: the server runs the change it recorded for the
+        // card, never a tool name or arguments from the browser.
+        body: JSON.stringify({ toolCallId: 'tool-call-123' }),
       });
     });
   });

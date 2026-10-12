@@ -72,6 +72,26 @@ export function isEmailBlocked(email: string | undefined | null): boolean {
   return normalized.length > 0 && loadBlocklist().has(normalized);
 }
 
+/** Our own domain: its mailboxes are support and the site's test and demo accounts. */
+const OWN_DOMAIN = "permtracker.app";
+/** Addresses on our own domain that do get mail: the support inbox (the contact form writes to it). */
+const OWN_ADDRESSES_THAT_GET_MAIL = new Set(["support"]);
+
+/**
+ * True for the site's own test and demo accounts: any address at
+ * permtracker.app except support@. They get no notification, reminder, digest
+ * or alert mail, which only spent the shared 100-a-day allowance (Oct 12 2026).
+ * Sign-in codes and password resets don't go through this check, so the
+ * accounts can still be signed in to. Subdomains (press.permtracker.app) are
+ * real mailboxes and aren't matched.
+ */
+export function isOwnTestAddress(email: string | undefined | null): boolean {
+  const normalized = normalizeEmail(email);
+  const at = normalized.lastIndexOf("@");
+  if (at <= 0) return false;
+  return normalized.slice(at + 1) === OWN_DOMAIN && !OWN_ADDRESSES_THAT_GET_MAIL.has(normalized.slice(0, at));
+}
+
 /**
  * Returns the list of blocked emails (for inspection, tests, admin views).
  * A copy, never the backing Set.

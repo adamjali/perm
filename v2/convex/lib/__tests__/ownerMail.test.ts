@@ -1,0 +1,76 @@
+/**
+ * Mail to the owner goes through the free mail Worker when it's set up, and
+ * through Resend whenever it isn't or doesn't answer (Oct 12 2026).
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Resend } from "resend";
+import { sendOwnerMail, textFromHtml, workerCanSend } from "../ownerMail";
+
+const OWNER = "owner@example.com";
+
+function fakeCtx() {
+  return { runQuery: vi.fn(async () => 0), runMutation: vi.fn(async () => null) } as never;
+}
+function fakeResend() {
+  const send = vi.fn(async () => ({ data: { id: "r1" }, error: null }));
+  return { resend: { emails: { send } } as unknown as Resend, send };
+}
+const msg = { to: OWNER, subject: "Disk", html: "<p>Disk <b>full</b></p>" };
+
+beforeEach(() => {
+  vi.stubEnv("SECURITY_ALERT_EMAIL", OWNER);
+  vi.stubEnv("OWNER_MAIL_URL", "https://mail.example.com/owner");
+  vi.stubEnv("OWNER_MAIL_KEY", "key");
+});
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
+
+describe("sendOwnerMail", () => {
+  it("uses the Worker for the owner, with the key and a text copy, and never Resend", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { resend, send } = fakeResend();
+    const out = await sendOwnerMail(fakeCtx(), "alert", resend, msg);
+    expect(out.data?.id).toBe("worker");
+    expect(send).not.toHaveBeenCalled();
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect((init.headers as Record<string, string>)["x-owner-mail-key"]).toBe("key");
+    expect(JSON.parse(String(init.body))).toMatchObject({ subject: "Disk", text: "Disk full" });
+  });
+
+  it("falls back to Resend when the Worker refuses or can't be reached", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("no", { status: 502 })));
+    const a = fakeResend();
+    expect((await sendOwnerMail(fakeCtx(), "alert", a.resend, msg)).error).toBeUndefined();
+    expect(a.send).toHaveBeenCalledTimes(1);
+
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("network"); }));
+    const b = fakeResend();
+    await sendOwnerMail(fakeCtx(), "alert", b.resend, msg);
+    expect(b.send).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses Resend for anyone but the owner, and when the Worker isn't configured", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const a = fakeResend();
+    await sendOwnerMail(fakeCtx(), "alert", a.resend, { ...msg, to: "someone@example.com" });
+    expect(a.send).toHaveBeenCalledTimes(1);
+    vi.stubEnv("OWNER_MAIL_KEY", "");
+    const b = fakeResend();
+    await sendOwnerMail(fakeCtx(), "alert", b.resend, msg);
+    expect(b.send).toHaveBeenCalledTimes(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("pieces", () => {
+  it("workerCanSend ignores case and spaces in the owner address", () => {
+    expect(workerCanSend(" Owner@Example.com ")).toBe(true);
+  });
+  it("textFromHtml keeps the words and drops the markup", () => {
+    expect(textFromHtml("<style>p{}</style><p>One &amp; two</p><br/><div>Three</div>")).toBe("One & two\n\nThree");
+  });
+});

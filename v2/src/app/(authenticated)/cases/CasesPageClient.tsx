@@ -717,11 +717,15 @@ export function CasesPageClient() {
           analytics.capture("case_archived", { count: result.successCount, bulk: true });
           toast.success(`Archived ${result.successCount} case${result.successCount !== 1 ? "s" : ""}`);
         }
+        if (result.unchangedCount > 0) {
+          toast.info(`${result.unchangedCount} case${result.unchangedCount !== 1 ? "s were" : " was"} already archived`);
+        }
         if (result.failedCount > 0) {
           toast.error(`Couldn’t archive ${result.failedCount} case${result.failedCount !== 1 ? "s" : ""}. Try again.`);
         }
       } else if (confirmDialog.type === "reopen") {
-        // Re-open sets status back to 'pwd' (initial stage)
+        // Reopening puts each case at the stage its dates support (the server
+        // reads "pwd" on a closed case as "reopen"), as reopening one case does.
         const result = await bulkUpdateStatusMutation({ ids, status: "pwd" });
         if (result.successCount > 0) {
           toast.success(`Reopened ${result.successCount} case${result.successCount !== 1 ? "s" : ""}`);
