@@ -1,7 +1,7 @@
 'use client';
 
-import { Fragment, useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { Fragment, useRef, useEffect, useId, useLayoutEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence, MotionConfig, useReducedMotion } from 'motion/react';
 import { ArrowDownIcon, ChatTextIcon, ClockCounterClockwiseIcon as History, InfoIcon, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import { ChatMessage } from './ChatMessage';
@@ -200,6 +200,17 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const { scrollRef, contentRef, onScroll, showJump, stick, jump, toBottom } = useStickToBottom();
   const reduceMotion = useReducedMotion();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+
+  // Focus goes into the panel when it opens: the message box on a desk; on a
+  // phone the panel itself, so the keyboard doesn't jump up over it unasked.
+  const [focusInput] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 768px)').matches === true
+  );
+  useEffect(() => {
+    if (!focusInput) panelRef.current?.focus();
+  }, [focusInput]);
 
   // Messages present when the panel opened render still; only messages that
   // arrive while it is open fade in.
@@ -230,6 +241,10 @@ export function ChatPanel({
 
   const isProcessing = status === 'submitted' || status === 'streaming';
   const errorText = chatErrorText(error ?? undefined);
+  // Actions in the interrupted reply already ran; Try again carries on from
+  // them (useChatWithPersistence retry) and the panel says so.
+  const actionsRan =
+    lastMessage?.role === 'assistant' && (lastMessage.toolCalls ?? []).some((tc) => tc.status !== 'pending');
 
   // The latest page of messages; earlier ones on request.
   const [pageSize, setPageSize] = useState(MESSAGE_PAGE);
@@ -239,12 +254,29 @@ export function ChatPanel({
   const showTyping = status === 'submitted' || (status === 'streaming' && lastMessage?.role !== 'assistant');
 
   return (
+    // reducedMotion="user": the spinners and the typing dots hold still for
+    // anyone whose system asks for less motion.
+    <MotionConfig reducedMotion="user">
     <motion.div
+      ref={panelRef}
+      role="dialog"
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      // Escape closes the panel (a menu or tooltip inside takes it first).
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !e.defaultPrevented) {
+          e.stopPropagation();
+          onClose();
+        }
+      }}
       initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}
       transition={springConfig}
       className={cn(
+        // ph-no-capture: PostHog's automatic click capture records the text of
+        // what's clicked, and here that is the person's own conversation.
+        'ph-no-capture focus:outline-none',
         'fixed z-[60]',
         // Mobile: full screen
         'inset-0 md:inset-auto',
@@ -260,7 +292,7 @@ export function ChatPanel({
       <div className="flex items-center justify-between px-3 py-2 border-b-2 border-border bg-muted gap-2">
         <div className="flex items-center gap-2 flex-shrink-0">
           <ChatTextIcon className="h-5 w-5 text-primary" />
-          <h2 className="font-heading font-semibold text-sm max-[389px]:sr-only">PERM Assistant</h2>
+          <h2 id={titleId} className="font-heading font-semibold text-sm max-[389px]:sr-only">PERM Assistant</h2>
         </div>
 
         {/* Action Mode Toggle (icons only, portal tooltip) */}
@@ -268,7 +300,9 @@ export function ChatPanel({
           <ActionModeToggle
             mode={actionMode}
             onChange={onActionModeChange}
-            disabled={actionModeLoading}
+            // Not while a reply is running: a mode change then started a
+            // second request beside it.
+            disabled={actionModeLoading || isProcessing}
           />
         )}
 
@@ -436,7 +470,12 @@ export function ChatPanel({
                       </p>{" "}
                       <p className="text-sm text-destructive mt-1 break-words">
                         {errorText.detail}
-                      </p>
+                      </p>{" "}
+                      {actionsRan && (
+                        <p className="text-sm text-destructive mt-1">
+                          The actions above already ran. Try again carries on from them without running them again.
+                        </p>
+                      )}
                       {onRetry && (
                         <Button
                           type="button"
@@ -494,7 +533,9 @@ export function ChatPanel({
         disabled={false}
         isProcessing={isProcessing}
         placeholder={isProcessing ? 'Answering…' : 'Type a message...'}
+        autoFocus={focusInput}
       />
     </motion.div>
+    </MotionConfig>
   );
 }

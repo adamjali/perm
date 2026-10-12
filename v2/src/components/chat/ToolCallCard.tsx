@@ -178,7 +178,7 @@ export function ToolCallCard({
               initial={{ opacity: 0, x: -4 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, ...springConfig }}
-              className="text-sm font-medium text-primary"
+              className="text-sm font-medium text-primary-text"
             >
               {resultSummary}
             </motion.span>

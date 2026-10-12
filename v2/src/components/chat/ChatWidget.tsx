@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChatTextIcon } from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
@@ -70,6 +70,14 @@ export function ChatWidget({
   summaryMetadata,
 }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
+  // Focus goes back to the bubble when the panel closes (the bubble is
+  // unmounted while it's open, so focus had dropped to the page).
+  const bubbleRef = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (isOpen) wasOpen.current = true;
+    else if (wasOpen.current) bubbleRef.current?.focus();
+  }, [isOpen]);
 
   // Listen for external open requests (e.g. from onboarding checklist)
   useEffect(() => {
@@ -98,6 +106,7 @@ export function ChatWidget({
             data-tour="chat-bubble"
           >
             <Button
+              ref={bubbleRef}
               onClick={() => setIsOpen(true)}
               size="lg"
               className={cn(

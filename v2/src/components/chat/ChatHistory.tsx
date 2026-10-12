@@ -19,16 +19,16 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { ChatTextIcon, PlusIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react/ssr";
 import { formatDistanceToNow } from 'date-fns';
-import { springConfig } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import type { Id } from '@convex/_generated/dataModel';
 import { useAuthContext } from '@/lib/contexts/AuthContext';
+import { CHAT_LIMITS } from '@convex/lib/chatLimits';
 
 /**
  * Conversations shown per page. The list grows with every conversation the
@@ -41,9 +41,14 @@ interface ChatHistoryProps {
   onClose: () => void;
   currentConversationId: Id<'conversations'> | null;
   onSelectConversation: (id: Id<'conversations'>) => void;
-  onNewConversation: () => void;
+  onNewConversation: () => unknown;
 }
 
+/**
+ * A Radix dialog: focus stays inside while it's open, Escape and a click
+ * outside close it, and focus goes back to the history button. Each
+ * conversation is a button, so a keyboard can open one.
+ */
 export function ChatHistory({
   isOpen,
   onClose,
@@ -61,122 +66,125 @@ export function ChatHistory({
   const [shown, setShown] = useState(HISTORY_PAGE);
   const deleteConversation = useMutation(api.conversations.deleteConversation);
   const deleteAllConversations = useMutation(api.conversations.deleteAll);
+  // The list holds the newest CHAT_LIMITS.conversationsListed; at that length
+  // there may be older ones it doesn't show, and it says so.
+  const atListLimit = (conversations?.length ?? 0) >= CHAT_LIMITS.conversationsListed;
+
+  const startNew = () => {
+    Promise.resolve(onNewConversation()).catch((err: unknown) => {
+      console.error('[ChatHistory] Could not start a new conversation:', err instanceof Error ? err.message : err);
+    });
+  };
 
   const handleDeleteAll = async () => {
     if (
       conversations &&
       conversations.length > 0 &&
       confirm(
-        `Delete all ${conversations.length} conversation${conversations.length > 1 ? 's' : ''} permanently? This cannot be undone.`
+        atListLimit
+          ? 'Delete all your conversations permanently? This cannot be undone.'
+          : `Delete all ${conversations.length} conversation${conversations.length > 1 ? 's' : ''} permanently? This cannot be undone.`
       )
     ) {
       await deleteAllConversations({});
-      onNewConversation();
+      startNew();
     }
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/20 z-[60]"
-            onClick={onClose}
-          />
-
-          {/* Panel */}
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={springConfig}
-            className={cn(
-              'fixed right-0 top-0 bottom-0 z-[61]',
-              'w-80 max-w-[85vw]',
-              'bg-background border-l-2 border-border shadow-hard-lg',
-              'flex flex-col'
-            )}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b-2 border-border">
-              <div className="min-w-0">
-                <h2 className="font-heading font-semibold">Chat history</h2>{" "}
-                {conversations && conversations.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {conversations.length.toLocaleString('en-US')} conversation{conversations.length === 1 ? '' : 's'}
-                  </p>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                aria-label="Close history"
-              >
+    <DialogPrimitive.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay
+          className="fixed inset-0 z-[60] bg-black/20 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 motion-reduce:animate-none"
+        />
+        <DialogPrimitive.Content
+          aria-describedby={undefined}
+          className={cn(
+            'ph-no-capture',
+            'fixed right-0 top-0 bottom-0 z-[61]',
+            'w-80 max-w-[85vw]',
+            'bg-background border-l-2 border-border shadow-hard-lg',
+            'flex flex-col focus:outline-none',
+            'data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right motion-reduce:animate-none'
+          )}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b-2 border-border">
+            <div className="min-w-0">
+              <DialogPrimitive.Title className="font-heading font-semibold">Chat history</DialogPrimitive.Title>{" "}
+              {conversations && conversations.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {atListLimit
+                    ? `Your ${conversations.length.toLocaleString('en-US')} most recent conversations`
+                    : `${conversations.length.toLocaleString('en-US')} conversation${conversations.length === 1 ? '' : 's'}`}
+                </p>
+              )}
+            </div>
+            <DialogPrimitive.Close asChild>
+              <Button variant="ghost" size="icon" className="h-11 w-11 md:h-9 md:w-9" aria-label="Close history">
                 <XIcon className="h-4 w-4" />
               </Button>
-            </div>
+            </DialogPrimitive.Close>
+          </div>
 
-            {/* New Conversation Button */}
-            <div className="p-4 border-b-2 border-border">
-              <Button
-                onClick={() => {
-                  onNewConversation();
-                  onClose();
-                }}
-                className="w-full shadow-hard-sm"
-              >
-                <PlusIcon className="h-4 w-4 mr-2" />
-                New conversation
-              </Button>
-            </div>
+          {/* New Conversation Button */}
+          <div className="p-4 border-b-2 border-border">
+            <Button
+              onClick={() => {
+                startNew();
+                onClose();
+              }}
+              className="w-full shadow-hard-sm"
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              New conversation
+            </Button>
+          </div>
 
-            {/* Conversation List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {!conversations || conversations.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <ChatTextIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No conversations yet</p>
-                </div>
-              ) : (
-                conversations.slice(0, shown).map((conv) => (
-                  <div
-                    key={conv._id}
-                    className={cn(
-                      'group relative p-3 border-2 cursor-pointer',
-                      'transition-all duration-150',
-                      conv._id === currentConversationId
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                    )}
-                    onClick={() => {
-                      onSelectConversation(conv._id);
-                      onClose();
-                    }}
-                  >
-                    <div className="pr-16">
-                      <p className="font-medium text-sm truncate" title={conv.title}>
+          {/* Conversation List */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {!conversations || conversations.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <ChatTextIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">No conversations yet</p>
+              </div>
+            ) : (
+              conversations.slice(0, shown).map((conv) => {
+                const isCurrent = conv._id === currentConversationId;
+                return (
+                  <div key={conv._id} className="group relative">
+                    <button
+                      type="button"
+                      aria-current={isCurrent ? 'true' : undefined}
+                      className={cn(
+                        'block w-full text-left p-3 pr-16 border-2',
+                        'transition-colors duration-150',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        isCurrent
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                      )}
+                      onClick={() => {
+                        onSelectConversation(conv._id);
+                        onClose();
+                      }}
+                    >
+                      <span className="block font-medium text-sm truncate" title={conv.title}>
                         {conv.title}
-                      </p>{" "}
-                      <p className="text-sm text-muted-foreground mt-1">
+                      </span>{" "}
+                      <span className="block text-sm text-muted-foreground mt-1">
                         {formatDistanceToNow(conv.updatedAt, { addSuffix: true })}
-                      </p>
-                    </div>
+                      </span>
+                    </button>
 
-                    {/* Delete Action */}
-                    {/* Hover on a desk; always shown on a touch screen, and on
-                        keyboard focus, so it never needs a mouse. */}
+                    {/* Delete: beside the row, never inside its button. Shown
+                        on hover and keyboard focus on a desk, always on a phone. */}
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-11 w-11 md:h-7 md:w-7 text-destructive hover:text-destructive-text"
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        className="h-11 w-11 md:h-9 md:w-9 text-destructive hover:text-destructive-text"
+                        onClick={() => {
                           if (confirm('Delete this conversation permanently?')) {
                             deleteConversation({ id: conv._id });
                           }
@@ -187,40 +195,45 @@ export function ChatHistory({
                       </Button>
                     </div>
                   </div>
-                ))
-              )}
-              {conversations && conversations.length > shown && (() => {
-                const left = conversations.length - shown;
-                const next = Math.min(HISTORY_PAGE, left);
-                return (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-11 md:h-9 shadow-hard-sm"
-                    onClick={() => setShown((n) => n + HISTORY_PAGE)}
-                  >
-                    {next === left ? `Show ${next} more` : `Show ${next} more (${left} left)`}
-                  </Button>
                 );
-              })()}
-            </div>
-
-            {/* Delete All Footer */}
-            {conversations && conversations.length > 0 && (
-              <div className="p-4 border-t-2 border-border">
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={handleDeleteAll}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete all conversations
-                </Button>
-              </div>
+              })
             )}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            {conversations && conversations.length > shown && (() => {
+              const left = conversations.length - shown;
+              const next = Math.min(HISTORY_PAGE, left);
+              return (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 md:h-9 shadow-hard-sm"
+                  onClick={() => setShown((n) => n + HISTORY_PAGE)}
+                >
+                  {next === left ? `Show ${next} more` : `Show ${next} more (${left} left)`}
+                </Button>
+              );
+            })()}
+            {atListLimit && conversations && shown >= conversations.length && (
+              <p className="text-sm text-muted-foreground">
+                Older conversations aren&rsquo;t listed here. A conversation is deleted 90 days after its last message.
+              </p>
+            )}
+          </div>
+
+          {/* Delete All Footer */}
+          {conversations && conversations.length > 0 && (
+            <div className="p-4 border-t-2 border-border">
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={handleDeleteAll}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete all conversations
+              </Button>
+            </div>
+          )}
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }

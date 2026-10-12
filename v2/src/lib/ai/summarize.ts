@@ -66,9 +66,9 @@ const ENTITY_EXTRACTION_PROMPT = `Extract structured facts from this conversatio
 Return a JSON object with these optional fields:
 - cases: PERM case IDs (strings) or {id, status} objects if status is explicit
 - people: {name, role} objects where role is e.g. "beneficiary", "employer rep"
-- dates: key→date strings, e.g. {"pwdFiling": "2024-06-15", "recruitment": "2024-09-01"}
+- dates: key→date strings, each key naming its case (employer or case number) and the date, e.g. {"Acme Corp: pwdFiling": "2024-06-15", "G-100-24339-516453: recruitmentStart": "2024-09-01"}. Never a key without its case: two cases' dates must not collide
 - preferences: explicit user preferences, e.g. ["bullet summaries", "concise answers"]
-- openActions: work items not yet completed, e.g. ["waiting for RFE response"]
+- openActions: the work STILL open at the end of the snippet, e.g. ["Acme Corp: waiting for RFE response"]. Leave out anything finished. This list replaces the earlier one
 
 Omit any field with no entries. Never invent facts. Only extract what's explicitly stated.
 `;
@@ -221,7 +221,9 @@ export async function summarizeConversation(
   const startTime = Date.now();
 
   // Claim the lock atomically. If another process holds it, back off.
-  let locked = false;
+  // The lock's token (when it started); saveSummary checks it, so a run that
+  // outlived its lock can't overwrite a newer summary.
+  let locked: boolean | number = false;
   try {
     locked = await fetchMutation(
       api.conversationSummary.beginSummarizing,
@@ -310,6 +312,7 @@ export async function summarizeConversation(
         facts: factsJson,
         tokenCount: estimateStringTokens(proseText),
         messageCountAtSummary,
+        ...(typeof locked === 'number' ? { lockToken: locked } : {}),
       },
       { token },
     );

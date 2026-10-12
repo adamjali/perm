@@ -4,6 +4,8 @@ import { useRef, useState, useEffect, useCallback, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { MicrophoneIcon as Mic, MicrophoneSlashIcon, PaperPlaneTiltIcon as Send, SquareIcon } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
+import { CharLimitNote, useCharLimit } from '@/components/ui/char-limit';
+import { CHAT_LIMITS } from '@convex/lib/chatLimits';
 import { captureError } from '@/lib/sentry';
 
 // Web Speech API types
@@ -65,6 +67,8 @@ interface ChatInputProps {
   disabled?: boolean;
   isProcessing?: boolean;
   placeholder?: string;
+  /** Focus the box when it first shows (the panel opening on a desk). */
+  autoFocus?: boolean;
 }
 
 export function ChatInput({
@@ -75,7 +79,11 @@ export function ChatInput({
   disabled = false,
   isProcessing = false,
   placeholder = 'Type a message...',
+  autoFocus = false,
 }: ChatInputProps) {
+  // The server takes the same length (convex/lib/chatLimits.ts); past it the
+  // box says so instead of the send failing.
+  const limit = useCharLimit(CHAT_LIMITS.userMessageChars, value);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   // Track cursor position for voice input insertion
@@ -115,6 +123,10 @@ export function ChatInput({
   }, []);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter that ends a Chinese, Japanese, Korean or Vietnamese composition
+    // picks the word; it must not send the half-typed message. (229 is the
+    // keyCode browsers give keys pressed during a composition.)
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       // One turn at a time: Enter mid-reply would start a second, interleaved answer.
@@ -304,7 +316,8 @@ export function ChatInput({
   const showStopButton = isProcessing && onStop;
 
   return (
-    <div className="flex gap-2 p-3 border-t-2 border-border bg-background">
+    <div className="p-3 border-t-2 border-border bg-background">
+    <div className="flex gap-2">
       <textarea
         ref={textareaRef}
         value={value}
@@ -315,6 +328,9 @@ export function ChatInput({
         onClick={handleSelect}
         disabled={disabled}
         placeholder={placeholder}
+        aria-label="Message"
+        autoFocus={autoFocus}
+        {...limit.fieldProps}
         rows={1}
         className={cn(
           // 16px on phones: iOS Safari zooms the page into any field under 16px.
@@ -366,6 +382,8 @@ export function ChatInput({
           <Send className="h-4 w-4" />
         </Button>
       )}
+    </div>
+    <CharLimitNote id={limit.id} message={limit.message} full={limit.full} />
     </div>
   );
 }

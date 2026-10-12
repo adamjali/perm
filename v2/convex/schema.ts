@@ -664,7 +664,9 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user_id", ["userId"])
-    .index("by_user_and_archived", ["userId", "isArchived"]),
+    .index("by_user_and_archived", ["userId", "isArchived"])
+    // Newest first for the history panel and "resume the latest" (bounded reads).
+    .index("by_user_and_updated", ["userId", "updatedAt"]),
 
   // Chatbot message history
   conversationMessages: defineTable({
@@ -717,6 +719,9 @@ export default defineSchema({
         // Why a reply stopped early, so a saved reply still says so
         // (the output cap, or the tool-step cap). Sep 29 2026.
         cutShort: v.optional(v.union(v.literal("length"), v.literal("steps"))),
+        // The reply was interrupted (stopped, a dropped connection, a failed
+        // model) after some of its actions had run; saved so they're on record.
+        incomplete: v.optional(v.boolean()),
       })
     ),
     createdAt: v.number(),

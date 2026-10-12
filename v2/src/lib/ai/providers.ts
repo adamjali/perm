@@ -395,6 +395,9 @@ export class FallbackModel implements LanguageModelV4 {
         this._lastAttemptCount = i + 1;
         return result;
       } catch (error) {
+        // The request was aborted (Stop, a closed tab): every other model would
+        // fail the same way, and none of it is a provider failure.
+        if (options.abortSignal?.aborted) throw error;
         const errorStr = formatError(error);
         errors.push({ name: config.name, error: errorStr });
         reportModelGone(config.name, error);

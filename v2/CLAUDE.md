@@ -9776,3 +9776,40 @@ in `workers/mail/README.md`. Proven by a test message to support@ from the press
 accented text intact), a direct `/owner` send, and an admin notice from Convex with no fallback logged.
 `postal-mime` bundled to 74 KB (an HTML entity table), too big to upload cleanly, so `mime.mjs` reads the text.
 
+## Oct 12 2026 (night): the rest of the chat audit
+
+The client half of the chat audit, after the incident fixes above. Each item was a defect a person could hit:
+
+- **After a reload the model saw none of the conversation.** The AI SDK holds only this session's messages, so
+  "yes, update it" in a reopened chat had nothing to refer to. The newest 20 saved turns (`HISTORY_FOR_MODEL` in
+  `src/lib/ai/chatTurn.ts`) ride every request as `history` (`historyForModel` in `useChatWithPersistence`, saved
+  tool calls as `[Earlier action ...]` lines the prompt calls a record); the route checks them (`savedTurns`) and
+  puts them ahead of the session's own. The summary rides every compaction level now (L0 and L1 had dropped it),
+  and the route fits the context whether or not a summary exists.
+- **A turn that failed or was stopped after an action ran is saved**, marked `incomplete` (shown as stopped), so
+  the action is on record. Try again after such a turn sends a continuation naming what ran instead of
+  regenerating (which had let the model run a `createCase` twice); the panel says the actions already ran.
+- **A reply belongs to the conversation it was asked in** (`requestConversationRef`, set at send): switching
+  mid-stream had saved the reply and its cards into the new conversation. A switch also stops the stream.
+- **One new conversation however fast the second send** (`sendingRef`), and a failed create puts the words back
+  with the reason. The error copy no longer claims "your message is saved".
+- **Per-account quota** (`convex/chatQuota.ts`: 60 turns an hour, burst 20, 400 a day), beside the per-address
+  limit; the route answers 429 with the wait and fails open. **Stop aborts the model calls** (`abortSignal`), and
+  the fallback stops on an abort instead of trying every model and reporting "all models failed".
+- **Storage is bounded** (`convex/lib/chatLimits.ts`): 400 messages a conversation (the route answers 409 with a
+  sentence, `createUserMessage` refuses), 8,000 characters typed (the composer counts toward it), replies and tool
+  parts clipped with a note, every message read capped, the history list the newest 200 (it says so), `getMostRecent`
+  one index read (`by_user_and_updated`), and saving messages rate-limited (`chatMessageWrite`).
+- **Summaries**: open actions are replaced each cycle (merged, they only grew), dates are keyed by case, every
+  fact category keeps its newest entries (`FACT_CAPS`), and a run that outlived its lock can't overwrite a newer
+  summary or move one back (`lockToken`, the count only moves forward).
+- **Deleting a conversation leaves nothing**: its cached tool answers go too, the audit row holds counts only (it
+  had kept the title and summary for good), and delete-all runs in batches past one transaction.
+- **Accessibility**: the panel is a labelled dialog that Escape closes, focus goes to the message box on a desk
+  (the panel on a phone) and back to the bubble on close; the history panel is a Radix dialog with button rows;
+  Enter during a Chinese, Korean or Vietnamese composition doesn't send; Confirm moves focus to the outcome; mode
+  buttons are 44px on a phone and locked while a reply runs; motion respects reduced-motion settings.
+- **Rendering and privacy**: an image in a reply is a link and never loads (quoted text could have sent details to
+  any address), numbered lists are numbered again, the chat is `ph-no-capture`, and the search error logs no longer
+  carry the query.
+

@@ -112,8 +112,6 @@ export function ChatWidgetConnected() {
         return;
       }
 
-      console.log('[ChatWidget] Persisting tool result:', { toolCallId, status, conversationId });
-
       try {
         const success = await updateToolCallResult({
           conversationId,
@@ -122,9 +120,7 @@ export function ChatWidgetConnected() {
           status,
         });
 
-        if (success) {
-          console.log('[ChatWidget] Tool result persisted successfully');
-        } else {
+        if (!success) {
           console.warn('[ChatWidget] Tool result persistence returned false - tool call not found in DB. This may be a timing issue.');
         }
       } catch (err) {

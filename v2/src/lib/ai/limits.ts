@@ -231,9 +231,26 @@ export function chatIpLimitBody(retryAfterMs: number, blocked: boolean) {
   };
 }
 
+/**
+ * The chat route's per-account refusal (convex/chatQuota.ts), in the same JSON
+ * shape as the per-address one, so the panel shows the wait.
+ */
+export function chatUserLimitBody(retryAfterMs: number, window: 'hour' | 'day') {
+  const wait = formatWait(retryAfterMs);
+  return {
+    error: 'rate_limited' as const,
+    message: window === 'day'
+      ? `You've reached the chat's daily limit for one account. Try again in ${wait}.`
+      : `You've sent a lot of chat messages in the last hour. Try again in ${wait}.`,
+    retryAfter: Math.max(1, Math.ceil(retryAfterMs / 1000)),
+  };
+}
+
+// No claim that the message was saved: the save runs beside the request and
+// can fail on its own.
 const GENERIC_ERROR = {
   title: 'The assistant couldn’t answer that',
-  detail: 'The AI services didn’t respond. Your message is saved; try again in a moment.',
+  detail: 'The AI services didn’t respond. Try again in a moment.',
 };
 
 /**
@@ -258,6 +275,12 @@ export function chatErrorText(error: Error | undefined): { title: string; detail
   }
   if (code === 'busy') {
     return { title: 'The site is busy', detail: message || 'Try again in a few seconds.' };
+  }
+  if (code === 'conversation_full') {
+    return { title: 'This conversation is full', detail: message || 'Start a new conversation from the history button.' };
+  }
+  if (code === 'message_too_long') {
+    return { title: 'That message is too long', detail: message || 'Shorten it and send again.' };
   }
   if (code === 'Unauthorized' || code === 'Authentication error') {
     return { title: 'You’re signed out', detail: 'Sign in again, then send your message.' };

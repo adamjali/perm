@@ -22,6 +22,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { MS_PER_MINUTE } from "./lib/time";
+import { MESSAGE_READ_CAP } from "./lib/chatLimits";
 
 // =============================================================================
 // CONSTANTS
@@ -101,7 +102,8 @@ export const needsSummarization = query({
       .withIndex("by_conversation_id", (q) =>
         q.eq("conversationId", args.conversationId)
       )
-      .collect();
+      // Bounded: a conversation holds at most CHAT_LIMITS.messagesPerConversation.
+      .take(MESSAGE_READ_CAP);
 
     // Fast reject: too few messages to bother summarizing.
     // Avoids summarization cycles on short conversations regardless of content size.
@@ -175,7 +177,8 @@ export const getContextMessages = query({
       .withIndex("by_conversation_id", (q) =>
         q.eq("conversationId", args.conversationId)
       )
-      .collect();
+      // Bounded: a conversation holds at most CHAT_LIMITS.messagesPerConversation.
+      .take(MESSAGE_READ_CAP);
 
     return {
       summary: conversation.summary?.content ?? null,
@@ -234,7 +237,8 @@ export const getMessagesToSummarize = query({
       .withIndex("by_conversation_id", (q) =>
         q.eq("conversationId", args.conversationId)
       )
-      .collect();
+      // Bounded: a conversation holds at most CHAT_LIMITS.messagesPerConversation.
+      .take(MESSAGE_READ_CAP);
 
     const sortedMessages = allMessages.sort((a, b) => a.createdAt - b.createdAt);
     const totalMessageCount = sortedMessages.length;
@@ -293,6 +297,8 @@ export const saveSummary = mutation({
     facts: v.optional(v.string()),
     tokenCount: v.number(),
     messageCountAtSummary: v.number(),
+    /** beginSummarizing's answer: the run that holds the lock. */
+    lockToken: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<void> => {
     const userId = await getCurrentUserId(ctx);
@@ -305,6 +311,12 @@ export const saveSummary = mutation({
     if (conversation.userId !== userId) {
       throw new Error("Access denied: you do not own this conversation");
     }
+
+    // A run that outlived its lock (60 s) may finish after a newer run has
+    // saved: only the lock's holder saves, and a summary never moves back.
+    const current = conversation.summary;
+    if (args.lockToken !== undefined && current?.summarizingAt !== args.lockToken) return;
+    if (current && args.messageCountAtSummary < current.messageCountAtSummary) return;
 
     await ctx.db.patch(args.conversationId, {
       summary: {
@@ -323,7 +335,7 @@ export const saveSummary = mutation({
 /**
  * Atomically claim a summarization lock on a conversation.
  *
- * Returns true if the lock was acquired (caller should proceed to summarize).
+ * Returns the lock's token (a timestamp) if the lock was acquired (caller should proceed to summarize; saveSummary checks the token).
  * Returns false if another process already holds a fresh lock.
  *
  * The lock stores a timestamp. Stale locks (>60s) are considered abandoned
@@ -336,7 +348,9 @@ export const beginSummarizing = mutation({
   args: {
     conversationId: v.id("conversations"),
   },
-  handler: async (ctx, args): Promise<boolean> => {
+  // false when another run holds the lock; otherwise the lock's token (when it
+  // started), which saveSummary checks.
+  handler: async (ctx, args): Promise<false | number> => {
     const userId = await getCurrentUserId(ctx);
 
     const conversation = await ctx.db.get(args.conversationId);
@@ -363,7 +377,7 @@ export const beginSummarizing = mutation({
         summarizingAt: now,
       },
     });
-    return true;
+    return now;
   },
 });
 

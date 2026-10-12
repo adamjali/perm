@@ -675,7 +675,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (night)".
 - **A table cell's fill can say its state**: the bulletin matrix tints Current and Unavailable, with a key.
 - **The dev capture scripts live in `node_modules/.cache/qa/`**: `top-shot.mjs`, `dark-shot.mjs`, `embed-shot.mjs`, `load-shot.mjs` (for pages that never go network-idle).
 
-## Oct 12 2026, in sixteen lines
+## Oct 12 2026, in eighteen lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 
@@ -701,3 +701,8 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 - **The site's own test accounts get no notification mail** (`isOwnTestAddress`: every `@permtracker.app` address but support@).
 - **Inbound mail and alerts to the owner go through Cloudflare, free** (`workers/mail/`): the root MX is Cloudflare's,
   a Worker forwards and stores every message, and owner mail falls back to Resend only if the Worker fails.
+- **After a reload the chat sends the newest saved turns with each question**, and an interrupted turn whose action ran
+  is saved and never re-run by Try again (`useChatWithPersistence`, `src/lib/ai/chatTurn.ts`).
+- **The chat has a per-account quota and bounded storage** (`convex/chatQuota.ts`, `convex/lib/chatLimits.ts`), its
+  panels are real dialogs, and a deleted conversation leaves no words in the audit log.
+

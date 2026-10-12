@@ -33,7 +33,9 @@ import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { useAuthContext } from '@/lib/contexts/AuthContext';
 import { type PageContext, serializePageContext } from '@/lib/ai/page-context';
-import type { CutShort } from '@/lib/ai/limits';
+import { rateLimitFrom, formatWait, type CutShort } from '@/lib/ai/limits';
+import { summarizeToolResult } from '@/components/chat/tool-result-summary';
+import { HISTORY_FOR_MODEL } from '@/lib/ai/chatTurn';
 
 interface UseChatWithPersistenceOptions {
   conversationId?: Id<'conversations'>;
@@ -147,6 +149,56 @@ function toolCallsOf(message: UIMessage): ToolCallDisplay[] {
 /** Which Convex messages are history for the current session. */
 type HistoryBoundary = { ids: Set<string> } | { before: number };
 
+// Saved turns sent to the model ahead of the session's own (HISTORY_FOR_MODEL
+// in chatTurn.ts). The SDK holds only this session's messages, so after a
+// reload the model saw none of the conversation it was asked to continue
+// ("yes, update it" had nothing to refer to). The summary covers anything older.
+const HISTORY_MESSAGE_CHARS = 4_000;
+
+type PersistedMessage = {
+  _id: string;
+  role: string;
+  content: string;
+  toolCalls?: Array<{ tool: string; result?: string; status?: 'pending' | 'success' | 'error' }>;
+};
+
+/** One saved tool call as a line the model can read (not a call to answer). */
+function toolNote(tc: NonNullable<PersistedMessage['toolCalls']>[number]): string {
+  const outcome =
+    tc.status === 'pending'
+      ? 'shown for confirmation, not answered'
+      : summarizeToolResult(tc.tool, tc.result) || (tc.status === 'error' ? 'failed' : 'done');
+  return `[Earlier action ${tc.tool}: ${outcome}]`;
+}
+
+/** The newest saved turns as plain text messages for the model. */
+export function historyForModel(persisted: readonly PersistedMessage[]): UIMessage[] {
+  const out: UIMessage[] = [];
+  for (const m of persisted.slice(-HISTORY_FOR_MODEL)) {
+    if (m.role !== 'user' && m.role !== 'assistant') continue;
+    const notes = m.role === 'assistant' ? (m.toolCalls ?? []).map(toolNote) : [];
+    const text = [m.content.slice(0, HISTORY_MESSAGE_CHARS), ...notes].filter(Boolean).join('\n\n').trim();
+    if (!text) continue;
+    out.push({ id: m._id, role: m.role, parts: [{ type: 'text', text }] });
+  }
+  return out;
+}
+
+/** The tool calls in a message that actually ran (not a card still waiting). */
+function ranToolCalls(message: UIMessage | undefined): ToolCallDisplay[] {
+  if (!message || message.role !== 'assistant') return [];
+  return toolCallsOf(message).filter((tc) => tc.status !== 'pending');
+}
+
+/** An error the panel reads like the route's (chatErrorText parses the JSON). */
+function panelError(error: unknown, fallback: string): Error {
+  const limit = rateLimitFrom(error);
+  const body = limit
+    ? { error: 'rate_limited', message: `Too many new conversations in a short time. Try again in ${formatWait(limit.retryAfterMs)}.` }
+    : { error: 'send_failed', message: fallback };
+  return new Error(JSON.stringify(body));
+}
+
 interface OptimisticMessage {
   id: string;
   role: 'user';
@@ -164,10 +216,21 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [history, setHistory] = useState<HistoryBoundary | null>(null);
   const [stoppedIds, setStoppedIds] = useState<ReadonlySet<string>>(() => new Set());
+  // A failure before the request was sent (a new conversation couldn't be made).
+  const [localError, setLocalError] = useState<Error | null>(null);
 
   const { isSigningOut } = useAuthContext();
   const streamStartTime = useRef<number | null>(null);
   const conversationIdRef = useRef<Id<'conversations'> | null>(conversationId);
+  // The conversation the request in flight belongs to, fixed when it's sent:
+  // read at the reply's end, a switch mid-stream saved the reply (and its
+  // cards) into the conversation switched to.
+  const requestConversationRef = useRef<Id<'conversations'> | null>(null);
+  // The saved turns sent ahead of the session's own (historyForModel).
+  const historyRef = useRef<UIMessage[]>([]);
+  // A send is between its first line and the request going out (a new
+  // conversation is created in between): a second Enter must not start another.
+  const sendingRef = useRef(false);
 
   const createConversation = useMutation(api.conversations.create);
   const createUserMessage = useMutation(api.conversationMessages.createUserMessage);
@@ -202,12 +265,7 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     // One UI update per 50 ms while streaming, instead of one per token.
     throttle: 50,
     onFinish: async ({ message, isAbort, isDisconnect, isError }) => {
-      // onFinish also fires on abort/disconnect/error. Persisting those would
-      // write a truncated or garbage assistant turn as a clean one, corrupting
-      // history and the compaction summaries built from it.
-      if (isAbort || isDisconnect || isError) return;
-
-      const currentConversationId = conversationIdRef.current;
+      const currentConversationId = requestConversationRef.current;
       if (!currentConversationId) return;
 
       const toolCalls = toolCallsOf(message).map(({ toolCallId: _id, ...tc }) => ({
@@ -215,17 +273,29 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
         executedAt: tc.status !== 'pending' ? Date.now() : undefined,
       }));
 
+      // onFinish also fires on a stop, a dropped connection and a failure. Such
+      // a reply is saved only when an action in it had already run, marked
+      // incomplete, so the action is on record after a reload and in the
+      // summaries; a reply with nothing done is left out, as before.
+      const interrupted = isAbort || isDisconnect || isError;
+      if (interrupted && !toolCalls.some((tc) => tc.status !== 'pending')) return;
+
       const cutShort = (message.metadata as { cutShort?: CutShort } | undefined)?.cutShort;
-      await createAssistantMessage({
-        conversationId: currentConversationId,
-        content: textOf(message),
-        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
-        metadata: {
-          processingTimeMs: Date.now() - (streamStartTime.current ?? Date.now()),
-          // Saved with the reply, so reopening the chat still says it was cut short.
-          ...(cutShort ? { cutShort } : {}),
-        },
-      });
+      try {
+        await createAssistantMessage({
+          conversationId: currentConversationId,
+          content: textOf(message),
+          toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+          metadata: {
+            processingTimeMs: Date.now() - (streamStartTime.current ?? Date.now()),
+            // Saved with the reply, so reopening the chat still says it was cut short.
+            ...(cutShort ? { cutShort } : {}),
+            ...(interrupted ? { incomplete: true } : {}),
+          },
+        });
+      } catch (err) {
+        console.error('[Chat] Failed to save the reply:', err instanceof Error ? err.message : err);
+      }
     },
     onError: (err) => {
       const errAny = err as { status?: number; statusCode?: number; cause?: { message?: string } | string; responseBody?: unknown };
@@ -241,13 +311,21 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     },
   });
 
+  // The status, readable from callbacks without re-creating them.
+  const statusRef = useRef<ChatStatus>('ready');
+
   /** Forget the session: a different conversation, or none. */
   const resetSession = useCallback(() => {
+    // A reply still streaming ends here; its own conversation keeps whatever
+    // ran (onFinish, requestConversationRef), and none of it lands in the next.
+    if (statusRef.current === 'submitted' || statusRef.current === 'streaming') void stop();
     setAIMessages([]);
     setOptimisticMessage(null);
     setHistory(null);
     setStoppedIds(new Set());
-  }, [setAIMessages]);
+    setLocalError(null);
+    historyRef.current = [];
+  }, [setAIMessages, stop]);
 
   // The current conversation was deleted (from ChatHistory): drop it.
   useEffect(() => {
@@ -296,11 +374,15 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
   // depth exceeded"); that is a rendering error, not an API failure.
   const status: ChatStatus = useMemo(() => {
     const isRenderingError = error?.message?.includes('Maximum update depth');
-    return (error && !isRenderingError) ? 'error'
+    return localError ? 'error'
+      : (error && !isRenderingError) ? 'error'
       : aiStatus === 'streaming' ? 'streaming'
       : aiStatus === 'submitted' ? 'submitted'
       : 'ready';
-  }, [aiStatus, error]);
+  }, [aiStatus, error, localError]);
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   // Drop the optimistic message once the SDK holds the real one.
   useEffect(() => {
@@ -327,6 +409,8 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
         content: m.content,
         timestamp: m.createdAt,
         isLive: false,
+        // Saved after a stop or a failure because an action in it had run.
+        wasStopped: (m.metadata as { incomplete?: boolean } | undefined)?.incomplete === true,
         cutShort:
           m.role === 'assistant'
             ? (m.metadata as { cutShort?: CutShort } | undefined)?.cutShort
@@ -387,27 +471,38 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     (activeConversationId: Id<'conversations'>) => ({
       conversationId: activeConversationId,
       pageContext: options.pageContext ? serializePageContext(options.pageContext) : undefined,
+      // The saved turns from before this session; the route puts them ahead
+      // of the session's own messages (historyForModel).
+      history: historyRef.current,
     }),
     [options.pageContext]
   );
 
   const isBusy = status === 'submitted' || status === 'streaming';
 
-  /** Fix the history boundary before this session's first send, of any kind. */
+  /**
+   * Fix the history boundary before this session's first send, of any kind,
+   * and the saved turns the model gets with every request of the session.
+   */
   const ensureHistory = useCallback(() => {
     if (history) return;
-    setHistory(
-      persistedMessages
-        ? { ids: new Set(persistedMessages.map((m) => m._id as string)) }
-        : { before: Date.now() - 5_000 }
-    );
+    if (persistedMessages) {
+      setHistory({ ids: new Set(persistedMessages.map((m) => m._id as string)) });
+      historyRef.current = historyForModel(persistedMessages as unknown as PersistedMessage[]);
+    } else {
+      setHistory({ before: Date.now() - 5_000 });
+      historyRef.current = [];
+    }
   }, [history, persistedMessages]);
 
   /** Send one user message; `fromInput` clears the composer as it goes. */
   const sendUserText = useCallback(async (text: string, fromInput: boolean) => {
     const messageContent = text.trim();
-    // One turn at a time: a second send mid-stream interleaves two replies.
-    if (!messageContent || isBusy) return;
+    // One turn at a time: a second send mid-stream interleaves two replies,
+    // and one during the first send's wait for a new conversation made two.
+    if (!messageContent || isBusy || sendingRef.current) return;
+    sendingRef.current = true;
+    setLocalError(null);
 
     flushSync(() => {
       setOptimisticMessage({
@@ -423,14 +518,25 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
 
     let activeConversationId = conversationId;
     if (!activeConversationId) {
-      activeConversationId = await startNewConversation();
+      try {
+        activeConversationId = await startNewConversation();
+      } catch (err) {
+        // Nothing was sent: put the words back and say why.
+        sendingRef.current = false;
+        setOptimisticMessage(null);
+        if (fromInput) setInput(messageContent);
+        setLocalError(panelError(err, 'The chat couldn’t start a new conversation. Try again in a moment.'));
+        return;
+      }
     }
 
     streamStartTime.current = Date.now();
+    requestConversationRef.current = activeConversationId;
     sendMessage(
       { text: messageContent, metadata: { createdAt: Date.now() } },
       { body: requestBody(activeConversationId) }
     );
+    sendingRef.current = false;
 
     // Persist the user message in parallel with the AI request.
     createUserMessage({
@@ -457,10 +563,6 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
   // A continuation sent while a reply is still streaming waits for it to end:
   // two requests at once pushed the first reply twice and saved the card as
   // still waiting, so it could be approved again after a reload.
-  const statusRef = useRef(status);
-  useEffect(() => {
-    statusRef.current = status;
-  }, [status]);
   const queuedContinuation = useRef<{ text: string; conversationId: Id<'conversations'> } | null>(null);
 
   const sendContinuation = useCallback(
@@ -473,6 +575,7 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
       }
       ensureHistory();
       streamStartTime.current = Date.now();
+      requestConversationRef.current = activeConversationId;
       sendMessage({ text: options.text }, { body: requestBody(activeConversationId) });
     },
     [ensureHistory, sendMessage, requestBody]
@@ -498,12 +601,31 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
 
   /** Try the failed turn again. */
   const retry = useCallback(() => {
+    // Nothing went out (a new conversation couldn't be made): send it again.
+    if (localError) {
+      setLocalError(null);
+      void sendUserText(input, true);
+      return;
+    }
     const activeConversationId = conversationIdRef.current;
     if (!activeConversationId) return;
     clearError();
+    // Actions that already ran stay done: regenerating would drop the reply
+    // they're in and let the model run them again (a second createCase). Carry
+    // on from them instead, telling the model which ran.
+    const ran = ranToolCalls(sdkMessagesRef.current[sdkMessagesRef.current.length - 1]);
+    if (ran.length > 0) {
+      sendContinuation({
+        text: `[System: Your last reply was interrupted after these actions had already run: ${ran
+          .map((tc) => tc.tool)
+          .join(', ')}. Do not run them again. Finish the reply from where it stopped.]`,
+      });
+      return;
+    }
     streamStartTime.current = Date.now();
+    requestConversationRef.current = activeConversationId;
     void regenerate({ body: requestBody(activeConversationId) });
-  }, [clearError, regenerate, requestBody]);
+  }, [localError, sendUserText, input, clearError, sendContinuation, regenerate, requestBody]);
 
   return {
     // State
@@ -512,7 +634,7 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     messages: displayMessages,
     input,
     status,
-    error,
+    error: localError ?? error,
     streamingContent,
 
     // Actions

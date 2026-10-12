@@ -212,7 +212,7 @@ export function ActionModeToggle({
               className={cn(
                 // Base segment styling - icons only, compact
                 "relative flex items-center justify-center",
-                "w-10 h-11 md:w-9 md:h-8",
+                "w-11 h-11 md:w-9 md:h-8",
                 "transition-colors duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 // Border between segments (not on last)

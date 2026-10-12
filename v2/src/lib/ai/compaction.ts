@@ -4,8 +4,8 @@
  * Pure, testable utilities for shrinking conversation context to fit model budgets.
  *
  * Levels (escalate until it fits):
- *   L0: no change
- *   L1: pruneMessages, strip old reasoning + tool call bodies (SDK-native, lossless for live tool state)
+ *   L0: [COMPACTED CONTEXT] envelope (when a summary exists) + every message
+ *   L1: envelope + pruneMessages, strip old reasoning + tool call bodies (SDK-native, lossless for live tool state)
  *   L2: [COMPACTED CONTEXT] envelope + last 10 messages (reasoning stripped via pruneMessages), prose cap 1000 tokens
  *   L3: envelope + last 6 messages (reasoning stripped), prose cap 400 tokens
  *   L4: envelope + last 4 messages (reasoning stripped), prose cap 200 tokens
@@ -216,17 +216,23 @@ function buildEnvelope(
 export function compactAt(level: CompactionLevel, input: CompactionInput): ModelMessage[] {
   const { messages, summary } = input;
 
+  // The summary rides every level when one exists: after a reload the client
+  // sends only the newest saved turns, so the summary is the only record of
+  // what came before them.
   if (level === 0) {
-    return messages;
+    return [...buildEnvelope(summary, 1000), ...messages];
   }
 
   if (level === 1) {
-    return pruneMessages({
-      messages,
-      reasoning: 'before-last-message',
-      toolCalls: 'before-last-2-messages',
-      emptyMessages: 'remove',
-    });
+    return [
+      ...buildEnvelope(summary, 1000),
+      ...pruneMessages({
+        messages,
+        reasoning: 'before-last-message',
+        toolCalls: 'before-last-2-messages',
+        emptyMessages: 'remove',
+      }),
+    ];
   }
 
   const config: Record<2 | 3 | 4, { keep: number; proseMaxTokens: number }> = {
@@ -287,20 +293,29 @@ export function compactToFit(
 }
 
 /**
+ * Most entries kept per fact category. The facts ride every request after a
+ * summary, so they can't grow with the conversation; the newest are kept.
+ */
+export const FACT_CAPS = { cases: 50, people: 30, dates: 60, preferences: 20, openActions: 15 } as const;
+
+/**
  * Merge newly-extracted facts into an existing facts object.
  *
  * Merge rules:
- *   - Arrays: dedupe by string form of each entry (preserves order, prefers newer)
- *   - Objects (dates): shallow merge, newer keys overwrite
- *   - Preferences: dedupe, case-insensitive
+ *   - Arrays: dedupe by key, newer entries replace older ones and move to the end
+ *   - Dates: newer keys overwrite (the extractor names the case in each key)
+ *   - Open actions: REPLACED by the newer list when it has one. They're the
+ *     work still to do, so an item done since must be able to drop out; merged,
+ *     they only ever grew
+ *   - Every category keeps its newest FACT_CAPS entries
  */
 export function mergeFacts(
   existing: CompactionFacts | undefined,
   incoming: CompactionFacts | undefined,
 ): CompactionFacts | undefined {
   if (!existing && !incoming) return undefined;
-  if (!existing) return incoming;
-  if (!incoming) return existing;
+  if (!existing) return capFacts(incoming!);
+  if (!incoming) return capFacts(existing);
 
   const dedupeArray = <T>(
     existingArr: T[] | undefined,
@@ -308,49 +323,50 @@ export function mergeFacts(
     key: (item: T) => string,
   ): T[] | undefined => {
     if (!existingArr && !incomingArr) return undefined;
-    const combined = [...(existingArr ?? []), ...(incomingArr ?? [])];
     const seen = new Map<string, T>();
-    for (const item of combined) {
-      seen.set(key(item), item); // newer wins
+    for (const item of [...(existingArr ?? []), ...(incomingArr ?? [])]) {
+      const k = key(item);
+      seen.delete(k); // newer wins, and moves to the end
+      seen.set(k, item);
     }
     return Array.from(seen.values());
   };
 
   const merged: CompactionFacts = {};
 
-  const cases = dedupeArray(
-    existing.cases,
-    incoming.cases,
-    (c) => c.id,
-  );
+  const cases = dedupeArray(existing.cases, incoming.cases, (c) => c.id);
   if (cases) merged.cases = cases;
 
-  const people = dedupeArray(
-    existing.people,
-    incoming.people,
-    (p) => p.name.toLowerCase(),
-  );
+  const people = dedupeArray(existing.people, incoming.people, (p) => p.name.toLowerCase());
   if (people) merged.people = people;
 
   if (existing.dates || incoming.dates) {
-    merged.dates = { ...(existing.dates ?? {}), ...(incoming.dates ?? {}) };
+    const dates: Record<string, string> = {};
+    for (const [k, v] of Object.entries(existing.dates ?? {})) {
+      if (!(incoming.dates && k in incoming.dates)) dates[k] = v;
+    }
+    Object.assign(dates, incoming.dates ?? {});
+    merged.dates = dates;
   }
 
-  const preferences = dedupeArray(
-    existing.preferences,
-    incoming.preferences,
-    (s) => s.toLowerCase(),
-  );
+  const preferences = dedupeArray(existing.preferences, incoming.preferences, (s) => s.toLowerCase());
   if (preferences) merged.preferences = preferences;
 
-  const openActions = dedupeArray(
-    existing.openActions,
-    incoming.openActions,
-    (s) => s.toLowerCase(),
-  );
+  const openActions = incoming.openActions ?? existing.openActions;
   if (openActions) merged.openActions = openActions;
 
-  return merged;
+  return capFacts(merged);
+}
+
+/** Keep the newest FACT_CAPS entries of each category. */
+function capFacts(facts: CompactionFacts): CompactionFacts {
+  const out: CompactionFacts = { ...facts };
+  if (out.cases) out.cases = out.cases.slice(-FACT_CAPS.cases);
+  if (out.people) out.people = out.people.slice(-FACT_CAPS.people);
+  if (out.preferences) out.preferences = out.preferences.slice(-FACT_CAPS.preferences);
+  if (out.openActions) out.openActions = out.openActions.slice(-FACT_CAPS.openActions);
+  if (out.dates) out.dates = Object.fromEntries(Object.entries(out.dates).slice(-FACT_CAPS.dates));
+  return out;
 }
 
 /**

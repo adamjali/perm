@@ -7,8 +7,11 @@
  * @module convex/conversations
  */
 
-import { query, mutation } from "./_generated/server";
+import { internalMutation, query, mutation, type MutationCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
 import { v } from "convex/values";
+import { CHAT_LIMITS, MESSAGE_READ_CAP } from "./lib/chatLimits";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { logDelete } from "./lib/audit";
 import { validateStringLength, INPUT_LIMITS } from "./lib/validation";
@@ -135,21 +138,45 @@ export const list = query({
     const userId = await getCurrentUserIdOrNull(ctx);
     if (userId === null) return [];
 
-    const conversations = await ctx.db
-      .query("conversations")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    // Sort by updatedAt descending (most recent first). Each conversation's
+    // The newest CHAT_LIMITS.conversationsListed, newest first (the panel says
+    // when it shows only these). Each conversation's
     // summary (up to ~1,000 tokens, written by compaction) stays out: the
     // history panel shows the title and the time, and this list grows with
     // every conversation the person starts. The chat reads the summary through
     // conversationSummary.getContextMessages.
-    return conversations
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .map(({ summary: _summary, ...rest }) => rest);
+    const conversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_user_and_updated", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(CHAT_LIMITS.conversationsListed);
+    return conversations.map(({ summary: _summary, ...rest }) => rest);
   },
 });
+
+/**
+ * Delete one conversation's messages and cached tool answers, then the
+ * conversation. Returns how many messages it held.
+ */
+async function purgeConversation(ctx: MutationCtx, conversation: Doc<"conversations">): Promise<number> {
+  const messages = await ctx.db
+    .query("conversationMessages")
+    .withIndex("by_conversation_id", (q) => q.eq("conversationId", conversation._id))
+    .take(MESSAGE_READ_CAP);
+  for (const message of messages) {
+    await ctx.db.delete(message._id);
+  }
+  // Cached tool answers (case lists, searches) hold the conversation's data too.
+  const cached = await ctx.db
+    .query("toolCache")
+    .withIndex("by_conversation_tool_hash", (q) => q.eq("conversationId", conversation._id))
+    // Bounded; anything past it expires on its own (toolCache by_expires).
+    .take(2_000);
+  for (const row of cached) {
+    await ctx.db.delete(row._id);
+  }
+  await ctx.db.delete(conversation._id);
+  return messages.length;
+}
 
 /**
  * Permanently delete a conversation and all its messages
@@ -182,75 +209,73 @@ export const deleteConversation = mutation({
       throw new Error("Access denied: you do not own this conversation");
     }
 
-    // Delete all messages in this conversation
-    const messages = await ctx.db
-      .query("conversationMessages")
-      .withIndex("by_conversation_id", (q) => q.eq("conversationId", args.id))
-      .collect();
+    const messageCount = await purgeConversation(ctx, conversation);
 
-    for (const message of messages) {
-      await ctx.db.delete(message._id);
-    }
-
-    // Audit: conversation deletion
-    await logDelete(ctx, "conversations", args.id, conversation as Record<string, unknown>);
-
-    // Delete the conversation itself
-    await ctx.db.delete(args.id);
+    // Audit: that it was deleted and how big it was. Never its title (the
+    // first words of the first message) or its summary: audit logs are kept
+    // indefinitely, and a delete must not leave the words behind.
+    await logDelete(ctx, "conversations", args.id, {
+      messageCount,
+      hadSummary: conversation.summary !== undefined,
+      createdAt: conversation.createdAt,
+    });
   },
 });
+
+/** Conversations deleted per transaction by deleteAll; the rest follow. */
+const DELETE_ALL_BATCH = 10;
+
+async function deleteAllBatch(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+): Promise<{ deleted: number; more: boolean; firstId?: Id<"conversations"> }> {
+  const conversations = await ctx.db
+    .query("conversations")
+    .withIndex("by_user_id", (q) => q.eq("userId", userId))
+    .take(DELETE_ALL_BATCH + 1);
+  const batch = conversations.slice(0, DELETE_ALL_BATCH);
+  for (const conversation of batch) {
+    await purgeConversation(ctx, conversation);
+  }
+  const more = conversations.length > DELETE_ALL_BATCH;
+  if (more) {
+    await ctx.scheduler.runAfter(0, internal.conversations.deleteAllRest, { userId });
+  }
+  return { deleted: batch.length, more, firstId: batch[0]?._id };
+}
 
 /**
  * Permanently delete all conversations and their messages for the current user
  *
- * This is a destructive operation that cannot be undone.
+ * This is a destructive operation that cannot be undone. The first
+ * DELETE_ALL_BATCH go in this call; the rest follow in scheduled batches, so a
+ * long history can't run past one transaction's limits.
  *
- * @returns Number of conversations deleted
- *
- * @example
- * ```typescript
- * const count = await ctx.runMutation(api.conversations.deleteAll, {});
- * console.log(`Deleted ${count} conversations`);
- * ```
+ * @returns Number of conversations deleted in this call
  */
 export const deleteAll = mutation({
   args: {},
   handler: async (ctx) => {
     const userId = await getCurrentUserId(ctx);
+    const { deleted, more, firstId } = await deleteAllBatch(ctx, userId);
 
-    // Get all conversations for user
-    const conversations = await ctx.db
-      .query("conversations")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    // Delete each conversation and its messages
-    for (const conversation of conversations) {
-      // Delete all messages in this conversation
-      const messages = await ctx.db
-        .query("conversationMessages")
-        .withIndex("by_conversation_id", (q) =>
-          q.eq("conversationId", conversation._id)
-        )
-        .collect();
-
-      for (const message of messages) {
-        await ctx.db.delete(message._id);
-      }
-
-      // Delete the conversation itself
-      await ctx.db.delete(conversation._id);
-    }
-
-    // Audit: batch deletion (single summarized entry to avoid flooding)
-    if (conversations.length > 0) {
-      await logDelete(ctx, "conversations", conversations[0]!._id, {
+    // Audit: one summarized entry, counts only.
+    if (firstId) {
+      await logDelete(ctx, "conversations", firstId, {
         batchDelete: true,
-        count: conversations.length,
-        conversationIds: conversations.map((c) => c._id.toString()),
+        deletedNow: deleted,
+        more,
       });
     }
 
-    return conversations.length;
+    return deleted;
+  },
+});
+
+/** The rest of a deleteAll, one batch at a time. */
+export const deleteAllRest = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    await deleteAllBatch(ctx, args.userId);
   },
 });

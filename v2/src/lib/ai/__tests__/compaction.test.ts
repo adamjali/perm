@@ -6,6 +6,7 @@ import {
   compactAt,
   compactToFit,
   mergeFacts,
+  FACT_CAPS,
   parseFacts,
   type CompactionFacts,
 } from '../compaction';
@@ -43,19 +44,24 @@ describe('estimateStringTokens', () => {
 });
 
 describe('compactAt — Level 0', () => {
-  it('returns messages unchanged', () => {
+  it('returns messages unchanged when there is no summary', () => {
     const messages = [msg('user', 'hello'), msg('assistant', 'hi')];
     const result = compactAt(0, { messages });
-    expect(result).toBe(messages);
+    expect(result).toEqual(messages);
   });
 
-  it('ignores summary at level 0', () => {
+  // After a reload the client sends only the newest saved turns, so the
+  // summary is the only record of what came before them (Oct 12 2026).
+  it('keeps the summary ahead of the messages at level 0', () => {
     const messages = [msg('user', 'hello')];
     const result = compactAt(0, {
       messages,
       summary: { content: 'prior context', facts: { cases: [{ id: 'X-123' }] } },
     });
-    expect(result).toEqual(messages);
+    expect(result).toHaveLength(3);
+    expect(String(result[0]?.content)).toContain('prior context');
+    expect(String(result[0]?.content)).toContain('X-123');
+    expect(result[2]).toEqual(messages[0]);
   });
 });
 
@@ -381,11 +387,33 @@ describe('mergeFacts', () => {
     expect(merged!.preferences).toHaveLength(2);
   });
 
-  it('accumulates open actions without duplicates', () => {
+  // Open actions are the work still to do: merged, an item finished since
+  // could never drop out (Oct 12 2026).
+  it('replaces open actions with the newer list', () => {
+    const existing: CompactionFacts = { openActions: ['waiting for RFE', 'review 9089'] };
+    const incoming: CompactionFacts = { openActions: ['file the I-140'] };
+    expect(mergeFacts(existing, incoming)!.openActions).toEqual(['file the I-140']);
+  });
+
+  it('keeps the open actions when the newer facts name none', () => {
     const existing: CompactionFacts = { openActions: ['waiting for RFE'] };
-    const incoming: CompactionFacts = { openActions: ['waiting for RFE', 'review 9089'] };
-    const merged = mergeFacts(existing, incoming);
-    expect(merged!.openActions).toHaveLength(2);
+    expect(mergeFacts(existing, { cases: [{ id: 'X-1' }] })!.openActions).toEqual(['waiting for RFE']);
+  });
+
+  it('keeps only the newest entries of each category', () => {
+    const many = (n: number, prefix: string) => Array.from({ length: n }, (_, i) => `${prefix}${i}`);
+    const existing: CompactionFacts = {
+      cases: many(FACT_CAPS.cases, 'old-').map((id) => ({ id })),
+      dates: Object.fromEntries(many(FACT_CAPS.dates, 'old-').map((k) => [k, '2024-01-01'])),
+    };
+    const incoming: CompactionFacts = { cases: [{ id: 'new-case' }], dates: { 'new-date': '2026-10-12' } };
+    const merged = mergeFacts(existing, incoming)!;
+    expect(merged.cases).toHaveLength(FACT_CAPS.cases);
+    expect(merged.cases!.at(-1)).toEqual({ id: 'new-case' });
+    expect(merged.cases!.some((c) => c.id === 'old-0')).toBe(false);
+    expect(Object.keys(merged.dates!)).toHaveLength(FACT_CAPS.dates);
+    expect(merged.dates!['new-date']).toBe('2026-10-12');
+    expect('old-0' in merged.dates!).toBe(false);
   });
 });
 

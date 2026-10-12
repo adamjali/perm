@@ -22,7 +22,7 @@
  * the existing client-side error handlers already recognize + surface.
  */
 
-import { RateLimiter, MINUTE, HOUR } from "@convex-dev/rate-limiter";
+import { RateLimiter, MINUTE, HOUR, DAY } from "@convex-dev/rate-limiter";
 import { components } from "./_generated/api";
 
 /**
@@ -41,6 +41,16 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
 
   // Chat/conversation creation (mutations)
   conversationCreate: { kind: "token bucket", rate: 20, period: MINUTE, capacity: 10 },
+
+  // One account's chat turns (convex/chatQuota.ts, asked by the chat route):
+  // every request to the AI, a question or the follow-up after an approval.
+  // The AI providers' free quotas are shared by every account, so one account
+  // can't spend them all. A busy attorney's day is well under these.
+  chatTurn: { kind: "token bucket", rate: 60, period: HOUR, capacity: 20 },
+  chatTurnDaily: { kind: "fixed window", rate: 400, period: DAY },
+  // Saving chat messages (convex/conversationMessages.ts): a question and its
+  // reply per turn, with room for a fast exchange.
+  chatMessageWrite: { kind: "token bucket", rate: 120, period: MINUTE, capacity: 40 },
 
   // Confirmation cards the chat shows (convex/chatConfirmations.ts), one per
   // write the assistant proposes; a turn proposes a few at most.

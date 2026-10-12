@@ -14,8 +14,15 @@
  */
 
 import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import {
+  CHAT_LIMITS,
+  CONVERSATION_FULL_MESSAGE,
+  MESSAGE_READ_CAP,
+  clipText,
+} from "./lib/chatLimits";
+import { rateLimiter } from "./rateLimitConfig";
 
 /**
  * Truncate a string to a maximum length, adding ellipsis if truncated.
@@ -68,6 +75,22 @@ export const createUserMessage = mutation({
 
     if (conversation.userId !== userId) {
       throw new Error("Access denied: you do not own this conversation");
+    }
+
+    if (args.content.length > CHAT_LIMITS.userMessageChars) {
+      throw new ConvexError({
+        code: "message_too_long",
+        message: `A chat message holds up to ${CHAT_LIMITS.userMessageChars.toLocaleString("en-US")} characters.`,
+      });
+    }
+    await rateLimiter.limit(ctx, "chatMessageWrite", { key: userId, throws: true });
+    // A full conversation takes no new question (the chat route says so first).
+    const held = await ctx.db
+      .query("conversationMessages")
+      .withIndex("by_conversation_id", (q) => q.eq("conversationId", args.conversationId))
+      .take(CHAT_LIMITS.messagesPerConversation);
+    if (held.length >= CHAT_LIMITS.messagesPerConversation) {
+      throw new ConvexError({ code: "conversation_full", message: CONVERSATION_FULL_MESSAGE });
     }
 
     // Create the message
@@ -155,6 +178,7 @@ export const createAssistantMessage = mutation({
         model: v.optional(v.string()),
         tokenCount: v.optional(v.number()),
         cutShort: v.optional(v.union(v.literal("length"), v.literal("steps"))),
+        incomplete: v.optional(v.boolean()),
       })
     ),
   },
@@ -173,12 +197,18 @@ export const createAssistantMessage = mutation({
       throw new Error("Access denied: you do not own this conversation");
     }
 
-    // Create the message
+    await rateLimiter.limit(ctx, "chatMessageWrite", { key: userId, throws: true });
+
+    // Create the message, each part kept to its limit (convex/lib/chatLimits.ts).
     const messageId = await ctx.db.insert("conversationMessages", {
       conversationId: args.conversationId,
       role: "assistant",
-      content: args.content,
-      toolCalls: args.toolCalls,
+      content: clipText(args.content, CHAT_LIMITS.assistantMessageChars),
+      toolCalls: args.toolCalls?.map((tc) => ({
+        ...tc,
+        arguments: clipText(tc.arguments, CHAT_LIMITS.toolArgumentsChars),
+        ...(tc.result !== undefined ? { result: clipText(tc.result, CHAT_LIMITS.toolResultChars) } : {}),
+      })),
       metadata: args.metadata,
       createdAt: now,
     });
@@ -197,7 +227,7 @@ export const createAssistantMessage = mutation({
         .withIndex("by_conversation_id", (q) =>
           q.eq("conversationId", args.conversationId)
         )
-        .collect();
+        .take(3);
 
       // Count is now 2 (including the message we just created)
       // Note: We count after insert, so the new message is already in the count
@@ -261,13 +291,14 @@ export const list = query({
       return [];
     }
 
-    // Get all messages for this conversation
+    // Every message: a conversation holds at most
+    // CHAT_LIMITS.messagesPerConversation, so the read is bounded.
     const messages = await ctx.db
       .query("conversationMessages")
       .withIndex("by_conversation_id", (q) =>
         q.eq("conversationId", args.conversationId)
       )
-      .collect();
+      .take(MESSAGE_READ_CAP);
 
     // Sort by createdAt ascending (oldest first for chat display)
     return messages.sort((a, b) => a.createdAt - b.createdAt);
@@ -303,19 +334,13 @@ export const getMostRecent = query({
     const userId = await getCurrentUserIdOrNull(ctx);
     if (!userId) return null;
 
-    const conversations = await ctx.db
+    // The newest by updatedAt, one index read (it had read every
+    // conversation the person ever started, on every change to any of them).
+    return await ctx.db
       .query("conversations")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .collect();
-
-    if (conversations.length === 0) {
-      return null;
-    }
-
-    // Find the most recently updated
-    return conversations.reduce((mostRecent, current) =>
-      current.updatedAt > mostRecent.updatedAt ? current : mostRecent
-    );
+      .withIndex("by_user_and_updated", (q) => q.eq("userId", userId))
+      .order("desc")
+      .first();
   },
 });
 
@@ -379,14 +404,15 @@ export const updateToolCallResult = mutation({
       throw new Error("Access denied: you do not own this conversation");
     }
 
-    // Find the message containing this tool call
-    // We search for messages with toolCalls that contain the toolCallId in their result
+    // Find the message containing this tool call: newest first, since a card
+    // is answered near where it was shown; bounded like every message read.
     const messages = await ctx.db
       .query("conversationMessages")
       .withIndex("by_conversation_id", (q) =>
         q.eq("conversationId", args.conversationId)
       )
-      .collect();
+      .order("desc")
+      .take(MESSAGE_READ_CAP);
 
     // Find the message and tool call index
     for (const message of messages) {
@@ -409,7 +435,7 @@ export const updateToolCallResult = mutation({
             updatedToolCalls[i] = {
               tool: toolCall.tool,
               arguments: toolCall.arguments,
-              result: args.result,
+              result: clipText(args.result, CHAT_LIMITS.toolResultChars),
               status: args.status,
               executedAt: Date.now(),
             };

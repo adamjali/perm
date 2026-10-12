@@ -406,7 +406,8 @@ export function createTools(
                 error,
                 errorMessage: error instanceof Error ? error.message : String(error),
                 errorType: error instanceof Error ? error.constructor.name : typeof error,
-                params: truncateForLog(params),
+                // Not the query: it's the person's own words, often a client's name.
+                queryLength: typeof (params as { query?: unknown }).query === 'string' ? (params as { query: string }).query.length : undefined,
               });
               captureError(error);
               return {
@@ -458,7 +459,8 @@ export function createTools(
                 error,
                 errorMessage: error instanceof Error ? error.message : String(error),
                 errorType: error instanceof Error ? error.constructor.name : typeof error,
-                params: truncateForLog(params),
+                // Not the query: it's the person's own words, often a client's name.
+                queryLength: typeof (params as { query?: unknown }).query === 'string' ? (params as { query: string }).query.length : undefined,
               });
               captureError(error);
               return {

@@ -110,39 +110,42 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
       </a>
     ),
 
-    // Unordered lists
+    // Lists use the browser's own markers. react-markdown 10 no longer tells a
+    // list item whether its list is numbered, so a custom marker drew numbered
+    // steps as bullets.
     ul: ({ children }) => (
-      <ul className="my-2 ml-4 space-y-1 list-none">
+      <ul className={cn('my-2 ml-5 space-y-1 list-disc', isUser ? 'marker:text-current' : 'marker:text-primary-text')}>
         {children}
       </ul>
     ),
 
-    // Ordered lists
-    ol: ({ children }) => (
-      <ol className="my-2 ml-4 space-y-1 list-none counter-reset-item">
+    ol: ({ children, start }) => (
+      <ol
+        start={start}
+        className={cn('my-2 ml-5 space-y-1 list-decimal marker:font-bold', isUser ? 'marker:text-current' : 'marker:text-primary-text')}
+      >
         {children}
       </ol>
     ),
 
-    // List items
-    li: ({ children, ...props }) => {
-      // Check if parent is ol or ul based on ordered prop
-      const isOrdered = 'ordered' in props && props.ordered;
+    li: ({ children }) => <li className="pl-1">{children}</li>,
 
-      return (
-        <li className="relative pl-4">
-          <span
-            className={cn(
-              'absolute left-0 top-0 font-bold',
-              isUser ? 'text-current' : 'text-primary'
-            )}
-          >
-            {isOrdered ? '→' : '•'}
-          </span>
-          {children}
-        </li>
-      );
-    },
+    // An image is shown as a link, never loaded: a reply can quote a web page
+    // or a note, and loading an image from any address would let such text
+    // send the conversation's details to that address in the image's URL.
+    img: ({ src, alt }) =>
+      typeof src === 'string' && /^https:\/\//i.test(src) ? (
+        <a
+          href={src}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          className="underline underline-offset-2 decoration-2"
+        >
+          {alt ? `Image: ${alt}` : 'Image link'}
+        </a>
+      ) : (
+        <span>{alt ? `[Image: ${alt}]` : '[Image]'}</span>
+      ),
 
     // Tables
     table: ({ children }) => (

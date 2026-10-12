@@ -155,4 +155,26 @@ describe('ChatInput', () => {
       });
     });
   });
+
+  // Chinese, Japanese, Korean and Vietnamese keyboards use Enter to pick the
+  // word being composed; that Enter must not send the half-typed message.
+  describe('composition', () => {
+    it('does not send on the Enter that ends a composition', () => {
+      const onSend = vi.fn();
+      render(<ChatInput {...defaultProps} value="xin chao" onSend={onSend} />);
+      const box = screen.getByRole('textbox', { name: 'Message' });
+      fireEvent.keyDown(box, { key: 'Enter', isComposing: true });
+      fireEvent.keyDown(box, { key: 'Enter', keyCode: 229 });
+      expect(onSend).not.toHaveBeenCalled();
+      fireEvent.keyDown(box, { key: 'Enter' });
+      expect(onSend).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('holds a message to the chat\'s length limit and says so near it', () => {
+    render(<ChatInput {...defaultProps} value={'x'.repeat(7_000)} />);
+    const box = screen.getByRole('textbox', { name: 'Message' });
+    expect(box).toHaveAttribute('maxLength', '8000');
+    expect(screen.getByText('7,000 of 8,000 characters')).toBeInTheDocument();
+  });
 });

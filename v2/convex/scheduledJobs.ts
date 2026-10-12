@@ -786,6 +786,16 @@ export const cleanupExpiredConversations = internalMutation({
         await ctx.db.delete(message._id);
       }
 
+      // Cached tool answers hold the conversation's data too.
+      const cached = await ctx.db
+        .query("toolCache")
+        .withIndex("by_conversation_tool_hash", (q) => q.eq("conversationId", conversation._id))
+        // Bounded; anything past it expires on its own (toolCache by_expires).
+        .take(2_000);
+      for (const row of cached) {
+        await ctx.db.delete(row._id);
+      }
+
       // Delete the conversation itself
       await ctx.db.delete(conversation._id);
       deleted++;

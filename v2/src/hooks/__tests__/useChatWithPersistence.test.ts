@@ -247,9 +247,15 @@ describe('useChatWithPersistence', () => {
 
       const { useChatWithPersistence } = await import('../useChatWithPersistence');
       const mockConversationId = 'conv-c2' as never;
-      renderHook(() => useChatWithPersistence({ conversationId: mockConversationId }));
+      const hook = renderHook(() => useChatWithPersistence({ conversationId: mockConversationId }));
+      // A reply belongs to the conversation its request was sent in, so every
+      // case starts with a send.
+      act(() => hook.result.current.setInput('question'));
+      await act(async () => {
+        await hook.result.current.handleSend();
+      });
 
-      return { createAssistantMessage, getOnFinish: () => capturedOnFinish };
+      return { createAssistantMessage, getOnFinish: () => capturedOnFinish, hook };
     };
 
     const goodMessage = { parts: [{ type: 'text', text: 'real answer' }] };
@@ -266,6 +272,40 @@ describe('useChatWithPersistence', () => {
         await onFinish!({ message: goodMessage, ...(flags as object) });
       });
       expect(createAssistantMessage).not.toHaveBeenCalled();
+    });
+
+    // A stop, a dropped connection or a failure after an action had run: the
+    // reply is saved, marked incomplete, so the action is on record after a
+    // reload (Oct 12 2026).
+    const ranMessage = {
+      parts: [
+        { type: 'text', text: 'Creating the case now' },
+        { type: 'tool-createCase', toolCallId: 'call-1', state: 'output-available', input: { employerName: 'Acme' }, output: { success: true, caseId: 'c1' } },
+      ],
+    };
+    it.each([
+      ['isAbort', { isAbort: true }],
+      ['isDisconnect', { isDisconnect: true }],
+      ['isError', { isError: true }],
+    ])('saves an interrupted reply whose action ran, marked incomplete (%s)', async (_label, flags) => {
+      const { createAssistantMessage, getOnFinish } = await setupCaptureOnFinish();
+      await act(async () => {
+        await getOnFinish()!({ message: ranMessage as never, ...(flags as object) });
+      });
+      expect(createAssistantMessage).toHaveBeenCalledTimes(1);
+      expect(createAssistantMessage.mock.calls[0]![0]).toMatchObject({
+        conversationId: 'conv-c2',
+        metadata: expect.objectContaining({ incomplete: true }),
+      });
+    });
+
+    it('saves the reply into the conversation it was asked in, after a switch', async () => {
+      const { createAssistantMessage, getOnFinish, hook } = await setupCaptureOnFinish();
+      act(() => hook.result.current.selectConversation('conv-other' as never));
+      await act(async () => {
+        await getOnFinish()!({ message: goodMessage, isAbort: false, isDisconnect: false, isError: false });
+      });
+      expect(createAssistantMessage).toHaveBeenCalledWith(expect.objectContaining({ conversationId: 'conv-c2' }));
     });
 
     it('DOES persist a clean, successful turn', async () => {
@@ -290,9 +330,10 @@ describe('useChatWithPersistence', () => {
     type SdkMsg = { id: string; role: 'user' | 'assistant'; parts: Array<{ type: string; text?: string }>; metadata?: unknown };
     const conv = 'conv-live' as never;
     let sdk: { messages: SdkMsg[]; status: string };
-    let persisted: Array<{ _id: string; role: string; content: string; createdAt: number }>;
+    let persisted: Array<{ _id: string; role: string; content: string; createdAt: number; toolCalls?: unknown[] }>;
     let sendMessage: ReturnType<typeof vi.fn>;
     let stop: ReturnType<typeof vi.fn>;
+    let regenerate: ReturnType<typeof vi.fn>;
 
     const setup = async () => {
       const { useChat } = await import('@ai-sdk/react');
@@ -301,13 +342,14 @@ describe('useChatWithPersistence', () => {
       persisted = [];
       sendMessage = vi.fn();
       stop = vi.fn();
+      regenerate = vi.fn();
       vi.mocked(useChat).mockImplementation(
         () =>
           ({
             messages: sdk.messages,
             setMessages: vi.fn(),
             sendMessage,
-            regenerate: vi.fn(),
+            regenerate,
             clearError: vi.fn(),
             status: sdk.status,
             error: null,
@@ -447,6 +489,67 @@ describe('useChatWithPersistence', () => {
       expect(result.current.input).toBe('half-typed note');
     });
 
+    // After a reload the SDK holds none of the conversation; the saved turns
+    // ride the request so "yes, update it" has something to refer to.
+    it('sends the saved turns from before the session with every request', async () => {
+      const { result, rerender } = await setup();
+      persisted = [
+        { _id: 'p1', role: 'user', content: 'Update the Acme case filing date', createdAt: 1 },
+        {
+          _id: 'p2',
+          role: 'assistant',
+          content: 'Here is the change.',
+          createdAt: 2,
+          toolCalls: [{ tool: 'updateCase', arguments: '{}', status: 'success', result: JSON.stringify({ success: true, stage: 'ETA 9089, filed' }) }],
+        },
+      ];
+      rerender();
+      act(() => result.current.setInput('yes, do it'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      const body = sendMessage.mock.calls[0]![1].body as { history: Array<{ id: string; role: string; parts: Array<{ text: string }> }> };
+      expect(body.history.map((m) => m.id)).toEqual(['p1', 'p2']);
+      expect(body.history[1]!.parts[0]!.text).toContain('Here is the change.');
+      expect(body.history[1]!.parts[0]!.text).toContain('[Earlier action updateCase: Saved, stage ETA 9089, filed]');
+    });
+
+    it('Try again after an action ran carries on from it instead of running it again', async () => {
+      const { result, rerender } = await setup();
+      act(() => result.current.setInput('add Acme'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      sdk.messages = [
+        { id: 'u1', role: 'user', parts: text('add Acme') },
+        {
+          id: 'a1',
+          role: 'assistant',
+          parts: [
+            { type: 'text', text: 'Creating it' },
+            { type: 'tool-createCase', toolCallId: 'call-1', state: 'output-available', input: {}, output: { success: true } } as never,
+          ],
+        },
+      ];
+      rerender();
+      act(() => result.current.retry());
+      expect(regenerate).not.toHaveBeenCalled();
+      expect(sendMessage).toHaveBeenCalledTimes(2);
+      expect(sendMessage.mock.calls[1]![0].text).toMatch(/^\[System: Your last reply was interrupted after these actions had already run: createCase\. Do not run them again/);
+    });
+
+    it('Try again with nothing done regenerates the reply', async () => {
+      const { result, rerender } = await setup();
+      act(() => result.current.setInput('hi'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      sdk.messages = [{ id: 'u1', role: 'user', parts: text('hi') }];
+      rerender();
+      act(() => result.current.retry());
+      expect(regenerate).toHaveBeenCalledTimes(1);
+    });
+
     it('an ordinary reply carries no cut-short reason', async () => {
       const { result, rerender } = await setup();
       act(() => result.current.setInput('hi'));
@@ -459,6 +562,54 @@ describe('useChatWithPersistence', () => {
       ];
       rerender();
       expect(result.current.messages.at(-1)?.cutShort).toBeUndefined();
+    });
+  });
+
+  describe('the first message of a new conversation', () => {
+    const setupNew = async (create: ReturnType<typeof vi.fn>) => {
+      const { useMutation } = await import('convex/react');
+      vi.mocked(useMutation).mockImplementation(((ref: unknown) =>
+        ref === 'create' ? create : vi.fn().mockResolvedValue('mock-id')) as never);
+      const { useChatWithPersistence } = await import('../useChatWithPersistence');
+      return renderHook(() => useChatWithPersistence({}));
+    };
+
+    // During the wait for the new conversation the status is still ready, so a
+    // second Enter made a second conversation (Oct 12 2026).
+    it('starts one conversation however fast the second send comes', async () => {
+      let resolve!: (id: string) => void;
+      const create = vi.fn(() => new Promise<string>((r) => { resolve = r; }));
+      const { result } = await setupNew(create);
+      act(() => result.current.setInput('hello'));
+      let first!: Promise<void>;
+      act(() => {
+        first = result.current.handleSend() as Promise<void>;
+      });
+      // A second message typed and sent while the first waits.
+      act(() => result.current.setInput('and another'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      await act(async () => {
+        resolve('conv-new');
+        await first;
+      });
+      expect(create).toHaveBeenCalledTimes(1);
+      // The second message isn't lost: it waits in the box.
+      expect(result.current.input).toBe('and another');
+    });
+
+    it('puts the words back and says why when the conversation can\'t be made', async () => {
+      const create = vi.fn().mockRejectedValue(new Error('server down'));
+      const { result } = await setupNew(create);
+      act(() => result.current.setInput('hello there'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      expect(result.current.input).toBe('hello there');
+      expect(result.current.status).toBe('error');
+      expect(JSON.parse(result.current.error!.message)).toMatchObject({ error: 'send_failed' });
+      expect(result.current.messages).toHaveLength(0);
     });
   });
 

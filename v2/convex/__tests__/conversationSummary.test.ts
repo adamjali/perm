@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { vi, describe, it, expect } from "vitest";
 import {
   createTestContext,
   createAuthenticatedContext,
@@ -109,7 +109,7 @@ describe("conversationSummary", () => {
         api.conversationSummary.beginSummarizing,
         { conversationId },
       );
-      expect(claimed).toBe(true);
+      expect(typeof claimed).toBe("number");
 
       const needs = await asUser.query(
         api.conversationSummary.needsSummarization,
@@ -129,7 +129,8 @@ describe("conversationSummary", () => {
         api.conversationSummary.beginSummarizing,
         { conversationId },
       );
-      expect(claimed).toBe(true);
+      // The lock's token, which saveSummary checks.
+      expect(typeof claimed).toBe("number");
     });
 
     it("blocks concurrent acquisitions", async () => {
@@ -145,7 +146,7 @@ describe("conversationSummary", () => {
         api.conversationSummary.beginSummarizing,
         { conversationId },
       );
-      expect(first).toBe(true);
+      expect(typeof first).toBe("number");
       expect(second).toBe(false);
     });
 
@@ -233,6 +234,55 @@ describe("conversationSummary", () => {
       const parsedFacts = JSON.parse(ctx.facts!);
       expect(parsedFacts.cases).toEqual(["X-1"]);
       expect(ctx.messageCountAtSummary).toBe(5);
+    });
+
+    // A run that outlived its 60-second lock finishes after a newer run has
+    // saved: its older summary must not replace the newer one (Oct 12 2026).
+    it("refuses a save from a run that no longer holds the lock", async () => {
+      const t = createTestContext();
+      const asUser = await createAuthenticatedContext(t);
+      const conversationId = await seedConversation(asUser, 15);
+
+      const stale = await asUser.mutation(api.conversationSummary.beginSummarizing, { conversationId });
+      // The lock lapses and a second run claims it and saves.
+      vi.useFakeTimers({ toFake: ["Date"], now: Date.now() + 2 * 60_000 });
+      try {
+        const fresh = await asUser.mutation(api.conversationSummary.beginSummarizing, { conversationId });
+        expect(typeof fresh).toBe("number");
+        await asUser.mutation(api.conversationSummary.saveSummary, {
+          conversationId,
+          content: "the newer summary",
+          tokenCount: 10,
+          messageCountAtSummary: 5,
+          lockToken: fresh as number,
+        });
+        await asUser.mutation(api.conversationSummary.saveSummary, {
+          conversationId,
+          content: "the stale summary",
+          tokenCount: 10,
+          messageCountAtSummary: 5,
+          lockToken: stale as number,
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+      const ctx = await asUser.query(api.conversationSummary.getContextMessages, { conversationId });
+      expect(ctx.summary).toBe("the newer summary");
+    });
+
+    it("never moves a summary back to fewer messages", async () => {
+      const t = createTestContext();
+      const asUser = await createAuthenticatedContext(t);
+      const conversationId = await seedConversation(asUser, 15);
+      await asUser.mutation(api.conversationSummary.saveSummary, {
+        conversationId, content: "covers 8", tokenCount: 10, messageCountAtSummary: 8,
+      });
+      await asUser.mutation(api.conversationSummary.saveSummary, {
+        conversationId, content: "covers 4", tokenCount: 10, messageCountAtSummary: 4,
+      });
+      const ctx = await asUser.query(api.conversationSummary.getContextMessages, { conversationId });
+      expect(ctx.summary).toBe("covers 8");
+      expect(ctx.messageCountAtSummary).toBe(8);
     });
 
     it("saves summary without facts (backward compat)", async () => {

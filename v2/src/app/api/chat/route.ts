@@ -34,13 +34,14 @@ import { chatModel, PRIMARY_MODEL_NAME, reportMidStreamFailure } from '@/lib/ai/
 import { compactToFit, compactAt, parseFacts } from '@/lib/ai/compaction';
 import { getClientIp } from '@/lib/net/getClientIp';
 import { getSystemPrompt } from '@/lib/ai/system-prompt';
-import { nowInZone, stepShowedCard } from '@/lib/ai/chatTurn';
+import { nowInZone, savedTurns, stepShowedCard } from '@/lib/ai/chatTurn';
 import type { ActionMode } from '@/lib/ai/tool-permissions';
 import { createCacheStats } from '@/lib/ai/cache';
 import { captureError } from '@/lib/sentry';
 import { getPostHogClient } from '@/lib/posthog-server';
 import { chatDebug, createTools, truncateForLog } from './create-tools';
-import { CHAT_MAX_OUTPUT_TOKENS, CHAT_MAX_STEPS, chatIpLimitBody, cutShortFrom } from '@/lib/ai/limits';
+import { CHAT_MAX_OUTPUT_TOKENS, CHAT_MAX_STEPS, chatIpLimitBody, chatUserLimitBody, cutShortFrom } from '@/lib/ai/limits';
+import { CHAT_LIMITS, CONVERSATION_FULL_MESSAGE } from '@convex/lib/chatLimits';
 
 // Up to 60 seconds for streaming responses (extra time for fallbacks + tool
 // calls), for platforms that read maxDuration. On our own server `next start`
@@ -136,13 +137,32 @@ export async function POST(req: Request) {
       );
     }
 
+    // One account's turns (convex/chatQuota.ts): the AI providers' free
+    // quotas are shared, so one account can't spend them all. Fails open like
+    // the per-address check, and says so in Sentry.
+    try {
+      const turn = await fetchMutation(api.chatQuota.takeTurn, {}, { token });
+      if (!turn.ok) {
+        const body = chatUserLimitBody(turn.retryAfterMs, turn.window);
+        return new Response(JSON.stringify(body), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': String(body.retryAfter) },
+        });
+      }
+    } catch (quotaError) {
+      console.warn(`[Chat API] [${sessionId}] Chat quota check failed, allowing:`, quotaError instanceof Error ? quotaError.message : quotaError);
+      captureError(quotaError, { operation: 'chat.userQuota.failOpen', extra: { sessionId } });
+    }
+
     // Parse request body
     const {
-      messages,
+      messages: sessionMessages,
+      history,
       conversationId,
       pageContext,
     }: {
       messages: UIMessage[];
+      history?: unknown;
       conversationId?: string;
       pageContext?: {
         path?: string;
@@ -155,6 +175,12 @@ export async function POST(req: Request) {
         [key: string]: unknown;
       };
     } = await req.json();
+    // The saved turns from before the client's session (useChatWithPersistence
+    // historyForModel), then the session's own: after a reload the session
+    // holds none of the conversation. Text only, kept to their bounds.
+    const messages: UIMessage[] = Array.isArray(sessionMessages)
+      ? [...savedTurns(history), ...sessionMessages]
+      : sessionMessages;
     const lastMessage = messages[messages.length - 1];
     const messageContent = lastMessage?.parts
       ? lastMessage.parts.filter((p): p is { type: 'text'; text: string } => (p as { type: string }).type === 'text').map(p => p.text).join(' ')
@@ -174,10 +200,26 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get optimized context if conversationId is provided
-    // This uses summary + recent messages instead of full history
+    // The composer stops at the same length; this is for anything else.
+    if (lastMessage?.role === 'user' && messageContent.length > CHAT_LIMITS.userMessageChars) {
+      return new Response(
+        JSON.stringify({
+          error: 'message_too_long',
+          message: `That message is ${messageContent.length.toLocaleString('en-US')} characters; the chat takes up to ${CHAT_LIMITS.userMessageChars.toLocaleString('en-US')}. Shorten it and send again.`,
+        }),
+        { status: 413, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // The model's context: the summary of earlier turns (when one exists) and
+    // the messages the client sent, which include the saved turns from before
+    // this session (useChatWithPersistence seeds them), fitted to the budget.
+    // Target ~10k tokens, the smallest model in the chain that isn't skipped.
+    const TARGET_TOKENS = 10_000;
     let convertedMessages: Awaited<ReturnType<typeof convertToModelMessages>>;
     let typedConversationId: Id<"conversations"> | null = null;
+    const fullMessages = await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true });
+    let summary: { content: string; facts: ReturnType<typeof parseFacts> } | undefined;
 
     if (conversationId) {
       typedConversationId = conversationId as Id<"conversations">;
@@ -187,57 +229,36 @@ export async function POST(req: Request) {
           { conversationId: typedConversationId },
           { token }
         );
-
+        // A full conversation takes no new question (convex/lib/chatLimits.ts).
+        if (lastMessage?.role === 'user' && contextData.totalMessageCount >= CHAT_LIMITS.messagesPerConversation) {
+          return new Response(
+            JSON.stringify({ error: 'conversation_full', message: CONVERSATION_FULL_MESSAGE }),
+            { status: 409, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
         if (contextData.summary || contextData.facts) {
-          chatDebug(`[Chat API] [${sessionId}] Compacting context (${contextData.totalMessageCount} total messages)`);
-
-          // Convert raw message history to ModelMessage[] (full fidelity — no hard truncation).
-          // Let the compaction module walk L0→L4 to fit the target budget.
-          const fullMessages = await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true });
-
-          // Target budget: ~10k tokens — fits Groq (the tightest model in the chain that
-          // doesn't get skipped). Gemini (1M) and Mistral/GLM (~100k) handle this easily
-          // with plenty of headroom. This targets the smallest non-skipped model so no
-          // model in the chain gets skipped for size.
-          const TARGET_TOKENS = 10_000;
-
-          const compactionInput = {
-            messages: fullMessages,
-            summary: {
-              content: contextData.summary ?? "",
-              facts: parseFacts(contextData.facts ?? undefined),
-            },
-          };
-
-          const compaction = compactToFit(compactionInput, TARGET_TOKENS);
-
-          if (compaction) {
-            chatDebug(`[Chat API] [${sessionId}] Compaction L${compaction.level}: ${compaction.estimatedTokens} tokens`);
-            convertedMessages = compaction.messages;
-          } else {
-            // Emergency: even L4 didn't fit — a single turn exceeds the target
-            // budget even after maximal compaction. Use the L4 result (which
-            // PRESERVES the summary/facts envelope, unlike a raw tail slice) and
-            // let FallbackModel skip models that can't handle the size.
-            // captureError because this is a real product signal, not just noise.
-            console.warn(`[Chat API] [${sessionId}] No compaction level fits ${TARGET_TOKENS} tokens; using L4 (envelope preserved)`);
-            captureError(
-              new Error(`Compaction L4 still exceeds ${TARGET_TOKENS} tokens`),
-              { operation: 'chat.compaction.noFit', extra: { sessionId, totalMessageCount: contextData.totalMessageCount } },
-            );
-            convertedMessages = compactAt(4, compactionInput);
-          }
-        } else {
-          chatDebug(`[Chat API] [${sessionId}] No summary available, using full history`);
-          convertedMessages = await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true });
+          summary = { content: contextData.summary ?? '', facts: parseFacts(contextData.facts ?? undefined) };
         }
       } catch (error) {
-        console.warn(`[Chat API] [${sessionId}] Failed to get context, using full history:`, error);
+        console.warn(`[Chat API] [${sessionId}] Failed to get the conversation summary, going on without it:`, error instanceof Error ? error.message : error);
         captureError(error);
-        convertedMessages = await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true });
       }
+    }
+
+    const compactionInput = { messages: fullMessages, summary };
+    const compaction = compactToFit(compactionInput, TARGET_TOKENS);
+    if (compaction) {
+      chatDebug(`[Chat API] [${sessionId}] Compaction L${compaction.level}: ${compaction.estimatedTokens} tokens`);
+      convertedMessages = compaction.messages;
     } else {
-      convertedMessages = await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true });
+      // Even L4 didn't fit: one turn is over the budget on its own. L4 keeps
+      // the summary envelope; FallbackModel skips models that can't take it.
+      console.warn(`[Chat API] [${sessionId}] No compaction level fits ${TARGET_TOKENS} tokens; using L4`);
+      captureError(
+        new Error(`Compaction L4 still exceeds ${TARGET_TOKENS} tokens`),
+        { operation: 'chat.compaction.noFit', extra: { sessionId } },
+      );
+      convertedMessages = compactAt(4, compactionInput);
     }
 
     // Create cache stats tracker for this request
@@ -304,8 +325,12 @@ export async function POST(req: Request) {
         prepareStep: ({ steps }) => (steps.some(stepShowedCard) ? { toolChoice: 'none' as const } : undefined),
         maxOutputTokens: CHAT_MAX_OUTPUT_TOKENS,
         maxRetries: 0, // Disable per-model retries; FallbackModel handles model-to-model fallback
+        // Stop and a closed tab end the request, and with it the model calls
+        // still running for it (FallbackModel stops on an abort, no fallback).
+        abortSignal: req.signal,
         onError({ error }) {
           // AI SDK v6: errors during streaming become part of the stream
+          if (req.signal.aborted) return; // Stop or a closed tab, not a failure
           console.error(`[Chat API] [${sessionId}] streamText onError:`, error instanceof Error ? error.message : String(error));
           captureError(error);
         },
@@ -387,6 +412,8 @@ export async function POST(req: Request) {
             // that finished with isError — see useChatWithPersistence onFinish.
             onError: (error) => {
               const msg = error instanceof Error ? error.message : String(error);
+              // The person stopped the reply or left: not a provider failure.
+              if (req.signal.aborted) return 'Stopped.';
               console.error(`[Chat API] [${sessionId}] UIMessageStream onError:`, msg.slice(0, 300));
               // Distinct mid-stream telemetry: this fires AFTER doStream resolved,
               // i.e. outside FallbackModel's connection-time retry loop — the
@@ -417,7 +444,11 @@ export async function POST(req: Request) {
       return createUIMessageStreamResponse({ stream: uiStream });
     } catch (error) {
       // All models failed (FallbackModel exhausted all options)
-      // This fires when model.doStream() throws before streaming starts
+      // This fires when model.doStream() throws before streaming starts.
+      // An abort (Stop, a closed tab) lands here too and isn't a failure.
+      if (req.signal.aborted) {
+        return new Response(null, { status: 499 });
+      }
       const errMsg = error instanceof Error ? error.message : String(error);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const errAny = error as any;

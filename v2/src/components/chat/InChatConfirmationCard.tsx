@@ -22,6 +22,7 @@
  * - error: Red styling, error message
  */
 
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckIcon, CheckCircleIcon, CircleNotchIcon, MagnifyingGlassIcon as Search, WarningIcon as AlertTriangle, XIcon, XCircleIcon } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
@@ -170,6 +171,17 @@ export function InChatConfirmationCard({
   // Show buttons only in pending state
   const showButtons = status === 'pending';
 
+  // Confirm and Cancel leave the card when pressed; focus moves to the line
+  // that says what happened instead of dropping to the page.
+  const statusRef = useRef<HTMLDivElement>(null);
+  const answered = useRef(false);
+  useEffect(() => {
+    if (status !== 'pending' && answered.current) {
+      answered.current = false;
+      statusRef.current?.focus();
+    }
+  }, [status]);
+
   // Border styles by status
   // Status reads from the whole 2px outline, the site's own card language,
   // not a thick left bar.
@@ -300,7 +312,8 @@ export function InChatConfirmationCard({
           )}
         </AnimatePresence>
 
-        {/* Status messages for non-pending states */}
+        {/* Status messages for non-pending states (focused after an answer) */}
+        <div ref={statusRef} tabIndex={-1} role="status" className="focus:outline-none">
         <AnimatePresence>
           {status === 'executing' && (
             <motion.div
@@ -317,7 +330,7 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-sm text-primary font-medium"
+              className="text-sm text-primary-text font-medium"
             >
               Approved
             </motion.div>
@@ -337,12 +350,13 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-sm text-primary font-medium"
+              className="text-sm text-primary-text font-medium"
             >
               {resultMessage || 'Done.'}
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
 
         {/* Action buttons */}
         <AnimatePresence>
@@ -362,7 +376,10 @@ export function InChatConfirmationCard({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onDeny}
+                onClick={() => {
+                  answered.current = true;
+                  onDeny();
+                }}
                 disabled={busy}
                 className="gap-1.5 h-11 md:h-9 px-4"
               >
@@ -372,7 +389,10 @@ export function InChatConfirmationCard({
               <Button
                 variant={isDestructive ? 'destructive' : 'default'}
                 size="sm"
-                onClick={onApprove}
+                onClick={() => {
+                  answered.current = true;
+                  onApprove();
+                }}
                 disabled={busy}
                 className="gap-1.5 h-11 md:h-9 px-4"
               >

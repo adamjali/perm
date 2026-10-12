@@ -96,6 +96,9 @@ vi.mock("motion/react", () => {
 
   return {
     motion,
+    // A passthrough: the chat panel wraps itself in one (reducedMotion="user").
+    MotionConfig: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
     AnimatePresence: ({ children }: { children: React.ReactNode }) =>
       React.createElement(React.Fragment, null, children),
     useAnimation: () => ({ start: vi.fn(), stop: vi.fn(), set: vi.fn() }),
