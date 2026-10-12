@@ -114,6 +114,29 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
     [cells],
   );
   const withheld = useMemo(() => cells.filter((c) => c.pace === null), [cells]);
+  // Lines open to every date for the whole window say one thing, so they are
+  // said once, a chip per category; a shut or barely-dated line keeps its own
+  // sentence, because each carries a month or a movement of its own.
+  const { openLines, otherWithheld } = useMemo(() => {
+    const byCategory = new Map<string, CountryKey[]>();
+    const other: typeof withheld = [];
+    for (const c of withheld) {
+      if (c.latest.kind === "current") {
+        const list = byCategory.get(c.category) ?? [];
+        list.push(c.country);
+        byCategory.set(c.category, list);
+      } else other.push(c);
+    }
+    const all = Object.keys(COUNTRY_LABELS).length;
+    return {
+      openLines: [...byCategory].map(([category, countries]) => ({
+        category,
+        countries,
+        everyCountry: countries.length === all,
+      })),
+      otherWithheld: other,
+    };
+  }, [withheld]);
 
   // The scale always includes 1.0 with room past it, so the holding-station
   // line never sits against an edge where it reads as the maximum.
@@ -324,42 +347,60 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
             Queues with no pace to report
           </h3>{" "}
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
-            A pace needs two real cutoff dates to measure between, and it&rsquo;s
-            withheld for a category that&rsquo;s currently shut: measured up to
-            the month a queue stopped, it would describe a queue that no longer
-            exists.
+            A pace needs two real cutoff dates to measure between.
           </p>{" "}
-          <ul className="mt-4 space-y-2">
-            {withheld.map((c) => (
-              <Fragment key={`${c.category}|${c.country}`}>
-                {" "}
-                <li className="text-base leading-relaxed text-foreground/70">
-                <strong className="font-bold text-foreground">
-                  {categoryLabel(c.category)} {COUNTRY_LABELS[c.country]}
-                </strong>{" "}
-                {c.latest.kind === "unavailable" ? (
-                  <>
-                    was closed in {formatMonth(c.latestMonth)}
-                    {c.movedDays !== null && c.movedDays > 0 ? (
-                      <>
-                        , after advancing {asYearsMonths(c.movedDays)} across
-                        the bulletins before it
-                      </>
-                    ) : null}
-                    .
-                  </>
-                ) : c.latest.kind === "current" ? (
-                  <>
-                    published no cutoff date in this window. It was open to
-                    every priority date instead.
-                  </>
-                ) : (
-                  <>published one cutoff date here, which is too few to measure between.</>
-                )}
-                </li>
-              </Fragment>
-            ))}
-          </ul>
+          {openLines.length > 0 ? (
+            <>
+              <p className="mt-5 text-base text-foreground/70">
+                These published no cutoff date in this window; each was open to every priority date:
+              </p>{" "}
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {openLines.map((g) => (
+                  <Fragment key={g.category}>
+                    <li className="border-2 border-border bg-tint-primary px-3 py-1.5 text-sm font-bold">
+                      {g.everyCountry
+                        ? `${categoryLabel(g.category)}, every country`
+                        : `${categoryLabel(g.category)}: ${g.countries.map((k) => COUNTRY_LABELS[k]).join(", ")}`}
+                    </li>{" "}
+                  </Fragment>
+                ))}
+              </ul>
+            </>
+          ) : null}{" "}
+          {otherWithheld.some((c) => c.latest.kind === "unavailable") ? (
+            <p className="mt-5 text-base leading-relaxed text-foreground/70">
+              A shut queue&rsquo;s pace is withheld too: measured up to the month it
+              stopped, it would describe a queue that no longer exists.
+            </p>
+          ) : null}{" "}
+          {otherWithheld.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {otherWithheld.map((c) => (
+                <Fragment key={`${c.category}|${c.country}`}>
+                  {" "}
+                  <li className="text-base leading-relaxed text-foreground/70">
+                  <strong className="font-bold text-foreground">
+                    {categoryLabel(c.category)} {COUNTRY_LABELS[c.country]}
+                  </strong>{" "}
+                  {c.latest.kind === "unavailable" ? (
+                    <>
+                      was closed in {formatMonth(c.latestMonth)}
+                      {c.movedDays !== null && c.movedDays > 0 ? (
+                        <>
+                          , after advancing {asYearsMonths(c.movedDays)} across
+                          the bulletins before it
+                        </>
+                      ) : null}
+                      .
+                    </>
+                  ) : (
+                    <>published one cutoff date here, which is too few to measure between.</>
+                  )}
+                  </li>
+                </Fragment>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
     </div>
