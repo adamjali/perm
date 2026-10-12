@@ -23,9 +23,10 @@ crawled after its own change was skipped.
 Refused: `/tools` (indexed, last crawled Oct 8, 3:28 PM) at 7:14 PM; first in line next round. Inspected
 only, crawled after their own change: `/press` (Oct 11, 6:51 AM) and `/` (Oct 11, 11:29 AM).
 
-**Queue for the next round** (slots free up from about 6:55 PM EDT Oct 12): the rest of the Oct 11 section,
-from item 4's `/tools`, then items 5 to 8. Inspect each; request only those last crawled before Oct 11. Pages
-redrawn later on Oct 11 or after are added to that section by the round's queue upkeep.
+**Queue for the next round** (slots free up from about 6:55 PM EDT Oct 12): first `/about` (rebuilt the night
+of Oct 11; the page meant to carry the brand query), then the rest of the Oct 11 section from item 4's `/tools`
+and items 5 to 8, then the "Oct 11 (night)" section at the end of this file. Inspect each; request only those
+last crawled before the change.
 
 **Previous run:** Oct 10, 5:39 to 5:59 PM EDT, 11 accepted (`/about`, `/developers`, `/api-terms`,
 `/i140-awaiting-visa`, `/i485-by-field-office`, `/perm-employers/under-review`, `/perm-case-statuses`,
@@ -966,3 +967,15 @@ the rest to the sitemap's lastmod. Inspect each; request only those last crawled
 7. `/perm-cities`, `/perm-industries`, `/perm-countries`, `/perm-cities/new-york-ny`, `/layoffs`, `/green-card-timelines`
 8. `/guides`, `/blog`, `/guides/look-up-a-sponsor`, `/guides/where-your-filing-month-sits`, `/guides/the-data-pages-and-what-each-answers` (pictures re-shot)
 9. Everything else on the script's list: the sitemap carries it.
+
+## Queue after the Oct 11 (night) changes (About rebuilt, long lists folded, "did you mean" on every search)
+
+Listed by `node scripts/gsc_queue.mjs` (since `b957239b`) at 11:40 PM EDT Oct 11; these were redrawn after the
+6:55 PM run, so a crawl dated Oct 11 morning is still stale. In order:
+
+1. `/about` (rebuilt: portrait, both halves as the app's pages, the sources flow, the dated record)
+2. `/opt-employers` (23,693 px to 5,173: top 25 rows, the rest folded), `/estimate-scorecard` (readings folded)
+3. `/visa-bulletin` (33 sentences to four chips), `/visa-bulletin/categories` (cells tinted by state)
+4. `/calculators`, `/badges`, `/security`, `/api-terms`, `/tools/green-card-fees`
+5. Everything else on the script's list: the sitemap's lastmod carries it. The 404 is noindex and never requested.
+
