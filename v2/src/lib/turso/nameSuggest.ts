@@ -57,9 +57,15 @@ const SOURCES: Record<SuggestKind, Source[]> = {
   occupation: [{ table: "perm_entities", count: "total", where: "kind = 'occupation' AND" }],
 };
 
-const WINDOW = 20_000;
+/**
+ * Small windows, read one after another with the event loop let go between
+ * them: inside a web process busy rendering pages, a 20,000-row answer (2.6
+ * MB) waited past the read layer's 20-second deadline although the database
+ * returned it in 0.19 s and a bare client read it in 0.65 s.
+ */
+const WINDOW = 5_000;
 /** Ranks run 1..N per table; this bounds a runaway loop on a corrupt rank column. */
-const MAX_WINDOWS = 40;
+const MAX_WINDOWS = 100;
 
 async function readSource(src: Source): Promise<{ slug: string; name: string; n: number | string }[]> {
   const out: { slug: string; name: string; n: number | string }[] = [];
@@ -71,6 +77,7 @@ async function readSource(src: Source): Promise<{ slug: string; name: string; n:
     );
     out.push(...part);
     if (part.length === 0) break;
+    await new Promise((resolve) => setTimeout(resolve, 0));
   }
   return out;
 }
@@ -81,16 +88,18 @@ const TTL_MS = 6 * 60 * 60 * 1000;
 const cache = new Map<SuggestKind, { at: number; index: Promise<FuzzyIndex<NameRow>> }>();
 
 async function load(kind: SuggestKind): Promise<FuzzyIndex<NameRow>> {
-  const parts = await Promise.all(
-    SOURCES[kind].map((src) =>
-      readSource(src).catch((e: unknown) => {
+  // One source at a time: three large reads at once is the load that starved.
+  const parts: Awaited<ReturnType<typeof readSource>>[] = [];
+  for (const src of SOURCES[kind]) {
+    parts.push(
+      await readSource(src).catch((e: unknown) => {
         // A table the deployment doesn't hold yet is no names, not an outage;
         // anything else is an error the caller reports.
         if (String(e).includes("no such table")) return [];
         throw e;
       }),
-    ),
-  );
+    );
+  }
   const seen = new Set<string>();
   const all: NameRow[] = [];
   parts.forEach((part, k) => {
@@ -101,8 +110,10 @@ async function load(kind: SuggestKind): Promise<FuzzyIndex<NameRow>> {
       all.push({ slug: r.slug, name: r.name, n: Number(r.n) || 0, published });
     }
   });
-  all.sort((a, b) => b.n - a.n);
-  return new FuzzyIndex(all, (r) => r.name, (r) => r.n);
+  // Built a slice at a time: 298,000 employer names in one go would hold the
+  // process for seconds. Equally close names are ordered by filings in the
+  // index itself, so the list needs no sort first.
+  return FuzzyIndex.build(all, (r) => r.name, (r) => r.n);
 }
 
 function indexFor(kind: SuggestKind): Promise<FuzzyIndex<NameRow>> {
@@ -117,6 +128,24 @@ function indexFor(kind: SuggestKind): Promise<FuzzyIndex<NameRow>> {
   return index;
 }
 
+
+/**
+ * Whether a kind's names are loaded, waiting at most `waitMs` (and starting
+ * the load if it hasn't begun). A search shouldn't wait out the first load of
+ * every kind: what's ready answers now, and the rest is there next time.
+ */
+export async function indexReady(kind: SuggestKind, waitMs: number): Promise<boolean> {
+  const index = indexFor(kind);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<false>((resolve) => {
+    timer = setTimeout(() => resolve(false), waitMs);
+  });
+  try {
+    return await Promise.race([index.then(() => true as const), late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /** Shortest and longest query worth a guess. */
 export const SUGGEST_MIN_LENGTH = 2;

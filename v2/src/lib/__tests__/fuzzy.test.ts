@@ -116,4 +116,11 @@ describe("FuzzyIndex", () => {
   it("finds nothing for nothing like any name", () => {
     expect(index.search("zzqxw")).toEqual([]);
   });
+
+  it("answers the same when built a slice at a time", async () => {
+    const sliced = await FuzzyIndex.build(employers, (e) => e.name, (e) => e.n, { chunk: 3 });
+    for (const q of ["amazn", "microsfot", "j p morgan", "nvdia"]) {
+      expect(sliced.search(q).map((r) => r.item.name)).toEqual(index.search(q).map((r) => r.item.name));
+    }
+  });
 });

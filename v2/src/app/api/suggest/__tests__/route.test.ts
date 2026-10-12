@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const suggestNames = vi.fn();
+const indexReady = vi.fn();
 vi.mock("@/lib/turso/nameSuggest", () => ({
+  indexReady: (...a: unknown[]) => indexReady(...a),
   SUGGEST_KINDS: ["employer", "attorney", "occupation"],
   SUGGEST_MIN_LENGTH: 2,
   SUGGEST_MAX_LENGTH: 80,
@@ -24,6 +26,8 @@ const get = (qs: string) => GET(new Request(`https://permtracker.app/api/suggest
 describe("GET /api/suggest", () => {
   beforeEach(() => {
     suggestNames.mockReset();
+    indexReady.mockReset();
+    indexReady.mockResolvedValue(true);
   });
 
   it("refuses an unknown kind and a query out of bounds with a 400, never an empty answer", async () => {
@@ -40,7 +44,7 @@ describe("GET /api/suggest", () => {
     expect(r.headers.get("cache-control")).toContain("s-maxage=");
     const d = (await r.json()) as { suggestions: { name: string }[] };
     expect(d.suggestions.map((x) => x.name)).toEqual(["Amazon.com Services LLC"]);
-    expect(suggestNames).toHaveBeenCalledWith("employer", "amazn");
+    expect(suggestNames).toHaveBeenCalledWith("employer", "amazn", undefined);
   });
 
   it("ranks every kind together for kind=all, closest first", async () => {
@@ -53,6 +57,16 @@ describe("GET /api/suggest", () => {
     );
     const d = (await (await get("q=fragomn")).json()) as { suggestions: { kind: string }[] };
     expect(d.suggestions.map((x) => x.kind)).toEqual(["attorney", "employer"]);
+  });
+
+  it("answers from the kinds that are ready, names the rest, and isn't cached then", async () => {
+    indexReady.mockImplementation(async (kind: string) => kind !== "employer");
+    suggestNames.mockImplementation(async (kind: string) => [s(kind, `${kind} name`, 0.8)]);
+    const r = await get("q=fragomn");
+    const d = (await r.json()) as { suggestions: { kind: string }[]; warming: string[] };
+    expect(d.warming).toEqual(["employer"]);
+    expect(d.suggestions.map((x) => x.kind).sort()).toEqual(["attorney", "occupation"]);
+    expect(r.headers.get("cache-control")).toBe("no-store");
   });
 
   it("says the names couldn't be read, as a 503, when the index fails", async () => {

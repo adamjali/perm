@@ -185,6 +185,11 @@ function trigrams(compact: string): string[] {
   return [...out];
 }
 
+/** Lets the event loop run whatever is waiting before the next slice of work. */
+function yieldToLoop(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 /** A triplet in more than this share of names says little about which one. */
 const COMMON_GRAM_SHARE = 0.08;
 
@@ -205,24 +210,67 @@ const COMMON_GRAM_SHARE = 0.08;
  * "AmazngCleaning" that happens to start with those letters.
  */
 export class FuzzyIndex<T> {
-  private readonly entries: { item: T; norm: string; boost: number }[];
+  private readonly entries: { item: T; norm: string; boost: number }[] = [];
   private readonly postings = new Map<string, Int32Array>();
+  private lists: Map<string, number[]> | null = new Map();
 
-  constructor(items: readonly T[], text: (item: T) => string, weight?: (item: T) => number) {
-    const lists = new Map<string, number[]>();
-    this.entries = items.map((item, i) => {
-      const norm = normalizeText(text(item));
+  constructor(
+    items: readonly T[],
+    private readonly text: (item: T) => string,
+    private readonly weight?: (item: T) => number,
+  ) {
+    this.add(items);
+    this.seal();
+  }
+
+  /**
+   * The same index, built a slice at a time with the event loop let go
+   * between slices, for a list large enough that building it in one go would
+   * hold up everything else the process is doing.
+   */
+  static async build<T>(
+    items: readonly T[],
+    text: (item: T) => string,
+    weight?: (item: T) => number,
+    { chunk = 5000 }: { chunk?: number } = {},
+  ): Promise<FuzzyIndex<T>> {
+    const index = new FuzzyIndex<T>([], text, weight);
+    index.lists = new Map();
+    for (let i = 0; i < items.length; i += chunk) {
+      index.add(items.slice(i, i + chunk));
+      await yieldToLoop();
+    }
+    const grams = [...index.lists.entries()];
+    index.lists = null;
+    for (let i = 0; i < grams.length; i += chunk) {
+      for (const [g, l] of grams.slice(i, i + chunk)) index.postings.set(g, Int32Array.from(l));
+      await yieldToLoop();
+    }
+    return index;
+  }
+
+  private add(items: readonly T[]): void {
+    const lists = this.lists;
+    if (!lists) throw new Error("FuzzyIndex is sealed");
+    for (const item of items) {
+      const i = this.entries.length;
+      const norm = normalizeText(this.text(item));
       for (const g of trigrams(norm.replace(/ /g, ""))) {
         let l = lists.get(g);
         if (!l) lists.set(g, (l = []));
         l.push(i);
       }
       // From 0.85 for a name with one filing to 1 at about 3,000.
-      const w = weight ? Math.max(0, weight(item)) : 0;
-      const boost = weight ? 0.85 + 0.15 * Math.min(1, Math.log10(1 + w) / 3.5) : 1;
-      return { item, norm, boost };
-    });
-    for (const [g, l] of lists) this.postings.set(g, Int32Array.from(l));
+      const w = this.weight ? Math.max(0, this.weight(item)) : 0;
+      const boost = this.weight ? 0.85 + 0.15 * Math.min(1, Math.log10(1 + w) / 3.5) : 1;
+      this.entries.push({ item, norm, boost });
+    }
+  }
+
+  private seal(): void {
+    if (!this.lists) return;
+    for (const [g, l] of this.lists) this.postings.set(g, Int32Array.from(l));
+    this.lists = null;
   }
 
   get size(): number {

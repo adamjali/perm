@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
  */
 
 const DEBOUNCE_MS = 250;
+const WARMING_RETRY_MS = 4_000;
 
 export function useNameSuggestions(
   kind: SuggestKind | "all",
@@ -32,12 +33,17 @@ export function useNameSuggestions(
   React.useEffect(() => {
     if (!active) return;
     const ctl = new AbortController();
-    const t = setTimeout(() => {
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const ask = (again: boolean) => {
       setLoading(true);
       fetch(`/api/suggest?kind=${kind}&q=${encodeURIComponent(q)}`, { signal: ctl.signal })
         .then((r) => (r.ok ? r.json() : null))
-        .then((d: { suggestions?: NameSuggestion[] } | null) => {
+        .then((d: { suggestions?: NameSuggestion[]; warming?: string[] } | null) => {
           setState({ key, suggestions: d?.suggestions ?? [] });
+          // The server's name list was still loading: ask once more shortly.
+          if (again && (d?.warming?.length ?? 0) > 0 && (d?.suggestions?.length ?? 0) === 0) {
+            retry = setTimeout(() => ask(false), WARMING_RETRY_MS);
+          }
         })
         .catch(() => {
           // A suggestion is a courtesy: when it can't be had, the search's own
@@ -46,9 +52,11 @@ export function useNameSuggestions(
         .finally(() => {
           if (!ctl.signal.aborted) setLoading(false);
         });
-    }, DEBOUNCE_MS);
+    };
+    const t = setTimeout(() => ask(true), DEBOUNCE_MS);
     return () => {
       clearTimeout(t);
+      clearTimeout(retry);
       ctl.abort();
     };
   }, [active, key, kind, q]);

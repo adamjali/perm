@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
+  indexReady,
   SUGGEST_KINDS,
   SUGGEST_MAX_LENGTH,
   SUGGEST_MIN_LENGTH,
@@ -23,6 +24,9 @@ import {
 
 const ALL_PER_KIND = 3;
 const ALL_LIMIT = 6;
+/** How long a search waits on a kind's first load before answering without it. */
+const ALL_WAIT_MS = 2_000;
+const ONE_WAIT_MS = 25_000;
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -38,16 +42,25 @@ export async function GET(request: Request) {
     );
   }
   try {
-    let suggestions: NameSuggestion[];
-    if (kind === "all") {
-      const per = await Promise.all(SUGGEST_KINDS.map((k) => suggestNames(k, q, ALL_PER_KIND)));
-      suggestions = per.flat().sort((a, b) => b.score - a.score || b.cases - a.cases).slice(0, ALL_LIMIT);
-    } else {
-      suggestions = await suggestNames(kind as SuggestKind, q);
-    }
+    const kinds = kind === "all" ? SUGGEST_KINDS : [kind as SuggestKind];
+    // A kind whose names are still loading is named in `warming` rather than
+    // held up for: the answer comes from what's ready, and isn't cached.
+    const ready = await Promise.all(kinds.map((k) => indexReady(k, kind === "all" ? ALL_WAIT_MS : ONE_WAIT_MS)));
+    const warming = kinds.filter((_, i) => !ready[i]);
+    const per = await Promise.all(
+      kinds.map((k, i) => (ready[i] ? suggestNames(k, q, kind === "all" ? ALL_PER_KIND : undefined) : [])),
+    );
+    const suggestions: NameSuggestion[] =
+      kind === "all"
+        ? per.flat().sort((a, b) => b.score - a.score || b.cases - a.cases).slice(0, ALL_LIMIT)
+        : (per[0] ?? []);
     return NextResponse.json(
-      { query: q, kind, suggestions },
-      { headers: { "Cache-Control": "public, max-age=0, s-maxage=3600" } },
+      { query: q, kind, suggestions, warming },
+      {
+        headers: {
+          "Cache-Control": warming.length > 0 ? "no-store" : "public, max-age=0, s-maxage=3600",
+        },
+      },
     );
   } catch (e) {
     console.error("[suggest] failed", e);
