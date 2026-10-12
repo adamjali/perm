@@ -674,3 +674,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (night)".
 - **Long lists fold**: OPT employers (23,693 to 5,173 px), the scorecard's readings, 33 identical bulletin sentences as four chips.
 - **A table cell's fill can say its state**: the bulletin matrix tints Current and Unavailable, with a key.
 - **The dev capture scripts live in `node_modules/.cache/qa/`**: `top-shot.mjs`, `dark-shot.mjs`, `embed-shot.mjs`, `load-shot.mjs` (for pages that never go network-idle).
+
+## Oct 12 2026, in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
+
+- **One scraper was about 60% of page requests**: about 70,000 addresses, 335 browser labels, employer pages 96% of the time, never running the site's scripts; it set off Under Attack Mode three times in 12 hours.
+- **Cloudflare rule 4 checks Mac Chrome 119 to 133 too**, and **the defense challenges one overloaded part of the site before the whole site**; nginx's defense log records the path a visitor asked for (`$request_uri`), where it had recorded the busy page's own `/503.html`.
+- **The build-file prune no longer takes files the live site still uses**: each deploy dates the files it ships.
+- **The cron dispatcher waits out a busy site** instead of failing on the first 503.
+- **Alert ratings are on**: a case's final alert asks for 1 to 5.

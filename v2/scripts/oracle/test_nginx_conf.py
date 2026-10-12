@@ -296,7 +296,10 @@ def run(conf_text: str) -> None:
     check("defend: main access log still written", "access_log /var/log/nginx/access.log;" in server_level)
     fmt = re.search(r"log_format pt_defend '([^']*)'", head)
     check("defend: log records time, status, network, crawler flag, path and browser",
-          fmt is not None and fmt.group(1).startswith('$msec $status $http_x_pt_asn $http_x_pt_verified_bot "$uri" "$http_user_agent"'))
+          fmt is not None and fmt.group(1).startswith('$msec $status $http_x_pt_asn $http_x_pt_verified_bot "$request_uri" "$http_user_agent"'))
+    # $uri of a turned-away request is the busy page's /503.html; the defense
+    # needs the page the visitor asked for (Oct 12 2026).
+    check("defend: the path is the one asked for, not the busy page's", fmt is not None and '"$uri"' not in fmt.group(1))
 
 
 def probe() -> None:
@@ -310,6 +313,7 @@ def probe() -> None:
             r"\1", good, count=1),
         "people refused instead of slowed": good.replace("zone=pt_page burst=300 delay=150", "zone=pt_page burst=300 nodelay", 1),
         "refusal page drops its status": good.replace("error_page 429 @pt_slow_down;", "error_page 429 = @pt_slow_down;"),
+        "defense log records the busy page's path": good.replace('"$request_uri" "$http_user_agent"', '"$uri" "$http_user_agent"', 1),
         "relay sends the server's address": good.replace(
             "proxy_set_header X-Forwarded-For $remote_addr;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie",
             "proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie", 1),

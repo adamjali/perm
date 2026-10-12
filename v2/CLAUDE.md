@@ -9573,3 +9573,50 @@ with it).
 `embed-shot.mjs` (560 and 360) and `load-shot.mjs` (waits for load, for /login and other pages
 with sign-in widgets that never go network-idle). A PIL crop past an image's bottom fills black:
 not a page defect. A dev capture right after an edit can beat the recompile.
+
+## Oct 12 2026: one scraper on 70,000 addresses, and what turns it away
+
+**What filled the app.** From 8:11 PM EDT Oct 11 to 6:55 AM, 121,000 page requests: about 34% declared
+crawlers, about 60% one scraper, real people a few percent (3% of the browser-looking addresses ever ran
+the site's scripts). The scraper never reuses an address (about 70,000 in 11 hours, one to three pages
+each, home, phone and cloud networks in the US, Vietnam, India, China and Turkey), rotates about 335
+browser labels (half of them Mac Chrome 119 to 133), asks for employer pages 96% of the time and never
+runs the site's scripts. A cold employer page takes about 15 reads, and at about 200 a minute that keeps
+the app near full: a calm 4 AM window looked like the episodes. Three times in 12 hours (6:37 PM, 1:53 AM,
+6:02 AM EDT) the app was full three minutes running and the defense put the whole site behind Under
+Attack Mode for about 30 minutes. Per-address limits see one request per address, and no network or
+label reached the defense's 30%.
+- **Cloudflare rule 4 also checks Mac Chrome 119 to 133** (one click; owner's go). PostHog saw 87 visits on
+  those versions in 14 days, one page each, 74 of 88 on employer pages: the same scraper. Probed live: Mac
+  Chrome 126 and 133 answer 403 `cf-mitigated: challenge`, 118 and 154 answer 200.
+- **The defense challenges one part of the site before the whole site** (`find_section` in
+  `bin/permtracker-defend`): failing a network or label, a first path segment drawing 60% and 60+ of the
+  page requests turned away gets the managed challenge on its own, and every other page stays open. Still
+  in trouble 10 minutes later: Under Attack Mode as before. Never `/api`, `/embed` or an emailed-link
+  route, and the value is checked against `/[a-z0-9-]*` before it goes into a Cloudflare expression.
+- **nginx's defense log records `$request_uri`.** It logged `$uri`, which for a turned-away request is the
+  busy page's `/503.html`: every alert's "mostly for" named `/503.html`, and no section could ever have
+  been found. `test_nginx_conf.py` probes the format.
+
+**Build files.** The deploy copies a release's build files into `shared/` without overwriting, so a font
+or stylesheet whose name never changes kept the date it first arrived, and the three-week prune deletes
+by date: 21 of the live release's 401 files dated from Sep 28 and were due to go on Oct 19 (nginx would
+then have asked the app for them). `stamp_shared` in `bin/permtracker-deploy` dates every file a deploy
+ships. Since Oct 10 every chunk's name changes per deploy (`chunkLoadingGlobal`), so `shared/` grows by a
+full set each time: 607 MB on Oct 12, 269 MB of it in one day of 16 deploys, about 5 to 6 GB at that pace
+under the three-week rule.
+
+**The cron dispatcher waits out a busy site** (`bin/permtracker-cron`, `test_cron.py`): a 503, 429, 502,
+504 or dropped connection is asked again after the wait the reply names (else 15, 30, 60 and 120 s), five
+tries. At 6:00 AM the scraper had the app full, and the ingest-health dispatch failed and emailed the owner.
+
+**Alert ratings are on** (`ALERT_RATING_ENABLED=1` on Convex production, owner, Oct 12): a case's final
+alert carries the 1-to-5 row.
+
+**Search Console's Oct 12 emails:** the duplicate-canonical pages were the Oct 5 merges (308s now; the
+recheck was started), the alternate canonicals are `?q=` and `?ref=` links (correct), and two review-stage
+URLs the census once linked answered 404 and redirect now (`next.config.ts`).
+
+**Smaller:** the 404's brand link hides under the site header (`[body:has([data-site-header])_&]:hidden`);
+the admin and security pages read in sentence case, and a security event of kind `rate_limit` reads
+"Counted": every attempt is a row in the limits table, refused or let through.

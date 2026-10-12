@@ -80,6 +80,51 @@ spread = [dl(NOW - i % 200, asn=1000 + i % 10, ua=f"UA {i % 10}") for i in range
 check("no network or label at 30% means no single source", d.find_source(d.page_requests(spread, NOW - 300), NOW) is None)
 check("a label is quoted safely in the rule", d.rule_expression({"kind": "ua", "value": 'a"b\\c'}) == 'http.user_agent eq "a\\"b\\\\c"')
 
+# One part of the site. Oct 12 2026: a scraper on about 70,000 addresses and
+# 335 browser labels never reached 30% on any one of them, while 96% of what it
+# asked for were employer pages. Challenging those pages leaves the rest open.
+check("the path is the one asked for, without its query",
+      d.page_requests([dl(NOW, uri="/perm-employers/acme?_rsc=1")], 0)[0][5] == "/perm-employers/acme")
+check("a static file is still skipped when it carries a query",
+      d.page_requests([dl(NOW, uri="/_next/static/x.js?v=2")], 0) == [])
+rotating = ([dl(NOW - i % 200, status=503, asn=2000 + i % 40, ua=f"Chrome/{119 + i % 15}", uri=f"/perm-employers/e{i}")
+             for i in range(300)]
+            + [dl(NOW - i % 200, asn=3000 + i % 40, ua=f"Chrome/{119 + i % 15}", uri="/perm-wages/x") for i in range(500)])
+src = d.find_source(d.page_requests(rotating, NOW - 300), NOW)
+check("rotating addresses and labels, refusals on one section: that section is the source",
+      src and src["kind"] == "section" and src["value"] == "/perm-employers" and src["requests"] == 300, str(src))
+check("its rule covers the section's index and every page under it",
+      d.rule_expression(src) == '(http.request.uri.path eq "/perm-employers" or starts_with(http.request.uri.path, "/perm-employers/"))')
+check("the alert names the pages being checked",
+      "visitors to the /perm-employers pages" in d.describe(src))
+split = ([dl(NOW - i % 200, status=503, asn=2000 + i % 40, ua=f"L{i % 15}", uri=f"/{['perm-employers', 'perm-wages', 'tools'][i % 3]}/p")
+          for i in range(300)])
+check("refusals spread over several sections: no source", d.find_source(d.page_requests(split, NOW - 300), NOW) is None)
+few = [dl(NOW - i, status=503, asn=2000 + i, ua=f"L{i}", uri="/perm-employers/p") for i in range(d.SECTION_MIN - 1)]
+check("too few refusals to call it a section", d.find_section(d.page_requests(few, NOW - 300), NOW) is None)
+api = [dl(NOW - i % 200, status=503, asn=2000 + i % 40, ua=f"L{i % 15}", uri=f"/api/perm-cases?q={i}") for i in range(300)]
+check("the site's own data calls (/api) are never challenged as a section",
+      d.find_section(d.page_requests(api, NOW - 300), NOW) is None)
+old_log = [dl(NOW - i % 200, status=503, asn=2000 + i % 40, ua=f"L{i % 15}", uri="/503.html") for i in range(300)]
+check("a log line naming the busy page itself is never a section",
+      d.find_section(d.page_requests(old_log, NOW - 300), NOW) is None)
+crawled = [dl(NOW - i % 200, status=503, bot="true", uri="/perm-employers/p") for i in range(300)]
+check("crawlers' refusals don't make a section", d.find_section(d.page_requests(crawled, NOW - 300), NOW) is None)
+check("a network or label still comes before a section",
+      (d.find_source(d.page_requests([dl(NOW - i % 200, asn=132203, ua=SCRAPER) for i in range(800)] + rotating,
+                                     NOW - 300), NOW) or {}).get("kind") == "asn")
+for bad in ("/api", '/x" or true', "/Perm", "/503.html"):
+    try:
+        d.rule_expression({"kind": "section", "value": bad})
+        check(f"a rule is refused for {bad!r}", False)
+    except ValueError:
+        check(f"a rule is refused for {bad!r}", True)
+check("the homepage is matched exactly, never as a prefix of everything",
+      d.rule_expression({"kind": "section", "value": "/"}) == 'http.request.uri.path eq "/"')
+SEC = {"kind": "section", "value": "/perm-employers", "share": 0.9, "requests": 300}
+check("trouble with a section source: the rule, not Under Attack Mode",
+      d.decide({"mode": "off"}, True, SEC, NOW) == [("rule_on", {"source": SEC})])
+
 # Decisions
 S = {"kind": "asn", "value": 132203, "share": 0.6, "requests": 400}
 check("trouble with a source: the rule", d.decide({"mode": "off"}, True, S, NOW) == [("rule_on", {"source": S})])
@@ -178,6 +223,9 @@ _flood += [dl(NOW - 40, status=200)] * 50
 _text = d.what_filled(d.page_requests(_flood, NOW - 600), NOW)
 check("says how many page requests were turned away, of how many", "300 of 350" in _text, _text)
 check("names the busiest section", "/pwd-cases (300)" in _text, _text)
+_queried = [dl(NOW - 30 - i * 0.1, status=503, uri=f"/perm-employers/e{i}?_rsc=x") for i in range(30)]
+check("names the section a turned-away request asked for, query or not",
+      "/perm-employers (30)" in d.what_filled(d.page_requests(_queried, NOW - 600), NOW))
 check("counts the browser labels", "6 browser labels" in _text, _text)
 check("says nothing when nothing was turned away", d.what_filled(d.page_requests([dl(NOW - 30)], NOW - 600), NOW) == "")
 check("a full app nobody saw reads as a scraper, not as zero people",
