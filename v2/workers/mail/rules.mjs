@@ -59,3 +59,16 @@ export async function keyTag(key) {
   const d = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key)));
   return Array.from(d.slice(0, 4), (b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+/** Longest a rotation window may stay open, whatever PROVISION_UNTIL says. */
+export const PROVISION_WINDOW_MS = 60 * 60 * 1000;
+
+/**
+ * Whether POST /provision answers at all. Closed (404) unless the upload set
+ * PROVISION_UNTIL, an instant at most an hour ahead, for a key rotation: with
+ * the keys deleted, an open route would let anyone set keys of their own.
+ */
+export function provisionOpen(until, now = Date.now()) {
+  const t = typeof until === "string" ? Date.parse(until) : NaN;
+  return Number.isFinite(t) && now < t && t - now <= PROVISION_WINDOW_MS;
+}

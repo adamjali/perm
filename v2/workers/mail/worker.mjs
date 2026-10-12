@@ -20,11 +20,12 @@
  * The keys live in KV, not in Worker secrets, so they never pass through the
  * Cloudflare API in plain text from anyone's terminal: POST /provision sets
  * both, once, from a machine that reads them from its own files, and answers
- * with their SHA-256 tags so the caller can confirm. It refuses once keys are
- * set; to rotate, delete the two KV entries and provision again.
+ * with their SHA-256 tags so the caller can confirm. The route answers 404
+ * unless the upload set PROVISION_UNTIL (a rotation window of at most an
+ * hour, rules.mjs), and refuses once keys are set (README, "Keys").
  */
 import { readMessage } from "./mime.mjs";
-import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, PARSE_MAX_BYTES, shouldForward } from "./rules.mjs";
+import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, PARSE_MAX_BYTES, provisionOpen, shouldForward } from "./rules.mjs";
 
 /** The two keys, from KV (see above). */
 async function keys(env) {
@@ -90,7 +91,7 @@ const worker = {
 
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (request.method === "POST" && url.pathname === "/provision") {
+    if (request.method === "POST" && url.pathname === "/provision" && provisionOpen(env.PROVISION_UNTIL)) {
       const current = await keys(env);
       if (current.owner || current.inbound) return json({ ok: false, message: "Keys are already set." }, 409);
       let body;

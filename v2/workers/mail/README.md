@@ -33,10 +33,15 @@ The two keys live only in `~/.config/permtracker-mail/` on the owner's Mac (mode
 `owner-mail.env`, and the Worker's KV. They never pass through the Cloudflare API
 in plain text: `POST /provision` sets both once, from a machine that reads them
 from its own files, and answers with each key's SHA-256 tag (first 8 hex) to
-compare. It refuses once keys are set.
+compare. It refuses once keys are set, and it answers 404 at all times except
+inside a rotation window: an upload carrying the plain-text binding
+`PROVISION_UNTIL`, an instant at most an hour ahead (`provisionOpen` in
+`rules.mjs`). Without that gate, anyone could set keys of their own while the
+old ones were deleted.
 
-To rotate: generate new files, delete the two KV entries (Cloudflare API, KV
-namespace `permtracker-mail-keys`), provision again, then pipe the new values to
+To rotate: generate new files; upload with `PROVISION_UNTIL` 15 minutes ahead;
+delete the two KV entries (Cloudflare API, KV namespace `permtracker-mail-keys`);
+provision; upload again WITHOUT `PROVISION_UNTIL`; then pipe the new values to
 Convex (`npx convex env set NAME --prod < file`) and the server file.
 
 ## Upload

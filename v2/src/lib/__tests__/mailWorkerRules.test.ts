@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error: a plain ES module the Worker bundles; no type declarations.
-import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, shouldForward } from '../../../workers/mail/rules.mjs';
+import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, provisionOpen, shouldForward } from '../../../workers/mail/rules.mjs';
 import { shouldForwardInbound } from '@convex/lib/supportEmailForward';
 
 const OWNER = 'owner@example.com';
@@ -52,5 +52,18 @@ describe('provisioned keys', () => {
     const tag = await keyTag('a'.repeat(64));
     expect(tag).toMatch(/^[0-9a-f]{8}$/);
     expect('a'.repeat(64)).not.toContain(tag);
+  });
+});
+
+describe('the provisioning window', () => {
+  const now = Date.parse('2026-10-12T22:00:00Z');
+  it('is shut unless an upload opened it, and never for more than an hour', () => {
+    expect(provisionOpen(undefined, now)).toBe(false);
+    expect(provisionOpen('', now)).toBe(false);
+    expect(provisionOpen('not a date', now)).toBe(false);
+    expect(provisionOpen('2026-10-12T21:59:00Z', now)).toBe(false); // passed
+    expect(provisionOpen('2026-10-12T22:15:00Z', now)).toBe(true); // a rotation window
+    expect(provisionOpen('2026-10-12T23:00:00Z', now)).toBe(true); // the hour itself
+    expect(provisionOpen('2026-10-13T22:00:00Z', now)).toBe(false); // a day: too long to leave open
   });
 });
