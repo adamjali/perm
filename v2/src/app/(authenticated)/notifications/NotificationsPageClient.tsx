@@ -41,7 +41,6 @@ export function NotificationsPageClient() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <PageHeading
-            eyebrow="Alerts"
             title="Notifications"
             lede="Manage your notification history"
           />

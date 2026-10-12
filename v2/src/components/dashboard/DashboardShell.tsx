@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /**
  * The dashboard's heading. `firstName` undefined means the user is still
  * loading: only the greeting line waits, as a bar the height of the heading.
- * The eyebrow, the lede and the button never change, so they never wait.
+ * The lede and the button never change, so they never wait.
  */
 export function DashboardHeading({
   firstName,
@@ -24,17 +24,14 @@ export function DashboardHeading({
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          Dashboard
-        </p>{" "}
         {firstName === undefined ? (
           // The heading's own line box: text-3xl (1.875rem) and sm:text-4xl
           // (2.25rem) at leading-[1.08].
-          <div className="mt-2 flex h-[2.025rem] items-center sm:h-[2.43rem]">
+          <div className="flex h-[2.025rem] items-center sm:h-[2.43rem]">
             <Skeleton variant="line" className="h-7 w-64 sm:h-8" />
           </div>
         ) : (
-          <h1 className="mt-2 font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">
+          <h1 className="font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">
             {firstName ? `${greeting}, ${firstName}` : greeting}
           </h1>
         )}{" "}

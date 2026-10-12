@@ -85,7 +85,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
 
         <form onSubmit={handleSend} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="to" className="text-sm font-bold uppercase tracking-wide">
+            <label htmlFor="to" className="text-sm font-bold">
               To
             </label>
             <Input
@@ -98,7 +98,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="subject" className="text-sm font-bold uppercase tracking-wide">
+            <label htmlFor="subject" className="text-sm font-bold">
               Subject
             </label>
             <Input
@@ -112,7 +112,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="body" className="text-sm font-bold uppercase tracking-wide">
+            <label htmlFor="body" className="text-sm font-bold">
               Message
             </label>
             <Textarea

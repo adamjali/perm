@@ -254,7 +254,6 @@ export function SettingsPageClient() {
         {/* Page Header */}
         <div>
           <PageHeading
-            eyebrow="Account"
             title="Settings"
             lede="Manage your account preferences"
           />

@@ -52,7 +52,13 @@ export default function NotFound() {
       <div className="bg-dots pointer-events-none fixed inset-0 opacity-30" aria-hidden="true" />
 
       <div className="relative mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-20">
-        <Link href="/" className="inline-flex min-h-[44px] items-center font-heading text-xl font-black">
+        {/* The way home when this page stands alone; under the site's own
+            header (a missing employer, firm or article) that header already
+            carries the name, so this one steps aside. */}
+        <Link
+          href="/"
+          className="inline-flex min-h-[44px] items-center font-heading text-xl font-black [body:has([data-site-header])_&]:hidden"
+        >
           <span className="text-primary-text">PERM</span>&nbsp;Tracker
         </Link>{" "}
 

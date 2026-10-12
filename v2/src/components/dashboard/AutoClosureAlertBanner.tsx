@@ -42,15 +42,15 @@ import { useAuthContext } from "@/lib/contexts/AuthContext";
 function formatClosureReason(reason: string): string {
   switch (reason) {
     case "pwd_expired":
-      return "PWD Expired";
+      return "PWD expired";
     case "recruitment_window_missed":
-      return "Recruitment Window Missed";
+      return "Recruitment window missed";
     case "filing_window_missed":
-      return "Filing Window Missed";
+      return "Filing window missed";
     case "eta9089_expired":
-      return "ETA 9089 Expired";
+      return "ETA 9089 expired";
     default:
-      return "Deadline Missed";
+      return "Deadline missed";
   }
 }
 
@@ -129,8 +129,8 @@ export default function AutoClosureAlertBanner() {
           <AlertTriangle className="w-5 h-5 text-data-warn-ink" />
           <h3 className="font-heading font-bold text-data-warn-ink">
             {alerts.length === 1
-              ? "1 Case Auto-Closed"
-              : `${alerts.length} Cases Auto-Closed`}
+              ? "1 case closed automatically"
+              : `${alerts.length} cases closed automatically`}
           </h3>
         </div>
 

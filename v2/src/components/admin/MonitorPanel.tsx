@@ -74,7 +74,7 @@ export function MonitorPanel() {
         {sections.map((s) => (
           <li key={s.key} className="border-2 border-border bg-card p-4 shadow-hard-sm sm:p-5">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className={`border-2 border-border px-2 py-0.5 text-sm font-black uppercase ${CHIP[s.status]}`}>
+              <span className={`border-2 border-border px-2 py-0.5 text-sm font-black ${CHIP[s.status]}`}>
                 {WORD[s.status]}
               </span>{" "}
               <h3 className="font-heading text-lg font-black">{s.title}</h3>{" "}

@@ -53,7 +53,7 @@ export default function SecurityDashboardClient() {
         <Card className="border-2 border-destructive">
           <CardContent className="py-12 text-center">
             <ShieldIcon className="mx-auto h-12 w-12 text-destructive" />
-            <p className="mono mt-4 font-bold uppercase tracking-widest">
+            <p className="mt-4 font-bold">
               Access denied, admin only
             </p>
           </CardContent>
@@ -68,7 +68,7 @@ export default function SecurityDashboardClient() {
           the only exit was the browser button. */}
       <Link
         href="/admin"
-        className="mono inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex min-h-[44px] items-center gap-2 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeftIcon className="h-4 w-4" aria-hidden />
         Admin dashboard
@@ -77,11 +77,11 @@ export default function SecurityDashboardClient() {
       <header className="flex items-center gap-3">
         <ShieldIcon className="h-8 w-8 text-primary" aria-hidden />
         <div>
-          <h1 className="font-heading text-3xl font-black uppercase tracking-tight">
-            Security ops
+          <h1 className="font-heading text-3xl font-black">
+            Security
           </h1>{" "}
-          <p className="mono text-sm uppercase tracking-widest text-muted-foreground">
-            Abuse monitoring · blocklist · flagged users
+          <p className="text-sm text-muted-foreground">
+            Abuse monitoring, the blocklist and flagged users
           </p>
         </div>
       </header>
@@ -103,7 +103,7 @@ export default function SecurityDashboardClient() {
               aria-selected={active}
               onClick={() => setTab(t.id)}
               className={cn(
-                "mono flex items-center gap-2 border-2 px-4 py-2 text-sm font-bold uppercase tracking-widest transition-all",
+                "flex min-h-[44px] items-center gap-2 border-2 px-4 py-2 text-sm font-bold transition-all",
                 active
                   ? "translate-y-[-1px] border-foreground bg-primary text-primary-foreground shadow-hard"
                   : "border-border bg-background hover:shadow-hard-sm",
@@ -169,7 +169,7 @@ function SummaryCards({ summary }: { summary?: SummaryShape }) {
           >
             <CardContent className="space-y-2 p-4">
               <div className="flex items-start justify-between">
-                <p className="mono text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                <p className="text-sm font-bold text-muted-foreground">
                   {c.label}
                 </p>
                 <Icon className="h-4 w-4 opacity-60" aria-hidden />
@@ -203,6 +203,17 @@ function actorFor(event: SecurityEvent): string {
   }
 }
 
+/**
+ * What each row is. A "rate_limit" row is an attempt the limits counted (a
+ * sign-in, a sign-up), not a refusal: printed as RATE_LIMIT, every ordinary
+ * sign-in read as blocked.
+ */
+const KIND_WORD: Record<SecurityEvent["kind"], string> = {
+  strike: "Strike",
+  rate_limit: "Counted",
+  error: "Error",
+};
+
 function EventsTab() {
   const events = useQuery(api.adminSecurity.listRecentEvents, { limit: 200 });
   if (!events) return <TableSkeleton rows={8} />;
@@ -211,7 +222,7 @@ function EventsTab() {
       <Card className="border-2">
         <CardContent className="py-12 text-center">
           <CheckIcon className="mx-auto h-8 w-8 text-primary" aria-hidden />
-          <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             No recent security events
           </p>
         </CardContent>
@@ -221,14 +232,14 @@ function EventsTab() {
   return (
     <Card className="border-2 shadow-hard">
       <CardHeader className="border-b-2 border-border">
-        <CardTitle className="mono text-sm uppercase tracking-widest">
+        <CardTitle className="font-heading text-base font-black">
           Recent events
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-auto">
           <table className="w-full text-sm">
-            <thead className="mono border-b-2 border-border bg-muted/40 text-sm uppercase tracking-widest">
+            <thead className="border-b-2 border-border bg-muted/40 text-sm font-bold">
               <tr>
                 <th className="px-3 py-2 text-left">Time</th>
                 <th className="px-3 py-2 text-left">Kind</th>
@@ -253,13 +264,13 @@ function EventsTab() {
                   <td className="px-3 py-2">
                     <span
                       className={cn(
-                        "inline-block border-2 px-1.5 py-0.5 text-sm font-bold uppercase tracking-widest",
+                        "inline-block border-2 px-1.5 py-0.5 text-sm font-bold",
  e.kind === "strike" && "border-data-warn text-data-warn-ink",
                         e.kind === "rate_limit" && "border-border",
                         e.kind === "error" && "border-destructive text-destructive",
                       )}
                     >
-                      {e.kind}
+                      {KIND_WORD[e.kind]}
                     </span>
                   {" "}</td>
                   <td className="max-w-[220px] truncate px-3 py-2 text-sm">{e.endpoint}{" "}</td>
@@ -325,7 +336,7 @@ function BlockedIpsTab() {
     <div className="space-y-4">
       <Card className="border-2 shadow-hard">
         <CardHeader className="border-b-2 border-border">
-          <CardTitle className="mono text-sm uppercase tracking-widest">
+          <CardTitle className="font-heading text-base font-black">
             Manual block
           </CardTitle>
         </CardHeader>
@@ -365,7 +376,7 @@ function BlockedIpsTab() {
 
       <Card className="border-2 shadow-hard">
         <CardHeader className="border-b-2 border-border">
-          <CardTitle className="mono text-sm uppercase tracking-widest">
+          <CardTitle className="font-heading text-base font-black">
             Active Blocks ({blocks.length})
           </CardTitle>
         </CardHeader>
@@ -373,13 +384,13 @@ function BlockedIpsTab() {
           {blocks.length === 0 ? (
             <div className="py-12 text-center">
               <CheckIcon className="mx-auto h-8 w-8 text-primary" aria-hidden />
-              <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
+              <p className="mt-2 text-sm text-muted-foreground">
                 No active blocks
               </p>
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="mono border-b-2 border-border bg-muted/40 text-sm uppercase tracking-widest">
+              <thead className="border-b-2 border-border bg-muted/40 text-sm font-bold">
                 <tr>
                   <th className="px-3 py-2 text-left">IP</th>
                   <th className="px-3 py-2 text-left">Reason</th>
@@ -399,13 +410,13 @@ function BlockedIpsTab() {
                     <td className="px-3 py-2 text-sm">
                       <span
                         className={cn(
-                          "border-2 px-1.5 py-0.5 text-sm font-bold uppercase tracking-widest",
+                          "border-2 px-1.5 py-0.5 text-sm font-bold",
                           b.manualOverride
                             ? "border-primary text-primary"
                             : "border-data-warn text-data-warn-ink",
                         )}
                       >
-                        {b.manualOverride ? "manual" : "auto"}
+                        {b.manualOverride ? "Manual" : "Automatic"}
                       </span>
                     {" "}</td>
                     <td className="px-3 py-2 text-right">
@@ -460,7 +471,7 @@ function FlaggedUsersTab() {
       <Card className="border-2">
         <CardContent className="py-12 text-center">
           <CheckIcon className="mx-auto h-8 w-8 text-primary" aria-hidden />
-          <p className="mono mt-2 text-sm uppercase tracking-widest text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             No flagged users
           </p>
         </CardContent>
@@ -471,13 +482,13 @@ function FlaggedUsersTab() {
   return (
     <Card className="border-2 shadow-hard">
       <CardHeader className="border-b-2 border-border">
-        <CardTitle className="mono text-sm uppercase tracking-widest">
+        <CardTitle className="font-heading text-base font-black">
           Flagged / Suspended Users ({flagged.length})
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <table className="w-full text-sm">
-          <thead className="mono border-b-2 border-border bg-muted/40 text-sm uppercase tracking-widest">
+          <thead className="border-b-2 border-border bg-muted/40 text-sm font-bold">
             <tr>
               <th className="px-3 py-2 text-left">Email</th>
               <th className="px-3 py-2 text-left">Suspended at</th>
@@ -542,7 +553,7 @@ function SettingsTab() {
   return (
     <Card className="border-2 shadow-hard">
       <CardHeader className="border-b-2 border-border">
-        <CardTitle className="mono text-sm uppercase tracking-widest">
+        <CardTitle className="font-heading text-base font-black">
           Rate Limit Thresholds (code-defined)
         </CardTitle>
       </CardHeader>

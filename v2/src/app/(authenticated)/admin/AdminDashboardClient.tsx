@@ -140,7 +140,7 @@ export default function AdminDashboardClient() {
             <ShieldIcon className="size-6 text-black" />
           </div>
           <div>
-            <h1 className="font-heading text-3xl font-bold uppercase tracking-wide">
+            <h1 className="font-heading text-3xl font-black">
               Admin dashboard
             </h1>{" "}
             <p className="text-muted-foreground">
@@ -150,10 +150,10 @@ export default function AdminDashboardClient() {
         </div>
         <Link
           href="/admin/security"
-          className="mono flex items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-sm font-bold uppercase tracking-widest shadow-hard-sm transition-all hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+          className="flex min-h-[44px] items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-sm font-bold shadow-hard-sm transition-all hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
           <ShieldIcon className="h-4 w-4" aria-hidden />
-          Security ops
+          Security
         </Link>
       </div>
 

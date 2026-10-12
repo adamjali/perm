@@ -168,6 +168,7 @@ export default function AuthHeader({
   return (
     <header
       ref={headerRef}
+      data-site-header=""
       style={{ top: "var(--security-banner-h, 0px)" }}
       className={cn(
         "fixed inset-x-0 z-50 border-b-3 border-white/20 bg-black",

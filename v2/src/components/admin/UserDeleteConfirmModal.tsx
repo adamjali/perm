@@ -91,7 +91,7 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="confirmEmail" className="text-sm font-bold uppercase tracking-wide">
+            <label htmlFor="confirmEmail" className="text-sm font-bold">
               Type <span className="text-destructive">{user.email}</span> to confirm
             </label>
             <Input

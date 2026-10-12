@@ -85,7 +85,7 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
         // fade back in (tw-animate's fill mode does not hold the first frame).
         <Card key={stat.label}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+            <CardTitle className="text-sm font-bold text-muted-foreground">
               {stat.label}
             </CardTitle>
             <div className={`p-2 border-2 border-border ${stat.bgColor} shadow-hard-sm`}>

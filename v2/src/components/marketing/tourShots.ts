@@ -29,10 +29,10 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
     narrowDark: { src: "/images/for-attorneys/timeline-dark-phone.webp", width: 1200, height: 1124 },
   },
   "dashboard": {
-    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1500 },
-    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1500 },
-    narrowLight: { src: "/images/for-attorneys/dashboard-light-phone.webp", width: 796, height: 2000 },
-    narrowDark: { src: "/images/for-attorneys/dashboard-dark-phone.webp", width: 796, height: 2000 },
+    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1481 },
+    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1481 },
+    narrowLight: { src: "/images/for-attorneys/dashboard-light-phone.webp", width: 796, height: 1974 },
+    narrowDark: { src: "/images/for-attorneys/dashboard-dark-phone.webp", width: 796, height: 1974 },
   },
   "cases": {
     light: { src: "/images/for-attorneys/cases-light.webp", width: 1800, height: 1255 },
@@ -59,8 +59,8 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
     narrowDark: { src: "/images/for-attorneys/calendar-dark-phone.webp", width: 796, height: 1542 },
   },
   "notifications": {
-    light: { src: "/images/for-attorneys/notifications-light.webp", width: 1800, height: 1340 },
-    dark: { src: "/images/for-attorneys/notifications-dark.webp", width: 1800, height: 1340 },
+    light: { src: "/images/for-attorneys/notifications-light.webp", width: 1800, height: 1346 },
+    dark: { src: "/images/for-attorneys/notifications-dark.webp", width: 1800, height: 1346 },
     narrowLight: { src: "/images/for-attorneys/notifications-light-phone.webp", width: 796, height: 1880 },
     narrowDark: { src: "/images/for-attorneys/notifications-dark-phone.webp", width: 796, height: 1880 },
   },

@@ -244,7 +244,7 @@ function StatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <span className={`border-2 text-sm font-bold px-2 py-0.5 uppercase tracking-wide whitespace-nowrap ${styles[status] || "bg-muted text-foreground border-border"}`}>
+    <span className={`border-2 text-sm font-bold px-2 py-0.5 whitespace-nowrap ${styles[status] || "bg-muted text-foreground border-border"}`}>
       {labels[status] || status}
     </span>
   );
@@ -307,7 +307,7 @@ export function UsersTable({
       <Card>
         <CardHeader className="border-b-2 border-border">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle className="font-heading text-xl font-bold uppercase tracking-wide">
+            <CardTitle className="font-heading text-xl font-bold">
               Users ({totalCount})
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -336,7 +336,7 @@ export function UsersTable({
                     >
                       <button
                         onClick={() => handleSort(col.key)}
-                        className="flex items-center gap-1 hover:text-primary-text transition-colors font-bold uppercase tracking-wide"
+                        className="flex items-center gap-1 hover:text-primary-text transition-colors font-bold"
                       >
                         {col.label}
                         <ArrowsDownUpIcon
@@ -345,7 +345,7 @@ export function UsersTable({
                       </button>
                     </th>
                   ))}
-                  <th className="p-3 text-right text-sm font-bold uppercase tracking-wide sticky right-0 z-20 bg-muted min-w-[90px] border-l-2 border-border">
+                  <th className="p-3 text-right text-sm font-bold sticky right-0 z-20 bg-muted min-w-[90px] border-l-2 border-border">
                     Actions
                   </th>
                 </tr>
