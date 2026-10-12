@@ -76,6 +76,15 @@ switch_to(){ # $1 slot
   echo "$1" > $A/active
   log "traffic now on $1 ($(readlink $A/slots/$1 | xargs basename)), ports $p1$([ "$p2" != "$p1" ] && echo " and $p2")"
 }
+stamp_shared(){ # $1 a release's .next/static; $2 the shared folder nginx serves build files from
+  # The copy into shared/ is --no-clobber, so a file whose name never changes
+  # (the fonts, a stylesheet, the build manifest) keeps the date it first
+  # arrived. The prune deletes by date, so on Oct 19 2026 it would have
+  # deleted 21 files the live site still used (measured Oct 12), sending them
+  # through the app instead of disk. Dated today, a file's age means "last
+  # shipped by a release".
+  ( cd "$1" && find . -type f -print0 ) | ( cd "$2" && xargs -0 -r touch -c -- )
+}
 order_paths(){ # $1 the release's warm-first.txt; the usual warm-up paths on stdin
   # The pages the push changed go first ("page <path>" lines), then the
   # sitemap pages under a changed family ("prefix <path>/"), then the rest in
@@ -181,6 +190,8 @@ case "$action" in
     [ -f "$A/releases/$rel/server.js" ] || { log "release has no server.js"; exit 3; }
     chown -R permtracker:permtracker "$A/releases/$rel"
     cp -a --no-clobber "$A/releases/$rel/.next/static/." "$A/shared/_next/static/"
+    stamp_shared "$A/releases/$rel/.next/static" "$A/shared/_next/static" \
+      || log "could not date this release's build files in shared/; the prune may take a still-used one (nginx then asks the app)"
     # The second copy's own folder, copied while it holds only the build.
     rm -rf "$A/releases/$rel.w2"; cp -a "$A/releases/$rel" "$A/releases/$rel.w2"
     ln -sfn "$A/releases/$rel" "$A/slots/$idle"
@@ -221,7 +232,8 @@ case "$action" in
     log "deployed $rel" ;;
   prune-releases)
     # Keep the ten newest releases and every one a slot runs from; drop build
-    # files no release has served for three weeks. One at a time.
+    # files no release has shipped for three weeks (stamp_shared dates each
+    # file a deploy ships). One at a time.
     exec 9>"$A/.release-prune.lock"
     flock -n 9 || exit 0
     # A slot with no link yet is skipped (under pipefail its failed readlink

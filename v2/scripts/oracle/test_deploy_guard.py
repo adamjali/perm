@@ -88,9 +88,55 @@ def check_reload() -> None:
     check(reload_with("101 102", "103 104") == 0, "new workers mean the reload took")
 
 
+PRUNE_SHARED = 'find "$A/shared/_next/static" -type f -mtime +21 -delete'
+
+
+def check_stamp() -> None:
+    """A build file the live release still ships survives the three-week prune.
+
+    The copy into shared/ is --no-clobber, so a font whose name never changes
+    kept the date it first arrived, and the prune deletes by date: 21 files
+    the live site used were due to go on Oct 19 2026.
+    """
+    text = SCRIPT.read_text()
+    start = text.index("stamp_shared(){")
+    fn = text[start:text.index("\n}\n", start) + 3]
+    copy = text.index('cp -a --no-clobber "$A/releases/$rel/.next/static/." "$A/shared/_next/static/"')
+    check(text.index('stamp_shared "$A/releases/$rel/.next/static" "$A/shared/_next/static"', copy) - copy < 200,
+          "the deploy dates its build files right after copying them into shared/")
+    check(PRUNE_SHARED in text, "the prune deletes shared build files by that date (the line this test runs)")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        rel, shared = root / "release" / "static", root / "shared" / "_next" / "static"
+        month_ago = 1_700_000_000
+        for p in ("media/font-a.woff2", "css/site.css", "chunks/new-1.js", "chunks/not-copied.js"):
+            (rel / p).parent.mkdir(parents=True, exist_ok=True)
+            (rel / p).write_text("built\n")
+        for p in ("media/font-a.woff2", "css/site.css", "chunks/old-0.js"):
+            (shared / p).parent.mkdir(parents=True, exist_ok=True)
+            (shared / p).write_text("built\n")
+            os.utime(shared / p, (month_ago, month_ago))
+        (shared / "chunks" / "new-1.js").write_text("built\n")
+        r = subprocess.run(["bash", "-c", fn + f'stamp_shared "{rel}" "{shared}"'], capture_output=True, text=True, timeout=30)
+        check(r.returncode == 0, f"stamp_shared ran ({r.stderr.strip()[:120]})")
+        check(not (shared / "chunks" / "not-copied.js").exists(), "it only dates files; it never creates one in shared/")
+        check((shared / "media" / "font-a.woff2").stat().st_mtime > month_ago + 86400,
+              "a font the release still ships is dated today")
+        check((shared / "chunks" / "old-0.js").stat().st_mtime == month_ago,
+              "a file the release no longer ships keeps its old date")
+        subprocess.run(["bash", "-c", f'A="{root}"; ' + PRUNE_SHARED], timeout=30)
+        left = sorted(str(p.relative_to(shared)) for p in shared.rglob("*") if p.is_file())
+        check(left == ["chunks/new-1.js", "css/site.css", "media/font-a.woff2"],
+              f"the prune then removes only what no release ships ({left})")
+        r = subprocess.run(["bash", "-c", "set -euo pipefail; " + fn + f'stamp_shared "{root / "empty"}" "{shared}"'],
+                           capture_output=True, timeout=30)
+        check(r.returncode != 0, "a release with no build files is reported, never silently passed")
+
+
 def main() -> int:
     check_order()
     check_reload()
+    check_stamp()
     if platform.system() != "Linux":
         print("skipped the rest: Linux only (CI and the server run it)")
         print(f"\n{len(failures)} failure(s)")
