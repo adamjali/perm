@@ -1,6 +1,13 @@
 #!/bin/bash
 # permtracker-cron <job>: calls the site's own cron route
 # (GET with Authorization: Bearer CRON_SECRET).
+#
+# A busy site is a wait, not a failure. When the app is full nginx answers 503
+# with how long to wait (or 429 under a rate limit), and a scraper filling the
+# app for a minute made the 6 AM ingest-health dispatch fail on Oct 12 2026 and
+# email the owner. So a 503, 429, 502, 504 or a dropped connection is asked
+# again after the wait the reply names (the JSON's retryAfter, else 15, 30, 60
+# then 120 s), five tries in about five minutes. Anything else fails at once.
 set -euo pipefail
 job="$1"
 case "$job" in
@@ -8,9 +15,24 @@ case "$job" in
   prune-uscis|scorecard) path="/api/cron/$job" ;;
   *) echo "unknown job $job"; exit 2 ;;
 esac
+root="${PT_ROOT:-/srv/permtracker}"
+base="${PT_CRON_BASE:-http://127.0.0.1:8081}"
+nap="${PT_SLEEP:-sleep}"
+waits=(15 30 60 120)
 out=$(mktemp)
-code=$(curl -sS -o "$out" -w '%{http_code}' --max-time 300 \
-  -H "Authorization: Bearer $(cat /srv/permtracker/secrets/cron_secret)" \
-  -H "Host: permtracker.app" -A "permtracker-cron/1.0" "http://127.0.0.1:8081$path") || code=000
-echo "$job -> HTTP $code: $(head -c 400 "$out")"; rm -f "$out"
-[[ "$code" =~ ^2 ]]
+trap 'rm -f "$out"' EXIT
+for try in 1 2 3 4 5; do
+  code=$(curl -sS -o "$out" -w '%{http_code}' --max-time 300 \
+    -H "Authorization: Bearer $(cat "$root/secrets/cron_secret")" \
+    -H "Host: permtracker.app" -A "permtracker-cron/1.0" "$base$path") || code=000
+  echo "$job -> HTTP $code: $(head -c 400 "$out")"
+  [[ "$code" =~ ^2 ]] && exit 0
+  case "$code" in 503|429|502|504|000) ;; *) exit 1 ;; esac
+  [ "$try" -eq 5 ] && break
+  wait="${waits[$((try - 1))]}"
+  asked=$(grep -o '"retryAfter":[0-9]*' "$out" | head -1 | cut -d: -f2 || true)
+  if [[ "$asked" =~ ^[0-9]+$ ]] && [ "$asked" -gt "$wait" ] && [ "$asked" -le 300 ]; then wait="$asked"; fi
+  echo "$job: the site was busy; asking again in ${wait}s (try $((try + 1)) of 5)"
+  "$nap" "$wait"
+done
+exit 1
