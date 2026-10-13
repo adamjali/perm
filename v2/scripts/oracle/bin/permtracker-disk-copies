@@ -7,6 +7,8 @@ the boot disk) makes one copy a night, about 2 AM Eastern, but never deleted a
 copy once it expired: the Oct 4 copy expired Oct 7 and was still held on Oct 12,
 the count reached nine, and the any-spend alarm fired. So at 3:45 AM this job:
 
+  0. checks the schedule is still attached to the disk, and attaches it again
+     when it isn't;
   1. checks last night's copy exists (made in the last 26 hours) and that
      Oracle marks it Always free;
   2. deletes this disk's copies until KEEP - 1 remain, billed ones before free
@@ -22,10 +24,11 @@ emails within five minutes. DISKCOPY_OK records the last run that found a fresh
 copy, for the health report.
 
 The server signs in to Oracle as itself (an instance principal): the dynamic
-group permtracker-server and the policy permtracker-disk-copies (manage
-boot-volume-backups, use volumes) let it, and no key is stored anywhere. It
-can't see or assign backup policies; switching the schedule on is the owner's
-click. /etc/permtracker/disk-copies.env names the disk (BOOT_VOLUME_ID).
+group permtracker-server and the policy permtracker-disk-copies let it, and no
+key is stored anywhere. Since Oct 13 2026 that policy also grants manage
+all-resources in tenancy (owner's call, for the most room to act), so the job
+can see and attach the schedule. /etc/permtracker/disk-copies.env names the
+disk (BOOT_VOLUME_ID).
 
   permtracker-disk-copies            the daily run
   permtracker-disk-copies --dry-run  say what it would delete; change nothing
@@ -135,6 +138,27 @@ def disk_copies(client, compartment: str, volume_id: str):
             return out
 
 
+SCHEDULE_NAME = "permtracker-daily-keep3"
+
+
+def ensure_schedule(client, compartment: str, volume_id: str, *, dry_run: bool = False, make_details=None) -> str | None:
+    """Attach Oracle's nightly schedule to the disk when it isn't attached.
+    Returns a problem sentence, or None when the schedule is (now) attached."""
+    attached = client.get_volume_backup_policy_asset_assignment(asset_id=volume_id).data
+    if attached:
+        return None
+    policies = [p for p in client.list_volume_backup_policies(compartment_id=compartment).data
+                if p.display_name == SCHEDULE_NAME]
+    if not policies:
+        return f"Oracle's schedule {SCHEDULE_NAME} is gone; no copy will be made tonight"
+    if dry_run:
+        print(f"disk copies: the schedule isn't attached; a run would attach {SCHEDULE_NAME}")
+        return None
+    client.create_volume_backup_policy_assignment(make_details(volume_id, policies[0].id))
+    print(f"disk copies: the schedule wasn't attached; attached {SCHEDULE_NAME} again")
+    return None
+
+
 def run(client, compartment: str, volume_id: str, *, now: datetime, dry_run: bool = False,
         sleep=time.sleep, clock=time.monotonic, marker: pathlib.Path = MARKER) -> int:
     copies = [c for c in disk_copies(client, compartment, volume_id) if c.lifecycle_state not in GONE]
@@ -207,10 +231,18 @@ def main(argv: list[str]) -> int:
     signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
     client = oci.core.BlockstorageClient(config={}, signer=signer)
 
+    def assignment(vid: str, policy_id: str):
+        return oci.core.models.CreateVolumeBackupPolicyAssignmentDetails(asset_id=vid, policy_id=policy_id)
+
     try:
         if "--list" in argv:
             return list_copies(client, compartment, volume_id)
-        return run(client, compartment, volume_id, now=datetime.now(timezone.utc), dry_run="--dry-run" in argv)
+        problem = ensure_schedule(client, compartment, volume_id, dry_run="--dry-run" in argv, make_details=assignment)
+        code = run(client, compartment, volume_id, now=datetime.now(timezone.utc), dry_run="--dry-run" in argv)
+        if problem:
+            print(f"disk copies: {problem}")
+            return 1
+        return code
     except oci.exceptions.ServiceError as exc:
         print(f"disk copies: Oracle refused ({exc.status} {exc.code})")
         return 1

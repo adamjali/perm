@@ -684,9 +684,10 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 - **The build-file prune no longer takes files the live site still uses**: each deploy dates the files it ships.
 - **The cron dispatcher waits out a busy site** instead of failing on the first 503.
 - **Alert ratings are on**: a case's final alert asks for 1 to 5.
-- **Oracle's disk copies are kept inside the free five by our own job** (`permtracker-disk-copies`, 3:45 AM ET):
-  Oracle's schedule never deleted expired copies and billed the extras; the job deletes the oldest first, keeps 4, and
-  emails when a copy isn't tagged free.
+- **Oracle's disk copies stay inside the free five**: Oracle's schedule (`permtracker-daily-keep3`, re-attached Oct 13)
+  makes one a night, and `permtracker-disk-copies` (3:45 AM ET) checks it's there and free, deletes down to 3 (billed
+  first) and re-attaches the schedule if it's ever detached; the one copy the job made itself was billed. The server's
+  Oracle identity holds `manage all-resources in tenancy` since Oct 13 (owner's call).
 - **The Terms say Settings deletes an account** (30-day grace), as the Privacy Policy did; they had said "by contacting us".
 - **Signed-in users can switch usage analytics off** in Settings > Support; the account's browsers then send PostHog nothing.
 - **The assistant's models had retired** (Gemini 2.0 Flash, Groq's Llama 3.3, OpenRouter's free GLM; Mistral and Cerebras refuse

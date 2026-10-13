@@ -188,6 +188,34 @@ code, marker = run(fake)
 check("a stuck copy fails the run and changes nothing",
       code == 1 and not marker.exists() and not deleted(fake))
 
+# --- ensure_schedule: the nightly schedule stays attached ---
+class Schedules:
+    def __init__(self, attached, names):
+        self.attached, self.names, self.made = attached, names, []
+
+    def get_volume_backup_policy_asset_assignment(self, asset_id):
+        return NS(data=self.attached)
+
+    def list_volume_backup_policies(self, compartment_id):
+        return NS(data=[NS(display_name=n, id=f"policy-{n}") for n in self.names])
+
+    def create_volume_backup_policy_assignment(self, details):
+        self.made.append(details)
+
+
+quiet = io.StringIO()
+with contextlib.redirect_stdout(quiet):
+    s1 = Schedules([NS(policy_id="p")], [dc.SCHEDULE_NAME])
+    check("an attached schedule is left alone", dc.ensure_schedule(s1, "c", VOL, make_details=details) is None and s1.made == [])
+    s2 = Schedules([], ["Gold", dc.SCHEDULE_NAME])
+    check("a missing schedule is attached again, ours and not Oracle's",
+          dc.ensure_schedule(s2, "c", VOL, make_details=lambda v, p: (v, p)) is None and s2.made == [(VOL, f"policy-{dc.SCHEDULE_NAME}")],
+          str(s2.made))
+    s3 = Schedules([], ["Gold"])
+    check("a schedule that no longer exists is a problem", dc.ensure_schedule(s3, "c", VOL, make_details=details) and s3.made == [])
+    s4 = Schedules([], [dc.SCHEDULE_NAME])
+    check("a dry run attaches nothing", dc.ensure_schedule(s4, "c", VOL, dry_run=True, make_details=details) is None and s4.made == [])
+
 # --- wait_for ---
 gone = NS(status=404)
 
