@@ -101,6 +101,7 @@ export {
   // Federal holidays
   getFederalHolidays,
   isFederalHoliday,
+  federalHolidayName,
   isBusinessDay,
   type FederalHoliday,
   // Method date utilities

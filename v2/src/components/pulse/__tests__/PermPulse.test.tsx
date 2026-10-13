@@ -56,6 +56,22 @@ describe("PermPulse", () => {
     expect(text(block)).not.toContain("Checked against DOL");
   });
 
+  it("leads with DOL's last working day and names a holiday after it", () => {
+    // Columbus Day 2026: DOL closed, 11 decided. The board had read "Decided Oct 12: 11".
+    const holiday = renderToStaticMarkup(
+      <PermPulse
+        days={[day("2026-10-02", 629, 599, 16), day("2026-10-09", 615, 575, 29), day("2026-10-11", 6, 0, 4), day("2026-10-12", 11, 0, 4)]}
+        checkedAt={null}
+      />,
+    );
+    const t = text(holiday);
+    expect(t).toContain("Decided on Friday, Oct 9");
+    expect(t).toContain("Monday, Oct 12 was Columbus Day, a federal holiday: DOL was closed.");
+    expect(holiday).toContain("Columbus Day: DOL closed");
+    // The chart still ends on its last bar.
+    expect(holiday).toContain("to October 12, from");
+  });
+
   it("renders nothing without a day on record", () => {
     expect(renderToStaticMarkup(<PermPulse days={[]} checkedAt={null} />)).toBe("");
   });

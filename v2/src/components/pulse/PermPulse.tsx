@@ -3,15 +3,17 @@ import Link from "next/link";
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
+import { federalHolidayName } from "@/lib/perm";
 import type { ActivityDay } from "@/lib/activityStats";
-import { certifiedShare, lastDays, pulseHeadline, pulseSummary, recentWeekdays } from "@/lib/pulseStats";
+import { type ClosedDay, certifiedShare, lastDays, pulseHeadline, pulseSummary, recentWeekdays } from "@/lib/pulseStats";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { checkedLabel } from "@/lib/time";
 
 /**
- * PERM decisions, day by day: the newest day DOL's case status moved under
- * our check, the 30 days before it, and the shape of a week.
+ * PERM decisions, day by day: DOL's last working day under our check (a
+ * weekend or a federal holiday after it is named, never led with), the 30
+ * days before it, and the shape of a week.
  *
  * Every figure is a count of DOL's own decisions, dated by the day our sweep
  * saw them change; nothing is modelled.
@@ -35,6 +37,13 @@ function dayLabel(iso: string, opts: Intl.DateTimeFormatOptions): string {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", ...opts });
 }
 
+/** "Monday, Oct 12 was Columbus Day, a federal holiday: DOL was closed." */
+function closedSentence(closed: readonly ClosedDay[]): string {
+  return closed
+    .map((c) => `${dayLabel(c.date, { weekday: "long", month: "short", day: "numeric" })} was ${c.name}, a federal holiday: DOL was closed.`)
+    .join(" ");
+}
+
 export interface PermPulseProps {
   /** `sweep-observed` days, any order. Eight weeks covers the comparison and the bars. */
   days: readonly ActivityDay[];
@@ -54,8 +63,13 @@ export interface PermPulseProps {
 export function PermPulse({ days, checkedAt, showLink = true, variant = "band", className }: PermPulseProps) {
   const head = pulseHeadline(days);
   if (!head) return null;
-  const { day, changePct, typical } = head;
+  const { day, changePct, typical, closedAfter } = head;
   const bars = lastDays(days, 30);
+  const lastBar = bars[bars.length - 1]!;
+  const holidayOf = new Map(bars.flatMap((b) => {
+    const name = federalHolidayName(b.date);
+    return name ? [[b.date, name] as const] : [];
+  }));
   const week = recentWeekdays(days, 4);
   const max = Math.max(1, ...bars.map((b) => b.total));
   const weekMax = Math.max(1, ...week.map((w) => w.mean));
@@ -112,7 +126,10 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
                 {`${up ? "+" : "−"}${Math.abs(changePct)}% vs a typical ${weekday} (${formatInt(typical)})`}
               </p>
             ) : null}
-          </div>
+          </div>{" "}
+          {closedAfter.length > 0 ? (
+            <p className="mt-3 text-sm text-background/75">{closedSentence(closedAfter)}</p>
+          ) : null}
         </div>{" "}
         <div className="border-2 border-border bg-card p-5 shadow-hard-sm">
           <p className="text-sm font-bold text-foreground/70">Certified</p>{" "}
@@ -174,12 +191,12 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
           <div
             className="flex h-40 items-end gap-[2px] border-b-2 border-l-2 border-border pl-px sm:h-48"
             role="img"
-            aria-label={`Decisions per day, ${dayLabel(bars[0]!.date, { month: "long", day: "numeric" })} to ${dayLabel(day.date, { month: "long", day: "numeric" })}, from ${formatInt(Math.min(...bars.map((b) => b.total)))} to ${formatInt(max)} a day.`}
+            aria-label={`Decisions per day, ${dayLabel(bars[0]!.date, { month: "long", day: "numeric" })} to ${dayLabel(lastBar.date, { month: "long", day: "numeric" })}, from ${formatInt(Math.min(...bars.map((b) => b.total)))} to ${formatInt(max)} a day.`}
           >
             {bars.map((b) => (
               <div
                 key={b.date}
-                data-tip={`${dayLabel(b.date, { weekday: "short", month: "short", day: "numeric" })}\n${formatInt(b.total)} decided\n${formatInt(b.certified)} certified\n${formatInt(b.denied)} denied\n${formatInt(b.withdrawn)} withdrawn`}
+                data-tip={`${dayLabel(b.date, { weekday: "short", month: "short", day: "numeric" })}\n${formatInt(b.total)} decided\n${formatInt(b.certified)} certified\n${formatInt(b.denied)} denied\n${formatInt(b.withdrawn)} withdrawn${holidayOf.has(b.date) ? `\n${holidayOf.get(b.date)}: DOL closed` : ""}`}
                 className={cn("flex flex-1 flex-col-reverse", b.date === day.date && "outline outline-2 outline-offset-1 outline-foreground")}
                 style={{ height: `${(b.total / max) * 100}%` }}
               >
@@ -192,7 +209,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
           </ChartTips>{" "}
           <div className="mt-2 flex justify-between text-sm tabular-nums text-foreground/70">
             <span>{dayLabel(bars[0]!.date, { month: "short", day: "numeric" })}</span>{" "}
-            <span>{dayLabel(day.date, { month: "short", day: "numeric" })}</span>
+            <span>{dayLabel(lastBar.date, { month: "short", day: "numeric" })}</span>
           </div>
         </figure>{" "}
 

@@ -195,6 +195,29 @@ export function isFederalHoliday(dateStr: string): boolean {
   return holidays.some((holiday) => holiday.date === dateStr);
 }
 
+/** How a holiday reads to a person: OPM's names, shortened where it lists a long one. */
+const HOLIDAY_DISPLAY_NAMES: Record<string, string> = {
+  'New Year': "New Year's Day",
+  'MLK Day': 'Martin Luther King Jr. Day',
+  'Presidents Day': "Washington's Birthday",
+  Thanksgiving: 'Thanksgiving Day',
+  Christmas: 'Christmas Day',
+};
+
+/**
+ * The name of the federal holiday observed on a date, or null on any other day.
+ * A weekend holiday is named on the weekday it's observed (July 3, 2026 reads
+ * "Independence Day").
+ *
+ * @param dateStr - ISO date string (YYYY-MM-DD)
+ */
+export function federalHolidayName(dateStr: string): string | null {
+  const year = new Date(dateStr + 'T00:00:00').getFullYear();
+  const holiday = getFederalHolidays(year).find((h) => h.date === dateStr);
+  if (!holiday) return null;
+  return HOLIDAY_DISPLAY_NAMES[holiday.name] ?? holiday.name;
+}
+
 /**
  * Check if a date is a business day (not a weekend, not a holiday).
  *

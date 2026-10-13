@@ -20,6 +20,7 @@ export { addBusinessDays, subtractBusinessDays, countBusinessDays } from './busi
 export {
   getFederalHolidays,
   isFederalHoliday,
+  federalHolidayName,
   isBusinessDay,
   type FederalHoliday,
 } from './holidays';

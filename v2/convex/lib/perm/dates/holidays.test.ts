@@ -2,6 +2,7 @@ import { describe, test, expect } from 'vitest';
 import {
   getFederalHolidays,
   isFederalHoliday,
+  federalHolidayName,
   isBusinessDay,
 } from './holidays';
 
@@ -152,5 +153,22 @@ describe('isBusinessDay', () => {
 
   test('returns false for Thanksgiving 2024', () => {
     expect(isBusinessDay('2024-11-28')).toBe(false);
+  });
+});
+
+describe('federalHolidayName', () => {
+  test('names the holiday as a person reads it', () => {
+    expect(federalHolidayName('2026-10-12')).toBe('Columbus Day');
+    expect(federalHolidayName('2026-01-01')).toBe("New Year's Day");
+    expect(federalHolidayName('2026-01-19')).toBe('Martin Luther King Jr. Day');
+  });
+
+  test('names a weekend holiday on the day it is observed', () => {
+    expect(federalHolidayName('2026-07-03')).toBe('Independence Day');
+    expect(federalHolidayName('2026-07-04')).toBeNull();
+  });
+
+  test('is null on an ordinary day', () => {
+    expect(federalHolidayName('2026-10-13')).toBeNull();
   });
 });

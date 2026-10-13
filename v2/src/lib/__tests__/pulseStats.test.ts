@@ -59,6 +59,45 @@ describe("pulseHeadline", () => {
   it("is null for an empty series", () => {
     expect(pulseHeadline([])).toBeNull();
   });
+
+  // Oct 2026 as our sweep recorded it. Columbus Day (Mon Oct 12): DOL closed,
+  // 11 decided, and the homepage board read "Decided Oct 12: 11".
+  const HOLIDAY_WEEK: ActivityDay[] = [
+    d("2026-09-07", 2), // Mon, Labor Day
+    d("2026-09-14", 693), // Mon
+    d("2026-09-21", 608), // Mon
+    d("2026-09-28", 712), // Mon
+    d("2026-10-05", 628), // Mon
+    d("2026-10-09", 615), // Fri
+    d("2026-10-02", 629), // Fri
+    d("2026-09-25", 792), // Fri
+    d("2026-09-18", 796), // Fri
+    d("2026-09-11", 719), // Fri
+    d("2026-10-10", 145), // Sat
+    d("2026-10-11", 6), // Sun
+    d("2026-10-12", 11, 0), // Mon, Columbus Day
+  ];
+
+  it("leads with DOL's last working day and names the holiday after it", () => {
+    const h = pulseHeadline(HOLIDAY_WEEK)!;
+    expect(h.day.date).toBe("2026-10-09");
+    expect(h.typical).toBe(Math.round((792 + 796 + 629 + 719) / 4));
+    expect(h.closedAfter).toEqual([{ date: "2026-10-12", name: "Columbus Day", total: 11 }]);
+  });
+
+  it("leads with Friday over a weekend, with no holiday to name", () => {
+    const h = pulseHeadline(HOLIDAY_WEEK.filter((x) => x.date !== "2026-10-12"))!;
+    expect(h.day.date).toBe("2026-10-09");
+    expect(h.closedAfter).toEqual([]);
+  });
+
+  it("leaves a holiday out of the same-weekday average", () => {
+    // Oct 5 against the Mondays before it: Labor Day's 2 isn't one of them.
+    const h = pulseHeadline(HOLIDAY_WEEK.filter((x) => x.date <= "2026-10-05"))!;
+    expect(h.day.date).toBe("2026-10-05");
+    expect(h.typical).toBe(Math.round((693 + 608 + 712) / 3));
+    expect(h.compared).toBe(3);
+  });
 });
 
 describe("lastDays and recentWeekdays", () => {
@@ -90,6 +129,14 @@ describe("pulseSummary", () => {
     expect(s.last7).toBe(1709);
     // Aug 31 to Sep 29 holds every row.
     expect(s.last30).toBe(700 + 800 + 2 + 600 + 900 + 8 + 712 + 989);
+  });
+
+  it("leaves a federal holiday out of the typical weekday and the typical week", () => {
+    const rows = [d("2026-10-05", 628), d("2026-10-09", 615), d("2026-10-12", 11, 0)];
+    expect(pulseSummary(rows)!.weekdayAvg).toBe(Math.round((628 + 615) / 2));
+    const mon = recentWeekdays(rows, 4).find((x) => x.label === "Mon")!;
+    expect(mon.days).toBe(1);
+    expect(mon.mean).toBe(628);
   });
 
   it("averages weekdays only, so a weekend never drags the typical day down", () => {

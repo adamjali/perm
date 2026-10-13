@@ -714,3 +714,9 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 - **The chat has a per-account quota and bounded storage** (`convex/chatQuota.ts`, `convex/lib/chatLimits.ts`), its
   panels are real dialogs, and a deleted conversation leaves no words in the audit log.
 
+
+## Oct 13 2026, in one line
+
+- **The homepage board and the daily pulse lead with DOL's last working day** (`isDolWorkday` in `src/lib/pulseStats.ts`):
+  on Columbus Day the board read "Decided Oct 12: 11", and a weekend did the same every Monday morning. A holiday after
+  it is named ("Monday, Oct 12 was Columbus Day, a federal holiday: DOL was closed"), and no holiday counts toward a typical day.
