@@ -1,7 +1,6 @@
 /**
  * WeeklyDigest Email Template
- * Weekly case summary, sent once a week on the account's own day (Monday,
- * Tuesday or Wednesday; convex/lib/digestDay.ts).
+ * Weekly case summary, sent every Monday morning.
  *
  * Features:
  * - Stats overview (active cases, overdue, urgent)

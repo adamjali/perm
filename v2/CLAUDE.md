@@ -9759,10 +9759,12 @@ An audit of the whole chat followed; what it changed:
   audit rows and tool cache, the panel as a dialog, IME-safe Enter, markdown images from any host, a per-user chat
   quota, and unbounded conversation reads.
 
-**Email, same evening.** The weekly case summary goes out on each account's own day (`digestSlot`: Monday, Tuesday
-or Wednesday, three crons) instead of all on Monday; empty summaries were already skipped. Mail to the site's own
-test and demo accounts (every `@permtracker.app` address but support@) counts as done and isn't sent or counted
-(`isOwnTestAddress` in `sendOrQueue`); sign-in codes and resets still go.
+**Email, same evening.** The weekly case summary stays on Monday for every account (owner's call: a split across
+Monday, Tuesday and Wednesday shipped and was undone the same night; empty summaries were already skipped). Mail the
+site sends to its own test and demo accounts (every `@permtracker.app` address but support@; on Oct 12 the only one
+was demo@) counts as done and isn't sent or counted (`isOwnTestAddress` in `sendOrQueue`); sign-in codes and resets
+still go. This is outbound only: mail anyone sends TO an `@permtracker.app` address still reaches the owner through
+the Cloudflare catch-all below.
 
 **Inbound mail and owner mail moved to Cloudflare (live 5:24 to 5:42 PM EDT Oct 12 2026).** Resend counts received
 mail and every alert to the owner against its 100 a day; Cloudflare Email Routing does neither. The root MX now

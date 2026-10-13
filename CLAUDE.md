@@ -697,7 +697,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   `convex/chatConfirmations.ts`): a stage the dates don't support asks for the date; a card runs the change the server
   stored, once; the result is read back from the case. Archive closes and never deletes.
 - **Closing sets the override and the closure trail; reopening hands the stage back to the dates**, from the cases page too.
-- **The weekly case summary goes out on each account's own day** (Monday, Tuesday or Wednesday, `convex/lib/digestDay.ts`).
+- **The weekly case summary stays on Monday for every account** (owner's call, Oct 12: a split across three days was tried and undone).
 - **The site's own test accounts get no notification mail** (`isOwnTestAddress`: every `@permtracker.app` address but support@).
 - **Inbound mail and alerts to the owner go through Cloudflare, free** (`workers/mail/`): the root MX is Cloudflare's,
   a Worker forwards and stores every message, and owner mail falls back to Resend only if the Worker fails.

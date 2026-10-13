@@ -106,23 +106,7 @@ crons.hourly(
 crons.weekly(
   "weekly-digest",
   { dayOfWeek: "monday", hourUTC: 15, minuteUTC: 0 },
-  internal.scheduledJobs.sendWeeklyDigest,
-  { slot: 0 }
-);
-// Each account has one fixed day (convex/lib/digestDay.ts): a third go on
-// Monday, a third on Tuesday, a third on Wednesday, so they never all land
-// on one day's allowance beside the reminders.
-crons.weekly(
-  "weekly-digest-tuesday",
-  { dayOfWeek: "tuesday", hourUTC: 15, minuteUTC: 0 },
-  internal.scheduledJobs.sendWeeklyDigest,
-  { slot: 1 }
-);
-crons.weekly(
-  "weekly-digest-wednesday",
-  { dayOfWeek: "wednesday", hourUTC: 15, minuteUTC: 0 },
-  internal.scheduledJobs.sendWeeklyDigest,
-  { slot: 2 }
+  internal.scheduledJobs.sendWeeklyDigest
 );
 
 // ============================================================================

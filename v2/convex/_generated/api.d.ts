@@ -93,7 +93,6 @@ import type * as lib_deadlineEnforcementHelpers from "../lib/deadlineEnforcement
 import type * as lib_deadlineTypeMapping from "../lib/deadlineTypeMapping.js";
 import type * as lib_deletion from "../lib/deletion.js";
 import type * as lib_derivedCalculations from "../lib/derivedCalculations.js";
-import type * as lib_digestDay from "../lib/digestDay.js";
 import type * as lib_digestHelpers from "../lib/digestHelpers.js";
 import type * as lib_documents from "../lib/documents.js";
 import type * as lib_dolProcessingTimes from "../lib/dolProcessingTimes.js";
@@ -317,7 +316,6 @@ declare const fullApi: ApiFromModules<{
   "lib/deadlineTypeMapping": typeof lib_deadlineTypeMapping;
   "lib/deletion": typeof lib_deletion;
   "lib/derivedCalculations": typeof lib_derivedCalculations;
-  "lib/digestDay": typeof lib_digestDay;
   "lib/digestHelpers": typeof lib_digestHelpers;
   "lib/documents": typeof lib_documents;
   "lib/dolProcessingTimes": typeof lib_dolProcessingTimes;

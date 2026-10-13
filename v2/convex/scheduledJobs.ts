@@ -21,7 +21,6 @@
  */
 
 import { internalAction, internalQuery, internalMutation } from "./_generated/server";
-import { digestSlot } from "./lib/digestDay";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id, Doc } from "./_generated/dataModel";
@@ -389,15 +388,10 @@ export const deleteNotification = internalMutation({
  * Monday case summary burst. Only opted-in users with something to report are emailed.
  */
 export const sendWeeklyDigest = internalAction({
-  args: {
-    /** This run's weekday slot (convex/lib/digestDay.ts); absent sends every account (a run by hand). */
-    slot: v.optional(v.number()),
-  },
-  handler: async (ctx, args): Promise<{ sent: number; skipped: number }> => {
-    // Get users who should receive digest: on a scheduled run, only the
-    // accounts whose day this is.
-    const everyone = await ctx.runQuery(internal.scheduledJobs.getUsersForWeeklyDigest);
-    const users = args.slot === undefined ? everyone : everyone.filter((u) => digestSlot(u.userId) === args.slot);
+  args: {},
+  handler: async (ctx): Promise<{ sent: number; skipped: number }> => {
+    // Get users who should receive digest
+    const users = await ctx.runQuery(internal.scheduledJobs.getUsersForWeeklyDigest);
 
     let sent = 0;
     let skipped = 0;
