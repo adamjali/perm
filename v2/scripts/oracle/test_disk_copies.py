@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""The daily disk copy (bin/permtracker-disk-copies): one run deletes, a run
-hours later makes, it never holds more than the free five, deletes billed
-copies before free ones, never touches another disk's copies, and says when a
-copy isn't free. Run: python3 scripts/oracle/test_disk_copies.py"""
+"""The nightly disk-copy check (bin/permtracker-disk-copies): Oracle's schedule
+makes the copy, and this job checks last night's is there and free, deletes
+down to three, billed copies first, never makes one, never touches another
+disk's copies. Run: python3 scripts/oracle/test_disk_copies.py"""
 import contextlib
 import io
 import importlib.machinery
@@ -90,12 +90,8 @@ def details(vid, name):
 LOG = {"text": ""}
 
 
-def run(fake, pruned_hours_ago: float | None = None, **kw):
-    folder = pathlib.Path(tempfile.mkdtemp()) / "backups"
-    tmp, pruned = folder / "DISKCOPY_OK", folder / "DISKCOPY_PRUNED"
-    if pruned_hours_ago is not None:
-        folder.mkdir(parents=True)
-        pruned.write_text((NOW - timedelta(hours=pruned_hours_ago)).strftime("%Y-%m-%dT%H:%M:%SZ") + "\n")
+def run(fake, **kw):
+    tmp = pathlib.Path(tempfile.mkdtemp()) / "backups" / "DISKCOPY_OK"
     ticks = {"t": 0.0}
 
     def clock():  # every read moves the clock one poll, so waits end in steps, not real time
@@ -104,10 +100,9 @@ def run(fake, pruned_hours_ago: float | None = None, **kw):
 
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
-        code = dc.run(fake, "ocid1.tenancy.oc1..x", VOL, details, now=NOW, sleep=lambda s: None, clock=clock,
-                      marker=tmp, pruned=pruned, **kw)
+        code = dc.run(fake, "ocid1.tenancy.oc1..x", VOL, now=NOW, sleep=lambda s: None, clock=clock,
+                      marker=tmp, **kw)
     LOG["text"] = out.getvalue()
-    run.pruned = pruned
     return code, tmp
 
 
@@ -143,81 +138,55 @@ stuck = five[:3] + [copy(12, "CREATING", hours_ago=9)]
 todo, skip, problem = dc.plan(stuck, NOW.timestamp())
 check("a copy stuck for nine hours is a problem, not a skip", todo == [] and problem and not skip)
 
-# --- run: one run deletes, a run hours later makes ---
-fake = FakeOracle(five + [copy(9, vol=OTHER)])
+# --- run: check last night's copy, delete down to three, never make one ---
+def nights():  # fresh copies each time: a delete marks the copy object itself
+    return [copy(10), copy(11), copy(12), copy(13)]  # Oct 13's copy was made half an hour before NOW
+
+
+night = nights()
+fake = FakeOracle(night + [copy(9, vol=OTHER)])
 code, marker = run(fake)
-check("a run that deletes makes nothing", creates(fake) == [], str(fake.calls))
-check("the two oldest of this disk were deleted, nothing else",
-      sorted(deleted(fake)) == sorted([five[0].id, five[1].id]), str(deleted(fake)))
+check("four held: the oldest goes, leaving three for tonight's copy", deleted(fake) == [night[0].id], str(deleted(fake)))
+check("the job never makes a copy", creates(fake) == [], str(fake.calls))
 check("another disk's copy is never touched", fake.copies[copy(9, vol=OTHER).id].lifecycle_state == "AVAILABLE")
-check("a delete run exits 0 and records when it deleted",
-      code == 0 and run.pruned.exists() and run.pruned.read_text().split() == ["2026-10-13T06:30:00Z"])
-check("a delete run writes no made-copy marker", not marker.exists())
-
-fake = FakeOracle(five[2:])
-code, marker = run(fake, pruned_hours_ago=2)
-check("two hours after a delete, no copy is made yet", code == 0 and creates(fake) == [] and not marker.exists())
-
-fake = FakeOracle(five[2:] + [copy(4, "TERMINATED")])
-code, marker = run(fake, pruned_hours_ago=12)
-check("twelve hours after a delete, the copy is made with three held, so it's the fourth, never the sixth",
-      creates(fake) == [("create", 3)], str(fake.calls))
-check("a good make run exits 0", code == 0)
-check("the marker says when, how many and whether the new copy is free",
-      marker.exists() and marker.read_text().split() == ["2026-10-13T06:30:00Z", "4", "yes"],
+check("a good run exits 0", code == 0, LOG["text"])
+check("the marker says when, how many are left and whether last night's copy is free",
+      marker.exists() and marker.read_text().split() == ["2026-10-13T06:30:00Z", "3", "yes"],
       marker.read_text() if marker.exists() else "no marker")
-check("the made line says how many deleted copies Oracle still listed",
-      "1 deleted copies were still listed" in LOG["text"], LOG["text"])
 
-fake = FakeOracle(five[3:] + [copy(13, hours_ago=3)])
-code, marker = run(fake, pruned_hours_ago=30)
-check("a copy made three hours ago: nothing to do", code == 0 and creates(fake) == [] and not deleted(fake))
-
-fake = FakeOracle(five)
-code, marker = run(fake, dry_run=True)
-check("a dry run deletes nothing and makes nothing", not any(c[0] in ("delete", "create") for c in fake.calls))
-check("a dry run writes no marker", not marker.exists() and not run.pruned.exists())
-fake = FakeOracle(five[2:])
-code, marker = run(fake, dry_run=True)
-check("a dry make run makes nothing", creates(fake) == [] and not marker.exists())
-
-fake = FakeOracle(five[2:], new_tags={"orcl-cloud": {"free-tier-retained": "false"}})
+fake = FakeOracle(nights()[1:])
 code, marker = run(fake)
-check("a new copy Oracle doesn't mark free fails the run, so the alarm emails", code == 1)
-check("and the marker says so", marker.exists() and marker.read_text().split()[2] == "no")
+check("three held: nothing deleted, all fine", code == 0 and deleted(fake) == [] and marker.exists())
 
-fake = FakeOracle(five[2:], new_tags={})
+fake = FakeOracle([copy(10), copy(11)])
 code, marker = run(fake)
-check("a copy with no tags at all reads as billed (how Oracle showed the billed ones)",
-      code == 1 and marker.read_text().split()[2] == "no")
+check("no copy in 26 hours fails the run and names the schedule",
+      code == 1 and "permtracker-daily-keep3" in LOG["text"] and not marker.exists(), LOG["text"])
 
-late = FakeOracle(five[2:], new_tags={})
-reads = {"n": 0}
-real_get = late.get_boot_volume_backup
+billed = {"orcl-cloud": {}}
+fake = FakeOracle(nights()[:3] + [copy(13, tags=billed)])
+code, marker = run(fake)
+check("a billed copy from last night fails the run, so the alarm emails", code == 1, LOG["text"])
+check("and it's the one deleted, billed copies first", deleted(fake) == [copy(13, tags=billed).id], str(deleted(fake)))
+check("and the marker says it wasn't free", marker.exists() and marker.read_text().split()[2] == "no")
 
+fake = FakeOracle(nights())
+code, marker = run(fake, dry_run=True)
+check("a dry run deletes nothing and writes no marker", deleted(fake) == [] and not marker.exists())
 
-def get_tagged_later(cid):
-    out = real_get(cid)
-    if cid.endswith(".new"):
-        reads["n"] += 1
-        if reads["n"] >= 3:
-            out.data.system_tags = FREE
-    return out
-
-
-late.get_boot_volume_backup = get_tagged_later
-code, marker = run(late)
-check("a tag Oracle adds a little after the copy is ready still counts", code == 0 and marker.read_text().split()[2] == "yes")
-
-fake = FakeOracle([copy(d) for d in range(4, 13)], page_size=3)
+fake = FakeOracle([copy(d) for d in range(5, 14)], page_size=3)
 code, _ = run(fake)
 check("copies spread over several pages are all counted (nine held, six deleted)",
       len(deleted(fake)) == 6, str(len(deleted(fake))))
 
-fake = FakeOracle(five[:3] + [copy(12, "CREATING", hours_ago=9)])
+fake = FakeOracle(nights()[:3] + [copy(13, "CREATING", hours_ago=1)])
+code, marker = run(fake)
+check("Oracle still making last night's copy: the run steps aside", code == 0 and deleted(fake) == [])
+
+fake = FakeOracle(nights()[:3] + [copy(12, "CREATING", hours_ago=9)])
 code, marker = run(fake)
 check("a stuck copy fails the run and changes nothing",
-      code == 1 and not marker.exists() and not any(c[0] in ("delete", "create") for c in fake.calls))
+      code == 1 and not marker.exists() and not deleted(fake))
 
 # --- wait_for ---
 gone = NS(status=404)

@@ -1,8 +1,7 @@
 [Unit]
-Description=Oracle disk copies: 3:45 AM Eastern deletes (after the 3:15 AM database backup, before the 4:10 AM sweep), 3:45 PM makes the new one
+Description=Oracle disk copies, 3:45 AM Eastern: check last night's scheduled copy and delete down to three (after Oracle's 2 AM copy and the 3:15 AM database backup, before the 4:10 AM sweep)
 [Timer]
 OnCalendar=*-*-* 03:45:00 America/New_York
-OnCalendar=*-*-* 15:45:00 America/New_York
 Persistent=true
 RandomizedDelaySec=5m
 [Install]
