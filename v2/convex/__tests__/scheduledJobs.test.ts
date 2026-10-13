@@ -817,6 +817,46 @@ describe("Scheduled Jobs", () => {
       expect(result.sent).toBe(0);
       expect(result.skipped).toBe(2);
     });
+
+    // Oct 12 2026: while email is scarce the summary waits for a change, a case
+    // updated or a deadline passed in the last 7 days; with a paid allowance
+    // (EMAIL_DAILY_LIMIT above 100) it goes every week for an active case.
+    const quietWeek = async (t: ReturnType<typeof createTestContext>, name: string, pwdExpirationDate: string) => {
+      const { authT } = await createTestUserWithProfile(t, name, { emailNotificationsEnabled: true, emailWeeklyDigest: true });
+      const caseId = await createTestCaseWithDeadlines(t, authT, {
+        employerName: `${name} Co`,
+        beneficiaryIdentifier: `${name} worker`,
+        pwdExpirationDate,
+      });
+      await t.run(async (ctx) => ctx.db.patch(caseId, { updatedAt: Date.now() - 10 * 24 * 60 * 60 * 1000 }));
+    };
+
+    it("skips a week with an upcoming deadline but no change", async () => {
+      const t = createTestContext();
+      await quietWeek(t, "Quiet Week", daysFromNow(5));
+      const result = await t.action(internal.scheduledJobs.sendWeeklyDigest, {});
+      expect(result).toEqual({ sent: 0, skipped: 1 });
+    });
+
+    it("sends when a deadline passed this week, even with no edit", async () => {
+      const t = createTestContext();
+      await quietWeek(t, "Missed Week", daysAgo(3));
+      const result = await t.action(internal.scheduledJobs.sendWeeklyDigest, {});
+      expect(result).toEqual({ sent: 1, skipped: 0 });
+    });
+
+    it("sends every week for an active case once email isn't scarce, and still skips an account with none", async () => {
+      const t = createTestContext();
+      await quietWeek(t, "Paid Week", daysFromNow(5));
+      await createTestUserWithProfile(t, "Paid No Cases", { emailNotificationsEnabled: true, emailWeeklyDigest: true });
+      process.env.EMAIL_DAILY_LIMIT = "1600";
+      try {
+        const result = await t.action(internal.scheduledJobs.sendWeeklyDigest, {});
+        expect(result).toEqual({ sent: 1, skipped: 1 });
+      } finally {
+        delete process.env.EMAIL_DAILY_LIMIT;
+      }
+    });
   });
 
   // ============================================================================

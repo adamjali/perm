@@ -173,9 +173,9 @@ import { createLogger } from "./lib/logging";
 import { deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
 import {
-  CASE_ALERT_BUDGET,
   CASE_ALERT_KEY,
   noteRefusal,
+  windowFor,
   CONFIRMATION_COOLDOWN_MS,
   SUBSCRIBE_IP_LIMIT,
   SWEEP_RESUME_DELAY_MS,
@@ -183,6 +183,7 @@ import {
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { formatInt } from "./lib/format";
+import { scaled } from "./lib/emailAllowance";
 import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 import { isPlausibleEmail } from "./lib/emailShape";
 
@@ -198,14 +199,14 @@ const log = createLogger("CaseAlerts");
 const CHECK_BATCH_LIMIT = 300;
 
 /** How many alerts one sweep may send. See the budget arithmetic above. */
-const ALERT_BATCH_LIMIT = 18;
+const alertBatchLimit = () => scaled(18);
 
 /**
  * Global ceilings on alerts and on confirmation emails, across every
  * subscriber, per rolling day. Shared with employer alerts; see
  * convex/lib/alertBudgets.ts.
  */
-const ALERT_GLOBAL_BUDGET = CASE_ALERT_BUDGET;
+const alertGlobalBudget = () => windowFor("caseAlert");
 
 /**
  * Minimum gap between ALERTS to one subscription.
@@ -1217,7 +1218,7 @@ export const claimAlertBudget = internalMutation({
   returns: v.number(),
   handler: async (ctx, args) => {
     if (args.want <= 0) return 0;
-    const state = await checkRateLimit(ctx, "all", CASE_ALERT_KEY, ALERT_GLOBAL_BUDGET);
+    const state = await checkRateLimit(ctx, "all", CASE_ALERT_KEY, alertGlobalBudget());
     if (!state.allowed) {
       await noteRefusal(ctx, "caseAlert", args.want);
       return 0;
@@ -1622,7 +1623,7 @@ export const sweepCaseChanges = internalAction({
 
     // Claim the budget BEFORE rendering anything. A send that the budget will
     // refuse is a React render nobody reads.
-    const want = Math.min(changed.length, ALERT_BATCH_LIMIT);
+    const want = Math.min(changed.length, alertBatchLimit());
     const granted = await ctx.runMutation(internal.caseAlerts.claimAlertBudget, {
       want,
     });
@@ -1630,7 +1631,7 @@ export const sweepCaseChanges = internalAction({
     if (granted === 0) {
       log.error("alert budget exhausted; nothing sent this sweep", {
         due: changed.length,
-        limit: ALERT_GLOBAL_BUDGET.limit,
+        limit: alertGlobalBudget().limit,
       });
       return { checked: batch.length, sent: 0, queued: 0, failed: 0, seeded, remaining };
     }

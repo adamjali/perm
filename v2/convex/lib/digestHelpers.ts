@@ -269,6 +269,24 @@ export function categorizeDeadlines(deadlines: DigestDeadline[]): {
 /**
  * Build the complete digest content from raw data.
  */
+/**
+ * Whether the week brought a change worth a summary: a case updated in the
+ * last 7 days, or a deadline that passed in them. A deadline merely coming up
+ * isn't one; the daily reminders already announce those.
+ */
+export function weekHadChange(rawCaseUpdates: RawCaseUpdateData[], rawDeadlines: RawDeadlineData[]): boolean {
+  return rawCaseUpdates.length > 0 || rawDeadlines.some((d) => d.daysUntil < 0 && d.daysUntil >= -7);
+}
+
+/**
+ * Whether this week's summary goes (convex/lib/emailAllowance.ts). While email
+ * is scarce, only in a week something changed. With enough of it, every week
+ * to anyone with an active case, quiet weeks included.
+ */
+export function summaryWorthSending(args: { savingEmail: boolean; changed: boolean; totalActiveCases: number }): boolean {
+  return args.savingEmail ? args.changed : args.totalActiveCases > 0;
+}
+
 export function buildDigestContent(params: {
   userName: string;
   userEmail: string;

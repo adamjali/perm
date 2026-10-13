@@ -35,17 +35,46 @@ export async function keyMatches(given, want) {
 /** Most an owner message may carry. */
 export const OWNER_LIMITS = { subject: 300, text: 200_000, html: 500_000 };
 
-/** An owner message from a request body, or why it isn't one. */
+/** An address as an address: one @, no spaces or angle brackets, bounded. */
+const ADDRESS = /^[^\s@<>,;]{1,64}@[^\s@<>,;]{1,255}$/;
+const isAddress = (x) => typeof x === "string" && x.length <= 254 && ADDRESS.test(x);
+
+/**
+ * An owner message from a request body, or why it isn't one. `to` names one of
+ * the owner's own inboxes (ownerRecipient decides which are allowed); `replyTo`
+ * is where a reply goes, for mail like the contact form's.
+ */
 export function ownerMessage(body) {
-  if (!body || typeof body !== "object") return { error: "Send JSON: { subject, text, html? }." };
-  const { subject, text, html } = body;
+  if (!body || typeof body !== "object") return { error: "Send JSON: { subject, text, html?, to?, replyTo? }." };
+  const { subject, text, html, to, replyTo } = body;
+  if (to !== undefined && !isAddress(to)) return { error: "to must be an address." };
+  if (replyTo !== undefined && !isAddress(replyTo)) return { error: "replyTo must be an address." };
   if (typeof subject !== "string" || subject.trim().length === 0) return { error: "subject is required." };
   if (typeof text !== "string" || text.length === 0) return { error: "text is required." };
   if (html !== undefined && typeof html !== "string") return { error: "html must be text." };
   if (subject.length > OWNER_LIMITS.subject || text.length > OWNER_LIMITS.text || (html?.length ?? 0) > OWNER_LIMITS.html) {
     return { error: "Too long." };
   }
-  return { subject: subject.replace(/[\r\n]+/g, " ").trim(), text, ...(html ? { html } : {}) };
+  return {
+    subject: subject.replace(/[\r\n]+/g, " ").trim(),
+    text,
+    ...(html ? { html } : {}),
+    ...(to ? { to: to.trim().toLowerCase() } : {}),
+    ...(replyTo ? { replyTo: replyTo.trim() } : {}),
+  };
+}
+
+/**
+ * Where an owner message goes: the owner's main inbox when it names none, or
+ * the one it names when that's among OWNER_ADDRESSES (comma-separated, each
+ * verified in Email Routing and allowed by the OWNER binding). Null for any
+ * other address: this route never mails a stranger.
+ */
+export function ownerRecipient(to, ownerEmail, ownerAddresses = "") {
+  const main = (ownerEmail || "").trim().toLowerCase();
+  if (!to) return main || null;
+  const allowed = new Set([main, ...String(ownerAddresses).split(",").map((a) => a.trim().toLowerCase())].filter(Boolean));
+  return allowed.has(to.toLowerCase()) ? to.toLowerCase() : null;
 }
 
 /** Messages larger than this are forwarded and stored with headers only (CPU on the free plan). */

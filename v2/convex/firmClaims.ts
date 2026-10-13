@@ -77,7 +77,8 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { CONFIRMATION_COOLDOWN_MS } from "./lib/alertBudgets";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
-import { getAdminEmail, requireAdmin } from "./lib/admin";
+import { getSecurityAlertEmail, requireAdmin } from "./lib/admin";
+import { sendOwnerMail } from "./lib/ownerMail";
 import { createLogger } from "./lib/logging";
 import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 import type { FirmClaimEmailKind } from "../src/emails/FirmClaimEmail";
@@ -653,7 +654,9 @@ export const notifyAdminOfReview = internalAction({
   args: { claimId: v.optional(v.id("firmClaims")) },
   returns: v.null(),
   handler: async (ctx) => {
-    const to = getAdminEmail();
+    // The owner's main inbox, like every admin notice, through the free Worker
+    // (it went through Resend to the admin sign-in address until Oct 12 2026).
+    const to = getSecurityAlertEmail();
     if (!to) return null;
     try {
       const waiting = await ctx.runQuery(internal.firmClaims.reviewWaiting, {});
@@ -661,26 +664,25 @@ export const notifyAdminOfReview = internalAction({
       const lines = waiting
         .slice(0, 20)
         .map((w) => `- ${w.firmName}: ${w.kind === "claim" ? "a claim to check by hand (DOL's files don't tie the address's domain to the firm)" : "profile changes to read"}`);
-      await sendOrQueue(
-        ctx,
-        "firm-claim-review",
-        getResend(),
-        {
-          from: FROM_EMAIL,
-          to,
-          subject: `Firm pages waiting for your review: ${waiting.length}`,
-          text: [
-            "These wait for you before anything shows on the firm pages:",
-            "",
-            ...lines,
-            "",
-            `Approve or decline on the admin page: ${SITE_URL}/admin#firm-claims`,
-            "",
-            "You get this at most once a day. The 7:30 AM report lists whatever still waits.",
-          ].join("\n"),
-        },
-        { priority: "high" },
-      );
+      const text = [
+        "These wait for you before anything shows on the firm pages:",
+        "",
+        ...lines,
+        "",
+        `Approve or decline on the admin page: ${SITE_URL}/admin#firm-claims`,
+        "",
+        "You get this at most once a day. The 7:30 AM report lists whatever still waits.",
+      ].join("\n");
+      const html = text
+        .split("\n")
+        .map((l) => (l ? `<p>${l.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : ""))
+        .join("");
+      await sendOwnerMail(ctx, "firm-claim-review", getResend(), {
+        to,
+        subject: `Firm pages waiting for your review: ${waiting.length}`,
+        html,
+        text,
+      });
     } catch (error) {
       await recordError(ctx, "action", "firmClaims.notifyAdminOfReview", error);
     }

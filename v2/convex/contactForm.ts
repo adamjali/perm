@@ -2,7 +2,9 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
-import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
+import { getResend } from "./lib/email";
+import { getSecurityAlertEmail } from "./lib/admin";
+import { sendOwnerMail } from "./lib/ownerMail";
 import { recordError } from "./lib/errorRecording";
 import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
 
@@ -22,7 +24,7 @@ import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
 const GLOBAL_PER_DAY = 25;
 const PER_IP_PER_HOUR = 10;
 
-/** Where the form lands; support@ forwards to the owner. */
+/** The support address a message is filed under, as if it had been mailed there. */
 const CONTACT_INBOX = "support@permtracker.app";
 
 export const submit = internalMutation({
@@ -97,16 +99,36 @@ export const forward = internalAction({
 
     const esc = (t: string) =>
       t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const result = await sendOrQueue(ctx, "contact-form", getResend(), {
-      from: FROM_EMAIL,
-      to: CONTACT_INBOX,
+    const subject = `Contact form: ${row.name}`;
+    // Filed with the support mail, so supportEmail:replyToEmail answers it in a
+    // thread, as when it went to support@ and came back in (Oct 12 2026: that
+    // round trip spent a Resend send and the forward another).
+    await ctx.runMutation(internal.supportEmail.storeCloudflareInbound, {
+      fromEmail: row.email,
+      fromName: row.name,
+      toEmail: CONTACT_INBOX,
+      subject,
+      bodyText: row.message,
+      messageId: `<contact-form-${id}@permtracker.app>`,
+      forwarded: true,
+    });
+    const to = getSecurityAlertEmail();
+    if (!to) {
+      await recordError(ctx, "action", "contactForm.forward", new Error("no owner address configured"));
+      return null;
+    }
+    // Straight to the owner's inbox through the free Worker, a reply going to
+    // the person who wrote; Resend only if the Worker can't take it.
+    const result = await sendOwnerMail(ctx, "contact-form", getResend(), {
+      to,
       replyTo: row.email,
-      subject: `Contact form: ${row.name}`,
+      subject,
       html: `<p><b>${esc(row.name)}</b> &lt;${esc(row.email)}&gt;</p><p style="white-space:pre-wrap">${esc(row.message)}</p>`,
-    }, { priority: "public" });
-    // "public" on purpose: strangers can send 25 of these a day, so they stop
-    // where sign-ups do and never use the room kept for alerts or sign-in
-    // codes. The message is stored above, so a wait loses nothing.
+      text: `${row.name} <${row.email}>\n\n${row.message}`,
+      // A stranger sets this off: on the Resend fallback it stops where
+      // sign-ups do, never in the room kept for alerts.
+      priority: "public",
+    });
     if (result.error) {
       // The message is already stored; log and leave notifiedAt unset so a
       // later manual sweep can see exactly which forwards never went out.

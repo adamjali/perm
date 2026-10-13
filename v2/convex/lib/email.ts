@@ -14,12 +14,11 @@
 import { Resend } from "resend";
 import { createLogger } from "./logging";
 import { isEmailBlocked, isOwnTestAddress } from "./emailBlocklist";
+import { viaWorker, workerCanSend } from "./ownerWorker";
 import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import {
-  LIST_CEILING,
-  PUBLIC_CEILING,
-  RESEND_DAILY_CAP,
+  dailyCeilings,
   isQuotaError,
   isRetryableSendError,
 } from "./emailLimits";
@@ -192,10 +191,23 @@ export async function sendOrQueue(
     return { data: { id: "skipped:own-test-account" } };
   }
 
+  // Mail to one of the owner's own inboxes goes through the free Worker first
+  // (convex/lib/ownerWorker.ts): it never spends Resend's allowance. Resend
+  // carries it only when the Worker isn't set up or doesn't answer.
+  if (recipients.length === 1 && workerCanSend(recipients[0]!)) {
+    const html = typeof params.html === "string" ? params.html : undefined;
+    const text = typeof params.text === "string" ? params.text : undefined;
+    const replyTo = toRecipientArray(params.replyTo)[0];
+    if ((html || text) && (await viaWorker({ to: recipients[0]!, subject: params.subject || "", html, text, replyTo }))) {
+      log.info(`Sent ${kind} to the owner through the mail Worker`);
+      return { data: { id: "worker" } };
+    }
+  }
+
   if (!recipients.some(isEmailBlocked)) {
     const used: number = await ctx.runQuery(internal.emailLedger.accountUsed, {});
-    const ceiling =
-      opts.priority === "high" ? RESEND_DAILY_CAP : opts.priority === "public" ? PUBLIC_CEILING : LIST_CEILING;
+    const limits = dailyCeilings();
+    const ceiling = opts.priority === "high" ? limits.cap : opts.priority === "public" ? limits.publicMail : limits.list;
     if (used >= ceiling) {
       const kept = await keep({ name: "daily_ceiling", message: `today's count is ${used} of ${ceiling}` }, true);
       if (kept) return kept;

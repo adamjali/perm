@@ -5,6 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Resend } from "resend";
 import { sendOwnerMail, textFromHtml, workerCanSend } from "../ownerMail";
+import { sendOrQueue } from "../email";
 
 const OWNER = "owner@example.com";
 
@@ -74,3 +75,48 @@ describe("pieces", () => {
     expect(textFromHtml("<style>p{}</style><p>One &amp; two</p><br/><div>Three</div>")).toBe("One & two\n\nThree");
   });
 });
+
+describe("any email to one of the owner's inboxes (Oct 12 2026)", () => {
+  const ok = () => vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+  it("goes through the Worker whatever sent it, a reply-to carried along", async () => {
+    const fetchMock = ok();
+    vi.stubGlobal("fetch", fetchMock);
+    const { resend, send } = fakeResend();
+    const out = await sendOrQueue(fakeCtx(), "weekly-summary", resend, {
+      from: "x@permtracker.app",
+      to: "Owner@Example.com",
+      replyTo: "person@example.org",
+      subject: "Your week",
+      html: "<p>Hi</p>",
+    });
+    expect(out.data?.id).toBe("worker");
+    expect(send).not.toHaveBeenCalled();
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toMatchObject({ to: "owner@example.com", replyTo: "person@example.org", text: "Hi" });
+  });
+
+  it("reaches a second inbox once it's listed in OWNER_INBOXES, and not before", async () => {
+    vi.stubGlobal("fetch", ok());
+    expect(workerCanSend("second@example.org")).toBe(false);
+    vi.stubEnv("OWNER_INBOXES", "second@example.org, third@example.net");
+    expect(workerCanSend("Second@Example.org")).toBe(true);
+    const { resend, send } = fakeResend();
+    const out = await sendOrQueue(fakeCtx(), "alert", resend, { from: "x@permtracker.app", to: "second@example.org", subject: "s", text: "t" });
+    expect(out.data?.id).toBe("worker");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("leaves mail to anyone else, or to several people, on Resend", async () => {
+    const fetchMock = ok();
+    vi.stubGlobal("fetch", fetchMock);
+    const a = fakeResend();
+    await sendOrQueue(fakeCtx(), "alert", a.resend, { from: "x@permtracker.app", to: "someone@example.com", subject: "s", html: "<p>h</p>" });
+    const b = fakeResend();
+    await sendOrQueue(fakeCtx(), "alert", b.resend, { from: "x@permtracker.app", to: [OWNER, "someone@example.com"], subject: "s", html: "<p>h</p>" });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(a.send).toHaveBeenCalledTimes(1);
+    expect(b.send).toHaveBeenCalledTimes(1);
+  });
+});
+

@@ -25,6 +25,7 @@
  * tests can all import it.
  */
 import type { QueryCtx } from "../_generated/server";
+import { emailDailyLimit } from "./emailAllowance";
 import { MS_PER_DAY, MS_PER_MINUTE } from "./time";
 
 /** Resend's free-plan daily limit, sent and received together. */
@@ -35,6 +36,17 @@ export const LIST_CEILING = 85;
 export const ALERT_RESERVE = 30;
 /** Mail anyone can set off stops here (55). */
 export const PUBLIC_CEILING = LIST_CEILING - ALERT_RESERVE;
+/**
+ * The day's three ceilings in force: the free plan's 100, 85 and 55, or the
+ * same shares of a paid plan's daily figure (EMAIL_DAILY_LIMIT,
+ * convex/lib/emailAllowance.ts). Read per call, so the switch needs no deploy.
+ */
+export function dailyCeilings(): { cap: number; list: number; publicMail: number } {
+  const cap = emailDailyLimit();
+  const share = (ceiling: number) => Math.floor((cap * ceiling) / RESEND_DAILY_CAP);
+  return { cap, list: share(LIST_CEILING), publicMail: share(PUBLIC_CEILING) };
+}
+
 /** Received mail counts toward the quota but isn't in Resend's list of sent mail. */
 export const RECEIVED_MARGIN = 5;
 

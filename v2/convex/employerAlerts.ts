@@ -63,14 +63,15 @@ import {
 import { stageNewsFor, stageNewsletterFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 import {
-  CASE_ALERT_BUDGET,
   CASE_ALERT_KEY,
   noteRefusal,
+  windowFor,
   CONFIRMATION_COOLDOWN_MS,
   SUBSCRIBE_IP_LIMIT,
   SWEEP_RESUME_DELAY_MS,
 } from "./lib/alertBudgets";
 import { deliverAlert } from "./lib/alertDelivery";
+import { scaled } from "./lib/emailAllowance";
 import { dropQueued } from "./lib/alertOutboxStore";
 import {
   HOLD_STATUS,
@@ -92,7 +93,7 @@ const log = createLogger("EmployerAlerts");
 export const MAX_EMPLOYERS_PER_ADDRESS = 100;
 /** Rows one sweep reads, and alerts one sweep may build. */
 const CHECK_BATCH_LIMIT = 300;
-const ALERT_BATCH_LIMIT = 18;
+const alertBatchLimit = () => scaled(18);
 /**
  * A move older than this many days is history, not news, and is never sent.
  * Seven days: the alert pool is shared, so a busy stretch can hold a move for
@@ -585,7 +586,7 @@ export const claimAlertBudget = internalMutation({
   returns: v.number(),
   handler: async (ctx, args) => {
     if (args.want <= 0) return 0;
-    const state = await checkRateLimit(ctx, "all", CASE_ALERT_KEY, CASE_ALERT_BUDGET);
+    const state = await checkRateLimit(ctx, "all", CASE_ALERT_KEY, windowFor("caseAlert"));
     if (!state.allowed) {
       await noteRefusal(ctx, "caseAlert", args.want);
       return 0;
@@ -657,7 +658,7 @@ export const sweep = internalAction({
     if (withNews.length === 0) return { checked: batch.length, sent: 0, queued: 0, failed: 0 };
 
     const granted = await ctx.runMutation(internal.employerAlerts.claimAlertBudget, {
-      want: Math.min(withNews.length, ALERT_BATCH_LIMIT),
+      want: Math.min(withNews.length, alertBatchLimit()),
     });
     if (granted < withNews.length) remaining = true;
     if (granted === 0) {

@@ -45,7 +45,7 @@ import {
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { BUDGETS, noteQueued, noteRefusal, windowFor, type BudgetName } from "./lib/alertBudgets";
-import { ALERT_RESERVE, LIST_CEILING, PUBLIC_CEILING, RECEIVED_MARGIN, msToNextUtcDay, usedToday } from "./lib/emailLimits";
+import { RECEIVED_MARGIN, dailyCeilings, msToNextUtcDay, usedToday } from "./lib/emailLimits";
 import { checkAndRecordRateLimit, checkRateLimit } from "./lib/rateLimit";
 import { siteThrottleReply } from "./lib/throttleReply";
 import { createLogger } from "./lib/logging";
@@ -79,7 +79,7 @@ export async function admitConfirmation(
   pool: BudgetName,
 ): Promise<{ allowed: boolean; resetInMs: number }> {
   const now = Date.now();
-  if ((await usedToday(ctx, now)) >= PUBLIC_CEILING) return { allowed: false, resetInMs: msToNextUtcDay(now) };
+  if ((await usedToday(ctx, now)) >= dailyCeilings().publicMail) return { allowed: false, resetInMs: msToNextUtcDay(now) };
   const r = await checkAndRecordRateLimit(ctx, "all", BUDGETS[pool].key, windowFor(pool));
   return { allowed: r.allowed, resetInMs: r.resetInMs };
 }
@@ -90,7 +90,7 @@ export async function admitConfirmation(
  * for), which must still get the reply a real request would get.
  */
 export async function confirmationWouldWait(ctx: MutationCtx, pool: BudgetName): Promise<boolean> {
-  if ((await usedToday(ctx, Date.now())) >= PUBLIC_CEILING) return true;
+  if ((await usedToday(ctx, Date.now())) >= dailyCeilings().publicMail) return true;
   return !(await checkRateLimit(ctx, "all", BUDGETS[pool].key, windowFor(pool))).allowed;
 }
 
@@ -193,7 +193,8 @@ export function adminNoticeWords(
   used: number,
   now: number,
 ): { subject: string; body: string } {
-  const b = BUDGETS[pool];
+  const b = { label: BUDGETS[pool].label, limit: windowFor(pool).limit };
+  const { cap, list, publicMail } = dailyCeilings();
   const at = easternTime(now);
   if (what === "turnedAway") {
     return {
@@ -207,14 +208,14 @@ export function adminNoticeWords(
   const tail =
     `Nobody has been turned away. The admin page's Alerts and email tab shows the queue. ` +
     `This email comes at most once a day.`;
-  if (used >= PUBLIC_CEILING) {
+  if (used >= publicMail) {
     const reset = easternTime(now + msToNextUtcDay(now));
     return {
-      subject: `Sign-up emails wait until ${reset}: the site has sent ${used} of Resend's 100 today`,
+      subject: `Sign-up emails wait until ${reset}: the site has sent ${used} of Resend's ${cap} today`,
       body:
         `At ${at} a ${b.label.toLowerCase()} request had to wait. Its own pool wasn't the limit: the whole site had ` +
-        `sent ${used} emails today, and sign-up emails stop at ${PUBLIC_CEILING} of Resend's 100 so ${ALERT_RESERVE} ` +
-        `stay for alerts and the last ${100 - LIST_CEILING} for sign-in codes. Resend counts a UTC day, so waiting ` +
+        `sent ${used} emails today, and sign-up emails stop at ${publicMail} of Resend's ${cap} so ${list - publicMail} ` +
+        `stay for alerts and the last ${cap - list} for sign-in codes. Resend counts a UTC day, so waiting ` +
         `requests go out at ${reset}, when its count starts again. ${tail}`,
     };
   }
@@ -242,16 +243,21 @@ export function utcDayStart(now: number): number {
 }
 
 /** How many emails may go now, given what today has used (convex/lib/emailLimits.ts). */
-export function drainRoom(used: number, perRun: number = PER_RUN): number {
-  return Math.max(0, Math.min(perRun, LIST_CEILING - used));
+export function drainRoom(used: number, perRun: number = PER_RUN, listCeiling: number = dailyCeilings().list): number {
+  return Math.max(0, Math.min(perRun, listCeiling - used));
 }
 
 /**
  * How many queued confirmations may go after `retried` retries went: what's
  * left of the run, but never past PUBLIC_CEILING, so the alert reserve holds.
  */
-export function confirmationRoom(used: number, retried: number, room: number): number {
-  return Math.max(0, Math.min(room - retried, PUBLIC_CEILING - used - retried));
+export function confirmationRoom(
+  used: number,
+  retried: number,
+  room: number,
+  publicCeiling: number = dailyCeilings().publicMail,
+): number {
+  return Math.max(0, Math.min(room - retried, publicCeiling - used - retried));
 }
 
 interface ResendListPage {

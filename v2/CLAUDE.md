@@ -9825,4 +9825,32 @@ puts no events in Google Calendar (`getCaseForCalendarSync`, `listForSync`; new 
 **A weekly newsletter with nothing new isn't sent** (`issueHasNews` in `convex/lib/newsletterCompose.ts`): DOL's month
 and average where the last issue left them, the bulletin and USCIS's quarter already reported, no Federal Register
 document and no employer move that week. The issue is still built and stored, marked `skipped`; a rebuild judges it
-again. The weekly case summary already skipped a week with no deadline in 14 days and no case update in 7.
+again.
+
+**The weekly case summary goes only in a week something changed** (owner, Oct 12 2026): a case updated, or a deadline
+passed, in the last 7 days (`weekHadChange`, `summaryWorthSending` in `convex/lib/digestHelpers.ts`). Bookkeeping
+isn't a change: Google Calendar sync no longer bumps a case's `updatedAt` when it stores event ids.
+
+**One switch, `EMAIL_DAILY_LIMIT`, puts every saving back** (`convex/lib/emailAllowance.ts`; owner, Oct 12 2026: "if
+we ever pay for ... enough emails these should all go back to the most helpful"). Unset or 100 and below is Resend's
+free plan and everything above holds. Set on Convex to a paid plan's daily figure, read on every call, no deploy: the
+weekly summary goes every week to everyone with an active case, the newsletter every week, the day's ceilings become
+the same shares of the new figure (`dailyCeilings()`: 100%, 85%, 55%), and every pool (`windowFor`), every per-sweep
+alert batch and the newsletter's daily cap grow by the same factor (`scaled`). Kept either way, because they're
+about what helps people: one alert email a day with status changes at once, deadline reminders gathered into one
+email, nothing for progress-only edits, the 10-email cap on a bulk stage change, the inactivity pause, the sample
+case and test accounts quiet, quiet hours. `emailAllowance.test.ts` holds each.
+
+**Every email to one of the owner's own inboxes goes through the mail Worker** (Oct 12 2026), not only the admin
+notices: `sendOrQueue` sends a single-recipient email addressed to `SECURITY_ALERT_EMAIL` or any address in
+`OWNER_INBOXES` (comma-separated, Convex env) through `viaWorker` (`convex/lib/ownerWorker.ts`), Resend only when the
+Worker can't take it. That covers the site's own mail to the owner's user accounts (alerts, the weekly summary,
+deadline reminders), the firm-review notice (it had gone to a second inbox through Resend) and the contact form,
+which is now filed in `supportEmails` and sent to the owner with the visitor as reply-to; on the Resend fallback it
+keeps the `public` ceiling. The Worker's `/owner` takes `to` and `replyTo` and answers 403 for any address that isn't
+`OWNER_EMAIL` or listed in its `OWNER_ADDRESSES` binding, and its send binding allows only Cloudflare-verified
+destinations, so a second inbox needs Cloudflare's verification click first. **Sign-in codes stay on Resend**
+(`ResendOTP`): Convex Auth sends them itself, and a code has to arrive. Bulk mail (several recipients) stays on Resend.
+
+**Chrome's own "network error" is a dropped request** and the error screen reloads for it like "Failed to fetch"
+(`RELOAD_CURABLE` in `src/components/error/recovery.ts`; Sentry 56).

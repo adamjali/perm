@@ -188,9 +188,11 @@ export const updateCaseCalendarEventIds = internalMutation({
     }),
   },
   handler: async (ctx, args): Promise<void> => {
+    // Bookkeeping, not a change to the case: updatedAt stays, or every sync
+    // would read as an edit (the weekly summary's "recent updates", a waiting
+    // chat card refused as stale).
     await ctx.db.patch(args.caseId, {
       calendarEventIds: args.calendarEventIds,
-      updatedAt: Date.now(),
     });
   },
 });
@@ -206,9 +208,9 @@ export const clearCaseCalendarEventIds = internalMutation({
     caseId: v.id("cases"),
   },
   handler: async (ctx, args): Promise<void> => {
+    // Bookkeeping, not a change to the case: updatedAt stays.
     await ctx.db.patch(args.caseId, {
       calendarEventIds: undefined,
-      updatedAt: Date.now(),
     });
   },
 });

@@ -45,9 +45,12 @@ import {
 import type { DeadlineType } from "./lib/perm/deadlines";
 import {
   buildDigestContent,
+  summaryWorthSending,
+  weekHadChange,
   type RawDeadlineData,
   type RawCaseUpdateData,
 } from "./lib/digestHelpers";
+import { savingEmail } from "./lib/emailAllowance";
 import { purgeAllUserData } from "./lib/deletion";
 import { DEFAULT_NOTIFICATION_PREFS } from "./lib/userDefaults";
 import {
@@ -385,9 +388,9 @@ export const deleteNotification = internalMutation({
  * - Recent case updates (last 7 days)
  * - Unread notification count
  *
- * Skips "All Clear" digests (no overdue/upcoming/later deadlines AND no recent case
- * updates) — those add no value and needlessly burn Resend's daily send cap during the
- * Monday case summary burst. Only opted-in users with something to report are emailed.
+ * While email is scarce (Resend's free 100 a day), it goes only in a week something
+ * changed: a case was updated or a deadline passed. With a paid allowance it goes
+ * every week to anyone with an active case (convex/lib/emailAllowance.ts).
  */
 export const sendWeeklyDigest = internalAction({
   args: {},
@@ -444,11 +447,14 @@ export const sendWeeklyDigest = internalAction({
           rawCaseUpdates,
         });
 
-        // Cost control: skip "All Clear" digests. `isEmpty` is the canonical
-        // no-content signal (no overdue/upcoming/later deadlines and no recent case
-        // updates) — the same flag the email template uses to render its empty state.
-        // Sending these only spends Resend's 100/day cap without giving the user anything.
-        if (digestContent.isEmpty) {
+        // While email is scarce, a summary goes only in a week something
+        // changed; with enough of it, every week (convex/lib/emailAllowance.ts).
+        const worthSending = summaryWorthSending({
+          savingEmail: savingEmail(),
+          changed: weekHadChange(rawCaseUpdates, rawDeadlines),
+          totalActiveCases,
+        });
+        if (!worthSending) {
           skipped++;
           continue;
         }

@@ -18,6 +18,7 @@
  * admin that day.
  */
 import type { MutationCtx } from "../_generated/server";
+import { scaled } from "./emailAllowance";
 import { easternDay, MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "./time";
 
 /**
@@ -106,14 +107,16 @@ export const SWEEP_RESUME_DELAY_MS = 5 * MS_PER_MINUTE;
 export type BudgetName = keyof typeof BUDGETS;
 
 /** A pool as the rate limiter takes it. */
+/**
+ * A pool's limit in force: the number above on the free plan, grown by the
+ * same factor as the daily allowance on a paid one (convex/lib/emailAllowance.ts).
+ */
 export function windowFor(name: BudgetName): { limit: number; windowMs: number } {
-  return { limit: BUDGETS[name].limit, windowMs: MS_PER_DAY };
+  return { limit: scaled(BUDGETS[name].limit), windowMs: MS_PER_DAY };
 }
 
 export const CASE_CONFIRMATION_KEY = BUDGETS.caseConfirm.key;
-export const CASE_CONFIRMATION_BUDGET = windowFor("caseConfirm");
 export const CASE_ALERT_KEY = BUDGETS.caseAlert.key;
-export const CASE_ALERT_BUDGET = windowFor("caseAlert");
 
 /**
  * Count `n` refusals against a pool for today (Eastern): people who got no

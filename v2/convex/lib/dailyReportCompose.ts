@@ -12,6 +12,7 @@
 import type { KeyCounts } from "./apiKeyStats";
 import { audienceLine, type AudienceCounts } from "./audience";
 import { SITE_URL } from "./links";
+import { emailDailyLimit } from "./emailAllowance";
 import { MS_PER_DAY } from "./time";
 
 export type SectionStatus = "fail" | "warn" | "unknown" | "off" | "ok";
@@ -205,8 +206,9 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
   const emailLines: string[] = [];
   const emailStatus: ReportSection["status"][] = [];
   if (typeof resend !== "string") {
-    emailLines.push(`Resend sent ${resend.sent} of the ${RESEND_DAILY_CAP} a day the account allows`);
-    if (resend.sent >= RESEND_DAILY_CAP * 0.8) emailStatus.push("warn");
+    const allowed = emailDailyLimit();
+    emailLines.push(`Resend sent ${resend.sent} of the ${allowed} a day the account allows`);
+    if (resend.sent >= allowed * 0.8) emailStatus.push("warn");
     if (resend.bounced || resend.complained) {
       emailLines.push(`${resend.bounced} bounced, ${resend.complained} marked as spam`);
       if (resend.complained) emailStatus.push("warn");

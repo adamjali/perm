@@ -10,11 +10,13 @@
  *    (/inbound-email) to be stored for a threaded reply, as Resend-received
  *    mail was (mime.mjs reads its text). A message too big to read within the
  *    free plan's CPU is stored with its headers only.
- * 2. `fetch` POST /owner: alerts, the morning report and admin notices, to the
- *    owner's own verified address. The OWNER binding can send only to that
- *    address, so the key, if it leaked, could mail no one else.
+ * 2. `fetch` POST /owner: alerts, the morning report, admin notices, the
+ *    contact form and the site's own mail to the owner's accounts, to the
+ *    owner's own verified inboxes. The OWNER binding can send only to those,
+ *    so the key, if it leaked, could mail no one else.
  *
- * Bindings: OWNER (send_email, destination_address = the owner), OWNER_EMAIL,
+ * Bindings: OWNER (send_email, restricted to the owner's verified inboxes),
+ * OWNER_EMAIL (the main inbox), OWNER_ADDRESSES (optional, the others allowed),
  * FROM_EMAIL, CONVEX_SITE, and KEYS (a KV namespace holding the two keys).
  *
  * The keys live in KV, not in Worker secrets, so they never pass through the
@@ -25,7 +27,7 @@
  * hour, rules.mjs), and refuses once keys are set (README, "Keys").
  */
 import { readMessage } from "./mime.mjs";
-import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, PARSE_MAX_BYTES, provisionOpen, shouldForward } from "./rules.mjs";
+import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, ownerRecipient, PARSE_MAX_BYTES, provisionOpen, shouldForward } from "./rules.mjs";
 
 /** The two keys, from KV (see above). */
 async function keys(env) {
@@ -120,13 +122,16 @@ const worker = {
     }
     const msg = ownerMessage(body);
     if (msg.error) return json({ ok: false, message: msg.error }, 400);
+    const to = ownerRecipient(msg.to, env.OWNER_EMAIL, env.OWNER_ADDRESSES);
+    if (!to) return json({ ok: false, message: "Not one of the owner's inboxes." }, 403);
     try {
       const sent = await env.OWNER.send({
-        to: env.OWNER_EMAIL,
+        to,
         from: { email: env.FROM_EMAIL, name: "PERM Tracker" },
         subject: msg.subject,
         text: msg.text,
         ...(msg.html ? { html: msg.html } : {}),
+        ...(msg.replyTo ? { replyTo: msg.replyTo } : {}),
       });
       return json({ ok: true, id: sent?.messageId }, 200);
     } catch (e) {

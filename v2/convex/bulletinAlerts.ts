@@ -39,6 +39,7 @@ import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
 import { BUDGETS, noteRefusal, windowFor, CONFIRMATION_COOLDOWN_MS, SUBSCRIBE_IP_LIMIT, SWEEP_RESUME_DELAY_MS } from "./lib/alertBudgets";
+import { scaled } from "./lib/emailAllowance";
 import { monthLabel } from "./lib/newsletterCompose";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
@@ -73,8 +74,8 @@ const categoryValidator = v.union(...CATEGORIES.map((c) => v.literal(c)));
 const countryValidator = v.union(...COUNTRIES.map((c) => v.literal(c)));
 
 /** Alerts one sweep may send; the remainder reschedules. Budget arithmetic in caseAlerts.ts. */
-const ALERT_BATCH_LIMIT = 12;
-const ALERT_GLOBAL_BUDGET = windowFor("bulletinAlert");
+const alertBatchLimit = () => scaled(12);
+const alertGlobalBudget = () => windowFor("bulletinAlert");
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
 
 function unsubscribeSecret(): string {
@@ -579,7 +580,7 @@ export const sweep = internalAction({
         continue;
       }
 
-      if (sent >= ALERT_BATCH_LIMIT) {
+      if (sent >= alertBatchLimit()) {
         // Remainder picked up by the rescheduled run below.
         continue;
       }
@@ -676,7 +677,7 @@ export const sweep = internalAction({
     // More movements than one batch could send: resume shortly, but only if
     // this run made progress (same stall logic as the queue sweep).
     const moved = subs.length - baselined;
-    if (sent === ALERT_BATCH_LIMIT && moved > sent && sent > 0) {
+    if (sent === alertBatchLimit() && moved > sent && sent > 0) {
       await ctx.scheduler.runAfter(SWEEP_RESUME_DELAY_MS, internal.bulletinAlerts.sweep, {});
     }
 
@@ -693,7 +694,7 @@ export const claimAlertBudget = internalMutation({
       ctx,
       "all",
       BUDGETS.bulletinAlert.key,
-      ALERT_GLOBAL_BUDGET,
+      alertGlobalBudget(),
     );
     if (!r.allowed) await noteRefusal(ctx, "bulletinAlert");
     return r.allowed;

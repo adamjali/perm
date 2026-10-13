@@ -85,6 +85,7 @@ import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 import { CONFIRMATION_COOLDOWN_MS, SUBSCRIBE_IP_LIMIT, SWEEP_RESUME_DELAY_MS } from "./lib/alertBudgets";
+import { scaled } from "./lib/emailAllowance";
 import { isPlausibleEmail } from "./lib/emailShape";
 
 const log = createLogger("QueueAlerts");
@@ -95,7 +96,7 @@ const log = createLogger("QueueAlerts");
  * Well under Resend's 100/day account cap. When more than this are due the
  * sweep reschedules itself for the remainder rather than dropping them.
  */
-const NOTIFY_BATCH_LIMIT = 40;
+const notifyBatchLimit = () => scaled(40);
 
 /**
  * One reply for every outcome on an existing address.
@@ -770,12 +771,12 @@ export const notifyQueueReached = internalAction({
     const queue: DolQueue = args.queue ?? "perm";
     const due = await ctx.runQuery(internal.queueAlerts.dueForAlert, {
       frontier: args.frontier,
-      limit: NOTIFY_BATCH_LIMIT + 1,
+      limit: notifyBatchLimit() + 1,
       queue,
     });
 
-    const batch = due.slice(0, NOTIFY_BATCH_LIMIT);
-    let remaining = due.length > NOTIFY_BATCH_LIMIT;
+    const batch = due.slice(0, notifyBatchLimit());
+    let remaining = due.length > notifyBatchLimit();
     let sent = 0;
     let failed = 0;
 

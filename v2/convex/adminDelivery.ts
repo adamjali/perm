@@ -17,7 +17,7 @@ import { query, type QueryCtx } from "./_generated/server";
 import { requireAdmin } from "./lib/admin";
 import { BUDGETS, type BudgetName } from "./lib/alertBudgets";
 import { QUEUE_MAX } from "./confirmationQueue";
-import { LIST_CEILING, PUBLIC_CEILING, RESEND_DAILY_CAP, RETRY_MAX_ROWS, utcDay } from "./lib/emailLimits";
+import { RETRY_MAX_ROWS, dailyCeilings, utcDay } from "./lib/emailLimits";
 import { easternDay, MS_PER_DAY } from "./lib/time";
 
 /** Budget refusal rows read: one per pool per day, so a week of pools fits many times over. */
@@ -230,9 +230,9 @@ export const getDelivery = query({
       },
       emailDay: {
         used: today ? Math.max(today.sent, today.reported ?? 0) : 0,
-        listCeiling: LIST_CEILING,
-        publicCeiling: PUBLIC_CEILING,
-        cap: RESEND_DAILY_CAP,
+        listCeiling: dailyCeilings().list,
+        publicCeiling: dailyCeilings().publicMail,
+        cap: dailyCeilings().cap,
         retrying: retryRows.length,
         oldestRetryAt: retryRows[0]?.queuedAt ?? null,
         retriedToday: today?.retried ?? 0,

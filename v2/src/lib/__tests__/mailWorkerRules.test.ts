@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error: a plain ES module the Worker bundles; no type declarations.
-import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, provisionOpen, shouldForward } from '../../../workers/mail/rules.mjs';
+import { KEY_PATTERN, keyMatches, keyTag, ownerMessage, ownerRecipient, provisionOpen, shouldForward } from '../../../workers/mail/rules.mjs';
 import { shouldForwardInbound } from '@convex/lib/supportEmailForward';
 
 const OWNER = 'owner@example.com';
@@ -41,6 +41,26 @@ describe('ownerMessage', () => {
     expect(ownerMessage({ subject: 's' }).error).toBeTruthy();
     expect(ownerMessage({ subject: 's'.repeat(301), text: 'x' }).error).toBeTruthy();
     expect(ownerMessage(null).error).toBeTruthy();
+  });
+  it('carries a reply-to and an inbox, and refuses anything that isn\'t one address', () => {
+    expect(ownerMessage({ subject: 's', text: 'x', to: 'Me@Example.com', replyTo: 'person@example.org' })).toEqual({
+      subject: 's', text: 'x', to: 'me@example.com', replyTo: 'person@example.org',
+    });
+    expect(ownerMessage({ subject: 's', text: 'x', replyTo: 'a@b.com, c@d.com' }).error).toBeTruthy();
+    expect(ownerMessage({ subject: 's', text: 'x', to: 'Name <a@b.com>' }).error).toBeTruthy();
+    expect(ownerMessage({ subject: 's', text: 'x', to: 7 }).error).toBeTruthy();
+  });
+});
+
+describe('ownerRecipient', () => {
+  it('sends to the main inbox when none is named', () => {
+    expect(ownerRecipient(undefined, ' Owner@Example.com ')).toBe('owner@example.com');
+  });
+  it('allows the main inbox and the listed ones, and no other address', () => {
+    expect(ownerRecipient('owner@example.com', OWNER)).toBe('owner@example.com');
+    expect(ownerRecipient('second@example.org', OWNER, 'second@example.org, third@example.net')).toBe('second@example.org');
+    expect(ownerRecipient('stranger@example.com', OWNER, 'second@example.org')).toBeNull();
+    expect(ownerRecipient('second@example.org', OWNER)).toBeNull();
   });
 });
 

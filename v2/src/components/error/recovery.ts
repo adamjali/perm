@@ -14,10 +14,11 @@ import { analytics } from "@/lib/analytics";
 /**
  * Errors a fresh page load cures: code from a previous deploy meeting the new
  * one (a chunk that no longer loads, webpack's "reading 'call'"), or a code or
- * data request that failed mid-navigation.
+ * data request that failed mid-navigation. Chrome words a response cut off
+ * mid-read as "network error" (an Android sign-in page, Oct 12 2026).
  */
 const RELOAD_CURABLE =
-  /ChunkLoadError|Loading (CSS )?chunk|dynamically imported module|Importing a module script failed|reading 'call'|Failed to fetch|NetworkError|Load failed|Connection closed|fetch failed|An error occurred in the Server Components render/i;
+  /ChunkLoadError|Loading (CSS )?chunk|dynamically imported module|Importing a module script failed|reading 'call'|Failed to fetch|Network ?Error|Load failed|Connection closed|fetch failed|An error occurred in the Server Components render/i;
 
 export function isReloadCurable(error: unknown): boolean {
   if (!error) return false;

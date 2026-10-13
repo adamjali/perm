@@ -11,6 +11,7 @@ describe("isReloadCurable", () => {
     ["TypeError", "Failed to fetch dynamically imported module: /_next/x.js"],
     ["TypeError", "Failed to fetch"],
     ["TypeError", "Load failed"],
+    ["TypeError", "network error"],
     ["Error", "Connection closed."],
     ["Error", "An error occurred in the Server Components render."],
   ])("a fresh load cures %s: %s", (name, message) => {

@@ -697,12 +697,17 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   `convex/chatConfirmations.ts`): a stage the dates don't support asks for the date; a card runs the change the server
   stored, once; the result is read back from the case. Archive closes and never deletes.
 - **Closing sets the override and the closure trail; reopening hands the stage back to the dates**, from the cases page too.
-- **The weekly case summary stays on Monday for every account** (owner's call, Oct 12: a split across three days was tried and undone).
+- **The weekly case summary stays on Monday for every account** (owner's call, Oct 12: a split across three days was tried and
+  undone), **and goes only in a week something changed**: a case updated or a deadline passed in the last 7 days.
+- **One switch puts every email saving back**: `EMAIL_DAILY_LIMIT` on Convex above 100 (a paid plan's daily figure) sends
+  the weekly summary and newsletter every week and scales every ceiling, pool and batch (`convex/lib/emailAllowance.ts`).
 - **The sample case sends nothing**: no reminder, alert, status email, auto-closure or calendar event; and a weekly
   newsletter with nothing new since the last issue is stored as `skipped`, not sent.
 - **The site's own test accounts get no notification mail** (`isOwnTestAddress`: every `@permtracker.app` address but support@).
 - **Inbound mail and alerts to the owner go through Cloudflare, free** (`workers/mail/`): the root MX is Cloudflare's,
-  a Worker forwards and stores every message, and owner mail falls back to Resend only if the Worker fails.
+  a Worker forwards and stores every message, and owner mail falls back to Resend only if the Worker fails. Any email
+  addressed to one of the owner's inboxes (`SECURITY_ALERT_EMAIL`, `OWNER_INBOXES`) goes through the Worker, the
+  contact form included; sign-in codes are the one exception.
 - **After a reload the chat sends the newest saved turns with each question**, and an interrupted turn whose action ran
   is saved and never re-run by Try again (`useChatWithPersistence`, `src/lib/ai/chatTurn.ts`).
 - **The chat has a per-account quota and bounded storage** (`convex/chatQuota.ts`, `convex/lib/chatLimits.ts`), its

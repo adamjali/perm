@@ -42,6 +42,7 @@ import {
   type DigestData,
   type DigestNotice,
   issueHasNews,
+  type PreviousDolFigures,
   pickUscisMedians,
   pickEmployerMoves,
   type DigestEmployerMove,
@@ -55,6 +56,7 @@ import { adminSummaryValidator, issueStatusValidator } from "./lib/newsletterVal
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
 import { employerMoves, parseEmployerStagesDoc } from "../src/lib/employerStages";
 import { MS_PER_DAY } from "./lib/time";
+import { savingEmail } from "./lib/emailAllowance";
 
 const log = createLogger("newsletter");
 const BATCH = 25;
@@ -440,7 +442,7 @@ export const chargeSend = internalMutation({
 export const buildIssue = internalAction({
   args: { weekOf: v.optional(v.string()) },
   returns: v.object({ weekOf: v.string(), subject: v.string(), scheduledSend: v.boolean() }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ weekOf: string; subject: string; scheduledSend: boolean }> => {
     const weekOf = args.weekOf ?? new Date().toISOString().slice(0, 10);
     const since = new Date(Date.now() - 7 * MS_PER_DAY).toISOString().slice(0, 10);
     try {
@@ -459,7 +461,7 @@ export const buildIssue = internalAction({
       // Same rule for USCIS's quarter, except a repeat is silent rather than
       // restated: a workbook lands four times a year.
       const previousQuarter = await ctx.runQuery(internal.newsletter.previousUscisQuarter, { weekOf });
-      const previousDol = await ctx.runQuery(internal.newsletter.previousDolFigures, { weekOf });
+      const previousDol: PreviousDolFigures | null = await ctx.runQuery(internal.newsletter.previousDolFigures, { weekOf });
       const data: DigestData = {
         weekOf,
         ...queue,
@@ -481,9 +483,10 @@ export const buildIssue = internalAction({
         text,
         html,
       });
-      // A week with nothing the last issue didn't say isn't sent; the row
-      // stays as the record, marked skipped.
-      const news = issueHasNews(data, previousDol);
+      // While email is scarce, a week with nothing the last issue didn't say
+      // isn't sent; the row stays as the record, marked skipped. With enough
+      // email, every week goes (convex/lib/emailAllowance.ts).
+      const news: boolean = !savingEmail() || issueHasNews(data, previousDol);
       if (!news) await ctx.runMutation(internal.newsletter.markSkipped, { weekOf });
       const enabled = sendingEnabled() && news;
       log.info("issue built", { weekOf, subject, enabled, news });

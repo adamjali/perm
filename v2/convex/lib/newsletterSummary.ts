@@ -11,6 +11,7 @@ import type { Infer } from "convex/values";
 
 import type { QueryCtx } from "../_generated/server";
 import type { adminSummaryValidator } from "./newsletterValidators";
+import { scaled } from "./emailAllowance";
 import { MS_PER_DAY } from "./time";
 
 export type NewsletterAdminSummary = Infer<typeof adminSummaryValidator>;
@@ -21,9 +22,14 @@ export function newsletterSendingEnabled(): boolean {
   return process.env.NEWSLETTER_ENABLED === "1";
 }
 
+/**
+ * Issues sent a day. While email is scarce, NEWSLETTER_DAILY_CAP (30 unset) and
+ * the rest go the next day; with a paid allowance the cap grows with it
+ * (convex/lib/emailAllowance.ts).
+ */
 export function newsletterDailyCap(): number {
   const n = Number(process.env.NEWSLETTER_DAILY_CAP);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 30;
+  return scaled(Number.isFinite(n) && n > 0 ? Math.floor(n) : 30);
 }
 
 /** The Tuesday build is weekly, so an issue older than this means the cron stopped. */
