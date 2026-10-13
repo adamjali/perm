@@ -7,16 +7,23 @@ Oct 12 2026) was meant to keep three, but Oracle never deleted a copy once it
 expired: the Oct 4 copy expired Oct 7 and was still held on Oct 12, the count
 reached nine, and the any-spend alarm fired. So this job holds the rule itself:
 
-  1. delete this disk's oldest copies until KEEP - 1 remain,
-  2. make a new copy and wait until Oracle says it's ready,
-  3. check the new copy carries Oracle's free-tier tag and that no more than
-     FREE_LIMIT copies exist.
+  1. 3:45 AM: delete this disk's copies until KEEP - 1 remain, billed ones
+     before free ones, and stop there;
+  2. 3:45 PM, SETTLE_S after a delete: make a new copy, wait until Oracle says
+     it's ready, and check it carries Oracle's free-tier tag and that no more
+     than FREE_LIMIT copies exist.
 
 Deleting first keeps the count at KEEP or under at every moment, so a new copy
 is never the sixth, and one slot always stays free for a copy made by hand
-before a risky change. A failed run exits 1: the unit shows failed and
-permtracker-alarm emails within five minutes. DISKCOPY_OK records the last
-run that made a copy, for the health report.
+before a risky change. The two halves are hours apart because of Oct 13 2026:
+the run deleted two copies, made one minutes later with three held, and Oracle
+billed it, while its own scheduled copies had been free. Either Oracle still
+counted the deleted copies (they stay listed as TERMINATED, still tagged free)
+or it never marks a copy made through the API free; the made line says how
+many deleted copies Oracle still listed, which tells the two apart. A failed
+run exits 1: the unit shows failed and permtracker-alarm emails within five
+minutes. DISKCOPY_OK records the last run that made a copy, for the health
+report; DISKCOPY_PRUNED the last delete.
 
 The server signs in to Oracle as itself (an instance principal): the dynamic
 group permtracker-server and the policy permtracker-disk-copies (manage
@@ -41,6 +48,11 @@ from zoneinfo import ZoneInfo
 KEEP = 4          # copies held after a run; the fifth free slot stays spare
 FREE_LIMIT = 5    # Oracle's Always Free allowance of volume backups
 MARKER = pathlib.Path("/srv/permtracker/backups/DISKCOPY_OK")
+PRUNED = pathlib.Path("/srv/permtracker/backups/DISKCOPY_PRUNED")
+# A new copy waits this long after a delete (the timer runs 12 hours apart,
+# with up to 5 minutes' jitter), and isn't made again within MADE_WITHIN_S.
+SETTLE_S = 11 * 3600
+MADE_WITHIN_S = 20 * 3600
 METADATA = "http://169.254.169.254/opc/v2/instance/"
 ET = ZoneInfo("America/New_York")
 
@@ -80,7 +92,8 @@ def plan(copies, now_s: float, keep: int = KEEP):
 
     Returns (to_delete, skip_reason, problem). A copy being made by someone else
     skips the run quietly; one stuck for six hours is a problem. Broken copies
-    go first, then the oldest good ones, until keep - 1 remain.
+    go first, then billed ones (they cost money), then the oldest free ones,
+    until keep - 1 remain.
     """
     pending = [c for c in copies if c.lifecycle_state in PENDING]
     if pending:
@@ -90,11 +103,27 @@ def plan(copies, now_s: float, keep: int = KEEP):
             return [], None, f"a copy has been in progress for {age / 3600:.0f} hours ({oldest.display_name})"
         return [], f"a copy is already being made ({oldest.display_name})", None
     broken = [c for c in copies if c.lifecycle_state in BROKEN]
-    live = sorted((c for c in copies if c.lifecycle_state in LIVE), key=lambda c: c.time_created)
+    live = sorted((c for c in copies if c.lifecycle_state in LIVE), key=lambda c: (free_tagged(c), c.time_created))
     excess = len(broken) + len(live) - (keep - 1)
     if excess <= 0:
         return [], None, None
     return (broken + live)[:excess], None, None
+
+
+def read_time(path: pathlib.Path) -> float | None:
+    """The UTC time a marker file starts with, as seconds; None when it can't be read."""
+    try:
+        stamp = path.read_text().split()[0]
+        return datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+    except (OSError, IndexError, ValueError):
+        return None
+
+
+def write_marker(path: pathlib.Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(text)
+    tmp.replace(path)
 
 
 def wait_for(get, copy_id: str, done: set[str], timeout_s: float, sleep=time.sleep, clock=time.monotonic):
@@ -133,8 +162,10 @@ def disk_copies(client, compartment: str, volume_id: str):
 
 
 def run(client, compartment: str, volume_id: str, make_details, *, now: datetime,
-        dry_run: bool = False, sleep=time.sleep, clock=time.monotonic, marker: pathlib.Path = MARKER) -> int:
-    copies = [c for c in disk_copies(client, compartment, volume_id) if c.lifecycle_state not in GONE]
+        dry_run: bool = False, sleep=time.sleep, clock=time.monotonic, marker: pathlib.Path = MARKER,
+        pruned: pathlib.Path = PRUNED) -> int:
+    all_copies = disk_copies(client, compartment, volume_id)
+    copies = [c for c in all_copies if c.lifecycle_state not in GONE]
     to_delete, skip, problem = plan(copies, now.timestamp())
     if problem:
         print(f"disk copies: {problem}")
@@ -143,19 +174,42 @@ def run(client, compartment: str, volume_id: str, make_details, *, now: datetime
         print(f"disk copies: {skip}; not starting another")
         return 0
     held = [c for c in copies if c.lifecycle_state in LIVE | BROKEN]
-    print(f"disk copies: {len(held)} held; deleting {len(to_delete)}, then making one")
-    for c in to_delete:
-        when = c.time_created.astimezone(ET).strftime("%b %-d %Y %-I:%M %p %Z")
-        print(f"  delete: {c.display_name} (made {when}, {c.lifecycle_state})")
+    now_s = now.timestamp()
+    if to_delete:
+        print(f"disk copies: {len(held)} held; deleting {len(to_delete)}; the new copy waits {SETTLE_S // 3600} hours, "
+              "until Oracle stops counting the deleted ones")
+        for c in to_delete:
+            when = c.time_created.astimezone(ET).strftime("%b %-d %Y %-I:%M %p %Z")
+            kind = "free" if free_tagged(c) else "billed"
+            print(f"  delete: {c.display_name} (made {when}, {c.lifecycle_state}, {kind})")
+        if dry_run:
+            print("dry run: nothing changed")
+            return 0
+        for c in to_delete:
+            client.delete_boot_volume_backup(c.id)
+            wait_for(client.get_boot_volume_backup, c.id, {"TERMINATED"}, DELETE_WAIT_S, sleep, clock)
+        try:
+            write_marker(pruned, now.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") + "\n")
+        except OSError as exc:
+            print(f"disk copies: could not record the delete ({exc})")
+            return 1
+        return 0
+
+    pruned_at = read_time(pruned)
+    if pruned_at is not None and now_s - pruned_at < SETTLE_S:
+        ready = datetime.fromtimestamp(pruned_at + SETTLE_S, timezone.utc).astimezone(ET).strftime("%-I:%M %p %Z")
+        print(f"disk copies: copies were deleted less than {SETTLE_S // 3600} hours ago; the new copy waits until {ready}")
+        return 0
+    newest = max((c.time_created.timestamp() for c in copies if c.lifecycle_state in LIVE), default=None)
+    if newest is not None and now_s - newest < MADE_WITHIN_S:
+        print(f"disk copies: a copy was made {(now_s - newest) / 3600:.0f} hours ago; nothing to do")
+        return 0
     name = "permtracker-web daily " + now.astimezone(ET).strftime("%Y-%m-%d")
-    print(f"  make:   {name}")
+    gone_listed = sum(1 for c in all_copies if c.lifecycle_state in GONE)
+    print(f"disk copies: {len(held)} held; making {name}")
     if dry_run:
         print("dry run: nothing changed")
         return 0
-
-    for c in to_delete:
-        client.delete_boot_volume_backup(c.id)
-        wait_for(client.get_boot_volume_backup, c.id, {"TERMINATED"}, DELETE_WAIT_S, sleep, clock)
     made = client.create_boot_volume_backup(make_details(volume_id, name)).data
     wait_for(client.get_boot_volume_backup, made.id, LIVE, CREATE_WAIT_S, sleep, clock)
 
@@ -163,14 +217,12 @@ def run(client, compartment: str, volume_id: str, make_details, *, now: datetime
     word = "yes" if free else "no"
     after = [c for c in disk_copies(client, compartment, volume_id) if c.lifecycle_state not in GONE]
     try:
-        marker.parent.mkdir(parents=True, exist_ok=True)
-        tmp = marker.with_suffix(".tmp")
-        tmp.write_text(f"{now.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')} {len(after)} {word}\n")
-        tmp.replace(marker)
+        write_marker(marker, f"{now.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')} {len(after)} {word}\n")
     except OSError as exc:
         print(f"disk copies: could not record the run ({exc})")
         return 1
-    print(f"disk copies: made {name}; {len(after)} held; Always free: {word}")
+    print(f"disk copies: made {name}; {len(after)} held; Always free: {word}; "
+          f"{gone_listed} deleted copies were still listed by Oracle when it was made")
     if len(after) > FREE_LIMIT:
         print(f"disk copies: {len(after)} copies held, over the free {FREE_LIMIT}; Oracle bills the extra")
         return 1

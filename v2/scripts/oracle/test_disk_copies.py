@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""The daily disk copy (bin/permtracker-disk-copies): it deletes before it
-makes, never holds more than the free five, never touches another disk's
-copies, and says when a copy isn't free. Run: python3 scripts/oracle/test_disk_copies.py"""
+"""The daily disk copy (bin/permtracker-disk-copies): one run deletes, a run
+hours later makes, it never holds more than the free five, deletes billed
+copies before free ones, never touches another disk's copies, and says when a
+copy isn't free. Run: python3 scripts/oracle/test_disk_copies.py"""
+import contextlib
+import io
 import importlib.machinery
 import importlib.util
 import pathlib
@@ -84,17 +87,32 @@ def details(vid, name):
     return {"vid": vid, "name": name}
 
 
-def run(fake, **kw):
-    tmp = pathlib.Path(tempfile.mkdtemp()) / "backups" / "DISKCOPY_OK"
+LOG = {"text": ""}
+
+
+def run(fake, pruned_hours_ago: float | None = None, **kw):
+    folder = pathlib.Path(tempfile.mkdtemp()) / "backups"
+    tmp, pruned = folder / "DISKCOPY_OK", folder / "DISKCOPY_PRUNED"
+    if pruned_hours_ago is not None:
+        folder.mkdir(parents=True)
+        pruned.write_text((NOW - timedelta(hours=pruned_hours_ago)).strftime("%Y-%m-%dT%H:%M:%SZ") + "\n")
     ticks = {"t": 0.0}
 
     def clock():  # every read moves the clock one poll, so waits end in steps, not real time
         ticks["t"] += dc.POLL_S
         return ticks["t"]
 
-    code = dc.run(fake, "ocid1.tenancy.oc1..x", VOL, details, now=NOW, sleep=lambda s: None, clock=clock,
-                  marker=tmp, **kw)
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        code = dc.run(fake, "ocid1.tenancy.oc1..x", VOL, details, now=NOW, sleep=lambda s: None, clock=clock,
+                      marker=tmp, pruned=pruned, **kw)
+    LOG["text"] = out.getvalue()
+    run.pruned = pruned
     return code, tmp
+
+
+def creates(fake):
+    return [c for c in fake.calls if c[0] == "create"]
 
 
 def deleted(fake):
@@ -110,6 +128,11 @@ check("three held: nothing goes", dc.plan(five[2:], NOW.timestamp())[0] == [])
 nine = [copy(d) for d in range(4, 13)]
 check("nine held (Oct 12 2026): the six oldest go, the newest three stay",
       [c.display_name for c in dc.plan(nine, NOW.timestamp())[0]] == [f"copy Oct {d}" for d in range(4, 10)])
+billed = {"orcl-cloud": {}}
+mixed = [copy(6), copy(7), copy(8), copy(13, tags=billed)]
+check("a billed copy goes before older free ones",
+      [c.display_name for c in dc.plan(mixed, NOW.timestamp())[0]] == ["copy Oct 13"],
+      str([c.display_name for c in dc.plan(mixed, NOW.timestamp())[0]]))
 broken = [copy(10, "FAULTY")] + five[2:]
 check("a broken copy goes before any good one",
       [c.lifecycle_state for c in dc.plan(broken, NOW.timestamp())[0]] == ["FAULTY"])
@@ -120,38 +143,55 @@ stuck = five[:3] + [copy(12, "CREATING", hours_ago=9)]
 todo, skip, problem = dc.plan(stuck, NOW.timestamp())
 check("a copy stuck for nine hours is a problem, not a skip", todo == [] and problem and not skip)
 
-# --- run: the order of calls, the count, the marker ---
+# --- run: one run deletes, a run hours later makes ---
 fake = FakeOracle(five + [copy(9, vol=OTHER)])
 code, marker = run(fake)
-first_create = next(i for i, c in enumerate(fake.calls) if c[0] == "create")
-last_delete = max(i for i, c in enumerate(fake.calls) if c[0] == "delete")
-check("every delete finishes before the copy is made", last_delete < first_create)
-check("the new copy is made with three held, so it's the fourth, never the sixth",
-      fake.calls[first_create][1] == 3, str(fake.calls[first_create]))
+check("a run that deletes makes nothing", creates(fake) == [], str(fake.calls))
 check("the two oldest of this disk were deleted, nothing else",
       sorted(deleted(fake)) == sorted([five[0].id, five[1].id]), str(deleted(fake)))
 check("another disk's copy is never touched", fake.copies[copy(9, vol=OTHER).id].lifecycle_state == "AVAILABLE")
-check("a good run exits 0", code == 0)
+check("a delete run exits 0 and records when it deleted",
+      code == 0 and run.pruned.exists() and run.pruned.read_text().split() == ["2026-10-13T06:30:00Z"])
+check("a delete run writes no made-copy marker", not marker.exists())
+
+fake = FakeOracle(five[2:])
+code, marker = run(fake, pruned_hours_ago=2)
+check("two hours after a delete, no copy is made yet", code == 0 and creates(fake) == [] and not marker.exists())
+
+fake = FakeOracle(five[2:] + [copy(4, "TERMINATED")])
+code, marker = run(fake, pruned_hours_ago=12)
+check("twelve hours after a delete, the copy is made with three held, so it's the fourth, never the sixth",
+      creates(fake) == [("create", 3)], str(fake.calls))
+check("a good make run exits 0", code == 0)
 check("the marker says when, how many and whether the new copy is free",
       marker.exists() and marker.read_text().split() == ["2026-10-13T06:30:00Z", "4", "yes"],
       marker.read_text() if marker.exists() else "no marker")
+check("the made line says how many deleted copies Oracle still listed",
+      "1 deleted copies were still listed" in LOG["text"], LOG["text"])
+
+fake = FakeOracle(five[3:] + [copy(13, hours_ago=3)])
+code, marker = run(fake, pruned_hours_ago=30)
+check("a copy made three hours ago: nothing to do", code == 0 and creates(fake) == [] and not deleted(fake))
 
 fake = FakeOracle(five)
 code, marker = run(fake, dry_run=True)
 check("a dry run deletes nothing and makes nothing", not any(c[0] in ("delete", "create") for c in fake.calls))
-check("a dry run writes no marker", not marker.exists())
+check("a dry run writes no marker", not marker.exists() and not run.pruned.exists())
+fake = FakeOracle(five[2:])
+code, marker = run(fake, dry_run=True)
+check("a dry make run makes nothing", creates(fake) == [] and not marker.exists())
 
-fake = FakeOracle(five, new_tags={"orcl-cloud": {"free-tier-retained": "false"}})
+fake = FakeOracle(five[2:], new_tags={"orcl-cloud": {"free-tier-retained": "false"}})
 code, marker = run(fake)
 check("a new copy Oracle doesn't mark free fails the run, so the alarm emails", code == 1)
 check("and the marker says so", marker.exists() and marker.read_text().split()[2] == "no")
 
-fake = FakeOracle(five, new_tags={})
+fake = FakeOracle(five[2:], new_tags={})
 code, marker = run(fake)
 check("a copy with no tags at all reads as billed (how Oracle showed the billed ones)",
       code == 1 and marker.read_text().split()[2] == "no")
 
-late = FakeOracle(five, new_tags={})
+late = FakeOracle(five[2:], new_tags={})
 reads = {"n": 0}
 real_get = late.get_boot_volume_backup
 
