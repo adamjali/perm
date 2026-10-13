@@ -38,7 +38,9 @@ describe("the daily email budget table", () => {
 
   it("keeps room for alerts above everything a stranger can set off", () => {
     expect(PUBLIC_CEILING).toBe(LIST_CEILING - ALERT_RESERVE);
-    expect(ALERT_RESERVE).toBeGreaterThanOrEqual(30);
+    // Owner's floor: 30 on Oct 10 2026, lowered to 15 on Oct 13 2026 (5:17 PM EDT) so sign-ups stop
+    // waiting until 8 PM. A heavy decision day can now push some alerts to the next UTC day.
+    expect(ALERT_RESERVE).toBeGreaterThanOrEqual(15);
   });
 
   it("keeps room for sign-in codes under Resend's daily cap", () => {

@@ -125,8 +125,8 @@ describe("a full pool queues the request", () => {
 
   it("the day's real count queues a confirmation even when its pool has room", async () => {
     const t = createTestContext();
-    // Resend has sent 55 today: confirmations stop there, whatever the pool
-    // says, and the 30 above it are kept for alerts.
+    // Resend has sent 70 today: confirmations stop there, whatever the pool
+    // says, and the 15 above it are kept for alerts.
     await t.run((ctx) => ctx.db.insert("emailDays", { day: utcDay(Date.now()), sent: 3, reported: PUBLIC_CEILING }));
     const r = await t.mutation(internal.caseAlerts.subscribe, { email: "late@example.com", caseNumber: "G-100-25324-425560" });
     expect(r).toEqual({ ok: true, message: QUEUED_REPLY, queued: true });
@@ -142,10 +142,11 @@ describe("a full pool queues the request", () => {
   });
 
   it("the admin email names the limit that held, not always the pool", () => {
-    // Monday Oct 12 2026, 11:47 AM EDT: the site had sent 59, the pool none.
+    // Shaped on Monday Oct 12 2026, 11:47 AM EDT (the site past its sign-up line, the pool
+    // empty), at today's line of 70: the site has sent 72.
     const now = Date.UTC(2026, 9, 12, 15, 47);
-    const site = adminNoticeWords("queued", "queueConfirm", 1, 59, now);
-    expect(site.subject).toBe("Sign-up emails wait until 8:00 PM EDT: the site has sent 59 of Resend's 100 today");
+    const site = adminNoticeWords("queued", "queueConfirm", 1, 72, now);
+    expect(site.subject).toBe("Sign-up emails wait until 8:00 PM EDT: the site has sent 72 of Resend's 100 today");
     expect(site.body).toContain("Its own pool wasn't the limit");
     expect(site.subject).not.toContain(String(BUDGETS.queueConfirm.limit));
     const pool = adminNoticeWords("queued", "queueConfirm", 1, 12, now);
@@ -337,26 +338,26 @@ describe("drain against Resend's own count", () => {
     process.env.AUTH_RESEND_KEY = "re_test_key";
     const t = createTestContext();
     await queueCases(t, 6);
-    // 46 sent today, plus 5 for received mail: 51, so confirmations have
-    // 55 - 51 = 4 while alerts and retries still have 85 - 51 = 34.
-    stubSentToday(46);
+    // 61 sent today, plus 5 for received mail: 66, so confirmations have
+    // 70 - 66 = 4 while alerts and retries still have 85 - 66 = 19.
+    stubSentToday(61);
     const res = await t.action(internal.confirmationQueue.drain, {});
-    expect(res).toEqual({ sent: 4, retried: 0, room: 34 });
+    expect(res).toEqual({ sent: 4, retried: 0, room: 19 });
     expect(await queued(t)).toHaveLength(2);
     expect(await t.run((ctx) => ctx.db.query("caseStatusAlerts").collect())).toHaveLength(4);
     // Resend's own count became part of the day's.
     const day = await t.run((ctx) => ctx.db.query("emailDays").first());
-    expect(day?.reported).toBe(46 + RECEIVED_MARGIN);
+    expect(day?.reported).toBe(61 + RECEIVED_MARGIN);
   });
 
   it("past the sign-up line, queued confirmations wait while the alert room stays open", async () => {
     process.env.AUTH_RESEND_KEY = "re_test_key";
     const t = createTestContext();
     await queueCases(t, 2);
-    // 60 counted: over the 55 sign-ups may use, under the 85 alerts may.
-    stubSentToday(60 - RECEIVED_MARGIN);
+    // 75 counted: over the 70 sign-ups may use, under the 85 alerts may.
+    stubSentToday(75 - RECEIVED_MARGIN);
     const res = await t.action(internal.confirmationQueue.drain, {});
-    expect(res).toEqual({ sent: 0, retried: 0, room: LIST_CEILING - 60 });
+    expect(res).toEqual({ sent: 0, retried: 0, room: LIST_CEILING - 75 });
     expect(await queued(t)).toHaveLength(2);
   });
 
@@ -402,13 +403,13 @@ describe("pure helpers", () => {
   });
 
   it("confirmations get what the run leaves, never past the sign-up line", () => {
-    expect(PUBLIC_CEILING).toBe(55);
-    expect(confirmationRoom(0, 0, PER_RUN)).toBe(PUBLIC_CEILING);
-    expect(confirmationRoom(51, 0, 34)).toBe(4);
+    expect(PUBLIC_CEILING).toBe(70);
+    expect(confirmationRoom(0, 0, PER_RUN)).toBe(Math.min(PER_RUN, PUBLIC_CEILING));
+    expect(confirmationRoom(66, 0, 19)).toBe(4);
     // Retries sent first count toward the line too.
-    expect(confirmationRoom(50, 3, 35)).toBe(2);
-    expect(confirmationRoom(60, 0, 25)).toBe(0);
-    expect(confirmationRoom(10, 40, 60)).toBe(5);
+    expect(confirmationRoom(65, 3, 20)).toBe(2);
+    expect(confirmationRoom(75, 0, 10)).toBe(0);
+    expect(confirmationRoom(25, 40, 60)).toBe(5);
   });
 
   it("counts today's sends across pages and stops at yesterday", async () => {

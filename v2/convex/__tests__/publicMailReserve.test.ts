@@ -1,6 +1,6 @@
 /**
- * Mail anyone can set off stops at PUBLIC_CEILING (55 of Resend's 100), so
- * the 30 above it stay free for alerts (owner's call, Oct 10 2026). The
+ * Mail anyone can set off stops at PUBLIC_CEILING (70 of Resend's 100), so
+ * the 15 above it stay free for alerts (owner's call Oct 10 2026, lowered Oct 13). The
  * confirmation queue's side is in confirmationQueue.test.ts; this holds the
  * contact form, which goes to the owner through the free mail Worker and, when
  * that can't take it, through Resend with priority "public" (Oct 12 2026).

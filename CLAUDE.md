@@ -715,8 +715,11 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   panels are real dialogs, and a deleted conversation leaves no words in the audit log.
 
 
-## Oct 13 2026, in one line
+## Oct 13 2026, in two lines
 
 - **The homepage board and the daily pulse lead with DOL's last working day** (`isDolWorkday` in `src/lib/pulseStats.ts`):
   on Columbus Day the board read "Decided Oct 12: 11", and a weekend did the same every Monday morning. A holiday after
   it is named ("Monday, Oct 12 was Columbus Day, a federal holiday: DOL was closed"), and no holiday counts toward a typical day.
+- **Sign-ups may use 70 of Resend's 100 a day, alerts keep 15 above that** (`ALERT_RESERVE` 30 to 15 in
+  `convex/lib/emailLimits.ts`, owner's call 5:17 PM EDT): sign-up confirmations had waited until 8 PM two days running,
+  and each night's leftovers spent the next morning's room. Sign-in codes keep the last 15.

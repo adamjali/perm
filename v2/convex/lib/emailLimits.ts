@@ -13,7 +13,8 @@
  * - Mail anyone can set off (confirmations, preference and firm-claim links,
  *   the contact form, inbound support forwards) stops ALERT_RESERVE sooner, at
  *   PUBLIC_CEILING, so a flood of sign-ups can't hold a real alert until the
- *   next UTC day (owner's call, Oct 10 2026: 30 of the 85 kept for alerts).
+ *   next UTC day (owner's call, Oct 10 2026: 30 of the 85 kept for alerts;
+ *   lowered to 15 on Oct 13 2026, 5:17 PM EDT, when sign-ups waited two days running).
  * - The last RESEND_DAILY_CAP - LIST_CEILING are kept for sign-in and reset
  *   codes, which lock a person out when they don't arrive.
  *
@@ -33,11 +34,11 @@ export const RESEND_DAILY_CAP = 100;
 /** List mail stops here; the rest of the day is kept for sign-in codes. */
 export const LIST_CEILING = 85;
 /** Of the list room, this many are kept for alerts and reminders. */
-export const ALERT_RESERVE = 30;
-/** Mail anyone can set off stops here (55). */
+export const ALERT_RESERVE = 15;
+/** Mail anyone can set off stops here (70). */
 export const PUBLIC_CEILING = LIST_CEILING - ALERT_RESERVE;
 /**
- * The day's three ceilings in force: the free plan's 100, 85 and 55, or the
+ * The day's three ceilings in force: the free plan's 100, 85 and 70, or the
  * same shares of a paid plan's daily figure (EMAIL_DAILY_LIMIT,
  * convex/lib/emailAllowance.ts). Read per call, so the switch needs no deploy.
  */

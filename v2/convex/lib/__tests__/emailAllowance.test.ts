@@ -36,9 +36,9 @@ describe("the email allowance switch", () => {
   });
 
   it("keeps the day's ceilings at the same shares of the allowance", () => {
-    expect(dailyCeilings()).toEqual({ cap: 100, list: 85, publicMail: 55 });
+    expect(dailyCeilings()).toEqual({ cap: 100, list: 85, publicMail: 70 });
     process.env.EMAIL_DAILY_LIMIT = "1600";
-    expect(dailyCeilings()).toEqual({ cap: 1600, list: 1360, publicMail: 880 });
+    expect(dailyCeilings()).toEqual({ cap: 1600, list: 1360, publicMail: 1120 });
   });
 
   it("grows every per-kind pool with the allowance", () => {

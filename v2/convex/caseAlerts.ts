@@ -98,7 +98,7 @@
  * instead of being refused. Codes keep the last 15 of every day because list
  * mail stops at 85; per address, 5 codes an hour. And mail anyone can set off
  * (the confirmations and links above, the contact form, support forwards)
- * stops at 55 (PUBLIC_CEILING), so alerts always have the 30 between.
+ * stops at 70 (PUBLIC_CEILING), so alerts always have the 15 between.
  *
  * Every pool is GLOBAL, keyed on the literal string "all". That is the only
  * kind of limit that cannot be rotated around: a per-address cooldown does

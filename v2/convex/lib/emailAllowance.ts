@@ -16,7 +16,7 @@
  *   case, quiet weeks included ("your cases are on track").
  * - The weekly visa bulletin newsletter skips a week with nothing new -> goes
  *   every week; its daily send cap (NEWSLETTER_DAILY_CAP) is lifted.
- * - The day's ceilings (100 in all, list mail 85, mail anyone can set off 55;
+ * - The day's ceilings (100 in all, list mail 85, mail anyone can set off 70;
  *   convex/lib/emailLimits.ts) -> the same shares of the new daily figure.
  * - Every per-kind daily pool (convex/lib/alertBudgets.ts: confirmations,
  *   alerts, sign-in codes and the rest) -> scaled by the same factor.

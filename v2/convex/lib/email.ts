@@ -151,7 +151,7 @@ export type SendOutcome =
  * Send one email through the day's count and the retry queue. Use this for
  * every send except sign-in codes.
  *
- * 1. At the day's ceiling (85 of Resend's 100 for list mail; 55 for
+ * 1. At the day's ceiling (85 of Resend's 100 for list mail; 70 for
  *    `priority: "public"`, mail a stranger can set off; the full 100 for
  *    `priority: "high"` admin mail), it doesn't try: the email waits for the
  *    next UTC day in the retry queue.
