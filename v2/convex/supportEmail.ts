@@ -30,10 +30,13 @@ function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-/** Inbox that inbound mail is forwarded to (set via SUPPORT_FORWARD_EMAIL in prod;
- * replaces the ImprovMX catch-all). Mail addressed to this same address is not
- * re-forwarded (loop guard). */
-const CATCH_ALL_FORWARD_TO = process.env.SUPPORT_FORWARD_EMAIL || "support@permtracker.app";
+/** Inbox that mail received through Resend is forwarded to: the owner's address
+ * (SECURITY_ALERT_EMAIL), unless SUPPORT_FORWARD_EMAIL names another. Mail
+ * addressed to this same address is not re-forwarded (loop guard). Since Oct 12
+ * 2026 inbound mail arrives through Cloudflare, which forwards it itself, so this
+ * path only runs if the MX ever points back at Resend. */
+const forwardTo = (): string =>
+  process.env.SUPPORT_FORWARD_EMAIL || process.env.SECURITY_ALERT_EMAIL || "support@permtracker.app";
 
 // ============================================================================
 // INTERNAL MUTATIONS
@@ -203,13 +206,14 @@ export const processInboundEmail = internalAction({
     // Forward inbound human mail to the catch-all inbox. DMARC machine reports
     // (dmarc@), the forward target itself and our own outbound mail are excluded — see shouldForwardInbound.
     // DMARC reports are still stored above for the record.
-    if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO, args.fromEmail) && !(await ctx.runMutation(internal.supportEmail.admitForward, {}))) {
+    const target = forwardTo();
+    if (shouldForwardInbound(toEmail, target, args.fromEmail) && !(await ctx.runMutation(internal.supportEmail.admitForward, {}))) {
       log.warn("Forward pool spent for today; the email is stored, not forwarded", { to: toEmail });
-    } else if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO, args.fromEmail)) {
+    } else if (shouldForwardInbound(toEmail, target, args.fromEmail)) {
       try {
         const { error } = await sendOrQueue(ctx, "support-forward", resend, {
           from: FROM_EMAIL,
-          to: [CATCH_ALL_FORWARD_TO],
+          to: [target],
           subject: `[Fwd] ${args.subject}`,
           replyTo: args.fromEmail,
           text: `---------- Forwarded Email ----------\nFrom: ${args.fromName ? `${args.fromName} <${args.fromEmail}>` : args.fromEmail}\nTo: ${toEmail}\nSubject: ${args.subject}\n-------------------------------------\n\n${bodyText || "(No text content)"}`,
@@ -235,7 +239,7 @@ export const processInboundEmail = internalAction({
           log.info("Email forwarded to catch-all", {
             from: args.fromEmail,
             originalTo: toEmail,
-            forwardedTo: CATCH_ALL_FORWARD_TO,
+            forwardedTo: target,
           });
         }
       } catch (err) {

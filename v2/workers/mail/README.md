@@ -66,3 +66,22 @@ include:amazonses.com -all`. DKIM: `cf2024-1._domainkey`. `send.permtracker.app`
    `destination_address`) and a plain-text `OWNER_ADDRESSES` naming the second.
 3. Add it to `OWNER_INBOXES` on Convex (comma-separated); `sendOrQueue` then sends its mail here.
    Note `npx convex env get` exits 0 even for a variable that isn't set: read its output.
+
+## Changing the owner's address
+
+There's no single switch: Cloudflare sends only to addresses it has verified, so the address lives in
+three systems. To move every owner email to a new inbox, in this order:
+
+1. **Cloudflare**: Email Routing > Destination addresses, add it, and click Cloudflare's link in that
+   inbox. Then upload the Worker with `OWNER_EMAIL` and the `OWNER` binding set to it. Inbound mail
+   to every @permtracker.app address and every server alarm follow at once.
+2. **Convex**: `SECURITY_ALERT_EMAIL` on production. Everything Convex sends the owner reads it: admin
+   notices, the morning report, error alerts, the contact form, and the old Resend forward. Until it
+   agrees with step 1 the Worker answers 403, Convex logs "Convex and the Worker disagree on the
+   owner's address", and Resend carries the mail, so nothing is lost while the two are out of step.
+3. **The server**: `ALERT_TO` in `/etc/permtracker/defend.env`, used only when the Worker can't take
+   an alarm.
+
+`ADMIN_EMAIL` on Convex is a different thing: the account allowed into the admin page, not where mail
+goes. Another of the owner's inboxes that should also skip Resend goes in `OWNER_INBOXES` (Convex)
+and `OWNER_ADDRESSES` (the Worker), after Cloudflare's verification click.

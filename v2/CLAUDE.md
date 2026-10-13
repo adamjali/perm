@@ -9849,7 +9849,11 @@ deadline reminders), the firm-review notice (it had gone to a second inbox throu
 which is now filed in `supportEmails` and sent to the owner with the visitor as reply-to; on the Resend fallback it
 keeps the `public` ceiling. The Worker's `/owner` takes `to` and `replyTo` and answers 403 for any address that isn't
 `OWNER_EMAIL` or listed in its `OWNER_ADDRESSES` binding, and its send binding allows only Cloudflare-verified
-destinations, so a second inbox needs Cloudflare's verification click first. **Sign-in codes stay on Resend**
+destinations, so a second inbox needs Cloudflare's verification click first. **The owner's inboxes on Oct 12 2026**: the main Gmail (`SECURITY_ALERT_EMAIL`, the Worker's
+`OWNER_EMAIL`) plus the Yahoo and the second Gmail (`OWNER_INBOXES`, `OWNER_ADDRESSES`), all three verified in
+Cloudflare (up to 200 a account, each one click). Nothing the site sends goes to an @permtracker.app address: mail
+TO those arrives through the catch-all, and the site's own test accounts are skipped. Swapping the main address is
+three places, in `workers/mail/README.md`, "Changing the owner's address". **Sign-in codes stay on Resend**
 (`ResendOTP`): Convex Auth sends them itself, and a code has to arrive. Bulk mail (several recipients) stays on Resend.
 
 **Chrome's own "network error" is a dropped request** and the error screen reloads for it like "Failed to fetch"

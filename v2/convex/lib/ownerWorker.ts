@@ -81,7 +81,15 @@ export async function viaWorker(msg: WorkerMessage): Promise<boolean> {
       signal: controller.signal,
     });
     if (res.ok) return true;
-    log.warn("owner mail Worker refused; falling back to Resend", { status: res.status });
+    // 403 means the Worker doesn't list this inbox: the owner's address on Convex
+    // and the Worker's OWNER_EMAIL / OWNER_ADDRESSES disagree (workers/mail/README.md,
+    // "Changing the owner's address"). Resend still carries it, at a cost.
+    log.warn(
+      res.status === 403
+        ? "owner mail Worker doesn't list this inbox (Convex and the Worker disagree on the owner's address); falling back to Resend"
+        : "owner mail Worker refused; falling back to Resend",
+      { status: res.status },
+    );
     return false;
   } catch (e) {
     log.warn("owner mail Worker unreachable; falling back to Resend", { error: e instanceof Error ? e.message : String(e) });
