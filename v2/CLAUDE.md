@@ -9665,9 +9665,12 @@ charges anyone.
   `before_send`) on every browser the account signs in on. The switch acts on its own browser before
   the save and rolls back if the save fails; under GPC it shows off and disabled.
   `AnalyticsToggle.test.tsx`, `convex/__tests__/analyticsOff.test.ts` (probed by removing the check).
-- **Open, the owner's call:** PostHog autocapture records the text of clicked elements and nothing
-  masks it (`mask_all_text` is unset), so in the signed-in app a click can carry a client's name and on
-  public pages a case number (`redactCaseParam` cleans URLs only).
+- **Click text is masked (owner's call, Oct 12 2026, 11:51 PM EDT)** by `scrubClickEvent`
+  (`src/lib/analyticsRedact.ts`, called in before_send): a click in the signed-in app sends no element text or
+  attributes (tag, classes, position and link stay), and no click anywhere carries a case number, USCIS receipt
+  number or email address; a link to a case lookup had carried its case number in the elements chain's href.
+  posthog-js's own `mask_all_text` wasn't used: the SDK copies it into the click recorder through an internal
+  refresh, so flipping it per page can't be trusted. `APP_SEGMENTS` is held to `src/app/(authenticated)` by test.
 
 ## Oct 12 2026 (afternoon): the chat's models had retired, a notice named the wrong limit, a sitemap 404
 

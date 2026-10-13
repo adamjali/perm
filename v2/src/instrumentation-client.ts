@@ -23,6 +23,7 @@ import {
 import { edgeCountry } from "@/lib/edgeCountry";
 import { chunkDiagnostics, isMissingModule } from "@/components/error/recovery";
 import { fromInjectedBridge, fromServiceWorkerRegister } from "@/lib/exceptionNoise";
+import { scrubClickEvent } from "@/lib/analyticsRedact";
 
 // The live site's security policy has no 'unsafe-eval', so zod must not
 // compile parsers with new Function: its probe would be refused and log a
@@ -131,6 +132,9 @@ function startPostHog(key: string, country: string | null): void {
         // event still carries the path, so the page is still measurable.
         redactCaseParam(event.properties);
         redactCaseParam(event.$set);
+        // A click's own text and attributes: none from the signed-in app (it can show
+        // a client's name), and no case or receipt numbers or addresses from anywhere.
+        scrubClickEvent(event.properties);
 
         // The country Cloudflare reported (see edgeCountry). Signed-in events
         // also get PostHog's own lookup, which agrees with it.
