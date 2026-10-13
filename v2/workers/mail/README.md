@@ -6,7 +6,7 @@ outside Resend's 100 emails a day:
 | job | how |
 |---|---|
 | **Inbound**: every message to an `@permtracker.app` address | the zone's catch-all rule hands it to the Worker's `email` handler, which forwards it to the owner's verified Gmail and posts it to Convex `POST /inbound-email` (stored in `supportEmails`, `resendEmailId` = `cloudflare:<Message-ID>`) |
-| **Owner mail**: alerts, admin notices, the morning report | `POST https://permtracker-mail.permtracker.workers.dev/owner` with `x-owner-mail-key`; the `OWNER` send binding can only send to the owner's verified address |
+| **Owner mail**: every email to one of the owner's inboxes (alerts, admin notices, the morning report, the contact form, the site's own mail to the owner's accounts) | `POST https://permtracker-mail.permtracker.workers.dev/owner` with `x-owner-mail-key` and JSON `{ subject, text, html?, to?, replyTo? }`; `to` must be `OWNER_EMAIL` or listed in `OWNER_ADDRESSES` (else 403), and the `OWNER` send binding can only send to Cloudflare-verified addresses |
 
 Callers: `convex/lib/ownerMail.ts` (`OWNER_MAIL_URL`, `OWNER_MAIL_KEY` on Convex),
 `permtracker-alarm` and `permtracker-defend` on the server
@@ -22,7 +22,8 @@ Worker isn't set up or doesn't answer.
 
 ## Bindings
 
-`OWNER` (send_email, `destination_address` = the owner), `OWNER_EMAIL`, `FROM_EMAIL`
+`OWNER` (send_email, `destination_address` = the owner), `OWNER_EMAIL`, optional
+`OWNER_ADDRESSES` (comma-separated, more of the owner's inboxes), `FROM_EMAIL`
 (`alerts@permtracker.app`), `CONVEX_SITE`, and `KEYS`, the KV namespace
 `permtracker-mail-keys` holding `owner_mail_key` and `inbound_key`.
 
@@ -56,3 +57,12 @@ Root MX: Cloudflare's `route1/2/3.mx.cloudflare.net` (Resend's Amazon SES inboun
 MX was removed Oct 12 2026). Root SPF: `v=spf1 include:_spf.mx.cloudflare.net
 include:amazonses.com -all`. DKIM: `cf2024-1._domainkey`. `send.permtracker.app`
 (Resend's sending) and `press.permtracker.app` (Zoho) are unchanged.
+
+## A second inbox for the owner
+
+1. Cloudflare dashboard, Email Routing, Destination addresses: add it; Cloudflare emails it a link, and the
+   owner clicks it.
+2. Upload with the `OWNER` binding as `allowed_destination_addresses: [main, second]` (in place of
+   `destination_address`) and a plain-text `OWNER_ADDRESSES` naming the second.
+3. Add it to `OWNER_INBOXES` on Convex (comma-separated); `sendOrQueue` then sends its mail here.
+   Note `npx convex env get` exits 0 even for a variable that isn't set: read its output.

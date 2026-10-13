@@ -9841,8 +9841,8 @@ about what helps people: one alert email a day with status changes at once, dead
 email, nothing for progress-only edits, the 10-email cap on a bulk stage change, the inactivity pause, the sample
 case and test accounts quiet, quiet hours. `emailAllowance.test.ts` holds each.
 
-**Every email to one of the owner's own inboxes goes through the mail Worker** (Oct 12 2026), not only the admin
-notices: `sendOrQueue` sends a single-recipient email addressed to `SECURITY_ALERT_EMAIL` or any address in
+**Every email to one of the owner's own inboxes goes through the mail Worker** (Oct 12 2026):
+`sendOrQueue` sends a single-recipient email addressed to `SECURITY_ALERT_EMAIL` or any address in
 `OWNER_INBOXES` (comma-separated, Convex env) through `viaWorker` (`convex/lib/ownerWorker.ts`), Resend only when the
 Worker can't take it. That covers the site's own mail to the owner's user accounts (alerts, the weekly summary,
 deadline reminders), the firm-review notice (it had gone to a second inbox through Resend) and the contact form,
