@@ -715,7 +715,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   panels are real dialogs, and a deleted conversation leaves no words in the audit log.
 
 
-## Oct 13 2026, in two lines
+## Oct 13 2026, in three lines
 
 - **The homepage board and the daily pulse lead with DOL's last working day** (`isDolWorkday` in `src/lib/pulseStats.ts`):
   on Columbus Day the board read "Decided Oct 12: 11", and a weekend did the same every Monday morning. A holiday after
@@ -723,3 +723,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 - **Sign-ups may use 70 of Resend's 100 a day, alerts keep 15 above that** (`ALERT_RESERVE` 30 to 15 in
   `convex/lib/emailLimits.ts`, owner's call 5:17 PM EDT): sign-up confirmations had waited until 8 PM two days running,
   and each night's leftovers spent the next morning's room. Sign-in codes keep the last 15.
+- **"Maximum update depth exceeded" (#185) comes from pressing Back several times quickly.** React renders a Back
+  transition synchronously, its 50-commit counter overflows, and whichever update lands next throws (the header's scroll
+  listener 7 of 9 times, Next's router once, the scroll bar once). The header now touches React only when the bar
+  changes and `ScrollProgress` draws without state; Next's router can still be the one that throws.

@@ -101,10 +101,23 @@ export default function AuthHeader({
   // ping-pong throws React's "Maximum update depth exceeded" (#185) from this
   // handler. The bar compacts past 24px and only grows
   // again under 4px, a 20px band no 12px shift can cross.
+  //
+  // AND IT TOUCHES REACT ONLY WHEN THE BAR CHANGES. A functional setState still
+  // queues an update whenever the component has other work pending, and every
+  // queued update is checked against React's 50-commit limit. Pressing Back
+  // several times quickly makes Next render each step synchronously while the
+  // page scrolls, and this listener, firing on every scroll event, was the update
+  // that tripped #185 in 7 of 9 production crashes (Oct 6 to 13 2026). The ref
+  // mirrors the state, so a scroll inside the band calls nothing.
+  const scrolledRef = React.useRef(false);
   useIsoLayoutEffect(() => {
     const handleScroll = () => {
+      const was = scrolledRef.current;
       const y = window.scrollY;
-      setIsScrolled((was) => (was ? y > SCROLL_EXPAND_BELOW : y > SCROLL_COMPACT_ABOVE));
+      const next = was ? y > SCROLL_EXPAND_BELOW : y > SCROLL_COMPACT_ABOVE;
+      if (next === was) return;
+      scrolledRef.current = next;
+      setIsScrolled(next);
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });

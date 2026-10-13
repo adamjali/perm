@@ -9,23 +9,30 @@
 import * as React from "react";
 
 export function ScrollProgress() {
-  const [progress, setProgress] = React.useState(0);
+  const barRef = React.useRef<HTMLDivElement>(null);
   const rafRef = React.useRef<number | null>(null);
 
+  // No React state: the bar is written straight onto its element. It is on screen
+  // during every scroll, including the burst Next makes when someone presses Back
+  // several times quickly, and an update per frame there was one of the updates
+  // that tripped React's "Maximum update depth exceeded" (#185) in production.
   React.useEffect(() => {
+    const draw = () => {
+      rafRef.current = null;
+      const bar = barRef.current;
+      if (!bar) return;
+      const scrollTop = document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const share = scrollHeight > 0 ? Math.min(1, Math.max(0, scrollTop / scrollHeight)) : 0;
+      bar.style.transform = `scaleX(${share})`;
+    };
     const handleScroll = () => {
       if (rafRef.current !== null) return;
-
-      rafRef.current = requestAnimationFrame(() => {
-        const scrollTop = document.documentElement.scrollTop;
-        const scrollHeight =
-          document.documentElement.scrollHeight - window.innerHeight;
-        const progressValue = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
-        setProgress(progressValue);
-        rafRef.current = null;
-      });
+      rafRef.current = requestAnimationFrame(draw);
     };
 
+    // A page restored by Back keeps its scroll position, so start from it.
+    draw();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -37,11 +44,11 @@ export function ScrollProgress() {
 
   return (
     <div
+      ref={barRef}
       className="scroll-progress"
-      // scaleX, not width. See .scroll-progress in globals.css. The bar is full
-      // width in CSS and scaled here, so the browser composites the update
-      // instead of running layout on every scroll frame.
-      style={{ transform: `scaleX(${progress / 100})` }}
+      // scaleX, not width. See .scroll-progress in globals.css: the bar is full
+      // width in CSS and starts at scaleX(0) there, so the browser composites the
+      // update instead of running layout on every scroll frame.
       aria-hidden="true"
     />
   );

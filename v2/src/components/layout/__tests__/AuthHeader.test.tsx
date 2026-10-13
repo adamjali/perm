@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { Profiler } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
@@ -265,6 +266,30 @@ describe("AuthHeader: scroll compaction cannot ping-pong (React #185, Oct 1 2026
     // And on the way down, a page shifted 12px from the top stays tall.
     scrollTo(SCROLL_EXPAND_BELOW + 12);
     expect(header().className).toContain("py-3");
+  });
+
+  it("commits only when the bar changes, never for a scroll inside the band (#185, Oct 13 2026)", () => {
+    const commits = vi.fn();
+    renderWithProviders(
+      <Profiler id="header" onRender={commits}>
+        <AuthHeader />
+      </Profiler>,
+    );
+    const settled = commits.mock.calls.length;
+
+    // Scrolling that stays tall: nothing for React to do.
+    for (let y = 0; y <= SCROLL_COMPACT_ABOVE; y += 3) scrollTo(y);
+    expect(commits.mock.calls.length).toBe(settled);
+
+    // Crossing compacts the bar: one commit.
+    scrollTo(SCROLL_COMPACT_ABOVE + 1);
+    expect(header().className).toContain("py-1.5");
+    expect(commits.mock.calls.length).toBe(settled + 1);
+
+    // Scrolling on down, and back up inside the band: still nothing.
+    for (let y = 40; y <= 2000; y += 97) scrollTo(y);
+    for (let y = SCROLL_COMPACT_ABOVE; y > SCROLL_EXPAND_BELOW; y -= 4) scrollTo(y);
+    expect(commits.mock.calls.length).toBe(settled + 1);
   });
 
   it("keeps a band wider than the 12px the bar changes by", () => {
