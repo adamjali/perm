@@ -5,6 +5,7 @@ import {
   CHECK_CASE_URL,
   composeSubject,
   composeText,
+  issueHasNews,
   pickEmployerMoves,
   pickUscisMedians,
   SIGNUP_URL,
@@ -245,5 +246,45 @@ describe("the employer-wide moves block (2026-09-26)", () => {
     expect(text).toContain("Adobe Inc.: DOL put 215 of its cases on hold (recorded Sep 7, 2026).");
     expect(text).toContain("DOL gives no reason");
     expect(composeText(full)).not.toContain("EMPLOYER-WIDE");
+  });
+});
+
+describe("a week with nothing new isn't sent (2026-10-12)", () => {
+  const quiet: DigestData = {
+    ...full,
+    bulletinRepeat: true,
+    notices: [],
+    employerMoves: [],
+    uscisQuarter: null,
+    uscisMedians: [],
+  };
+  const same = { frontierMonth: full.frontierMonth, averageDays: full.averageDays };
+
+  it("skips an issue that repeats the last one", () => {
+    expect(issueHasNews(quiet, same)).toBe(false);
+  });
+
+  it("always sends the first issue", () => {
+    expect(issueHasNews(quiet, null)).toBe(true);
+  });
+
+  it("sends when DOL's month or average moved", () => {
+    expect(issueHasNews({ ...quiet, frontierMonth: "2025-12" }, same)).toBe(true);
+    expect(issueHasNews({ ...quiet, averageDays: 330 }, same)).toBe(true);
+  });
+
+  it("doesn't count a figure it couldn't read as news", () => {
+    expect(issueHasNews({ ...quiet, frontierMonth: null, averageDays: null }, same)).toBe(false);
+  });
+
+  it("sends for a new bulletin, a new USCIS quarter, a notice or an employer move", () => {
+    expect(issueHasNews({ ...quiet, bulletinRepeat: false }, same)).toBe(true);
+    expect(
+      issueHasNews({ ...quiet, uscisQuarter: "FY2026 Q3", uscisRepeat: false, uscisMedians: [{ form: "I-140", label: "I-140", medianMonths: 6 }] }, same),
+    ).toBe(true);
+    expect(issueHasNews({ ...quiet, notices: full.notices }, same)).toBe(true);
+    expect(
+      issueHasNews({ ...quiet, employerMoves: [{ name: "Adobe", url: null, date: "2026-09-24", sentence: "DOL put 215 of its cases on hold" }] }, same),
+    ).toBe(true);
   });
 });

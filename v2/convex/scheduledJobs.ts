@@ -175,13 +175,15 @@ export const getCasesNeedingReminders = internalQuery({
       }
     }
 
-    // Get all active cases (not deleted, not closed)
+    // Get all active cases (not deleted, not closed). The onboarding sample
+    // case is demo data: it never makes a reminder, a notification or an email.
     const cases = await ctx.db
       .query("cases")
       .filter((q) =>
         q.and(
           q.eq(q.field("deletedAt"), undefined),
-          q.neq(q.field("caseStatus"), "closed")
+          q.neq(q.field("caseStatus"), "closed"),
+          q.neq(q.field("isSample"), true)
         )
       )
       .collect();
@@ -510,7 +512,8 @@ export const getDeadlinesForDigest = internalQuery({
       .filter((q) =>
         q.and(
           q.eq(q.field("deletedAt"), undefined),
-          q.neq(q.field("caseStatus"), "closed")
+          q.neq(q.field("caseStatus"), "closed"),
+          q.neq(q.field("isSample"), true)
         )
       )
       .collect();
@@ -562,7 +565,8 @@ export const getRecentlyUpdatedCases = internalQuery({
       .filter((q) =>
         q.and(
           q.eq(q.field("deletedAt"), undefined),
-          q.gt(q.field("updatedAt"), sevenDaysAgo)
+          q.gt(q.field("updatedAt"), sevenDaysAgo),
+          q.neq(q.field("isSample"), true)
         )
       )
       .collect();
@@ -592,7 +596,8 @@ export const getActiveCaseCountForUser = internalQuery({
       .filter((q) =>
         q.and(
           q.eq(q.field("deletedAt"), undefined),
-          q.neq(q.field("caseStatus"), "closed")
+          q.neq(q.field("caseStatus"), "closed"),
+          q.neq(q.field("isSample"), true)
         )
       )
       .collect();
@@ -865,8 +870,10 @@ export const getActiveCasesForEnforcement = internalQuery({
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .collect();
 
+    // The sample case is never closed for a missed deadline: it's demo data,
+    // and closing it would mean a notification and an email about it.
     return cases.filter(
-      (c) => c.deletedAt === undefined && c.caseStatus !== "closed"
+      (c) => c.deletedAt === undefined && c.caseStatus !== "closed" && c.isSample !== true
     );
   },
 });

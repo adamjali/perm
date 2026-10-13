@@ -75,7 +75,8 @@ export const getCaseForCalendarSync = internalQuery({
         responseDueDate: entry.responseDueDate,
         responseSubmittedDate: entry.responseSubmittedDate,
       })),
-      calendarSyncEnabled: caseDoc.calendarSyncEnabled,
+      // The sample case is demo data: no events, so no calendar reminders.
+      calendarSyncEnabled: caseDoc.isSample ? false : caseDoc.calendarSyncEnabled,
     };
   },
 });

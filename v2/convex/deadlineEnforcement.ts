@@ -117,9 +117,10 @@ export const checkAndEnforceDeadlines = mutation({
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .collect();
 
-    // Filter to active cases only
+    // Filter to active cases only; the sample case is demo data and is never
+    // closed, notified or emailed about.
     const activeCases = cases.filter(
-      (c) => c.deletedAt === undefined && c.caseStatus !== "closed"
+      (c) => c.deletedAt === undefined && c.caseStatus !== "closed" && c.isSample !== true
     );
 
     const closedCases: EnforcementResult["closedCases"] = [];
@@ -420,7 +421,7 @@ export const closeCaseAndNotify = internalMutation({
   handler: async (ctx, args): Promise<Id<"notifications"> | null> => {
     // Idempotency guard: skip if already closed or deleted (race with login-triggered enforcement)
     const caseDoc = await ctx.db.get(args.caseId);
-    if (!caseDoc || caseDoc.caseStatus === "closed" || caseDoc.deletedAt !== undefined) {
+    if (!caseDoc || caseDoc.caseStatus === "closed" || caseDoc.deletedAt !== undefined || caseDoc.isSample) {
       return null;
     }
 

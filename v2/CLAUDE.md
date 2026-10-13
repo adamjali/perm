@@ -9815,3 +9815,14 @@ The client half of the chat audit, after the incident fixes above. Each item was
   any address), numbered lists are numbered again, the chat is `ph-no-capture`, and the search error logs no longer
   carry the query.
 
+**The onboarding sample case is quiet** (owner, Oct 12 2026: no emails, no notifications). Every reader that feeds a
+reminder, an RFI or RFE alert, the weekly summary (deadlines, updates, case count) or auto-closure skips `isSample`
+cases (`scheduledJobs.ts`, `deadlineEnforcement.ts`); `notifications.createNotification` returns null for one,
+whoever calls it, and no status email can go without a notification; it's never closed for a missed deadline; and it
+puts no events in Google Calendar (`getCaseForCalendarSync`, `listForSync`; new samples start with calendar sync off).
+`convex/__tests__/sampleCaseQuiet.test.ts` sets a real case with the same dates beside it each time.
+
+**A weekly newsletter with nothing new isn't sent** (`issueHasNews` in `convex/lib/newsletterCompose.ts`): DOL's month
+and average where the last issue left them, the bulletin and USCIS's quarter already reported, no Federal Register
+document and no employer move that week. The issue is still built and stored, marked `skipped`; a rebuild judges it
+again. The weekly case summary already skipped a week with no deadline in 14 days and no case update in 7.

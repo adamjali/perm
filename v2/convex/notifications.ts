@@ -26,7 +26,7 @@
 
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull, isEmailVerified, getUserByEmail } from "./lib/auth";
 import { logDelete } from "./lib/audit";
 import { createLogger } from "./lib/logging";
@@ -480,7 +480,8 @@ export const deleteAllRead = mutation({
  * Create a notification (internal use only).
  *
  * Called from other server code (e.g., deadline enforcement, case status changes).
- * Not exposed to the client API.
+ * Not exposed to the client API. Returns null, and creates nothing, for the
+ * onboarding sample case: it's demo data and never notifies anyone.
  */
 export const createNotification = internalMutation({
   args: {
@@ -499,7 +500,11 @@ export const createNotification = internalMutation({
     deadlineType: v.optional(v.string()),
     daysUntilDeadline: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Id<"notifications"> | null> => {
+    if (args.caseId) {
+      const caseDoc = await ctx.db.get(args.caseId);
+      if (caseDoc?.isSample) return null;
+    }
     const now = Date.now();
 
     const notificationId = await ctx.db.insert("notifications", {

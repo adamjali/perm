@@ -29,7 +29,7 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
-import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, type QueryCtx } from "./_generated/server";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
 import { actionUrl } from "./lib/links";
@@ -41,6 +41,7 @@ import {
   composeText,
   type DigestData,
   type DigestNotice,
+  issueHasNews,
   pickUscisMedians,
   pickEmployerMoves,
   type DigestEmployerMove,
@@ -253,10 +254,11 @@ export const storeIssue = internalMutation({
       .query("newsletterIssues")
       .withIndex("by_weekOf", (q) => q.eq("weekOf", args.weekOf))
       .first();
-    // A rebuild of a week that already went out must not reset its send state.
-    if (existing && existing.status !== "preview") return null;
+    // A rebuild of a week that already went out must not reset its send state;
+    // a skipped week is built again and judged again.
+    if (existing && existing.status !== "preview" && existing.status !== "skipped") return null;
     if (existing) {
-      await ctx.db.patch(existing._id, { ...args, builtAt: Date.now() });
+      await ctx.db.patch(existing._id, { ...args, builtAt: Date.now(), status: "preview" });
       return null;
     }
     await ctx.db.insert("newsletterIssues", {
@@ -290,42 +292,62 @@ export const issueForWeek = internalQuery({
 });
 
 /** The bulletin month the newest EARLIER issue carried, or null. */
+/** The newest issue built before `weekOf`, parsed, or null. */
+async function previousIssueData(ctx: QueryCtx, weekOf: string): Promise<Record<string, unknown> | null> {
+  const prev = await ctx.db
+    .query("newsletterIssues")
+    .withIndex("by_weekOf", (q) => q.lt("weekOf", weekOf))
+    .order("desc")
+    .first();
+  if (!prev) return null;
+  try {
+    const d: unknown = JSON.parse(prev.data);
+    return d && typeof d === "object" ? (d as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+const textOrNull = (x: unknown): string | null => (typeof x === "string" ? x : null);
+
 export const previousBulletinMonth = internalQuery({
   args: { weekOf: v.string() },
   returns: v.union(v.string(), v.null()),
-  handler: async (ctx, { weekOf }) => {
-    const prev = await ctx.db
-      .query("newsletterIssues")
-      .withIndex("by_weekOf", (q) => q.lt("weekOf", weekOf))
-      .order("desc")
-      .first();
-    if (!prev) return null;
-    try {
-      const d = JSON.parse(prev.data) as { bulletinMonth?: unknown };
-      return typeof d.bulletinMonth === "string" ? d.bulletinMonth : null;
-    } catch {
-      return null;
-    }
-  },
+  handler: async (ctx, { weekOf }) => textOrNull((await previousIssueData(ctx, weekOf))?.bulletinMonth),
 });
 
 /** The USCIS quarter the newest EARLIER issue carried, or null: a quarter is news once. */
 export const previousUscisQuarter = internalQuery({
   args: { weekOf: v.string() },
   returns: v.union(v.string(), v.null()),
+  handler: async (ctx, { weekOf }) => textOrNull((await previousIssueData(ctx, weekOf))?.uscisQuarter),
+});
+
+/** DOL's month and average as the newest EARLIER issue printed them, or null when there's no earlier issue. */
+export const previousDolFigures = internalQuery({
+  args: { weekOf: v.string() },
+  returns: v.union(v.null(), v.object({ frontierMonth: v.union(v.string(), v.null()), averageDays: v.union(v.number(), v.null()) })),
   handler: async (ctx, { weekOf }) => {
-    const prev = await ctx.db
+    const d = await previousIssueData(ctx, weekOf);
+    if (!d) return null;
+    return {
+      frontierMonth: textOrNull(d.frontierMonth),
+      averageDays: typeof d.averageDays === "number" ? d.averageDays : null,
+    };
+  },
+});
+
+/** A built week with nothing new: kept for the record, never sent. */
+export const markSkipped = internalMutation({
+  args: { weekOf: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { weekOf }) => {
+    const issue = await ctx.db
       .query("newsletterIssues")
-      .withIndex("by_weekOf", (q) => q.lt("weekOf", weekOf))
-      .order("desc")
+      .withIndex("by_weekOf", (q) => q.eq("weekOf", weekOf))
       .first();
-    if (!prev) return null;
-    try {
-      const d = JSON.parse(prev.data) as { uscisQuarter?: unknown };
-      return typeof d.uscisQuarter === "string" ? d.uscisQuarter : null;
-    } catch {
-      return null;
-    }
+    if (issue && issue.status === "preview") await ctx.db.patch(issue._id, { status: "skipped" });
+    return null;
   },
 });
 
@@ -437,6 +459,7 @@ export const buildIssue = internalAction({
       // Same rule for USCIS's quarter, except a repeat is silent rather than
       // restated: a workbook lands four times a year.
       const previousQuarter = await ctx.runQuery(internal.newsletter.previousUscisQuarter, { weekOf });
+      const previousDol = await ctx.runQuery(internal.newsletter.previousDolFigures, { weekOf });
       const data: DigestData = {
         weekOf,
         ...queue,
@@ -458,8 +481,12 @@ export const buildIssue = internalAction({
         text,
         html,
       });
-      const enabled = sendingEnabled();
-      log.info("issue built", { weekOf, subject, enabled });
+      // A week with nothing the last issue didn't say isn't sent; the row
+      // stays as the record, marked skipped.
+      const news = issueHasNews(data, previousDol);
+      if (!news) await ctx.runMutation(internal.newsletter.markSkipped, { weekOf });
+      const enabled = sendingEnabled() && news;
+      log.info("issue built", { weekOf, subject, enabled, news });
       if (enabled) {
         await ctx.scheduler.runAfter(0, internal.newsletter.sendBatch, { weekOf });
       }
@@ -492,7 +519,7 @@ export const sendBatch = internalAction({
       return { sent: 0, failed: 0, done: true };
     }
     const issue = await ctx.runQuery(internal.newsletter.issueForWeek, { weekOf });
-    if (!issue || issue.status === "sent") return { sent: 0, failed: 0, done: true };
+    if (!issue || issue.status === "sent" || issue.status === "skipped") return { sent: 0, failed: 0, done: true };
     const data = JSON.parse(issue.data) as DigestData;
     const resend = getResend();
     const secret = unsubscribeSecret();

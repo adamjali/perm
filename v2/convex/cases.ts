@@ -581,7 +581,8 @@ export const create = mutation({
         .first();
 
       const userPrefs = buildUserNotificationPrefs(userProfile);
-      if (userPrefs.emailStatusUpdates) {
+      // The sample case is demo data: it never notifies or emails.
+      if (userPrefs.emailStatusUpdates && !args.isSample) {
         const notificationId = await ctx.runMutation(internal.notifications.createNotification, {
           userId: userId,
           caseId: caseId,
@@ -592,7 +593,7 @@ export const create = mutation({
         });
 
         // Schedule email if preferences allow
-        if (shouldSendEmail("status_change", "normal", userPrefs)) {
+        if (notificationId && shouldSendEmail("status_change", "normal", userPrefs)) {
           // Get user email from users table
           const user = await ctx.db.get(userId);
           if (user?.email) {
@@ -964,9 +965,11 @@ export const update = mutation({
         .withIndex("by_user_id", (q) => q.eq("userId", oldDoc!.userId))
         .first();
       const userPrefs = buildUserNotificationPrefs(userProfile);
+      // The sample case is demo data: none of the three notices below, and no email.
+      const quiet = oldDoc!.isSample === true;
 
       // 1. Case status change notification
-      if (caseStatusChanged) {
+      if (caseStatusChanged && !quiet) {
         if (userPrefs.emailStatusUpdates) {
           const notificationId = await ctx.runMutation(internal.notifications.createNotification, {
             userId: oldDoc!.userId,
@@ -978,7 +981,7 @@ export const update = mutation({
           });
 
           // Schedule email if preferences allow
-          if (shouldSendEmail("status_change", "normal", userPrefs)) {
+          if (notificationId && shouldSendEmail("status_change", "normal", userPrefs)) {
             const user = await ctx.db.get(oldDoc!.userId);
             if (user?.email) {
               await ctx.scheduler.runAfter(0, internal.notificationActions.sendStatusChangeEmail, {
@@ -999,7 +1002,7 @@ export const update = mutation({
       }
 
       // 2. Progress status change notification (only if caseStatus didn't also change)
-      if (progressStatusChanged && !caseStatusChanged) {
+      if (progressStatusChanged && !caseStatusChanged && !quiet) {
         if (userPrefs.emailStatusUpdates) {
           await ctx.runMutation(internal.notifications.createNotification, {
             userId: oldDoc!.userId,
@@ -1014,7 +1017,7 @@ export const update = mutation({
       }
 
       // 3. Job description change notification
-      if (jobDescriptionChanged) {
+      if (jobDescriptionChanged && !quiet) {
         await ctx.runMutation(internal.notifications.createNotification, {
           userId: oldDoc!.userId,
           caseId: args.id,
@@ -1514,7 +1517,8 @@ export const bulkUpdateStatus = mutation({
             .first();
           const bulkPrefs = buildUserNotificationPrefs(userProfile);
 
-          if (bulkPrefs.emailStatusUpdates) {
+          // The sample case is demo data: it never notifies or emails.
+          if (bulkPrefs.emailStatusUpdates && !oldDoc.isSample) {
             const notificationId = await ctx.runMutation(internal.notifications.createNotification, {
               userId: oldDoc.userId,
               caseId: id,
@@ -1526,7 +1530,7 @@ export const bulkUpdateStatus = mutation({
 
             // Schedule email if preferences allow - limit bulk emails to first 10 cases
             // to prevent overwhelming the user with too many emails at once
-            if (successCount < 10 && shouldSendEmail("status_change", "normal", bulkPrefs)) {
+            if (notificationId && successCount < 10 && shouldSendEmail("status_change", "normal", bulkPrefs)) {
               // Get user email from users table
               const user = await ctx.db.get(oldDoc.userId);
               if (user?.email) {
@@ -2835,7 +2839,8 @@ export const listForSync = internalQuery({
       .map((c) => ({
         _id: c._id,
         employerName: c.employerName,
-        calendarSyncEnabled: c.calendarSyncEnabled,
+        // The sample case is never synced (no calendar reminders for demo data).
+        calendarSyncEnabled: c.isSample ? false : c.calendarSyncEnabled,
       }));
   },
 });
@@ -2857,8 +2862,8 @@ export const getSyncEligibleCaseCount = query({
 
     const { cases } = await readUserCases(ctx, userId);
 
-    // Count live cases with sync enabled (not explicitly false)
-    return cases.filter((c) => c.calendarSyncEnabled !== false).length;
+    // Count live cases with sync enabled (not explicitly false); the sample case is never synced
+    return cases.filter((c) => c.calendarSyncEnabled !== false && c.isSample !== true).length;
   },
 });
 

@@ -675,7 +675,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 11 2026 (night)".
 - **A table cell's fill can say its state**: the bulletin matrix tints Current and Unavailable, with a key.
 - **The dev capture scripts live in `node_modules/.cache/qa/`**: `top-shot.mjs`, `dark-shot.mjs`, `embed-shot.mjs`, `load-shot.mjs` (for pages that never go network-idle).
 
-## Oct 12 2026, in eighteen lines
+## Oct 12 2026, in twenty lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
 
@@ -698,6 +698,8 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   stored, once; the result is read back from the case. Archive closes and never deletes.
 - **Closing sets the override and the closure trail; reopening hands the stage back to the dates**, from the cases page too.
 - **The weekly case summary stays on Monday for every account** (owner's call, Oct 12: a split across three days was tried and undone).
+- **The sample case sends nothing**: no reminder, alert, status email, auto-closure or calendar event; and a weekly
+  newsletter with nothing new since the last issue is stored as `skipped`, not sent.
 - **The site's own test accounts get no notification mail** (`isOwnTestAddress`: every `@permtracker.app` address but support@).
 - **Inbound mail and alerts to the owner go through Cloudflare, free** (`workers/mail/`): the root MX is Cloudflare's,
   a Worker forwards and stores every message, and owner mail falls back to Resend only if the Worker fails.

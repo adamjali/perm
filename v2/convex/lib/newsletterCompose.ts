@@ -78,6 +78,31 @@ export function uscisIsNews(d: DigestData): boolean {
   return typeof d.uscisQuarter === "string" && d.uscisQuarter.length > 0 && !d.uscisRepeat && (d.uscisMedians?.length ?? 0) > 0;
 }
 
+/** DOL's two figures as the previous issue printed them. */
+export interface PreviousDolFigures {
+  frontierMonth: string | null;
+  averageDays: number | null;
+}
+
+/**
+ * Whether an issue says anything the previous one didn't. An issue with
+ * nothing new isn't sent: DOL's month and average are where the last issue
+ * left them, the bulletin and USCIS's quarter were already reported, and the
+ * week brought no Federal Register document and no employer-wide move. A
+ * figure that couldn't be read this week is never news. The first issue
+ * always goes.
+ */
+export function issueHasNews(d: DigestData, previous: PreviousDolFigures | null): boolean {
+  if (!previous) return true;
+  if (d.frontierMonth !== null && d.frontierMonth !== previous.frontierMonth) return true;
+  if (d.averageDays !== null && d.averageDays !== previous.averageDays) return true;
+  if (d.bulletinMonth !== null && d.bulletinMoves !== null && !d.bulletinRepeat) return true;
+  if (uscisIsNews(d)) return true;
+  if (d.notices.length > 0) return true;
+  if ((d.employerMoves?.length ?? 0) > 0) return true;
+  return false;
+}
+
 /** "6" for 6.0, "5.8" for 5.8: the workbook prints one decimal and so do we. */
 export function monthsLabel(m: number): string {
   return Number.isInteger(m) ? String(m) : m.toFixed(1);

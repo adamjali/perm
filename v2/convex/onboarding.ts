@@ -210,7 +210,8 @@ export const createSampleCase = mutation({
       ],
       tags: ["sample"],
       documents: [],
-      calendarSyncEnabled: true,
+      // Demo data: no Google Calendar events, so no calendar reminders.
+      calendarSyncEnabled: false,
       showOnTimeline: true,
 
       // PWD dates (completed)

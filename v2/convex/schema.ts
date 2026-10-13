@@ -1741,8 +1741,8 @@ export default defineSchema({
     text: v.string(),
     html: v.string(),
     builtAt: v.number(),
-    /** preview: composed, flag off. sending: in progress. sent: done. */
-    status: v.union(v.literal("preview"), v.literal("sending"), v.literal("sent")),
+    /** preview: composed, flag off. sending: in progress. sent: done. skipped: nothing new since the last issue, never sent. */
+    status: v.union(v.literal("preview"), v.literal("sending"), v.literal("sent"), v.literal("skipped")),
     sentCount: v.number(),
     /** The last address sent to, so a daily batch resumes where it stopped. */
     cursor: v.optional(v.string()),

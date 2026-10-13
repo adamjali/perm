@@ -12,6 +12,7 @@ export const issueStatusValidator = v.union(
   v.literal("preview"),
   v.literal("sending"),
   v.literal("sent"),
+  v.literal("skipped"),
 );
 
 export const adminSummaryValidator = v.object({
