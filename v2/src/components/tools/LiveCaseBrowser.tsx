@@ -14,6 +14,8 @@ import type { LiveKind, LiveListPage, LiveRemainderSummary, LiveSort } from "@/l
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
+import { StatusBadge } from "@/components/ui/badge";
+import { choiceVariants } from "@/components/ui/choice";
 
 /**
  * The live half of the case corpus, browsable.
@@ -58,13 +60,6 @@ function longDate(iso: string | null): string {
   });
 }
 
-function statusClass(status: string | null, isFinal: boolean): string {
-  const s = (status ?? "").toUpperCase();
-  if (s === "CERTIFIED") return "bg-primary text-primary-foreground";
-  if (s === "DENIED") return "bg-foreground text-background";
-  if (isFinal) return "bg-card";
-  return "bg-tint";
-}
 
 export function LiveCaseBrowser({
   summary,
@@ -196,10 +191,7 @@ export function LiveCaseBrowser({
                 type="button"
                 aria-pressed={kind === k}
                 onClick={() => pickKind(k)}
-                className={
-                  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary " +
-                  (kind === k ? "bg-foreground text-background hover:bg-foreground" : "bg-card")
-                }
+                className={choiceVariants({ on: kind === k })}
               >
                 {KIND_LABEL[k]}
                 {counts && k !== "all" ? ` · ${formatInt(counts[k])}` : ""}
@@ -267,7 +259,7 @@ export function LiveCaseBrowser({
               <caption className="sr-only">
                 Live cases from DOL&apos;s case-status service, newest filing first
               </caption>
-              <thead className="bg-foreground text-background">
+              <thead className="border-b border-input bg-muted">
                 <tr>
                   {["Case", "Status", "Employer", "Job title", "Filed", "Seen"].map((h) => (
                     <Fragment key={h}>
@@ -309,14 +301,7 @@ export function LiveCaseBrowser({
                       </PendingLink>
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3">
-                      <span
-                        className={
-                          "border border-border px-2 py-0.5 font-mono text-sm font-bold " +
-                          statusClass(r.status, r.isFinal)
-                        }
-                      >
-                        {r.status ?? "unknown"}
-                      </span>
+                      {r.status ? <StatusBadge status={r.status} /> : <span className="text-muted-foreground">Unknown</span>}
                     {" "}</td>
                     <td className="px-3 py-3">
                       {r.employerSlug ? (

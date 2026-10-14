@@ -22,6 +22,8 @@ import { RequestFailed } from "@/components/tools/RequestFailed";
 import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
+import { StatusBadge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 
 /** One shared empty result, so an empty page or search does not mint a new array identity per render. */
 const EMPTY_ROWS: CaseRow[] = [];
@@ -154,8 +156,7 @@ function unreadMonthLabels(from: string, to: string): string[] {
 
 const CONTROL =
   "min-h-[44px] w-full min-w-0 border border-border bg-card px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary";
-const BUTTON =
-  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary";
+const BUTTON = buttonVariants({ variant: "outline" });
 const LABEL = "text-sm font-bold text-muted-foreground";
 
 function fmtWage(n: number | null): string {
@@ -548,7 +549,7 @@ export function CaseBrowser({
           </label>{" "}
           <button
             type="submit"
-            className={`${BUTTON} bg-primary text-primary-foreground`}
+            className={buttonVariants({ size: "lg" })}
             disabled={caseLookupPending}
             aria-busy={caseLookupPending}
           >
@@ -585,7 +586,7 @@ export function CaseBrowser({
             </p>{" "}
             <Link
               href={`/perm-case-status?case=${encodeURIComponent(liveHit.caseNumber)}`}
-              className="mt-3 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-4 font-heading font-bold text-primary-foreground"
+              className={buttonVariants({ variant: "outline", className: "mt-3" })}
             >
               <LinkPending />
               View the live status
@@ -1133,7 +1134,7 @@ function CaseTable({
   return (
     <table className="w-full min-w-[880px] border-collapse text-left text-base">
       <caption className="sr-only">{caption}</caption>
-      <thead className="bg-foreground text-background">
+      <thead className="border-b border-input bg-muted">
         <tr>
           {columns.map((c) => {
             const active = sortable && c.key === sortKey;
@@ -1171,18 +1172,7 @@ function CaseTable({
           <tr key={r.caseNumber} className="border-t border-border/30 align-top">
             <td className="whitespace-nowrap px-3 py-3 font-mono text-base">{r.caseNumber}{" "}</td>
             <td className="whitespace-nowrap px-3 py-3">
-              <span
-                className={
-                  "border border-border px-2 py-0.5 font-mono text-sm font-bold " +
-                  (r.status === "certified"
-                    ? "bg-primary text-primary-foreground"
-                    : r.status === "denied"
-                      ? "bg-foreground text-background"
-                      : "bg-card")
-                }
-              >
-                {STATUS_LABEL[r.status]}
-              </span>
+              <StatusBadge status={STATUS_LABEL[r.status]} />
             {" "}</td>
             <td className="px-3 py-3">
               {r.employerSlug ? (

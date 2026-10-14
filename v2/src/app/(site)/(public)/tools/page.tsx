@@ -11,7 +11,8 @@ import type { Metadata } from "next";
 import { CALCULATOR_PAGES } from "@/lib/siteMap";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
-import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
+import { Figure, FigureRow } from "@/components/data/FigureRow";
+import { buttonVariants } from "@/components/ui/button";
 
 import { openGraphBase } from "@/lib/openGraphBase";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
@@ -92,69 +93,46 @@ export default async function ToolsPage() {
         </p>
       </header>
 
-      {/* Live position: three tone panels, rotated so they read as three
-          different facts rather than three identical boxes. */}
+      {/* DOL's position in three figures, then the case box: a person holding
+          a case number outranks every aggregate below. */}
       {snapshot ? (
-        <section aria-label="Live DOL position" className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-4">
-          <div className="border border-border bg-foreground p-6 text-background">
-            <p className="text-sm font-bold text-background/60">
-              DOL is deciding cases filed
-            </p>{" "}
-            <p className="mt-2 font-heading text-3xl font-bold leading-none">
-              {formatMonth(frontierMonth) ?? "—"}
-            </p>{" "}
-            <p className="mt-3 text-sm leading-relaxed text-background/70">
-              Analyst review, the queue nearly every case sits in.
-            </p>
-          </div>
-          <div className="border border-border bg-tint p-6">
-            <p className="text-sm font-bold text-muted-foreground">
-              Average to a determination
-            </p>{" "}
-            <p className="mt-2 font-heading text-3xl font-bold leading-none">
-              {analystAvg?.calendarDays != null ? `${analystAvg.calendarDays} days` : "—"}
-            </p>{" "}
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Across cases DOL decided recently. An RFI or audit can make one case take longer.
-            </p>
-          </div>
-          <div className="border border-border bg-card p-6">
-            <p className="text-sm font-bold text-muted-foreground">
-              Wage requests pending
-            </p>{" "}
-            <p className="mt-2 font-heading text-3xl font-bold leading-none">
-              {pwd != null ? pwd.toLocaleString("en-US") : "—"}
-            </p>{" "}
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Prevailing wage, the stage before recruitment.
-            </p>
-          </div>
+        <section aria-label="Live DOL position" className="mt-10">
+          <FigureRow>
+            <Figure
+              label="DOL is deciding cases filed"
+              value={formatMonth(frontierMonth) ?? "Not published"}
+              note="Analyst review, the queue nearly every case sits in."
+            />
+            <Figure
+              label="Average to a determination"
+              value={analystAvg?.calendarDays != null ? `${analystAvg.calendarDays} days` : "Not published"}
+              note="Across cases DOL decided recently. An RFI or audit can make one case take longer."
+            />
+            <Figure
+              label="Wage requests pending"
+              value={pwd != null ? pwd.toLocaleString("en-US") : "Not published"}
+              note="Prevailing wage, the stage before recruitment."
+            />
+          </FigureRow>
         </section>
       ) : null}
 
-      {/* The case lookup first: a person holding a case number outranks every
-          aggregate below. A plain GET form, like the homepage's. */}
-      <section className="mt-10 border border-border bg-card p-6 sm:p-8">
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
-          <div className="min-w-0">
-            <h2 className="font-heading text-2xl font-bold">
-              Where&apos;s your case? When could it be decided?
-            </h2>{" "}
-            <p className="mt-2 max-w-xl text-base leading-relaxed text-muted-foreground">
-              Live DOL status, your place in the queue and an estimate. Free,
-              no account.
-            </p>
-          </div>
-          <CaseLookupForm
-            className="w-full max-w-xl"
-            label="Case number"
-            compact
-            source="data-hub"
-            help={null}
-            searchHref="/tools/perm-timeline-calculator"
-            searchLabel="Estimate your wait from the month you filed"
-          />
-        </div>
+      <section aria-labelledby="your-case" className="mt-10 bg-tint p-5 sm:p-8">
+        <h2 id="your-case" className="font-heading text-xl font-bold">
+          Where&apos;s your case? When could it be decided?
+        </h2>{" "}
+        <p className="mt-1 max-w-xl text-base leading-relaxed text-soft">
+          Live DOL status, your place in the queue and an estimate. Free, no account.
+        </p>{" "}
+        <CaseLookupForm
+          className="mt-4 max-w-2xl"
+          label="Case number"
+          compact
+          source="data-hub"
+          help={null}
+          searchHref="/tools/perm-timeline-calculator"
+          searchLabel="Estimate your wait from the month you filed"
+        />
       </section>
 
       {/* The queue as a tape: the one drawing that carries the mental model. */}
@@ -163,10 +141,7 @@ export default async function ToolsPage() {
           <h2 className="font-heading text-2xl font-bold">The queue, oldest first</h2>{" "}
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             Every PERM waits in filing-month order.{" "}
-            <Link
-              href="/tools/perm-timeline-calculator"
-              className="font-bold underline underline-offset-2 hover:text-primary"
-            >
+            <Link href="/tools/perm-timeline-calculator" className="link">
               Find your month
             </Link>
             .
@@ -177,20 +152,16 @@ export default async function ToolsPage() {
 
 
 
-      <section className="mt-10 flex flex-wrap items-center justify-between gap-4 border border-border bg-tint p-6 sm:p-8">
+      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 border-y border-border py-6">
         <div>
           <h2 className="font-heading text-2xl font-bold">All {CALCULATOR_PAGES.length} calculators</h2>{" "}
-          <p className="mt-1 max-w-xl text-base text-muted-foreground">
+          <p className="mt-1 max-w-xl text-base text-soft">
             Decision times, the wage, I-140 and I-485 queues, priority dates,
             the green card drawn to scale, and every statutory deadline.
           </p>
-        </div>
-        <Link
-          href="/calculators"
-          className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 py-2.5 font-bold text-black transition-colors duration-150"
-        >
+        </div>{" "}
+        <Link href="/calculators" className={buttonVariants({ variant: "outline", size: "lg" })}>
           Open the calculators
-          <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
 
@@ -208,92 +179,71 @@ export default async function ToolsPage() {
               href: "/case-search",
               label: "Search all programs",
               blurb: "One box across PERM, wage requests, LCAs and H-2A, H-2B and CW-1.",
-              tone: "ink",
               viz: "union" as const,
             },
             {
               href: "/perm-by-state",
               label: "By state",
               blurb: "An interactive map of filings, approval rates and wages by state.",
-              tone: "tint",
               viz: "scale" as const,
             },
             {
               href: "/perm-wages",
               label: "Wages",
               blurb: "Median offered wage by occupation, from what employers committed to pay.",
-              tone: "tint",
               viz: "twobars" as const,
             },
             {
               href: "/perm-employers",
               label: "Employers",
               blurb: "Every sponsor in DOL's files, ranked, with track records.",
-              tone: "card",
               viz: "queue" as const,
             },
             {
               href: "/perm-attorneys",
               label: "Law firms",
               blurb: "Who files the most PERM cases, and how fast.",
-              tone: "card",
               viz: "spans" as const,
             },
             {
               href: "/perm-denial-risk",
               label: "Denial rates",
               blurb: "What gets denied, by wage, by year, and by what the form declares.",
-              tone: "tint",
               viz: "shares" as const,
             },
             {
               href: "/perm-cases",
               label: "Case search",
               blurb: "Every decided case DOL has published, by employer, job and outcome.",
-              tone: "card",
               viz: "records" as const,
             },
             {
               href: "/pwd-cases",
               label: "Wage requests",
               blurb: "Prevailing wage requests, searchable before the PERM exists.",
-              tone: "tint",
               viz: "levels" as const,
             },
             {
               href: "/lca-cases",
               label: "H-1B LCAs",
               blurb: "Labor condition applications as DOL confirms them, by employer and title.",
-              tone: "card",
               viz: "attest" as const,
             },
             {
               href: "/seasonal-cases",
               label: "H-2A, H-2B and CW-1",
               blurb: "Seasonal farm and non-farm filings as DOL confirms them, by employer.",
-              tone: "tint",
               viz: "records" as const,
             },
           ].map((c) => (
             <a
               key={c.href}
               href={c.href}
-              className={
-                "group flex flex-col border border-border p-6 transition-colors duration-150 " +
-                (c.tone === "ink"
-                  ? "bg-foreground text-background"
-                  : c.tone === "tint"
-                    ? "bg-tint"
-                    : "bg-card")
-              }
+              className="group flex flex-col border border-border bg-card p-6 transition-colors duration-150 hover:border-foreground"
             >
               <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
               {/* The card's own subject, drawn. */}
-              <div
-                className={
-                  "mt-3 max-w-[150px] " + (c.tone === "ink" ? "text-background" : "text-foreground")
-                }
-              >
+              <div className="mt-3 max-w-[150px] text-foreground">
                 {c.viz === "scale" ? <ScaleBarsMini /> : null}
                 {c.viz === "twobars" ? <TwoBarsMini /> : null}
                 {c.viz === "queue" ? <QueueDepthMini /> : null}
@@ -304,31 +254,10 @@ export default async function ToolsPage() {
                 {c.viz === "levels" ? <WageLevelsMini /> : null}
                 {c.viz === "attest" ? <AttestationStackMini /> : null}
               </div>{" "}
-              <p
-                className={
-                  "mt-2 flex-1 text-sm leading-relaxed " +
-                  (c.tone === "ink" ? "text-background/70" : "text-muted-foreground")
-                }
-              >
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-soft">
                 {c.blurb}
               </p>{" "}
-              <span
-                className={
-                  "mt-4 text-sm font-bold " +
-                  // NOT `text-primary` ON THE INK CARD. That card is
-                  // `bg-foreground`, which is near-black in light and
-                  // near-WHITE in dark, while the lime holds still at #2ecc40
-                  // - so the label measured 4.28:1 in light and 2.05:1 in
-                  // dark. `text-background` is the half of the pair that flips
-                  // WITH the card, so it is legible in both by construction.
-                  // Same defect as the verdict chip, same fix.
-                  (c.tone === "ink"
-                    ? "text-background/80 group-hover:text-background"
-                    : "text-muted-foreground group-hover:text-primary")
-                }
-              >
-                Open →
-              </span>
+              <span className="link mt-4 text-sm">Open</span>
             </a>
           ))}
         </div>
@@ -348,21 +277,19 @@ export default async function ToolsPage() {
             <Link
               key={c.href}
               href={c.href}
-              className="group flex flex-col border border-border bg-card p-5 transition-colors duration-150"
+              className="group flex flex-col border border-border bg-card p-5 transition-colors duration-150 hover:border-foreground"
             >
               <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
               {/* The page's subject, drawn, as on the tiles above. */}
               <div className="mt-3 max-w-[150px] text-foreground">{c.viz}</div>{" "}
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{c.blurb}</p>{" "}
-              <span className="mt-3 text-sm font-bold text-muted-foreground group-hover:text-primary">
-                Open →
-              </span>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-soft">{c.blurb}</p>{" "}
+              <span className="link mt-3 text-sm">Open</span>
             </Link>
           ))}
         </div>{" "}
         <p className="mt-4 text-sm text-muted-foreground">
           How every figure is computed:{" "}
-          <Link href="/methodology" className="font-bold underline underline-offset-2 hover:text-primary">
+          <Link href="/methodology" className="link">
             the methodology page
           </Link>
           .
@@ -371,9 +298,7 @@ export default async function ToolsPage() {
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="border border-border bg-card p-6 sm:p-8">
-          <p className="text-sm font-bold text-muted-foreground">
-            For your own case
-          </p>{" "}
+          <p className="text-sm text-muted-foreground">For your own case</p>{" "}
           <h2 className="mt-2 font-heading text-xl font-bold">
             Get notified when DOL reaches your month
           </h2>{" "}
@@ -381,44 +306,35 @@ export default async function ToolsPage() {
             Set it on the{" "}
             <Link
               href="/perm-processing-times"
-              className="font-bold underline underline-offset-2 hover:text-primary"
+              className="link"
             >
               processing times page
             </Link>
             , or on any case you check. Everything we send is listed on the{" "}
             <Link
               href="/email-preferences"
-              className="font-bold underline underline-offset-2 hover:text-primary"
+              className="link"
             >
               email preferences page
             </Link>
             .
           </p>
         </div>
-        <div className="border border-border bg-foreground p-6 text-background sm:p-8">
-          <p className="text-sm font-bold text-background/60">
-            For a caseload
+        <div className="border border-border bg-card p-6 sm:p-8">
+          <p className="text-sm text-muted-foreground">For a caseload</p>{" "}
+          <h2 className="mt-2 font-heading text-xl font-bold">Track every deadline in every case</h2>{" "}
+          <p className="mt-3 text-base leading-relaxed text-soft">
+            The deadline calculator&apos;s date math, applied to every case you run, with alerts and calendar sync.
+            Free.
           </p>{" "}
-          <h2 className="mt-2 font-heading text-xl font-bold">
-            Track every deadline in every case
-          </h2>{" "}
-          <p className="mt-3 text-base leading-relaxed text-background/70">
-            The deadline calculator&apos;s date math, applied to every case you
-            run, with alerts and calendar sync. Free.
-          </p>{" "}
-          <Link
-            href="/signup"
-            className="mt-5 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 py-2.5 font-bold text-black transition-colors duration-150"
-          >
-            Start tracking
-            <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
-          </Link>{" "}
-          <Link
-            href="/for-attorneys"
-            className="mt-3 inline-flex min-h-[44px] items-center font-bold underline decoration-primary decoration-2 underline-offset-4 sm:ml-4 sm:mt-5"
-          >
-            What firms get
-          </Link>
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link href="/signup" className={buttonVariants({ variant: "outline" })}>
+              Start tracking
+            </Link>{" "}
+            <Link href="/for-attorneys" className="link inline-flex min-h-11 items-center">
+              What firms get
+            </Link>
+          </div>
         </div>
       </section>
     </div>

@@ -139,7 +139,7 @@ export default async function PermWagesPage() {
         ]}
         aside={
           <IndexSearch
-            title="Find a job"
+            title="Filter jobs"
             action="/perm-wages#all"
             placeholder="Software developer, nurse"
             note="Each occupation's page has its wage ladder, its employers and BLS's market pay."

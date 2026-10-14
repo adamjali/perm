@@ -44,7 +44,7 @@ interface KindCopy {
 }
 
 /** What a reader types into each list's search box. */
-const SEARCH_TITLE: Record<GroupKind, string> = { city: "Find a city", industry: "Find an industry", country: "Find a country" };
+const SEARCH_TITLE: Record<GroupKind, string> = { city: "Filter cities", industry: "Filter industries", country: "Filter countries" };
 const SEARCH_HINT: Record<GroupKind, string> = {
   city: "Seattle, Austin",
   industry: "Software, poultry, hospitals",

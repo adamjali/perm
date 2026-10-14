@@ -101,7 +101,7 @@ export default async function PermAttorneysPage() {
         ]}
         aside={
           <IndexSearch
-            title="Find a law firm"
+            title="Filter law firms"
             action="/perm-attorneys#all"
             placeholder="Fragomen, Berry Appleman"
             note="The start of the name is enough; a firm DOL spells several ways counts once."

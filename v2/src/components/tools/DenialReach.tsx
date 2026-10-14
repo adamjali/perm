@@ -149,7 +149,7 @@ export function DenialReach({
     <div className="overflow-x-auto">
       <table className="w-full border border-border text-left text-sm">
         <caption className="sr-only">{caption}</caption>
-        <thead className="bg-foreground text-background">
+        <thead className="border-b border-input bg-muted">
           <tr>
             <th scope="col" className="p-3 text-sm font-bold">
               {unitLabel}

@@ -3,7 +3,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
 import { PageBasics } from "@/components/data/PageBasics";
-import { IndexHeader, IndexSearch } from "@/components/data/IndexHeader";
+import { IndexHeader, IndexLookup } from "@/components/data/IndexHeader";
 import { FilingMonthBars } from "@/components/data/FilingMonthBars";
 import { formatInt } from "@/lib/format";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -75,21 +75,11 @@ export default async function LcaCasesPage() {
           },
         ]}
         aside={
-          <IndexSearch
+          <IndexLookup
             title="Have the number?"
-            note="DOL is asked live, and the case page can email you when it moves."
-            action="/perm-case-status"
-            name="case"
-            button="Look it up"
             placeholder="I-200-26188-123456"
-            footer={
-              <Link
-                href="/h1b-employers"
-                className="font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
-              >
-                The busiest H-1B employers, year by year
-              </Link>
-            }
+            note="DOL is asked live, and the case page can email you when it moves."
+            source="lca-cases"
           />
         }
       />{" "}

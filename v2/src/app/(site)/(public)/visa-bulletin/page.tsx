@@ -348,7 +348,7 @@ export default async function VisaBulletinPage() {
           </ul>
           <div className="mt-3 overflow-x-auto overscroll-x-none">
             <table className="w-full min-w-[640px] border border-border text-sm">
-              <thead className="bg-foreground text-background">
+              <thead className="border-b border-input bg-muted">
                 <tr>
                   <th className="p-3 text-left text-sm">Category{" "}</th>
                   {BOARD_COUNTRIES.map((c) => (
@@ -397,7 +397,7 @@ export default async function VisaBulletinPage() {
           </summary>{" "}
           <div className="overflow-x-auto overscroll-x-none border-t border-border/40 p-3 sm:p-4">
             <table className="w-full min-w-[720px] border border-border text-sm">
-              <thead className="bg-foreground text-background">
+              <thead className="border-b border-input bg-muted">
                 <tr>
                   <th className="p-3 text-left text-sm">Country{" "}</th>
                   <th className="p-3 text-left text-sm">Cutoff, {monthLabel(last.bulletinMonth)}{" "}</th>

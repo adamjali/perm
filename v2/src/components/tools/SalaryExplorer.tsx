@@ -569,7 +569,7 @@ export function SalaryExplorer({
                   </summary>
                 <div className="overflow-x-auto border-t border-border">
                   <table className="w-full min-w-[36rem] text-left text-sm">
-                    <thead className="bg-foreground text-background">
+                    <thead className="border-b border-input bg-muted">
                       <tr>
                         {["State", "Cases", "5th", "Median", "Average", "95th"].map((h, i) => (
                           <th

@@ -156,12 +156,4 @@ export const STAGE_META: Record<QueueStage, StageMeta> = {
  * The acronyms are restored afterwards because a blanket title case turns
  * `RFI` into `Rfi`, which reads as a typo rather than as an abbreviation.
  */
-/** DOL's acronyms, which stay in capitals whatever the casing around them. */
-const STATUS_ACRONYMS = /\b(rfi|nord|nod|nor|nrm|balca|co)\b/gi;
-
-export function prettyStatus(status: string): string {
-  return status
-    .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .replace(STATUS_ACRONYMS, (m) => m.toUpperCase());
-}
+export { prettyStatus } from "@/lib/statusTone";

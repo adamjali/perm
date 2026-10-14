@@ -251,7 +251,7 @@ function ChartTable({
       </p>{" "}
       <div className="mt-4 overflow-x-auto overscroll-x-none border border-border bg-card">
         <table className="w-full min-w-[760px] border-collapse text-sm">
-          <thead className="bg-foreground text-background">
+          <thead className="border-b border-input bg-muted">
             <tr>
               <th scope="col" className="px-3 py-3 text-left text-sm font-bold">Category{" "} </th>
               {BOARD_COUNTRIES.map((c) => (

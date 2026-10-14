@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 
 /**
- * The top of a list page: what the list is, its headline figures as cells,
- * and the search box beside them.
+ * The top of a list page: what the list is, its headline figures, and the
+ * box that filters it beside them.
  *
  * Most people who open a list of sponsors, firms or jobs came to find one of
  * them, and the search used to sit thousands of pixels down, inside the
@@ -22,8 +23,6 @@ export interface IndexFigure {
   note?: string;
 }
 
-const COLUMNS: Record<number, string> = { 2: "sm:grid-cols-2", 3: "sm:grid-cols-3" };
-
 export function IndexHeader({
   title,
   lede,
@@ -38,26 +37,26 @@ export function IndexHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("pt-10 sm:pt-12", className)}>
-      <div className="grid grid-cols-1 gap-8 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,25rem)] lg:items-start">
+    <header className={cn("pt-8 sm:pt-10", className)}>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start [&>*]:min-w-0">
         <div>
-          <h1 className="font-heading text-4xl font-bold leading-[1.05] sm:text-5xl">{title}</h1>{" "}
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">{lede}</p>{" "}
+          <h1 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">{title}</h1>{" "}
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">{lede}</p>{" "}
           {figures.length > 0 ? (
-            <dl className={cn("mt-6 grid grid-cols-1 gap-px border border-border bg-border [&>*]:min-w-0", COLUMNS[figures.length])}>
+            <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-4">
               {figures.map((f) => (
-                <div key={f.label} className="bg-card px-4 py-3">
-                  <dt className="text-sm text-muted-foreground">{f.label}{" "}</dt>{" "}
+                <div key={f.label} className="min-w-0">
+                  <dt className="text-sm text-muted-foreground">{f.label}</dt>{" "}
                   <dd className="mt-0.5 font-heading text-lg font-bold leading-snug [overflow-wrap:anywhere]">
                     {f.href ? (
-                      <Link href={f.href} className="underline decoration-primary decoration-2 underline-offset-4 hover:text-primary">
+                      <Link href={f.href} className="link">
                         {f.value}
                       </Link>
                     ) : (
                       f.value
-                    )}{" "}
-                  </dd>
-                  {f.note ? <dd className="mt-0.5 text-sm text-muted-foreground">{f.note}{" "}</dd> : null}
+                    )}
+                  </dd>{" "}
+                  {f.note ? <dd className="text-sm text-muted-foreground">{f.note}</dd> : null}
                 </div>
               ))}
             </dl>
@@ -71,7 +70,8 @@ export function IndexHeader({
 
 /**
  * A plain GET form into a list's table: no script, so it works before the
- * page's code has loaded, and the address it lands on can be shared.
+ * page's code has loaded, and the address it lands on can be shared. It
+ * filters the list it sits on; the header's box is the site-wide search.
  */
 export function IndexSearch({
   title,
@@ -80,7 +80,7 @@ export function IndexSearch({
   note,
   footer,
   name = "q",
-  button = "Search",
+  button = "Filter",
 }: {
   title: string;
   /** The list page and its table's anchor, e.g. "/perm-employers#all", or another page that reads the field. */
@@ -93,17 +93,12 @@ export function IndexSearch({
   footer?: ReactNode;
 }) {
   return (
-    <form
-      method="get"
-      action={action}
-      role="search"
-      className="border border-border bg-card p-5 sm:p-6"
-    >
-      <label htmlFor="index-search" className="font-heading text-xl font-bold leading-tight">
+    <form method="get" action={action} role="search" className="bg-tint p-5 sm:p-6">
+      <label htmlFor="index-search" className="font-heading text-lg font-bold leading-tight">
         {title}
       </label>{" "}
-      {note ? <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{note}</p> : null}{" "}
-      <div className="mt-4 flex gap-2">
+      {note ? <p className="mt-1 text-sm leading-relaxed text-soft">{note}</p> : null}{" "}
+      <div className="mt-3 flex gap-2">
         <input
           id="index-search"
           name={name}
@@ -112,17 +107,46 @@ export function IndexSearch({
           minLength={2}
           autoComplete="off"
           placeholder={placeholder}
-          className="min-h-11 min-w-0 flex-1 border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="h-12 min-w-0 flex-1 border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />{" "}
-        <button
-          type="submit"
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 border border-border bg-primary px-4 font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
-        >
-          <MagnifyingGlassIcon aria-hidden="true" className="size-4" weight="bold" />
+        <button type="submit" className={buttonVariants({ size: "lg" })}>
           {button}
         </button>
       </div>{" "}
-      {footer ? <div className="mt-4 border-t border-border pt-3 text-sm">{footer}</div> : null}
+      {footer ? <div className="mt-3 text-sm">{footer}</div> : null}
     </form>
+  );
+}
+
+/**
+ * The case box on a program's list page: the one shared lookup, labelled for
+ * that program's numbers, for someone who landed here holding one.
+ */
+export function IndexLookup({
+  title,
+  placeholder,
+  note,
+  source,
+  searchHref = "/case-search",
+  searchLabel = "Find a case by employer name",
+}: {
+  title: string;
+  placeholder: string;
+  note?: ReactNode;
+  source: string;
+  searchHref?: string;
+  searchLabel?: string;
+}) {
+  return (
+    <div className="bg-tint p-5 sm:p-6">
+      <CaseLookupForm
+        label={title}
+        placeholder={placeholder}
+        help={note ?? null}
+        source={source}
+        searchHref={searchHref}
+        searchLabel={searchLabel}
+      />
+    </div>
   );
 }

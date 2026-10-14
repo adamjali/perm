@@ -27,7 +27,7 @@ import { listByKind } from "@/lib/turso/entities";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
-import { IndexHeader, IndexSearch, type IndexFigure } from "@/components/data/IndexHeader";
+import { IndexHeader, IndexLookup, type IndexFigure } from "@/components/data/IndexHeader";
 import { Chapter } from "@/components/entities/Chapter";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { withSocialCard } from "@/lib/socialCard";
@@ -137,21 +137,11 @@ export default async function PermCasesPage() {
         }
         figures={figures}
         aside={
-          <IndexSearch
-            title="Look up a case number"
-            action="/perm-case-status"
-            name="case"
-            button="Look it up"
+          <IndexLookup
+            title="Have the number?"
             placeholder="G-100-26125-868956"
             note="DOL's status today, the published record once there is one, and an estimated date."
-            footer={
-              <>
-                Don&apos;t have the number?{" "}
-                <Link href="/case-search" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-                  Find the case by employer
-                </Link>
-              </>
-            }
+            source="perm-cases"
           />
         }
       />

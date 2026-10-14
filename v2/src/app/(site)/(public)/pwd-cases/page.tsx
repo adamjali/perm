@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
-import Link from "next/link";
 
 import { PageBasics } from "@/components/data/PageBasics";
-import { IndexHeader, IndexSearch } from "@/components/data/IndexHeader";
+import { IndexHeader, IndexLookup } from "@/components/data/IndexHeader";
 import { FilingMonthBars } from "@/components/data/FilingMonthBars";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { dolPwdNow } from "@/lib/dolNow";
@@ -94,21 +93,11 @@ export default async function PwdCasesPage() {
           },
         ]}
         aside={
-          <IndexSearch
+          <IndexLookup
             title="Have the number?"
-            note="DOL is asked live, and the case page can email you when it moves."
-            action="/perm-case-status"
-            name="case"
-            button="Look it up"
             placeholder="P-100-26140-123456"
-            footer={
-              <Link
-                href="/case-search"
-                className="font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
-              >
-                Every filing an employer has made, in one search
-              </Link>
-            }
+            note="DOL is asked live, and the case page can email you when it moves."
+            source="pwd-cases"
           />
         }
       />{" "}

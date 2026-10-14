@@ -67,7 +67,6 @@ const TOOLS = [
     icon: CalendarClock,
     name: "PERM processing time calculator",
     kind: "Estimate",
-    tone: "ink",
     blurb:
       "When DOL is likely to decide a case filed in a given month.",
   },
@@ -77,7 +76,6 @@ const TOOLS = [
     icon: CalendarCheckIcon,
     name: "PERM deadline calculator",
     kind: "Exact",
-    tone: "pop",
     blurb:
       "The recruitment window, the quiet period and the ETA-9089 filing window, under 20 CFR 656.",
   },
@@ -87,7 +85,6 @@ const TOOLS = [
     icon: Scale,
     name: "Prevailing wage queue calculator",
     kind: "Count",
-    tone: "paper",
     blurb:
       "How many wage requests sit ahead of yours.",
   },
@@ -97,7 +94,6 @@ const TOOLS = [
     icon: FileTextIcon,
     kind: "Count",
     name: "I-140 queue calculator",
-    tone: "paper",
     blurb:
       "How many petitions wait in your category, against how fast USCIS clears them.",
   },
@@ -107,7 +103,6 @@ const TOOLS = [
     icon: UsersIcon,
     kind: "Range",
     name: "I-485 queue position",
-    tone: "ink",
     blurb:
       "How many employment-based adjustment applications USCIS had pending ahead of a priority date. USCIS withholds its smallest counts, so the answer is a floor and a ceiling.",
   },
@@ -117,7 +112,6 @@ const TOOLS = [
     icon: UsersThreeIcon,
     kind: "Range",
     name: "Green card line",
-    tone: "paper",
     blurb:
       "Everyone ahead of your priority date, not just the people who've filed: approved petitions waiting, petitions pending and cases already current, by line and country.",
   },
@@ -127,7 +121,6 @@ const TOOLS = [
     icon: Scale,
     kind: "Compare",
     name: "EB-2 vs EB-3",
-    tone: "paper",
     blurb:
       "The two lines side by side for your country and priority date, and whether one really has fewer people ahead.",
   },
@@ -137,7 +130,6 @@ const TOOLS = [
     icon: CompassIcon,
     kind: "Match",
     name: "Which green card fits",
-    tone: "ink",
     blurb: "Which employment categories your job and background point to, and what each one needs.",
   },
   {
@@ -146,7 +138,6 @@ const TOOLS = [
     icon: CalendarRange,
     kind: "History",
     name: "Priority date calculator",
-    tone: "tint",
     blurb:
       "Where a priority date sits against the visa bulletin, and which way the cutoff has moved, including backwards.",
   },
@@ -156,7 +147,6 @@ const TOOLS = [
     icon: Route,
     kind: "Overview",
     name: "Green card timeline",
-    tone: "paper",
     blurb:
       "Every stage drawn to scale, marked by which are fixed by regulation, which are queues, and which have no published figure.",
   },
@@ -166,7 +156,6 @@ const TOOLS = [
     icon: CalendarCheckIcon,
     kind: "Exact",
     name: "RFI and audit deadline",
-    tone: "paper",
     blurb:
       "Thirty calendar days from the date on DOL's letter, under 20 CFR 656.20, with the weekday and the days left.",
   },
@@ -176,7 +165,6 @@ const TOOLS = [
     icon: CalendarRange,
     kind: "Exact",
     name: "Wage determination validity",
-    tone: "tint",
     blurb:
       "When a prevailing wage determination expires: 90 days, or June 30 when the wage year turns over, and which rule applied.",
   },
@@ -186,7 +174,6 @@ const TOOLS = [
     icon: CalendarClock,
     kind: "Exact",
     name: "H-1B six-year limit",
-    tone: "ink",
     blurb:
       "The day H-1B status runs out, and the last day to file a PERM so one-year extensions stay open under the 365-day rule.",
   },
@@ -196,7 +183,6 @@ const TOOLS = [
     icon: ChartBarIcon,
     kind: "Estimate",
     name: "H-1B lottery odds",
-    tone: "paper",
     blurb:
       "The OEWS level an offer meets in each work area, from DOL's wage search, and DHS's estimated chance at that level in the weighted draw.",
   },
@@ -206,7 +192,6 @@ const TOOLS = [
     icon: FileTextIcon,
     kind: "Exact",
     name: "Priority date retention",
-    tone: "pop",
     blurb:
       "When an employer's withdrawal stops revoking the I-140, when a pending I-485 becomes portable, and whether the priority date is kept.",
   },
@@ -216,7 +201,6 @@ const TOOLS = [
     icon: CurrencyDollarIcon,
     kind: "Live",
     name: "Prevailing wage levels",
-    tone: "tint",
     blurb:
       "DOL's four wage levels for an occupation in an area, read live from the OFLC wage search, with the series year.",
   },
@@ -226,7 +210,6 @@ const TOOLS = [
     icon: CurrencyDollarIcon,
     kind: "Schedule",
     name: "Green card government fees",
-    tone: "paper",
     blurb:
       "USCIS fees for the whole employment-based case from Form G-1055, with its edition date and what the total leaves out.",
   },
@@ -305,7 +288,7 @@ export default function CalculatorsPage() {
         <h2 className="font-heading text-2xl font-bold">Which one answers your question?</h2>
         <div className="mt-6 overflow-x-auto">
           <table className="w-full border border-border text-left text-sm">
-            <thead className="bg-foreground text-background">
+            <thead className="border-b border-input bg-muted">
               <tr>
                 <th scope="col" className="p-3 text-sm font-bold">Your situation{" "}</th>
                 <th scope="col" className="p-3 text-sm font-bold">Ask{" "}</th>
@@ -354,25 +337,11 @@ export default function CalculatorsPage() {
               <Link
                 key={t.href}
                 href={t.href}
-                className={
-                  "group flex h-full flex-col border border-border p-6 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 " +
-                  (t.tone === "ink"
-                    ? "bg-foreground text-background"
-                    : t.tone === "tint"
-                      ? "bg-tint"
-                      : t.tone === "pop"
-                        ? "bg-card"
-                        : "bg-card")
-                }
+                className="group flex h-full flex-col border border-border bg-card p-6 transition-colors duration-150 hover:border-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-                  <span
-                    className={
-                      "text-sm font-bold " +
-                      (t.tone === "ink" ? "text-background/60" : "text-muted-foreground")
-                    }
-                  >
+                  <Icon className="size-6 shrink-0 text-primary-text" aria-hidden="true" />
+                  <span className="text-sm text-muted-foreground">
                     {t.kind}
                   </span>
                 </div>
@@ -390,39 +359,13 @@ export default function CalculatorsPage() {
                   {t.viz === "range" ? <CertaintyRangeMini /> : null}
                   {t.viz === "levels" ? <WageLevelsMini /> : null}
                 </div>{" "}
-                <p
-                  className={
-                    "mt-3 flex-1 text-base leading-relaxed " +
-                    (t.tone === "ink" ? "text-background/70" : "text-muted-foreground")
-                  }
-                >
+                <p className="mt-3 flex-1 text-base leading-relaxed text-soft">
                   {t.blurb}
                 </p>{" "}
-                <span
-                  className={
-                    "mt-5 inline-flex items-center gap-2 font-bold underline decoration-primary decoration-2 underline-offset-4 " +
-                    // Lime TEXT passes on ink (10.4:1) and fails on light
-                    // surfaces (2.05:1 measured), so the label reads in the
-                    // surface's own foreground and lime carries the underline.
-                    (t.tone === "ink" ? "text-background" : "text-foreground")
-                  }
-                >
-                  Open
-                  <ArrowRightIcon
-                    className="h-4 w-4 transition-transform duration-150 motion-reduce:transition-none"
-                    aria-hidden="true"
-                  />
-                </span>
+                <span className="link mt-5">Open</span>
               </Link>
             );
-            // One offset block in the grid, on the exact-answer tool.
-            return t.tone === "pop" ? (
-              <div key={t.href}>
-                {card}
-              </div>
-            ) : (
-              card
-            );
+            return card;
           })}
         </div>
       </section>

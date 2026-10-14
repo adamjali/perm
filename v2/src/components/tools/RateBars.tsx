@@ -213,9 +213,9 @@ export function RateTable({
           }
         }}
         className={
-          "min-h-[44px] w-full px-3 py-2 text-sm font-bold transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
+          "min-h-[44px] w-full px-3 py-2 text-sm font-semibold text-soft transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring " +
           (numeric ? "text-right" : "text-left") +
-          (sortKey === key ? " text-primary-on-ink" : "")
+          (sortKey === key ? " text-foreground" : "")
         }
       >
         {label}
@@ -228,7 +228,7 @@ export function RateTable({
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] border border-border text-left text-sm">
         <caption className="sr-only">{caption}</caption>
-        <thead className="bg-foreground text-background">
+        <thead className="border-b border-input bg-muted">
           <tr>
             {/* No whitespace between these: a text node whose parent is
                 <tr> is invalid HTML and React warns it breaks hydration.

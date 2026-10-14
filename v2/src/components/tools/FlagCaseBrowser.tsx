@@ -31,6 +31,9 @@ import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { seasonalForm } from "@/lib/seasonalForms";
 import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
+import { choiceVariants } from "@/components/ui/choice";
+import { buttonVariants } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/badge";
 
 /**
  * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
@@ -111,18 +114,8 @@ const PAGE_SIZE = 50;
 
 const CONTROL =
   "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
-const BUTTON =
-  "min-h-[44px] border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
-const CHIP =
-  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary ";
 
 
-function chip(status: string, isFinal: boolean): string {
-  const u = status.toUpperCase();
-  if (u === "DETERMINATION ISSUED" || u.startsWith("REDETERMINATION")) return "bg-primary text-primary-foreground";
-  if (u === "DENIED") return "bg-foreground text-background";
-  return isFinal ? "bg-card" : "bg-tint";
-}
 
 function Rows({
   rows,
@@ -211,9 +204,7 @@ function Rows({
                 {" "}</td>
               ) : null}
               <td className="whitespace-nowrap px-3 py-3">
-                <span className={"border border-border px-2 py-0.5 font-mono text-sm font-bold " + chip(r.status, r.isFinal)}>
-                  {r.status}
-                </span>
+                <StatusBadge status={r.status} />
               {" "}</td>
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
               <td className="px-3 py-3 text-soft max-sm:text-sm">{r.jobTitle ?? ""}{" "}</td>
@@ -301,9 +292,7 @@ function DisclosedRows({
                 </PendingLink>
               {" "}</td>
               <td className="whitespace-nowrap px-3 py-3">
-                <span className={"border border-border px-2 py-0.5 font-mono text-sm font-bold " + chip(r.status, true)}>
-                  {r.status}
-                </span>
+                <StatusBadge status={r.status} />
               {" "}</td>
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
               <td className="px-3 py-3 text-soft">{r.jobTitle ?? ""}{" "}</td>
@@ -418,7 +407,7 @@ function FlagSearchFilters({
           hourly and yearly figures compare as plain numbers.
         </p>{" "}
         {anyFlagFilter(value) ? (
-          <button type="button" onClick={() => onChange({})} className={CHIP + "bg-card"}>
+          <button type="button" onClick={() => onChange({})} className={choiceVariants()}>
             Clear these filters
           </button>
         ) : null}
@@ -614,7 +603,7 @@ export function FlagCaseBrowser({
             />
           </label>{" "}
           <div className="flex items-end">
-            <button type="submit" className={BUTTON} disabled={searchPending} aria-busy={searchPending}>
+            <button type="submit" className={buttonVariants({ size: "lg" })} disabled={searchPending} aria-busy={searchPending}>
               {searchPending ? "Searching…" : "Search"}
             </button>
           </div>{" "}
@@ -783,7 +772,7 @@ export function FlagCaseBrowser({
                   setKind(k);
                   setCursors([]);
                 }}
-                className={CHIP + (kind === k ? "bg-foreground text-background hover:bg-foreground" : "bg-card")}
+                className={choiceVariants({ on: kind === k })}
               >
                 {KIND_LABEL[k]}
                 {summary && k !== "all" ? ` · ${formatInt(summary[k])}` : ""}
@@ -849,7 +838,7 @@ export function FlagCaseBrowser({
             previousLabel={order === "oldest" ? "Older" : "Newer"}
             nextLabel={order === "oldest" ? "Newer" : "Older"}
             labelClassName="text-sm font-bold"
-            buttonClassName={CHIP + "bg-card disabled:text-muted-foreground disabled:hover:bg-card"}
+            buttonClassName={choiceVariants()}
             scrollTo={browseTop}
             onPrevious={() => setCursors((c) => c.slice(0, -1))}
             onNext={() => page && setCursors((c) => [...c, page.continueCursor])}

@@ -85,7 +85,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
       </p>{" "}
       <div className="mt-4 overflow-x-auto overscroll-x-none">
         <table className="w-full min-w-[720px] border border-border text-sm">
-          <thead className="bg-foreground text-background">
+          <thead className="border-b border-input bg-muted">
             <tr>
               <th className="p-3 text-left text-sm">Category{" "}</th>
               {BOARD_COUNTRIES.map((c) => (

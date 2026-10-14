@@ -181,7 +181,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
             <caption className="sr-only">
               {`Employment-based ${chart === "finalAction" ? "final action" : "dates for filing"} cutoffs by category and country of birth, from the ${formatMonth(board.lastMonth)} visa bulletin.`}
             </caption>
-            <thead className="bg-foreground text-background">
+            <thead className="border-b border-input bg-muted">
               <tr>
                 <th
                   scope="col"

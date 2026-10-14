@@ -47,6 +47,9 @@ import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
 import { seasonalForm } from "@/lib/seasonalForms";
+import { choiceVariants } from "@/components/ui/choice";
+import { buttonVariants } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/badge";
 
 /**
  * Every DOL filing this site holds, in one search, with every filter the
@@ -150,10 +153,6 @@ const CONTROL =
   // (The banned class is named by ratio rather than spelled out, because the
   // gate scans file TEXT and cannot tell a comment from a className.)
   "disabled:border-border/50 disabled:bg-tint/40 disabled:text-muted-foreground";
-const BUTTON =
-  "min-h-[44px] border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
-const CHIP =
-  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-card ";
 
 /**
  * Rows drawn at once. An answer holds up to 1,000 (UNIFIED_MAX); drawing them
@@ -181,14 +180,6 @@ const COLUMNS: SortColumn<UnifiedCase>[] = [
   { key: "days", label: "Days", descFirst: true, get: (r) => r.days },
 ];
 
-function statusTone(status: string, isFinal: boolean): string {
-  const u = status.toUpperCase();
-  if (u.startsWith("CERTIFIED") || u === "DETERMINATION ISSUED" || u.startsWith("REDETERMINATION")) {
-    return "bg-primary text-primary-foreground";
-  }
-  if (u === "DENIED" || u.startsWith("WITHDRAWN")) return "bg-foreground text-background";
-  return isFinal ? "bg-card" : "bg-tint";
-}
 
 interface ResolvedEntity {
   key: string;
@@ -734,7 +725,7 @@ export function UnifiedCaseSearch({
                 />
               </div>{" "}
               <div className="flex items-end">
-                <button type="submit" className={BUTTON} disabled={pending} aria-busy={pending}>
+                <button type="submit" className={buttonVariants({ size: "lg" })} disabled={pending} aria-busy={pending}>
                   {pending ? "Searching…" : "Search"}
                 </button>
               </div>
@@ -852,7 +843,7 @@ export function UnifiedCaseSearch({
                 onClick={() => setOutcome("")}
                 disabled={!can.outcome.on}
                 aria-describedby={can.outcome.on ? undefined : `${uid}-outcome-why`}
-                className={CHIP + (outcome === "" ? "bg-foreground text-background hover:bg-foreground" : "bg-card")}
+                className={choiceVariants({ on: outcome === "" })}
               >
                 Any
               </button>{" "}
@@ -865,7 +856,7 @@ export function UnifiedCaseSearch({
                     disabled={!can.outcome.on}
                     aria-describedby={can.outcome.on ? undefined : `${uid}-outcome-why`}
                     className={
-                      CHIP + (outcome === o ? "bg-foreground text-background hover:bg-foreground" : "bg-card")
+                      choiceVariants({ on: outcome === o })
                     }
                   >
                     {OUTCOME_LABEL[o]}
@@ -1132,7 +1123,7 @@ export function UnifiedCaseSearch({
                       disabled={!can.programs.on}
                       aria-describedby={can.programs.on ? undefined : `${uid}-programs-why`}
                       className={
-                        CHIP + (programs.includes(p) ? "bg-foreground text-background hover:bg-foreground" : "bg-card")
+                        choiceVariants({ on: programs.includes(p) })
                       }
                     >
                       {PROGRAM_LABEL[p]}
@@ -1587,7 +1578,7 @@ export function UnifiedCaseSearch({
                     type="button"
                     aria-pressed={stage === k}
                     onClick={() => setStage(k)}
-                    className={CHIP + (stage === k ? "bg-foreground text-background hover:bg-foreground" : "bg-card")}
+                    className={choiceVariants({ on: stage === k })}
                   >
                     {k === "all" ? "All" : k === "pending" ? "Still open" : "Decided"}
                   </button>{" "}
@@ -1646,9 +1637,7 @@ export function UnifiedCaseSearch({
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm">{rowProgramLabel(r)}{" "}</td>
                     <td className="px-3 py-3">
-                      <span className={"inline-block border border-border px-2 py-1 text-sm font-bold " + statusTone(r.status, r.isFinal)}>
-                        {r.status || "—"}
-                      </span>
+                      {r.status ? <StatusBadge status={r.status} /> : <span className="text-muted-foreground">Not given</span>}
                     {" "}</td>
                     <td className="px-3 py-3 text-sm">
                       {r.employerSlug && r.program === "perm" ? (
@@ -1732,7 +1721,7 @@ export function UnifiedCaseSearch({
               </p>{" "}
               <button
                 type="button"
-                className={CHIP + "bg-card"}
+                className={choiceVariants()}
                 onClick={() => setExpanded({ key: pageKey, n: visible + PAGE_ROWS })}
               >
                 Show {formatInt(Math.min(PAGE_ROWS, shown.length - visible))} more

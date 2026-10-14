@@ -2,6 +2,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { prettyStatus, statusTone } from "@/lib/statusTone"
 
 /**
  * A badge is a quiet chip: muted ground, plain text. Status colour, where it
@@ -38,4 +39,31 @@ function Badge({
   )
 }
 
-export { Badge, badgeVariants }
+const TONE_DOT = {
+  good: "bg-data-good-ink",
+  bad: "bg-data-bad-ink",
+  warn: "bg-data-warn-ink",
+  flat: "bg-muted-foreground",
+} as const
+
+/**
+ * A DOL status as a quiet chip: its own words (capitalised as a name, acronyms kept)
+ * and a dot whose colour repeats what the words say. One look for every
+ * status in every table and list.
+ */
+function StatusBadge({
+  status,
+  className,
+}: {
+  status: string
+  className?: string
+}) {
+  return (
+    <Badge className={cn("font-normal", className)} translate="no">
+      <span aria-hidden="true" className={cn("size-2 shrink-0", TONE_DOT[statusTone(status)])} />
+      {prettyStatus(status)}
+    </Badge>
+  )
+}
+
+export { Badge, badgeVariants, StatusBadge }

@@ -117,7 +117,7 @@ export default async function PermEmployersPage() {
         figures={figures}
         aside={
           <IndexSearch
-            title="Find an employer"
+            title="Filter employers"
             action="/perm-employers#all"
             placeholder="Microsoft, Infosys, a hospital"
             note="Searches every sponsor, including ones whose cases DOL hasn't published yet."

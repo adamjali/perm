@@ -431,7 +431,7 @@ function QueueHistoryTable({
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] border border-border text-left text-sm">
         <caption className="sr-only">{copy.caption}</caption>
-        <thead className="bg-foreground text-background">
+        <thead className="border-b border-input bg-muted">
           <tr>
             <th scope="col" className="px-3 py-2 text-sm font-bold">
               {copy.dateHead}
@@ -751,7 +751,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                 PERM determinations recorded in DOL&apos;s disclosure files, by month
                 of decision
               </caption>
-              <thead className="bg-foreground text-background">
+              <thead className="border-b border-input bg-muted">
                 <tr>
                   <th scope="col" className="px-3 py-2 text-sm font-bold">
                     Month

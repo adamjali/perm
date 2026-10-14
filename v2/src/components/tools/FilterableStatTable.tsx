@@ -517,7 +517,7 @@ export function FilterableStatTable<T>({
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[560px] border border-border text-left text-sm">
           <caption className="sr-only">{caption}</caption>
-          <thead className="bg-foreground text-background">
+          <thead className="border-b border-input bg-muted">
             <tr>
               {columns.map((c) => {
                 const isSorted = c.key === sortKey;
@@ -536,9 +536,9 @@ export function FilterableStatTable<T>({
                         type="button"
                         onClick={() => toggleSort(c.key, c.numeric)}
                         className={
-                          "min-h-[44px] w-full px-3 py-2 text-sm font-bold transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
+                          "min-h-[44px] w-full px-3 py-2 text-sm font-semibold text-soft transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring " +
                           (c.numeric ? "text-right" : "text-left") +
-                          (isSorted ? " text-primary-on-ink" : "")
+                          (isSorted ? " text-foreground" : "")
                         }
                       >
                         {c.label}

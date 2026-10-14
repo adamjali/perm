@@ -9,6 +9,7 @@ import { formatInt } from "@/lib/format";
 import { CENSUS_REGION } from "./USStateMap";
 import { DataView } from "./DataView";
 import { FilterableStatTable, type CsvSpec, type StatColumn } from "./FilterableStatTable";
+import { choiceVariants } from "@/components/ui/choice";
 
 /**
  * Concentration: the fact a choropleth structurally cannot show.
@@ -144,7 +145,7 @@ function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
         <caption className="sr-only">
           Every state by the share of its filings in its single biggest {unit.toLowerCase()}
         </caption>
-        <thead className="bg-foreground text-background">
+        <thead className="border-b border-input bg-muted">
           <tr>
             <th scope="col" className="p-3 text-sm font-bold">
               State
@@ -209,12 +210,7 @@ export function StateConcentration({
                   type="button"
                   onClick={() => setAxis(a.key)}
                   aria-pressed={axis === a.key}
-                  className={
-                    "inline-flex min-h-[44px] items-center border border-border px-4 py-2 text-sm font-bold transition-colors duration-150 " +
-                    (axis === a.key
-                      ? "bg-foreground text-background"
-                      : "bg-card")
-                  }
+                  className={choiceVariants({ on: axis === a.key })}
                 >
                   {a.label}
                 </button>

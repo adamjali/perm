@@ -132,7 +132,7 @@ function BacklogTable({
           Prevailing wage requests still pending by month of receipt, with each
           month&apos;s share of the pile and the running total from the oldest month
         </caption>
-        <thead className="bg-foreground text-background">
+        <thead className="border-b border-input bg-muted">
           <tr>
             <th scope="col" className="px-3 py-2 text-sm font-bold">
               Received

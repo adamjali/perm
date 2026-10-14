@@ -37,7 +37,7 @@ export function SortableHeader<T>({
   disabled?: boolean;
 }) {
   return (
-    <thead className="bg-foreground text-background">
+    <thead className="border-b border-input bg-muted">
       <tr>
         {(leading ?? []).map((h) => (
           <Fragment key={h}>

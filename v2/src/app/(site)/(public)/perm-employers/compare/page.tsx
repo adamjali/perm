@@ -191,7 +191,7 @@ export default async function CompareEmployersPage({
       {both ? (
         <div className="mt-10 overflow-x-auto overscroll-x-none border border-border bg-card">
           <table className="w-full min-w-[640px] border-collapse text-sm">
-            <thead className="bg-foreground text-background">
+            <thead className="border-b border-input bg-muted">
               <tr>
                 <th scope="col" className="px-4 py-3 text-left text-sm font-bold">Measure{" "} </th>
                 {[left, right].map((s) => (
