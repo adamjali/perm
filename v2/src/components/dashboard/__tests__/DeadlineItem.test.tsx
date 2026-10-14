@@ -3,8 +3,8 @@ import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import { createMockDeadlineItem, createOverdueDeadline } from "../../../../test-utils/deadline-fixtures";
-import DeadlineItem, { countdownWords } from "../DeadlineItem";
-import { formatDeadlineDate } from "@/components/cases/case-card.utils";
+import DeadlineItem from "../DeadlineItem";
+import { countdownWords, formatDeadlineDate } from "@/components/cases/case-card.utils";
 
 describe("DeadlineItem", () => {
   it("names the employer, what's due and the role, and links to the case", () => {

@@ -47,7 +47,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { motion, AnimatePresence } from "motion/react";
 import { SortableCaseCard } from "@/components/cases/SortableCaseCard";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { CaseFilterBar } from "@/components/cases/CaseFilterBar";
@@ -939,7 +938,7 @@ export function CasesPageClient() {
         <div className="flex items-center gap-3">
           <div>
             <PageHeading
-              eyebrow={`${totalCount} ${totalCount === 1 ? "case" : "cases"}`}
+              meta={`${totalCount} ${totalCount === 1 ? "case" : "cases"}`}
               title="Cases"
             />
           </div>
@@ -948,20 +947,21 @@ export function CasesPageClient() {
         {/* Phone: the primary action first and full width, the two tools under it. */}
         <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0 md:flex md:flex-wrap md:items-center">
           <Button
-            variant={selectionMode ? "default" : "outline"}
-            size="lg"
+            variant="outline"
+            className="h-11"
+            aria-pressed={selectionMode}
             onClick={handleToggleSelectionMode}
             aria-label={selectionMode ? "Exit selection mode" : "Enter selection mode"}
           >
-            <CheckSquareIcon className="size-5 mr-2" />
-            {selectionMode ? "Exit selection" : "Select cases"}
+            <CheckSquareIcon className="max-sm:hidden" />
+            {selectionMode ? "Done selecting" : "Select"}
           </Button>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="lg" loading={exportLoading} loadingText="Exporting...">
-                <ArrowsDownUpIcon className="size-5 mr-2" aria-hidden="true" />
+              <Button variant="outline" className="h-11" loading={exportLoading} loadingText="Exporting...">
+                <ArrowsDownUpIcon className="max-sm:hidden" aria-hidden="true" />
                 Import / export
-                <CaretDownIcon className="size-4 ml-1.5" aria-hidden="true" />
+                <CaretDownIcon aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72">
@@ -1000,7 +1000,7 @@ export function CasesPageClient() {
             loading={isAddingCase}
             loadingText="Adding..."
           >
-            <PlusIcon className="size-5 mr-2" />
+            <PlusIcon aria-hidden="true" />
             Add case
           </Button>
         </div>
@@ -1023,17 +1023,7 @@ export function CasesPageClient() {
         className="transition-opacity duration-150"
         style={{ opacity: isRefetching || isPending ? 0.6 : 1 }}
       >
-        {/* initial={false}: the grid is at rest when the page mounts. It faded
-            in after the loading skeleton, a second reveal of the same list.
-            Switching between card and list view still animates. */}
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={viewMode}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15 }}
-          >
+        <div key={viewMode}>
             {viewMode === "card" ? (
               <DndContext
                 sensors={sensors}
@@ -1069,7 +1059,7 @@ export function CasesPageClient() {
                   zIndex={50}
                 >
                   {activeDragCase && (
-                    <div className="rotate-[2deg] scale-105 pointer-events-none">
+                    <div className="pointer-events-none shadow-overlay">
                       <CaseCard case={activeDragCase} />
                     </div>
                   )}
@@ -1084,8 +1074,7 @@ export function CasesPageClient() {
                 onSelect={handleSelectCase}
               />
             )}
-          </motion.div>
-        </AnimatePresence>
+        </div>
       </div>
 
       {/* Pagination */}

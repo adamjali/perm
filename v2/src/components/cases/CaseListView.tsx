@@ -2,7 +2,7 @@
  * CaseListView Component
  *
  * Container for list view with auto-grouping based on sort field.
- * Renders grouped cases with sticky headers and staggered animations.
+ * Renders grouped cases under sticky group headings.
  *
  * @module components/cases/CaseListView
  */
@@ -10,8 +10,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
+import { formatCaseStatus } from "@convex/lib/notificationHelpers";
 import { CaseListRow } from "./CaseListRow";
 import type { CaseCardData } from "@convex/lib/caseListTypes";
 import type { CaseListSortField } from "@convex/lib/caseListTypes";
@@ -161,13 +160,6 @@ function groupByDeadline(cases: CaseCardData[]): CaseGroup[] {
 
 function groupByStatus(cases: CaseCardData[]): CaseGroup[] {
   const statusOrder = ["pwd", "recruitment", "eta9089", "i140", "closed"];
-  const statusLabels: Record<string, string> = {
-    pwd: "PWD",
-    recruitment: "Recruitment",
-    eta9089: "ETA 9089",
-    i140: "I-140",
-    closed: "Closed",
-  };
 
   const groups = new Map<string, CaseCardData[]>();
 
@@ -183,7 +175,7 @@ function groupByStatus(cases: CaseCardData[]): CaseGroup[] {
     .filter((status) => groups.has(status))
     .map((status) => ({
       key: status,
-      label: statusLabels[status] || status,
+      label: formatCaseStatus(status),
       cases: groups.get(status)!,
     }));
 }
@@ -215,58 +207,29 @@ export function CaseListView({
 }: CaseListViewProps) {
   const groups = useMemo(() => groupCases(cases, sortBy), [cases, sortBy]);
 
-  // Calculate global index for stagger animation
-  let globalIndex = 0;
-
   return (
-    <div className="border border-border bg-background overflow-visible">
+    <div className="border-x border-t border-border bg-card">
       {groups.map((group) => (
         <div key={group.key}>
           {/* Group header - only show if there’s a label */}
           {group.label && (
-            <div
-              className={cn(
-                "sticky top-0 z-10",
-                "bg-background",
-                "border-b border-border",
-                "py-2 px-4"
-              )}
-            >
-              <h3 className="font-heading font-bold text-sm text-muted-foreground">
+            <div className="sticky top-0 z-20 border-b border-border bg-muted px-4 py-2">
+              <h3 className="text-sm font-semibold">
                 {group.label}{" "}
-                <span className="text-sm font-normal">({group.cases.length})</span>
+                <span className="font-normal text-muted-foreground">{group.cases.length}</span>
               </h3>
             </div>
           )}
 
-          {/* Rows */}
-          <motion.div
-            initial={false}
-            animate="visible"
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.05,
-                },
-              },
-            }}
-          >
-            {group.cases.map((caseData) => {
-              const currentIndex = globalIndex++;
-              return (
-                <CaseListRow
-                  key={caseData._id}
-                  caseData={caseData}
-                  isSelected={selectedCaseIds.has(caseData._id)}
-                  onSelect={onSelect}
-                  selectionMode={selectionMode}
-                  index={currentIndex}
-                />
-              );
-            })}
-          </motion.div>
+          {group.cases.map((caseData) => (
+            <CaseListRow
+              key={caseData._id}
+              caseData={caseData}
+              isSelected={selectedCaseIds.has(caseData._id)}
+              onSelect={onSelect}
+              selectionMode={selectionMode}
+            />
+          ))}
         </div>
       ))}
 

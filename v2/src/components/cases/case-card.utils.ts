@@ -4,7 +4,6 @@
  */
 
 import { getDaysUntilDeadline } from "@/lib/status/urgency";
-import type { CaseStatus } from "@/lib/perm";
 
 /**
  * Format closure reason for display.
@@ -48,38 +47,16 @@ export function formatDeadlineDate(deadline: string): string {
   });
 }
 
-/**
- * The countdown the card leads with: a number and its unit, e.g. 24 / "days",
- * 0 / "today", 3 / "days late". The number is the visual; the unit says what
- * it counts.
- */
-export function deadlineCountdown(deadline: string): { value: number; unit: string } {
-  const days = getDaysUntilDeadline(deadline);
-  if (days < 0) return { value: Math.abs(days), unit: Math.abs(days) === 1 ? "day late" : "days late" };
-  if (days === 0) return { value: 0, unit: "today" };
-  return { value: days, unit: days === 1 ? "day" : "days" };
+/** How a deadline reads on a card: how long until it, or how late. */
+export function countdownWords(daysUntil: number): string {
+  if (daysUntil < 0) return `${Math.abs(daysUntil)} ${Math.abs(daysUntil) === 1 ? "day" : "days"} late`;
+  if (daysUntil === 0) return "Today";
+  return `In ${daysUntil} ${daysUntil === 1 ? "day" : "days"}`;
 }
 
-/**
- * Format deadline for display.
- * ALWAYS shows the actual date, plus relative time for context.
- */
-export function formatDeadline(deadline: string): string {
-  const deadlineDate = parseLocalDate(deadline);
-  const daysUntil = getDaysUntilDeadline(deadline);
-
-  const dateStr = deadlineDate.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  if (daysUntil === 0) return `${dateStr} (today)`;
-  if (daysUntil === 1) return `${dateStr} (tomorrow)`;
-  if (daysUntil < 0) return `${dateStr} (overdue)`;
-  if (daysUntil <= 30) return `${dateStr} (${daysUntil} days)`;
-
-  return dateStr;
+/** The countdown for a deadline date, read against today. */
+export function deadlineCountdownWords(deadline: string): string {
+  return countdownWords(getDaysUntilDeadline(deadline));
 }
 
 /**
@@ -102,28 +79,4 @@ export function formatCompactDate(dateStr: string): string {
  */
 export function countShownDates(dates: object): number {
   return Object.entries(dates).filter(([key, value]) => key !== "created" && key !== "updated" && Boolean(value)).length;
-}
-
-/**
- * Get stage color bar CSS variable.
- */
-export function getStageColorVar(stage: CaseStatus): string {
-  const varMap: Record<string, string> = {
-    pwd: "var(--stage-pwd)",
-    recruitment: "var(--stage-recruitment)",
-    eta9089: "var(--stage-eta9089)",
-    i140: "var(--stage-i140)",
-    closed: "var(--stage-closed)",
-  };
-  return varMap[stage] || "var(--stage-pwd)";
-}
-
-/**
- * Format case status for display (e.g., "eta9089" -> "ETA 9089", "i140" -> "I-140")
- */
-export function formatCaseStatus(status: CaseStatus): string {
-  if (status === "eta9089") return "ETA 9089";
-  if (status === "i140") return "I-140";
-  if (status === "pwd") return "PWD";
-  return status.charAt(0).toUpperCase() + status.slice(1);
 }

@@ -38,7 +38,7 @@ interface TimelineControlsProps {
   /** Callback when zoom level changes */
   onZoomChange?: (zoom: number) => void;
   /** The line above the title (how many cases are shown), as on every app page. */
-  eyebrow?: ReactNode;
+  meta?: ReactNode;
 }
 
 const TIME_RANGE_OPTIONS: { value: 3 | 6 | 12 | 24; label: string }[] = [
@@ -57,7 +57,7 @@ export function TimelineControls({
   hasActiveSelection = false,
   zoomLevel = 100,
   onZoomChange,
-  eyebrow,
+  meta,
 }: TimelineControlsProps) {
   const currentRangeLabel =
     TIME_RANGE_OPTIONS.find((opt) => opt.value === timeRange)?.label ??
@@ -74,7 +74,7 @@ export function TimelineControls({
   return (
     <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-3">
       {/* The same heading every app page opens with: count, then the title. */}
-      <PageHeading eyebrow={eyebrow} title="Timeline" />
+      <PageHeading meta={meta} title="Timeline" />
 
       {/* Controls: on a phone, zoom across the top and the range and cases side
           by side under it (two rows, not three full-width stacked boxes). */}

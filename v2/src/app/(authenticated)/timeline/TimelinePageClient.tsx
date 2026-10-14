@@ -30,7 +30,7 @@ export function TimelineSkeleton() {
             on a phone, one row from sm. */}
         <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-3">
           <PageHeading
-            eyebrow={<Skeleton variant="line" className="inline-block h-4 w-36 align-middle" />}
+            meta={<Skeleton variant="line" className="inline-block h-4 w-36 align-middle" />}
             title="Timeline"
           />
           <div className="grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
@@ -240,7 +240,6 @@ export function TimelinePageClient() {
           <div>
             <PageHeading
               title="Timeline"
-              lede="Visualize your case progress"
             />
           </div>
           <TimelineControls
@@ -301,7 +300,7 @@ export function TimelinePageClient() {
           hasActiveSelection={hasActiveSelection}
           zoomLevel={zoomLevel}
           onZoomChange={handleZoomChange}
-          eyebrow={
+          meta={
             filteredCaseId
               ? `Viewing 1 of ${cases.length} cases`
               : `${cases.length} ${cases.length === 1 ? "case" : "cases"} displayed`

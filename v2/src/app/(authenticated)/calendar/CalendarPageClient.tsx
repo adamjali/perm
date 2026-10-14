@@ -53,10 +53,10 @@ const pageVariants = {
 export function CalendarSkeleton() {
   return (
     <div className="flex flex-col h-full" aria-busy={true}>
-      {/* Header: the real title; only the count in the eyebrow waits. */}
+      {/* Header: the real title; only the count under it waits. */}
       <div className="mb-4">
         <PageHeading
-          eyebrow={<Skeleton variant="line" className="inline-block h-4 w-56 align-middle" />}
+          meta={<Skeleton variant="line" className="inline-block h-4 w-56 align-middle" />}
           title="Calendar"
         />
       </div>
@@ -147,7 +147,6 @@ function CalendarEmptyState() {
       <div className="mb-6">
         <PageHeading
           title="Calendar"
-          lede="View your case deadlines and milestones"
         />
       </div>
 
@@ -323,7 +322,6 @@ export function CalendarPageClient() {
         <div className="mb-6">
           <PageHeading
             title="Calendar"
-            lede="View your case deadlines and milestones"
           />
         </div>
 
@@ -392,7 +390,7 @@ export function CalendarPageClient() {
       {/* Header */}
       <div className="mb-4">
         <PageHeading
-          eyebrow={`${openDeadlines} deadline${openDeadlines !== 1 ? "s" : ""} across ${calendarCases.length} case${calendarCases.length !== 1 ? "s" : ""}`}
+          meta={`${openDeadlines} deadline${openDeadlines !== 1 ? "s" : ""} across ${calendarCases.length} case${calendarCases.length !== 1 ? "s" : ""}`}
           title="Calendar"
         />
       </div>

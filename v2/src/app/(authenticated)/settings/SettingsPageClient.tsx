@@ -255,7 +255,6 @@ export function SettingsPageClient() {
         <div>
           <PageHeading
             title="Settings"
-            lede="Manage your account preferences"
           />
         </div>
 

@@ -1,101 +1,53 @@
 "use client";
 
-// `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here rather
-// than inherited from whichever importer happened to cross a boundary first.
-// Without it this module works until the chunk graph shifts, then fails with
-// `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx.
-
 /**
- * useCardMutations Hook
- * Handles all mutation operations for CaseCard component with consistent error handling.
+ * A case card's own actions (favorite, keep dates open, reopen), each with
+ * its busy flag and one way of reporting a failure.
  */
 
-import { formatProgressStatus } from "@convex/lib/notificationHelpers";
+import { useState } from "react";
 import { useMutation } from "convex/react";
+import { formatCaseStatus, formatProgressStatus } from "@convex/lib/notificationHelpers";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { formatCaseStatus } from "./case-card.utils";
-import type { CaseStatus } from "@/lib/perm";
 
-interface UseCardMutationsParams {
-  caseId: Id<"cases">;
-  setTogglingFavorite: (toggling: boolean) => void;
-  setTogglingPinned: (toggling: boolean) => void;
-  setReopening: (reopening: boolean) => void;
-}
+type Action = "favorite" | "pinned" | "reopening";
 
-interface UseCardMutationsReturn {
-  handleFavoriteToggle: (e: React.MouseEvent) => Promise<void>;
-  handlePinnedToggle: () => Promise<void>;
-  handleReopen: (e: React.MouseEvent) => Promise<void>;
-}
+export function useCardMutations(caseId: Id<"cases">) {
+  const toggleFavorite = useMutation(api.cases.toggleFavorite);
+  const togglePinned = useMutation(api.cases.togglePinned);
+  const reopenCase = useMutation(api.cases.reopenCase);
+  const [busy, setBusy] = useState<Action | null>(null);
 
-/**
- * Hook to manage CaseCard mutations with consistent error handling patterns.
- */
-export function useCardMutations({
-  caseId,
-  setTogglingFavorite,
-  setTogglingPinned,
-  setReopening,
-}: UseCardMutationsParams): UseCardMutationsReturn {
-  const toggleFavoriteMutation = useMutation(api.cases.toggleFavorite);
-  const togglePinnedMutation = useMutation(api.cases.togglePinned);
-  const reopenCaseMutation = useMutation(api.cases.reopenCase);
-
-  const handleFavoriteToggle = async (e: React.MouseEvent): Promise<void> => {
-    e.stopPropagation();
-    setTogglingFavorite(true);
+  async function run(action: Action, work: () => Promise<void>, userMessage: string) {
+    setBusy(action);
     try {
-      await toggleFavoriteMutation({ id: caseId });
+      await work();
     } catch (error) {
-      handleOperationError(error, {
-        userMessage: "Couldn’t update the favorite. Try again.",
-        context: { operation: "toggleFavorite" },
-      });
+      handleOperationError(error, { userMessage, context: { operation: action } });
     } finally {
-      setTogglingFavorite(false);
+      setBusy(null);
     }
-  };
-
-  const handlePinnedToggle = async (): Promise<void> => {
-    setTogglingPinned(true);
-    try {
-      await togglePinnedMutation({ id: caseId });
-    } catch (error) {
-      handleOperationError(error, {
-        userMessage: "Couldn’t update the pin. Try again.",
-        context: { operation: "togglePinned" },
-      });
-    } finally {
-      setTogglingPinned(false);
-    }
-  };
-
-  const handleReopen = async (e: React.MouseEvent): Promise<void> => {
-    e.stopPropagation();
-    setReopening(true);
-    try {
-      const result = await reopenCaseMutation({ id: caseId });
-      const statusLabel = formatCaseStatus(result.newCaseStatus as CaseStatus);
-      toast.success(`Case reopened: ${statusLabel} (${formatProgressStatus(result.newProgressStatus)})`);
-    } catch (error) {
-      handleOperationError(error, {
-        userMessage: "Couldn’t reopen the case. Try again.",
-        context: { operation: "reopenCase" },
-      });
-    } finally {
-      setReopening(false);
-    }
-  };
+  }
 
   return {
-    handleFavoriteToggle,
-    handlePinnedToggle,
-    handleReopen,
+    busy,
+    toggleFavorite: () =>
+      run("favorite", async () => void (await toggleFavorite({ id: caseId })), "Couldn’t update the favorite. Try again."),
+    togglePinned: () =>
+      run("pinned", async () => void (await togglePinned({ id: caseId })), "Couldn’t update the case. Try again."),
+    reopen: () =>
+      run(
+        "reopening",
+        async () => {
+          const result = await reopenCase({ id: caseId });
+          toast.success(
+            `Case reopened: ${formatCaseStatus(result.newCaseStatus)} (${formatProgressStatus(result.newProgressStatus)})`,
+          );
+        },
+        "Couldn’t reopen the case. Try again.",
+      ),
   };
 }

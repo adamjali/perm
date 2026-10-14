@@ -44,12 +44,12 @@ describe("CaseCard - Rendering", () => {
     expect(screen.getByText("Jane Smith")).toBeInTheDocument();
   });
 
-  it("renders the folder tab with the stage's name (CSS sets the capitals)", () => {
+  it("names the stage on its chip", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ caseStatus: "recruitment" })} />);
     expect(screen.getByText("Recruitment")).toBeInTheDocument();
   });
 
-  it("writes I-140 with its hyphen on the tab, not the internal id", () => {
+  it("writes I-140 with its hyphen, not the internal id", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ caseStatus: "i140" })} />);
     expect(screen.getAllByText("I-140").length).toBeGreaterThan(0);
     expect(screen.queryByText(/^I140$/i)).not.toBeInTheDocument();
@@ -93,15 +93,14 @@ describe("CaseCard - Favorite Star", () => {
 });
 
 describe("CaseCard - Calendar Sync", () => {
-  it("shows Synced indicator when enabled and connected", () => {
+  it("shows the synced mark when enabled and connected", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ calendarSyncEnabled: true })} />);
-    expect(screen.getByLabelText(/syncing to google calendar/i)).toBeInTheDocument();
-    expect(screen.getByText("Synced")).toBeInTheDocument();
+    expect(screen.getByLabelText("Synced to Google Calendar")).toBeInTheDocument();
   });
 
-  it("hides calendar indicator when disabled", () => {
+  it("hides the calendar mark when disabled", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ calendarSyncEnabled: false })} />);
-    expect(screen.queryByLabelText(/syncing to google calendar/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/google calendar/i)).not.toBeInTheDocument();
   });
 });
 
@@ -114,16 +113,12 @@ describe("CaseCard - Next Deadline", () => {
     expect(screen.getByText(new RegExp(expected))).toBeInTheDocument();
   });
 
-  // The card leads with the countdown: the number of days, then its unit.
-  it("leads with the days remaining, in the urgency colour", () => {
+  it("says how long until the deadline, in the urgency colour", () => {
     const urgentDate = new Date();
     urgentDate.setDate(urgentDate.getDate() + 5);
     const iso = `${urgentDate.getFullYear()}-${String(urgentDate.getMonth() + 1).padStart(2, "0")}-${String(urgentDate.getDate()).padStart(2, "0")}`;
     renderWithProviders(<CaseCard case={createMockCaseCardData({ nextDeadline: iso })} />);
-    const count = screen.getByText("5");
-    expect(count).toBeInTheDocument();
-    expect(screen.getByText("days")).toBeInTheDocument();
-    expect(count.parentElement).toHaveClass("bg-data-bad");
+    expect(screen.getByText("In 5 days")).toHaveClass("text-destructive");
   });
 
   it("handles missing deadline gracefully", () => {
@@ -133,14 +128,14 @@ describe("CaseCard - Next Deadline", () => {
 });
 
 describe("CaseCard - Action Buttons", () => {
-  it("renders View, Edit, and More buttons", () => {
+  it("opens the case from the employer's name, and keeps the other actions in the menu", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData()} />);
-    expect(screen.getByRole("button", { name: /view/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /edit/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Acme Corp" })).toHaveAttribute("href", "/cases/test-case-id");
     expect(screen.getByRole("button", { name: /more options/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^view$/i })).not.toBeInTheDocument();
   });
 
-  it.each(["delete", "archive"])("shows %s option in More menu", async (option) => {
+  it.each(["edit", "delete", "archive"])("shows %s option in More menu", async (option) => {
     const { user } = renderWithProviders(<CaseCard case={createMockCaseCardData()} />);
     await user.click(screen.getByRole("button", { name: /more options/i }));
     expect(await screen.findByRole("menuitem", { name: new RegExp(option, "i") })).toBeInTheDocument();
@@ -178,49 +173,31 @@ describe("CaseCard - Selection Mode", () => {
   });
 });
 
-// Phones have no hover, so a card starts short and one row opens its dates.
-// The row is md:hidden; happy-dom applies no media queries, so these assert
-// the row's state and wiring, not whether it shows at a given width.
-describe("CaseCard - Phone dates row", () => {
+// The dates sit in a native fold: it keeps them in the page for search and
+// screen readers whether open or shut, and a pinned case starts open.
+describe("CaseCard - Dates fold", () => {
   const withDates = { created: 1, updated: 2, pwdFiled: "2025-01-10", pwdExpires: "2025-06-30" } as CaseCardData["dates"];
+  const fold = () => screen.getByText(/^Dates \(/).closest("details")!;
 
-  it("counts only the dates the card lists, and opens and closes", async () => {
-    const { user } = renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: withDates })} />);
-    const row = screen.getByRole("button", { name: "Show dates (2)" });
-    expect(row).toHaveAttribute("aria-expanded", "false");
-    expect(row).toHaveAttribute("aria-controls", "case-details-test-case-id");
-    expect(document.getElementById("case-details-test-case-id")).toBeInTheDocument();
-
-    await user.click(row);
-    expect(screen.getByRole("button", { name: "Hide dates" })).toHaveAttribute("aria-expanded", "true");
-    await user.click(screen.getByRole("button", { name: "Hide dates" }));
-    expect(screen.getByRole("button", { name: "Show dates (2)" })).toHaveAttribute("aria-expanded", "false");
+  it("counts only the dates the card lists", () => {
+    renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: withDates })} />);
+    expect(screen.getByText("Dates (2)")).toBeInTheDocument();
+    expect(fold()).not.toHaveAttribute("open");
   });
 
-  it("does not pin the card when the row is tapped", async () => {
-    const { user } = renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: withDates })} />);
-    mutationSpy.mockClear();
-    await user.click(screen.getByRole("button", { name: "Show dates (2)" }));
-    // A tap that bubbled up to the card would run its pin mutation.
-    expect(mutationSpy).not.toHaveBeenCalled();
-    // Control: a tap on the card itself does run it.
-    await user.click(screen.getByText("Acme Corp"));
-    expect(mutationSpy).toHaveBeenCalled();
-  });
-
-  it("starts open on a pinned card", () => {
+  it("starts open on a pinned case", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: withDates, isPinned: true })} />);
-    expect(screen.getByRole("button", { name: "Hide dates" })).toHaveAttribute("aria-expanded", "true");
+    expect(fold()).toHaveAttribute("open");
   });
 
   it("names notes when the case has them", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: withDates, notes: "Waiting on the employer" })} />);
-    expect(screen.getByRole("button", { name: "Show dates (2) and notes" })).toBeInTheDocument();
+    expect(screen.getByText("Dates (2) and notes")).toBeInTheDocument();
   });
 
-  it("shows no row and no band when nothing is recorded", () => {
+  it("shows no fold when nothing is recorded", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: { created: 1, updated: 2 } as CaseCardData["dates"] })} />);
-    expect(screen.queryByRole("button", { name: /show dates|show notes/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Dates \(|^Notes$/)).not.toBeInTheDocument();
     expect(screen.queryByTestId("expanded-content")).not.toBeInTheDocument();
   });
 });

@@ -14,10 +14,9 @@ import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { DeadlineGroups, DeadlineItem } from "@convex/lib/dashboardTypes";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
-import { formatDeadlineDate } from "@/components/cases/case-card.utils";
+import { countdownWords, formatDeadlineDate } from "@/components/cases/case-card.utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import UrgencyGroup from "./UrgencyGroup";
-import { countdownWords } from "./DeadlineItem";
 import { WIDGET_CONTAINER_CLASSES, WidgetHeader, WidgetLink } from "./widget-primitives";
 
 const GROUPS = [

@@ -51,13 +51,14 @@ function ToneBadge({
   tone,
   className,
   children,
+  ...props
 }: {
   tone: StatusTone
   className?: string
   children: React.ReactNode
-}) {
+} & Omit<React.ComponentProps<"span">, "children" | "className">) {
   return (
-    <Badge className={cn("font-normal", className)}>
+    <Badge className={cn("font-normal", className)} {...props}>
       <span aria-hidden="true" className={cn("size-2 shrink-0", TONE_DOT[tone])} />
       {children}
     </Badge>

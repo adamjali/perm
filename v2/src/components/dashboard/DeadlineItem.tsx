@@ -1,15 +1,8 @@
 "use client";
 
 import type { DeadlineItem as DeadlineItemType } from "@convex/lib/dashboardTypes";
-import { formatDeadlineDate } from "@/components/cases/case-card.utils";
+import { countdownWords, formatDeadlineDate } from "@/components/cases/case-card.utils";
 import { WidgetRow } from "./widget-primitives";
-
-/** How a deadline reads on the dashboard: how long until it, or how late. */
-export function countdownWords(daysUntil: number): string {
-  if (daysUntil < 0) return `${Math.abs(daysUntil)} ${Math.abs(daysUntil) === 1 ? "day" : "days"} late`;
-  if (daysUntil === 0) return "Today";
-  return `In ${daysUntil} ${daysUntil === 1 ? "day" : "days"}`;
-}
 
 /**
  * One deadline: the employer, what's due and the role, then how long until

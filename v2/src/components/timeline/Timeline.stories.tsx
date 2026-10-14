@@ -106,7 +106,7 @@ function TimelinePage({ cases }: { cases: TimelineCaseData[] }) {
           caseCount={cases.length}
           zoomLevel={zoom}
           onZoomChange={setZoom}
-          eyebrow={`${cases.length} cases displayed`}
+          meta={`${cases.length} cases displayed`}
         />
       </div>
       <TimelineLegendCompact className="mb-3" />

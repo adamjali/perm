@@ -1,26 +1,28 @@
 "use client";
 
 /**
- * CaseFilterBar Component
- * Filter and sort controls for case list with neobrutalist design.
+ * CaseFilterBar
  *
- * Features:
- * - Show By tabs: Active (default) | Completed | Closed/Archived | All
- * - Search input with debounced callback (300ms)
- * - Case Status dropdown (All, PWD, Recruitment, ETA 9089, I-140)
- * - Progress Status dropdown (All, Working, Waiting, Filed, Approved, etc.)
- * - Sort dropdown (Deadline, Favorites, Recent, Employer, etc.)
- * - Responsive: horizontal on desktop, vertical on mobile
+ * The case list's controls in two rows: which cases (Active, Completed,
+ * Closed, All), then the search (debounced 300ms), one Filters menu (stage,
+ * progress, duplicates only) and one Sort menu (the order and how many a
+ * page shows).
  */
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowDownIcon, ArrowUpIcon, CaretDownIcon, CopyIcon, MagnifyingGlassIcon as Search } from "@phosphor-icons/react";
+import { ArrowDownIcon, ArrowUpIcon, CaretDownIcon, FunnelSimpleIcon, MagnifyingGlassIcon as Search } from "@phosphor-icons/react";
+import { formatCaseStatus, formatProgressStatus } from "@convex/lib/notificationHelpers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { choiceVariants } from "@/components/ui/choice";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type {
@@ -49,23 +51,16 @@ type ShowByTab = "active" | "completed" | "closed" | "all";
 // LABEL MAPS
 // ============================================================================
 
-// Status labels for dropdown display
-const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
-  pwd: "PWD",
-  recruitment: "Recruitment",
-  eta9089: "ETA 9089",
-  i140: "I-140",
-  closed: "Closed",
-};
+/** The stages a filter can pick (closed has its own toggle). */
+const STAGES: readonly CaseStatus[] = ["pwd", "recruitment", "eta9089", "i140"];
+const PROGRESS: readonly ProgressStatus[] = ["working", "waiting_intake", "filed", "approved", "under_review", "rfi_rfe"];
 
-const PROGRESS_STATUS_LABELS: Record<ProgressStatus, string> = {
-  working: "Working on it",
-  waiting_intake: "Waiting for intake",
-  filed: "Filed",
-  approved: "Approved",
-  under_review: "Under review",
-  rfi_rfe: "RFI/RFE",
-};
+const TABS: ReadonlyArray<{ id: ShowByTab; label: string }> = [
+  { id: "active", label: "Active" },
+  { id: "completed", label: "Completed" },
+  { id: "closed", label: "Closed" },
+  { id: "all", label: "All" },
+];
 
 const SORT_FIELD_LABELS: Record<CaseListSortField, string> = {
   deadline: "Next deadline",
@@ -261,249 +256,130 @@ export function CaseFilterBar({
   };
 
   // ============================================================================
-  // RENDER HELPERS
-  // ============================================================================
-
-  const getCurrentCaseStatusLabel = (): string => {
-    if (!filters.status) return "All";
-    return CASE_STATUS_LABELS[filters.status];
-  };
-
-  const getCurrentProgressStatusLabel = (): string => {
-    if (!filters.progressStatus) return "All";
-    return PROGRESS_STATUS_LABELS[filters.progressStatus];
-  };
-
-  const getCurrentSortLabel = (): string => {
-    return SORT_FIELD_LABELS[sort.sortBy];
-  };
-
-  // ============================================================================
   // RENDER
   // ============================================================================
 
+  // The Completed and Closed toggles set the stage themselves; only a stage
+  // chosen in the menu counts as a filter there.
+  const tabSetsStatus = activeTab === "completed" || activeTab === "closed";
+  const activeFilters =
+    (filters.status && !tabSetsStatus ? 1 : 0) +
+    (filters.progressStatus && activeTab !== "completed" ? 1 : 0) +
+    (filters.duplicatesOnly ? 1 : 0);
+
   return (
-    <div
-      data-testid="case-filter-bar"
-      className="space-y-5 border border-border bg-background p-5"
-    >
-      {/* Show By Tabs: a 2x2 block on phones, one row from sm up */}
-      <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0 sm:flex sm:flex-wrap">
-        <Button
-          variant={activeTab === "active" ? "default" : "outline"}
-          size="default"
-          onClick={() => handleTabClick("active")}
-        >
-          Active
-        </Button>
-        <Button
-          variant={activeTab === "completed" ? "default" : "outline"}
-          size="default"
-          onClick={() => handleTabClick("completed")}
-        >
-          Completed
-        </Button>
-        <Button
-          variant={activeTab === "closed" ? "default" : "outline"}
-          size="default"
-          onClick={() => handleTabClick("closed")}
-        >
-          Closed/Archived
-        </Button>
-        <Button
-          variant={activeTab === "all" ? "default" : "outline"}
-          size="default"
-          onClick={() => handleTabClick("all")}
-        >
-          All
-        </Button>
+    <div data-testid="case-filter-bar" className="space-y-3">
+      <div className="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap" role="group" aria-label="Which cases">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            aria-pressed={activeTab === t.id}
+            onClick={() => handleTabClick(t.id)}
+            className={choiceVariants({ on: activeTab === t.id, className: "px-2 sm:px-4" })}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* Filter Row */}
-      {/* Phones: two columns, packed densely so no cell is left empty */}
-      <div className="grid grid-flow-row-dense grid-cols-2 gap-3 [&>*]:min-w-0 md:flex md:flex-row md:flex-wrap md:items-center">
-        {/* Search Input */}
-        <div data-testid="search-input-container" className="relative col-span-2 flex-1 group">
+      <div className="flex flex-wrap items-center gap-2">
+        <div data-testid="search-input-container" className="relative min-w-0 flex-1 basis-64">
           <Input
-            type="text"
+            type="search"
+            aria-label="Search cases"
             placeholder="Name, job or case number"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-11 h-11 md:h-9 text-base"
+            className="h-11 pl-10 text-base"
           />
-          <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground dark:text-muted-foreground pointer-events-none transition-transform duration-150" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         </div>
 
-        {/* Case Status Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="default"
-              className="w-full md:w-36 justify-between cursor-pointer"
-              aria-label={`Stage: ${getCurrentCaseStatusLabel()}`}
-            >
-              <span className="truncate">Stage: {getCurrentCaseStatusLabel()}</span>{" "}
-              <CaretDownIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
+            <Button variant="outline" className="h-11" aria-label={activeFilters ? `Filters, ${activeFilters} on` : "Filters"}>
+              <FunnelSimpleIcon aria-hidden="true" />
+              Filters
+              {activeFilters ? <span className="tabular-nums text-muted-foreground">{activeFilters}</span> : null}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-44">
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("all")} className="cursor-pointer">
-              All
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("pwd")} className="cursor-pointer">
-              PWD
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("recruitment")} className="cursor-pointer">
-              Recruitment
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("eta9089")} className="cursor-pointer">
-              ETA 9089
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCaseStatusChange("i140")} className="cursor-pointer">
-              I-140
-            </DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel>Stage</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={filters.status && !tabSetsStatus ? filters.status : "all"}
+              onValueChange={(v) => handleCaseStatusChange(v as CaseStatus | "all")}
+            >
+              <DropdownMenuRadioItem value="all">Any stage</DropdownMenuRadioItem>
+              {STAGES.map((st) => (
+                <DropdownMenuRadioItem key={st} value={st}>
+                  {formatCaseStatus(st)}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Progress</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={filters.progressStatus ?? "all"}
+              onValueChange={(v) => handleProgressStatusChange(v as ProgressStatus | "all")}
+            >
+              <DropdownMenuRadioItem value="all">Any progress</DropdownMenuRadioItem>
+              {PROGRESS.map((p) => (
+                <DropdownMenuRadioItem key={p} value={p}>
+                  {formatProgressStatus(p)}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              checked={Boolean(filters.duplicatesOnly)}
+              onCheckedChange={(on) => onFiltersChange({ ...filters, duplicatesOnly: on === true })}
+            >
+              Duplicates only
+            </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Progress Status Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="default"
-              className="w-full md:w-52 justify-between cursor-pointer"
-              aria-label={`Progress Status: ${getCurrentProgressStatusLabel()}`}
-            >
-              <span className="truncate">Progress: {getCurrentProgressStatusLabel()}</span>{" "}
-              <CaretDownIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-48">
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("all")} className="cursor-pointer">
-              All
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("working")} className="cursor-pointer">
-              Working on it
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("waiting_intake")} className="cursor-pointer">
-              Waiting for intake
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("filed")} className="cursor-pointer">
-              Filed
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("approved")} className="cursor-pointer">
-              Approved
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("under_review")} className="cursor-pointer">
-              Under review
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleProgressStatusChange("rfi_rfe")} className="cursor-pointer">
-              RFI/RFE
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Duplicates Only Toggle */}
-        <Button
-          variant={filters.duplicatesOnly ? "default" : "outline"}
-          size="default"
-          onClick={() => onFiltersChange({ ...filters, duplicatesOnly: !filters.duplicatesOnly })}
-          aria-label={filters.duplicatesOnly ? "Showing duplicates only" : "Show duplicates only"}
-          title={filters.duplicatesOnly ? "Showing duplicates only - click to show all" : "Show only duplicate cases"}
-          className="gap-2"
-        >
-          <CopyIcon className="size-4" />
-          Duplicates
-        </Button>
-
-        {/* Sort Dropdown + Order Toggle */}
-        <div className="col-span-2 flex w-full md:w-auto items-center gap-1">
+        <div className="flex items-center gap-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="default"
-                className="flex-1 md:w-52 justify-between cursor-pointer"
-                aria-label={`Sort by: ${getCurrentSortLabel()}`}
-              >
-                <span className="truncate">Sort: {getCurrentSortLabel()}</span>{" "}
-                <CaretDownIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
+              <Button variant="outline" className="h-11" aria-label={`Sort by: ${SORT_FIELD_LABELS[sort.sortBy]}`}>
+                <span className="truncate">
+                  Sort<span className="hidden sm:inline">: {SORT_FIELD_LABELS[sort.sortBy]}</span>
+                </span>
+                <CaretDownIcon className="size-4" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-44">
-              <DropdownMenuItem onClick={() => handleSortChange("custom")} className="cursor-pointer">
-                Custom order
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("deadline")} className="cursor-pointer">
-                Next deadline
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("updated")} className="cursor-pointer">
-                Recently updated
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("favorites")} className="cursor-pointer">
-                Favorites first
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("employer")} className="cursor-pointer">
-                Employer name
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("status")} className="cursor-pointer">
-                Case status
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("pwdFiled")} className="cursor-pointer">
-                PWD filed
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("etaFiled")} className="cursor-pointer">
-                ETA 9089 filed
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("i140Filed")} className="cursor-pointer">
-                I-140 filed
-              </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuRadioGroup value={sort.sortBy} onValueChange={(v) => handleSortChange(v as CaseListSortField)}>
+                {(Object.keys(SORT_FIELD_LABELS) as CaseListSortField[]).map((field) => (
+                  <DropdownMenuRadioItem key={field} value={field}>
+                    {SORT_FIELD_LABELS[field]}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Per page</DropdownMenuLabel>
+              <DropdownMenuRadioGroup value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <DropdownMenuRadioItem key={size} value={String(size)} aria-label={`${size} per page`}>
+                    {size}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Sort Order Toggle Button */}
           <Button
             variant="outline"
             size="icon"
+            className="size-11"
             onClick={handleSortOrderToggle}
             aria-label={`Sort order: ${sort.sortOrder === "asc" ? "Ascending" : "Descending"}`}
-            title={sort.sortOrder === "asc" ? "Ascending (click for descending)" : "Descending (click for ascending)"}
+            title={sort.sortOrder === "asc" ? "Ascending" : "Descending"}
           >
-            {sort.sortOrder === "asc" ? (
-              <ArrowUpIcon className="size-4" />
-            ) : (
-              <ArrowDownIcon className="size-4" />
-            )}
+            {sort.sortOrder === "asc" ? <ArrowUpIcon className="size-4" /> : <ArrowDownIcon className="size-4" />}
           </Button>
         </div>
-
-        {/* Per Page Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="default"
-              className="w-full md:w-36 justify-between cursor-pointer"
-              aria-label={`Per Page: ${pageSize}`}
-            >
-              <span className="truncate">{pageSize} per page</span>{" "}
-              <CaretDownIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-36">
-            {PAGE_SIZE_OPTIONS.map((size) => (
-              <DropdownMenuItem
-                key={size}
-                onClick={() => onPageSizeChange(size)}
-                className="cursor-pointer tabular-nums"
-                aria-label={`${size} per page`}
-              >
-                {size}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </div>
   );
