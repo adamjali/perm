@@ -53,10 +53,12 @@ describe("CaseMilestones (the timeline form)", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("draws the reported stops from the summary route", async () => {
+  it("names the reported stops from the summary route, and only those", async () => {
     render(<CaseMilestones caseNumber={CASE} />);
-    expect(await screen.findByText("2 reported")).toBeInTheDocument();
-    expect(screen.getByText("none yet")).toBeInTheDocument();
+    const line = (await screen.findByText(/Reported for this case/)).textContent ?? "";
+    expect(line).toMatch(/Reported for this case: I-140 filed \(2\)\./);
+    // A stop nobody reported isn't listed.
+    expect(line).not.toMatch(/I-140 approved/);
   });
 
   it("starts with the public box unticked", () => {

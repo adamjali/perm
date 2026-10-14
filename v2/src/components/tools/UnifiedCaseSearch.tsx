@@ -149,11 +149,11 @@ const CONTROL =
   // below the floor turns a refusal into a dead end.
   // (The banned class is named by ratio rather than spelled out, because the
   // gate scans file TEXT and cannot tell a comment from a className.)
-  "disabled:border-border/50 disabled:bg-tint-primary/40 disabled:text-muted-foreground";
+  "disabled:border-border/50 disabled:bg-tint/40 disabled:text-muted-foreground";
 const BUTTON =
   "min-h-[44px] border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
 const CHIP =
-  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-card ";
+  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-card ";
 
 /**
  * Rows drawn at once. An answer holds up to 1,000 (UNIFIED_MAX); drawing them
@@ -187,7 +187,7 @@ function statusTone(status: string, isFinal: boolean): string {
     return "bg-primary text-primary-foreground";
   }
   if (u === "DENIED" || u.startsWith("WITHDRAWN")) return "bg-foreground text-background";
-  return isFinal ? "bg-card" : "bg-tint-primary";
+  return isFinal ? "bg-card" : "bg-tint";
 }
 
 interface ResolvedEntity {
@@ -385,7 +385,7 @@ function FilterGroup({
 }) {
   return (
     <details open={initiallyOpen || undefined} className="group border border-border bg-card">
-      <summary className="flex min-h-[52px] cursor-pointer list-none items-center gap-3 px-4 py-2 hover:bg-tint-primary focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-[52px] cursor-pointer list-none items-center gap-3 px-4 py-2 hover:bg-tint focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
         <CaretRightIcon
           className="size-4 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none"
           weight="bold"
@@ -757,7 +757,7 @@ export function UnifiedCaseSearch({
                     type="button"
                     onClick={() => runExample(name)}
                     disabled={pending}
-                    className="min-h-[44px] border border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary disabled:text-muted-foreground"
+                    className="min-h-[44px] border border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary disabled:text-muted-foreground"
                   >
                     {name}
                   </button>{" "}
@@ -1321,7 +1321,7 @@ export function UnifiedCaseSearch({
       </section>
 
       {typedCaseNumber ? (
-        <div className="border border-primary bg-tint-primary p-5">
+        <div className="border border-primary bg-tint p-5">
           <p className="text-base leading-relaxed">
             <b className="font-bold">{typedCaseNumber} is a case number.</b>{" "}
             The search below reads this site&apos;s own copy of DOL&apos;s
@@ -1401,7 +1401,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {data?.needsLead ? (
-        <div className="border border-border bg-tint-primary p-5">
+        <div className="border border-border bg-tint p-5">
           <p className="text-base leading-relaxed">
             Nothing was filled in that a search can start from. Type an employer
             or a case number, or pick a worksite state, a law firm or an
@@ -1431,7 +1431,7 @@ export function UnifiedCaseSearch({
                     <button
                       type="button"
                       onClick={() => applyAlternative("firm", a.name)}
-                      className="min-h-[44px] border border-border bg-card px-3 text-sm font-bold hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+                      className="min-h-[44px] border border-border bg-card px-3 text-sm font-bold hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       {a.name} ({formatInt(a.total)})
                     </button>{" "}
@@ -1459,7 +1459,7 @@ export function UnifiedCaseSearch({
                   <button
                     type="button"
                     onClick={() => applyAlternative("occupation", a.name)}
-                    className="min-h-[44px] border border-border bg-card px-3 text-sm font-bold hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+                    className="min-h-[44px] border border-border bg-card px-3 text-sm font-bold hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     {a.name} ({formatInt(a.total)})
                   </button>{" "}
@@ -1471,7 +1471,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {droppedList.length > 0 ? (
-        <div className="border border-border bg-tint-primary p-4">
+        <div className="border border-border bg-tint p-4">
           <p className="text-base font-bold">
             {droppedList.length === 1
               ? "One filter was not applied."
@@ -1517,7 +1517,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {data && !data.needsLead && (data.unread?.length ?? 0) > 0 ? (
-        <div role="status" className="border border-border bg-tint-primary p-4">
+        <div role="status" className="border border-border bg-tint p-4">
           <p className="text-base leading-relaxed">
             <b className="font-bold">Part of the record couldn&apos;t be read just now:</b>{" "}
             {data.unread?.join(", ")}. This answer may be missing cases from it.
@@ -1549,7 +1549,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {searching && data && !data.needsLead && data.rows.length === 0 ? (
-        <div className="border border-border bg-tint-primary p-5">
+        <div className="border border-border bg-tint p-5">
           <p className="text-base leading-relaxed">
             Nothing matched. Try a shorter form of the employer name: DOL spells
             one company several ways, and the search matches the start of the
@@ -1610,7 +1610,7 @@ export function UnifiedCaseSearch({
               <a
                 href={`/api/case-search?${submitted}&format=csv`}
                 download="permtracker-case-search.csv"
-                className="inline-flex min-h-[44px] items-center border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+                className="inline-flex min-h-[44px] items-center border border-border bg-card px-4 text-sm font-bold hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
               >
                 Download CSV ({formatInt(data.rows.length)} rows)
               </a>
@@ -1753,7 +1753,7 @@ export function UnifiedCaseSearch({
           ) : null}{" "}
 
           {data.windowed ? (
-            <p className="mt-4 max-w-3xl border border-border bg-tint-primary p-4 text-base leading-relaxed">
+            <p className="mt-4 max-w-3xl border border-border bg-tint p-4 text-base leading-relaxed">
               <b className="font-bold">These filters covered this employer&apos;s newest filings, not its whole
               record.</b>{" "}
               Give the full employer name, or add a filing month, to reach older ones.
@@ -1796,7 +1796,7 @@ export function UnifiedCaseSearch({
                 <span
                   className={
                     "inline-block w-fit border border-border px-2 py-0.5 text-sm font-bold " +
-                    (g.open ? "bg-card" : "bg-tint-primary")
+                    (g.open ? "bg-card" : "bg-tint")
                   }
                 >
                   {g.open ? "Still open" : "Decided"}

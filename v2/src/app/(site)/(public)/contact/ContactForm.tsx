@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PaperPlaneTiltIcon as Send } from "@phosphor-icons/react";
 import { CharLimit } from "@/components/ui/char-limit";
+import { convexSiteUrl } from "@/lib/convexSite";
 
 /**
  * The contact form. Posts to the Convex HTTP route, which owns the shape
@@ -10,11 +11,6 @@ import { CharLimit } from "@/components/ui/char-limit";
  * and never pretends. The hidden "website" field is the honeypot: humans
  * never see it, bots fill it, the route answers success and writes nothing.
  */
-
-function endpoint(): string {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
-  return `${cloud.replace(".convex.cloud", ".convex.site")}/contact`;
-}
 
 type Phase = "idle" | "sending" | "sent" | "error";
 
@@ -29,8 +25,10 @@ export function ContactForm() {
     const data = new FormData(form);
     setPhase("sending");
     setNote("");
+    const url = convexSiteUrl("/contact");
     try {
-      const res = await fetch(endpoint(), {
+      if (!url) throw new Error("no Convex deployment");
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -57,7 +55,7 @@ export function ContactForm() {
 
   if (phase === "sent") {
     return (
-      <div className="border border-border bg-tint-primary p-8 text-center">
+      <div className="border border-border bg-tint p-8 text-center">
         <p className="font-heading text-xl font-bold">Message sent</p>{" "}
         <p className="mt-2 text-base text-muted-foreground">{note}</p>
       </div>

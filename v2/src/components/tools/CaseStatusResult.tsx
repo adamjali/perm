@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { FinePrint } from "@/components/data/FinePrint";
 import { Fragment } from "react";
-import { BellIcon, WarningIcon } from "@phosphor-icons/react/ssr";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { FigurePlate } from "@/components/tools/FigurePlate";
-import { InsightLede, Verdict } from "@/components/tools/Insight";
-import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
+import { AnswerPanel } from "@/components/tools/Insight";
+import { PageSection } from "@/components/data/PageSection";
+import { Figure, FigureRow } from "@/components/data/FigureRow";
+import { Fold, FoldList } from "@/components/data/Fold";
+import { buttonVariants } from "@/components/ui/button";
 import { CaseMilestones } from "@/components/tools/CaseMilestones";
-import { CasePushAlert } from "@/components/tools/CasePushAlert";
+import { AnswerNext } from "@/components/tools/AnswerNext";
+import { RecordList, type RecordRow } from "@/components/data/RecordList";
 import {
   CaseEstimate,
   CaseEstimatePanel,
@@ -79,8 +83,6 @@ const money = (n: number) =>
 /** Below this many decided cases, a percentage is arithmetic on an anecdote. */
 const MIN_RATE_SAMPLE = 20;
 
-/** Where the answer card's "Email me when it changes" lands. */
-const WATCH_ANCHOR = "watch";
 
 export interface CaseStatusResultProps {
   result: CaseLookupResult;
@@ -217,9 +219,15 @@ export function CaseStatusResult({
     live.isFinal &&
     !live.status.toLowerCase().startsWith(decided.status.toLowerCase());
 
+  // An action stage (an RFI, a notice of intent to deny, an audit) carries a
+  // clock and someone who has to act, so its meaning is shown in the open; any
+  // other status is explained in a fold.
+  const actionStage = meaning?.kind === "action";
+
   return (
     <div>
       <Answer
+        caseNumber={result.caseNumber}
         status={status}
         isFinal={isFinal}
         meaning={meaning}
@@ -235,83 +243,47 @@ export function CaseStatusResult({
       />
 
       {check?.stale && !isFinal ? (
-        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
-          <WarningIcon
-            className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
-            weight="fill"
-            aria-hidden="true"
-          />{" "}
-          <span>
-            <b className="font-bold text-data-warn-ink">
-              DOL showed this status {check.ageDays} days ago
-            </b>
-            , on {formatAsOf(check.date)}, and it hasn&apos;t been checked since. A recent change shows first
-            on{" "}
-            {/* DOL's case-status search, not its processing-times page, which can't show one case. */}
-            <a
-              href={DOL_CASE_STATUS_URL}
-              rel="noopener noreferrer"
-              className="font-bold underline underline-offset-2 hover:text-primary"
-            >
-              flag.dol.gov
-            </a>
-            , DOL&apos;s own status page.
-          </span>
-        </p>
+        <Notice title={`DOL showed this status ${check.ageDays} days ago`}>
+          , on {formatAsOf(check.date)}, and it hasn&apos;t been checked since. A recent change shows first on{" "}
+          {/* DOL's case-status search, not its processing-times page, which can't show one case. */}
+          <a href={DOL_CASE_STATUS_URL} rel="noopener noreferrer" className="link">
+            flag.dol.gov
+          </a>
+          , DOL&apos;s own status page.
+        </Notice>
       ) : null}
 
       {reopened && decided && live ? (
-        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
-          <WarningIcon
-            className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
-            weight="fill"
-            aria-hidden="true"
-          />{" "}
-          <span>
-            <b className="font-bold text-data-warn-ink">
-              DOL&apos;s file records a decision on this case, and it is back in
-              processing.
-            </b>{" "}
-            DOL&apos;s quarterly file shows it {decided.status.toLowerCase()}
-            {decided.decisionDate ? <> on {formatAsOf(decided.decisionDate)}</> : null}
-            ; DOL&apos;s live status is now {prettyStatus(live.status).toLowerCase()}, which is current. That&apos;s
-            normal: a denial can be appealed within 30 days under{" "}
-            <a
-              href="https://www.ecfr.gov/current/title-20/section-656.24"
-              rel="noopener noreferrer"
-              className="font-bold underline underline-offset-2 hover:text-primary"
-            >
-              20 CFR 656.24(g)
-            </a>
-            .
-          </span>
-        </p>
+        <Notice title="DOL's file records a decision on this case, and it's back in processing.">
+          {" "}DOL&apos;s quarterly file shows it {decided.status.toLowerCase()}
+          {decided.decisionDate ? <> on {formatAsOf(decided.decisionDate)}</> : null}; DOL&apos;s live status is now{" "}
+          {prettyStatus(live.status).toLowerCase()}, which is current. That&apos;s normal: a denial can be appealed
+          within 30 days under{" "}
+          <a href="https://www.ecfr.gov/current/title-20/section-656.24" rel="noopener noreferrer" className="link">
+            20 CFR 656.24(g)
+          </a>
+          .
+        </Notice>
       ) : null}
 
       {sourcesDisagree && decided && live ? (
-        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
-          <WarningIcon
-            className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
-            weight="fill"
-            aria-hidden="true"
-          />{" "}
-          <span>
-            <b className="font-bold text-data-warn-ink">
-              The two federal sources disagree about this case.
-            </b>{" "}
-            DOL&apos;s quarterly disclosure file records it as{" "}
-            {decided.status.toLowerCase()}; the live status page shows{" "}
-            {prettyStatus(live.status).toLowerCase()}. About one case in five thousand does this, usually after
-            moving once the file closed. Both are shown below.
-          </span>
-        </p>
+        <Notice title="The two federal sources disagree about this case.">
+          {" "}DOL&apos;s quarterly disclosure file records it as {decided.status.toLowerCase()}; the live status page
+          shows {prettyStatus(live.status).toLowerCase()}. About one case in five thousand does this, usually after
+          moving once the file closed. Both are shown below.
+        </Notice>
       ) : null}
 
+      {!isFinal && result.censusMissing ? (
+        <Notice title="Some sections are missing today." tone="info">
+          {" "}The daily count of every pending case, which places this one in its filing month, couldn&apos;t be
+          read or is more than eight days old. The status above is current; the rest comes back when the count is
+          rewritten, usually the next morning.
+        </Notice>
+      ) : null}
 
-      {/* The estimate, right after the answer: the question that brought
-          most readers here, answered by the canonical models and adjusted for
-          the stage this case is actually at. Renders nothing when no
-          defensible estimate exists. */}
+      {/* The line, then the estimate built on it: the question that brought
+          most readers here. Each renders nothing when it can't be answered. */}
       {!isFinal && status?.trim().toUpperCase() === "ANALYST REVIEW" && lineAhead && lineAhead.length > 0 ? (
         <LineAhead rows={lineAhead} perDay={decisionPace?.pace ?? null} />
       ) : null}{" "}
@@ -323,123 +295,110 @@ export function CaseStatusResult({
           source="case-page"
         />
       ) : null}
-      {/* Only while the case can still change. On a decided one this would
-          promise mail that can never arrive. Directly beneath the estimate on
-          purpose: "email me when this changes" is the next step after reading
-          a window, and the answer card's button lands here. */}
-      {!isFinal ? (
-        <div id={WATCH_ANCHOR} >
-          <CaseAlertForm caseNumber={result.caseNumber} className="mt-8" />{" "}
-          <CasePushAlert caseNumber={result.caseNumber} className="mt-4" />
-        </div>
-      ) : null}{" "}
-      {/* The record's details below the next steps: the answer card already
-          states the status, the filing date and the queue, so these two cards
-          are reference, not the answer. */}
-      <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
-        {parsed ? (
-          <CaseNumberPlate parsed={parsed} recordedFilingDate={filingDate} />
-        ) : null}
-        <TheRecord
-          result={result}
-          status={status}
-          filingDate={filingDate}
-          elapsed={elapsed}
-          isFinal={isFinal}
-          check={check}
-        />
-      </section>
+
+      {decided ? <TheDecision decided={decided} duration={duration} cohort={cohort} wage={wage} /> : null}
+
+      {meaning && actionStage ? (
+        <PageSection title={<>What &ldquo;{meaning.label}&rdquo; means</>}>
+          <StatusExplainer meaning={meaning} nowInStatus={statusOutlook?.nowInStatus ?? null} />
+        </PageSection>
+      ) : null}
+
+      <TheRecord
+        result={result}
+        parsed={parsed}
+        status={status}
+        filingDate={filingDate}
+        elapsed={elapsed}
+        isFinal={isFinal}
+        check={check}
+      />
+
       {/* After DOL: the I-140 and I-485 have no federal per-case record, so
           this is the only trace of them, as labelled user reports. Rendered for
-          decided cases too, because a certified PERM is exactly the case whose
-          next stage people want to compare notes on. */}
-      <CaseMilestones caseNumber={result.caseNumber} className="mt-8" />{" "}
-      {/* The cohort a reader actually compares themselves with: the cases
-          DOL numbered the same day, and the ones right beside this number. */}
-      {sameDay ? <SameDayCases data={sameDay} className="mt-8" /> : null}{" "}
-      {!isFinal && wall ? (
-        <Position
-          wall={wall}
-          cohort={cohort}
-          publishedFront={publishedFront}
-          publishedAsOf={publishedAsOf}
-        />
-      ) : null}
+          decided cases too: a certified PERM is the case whose next stage
+          people want to compare notes on. */}
+      <CaseMilestones caseNumber={result.caseNumber} className="mt-12 sm:mt-16" />{" "}
+      {sameDay ? <SameDayCases data={sameDay} className="mt-12 sm:mt-16" /> : null}
 
-      {decided ? (
-        <TheDecision decided={decided} duration={duration} cohort={cohort} wage={wage} />
-      ) : null}
-
-      {meaning ? (
-        <StatusExplainer
-          meaning={meaning}
-          nowInStatus={statusOutlook?.nowInStatus ?? null}
-        />
-      ) : status ? (
-        <UndecodedStatus status={status} />
-      ) : null}
-
-      {!isFinal && cohortStatuses.length > 0 && cohort ? (
-        <CohortQueues counts={cohortStatuses} month={cohort.month} />
-      ) : null}
-
-      {!isFinal && result.censusMissing ? (
-        <p role="status" className="mt-10 max-w-2xl border border-border bg-tint-primary p-4 text-base leading-relaxed">
-          <span className="font-bold">Some sections are missing today.</span> The daily count of every
-          pending case, which places this one in its filing month and against its neighbours,
-          couldn&apos;t be read or is more than eight days old. The status above is current; the
-          rest comes back when the count is rewritten, usually the next morning.
-        </p>
-      ) : null}
-
-      {/* Pending only, for the same reason the queue split is. On a decided
-          case this rendered three rows of "0 of 15,330 still open (100%
-          decided)", and the cohort context that IS useful for one is the
-          duration comparison in the section above. */}
-      {!isFinal && neighbours.length > 1 && cohort ? (
-        <section className="mt-12">
-          <h2 className="font-heading text-2xl font-bold">
-            This filing month against its neighbours
-          </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-            A month is not slow or fast on its own. Two either side is enough
-            to see whether this one is ordinary, and{" "}
-            {formatMonth(cohort.month)} is not the only thing DOL is holding.
-          </p>
-          <CohortNeighbours
-            months={neighbours}
-            subjectMonth={cohort.month}
-            className="mt-5"
-          />{" "}
-          <p className="mt-4 text-sm text-muted-foreground">
-            <Link
-              href={`/perm-queue/${cohort.month}`}
-              className="font-bold underline underline-offset-2 hover:text-primary"
-            >
-              The full split for {formatMonth(cohort.month)}
-            </Link>{" "}
-            ·{" "}
-            <Link
-              href="/perm-queue"
-              className="font-bold underline underline-offset-2 hover:text-primary"
-            >
-              Every filing month
-            </Link>
-          </p>
-        </section>
-      ) : null}
-
-      {employer ? <EmployerRecord employer={employer} /> : null}{" "}
-      <WontSay isFinal={isFinal} />
+      <FoldList>
+        {!isFinal && wall ? (
+          <Fold title="Where it sits in the queue" hint="Undecided cases by filing month, and DOL's work front">
+            <Position wall={wall} cohort={cohort} publishedFront={publishedFront} publishedAsOf={publishedAsOf} />
+          </Fold>
+        ) : null}
+        {meaning && !actionStage ? (
+          <Fold title={<>What &ldquo;{meaning.label}&rdquo; means</>} hint={KIND_LABEL[meaning.kind]}>
+            <StatusExplainer meaning={meaning} nowInStatus={statusOutlook?.nowInStatus ?? null} />
+          </Fold>
+        ) : !meaning && status ? (
+          <Fold title={<>What &ldquo;{prettyStatus(status)}&rdquo; means</>}>
+            <UndecodedStatus />
+          </Fold>
+        ) : null}
+        {!isFinal && cohort && groupByStage(cohortStatuses).pending > 0 ? (
+          <Fold title={`Where the rest of ${formatMonth(cohort.month)} is`} hint="Analyst review, holds, RFIs and appeals">
+            <CohortQueues counts={cohortStatuses} month={cohort.month} />
+          </Fold>
+        ) : null}
+        {/* Pending only: on a decided case this read "0 of 15,330 still open". */}
+        {!isFinal && neighbours.length > 1 && cohort ? (
+          <Fold title="This filing month against its neighbours" hint="Two months either side">
+            <Neighbours months={neighbours} month={cohort.month} />
+          </Fold>
+        ) : null}
+        {employer ? (
+          <Fold title="This employer's record" hint={`Every decided PERM case DOL published for ${employer.name}`}>
+            <EmployerRecord employer={employer} />
+          </Fold>
+        ) : null}
+        <Fold title="What this page won't tell you">
+          <WontSay isFinal={isFinal} />
+        </Fold>
+      </FoldList>
     </div>
   );
 }
 
+/**
+ * A note about the record itself, above anything it qualifies: a figure the
+ * reader has already absorbed can't be un-absorbed by a note under it.
+ */
+function Notice({
+  title,
+  tone = "warn",
+  children,
+}: {
+  title: string;
+  tone?: "warn" | "info";
+  children: React.ReactNode;
+}) {
+  return (
+    <p
+      className={cn(
+        "mt-6 flex items-start gap-2 border-l-2 px-4 py-3 text-base leading-relaxed text-soft",
+        tone === "warn" ? "border-data-warn-ink bg-data-warn/8" : "border-border bg-muted",
+      )}
+    >
+      <WarningIcon
+        className={cn("mt-1 size-4 shrink-0", tone === "warn" ? "text-data-warn-ink" : "text-muted-foreground")}
+        weight="fill"
+        aria-hidden="true"
+      />{" "}
+      <span>
+        <b className="font-semibold text-foreground">{title}</b>
+        {children}
+      </span>
+    </p>
+  );
+}
+
 /* ------------------------------------------------------------------ */
-/* The answer, first, in one sentence with the figures inside it.      */
+/* The answer, first: the status, the queue and the next step.         */
 /* ------------------------------------------------------------------ */
 
 function Answer({
+  caseNumber,
   status,
   isFinal,
   meaning,
@@ -453,6 +412,7 @@ function Answer({
   casesAhead,
   estimate,
 }: {
+  caseNumber: string;
   status: string | null;
   isFinal: boolean;
   meaning: ReturnType<typeof getStatusMeaning>;
@@ -480,14 +440,10 @@ function Answer({
    *
    * All four terminal statuses share `kind: "decided"` - CERTIFIED,
    * CERTIFIED - EXPIRED, DENIED and WITHDRAWN - so the kind alone cannot tell
-   * an approval from a refusal. A rule like `isFinal ? "good" : "flat"` would
-   * draw a denied case with a green badge, a ▲ mark and the word "Denied" set
-   * in the brand lime: the success colour on the worst outcome the process
-   * has, for someone opening their own case number.
-   *
-   * `isApproval` is a lookup against a set of exactly one status rather than a
-   * substring test, precisely so that CERTIFIED - EXPIRED does not read as an
-   * approval on the strength of containing "CERTIFIED".
+   * an approval from a refusal. `isApproval` is a lookup against a set of
+   * exactly one status rather than a substring test, so that CERTIFIED -
+   * EXPIRED does not read as an approval on the strength of containing
+   * "CERTIFIED".
    */
   const approved = status !== null && isApproval(status);
   const direction =
@@ -505,11 +461,40 @@ function Answer({
   ].filter(Boolean);
 
   return (
-    <InsightLede
+    <AnswerPanel
       verdict={verdict}
-      direction={direction as "good" | "warn" | "flat"}
+      direction={direction}
+      label={<span translate="no">{caseNumber}</span>}
       source={sourceBits.length > 0 ? sourceBits.join(" · ") : undefined}
-      actions={isFinal ? undefined : <NextSteps estimate={estimate} />}
+      actions={
+        isFinal ? (
+          <DecidedNext status={status} approved={approved} />
+        ) : (
+          <AnswerNext
+            caseNumber={caseNumber}
+            program="perm"
+            date={
+              estimate?.kind === "date"
+                ? `Around ${formatAsOf(estimate.estimatedDate) ?? estimate.estimatedDate}`
+                : null
+            }
+            note={
+              estimate?.kind === "date" ? (
+                <a href={`#${ESTIMATE_ANCHOR}`} className="link inline-flex min-h-11 items-center">
+                  How this is worked out
+                </a>
+              ) : estimate?.kind === "no-date" ? (
+                <>
+                  No date can honestly be put on this case yet.{" "}
+                  <a href={`#${ESTIMATE_ANCHOR}`} className="link">
+                    Here&apos;s why
+                  </a>
+                </>
+              ) : null
+            }
+          />
+        )
+      }
     >
       {/* The status is stated as a LABEL, never slotted into a clause. "This
           case is in Analyst Review" reads fine and "This case is in In
@@ -518,11 +503,7 @@ function Answer({
       {status ? (
         <>
           DOL&apos;s status for this case is{" "}
-          <b
-            className={
-              direction === "bad" ? "text-data-bad-on-ink" : "text-primary-on-ink"
-            }
-          >
+          <b className="font-semibold" translate="no">
             {prettyStatus(status)}
           </b>
           .
@@ -553,58 +534,31 @@ function Answer({
           ) : (
             <>The oldest month still open is {formatMonth(wall.frontMonth)}</>
           )}
-          , and {formatInt(casesAhead ?? wall.ahead)} cases in DOL&apos;s normal queue
-          were filed before this one.
+          , and <b className="font-semibold">{formatInt(casesAhead ?? wall.ahead)}</b> cases in DOL&apos;s normal
+          queue were filed before this one.
         </>
       ) : wall ? (
-        <>
-          DOL has already moved past this filing month, so filing order is not
-          what it is waiting on.
-        </>
+        <>DOL has already moved past this filing month, so filing order isn&apos;t what it&apos;s waiting on.</>
       ) : null}
-    </InsightLede>
+    </AnswerPanel>
   );
 }
 
-/**
- * What most people open a pending case for, on the answer card itself: when
- * it could be decided, and a way to hear when it moves. The date is the
- * estimate panel's own (built once by the caller), and both links land
- * further down this page, so nothing here is a second estimate.
- */
-function NextSteps({ estimate }: { estimate: Estimate | null }) {
-  const link =
-    "inline-flex min-h-[44px] items-center text-base font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary";
+/** A decided case's next step: what comes after PERM, or what a denial means. */
+function DecidedNext({ status, approved }: { status: string | null; approved: boolean }) {
+  const denied = status?.trim().toUpperCase().startsWith("DENIED") ?? false;
+  const next = approved
+    ? { href: "/tools/green-card-timeline", label: "What comes after a certified PERM", note: "The I-140 and the green card, step by step." }
+    : denied
+      ? { href: "/guides/perm-denied-what-happens-next", label: "What happens after a denial", note: "Reconsideration, appeal and refiling, and their deadlines." }
+      : null;
+  if (!next) return null;
   return (
-    <div className="mt-6 flex flex-col gap-4 border-t border-background/25 pt-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-      {estimate?.kind === "date" ? (
-        <p>
-          <span className="block text-sm text-background/70">
-            Estimated decision
-          </span>{" "}
-          <span className="block font-heading text-2xl font-bold sm:text-3xl">
-            Around {formatAsOf(estimate.estimatedDate) ?? estimate.estimatedDate}
-          </span>{" "}
-          <a href={`#${ESTIMATE_ANCHOR}`} className={link}>
-            How this estimate is worked out
-          </a>
-        </p>
-      ) : estimate?.kind === "no-date" ? (
-        <p className="max-w-xl text-base leading-relaxed text-background/80">
-          No date can honestly be put on this case yet.{" "}
-          <a href={`#${ESTIMATE_ANCHOR}`} className={link}>
-            Here&apos;s why
-          </a>
-        </p>
-      ) : null}{" "}
-      <a
-        href={`#${WATCH_ANCHOR}`}
-        className="inline-flex min-h-[48px] items-center justify-center gap-2 self-start border border-background bg-primary px-5 text-sm font-bold text-primary-foreground transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none sm:self-auto"
-      >
-        <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
-        {/* The alert form's own button label, so the action keeps one name. */}
-        Email me changes
-      </a>
+    <div className="mt-6 border-t border-foreground/10 pt-6">
+      <Link href={next.href} className={buttonVariants({ variant: "outline", size: "lg" })}>
+        {next.label}
+      </Link>{" "}
+      <p className="mt-2 text-sm text-muted-foreground">{next.note}</p>
     </div>
   );
 }
@@ -615,6 +569,7 @@ function NextSteps({ estimate }: { estimate: Estimate | null }) {
 
 function TheRecord({
   result,
+  parsed,
   status,
   filingDate,
   elapsed,
@@ -622,6 +577,7 @@ function TheRecord({
   check,
 }: {
   result: CaseLookupResult;
+  parsed: ReturnType<typeof parseCaseNumber>;
   status: string | null;
   filingDate: string | null;
   elapsed: number | null;
@@ -632,26 +588,13 @@ function TheRecord({
   const employerName = live?.employerName ?? decided?.employerName ?? null;
   const jobTitle = live?.jobTitle ?? decided?.jobTitle ?? null;
 
-  // The status is why the visitor is here; it must not weigh the same as
-  // "Job title". It leads the card at display size, toned by its kind, and
-  // the dl below keeps the supporting facts.
-  const kind = status ? getStatusMeaning(status)?.kind ?? null : null;
-  const statusTone =
-    kind === "decided"
-      ? "bg-foreground text-background"
-      : kind === "action"
-        ? "bg-data-warn/15"
-        : "bg-tint-primary";
-
-  // `raw` rows are DOL's own words (a name, a title): a browser translating
-  // the page leaves them as DOL printed them, so they still match the record.
-  const rows: { label: string; value: React.ReactNode; raw?: boolean }[] = [
+  const rows: RecordRow[] = [
+    { label: "Status", value: status ? prettyStatus(status) : "Not recorded", raw: !!status },
+    { label: "Case number", value: result.caseNumber, raw: true, mono: true },
     {
       label: "Filed",
       value: filingDate
-        ? `${formatAsOf(filingDate)}${
-            elapsed !== null && !isFinal ? ` (${formatInt(elapsed)} days ago)` : ""
-          }`
+        ? `${formatAsOf(filingDate)}${elapsed !== null && !isFinal ? ` (${formatInt(elapsed)} days ago)` : ""}`
         : "Not recorded",
     },
     { label: "Employer", value: employerName ?? "Not recorded", raw: !!employerName },
@@ -665,68 +608,20 @@ function TheRecord({
   ];
 
   return (
-    <div className="border border-border bg-card">
-      <p className="border-b border-border px-4 py-2 text-sm font-bold text-muted-foreground sm:px-5">
-        The record
-      </p>
-      <div className={`border-b border-border px-4 py-4 sm:px-5 ${statusTone}`}>
-        <p className={`text-sm font-bold ${kind === "decided" ? "text-background/80" : "text-muted-foreground"}`}>
-          {kind ? KIND_LABEL[kind] : "Status"}
-        </p>{" "}
-        <p className="mt-1 font-heading text-2xl font-bold leading-tight" translate={status ? "no" : undefined}>
-          {status ? prettyStatus(status) : "Not recorded"}
-        </p>
-      </div>
-      <dl className="px-4 py-4 sm:px-5">
-        {rows.map((r) => (
-          <Fragment key={r.label}>{" "}
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 border-b border-border/50 py-2 last:border-b-0">
-            <dt className="text-sm font-bold text-muted-foreground">
-              {r.label}
-            </dt>{" "}
-            <dd className="min-w-0 text-right text-base font-bold" translate={r.raw ? "no" : undefined}>
-              {r.value}
-            </dd>
-          </div>
-          </Fragment>
-        ))}
-      </dl>
-    </div>
+    <PageSection title="The record" lede="As DOL holds it, with nothing worked out.">
+      <RecordList rows={rows} />{" "}
+      {parsed ? (
+        <FinePrint summary="What the case number says" className="mt-3">
+          <CaseNumberPlate parsed={parsed} recordedFilingDate={filingDate} />
+        </FinePrint>
+      ) : null}
+    </PageSection>
   );
 }
 
 /* ------------------------------------------------------------------ */
 /* Where it sits.                                                      */
 /* ------------------------------------------------------------------ */
-
-function Stat({
-  label,
-  value,
-  note,
-  emphasis,
-}: {
-  label: string;
-  value: string;
-  note: string;
-  emphasis?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "min-w-0 flex-1 basis-56 border p-4",
-        emphasis ? "border-foreground bg-card" : "border-border bg-background",
-      )}
-    >
-      <p className="text-sm font-bold text-muted-foreground">
-        {label}
-      </p>{" "}
-      <p className="mt-1 font-heading text-4xl font-bold leading-none tabular-nums">
-        {value}
-      </p>{" "}
-      <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{note}</p>
-    </div>
-  );
-}
 
 function Position({
   wall,
@@ -742,11 +637,9 @@ function Position({
   const maturity = cohort ? cohortMaturity({ ...cohort, decidedPct: cohort.decidedPct }) : "unknown";
 
   return (
-    <section className="mt-12">
-      <h2 className="font-heading text-2xl font-bold">Where it sits</h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-        Counts from DOL&apos;s live status of every pending case, by filing
-        month.
+    <div>
+      <p className="max-w-2xl text-base leading-relaxed text-soft">
+        Counts from DOL&apos;s live status of every pending case, by filing month.
       </p>{" "}
 
       {/* The one drawing that carries the whole mental model: DOL's tape of
@@ -761,19 +654,18 @@ function Position({
         />
       ) : null}
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Stat
-          emphasis
+      <FigureRow className="mt-6">
+        <Figure
           label="Filed in earlier months"
           value={formatInt(wall.ahead)}
           note="still waiting in DOL's normal queue"
         />
-        <Stat
+        <Figure
           label="Filed the same month"
           value={formatInt(wall.sameMonth)}
           note="still waiting, this case among them"
         />
-        <Stat
+        <Figure
           label="Behind the work front"
           value={
             wall.isPastFront
@@ -786,10 +678,10 @@ function Position({
               : `oldest month still open: ${formatMonth(wall.frontMonth)}`
           }
         />
-      </div>
+      </FigureRow>
 
       {wall.isPastFront ? (
-        <div className="mt-6 border border-border bg-card p-6 sm:p-8">
+        <div className="mt-6">
           <PastFrontNote wall={wall} />
         </div>
       ) : (
@@ -832,7 +724,7 @@ function Position({
           ) : null}
         </p>
       ) : null}
-    </section>
+    </div>
   );
 }
 
@@ -857,46 +749,40 @@ function TheDecision({
     canQuoteCohortDuration(duration.n, cohort.total);
 
   return (
-    <section className="mt-12">
-      <h2 className="font-heading text-2xl font-bold">
-        What DOL recorded when it decided
-      </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-        Straight from the quarterly disclosure file, which carries fields the
-        live status page does not.
-      </p>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Stat
-          emphasis
+    <PageSection
+      title="What DOL recorded when it decided"
+      lede="From the quarterly disclosure file, which carries fields the live status page doesn't."
+    >
+      <FigureRow>
+        <Figure
           label="Outcome"
           value={prettyStatus(decided.status)}
           note={decided.decisionDate ? formatAsOf(decided.decisionDate) ?? "" : ""}
         />
         {decided.days !== null ? (
-          <Stat
+          <Figure
             label="Days taken"
             value={formatInt(decided.days)}
             note="from receipt to determination"
           />
         ) : null}
         {decided.wage !== null ? (
-          <Stat
+          <Figure
             label="Offered wage"
             value={money(decided.wage)}
             note={decided.socTitle ?? "as filed"}
           />
         ) : null}
         {decided.state ? (
-          <Stat label="Worksite state" value={decided.state} note="as filed" />
+          <Figure label="Worksite state" value={decided.state} note="as filed" />
         ) : null}
-      </div>
+      </FigureRow>
 
       {quotable && duration && cohort && decided.days !== null ? (
-        <p className="mt-6 max-w-3xl border border-border bg-card p-5 text-base leading-relaxed text-soft">
+        <p className="mt-6 max-w-3xl text-base leading-relaxed text-soft">
           Across {formatInt(duration.n)} decided cases filed in{" "}
           {formatMonth(cohort.month)}, the middle one took{" "}
-          <b className="font-bold text-foreground">
+          <b className="font-semibold text-foreground">
             {formatInt(duration.medianDays ?? 0)} days
           </b>
           , and half of them landed between {formatInt(duration.p25Days ?? 0)} and{" "}
@@ -912,7 +798,7 @@ function TheDecision({
       ) : null}
 
       {wage ? <WageLadder wage={wage} /> : null}
-    </section>
+    </PageSection>
   );
 }
 
@@ -1065,84 +951,47 @@ function StatusExplainer({
   nowInStatus: number | null;
 }) {
   return (
-    <section className="mt-12">
-      <h2 className="font-heading text-2xl font-bold">
-        What &ldquo;{meaning.label}&rdquo; means
-      </h2>
-      <div className="mt-5 border border-border bg-card">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border px-6 py-3">
-          <Verdict direction={meaning.kind === "action" ? "warn" : "flat"}>
-            {KIND_LABEL[meaning.kind]}
-          </Verdict>{" "}
-          {meaning.cite ? (
-            <a
-              href={meaning.cite.href}
-              rel="noopener noreferrer"
-              className="font-mono text-sm font-bold underline underline-offset-2 hover:text-primary"
-            >
-              {meaning.cite.label}
-            </a>
-          ) : (
-            <span className="font-mono text-sm text-muted-foreground">
-              No published definition
-            </span>
-          )}
-        </div>
-
-        <div className="px-6 py-5">
-          <p className="max-w-3xl text-base leading-relaxed text-soft">
-            {meaning.summary}
-          </p>{" "}
-          <p className="mt-2 text-sm">
-            <Link
-              href={`/perm-case-statuses#${statusAnchor(meaning.status)}`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              Every status, side by side
-            </Link>
-          </p>{" "}
-
-          {meaning.deadline ? (
-            <p className="mt-4 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed">
-              <b className="font-bold text-data-warn-ink">The clock:</b>{" "}
-              {meaning.deadline}
-            </p>
-          ) : null}
-
-          {meaning.action ? (
-            <p className="mt-4 max-w-3xl text-base leading-relaxed text-soft">
-              <b className="font-bold text-foreground">Who acts:</b>{" "}
-              {meaning.action}
-            </p>
-          ) : null}
-
-          {nowInStatus !== null ? (
-            <p className="mt-4 border-t border-border pt-4 text-base leading-relaxed text-muted-foreground">
-              <b className="font-bold text-foreground">
-                {formatInt(nowInStatus)} cases
-              </b>{" "}
-              are in this status right now, across every filing month: how common it is, not how likely this
-              case is to leave it. Status changes have only been recorded since August 2026, too short a record
-              to price those odds.
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </section>
+    <div className="max-w-3xl">
+      <p className="text-base leading-relaxed text-soft">{meaning.summary}</p>{" "}
+      {meaning.deadline ? (
+        <p className="mt-4 border-l-2 border-data-warn-ink bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
+          <b className="font-semibold text-foreground">The clock:</b> {meaning.deadline}
+        </p>
+      ) : null}{" "}
+      {meaning.action ? (
+        <p className="mt-4 text-base leading-relaxed text-soft">
+          <b className="font-semibold text-foreground">Who acts:</b> {meaning.action}
+        </p>
+      ) : null}{" "}
+      {nowInStatus !== null ? (
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          <b className="font-semibold text-foreground">{formatInt(nowInStatus)} cases</b> are in this status right
+          now, across every filing month: how common it is, not how likely this case is to leave it. Status changes
+          have only been recorded since August 2026, too short a record to price those odds.
+        </p>
+      ) : null}{" "}
+      <p className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+        {meaning.cite ? (
+          <a href={meaning.cite.href} rel="noopener noreferrer" className={cn("font-mono", "link")}>
+            {meaning.cite.label}
+          </a>
+        ) : (
+          <span className="text-muted-foreground">No published definition</span>
+        )}{" "}
+        <Link href={`/perm-case-statuses#${statusAnchor(meaning.status)}`} className="link">
+          Every status, side by side
+        </Link>
+      </p>
+    </div>
   );
 }
 
-function UndecodedStatus({ status }: { status: string }) {
+function UndecodedStatus() {
   return (
-    <section className="mt-12">
-      <h2 className="font-heading text-2xl font-bold">
-        What &ldquo;{prettyStatus(status)}&rdquo; means
-      </h2>{" "}
-      <p className="mt-4 max-w-3xl border border-border bg-card p-6 text-base leading-relaxed text-soft">
-        Not written up here yet, and DOL publishes no glossary, so this page won&apos;t guess. The notice DOL
-        sent the employer explains it; their attorney has it.
-      </p>
-    </section>
+    <p className="max-w-3xl text-base leading-relaxed text-soft">
+      Not written up here yet, and DOL publishes no glossary, so this page won&apos;t guess. The notice DOL sent the
+      employer explains it; their attorney has it.
+    </p>
   );
 }
 
@@ -1159,37 +1008,51 @@ function CohortQueues({
 }) {
   const split = groupByStage(counts);
   if (split.pending === 0) return null;
+  const label = formatMonth(month) ?? month;
 
   return (
-    <section className="mt-12">
-      <h2 className="font-heading text-2xl font-bold">
-        Which queue the rest of {formatMonth(month)} is in
-      </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-        Analyst review moves in filing order. A hold, an RFI, an audit or an
-        appeal takes a case out of that order.
+    <div>
+      <p className="max-w-2xl text-base leading-relaxed text-soft">
+        <b className="font-semibold text-foreground">{formatInt(split.ordinary)}</b> of the{" "}
+        {formatInt(split.pending)} still open are in analyst review, which moves in filing order. A hold, an RFI, an
+        audit or an appeal takes a case out of that order.
       </p>
+      {/* The same drawing the month pages use, on the same data, so a reader
+          arriving from /perm-queue/<month> isn't asked to learn a second chart. */}
+      <ChartTips label={`Pending cases filed in ${label}, by stage`} className="mt-6">
+        <StageBar stages={split.stages} scale="composition" tipHeading={`Filed in ${label}`} />
+      </ChartTips>
+      <StageLegend stages={split.stages} className="mt-4" />
+      <FinePrint summary={`Every DOL status in ${label}`} className="mt-6">
+        <PendingCensus
+          stages={split.stages}
+          caption={`Every DOL status a pending case filed in ${label} is currently in, grouped by queue`}
+        />
+      </FinePrint>
+      <p className="mt-4 text-sm">
+        <Link href={`/perm-queue/${month}`} className="link">
+          The full split for {label}
+        </Link>
+      </p>
+    </div>
+  );
+}
 
-      <div className="mt-5 border border-border bg-card p-6 sm:p-8">
-        <p className="text-base leading-relaxed text-soft">
-          <b className="font-bold text-foreground">{formatInt(split.ordinary)}</b> of
-          the {formatInt(split.pending)} still open are in analyst review.
-        </p>
-        {/* The same drawing language the month pages use, on the same data,
-            so a reader arriving here from /perm-queue/<month> is not asked to
-            learn a second chart of one thing. */}
-        <ChartTips label={`Pending cases filed in ${formatMonth(month) ?? month}, by stage`} className="mt-6">
-          <StageBar stages={split.stages} scale="composition" tipHeading={`Filed in ${formatMonth(month) ?? month}`} />
-        </ChartTips>
-        <StageLegend stages={split.stages} className="mt-4" />
-        <FinePrint summary="Every DOL status in this month" className="mt-6">
-          <PendingCensus
-            stages={split.stages}
-            caption={`Every DOL status a pending case filed in ${formatMonth(month)} is currently in, grouped by queue`}
-          />
-        </FinePrint>
-      </div>
-    </section>
+/** The filing month beside two months either side of it. */
+function Neighbours({ months, month }: { months: readonly CohortMonth[]; month: string }) {
+  return (
+    <div>
+      <p className="max-w-2xl text-base leading-relaxed text-soft">
+        A month isn&apos;t slow or fast on its own. Two either side is enough to see whether{" "}
+        {formatMonth(month)} is ordinary.
+      </p>{" "}
+      <CohortNeighbours months={months} subjectMonth={month} className="mt-5" />{" "}
+      <p className="mt-4 text-sm">
+        <Link href="/perm-queue" className="link">
+          Every filing month
+        </Link>
+      </p>
+    </div>
   );
 }
 
@@ -1234,17 +1097,11 @@ function EmployerRecord({
   ];
 
   return (
-    <section className="mt-12">
-      <h2 className="font-heading text-2xl font-bold">
-        This employer&apos;s own record
-      </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-        Every decided PERM case DOL published for {employer.name}, across
-        FY2024 to FY2026. It describes the employer&apos;s filings, not this
-        case.
-      </p>
-
-      <div className="mt-5 border border-border bg-card p-5 sm:p-6">
+    <div>
+      <p className="max-w-2xl text-base leading-relaxed text-soft">
+        Across FY2024 to FY2026. It describes the employer&apos;s filings, not this case.
+      </p>{" "}
+      <div className="mt-5">
         <dl className="flex flex-wrap items-baseline gap-x-8 gap-y-4">
           {figures.map((f) => (
             <Fragment key={f.label + f.value}>{" "}
@@ -1252,7 +1109,7 @@ function EmployerRecord({
                 twin. The twin version rendered every label TWICE into
                 textContent, which is what Google reads. */}
             <div className="flex min-w-0 flex-row-reverse items-baseline justify-end gap-2">
-              <dt className="text-sm font-bold text-muted-foreground">
+              <dt className="text-sm text-muted-foreground">
                 {f.label}
               </dt>{" "}
               <dd className="font-heading text-3xl font-bold leading-none tabular-nums">
@@ -1263,7 +1120,7 @@ function EmployerRecord({
           ))}
         </dl>
 
-        <p className="mt-5 border-t border-border pt-4 text-base leading-relaxed text-soft">
+        <p className="mt-5 max-w-3xl text-base leading-relaxed text-soft">
           {thin ? (
             employer.total === employer.certified ? (
               <>
@@ -1289,14 +1146,14 @@ function EmployerRecord({
           )}{" "}
           <Link
             href={`/perm-employers/${employer.slug}`}
-            className="font-bold underline underline-offset-2 hover:text-primary"
+            className="link"
           >
             Everything published about {employer.name}
           </Link>
           .
         </p>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -1306,66 +1163,41 @@ function EmployerRecord({
 
 export function WontSay({ isFinal }: { isFinal: boolean }) {
   return (
-    <section className="mt-12 border border-border bg-foreground p-6 text-background sm:p-8">
-      <h2 className="font-heading text-2xl font-bold">
-        What this page will not tell you
-      </h2>{" "}
-      <ul className="mt-4 max-w-3xl space-y-4 text-base leading-relaxed text-background/85">
-        {!isFinal ? (
-          <>
-            <li>
-              <b className="font-bold text-primary-on-ink">
-                A guaranteed decision date.
-              </b>{" "}
-              The estimate is a statistic, not a schedule: audits and appeals
-              take cases out of order. Every model side by side is on the{" "}
-              <Link
-                href="/tools/perm-timeline-calculator"
-                className="font-bold text-primary-on-ink underline underline-offset-2"
-              >
-                processing time calculator
-              </Link>
-              .
-            </li>{" "}
-            <li>
-              <b className="font-bold text-primary-on-ink">
-                How likely this case is to be certified.
-              </b>{" "}
-              One odds figure would claim more than the data can support. The
-              measured rates, factor by factor, are on the{" "}
-              <Link
-                href="/perm-denial-risk"
-                className="font-bold text-primary-on-ink underline underline-offset-2"
-              >
-                denial-rate page
-              </Link>
-              .
-            </li>
-          </>
-        ) : (
+    <ul className="max-w-3xl space-y-4 text-base leading-relaxed text-soft">
+      {!isFinal ? (
+        <>
           <li>
-            <b className="font-bold text-primary-on-ink">
-              What happens next for this case.
-            </b>{" "}
-            PERM is the first of three stages, and DOL publishes nothing about
-            the next two against a case number. The{" "}
-            <Link
-              href="/tools/green-card-timeline"
-              className="font-bold text-primary-on-ink underline underline-offset-2"
-            >
-              green card timeline
-            </Link>{" "}
-            covers the stages after this one.
+            <b className="font-semibold text-foreground">A guaranteed decision date.</b> The estimate is a
+            statistic, not a schedule: audits and appeals take cases out of order. Every model side by side is on
+            the{" "}
+            <Link href="/tools/perm-timeline-calculator" className="link">
+              processing time calculator
+            </Link>
+            .
+          </li>{" "}
+          <li>
+            <b className="font-semibold text-foreground">How likely this case is to be certified.</b> One odds
+            figure would claim more than the data can support. The measured rates, factor by factor, are on the{" "}
+            <Link href="/perm-denial-risk" className="link">
+              denial-rate page
+            </Link>
+            .
           </li>
-        )}{" "}
+        </>
+      ) : (
         <li>
-          <b className="font-bold text-primary-on-ink">
-            Anything about the worker.
-          </b>{" "}
-          DOL&apos;s files name employers, job titles and case numbers, never
-          the person, and neither does this site.
+          <b className="font-semibold text-foreground">What happens next for this case.</b> PERM is the first of
+          three stages, and DOL publishes nothing about the next two against a case number. The{" "}
+          <Link href="/tools/green-card-timeline" className="link">
+            green card timeline
+          </Link>{" "}
+          covers the stages after this one.
         </li>
-      </ul>
-    </section>
+      )}{" "}
+      <li>
+        <b className="font-semibold text-foreground">Anything about the worker.</b> DOL&apos;s files name
+        employers, job titles and case numbers, never the person, and neither does this site.
+      </li>
+    </ul>
   );
 }

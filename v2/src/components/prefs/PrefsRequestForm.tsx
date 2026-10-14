@@ -13,12 +13,7 @@
 import * as React from "react";
 import { isQueued, replyHeading } from "@/lib/alertReply";
 import { formText } from "@/lib/forms/formText";
-
-function requestEndpoint(): string | null {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!cloud) return null;
-  return `${cloud.replace(".convex.cloud", ".convex.site")}/prefs/request`;
-}
+import { convexSiteUrl } from "@/lib/convexSite";
 
 export function PrefsRequestForm() {
   const [email, setEmail] = React.useState("");
@@ -28,7 +23,7 @@ export function PrefsRequestForm() {
   const [message, setMessage] = React.useState("");
   const [queued, setQueued] = React.useState(false);
 
-  const endpoint = requestEndpoint();
+  const endpoint = convexSiteUrl("/prefs/request");
   if (!endpoint) return null;
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {

@@ -359,7 +359,7 @@ export function SearchPalette({
         {navTarget !== null ? (
           <p
             role="status"
-            className="flex items-center gap-2 border-b border-border bg-tint-primary px-4 py-2 text-sm font-bold"
+            className="flex items-center gap-2 border-b border-border bg-tint px-4 py-2 text-sm font-bold"
           >
             <CircleNotchIcon
               aria-hidden="true"

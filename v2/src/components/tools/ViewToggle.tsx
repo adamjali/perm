@@ -65,7 +65,7 @@ export function ViewToggle<T extends string>({
               i > 0 && "border-l border-border",
               active
                 ? "bg-primary text-primary-foreground"
-                : "bg-card text-muted-foreground hover:bg-tint-primary hover:text-foreground",
+                : "bg-card text-muted-foreground hover:bg-tint hover:text-foreground",
             )}
           >
             {o.label}

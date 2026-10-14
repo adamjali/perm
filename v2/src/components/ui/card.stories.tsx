@@ -139,15 +139,15 @@ export const NeobrutalistShowcase: Story = {
         <Card className="w-[280px]">
           <CardHeader>
             <CardTitle>Me Too!</CardTitle>
-            <CardDescription>Neobrutalist design</CardDescription>
+            <CardDescription>Flat surface</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm">Bold borders and defined edges.</p>
+            <p className="text-sm">A 1px line groups the content; nothing moves on hover.</p>
           </CardContent>
         </Card>
       </div>
       <div className="text-sm text-muted-foreground mt-4">
-        Notice the hard shadows (shadow-hard) and the hover lift effect
+        Cards are flat: a 1px line, no shadow, no lift.
       </div>
     </div>
   ),

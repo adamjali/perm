@@ -201,7 +201,7 @@ function StagesLine({
 
 const POSITION_COPY: Record<string, { tone: string; heading: string }> = {
   "awaiting-queue": {
-    tone: "bg-tint-primary",
+    tone: "bg-tint",
     heading: "DOL hasn’t reached your filing month yet",
   },
   "queue-reached": {

@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
+import { PageSection } from "@/components/data/PageSection";
 import type { DayGroup, SameDay } from "@/lib/sameDay";
 import { prettyStatus } from "@/components/queue/stages";
 import { cn } from "@/lib/utils";
@@ -21,9 +22,13 @@ const GROUPS: { key: DayGroup; label: string; tone: string }[] = [
   { key: "denied", label: "Denied", tone: "bg-data-bad" },
   { key: "withdrawn", label: "Withdrawn", tone: "bg-data-none" },
   { key: "aside", label: "On hold, RFI or appeal", tone: "bg-data-warn" },
-  { key: "inLine", label: "Still in line", tone: "bg-background" },
+  { key: "inLine", label: "Still in line", tone: "bg-card bg-hatch text-input" },
 ];
-const TONE = Object.fromEntries(GROUPS.map((g) => [g.key, g.tone])) as Record<DayGroup, string>;
+// The neighbour squares carry a number, so "still in line" is a plain card
+// there: a hatch behind small type would fight it.
+const TONE = Object.fromEntries(
+  GROUPS.map((g) => [g.key, g.key === "inLine" ? "bg-card" : g.tone]),
+) as Record<DayGroup, string>;
 const LABEL = Object.fromEntries(GROUPS.map((g) => [g.key, g.label])) as Record<DayGroup, string>;
 
 const longDay = (iso: string) =>
@@ -33,25 +38,25 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
   const decided = data.counts.certified + data.counts.denied + data.counts.withdrawn;
   const shown = GROUPS.filter((g) => data.counts[g.key] > 0);
   return (
-    <section
-      aria-labelledby="same-day-h"
-      className={cn("border border-border bg-card p-5 sm:p-6", className)}
+    <PageSection
+      id="same-day"
+      title="Filed the same day"
+      className={className}
+      lede={
+        <>
+          <b className="font-semibold text-foreground">{data.total.toLocaleString("en-US")}</b> PERM cases were filed
+          on {longDay(data.day)}. <b className="font-semibold text-foreground">{decided.toLocaleString("en-US")}</b>{" "}
+          have been decided.
+        </>
+      }
     >
-      <h2 id="same-day-h" className="font-heading text-xl font-bold sm:text-2xl">
-        Filed the same day
-      </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
-        <b className="font-bold text-foreground">{data.total.toLocaleString("en-US")}</b> PERM cases were filed on{" "}
-        {longDay(data.day)}.{" "}
-        <b className="font-bold text-foreground">{decided.toLocaleString("en-US")}</b> have been decided.
-      </p>{" "}
-      <ChartTips label={`Cases filed on ${longDay(data.day)}, by what has happened to them`} className="mt-4">
-      <div className="flex h-5 w-full overflow-hidden border border-border" aria-hidden="true">
+      <ChartTips label={`Cases filed on ${longDay(data.day)}, by what has happened to them`}>
+      <div className="flex h-5 w-full overflow-hidden border border-input" aria-hidden="true">
         {shown.map((g) => (
           <div
             key={g.key}
             data-tip={`${g.label}\n${data.counts[g.key].toLocaleString("en-US")} of the ${data.total.toLocaleString("en-US")} filed ${longDay(data.day)}`}
-            className={cn("h-full", g.tone, g.key === "inLine" && "bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,var(--border)_4px,var(--border)_5px)]")}
+            className={cn("h-full", g.tone)}
             style={{ width: `${(data.counts[g.key] / data.total) * 100}%` }}
           />
         ))}
@@ -61,9 +66,9 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
         {shown.map((g) => (
           <Fragment key={g.key}>{" "}
           <li className="flex items-center gap-1.5">
-            <span className={cn("inline-block h-3.5 w-3.5 shrink-0 border border-border", g.tone)} aria-hidden="true" />{" "}
+            <span className={cn("inline-block size-3.5 shrink-0 border border-input", g.tone)} aria-hidden="true" />{" "}
             <span className="text-soft">{g.label}</span>{" "}
-            <span className="font-mono font-bold tabular-nums">{data.counts[g.key].toLocaleString("en-US")}</span>
+            <span className="font-mono font-semibold tabular-nums">{data.counts[g.key].toLocaleString("en-US")}</span>
           </li>
           </Fragment>
         ))}
@@ -71,9 +76,7 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
 
       {data.nearby.length > 1 ? (
         <>
-          <h3 className="mt-6 text-sm font-bold text-muted-foreground">
-            The cases numbered beside it
-          </h3>{" "}
+          <h3 className="mt-8 text-base font-semibold">The cases numbered beside it</h3>{" "}
           <ol className="mt-3 flex flex-wrap gap-1.5" translate="no">
             {data.nearby.map((n) => (
               <Fragment key={n.caseNumber}>{" "}
@@ -83,9 +86,9 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
                   rel="nofollow"
                   title={`${n.caseNumber}: ${n.status ? prettyStatus(n.status) : "no status"}`}
                   className={cn(
-                    "flex h-11 w-11 items-center justify-center border border-border font-mono text-sm font-bold tabular-nums transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none",
+                    "flex size-11 items-center justify-center border border-input font-mono text-sm font-semibold tabular-nums text-foreground transition-colors hover:border-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     TONE[n.group],
-                    n.isThis && "outline outline-4 outline-offset-2 outline-primary",
+                    n.isThis && "outline outline-2 outline-offset-2 outline-primary-text",
                   )}
                 >
                   <span aria-hidden="true">{n.isThis ? "this" : n.caseNumber.slice(-3)}</span>{" "}
@@ -102,6 +105,6 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
           </p>
         </>
       ) : null}
-    </section>
+    </PageSection>
   );
 }

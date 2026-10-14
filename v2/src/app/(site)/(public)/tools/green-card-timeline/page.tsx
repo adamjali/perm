@@ -202,7 +202,7 @@ export default async function GreenCardTimelinePage() {
       {/* Who controls what: the single most useful fact about the timeline,
           drawn as structure rather than said in a paragraph. */}
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="border border-border bg-tint-primary p-6">
+        <div className="border border-border bg-tint p-6">
           <p className="text-sm font-bold text-muted-foreground">
             You control
           </p>{" "}

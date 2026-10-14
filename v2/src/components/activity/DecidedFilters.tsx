@@ -129,7 +129,7 @@ export function DecidedFilters({
           <button
             type="button"
             onClick={() => onChange({})}
-            className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+            className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
           >
             Clear these filters
           </button>

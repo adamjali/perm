@@ -157,7 +157,7 @@ export default async function CompareEmployersPage({
                 <Link
                   href={`/perm-employers/compare?a=${e.a}&b=${e.b}`}
                   rel="nofollow"
-                  className="inline-flex min-h-11 items-center border border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint-primary"
+                  className="inline-flex min-h-11 items-center border border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint"
                 >
                   {e.label}
                 </Link>{" "}

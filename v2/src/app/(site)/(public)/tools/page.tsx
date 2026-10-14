@@ -107,7 +107,7 @@ export default async function ToolsPage() {
               Analyst review, the queue nearly every case sits in.
             </p>
           </div>
-          <div className="border border-border bg-tint-primary p-6">
+          <div className="border border-border bg-tint p-6">
             <p className="text-sm font-bold text-muted-foreground">
               Average to a determination
             </p>{" "}
@@ -177,7 +177,7 @@ export default async function ToolsPage() {
 
 
 
-      <section className="mt-10 flex flex-wrap items-center justify-between gap-4 border border-border bg-tint-primary p-6 sm:p-8">
+      <section className="mt-10 flex flex-wrap items-center justify-between gap-4 border border-border bg-tint p-6 sm:p-8">
         <div>
           <h2 className="font-heading text-2xl font-bold">All {CALCULATOR_PAGES.length} calculators</h2>{" "}
           <p className="mt-1 max-w-xl text-base text-muted-foreground">
@@ -283,7 +283,7 @@ export default async function ToolsPage() {
                 (c.tone === "ink"
                   ? "bg-foreground text-background"
                   : c.tone === "tint"
-                    ? "bg-tint-primary"
+                    ? "bg-tint"
                     : "bg-card")
               }
             >

@@ -265,7 +265,7 @@ export async function OccupationReference({
           </dl>
           {main.bright.length ? (
             <p className="mt-4 text-base">
-              <span className="mr-2 inline-block border border-border bg-tint-primary px-2 py-0.5 font-bold">Bright Outlook</span>{" "}
+              <span className="mr-2 inline-block border border-border bg-tint px-2 py-0.5 font-bold">Bright Outlook</span>{" "}
               O*NET OnLine lists this job for {main.bright.map((b) => b.toLowerCase()).join(" and ")}.
             </p>
           ) : null}

@@ -25,7 +25,7 @@ import { stateName } from "@/lib/usStateNames";
 import { RateViews, RankedRateViews, type RateRow } from "@/components/tools/RateBars";
 import { DenialReach } from "@/components/tools/DenialReach";
 import { CENSUS_REGION } from "@/components/tools/USStateMap";
-import { FreshnessDots, InsightLede } from "@/components/tools/Insight";
+import { FreshnessDots, AnswerPanel } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import {
   getWageDenialBands,
@@ -312,7 +312,7 @@ export default async function PermDenialRiskPage() {
           </div>
 
           <section className="mt-6">
-            <InsightLede
+            <AnswerPanel
               verdict={topFlag ? `${topMultiple} the field` : undefined}
               direction="bad"
               source={`${baseline.denied.toLocaleString("en-US")} denials in ${baseline.decided.toLocaleString("en-US")} decided cases`}
@@ -331,7 +331,7 @@ export default async function PermDenialRiskPage() {
                   {baseline.decided.toLocaleString("en-US")} decided cases.
                 </>
               )}
-            </InsightLede>
+            </AnswerPanel>
           </section>
 
           {/* The baseline every other number on the page is read against. */}
@@ -348,7 +348,7 @@ export default async function PermDenialRiskPage() {
           </section>
 
           {/* Read this before the bars, not after. */}
-          <section className="mt-6 border border-border bg-tint-primary p-6">
+          <section className="mt-6 border border-border bg-tint p-6">
             <h2 className="font-heading text-lg font-bold">
               What these rates can and can’t tell you
             </h2>{" "}
@@ -651,7 +651,7 @@ export default async function PermDenialRiskPage() {
             covers the dates side.
           </p>
         </div>
-        <div className="border border-border bg-tint-primary p-6">
+        <div className="border border-border bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">Waiting on one?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Denials are rare; most of the wait is queue time. The{" "}

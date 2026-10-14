@@ -113,7 +113,7 @@ export default function GlossaryPage() {
             {" "}
             <a
               href={`#letter-${l}`}
-              className="flex size-11 items-center justify-center border border-border bg-card font-heading text-base font-bold hover:bg-tint-primary"
+              className="flex size-11 items-center justify-center border border-border bg-card font-heading text-base font-bold hover:bg-tint"
             >
               {l}
             </a>
@@ -217,7 +217,7 @@ function TermChips({ slugs, names }: { slugs: readonly string[]; names: Map<stri
         <li key={slug}>
           <a
             href={`#${slug}`}
-            className="inline-flex min-h-11 items-center border border-border bg-card px-3 text-base font-semibold hover:bg-tint-primary"
+            className="inline-flex min-h-11 items-center border border-border bg-card px-3 text-base font-semibold hover:bg-tint"
           >
             {names.get(slug) ?? slug}
           </a>{" "}

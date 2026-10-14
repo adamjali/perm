@@ -58,6 +58,11 @@ export function formatAsOf(value: string | null | undefined): string | null {
   return name ? `${name} ${Number(m[3])}, ${m[1]}` : null;
 }
 
+/** A date or a timestamp ("2026-08-20T13:05:00") to "August 20, 2026"; null when it's neither. */
+export function formatDay(value: string | null | undefined): string | null {
+  return formatAsOf(value ? value.slice(0, 10) : null);
+}
+
 /**
  * "2026-08-05" to "Aug 5, 2026". For tight columns, as formatMonthShort is.
  *
@@ -70,6 +75,12 @@ export function formatAsOfShort(value: string | null | undefined): string | null
   if (!full) return null;
   const [name, ...rest] = full.split(" ");
   return name ? `${name.slice(0, 3)} ${rest.join(" ")}` : full;
+}
+
+/** "2026-10-27" to "Oct 27": a chart label or a table cell where the year is plain. */
+export function formatMonthDay(value: string | null | undefined): string | null {
+  const short = formatAsOfShort(value);
+  return short ? short.replace(/, \d{4}$/, "") : null;
 }
 
 /**

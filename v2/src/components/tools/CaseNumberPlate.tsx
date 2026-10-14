@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import type { ParsedCaseNumber } from "@/lib/permCaseNumber";
 import { MS_PER_DAY } from "@/lib/time";
 
@@ -70,29 +69,25 @@ export function CaseNumberPlate({
     !!recordedFilingDate && recordedFilingDate !== parsed.filingDate;
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
-      <p className="border-b border-border px-4 py-2 text-sm font-bold text-muted-foreground sm:px-5">
-        Case number
-      </p>
-
-      <div className="px-4 py-5 sm:px-5">
+    <div className={className}>
+      <div>
         {/* Segments, not one run: the hyphens stay so the number is still the
             number a reader can compare against their own paperwork. */}
         <div className="flex flex-wrap items-end gap-x-1 gap-y-3">
           {segments.map((s, i) => (
             <div key={s.label} className="flex items-end">
               <span className="block">
-                <span className="block text-sm font-bold text-muted-foreground">
+                <span className="block text-sm text-muted-foreground">
                   {s.label}
                 </span>{" "}
-                <span className="block font-mono text-xl font-bold leading-none tracking-tight tabular-nums sm:text-2xl">
+                <span className="block font-mono text-xl font-semibold leading-none tabular-nums sm:text-2xl">
                   {s.text}
                 </span>
               </span>
               {i < segments.length - 1 ? (
                 <span
                   aria-hidden="true"
-                  className="px-1 font-mono text-xl font-bold leading-none text-muted-foreground sm:text-2xl"
+                  className="px-1 font-mono text-xl leading-none text-muted-foreground sm:text-2xl"
                 >
                   -
                 </span>
@@ -101,9 +96,9 @@ export function CaseNumberPlate({
           ))}
         </div>
 
-        <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           The middle five digits are a date:{" "}
-          <b className="font-bold text-foreground">
+          <b className="font-semibold text-foreground">
             day {Number(dayOfYear)} of 20{yy}
           </b>
           , which is {decoded}.
@@ -112,7 +107,7 @@ export function CaseNumberPlate({
               {" "}
               DOL&apos;s own record puts the receipt date one or two days off
               that, at{" "}
-              <b className="font-bold text-foreground">
+              <b className="font-semibold text-foreground">
                 {longDate(recordedFilingDate)}
               </b>
               , and the record is what every figure on this page uses.

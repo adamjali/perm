@@ -17,80 +17,20 @@ import { cn } from "@/lib/utils";
 
 type Direction = "good" | "warn" | "bad" | "flat";
 
-/**
- * EVERY ENTRY SETS ITS OWN `text-`, and that is the whole fix.
- *
- * The block that stood here argued the exact opposite - "NO TEXT COLOUR HERE,
- * DELIBERATELY, the badge INHERITS from whatever it sits on" - and it was
- * wrong in a way worth recording, because it reads as a considered decision.
- * Inheriting is only safe when every surface the component can land on shares
- * a foreground. This one lands on an INVERTED panel and on ordinary cards, and
- * those two have opposite foregrounds, so inheriting guarantees it is wrong on
- * one of them. The comment even named the failure it was causing.
- *
- * These set a background and a border and inherited their text colour, which
- * is only safe while the chip sits on a surface whose foreground happens to
- * suit. `Insight` is an INVERTED panel - `bg-foreground text-background` - so
- * the chip inherited the panel's near-white ink and painted it on its own
- * translucent tint. Measured on /perm-rfi-audit before this change, with the
- * browser's own computed values:
- *
- *   light   rgb(250,250,250) on rgb(250,250,250)   1.00:1
- *   dark    rgb(10,10,10)    on rgb(26,26,26)      1.14:1
- *
- * An inherited colour was invisible in both themes, which is what it does when the two surfaces it might
- * land on are inverses of each other.
- *
- * The backgrounds are solid rather than translucent for the same reason: a
- * tint composites against whatever is behind it, so its contrast is a property
- * of the parent rather than of this component. A solid pair can be measured
- * once and stays true wherever the chip is used.
- *
- * THE FILL CANNOT CARRY THE COLOUR, and measuring the tokens is what settled
- * it. A first pass filled each chip with its own `-ink` token and pinned a
- * fixed text colour on top. That works in one theme and cannot work in both,
- * because the `-ink` tokens INVERT between them:
- *
- *   --data-bad-ink    light #b3271a (white 6.52, black 3.22)
- *                     dark  #f87171 (white 2.77, black 7.59)
- *   --data-warn-ink   light #b45309 (white 5.02) / dark #fbbf24 (black 12.58)
- *
- * So white passes in light and fails at 2.77:1 in dark, which is exactly what
- * the re-measurement caught on /perm-denial-risk after the "fix". Only
- * `--primary` holds still (#2ecc40 in both, black 9.83), which is why the
- * lime chip was the one that survived.
- *
- * The chip therefore keeps a `bg-card` / `text-foreground` pair - two tokens
- * designed to flip TOGETHER, so the label is legible in either theme by
- * construction and not by a lucky pairing - and carries its meaning in the
- * BORDER and the mark, both of which use the `-ink` variants that exist
- * precisely to be readable against a card.
- */
-const DIRECTION_STYLE: Record<Direction, string> = {
-  good: "border-primary bg-card text-foreground",
-  warn: "border-[var(--data-warn-ink)] bg-card text-foreground",
-  bad: "border-[var(--data-bad-ink)] bg-card text-foreground",
-  flat: "border-border bg-card text-foreground",
-};
-
-/** The mark carries the direction's colour; the label stays on the safe pair. */
-const DIRECTION_INK: Record<Direction, string> = {
-  good: "text-[var(--data-good-ink)]",
-  warn: "text-[var(--data-warn-ink)]",
-  bad: "text-[var(--data-bad-ink)]",
-  flat: "text-muted-foreground",
-};
-
-const DIRECTION_MARK: Record<Direction, string> = {
-  good: "▲",
-  warn: "▲",
-  bad: "▼",
-  flat: "■",
+/** The dot carries the direction; the label stays on the surface's own ink. */
+const DIRECTION_DOT: Record<Direction, string> = {
+  good: "bg-data-good-ink",
+  warn: "bg-data-warn-ink",
+  bad: "bg-data-bad-ink",
+  flat: "bg-muted-foreground",
 };
 
 /**
- * A verdict chip. Reads before the figure it describes, because "gaining
- * ground" is the answer and "+279" is the evidence.
+ * A verdict chip: a quiet label with a coloured dot, read before the figure it
+ * describes ("Pending", then the sentence). The word carries the meaning; the
+ * dot only repeats it, so nothing rests on colour. The chip is a card on
+ * whatever it sits on, and the dot uses the `-ink` tokens, which clear 3:1 on
+ * a card in both themes.
  */
 export function Verdict({
   direction = "flat",
@@ -100,67 +40,52 @@ export function Verdict({
   children: ReactNode;
 }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 border px-2.5 py-1 text-sm font-bold",
-        DIRECTION_STYLE[direction],
-      )}
-    >
-      <span aria-hidden="true" className={DIRECTION_INK[direction]}>
-        {DIRECTION_MARK[direction]}
-      </span>{" "}
+    <span className="inline-flex items-center gap-2 bg-card px-2.5 py-1 text-sm font-semibold text-foreground">
+      <span aria-hidden="true" className={cn("size-2.5 shrink-0", DIRECTION_DOT[direction])} />{" "}
       {children}
     </span>
   );
 }
 
 /**
- * The lede claim on a data page: one sentence stating what the data says,
- * with the figures inside it, above everything else on the page.
+ * The answer block: the one tinted panel on a page, holding the fact the page
+ * exists to give and the one thing to do next.
+ *
+ * Everything above `actions` is a claim TRUE BY CONSTRUCTION, arithmetic on
+ * figures already on the page. A verdict we cannot derive is a verdict we do
+ * not ship. The source line says where the figures came from, under them.
  */
-export function InsightLede({
+export function AnswerPanel({
   verdict,
   direction,
+  label,
   children,
   source,
   actions,
+  className,
 }: {
   verdict?: string;
   direction?: Direction;
+  /** Beside the chip: what the answer is about (a case number, a month). */
+  label?: ReactNode;
   children: ReactNode;
   source?: ReactNode;
   /** What to do next, under the claim and above the source line. */
   actions?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="border border-border bg-foreground p-6 text-background sm:p-8">
-      {verdict ? (
-        <div className="mb-4">
-          <Verdict direction={direction}>{verdict}</Verdict>
+    <section className={cn("bg-tint p-5 sm:p-8", className)}>
+      {verdict || label ? (
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+          {verdict ? <Verdict direction={direction}>{verdict}</Verdict> : null}{" "}
+          {label ? <span className="font-mono text-sm text-soft">{label}</span> : null}
         </div>
       ) : null}
-      <p className="max-w-3xl font-heading text-xl font-bold leading-snug sm:text-2xl">
-        {children}
-      </p>{" "}
+      <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-xl">{children}</p>{" "}
       {actions ?? null}{" "}
-      {/* /70, not /50. Measured on this panel in dark mode: the source line
-          came out at 3.71:1 against a 4.5 floor, which is a dateline nobody
-          can read on the one component whose whole job is saying where the
-          figures came from. Tracked caps at 12px are already the hardest thing
-          on the page to read, and a half-opacity ink on top of that is three
-          legibility taxes at once.
-
-          The comment sits HERE rather than inside the ternary: the first
-          position after `? (` is an expression, not JSX children, so a JSX
-          comment there parses as an object literal and takes the build down.
-          Writing that rule out cost a second build, because spelling the
-          comment delimiters literally inside a comment closes it early. */}
-      {source ? (
-        <p className="mt-3 text-sm text-background/70">
-          {source}
-        </p>
-      ) : null}{" "}
-    </div>
+      {source ? <p className="mt-5 text-sm text-muted-foreground">{source}</p> : null}
+    </section>
   );
 }
 

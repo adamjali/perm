@@ -359,7 +359,7 @@ export default function CalculatorsPage() {
                   (t.tone === "ink"
                     ? "bg-foreground text-background"
                     : t.tone === "tint"
-                      ? "bg-tint-primary"
+                      ? "bg-tint"
                       : t.tone === "pop"
                         ? "bg-card"
                         : "bg-card")
@@ -445,7 +445,7 @@ export default function CalculatorsPage() {
               <Link
                 key={t.href}
                 href={t.href}
-                className="group flex flex-wrap items-start gap-x-4 gap-y-2 p-6 transition-colors duration-150 hover:bg-tint-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset sm:p-8"
+                className="group flex flex-wrap items-start gap-x-4 gap-y-2 p-6 transition-colors duration-150 hover:bg-tint focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset sm:p-8"
               >
                 <Icon className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
                 <div className="min-w-0 flex-1">

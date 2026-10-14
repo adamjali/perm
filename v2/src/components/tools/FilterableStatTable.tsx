@@ -423,7 +423,7 @@ export function FilterableStatTable<T>({
             <button
               type="button"
               onClick={downloadCsv}
-              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
             >
               Download CSV
             </button>
@@ -619,7 +619,7 @@ export function FilterableStatTable<T>({
                 setPage((p) => Math.max(0, p - 1));
               }}
               disabled={safePage === 0}
-              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             >
               ← Prev
             </button>{" "}
@@ -630,7 +630,7 @@ export function FilterableStatTable<T>({
                 setPage((p) => Math.min(pageCount - 1, p + 1));
               }}
               disabled={safePage >= pageCount - 1}
-              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             >
               Next →
             </button>
@@ -647,7 +647,7 @@ export function FilterableStatTable<T>({
           what={`The search across all ${noun}`}
           failure={remoteFailure}
           onRetry={() => setRemoteAttempt((n) => n + 1)}
-          className="mt-4 border border-border bg-tint-primary p-4"
+          className="mt-4 border border-border bg-tint p-4"
         />
       ) : null}
       {remoteExtra}

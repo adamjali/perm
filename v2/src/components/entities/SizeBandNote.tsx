@@ -89,7 +89,7 @@ export function SizeBandNote({
               <dt className="text-sm font-bold text-soft">{row.k}</dt>{" "}
               <dd className="m-0 h-4 border border-border bg-background">
                 <span
-                  className={cn("block h-full", row.strong ? "bg-primary" : "bg-foreground/45")}
+                  className={cn("block h-full", row.strong ? "bg-primary" : "bg-foreground/50")}
                   style={{ width: `${Math.max(2, ((row.v ?? 0) / max) * 100)}%` }}
                 />
               </dd>{" "}

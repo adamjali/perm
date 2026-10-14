@@ -19,7 +19,7 @@ import {
 const SELECT_CLASS =
   "mt-2 block min-h-[44px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const OPTION_CLASS =
-  "flex min-h-[44px] cursor-pointer items-center gap-3 border border-border bg-background px-3 py-2 text-base has-[:checked]:bg-tint-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary";
+  "flex min-h-[44px] cursor-pointer items-center gap-3 border border-border bg-background px-3 py-2 text-base has-[:checked]:bg-tint has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary";
 
 const SPONSORS: Array<{ value: Sponsor; label: string }> = [
   { value: "employer", label: "A US employer offering me a job" },

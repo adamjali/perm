@@ -128,7 +128,7 @@ export default async function PermByStatePage() {
                 De-duplicated by case number across the quarterly files.
               </p>
             </div>
-            <div className="border border-border bg-tint-primary p-6">
+            <div className="border border-border bg-tint p-6">
               <p className="text-sm font-bold text-muted-foreground">
                 Busiest state
               </p>{" "}
@@ -202,7 +202,7 @@ export default async function PermByStatePage() {
             </>
           ) : null}
 
-          <section className="mt-10 border border-border bg-tint-primary p-6">
+          <section className="mt-10 border border-border bg-tint p-6">
             <h2 className="font-heading text-lg font-bold">
               Reading a rate off a small state
             </h2>{" "}
@@ -241,7 +241,7 @@ export default async function PermByStatePage() {
 
       {/* Both doors, as everywhere on the data surface. */}
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-tint-primary p-6">
+        <div className="border border-border bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">Waiting on a case here?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The state doesn’t change your place in line. The filing month

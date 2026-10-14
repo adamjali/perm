@@ -326,7 +326,7 @@ export function H1bLotteryCalculator() {
               <p className="mt-1 font-heading text-4xl font-bold">Level {assigned.level}</p>{" "}
               <p className="mt-1 text-base">Entered in the draw {timesWord(odds.entries)}.</p>
             </div>{" "}
-            <div className="border border-border bg-tint-primary p-5">
+            <div className="border border-border bg-tint p-5">
               <p className="text-sm font-bold text-muted-foreground">DHS&apos;s estimated chance at that level</p>{" "}
               <p className="mt-1 font-heading text-4xl font-bold tabular-nums">{odds.percent.toFixed(1)}%</p>{" "}
               <p className="mt-1 text-base">Against {WEIGHTED_ESTIMATE.randomPercent}% for everyone under the old random draw (the dashed line).</p>

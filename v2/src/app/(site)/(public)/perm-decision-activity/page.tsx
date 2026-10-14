@@ -489,7 +489,7 @@ export default async function DecisionActivityPage() {
       ) : null}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-tint-primary p-6">
+        <div className="border border-border bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">Waiting on a case?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Pace alone does not place a case in the queue. The{" "}

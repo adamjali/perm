@@ -1,4 +1,5 @@
 import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
+import { AnswerPanel } from "@/components/tools/Insight";
 import { WatchThisNumber } from "@/components/tools/WatchThisNumber";
 import { unsettledClause, unsettledVerdict, type LookupGap } from "@/lib/dolMiss";
 import type { FlagProgram } from "@/lib/flagCaseNumber";
@@ -25,40 +26,33 @@ export function DolUnanswered({
   watch?: FlagProgram;
 }) {
   const retry = `/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
-  const panel = (
-    <section className="border border-border bg-card p-5 sm:p-6">
-      <p className="text-sm font-bold text-muted-foreground">{label}</p>{" "}
-      <h2 className="mt-2 break-words font-heading text-2xl font-bold">
-        {unsettledVerdict(miss)}
-      </h2>{" "}
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
-        {miss === "records" ? "We couldn't check" : "We hold no record for"}{" "}
-        <span className="font-mono font-bold" translate="no">{caseNumber}</span>
-        {miss === "records" ? " just now: " : " yet, "}
-        {unsettledClause(miss)}{" "}
-        <a
-          href={retry}
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-        >
-          Try again
-        </a>{" "}
-        or use{" "}
-        <a
-          href={DOL_CASE_STATUS_URL}
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-          rel="noopener"
-        >
-          DOL&apos;s own case status page
-        </a>
-        .
-      </p>
-    </section>
-  );
-  if (!watch) return panel;
   return (
-    <div className="space-y-6">
-      {panel}{" "}
-      <WatchThisNumber caseNumber={caseNumber} program={watch} />
-    </div>
+    <AnswerPanel
+      verdict={unsettledVerdict(miss)}
+      direction="flat"
+      label={
+        <>
+          {label} <span translate="no">{caseNumber}</span>
+        </>
+      }
+      actions={
+        watch ? (
+          <div className="mt-6 border-t border-foreground/10 pt-6">
+            <WatchThisNumber caseNumber={caseNumber} program={watch} variant="inline" />
+          </div>
+        ) : undefined
+      }
+    >
+      {miss === "records" ? "We couldn't check this number just now: " : "We hold no record for this number yet, "}
+      {unsettledClause(miss)}{" "}
+      <a href={retry} className="link">
+        Try again
+      </a>{" "}
+      or use{" "}
+      <a href={DOL_CASE_STATUS_URL} className="link" rel="noopener">
+        DOL&apos;s own case status page
+      </a>
+      .
+    </AnswerPanel>
   );
 }

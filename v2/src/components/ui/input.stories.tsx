@@ -118,14 +118,14 @@ export const NeobrutalistShowcase: Story = {
   args: {},
   render: () => (
     <div className="p-8 space-y-4">
-      <div className="text-sm font-semibold mb-4 text-foreground">Focus inputs to see the neobrutalist shadow upgrade</div>
+      <div className="text-sm font-semibold mb-4 text-foreground">Focus an input to see the focus ring</div>
       <div className="grid gap-4 max-w-sm">
         <Input placeholder="Click to focus..." />
-        <Input placeholder="Watch the shadow change..." />
-        <Input placeholder="Hard shadow on focus!" />
+        <Input placeholder="Tab here from the keyboard" />
+        <Input placeholder="A third field" />
       </div>
       <div className="text-sm text-muted-foreground mt-4">
-        Notice the hard shadow (shadow-hard-sm → shadow-hard) and focus ring
+        A 1px control line at rest; a 2px green ring on keyboard focus.
       </div>
     </div>
   ),

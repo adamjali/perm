@@ -76,7 +76,7 @@ export function UscisH1bRecord({
           <p className="text-sm font-bold text-muted-foreground">Denied</p>{" "}
           <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(denied)}</p>
         </div>{" "}
-        <div className="border border-border bg-tint-primary p-4">
+        <div className="border border-border bg-tint p-4">
           <p className="text-sm font-bold text-muted-foreground">Approved on first decision</p>{" "}
           <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{rate === null ? "Too few" : pct(rate)}</p>{" "}
           {rate === null ? <p className="text-sm text-muted-foreground">Under 20 decisions that year.</p> : null}

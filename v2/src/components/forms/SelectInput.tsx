@@ -28,13 +28,9 @@ export interface SelectInputProps
 }
 
 /**
- * SelectInput component - styled dropdown with neobrutalist design.
- *
- * Features:
- * - Native select with consistent neobrutalist styling
- * - Hard shadows and black border
- * - Placeholder support
- * - Error state styling
+ * The site's one dropdown: a native select (so phones show their own picker
+ * and every browser gets keyboard use for free) drawn like the text inputs,
+ * a 1px control line, 16px text and a chevron.
  */
 export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>(
   ({ className, options, placeholder, error, ...props }, ref) => {
@@ -43,14 +39,11 @@ export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>
         ref={ref}
         aria-invalid={error ? "true" : undefined}
         className={cn(
-          // Base styles - neobrutalist
-          "h-11 w-full min-w-0 border bg-background px-3 py-1 text-base transition-colors duration-150 outline-none appearance-none cursor-pointer dark:bg-input/30",
+          "h-11 w-full min-w-0 border bg-card px-3 py-1 text-base transition-colors duration-150 outline-none appearance-none cursor-pointer",
           // Custom arrow (black for light mode, light gray for dark mode)
           "bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-10",
           // Dark mode: native <option> elements use system colors; color-scheme ensures they match
           "dark:text-foreground dark:[color-scheme:dark]",
-          // Hover state
-          "",
           // Focus state
           "focus:ring-2 focus:ring-ring focus-visible:border-ring",
           // Disabled state

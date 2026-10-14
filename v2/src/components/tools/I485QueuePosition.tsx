@@ -584,7 +584,7 @@ export function I485QueuePosition({
                 yours. Anyone who hasn’t filed yet isn’t in this figure.
               </p>
             </div>{" "}
-            <div className="bg-tint-primary p-6 sm:p-8">
+            <div className="bg-tint p-6 sm:p-8">
               <p className={EYEBROW_CLASS}>The whole category</p>{" "}
               <p className="mt-2 font-heading text-3xl font-bold leading-none tabular-nums">
                 {position.categorySuppressedCells > 0
@@ -649,7 +649,7 @@ export function I485QueuePosition({
                           style={{ width: `${Math.max(((t.available ?? t.total) / max) * 100, 1)}%` }}
                         />{" "}
                         <span
-                          className="block h-full bg-foreground/45"
+                          className="block h-full bg-foreground/50"
                           style={{ width: `${Math.max(((t.awaiting ?? 0) / max) * 100, 0)}%` }}
                         />
                       </span>{" "}
@@ -770,7 +770,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
               type="button"
               onClick={() => setSupply(String(a.value))}
               title={a.note}
-              className="min-h-11 border border-border bg-card px-3 text-sm font-semibold transition-colors hover:bg-tint-primary"
+              className="min-h-11 border border-border bg-card px-3 text-sm font-semibold transition-colors hover:bg-tint"
             >
               {a.label}: {formatInt(a.value)}
             </button>

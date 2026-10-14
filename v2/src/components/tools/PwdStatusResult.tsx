@@ -8,7 +8,6 @@ import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import {
   lookupPwdCaseOutcome,
   lookupPwdDetermination,
-  type PwdCaseRow,
   type PwdDisclosedRow,
 } from "@/lib/turso/pwdCases";
 import { currentMonthUtc } from "@/lib/dolFormat";
@@ -17,8 +16,15 @@ import { formatWage } from "@/lib/wageFormat";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { QueueAlertForm } from "@/app/(site)/(public)/perm-processing-times/QueueAlertForm";
 import { WatchThisNumber } from "@/components/tools/WatchThisNumber";
+import { AnswerNext } from "@/components/tools/AnswerNext";
+import { AnswerPanel } from "@/components/tools/Insight";
+import { PageSection } from "@/components/data/PageSection";
+import { RecordList } from "@/components/data/RecordList";
+import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { isLookupGap } from "@/lib/dolMiss";
 import { formatInt } from "@/lib/format";
+import { formatDay } from "@/lib/dolFormat";
+import { prettyStatus } from "@/components/queue/stages";
 
 /**
  * A prevailing wage request (ETA-9141) by number: DOL's own status for it,
@@ -33,38 +39,13 @@ import { formatInt } from "@/lib/format";
  * common case and the later of the two.
  */
 
-function prettyStatus(s: string): string {
-  const u = s.trim().toUpperCase();
-  if (u === "IN PROCESS") return "In process";
-  return u.charAt(0) + u.slice(1).toLowerCase();
-}
 
-function chipClass(row: PwdCaseRow): string {
-  const u = row.status.toUpperCase();
-  if (u === "DETERMINATION ISSUED" || u.startsWith("REDETERMINATION")) {
-    return "bg-primary text-primary-foreground";
-  }
-  if (u === "DENIED") return "bg-foreground text-background";
-  if (row.isFinal) return "bg-card";
-  return "bg-tint-primary";
-}
 
 /** A share as a percent; one decimal just under 100, so 99.5% never reads as all of them. */
 function sharePct(x: number): string {
   return x >= 0.99 && x < 1 ? `${(Math.floor(x * 1000) / 10).toFixed(1)}%` : `${Math.round(x * 100)}%`;
 }
 
-function day(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = iso.slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(d)
-    ? new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : null;
-}
 
 const ISSUED = /^(DETERMINATION ISSUED|REDETERMINATION|CENTER DIRECTOR REVIEW)/;
 
@@ -90,61 +71,48 @@ function Determination({ d }: { d: PwdDisclosedRow }) {
   const wage = formatWage(d.wage, d.wageUnit);
   const until = issued ? validUntil(d.decisionDate) : null;
   return (
-    <section className="border border-border bg-card p-5 sm:p-6">
-      <p className="text-sm font-bold text-muted-foreground">
-        DOL&apos;s determination · from the quarterly disclosure file
-      </p>{" "}
+    <PageSection title="DOL's determination" lede="From DOL's quarterly disclosure file: the part the live record never says.">
       {issued && wage ? (
         <>
-          <p className="mt-2 font-heading text-3xl font-bold sm:text-4xl">{wage}</p>{" "}
+          <p className="font-heading text-3xl font-bold sm:text-4xl">{wage}</p>{" "}
           <YearlyPayNote wage={d.wage} unit={d.wageUnit} />
         </>
       ) : (
-        <p className="mt-2 font-heading text-2xl font-bold">{d.status.charAt(0) + d.status.slice(1).toLowerCase()}</p>
+        <p className="font-heading text-2xl font-bold">{d.status.charAt(0) + d.status.slice(1).toLowerCase()}</p>
       )}{" "}
-      <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
-        {d.socTitle || d.socCode ? (
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Occupation DOL used</dt>{" "}
-            <dd className="font-medium">
-              {d.socTitle ?? "Not given"}
-              {d.socCode ? <span className="font-mono text-sm text-muted-foreground"> · {d.socCode}</span> : null}
-            </dd>
-          </div>
-        ) : null}{" "}
-        {d.worksiteState ? (
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Worksite state</dt>{" "}
-            <dd className="font-medium">{d.worksiteState}</dd>
-          </div>
-        ) : null}{" "}
-        <div>
-          <dt className="text-sm font-bold text-muted-foreground">Received by DOL</dt>{" "}
-          <dd className="font-medium">{day(d.receivedDate) ?? "Unknown"}</dd>
-        </div>{" "}
-        <div>
-          <dt className="text-sm font-bold text-muted-foreground">{issued ? "Determination date" : "Decided"}</dt>{" "}
-          <dd className="font-medium">{day(d.decisionDate) ?? "Unknown"}</dd>
-        </div>{" "}
-        {until ? (
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Valid until</dt>{" "}
-            <dd className="font-medium">{day(until)}</dd>
-          </div>
-        ) : null}
-      </dl>{" "}
+      <RecordList
+        className="mt-6"
+        rows={[
+          ...(d.socTitle || d.socCode
+            ? [
+                {
+                  label: "Occupation DOL used",
+                  value: (
+                    <>
+                      {d.socTitle ?? "Not given"}
+                      {d.socCode ? <span className="font-mono text-sm font-normal text-muted-foreground"> · {d.socCode}</span> : null}
+                    </>
+                  ),
+                },
+              ]
+            : []),
+          ...(d.worksiteState ? [{ label: "Worksite state", value: d.worksiteState }] : []),
+          { label: "Received by DOL", value: formatDay(d.receivedDate) ?? "Unknown" },
+          { label: issued ? "Determination date" : "Decided", value: formatDay(d.decisionDate) ?? "Unknown" },
+          ...(until ? [{ label: "Valid until", value: formatDay(until) }] : []),
+        ]}
+      />{" "}
       {until ? (
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          The PERM must be filed, or recruitment started, before the
-          determination expires. Every date after it is arithmetic on this one;
-          the{" "}
-          <Link href="/tools/perm-deadline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          The PERM must be filed, or recruitment started, before the determination expires. Every date after it is
+          arithmetic on this one; the{" "}
+          <Link href="/tools/perm-deadline-calculator" className="link">
             deadline calculator
           </Link>{" "}
           works them out.
         </p>
       ) : null}
-    </section>
+    </PageSection>
   );
 }
 
@@ -161,42 +129,42 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
     // DOL's live endpoint has nothing (or did not answer) but the quarterly
     // file holds the decided record: show that, plainly labelled as the file.
     return (
-      <div className="space-y-6">
-        <section className="border border-border bg-card p-5 sm:p-6">
-          <p className="text-sm font-bold text-muted-foreground">
-            Prevailing wage request · ETA-9141
-          </p>{" "}
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <h2 className="font-heading text-2xl font-bold sm:text-3xl" translate="no">{disclosed.caseNumber}</h2>{" "}
-            <span className="border border-border bg-primary px-2 py-0.5 font-mono text-sm font-bold text-primary-foreground">
-              {prettyStatus(disclosed.status)}
-            </span>
-          </div>{" "}
-          <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
-            <div>
-              <dt className="text-sm font-bold text-muted-foreground">Employer</dt>{" "}
-              <dd className="font-medium" translate="no">
-                {disclosed.employerName ? (
-                  <Link href={`/pwd-cases?q=${encodeURIComponent(disclosed.employerName)}`} className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+      <div>
+        <AnswerPanel
+          verdict={ISSUED.test(disclosed.status.toUpperCase()) ? "Wage set" : "Decided"}
+          direction={disclosed.status.toUpperCase() === "DENIED" ? "bad" : "good"}
+          label={
+            <>
+              Wage request <span translate="no">{disclosed.caseNumber}</span>
+            </>
+          }
+          source="From DOL's quarterly disclosure file, which lists decided requests only"
+        >
+          DOL decided this wage request:{" "}
+          <b className="font-semibold" translate="no">
+            {prettyStatus(disclosed.status)}
+          </b>
+          . Its live case system didn&apos;t return the number, so the record below is from the quarterly file.
+        </AnswerPanel>
+        <Determination d={disclosed} />
+        <PageSection title="The record">
+          <RecordList
+            rows={[
+              {
+                label: "Employer",
+                raw: true,
+                value: disclosed.employerName ? (
+                  <Link href={`/pwd-cases?q=${encodeURIComponent(disclosed.employerName)}`} className="link">
                     {disclosed.employerName}
                   </Link>
                 ) : (
                   "Not given"
-                )}
-              </dd>
-            </div>{" "}
-            <div>
-              <dt className="text-sm font-bold text-muted-foreground">Job title</dt>{" "}
-              <dd className="font-medium">{disclosed.jobTitle ?? "Not given"}</dd>
-            </div>
-          </dl>{" "}
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            DOL&apos;s live case system didn&apos;t return this number; the record
-            above is from its quarterly disclosure file, which lists decided
-            requests only.
-          </p>
-        </section>
-        <Determination d={disclosed} />
+                ),
+              },
+              { label: "Job title", value: disclosed.jobTitle ?? "Not given", raw: !!disclosed.jobTitle },
+            ]}
+          />
+        </PageSection>
       </div>
     );
   }
@@ -207,37 +175,31 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
 
   if (!row) {
     return (
-      <div className="space-y-6">
-      <section className="border border-border bg-card p-5 sm:p-6">
-        <p className="text-sm font-bold text-muted-foreground">
-          Prevailing wage request
-        </p>{" "}
-        <h2 className="mt-2 font-heading text-2xl font-bold">
-          No record under {caseNumber}
-        </h2>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
-          DOL&apos;s case system holds nothing under this number.
-          It may be a typo, a filing from the last day, or a
-          number from before DOL&apos;s current system. Check it on{" "}
-          <a
-            href="https://flag.dol.gov/case-status-search"
-            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            rel="noopener"
-          >
-            DOL&apos;s own case status page
-          </a>
-          , which takes P- numbers, or find it by employer on the{" "}
-          <Link
-            href="/pwd-cases"
-            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-          >
-            wage request search
-          </Link>
-          .
-        </p>
-      </section>{" "}
-      <WatchThisNumber caseNumber={caseNumber} program="pwd" />
-      </div>
+      <AnswerPanel
+        verdict="No record"
+        direction="flat"
+        label={
+          <>
+            Wage request <span translate="no">{caseNumber}</span>
+          </>
+        }
+        actions={
+          <div className="mt-6 border-t border-foreground/10 pt-6">
+            <WatchThisNumber caseNumber={caseNumber} program="pwd" variant="inline" />
+          </div>
+        }
+      >
+        DOL&apos;s case system holds nothing under this number. It may be a typo, a filing from the last day, or a
+        number from before DOL&apos;s current system. Check it on{" "}
+        <a href="https://flag.dol.gov/case-status-search" className="link" rel="noopener">
+          DOL&apos;s own case status page
+        </a>
+        , or find it by employer on the{" "}
+        <Link href="/pwd-cases" className="link">
+          wage request search
+        </Link>
+        .
+      </AnswerPanel>
     );
   }
 
@@ -267,166 +229,165 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
       : null;
   const dated = dayEst && dayEst.kind === "estimate" ? dayEst : null;
 
+  const pending = !row.isFinal;
+  const upper = row.status.toUpperCase();
+  const issuedNow = ISSUED.test(upper);
+  const filed = formatDay(row.submittedDate) ?? formatDay(row.filingDate);
+  const oews = est?.frontier?.oewsMonth ?? null;
+
   return (
-    <div className="space-y-6">
-      <section className="border border-border bg-card p-5 sm:p-6">
-        <p className="text-sm font-bold text-muted-foreground">
-          Prevailing wage request · ETA-9141
-        </p>{" "}
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h2 className="font-heading text-2xl font-bold sm:text-3xl" translate="no">{row.caseNumber}</h2>{" "}
-          <span
-            className={
-              "border border-border px-2 py-0.5 font-mono text-sm font-bold " + chipClass(row)
-            }
-          >
-            {prettyStatus(row.status)}
-          </span>
-        </div>{" "}
-        <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Employer</dt>{" "}
-            <dd className="font-medium" translate="no">
-              {row.employerName ? (
-                <Link
-                  href={`/pwd-cases?q=${encodeURIComponent(row.employerName)}`}
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  {row.employerName}
-                </Link>
-              ) : (
-                "Not given"
-              )}
-            </dd>
-          </div>{" "}
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Job title</dt>{" "}
-            <dd className="font-medium">{row.jobTitle ?? "Not given"}</dd>
-          </div>{" "}
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Filed with DOL</dt>{" "}
-            <dd className="font-medium">{day(row.submittedDate) ?? day(row.filingDate) ?? "Unknown"}</dd>
-          </div>{" "}
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Last checked against DOL</dt>{" "}
-            <dd className="font-medium">{day(row.lastCheckedAt) ?? "Today"}</dd>
-          </div>
-        </dl>{" "}
-        {notPerm ? (
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            DOL tags this request as {row.visaType}. The queue figures on this
-            site cover PERM wage requests only, so none are shown for it.
-          </p>
-        ) : null}
-      </section>
+    <div>
+      <AnswerPanel
+        verdict={pending ? "Waiting" : issuedNow ? "Wage set" : "Decided"}
+        direction={upper === "DENIED" ? "bad" : issuedNow ? "good" : "flat"}
+        label={
+          <>
+            Wage request <span translate="no">{row.caseNumber}</span>
+          </>
+        }
+        source={row.lastCheckedAt ? `DOL showed this status on ${formatDay(row.lastCheckedAt)}` : undefined}
+        actions={
+          pending ? (
+            <AnswerNext
+              caseNumber={row.caseNumber}
+              program="pwd"
+              dateLabel="Estimated determination"
+              date={
+                notPerm
+                  ? null
+                  : dated
+                    ? `Around ${formatDay(dated.date)}`
+                    : estimate?.estimatedMonth
+                      ? formatMonth(estimate.estimatedMonth)
+                      : null
+              }
+              note={
+                !notPerm && (dated || estimate?.estimatedMonth) ? (
+                  <a href="#wage-queue" className="link inline-flex min-h-11 items-center">
+                    How this is worked out
+                  </a>
+                ) : null
+              }
+            />
+          ) : undefined
+        }
+      >
+        DOL&apos;s status for this wage request is{" "}
+        <b className="font-semibold" translate="no">
+          {prettyStatus(row.status)}
+        </b>
+        .{filed ? ` It was filed ${filed}.` : ""}
+        {pending && !notPerm && oews
+          ? ` DOL is working requests received in ${formatMonth(oews)} where the wage comes from the OEWS survey.`
+          : ""}
+      </AnswerPanel>
+
+      {notPerm ? (
+        <p className="mt-6 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          DOL tags this request as {row.visaType}. The queue figures on this site cover PERM wage requests only, so
+          none are shown for it.
+        </p>
+      ) : null}
 
       {disclosed ? <Determination d={disclosed} /> : null}
 
-      {!row.isFinal && !notPerm ? (
-        <section className="border border-border bg-card p-5 sm:p-6">
-          <h3 className="font-heading text-xl font-bold">Where it sits in DOL&apos;s wage queue</h3>{" "}
-          {est?.frontier?.oewsMonth ? (
-            <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
-              As of {formatAsOf(est.asOf) ?? est.asOf}, DOL is working requests
-              received in {formatMonth(est.frontier.oewsMonth)} where the wage comes
-              from the OEWS survey
-              {est.frontier.nonOewsMonth
-                ? `, and ${formatMonth(est.frontier.nonOewsMonth)} where it doesn't`
-                : ""}
+      {pending && !notPerm ? (
+        <PageSection id="wage-queue" title="Where it sits in DOL's wage queue">
+          {oews ? (
+            <p className="max-w-2xl text-base leading-relaxed text-soft">
+              As of {formatAsOf(est?.asOf ?? null) ?? est?.asOf}, DOL is working requests received in{" "}
+              {formatMonth(oews)} where the wage comes from the OEWS survey
+              {est?.frontier?.nonOewsMonth ? `, and ${formatMonth(est.frontier.nonOewsMonth)} where it doesn't` : ""}
               . A case record doesn&apos;t say which line this one is in.
             </p>
           ) : (
-            <p className="mt-3 text-base text-soft">
+            <p className="text-base text-soft">
               DOL&apos;s current queue position didn&apos;t load. The{" "}
-              <Link href="/tools/pwd-calculator" className="underline decoration-primary decoration-2 underline-offset-2">
+              <Link href="/tools/pwd-calculator" className="link">
                 PWD queue calculator
               </Link>{" "}
               has it.
             </p>
           )}{" "}
           {estimate && month ? (
-            <dl className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
-              <div className="border border-border bg-tint-primary p-4">
-                <dt className="text-sm font-bold text-muted-foreground">Requests ahead of {formatMonth(month)}</dt>{" "}
-                <dd className="mt-1 font-heading text-2xl font-bold">{formatInt(estimate.requestsAhead)}</dd>
-              </div>{" "}
-              <div className="border border-border bg-card p-4">
-                <dt className="text-sm font-bold text-muted-foreground">Received the same month</dt>{" "}
-                <dd className="mt-1 font-heading text-2xl font-bold">{formatInt(estimate.requestsSameMonth)}</dd>
-              </div>{" "}
-              <div className="border border-border bg-card p-4">
-                <dt className="text-sm font-bold text-muted-foreground">Estimated determination</dt>{" "}
-                <dd className="mt-1 font-heading text-2xl font-bold">
-                  {dated
-                    ? `Around ${day(dated.date)}`
-                    : estimate.estimatedMonth
-                      ? formatMonth(estimate.estimatedMonth)
-                      : "Not enough history yet"}
-                </dd>
-              </div>
-            </dl>
+            <FigureRow className="mt-6">
+              <Figure label={`Requests ahead of ${formatMonth(month)}`} value={formatInt(estimate.requestsAhead)} />
+              <Figure label="Received the same month" value={formatInt(estimate.requestsSameMonth)} />
+            </FigureRow>
           ) : null}{" "}
           {dated ? (
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-soft">
               {dated.rangeFrom === "measured"
                 ? "Going by how far recent determinations landed from their dates, between "
                 : "If DOL keeps to its fastest or slowest recent pace, between "}
-              <b>{day(dated.earliest)}</b> and <b>{day(dated.latest)}</b>.{" "}
-              {formatInt(dated.requestsAhead)} PERM wage requests filed before this one are still in process,
-              and DOL has been finishing about {formatInt(Math.round(dated.pace))} a day.
+              <b className="font-semibold text-foreground">{formatDay(dated.earliest)}</b> and{" "}
+              <b className="font-semibold text-foreground">{formatDay(dated.latest)}</b>.{" "}
+              {formatInt(dated.requestsAhead)} PERM wage requests filed before this one are still in process, and DOL
+              has been finishing about {formatInt(Math.round(dated.pace))} a day.
               {dayData?.tested
                 ? ` Tested on ${formatInt(dayData.tested.decided)} requests DOL has since decided, the date was typically ${dayData.tested.typicalMissDays} ${dayData.tested.typicalMissDays === 1 ? "day" : "days"} off${dayData.tested.within7Share !== null ? `, and ${sharePct(dayData.tested.within7Share)} were within a week` : ""}.`
                 : ""}
             </p>
           ) : null}{" "}
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            An estimate only. It assumes DOL keeps clearing requests at its
-            recent rate. The{" "}
-            <Link href="/tools/pwd-calculator" className="underline decoration-primary decoration-2 underline-offset-2">
+            An estimate only. It assumes DOL keeps clearing requests at its recent rate. The{" "}
+            <Link href="/tools/pwd-calculator" className="link">
               PWD queue calculator
             </Link>{" "}
             shows the same figures for any month.
           </p>
-        </section>
+        </PageSection>
       ) : null}
 
-      {/* TWO alerts, and the order is the point. THIS request moving is what
-          the reader came for, so it goes first and is offered on every pending
-          request, PERM-tagged or not. The queue-month alert below is the
-          weaker, broader signal and only makes sense for a PERM request. */}
-      {!row.isFinal ? <WatchThisNumber caseNumber={row.caseNumber} program="pwd" /> : null}
-
-      {!row.isFinal && !notPerm ? (
-        // The broader signal: hear when DOL reaches this filing month. Same
-        // machinery as the calculator page's form, same PWD queues; the
-        // source tag says which page asked.
-        <QueueAlertForm
-          source="pwd-status"
-          newestMonth={currentMonthUtc()}
-          queue="pwd-oews"
-          allowPwdChoice
+      <PageSection title="The record" lede="As DOL holds it.">
+        <RecordList
+          rows={[
+            {
+              label: "Employer",
+              raw: true,
+              value: row.employerName ? (
+                <Link href={`/pwd-cases?q=${encodeURIComponent(row.employerName)}`} className="link">
+                  {row.employerName}
+                </Link>
+              ) : (
+                "Not given"
+              ),
+            },
+            { label: "Job title", value: row.jobTitle ?? "Not given", raw: !!row.jobTitle },
+            { label: "Case number", value: row.caseNumber, raw: true, mono: true },
+            { label: "Filed with DOL", value: filed ?? "Unknown" },
+            { label: "Last checked against DOL", value: formatDay(row.lastCheckedAt) ?? "Today" },
+          ]}
         />
+      </PageSection>
+
+      {/* The broader signal: hear when DOL reaches this filing month. Same
+          machinery as the calculator page's form, same PWD queues; the source
+          tag says which page asked. */}
+      {pending && !notPerm ? (
+        <PageSection title="Or hear when DOL reaches this month" lede="One email when DOL's wage queue gets to your filing month.">
+          <QueueAlertForm source="pwd-status" newestMonth={currentMonthUtc()} queue="pwd-oews" allowPwdChoice bare />
+        </PageSection>
       ) : null}
 
       {row.isFinal && !disclosed ? (
-        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          The wage DOL set is not in its live record. It arrives in the next
-          quarterly disclosure file, which this page reads as soon as it lands.
+        <p className="mt-6 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          The wage DOL set isn&apos;t in its live record. It arrives in the next quarterly disclosure file, which this
+          page reads as soon as it lands.
         </p>
       ) : null}
 
       {row.isFinal ? (
-        <section className="border border-border bg-tint-primary p-5 sm:p-6">
-          <h3 className="font-heading text-xl font-bold">What comes next</h3>{" "}
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
-            With the wage set, the employer recruits, then files the PERM. That
-            gets its own G- case number. Once filed, the{" "}
-            <Link href="/perm-cases" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+        <PageSection title="What comes next">
+          <p className="max-w-2xl text-base leading-relaxed text-soft">
+            With the wage set, the employer recruits, then files the PERM. That gets its own G- case number. Once
+            filed, the{" "}
+            <Link href="/perm-cases" className="link">
               PERM case search
             </Link>{" "}
             finds it by employer, usually within a day.
           </p>
-        </section>
+        </PageSection>
       ) : null}
     </div>
   );

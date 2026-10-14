@@ -274,7 +274,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
             <DenialRateLine points={points} />
 
             {split ? (
-              <section className="mt-12 border border-border bg-tint-primary p-6 sm:p-8">
+              <section className="mt-12 border border-border bg-tint p-6 sm:p-8">
                 <h3 className="font-heading text-xl font-bold">
                   What the {category} rate is an average of
                 </h3>{" "}

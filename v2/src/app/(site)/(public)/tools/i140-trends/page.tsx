@@ -105,7 +105,7 @@ export default async function I140TrendsPage() {
           before any chart, with the figures computed from the same rows the
           charts read. */}
       {bothRates && ratio !== null ? (
-        <section className="mt-8 border border-border bg-tint-primary p-6 sm:p-8">
+        <section className="mt-8 border border-border bg-tint p-6 sm:p-8">
           <h2 className="font-heading text-xl font-bold sm:text-2xl">
             An advanced degree and a national interest waiver are not the same
             category

@@ -9,7 +9,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { CASE_STATUS_FRAME, CaseStatusHead, LookupSkeleton } from "./CaseStatusShell";
+import { CASE_STATUS_FRAME, CaseStatusHead, CheckAnother, LookupSkeleton } from "./CaseStatusShell";
 import { CaseNotFound, CaseStatusEmpty } from "@/components/tools/CaseNotFound";
 import { CaseStatusResult } from "@/components/tools/CaseStatusResult";
 import { PwdLookup } from "@/components/tools/PwdStatusResult";
@@ -43,6 +43,7 @@ import {
 } from "@/lib/turso/stageStats";
 import { getLiveBacklog, getLiveMirrorSize } from "@/lib/turso/publicData";
 import { MoreText } from "@/components/data/MoreText";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * One PERM case number in, everything we can honestly say about it out.
@@ -196,6 +197,13 @@ export default async function PermCaseStatusPage({
     lcaNumber === null &&
     seasonalNumber === null;
 
+  // An employer name rather than a number: the search that can answer it,
+  // with no stop on a "wrong shape" page first. The homepage box posts here.
+  if (malformed && !looksLikeReceipt(typed) && looksLikeName(typed)) {
+    redirect(`/case-search?q=${encodeURIComponent(typed.trim().slice(0, 120))}`);
+  }
+  const hasNumber = !!(pwdNumber || lcaNumber || seasonalNumber || caseNumber);
+
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
@@ -208,73 +216,40 @@ export default async function PermCaseStatusPage({
 
   return (
     <div className={CASE_STATUS_FRAME}>
-      <div className="pt-10 sm:pt-12" />
+      <div className="pt-8 sm:pt-10" />
       <JsonLdScript schema={faqSchema} />
 
-      <CaseStatusHead typed={typed} />
+      <CaseStatusHead typed={typed} withBox={!hasNumber} />
 
       {/* The warning sits ABOVE anything it qualifies and nothing is computed
           from bad input. A figure the reader has already absorbed cannot be
           un-absorbed by a note underneath it. */}
       {malformed ? (
-        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
-          <WarningIcon
-            className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
-            weight="fill"
-            aria-hidden="true"
-          />{" "}
+        <p className="mt-6 flex items-start gap-2 border-l-2 border-data-warn-ink bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
+          <WarningIcon className="mt-1 size-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>
-            <b className="font-bold text-data-warn-ink">
-              That isn&apos;t the shape of a case number,
-            </b>{" "}
+            <b className="font-semibold text-foreground">That isn&apos;t the shape of a case number,</b>{" "}
             so nothing was looked up. PERM numbers look like G-100-26125-868956 (A-23043-00641 for 2022 and
             2023) and are on the ETA-9089 receipt. Wage requests start with P, H-1B LCAs with I, H-2A and H-2B
             cases with H (an H-2A job order with JO-A), and CW-1 with C.
           </span>
         </p>
       ) : null}
-      {/* NOT A DEAD END. The homepage hero posts here, so whatever someone
-          types on the front page lands on this branch - and an employer name
-          is the most likely thing that is not a case number. Handing it to the
-          cross-program search answers the question they were actually asking
-          instead of stopping at "wrong shape". */}
       {malformed && looksLikeReceipt(typed) ? (
-        <div className="mt-4 border border-border bg-tint-primary p-5">
+        <div className="mt-4 bg-tint p-5">
           <p className="text-base leading-relaxed">
-            <b className="font-bold">Holding a USCIS receipt number?</b> Three
+            <b className="font-semibold">Holding a USCIS receipt number?</b> Three
             letters and ten digits, like EAC2190123456, is USCIS&apos;s record
             of the I-140 or I-485, not DOL&apos;s record of the PERM. It has
             its own page.
           </p>{" "}
           <p className="mt-3">
-            <Link
-              href="/uscis-case-status"
-              className="inline-flex min-h-[44px] items-center border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent"
-            >
+            <Link href="/uscis-case-status" className={buttonVariants({ variant: "outline" })}>
               Check a USCIS receipt instead
             </Link>
           </p>
         </div>
       ) : null}
-      {malformed && looksLikeName(typed) ? (
-        <div className="mt-4 border border-border bg-tint-primary p-5">
-          <p className="text-base leading-relaxed">
-            <b className="font-bold">Looking for an employer rather than a number?</b>{" "}
-            Search every filing under that name across every DOL program:
-            the PERM, the wage request that came before it and the H-1B
-            condition application beside it.
-          </p>{" "}
-          <p className="mt-3">
-            <Link
-              href={`/case-search?q=${encodeURIComponent(typed.trim().slice(0, 120))}`}
-              className="inline-flex min-h-[44px] items-center border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent"
-            >
-              Search DOL for &ldquo;{typed.trim().slice(0, 60)}&rdquo;
-            </Link>
-          </p>
-        </div>
-      ) : null}
-
       <div className="mt-8">
         {pwdNumber ? (
           <Suspense key={pwdNumber} fallback={<LookupSkeleton />}>
@@ -299,7 +274,9 @@ export default async function PermCaseStatusPage({
         )}
       </div>
 
-      <section className="mt-14">
+      {hasNumber ? <CheckAnother typed={typed} /> : null}
+
+      <section className="mt-12 border-t border-border pt-8 sm:mt-16">
         <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
         <FaqList items={FAQS} />
       </section>

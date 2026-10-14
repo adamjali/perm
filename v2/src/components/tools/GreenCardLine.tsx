@@ -212,7 +212,7 @@ export function GreenCardLine({
           <p className="text-base text-soft">{result.reason}</p>
         </div>
       ) : result.kind === "current" ? (
-        <div className="bg-tint-primary p-6 sm:p-8">
+        <div className="bg-tint p-6 sm:p-8">
           <p className={EYEBROW_CLASS}>{lineLabel}</p>{" "}
           <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">
             Your priority date is current

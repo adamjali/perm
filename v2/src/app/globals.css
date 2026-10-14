@@ -287,6 +287,33 @@ html {
   scroll-padding-top: calc(var(--site-header-h) + 1.5rem);
 }
 
+/* A link in running text: green ink, always underlined (so it never rests on
+   colour alone), the underline thickening on hover. The one link style for
+   prose, notes and answers; navigation and buttons have their own. */
+@utility link {
+  font-weight: 600;
+  color: var(--primary-text);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+/* A hatched fill: "not decided yet", "not known", "withheld". The lines take
+   the element's text colour, so a hatch is set with a text class:
+   text-muted-foreground where it only marks a placeholder, text-input where
+   the hatch itself has to be seen against its neighbour (3:1). One pitch
+   everywhere; bg-hatch-reverse leans the other way, for a second hatched
+   segment beside the first. */
+@utility bg-hatch {
+  background-image: repeating-linear-gradient(-45deg, currentColor 0 2px, transparent 2px 8px);
+}
+@utility bg-hatch-reverse {
+  background-image: repeating-linear-gradient(45deg, currentColor 0 2px, transparent 2px 8px);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -363,9 +390,6 @@ html {
   --radius-2xl: 0px;
   --radius-3xl: 0px;
   --radius-4xl: 0px;
-  /* Hard offset shadows are the system; the framework's soft ones map onto
-     them so a stray shadow-sm or shadow-xl draws the house shadow instead of a
-     blur. */
   /* Small framework shadows draw nothing; the larger ones are the floating
      layer's soft shadow, so a primitive that asks for shadow-lg gets that. */
   --shadow-2xs: 0 0 #0000;
@@ -423,31 +447,6 @@ html {
     box-shadow: var(--shadow-hard-lg);
   }
 
-  /* Grain overlay texture - matches mockup exactly */
-  .grain-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1000;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  }
-
-  /* Dot pattern background - light mode */
-  .bg-dots {
-    background-image: radial-gradient(circle, rgba(0,0,0,0.5) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
-  /* Dot pattern background - dark mode */
-  .dark .bg-dots {
-    background-image: radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
   /* Monospace font utility */
   .mono {
     font-family: var(--font-mono);
@@ -483,14 +482,6 @@ html {
     animation: skeleton-sweep 2.8s ease-in-out 0.4s infinite;
   }
 
-  /* A skeleton drawn inside an inverted (ink) panel, such as the case page's
-     answer card: its bars are tints of the page ground over the ink, so they
-     read as text-to-come in both themes rather than as white slabs. */
-  .skeleton-on-ink {
-    background-color: color-mix(in oklab, var(--background) 16%, transparent);
-    --skeleton-sheen: color-mix(in oklab, var(--background) 22%, transparent);
-  }
-
   @keyframes skeleton-sweep {
     0% {
       background-position: 100% 0;
@@ -501,35 +492,6 @@ html {
     }
   }
 
-
-
-  /* Snappy card hover - design3 style
-   * 0.15s max for hover responses (Linear.app style)
-   * Ease-out-quad curve for natural deceleration
-   */
-
-  /* Corner decoration - dramatic accent like design4 */
-
-  /* Corner accent with hazard pattern */
-
-  /* Corner accent variations */
-
-  /* Bottom-left corner variant */
-
-  /* Glass panel effect - frosted glass with backdrop blur */
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-  }
-
-  .dark .glass-panel {
-    background: rgba(42, 42, 42, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  
 
   /* Hide scrollbar for horizontal scroll containers */
   .scrollbar-hide {
@@ -545,8 +507,6 @@ html {
   .count-up {
     font-variant-numeric: tabular-nums;
   }
-
-  /* Manila folder tab styles moved outside @layer — see below */
 
 }
 
@@ -644,7 +604,6 @@ html {
    Outside @layer to avoid Tailwind v4 tree-shaking
    ================================================================ */
 
-/* Card container */
 /**
  * Page-level container for the long-form public pages: privacy, terms,
  * security, contact, and their loading skeletons.
@@ -1357,8 +1316,6 @@ html.dark {
   height: 8px;
 }
 
-/* Hazard strip for deadline widget - red/black variant */
-
 /* Global cursor pointer styles */
 button,
 [role="button"],
@@ -1384,7 +1341,6 @@ button[disabled] {
   cursor: not-allowed;
 }
 
-/* Fade in animation */
 /* A message that appears because someone acted (a field error, a hint) fades
    in quickly, without moving. */
 @keyframes fade-in {
@@ -1975,37 +1931,6 @@ input[type="week"] {
   appearance: none;
   color: inherit;
   max-width: 100%;
-}
-
-/* An OPAQUE tint for stat panels. `bg-primary/10` is translucent, and this
-   one has to stay opaque - see the black-backdrop note at the end.
-
-   MIXED FROM THE INK GREEN, NOT THE LIME. Mixed from the lime, the rail's
-   active row and a stat panel come out a pale mint.
-
-   The cause is the source colour rather than the strength. `--primary` is
-   #2ECC40, a bright lime, and 12% of it over a near-white card lands on
-   #E2F4E4 - a high-value mint with a cyan cast that reads as washed out,
-   especially sitting next to the solid black panels it alternates with.
-   `--data-good-ink` is #1D8229 in light, the darker green already used for
-   every chart and marker on the site, and that IS the site's green. Same
-   mix over the same card gives a sage that belongs to the palette.
-
-   14% IS A MEASURED CEILING, NOT A GUESS. Every ink that currently clears
-   4.5:1 on this surface has to still clear it, and the binding one is
-   `--muted-foreground`: 5.00 today, 4.57 at 14%, 4.46 at 16%. Solved rather
-   than eyeballed, because the whole point of moving to a darker source is
-   that it takes contrast with it.
-
-   The mix is into `--card` and not into whatever sits behind, which is
-   deliberate and predates this: the I-140 stat grid uses the `gap-px
-   bg-border` hairline trick, so in light mode the surface under its cells is
-   pure BLACK, and a tint that composited against its backdrop rendered a dark
-   green panel with near-black text on the live site. Mixing into the card
-   colour makes the panel self-contained - the same readable surface wherever
-   it lands, in both themes. */
-.bg-tint-primary {
-  background-color: var(--tint);
 }
 
 

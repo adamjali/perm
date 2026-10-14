@@ -76,7 +76,7 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
       </div>
 
       {closest ? (
-        <p role="status" className="border-l-2 border-primary bg-tint-primary px-4 py-3 text-base">
+        <p role="status" className="border-l-2 border-primary bg-tint px-4 py-3 text-base">
           No article holds &ldquo;{search}&rdquo; exactly. These are the closest.
         </p>
       ) : null}

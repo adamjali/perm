@@ -295,7 +295,7 @@ export default async function MethodologyPage() {
               key={s.name}
               className={
                 "border border-border p-6 " +
-                (i % 2 === 0 ? "bg-card" : "bg-tint-primary")
+                (i % 2 === 0 ? "bg-card" : "bg-tint")
               }
             >
               <div className="flex flex-wrap items-center justify-between gap-2">

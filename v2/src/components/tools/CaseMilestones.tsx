@@ -2,10 +2,12 @@
 
 import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { CheckIcon, WarningIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, CheckIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { PageSection } from "@/components/data/PageSection";
 import {
   CATEGORIES,
   COUNTRIES,
@@ -19,7 +21,7 @@ import {
   validateTimeline,
   type TimelineInput,
 } from "@/lib/communityTimeline";
-import { cn } from "@/lib/utils";
+import { convexSiteUrl } from "@/lib/convexSite";
 
 /**
  * The case's timeline after PERM: what people report, and a form to add
@@ -46,13 +48,6 @@ interface Mine {
   input: TimelineInput;
   permFiledOn: string | null;
   permCertifiedOn: string | null;
-}
-
-/** Convex HTTP actions live on the `.convex.site` twin of the cloud URL. */
-function endpoint(path: string): string | null {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!cloud) return null;
-  return `${cloud.replace(".convex.cloud", ".convex.site")}${path}`;
 }
 
 const storageKey = (c: string) => `pt-timeline-key:${c}`;
@@ -85,7 +80,7 @@ const monthDay = (iso: string) =>
 const EMPTY: TimelineInput = { route: "adjustment", public: false };
 
 const selectCls =
-  "mt-1.5 block min-h-11 w-full min-w-0 border border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "mt-1.5 block h-11 w-full min-w-0 border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function CaseMilestones({ caseNumber, className }: { caseNumber: string; className?: string }) {
   const uid = useId();
@@ -99,7 +94,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
     { kind: "idle" } | { kind: "sending" } | { kind: "done" | "refused"; message: string }
   >({ kind: "idle" });
 
-  const summaryUrl = valid ? endpoint(`/timeline/summary?case=${encodeURIComponent(caseNumber)}`) : null;
+  const summaryUrl = valid ? convexSiteUrl(`/timeline/summary?case=${encodeURIComponent(caseNumber)}`) : null;
 
   const loadSummary = (fresh = false) => {
     if (!summaryUrl) return;
@@ -116,7 +111,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
     loadSummary();
     if (window.location.hash === "#timeline") setOpen(true);
     const k = readKey(caseNumber);
-    const url = endpoint("/timeline/mine");
+    const url = convexSiteUrl("/timeline/mine");
     if (!k || !url) return;
     setKey(k);
     fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseNumber, key: k }) })
@@ -138,8 +133,8 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
   const check = useMemo(() => validateTimeline(form), [form]);
 
   if (!valid) return null;
-  const saveUrl = endpoint("/timeline/save");
-  const removeUrl = endpoint("/timeline/remove");
+  const saveUrl = convexSiteUrl("/timeline/save");
+  const removeUrl = convexSiteUrl("/timeline/remove");
   if (!saveUrl || !removeUrl) return null;
 
   const set = <K extends keyof TimelineInput>(k: K, v: TimelineInput[K]) => {
@@ -202,53 +197,43 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
   }
 
   const stops = summary?.stops ?? [];
-  const reported = stops.reduce((n, s) => n + s.count, 0);
+
+  const shown = stops.filter((st) => st.count > 0);
 
   return (
-    <section
+    <PageSection
       id="timeline"
-      className={cn("scroll-mt-28 border border-border bg-card p-5 sm:p-6", className)}
+      title="After PERM"
+      className={className}
+      lede="USCIS doesn't publish the I-140 or the I-485 case by case, so this part comes from the people waiting. Their dates are self-reported; the PERM dates come from DOL's own record."
     >
-      <h2 className="font-heading text-xl font-bold sm:text-2xl">After PERM: the rest of the timeline</h2>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
-        USCIS doesn&apos;t publish the I-140 or the I-485 case by case, so this part comes from the people waiting.
-        Dates here are self-reported. The PERM dates beside them come from DOL&apos;s own record.
-      </p>{" "}
-
-      {/* The track: one square per stop, lit when anyone has reported it for this case. */}
       {summary ? (
-        <ol className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-4 lg:grid-cols-7 [&>*]:min-w-0" aria-label="Reported milestones for this case">
-          {stops.map((s) => (
-            <Fragment key={s.id}>
-              {" "}
-              <li
-                className={cn(
-                  "flex items-center justify-between gap-2 border px-3 py-2 sm:flex-col sm:items-start",
-                  s.count > 0 ? "border-border bg-primary/15" : "border-border/40 bg-background text-muted-foreground",
-                )}
-              >
-                <span className="text-sm font-bold leading-tight">{s.label}</span>{" "}
-                <span className="font-mono text-sm tabular-nums">
-                  {s.count > 0 ? `${s.count} reported` : "none yet"}
-                </span>
-              </li>
-            </Fragment>
-          ))}
-        </ol>
-      ) : null}{" "}
-      {summary && reported === 0 && !mine ? (
-        <p className="mt-3 text-sm text-muted-foreground">Nobody has added dates for this case yet.</p>
+        <p className="text-base leading-relaxed text-soft">
+          {shown.length > 0 ? (
+            <>
+              Reported for this case:{" "}
+              {shown.map((st, i) => (
+                <Fragment key={st.id}>
+                  {i > 0 ? ", " : ""}
+                  <b className="font-semibold text-foreground">{st.label}</b> ({st.count})
+                </Fragment>
+              ))}
+              .
+            </>
+          ) : !mine ? (
+            "Nobody has added dates for this case yet."
+          ) : null}
+        </p>
       ) : null}
 
       <details
-        className="group mt-6 border-t border-border pt-4"
+        className="group mt-4"
         open={open}
         onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
       >
-        <summary className="cursor-pointer list-none font-heading text-lg font-bold marker:content-none">
-          <span className="inline-flex min-h-11 items-center gap-2 underline decoration-primary decoration-2 underline-offset-4">
-            {mine ? "Your timeline for this case" : "Add your dates"}
-          </span>
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+          <CaretRightIcon className="size-4 shrink-0 transition-transform group-open:rotate-90" weight="bold" aria-hidden="true" />{" "}
+          {mine ? "Your timeline for this case" : "Add your dates"}
         </summary>
 
         {mine?.permCertifiedOn ? (
@@ -264,7 +249,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
 
         <form onSubmit={save} className="mt-4 space-y-6" noValidate>
           <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-            <legend className="mb-2 text-base font-bold">About the case</legend>
+            <legend className="mb-2 text-base font-semibold">About the case</legend>
             <div>
               <Label htmlFor={`${uid}-cat`}>Category</Label>
               <select id={`${uid}-cat`} className={selectCls} value={form.category ?? ""} onChange={(e) => set("category", e.target.value || null)}>
@@ -320,7 +305,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
           </fieldset>{" "}
 
           <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-            <legend className="mb-2 text-base font-bold">Dates, only the ones that have happened</legend>
+            <legend className="mb-2 text-base font-semibold">Dates, only the ones that have happened</legend>
             {dateFields.map((f) => (
               <Fragment key={f.id}>
                 {" "}
@@ -337,9 +322,9 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             ))}
           </fieldset>{" "}
 
-          <details className="border border-border/60 p-4" open={Boolean(form.rfeForm)}>
-            <summary className="cursor-pointer list-none text-base font-bold marker:content-none">
-              <span className="inline-flex min-h-11 items-center">Got a request for evidence (RFE)?</span>
+          <details className="border-t border-border pt-2" open={Boolean(form.rfeForm)}>
+            <summary className="inline-flex min-h-11 cursor-pointer list-none items-center text-base font-semibold [&::-webkit-details-marker]:hidden">
+              Got a request for evidence (RFE)?
             </summary>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
               <div>
@@ -386,7 +371,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             </div>
           </details>{" "}
 
-          <div className="border border-border bg-background p-4">
+          <div className="border-t border-border pt-4">
             <label className="flex min-h-11 items-start gap-3 text-base">
               <input
                 type="checkbox"
@@ -395,13 +380,13 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
                 onChange={(e) => set("public", e.target.checked)}
               />
               <span>
-                <b>Show my timeline on the public board.</b> The case number and employer never show there; it lists
+                <b className="font-semibold">Show my timeline on the public board.</b> The case number and employer never show there; it lists
                 the filing month and how many days each step took.
               </span>
             </label>{" "}
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Either way, your dates count toward the anonymous medians on the{" "}
-              <Link href="/green-card-timelines" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+              <Link href="/green-card-timelines" className="font-semibold underline underline-offset-2">
                 green card timelines
               </Link>{" "}
               page. This browser keeps a key for this case so you can edit or remove it later.
@@ -409,22 +394,13 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
           </div>{" "}
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              disabled={state.kind === "sending"}
-              className="min-h-11 border border-border bg-primary px-5 font-bold text-primary-foreground transition-transform disabled:text-muted-foreground"
-            >
-              {state.kind === "sending" ? "Saving" : mine ? "Save changes" : "Save my timeline"}
-            </button>{" "}
+            <Button type="submit" variant="outline" loading={state.kind === "sending"}>
+              {mine ? "Save changes" : "Save my timeline"}
+            </Button>{" "}
             {mine ? (
-              <button
-                type="button"
-                onClick={remove}
-                disabled={state.kind === "sending"}
-                className="min-h-11 border border-border bg-background px-5 font-bold transition-transform disabled:text-muted-foreground"
-              >
+              <Button type="button" variant="ghost" onClick={remove} disabled={state.kind === "sending"}>
                 Remove my timeline
-              </button>
+              </Button>
             ) : null}
           </div>{" "}
           {state.kind === "done" ? (
@@ -438,6 +414,6 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
           ) : null}
         </form>
       </details>
-    </section>
+    </PageSection>
   );
 }

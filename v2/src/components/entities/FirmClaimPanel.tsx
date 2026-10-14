@@ -29,12 +29,7 @@ import {
   profileFromForm,
   type ProfileField,
 } from "@/lib/firmProfile";
-
-function endpoint(path: string): string | null {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!cloud) return null;
-  return `${cloud.replace(".convex.cloud", ".convex.site")}${path}`;
-}
+import { convexSiteUrl } from "@/lib/convexSite";
 
 type Status = "idle" | "sending" | "done" | "error";
 type FieldErrors = Partial<Record<ProfileField | "email" | "role", string>>;
@@ -71,7 +66,7 @@ function ClaimForm({ slug }: { slug: string }) {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [chars, setChars] = useState(0);
-  const url = endpoint("/firm-claim/request");
+  const url = convexSiteUrl("/firm-claim/request");
   if (!url) return null;
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -221,7 +216,7 @@ function EditLinkForm({ slug }: { slug: string }) {
   const emailId = useId();
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
-  const url = endpoint("/firm-claim/edit-link");
+  const url = convexSiteUrl("/firm-claim/edit-link");
   if (!url) return null;
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {

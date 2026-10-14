@@ -10,26 +10,22 @@
  */
 
 import { useId, useState } from "react";
-import { AlertNote } from "@/components/alerts/AlertOptIns";
+import { AlertDone, AlertNote, EmailField } from "@/components/alerts/AlertParts";
+import { Button } from "@/components/ui/button";
 import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
 import { useAlertFormTelemetry } from "@/lib/funnelEvents";
-
-function subscribeEndpoint(): string | null {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!cloud) return null;
-  return `${cloud.replace(".convex.cloud", ".convex.site")}/employer-alert/subscribe`;
-}
+import { convexSiteUrl } from "@/lib/convexSite";
 
 export function EmployerFollowForm({ slug, source }: { slug: string; source: string }) {
-  const telemetry = useAlertFormTelemetry("employer", source);
+  const { observe, onFocusCapture } = useAlertFormTelemetry("employer", source);
   const emailId = useId();
   const noteId = useId();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
 
-  const endpoint = subscribeEndpoint();
+  const endpoint = convexSiteUrl("/employer-alert/subscribe");
   if (!endpoint) return null;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -58,51 +54,33 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
   }
 
   if (status === "done") {
-    return (
-      <p role="status" aria-live="polite" className="border border-border bg-primary px-4 py-3 text-base font-bold text-primary-foreground">
-        {message} Nothing is sent until you confirm.
-      </p>
-    );
+    return <AlertDone message={message} />;
   }
 
   return (
-    <form
-      ref={telemetry.ref}
-      onFocusCapture={telemetry.onFocusCapture}
-      onSubmit={handleSubmit}
-      aria-describedby={noteId}
-    >
-      <label htmlFor={emailId} className="text-sm font-bold">
+    <form ref={observe} onFocusCapture={onFocusCapture} onSubmit={handleSubmit} aria-describedby={noteId} className="print:hidden">
+      <label htmlFor={emailId} className="block text-base font-semibold">
         Your email address
       </label>{" "}
-      <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-        <input
-          id={emailId}
-          type="email"
-          name="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          autoComplete="email"
-          aria-invalid={status === "error" ? true : undefined}
-          className="min-h-[48px] w-full min-w-0 flex-1 border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-        />{" "}
-        <button
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <EmailField id={emailId} value={email} onChange={setEmail} invalid={status === "error"} className="sm:flex-1" />{" "}
+        <Button
           type="submit"
+          variant="outline"
+          size="lg"
+          loading={status === "sending"}
           data-ph-capture-attribute-cta="employer-follow"
-          disabled={status === "sending"}
-          className="inline-flex min-h-[48px] shrink-0 items-center justify-center border border-border bg-foreground px-6 text-base font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none"
         >
-          {status === "sending" ? "Sending" : "Follow"}
-        </button>
+          Follow
+        </Button>
       </div>{" "}
       {status === "error" && message ? (
-        <p className="mt-3 text-sm font-bold text-destructive" role="alert">
+        <p id={noteId} className="mt-2 text-sm font-semibold text-data-warn-ink" role="alert">
           {message}
         </p>
-      ) : null}{" "}
-      <AlertNote id={noteId} limit="One address can follow 100 employers." className="mt-3" />
+      ) : (
+        <AlertNote id={noteId} className="mt-2" />
+      )}
     </form>
   );
 }

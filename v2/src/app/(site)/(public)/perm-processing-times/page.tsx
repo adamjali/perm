@@ -345,7 +345,7 @@ export default async function PermProcessingTimesPage() {
       {snapshot ? (
         <>
           {/* The headline. This one sentence is what the whole search cluster asks for. */}
-          <section className="mt-10 border border-border bg-tint-primary p-6 sm:p-8">
+          <section className="mt-10 border border-border bg-tint p-6 sm:p-8">
             <p className="text-sm font-bold text-muted-foreground">The analyst review queue</p>{" "}
             <p className="mt-3 font-heading text-3xl font-bold leading-tight sm:text-4xl">
               {analystMonth

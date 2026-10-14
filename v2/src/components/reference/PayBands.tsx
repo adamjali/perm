@@ -95,7 +95,7 @@ function Track({ band, domain, ends }: { band: PayBand; domain: [number, number]
         <>
           <span
             aria-hidden="true"
-            className="absolute top-5 h-[3px] -translate-y-1/2 bg-foreground/45"
+            className="absolute top-5 h-[3px] -translate-y-1/2 bg-foreground/50"
             style={{ left: `${pct(band.p10!, domain)}%`, width: `${pct(band.p90!, domain) - pct(band.p10!, domain)}%` }}
           />
           <span
@@ -198,7 +198,7 @@ export function PayBands({
           <span aria-hidden="true" className="inline-block h-5 w-[3px] bg-foreground" /> median
         </li>{" "}
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-[3px] w-8 bg-foreground/45" /> 10th to 90th percentile
+          <span aria-hidden="true" className="inline-block h-[3px] w-8 bg-foreground/50" /> 10th to 90th percentile
         </li>{" "}
         {anyLevels ? (
           <li className="flex items-center gap-2">

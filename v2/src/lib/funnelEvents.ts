@@ -124,5 +124,5 @@ export function useAlertFormTelemetry(kind: AlertSignupKind, source?: string) {
     ref.current = el;
   }, []);
 
-  return { ref: setRef, onFocusCapture };
+  return { observe: setRef, onFocusCapture };
 }

@@ -15,30 +15,19 @@
  */
 
 import { useId, useState } from "react";
-import { BellIcon, CheckCircleIcon as CheckCircle2 } from "@phosphor-icons/react";
+import { CaretRightIcon } from "@phosphor-icons/react";
 
 import { MONTH_NAMES } from "@/lib/dolFormat";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SelectInput } from "@/components/forms/SelectInput";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { isQueued, replyHeading } from "@/lib/alertReply";
-import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
+import { AlertDone, AlertNote, EmailField, OptInBox } from "@/components/alerts/AlertParts";
 import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
 import { useAlertFormTelemetry } from "@/lib/funnelEvents";
-
-/**
- * Convex HTTP actions are served from the `.convex.site` twin of the
- * `.convex.cloud` deployment URL. Posting to an endpoint keeps this page free
- * of the Convex React client: the public layout mounts no ConvexProvider, so
- * marketing pages never open a websocket or ship that bundle.
- */
-function subscribeEndpoint(): string | null {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!cloud) return null;
-  return `${cloud.replace(".convex.cloud", ".convex.site")}/queue-alert/subscribe`;
-}
+import { convexSiteUrl } from "@/lib/convexSite";
 
 /**
  * Filing months a live PERM case could plausibly carry: `newest` back to 2020.
@@ -78,15 +67,6 @@ function filingMonthOptions(
   return options;
 }
 
-/** Native select styled to match the Input component (no Select primitive exists here). */
-const selectClasses = cn(
-  "border-input h-11 w-full min-w-0 border bg-background px-3 py-1 text-base",
-  "transition-colors duration-150 outline-none md:text-sm",
-  "",
-  "focus:ring-2 focus:ring-ring focus-visible:border-ring",
-  "disabled:shadow-none disabled:pointer-events-none disabled:text-muted-foreground",
-);
-
 export function QueueAlertForm({
   source,
   newestMonth,
@@ -94,7 +74,13 @@ export function QueueAlertForm({
   queue = "perm",
   allowPwdChoice = false,
   defaultMonth,
+  bare = false,
 }: {
+  /**
+   * Inside a section that already names the alert: no card and no heading of
+   * its own. Standing alone (the default), it's a card with its heading.
+   */
+  bare?: boolean;
   source: string;
   /** The filing month to start on, "YYYY-MM": a month's own page passes itself. */
   defaultMonth?: string;
@@ -123,7 +109,7 @@ export function QueueAlertForm({
    */
   allowPwdChoice?: boolean;
 }) {
-  const telemetry = useAlertFormTelemetry("queue", source);
+  const { observe, onFocusCapture } = useAlertFormTelemetry("queue", source);
   const emailId = useId();
   const monthId = useId();
   const roleId = useId();
@@ -153,7 +139,7 @@ export function QueueAlertForm({
     setMessage("");
 
     try {
-      const endpoint = subscribeEndpoint();
+      const endpoint = convexSiteUrl("/queue-alert/subscribe");
       if (!endpoint) throw new Error("Convex URL isn’t configured");
 
       const response = await fetch(endpoint, {
@@ -180,130 +166,109 @@ export function QueueAlertForm({
     }
   }
 
+  const frame = bare ? "" : "border border-border bg-card p-5 sm:p-6";
+  const what =
+    selectedQueue === "perm"
+      ? "One email when DOL's analyst-review queue reaches the month your case was filed, and nothing after it."
+      : "One email when the prevailing wage queue you pick reaches the month your request was filed, and nothing after it.";
+
   if (status === "done") {
     return (
-      <div
-        className="border border-border bg-card p-6 sm:p-8"
-        role="status"
-        aria-live="polite"
-      >
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <div>
-            <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{message}</p>
-          </div>
-        </div>
+      <div className={frame}>
+        <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
+        <AlertDone message={message} queued={queued} className="mt-2" />
       </div>
     );
   }
 
   return (
-    <form
-      ref={telemetry.ref}
-      onFocusCapture={telemetry.onFocusCapture}
-      onSubmit={handleSubmit}
-      className="border border-border bg-card p-6 sm:p-8"
-    >
-      <div className="flex items-center gap-2">
-        <BellIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h2 className="font-heading text-xl font-bold sm:text-2xl">
-          Get notified when DOL reaches your month
-        </h2>
-      </div>{" "}
-      {/* The queue is named from the prop, not hardcoded. This form also sits
-          on the prevailing wage pages, where "analyst review" is the wrong
-          queue entirely: it is the PERM stage, and a reader was being told the
-          alert watched a line their request is not in. */}
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        {selectedQueue === "perm"
-          ? "We’ll email you when the analyst-review queue reaches the month your case was filed."
-          : "We’ll email you when the prevailing wage queue you pick reaches the month your request was filed."}{" "}
-        It isn’t a newsletter and nothing else follows it.
-      </p>{" "}
+    <form ref={observe} onFocusCapture={onFocusCapture} onSubmit={handleSubmit} className={cn(frame, "print:hidden")}>
+      {bare ? null : (
+        <h2 className="font-heading text-xl font-bold">Email me when DOL reaches my month</h2>
+      )}{" "}
+      {/* The queue is named from the prop: on the prevailing wage pages
+          "analyst review" is the wrong queue, the PERM stage. */}
+      <p className={cn("max-w-2xl text-base leading-relaxed text-soft", !bare && "mt-2")}>{what}</p>{" "}
 
-      <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
+        <div>
           <Label htmlFor={emailId}>Email</Label>{" "}
-          <Input
-            id={emailId}
-            type="email"
-            name="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@firm.com"
-          />
+          <EmailField id={emailId} value={email} onChange={setEmail} invalid={status === "error"} className="mt-2" />
         </div>{" "}
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={monthId}>Month your case was filed</Label>{" "}
-          <select
+        <div>
+          <Label htmlFor={monthId}>Month your {selectedQueue === "perm" ? "case" : "request"} was filed</Label>{" "}
+          <SelectInput
             id={monthId}
             required
             value={filingMonth}
             onChange={(e) => setFilingMonth(e.target.value)}
-            className={selectClasses}
-          >
-            <option value="">Select a month</option>
-            {options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            placeholder="Select a month"
+            options={options}
+            className="mt-2 h-12"
+          />
         </div>
       </div>{" "}
 
       {allowPwdChoice ? (
-        <div className="mt-4 flex flex-col gap-2">
-          <Label htmlFor={queueId}>Which prevailing-wage queue</Label>{" "}
-          <select
+        <div className="mt-4 sm:max-w-sm">
+          <Label htmlFor={queueId}>Which prevailing wage queue</Label>{" "}
+          <SelectInput
             id={queueId}
             value={selectedQueue}
-            onChange={(e) =>
-              setSelectedQueue(e.target.value as "pwd-oews" | "pwd-nonoews")
-            }
-            className={cn(selectClasses, "sm:max-w-sm")}
-          >
-            <option value="pwd-oews">OEWS, the standard survey</option>{" "}
-            <option value="pwd-nonoews">Employer-provided survey</option>
-          </select>
+            onChange={(e) => setSelectedQueue(e.target.value as "pwd-oews" | "pwd-nonoews")}
+            options={[
+              { value: "pwd-oews", label: "OEWS, the standard survey" },
+              { value: "pwd-nonoews", label: "Employer-provided survey" },
+            ]}
+            className="mt-2"
+          />
         </div>
       ) : null}{" "}
 
-      <div className="mt-4 flex flex-col gap-2">
-        <Label htmlFor={roleId}>
-          You are <span className="font-normal text-muted-foreground">(optional)</span>
-        </Label>{" "}
-        <select
-          id={roleId}
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className={cn(selectClasses, "sm:max-w-sm")}
-        >
-          <option value="">Prefer not to say</option>{" "}
-          <option value="attorney">Attorney or paralegal</option>{" "}
-          <option value="applicant">The person the case is for</option>{" "}
-          <option value="employer">The sponsoring employer</option>
-        </select>
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Button type="submit" size="lg" loading={status === "sending"} data-ph-capture-attribute-cta="queue-alert">
+          Email me when it happens
+        </Button>{" "}
+        {status === "error" && message ? (
+          <p className="text-sm font-semibold text-data-warn-ink" role="alert">
+            {message}
+          </p>
+        ) : (
+          <AlertNote />
+        )}
       </div>{" "}
 
-      <OptInBox id={newsId} kind="news" checked={news} onChange={setNews} className="mt-4" />
-
-      {status === "error" && message ? (
-        <p className="mt-4 text-sm font-bold text-destructive" role="alert">
-          {message}
-        </p>
-      ) : null}
-
-      <Button type="submit"
-          data-ph-capture-attribute-cta="queue-alert" disabled={status === "sending"} className="mt-6 w-full sm:w-auto">
-        {status === "sending" ? "Sending" : "Email me when it happens"}
-      </Button>{" "}
-
-      <AlertNote limit="One address watches one filing month per queue; a new month replaces the old one." className="mt-4" />
+      {/* The role is the only segmentation that would change what gets built
+          next, so it's asked, but folded: it decides nothing about the email. */}
+      <details className="group mt-3">
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+          <CaretRightIcon className="size-3.5 shrink-0 transition-transform group-open:rotate-90" weight="bold" aria-hidden="true" />{" "}
+          More options
+        </summary>{" "}
+        <div className="space-y-4 pb-1 pl-5">
+          <div className="sm:max-w-sm">
+            <Label htmlFor={roleId}>
+              You are <span className="font-normal text-muted-foreground">(optional)</span>
+            </Label>{" "}
+            <SelectInput
+              id={roleId}
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              options={[
+                { value: "", label: "Prefer not to say" },
+                { value: "attorney", label: "Attorney or paralegal" },
+                { value: "applicant", label: "The person the case is for" },
+                { value: "employer", label: "The sponsoring employer" },
+              ]}
+              className="mt-2"
+            />
+          </div>{" "}
+          <OptInBox id={newsId} kind="news" checked={news} onChange={setNews} />{" "}
+          <p className="text-sm text-muted-foreground">
+            One address watches one filing month per queue; a new month replaces the old one.
+          </p>
+        </div>
+      </details>
     </form>
   );
 }

@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import { WatchThisNumber } from "@/components/tools/WatchThisNumber";
+import { AnswerPanel } from "@/components/tools/Insight";
+import { PageSection } from "@/components/data/PageSection";
+import { RecordList, type RecordRow } from "@/components/data/RecordList";
 import {
   lookupSeasonalCaseOutcome,
   lookupSeasonalPosting,
   lookupSeasonalRecord,
   type SeasonalPosting,
   type SeasonalRecord,
-  type SeasonalRow,
 } from "@/lib/turso/seasonalCasesTypes";
 import {
   decidedInFileOnly,
@@ -25,6 +27,8 @@ import { getSeasonalCheck, getSeasonalTiming } from "@/lib/turso/seasonalTiming"
 import { getH2bGroupTiming, h2bGroupOf } from "@/lib/turso/h2bGroups";
 import { pickGroup } from "@/lib/h2bGroups";
 import { SeasonalTimingPanel } from "@/components/tools/SeasonalTimingPanel";
+import { formatDay } from "@/lib/dolFormat";
+import { prettyStatus } from "@/components/queue/stages";
 
 /**
  * An H-2A application (`H-300-`), an H-2B application (`H-400-`) or an H-2B
@@ -42,29 +46,8 @@ function formOf(caseNumber: string): string {
   return f ? `${f.label} · ${f.form}` : "H-2A, H-2B or CW-1 filing";
 }
 
-function prettyStatus(s: string): string {
-  const u = s.trim().toUpperCase();
-  // DOL's acronyms stay capitals; everything else reads as a sentence.
-  const lower = u.charAt(0) + u.slice(1).toLowerCase();
-  return lower.replace(/\b(nod|nor|nrm|rfi)\b/gi, (m) => m.toUpperCase());
-}
 
-function chipClass(row: SeasonalRow): string {
-  const u = row.status.toUpperCase();
-  if (u === "FULL CERTIFICATION" || u === "PARTIAL CERTIFICATION" || u === "DETERMINATION ISSUED") {
-    return "bg-primary text-primary-foreground";
-  }
-  if (u === "DENIED") return "bg-foreground text-background";
-  return row.isFinal ? "bg-card" : "bg-tint-primary";
-}
 
-function day(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = iso.slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(d)
-    ? new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-    : null;
-}
 
 /**
  * What a status means: the status dictionary's own entry, so the lookup and
@@ -76,16 +59,9 @@ function entryFor(status: string) {
   return SEASONAL_STATUSES.find((e) => e.status.toUpperCase() === u) ?? null;
 }
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
-
-function Field({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null;
-  return (
-    <div>
-      <dt className="text-sm font-bold text-muted-foreground">{label}</dt>{" "}
-      <dd className="font-medium">{value}</dd>
-    </div>
-  );
+/** The rows that have a value, as RecordList rows. */
+function rowsOf(pairs: readonly (readonly [string, string | null | undefined])[]): RecordRow[] {
+  return pairs.filter((p): p is readonly [string, string] => !!p[1]).map(([label, value]) => ({ label, value }));
 }
 
 function workersPhrase(requested: number | null, certified: number | null): string | null {
@@ -96,8 +72,8 @@ function workersPhrase(requested: number | null, certified: number | null): stri
 }
 
 function periodPhrase(begin: string | null, end: string | null): string | null {
-  const a = day(begin);
-  const b = day(end);
+  const a = formatDay(begin);
+  const b = formatDay(end);
   if (a && b) return `${a} to ${b}`;
   return a ? `From ${a}` : b ? `Until ${b}` : null;
 }
@@ -125,53 +101,51 @@ function SeasonalDetails({
   const firstDay = record?.beginDate ?? posting?.beginDate ?? null;
   const decideBy = pending && !ruleShownElsewhere && /^H-300-/.test(caseNumber) ? h2aDecideBy(firstDay) : null;
   return (
-    <section className="border border-border bg-card p-5 sm:p-6">
-      <h3 className="font-heading text-xl font-bold">
-        {record ? "DOL's published record" : "The job, as DOL accepted it"}
-      </h3>{" "}
-      <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
-        {record ? (
-          <>
-            <Field label="Decision" value={publishedStatusLabel(record.status)} />{" "}
-            <Field label="Decided" value={day(record.decisionDate)} />{" "}
-          </>
-        ) : null}
-        <Field label="Wage offered" value={wagePhrase(record?.wage ?? posting?.wage ?? null, record?.wageUnit ?? posting?.wageUnit ?? null)} />{" "}
-        <Field
-          label="Workers"
-          value={workersPhrase(record?.workers ?? posting?.workersForeign ?? null, record?.workersCertified ?? null)}
-        />{" "}
-        <Field label="Work period" value={periodPhrase(firstDay, record?.endDate ?? posting?.endDate ?? null)} />{" "}
-        <Field
-          label="Worksite"
-          value={worksitePhrase(
-            record?.worksiteCity ?? posting?.worksiteCity ?? null,
-            record?.worksiteCounty ?? posting?.worksiteCounty ?? null,
-            record?.worksiteState ?? posting?.worksiteState ?? null,
-          )}
-        />{" "}
-        <Field label="Occupation" value={record?.socTitle ?? null} />{" "}
-        <Field label="Law firm or agent" value={record?.attorneyName ?? null} />{" "}
-        {!record && posting ? <Field label="Accepted by DOL" value={day(posting.acceptedDate)} /> : null}{" "}
-        {posting?.jobOrderNumber ? <Field label="Job order" value={posting.jobOrderNumber} /> : null}{" "}
-        {posting?.pwdNumber ? <Field label="Wage determination" value={posting.pwdNumber} /> : null}
-      </dl>{" "}
+    <PageSection
+      title={record ? "DOL's published record" : "The job, as DOL accepted it"}
+      lede={
+        record
+          ? `From DOL's quarterly ${record.visaClass ?? "disclosure"} file${record.sourceFile ? ` (${record.sourceFile})` : ""}.`
+          : "From DOL's SeasonalJobs feed, which lists applications it has accepted. The decision comes later."
+      }
+    >
+      <RecordList
+        rows={rowsOf([
+          ...(record
+            ? ([
+                ["Decision", publishedStatusLabel(record.status)],
+                ["Decided", formatDay(record.decisionDate)],
+              ] as const)
+            : []),
+          ["Wage offered", wagePhrase(record?.wage ?? posting?.wage ?? null, record?.wageUnit ?? posting?.wageUnit ?? null)],
+          ["Workers", workersPhrase(record?.workers ?? posting?.workersForeign ?? null, record?.workersCertified ?? null)],
+          ["Work period", periodPhrase(firstDay, record?.endDate ?? posting?.endDate ?? null)],
+          [
+            "Worksite",
+            worksitePhrase(
+              record?.worksiteCity ?? posting?.worksiteCity ?? null,
+              record?.worksiteCounty ?? posting?.worksiteCounty ?? null,
+              record?.worksiteState ?? posting?.worksiteState ?? null,
+            ),
+          ],
+          ["Occupation", record?.socTitle ?? null],
+          ["Law firm or agent", record?.attorneyName ?? null],
+          ...(!record && posting ? ([["Accepted by DOL", formatDay(posting.acceptedDate)]] as const) : []),
+          ["Job order", posting?.jobOrderNumber ?? null],
+          ["Wage determination", posting?.pwdNumber ?? null],
+        ])}
+      />{" "}
       {decideBy ? (
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
           By rule DOL decides an H-2A application no later than 30 days before the first day of work, so this one by{" "}
-          <span className="font-bold">{day(decideBy)}</span>, unless the application was modified (
-          <a href="https://www.ecfr.gov/current/title-20/chapter-V/part-655/section-655.160" className={LINK} rel="noopener">
+          <b className="font-semibold text-foreground">{formatDay(decideBy)}</b>, unless the application was modified (
+          <a href="https://www.ecfr.gov/current/title-20/chapter-V/part-655/section-655.160" className="link" rel="noopener">
             20 CFR 655.160
           </a>
           ).
         </p>
-      ) : null}{" "}
-      <p className="mt-4 text-sm text-muted-foreground">
-        {record
-          ? `From DOL's quarterly ${record.visaClass ?? "disclosure"} file${record.sourceFile ? ` (${record.sourceFile})` : ""}.`
-          : "From DOL's SeasonalJobs feed, which lists applications it has accepted. The decision comes later."}
-      </p>
-    </section>
+      ) : null}
+    </PageSection>
   );
 }
 
@@ -196,27 +170,30 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
     // so without this branch the page would say "no record".
     const granted = publishedGranted(record.status);
     return (
-      <div className="space-y-6">
-        <section className="border border-border bg-card p-5 sm:p-6">
-          <p className="text-sm font-bold text-muted-foreground">{form}</p>{" "}
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <h2 className="font-heading text-2xl font-bold sm:text-3xl" translate="no">{record.caseNumber}</h2>{" "}
-            <span
-              className={
-                "border border-border px-2 py-0.5 font-mono text-sm font-bold " +
-                (granted ? "bg-primary text-primary-foreground" : "bg-muted")
-              }
-            >
-              {publishedStatusLabel(record.status)}
-            </span>
-          </div>{" "}
-          <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
-            <Field label="Employer" value={record.employerName ?? "Not given"} />{" "}
-            <Field label="Job title" value={record.jobTitle ?? "Not given"} />{" "}
-            <Field label="Received by DOL" value={day(record.receivedDate)} />{" "}
-          </dl>
-        </section>{" "}
+      <div>
+        <AnswerPanel
+          verdict="Decided"
+          direction={granted ? "good" : "flat"}
+          label={
+            <>
+              {form} <span translate="no">{record.caseNumber}</span>
+            </>
+          }
+          source="From DOL's published file; its live case system didn't return the number"
+        >
+          DOL decided this application: <b className="font-semibold">{publishedStatusLabel(record.status)}</b>
+          {formatDay(record.decisionDate) ? `, ${formatDay(record.decisionDate)}` : ""}.
+        </AnswerPanel>
         <SeasonalDetails record={record} posting={posting} pending={false} caseNumber={record.caseNumber} />
+        <PageSection title="The record">
+          <RecordList
+            rows={[
+              { label: "Employer", value: record.employerName ?? "Not given", raw: !!record.employerName },
+              { label: "Job title", value: record.jobTitle ?? "Not given", raw: !!record.jobTitle },
+              ...rowsOf([["Received by DOL", formatDay(record.receivedDate)]]),
+            ]}
+          />
+        </PageSection>
       </div>
     );
   }
@@ -227,24 +204,26 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
 
   if (!row) {
     return (
-      <div className="space-y-6">
-      <section className="border border-border bg-card p-5 sm:p-6">
-        <p className="text-sm font-bold text-muted-foreground">{form}</p>{" "}
-        <h2 className="mt-2 font-heading text-2xl font-bold">No record under {caseNumber}</h2>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
-          DOL&apos;s case system answered and holds nothing under this number. Check it on{" "}
-          <a
-            href="https://flag.dol.gov/case-status-search"
-            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            rel="noopener"
-          >
-            DOL&apos;s case status page
-          </a>
-          .
-        </p>
-      </section>{" "}
-      <WatchThisNumber caseNumber={caseNumber} program="seasonal" />
-      </div>
+      <AnswerPanel
+        verdict="No record"
+        direction="flat"
+        label={
+          <>
+            {form} <span translate="no">{caseNumber}</span>
+          </>
+        }
+        actions={
+          <div className="mt-6 border-t border-foreground/10 pt-6">
+            <WatchThisNumber caseNumber={caseNumber} program="seasonal" variant="inline" />
+          </div>
+        }
+      >
+        DOL&apos;s case system answered and holds nothing under this number. Check it on{" "}
+        <a href="https://flag.dol.gov/case-status-search" className="link" rel="noopener">
+          DOL&apos;s case status page
+        </a>
+        .
+      </AnswerPanel>
     );
   }
 
@@ -271,53 +250,44 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
         timing,
         group,
       });
+  const u = row.status.toUpperCase();
+  const granted = u === "FULL CERTIFICATION" || u === "PARTIAL CERTIFICATION" || u === "DETERMINATION ISSUED";
+  const filed = formatDay(row.submittedDate) ?? formatDay(row.filingDate);
   return (
-    <div className="space-y-6">
-      <section className="border border-border bg-card p-5 sm:p-6">
-        <p className="text-sm font-bold text-muted-foreground">{form}</p>{" "}
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h2 className="font-heading text-2xl font-bold sm:text-3xl" translate="no">{row.caseNumber}</h2>{" "}
-          <span className={"border border-border px-2 py-0.5 font-mono text-sm font-bold " + chipClass(row)}>
-            {prettyStatus(row.status)}
-          </span>
-        </div>{" "}
-        <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Employer</dt>{" "}
-            <dd className="font-medium" translate="no">{row.employerName ?? "Not given"}</dd>
-          </div>{" "}
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Job title</dt>{" "}
-            <dd className="font-medium">{row.jobTitle ?? "Not given"}</dd>
-          </div>{" "}
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Filed with DOL</dt>{" "}
-            <dd className="font-medium">{day(row.submittedDate) ?? day(row.filingDate) ?? "Unknown"}</dd>
-          </div>{" "}
-          <div>
-            <dt className="text-sm font-bold text-muted-foreground">Last checked against DOL</dt>{" "}
-            <dd className="font-medium">{day(row.lastCheckedAt) ?? "Today"}</dd>
-          </div>
-        </dl>{" "}
+    <div>
+      <AnswerPanel
+        verdict={done ? "Decided" : "Waiting"}
+        direction={granted ? "good" : u === "DENIED" ? "bad" : "flat"}
+        label={
+          <>
+            {form} <span translate="no">{row.caseNumber}</span>
+          </>
+        }
+        source={row.lastCheckedAt ? `DOL showed this status on ${formatDay(row.lastCheckedAt)}` : undefined}
+        actions={
+          done ? undefined : (
+            <div className="mt-6 border-t border-foreground/10 pt-6">
+              <WatchThisNumber caseNumber={row.caseNumber} program="seasonal" variant="inline" />
+            </div>
+          )
+        }
+      >
+        DOL&apos;s status for this application is{" "}
+        <b className="font-semibold" translate="no">
+          {prettyStatus(row.status)}
+        </b>
+        .{filed ? ` It was filed ${filed}.` : ""}{" "}
         {fileDecided && record ? (
-          <p className="mt-4 max-w-2xl border-l-2 border-primary pl-3 text-base leading-relaxed">
-            <span className="font-bold">
-              DOL&apos;s published file records the decision: {publishedStatusLabel(record.status)}
-              {day(record.decisionDate) ? `, ${day(record.decisionDate)}` : ""}.
-            </span>{" "}
-            Its live case status still reads &ldquo;{prettyStatus(row.status)}&rdquo;, which DOL doesn&apos;t update on
-            some applications it has already decided.
-          </p>
-        ) : null}
-      </section>
-
-      <SeasonalDetails
-        record={record}
-        posting={posting}
-        pending={!done}
-        caseNumber={row.caseNumber}
-        ruleShownElsewhere={view?.ruleDay != null}
-      />{" "}
+          <>
+            DOL&apos;s published file records the decision:{" "}
+            <b className="font-semibold">{publishedStatusLabel(record.status)}</b>
+            {formatDay(record.decisionDate) ? `, ${formatDay(record.decisionDate)}` : ""}. Its live status isn&apos;t
+            updated on some applications DOL has already decided.
+          </>
+        ) : (
+          (entry?.summary ?? null)
+        )}
+      </AnswerPanel>
 
       {view ? (
         <SeasonalTimingPanel
@@ -328,26 +298,32 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
         />
       ) : null}{" "}
 
-      {!done ? <WatchThisNumber caseNumber={row.caseNumber} program="seasonal" /> : null}
+      <SeasonalDetails
+        record={record}
+        posting={posting}
+        pending={!done}
+        caseNumber={row.caseNumber}
+        ruleShownElsewhere={view?.ruleDay != null}
+      />{" "}
 
-      <section className="border border-border bg-tint-primary p-5 sm:p-6">
-        <h3 className="font-heading text-xl font-bold">
-          {fileDecided ? "What DOL's live status means" : "What this status means"}
-        </h3>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
-          {entry?.summary ?? "DOL's status for this case, as shown on its own case status page."}
-        </p>{" "}
+      <PageSection title="The record" lede="As DOL holds it.">
+        <RecordList
+          rows={[
+            { label: "Employer", value: row.employerName ?? "Not given", raw: !!row.employerName },
+            { label: "Job title", value: row.jobTitle ?? "Not given", raw: !!row.jobTitle },
+            { label: "Case number", value: row.caseNumber, raw: true, mono: true },
+            { label: "Filed with DOL", value: filed ?? "Unknown" },
+            { label: "Last checked against DOL", value: formatDay(row.lastCheckedAt) ?? "Today" },
+          ]}
+        />{" "}
         {entry ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            <Link
-              href={`/perm-case-statuses#h2-${statusAnchor(entry.status)}`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              The rule behind it, and how many cases carry it
+          <p className="mt-4 text-sm">
+            <Link href={`/perm-case-statuses#h2-${statusAnchor(entry.status)}`} className="link">
+              What &ldquo;{prettyStatus(entry.status)}&rdquo; means, the rule behind it, and how many cases carry it
             </Link>
           </p>
         ) : null}
-      </section>
+      </PageSection>
     </div>
   );
 }

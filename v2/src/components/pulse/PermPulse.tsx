@@ -179,7 +179,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
                 Denied
               </span>{" "}
               <span className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 border border-border bg-foreground/45" />
+                <span aria-hidden="true" className="size-3 border border-border bg-foreground/50" />
                 Withdrawn
               </span>
             </span>
@@ -202,7 +202,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
               >
                 <div className="bg-data-good-ink" style={{ height: `${b.total ? (b.certified / b.total) * 100 : 0}%` }} />
                 <div className="bg-data-bad-ink" style={{ height: `${b.total ? (b.denied / b.total) * 100 : 0}%` }} />
-                <div className="bg-foreground/45" style={{ height: `${b.total ? (b.withdrawn / b.total) * 100 : 0}%` }} />
+                <div className="bg-foreground/50" style={{ height: `${b.total ? (b.withdrawn / b.total) * 100 : 0}%` }} />
               </div>
             ))}
           </div>

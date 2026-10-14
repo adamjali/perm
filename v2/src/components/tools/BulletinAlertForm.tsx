@@ -12,16 +12,14 @@
 
 import { useId, useState } from "react";
 import { isQueued, replyHeading } from "@/lib/alertReply";
-import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
+import { AlertDone, AlertNote, EmailField, OptInFold } from "@/components/alerts/AlertParts";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { SelectInput } from "@/components/forms/SelectInput";
 import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
 import { useAlertFormTelemetry } from "@/lib/funnelEvents";
-
-function subscribeEndpoint(): string | null {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!cloud) return null;
-  return `${cloud.replace(".convex.cloud", ".convex.site")}/bulletin-alert/subscribe`;
-}
+import { convexSiteUrl } from "@/lib/convexSite";
 
 const CATEGORIES = [
   { value: "EB1", label: "EB-1" },
@@ -41,7 +39,7 @@ const COUNTRIES = [
 ] as const;
 
 export function BulletinAlertForm({ source }: { source: string }) {
-  const telemetry = useAlertFormTelemetry("bulletin", source);
+  const { observe, onFocusCapture } = useAlertFormTelemetry("bulletin", source);
   const emailId = useId();
   const catId = useId();
   const countryId = useId();
@@ -56,7 +54,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
   const [message, setMessage] = useState("");
   const [queued, setQueued] = useState(false);
 
-  const endpoint = subscribeEndpoint();
+  const endpoint = convexSiteUrl("/bulletin-alert/subscribe");
   if (!endpoint) return null;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -98,109 +96,74 @@ export function BulletinAlertForm({ source }: { source: string }) {
 
   if (status === "done") {
     return (
-      <div
-        className="border border-border bg-card p-6 sm:p-8"
-        role="status"
-        aria-live="polite"
-      >
-        <p className="font-heading text-xl font-bold">{replyHeading(queued)}</p>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-          {message} Once confirmed, you&apos;ll hear from us when a new
-          bulletin moves your cutoff, and not otherwise.
+      <div className="border border-border bg-card p-5 sm:p-6">
+        <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
+        <AlertDone message={message} queued={queued} className="mt-2" />{" "}
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Once confirmed, you&apos;ll hear from us when a new bulletin moves your cutoff, and not otherwise.
         </p>
       </div>
     );
   }
 
-  const inputClasses =
-    "min-h-[48px] w-full border border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
-
   return (
     <form
-      ref={telemetry.ref}
-      onFocusCapture={telemetry.onFocusCapture}
+      ref={observe}
+      onFocusCapture={onFocusCapture}
       onSubmit={handleSubmit}
-      className="border border-border bg-card p-6 sm:p-8"
+      className="border border-border bg-card p-5 sm:p-6 print:hidden"
     >
-      <p className="text-sm font-bold text-muted-foreground">
-        Alert
-      </p>{" "}
-      <h2 className="mt-1 font-heading text-2xl font-bold">
-        Email me when my cutoff moves
-      </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-        Pick your category and country. When a new bulletin changes that
-        final-action cutoff, we email the change, before and after. Nothing on
-        the months it doesn&apos;t move.
+      <h2 className="font-heading text-xl font-bold">Email me when my cutoff moves</h2>{" "}
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
+        When a new bulletin changes the final-action cutoff for your category and country, one email with the
+        change. Nothing in the months it doesn&apos;t move.
       </p>
-      <div className="mt-5 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <label htmlFor={catId} className="text-sm font-bold">
-            Category
-          </label>{" "}
-          <select
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
+        <div>
+          <Label htmlFor={catId}>Category</Label>{" "}
+          <SelectInput
             id={catId}
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className={inputClasses}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor={countryId} className="text-sm font-bold">
-            Country of birth
-          </label>{" "}
-          <select
+            options={CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
+            className="mt-2 h-12"
+          />
+        </div>{" "}
+        <div>
+          <Label htmlFor={countryId}>Country of birth</Label>{" "}
+          <SelectInput
             id={countryId}
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            className={inputClasses}
-          >
-            {COUNTRIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+            options={COUNTRIES.map((c) => ({ value: c.value, label: c.label }))}
+            className="mt-2 h-12"
+          />
+        </div>{" "}
+        <div>
+          <Label htmlFor={emailId}>Email</Label>{" "}
+          <EmailField id={emailId} value={email} onChange={setEmail} invalid={status === "error"} className="mt-2" />
         </div>
-      </div>
-      <div className="mt-4 flex flex-col gap-2">
-        <label htmlFor={emailId} className="text-sm font-bold">
-          Your email address
-        </label>{" "}
-        <input
-          id={emailId}
-          type="email"
-          name="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          autoComplete="email"
-          className={inputClasses}
-        />
-      </div>
-      <OptInBox id={newsId} kind="news" checked={news} onChange={setNews} className="mt-4" />{" "}
-      <OptInBox id={`${newsId}-newsletter`} kind="newsletter" checked={newsletter} onChange={setNewsletter} className="mt-3" />
-      {status === "error" && message ? (
-        <p className="mt-4 text-sm font-bold text-destructive" role="alert">
-          {message}
-        </p>
-      ) : null}
-      <button
-        type="submit"
-          data-ph-capture-attribute-cta="bulletin-alert"
-        disabled={status === "sending"}
-        className="mt-6 inline-flex min-h-[48px] items-center justify-center border border-border bg-foreground px-6 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none"
-      >
-        {status === "sending" ? "Sending" : "Email me when it moves"}
-      </button>{" "}
-      <AlertNote className="mt-4" />
+      </div>{" "}
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Button type="submit" size="lg" loading={status === "sending"} data-ph-capture-attribute-cta="bulletin-alert">
+          Email me when it moves
+        </Button>{" "}
+        {status === "error" && message ? (
+          <p className="text-sm font-semibold text-data-warn-ink" role="alert">
+            {message}
+          </p>
+        ) : (
+          <AlertNote />
+        )}
+      </div>{" "}
+      <OptInFold
+        id={newsId}
+        news={news}
+        newsletter={newsletter}
+        onNews={setNews}
+        onNewsletter={setNewsletter}
+        className="mt-1"
+      />
     </form>
   );
 }

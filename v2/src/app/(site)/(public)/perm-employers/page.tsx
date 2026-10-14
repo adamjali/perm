@@ -257,7 +257,7 @@ export default async function PermEmployersPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-tint-primary p-6">
+        <div className="border border-border bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">Your employer is on the list?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Their volume doesn’t change your place in line. The{" "}

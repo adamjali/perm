@@ -43,7 +43,7 @@ export function NotFoundSuggestions({ articles }: { articles: ArticleRef[] }) {
         <>
           <Link
             href={family.searchHref}
-            className="inline-flex min-h-[48px] items-center gap-2 border border-border bg-tint-primary px-4 font-bold transition-colors hover:bg-accent"
+            className="inline-flex min-h-[48px] items-center gap-2 border border-border bg-tint px-4 font-bold transition-colors hover:bg-accent"
           >
             <MagnifyingGlassIcon aria-hidden="true" className="size-5" weight="bold" />
             {family.searchable ? `Search ${family.noun} for “${family.query}”` : `Every page of ${family.noun}`}

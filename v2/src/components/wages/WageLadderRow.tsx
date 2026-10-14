@@ -92,7 +92,7 @@ export function WageLadderRow({
       {/* p5 to p95. */}
       <span
         aria-hidden="true"
-        className="absolute top-1/2 h-[3px] -translate-y-1/2 bg-foreground/45"
+        className="absolute top-1/2 h-[3px] -translate-y-1/2 bg-foreground/50"
         style={{ left: `${p.p5}%`, width: `${Math.max(0, p.p95 - p.p5)}%` }}
       />
       {/* p25 to p75, the middle half. */}
@@ -111,7 +111,7 @@ export function WageLadderRow({
         <span
           key={r}
           aria-hidden="true"
-          className="absolute top-1/2 h-2 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-foreground/45"
+          className="absolute top-1/2 h-2 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-foreground/50"
           style={{ left: `${p[r]}%` }}
         />
       ))}
@@ -138,7 +138,7 @@ export function WageLadderKey({ className }: { className?: string }) {
       )}
     >
       <li className="flex items-center gap-2">
-        <span aria-hidden="true" className="h-[3px] w-8 bg-foreground/45" />{" "}
+        <span aria-hidden="true" className="h-[3px] w-8 bg-foreground/50" />{" "}
         <span>5th to 95th</span>
       </li>{" "}
       <li className="flex items-center gap-2">
@@ -153,7 +153,7 @@ export function WageLadderKey({ className }: { className?: string }) {
         <span>Median</span>
       </li>{" "}
       <li className="flex items-center gap-2">
-        <span aria-hidden="true" className="h-2 w-0.5 bg-foreground/45" />{" "}
+        <span aria-hidden="true" className="h-2 w-0.5 bg-foreground/50" />{" "}
         <span>10th and 90th</span>
       </li>{" "}
     </ul>

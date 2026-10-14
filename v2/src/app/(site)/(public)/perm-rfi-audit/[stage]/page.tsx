@@ -432,7 +432,7 @@ export default async function StagePage({
                 <li>
                   <Link
                     href={`/perm-rfi-audit/${s.slug}`}
-                    className="inline-flex min-h-11 items-center gap-2 border border-border bg-card px-3 text-sm font-bold hover:bg-tint-primary"
+                    className="inline-flex min-h-11 items-center gap-2 border border-border bg-card px-3 text-sm font-bold hover:bg-tint"
                   >
                     {stageMeta(s.status).label}
                     <span className="font-mono text-sm font-normal tabular-nums text-muted-foreground">

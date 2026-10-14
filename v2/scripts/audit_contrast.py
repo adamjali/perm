@@ -43,8 +43,11 @@ PAIRS = [
     ("--destructive-text", "--background", "error text on page", False),
     ("--destructive-text", "--card", "error text on a card", False),
     ("--ring", "--background", "focus ring on page", True),
-    ("--border", "--background", "border on page", True),
-    ("--border", "--card", "border on a card", True),
+    # Lines a reader has to see (WCAG 1.4.11): a control's edge, a chart's
+    # ticks, a hatch. `--border` only groups content and is exempt.
+    ("--input", "--background", "control line on page", True),
+    ("--input", "--card", "control line on a card", True),
+    ("--input", "--muted", "control line on muted", True),
 ]
 
 # Manila pairs. The folder surface stays tan in BOTH themes, so its ink is
@@ -62,11 +65,11 @@ MANILA = [
 
 
 # Surfaces and graphics the PAIRS table cannot reach, because they are not
-# tokens. `.bg-tint-primary` is `color-mix(in srgb, --primary 12%, --card)`
-# and the bar fills are opacity-derived, so both are computed here from the
-# real tokens per theme instead of being read as hex literals.
+# pairs. The text levels on `--tint` (the answer block's ground) and the bar
+# fills are opacity-derived, so both are computed here from the real tokens
+# per theme instead of being read as hex literals.
 #
-# Added after measuring a page by hand found them ungated: tint-primary is
+# Added after measuring a page by hand found them ungated: the tint is
 # used on /tools, /calculators and the I-485 queue page and had never been
 # checked, and a data bar at foreground/25 measured 1.82:1 against its own
 # track, under the 3:1 floor for a graphical object.
@@ -76,8 +79,8 @@ DERIVED = [
     ("--foreground", 1.0, "tint", "ink on the primary tint", 4.5),
     ("--foreground", 0.7, "tint", "body at 70% on the primary tint", 4.5),
     ("--foreground", 0.6, "tint", "label at 60% on the primary tint", 4.5),
-    ("--foreground", 0.45, "muted", "data bar fill against its track", 3.0),
-    ("--border", 1.0, "muted", "hatch stroke against the hatched base", 3.0),
+    ("--foreground", 0.5, "muted", "data bar fill against its track", 3.0),
+    ("--input", 1.0, "muted", "hatch stroke against the hatched base", 3.0),
 ]
 
 # Boundaries a reader has to SEE, where more than one thing can carry them.
@@ -94,13 +97,8 @@ DERIVED = [
 # (label, floor, [(token_a, surface_a), ...] candidate carriers)
 BOUNDARIES = [
     ("certainty bar: solid meets hatched", 3.0,
-     [("--primary", "muted"), ("--border", "--primary")]),
+     [("--primary", "muted"), ("--input", "--primary")]),
 ]
-
-
-def mix(a, b, pa):
-    """color-mix(in srgb, a pa%, b)."""
-    return tuple(round(x * pa + y * (1 - pa)) for x, y in zip(a, b))
 
 
 def blend(fg, bg, a):
@@ -149,8 +147,7 @@ def main() -> int:
                   f"  {t}={toks[t].strip()} on {s_}={toks[s_].strip()}")
     for name, toks in (("LIGHT", light), ("DARK", dark)):
         print(f"\n  === {name}, DERIVED SURFACES ===")
-        tint = mix(rgb(toks["--primary"]), rgb(toks["--card"]), 0.12)
-        surfaces = {"tint": tint, "muted": rgb(toks["--muted"])}
+        surfaces = {"tint": rgb(toks["--tint"]), "muted": rgb(toks["--muted"])}
         for tok, a, sfc_name, label, floor in DERIVED:
             sfc = surfaces[sfc_name]
             r = ratio(blend(rgb(toks[tok]), sfc, a), sfc)

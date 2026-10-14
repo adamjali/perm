@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 
+import { PageSection } from "@/components/data/PageSection";
 import { ChartTips } from "@/components/data/ChartTips";
 import { formatInt } from "@/lib/format";
 import type { LineAheadRow } from "@/lib/queueAhead";
@@ -27,22 +28,24 @@ export function LineAhead({
   const max = Math.max(...rows.map((r) => r.n));
   const days = perDay && perDay > 0 ? Math.max(1, Math.round(total / perDay)) : null;
   return (
-    <section aria-labelledby="line-ahead" className="mt-8 border border-border bg-card p-6 sm:p-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 id="line-ahead" className="font-heading text-2xl font-bold">
-          The line ahead of you
-        </h2>{" "}
+    <PageSection
+      id="line-ahead"
+      title="The line ahead of you"
+      aside={
         <p className="font-heading text-3xl font-bold tabular-nums">
-          {formatInt(total)} <span className="text-base font-bold">cases</span>
+          {formatInt(total)} <span className="text-base font-semibold">cases</span>
         </p>
-      </div>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
-        Filed before yours and still in DOL&apos;s ordinary line.
-        {days !== null && perDay
-          ? ` DOL decides about ${formatInt(Math.round(perDay))} a day lately, so that's about ${formatInt(days)} ${days === 1 ? "day" : "days"} of work.`
-          : ""}
-      </p>{" "}
-      <ChartTips label="Cases ahead of yours in DOL's line, by filing month" className="mt-5">
+      }
+      lede={
+        <>
+          Filed before yours and still in DOL&apos;s ordinary line.
+          {days !== null && perDay
+            ? ` DOL decides about ${formatInt(Math.round(perDay))} a day lately, so that's about ${formatInt(days)} ${days === 1 ? "day" : "days"} of work.`
+            : ""}
+        </>
+      }
+    >
+      <ChartTips label="Cases ahead of yours in DOL's line, by filing month">
         <ol className="space-y-2">
           {rows.map((r) => (
             <Fragment key={r.key}>{" "}
@@ -50,10 +53,10 @@ export function LineAhead({
               className="grid grid-cols-[7.75rem_minmax(0,1fr)_4rem] items-center gap-x-3"
               data-tip={`${r.label}${r.own ? ", your own month, filed before you" : ""}\n${formatInt(r.n)} cases still in line`}
             >
-              <span className={`font-mono text-sm ${r.own ? "font-bold" : ""}`}>{r.label}</span>{" "}
-              <span className="block h-4 border border-border bg-background" aria-hidden="true">
+              <span className={`font-mono text-sm ${r.own ? "font-semibold" : "text-soft"}`}>{r.label}</span>{" "}
+              <span className="block h-4 bg-muted" aria-hidden="true">
                 <span
-                  className={`block h-full ${r.own ? "bg-data-warn-ink" : "bg-foreground"}`}
+                  className={`block h-full ${r.own ? "bg-primary-text" : "bg-foreground/50"}`}
                   style={{ width: `${Math.max(1, Math.round((r.n / max) * 100))}%` }}
                 />
               </span>{" "}
@@ -67,6 +70,6 @@ export function LineAhead({
         {rows.some((r) => r.own) ? "The last bar is your own filing month, counting only the days before yours. " : ""}Cases
         on hold, at an RFI or on appeal aren&apos;t in the line and aren&apos;t counted.
       </p>
-    </section>
+    </PageSection>
   );
 }

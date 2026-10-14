@@ -333,7 +333,7 @@ export function H1bEmployerRanks({
       </div>
 
       {q.failed ? (
-        <RequestFailed what="This ranking" failure={q.failure} onRetry={q.retry} className="mt-6 border border-border bg-tint-primary p-4" />
+        <RequestFailed what="This ranking" failure={q.failure} onRetry={q.retry} className="mt-6 border border-border bg-tint p-4" />
       ) : null}
 
       <div className={loading ? "opacity-60 transition-opacity motion-reduce:transition-none" : ""} aria-busy={loading}>

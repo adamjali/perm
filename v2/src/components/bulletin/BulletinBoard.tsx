@@ -357,7 +357,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
               <ul className="mt-3 flex flex-wrap gap-2">
                 {openLines.map((g) => (
                   <Fragment key={g.category}>
-                    <li className="border border-border bg-tint-primary px-3 py-1.5 text-sm font-bold">
+                    <li className="border border-border bg-tint px-3 py-1.5 text-sm font-bold">
                       {g.everyCountry
                         ? `${categoryLabel(g.category)}, every country`
                         : `${categoryLabel(g.category)}: ${g.countries.map((k) => COUNTRY_LABELS[k]).join(", ")}`}

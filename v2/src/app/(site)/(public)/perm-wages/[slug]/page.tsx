@@ -318,7 +318,7 @@ export default async function OccupationPage({
               {row.code ? (
                 <Link
                   href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
-                  className="inline-flex min-h-11 items-center justify-center border border-border bg-background px-4 font-bold hover:bg-tint-primary"
+                  className="inline-flex min-h-11 items-center justify-center border border-border bg-background px-4 font-bold hover:bg-tint"
                 >
                   DOL&apos;s wage levels for this job
                 </Link>
@@ -547,7 +547,7 @@ export default async function OccupationPage({
 
       <Chapter id="notes" title="Notes on these numbers">
       {/* ONE LINE AND A LINK, THE READING FOLDED. */}
-      <section className="mt-6 border border-border bg-tint-primary p-6 sm:p-8">
+      <section className="mt-6 border border-border bg-tint p-6 sm:p-8">
         <h3 className="font-heading text-xl font-bold">Reading the wage</h3>{" "}
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
           A floor, not a salary survey: every level and metro mixed.

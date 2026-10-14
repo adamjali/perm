@@ -294,7 +294,7 @@ function FrontierTable({
                 key={p.decisionMonth}
                 className={cn(
                   "border-t border-border/40",
-                  isTarget && "bg-tint-primary",
+                  isTarget && "bg-tint",
                 )}
               >
                 <td className="px-3 py-2.5 tabular-nums">

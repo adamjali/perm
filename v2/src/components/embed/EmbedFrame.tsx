@@ -35,8 +35,6 @@ export function embedCss(slug: string): string {
     // lose the page's vertical rhythm, which was spacing for content now hidden.
     `:is(${onPath}):not(.embed-root) { margin-top: 0 !important; margin-bottom: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; min-height: 0 !important; }`,
     `.embed-root ${m} { margin-top: 0 !important; }`,
-    // The site's film grain is page decoration, not part of a tool.
-    `.grain-overlay { display: none !important; }`,
     // A tool heading that repeats the title bar (marked data-embed-hide on the tool).
     `.embed-root [data-embed-hide] { display: none !important; }`,
     `.embed-root [data-embed-hide] + * { margin-top: 0 !important; }`,

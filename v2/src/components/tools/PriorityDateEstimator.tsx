@@ -645,7 +645,7 @@ export function PriorityDateEstimator({
         // Warnings sit ABOVE everything they cast doubt on. A date computed
         // from suspect input must never read as more authoritative than the
         // doubt about the input, and below the answer is where nobody looks.
-        <div className="border-b border-border bg-tint-primary p-6 sm:p-8" role="alert">
+        <div className="border-b border-border bg-tint p-6 sm:p-8" role="alert">
           {warnings.map((w) => (
             <div key={w} className="flex items-start gap-3 [&+&]:mt-4">
               <WarningIcon

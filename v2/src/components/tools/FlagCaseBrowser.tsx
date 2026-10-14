@@ -114,14 +114,14 @@ const CONTROL =
 const BUTTON =
   "min-h-[44px] border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
 const CHIP =
-  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary ";
+  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary ";
 
 
 function chip(status: string, isFinal: boolean): string {
   const u = status.toUpperCase();
   if (u === "DETERMINATION ISSUED" || u.startsWith("REDETERMINATION")) return "bg-primary text-primary-foreground";
   if (u === "DENIED") return "bg-foreground text-background";
-  return isFinal ? "bg-card" : "bg-tint-primary";
+  return isFinal ? "bg-card" : "bg-tint";
 }
 
 function Rows({
@@ -659,7 +659,7 @@ export function FlagCaseBrowser({
           </p>
         ) : null}
         {typedCaseNumber ? (
-          <p className="mt-4 border border-primary bg-tint-primary p-4 text-base leading-relaxed">
+          <p className="mt-4 border border-primary bg-tint p-4 text-base leading-relaxed">
             That is a case number.{" "}
             <PendingLink
               href={`/perm-case-status?case=${encodeURIComponent(typedCaseNumber)}`}
@@ -672,7 +672,7 @@ export function FlagCaseBrowser({
           </p>
         ) : null}
         {searching && searchFailed ? (
-          <RequestFailed what="The search" failure={searchFailure} onRetry={retrySearch} className="mt-4 border border-border bg-tint-primary p-4" />
+          <RequestFailed what="The search" failure={searchFailure} onRetry={retrySearch} className="mt-4 border border-border bg-tint p-4" />
         ) : null}
         {searching && search && found === 0 ? (
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
@@ -825,7 +825,7 @@ export function FlagCaseBrowser({
           </label>
         </div>{" "}
         {listFailed ? (
-          <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 border border-border bg-tint-primary p-4" />
+          <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 border border-border bg-tint p-4" />
         ) : null}
         {!withheld && !listFailed && shownPage === undefined ? (
           <p className="mt-4 text-base text-muted-foreground">Loading…</p>

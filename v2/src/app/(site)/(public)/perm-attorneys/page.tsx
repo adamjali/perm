@@ -223,7 +223,7 @@ export default async function PermAttorneysPage() {
             .
           </p>
         </div>
-        <div className="border border-border bg-tint-primary p-6">
+        <div className="border border-border bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">Checking on your firm?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             A firm&apos;s median sits near the national one because DOL works a

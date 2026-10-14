@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BellIcon, WarningIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { isPushSupported, subscribeToPush } from "@/lib/pushSubscription";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { convexSiteUrl } from "@/lib/convexSite";
 
 /**
  * A browser notification when DOL's status changes, with no account and no
@@ -18,13 +20,6 @@ import { cn } from "@/lib/utils";
  */
 
 const STORAGE_KEY = "pt-push-endpoint";
-
-/** Convex HTTP actions live on the `.convex.site` twin of the cloud URL. */
-function endpoint(path: string): string | null {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!cloud) return null;
-  return `${cloud.replace(".convex.cloud", ".convex.site")}${path}`;
-}
 
 type State =
   | { kind: "idle" }
@@ -47,8 +42,8 @@ export function CasePushAlert({ caseNumber, className }: { caseNumber: string; c
     }
   }, []);
 
-  const subscribeUrl = endpoint("/case-alert/push");
-  const stopUrl = endpoint("/case-alert/push/stop");
+  const subscribeUrl = convexSiteUrl("/case-alert/push");
+  const stopUrl = convexSiteUrl("/case-alert/push/stop");
   if (!subscribeUrl || !stopUrl || supported === false) return null;
 
   async function turnOn() {
@@ -78,7 +73,7 @@ export function CasePushAlert({ caseNumber, className }: { caseNumber: string; c
         }
         setState({ kind: "on", message: body?.message ?? "This browser will be notified when DOL's status changes." });
       } else {
-        setState({ kind: "refused", message: body?.message ?? "That did not go through. Try again in a moment." });
+        setState({ kind: "refused", message: body?.message ?? "That didn't go through. Try again in a moment." });
       }
     } catch (e) {
       const m = e instanceof Error ? e.message : "";
@@ -89,8 +84,8 @@ export function CasePushAlert({ caseNumber, className }: { caseNumber: string; c
           : /not supported/i.test(m)
             ? "This browser cannot receive notifications. On an iPhone, add the site to the home screen first."
             : /timed out/i.test(m)
-              ? "The browser did not answer. Reload the page and try once more."
-              : "That did not go through. Try again in a moment.",
+              ? "The browser didn't answer. Reload the page and try once more."
+              : "That didn't go through. Try again in a moment.",
       });
     }
   }
@@ -113,52 +108,49 @@ export function CasePushAlert({ caseNumber, className }: { caseNumber: string; c
         setStored(null);
         setState({ kind: "off", message: "This browser will not be notified any more." });
       } else {
-        setState({ kind: "refused", message: "That did not go through. Try again in a moment." });
+        setState({ kind: "refused", message: "That didn't go through. Try again in a moment." });
       }
     } catch {
-      setState({ kind: "refused", message: "That did not go through, which usually means the connection dropped." });
+      setState({ kind: "refused", message: "That didn't go through, which usually means the connection dropped." });
     }
   }
 
+  // Folded under the email box: one line until asked for, then the
+  // explanation and the button open in place.
   return (
-    <div className={cn("border border-border bg-card p-5 sm:p-6 print:hidden", className)}>
-      <h3 className="flex items-center gap-2 font-heading text-base font-bold">
-        <BellIcon size={18} weight="bold" aria-hidden="true" /> Or a notification in this browser
-      </h3>{" "}
-      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-        No email and no account: the browser hands this site a delivery address that identifies the browser, not
-        you, and one notification goes out minutes after DOL&apos;s status for this case changes. Turn it off
-        here or in the browser&apos;s settings.
-      </p>{" "}
-      {state.kind === "on" || state.kind === "off" ? (
-        <p className="mt-3 text-sm leading-relaxed text-soft">{state.message}</p>
-      ) : (
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={turnOn}
-            disabled={state.kind === "working"}
-            className="min-h-11 border border-border bg-background px-5 font-bold transition-transform disabled:text-muted-foreground"
-          >
-            {state.kind === "working" ? "Asking the browser" : "Notify this browser"}
-          </button>{" "}
-          {stored ? (
-            <button
-              type="button"
-              onClick={turnOff}
-              disabled={state.kind === "working"}
-              className="min-h-11 px-3 text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary disabled:text-muted-foreground"
-            >
-              Stop notifying this browser
-            </button>
-          ) : null}{" "}
-          {state.kind === "refused" ? (
-            <p className="flex items-start gap-2 text-sm">
-              <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {state.message}
-            </p>
-          ) : null}
-        </div>
-      )}
-    </div>
+    <details className={cn("group print:hidden", className)}>
+      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-soft hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <CaretRightIcon className="size-3.5 shrink-0 transition-transform group-open:rotate-90" weight="bold" aria-hidden="true" />{" "}
+        Or a browser notification
+      </summary>{" "}
+      <div className="pb-1 pl-5">
+        <p className="max-w-2xl text-sm leading-relaxed text-soft">
+          No email and no account. The browser gives this site an address for itself, not for you, and one
+          notification goes out minutes after the status changes. Turn it off here or in the browser&apos;s settings.
+        </p>{" "}
+        {state.kind === "on" || state.kind === "off" ? (
+          <p role="status" className="mt-3 text-sm leading-relaxed text-soft">
+            {state.message}
+          </p>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <Button type="button" variant="outline" onClick={turnOn} loading={state.kind === "working"}>
+              Notify this browser
+            </Button>{" "}
+            {stored ? (
+              <Button type="button" variant="link" onClick={turnOff} disabled={state.kind === "working"}>
+                Stop notifying this browser
+              </Button>
+            ) : null}{" "}
+            {state.kind === "refused" ? (
+              <p role="alert" className="flex items-start gap-2 text-sm">
+                <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0 text-data-warn-ink" aria-hidden="true" />{" "}
+                {state.message}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </div>
+    </details>
   );
 }

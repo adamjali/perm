@@ -155,7 +155,7 @@ function unreadMonthLabels(from: string, to: string): string[] {
 const CONTROL =
   "min-h-[44px] w-full min-w-0 border border-border bg-card px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
-  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "text-sm font-bold text-muted-foreground";
 
 function fmtWage(n: number | null): string {
@@ -565,13 +565,13 @@ export function CaseBrowser({
             what="The lookup"
             failure={caseFailure}
             onRetry={() => setCaseSubmit((s) => s + 1)}
-            className="mt-4 border border-border bg-tint-primary p-4"
+            className="mt-4 border border-border bg-tint p-4"
           />
         ) : null}
         {caseQuery !== "" && lookupData && !caseHit && liveHit ? (
           /* Not published yet, but DOL's live system knows it - the case the
              disclosure files cannot show for another quarter. */
-          <div className="mt-4 border border-border bg-tint-primary p-4">
+          <div className="mt-4 border border-border bg-tint p-4">
             <p className="text-base font-bold">
               Found in DOL&apos;s live system - not yet in the published files.
             </p>{" "}
@@ -593,7 +593,7 @@ export function CaseBrowser({
           </div>
         ) : null}
         {caseQuery !== "" && lookupData && !caseHit && !liveHit ? (
-          <div className="mt-4 border border-border bg-tint-primary p-4">
+          <div className="mt-4 border border-border bg-tint p-4">
             <p className="text-base font-bold">
               No case with that number in this window.
             </p>{" "}
@@ -705,7 +705,7 @@ export function CaseBrowser({
           ) : null}
 
           {dimension === "employer" && employerSlug ? (
-            <div className="flex min-h-[44px] items-center justify-between gap-2 border border-border bg-tint-primary px-3">
+            <div className="flex min-h-[44px] items-center justify-between gap-2 border border-border bg-tint px-3">
               <span className="truncate text-base font-bold">{employerSlug}</span>{" "}
               <button type="button" onClick={clearAll} className="shrink-0 text-sm underline">
                 Clear
@@ -714,7 +714,7 @@ export function CaseBrowser({
           ) : null}
 
           {dimension === "attorney" && attorneySlug ? (
-            <div className="flex min-h-[44px] items-center justify-between gap-2 border border-border bg-tint-primary px-3">
+            <div className="flex min-h-[44px] items-center justify-between gap-2 border border-border bg-tint px-3">
               <span className="truncate text-base font-bold">{attorneySlug}</span>{" "}
               <button type="button" onClick={clearAll} className="shrink-0 text-sm underline">
                 Clear
@@ -912,7 +912,7 @@ export function CaseBrowser({
         {searching && nameField === "employer" && liveHits.length > 0 ? (
           /* The live strip: filings newer than the last disclosure file, from
              DOL's live feed, each linking to its own status page. */
-          <div className="mt-4 border border-border bg-tint-primary p-4">
+          <div className="mt-4 border border-border bg-tint p-4">
             <p className="text-base font-bold">
               {narrow.title || narrow.from || narrow.to
                 ? "Matching filings - live from DOL, not yet in the published files"

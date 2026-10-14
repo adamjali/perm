@@ -231,7 +231,7 @@ export default async function PermCasesPage() {
             reads it against where DOL is working now.
           </p>
         </div>
-        <div className="border border-border bg-tint-primary p-6">
+        <div className="border border-border bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">Comparing a whole docket?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Per-firm and per-sponsor totals sit on the{" "}

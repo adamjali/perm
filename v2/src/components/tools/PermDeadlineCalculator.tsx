@@ -300,7 +300,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         // Warnings sit ABOVE the dates: a date computed from suspect input
         // must not read as more authoritative than the doubt about the input.
         <div
-          className="border-b border-border bg-tint-primary p-6 sm:p-8"
+          className="border-b border-border bg-tint p-6 sm:p-8"
           role="alert"
         >
           {result.warnings.map((w) => (

@@ -115,7 +115,7 @@ export function PwdQueueEstimator({
         </div>
       </div>
 
-      <div className="border-b border-border bg-tint-primary p-6 sm:p-8">
+      <div className="border-b border-border bg-tint p-6 sm:p-8">
         <p className="text-sm font-bold text-muted-foreground">
           Requests ahead of yours
         </p>{" "}

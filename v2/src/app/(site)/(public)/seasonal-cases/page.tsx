@@ -155,7 +155,7 @@ export default async function SeasonalCasesPage() {
                 <dt className="text-sm font-bold text-muted-foreground">Still in process</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.pending)}</dd>
               </div>{" "}
-              <div className="border border-border bg-tint-primary p-4">
+              <div className="border border-border bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">Decided</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.decided)}</dd>
               </div>

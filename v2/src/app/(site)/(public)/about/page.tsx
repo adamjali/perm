@@ -354,7 +354,7 @@ export default async function AboutPage() {
                 <li>
                   <Link
                     href={pg.href}
-                    className="flex min-h-[44px] items-center justify-between gap-3 border border-border bg-card px-4 font-bold transition-colors hover:bg-tint-primary"
+                    className="flex min-h-[44px] items-center justify-between gap-3 border border-border bg-card px-4 font-bold transition-colors hover:bg-tint"
                   >
                     {pg.label} <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
                   </Link>

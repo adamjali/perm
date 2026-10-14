@@ -90,7 +90,7 @@ export default function NotFound() {
               <li>
                 <Link
                   href={d.href}
-                  className="flex min-h-[56px] items-center gap-3 border border-border bg-card px-4 font-bold transition-colors hover:bg-tint-primary"
+                  className="flex min-h-[56px] items-center gap-3 border border-border bg-card px-4 font-bold transition-colors hover:bg-tint"
                 >
                   <d.Icon aria-hidden="true" className="size-5 shrink-0" weight="bold" />{" "}
                   <span className="flex-1">{d.label}</span>{" "}

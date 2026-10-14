@@ -1,4 +1,6 @@
 import type { TimingView } from "@/lib/seasonalTiming";
+import { formatAsOf, formatMonthDay } from "@/lib/dolFormat";
+import { PageSection } from "@/components/data/PageSection";
 
 /**
  * When DOL usually decides a case like this one: a range bar drawn from DOL's
@@ -8,15 +10,8 @@ import type { TimingView } from "@/lib/seasonalTiming";
  * measured basis; the caller passes null otherwise and nothing is drawn.
  */
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
-
-function day(iso: string): string {
-  return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-}
-
-function shortDay(iso: string): string {
-  return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
+const day = (iso: string) => formatAsOf(iso) ?? iso;
+const shortDay = (iso: string) => formatMonthDay(iso) ?? iso;
 
 /** Where a date falls on the early-to-late span, as a CSS percentage, clamped. */
 function at(v: TimingView, iso: string): string {
@@ -53,34 +48,31 @@ export function SeasonalTimingPanel({
   const start = view.basis === "start";
   const share = view.onTimeShare === null ? null : Math.round(view.onTimeShare * 100);
   return (
-    <section className="border border-border bg-card p-5 sm:p-6" aria-labelledby="seasonal-timing">
-      <h3 id="seasonal-timing" className="font-heading text-xl font-bold">
-        When DOL usually decides
-      </h3>{" "}
+    <PageSection id="seasonal-timing" title="When DOL usually decides">
       {view.group ? (
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
+        <p className="max-w-2xl text-base leading-relaxed text-soft">
           {groupLead(view)} For this case{filingDate ? `, filed ${day(filingDate)}` : ""}, that&apos;s{" "}
-          <span className="font-bold">
+          <b className="font-semibold text-foreground">
             {day(view.from)} to {day(view.to)}
-          </span>
+          </b>
           , most often around {day(view.typical)}.
         </p>
       ) : (
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
+      <p className="max-w-2xl text-base leading-relaxed text-soft">
         {start
           ? `Half of the H-2A applications DOL certified were decided ${view.days.to} to ${view.days.from} days before the work began. For this job, starting ${firstDay ? day(firstDay) : "on its first day"}, that's `
           : `Half of the ${view.visa} applications DOL certified${view.season ? ` that were filed ${view.season}` : ""} were decided ${view.days.from} to ${view.days.to} days after filing. For this case${filingDate ? `, filed ${day(filingDate)}` : ""}, that's `}
-        <span className="font-bold">
+        <b className="font-semibold text-foreground">
           {day(view.from)} to {day(view.to)}
-        </span>
+        </b>
         , most often around {day(view.typical)}.
       </p>
       )}{" "}
       <div className="mt-5" aria-hidden="true">
         <div className="relative h-8">
-          <div className="absolute inset-x-0 top-3 h-2 border border-border bg-muted" />{" "}
+          <div className="absolute inset-x-0 top-3 h-2 bg-muted" />{" "}
           <div
-            className="absolute top-2 h-4 border border-border bg-primary"
+            className="absolute top-2 h-4 bg-primary-text"
             style={{ left: at(view, view.from), width: `calc(${at(view, view.to)} - ${at(view, view.from)})` }}
           />{" "}
           <div className="absolute top-0 h-8 w-1 -translate-x-1/2 bg-foreground" style={{ left: at(view, view.typical) }} />{" "}
@@ -91,13 +83,13 @@ export function SeasonalTimingPanel({
             />
           ) : null}
         </div>{" "}
-        <div className="relative mt-1 h-5 text-sm font-bold">
+        <div className="relative mt-1 h-5 text-sm text-soft">
           <span className="absolute left-0">{shortDay(view.early)}</span>{" "}
           <span className="absolute right-0">{shortDay(view.late)}</span>
         </div>{" "}
         <div className="relative h-6 text-sm">
           <span
-            className="absolute -translate-x-1/2 whitespace-nowrap border border-border bg-background px-1 font-bold"
+            className="absolute -translate-x-1/2 whitespace-nowrap border border-input bg-card px-1 font-semibold"
             style={{ left: `clamp(3.5rem, ${(view.todayAt * 100).toFixed(2)}%, calc(100% - 3.5rem))` }}
           >
             {/* Dated, because off either end of the bar the label is held at the edge. */}
@@ -107,7 +99,7 @@ export function SeasonalTimingPanel({
       </div>{" "}
       <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-soft">
         <li>
-          <span className="mr-1 inline-block h-3 w-5 border border-border bg-primary align-middle" /> Middle half
+          <span className="mr-1 inline-block h-3 w-5 bg-primary-text align-middle" /> Middle half
         </li>{" "}
         <li>
           <span className="mr-1 inline-block h-3 w-1 bg-foreground align-middle" /> Most often
@@ -128,7 +120,7 @@ export function SeasonalTimingPanel({
       {share !== null && view.ruleDay ? (
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
           The rule has DOL decide by {day(view.ruleDay)}, 30 days before the work (
-          <a href="https://www.ecfr.gov/current/title-20/chapter-V/part-655/section-655.160" className={LINK} rel="noopener">
+          <a href="https://www.ecfr.gov/current/title-20/chapter-V/part-655/section-655.160" className="link" rel="noopener">
             20 CFR 655.160
           </a>
           ), unless the application was modified; {share}% of the certifications met it.
@@ -144,7 +136,7 @@ export function SeasonalTimingPanel({
         <p className="mt-4 text-sm text-muted-foreground">
           From DOL&apos;s {view.group.season} H-2B assignment-group list, which puts the applications filed in the
           season&apos;s first three days in groups by lottery and works them in order (
-          <a href="https://www.federalregister.gov/documents/2019/03/04/2019-03809/selection-procedures-for-reviewing-applications-filed-by-employers-seeking-temporary-employment-of" className={LINK} rel="noopener">
+          <a href="https://www.federalregister.gov/documents/2019/03/04/2019-03809/selection-procedures-for-reviewing-applications-filed-by-employers-seeking-temporary-employment-of" className="link" rel="noopener">
             84 FR 7399
           </a>
           ), and DOL&apos;s decisions on the {view.group.previous} groups. An estimate from past cases, not a promise.
@@ -160,6 +152,6 @@ export function SeasonalTimingPanel({
         . An estimate from past cases, not a promise.
       </p>
       )}
-    </section>
+    </PageSection>
   );
 }

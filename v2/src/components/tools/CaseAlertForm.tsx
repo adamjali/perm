@@ -1,15 +1,16 @@
 "use client";
 
 import { useId, useState } from "react";
-import { BellIcon, CheckCircleIcon } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 import { programNoun, type FlagProgram } from "@/lib/flagCaseNumber";
 import { isQueued } from "@/lib/alertReply";
-import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
+import { AlertDone, AlertNote, EmailField, OptInFold } from "@/components/alerts/AlertParts";
+import { Button } from "@/components/ui/button";
 import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
 import { useAlertFormTelemetry } from "@/lib/funnelEvents";
+import { convexSiteUrl } from "@/lib/convexSite";
 
 /**
  * Subscribe to status changes on ONE case.
@@ -26,6 +27,8 @@ import { useAlertFormTelemetry } from "@/lib/funnelEvents";
  *
  * IT IS DOUBLE OPT-IN, so nothing is sent until the address is confirmed, and
  * the success line says so rather than implying the alert is already armed.
+ *
+ * IT HAS NO BOX OF ITS OWN: WatchThisNumber places it, in an answer panel or a card.
  *
  * WHERE IT IS OFFERED is decided by the caller, and only for a case that can
  * still change. Mounting it on a decided case would promise mail that can
@@ -48,17 +51,6 @@ const SOURCE: Record<FlagProgram, string> = {
   seasonal: "seasonal-status",
 };
 
-/**
- * Convex HTTP actions are served from the `.convex.site` twin of the
- * `.convex.cloud` deployment URL. Derived the same way the queue-alert form
- * derives it, rather than introducing a second env var for the same address.
- */
-function subscribeEndpoint(): string | null {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!cloud) return null;
-  return `${cloud.replace(".convex.cloud", ".convex.site")}/case-alert/subscribe`;
-}
-
 type State =
   | { kind: "idle" }
   | { kind: "sending" }
@@ -74,7 +66,7 @@ export function CaseAlertForm({
   program?: FlagProgram;
   className?: string;
 }) {
-  const telemetry = useAlertFormTelemetry("case", program);
+  const { observe, onFocusCapture } = useAlertFormTelemetry("case", program);
   const noun = programNoun(program);
   const inputId = useId();
   const noteId = useId();
@@ -84,7 +76,7 @@ export function CaseAlertForm({
   const [newsletter, setNewsletter] = useState(false);
   const [state, setState] = useState<State>({ kind: "idle" });
 
-  const endpoint = subscribeEndpoint();
+  const endpoint = convexSiteUrl("/case-alert/subscribe");
   if (!endpoint) return null;
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -114,98 +106,66 @@ export function CaseAlertForm({
       // for the case where there is no body to read at all.
       const message =
         body?.message ??
-        "That did not go through. Try again in a moment, or check the case on DOL's own status page.";
+        "That didn't go through. Try again in a moment, or check the case on DOL's own status page.";
       setState(res.ok ? { kind: "done", message, queued: isQueued(body) } : { kind: "refused", message });
       trackAlertSignup("case", res.ok ? "accepted" : "refused", { program, status: res.status });
     } catch {
       trackAlertSignup("case", "error", { program });
       setState({
         kind: "refused",
-        message:
-          "That did not go through, which usually means the connection dropped. Try again in a moment.",
+        message: "That didn't go through, which usually means the connection dropped. Try again in a moment.",
       });
     }
   }
 
   if (state.kind === "done") {
-    return (
-      <div
-        className={cn(
-          "border border-border bg-card p-5 sm:p-6",
-          className,
-        )}
-      >
-        <p className="flex items-start gap-2 text-base leading-relaxed text-soft">
-          <CheckCircleIcon
-            className="mt-1 h-5 w-5 shrink-0 text-data-good-ink"
-            weight="fill"
-            aria-hidden="true"
-          />{" "}
-          <span>
-            <b className="font-bold text-foreground">{state.message}</b>{" "}
-            {state.queued
-              ? "Confirm it when it arrives. Nothing is sent until you do."
-              : "Nothing is sent until you confirm."}
-          </span>
-        </p>
-      </div>
-    );
+    return <AlertDone message={state.message} queued={state.queued} className={className} />;
   }
 
   return (
     <form
-      ref={telemetry.ref}
-      onFocusCapture={telemetry.onFocusCapture}
+      ref={observe}
+      onFocusCapture={onFocusCapture}
       onSubmit={submit}
-      className={cn(
-        "border border-border bg-card p-5 sm:p-6 print:hidden",
-        className,
-      )}
+      className={cn("print:hidden", className)}
     >
-      <p className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
-        <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
-        Watch this case
-      </p>{" "}
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
-        Get an email when DOL&apos;s status for this {noun} changes. A watched
-        case is checked against DOL every 5 minutes on weekdays and every half
-        hour otherwise, and for a year after it&apos;s decided, in case it&apos;s
-        appealed or reopened.
-      </p>
-      <div className="mt-4 flex flex-wrap items-stretch gap-3">
-        <label htmlFor={inputId} className="sr-only">
-          Your email address
-        </label>
-        <input
+      <label htmlFor={inputId} className="block text-base font-semibold text-foreground">
+        Email me when DOL changes this {noun}&apos;s status
+      </label>{" "}
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <EmailField
           id={inputId}
-          type="email"
-          name="email"
-          required
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          autoComplete="email"
-          aria-describedby={noteId}
-          className="min-h-[48px] w-full min-w-0 flex-1 basis-64 border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-        />
-        <button
+          onChange={setEmail}
+          describedBy={noteId}
+          invalid={state.kind === "refused"}
+          className="sm:flex-1"
+        />{" "}
+        <Button
           type="submit"
+          size="lg"
+          loading={state.kind === "sending"}
           data-ph-capture-attribute-cta="case-alert"
-          disabled={state.kind === "sending"}
-          className="min-h-[48px] shrink-0 border border-border bg-foreground px-5 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none"
+          className="sm:w-auto"
         >
-          {state.kind === "sending" ? "Sending" : "Email me changes"}
-        </button>
-      </div>
-      <OptInBox id={newsId} kind="news" checked={news} onChange={setNews} className="mt-3" />{" "}
-      <OptInBox id={`${newsId}-newsletter`} kind="newsletter" checked={newsletter} onChange={setNewsletter} className="mt-3" />{" "}
+          Email me changes
+        </Button>
+      </div>{" "}
       {state.kind === "refused" ? (
-        <p id={noteId} className="mt-2 text-sm font-bold text-data-warn-ink">
+        <p id={noteId} role="alert" className="mt-2 text-sm font-semibold text-data-warn-ink">
           {state.message}
         </p>
       ) : (
-        <AlertNote id={noteId} limit="One address can watch 100 cases." className="mt-2" />
-      )}
+        <AlertNote id={noteId} className="mt-2" />
+      )}{" "}
+      <OptInFold
+        id={newsId}
+        news={news}
+        newsletter={newsletter}
+        onNews={setNews}
+        onNewsletter={setNewsletter}
+        className="mt-1"
+      />
     </form>
   );
 }

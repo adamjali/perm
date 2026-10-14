@@ -33,7 +33,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataView } from "@/components/tools/DataView";
-import { InsightLede } from "@/components/tools/Insight";
+import { AnswerPanel } from "@/components/tools/Insight";
 import { OccupationRates } from "@/components/rfi/OccupationRates";
 import { RfiOutcomes } from "@/components/rfi/RfiOutcomes";
 import { StageCensus, CensusLinks } from "@/components/rfi/StageCensus";
@@ -172,7 +172,7 @@ export default async function PermRfiAuditPage() {
 
         {rfi && rfiMedian !== null ? (
           <div className="mt-8">
-            <InsightLede
+            <AnswerPanel
               verdict={`${rfi.cases.toLocaleString()} open RFIs`}
               direction="flat"
               actions={<RfiTiming rfiDay={rfiMedian} decideDay={analystDays} />}
@@ -184,7 +184,7 @@ export default async function PermRfiAuditPage() {
             >
               An RFI doesn&rsquo;t arrive at a random point in the wait. It
               shows up when a human finally opens the file.
-            </InsightLede>
+            </AnswerPanel>
           </div>
         ) : null}
 
@@ -725,16 +725,16 @@ function RfiTiming({ rfiDay, decideDay }: { rfiDay: number; decideDay: number | 
         {decideDay !== null ? `; DOL's own figure for an analyst-review determination is ${decideDay} calendar days` : ""}.
       </figcaption>{" "}
       <div aria-hidden="true" className="relative h-[4.5rem] font-mono text-sm">
-        <span className="absolute left-0 top-0 text-background/80">Filed</span>{" "}
-        <span className="absolute top-0 -translate-x-full whitespace-nowrap pr-2 font-bold text-background" style={{ left: at(rfiDay) }}>
+        <span className="absolute left-0 top-0 text-muted-foreground">Filed</span>{" "}
+        <span className="absolute top-0 -translate-x-full whitespace-nowrap pr-2 font-bold text-foreground" style={{ left: at(rfiDay) }}>
           Open RFIs: day {rfiDay}
         </span>{" "}
-        <span className="absolute inset-x-0 top-7 h-3 bg-background/20" />{" "}
-        <span className="absolute left-0 top-7 h-3 bg-primary" style={{ width: at(rfiDay) }} />{" "}
+        <span className="absolute inset-x-0 top-7 h-3 bg-card" />{" "}
+        <span className="absolute left-0 top-7 h-3 bg-data-good-ink" style={{ width: at(rfiDay) }} />{" "}
         {decideDay !== null ? (
           <>
-            <span className="absolute top-5 h-7 w-[3px] bg-background" style={{ left: at(decideDay) }} />{" "}
-            <span className="absolute bottom-0 -translate-x-full whitespace-nowrap pr-2 text-background" style={{ left: `calc(${at(decideDay)} + 3px)` }}>
+            <span className="absolute top-5 h-7 w-[3px] bg-foreground" style={{ left: at(decideDay) }} />{" "}
+            <span className="absolute bottom-0 -translate-x-full whitespace-nowrap pr-2 text-foreground" style={{ left: `calc(${at(decideDay)} + 3px)` }}>
               DOL decides: day {decideDay}
             </span>
           </>

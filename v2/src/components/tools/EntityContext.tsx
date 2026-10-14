@@ -203,7 +203,7 @@ export function entityTitle(
  *
  * Measured, because the doctrine is to measure rather than eyeball: this sits
  * on `bg-card`, where `--data-warn-ink` is 4.81:1 in light and 10.43:1 in
- * dark. Do NOT move it onto `bg-tint-primary`, which is the one surface it
+ * dark. Do NOT move it onto `bg-tint`, which is the one surface it
  * fails on - the tint drops it to 4.38:1 in light, under the floor.
  *
  * Position is not decoration. A caveat printed under a number reads as a
@@ -449,7 +449,7 @@ export function LimitsPanel({
     // click away, with the heading still in the outline; a reader meets the
     // heading and the count, not five paragraphs.
     <details
-      className={cn("group border border-border bg-tint-primary", className)}
+      className={cn("group border border-border bg-tint", className)}
     >
       <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-4 px-6 py-4">
         <h2 className="font-heading text-xl font-bold">What these numbers don&apos;t say</h2>{" "}

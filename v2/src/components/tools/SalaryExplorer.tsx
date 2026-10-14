@@ -532,7 +532,7 @@ export function SalaryExplorer({
                                 {r.ends ? (
                                   <span
                                     aria-hidden="true"
-                                    className="absolute inset-y-0.5 border border-border bg-tint-primary"
+                                    className="absolute inset-y-0.5 border border-border bg-tint"
                                     style={{ left: at(r.ends.p5), width: `${((r.ends.p95 - r.ends.p5) / span) * 100}%` }}
                                   />
                                 ) : null}

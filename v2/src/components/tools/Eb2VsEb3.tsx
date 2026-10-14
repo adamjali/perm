@@ -220,7 +220,7 @@ function Verdict({
   }
   const good = fewer === "both-current" || ((fewer === "EB2" || fewer === "EB3") && cmp[fewer].kind === "current");
   return (
-    <div className={cn("border-b border-border p-6 sm:p-8", good && "bg-tint-primary")}>
+    <div className={cn("border-b border-border p-6 sm:p-8", good && "bg-tint")}>
       <p className={EYEBROW_CLASS}>{LINE_COUNTRY_LABEL[country]}</p>{" "}
       <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">{head}</p>{" "}
       {body ? <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">{body}</p> : null}
@@ -316,7 +316,7 @@ function LineCard({
     <section
       className={cn(
         "border-border p-6 sm:p-8 md:[&:first-child]:border-r max-md:[&:first-child]:border-b",
-        fewer ? "bg-tint-primary" : "",
+        fewer ? "bg-tint" : "",
       )}
       aria-labelledby={headingId}
     >

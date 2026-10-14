@@ -328,7 +328,7 @@ export default async function UscisProcessingTimesPage() {
                 }
               >
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] [&>*]:min-w-0">
-                  <div className="border border-border bg-tint-primary p-5">
+                  <div className="border border-border bg-tint p-5">
                     <p className="text-sm font-bold text-muted-foreground">Quarterly median, all I-140s</p>{" "}
                     <p className="mt-2 font-heading text-5xl font-bold leading-none tabular-nums">{monthsLabel(i140.medianMonths)}</p>{" "}
                     <p className="mt-2 text-sm text-muted-foreground">

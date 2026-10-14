@@ -2,8 +2,12 @@ import Link from "next/link";
 import { Fragment } from "react";
 
 import { FigurePlate } from "@/components/tools/FigurePlate";
-import { InsightLede } from "@/components/tools/Insight";
-import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
+import { AnswerPanel } from "@/components/tools/Insight";
+import { PageSection } from "@/components/data/PageSection";
+import { Fold, FoldList } from "@/components/data/Fold";
+import { FinePrint } from "@/components/data/FinePrint";
+import { Figure, FigureRow } from "@/components/data/FigureRow";
+import { WatchThisNumber } from "@/components/tools/WatchThisNumber";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
 import { CaseWall, CohortNeighbours } from "@/components/tools/CaseWall";
 import { WontSay } from "@/components/tools/CaseStatusResult";
@@ -80,252 +84,172 @@ export function CaseNotFound({
     const retry = `/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
     return (
       <div>
-        <InsightLede
+        <AnswerPanel
           verdict={unsettledVerdict(dolMiss)}
           direction="flat"
           source={
             checked
               && dolMiss !== "records"
-              ? `${checked}; ${dolMiss === "unavailable" ? "DOL's live check did not answer within 8 seconds" : "the live check with DOL was not made"}`
+              ? `${checked}; ${dolMiss === "unavailable" ? "DOL's live check didn't answer within 8 seconds" : "the live check with DOL wasn't made"}`
               : undefined
           }
         >
           {dolMiss === "records" ? "We couldn't check" : "We hold no record for"}{" "}
-          <b className="font-mono text-primary-on-ink">{caseNumber}</b>
+          <b className="font-mono">{caseNumber}</b>
           {dolMiss === "records" ? " just now: " : " yet, "}
           {unsettledClause(dolMiss)}{" "}
-          <a href={retry} className="underline underline-offset-4 decoration-2">
+          <a href={retry} className="link">
             Try again
           </a>{" "}
           or use{" "}
-          <a
-            href={DOL_CASE_STATUS_URL}
-            rel="noopener noreferrer"
-            className="underline underline-offset-4 decoration-2"
-          >
+          <a href={DOL_CASE_STATUS_URL} rel="noopener noreferrer" className="link">
             DOL&apos;s own case-status search
           </a>
           .
-        </InsightLede>
+        </AnswerPanel>
       </div>
     );
   }
   return (
     <div>
-      <InsightLede
+      <AnswerPanel
         verdict="Not in our records"
         direction="flat"
+        label={<span translate="no">{caseNumber}</span>}
         source={checked ? `${checked}, then asked DOL directly` : undefined}
+        actions={
+          // A number in the current format we can't find is usually a recent
+          // filing, the case most worth watching. Legacy numbers are all
+          // decided, so they get nothing.
+          isLegacy ? undefined : (
+            <div className="mt-6 border-t border-foreground/10 pt-6">
+              <WatchThisNumber caseNumber={caseNumber} program="perm" variant="inline" />
+            </div>
+          )
+        }
       >
-        We hold no record for{" "}
-        <b className="font-mono text-primary-on-ink">{caseNumber}</b>. That is
-        not a statement about the case. It means this project has not got it,
-        and{" "}
-        {/* THE CASE-STATUS SEARCH, NOT THE PROCESSING-TIMES PAGE. The link
-            says "DOL's own system" is the authority on THIS NUMBER, and sent
-            the reader to a page of queue averages that cannot look a case up
-            at all. The wage-request and LCA equivalents already used the right
-            one; the PERM pair did not. */}
-        <a
-          href={DOL_CASE_STATUS_URL}
-          rel="noopener noreferrer"
-          className="underline underline-offset-4 decoration-2"
-        >
+        We hold no record for this number. That isn&apos;t a statement about the case, only that this project
+        hasn&apos;t got it, and{" "}
+        {/* THE CASE-STATUS SEARCH, NOT THE PROCESSING-TIMES PAGE: the link says
+            DOL's own system is the authority on THIS NUMBER. */}
+        <a href={DOL_CASE_STATUS_URL} rel="noopener noreferrer" className="link">
           DOL&apos;s own case-status search
         </a>{" "}
         is the authority either way.
-      </InsightLede>
+      </AnswerPanel>
 
-      <section className="mt-8 border border-border bg-card p-6 sm:p-8">
-        <h2 className="font-heading text-xl font-bold">
-          Three reasons a real case is missing here
-        </h2>{" "}
-        <ul className="mt-4 max-w-3xl space-y-3 text-base leading-relaxed text-soft">
+      <PageSection title="Why a real case can be missing here">
+        <ul className="max-w-3xl space-y-3 text-base leading-relaxed text-soft">
           <li>
-            <b className="font-bold text-foreground">DOL doesn&apos;t return it.</b>{" "}
-            A number we don&apos;t already hold is asked of DOL directly, at the
-            moment you search, so a filing from this week resolves. If DOL&apos;s
+            <b className="font-semibold text-foreground">DOL doesn&apos;t return it.</b> A number we don&apos;t
+            already hold is asked of DOL at the moment you search, so a filing from this week resolves. If DOL&apos;s
             own system has no exact match, neither do we.
           </li>{" "}
           <li>
-            <b className="font-bold text-foreground">It was filed before mid-2023.</b>{" "}
-            The per-case status data does not reach further back than that, and
-            DOL&apos;s published decision files start at fiscal year 2024.
+            <b className="font-semibold text-foreground">It was filed before mid-2023.</b> The per-case status data
+            doesn&apos;t reach further back, and DOL&apos;s published decision files start at fiscal year 2024.
           </li>{" "}
           <li>
-            <b className="font-bold text-foreground">
-              A digit is off.
-            </b>{" "}
-            The shape is right, so it got this far, and one wrong digit in the
-            serial is still a well-formed case number that belongs to nobody.
-            Check it against the receipt, or{" "}
-            <Link
-              href="/case-search"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
+            <b className="font-semibold text-foreground">A digit is off.</b> One wrong digit in the serial is still a
+            well-formed number that belongs to nobody. Check it against the receipt, or{" "}
+            <Link href="/case-search" className="link">
               find the case by employer name
             </Link>
             .
           </li>
-        </ul>
-      </section>
+        </ul>{" "}
+        {parsed ? (
+          <FinePrint summary="What the case number says" className="mt-4">
+            <CaseNumberPlate parsed={parsed} />{" "}
+            <p>{CASE_NUMBER_ACCURACY}</p>
+          </FinePrint>
+        ) : null}
+      </PageSection>
 
       {isLegacy ? (
-        <section className="mt-8 border border-border bg-card p-6 sm:p-8">
-          <h2 className="font-heading text-xl font-bold">
-            This is the older case-number format
-          </h2>{" "}
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
-            Numbers like{" "}
-            <b className="font-mono font-bold text-foreground">{caseNumber}</b>{" "}
-            are the older three-part format, used mostly in 2022 and 2023. Its middle digits aren&apos;t a
-            filing date: read as one, they match DOL&apos;s receipt date only{" "}
-            <b className="font-bold text-foreground">13% of the time</b>, against 90% for the current format.
-          </p>{" "}
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
-            Every case in this format is already decided and published, so a real one would be found here.
-            Check the digits against the receipt.
+        <PageSection title="This is the older case-number format">
+          <p className="max-w-3xl text-base leading-relaxed text-soft">
+            Numbers like <b className="font-mono font-semibold text-foreground">{caseNumber}</b> are the older
+            three-part format, used mostly in 2022 and 2023. Its middle digits aren&apos;t a filing date: read as one,
+            they match DOL&apos;s receipt date only <b className="font-semibold text-foreground">13% of the time</b>,
+            against 90% for the current format. Every case in this format is already decided and published, so a
+            real one would be found here. Check the digits against the receipt.
           </p>
-        </section>
-      ) : null}{" "}
-      {parsed ? (
-        <section className="mt-8">
-          <CaseNumberPlate parsed={parsed} />{" "}
-          <p className="mt-3 text-sm text-muted-foreground">
-            {CASE_NUMBER_ACCURACY}
-          </p>
-        </section>
+        </PageSection>
       ) : null}
 
-      {/* A number in the current format that we cannot find is usually a
-          recent filing, which is exactly the case worth watching. Legacy
-          numbers are all decided, so they get nothing. */}
-      {!isLegacy ? (
-        <CaseAlertForm caseNumber={caseNumber} className="mt-8" />
-      ) : null}{" "}
-      {parsed && cohort ? (
-        <section className="mt-12">
-          {/* The heading carries the attribution, not a footnote under the
-              chart. Everything in this section is about a month, and a
-              reader who only reads headings must still not come away
-              thinking any of it was measured on their case. */}
-          <h2 className="font-heading text-2xl font-bold">
-            Cases filed in {formatMonth(cohort.month)}
-          </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-            The number decodes to a filing month, so here is what DOL is
-            holding from that month.{" "}
-            <b className="font-bold text-foreground">
-              None of this was measured on {caseNumber}
-            </b>
-            , which we could not find. It describes the {formatInt(cohort.total)}{" "}
-            cases we do hold that were filed alongside it.
-          </p>
+      <FoldList>
+        {parsed && cohort ? (
+          // The heading carries the attribution: everything here is about a
+          // month, and a reader who only reads headings must not think any of
+          // it was measured on their case.
+          <Fold title={`Cases filed in ${formatMonth(cohort.month)}`} hint="The month this number decodes to">
+            <p className="max-w-2xl text-base leading-relaxed text-soft">
+              <b className="font-semibold text-foreground">None of this was measured on {caseNumber}</b>, which we
+              couldn&apos;t find. It describes the {formatInt(cohort.total)} cases we hold that were filed alongside
+              it.
+            </p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Cell
-              label="Filed that month"
-              value={formatInt(cohort.total)}
-              note="cases checked against DOL"
-            />
-            <Cell
-              label="Still undecided"
-              value={formatInt(cohort.pending)}
-              note={
-                cohort.decidedPct !== null
-                  ? `${cohort.decidedPct.toFixed(1)}% of the month is decided`
-                  : "of that month"
-              }
-            />
+            <FigureRow className="mt-6">
+              <Figure label="Filed that month" value={formatInt(cohort.total)} note="cases checked against DOL" />
+              <Figure
+                label="Still undecided"
+                value={formatInt(cohort.pending)}
+                note={
+                  cohort.decidedPct !== null ? `${cohort.decidedPct.toFixed(1)}% of the month is decided` : "of that month"
+                }
+              />
+              {wall && !wall.isPastFront ? (
+                <Figure
+                  label="Filed before that month"
+                  value={formatInt(wall.ahead)}
+                  note="undecided, across every earlier month"
+                />
+              ) : null}
+            </FigureRow>
+
             {wall && !wall.isPastFront ? (
-              <Cell
-                label="Filed before that month"
-                value={formatInt(wall.ahead)}
-                note="undecided, across every earlier month"
-              />
+              <FigurePlate
+                n="01"
+                title="The wall in front of that filing month"
+                subject="Undecided cases by filing month"
+                className="mt-6"
+                caption={
+                  <>
+                    Drawn for {formatMonth(cohort.month)}, the month this number decodes to: the queue in front of
+                    that month rather than in front of any one case.
+                  </>
+                }
+                source={
+                  publishedAsOf
+                    ? `Per-case statuses from DOL's own case status system, checked daily · DOL queue position as of ${formatAsOf(publishedAsOf)}`
+                    : "Per-case statuses from DOL's own case status system, checked daily"
+                }
+              >
+                {/* Not "Yours": the case wasn't found, so this column is the
+                    month the NUMBER decodes to and nothing more. */}
+                <CaseWall wall={wall} publishedFront={publishedFront} attribution="month" />
+              </FigurePlate>
             ) : null}
-          </div>
 
-          {wall && !wall.isPastFront ? (
-            <FigurePlate
-              n="01"
-              title="The wall in front of that filing month"
-              subject="Undecided cases by filing month"
-              className="mt-6"
-              caption={
-                <>
-                  Drawn for {formatMonth(cohort.month)}, the month this number
-                  decodes to. It is the queue in front of that month rather
-                  than in front of any one case.
-                </>
-              }
-              source={
-                publishedAsOf
-                  ? `Per-case statuses from DOL's own case status system, checked daily · DOL queue position as of ${formatAsOf(publishedAsOf)}`
-                  : "Per-case statuses from DOL's own case status system, checked daily"
-              }
-            >
-              {/* Not "Yours": the case was not found, so this column is the
-                  month the NUMBER decodes to and nothing more. */}
-              <CaseWall
-                wall={wall}
-                publishedFront={publishedFront}
-                attribution="month"
-              />
-            </FigurePlate>
-          ) : null}
+            {neighbours.length > 1 ? (
+              <CohortNeighbours months={neighbours} subjectMonth={cohort.month} attribution="month" className="mt-6" />
+            ) : null}
 
-          {neighbours.length > 1 ? (
-            <CohortNeighbours
-              months={neighbours}
-              subjectMonth={cohort.month}
-              attribution="month"
-              className="mt-6"
-            />
-          ) : null}
-
-          <p className="mt-5 text-sm text-muted-foreground">
-            <Link
-              href={`/perm-queue/${cohort.month}`}
-              className="font-bold underline underline-offset-2 hover:text-primary"
-            >
-              The full split for {formatMonth(cohort.month)}
-            </Link>{" "}
-            ·{" "}
-            <Link
-              href="/perm-processing-times"
-              className="font-bold underline underline-offset-2 hover:text-primary"
-            >
-              Get told when DOL reaches that month
-            </Link>
-          </p>
-        </section>
-      ) : null}
-
-      {" "}
-      <WontSay isFinal={false} />
-    </div>
-  );
-}
-
-function Cell({
-  label,
-  value,
-  note,
-}: {
-  label: string;
-  value: string;
-  note: string;
-}) {
-  return (
-    <div className="min-w-0 flex-1 basis-56 border border-border bg-background p-4">
-      <p className="text-sm font-bold text-muted-foreground">
-        {label}
-      </p>{" "}
-      <p className="mt-1 font-heading text-4xl font-bold leading-none tabular-nums">
-        {value}
-      </p>{" "}
-      <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{note}</p>
+            <p className="mt-5 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+              <Link href={`/perm-queue/${cohort.month}`} className="link">
+                The full split for {formatMonth(cohort.month)}
+              </Link>{" "}
+              <Link href="/perm-processing-times" className="link">
+                Get told when DOL reaches that month
+              </Link>
+            </p>
+          </Fold>
+        ) : null}
+        <Fold title="What this page won't tell you">
+          <WontSay isFinal={false} />
+        </Fold>
+      </FoldList>
     </div>
   );
 }
@@ -376,51 +300,41 @@ export function CaseStatusEmpty({
   return (
     <div>
       {facts.length > 0 ? (
-        <div className="flex flex-wrap gap-3">
+        <FigureRow>
           {facts.map((f) => (
-            <Fragment key={f.label}>{" "}
-            <Cell label={f.label} value={f.value} note={f.note} />
+            <Fragment key={f.label}>
+              {" "}
+              <Figure label={f.label} value={f.value} note={f.note} />
             </Fragment>
           ))}
-        </div>
+        </FigureRow>
       ) : null}{" "}
-      <section className="mt-8 border border-border bg-card p-6 sm:p-8">
-        <h2 className="font-heading text-xl font-bold">
-          What a case number gets you here
-        </h2>{" "}
-        <ul className="mt-4 max-w-3xl space-y-3 text-base leading-relaxed text-soft">
+      <PageSection title="What a case number gets you here">
+        <ul className="max-w-3xl space-y-3 text-base leading-relaxed text-soft">
           <li>
-            <b className="font-bold text-foreground">The status, decoded.</b>{" "}
-            DOL shows one word and explains none of them. Some mean waiting and
-            some mean a 30-day clock is running on the employer, and the
-            difference is worth knowing.
+            <b className="font-semibold text-foreground">The status, decoded.</b> DOL shows one word and explains
+            none of them. Some mean waiting and some mean a 30-day clock is running on the employer.
           </li>{" "}
           <li>
-            <b className="font-bold text-foreground">The position.</b> How many
-            undecided cases were filed before it, how far its filing month sits
-            behind the month DOL is working, and how the queue in between is
-            stacked.
+            <b className="font-semibold text-foreground">The position.</b> How many undecided cases were filed
+            before it, and how far its filing month sits behind the month DOL is working.
           </li>{" "}
           <li>
-            <b className="font-bold text-foreground">The employer&apos;s record.</b>{" "}
-            Every decided case DOL published for that sponsor, with the counts
-            rather than a score.
+            <b className="font-semibold text-foreground">An estimated decision date, and an email when it moves.</b>
           </li>{" "}
           <li>
-            <b className="font-bold text-foreground">
-              For a decided case, DOL&apos;s own file.
-            </b>{" "}
-            The outcome, the days it took, the offered wage against its
-            occupation, and the worksite state.
+            <b className="font-semibold text-foreground">For a decided case, DOL&apos;s own file.</b> The outcome,
+            the days it took, the offered wage against its occupation, and the worksite state.
           </li>
         </ul>
         {mirrorSize ? (
-          <p className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
-            Searched against {formatInt(mirrorSize)} per-case statuses, read from DOL&apos;s own case-status search, plus DOL&apos;s published decisions for FY2024 to FY2026.
-            Nothing is stored and nothing is sent anywhere else.
+          <p className="mt-5 text-sm text-muted-foreground">
+            Searched against {formatInt(mirrorSize)} per-case statuses, read from DOL&apos;s own case-status search,
+            plus DOL&apos;s published decisions for FY2024 to FY2026. Nothing is stored and nothing is sent anywhere
+            else.
           </p>
         ) : null}
-      </section>
+      </PageSection>
     </div>
   );
 }

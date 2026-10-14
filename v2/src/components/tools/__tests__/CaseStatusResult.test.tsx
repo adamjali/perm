@@ -202,7 +202,7 @@ describe("CaseStatusResult, pending case", () => {
     expect(text).not.toMatch(/When this case could be decided/i);
     // The refusals block still speaks, in its post-estimate wording: what the
     // page never gives is a GUARANTEED date, and it says so out loud.
-    expect(text).toMatch(/will not tell you/i);
+    expect(text).toMatch(/won.t tell you/i);
     expect(text).toMatch(/A guaranteed decision date/i);
   });
 
@@ -234,11 +234,13 @@ describe("CaseStatusResult, pending case", () => {
     expect(container.querySelector("section#estimate")).not.toBeNull();
   });
 
-  it("puts a button on the answer card that lands on the alert form", () => {
+  it("puts the alert form inside the answer, not a button that jumps to it", () => {
     const { container } = renderPending({}, ESTIMATOR);
-    const button = container.querySelector('a[href="#watch"]');
-    expect(button?.textContent).toMatch(/Email me changes/);
-    expect(container.querySelector("#watch")?.textContent).toMatch(/Watch this case/);
+    const answer = container.querySelector("section")!;
+    expect(answer.querySelector("#watch")?.textContent).toMatch(/Email me when DOL changes this PERM case/);
+    expect(answer.querySelector('button[type="submit"]')?.textContent).toMatch(/Email me changes/);
+    // One form, so the action is offered once.
+    expect(container.querySelector('a[href="#watch"]')).toBeNull();
   });
 
   it("puts the record's details below the date and the alert form", () => {
@@ -251,8 +253,8 @@ describe("CaseStatusResult, pending case", () => {
       expect(i, needle).toBeGreaterThan(-1);
       return i;
     };
-    expect(at('id="estimate"')).toBeLessThan(at('id="watch"'));
-    expect(at('id="watch"')).toBeLessThan(at("Job title"));
+    expect(at('id="watch"')).toBeLessThan(at('id="estimate"'));
+    expect(at('id="estimate"')).toBeLessThan(at("Job title"));
   });
 
   it("says when no date can be given, from the answer card too", () => {
@@ -299,8 +301,8 @@ describe("CaseStatusResult, pending case", () => {
 
   it("offers alerts while the case can still change", () => {
     const { container } = renderPending();
-    expect(container.textContent).toMatch(/Watch this case/);
-    expect(container.textContent).toMatch(/for a year after it's decided, in case it's\s+appealed or reopened/);
+    expect(container.textContent).toMatch(/Email me when DOL changes this PERM case/);
+    expect(container.textContent).toMatch(/You confirm by email first\. One click turns it off\./);
   });
 
   it("renders no alert form at all when the endpoint is not configured", () => {
@@ -311,7 +313,7 @@ describe("CaseStatusResult, pending case", () => {
     delete process.env.NEXT_PUBLIC_CONVEX_URL;
     try {
       const { container } = renderPending();
-      expect(container.textContent).not.toMatch(/Watch this case/);
+      expect(container.textContent).not.toMatch(/Email me when DOL changes this/);
     } finally {
       process.env.NEXT_PUBLIC_CONVEX_URL = saved;
     }
@@ -345,8 +347,8 @@ describe("CaseStatusResult, pending case", () => {
     // percentages (the cohort is 3.3% decided), so a container-wide scan
     // would fail on a figure that has nothing to do with this rule.
     const section = screen
-      .getByRole("heading", { name: /This employer.s own record/ })
-      .closest("section")!;
+      .getByRole("heading", { name: /This employer.s record/ })
+      .closest("details")!;
     const text = section.textContent ?? "";
     // 7 of 7 certified is worth knowing and is not a 100% approval rate.
     expect(text).toMatch(/it is not a rate/);
@@ -503,7 +505,7 @@ describe("CaseStatusResult, decided case", () => {
 
   it("does not offer alerts on a case that is already decided", () => {
     const { container } = renderDecided(null);
-    expect(container.textContent).not.toMatch(/Watch this case/);
+    expect(container.textContent).not.toMatch(/Email me when DOL changes this/);
     expect(container.querySelector('a[href="#watch"]')?.textContent ?? "").not.toMatch(/Email me changes/);
     expect(container.querySelector('a[href="#watch"]')).toBeNull();
   });
@@ -824,7 +826,7 @@ describe("CaseNotFound", () => {
     const { container } = renderMissing();
     const text = container.textContent ?? "";
     expect(text).toMatch(/We hold no record for/);
-    expect(text).toMatch(/not a statement about the case/);
+    expect(text).toMatch(/isn.t a statement about the case/);
     expect(text).not.toMatch(/invalid|error|not found in DOL/i);
   });
 
@@ -883,7 +885,7 @@ describe("CaseNotFound", () => {
 
   it("still refuses to predict anything, on the empty-handed path too", () => {
     const { container } = renderMissing();
-    expect(container.textContent).toMatch(/will not tell you/i);
+    expect(container.textContent).toMatch(/won.t tell you/i);
   });
 
   it("explains a legacy number rather than showing a month it guessed", () => {
@@ -908,13 +910,13 @@ describe("CaseNotFound", () => {
     expect(text).toMatch(/13% of the time/);
     expect(text).not.toMatch(/Cases filed in/);
     // And no alert form: every legacy case is already decided.
-    expect(text).not.toMatch(/Watch this case/);
+    expect(text).not.toMatch(/Email me when DOL changes this/);
   });
 
   it("offers the alert on a current-format number it cannot find", () => {
     // Normal for a recent filing, and exactly the case worth watching.
     const { container } = renderMissing();
-    expect(container.textContent).toMatch(/Watch this case/);
+    expect(container.textContent).toMatch(/Email me when DOL changes this/);
   });
 
   it("renders without a cohort when the month is one we hold nothing for", () => {

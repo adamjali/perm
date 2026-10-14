@@ -63,7 +63,7 @@ const PAGE_SIZES = [25, 50, 100, 250] as const;
 const CONTROL =
   "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground";
 const NAV =
-  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL =
   "block text-sm font-bold text-muted-foreground";
 
@@ -579,7 +579,7 @@ export function ChangeFeedBrowser({
       {/* ONE LINE FIRST, THE REST FOLDED. The answer to "what
           do these dates hold" is one of four short facts; the detail behind it
           stays a click away, in the DOM for search either way. */}
-      <details className="mt-6 border border-border bg-tint-primary">
+      <details className="mt-6 border border-border bg-tint">
         <summary className="flex min-h-[44px] cursor-pointer items-center px-4 py-2 text-base font-bold">
           {hasDecided && hasObserved
             ? "These dates cross DOL's published files and our own daily check"
@@ -652,7 +652,7 @@ export function ChangeFeedBrowser({
         key={hasDecided ? "filters-live" : "filters-off"}
         className="mt-4 border border-border bg-card"
       >
-        <summary className="cursor-pointer px-4 py-3 text-sm font-bold hover:bg-tint-primary">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-bold hover:bg-tint">
           {hasDecided
             ? "Wage, law firm, worksite and occupation: available for these dates"
             : "Why wage, law firm, worksite and occupation are off for these dates"}
@@ -780,7 +780,7 @@ export function ChangeFeedBrowser({
               what="Those decisions"
               failure={decidedFailure}
               onRetry={retryDecided}
-              className="mt-4 border border-border bg-tint-primary p-4"
+              className="mt-4 border border-border bg-tint p-4"
             />
           ) : (
             <p className="mt-4 text-base text-soft" role="status">
@@ -808,7 +808,7 @@ export function ChangeFeedBrowser({
                         reset();
                       }}
                       className={
-                        "min-h-[44px] border border-border px-3 py-2 text-sm hover:bg-tint-primary disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary " +
+                        "min-h-[44px] border border-border px-3 py-2 text-sm hover:bg-tint disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary " +
                         (on ? "bg-foreground text-background" : "bg-card")
                       }
                     >
@@ -829,7 +829,7 @@ export function ChangeFeedBrowser({
               type="button"
               onClick={() => setAllChips((v) => !v)}
               aria-expanded={allChips}
-              className="mb-4 inline-flex min-h-[44px] items-center border border-border bg-background px-3 text-sm font-bold hover:bg-tint-primary"
+              className="mb-4 inline-flex min-h-[44px] items-center border border-border bg-background px-3 text-sm font-bold hover:bg-tint"
             >
               {allChips ? "Show the busiest only" : `Show all ${feed.transitions.length} kinds of change`}
             </button>
@@ -950,7 +950,7 @@ export function ChangeFeedBrowser({
           failure={failure}
           onRetry={retry}
           after="The other days still work."
-          className="mt-6 border border-border bg-tint-primary p-4"
+          className="mt-6 border border-border bg-tint p-4"
         />
       ) : (
         <p className="mt-6 text-base text-soft" role="status">

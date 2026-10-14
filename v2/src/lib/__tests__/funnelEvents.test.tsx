@@ -57,7 +57,7 @@ describe("useAlertFormTelemetry", () => {
   function Form() {
     const t = useAlertFormTelemetry("case", "perm");
     return (
-      <form ref={t.ref} onFocusCapture={t.onFocusCapture}>
+      <form ref={t.observe} onFocusCapture={t.onFocusCapture}>
         <input aria-label="email" />
         <input aria-label="other" />
       </form>

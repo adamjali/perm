@@ -16,7 +16,7 @@ export function RequestFailed({
   failure,
   onRetry,
   after,
-  className = "border border-border bg-tint-primary p-4",
+  className = "border border-border bg-tint p-4",
 }: {
   what: string;
   failure: FetchFailure | null;

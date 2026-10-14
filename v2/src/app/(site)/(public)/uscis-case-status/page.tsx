@@ -196,7 +196,7 @@ export default async function UscisCaseStatusPage({
       ) : null}
 
       {dolNumber ? (
-        <div className="mt-6 border border-border bg-tint-primary p-5">
+        <div className="mt-6 border border-border bg-tint p-5">
           <p className="text-base leading-relaxed">
             <b className="font-bold">That is a Department of Labor number.</b> USCIS has no record
             under it; DOL does, and the PERM case page reads it.

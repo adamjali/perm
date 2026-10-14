@@ -154,7 +154,7 @@ function BacklogTable({
               key={row.receiptMonth}
               className={cn(
                 "border-t border-border/40",
-                row.receiptMonth === selectedMonth && "bg-tint-primary",
+                row.receiptMonth === selectedMonth && "bg-tint",
               )}
             >
               <td className="px-3 py-2.5 font-bold">
