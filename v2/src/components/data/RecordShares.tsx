@@ -30,7 +30,7 @@ export function RecordShares({ rows, className }: { rows: RecordShare[]; classNa
   const counted = rows.filter((r): r is RecordShare & { n: number } => r.n !== null && r.n > 0);
   const total = counted.reduce((sum, r) => sum + r.n, 0);
   return (
-    <section aria-labelledby="record-shares" className={cn("border border-border bg-card p-5 sm:p-6", className)}>
+    <section aria-labelledby="record-shares" className={className}>
       <h2 id="record-shares" className="font-heading text-xl font-bold leading-tight">
         {total > 0 ? `${formatInt(total)} filings, four programs` : "Four programs, one search"}
       </h2>{" "}

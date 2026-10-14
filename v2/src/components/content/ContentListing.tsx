@@ -14,9 +14,9 @@ import { Fragment } from "react";
 import type { ContentType, PostSummary } from "@/lib/content/types";
 import { topicsFor } from "@/lib/content/topics";
 import { rankFuzzy } from "@/lib/fuzzy";
-import { cn } from "@/lib/utils";
 import ContentGrid from "./ContentGrid";
 import ContentSearch from "./ContentSearch";
+import { choiceVariants } from "@/components/ui/choice";
 
 interface ContentListingProps {
   posts: PostSummary[];
@@ -113,13 +113,10 @@ function TopicButton({ pressed, onClick, label, count }: { pressed: boolean; onC
       type="button"
       aria-pressed={pressed}
       onClick={onClick}
-      className={cn(
-        "inline-flex min-h-11 items-center gap-2 border border-border px-3 text-sm font-semibold transition-colors",
-        pressed ? "bg-foreground text-background" : "bg-card text-foreground hover:bg-muted",
-      )}
+      className={choiceVariants({ on: pressed })}
     >
       {label}{" "}
-      <span className={cn("font-mono text-sm", pressed ? "text-background/75" : "text-muted-foreground")}>{count}</span>
+      <span className="text-sm text-muted-foreground">{count}</span>
     </button>
   );
 }

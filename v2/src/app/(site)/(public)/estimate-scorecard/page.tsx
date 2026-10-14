@@ -166,7 +166,7 @@ export default async function EstimateScorecardPage() {
       ) : null}
 
       {backtest && cur && cur.typicalMissDays !== null ? (
-        <section aria-labelledby="backtest-h" className="mt-8 border border-border bg-card p-6 sm:p-8">
+        <section aria-labelledby="backtest-h" className="mt-8">
           <h2 id="backtest-h" className="text-base font-bold text-muted-foreground">
             Typical miss on real decisions
           </h2>{" "}
@@ -228,7 +228,7 @@ export default async function EstimateScorecardPage() {
         </section>
       ) : null}
 
-      <section aria-labelledby="sample-h" className="mt-8 border border-border bg-card p-6 sm:p-8">
+      <section aria-labelledby="sample-h" className="mt-8">
         <h2 id="sample-h" className="font-heading text-2xl font-bold sm:text-3xl">A fresh sample, every morning</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Each day a few random pending cases from every filing month get the estimate the case page would show them,

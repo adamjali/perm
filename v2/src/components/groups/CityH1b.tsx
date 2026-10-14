@@ -16,8 +16,8 @@ export function CityH1b({ city, className = "mt-10" }: { city: LcaCity | null; c
   if (!city) return null;
   const span = city.fyFrom && city.fyTo ? `FY${city.fyFrom} to FY${city.fyTo}` : null;
   return (
-    <section className={`${className} border border-border bg-card p-6 sm:p-8`} aria-labelledby="city-h1b">
-      <h2 id="city-h1b" className="font-heading text-xl font-bold sm:text-2xl">
+    <section className={`${className}`} aria-labelledby="city-h1b">
+      <h2 id="city-h1b" className="font-heading text-xl font-bold">
         H-1B in {city.label}
       </h2>{" "}
       <p className="mt-2 text-base leading-relaxed text-muted-foreground">

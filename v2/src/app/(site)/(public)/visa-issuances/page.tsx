@@ -193,7 +193,7 @@ export default async function VisaIssuancesPage() {
           {(["EB-2", "EB-3", "EB-1", "EB-5", "EB-3 other workers"] as const).map((c) => {
             const rows = topRows(byCountry, c, 7);
             return rows.length ? (
-              <div key={c} className="border border-border bg-card p-5">
+              <div key={c} >
                 <h3 className="font-heading text-lg font-bold">{c}{" "}</h3>
                 <BarRows className="mt-3" label={`${c} visas issued abroad by country`} rows={rows} />
               </div>
@@ -257,7 +257,7 @@ export default async function VisaIssuancesPage() {
       </section>
 
       <section className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Abroad, not in the US</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             These are visas consulates issued to people outside the country. Someone in the US on an H-1B gets the
@@ -268,7 +268,7 @@ export default async function VisaIssuancesPage() {
             .
           </p>
         </div>{" "}
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">The cutoff behind them</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             A consulate can issue a visa only to someone whose priority date is current in that month&apos;s{" "}

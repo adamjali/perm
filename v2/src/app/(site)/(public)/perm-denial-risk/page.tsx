@@ -640,7 +640,7 @@ export default async function PermDenialRiskPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Filing a case?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             None of these changes what the regulations require, only what to

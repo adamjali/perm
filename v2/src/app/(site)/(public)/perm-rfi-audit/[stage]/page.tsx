@@ -263,8 +263,8 @@ export default async function StagePage({
         </section>
 
         {months.length > 0 ? (
-          <section className="mt-10 border border-border bg-card p-6 sm:p-8">
-            <h2 className="font-heading text-xl font-bold sm:text-2xl">
+          <section className="mt-10">
+            <h2 className="font-heading text-xl font-bold">
               Which filing months these come from
             </h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
@@ -311,8 +311,8 @@ export default async function StagePage({
           </section>
         ) : null}
 
-        <section className="mt-10 border border-border bg-card p-6 sm:p-8">
-          <h2 className="font-heading text-xl font-bold sm:text-2xl">
+        <section className="mt-10">
+          <h2 className="font-heading text-xl font-bold">
             {listing === "list" ? `All ${formatInt(cases)} of them` : "The cases themselves"}
           </h2>{" "}
 
@@ -415,7 +415,7 @@ export default async function StagePage({
         </section>
 
         <section className="mt-10">
-          <h2 className="font-heading text-xl font-bold sm:text-2xl">
+          <h2 className="font-heading text-xl font-bold">
             The other stages
           </h2>{" "}
           <ul className="mt-4 flex flex-wrap gap-2">

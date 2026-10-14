@@ -19,6 +19,7 @@ import {
 } from "@/lib/sponsorFinder";
 import { findSponsors } from "@/lib/turso/sponsorFinder";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * Find a green card sponsor by what its record shows: recent PERM filing,
@@ -148,7 +149,7 @@ export default async function SponsorFinderPage({
           </label>{" "}
           <button
             type="submit"
-            className="min-h-[44px] border border-border bg-foreground px-6 text-sm font-bold text-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className={buttonVariants()}
           >
             Find sponsors
           </button>{" "}

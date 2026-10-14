@@ -145,7 +145,7 @@ export default async function PermEmployersPage() {
           <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 xl:grid-cols-2">
           {/* The drawing first: the top ten as a volume ladder. */}
           <section className="h-full">
-            <div className="flex h-full flex-col border border-border bg-card p-6 sm:p-8">
+            <div className="flex h-full flex-col">
               <h3 className="font-heading text-xl font-bold">The top ten, by filings</h3>
               <ChartTips label="The top ten sponsors, by filings" className="mt-6">
               {/* Each name opens its employer page: visitors clicked the plain
@@ -267,7 +267,7 @@ export default async function PermEmployersPage() {
             takes your filing month.
           </p>
         </div>
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Managing a docket?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             <Link href="/perm-wages" className="link">

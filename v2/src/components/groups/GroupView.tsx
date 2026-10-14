@@ -20,7 +20,7 @@ const FLOOR = 20;
 
 function Box({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="border border-border bg-card p-5 sm:p-6">
+    <section >
       <h2 className="font-heading text-lg font-bold">{title}</h2>{" "}
       {children}
     </section>

@@ -21,6 +21,7 @@ import {
 } from "@/lib/uscis/receipt";
 import { uscisEnabled } from "@/lib/uscis/torchClient";
 import { MoreText } from "@/components/data/MoreText";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * A USCIS receipt number in; what it encodes, and (once USCIS has issued API
@@ -204,7 +205,7 @@ export default async function UscisCaseStatusPage({
           <p className="mt-3">
             <Link
               href={`/perm-case-status?case=${encodeURIComponent(dolNumber)}`}
-              className="inline-flex min-h-[44px] items-center border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent"
+              className={buttonVariants({ variant: "outline" })}
             >
               Look up {dolNumber} at DOL
             </Link>

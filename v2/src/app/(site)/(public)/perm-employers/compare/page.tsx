@@ -234,7 +234,7 @@ export default async function CompareEmployersPage({
       ) : null}{" "}
 
       {both ? (
-        <section className="mt-8 max-w-3xl border border-border bg-card p-5 sm:p-6" aria-labelledby="switching">
+        <section className="mt-8 max-w-3xl" aria-labelledby="switching">
           <h2 id="switching" className="font-heading text-xl font-bold">
             If you&apos;re moving from one to the other
           </h2>{" "}

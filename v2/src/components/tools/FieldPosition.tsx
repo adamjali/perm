@@ -123,7 +123,7 @@ export function FieldPosition({
   const tiedShare = ranked ? tied / clean.length : 0;
 
   return (
-    <div className={cn("", className)}>
+    <div className={className}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <p className="text-sm font-bold text-muted-foreground">
           {measure}

@@ -117,19 +117,19 @@ export default async function PermByStatePage() {
 
           {/* The three facts the map cannot say at a glance. */}
           <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="border border-border bg-foreground p-6 text-background">
-              <p className="text-sm font-bold text-background/60">
+            <div className="border border-border bg-card p-6">
+              <p className="text-sm text-muted-foreground">
                 Cases in this window
               </p>{" "}
               <p className="mt-2 font-heading text-3xl font-bold tabular-nums">
                 {formatInt(uniqueCases)}
               </p>{" "}
-              <p className="mt-2 text-sm leading-relaxed text-background/70">
+              <p className="mt-2 text-sm leading-relaxed text-soft">
                 De-duplicated by case number across the quarterly files.
               </p>
             </div>
-            <div className="border border-border bg-tint p-6">
-              <p className="text-sm font-bold text-muted-foreground">
+            <div className="border border-border bg-card p-6">
+              <p className="text-sm text-muted-foreground">
                 Busiest state
               </p>{" "}
               <p className="mt-2 font-heading text-3xl font-bold">
@@ -144,7 +144,7 @@ export default async function PermByStatePage() {
               </p>
             </div>
             <div className="border border-border bg-card p-6">
-              <p className="text-sm font-bold text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Why states differ
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -202,7 +202,7 @@ export default async function PermByStatePage() {
             </>
           ) : null}
 
-          <section className="mt-10 border border-border bg-tint p-6">
+          <section className="mt-10">
             <h2 className="font-heading text-lg font-bold">
               Reading a rate off a small state
             </h2>{" "}
@@ -241,7 +241,7 @@ export default async function PermByStatePage() {
 
       {/* Both doors, as everywhere on the data surface. */}
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-tint p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Waiting on a case here?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The state doesn’t change your place in line. The filing month
@@ -252,7 +252,7 @@ export default async function PermByStatePage() {
             reads your month against the live queue.
           </p>
         </div>
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Filing them?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Benchmark a case against the national medians, then track its

@@ -211,7 +211,7 @@ export default async function PermCasesPage() {
       )}
 
       <section className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Waiting on a case?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Its number gives DOL&apos;s status today and an estimated date. With only a filing month, the{" "}

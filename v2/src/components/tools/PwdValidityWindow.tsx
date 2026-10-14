@@ -64,7 +64,7 @@ function Row({ regime }: { regime: Regime }) {
   return (
     <div className="p-6 sm:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="text-sm font-bold text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Issued {formatAsOf(regime.from)} to {formatAsOf(regime.to)}
         </p>{" "}
         <p className="font-heading text-2xl font-bold tabular-nums">
@@ -93,15 +93,15 @@ export function PwdValidityWindow({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <div className="border border-border bg-foreground p-6 text-background sm:p-8">
-        <p className="text-sm font-bold text-background/60">
+      <div className="bg-tint p-6 sm:p-8">
+        <p className="text-sm text-muted-foreground">
           One day, {multiple} times the runway
         </p>{" "}
         <p className="mt-3 font-heading text-2xl font-bold leading-tight sm:text-3xl">
           A determination issued {formatAsOf(cliffBefore)} is valid {shortDays}{" "}
           days. One issued {formatAsOf(cliffAfter)} is valid {longDays}.
         </p>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
           Validity follows the wage year, not your determination date, and recruitment and the 30-day quiet
           period must fit inside it. Which side of 30 June yours lands on decides how tight that is.
         </p>

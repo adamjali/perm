@@ -204,7 +204,7 @@ export default async function EmployersUnderReviewPage() {
       ) : (
         <>
           {newest ? (
-            <section className="mt-8 border border-border bg-card p-6 sm:p-8" aria-labelledby="newest-move">
+            <section className="mt-8" aria-labelledby="newest-move">
               <h2 id="newest-move" className="font-heading text-lg font-bold sm:text-xl">
                 {`DOL's newest move: ${weekdayDate(newest.date)}`}
               </h2>{" "}
@@ -232,7 +232,7 @@ export default async function EmployersUnderReviewPage() {
 
           {held.length > 0 ? (
             <section className="mt-10" aria-labelledby="on-hold-now">
-              <h2 id="on-hold-now" className="font-heading text-xl font-bold sm:text-2xl">On hold right now</h2>{" "}
+              <h2 id="on-hold-now" className="font-heading text-xl font-bold">On hold right now</h2>{" "}
               <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
                 {`${formatInt(onHold)} PERM cases are on hold, ${formatShare(doc.pendingTotal ? onHold / doc.pendingTotal : 0)} of the ${formatInt(doc.pendingTotal)} DOL has pending, as of ${longDate(doc.asOf)}.`}
               </p>{" "}
@@ -278,7 +278,7 @@ export default async function EmployersUnderReviewPage() {
 
           {doc.logFrom && days.length > 0 ? (
             <section className="mt-10" aria-labelledby="when-moved">
-              <h2 id="when-moved" className="font-heading text-xl font-bold sm:text-2xl">When DOL moved them</h2>{" "}
+              <h2 id="when-moved" className="font-heading text-xl font-bold">When DOL moved them</h2>{" "}
               <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
                 {`Days DOL moved five or more of one employer's cases into or out of hold, from this site's daily record since ${longDate(doc.logFrom)}.`}
               </p>{" "}
@@ -303,8 +303,8 @@ export default async function EmployersUnderReviewPage() {
               {`Every stage outside the line: holds, RFIs and appeals (${formatInt(outside)} cases)`}
             </summary>
             <div className="border-t border-border px-5 pb-6">
-          <section className="mt-10 border border-border bg-card p-6 sm:p-8">
-            <h2 className="font-heading text-xl font-bold sm:text-2xl">Nationwide, as of {longDate(doc.asOf)}</h2>{" "}
+          <section className="mt-10">
+            <h2 className="font-heading text-xl font-bold">Nationwide, as of {longDate(doc.asOf)}</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {formatInt(doc.pendingTotal)} PERM cases are pending. {formatInt(doc.nationwide[QUEUE_STATUS] ?? 0)} of them
               are in analyst review; the rest sit at one of these stages.
@@ -337,7 +337,7 @@ export default async function EmployersUnderReviewPage() {
 
 
           <section className="mt-10">
-            <h2 className="font-heading text-xl font-bold sm:text-2xl">Most cases outside the normal queue</h2>{" "}
+            <h2 className="font-heading text-xl font-bold">Most cases outside the normal queue</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               By count. The biggest filers lead this list because they file the
               most; the share list below corrects for size.
@@ -392,7 +392,7 @@ export default async function EmployersUnderReviewPage() {
           </section>{" "}
 
           <section className="mt-10">
-            <h2 className="font-heading text-xl font-bold sm:text-2xl">Highest share of their own queue</h2>{" "}
+            <h2 className="font-heading text-xl font-bold">Highest share of their own queue</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               Employers with at least {SHARE_FLOOR} pending cases, ranked by the
               share outside the normal queue. Below that floor a share is noise:
@@ -444,7 +444,7 @@ export default async function EmployersUnderReviewPage() {
           </section>{" "}
 
           <section className="mt-10">
-            <h2 className="font-heading text-xl font-bold sm:text-2xl">Every employer with five or more pending cases</h2>{" "}
+            <h2 className="font-heading text-xl font-bold">Every employer with five or more pending cases</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {formatInt(doc.employers.length)} employers. Search by name, sort any column, or
               download the table. Each name opens the employer&apos;s page; to see the

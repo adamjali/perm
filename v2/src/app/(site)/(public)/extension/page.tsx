@@ -221,7 +221,7 @@ export default async function ExtensionPage() {
         </p>
       </section>
 
-      <section className="mt-14 border border-border bg-card p-5 sm:p-6">
+      <section className="mt-14">
         <h2 className="font-heading text-xl font-bold">Building your own?</h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
           The extension asks one endpoint, <code className="font-mono">/v1/lookup/employer</code>, and it needs no key.

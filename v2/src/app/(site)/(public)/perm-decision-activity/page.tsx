@@ -446,7 +446,7 @@ export default async function DecisionActivityPage() {
               ] as const
             ).map((col) => (
               <Fragment key={col.title}>
-              <div className="border border-border bg-card p-5">
+              <div >
                 <h3 className="text-sm font-bold text-muted-foreground">
                   {col.title}
                 </h3>{" "}
@@ -506,7 +506,7 @@ export default async function DecisionActivityPage() {
             carries DOL&apos;s own position.
           </p>
         </div>
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Want the cases themselves?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Every decision counted here is one row in the{" "}

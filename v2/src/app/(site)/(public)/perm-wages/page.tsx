@@ -159,7 +159,7 @@ export default async function PermWagesPage() {
         <>
           <ChapterNav items={chapters} className="mt-10" />
           {ladder ? (
-            <section id="ladder" className="mt-10 border border-border bg-foreground p-6 text-background sm:p-8">
+            <section id="ladder" className="mt-10">
               <h2 className="font-heading text-2xl font-bold">
                 The whole wage ladder
               </h2>{" "}
@@ -174,8 +174,8 @@ export default async function PermWagesPage() {
                   // Array items render with NOTHING between them, so the
                   // last figure of one rung glued to the next rung's label.
                   <Fragment key={d.k}>
-                    <div className={d.k === "Median" ? "border border-primary bg-primary/15 p-3" : "p-3"}>
-                      <dt className="text-sm font-bold text-background/60">
+                    <div className={d.k === "Median" ? "border border-primary-text bg-tint p-3" : "p-3"}>
+                      <dt className="text-sm text-muted-foreground">
                         {d.k}
                       </dt>{" "}
                       <dd className="mt-1 font-heading text-xl font-bold tabular-nums sm:text-2xl">
@@ -185,7 +185,7 @@ export default async function PermWagesPage() {
                   </Fragment>
                 ))}
               </dl>
-              <p className="mt-5 text-sm text-background/60">
+              <p className="mt-5 text-sm text-muted-foreground">
                 Cut at five points, from{" "}
                 {ladder.count.toLocaleString("en-US")} certified cases with a
                 readable wage.
@@ -268,7 +268,7 @@ export default async function PermWagesPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-tint p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Comparing an offer?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The{" "}
@@ -278,7 +278,7 @@ export default async function PermWagesPage() {
             recomputes the ladder over any occupation, state and year.
           </p>
         </div>
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Wondering about pace?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             A case&apos;s speed depends on its filing month, not its wage. The{" "}

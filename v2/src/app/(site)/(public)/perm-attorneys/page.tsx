@@ -212,9 +212,9 @@ export default async function PermAttorneysPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-foreground p-6 text-background">
+        <div >
           <h2 className="font-heading text-lg font-bold">Running a PERM practice?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-background/70">
+          <p className="mt-2 text-sm leading-relaxed text-soft">
             Benchmark your volume and median against the field, then track every
             deadline.{" "}
             <Link href="/signup" className="link">
@@ -223,7 +223,7 @@ export default async function PermAttorneysPage() {
             .
           </p>
         </div>
-        <div className="border border-border bg-tint p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Checking on your firm?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             A firm&apos;s median sits near the national one because DOL works a

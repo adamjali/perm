@@ -307,8 +307,8 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
       ) : null}
 
       {issued ? (
-        <section className="mt-12 border border-border bg-card p-6 sm:p-8" aria-labelledby="issued">
-          <h2 id="issued" className="font-heading text-xl font-bold sm:text-2xl">
+        <section className="mt-12" aria-labelledby="issued">
+          <h2 id="issued" className="font-heading text-xl font-bold">
             What State issued abroad in this line
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed">

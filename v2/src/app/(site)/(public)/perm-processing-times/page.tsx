@@ -134,7 +134,7 @@ function Figure({
 }) {
   return (
     <div className="border border-border bg-card p-5">
-      <p className="text-sm font-bold text-muted-foreground">{label}</p>{" "}
+      <p className="text-sm text-muted-foreground">{label}</p>{" "}
       <p className="mt-2 font-heading text-3xl font-bold leading-none sm:text-4xl">{value}</p>{" "}
       {caption ? <p className="mt-2 text-sm text-muted-foreground">{caption}</p> : null}
     </div>
@@ -345,8 +345,8 @@ export default async function PermProcessingTimesPage() {
       {snapshot ? (
         <>
           {/* The headline. This one sentence is what the whole search cluster asks for. */}
-          <section className="mt-10 border border-border bg-tint p-6 sm:p-8">
-            <p className="text-sm font-bold text-muted-foreground">The analyst review queue</p>{" "}
+          <section className="mt-10 border border-border bg-card p-6 sm:p-8">
+            <p className="text-sm text-muted-foreground">The analyst review queue</p>{" "}
             <p className="mt-3 font-heading text-3xl font-bold leading-tight sm:text-4xl">
               {analystMonth
                 ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
@@ -458,20 +458,20 @@ export default async function PermProcessingTimesPage() {
                 </p>
               </FinePrint>
 
-              <div className="mt-6 border border-border bg-foreground p-6 text-background sm:p-8">
-                <p className="text-sm font-bold text-background/75">Measured advance</p>{" "}
+              <div className="mt-6 border border-border bg-card p-6 sm:p-8">
+                <p className="text-sm text-muted-foreground">Measured advance</p>{" "}
                 <p className="mt-3 font-heading text-4xl font-bold leading-none tabular-nums sm:text-5xl">
                   {advance.rate.toFixed(2)}
                 </p>{" "}
-                <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
                   months of filing queue cleared per calendar month, over the{" "}
                   {advance.pointsUsed} determination months to{" "}
                   {formatMonth(advance.toMonth) ?? advance.toMonth}. At 1.00 the
                   queue holds station, so at {advance.rate.toFixed(2)} it is{" "}
-                  <strong className="text-background">{advanceVerdict}</strong>.
+                  <strong className="text-foreground">{advanceVerdict}</strong>.
                 </p>
                 {advance.slowest !== null && advance.fastest !== null ? (
-                  <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
+                  <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
                     It has ranged from {advance.slowest.toFixed(2)} to{" "}
                     {advance.fastest.toFixed(2)} over rolling three-month
                     windows, so it describes the past rather than predicting a case.
@@ -575,7 +575,7 @@ export default async function PermProcessingTimesPage() {
         title="Where your case sits"
         dek="Your own filing month against these figures, the steps after PERM as people report them, and an email when DOL reaches your month."
       >
-      <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+      <section className="mt-6">
         <h3 className="font-heading text-2xl font-bold">Your filing month, against the queue</h3>{" "}
         <p className="mt-3 leading-relaxed text-muted-foreground">
           The calculator reads your own filing month against these figures.
@@ -593,7 +593,7 @@ export default async function PermProcessingTimesPage() {
           per case once the PERM is certified, so this is the only way to show
           the I-140, I-485 and card steps; it says which half is checked. */}
       {board ? (
-        <section aria-labelledby="after-perm-h" className="mt-10 border border-border bg-card p-6 sm:p-8">
+        <section aria-labelledby="after-perm-h" className="mt-10">
           <h3 id="after-perm-h" className="font-heading text-2xl font-bold">After PERM, as people report it</h3>{" "}
           {afterPerm.length > 0 ? (
             <>
@@ -656,7 +656,7 @@ export default async function PermProcessingTimesPage() {
         </FinePrint>
       </section>
 
-      <section className="mt-12 border border-border bg-card p-6 sm:p-8">
+      <section className="mt-12">
         <h3 className="font-heading text-2xl font-bold">
           The deadlines you control
         </h3>{" "}

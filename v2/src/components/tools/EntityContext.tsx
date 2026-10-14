@@ -317,7 +317,7 @@ export function PeerList({
 }) {
   if (items.length === 0) return null;
   return (
-    <section className={cn("", className)}>
+    <section className={className}>
       <h2 className="font-heading text-2xl font-bold">{heading}</h2>{" "}
       {wordCount(note) > 28 ? (
         <MoreText gist={firstSentence(plainText(note))} className="mt-2">
@@ -395,7 +395,7 @@ export function RankLadder({
   if (below) rows.push({ label: "Just below", item: below });
 
   return (
-    <section className={cn("border border-border bg-card p-6", className)}>
+    <section className={className}>
       <h2 className="font-heading text-lg font-bold">Where this sits in the ranking</h2>{" "}
       <p className="mt-2 text-base leading-relaxed text-muted-foreground">
         Ranked {formatInt(rank)} of {formatInt(kindTotal)} by volume: {formatInt(above_)} filed at
@@ -526,7 +526,7 @@ export function EntityDataGap({
   backLabel: string;
 }) {
   return (
-    <section className="border border-border bg-card p-6 sm:p-8">
+    <section >
       <h2 className="font-heading text-xl font-bold">The figures didn’t load</h2>{" "}
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
         {what} is in DOL&apos;s disclosure files, but this page couldn’t read

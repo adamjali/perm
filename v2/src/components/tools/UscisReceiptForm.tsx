@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 
 import { RECEIPT_SHAPE_MESSAGE, normaliseReceipt } from "@/lib/uscis/receipt";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The receipt box on `/uscis-case-status`, as a plain GET form.
@@ -62,7 +63,7 @@ export function UscisReceiptForm({ defaultValue = "", className }: UscisReceiptF
         />{" "}
         <button
           type="submit"
-          className="min-h-[52px] shrink-0 border border-border bg-foreground px-6 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 motion-reduce:transition-none"
+          className={buttonVariants({ size: "lg", className: "h-auto min-h-[52px]" })}
         >
           Look it up
         </button>

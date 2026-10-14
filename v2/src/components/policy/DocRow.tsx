@@ -6,6 +6,7 @@ import { POLICY_SHOTS } from "@/lib/policyShots";
 import type { PolicyNotice } from "@/lib/turso/policyNotices";
 
 import { dayLabel } from "./format";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * One document, collapsed to what a reader decides on: the stage, the day,
@@ -25,11 +26,11 @@ export function typeLabel(type: string): string {
   return "Notice";
 }
 
-function badgeClass(type: string): string {
-  if (type === "Rule") return "bg-primary text-black";
-  if (type === "Proposed Rule") return "bg-foreground text-background";
-  if (type === OFLC_TYPE) return "bg-muted text-foreground";
-  return "bg-background text-foreground";
+/** The dot beside a document's type: a final rule is the one that binds. */
+function badgeDot(type: string): string {
+  if (type === "Rule") return "bg-data-good-ink";
+  if (type === "Proposed Rule") return "bg-data-warn-ink";
+  return "bg-muted-foreground";
 }
 
 /**
@@ -63,9 +64,10 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
       <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <span className={`inline-block border border-foreground px-2 py-0.5 text-sm font-bold ${badgeClass(doc.type)}`}>
+            <Badge>
+              <span aria-hidden="true" className={`size-2 shrink-0 ${badgeDot(doc.type)}`} />
               {typeLabel(doc.type)}
-            </span>{" "}
+            </Badge>{" "}
             <span className="font-mono text-sm text-muted-foreground">{dayLabel(doc.publicationDate)}</span>{" "}
             {!isOflc ? <span className="font-mono text-sm text-muted-foreground">{doc.agencies.join(", ")}</span> : null}{" "}
             {corrections.length > 0 ? (

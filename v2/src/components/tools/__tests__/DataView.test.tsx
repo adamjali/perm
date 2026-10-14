@@ -104,9 +104,8 @@ describe("ViewToggle", () => {
         onChange={() => {}}
       />,
     );
-    expect(screen.getByRole("button", { name: "Alpha" }).className).toContain(
-      "min-h-[44px]",
-    );
+    // 44px: Tailwind's min-h-11 (2.75rem) or the literal.
+    expect(screen.getByRole("button", { name: "Alpha" }).className).toMatch(/\bmin-h-(11|\[44px\])\b/);
   });
 });
 

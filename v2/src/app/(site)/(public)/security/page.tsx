@@ -110,11 +110,11 @@ export default function SecurityPage() {
         </ul>
       </section>{" "}
 
-      <section aria-labelledby="report" className="mt-12 border border-border bg-foreground p-6 text-background sm:p-8">
+      <section aria-labelledby="report" className="mt-12">
         <h2 id="report" className="font-heading text-2xl font-bold">
           Report a vulnerability
         </h2>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
           Email the issue, the steps to reproduce it and any proof of concept. We acknowledge every report within 72
           hours and agree on disclosure timing with you. There&apos;s no paid bug bounty yet; reporters who want to be
           named are credited in the record below.

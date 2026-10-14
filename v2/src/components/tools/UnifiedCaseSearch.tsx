@@ -1322,7 +1322,7 @@ export function UnifiedCaseSearch({
           <p className="mt-3">
             <Link
               href={`/perm-case-status?case=${encodeURIComponent(typedCaseNumber)}`}
-              className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent"
+              className={buttonVariants({ variant: "outline" })}
             >
               <LinkPending />
               Check {typedCaseNumber} with DOL

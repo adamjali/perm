@@ -91,7 +91,7 @@ export default async function LcaCasesPage() {
             program={LCA_PROGRAM}
             between={
               summary ? (
-                <section className="border border-border bg-card p-5 sm:p-6">
+                <section >
                   <h2 className="font-heading text-xl font-bold">LCAs by the month they were filed</h2>{" "}
                   <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                     DOL has seven working days to certify an LCA (20 CFR 655.740), so only the newest

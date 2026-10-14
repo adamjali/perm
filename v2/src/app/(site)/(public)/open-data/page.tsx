@@ -191,7 +191,7 @@ export default async function OpenDataPage() {
         />
       </div>{" "}
 
-      <section className="mt-12 border border-border bg-card p-5 sm:p-6">
+      <section className="mt-12">
         <h2 className="font-heading text-2xl font-bold">Credit</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Free to copy, change and publish, commercially too, under{" "}

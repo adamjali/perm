@@ -324,7 +324,7 @@ export default async function MethodologyPage() {
                 </a>
               </div>
               <p className="mt-2 text-base leading-relaxed text-muted-foreground">{s.what}</p>{" "}
-              <p className="mt-2 text-sm font-bold text-muted-foreground">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {s.cadence}
               </p>
             </div>
@@ -360,7 +360,7 @@ export default async function MethodologyPage() {
               <>
                 <p className="text-base leading-relaxed text-muted-foreground">{t.how}</p>{" "}
                 <p className="mt-2 text-base leading-relaxed">
-                  <span className="text-sm font-bold text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     Counted over
                   </span>{" "}
                   <span className="text-muted-foreground">{t.population}</span>
@@ -446,9 +446,9 @@ export default async function MethodologyPage() {
         </dl>
       </section>
 
-      <section className="mt-12 border border-border bg-foreground p-6 text-background sm:p-8">
+      <section className="mt-12">
         <h2 className="font-heading text-2xl font-bold">What we refuse to publish</h2>{" "}
-        <ul className="mt-4 grid gap-3 text-base leading-relaxed text-background/80">
+        <ul className="mt-4 grid gap-3 text-base leading-relaxed text-soft">
           <li className="border-l-2 border-primary pl-4">
             A single blended estimate. Each calculator shows every model its
             data supports, labelled, and lets them disagree.

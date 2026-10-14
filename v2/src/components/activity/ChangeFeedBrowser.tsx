@@ -20,6 +20,7 @@ import { coverageFor, daysInRange, type CoverageWindows } from "@/lib/dateCovera
 import type { ChangeCalendar, ChangeDayFeed } from "@/lib/turso/changes";
 import type { DecidedFeed } from "@/lib/turso/decidedDays";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { choiceVariants } from "@/components/ui/choice";
 
 /**
  * Everything DOL moved on a day, searchable, filterable and sortable.
@@ -392,11 +393,7 @@ export function ChangeFeedBrowser({
                   <button
                     type="button"
                     aria-pressed={date === d.date && rangeTo === d.date}
-                    className={`${NAV} ${
-                      date === d.date && rangeTo === d.date
-                        ? "bg-foreground text-background"
-                        : ""
-                    }`}
+                    className={choiceVariants({ on: date === d.date && rangeTo === d.date })}
                     onClick={() => {
                       setDate(d.date);
                       setRangeTo(d.date);
@@ -807,12 +804,9 @@ export function ChangeFeedBrowser({
                         setToStatus(on ? "" : t.toStatus);
                         reset();
                       }}
-                      className={
-                        "min-h-[44px] border border-border px-3 py-2 text-sm hover:bg-tint disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary " +
-                        (on ? "bg-foreground text-background" : "bg-card")
-                      }
+                      className={choiceVariants({ on })}
                     >
-                      <span className={on ? "text-background/70" : "text-muted-foreground"}>
+                      <span className="text-muted-foreground">
                         {t.fromStatus}
                       </span>{" "}
                       <span aria-hidden="true">&rarr;</span>{" "}

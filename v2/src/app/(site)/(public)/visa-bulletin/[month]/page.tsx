@@ -349,7 +349,7 @@ export default async function BulletinMonthPage({
       </p>{" "}
 
       {prev ? (
-        <section aria-labelledby="moved" className="mt-8 border border-border bg-card p-5 sm:p-6">
+        <section aria-labelledby="moved" className="mt-8">
           <h2 id="moved" className="font-heading text-xl font-bold">
             {`What moved since ${sinceLabel ?? "the bulletin before"}`}
           </h2>{" "}

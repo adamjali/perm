@@ -202,8 +202,8 @@ export default async function CohortPage({
         </div>
       ) : null}
 
-      <section className="mt-8 border border-border bg-card p-6 sm:p-8">
-        <h2 className="font-heading text-xl font-bold sm:text-2xl">
+      <section className="mt-8">
+        <h2 className="font-heading text-xl font-bold">
           Where this month sits
         </h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-soft">
@@ -250,7 +250,7 @@ export default async function CohortPage({
         </summary>
         <div className="border-t border-border px-4 pb-6 sm:px-5">
       <section className="mt-6">
-        <h2 className="font-heading text-xl font-bold sm:text-2xl">
+        <h2 className="font-heading text-xl font-bold">
           Still pending
         </h2>{" "}
         <p className="mt-2 text-base leading-relaxed text-soft">
@@ -301,7 +301,7 @@ export default async function CohortPage({
       </section>{" "}
 
       <section className="mt-6">
-        <h2 className="font-heading text-xl font-bold sm:text-2xl">
+        <h2 className="font-heading text-xl font-bold">
           Already decided
         </h2>{" "}
         <p className="mt-2 text-base leading-relaxed text-soft">
@@ -316,7 +316,7 @@ export default async function CohortPage({
       </section>{" "}
 
       <section className="mt-6">
-        <h2 className="font-heading text-xl font-bold sm:text-2xl">
+        <h2 className="font-heading text-xl font-bold">
           Who filed in {label}
         </h2>{" "}
         {liveMonth ? (
@@ -653,8 +653,8 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
   const monthName = label.replace(/ \d{4}$/, "");
   const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map((l) => ({ l, v: detail.letters[l] ?? [0, 0] as [number, number] }));
   return (
-    <section className="mt-8 border border-border bg-card p-6 sm:p-8" aria-labelledby="month-activity">
-      <h2 id="month-activity" className="font-heading text-xl font-bold sm:text-2xl">
+    <section className="mt-8" aria-labelledby="month-activity">
+      <h2 id="month-activity" className="font-heading text-xl font-bold">
         {`What DOL decided from ${label} lately`}
       </h2>{" "}
       <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">

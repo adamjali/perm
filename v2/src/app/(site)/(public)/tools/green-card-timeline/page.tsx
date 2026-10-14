@@ -202,8 +202,8 @@ export default async function GreenCardTimelinePage() {
       {/* Who controls what: the single most useful fact about the timeline,
           drawn as structure rather than said in a paragraph. */}
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="border border-border bg-tint p-6">
-          <p className="text-sm font-bold text-muted-foreground">
+        <div className="border border-border bg-card p-6">
+          <p className="text-sm text-muted-foreground">
             You control
           </p>{" "}
           <p className="mt-2 font-heading text-lg font-bold">Recruitment and filing</p>{" "}
@@ -213,7 +213,7 @@ export default async function GreenCardTimelinePage() {
           </p>
         </div>
         <div className="border border-border bg-card p-6">
-          <p className="text-sm font-bold text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             DOL controls
           </p>{" "}
           <p className="mt-2 font-heading text-lg font-bold">The two queues</p>{" "}
@@ -222,12 +222,12 @@ export default async function GreenCardTimelinePage() {
             DOL&apos;s published pace, oldest first.
           </p>
         </div>
-        <div className="border border-border bg-foreground p-6 text-background">
-          <p className="text-sm font-bold text-background/60">
+        <div className="border border-border bg-card p-6">
+          <p className="text-sm text-muted-foreground">
             USCIS and State control
           </p>{" "}
           <p className="mt-2 font-heading text-lg font-bold">The petition and the number</p>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-background/70">
+          <p className="mt-2 text-sm leading-relaxed text-soft">
             The I-140 runs on USCIS&apos;s queue. The visa number depends on the
             bulletin, which is why that stage carries no figure.
           </p>

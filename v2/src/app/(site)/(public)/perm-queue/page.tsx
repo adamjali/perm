@@ -279,7 +279,7 @@ export default async function PermQueuePage() {
         </div>
       </section>{" "}
 
-      <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+      <section className="mt-6">
         <h2 className="font-heading text-2xl font-bold sm:text-3xl">
           What those {formatInt(census.pending)} cases were doing
         </h2>{" "}
@@ -299,7 +299,7 @@ export default async function PermQueuePage() {
         </div>
       </section>{" "}
 
-      <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+      <section className="mt-6">
         <h2 className="font-heading text-2xl font-bold sm:text-3xl">
           The wall, by filing month
         </h2>{" "}
@@ -322,7 +322,7 @@ export default async function PermQueuePage() {
       </section>{" "}
 
       {alphabet ? (
-        <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+        <section className="mt-6">
           <h2 className="font-heading text-2xl font-bold sm:text-3xl">
             Your employer&rsquo;s first letter: small, and not in our estimates
           </h2>{" "}

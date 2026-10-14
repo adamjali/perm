@@ -29,6 +29,7 @@ import {
   type H1bView,
 } from "@/lib/h1bRanks";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
+import { choiceVariants } from "@/components/ui/choice";
 
 /**
  * The ranked list on /h1b-employers and its state pages.
@@ -297,8 +298,8 @@ export function H1bEmployerRanks({
           </label>{" "}
           <fieldset className="min-w-0">
             <legend className="text-sm font-bold">Ranked by</legend>{" "}
-            <div className="mt-1 grid grid-cols-2 [&>*]:min-w-0">
-              {(["lca", "uscis"] as const).map((b, i) => {
+            <div className="mt-1 grid grid-cols-2 gap-2 [&>*]:min-w-0">
+              {(["lca", "uscis"] as const).map((b) => {
                 const on = by === b;
                 const usable = b === "lca" ? lcaYear : uscisYear;
                 return (
@@ -308,9 +309,7 @@ export function H1bEmployerRanks({
                     aria-pressed={on}
                     disabled={!usable}
                     onClick={() => go(year.fy, b)}
-                    className={`min-h-[44px] border border-border px-2 text-sm font-bold sm:px-3 sm:text-base ${i > 0 ? "-ml-0.5" : ""} ${
-                      on ? "bg-foreground text-background" : "bg-background hover:bg-muted"
-                    } disabled:cursor-not-allowed disabled:text-muted-foreground`}
+                    className={choiceVariants({ on })}
                   >
                     {b === "lca" ? "DOL's LCAs" : "USCIS approvals"}{" "}
                   </button>

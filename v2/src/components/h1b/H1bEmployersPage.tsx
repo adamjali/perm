@@ -26,6 +26,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { getH1bSummary, getH1bView } from "@/lib/turso/h1bRanks";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
+import { choiceVariants } from "@/components/ui/choice";
 
 /**
  * /h1b-employers and /h1b-employers/<state>: the busiest H-1B employers by
@@ -186,11 +187,11 @@ export async function H1bEmployersPage({ state }: { state: string }) {
               .map((code) => (
                 <li key={code}>
                   {code === state ? (
-                    <span aria-current="page" className="inline-flex min-h-[44px] items-center border border-border bg-foreground px-3 text-base font-semibold text-background">
+                    <span aria-current="page" className={choiceVariants({ on: true })}>
                       {US_STATE_NAMES[code]}
                     </span>
                   ) : (
-                    <Link href={`${H1B_PATH}/${stateSlug(code)}`} className="inline-flex min-h-[44px] items-center border border-border bg-card px-3 text-base font-semibold hover:bg-muted">
+                    <Link href={`${H1B_PATH}/${stateSlug(code)}`} className={choiceVariants()}>
                       {US_STATE_NAMES[code]}
                     </Link>
                   )}{" "}

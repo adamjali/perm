@@ -166,7 +166,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
       ) : (
         <>
           <section className="mt-10">
-            <div className="border border-border bg-card p-6 sm:p-8">
+            <div >
               <h2 className="font-heading text-xl font-bold">{`The ${top.length} busiest, by decisions`}</h2>{" "}
               <ChartTips label={`The ${top.length} busiest ${c.noun}, by PERM decisions`} className="mt-5">
                 <ol className="space-y-2.5">

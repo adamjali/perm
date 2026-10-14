@@ -30,6 +30,7 @@ import {
   type ProfileField,
 } from "@/lib/firmProfile";
 import { convexSiteUrl } from "@/lib/convexSite";
+import { buttonVariants } from "@/components/ui/button";
 
 type Status = "idle" | "sending" | "done" | "error";
 type FieldErrors = Partial<Record<ProfileField | "email" | "role", string>>;
@@ -38,8 +39,7 @@ const INPUT =
   "mt-1.5 block min-h-[48px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const LABEL = "block text-sm font-bold";
 const HINT = "block text-sm font-normal text-muted-foreground";
-const BUTTON =
-  "inline-flex min-h-[48px] items-center justify-center border border-border bg-foreground px-6 text-base font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none";
+const BUTTON = buttonVariants({ variant: "outline", size: "lg" });
 
 function FieldError({ id, text }: { id: string; text?: string }) {
   return text ? (

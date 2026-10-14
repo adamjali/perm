@@ -4,6 +4,7 @@ import { Fragment, useCallback, useMemo, useState } from "react";
 import { CheckIcon, CopyIcon } from "@phosphor-icons/react";
 
 import { BADGE_THEMES, type BadgeStyle, type BadgeTheme } from "@/lib/badge";
+import { choiceVariants } from "@/components/ui/choice";
 
 /**
  * The catalogue: pick a shape, a theme and a snippet format once, and every
@@ -88,10 +89,7 @@ function Chip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={
-        "min-h-11 border border-border px-4 font-heading text-sm font-bold transition-transform duration-150 motion-reduce:transition-none " +
-        (active ? "bg-primary text-black" : "bg-background text-foreground")
-      }
+      className={choiceVariants({ on: active })}
     >
       {children}{" "}
     </button>

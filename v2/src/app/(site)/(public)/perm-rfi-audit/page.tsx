@@ -444,7 +444,7 @@ export default async function PermRfiAuditPage() {
           saying out loud rather than letting a reader discover the chain
           later, which would turn a genuine scoop into a credibility problem.
         */}
-        <section className="mt-14 max-w-3xl border border-border bg-card p-5 sm:mt-20">
+        <section className="mt-14 max-w-3xl sm:mt-20">
           <h2 className="font-heading text-lg font-bold">
             Where these numbers come from
           </h2>
