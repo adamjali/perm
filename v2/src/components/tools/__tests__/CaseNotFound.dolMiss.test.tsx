@@ -30,8 +30,8 @@ describe("a lookup DOL could not settle never reads as \"no record\" (Sep 29 202
 
   it("the wage-request and LCA notice says which of the two happened", () => {
     const { rerender } = render(<DolUnanswered caseNumber="P-100-26161-003499" label="Prevailing wage request" miss="unavailable" />);
-    expect(screen.getByRole("heading", { name: "DOL didn't answer" })).toBeInTheDocument();
+    expect(screen.getByText("DOL didn't answer")).toBeInTheDocument();
     rerender(<DolUnanswered caseNumber="P-100-26161-003499" label="Prevailing wage request" miss="not-asked" />);
-    expect(screen.getByRole("heading", { name: "Not checked with DOL" })).toBeInTheDocument();
+    expect(screen.getByText("Not checked with DOL")).toBeInTheDocument();
   });
 });

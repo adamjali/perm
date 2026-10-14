@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
  * they stack.
  */
 export function FigureRow({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("flex flex-wrap gap-x-10 gap-y-6", className)}>{children}</div>;
+  return <div className={cn("flex flex-wrap gap-x-8 gap-y-6", className)}>{children}</div>;
 }
 
 export function Figure({ label, value, note }: { label: string; value: ReactNode; note?: ReactNode }) {
   return (
-    <div className="min-w-0 flex-1 basis-48">
+    <div className="min-w-0 flex-1 basis-40">
       <p className="text-sm text-muted-foreground">{label}</p>{" "}
       <p className="mt-1 font-heading text-3xl font-bold leading-none tabular-nums">{value}</p>{" "}
       {note ? <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{note}</p> : null}

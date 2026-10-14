@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
+import { PageSection } from "@/components/data/PageSection";
 
-/** One named part of the page: a heavy rule, its title, one line on what it holds. */
+/**
+ * One named part of a long entity page: a page section whose id the "On this
+ * page" row links to.
+ */
 export function Chapter({
   id,
   title,
@@ -17,14 +20,8 @@ export function Chapter({
   className?: string;
 }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className={cn("mt-16", className)}>
-      <div className="border-t-2 border-foreground pt-4">
-        <h2 id={`${id}-title`} className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
-          {title}
-        </h2>{" "}
-        {dek ? <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">{dek}</p> : null}
-      </div>{" "}
+    <PageSection id={id} title={title} lede={dek} className={className}>
       {children}
-    </section>
+    </PageSection>
   );
 }

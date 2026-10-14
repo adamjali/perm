@@ -776,6 +776,7 @@ export default async function EmployerPage({
       <ProfileHeader
         eyebrow={`PERM sponsor, #${formatInt(row.rank)} of ${formatInt(kindTotal)} by filings`}
         name={row.name}
+        answer={pendingSentence(row.name, pending)}
         facts={facts}
         tags={tags}
         aside={
@@ -842,8 +843,8 @@ export default async function EmployerPage({
             with publication; until then the case number carries the reader
             to its own live status. */}
         {recentLive.length > 0 ? (
-          <section className="mt-10 border border-border bg-card p-6 sm:p-8" aria-labelledby="latest-live">
-            <h3 id="latest-live" className="font-heading text-xl font-bold sm:text-2xl">
+          <section className="mt-10" aria-labelledby="latest-live">
+            <h3 id="latest-live" className="font-heading text-xl font-bold">
               Its newest filings
             </h3>{" "}
             <p className="mt-2 text-base leading-relaxed text-muted-foreground">

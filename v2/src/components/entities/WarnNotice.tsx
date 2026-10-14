@@ -19,7 +19,7 @@ const STATE_NAME: Record<string, string> = { CA: "California", TX: "Texas", NY: 
 export function WarnNoticeBand({ rows, pageName }: { rows: Notice[]; pageName: string }) {
   if (rows.length === 0) return null;
   return (
-    <section id="layoffs" className="mt-8 border border-border bg-card p-5 sm:p-6" aria-labelledby="warn-heading">
+    <section id="layoffs" className="mt-8" aria-labelledby="warn-heading">
       <h2 id="warn-heading" className="font-heading text-xl font-bold">
         Layoff notices filed by {pageName}
       </h2>{" "}

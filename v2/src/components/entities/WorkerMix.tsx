@@ -27,7 +27,7 @@ const PANELS: { facet: WorkerFacet; title: string }[] = [
 function Panel({ title, rows }: { title: string; rows: WorkerFacetRow[] }) {
   const top = rows[0]?.n ?? 0;
   return (
-    <section className="border border-border bg-card p-5 sm:p-6">
+    <section >
       <h3 className="font-heading text-lg font-bold">{title}</h3>{" "}
       <ChartTips label={`${title}, FY2016 to FY2023 cases`} className="mt-4">
       <ul className="space-y-2.5">

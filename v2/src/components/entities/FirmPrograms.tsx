@@ -72,8 +72,8 @@ function Column({ label, noun, line }: { label: string; noun: string; line: Firm
 export function FirmPrograms({ name, data, className = "mt-10" }: { name: string; data: FirmProgramsData | null; className?: string }) {
   if (!data || (!data.lca && !data.pwd && !data.seasonal)) return null;
   return (
-    <section className={`${className} border border-border bg-card p-6 sm:p-8`}>
-      <h2 className="font-heading text-xl font-bold sm:text-2xl">Beyond PERM: its other work for clients</h2>{" "}
+    <section className={`${className}`}>
+      <h2 className="font-heading text-xl font-bold">Beyond PERM: its other work for clients</h2>{" "}
       <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
         DOL names the law firm or agent on each H-1B labor condition application, prevailing wage request and H-2A,
         H-2B and CW-1 application it publishes.

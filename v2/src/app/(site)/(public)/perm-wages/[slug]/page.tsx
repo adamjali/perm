@@ -14,6 +14,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import { FinePrint } from "@/components/data/FinePrint";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
@@ -303,22 +304,19 @@ export default async function OccupationPage({
         facts={facts}
         tags={tags}
         aside={
-          <div className="border border-border bg-card p-5 sm:p-6">
+          <div className="bg-tint p-5 sm:p-6">
             <p className="font-heading text-xl font-bold leading-tight">Weighing an offer for this job?</p>{" "}
-            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-1 text-base leading-relaxed text-soft">
               Where it falls among certified offers, and the four wage levels DOL sets for it by area.
             </p>{" "}
             <div className="mt-4 flex flex-col gap-2">
-              <Link
-                href="/tools/compare-my-offer"
-                className="inline-flex min-h-11 items-center justify-center border border-border bg-primary px-4 font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
-              >
+              <Link href="/tools/compare-my-offer" className={buttonVariants({ size: "lg" })}>
                 Compare my offer
               </Link>{" "}
               {row.code ? (
                 <Link
                   href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
-                  className="inline-flex min-h-11 items-center justify-center border border-border bg-background px-4 font-bold hover:bg-tint"
+                  className={buttonVariants({ variant: "outline", size: "lg" })}
                 >
                   DOL&apos;s wage levels for this job
                 </Link>
@@ -657,7 +655,7 @@ export default async function OccupationPage({
       />
 
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-card p-6">
+        <div >
           <h3 className="font-heading text-lg font-bold">Weighing an offer?</h3>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Compare it against this median, then check the{" "}
@@ -670,7 +668,7 @@ export default async function OccupationPage({
             , where the same occupation&apos;s medians swing hard by worksite.
           </p>
         </div>
-        <div className="border border-border bg-card p-6">
+        <div >
           <h3 className="font-heading text-lg font-bold">Setting one?</h3>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             All {kindTotal > 0 ? formatInt(kindTotal) : ""} occupations sort together

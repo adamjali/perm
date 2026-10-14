@@ -97,8 +97,8 @@ export function LcaProfile({
   const filed = longDate(p.newest?.filed ?? null);
 
   return (
-    <section className={cn("mt-10 border border-border bg-card p-6 sm:p-8", className)}>
-      <h2 className="font-heading text-xl font-bold sm:text-2xl">What its H-1B LCAs were for</h2>{" "}
+    <section className={cn("mt-10", className)}>
+      <h2 className="font-heading text-xl font-bold">What its H-1B LCAs were for</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         From DOL&apos;s quarterly LCA files: {formatInt(p.filings)} {p.filings === 1 ? "LCA" : "LCAs"} filed by {name}
         {p.detailRows > 0

@@ -159,8 +159,8 @@ export function UnpublishedEmployer({
       </section>
 
       {stages.length > 0 ? (
-        <section className="mt-10 border border-border bg-card p-6 sm:p-8">
-          <h2 className="font-heading text-xl font-bold sm:text-2xl">
+        <section className="mt-10">
+          <h2 className="font-heading text-xl font-bold">
             Where those cases are standing
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
@@ -204,8 +204,8 @@ export function UnpublishedEmployer({
 
       {follow}{" "}
       {wait}{" "}
-      <section className="mt-10 border border-border bg-card p-6 sm:p-8">
-        <h2 className="font-heading text-xl font-bold sm:text-2xl">
+      <section className="mt-10">
+        <h2 className="font-heading text-xl font-bold">
           {listed === total
             ? `All ${formatInt(total)} ${total === 1 ? "case" : "cases"}`
             : `The newest ${formatInt(listed)} of ${formatInt(total)} cases`}
@@ -249,7 +249,7 @@ export function UnpublishedEmployer({
       </section>
 
       {otherNames.length > 0 ? (
-        <section className="mt-10 border border-border bg-card p-6">
+        <section className="mt-10">
           <h2 className="font-heading text-lg font-bold">
             Other spellings on the same applications
           </h2>{" "}
@@ -271,7 +271,7 @@ export function UnpublishedEmployer({
       {programs}{" "}
 
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Your case is with them?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             The{" "}
@@ -284,7 +284,7 @@ export function UnpublishedEmployer({
             reads DOL live and can set an alert for the next change.
           </p>
         </div>
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Where the queue stands</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             DOL works one national queue, oldest first, whoever filed the case.{" "}

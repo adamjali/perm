@@ -387,7 +387,7 @@ export async function BrowseLetterBody({
             small for a page of their own.
           </p>
         </div>
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">
             Holding a case number?
           </h2>{" "}

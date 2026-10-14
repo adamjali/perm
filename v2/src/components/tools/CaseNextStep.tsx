@@ -37,12 +37,9 @@ export function CaseNextStep({
   className,
 }: CaseNextStepProps) {
   return (
-    <section
-      aria-label="Check your case"
-      className={cn("border border-border bg-card p-5 sm:p-6", className)}
-    >
-      <h2 className="font-heading text-xl font-bold leading-tight sm:text-2xl">{question}</h2>{" "}
-      <p className="mt-1 max-w-2xl text-base leading-relaxed text-muted-foreground">
+    <section aria-label="Check your case" className={cn("bg-tint p-5 sm:p-6", className)}>
+      <h2 className="font-heading text-xl font-bold leading-tight">{question}</h2>{" "}
+      <p className="mt-1 max-w-2xl text-base leading-relaxed text-soft">
         Its number gives DOL&apos;s live status, an estimated decision date and an email when it moves.
       </p>{" "}
       <CaseLookupForm
@@ -55,10 +52,7 @@ export function CaseNextStep({
       />{" "}
       {extra ? (
         <p className="mt-1 text-sm">
-          <a
-            href={extra.href}
-            className="inline-flex min-h-[44px] items-center font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-          >
+          <a href={extra.href} className="link inline-flex min-h-11 items-center">
             {extra.label}
           </a>
         </p>

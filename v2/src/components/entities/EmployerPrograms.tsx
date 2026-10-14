@@ -50,7 +50,7 @@ export function EmployerPrograms({
   const gap = wageGap(perm, lca);
   return (
     <section className="mt-10">
-      <h2 className="font-heading text-xl font-bold sm:text-2xl">Across DOL&apos;s programs</h2>{" "}
+      <h2 className="font-heading text-xl font-bold">Across DOL&apos;s programs</h2>{" "}
       <p className="mt-2 max-w-3xl text-base text-soft">
         {perm ? "The wage request, the PERM and the H-1B labor condition application" : "Each program it files"}
         {perm && seasonal ? ", and its seasonal H-2A, H-2B and CW-1 work" : ""}, one line each.

@@ -32,8 +32,8 @@ export function WageAndLcaFilings({
 }) {
   if (wageReqs.length === 0 && lcas.length === 0) return null;
   return (
-    <section className={`${className} border border-border bg-card p-6 sm:p-8`}>
-      <h2 className="font-heading text-xl font-bold sm:text-2xl">{heading}</h2>{" "}
+    <section className={`${className}`}>
+      <h2 className="font-heading text-xl font-bold">{heading}</h2>{" "}
       <p className="mt-2 text-base leading-relaxed text-muted-foreground">
         Filed by {name}, newest first. Decided ones carry the wage from DOL&apos;s quarterly files.
       </p>{" "}

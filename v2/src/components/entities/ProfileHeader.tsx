@@ -32,14 +32,13 @@ export interface ProfileTag {
 const TONE: Record<ProfileTag["tone"], string> = {
   warn: "bg-data-warn-ink",
   bad: "bg-data-bad-ink",
-  ink: "bg-foreground",
+  ink: "bg-muted-foreground",
 };
-
-const FACT_COLUMNS: Record<number, string> = { 2: "sm:grid-cols-2", 3: "sm:grid-cols-3" };
 
 export function ProfileHeader({
   eyebrow,
   name,
+  answer,
   facts = [],
   tags = [],
   aside,
@@ -47,71 +46,66 @@ export function ProfileHeader({
 }: {
   eyebrow: string;
   name: string;
+  /** The one sentence that answers why most people came: what is waiting at DOL now. */
+  answer?: ReactNode;
   facts?: ProfileFact[];
   tags?: ProfileTag[];
   aside?: ReactNode;
   figures?: ReactNode;
 }) {
   return (
-    <header className="pt-10 sm:pt-12">
-      <div className="grid grid-cols-1 gap-8 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,25rem)] lg:items-start">
+    <header className="pt-8 sm:pt-10">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start [&>*]:min-w-0">
         <div>
-          <p className="text-sm font-bold text-muted-foreground">{eyebrow}</p>{" "}
+          <p className="text-sm text-muted-foreground">{eyebrow}</p>{" "}
           <h1
             translate="no"
-            className="mt-2 font-heading text-4xl font-bold leading-[1.05] [overflow-wrap:anywhere] sm:text-5xl"
+            className="mt-2 font-heading text-3xl font-bold leading-tight [overflow-wrap:anywhere] sm:text-4xl"
           >
             {name}
           </h1>{" "}
-          {facts.length > 0 ? (
-            <dl
-              className={cn(
-                "mt-6 grid grid-cols-1 gap-px border border-border bg-border [&>*]:min-w-0",
-                FACT_COLUMNS[facts.length],
-              )}
-            >
-              {facts.map((f) => (
-                <div key={f.label} className="bg-card px-4 py-3">
-                  <dt className="text-sm text-muted-foreground">{f.label}{" "}</dt>{" "}
-                  <dd className="mt-0.5 font-heading text-lg font-bold leading-snug [overflow-wrap:anywhere]">
-                    {f.href ? (
-                      <Link
-                        href={f.href}
-                        className="underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
-                      >
-                        {f.value}
-                      </Link>
-                    ) : (
-                      f.value
-                    )}{" "}
-                  </dd>
-                  {f.note ? <dd className="mt-0.5 text-sm text-muted-foreground">{f.note}{" "}</dd> : null}
-                </div>
-              ))}
-            </dl>
-          ) : null}{" "}
+          {answer ? <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground">{answer}</p> : null}{" "}
           {tags.length > 0 ? (
-            <ul aria-label="What stands out now" className="mt-5 flex flex-wrap gap-2">
+            <ul aria-label="What stands out now" className="mt-3 flex flex-wrap gap-x-5">
               {tags.map((t) => (
                 <Fragment key={t.text}>
                   {" "}
                   <li>
                     <a
                       href={t.href}
-                      className="inline-flex min-h-11 items-center gap-2 border border-border bg-card px-3 text-sm font-bold transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none"
+                      className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold underline-offset-2 hover:underline"
                     >
-                      <span aria-hidden="true" className={cn("size-3 shrink-0", TONE[t.tone])} />
+                      <span aria-hidden="true" className={cn("size-2.5 shrink-0", TONE[t.tone])} />
                       {t.text}
                     </a>
                   </li>
                 </Fragment>
               ))}
             </ul>
+          ) : null}{" "}
+          {facts.length > 0 ? (
+            <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+              {facts.map((f) => (
+                <div key={f.label} className="min-w-0">
+                  <dt className="text-sm text-muted-foreground">{f.label}</dt>{" "}
+                  <dd className="text-base font-semibold [overflow-wrap:anywhere]">
+                    {f.href ? (
+                      <Link href={f.href} className="link">
+                        {f.value}
+                      </Link>
+                    ) : (
+                      f.value
+                    )}
+                    {f.note ? <span className="font-normal text-muted-foreground"> · {f.note}</span> : null}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           ) : null}
         </div>{" "}
         {aside ? <div>{aside}</div> : null}
       </div>{" "}
-      {figures ? <div className="mt-8">{figures}</div> : null}
+      {figures ? <div className="mt-10">{figures}</div> : null}
     </header>
   );
 }

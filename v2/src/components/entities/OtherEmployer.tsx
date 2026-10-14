@@ -51,8 +51,8 @@ function SeasonalCaseList({
 }) {
   if (cases.length === 0) return null;
   return (
-    <section className="mt-10 border border-border bg-card p-6 sm:p-8">
-      <h2 className="font-heading text-xl font-bold sm:text-2xl">
+    <section className="mt-10">
+      <h2 className="font-heading text-xl font-bold">
         {more
           ? `Its newest ${formatInt(cases.length)} H-2A, H-2B and CW-1 filings`
           : `Its ${formatInt(cases.length)} H-2A, H-2B and CW-1 ${cases.length === 1 ? "filing" : "filings"}`}
@@ -202,7 +202,7 @@ export function OtherEmployer({
       {/* The case-number box sits under the header now; this card points at
           the full list for anyone reading to the end. */}
       <section className="mt-10 max-w-2xl">
-        <div className="border border-border bg-card p-6">
+        <div >
           <h2 className="font-heading text-lg font-bold">Every filing under this name</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             <Link href={`/case-search?q=${encodeURIComponent(record.name)}`} className={LINK}>

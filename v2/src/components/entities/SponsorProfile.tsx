@@ -25,7 +25,7 @@ export function SponsorProfile({
   if (parts.length === 0 && facts.length === 0) return null;
   return (
     <section className={className} aria-labelledby="sponsor-profile">
-      <h2 id="sponsor-profile" className="font-heading text-xl font-bold sm:text-2xl">
+      <h2 id="sponsor-profile" className="font-heading text-xl font-bold">
         How it compares with other sponsors
       </h2>{" "}
       <p className="mt-2 max-w-3xl text-base text-soft">
@@ -65,7 +65,7 @@ export function SponsorProfile({
         </ul>
       ) : null}{" "}
       {facts.length ? (
-        <div className="mt-6 max-w-3xl border border-border bg-card p-4">
+        <div className="mt-6 max-w-3xl">
           <h3 className="text-sm font-bold">Also on its record</h3>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-base">
             {facts.map((f, i) => (

@@ -67,8 +67,8 @@ export function EmployerFollow({
   const legend = parts ? ribbonLegend(parts) : [];
   const shown = moves.slice(0, RAIL_SHOWN);
   return (
-    <section id="follow" className="mt-10 scroll-mt-28 border border-border bg-card p-6 sm:p-8">
-      <h2 className="font-heading text-xl font-bold sm:text-2xl">Follow {name}</h2>{" "}
+    <section id="follow" className="mt-10 scroll-mt-28">
+      <h2 className="font-heading text-xl font-bold">Follow {name}</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         An email when DOL moves its cases as a group: five or more on or off hold in a day, or a batch decided well above its usual pace.
       </p>

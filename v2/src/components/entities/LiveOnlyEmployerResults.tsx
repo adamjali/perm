@@ -34,7 +34,7 @@ export function LiveOnlyEmployerResults({
 }) {
   if (hits.length === 0) return null;
   return (
-    <section className="mt-6 border border-border bg-card p-5 sm:p-6">
+    <section className="mt-6">
       <h3 className="font-heading text-lg font-bold sm:text-xl">
         {more ? "The first " : ""}
         {formatInt(hits.length)} more {hits.length === 1 ? "sponsor" : "sponsors"},

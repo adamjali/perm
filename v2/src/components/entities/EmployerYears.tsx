@@ -67,7 +67,7 @@ export function EmployerYears({
       ) : null}
 
       {cases.length > 0 ? (
-        <div className="mt-6 border border-border bg-card p-5 sm:p-6">
+        <div className="mt-6">
           <h3 className="font-heading text-lg font-bold">
             Decided in FY2016 to FY2023
           </h3>{" "}

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { BarRows } from "@/components/data/BarRows";
 import type { FieldWait, FiledToday } from "@/lib/turso/employerWait";
 import type { WaitSummary } from "@/lib/waitSummary";
-import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 
 /**
@@ -58,9 +57,9 @@ export function EmployerWait({
   return (
     <section
       aria-labelledby="wait-h"
-      className={cn("border border-border bg-card p-6 sm:p-8", className)}
+      className={className}
     >
-      <h2 id="wait-h" className="font-heading text-xl font-bold sm:text-2xl">
+      <h2 id="wait-h" className="font-heading text-xl font-bold">
         How long their cases are taking
       </h2>{" "}
       {rows.length > 0 ? <BarRows label="Median days to a decision, this employer against every employer" className="mt-5 max-w-3xl" rows={rows} /> : null}{" "}

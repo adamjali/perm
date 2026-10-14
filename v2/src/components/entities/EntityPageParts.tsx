@@ -7,13 +7,14 @@
  * @see src/lib/entityPage.ts for the metadata and structured data they share
  */
 
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import Link from "next/link";
 import { formatDollars, formatInt } from "@/lib/format";
 import type { FieldDistribution } from "@/lib/turso/entities";
 import type { FacetRow } from "@/lib/turso/entityDetail";
 import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
+import { Figure, FigureRow } from "@/components/data/FigureRow";
 import {
   MIN_DECIDED_FOR_MEDIAN,
   rateReliability,
@@ -73,27 +74,18 @@ export interface StatCard {
   sub: string;
 }
 
-/** One row from `sm` up. Tailwind only builds classes written out in full. */
-const SM_COLUMNS: Record<number, string> = { 3: "sm:grid-cols-3", 4: "sm:grid-cols-4", 5: "sm:grid-cols-5" };
-
-/** The figure cards, one bordered grid. The page places it, below its ReliabilityBand. */
+/** The entity's headline figures, one plain row. The page places it, below its ReliabilityBand. */
 export function EntityStatCards({ cards: given }: { cards: (StatCard | null)[] }) {
   const cards = given.filter((c): c is StatCard => c !== null);
   return (
-    <div
-      // A lone last tile on a phone spans the row: a spanning tile mid-grid left two black holes.
-      className={`grid [&>*]:min-w-0 grid-cols-2 gap-px border border-border bg-border max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 ${SM_COLUMNS[cards.length] ?? ""}`}
-    >
+    <FigureRow>
       {cards.map((d) => (
-        <div key={d.k} className="bg-card p-5">
-          <p className="text-sm font-bold text-muted-foreground">
-            {d.k}
-          </p>{" "}
-          <p className="mt-1.5 font-heading text-2xl font-bold tabular-nums">{d.v}</p>{" "}
-          {d.sub ? <p className="mt-1 text-sm text-muted-foreground">{d.sub}</p> : null}
-        </div>
+        <Fragment key={d.k}>
+          {" "}
+          <Figure label={d.k} value={d.v} note={d.sub || undefined} />
+        </Fragment>
       ))}
-    </div>
+    </FigureRow>
   );
 }
 
@@ -118,7 +110,7 @@ export function certifiedCard(row: { certified: number; denied: number }): StatC
 export function approvalCard(reliability: RateReliability, baselineDenialPct: number): StatCard {
   return {
     k: "Approval",
-    v: reliability.ratePct == null ? "—" : `${reliability.ratePct.toFixed(1)}%`,
+    v: reliability.ratePct == null ? "Not shown" : `${reliability.ratePct.toFixed(1)}%`,
     sub:
       reliability.ratePct == null
         ? `withheld: ${formatInt(reliability.decided)} decided`

@@ -56,8 +56,8 @@ export function UscisH1bRecord({
   const others = record.nameCount - record.names.length;
 
   return (
-    <section className={cn("mt-10 border border-border bg-card p-6 sm:p-8", className)}>
-      <h2 className="font-heading text-xl font-bold sm:text-2xl">What USCIS decided on its H-1B petitions</h2>{" "}
+    <section className={cn("mt-10", className)}>
+      <h2 className="font-heading text-xl font-bold">What USCIS decided on its H-1B petitions</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Workers approved and denied on USCIS&apos;s first decision, FY{first} to FY{newest.fy}
         {throughLabel && through && through < `${newest.fy}-09-30` ? ` (through ${throughLabel})` : ""}, from{" "}

@@ -57,7 +57,7 @@ export function BrowseStrip({
   className?: string;
 }) {
   return (
-    <nav aria-label="Browse by first letter" className={cn("", className)}>
+    <nav aria-label="Browse by first letter" className={className}>
       <ul className="flex list-none flex-wrap gap-1.5 p-0">
         {BROWSE_BUCKETS.map((b) => {
           const n = counts[b] ?? 0;
