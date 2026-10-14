@@ -13,7 +13,7 @@ describe("CaseLookupForm", () => {
 
   it("offers the employer search to someone without the number", () => {
     render(<CaseLookupForm />);
-    const link = screen.getByRole("link", { name: /find the case by employer name/i });
+    const link = screen.getByRole("link", { name: /find a case by employer name/i });
     expect(link.getAttribute("href")).toBe("/case-search");
   });
 });
