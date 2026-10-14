@@ -4,7 +4,8 @@ import { ABOUT_TWO_HALVES } from "@/lib/constants/about";
 import { FILM_ATTORNEYS, FILM_WAITING, type Film } from "@/lib/constants/films";
 
 import { ExplainerFilm } from "./ExplainerFilm";
-import { ArrowRight } from "./icons";
+import { CaretDownIcon } from "@phosphor-icons/react/ssr";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The two audiences, side by side, with EQUAL headings.
@@ -70,7 +71,7 @@ function Bullets({ items }: { items: readonly string[] }) {
     <ul className="flex flex-col gap-2.5">
       {items.map((item) => (
         <li key={item} className="flex gap-3 text-base leading-relaxed text-soft">
-          <span aria-hidden="true" className="mt-[0.55em] block h-2.5 w-2.5 shrink-0 bg-primary" />
+          <span aria-hidden="true" className="mt-[0.6em] block size-2 shrink-0 bg-primary-text" />
           <span>{item}{" "}</span>
         </li>
       ))}
@@ -83,50 +84,37 @@ export function AudienceBlocks() {
     <section
       id="who-it-is-for"
       aria-labelledby="who-it-is-for-heading"
-      // THE DARK BAND: the films play on ink, like a screen
-      // room. `dark` scopes the theme tokens to this section only (the
-      // `dark` variant is `&:is(.dark *)`), so every child reads its colours
-      // from the dark palette without a second set of classes.
-      className="dark border-b border-border bg-background py-16 text-foreground sm:py-20"
+      className="border-b border-border py-14 sm:py-20"
     >
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
-        <h2
-          id="who-it-is-for-heading"
-          className="font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl"
-        >
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-8">
+        <h2 id="who-it-is-for-heading" className="font-heading text-2xl font-bold sm:text-3xl">
           Both sides of a PERM filing
         </h2>{" "}
-        <p className="mt-3 max-w-2xl text-lg text-soft">
-          Same federal record, both free.
-        </p>{" "}
-        <div className="mt-10 grid grid-cols-1 gap-10 [&>*]:min-w-0 lg:grid-cols-2 lg:gap-8">
+        <p className="mt-2 max-w-2xl text-base text-soft">Same federal record, both free.</p>{" "}
+        <div className="mt-8 grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-10 [&>*]:min-w-0">
           {HALVES.map((h) => (
             <article key={h.heading} className="flex flex-col">
-              <h3 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">
+              <h3 className="font-heading text-xl font-bold">
                 {h.heading}
               </h3>{" "}
               <ExplainerFilm film={h.film} className="mt-4" />{" "}
-              <details className="mt-4 border-y border-border">
-                <summary className="flex min-h-[48px] cursor-pointer items-center font-bold">
-                  What it does
+              <details className="group mt-4 border-y border-border">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between font-semibold [&::-webkit-details-marker]:hidden">
+                  What it does{" "}
+                  <CaretDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
                 </summary>{" "}
                 <div className="pb-4">
                   <Bullets items={h.items} />
                   <p className="mt-4 text-base leading-relaxed text-soft">{h.lede}</p>
                 </div>
               </details>{" "}
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href={h.cta.href}
-                  className="group inline-flex min-h-[48px] items-center justify-center gap-2 border border-border bg-primary px-6 font-heading font-bold text-primary-foreground transition-transform duration-150"
-                >
-                  {h.cta.label}{" "}
-                  <ArrowRight className="transition-transform duration-150" />
+              {/* The page's one lime action is the case box above; these are
+                  the next doors, so outline buttons and a link. */}
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link href={h.cta.href} className={buttonVariants({ variant: "outline", size: "lg" })}>
+                  {h.cta.label}
                 </Link>{" "}
-                <Link
-                  href={h.secondary.href}
-                  className="inline-flex min-h-[48px] items-center justify-center border border-border px-6 font-heading font-bold text-foreground transition-colors hover:bg-foreground hover:text-background"
-                >
+                <Link href={h.secondary.href} className="link inline-flex min-h-11 items-center">
                   {h.secondary.label}
                 </Link>
               </div>

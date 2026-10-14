@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon } from "@phosphor-icons/react/ssr";
+import { ArrowDownIcon, ArrowUpIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { federalHolidayName } from "@/lib/perm";
@@ -91,11 +91,11 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
       {variant === "charts" ? null : (
       <>
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
-        <h2 id="pulse-heading" className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
+        <h2 id="pulse-heading" className="font-heading text-2xl font-bold sm:text-3xl">
           PERM decisions, day by day
         </h2>{" "}
         {checkedAt ? (
-          <p className="font-mono text-sm font-semibold text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Checked against DOL {checkedLabel(checkedAt)}
           </p>
         ) : null}
@@ -103,49 +103,46 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
 
       {/* The day. One dominant figure, then its split. */}
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4 [&>*]:min-w-0">
-        <div className="col-span-2 border border-border bg-foreground p-5 text-background sm:p-6">
-          <p className="text-sm font-bold text-background/75">
+        <div className="col-span-2 bg-tint p-5 sm:p-6">
+          <p className="text-sm text-soft">
             Decided on {weekday}, {dayLabel(day.date, { month: "short", day: "numeric" })}
           </p>{" "}
           <div className="mt-2 flex flex-wrap items-end gap-x-4 gap-y-2">
-            <p className="font-heading text-6xl font-bold leading-none tabular-nums sm:text-7xl">
+            <p className="font-heading text-5xl font-bold leading-none tabular-nums">
               {formatInt(day.total)}
             </p>{" "}
             {changePct !== null && typical !== null ? (
               <p
-                className={cn(
-                  "mb-1 inline-flex items-center gap-1.5 border px-2 py-1 text-sm font-bold",
-                  up ? "border-primary bg-primary text-black" : "border-background/60 text-background",
-                )}
+                className="mb-1 inline-flex items-center gap-1.5 bg-card px-2 py-1 text-sm font-semibold"
               >
                 {up ? (
-                  <ArrowUpIcon className="size-4" weight="bold" aria-hidden="true" />
+                  <ArrowUpIcon className="size-4 text-data-good-ink" weight="bold" aria-hidden="true" />
                 ) : (
-                  <ArrowDownIcon className="size-4" weight="bold" aria-hidden="true" />
+                  <ArrowDownIcon className="size-4 text-muted-foreground" weight="bold" aria-hidden="true" />
                 )}
                 {`${up ? "+" : "−"}${Math.abs(changePct)}% vs a typical ${weekday} (${formatInt(typical)})`}
               </p>
             ) : null}
           </div>{" "}
           {closedAfter.length > 0 ? (
-            <p className="mt-3 text-sm text-background/75">{closedSentence(closedAfter)}</p>
+            <p className="mt-3 text-sm text-soft">{closedSentence(closedAfter)}</p>
           ) : null}
         </div>{" "}
-        <div className="border border-border bg-card p-5">
-          <p className="text-sm font-bold text-muted-foreground">Certified</p>{" "}
-          <p className="mt-2 font-heading text-4xl font-bold leading-none tabular-nums">{formatInt(day.certified)}</p>{" "}
+        <div className="p-5">
+          <p className="text-sm text-muted-foreground">Certified</p>{" "}
+          <p className="mt-2 font-heading text-3xl font-bold leading-none tabular-nums">{formatInt(day.certified)}</p>{" "}
           {share !== null ? <p className="mt-2 text-sm text-muted-foreground">{share}% of the day</p> : null}
         </div>{" "}
         {/* Two labelled numbers, never "62 · 21": a reader should not have to
             guess which figure is which. */}
-        <dl className="m-0 grid grid-cols-1 gap-3 border border-border bg-card p-5 sm:grid-cols-2 sm:gap-4 [&>*]:min-w-0">
+        <dl className="m-0 grid grid-cols-1 gap-3 p-5 sm:grid-cols-2 sm:gap-4 [&>*]:min-w-0">
           <div>
-            <dt className="text-sm font-bold text-muted-foreground">Denied</dt>{" "}
-            <dd className="m-0 mt-1 font-heading text-3xl font-bold leading-none tabular-nums sm:mt-2 sm:text-4xl">{formatInt(day.denied)}</dd>
+            <dt className="text-sm text-muted-foreground">Denied</dt>{" "}
+            <dd className="m-0 mt-1 font-heading text-3xl font-bold leading-none tabular-nums sm:mt-2">{formatInt(day.denied)}</dd>
           </div>{" "}
           <div>
-            <dt className="text-sm font-bold text-muted-foreground">Withdrawn</dt>{" "}
-            <dd className="m-0 mt-1 font-heading text-3xl font-bold leading-none tabular-nums sm:mt-2 sm:text-4xl">{formatInt(day.withdrawn)}</dd>
+            <dt className="text-sm text-muted-foreground">Withdrawn</dt>{" "}
+            <dd className="m-0 mt-1 font-heading text-3xl font-bold leading-none tabular-nums sm:mt-2">{formatInt(day.withdrawn)}</dd>
           </div>
         </dl>
       </div>{" "}
@@ -153,33 +150,33 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
       </>
       )}{" "}
       {/* The numbers first: what a reader wants before reading any chart. */}
-      <dl className={cn("m-0 grid grid-cols-2 gap-4 lg:grid-cols-4 [&>*]:min-w-0", variant !== "charts" && "mt-4")}>
+      <dl className={cn("m-0 grid grid-cols-2 gap-x-8 gap-y-6 lg:grid-cols-4 [&>*]:min-w-0", variant !== "charts" ? "mt-8" : "mt-8")}>
         {summaryFigures.map((f) => (
           <Fragment key={f.label}>
             {" "}
-            <div className="border border-border bg-card p-4 sm:p-5">
-              <dt className="text-sm font-bold text-muted-foreground">{f.label}</dt>{" "}
-              <dd className="m-0 mt-1 font-heading text-3xl font-bold leading-none tabular-nums sm:text-4xl">{f.value}</dd>
+            <div>
+              <dt className="text-sm text-muted-foreground">{f.label}</dt>{" "}
+              <dd className="m-0 mt-1 font-heading text-3xl font-bold leading-none tabular-nums">{f.value}</dd>
             </div>
           </Fragment>
         ))}
       </dl>{" "}
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3 [&>*]:min-w-0">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         {/* Thirty days. Weekends sit low because DOL decides little then. */}
         <figure className="m-0 border border-border bg-card p-5 lg:col-span-2">
           <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-            <span className="text-base font-bold">The last {bars.length} days</span>{" "}
+            <span className="text-base font-semibold">The last {bars.length} days</span>{" "}
             <span className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-soft">
               <span className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 border border-border bg-data-good-ink" />
+                <span aria-hidden="true" className="size-3 bg-data-good-ink" />
                 Certified
               </span>{" "}
               <span className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 border border-border bg-data-bad-ink" />
+                <span aria-hidden="true" className="size-3 bg-data-bad-ink" />
                 Denied
               </span>{" "}
               <span className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 border border-border bg-foreground/50" />
+                <span aria-hidden="true" className="size-3 bg-foreground/50" />
                 Withdrawn
               </span>
             </span>
@@ -215,7 +212,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
 
         {/* The shape of a week, over the last four. */}
         <figure className="m-0 border border-border bg-card p-5">
-          <figcaption className="text-base font-bold">A typical week</figcaption>{" "}
+          <figcaption className="text-base font-semibold">A typical week</figcaption>{" "}
           <ChartTips label="Average decisions by day of the week">
           <div className="mt-4 flex h-40 items-end gap-2 sm:h-48" role="img" aria-label="Average decisions by day of the week over the last four weeks.">
             {week.map((w) => (
@@ -224,9 +221,9 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
                 data-tip={w.days ? `${WEEKDAY_LONG[w.weekday]}\nAbout ${formatInt(w.mean)} decided\nAverage of the last ${w.days} ${WEEKDAY_LONG[w.weekday]}s` : `${WEEKDAY_LONG[w.weekday]}\nNone on record yet`}
                 className="flex h-full flex-1 flex-col justify-end text-center"
               >
-                <span className="mb-1 text-sm font-bold tabular-nums">{w.days ? formatInt(w.mean) : ""}</span>{" "}
+                <span className="mb-1 text-sm font-semibold tabular-nums">{w.days ? formatInt(w.mean) : ""}</span>{" "}
                 <div
-                  className={cn("border border-border", w.weekday >= 5 ? "bg-foreground/25" : "bg-primary")}
+                  className={w.weekday >= 5 ? "bg-foreground/25" : "bg-foreground/60"}
                   style={{ height: w.days ? `${Math.max(2, (w.mean / weekMax) * 100)}%` : "0" }}
                 />
               </div>
@@ -275,12 +272,8 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
           Counted from DOL&apos;s own case status, by the day our check saw each case change.
         </p>{" "}
         {showLink ? (
-          <Link
-            href="/perm-decision-activity"
-            className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-background px-4 py-2 font-bold transition-colors duration-150"
-          >
+          <Link href="/perm-decision-activity" className="link inline-flex min-h-11 items-center">
             Every day, and every case that moved
-            <ArrowRightIcon className="size-4" weight="bold" aria-hidden="true" />
           </Link>
         ) : null}
       </div>

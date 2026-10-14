@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fillPath } from "../SectionDivider";
 import { deriveFigures } from "../dataPageFigures";
-
-describe("fillPath", () => {
-  it("closes an open top edge down to the viewBox floor", () => {
-    expect(fillPath("M0,40 L1440,44")).toBe("M0,40 L1440,44 L1440,64 L0,64 Z");
-  });
-});
 
 describe("deriveFigures", () => {
   const full = {

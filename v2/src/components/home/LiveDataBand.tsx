@@ -1,7 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
 
-import { ArrowRight } from "./icons";
 
 import { QueueTape } from "@/components/tools/QueueTape";
 import { formatAsOf } from "@/lib/dolFormat";
@@ -154,28 +153,19 @@ export function LiveDataBand({
   if (!frontierMonth) return null;
 
   return (
-    <section
-      aria-label="DOL's queue and its pace"
-      className="border-y border-border bg-card"
-    >
-      <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+    <section aria-labelledby="pace-title" className="border-b border-border">
+      <div className="mx-auto max-w-[1200px] px-4 py-14 sm:px-8 sm:py-20">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
           <div>
-            <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
+            <h2 id="pace-title" className="font-heading text-2xl font-bold sm:text-3xl">
               How fast DOL works through the line
             </h2>{" "}
             {asOf ? (
-              <p className="mt-2 text-sm text-muted-foreground">
-                From DOL&apos;s own processing times, as of {formatAsOf(asOf)}
-              </p>
+              <p className="mt-2 text-base text-soft">From DOL&apos;s own processing times, as of {formatAsOf(asOf)}</p>
             ) : null}
           </div>{" "}
-          <Link
-            href="/tools"
-            className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-background px-5 py-2.5 font-bold transition-colors duration-150"
-          >
-            Browse every dataset
-            <ArrowRight />
+          <Link href="/tools" className="link inline-flex min-h-11 items-center">
+            Every dataset
           </Link>
         </div>
 
@@ -184,7 +174,6 @@ export function LiveDataBand({
           className="mt-8"
           monthsBehind={6}
           monthsAhead={8}
-          reveal
         />{" "}
         {children ? <div className="mt-8">{children}</div> : null}
 
@@ -194,43 +183,19 @@ export function LiveDataBand({
 }
 
 /**
- * Search every filing: the dataset doors, kept out of the queue band so each
- * band does one job. A plain GET form into
- * `/case-search?q=` leads it, so the most common next step (an employer's
- * name) is one field away; the five doors below keep their figures.
+ * The dataset doors, kept out of the queue band so each band does one job.
+ * The search is the header's box, so there's no second one here.
  */
 export function DataShelf({ figures }: { figures?: DataPageFigures }) {
   return (
-    <section aria-labelledby="data-shelf-heading" className="border-b border-border bg-card">
-      <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
-        <div className="grid grid-cols-1 items-end gap-6 [&>*]:min-w-0 lg:grid-cols-12">
-          <h2
-            id="data-shelf-heading"
-            className="font-heading text-3xl font-bold leading-tight sm:text-4xl lg:col-span-5"
-          >
-            Search every filing
-          </h2>{" "}
-          <form action="/case-search" method="get" role="search" className="flex flex-col gap-3 sm:flex-row lg:col-span-7">
-            <label htmlFor="shelf-q" className="sr-only">
-              Employer, law firm or job title
-            </label>
-            <input
-              id="shelf-q"
-              name="q"
-              type="search"
-              autoComplete="off"
-              placeholder="An employer's name"
-              className="min-h-[48px] w-full min-w-0 flex-1 border border-input bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />{" "}
-            <button
-              type="submit"
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 border border-border bg-foreground px-6 font-heading font-bold text-background transition-transform duration-150"
-            >
-              Search{" "}
-              <ArrowRight className="shrink-0" />
-            </button>
-          </form>
-        </div>{" "}
+    <section aria-labelledby="data-shelf-heading" className="border-b border-border">
+      <div className="mx-auto max-w-[1200px] px-4 py-14 sm:px-8 sm:py-20">
+        <h2 id="data-shelf-heading" className="font-heading text-2xl font-bold sm:text-3xl">
+          Look through the record
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base text-soft">
+          Every filing DOL has published, by state, wage, employer and law firm, and why cases are denied.
+        </p>{" "}
         {/* A CARD CARRIES A FIGURE ONLY IF THE FIGURE ANSWERS SOMETHING.
             An earlier version gave all five one, on the reasoning that a card
             without a number was "a menu pretending to be a page". That pushed
@@ -365,14 +330,13 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
             <Link
               key={d.href}
               href={d.href}
-              className="group flex flex-col border border-border bg-background p-4 transition-colors duration-150"
+              className="group flex flex-col border border-border bg-card p-4 transition-colors duration-150 hover:border-foreground"
             >
               {/* THE PICTURE AND THE NAME: no "View ..." line or OPEN row
                   restating the label; the whole card is the link, and `what`
                   names it for screen readers. */}
               <span className="flex items-center justify-between gap-2 font-heading text-lg font-bold">
                 {d.label}{" "}
-                <ArrowRight className="shrink-0 transition-transform duration-150" />
               </span>{" "}
               {d.figure ? (
                 <span className="mt-3 block border-t border-border/30 pt-3">

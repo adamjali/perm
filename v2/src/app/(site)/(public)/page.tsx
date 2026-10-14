@@ -42,7 +42,6 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { HOME_FAQS } from "@/components/home/faqData";
 import { analystReviewQueue } from "@convex/lib/dolProcessingTimes";
 import { DataShelf, LiveDataBand } from "@/components/home/LiveDataBand";
-import { SectionDivider } from "@/components/home/SectionDivider";
 import { pulseHeadline } from "@/lib/pulseStats";
 import { deriveFigures } from "@/components/home/dataPageFigures";
 import { getDisclosureStats } from "@/lib/turso/publicData";
@@ -179,7 +178,6 @@ export default async function HomePage() {
       <AudienceBlocks />
       <AboutSection record={record} />
       <FAQSection />
-      <SectionDivider kind="step" above="var(--card)" fill="var(--primary)" />
       <CTASection />
     </>
   );

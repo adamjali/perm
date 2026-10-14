@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 
 import { StakesSection, SecuritySection, CTASection } from "@/components/home";
-import { SectionDivider } from "@/components/home/SectionDivider";
 import { AttorneyHero } from "@/components/home/AttorneyHero";
 import { AttorneyTour } from "@/components/home/AttorneyTour";
 import { FirmSiteSection } from "@/components/home/FirmSiteSection";
@@ -40,9 +39,7 @@ export default function ForAttorneysPage() {
       <AttorneyTour />
       <FirmSiteSection />
       <StakesSection />
-      <SectionDivider kind="ledger" fill="var(--muted)" />
       <SecuritySection />
-      <SectionDivider kind="step" above="var(--muted)" fill="var(--primary)" />
       <CTASection />
     </>
   );

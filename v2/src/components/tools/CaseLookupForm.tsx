@@ -53,6 +53,12 @@ export interface CaseLookupFormProps {
   buttonLabel?: string;
   /** Fields the form carries along unseen (the embed's host site). */
   hiddenFields?: Readonly<Record<string, string>>;
+  /**
+   * The box also takes an employer's name (the homepage's): the case page
+   * sends a name on to the search, so a name typed here is never "the wrong
+   * shape", and the box is set in the body face rather than the numbers' mono.
+   */
+  names?: boolean;
 }
 
 /** The button's one word, everywhere a case number is asked for. */
@@ -71,6 +77,7 @@ export function CaseLookupForm({
   help = "It's on your ETA-9089 receipt. It goes into the page's address, so you can bookmark the result.",
   buttonLabel = CHECK_LABEL,
   hiddenFields,
+  names = false,
 }: CaseLookupFormProps) {
   const inputId = useId();
   const helpId = useId();
@@ -83,8 +90,9 @@ export function CaseLookupForm({
   // agency's number; the server sends a complete one to its own page, and the
   // hint says so first.
   const isReceipt = edited && looksLikeReceipt(value);
+  const looksLikeName = names && /[A-Za-z]{2}/.test(value) && (value.match(/[A-Za-z]/g) ?? []).length > (value.match(/\d/g) ?? []).length;
   const malformed =
-    edited && !isReceipt && value.trim().length > 0 && normaliseCaseNumber(value) === null;
+    edited && !isReceipt && !looksLikeName && value.trim().length > 0 && normaliseCaseNumber(value) === null;
   const hint = isReceipt ? (
     <span className="text-data-warn-ink">
       That looks like a USCIS receipt number, which is USCIS&apos;s record rather than DOL&apos;s.
@@ -124,19 +132,22 @@ export function CaseLookupForm({
           }}
           placeholder={placeholder}
           autoComplete="off"
-          autoCapitalize="characters"
+          autoCapitalize={names ? "none" : "characters"}
           spellCheck={false}
           enterKeyHint="search"
           translate="no"
-          maxLength={40}
+          maxLength={names ? 120 : 40}
           aria-invalid={malformed || undefined}
           aria-describedby={hint ? helpId : undefined}
-          className="h-12 w-full min-w-0 flex-1 basis-64 border border-input bg-card px-4 font-mono text-base placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
+          className={cn(
+            "h-12 w-full min-w-0 flex-1 basis-56 border border-input bg-card px-4 text-base placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+            !names && "font-mono",
+          )}
         />
         <button
           type="submit"
           data-ph-capture-attribute-cta="case-lookup"
-          className={cn(buttonVariants({ size: "lg" }), "h-12")}
+          className={cn(buttonVariants({ size: "lg" }), "h-12 w-full sm:w-auto")}
         >
           {buttonLabel}
         </button>
@@ -154,7 +165,7 @@ export function CaseLookupForm({
       {searchHref ? (
         <p className="mt-2 text-sm text-muted-foreground">
           Don&apos;t have the number?{" "}
-          <Link href={searchHref} className="font-semibold text-foreground underline underline-offset-4 hover:text-primary">
+          <Link href={searchHref} className="link">
             {searchLabel}
           </Link>
           .

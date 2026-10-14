@@ -151,3 +151,13 @@ describe("token contrast", () => {
     expect(contrast(light["primary-foreground"]!, light.primary!)).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+describe("globals.css parses", () => {
+  // A cut that leaves one stray brace makes the dev server answer every page
+  // with a CSS error and a production build fail; the typecheck can't see it.
+  it("has balanced rules a CSS parser accepts", async () => {
+    const postcss = (await import("postcss")).default;
+    const css = readFileSync(resolve(process.cwd(), "src/app/globals.css"), "utf8");
+    expect(() => postcss.parse(css)).not.toThrow();
+  });
+});

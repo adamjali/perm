@@ -13,7 +13,7 @@ vi.mock("next/image", () => ({
   ),
 }));
 
-const { FlapBoard } = await import("../FlapBoard");
+const { HeroSection } = await import("../HeroSection");
 const { boardRowsFor } = await import("../HeroSection");
 const { RoadSection } = await import("../RoadSection");
 const { ExplainerFilm } = await import("../ExplainerFilm");
@@ -27,10 +27,9 @@ function textOf(html: string): string {
   return el.textContent ?? "";
 }
 
-describe("FlapBoard", () => {
-  const html = renderToStaticMarkup(
-    <FlapBoard rows={[{ label: "Now deciding", value: "Dec 2025" }, { label: "PERM waiting", value: "91,933" }]} />,
-  );
+describe("the figures at DOL beside the lookup", () => {
+  const board = { frontierMonth: "2025-12-01", lastDay: { date: "2026-10-05", total: 552 }, pending: 91933, checkedAt: null };
+  const html = renderToStaticMarkup(<HeroSection board={board} />);
 
   it("puts each value in the page text exactly once", () => {
     const text = textOf(html);
@@ -38,22 +37,6 @@ describe("FlapBoard", () => {
     expect(text.match(/91,933/g)).toHaveLength(1);
   });
 
-  it("keeps the decoy glyphs out of the text (they are CSS pseudo-elements)", () => {
-    const text = textOf(html).replace(/Now deciding|PERM waiting|Dec 2025|91,933|DOL|PERM queue|\s/g, "");
-    expect(text).toBe("");
-    expect(html).toContain('data-c="D"');
-    expect(html).toContain("data-r=");
-  });
-
-  it("draws one cell per character, a gap for a space", () => {
-    const cells = html.match(/class="flap-cell"/g) ?? [];
-    const gaps = html.match(/flap-cell flap-gap/g) ?? [];
-    expect(cells).toHaveLength("DEC2025".length + "91,933".length);
-    expect(gaps).toHaveLength(1);
-  });
-});
-
-describe("boardRowsFor", () => {
   it("drops a row whose figure is missing, and never invents one", () => {
     expect(boardRowsFor(undefined)).toEqual([]);
     const rows = boardRowsFor({ frontierMonth: null, lastDay: null, pending: 91933, checkedAt: null, pwdPending: null });
@@ -82,17 +65,16 @@ describe("RoadSection", () => {
 
   it("shows six stops, each with a real document on disk at the size it declares", () => {
     const imgs = [...html.matchAll(/<img src="([^"]+)" alt="([^"]*)" width="(\d+)" height="(\d+)"/g)];
-    // Six stops plus the PERM stop's approval sheet.
-    expect(imgs).toHaveLength(7);
+    expect(imgs).toHaveLength(6);
     for (const [, src, , w, h] of imgs) {
       const size = webpSize(join(PUBLIC, src!));
       expect(size, src).toEqual({ w: Number(w), h: Number(h) });
     }
   });
 
-  it("names every document in its alt text, except the decorative approval sheet", () => {
+  it("names every document in its alt text", () => {
     const alts = [...html.matchAll(/<img src="[^"]+" alt="([^"]*)"/g)].map((m) => m[1]);
-    expect(alts.filter((a) => a === "")).toHaveLength(1);
+    expect(alts.filter((a) => a === "")).toHaveLength(0);
     expect(alts.filter(Boolean).every((a) => /Form|bulletin|card/i.test(a!))).toBe(true);
   });
 

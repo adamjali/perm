@@ -4,8 +4,6 @@ import Link from "next/link";
 import { formatMonth } from "@/lib/dolFormat";
 import { formatInt } from "@/lib/format";
 
-import { ArrowRight } from "./icons";
-
 /**
  * The road to a green card, drawn with each stop's real paperwork.
  *
@@ -27,13 +25,9 @@ import { ArrowRight } from "./icons";
  * Federal documents, so no licence question (17 U.S.C. 105). Each is shown
  * as the top of its first page, lossless WebP in 16 grays, 16 to 30 KB.
  *
- * THE PERM STOP SHOWS WHAT YOU GET AT THE END OF IT: the certification
- * approval sits behind the application, and pointing at the stop slides it
- * out with DOL's word on it. Both sheets are visible at rest, so nothing is
- * hover-only.
- *
- * A NATIVE SIDEWAYS STRIP ON A PHONE (scroll-snap, no scroll hijack); a row of
- * six on a wide screen, joined by one route line.
+ * Each document sits flat in a 1px frame, as a screenshot does. On a phone the
+ * stops are a list, the document small beside its name; from 1024px a row of
+ * six.
  */
 
 export interface RoadSectionProps {
@@ -47,8 +41,8 @@ interface Stop {
   n: number;
   name: string;
   who: string;
-  /** Tailwind class for the stop's top rule, the stage colour. */
-  rule: string;
+  /** The stage's colour, as a dot beside its number. */
+  dot: string;
   img: { src: string; alt: string; w: number; h: number };
   fact: string;
   href: string;
@@ -61,7 +55,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       n: 1,
       name: "Prevailing wage",
       who: "Labor Dept.",
-      rule: "border-t-stage-pwd",
+      dot: "bg-stage-pwd",
       img: {
         src: "/images/road/eta-9141.webp",
         alt: "The first page of Form ETA-9141, Application for Prevailing Wage Determination",
@@ -76,7 +70,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       n: 2,
       name: "PERM",
       who: "Labor Dept.",
-      rule: "border-t-stage-eta9089",
+      dot: "bg-stage-eta9089",
       img: {
         src: "/images/road/eta-9089.webp",
         alt: "The first page of Form ETA-9089, Application for Permanent Employment Certification",
@@ -93,7 +87,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       n: 3,
       name: "I-140",
       who: "USCIS",
-      rule: "border-t-stage-i140",
+      dot: "bg-stage-i140",
       img: {
         src: "/images/road/i-140.webp",
         alt: "The first page of Form I-140, Immigrant Petition for Alien Workers",
@@ -108,7 +102,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       n: 4,
       name: "Visa bulletin",
       who: "State Dept.",
-      rule: "border-t-stage-recruitment",
+      dot: "bg-stage-recruitment",
       img: {
         src: "/images/road/visa-bulletin-oct-2026.webp",
         alt: "The employment-based final action dates chart from the October 2026 visa bulletin",
@@ -123,7 +117,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       n: 5,
       name: "I-485",
       who: "USCIS",
-      rule: "border-t-stage-recruitment",
+      dot: "bg-stage-recruitment",
       img: {
         src: "/images/road/i-485.webp",
         alt: "The first page of Form I-485, Application to Register Permanent Residence or Adjust Status",
@@ -138,7 +132,7 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
       n: 6,
       name: "Green card",
       who: "The end of the road",
-      rule: "border-t-primary",
+      dot: "bg-primary-text",
       img: {
         src: "/images/road/green-card-specimen.webp",
         alt: "USCIS's specimen permanent resident card, marked SPECIMEN",
@@ -154,50 +148,21 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
 
 export function RoadSection(props: RoadSectionProps) {
   return (
-    <section
-      aria-labelledby="road-heading"
-      // No fill: the dotted ground and the particles show
-      // through, alternating with the white bands either side.
-      className="border-b border-border"
-    >
-      <div className="mx-auto max-w-[1400px] px-4 py-14 sm:px-8 sm:py-20">
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
-          <h2
-            id="road-heading"
-            className="font-heading text-3xl font-bold tracking-tight sm:text-4xl"
-          >
-            The road to a green card
-          </h2>{" "}
-          <p className="max-w-md text-base text-soft">
-            Six stops, three agencies. Each one has a calculator.
-          </p>
-        </div>{" "}
-        <ol className="road" aria-label="The stages, in order">
+    <section aria-labelledby="road-heading" className="border-b border-border">
+      <div className="mx-auto max-w-[1200px] px-4 py-14 sm:px-8 sm:py-20">
+        <h2 id="road-heading" className="font-heading text-2xl font-bold sm:text-3xl">
+          The road to a green card
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base text-soft">Six stops, three agencies. Each one has a calculator.</p>{" "}
+        <ol aria-label="The stages, in order" className="mt-8 grid grid-cols-1 gap-x-6 gap-y-2 lg:grid-cols-6 lg:gap-y-8">
           {stops(props).map((s) => (
-            <li key={s.n} className="road-stop">
+            <li key={s.n}>
               <Link
                 href={s.href}
                 aria-label={`${s.name}, ${s.who}: ${s.fact}. Open the ${s.cta.toLowerCase()} tool`}
-                className={`road-link border-t-[6px] ${s.rule}`}
+                className="group grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-4 py-2 lg:grid-cols-1 lg:items-start lg:gap-3"
               >
-                <span className="road-top">
-                  <span className="road-num">{s.n}</span>{" "}
-                  <span className="road-who">{s.who}</span>
-                </span>{" "}
-                <span className={s.n === 2 ? "road-paper road-paper-pair" : "road-paper"}>
-                  {s.n === 2 ? (
-                    <span className="road-approval" aria-hidden="true">
-                      <Image
-                        src="/images/road/eta-9089-approval.webp"
-                        alt=""
-                        width={560}
-                        height={449}
-                        unoptimized
-                        loading="lazy"
-                      />
-                      <span className="road-stamp">Certified</span>
-                    </span>
-                  ) : null}
+                <span className="block overflow-hidden border border-border bg-card lg:order-2">
                   <Image
                     src={s.img.src}
                     alt={s.img.alt}
@@ -205,14 +170,17 @@ export function RoadSection(props: RoadSectionProps) {
                     height={s.img.h}
                     unoptimized
                     loading="lazy"
-                    className="road-sheet"
+                    className="block h-auto w-full"
                   />
                 </span>{" "}
-                <span className="road-name">
-                  {s.name}{" "}
-                  <ArrowRight className="shrink-0" />
-                </span>{" "}
-                <span className="road-fact">{s.fact}</span>{" "}
+                <span className="min-w-0 lg:order-1">
+                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span aria-hidden="true" className={`size-2.5 shrink-0 ${s.dot}`} />
+                    {s.n} · {s.who}
+                  </span>{" "}
+                  <span className="mt-1 block font-heading text-lg font-bold group-hover:underline">{s.name}</span>{" "}
+                  <span className="mt-0.5 block text-sm leading-snug text-soft">{s.fact}</span>
+                </span>
               </Link>
             </li>
           ))}
