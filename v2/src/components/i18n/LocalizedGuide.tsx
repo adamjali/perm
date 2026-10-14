@@ -9,6 +9,7 @@ import { GLOSSED_STATUSES, SECTION_IDS } from "@/lib/i18n/guide/types";
 import { getGuideData, type GuideData } from "@/lib/i18n/guideData";
 import { languageAlternates, localeByCode, type LocaleCode, type LocaleDef } from "@/lib/i18n/locales";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 
 /**
  * One localized guide: the page body every `/zh`, `/es`, `/pt-br`, `/ko` and
@@ -149,28 +150,14 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
       <section className="mt-12" aria-labelledby="check">
         <h2 id="check" className={h2}>{copy.check.h2}</h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-soft">{copy.check.intro}</p>
-        <form method="get" action="/perm-case-status" className={`mt-5 grid grid-cols-1 gap-2 [&>*]:min-w-0 ${card}`}>
-          <label htmlFor="guide-case" className="text-base font-bold">{copy.check.label}</label>{" "}
-          <div className="flex gap-2">
-            <input
-              id="guide-case"
-              name="case"
-              translate="no"
-              placeholder="G-100-26125-868956"
-              autoComplete="off"
-              spellCheck={false}
-              maxLength={40}
-              className="min-h-11 min-w-0 flex-1 border border-input bg-background px-3 text-base"
-            />{" "}
-            <button
-              type="submit"
-              className="min-h-11 border border-border bg-primary px-5 font-bold text-primary-foreground"
-            >
-              {copy.check.button}
-            </button>
-          </div>{" "}
-          <p className="text-sm leading-relaxed text-muted-foreground">{copy.check.formats}</p>
-        </form>{" "}
+        <CaseLookupForm
+          className={`mt-5 ${card}`}
+          label={copy.check.label}
+          buttonLabel={copy.check.button}
+          help={copy.check.formats}
+          searchHref={null}
+          source="localized-guide"
+        />{" "}
         <p className="mt-4 text-base leading-relaxed text-soft">{copy.check.after}</p>{" "}
         <p className="mt-3 text-base leading-relaxed text-soft">{copy.check.noNumber}</p>
       </section>

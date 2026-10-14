@@ -15,6 +15,7 @@ import {
 
 import { NotFoundSuggestions } from "@/components/search/NotFoundSuggestions";
 import { getAllPosts } from "@/lib/content";
+import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 
 /**
  * A 404 must not be indexable. Without this it inherits the site default and
@@ -77,27 +78,7 @@ export default function NotFound() {
             <p className="mt-4 max-w-md text-lg leading-relaxed text-soft">
               This page doesn&apos;t exist or has moved. If you were after a case, put its number in here.
             </p>{" "}
-            <form action="/perm-case-status" method="get" className="mt-7 flex max-w-xl flex-col gap-3 sm:flex-row">
-              <label htmlFor="nf-case" className="sr-only">
-                Case number
-              </label>
-              <input
-                id="nf-case"
-                name="case"
-                type="text"
-                inputMode="text"
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="G-100-26125-868956"
-                className="min-h-[48px] w-full min-w-0 flex-1 border border-input bg-background px-4 font-mono text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              />{" "}
-              <button
-                type="submit"
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 border border-border bg-primary px-6 font-heading font-bold text-black transition-transform motion-reduce:transition-none"
-              >
-                Check a case
-              </button>
-            </form>{" "}
+            <CaseLookupForm className="mt-7 max-w-xl" label="Case number" compact source="not-found" help={null} />{" "}
             <NotFoundSuggestions articles={articles} />
           </div>
         </div>{" "}

@@ -3,78 +3,43 @@ import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import Footer from "../Footer";
-import { NOT_LEGAL_SERVICES } from "@/lib/constants/about";
+import { LEGAL_NAME, NOT_LEGAL_SERVICES } from "@/lib/constants/about";
+import { APP_FOOTER, FOOTER_COLUMNS, FOOTER_LEGAL } from "@/lib/siteMap";
 
 /**
- * There used to be a separate AuthFooter for /login, /signup and
- * /reset-password: a different, thinner footer on three pages, which is the
- * kind of inconsistency nobody notices until someone lands there from a
- * search result. One Footer now serves all three route groups, and these
- * assertions moved here with it.
+ * One footer component for the public site and the signed-in app (Oct 14
+ * 2026): three columns and a legal line in public, one line in the app.
+ * Every page, both audiences, says this isn't a law firm.
  */
 describe("Footer", () => {
   for (const audience of ["public", "app"] as const) {
-    it(`carries the legal and contact links for the ${audience} audience`, () => {
-      renderWithProviders(<Footer variant="extended" audience={audience} />);
-
-      expect(screen.getByRole("link", { name: /privacy/i })).toHaveAttribute("href", "/privacy");
-      expect(screen.getByRole("link", { name: /^terms of service$/i })).toHaveAttribute("href", "/terms");
-      expect(screen.getByRole("link", { name: /^api terms$/i })).toHaveAttribute("href", "/api-terms");
-      expect(screen.getByRole("link", { name: /contact/i })).toHaveAttribute("href", "/contact");
-
-      const currentYear = new Date().getFullYear();
-      // The brand name is a link home since 2026-09-15, so the line is split across elements.
-      expect(screen.getByText(new RegExp(`© ${currentYear}`))).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: "PERM Tracker" })).toHaveAttribute("href", "/");
-      // The bar rule on law-related services: every page says this isn't a law firm.
+    it(`says this isn't a law firm, and whose site it is, for the ${audience} audience`, () => {
+      renderWithProviders(<Footer audience={audience} />);
       expect(screen.getByText(NOT_LEGAL_SERVICES)).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(`© ${new Date().getFullYear()} ${LEGAL_NAME}`))).toBeInTheDocument();
+    });
+
+    it(`never offers sign in or sign up for the ${audience} audience (the header does that)`, () => {
+      const { container } = renderWithProviders(<Footer audience={audience} />);
+      expect(container.querySelector('a[href="/login"]')).toBeNull();
+      expect(container.querySelector('a[href="/signup"]')).toBeNull();
     });
   }
 
-  it("offers Sign In and Sign Up to a logged-out visitor", () => {
-    renderWithProviders(<Footer variant="extended" audience="public" />);
-
-    expect(screen.getByRole("link", { name: /sign in/i })).toHaveAttribute("href", "/login");
-    expect(screen.getByRole("link", { name: /^sign up$/i })).toHaveAttribute("href", "/signup");
+  it("lays the public footer out as its three columns and the legal line", () => {
+    renderWithProviders(<Footer />);
+    for (const col of FOOTER_COLUMNS) {
+      const nav = screen.getByRole("navigation", { name: col.title });
+      for (const p of col.pages) expect(nav.querySelector(`a[href="${p.href}"]`), p.href).not.toBeNull();
+    }
+    const legal = screen.getByRole("navigation", { name: "Legal" });
+    for (const p of FOOTER_LEGAL) expect(legal.querySelector(`a[href="${p.href}"]`), p.href).not.toBeNull();
+    expect(screen.getByRole("link", { name: "PERM Tracker" })).toHaveAttribute("href", "/");
   });
 
-  /**
-   * The signed-in app renders this same footer. It used to advertise Sign In
-   * and Sign Up on every page of the app, to people already signed in.
-   */
-  it("carries no auth links at all for the signed-in app", () => {
-    const { container } = renderWithProviders(<Footer variant="extended" audience="app" />);
-
-    expect(screen.queryByRole("link", { name: /sign in/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /sign up/i })).not.toBeInTheDocument();
-    expect(container.querySelector('a[href="/login"]')).toBeNull();
-    expect(container.querySelector('a[href="/signup"]')).toBeNull();
-  });
-
-  it("defaults to the public audience when none is given", () => {
-    renderWithProviders(<Footer variant="extended" />);
-
-    expect(screen.getByRole("link", { name: /sign in/i })).toBeInTheDocument();
-  });
-
-  /**
-   * Everything except the two auth links is shared, so the app footer must
-   * lose exactly two links and nothing else.
-   */
-  it("differs from the public footer by exactly the two auth links", () => {
-    const hrefs = (audience: "public" | "app") => {
-      const { container, unmount } = renderWithProviders(
-        <Footer variant="extended" audience={audience} />
-      );
-      const found = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href"));
-      unmount();
-      return found;
-    };
-
-    const publicHrefs = hrefs("public");
-    const appHrefs = hrefs("app");
-
-    expect(publicHrefs.filter((h) => !appHrefs.includes(h)).sort()).toEqual(["/login", "/signup"]);
-    expect(appHrefs.filter((h) => !publicHrefs.includes(h))).toEqual([]);
+  it("gives the signed-in app one line", () => {
+    const { container } = renderWithProviders(<Footer audience="app" />);
+    const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href"));
+    expect(hrefs).toEqual(APP_FOOTER.map((p) => p.href));
   });
 });

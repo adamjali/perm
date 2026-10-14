@@ -58,6 +58,8 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
             &copy; {year} {LEGAL_NAME}
           </span>
         </nav>
+        {/* Every page, every audience: see NOT_LEGAL_SERVICES for why. */}
+        <p className="mx-auto max-w-[1440px] px-4 pb-4 text-sm text-muted-foreground sm:px-6">{NOT_LEGAL_SERVICES}</p>
       </footer>
     );
   }

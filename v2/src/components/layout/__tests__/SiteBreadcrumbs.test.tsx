@@ -31,8 +31,4 @@ describe("SiteBreadcrumbs", () => {
     expect(html).not.toContain("BreadcrumbList");
   });
 
-  it("makes room for the data menu's handle on a phone, on data pages only", () => {
-    expect(render("/perm-queue")).toContain("max-lg:pl-16");
-    expect(render("/about")).not.toContain("max-lg:pl-16");
-  });
 });

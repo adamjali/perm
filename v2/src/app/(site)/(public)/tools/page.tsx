@@ -36,6 +36,7 @@ import {
 } from "@/components/tools/MiniDiagrams";
 import { QueueTape } from "@/components/tools/QueueTape";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 
 const TITLE = "Live PERM Data Overview";
 const DESCRIPTION =
@@ -144,29 +145,15 @@ export default async function ToolsPage() {
               no account.
             </p>
           </div>
-          <form action="/perm-case-status" method="get" className="flex min-w-0 flex-wrap items-center gap-3">
-            <label htmlFor="tools-case" className="sr-only">
-              Case number
-            </label>{" "}
-            <input
-              id="tools-case"
-              name="case"
-              placeholder="G-100-24339-516453"
-              className="min-h-[44px] w-64 min-w-0 max-w-full border border-input bg-background px-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />{" "}
-            <button
-              type="submit"
-              className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 font-heading font-bold text-primary-foreground transition-transform duration-150"
-            >
-              Check my case
-            </button>{" "}
-            <Link
-              href="/tools/perm-timeline-calculator"
-              className="text-sm font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
-            >
-              No number? Processing time calculator
-            </Link>
-          </form>
+          <CaseLookupForm
+            className="w-full max-w-xl"
+            label="Case number"
+            compact
+            source="data-hub"
+            help={null}
+            searchHref="/tools/perm-timeline-calculator"
+            searchLabel="Estimate your wait from the month you filed"
+          />
         </div>
       </section>
 

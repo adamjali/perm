@@ -4,6 +4,8 @@ import { useId, useState } from "react";
 import Link from "next/link";
 
 import { trackLookup } from "@/lib/funnelEvents";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { looksLikeReceipt } from "@/lib/uscis/receipt";
 
@@ -36,12 +38,25 @@ export interface CaseLookupFormProps {
   label?: string;
   /** For a block that already asks the question: the label is read, not shown. */
   compact?: boolean;
-  /** Where "Don't have the number?" goes, and its words. */
-  searchHref?: string;
+  /** Where "Don't have the number?" goes, and its words; null leaves it off. */
+  searchHref?: string | null;
   searchLabel?: string;
   /** Which page sent the lookup, for the funnel's lookup event. */
   source?: string;
+  /** Where the number goes. The embed answers inside its own frame. */
+  action?: string;
+  /** An example number, never a label. */
+  placeholder?: string;
+  /** The line under the box before anything is typed; null leaves it off. */
+  help?: React.ReactNode | null;
+  /** The button's word in another language; "Check" otherwise. */
+  buttonLabel?: string;
+  /** Fields the form carries along unseen (the embed's host site). */
+  hiddenFields?: Readonly<Record<string, string>>;
 }
+
+/** The button's one word, everywhere a case number is asked for. */
+export const CHECK_LABEL = "Check";
 
 export function CaseLookupForm({
   defaultValue = "",
@@ -49,29 +64,42 @@ export function CaseLookupForm({
   label = "Your PERM case number",
   compact = false,
   searchHref = "/case-search",
-  searchLabel = "Find the case by employer name",
+  searchLabel = "Find a case by employer name",
   source,
+  action = "/perm-case-status",
+  placeholder = "G-100-26125-868956",
+  help = "It's on your ETA-9089 receipt. It goes into the page's address, so you can bookmark the result.",
+  buttonLabel = CHECK_LABEL,
+  hiddenFields,
 }: CaseLookupFormProps) {
   const inputId = useId();
   const helpId = useId();
   const [value, setValue] = useState(defaultValue);
   const [edited, setEdited] = useState(false);
 
-  // An empty box is not a mistake. Somebody who clears it is starting again.
-  //
-  // And the hint stays quiet until they have TYPED something. On a submitted
-  // bad value the server already renders the withholding notice below, so
-  // firing this one as well puts two warnings about one typo on the screen.
-  // A USCIS receipt is a different agency's number. The server redirects a
-  // complete one to its own page; the hint says so before the round trip.
+  // An empty box is not a mistake, and the hint stays quiet until something is
+  // TYPED: on a submitted bad value the server already says so, and two
+  // warnings about one typo is one too many. A USCIS receipt is another
+  // agency's number; the server sends a complete one to its own page, and the
+  // hint says so first.
   const isReceipt = edited && looksLikeReceipt(value);
   const malformed =
     edited && !isReceipt && value.trim().length > 0 && normaliseCaseNumber(value) === null;
+  const hint = isReceipt ? (
+    <span className="text-data-warn-ink">
+      That looks like a USCIS receipt number, which is USCIS&apos;s record rather than DOL&apos;s.
+      Checking it takes you to the USCIS page.
+    </span>
+  ) : malformed ? (
+    <span className="text-data-bad-ink">That isn&apos;t the shape of a case number. They look like G-100-26125-868956.</span>
+  ) : (
+    help
+  );
 
   return (
     <form
       method="get"
-      action="/perm-case-status"
+      action={action}
       className={className}
       // A plain GET still navigates; this only records which page sent it and
       // the shape of what was typed (never the number itself).
@@ -81,17 +109,10 @@ export function CaseLookupForm({
         trackLookup(source, typeof typed === "string" ? typed : "");
       }}
     >
-      <label
-        htmlFor={inputId}
-        className={
-          compact
-            ? "sr-only"
-            : "block text-sm font-bold text-muted-foreground"
-        }
-      >
+      <label htmlFor={inputId} className={compact ? "sr-only" : "block text-base font-semibold"}>
         {label}
       </label>{" "}
-      <div className={compact ? "flex flex-wrap items-stretch gap-3" : "mt-2 flex flex-wrap items-stretch gap-3"}>
+      <div className={cn("flex flex-wrap items-stretch gap-3", !compact && "mt-2")}>
         <input
           id={inputId}
           name="case"
@@ -101,61 +122,44 @@ export function CaseLookupForm({
             setValue(e.target.value);
             setEdited(true);
           }}
-          // An example, never a label. The label is above.
-          placeholder="G-100-26125-868956"
+          placeholder={placeholder}
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
           enterKeyHint="search"
+          translate="no"
+          maxLength={40}
           aria-invalid={malformed || undefined}
-          aria-describedby={helpId}
-          className="min-h-[52px] w-full min-w-0 flex-1 basis-72 border border-input bg-background px-4 py-3 font-mono text-lg tracking-tight focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          aria-describedby={hint ? helpId : undefined}
+          className="h-12 w-full min-w-0 flex-1 basis-64 border border-input bg-card px-4 font-mono text-base placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <button
           type="submit"
           data-ph-capture-attribute-cta="case-lookup"
-          className="min-h-[52px] shrink-0 border border-border bg-foreground px-6 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 motion-reduce:transition-none"
+          className={cn(buttonVariants({ size: "lg" }), "h-12")}
         >
-          Look it up
+          {buttonLabel}
         </button>
       </div>
-      {/* Compact, the help line is for screen readers until there is
-          something to warn about: the block around it already says what the
-          number is for. */}
-      <p
-        id={helpId}
-        className={compact && !isReceipt && !malformed ? "sr-only" : "mt-2 text-sm text-muted-foreground"}
-      >
-        {isReceipt ? (
-          <span className="font-bold text-data-warn-ink">
-            That looks like a USCIS receipt number (three letters, ten digits),
-            which is USCIS&apos;s record rather than DOL&apos;s. Submitting takes
-            you to the USCIS page.
-          </span>
-        ) : malformed ? (
-          <span className="font-bold text-data-bad-ink">
-            That isn&apos;t the shape of a case number. They look like
-            G-100-26125-868956.
-          </span>
-        ) : (
-          <>
-            It&apos;s on your ETA-9089 receipt. It isn&apos;t stored; it goes
-            into the page&apos;s address so you can bookmark the result.
-          </>
-        )}
-      </p>{" "}
-      {/* Many people waiting on a case never saw the receipt (the lawyer
-          filed it). The employer search reaches pending cases too. */}
-      <p className="mt-2 text-sm text-muted-foreground">
-        Don&apos;t have the number?{" "}
-        <Link
-          href={searchHref}
-          className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-        >
-          {searchLabel}
-        </Link>
-        .
-      </p>
+      {hiddenFields
+        ? Object.entries(hiddenFields).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)
+        : null}
+      {hint ? (
+        <p id={helpId} className={cn("mt-2 text-sm", compact && !isReceipt && !malformed ? "sr-only" : "text-muted-foreground")}>
+          {hint}
+        </p>
+      ) : null}{" "}
+      {/* Many people waiting never saw the receipt (the lawyer filed it).
+          Finding the case by employer reaches pending cases too. */}
+      {searchHref ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Don&apos;t have the number?{" "}
+          <Link href={searchHref} className="font-semibold text-foreground underline underline-offset-4 hover:text-primary">
+            {searchLabel}
+          </Link>
+          .
+        </p>
+      ) : null}
     </form>
   );
 }

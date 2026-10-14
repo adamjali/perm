@@ -9,6 +9,7 @@ import { embedSiteFor } from "@/lib/embeds";
 import { getStatusMeaning } from "@/lib/permStatus";
 import { lookupForEmbed, type EmbedCaseAnswer } from "@/lib/turso/embedLookup";
 import { EASTERN_TIMEZONE } from "@/lib/time";
+import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 
 /**
  * The embeddable case lookup: one box, one answer card.
@@ -159,30 +160,15 @@ export default async function CaseStatusEmbed({
   return (
     <EmbedFrame slug="case-status">
       <div data-embed="case-status" className="mx-auto w-full max-w-xl px-4">
-        <form method="get" action="/embed/case-status" className="grid grid-cols-1 gap-2 [&>*]:min-w-0">
-          <label htmlFor="embed-case" className="text-sm font-bold">
-            DOL case number
-          </label>{" "}
-          <div className="flex gap-2">
-            <input
-              id="embed-case"
-              name="case"
-              defaultValue={typed}
-              placeholder="G-100-26125-868956"
-              autoComplete="off"
-              spellCheck={false}
-              maxLength={40}
-              className="min-h-11 min-w-0 flex-1 border border-input bg-background px-3 text-base"
-            />{" "}
-            <button
-              type="submit"
-              className="min-h-11 border border-border bg-primary px-4 font-bold text-primary-foreground"
-            >
-              Check
-            </button>
-          </div>{" "}
-          <input type="hidden" name="site" value={site} />
-        </form>{" "}
+        <CaseLookupForm
+          action="/embed/case-status"
+          label="DOL case number"
+          defaultValue={typed}
+          help={null}
+          searchHref={null}
+          source="embed"
+          hiddenFields={{ site }}
+        />{" "}
         {typed ? (
           <div className="mt-4">
             <Answer typed={typed} answer={answer} />
