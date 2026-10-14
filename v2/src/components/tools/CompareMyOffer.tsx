@@ -231,7 +231,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
                     </p>{" "}
                     <Link
                       href={`${meta.explorer}?soc=${encodeURIComponent(soc)}${state ? `&state=${encodeURIComponent(state)}` : ""}`}
-                      className="mt-3 inline-block font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary"
+                      className="link mt-3 inline-block"
                     >
                       See the whole distribution
                     </Link>

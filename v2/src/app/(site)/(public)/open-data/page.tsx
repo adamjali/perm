@@ -195,7 +195,7 @@ export default async function OpenDataPage() {
         <h2 className="font-heading text-2xl font-bold">Credit</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Free to copy, change and publish, commercially too, under{" "}
-          <a href={OPEN_DATA_LICENSE.url} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary" rel="license">
+          <a href={OPEN_DATA_LICENSE.url} className="link" rel="license">
             {OPEN_DATA_LICENSE.short}
           </a>
           . Credit us like this:
@@ -222,7 +222,7 @@ export default async function OpenDataPage() {
             </p>{" "}
             <p>
               It covers these two files only. The rest of the site&rsquo;s compiled data stays under{" "}
-              <a href="/terms#acceptable-use" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              <a href="/terms#acceptable-use" className="link">
                 the Terms
               </a>
               .
@@ -319,7 +319,7 @@ function DatasetPanel<T extends object>({
         </div>{" "}
         <p className="text-sm text-muted-foreground">
           From the{" "}
-          <a href={source.href} className="font-semibold underline underline-offset-2 hover:text-foreground" rel="noopener noreferrer" target="_blank">
+          <a href={source.href} className="link" rel="noopener noreferrer" target="_blank">
             {source.label}
           </a>
           . Updated the day it changes.

@@ -77,7 +77,7 @@ export default function ContactPage() {
               </p>{" "}
               <a
                 href="mailto:support@permtracker.app"
-                className="underline-offset-4 hover:underline text-primary font-medium"
+                className="link"
               >
                 support@permtracker.app
               </a>
@@ -99,7 +99,7 @@ export default function ContactPage() {
               </p>{" "}
               <a
                 href={FEATURE_REQUEST_URL}
-                className="underline-offset-4 hover:underline text-primary font-medium"
+                className="link"
               >
                 Email an idea
               </a>
@@ -120,7 +120,7 @@ export default function ContactPage() {
               </p>{" "}
               <a
                 href={BUG_REPORT_URL}
-                className="underline-offset-4 hover:underline text-primary font-medium"
+                className="link"
               >
                 Report a Bug
               </a>

@@ -358,7 +358,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
                 href={SHUTDOWN_SOURCE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-sm font-bold underline underline-offset-2 hover:text-primary"
+                className="link mt-3 inline-flex min-h-[44px] items-center gap-1 text-sm"
               >
                 DOL&apos;s announcement
                 <ArrowSquareOutIcon className="h-3.5 w-3.5" aria-hidden="true" />

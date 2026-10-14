@@ -139,7 +139,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
           href={src}
           target="_blank"
           rel="noopener noreferrer nofollow"
-          className="underline underline-offset-2 decoration-2"
+          className="link"
         >
           {alt ? `Image: ${alt}` : 'Image link'}
         </a>

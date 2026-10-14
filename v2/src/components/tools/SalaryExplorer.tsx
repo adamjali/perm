@@ -364,11 +364,11 @@ export function SalaryExplorer({
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             A city narrows a state, and an industry a state or an occupation. Cities are as DOL prints them.
             For one across the whole country, see the{" "}
-            <Link href="/perm-cities" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/perm-cities" className="link">
               city
             </Link>{" "}
             and{" "}
-            <Link href="/perm-industries" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/perm-industries" className="link">
               industry
             </Link>{" "}
             pages.

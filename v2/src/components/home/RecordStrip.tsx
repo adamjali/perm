@@ -49,7 +49,7 @@ export function RecordStrip({ record }: { record: RecordFigure[] }) {
             <dd className="text-base leading-snug text-soft">
               <Link
                 href={f.href}
-                className="underline decoration-primary/30 decoration-2 underline-offset-[3px] transition-colors hover:decoration-primary"
+                className="link"
               >
                 {f.label}
               </Link>

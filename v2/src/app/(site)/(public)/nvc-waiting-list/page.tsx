@@ -136,7 +136,7 @@ export default async function NvcWaitingListPage() {
           The waiting list hasn&apos;t been loaded yet. The State Department publishes it on its{" "}
           <a
             href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-statistics/immigrant-visa-statistics.html"
-            className="font-semibold underline underline-offset-2 hover:text-primary"
+            className="link"
             rel="noopener"
             target="_blank"
           >
@@ -178,7 +178,7 @@ export default async function NvcWaitingListPage() {
             <p className="mt-2 max-w-3xl text-base text-soft">
               November {yearOf(series[0]!.asOf)} to November {yearOf(newest.asOf)}, one bar a year, all categories on one
               scale. People counted here are waiting abroad; the{" "}
-              <Link href="/tools/green-card-line" className="font-semibold underline underline-offset-2 hover:text-primary">
+              <Link href="/tools/green-card-line" className="link">
                 green card line
               </Link>{" "}
               counts the line as a whole.
@@ -235,7 +235,7 @@ export default async function NvcWaitingListPage() {
                   .sort(([a], [z]) => a.localeCompare(z))
                   .map(([asOf, url], i, all) => (
                     <Fragment key={asOf}>
-                      <a href={url} className="font-semibold underline underline-offset-2 hover:text-primary" rel="noopener" target="_blank">
+                      <a href={url} className="link" rel="noopener" target="_blank">
                         {yearOf(asOf)}
                       </a>
                       {i < all.length - 1 ? ", " : "."}

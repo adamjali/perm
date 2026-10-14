@@ -105,7 +105,7 @@ export default async function LcaWagesPage() {
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           The wages employers attested on certified H-1B LCAs, as DOL published them. Filter by occupation,
           state or year.{" "}
-          <Link href="/tools/compare-my-offer" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+          <Link href="/tools/compare-my-offer" className="link">
             Have an offer? See where it falls.
           </Link>
         </p>

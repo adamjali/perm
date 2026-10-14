@@ -184,7 +184,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
         <p className="mt-3 text-base text-muted-foreground">
           Final action decides when a green card can be approved; dates for filing, when USCIS allows it, decides when
           an I-485 can be filed.{" "}
-          <Link href="/guides/how-the-visa-bulletin-works" className="font-semibold underline underline-offset-2 hover:text-primary">
+          <Link href="/guides/how-the-visa-bulletin-works" className="link">
             How the visa bulletin works
           </Link>
           .
@@ -317,7 +317,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             {country === "worldwide" ? "to people outside the four countries listed apart" : `to people chargeable ${where}`}{" "}
             from {monthName(issued.from)} to {monthName(issued.to)}, {issued.newest.toLocaleString("en-US")} of them in{" "}
             {monthName(issued.to)}. Consulates only: a green card granted inside the US isn&apos;t in this count.{" "}
-            <Link href="/visa-issuances" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/visa-issuances" className="link">
               Every month and category
             </Link>
             .

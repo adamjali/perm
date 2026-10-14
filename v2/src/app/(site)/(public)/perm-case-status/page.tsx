@@ -300,7 +300,7 @@ export default async function PermCaseStatusPage({
           <a
             href="https://flag.dol.gov"
             rel="noopener noreferrer"
-            className="font-bold underline underline-offset-2 hover:text-primary"
+            className="link"
           >
             Check it yourself at flag.dol.gov
           </a>

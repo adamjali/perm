@@ -190,7 +190,7 @@ export default async function GreenCardTimelinePage() {
           <p className="mt-6 text-sm text-muted-foreground">
             The I-140 stage uses USCIS&apos;s published time for {i140Label}, the time it took to finish 80% of
             the petitions it decided over six months. The queue runs longer, as the{" "}
-            <Link href="/tools/i140-calculator" className="underline underline-offset-2">
+            <Link href="/tools/i140-calculator" className="link">
               I-140 calculator
             </Link>{" "}
             shows.

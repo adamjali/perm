@@ -91,7 +91,7 @@ function Source({ cite, unsourced }: { cite?: { label: string; href: string } | 
   return cite ? (
     <p className="mt-3 text-sm text-muted-foreground">
       Source:{" "}
-      <a href={cite.href} rel="noopener noreferrer" className="font-mono font-bold underline underline-offset-2 hover:text-primary">
+      <a href={cite.href} rel="noopener noreferrer" className="link font-mono">
         {cite.label}
       </a>
     </p>
@@ -262,7 +262,7 @@ export default async function PermCaseStatusesPage() {
                     .filter((a) => a.program === pr.program)
                     .map((a) => (
                       <li key={a.anchor}>
-                        <a href={`#${a.anchor}`} className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                        <a href={`#${a.anchor}`} className="link">
                           {a.label}
                         </a>{" "}
                       </li>
@@ -390,11 +390,11 @@ export default async function PermCaseStatusesPage() {
           the rest are workflow words, described here by what the workflow shows.
         </p>{" "}
         <p className="mt-3 text-base leading-relaxed text-soft">
-          <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          <Link href="/perm-case-status" className="link">
             Look up a case number
           </Link>{" "}
           to see its status, or see every case at one review stage on{" "}
-          <Link href="/perm-rfi-audit" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          <Link href="/perm-rfi-audit" className="link">
             the RFI and audit page
           </Link>
           .

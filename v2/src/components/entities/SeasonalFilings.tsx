@@ -38,7 +38,7 @@ export function SeasonalFilings({
             <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
               <Link
                 href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2"
+                className="link font-mono text-sm"
               >
                 {r.caseNumber}
               </Link>{" "}
@@ -55,7 +55,7 @@ export function SeasonalFilings({
       <p className="mt-3 text-sm">
         <Link
           href={`/seasonal-cases?q=${encodeURIComponent(name)}`}
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link"
         >
           All H-2A, H-2B and CW-1 filings by this employer
         </Link>

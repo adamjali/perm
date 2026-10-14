@@ -145,7 +145,7 @@ export function GreenCardFeesCalculator() {
       </table>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
         Every figure is from USCIS Form G-1055, edition {result.edition}, read at{" "}
-        <a href={result.source} className="underline underline-offset-2 hover:text-primary" rel="noopener">
+        <a href={result.source} className="link" rel="noopener">
           uscis.gov/g-1055
         </a>
         . Check the current edition before paying; a fee paid short is a rejected filing.
@@ -160,7 +160,7 @@ export function GreenCardFeesCalculator() {
             <a
               href="https://www.uscis.gov/tools/find-a-civil-surgeon"
               rel="noopener"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               USCIS lists civil surgeons by ZIP code
             </a>

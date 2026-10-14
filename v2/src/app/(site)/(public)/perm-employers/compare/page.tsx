@@ -197,7 +197,7 @@ export default async function CompareEmployersPage({
                 {[left, right].map((s) => (
                   <Fragment key={s.entity.canonicalSlug}>
                     <th scope="col" className="px-4 py-3 text-left">
-                      <Link href={`/perm-employers/${s.entity.canonicalSlug}`} className="font-heading text-base font-bold underline decoration-primary decoration-2 underline-offset-2">
+                      <Link href={`/perm-employers/${s.entity.canonicalSlug}`} className="link font-heading text-base">
                         {s.entity.row.name}
                       </Link>{" "}
                     </th>
@@ -261,15 +261,15 @@ export default async function CompareEmployersPage({
             </li>
           </ul>{" "}
           <p className="mt-3 text-base">
-            <Link href="/tools/priority-date-retention" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+            <Link href="/tools/priority-date-retention" className="link">
               Check your own dates
             </Link>
             , read{" "}
-            <Link href="/guides/three-180-day-clocks" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+            <Link href="/guides/three-180-day-clocks" className="link">
               the three 180-day clocks
             </Link>
             , or see{" "}
-            <Link href="/tools/h1b-six-year-limit" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+            <Link href="/tools/h1b-six-year-limit" className="link">
               how H-1B time past six years works
             </Link>
             .

@@ -13,7 +13,7 @@ export function FromDolLive({ className }: { className?: string }) {
       Source: DOL&apos;s own case-status service,{" "}
       <a
         href={DOL_CASE_STATUS_URL}
-        className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+        className="link"
       >
         flag.dol.gov
       </a>

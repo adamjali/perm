@@ -362,7 +362,7 @@ export function StageGlossary({
                 {e.cite ? (
                   <p className="font-mono text-sm">
                     <a
-                      className="font-bold text-primary underline"
+                      className="link"
                       href={`${ECFR}${e.cite.section}`}
                       rel="noopener noreferrer"
                       target="_blank"

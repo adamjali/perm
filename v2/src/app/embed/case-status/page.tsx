@@ -88,7 +88,7 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
               : "Neither DOL nor PERM Tracker returned a record for this number. Check it and try again."}
         </p>{" "}
         <p className="mt-2">
-          <a href={full} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          <a href={full} className="link">
             Look it up on PERM Tracker
           </a>
         </p>
@@ -112,7 +112,7 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
       </dl>{" "}
       <p className="mt-3 text-sm text-muted-foreground">{sourceLine(answer)}</p>{" "}
       <p className="mt-2">
-        <a href={full} className="text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+        <a href={full} className="link text-sm">
           The full record on PERM Tracker
         </a>
       </p>

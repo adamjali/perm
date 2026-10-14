@@ -101,7 +101,7 @@ export default async function LayoffsPage() {
         </MoreText>{" "}
         <p className="mt-3 text-base leading-relaxed text-soft">
           A notice is not a finding about a PERM. What a layoff does to a filing, and to a pending case, is on{" "}
-          <Link href="/guides/employer-layoffs-and-your-perm" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          <Link href="/guides/employer-layoffs-and-your-perm" className="link">
             the layoffs guide
           </Link>
           .

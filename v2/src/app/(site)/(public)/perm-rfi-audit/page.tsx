@@ -353,7 +353,7 @@ export default async function PermRfiAuditPage() {
             By filing month, not RFIs issued per month, and one reading per
             case: nothing here shows a case entering or leaving a stage. Those
             are on the{" "}
-            <Link href="/perm-decision-activity" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/perm-decision-activity" className="link">
               decision activity
             </Link>{" "}
             page, from when the sweep started.
@@ -624,7 +624,7 @@ function Limits({
         The factors are not independent, so blending them into one number would
         read as precision the data cannot support. The same argument is made at
         greater length on{" "}
-        <Link href="/perm-denial-risk" className="font-bold text-primary underline">
+        <Link href="/perm-denial-risk" className="link">
           denial rates
         </Link>
         .
@@ -680,7 +680,7 @@ function EmptyState({ what }: { what: string }) {
       statuses at{" "}
       <a
         href="https://flag.dol.gov/processingtimes"
-        className="font-bold text-primary underline"
+        className="link"
         rel="noopener noreferrer"
         target="_blank"
       >

@@ -57,7 +57,7 @@ export function MailSubscriptionsCard({ email }: { email: string }) {
       ) : rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           None on this address.{" "}
-          <Link href={EMAIL_PREFERENCES_PATH} className="font-bold underline underline-offset-4 hover:text-primary">
+          <Link href={EMAIL_PREFERENCES_PATH} className="link">
             See what you can get
           </Link>
         </p>

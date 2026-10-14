@@ -211,7 +211,7 @@ export default async function SignupPage() {
             Looking up a case number needs no account.{" "}
             <Link
               href="/perm-case-status"
-              className="font-bold underline decoration-primary-text decoration-2 underline-offset-4 hover:text-primary-text"
+              className="link"
             >
               Check a case
             </Link>

@@ -210,7 +210,6 @@ export function CaseNotFound({
 
             {wall && !wall.isPastFront ? (
               <FigurePlate
-                n="01"
                 title="The wall in front of that filing month"
                 subject="Undecided cases by filing month"
                 className="mt-6"

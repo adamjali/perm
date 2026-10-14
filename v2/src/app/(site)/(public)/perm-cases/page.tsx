@@ -167,7 +167,7 @@ export default async function PermCasesPage() {
                 <>
                   Each with its wage, law firm, worksite and the days it took. Cases still waiting aren&apos;t in
                   these files, however recently they were filed; they&apos;re in the{" "}
-                  <Link href="#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  <Link href="#live" className="link">
                     live list
                   </Link>
                   .
@@ -178,7 +178,7 @@ export default async function PermCasesPage() {
                 <p>
                   {meta.sourceFiles.join(", ") || "DOL PERM disclosure files"}. Counts cover every row in the files,
                   including the ones off screen. A filtered count covers only that filter.{" "}
-                  <Link href="/methodology" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  <Link href="/methodology" className="link">
                     How every figure is built
                   </Link>
                   .
@@ -198,11 +198,11 @@ export default async function PermCasesPage() {
         <section className="mt-10 border border-border bg-card p-8 text-center">
           <p className="text-lg text-muted-foreground">
             The case-level table is written by the quarterly disclosure ingest. Until it has run, the{" "}
-            <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/perm-processing-times" className="link">
               processing times page
             </Link>{" "}
             carries the live queue and the{" "}
-            <Link href="/perm-employers" className="underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/perm-employers" className="link">
               sponsor table
             </Link>{" "}
             carries the per-employer totals.
@@ -215,7 +215,7 @@ export default async function PermCasesPage() {
           <h2 className="font-heading text-lg font-bold">Waiting on a case?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Its number gives DOL&apos;s status today and an estimated date. With only a filing month, the{" "}
-            <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/tools/perm-timeline-calculator" className="link">
               decision estimator
             </Link>{" "}
             reads it against where DOL is working now.
@@ -225,11 +225,11 @@ export default async function PermCasesPage() {
           <h2 className="font-heading text-lg font-bold">Comparing a whole docket?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Per-firm and per-sponsor totals sit on the{" "}
-            <Link href="/perm-attorneys" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/perm-attorneys" className="link">
               law firm table
             </Link>{" "}
             and the{" "}
-            <Link href="/perm-employers" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/perm-employers" className="link">
               sponsor table
             </Link>
             , and each one links straight back into these cases.

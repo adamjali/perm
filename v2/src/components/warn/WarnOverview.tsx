@@ -110,7 +110,7 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
                 >
                   <Link
                     href={`/perm-employers/${s.slug}`}
-                    className="truncate text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    className="link truncate text-sm"
                   >
                     {s.name}
                   </Link>{" "}

@@ -292,7 +292,7 @@ export default async function DecisionActivityPage() {
                   <li>
                     <Link
                       href={href}
-                      className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                      className="link"
                     >
                       {label}
                     </Link>
@@ -340,7 +340,6 @@ export default async function DecisionActivityPage() {
 
       {series.length > 0 ? (
         <FigurePlate
-          n="01"
           title="Decisions per week"
           subject="Every week in the record, with its holes left open"
           caption={
@@ -409,7 +408,6 @@ export default async function DecisionActivityPage() {
 
       {record.length > 0 ? (
         <FigurePlate
-          n="02"
           title="The working week"
           subject={`Mean decisions by day of week, ${formatInt(record.length)} days`}
           caption="Counting a Saturday as a working day drags a per-working-day rate down without saying so."
@@ -422,7 +420,6 @@ export default async function DecisionActivityPage() {
 
       {quarters.length > 0 ? (
         <FigurePlate
-          n="03"
           title="What happened to them"
           subject="Share of decided cases, by calendar quarter"
           caption="Denial and withdrawal have moved in opposite directions. Neither is explained here: a share of decisions cannot separate a change in how DOL adjudicates from a change in who is filing."
@@ -495,14 +492,14 @@ export default async function DecisionActivityPage() {
             Pace alone does not place a case in the queue. The{" "}
             <Link
               href="/tools/perm-timeline-calculator"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               decision estimator
             </Link>{" "}
             reads how many filings sit ahead of your month;{" "}
             <Link
               href="/perm-processing-times"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               processing times
             </Link>{" "}
@@ -515,14 +512,14 @@ export default async function DecisionActivityPage() {
             Every decision counted here is one row in the{" "}
             <Link
               href="/perm-cases"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               case browser
             </Link>
             , and the{" "}
             <Link
               href="/methodology"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               methodology
             </Link>{" "}

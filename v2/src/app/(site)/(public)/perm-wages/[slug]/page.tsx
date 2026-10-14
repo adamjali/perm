@@ -396,7 +396,6 @@ export default async function OccupationPage({
           rungs below it while still clearing the prevailing wage. */}
       {ladderYears.length >= 2 ? (
         <FigurePlate
-          n="02"
           title="The wage ladder, year by year"
           subject={`${displayTitle(row)}, certified offers`}
           caption="A median answers whether pay moved. The whole ladder answers which part of it moved, and those are not the same question: a distribution can hold its middle while its top stretches away."
@@ -412,7 +411,6 @@ export default async function OccupationPage({
 
       {stateLadders.length >= 2 ? (
         <FigurePlate
-          n="03"
           title="The same job, state by state"
           subject={`${stateLadders.length} states filing enough of this occupation to publish a ladder`}
           caption="One SOC code, one federal process, and a wage range that moves with the state. A state is included only when it files enough certified cases of this occupation to support seven percentiles; the rest are left out rather than drawn thin."
@@ -533,7 +531,7 @@ export default async function OccupationPage({
             .{" "}
             <Link
               href={`/lca-wages?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               By state and year in the salary explorer
             </Link>
@@ -554,7 +552,7 @@ export default async function OccupationPage({
               {" "}
               <Link
                 href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
-                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                className="link"
               >
                 DOL&apos;s four wage levels for this job
               </Link>
@@ -600,7 +598,7 @@ export default async function OccupationPage({
                 role&apos;s medians swing hard by worksite, which the{" "}
                 <Link
                   href="/perm-by-state"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   state map
                 </Link>{" "}
@@ -617,7 +615,7 @@ export default async function OccupationPage({
                 {displayTitle(row)}. The measured factors are on the{" "}
                 <Link
                   href="/perm-denial-risk"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   denial risk page
                 </Link>
@@ -637,7 +635,7 @@ export default async function OccupationPage({
                 the queue stands today is on the{" "}
                 <Link
                   href="/perm-processing-times"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   processing times page
                 </Link>
@@ -661,7 +659,7 @@ export default async function OccupationPage({
             Compare it against this median, then check the{" "}
             <Link
               href="/perm-by-state"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               state map
             </Link>
@@ -675,14 +673,14 @@ export default async function OccupationPage({
             on the{" "}
             <Link
               href={BASE}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               wages page
             </Link>
             , and{" "}
             <Link
               href="/perm-denial-risk"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               denial rates
             </Link>{" "}

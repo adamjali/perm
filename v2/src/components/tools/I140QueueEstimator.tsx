@@ -106,7 +106,7 @@ export function I140QueueEstimator({
           USCIS&apos;s quarterly I-140 figures are being fetched. Until they land,{" "}
           <a
             href="https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data"
-            className="font-bold underline underline-offset-2 hover:text-primary"
+            className="link"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -214,7 +214,7 @@ export function I140QueueEstimator({
               Half of every I-140 decided in {quarterlyMedian.quarterLabel} took less
               {quarterlyMedian.completed !== null ? `, over ${quarterlyMedian.completed.toLocaleString("en-US")} decisions` : ""}.
               One median across every subtype; the figure beside it is per subtype and covers 80% of cases.{" "}
-              <Link href="/uscis-processing-times" className="underline underline-offset-2 hover:text-primary">
+              <Link href="/uscis-processing-times" className="link">
                 Every form&apos;s median
               </Link>
               .
@@ -233,7 +233,7 @@ export function I140QueueEstimator({
               USCIS commits to a decision or refunds the fee.{" "}
               <a
                 href="https://egov.uscis.gov/processing-times/"
-                className="font-bold underline underline-offset-2 hover:text-primary"
+                className="link"
                 target="_blank"
                 rel="noopener noreferrer"
               >

@@ -175,16 +175,16 @@ export default async function SeasonalCasesPage() {
       <section className="mt-8 max-w-3xl">
         <p className="text-base leading-relaxed text-soft">
           Have the number? The{" "}
-          <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text">
+          <Link href="/perm-case-status" className="link">
             status lookup
           </Link>{" "}
           takes H-300, JO-A-300, H-400, P-400, C-500 and P-500 numbers, asks DOL directly, and can email you when the
           status changes. What each status means, and when DOL decides:{" "}
-          <Link href="/guides/h2a-case-status-and-timing" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text">
+          <Link href="/guides/h2a-case-status-and-timing" className="link">
             H-2A
           </Link>{" "}
           and{" "}
-          <Link href="/guides/h2b-and-cw1-case-status-and-timing" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text">
+          <Link href="/guides/h2b-and-cw1-case-status-and-timing" className="link">
             H-2B and CW-1
           </Link>
           .

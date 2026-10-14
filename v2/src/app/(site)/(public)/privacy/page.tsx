@@ -253,7 +253,7 @@ export default function PrivacyPage() {
                 href="https://developers.google.com/terms/api-services-user-data-policy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="link"
               >
                 Google API Services User Data Policy
               </a>
@@ -488,7 +488,7 @@ export default function PrivacyPage() {
                 href="https://posthog.com/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="link"
               >
                 PostHog&apos;s Privacy Policy
               </a>
@@ -598,7 +598,7 @@ export default function PrivacyPage() {
                 href="https://sentry.io/privacy/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="link"
               >
                 Sentry&apos;s Privacy Policy
               </a>
@@ -678,7 +678,7 @@ export default function PrivacyPage() {
                 href="https://www.cloudflare.com/turnstile-privacy-policy/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="link"
               >
                 Cloudflare&apos;s Turnstile Privacy Addendum
               </a>{" "}
@@ -687,7 +687,7 @@ export default function PrivacyPage() {
                 href="https://www.cloudflare.com/privacypolicy/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="link"
               >
                 Cloudflare&apos;s Privacy Policy
               </a>
@@ -935,7 +935,7 @@ export default function PrivacyPage() {
                 href="https://www.convex.dev/legal/subprocessors"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline"
+                className="link"
               >
                 convex.dev/legal/subprocessors
               </a>
@@ -1008,7 +1008,7 @@ export default function PrivacyPage() {
               To request data deletion, please email us at{" "}
               <a
                 href="mailto:support@permtracker.app"
-                className="text-primary hover:underline"
+                className="link"
               >
                 support@permtracker.app
               </a>
@@ -1053,7 +1053,7 @@ export default function PrivacyPage() {
               To exercise any of these rights, please contact us at{" "}
               <a
                 href="mailto:support@permtracker.app"
-                className="text-primary hover:underline"
+                className="link"
               >
                 support@permtracker.app
               </a>
@@ -1093,7 +1093,7 @@ export default function PrivacyPage() {
                 To exercise any California right, email{" "}
                 <a
                   href="mailto:support@permtracker.app"
-                  className="text-primary hover:underline"
+                  className="link"
                 >
                   support@permtracker.app
                 </a>{" "}
@@ -1190,7 +1190,7 @@ export default function PrivacyPage() {
               <li>The receipt number, the form type, the status text, the dated history, and the time of the lookup.</li>{" "}
               <li>We store it so a later lookup of the same receipt can show what changed, and so we can count lookups by form type and status. Counts are published only in aggregate; a receipt number is never published or shared.</li>{" "}
               <li>A receipt number identifies a case rather than a person, and we treat it as personal data anyway: it&apos;s encrypted at rest with the rest of the database, it&apos;s not sold, and it&apos;s not used for advertising.</li>{" "}
-              <li>Stored lookups are deleted twelve months after the last lookup of that receipt, or sooner if you ask at <a href="mailto:support@permtracker.app?subject=USCIS%20lookup%20deletion" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">support@permtracker.app</a> with the receipt number.</li>{" "}
+              <li>Stored lookups are deleted twelve months after the last lookup of that receipt, or sooner if you ask at <a href="mailto:support@permtracker.app?subject=USCIS%20lookup%20deletion" className="link">support@permtracker.app</a> with the receipt number.</li>{" "}
               <li>No email or notification is sent from a lookup. If alerts on USCIS receipts are ever offered they will be a separate, opt-in subscription described here first.</li>
             </ul>
           </details>{" "}
@@ -1229,7 +1229,7 @@ export default function PrivacyPage() {
                 <strong>Email:</strong>{" "}
                 <a
                   href="mailto:support@permtracker.app"
-                  className="text-primary hover:underline"
+                  className="link"
                 >
                   support@permtracker.app
                 </a>

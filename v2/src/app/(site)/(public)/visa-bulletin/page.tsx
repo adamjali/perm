@@ -194,7 +194,7 @@ export default async function VisaBulletinPage() {
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">The next visa bulletin</h1>{" "}
         <p className="mt-4 text-base text-soft">
           The bulletin archive is not available right now. The State Department publishes the current bulletin at{" "}
-          <a href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html" className="font-semibold underline" rel="noopener" target="_blank">travel.state.gov</a>.
+          <a href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html" className="link" rel="noopener" target="_blank">travel.state.gov</a>.
         </p>
       </div>
     );
@@ -317,7 +317,7 @@ export default async function VisaBulletinPage() {
           <MoreText gist={"Both from the State Department's own PDFs; no forecast."} className="mt-3">
             <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
               Both figures are read from the Department&apos;s own PDFs, the{" "}
-              <a href={spill.source} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">
+              <a href={spill.source} rel="noopener noreferrer" className="link">
                 annual numerical limits
               </a>{" "}
               and the annual report, and nothing here is a forecast. The spillover for the fiscal year about to open is not published on
@@ -459,8 +459,8 @@ export default async function VisaBulletinPage() {
       <MoreText gist={"Bulletins are the State Department's; the line ahead is USCIS's monthly inventory."} className="mt-6">
         <p className="text-sm text-muted-foreground">
           Bulletin figures are the State Department&apos;s, one row per published bulletin since {monthLabel(series[0]!.bulletinMonth)}. Inventory figures are USCIS&apos;s monthly pending I-485 counts. Every month-by-month cutoff, both charts, is on the{" "}
-          <Link href="/tools/priority-date-calculator" className="font-semibold underline underline-offset-2">priority date page</Link>, and the queue ahead of your own date on the{" "}
-          <Link href="/tools/i485-queue-position" className="font-semibold underline underline-offset-2">I-485 queue position tool</Link>.
+          <Link href="/tools/priority-date-calculator" className="link">priority date page</Link>, and the queue ahead of your own date on the{" "}
+          <Link href="/tools/i485-queue-position" className="link">I-485 queue position tool</Link>.
         </p>
       </MoreText>
 

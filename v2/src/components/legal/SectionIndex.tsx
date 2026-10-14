@@ -53,7 +53,7 @@ export function SectionIndex({
             <li>
               <Link
                 href={`#${s.id}`}
-                className="inline-flex min-h-[44px] items-center text-base underline decoration-border decoration-2 underline-offset-2 hover:decoration-primary hover:text-primary"
+                className="link inline-flex min-h-[44px] items-center text-base"
               >
                 {s.title}
               </Link>

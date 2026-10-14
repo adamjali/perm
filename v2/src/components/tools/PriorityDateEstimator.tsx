@@ -427,7 +427,7 @@ export function PriorityDateEstimator({
           The visa bulletin series is being fetched. Until it lands,{" "}
           <a
             href={DOS_BULLETIN_URL}
-            className="font-bold underline underline-offset-2 hover:text-primary"
+            className="link"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -719,7 +719,7 @@ export function PriorityDateEstimator({
               <p className="mt-3">
                 <a
                   href={DOS_BULLETIN_URL}
-                  className="inline-flex min-h-[44px] items-center font-bold underline underline-offset-2 hover:text-primary"
+                  className="link inline-flex min-h-[44px] items-center"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -755,7 +755,7 @@ export function PriorityDateEstimator({
                     which chart controls, not the cutoff dates themselves.{" "}
                     <a
                       href={USCIS_CHARTS_URL}
-                      className="font-bold underline underline-offset-2 hover:text-primary"
+                      className="link"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -1246,7 +1246,7 @@ export function PriorityDateEstimator({
                 {newestMonth ? formatMonth(newestMonth) : "the last month captured"}.{" "}
                 <a
                   href={DOS_BULLETIN_URL}
-                  className="font-bold underline underline-offset-2 hover:text-primary"
+                  className="link"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

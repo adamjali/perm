@@ -126,7 +126,7 @@ function CaseTable({ cases, head = true }: { cases: HistoryCase[]; head?: boolea
               <td className="py-1.5 pr-4 font-mono">
                 <a
                   href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   {c.caseNumber}
                 </a>{" "}

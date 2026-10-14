@@ -858,7 +858,7 @@ export default async function EmployerPage({
                   <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
                     <Link
                       href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                      className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                      className="link font-mono text-sm"
                     >
                       {c.caseNumber}
                     </Link>{" "}
@@ -875,7 +875,7 @@ export default async function EmployerPage({
               {recentLive.length > RECENT_LIVE_SHOWN ? `The ${RECENT_LIVE_SHOWN} newest. ` : ""}
               <Link
                 href={`/case-search?q=${encodeURIComponent(row.name)}`}
-                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                className="link"
               >
                 Every filing by this employer
               </Link>{" "}
@@ -930,7 +930,7 @@ export default async function EmployerPage({
         dek={
           <>
             Where it sits among {formatInt(kindTotal)} sponsors. The{" "}
-            <Link href={BASE} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href={BASE} className="link">
               full ranking
             </Link>{" "}
             sorts every column.
@@ -985,7 +985,7 @@ export default async function EmployerPage({
                 The employers filing the most PERM cases for{" "}
                 <Link
                   href={`/perm-wages/${similar.occupation.slug}`}
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   {similar.occupation.label}
                 </Link>
@@ -1089,7 +1089,7 @@ export default async function EmployerPage({
                   Where the queue stands overall is on the{" "}
                   <Link
                     href="/perm-processing-times"
-                    className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    className="link"
                   >
                     processing times page
                   </Link>

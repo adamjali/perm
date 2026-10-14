@@ -363,7 +363,7 @@ export function H1bLotteryCalculator() {
           <p className="text-sm leading-relaxed text-soft">
             {usd(done.offer, done.unit)} for SOC {done.soc}, against DOL&apos;s figures for the July {done.seriesYear} to June{" "}
             {done.seriesYear + 1} series, read just now from the{" "}
-            <a href={WAGE_SEARCH_PAGE} rel="noopener noreferrer" className="font-bold underline underline-offset-2 hover:text-primary">
+            <a href={WAGE_SEARCH_PAGE} rel="noopener noreferrer" className="link">
               OFLC wage search
             </a>
             .{" "}
@@ -372,7 +372,7 @@ export function H1bLotteryCalculator() {
           <FinePrint summary="Where the percentages come from">
             <p>
               The level rule is {LOTTERY_RULE.cfr}, and the percentages are DHS&apos;s estimate in the same rule,{" "}
-              <a href={LOTTERY_RULE.source} rel="noopener noreferrer" className="font-bold underline underline-offset-2 hover:text-primary">
+              <a href={LOTTERY_RULE.source} rel="noopener noreferrer" className="link">
                 {WEIGHTED_ESTIMATE.citation}
               </a>
               , in effect from {longDate(LOTTERY_RULE.effective)}, read {longDate(LOTTERY_RULE.read)}. DHS worked them out from past petitions assuming

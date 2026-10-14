@@ -36,7 +36,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
           {topic ? (
             <Link
               href={`/${type}#${topic.id}`}
-              className="inline-flex min-h-11 items-center text-base font-semibold text-primary-text underline-offset-4 hover:underline"
+              className="link inline-flex min-h-11 items-center text-base"
             >
               {topic.label}
             </Link>

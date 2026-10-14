@@ -686,7 +686,6 @@ function Position({
         </div>
       ) : (
         <FigurePlate
-          n="01"
           title="The wall in front of this case"
           subject="Undecided cases by filing month"
           className="mt-6"
@@ -838,7 +837,6 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
 
   return (
     <FigurePlate
-      n="02"
       title="Where this wage sits"
       subject={scope}
       className="mt-6"

@@ -153,7 +153,7 @@ export default async function BulletinCategoriesPage() {
                     <li>
                       <Link
                         href={`/visa-bulletin/categories/${lineSlug(cat, country)}`}
-                        className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
+                        className="link inline-flex min-h-[44px] items-center"
                       >
                         {LINE_CATEGORY_SHORT[cat]} {LINE_COUNTRY_SHORT[country]}
                       </Link>

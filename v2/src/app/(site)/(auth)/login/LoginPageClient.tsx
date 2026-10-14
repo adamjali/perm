@@ -484,7 +484,7 @@ export function LoginPageClient() {
             href="/terms"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground underline underline-offset-2 hover:text-primary-text transition-colors"
+            className="link"
           >
             Terms of Service
           </a>{" "}
@@ -493,7 +493,7 @@ export function LoginPageClient() {
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground underline underline-offset-2 hover:text-primary-text transition-colors"
+            className="link"
           >
             Privacy Policy
           </a>

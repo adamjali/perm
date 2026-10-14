@@ -268,7 +268,7 @@ export default async function PermQueuePage() {
               new applications keep arriving and DOL reprioritises. The{" "}
               <Link
                 href="/tools/perm-timeline-calculator"
-                className="font-bold underline underline-offset-2 hover:text-primary"
+                className="link"
               >
                 timeline calculator
               </Link>{" "}

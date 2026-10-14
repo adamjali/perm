@@ -283,7 +283,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
           </div>{" "}
           <p className="mt-3 text-sm text-muted-foreground">
             Source:{" "}
-            <a href={result.source} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">
+            <a href={result.source} rel="noopener noreferrer" className="link">
               OFLC wage search
             </a>
             , all-industries OEWS. The level a case is set at depends on the job&apos;s requirements, which DOL decides on the ETA-9141.

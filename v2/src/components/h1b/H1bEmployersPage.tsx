@@ -164,7 +164,7 @@ export async function H1bEmployersPage({ state }: { state: string }) {
         ) : (
           <p className="border border-border bg-card p-5 text-base">
             The rankings aren&apos;t built yet. They&apos;re made from DOL&apos;s LCA files and USCIS&apos;s Employer
-            Data Hub after each load; the <Link href="/lca-cases" className="font-bold underline decoration-primary decoration-2 underline-offset-2">LCA case search</Link> answers one employer at a time meanwhile.
+            Data Hub after each load; the <Link href="/lca-cases" className="link">LCA case search</Link> answers one employer at a time meanwhile.
           </p>
         )}
       </section>{" "}
@@ -225,16 +225,16 @@ export async function H1bEmployersPage({ state }: { state: string }) {
         </p>
       </FinePrint>{" "}
       <nav aria-label="Related" className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-base">
-        <Link href="/lca-wages" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+        <Link href="/lca-wages" className="link">
           H-1B salaries
         </Link>{" "}
-        <Link href="/sponsor-finder" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+        <Link href="/sponsor-finder" className="link">
           Find a green card sponsor
         </Link>{" "}
-        <Link href="/h1b-lottery-odds" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+        <Link href="/h1b-lottery-odds" className="link">
           H-1B lottery odds
         </Link>{" "}
-        <Link href="/lca-cases" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+        <Link href="/lca-cases" className="link">
           Search H-1B LCAs
         </Link>
       </nav>{" "}

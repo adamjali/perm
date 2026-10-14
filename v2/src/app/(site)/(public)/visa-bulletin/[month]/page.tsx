@@ -332,7 +332,7 @@ export default async function BulletinMonthPage({
         {isNewest ? (
           <>
             This is the newest bulletin in the archive.{" "}
-            <Link href="/visa-bulletin" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+            <Link href="/visa-bulletin" className="link">
               What the next one usually does
             </Link>{" "}
             is computed from the months before it.
@@ -340,7 +340,7 @@ export default async function BulletinMonthPage({
         ) : (
           <>
             The newest bulletin held here is{" "}
-            <Link href={`/visa-bulletin/${newestMonth}`} className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+            <Link href={`/visa-bulletin/${newestMonth}`} className="link">
               {bulletinMonthLabel(newestMonth)}
             </Link>
             .

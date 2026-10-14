@@ -121,7 +121,7 @@ export default async function OptEmployersPage() {
       {lists.length === 0 ? (
         <p className="mt-10 border border-border bg-card p-5 text-base">
           The lists haven&apos;t been loaded yet. ICE&apos;s own PDFs are on its{" "}
-          <a href={SOURCE} rel="noopener noreferrer" className="font-bold underline underline-offset-2 hover:text-primary">
+          <a href={SOURCE} rel="noopener noreferrer" className="link">
             SEVIS &quot;What&apos;s New&quot; page
           </a>
           .
@@ -183,7 +183,7 @@ export default async function OptEmployersPage() {
             <p>
               ICE&apos;s Student and Exchange Visitor Program publishes them with its yearly &quot;SEVIS by the
               Numbers&quot; release, linked from its{" "}
-              <a href={SOURCE} rel="noopener noreferrer" className="font-bold underline underline-offset-2 hover:text-primary">
+              <a href={SOURCE} rel="noopener noreferrer" className="link">
                 What&apos;s New page
               </a>
               . Only the top 200 are published, and ICE linked no lists for the years missing above. Each count is read by
@@ -193,7 +193,7 @@ export default async function OptEmployersPage() {
           </FinePrint>{" "}
           <p>
             Planning the next step?{" "}
-            <Link href="/tools/h1b-lottery-odds-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/tools/h1b-lottery-odds-calculator" className="link">
               The H-1B lottery odds for a job
             </Link>{" "}
             work from the wage and the area.

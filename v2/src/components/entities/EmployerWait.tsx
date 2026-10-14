@@ -89,7 +89,7 @@ export function EmployerWait({
           .{" "}
           <Link
             href="/tools/perm-timeline-calculator"
-            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            className="link"
           >
             Estimate another date
           </Link>

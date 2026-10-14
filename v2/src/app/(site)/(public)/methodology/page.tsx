@@ -317,7 +317,7 @@ export default async function MethodologyPage() {
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold underline underline-offset-2 hover:text-primary"
+                  className="link inline-flex min-h-[44px] items-center gap-1 text-sm"
                 >
                   Source
                   <ArrowSquareOutIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -368,7 +368,7 @@ export default async function MethodologyPage() {
                 <p className="mt-2">
                   <Link
                     href={t.where.href}
-                    className="text-sm font-bold underline underline-offset-2 hover:text-primary"
+                    className="link text-sm"
                   >
                     Open {t.where.label}
                   </Link>

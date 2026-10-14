@@ -150,7 +150,7 @@ export default async function PermByStatePage() {
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 DOL works one national queue, so median days barely move by
                 state. Volume and wages move a lot, which is industry mix.{" "}
-                <Link href="/methodology" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                <Link href="/methodology" className="link">
                   Methodology
                 </Link>
                 .
@@ -211,7 +211,7 @@ export default async function PermByStatePage() {
               one denial swings a rate by several points, so they stay
               uncoloured on rates and medians. Ranked denial rates with a 95%
               range are on the{" "}
-              <Link href="/perm-denial-risk" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              <Link href="/perm-denial-risk" className="link">
                 denial rates page
               </Link>
               .
@@ -231,7 +231,7 @@ export default async function PermByStatePage() {
           <p className="text-lg text-muted-foreground">
             The state aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}
-            <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/perm-processing-times" className="link">
               processing times page
             </Link>{" "}
             carries the live queue.
@@ -246,7 +246,7 @@ export default async function PermByStatePage() {
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The state doesn’t change your place in line. The filing month
             does. The{" "}
-            <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/tools/perm-timeline-calculator" className="link">
               decision estimator
             </Link>{" "}
             reads your month against the live queue.
@@ -257,7 +257,7 @@ export default async function PermByStatePage() {
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Benchmark a case against the national medians, then track its
             deadlines.{" "}
-            <Link href="/signup" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/signup" className="link">
               Free account
             </Link>
             .
@@ -266,7 +266,7 @@ export default async function PermByStatePage() {
       </section>
       <PageBasics page="perm-by-state" />{" "}
       <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-        Filings newer than DOL&apos;s last published file aren&apos;t in these figures: DOL reports the worksite state only when it publishes the decided case. Those are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link>, by employer.
+        Filings newer than DOL&apos;s last published file aren&apos;t in these figures: DOL reports the worksite state only when it publishes the decided case. Those are on the <Link href="/perm-cases#live" className="link">live list</Link>, by employer.
       </p>{" "}
       <DataProvenance datasets={["perm-cases"]} />
     </div>

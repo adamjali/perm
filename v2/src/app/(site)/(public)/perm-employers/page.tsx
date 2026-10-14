@@ -124,7 +124,7 @@ export default async function PermEmployersPage() {
             footer={
               <>
                 Have a case number?{" "}
-                <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                <Link href="/perm-case-status" className="link">
                   Look the case up
                 </Link>
               </>
@@ -167,7 +167,7 @@ export default async function PermEmployersPage() {
                     className="grid grid-cols-[minmax(0,220px)_1fr] items-center gap-3">
                     <Link
                       href={`/perm-employers/${e.slug}`}
-                      className="flex min-h-[44px] min-w-0 items-center text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                      className="link flex min-h-[44px] min-w-0 items-center text-sm"
                     >
                       <span className="truncate">{e.name}</span>
                     </Link>
@@ -248,7 +248,7 @@ export default async function PermEmployersPage() {
           <p className="text-lg text-muted-foreground">
             The employer aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}
-            <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/perm-processing-times" className="link">
               processing times page
             </Link>{" "}
             carries the live queue.
@@ -261,7 +261,7 @@ export default async function PermEmployersPage() {
           <h2 className="font-heading text-lg font-bold">Your employer is on the list?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Their volume doesn’t change your place in line. The{" "}
-            <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/tools/perm-timeline-calculator" className="link">
               decision estimator
             </Link>{" "}
             takes your filing month.
@@ -270,15 +270,15 @@ export default async function PermEmployersPage() {
         <div className="border border-border bg-card p-6">
           <h2 className="font-heading text-lg font-bold">Managing a docket?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            <Link href="/perm-wages" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/perm-wages" className="link">
               Wages by occupation
             </Link>
             ,{" "}
-            <Link href="/perm-by-state" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/perm-by-state" className="link">
               volume by state
             </Link>
             , and every figure&apos;s recipe in the{" "}
-            <Link href="/methodology" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/methodology" className="link">
               methodology
             </Link>
             .

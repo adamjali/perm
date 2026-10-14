@@ -55,7 +55,7 @@ export function AboutSection({ record = [] }: { record?: RecordFigure[] }) {
             advice.{" "}
             <Link
               href="/about"
-              className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
+              className="link"
             >
               More about us &rarr;
             </Link>

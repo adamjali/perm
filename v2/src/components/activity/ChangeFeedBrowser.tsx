@@ -666,7 +666,7 @@ export function ChangeFeedBrowser({
                 sortable here and on the{" "}
                 <Link
                   href="/perm-cases"
-                  className="font-bold underline decoration-primary-text decoration-2 underline-offset-2 hover:text-primary-text"
+                  className="link"
                 >
                   decided case browser
                 </Link>
@@ -681,7 +681,7 @@ export function ChangeFeedBrowser({
                 they switch on, or use the{" "}
                 <Link
                   href="/perm-cases"
-                  className="font-bold underline decoration-primary-text decoration-2 underline-offset-2 hover:text-primary-text"
+                  className="link"
                 >
                   decided case browser
                 </Link>

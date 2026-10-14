@@ -116,7 +116,6 @@ export async function OccupationReference({
     <>
       {bands.length ? (
         <FigurePlate
-          n="04"
           title="What the job pays outside PERM"
           subject={`${series ? `BLS ${series}` : "BLS"}${levelYear ? `, DOL wage year ${wageYearLabel(levelYear)}` : ""}`}
           caption={

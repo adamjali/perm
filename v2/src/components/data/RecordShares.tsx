@@ -55,7 +55,7 @@ export function RecordShares({ rows, className }: { rows: RecordShare[]; classNa
               <span className="min-w-0">
                 <Link
                   href={r.href}
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
+                  className="link"
                 >
                   {r.label}
                 </Link>{" "}

@@ -118,7 +118,7 @@ function StageRow({
           {stageFromSlug(stageSlug(stage.status)) ? (
             <Link
               href={`/perm-rfi-audit/${stageSlug(stage.status)}`}
-              className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               {meta.label}
             </Link>
@@ -220,11 +220,11 @@ export function CensusLinks() {
   return (
     <p className="mt-4 text-sm text-muted-foreground">
       The 94,000-case analyst-review queue is broken down by filing month on{" "}
-      <Link href="/perm-queue" className="font-bold text-primary underline">
+      <Link href="/perm-queue" className="link">
         the queue page
       </Link>
       , and the employers behind these filings have their own pages under{" "}
-      <Link href="/perm-employers" className="font-bold text-primary underline">
+      <Link href="/perm-employers" className="link">
         employers
       </Link>
       .

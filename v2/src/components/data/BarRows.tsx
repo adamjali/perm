@@ -159,7 +159,7 @@ export function QuarterlyEmpty({ file, children }: { file: string; children?: Re
           href="https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data"
           target="_blank"
           rel="noopener noreferrer"
-          className="underline underline-offset-2"
+          className="link"
         >
           USCIS&apos;s immigration and citizenship data page
         </a>

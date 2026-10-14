@@ -223,7 +223,7 @@ export function LcaProfile({
                 degree (655.737).{" "}
                 <a
                   href={ECFR}
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   The rule on eCFR
                 </a>

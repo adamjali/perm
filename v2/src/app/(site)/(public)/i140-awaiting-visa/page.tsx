@@ -182,7 +182,6 @@ export default async function I140AwaitingVisaPage() {
 
           <section id="by-country" className="mt-12 scroll-mt-24">
             <FigurePlate
-              n="01"
               title="Who is waiting, by category"
               subject={`Approved petitions awaiting a visa number, as of ${monthLabel(awaiting.asOf)}`}
               caption={
@@ -223,7 +222,6 @@ export default async function I140AwaitingVisaPage() {
           {awaiting.previous ? (
             <section id="movement" className="mt-12 scroll-mt-24">
               <FigurePlate
-                n="02"
                 title="What moved since the last count"
                 subject={`${monthLabel(awaiting.previous.asOf)} to ${monthLabel(awaiting.asOf)}`}
                 caption={
@@ -293,7 +291,6 @@ export default async function I140AwaitingVisaPage() {
       {classCountry && indiaYears.length > 0 ? (
         <section id="by-year" className="mt-12 scroll-mt-24">
           <FigurePlate
-            n="03"
             title="I-140 petitions by the year filed"
             subject={`India against all countries, FY${indiaYears[0]!.fy} to FY${indiaYears[indiaYears.length - 1]!.fy}, as of ${asOfQuarterLabel(classCountry.asOf)}`}
             caption={
@@ -365,17 +362,17 @@ export default async function I140AwaitingVisaPage() {
         <h2 className="font-heading text-2xl font-bold">Read next</h2>{" "}
         <ul className="mt-4 space-y-2">
           <li>
-            <Link href="/guides/approved-i140-no-visa-number-eb2-india" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/guides/approved-i140-no-visa-number-eb2-india" className="link">
               Approved I-140, no visa number: what the India wait actually is
             </Link>
           </li>{" "}
           <li>
-            <Link href="/visa-bulletin" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/visa-bulletin" className="link">
               What the next visa bulletin could do, from every bulletin since 2014
             </Link>
           </li>{" "}
           <li>
-            <Link href="/tools/i485-queue-position" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/tools/i485-queue-position" className="link">
               The I-485 inventory ahead of a priority date
             </Link>
           </li>

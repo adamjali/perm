@@ -71,7 +71,7 @@ export function DebarmentNotice({
       </ul>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
         Matched on the normalised name, so read the listed name against this page&apos;s.{" "}
-        <Link href="/debarments" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+        <Link href="/debarments" className="link">
           Every list, with DOL&apos;s originals
         </Link>
         .

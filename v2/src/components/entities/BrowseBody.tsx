@@ -198,7 +198,7 @@ export async function BrowseIndexBody({ kind }: { kind: EntityKind }) {
           biggest group at {formatInt(counts[busiest] ?? 0)}. The ranked table on the{" "}
           <Link
             href={cfg.base}
-            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            className="link"
           >
             main page
           </Link>{" "}
@@ -261,7 +261,7 @@ export async function BrowseTeaser({
         {formatInt(total)} {cfg.plural} with a page of their own, by first letter. The{" "}
         <Link
           href={browseHref(cfg.base)}
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link"
         >
           full A-Z index
         </Link>{" "}
@@ -317,7 +317,7 @@ export async function BrowseLetterBody({
             here, {pct(bucketTotal, total)}% of them. The busiest is{" "}
             <Link
               href={`${cfg.base}/${busiest.slug}`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               {busiest.name}
             </Link>{" "}
@@ -355,7 +355,7 @@ export async function BrowseLetterBody({
             <p className="mt-3 max-w-3xl border-l-2 border-primary bg-tint px-4 py-3 text-base text-soft">
               This letter holds {formatInt(bucketTotal)} {cfg.plural}; the list stops at {formatInt(shown)}. The other{" "}
               {formatInt(bucketTotal - shown)} still have their own pages.{" "}
-              <Link href={cfg.base} className="underline underline-offset-2">
+              <Link href={cfg.base} className="link">
                 Search {cfg.plural} by name
               </Link>{" "}
               to go straight to one.
@@ -379,7 +379,7 @@ export async function BrowseLetterBody({
             The{" "}
             <Link
               href={cfg.base}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               ranked table
             </Link>{" "}
@@ -395,7 +395,7 @@ export async function BrowseLetterBody({
             A{" "}
             <Link
               href="/perm-case-status"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               case lookup
             </Link>{" "}

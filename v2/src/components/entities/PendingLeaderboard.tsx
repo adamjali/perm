@@ -55,7 +55,6 @@ export function PendingLeaderboard({
 
   return (
     <FigurePlate
-      n={n}
       title="Most cases waiting right now"
       subject={`${formatInt(leaders.length)} sponsors, live tracker`}
       caption={
@@ -79,7 +78,7 @@ export function PendingLeaderboard({
                 <p className="text-sm font-bold leading-snug">
                   <Link
                     href={`/perm-employers/${l.slug}`}
-                    className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    className="link"
                   >
                     {l.name}
                   </Link>

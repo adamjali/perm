@@ -91,11 +91,11 @@ export default function EadExtensionPage() {
         <h2 className="font-heading text-2xl font-bold">The rules, from the source</h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-soft">
           The October 30, 2025 interim final rule,{" "}
-          <a href={FR_URL} rel="noopener" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          <a href={FR_URL} rel="noopener" className="link">
             90 FR 48799
           </a>
           , added a paragraph (e) to{" "}
-          <a href={ECFR_URL} rel="noopener" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          <a href={ECFR_URL} rel="noopener" className="link">
             8 CFR 274a.13
           </a>{" "}
           and limited the older paragraph (d) to renewals received before that date. DHS took comments until

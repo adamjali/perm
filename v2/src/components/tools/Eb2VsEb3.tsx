@@ -143,7 +143,7 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
               <p>
                 A second I-140 in the other category can be filed on the same certified PERM when the job&apos;s
                 requirements support it, and it keeps the original priority date under 8 CFR 204.5(e).{" "}
-                <Link href="/guides/eb2-vs-eb3-perm" className="font-semibold underline underline-offset-2 hover:text-primary">
+                <Link href="/guides/eb2-vs-eb3-perm" className="link">
                   EB-2 vs EB-3 on a PERM
                 </Link>{" "}
                 covers what decides the category and what a downgrade keeps.
@@ -167,7 +167,7 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
               <li>People who leave the line. Nobody publishes how many, so nobody is taken out.</li>{" "}
               <li>
                 Each count is worked out the same way as{" "}
-                <Link href="/tools/green-card-line" className="font-semibold underline underline-offset-2 hover:text-primary">
+                <Link href="/tools/green-card-line" className="link">
                   the green card line
                 </Link>
                 , which shows the method and where each part comes from.
@@ -367,7 +367,7 @@ function LineCard({
       {result.kind === "estimate" ? (
         <Link
           href={href}
-          className="mt-4 inline-flex min-h-[44px] items-center gap-2 font-semibold underline underline-offset-2 hover:text-primary"
+          className="link mt-4 inline-flex min-h-[44px] items-center gap-2"
         >
           Where they sit in {LINE_NAME[line]}
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

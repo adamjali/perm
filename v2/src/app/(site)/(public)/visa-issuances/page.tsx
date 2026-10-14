@@ -139,7 +139,6 @@ export default async function VisaIssuancesPage() {
       </header>
 
       <FigurePlate
-        n="01"
         title="Employment visas issued abroad, month by month"
         subject={`${monthName(sparkMonths[0] ?? newest)} to ${monthName(newest)}`}
         caption="Each bar is one month's issuances in the category; the newest is the dark one. A category can fall to almost nothing late in a fiscal year (it ends in September) once its yearly numbers are used up, and picks up again in October."

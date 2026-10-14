@@ -199,7 +199,7 @@ export default function H1bLotteryOddsPage() {
             Dashed line: {WEIGHTED_ESTIMATE.randomPercent}%, DHS&apos;s figure for everyone under the random draw. Its
             estimate ({WEIGHTED_ESTIMATE.citation}) assumes employers keep their wages and pools the two caps; DHS
             notes it may understate selections at higher levels.{" "}
-            <Link href="/tools/h1b-lottery-odds-calculator" className="font-semibold underline underline-offset-2 hover:text-primary">
+            <Link href="/tools/h1b-lottery-odds-calculator" className="link">
               Work out the level and the odds for one job
             </Link>
             .
@@ -241,7 +241,7 @@ export default function H1bLotteryOddsPage() {
         </div>{" "}
         <p className="mt-3 text-base text-soft">
           From USCIS&apos;s{" "}
-          <a href={H1B_REGISTRATION_SOURCE} className="font-semibold underline underline-offset-2 hover:text-primary" rel="noopener" target="_blank">
+          <a href={H1B_REGISTRATION_SOURCE} className="link" rel="noopener" target="_blank">
             H-1B electronic registration page
           </a>
           , last revised {H1B_REGISTRATION_REVISED}, read {H1B_REGISTRATION_READ}. Eligible leaves out duplicates,

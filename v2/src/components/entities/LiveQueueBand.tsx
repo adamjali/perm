@@ -82,7 +82,6 @@ export function LiveQueueBand({
 
   return (
     <FigurePlate
-      n={n}
       title="In the queue right now"
       subject={`${formatInt(tracked)} cases in the live tracker`}
       caption={

@@ -180,11 +180,11 @@ export default async function FamilyBulletinPage() {
         <p className="mt-3 text-base leading-relaxed text-soft">
           Each bulletin is read from the State Department&apos;s pages the day it appears. Employment history is
           on{" "}
-          <Link href="/tools/priority-date-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          <Link href="/tools/priority-date-calculator" className="link">
             the priority date calculator
           </Link>{" "}
           and the coming month&apos;s pattern on{" "}
-          <Link href="/visa-bulletin" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          <Link href="/visa-bulletin" className="link">
             the next bulletin
           </Link>
           .

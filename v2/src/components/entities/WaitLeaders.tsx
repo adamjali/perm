@@ -47,7 +47,7 @@ function Column({
               <a
                 href={`/perm-employers/${r.slug}`}
                 translate="no"
-                className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                className="link"
               >
                 {r.name}
               </a>

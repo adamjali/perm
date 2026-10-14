@@ -163,7 +163,6 @@ export async function CityReference({
 
       {bands.length ? (
         <FigurePlate
-          n="05"
           title={`What these jobs pay in ${geo.wageAreaName ?? geo.cbsaTitle ?? label}`}
           subject={`${series ? `BLS ${series}` : "BLS"}${year ? `, DOL wage year ${wageYearLabel(year)}` : ""}`}
           caption={`The jobs filed most in ${label}: what employers in the metro report paying everyone in each, and DOL's four prevailing wage levels there.${split ? ` ${label} spans ${countWord(geo.wageAreas ?? 0)} of DOL's wage areas; these figures are for ${geo.wageAreaName}, which takes in its center.` : ""}`}

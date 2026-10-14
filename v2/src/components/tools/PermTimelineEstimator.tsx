@@ -691,7 +691,7 @@ export function PermTimelineEstimator({
                 ) : null}{" "}
                 <Link
                   href="/perm-case-status"
-                  className="inline-flex min-h-[44px] items-center font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link inline-flex min-h-[44px] items-center"
                 >
                   Have the case number? Check the case itself
                 </Link>

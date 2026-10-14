@@ -386,7 +386,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             </label>{" "}
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Either way, your dates count toward the anonymous medians on the{" "}
-              <Link href="/green-card-timelines" className="font-semibold underline underline-offset-2">
+              <Link href="/green-card-timelines" className="link">
                 green card timelines
               </Link>{" "}
               page. This browser keeps a key for this case so you can edit or remove it later.

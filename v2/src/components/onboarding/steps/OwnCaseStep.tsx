@@ -100,7 +100,7 @@ export function OwnCaseStep() {
       <div className="mt-6 flex w-full max-w-md flex-col items-center gap-1 text-center text-sm">
         <Link
           href="/case-search"
-          className="inline-flex min-h-[44px] items-center font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link inline-flex min-h-[44px] items-center"
         >
           Don&apos;t have the number? Find the case by employer name
         </Link>{" "}

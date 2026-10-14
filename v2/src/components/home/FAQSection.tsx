@@ -113,7 +113,7 @@ export function FAQSection() {
           </p>{" "}
           <Link
             href="/faq"
-            className="mt-5 inline-flex min-h-11 items-center gap-2 font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary-text"
+            className="link mt-5 inline-flex min-h-11 items-center gap-2"
           >
             Every question about PERM
             <ArrowRightIcon size={18} weight="bold" aria-hidden="true" />

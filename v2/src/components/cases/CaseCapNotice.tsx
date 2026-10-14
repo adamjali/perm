@@ -43,7 +43,7 @@ export function CaseCapNotice({
       <span className="min-w-0">
         Your account holds more than {max} cases, and this page shows the newest {max}. Older
         cases are saved and unchanged. To reach them, email{" "}
-        <a className="font-semibold underline" href="mailto:support@permtracker.app?subject=More%20than%20the%20case%20list%20shows">
+        <a className="link" href="mailto:support@permtracker.app?subject=More%20than%20the%20case%20list%20shows">
           support@permtracker.app
         </a>
         .

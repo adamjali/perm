@@ -412,7 +412,7 @@ export function RankLadder({
               <dd className="mt-1 min-w-0">
                 <Link
                   href={`${hrefBase}/${r.item.slug}`}
-                  className="inline-flex min-h-[44px] items-center text-base font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  className="link inline-flex min-h-[44px] items-center text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                   {r.item.name}
                 </Link>{" "}
@@ -500,7 +500,7 @@ export function DisclosureNote({
       is counted here.{" "}
       <Link
         href="/methodology"
-        className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+        className="link"
       >
         How each figure is built
       </Link>
@@ -534,14 +534,14 @@ export function EntityDataGap({
         refresh rather than anything missing. Reload, or start from{" "}
         <Link
           href={backHref}
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link"
         >
           {backLabel}
         </Link>
         . The source files are on{" "}
         <a
           href="https://www.dol.gov/agencies/eta/foreign-labor/performance"
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link"
           rel="noopener noreferrer"
         >
           DOL&apos;s own performance page

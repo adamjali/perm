@@ -307,7 +307,7 @@ export function LiveCaseBrowser({
                       {r.employerSlug ? (
                         <Link
                           href={`/perm-employers/${r.employerSlug}`}
-                          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                          className="link"
                         >
                           {r.employerName}
                         </Link>

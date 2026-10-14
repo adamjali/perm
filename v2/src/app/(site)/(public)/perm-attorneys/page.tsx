@@ -108,7 +108,7 @@ export default async function PermAttorneysPage() {
             footer={
               <>
                 Looking for a sponsor instead?{" "}
-                <Link href="/perm-employers" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                <Link href="/perm-employers" className="link">
                   Every employer
                 </Link>
               </>
@@ -203,7 +203,7 @@ export default async function PermAttorneysPage() {
           <p className="text-lg text-muted-foreground">
             The firm aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}
-            <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/perm-processing-times" className="link">
               processing times page
             </Link>{" "}
             carries the live queue.
@@ -217,7 +217,7 @@ export default async function PermAttorneysPage() {
           <p className="mt-2 text-sm leading-relaxed text-background/70">
             Benchmark your volume and median against the field, then track every
             deadline.{" "}
-            <Link href="/signup" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/signup" className="link">
               Free account
             </Link>
             .
@@ -228,7 +228,7 @@ export default async function PermAttorneysPage() {
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             A firm&apos;s median sits near the national one because DOL works a
             single queue. Your own date comes from your filing month:{" "}
-            <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/tools/perm-timeline-calculator" className="link">
               decision estimator
             </Link>
             .
@@ -237,7 +237,7 @@ export default async function PermAttorneysPage() {
       </section>
       <PageBasics page="perm-attorneys" />{" "}
       <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-        Filings newer than DOL&apos;s last published file aren&apos;t here: DOL names the firm only when it publishes the decided case. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link>, by employer.
+        Filings newer than DOL&apos;s last published file aren&apos;t here: DOL names the firm only when it publishes the decided case. Those cases are on the <Link href="/perm-cases#live" className="link">live list</Link>, by employer.
       </p>{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>

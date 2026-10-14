@@ -200,7 +200,7 @@ export function PriorityDatePanel({
         A priority date earlier than the cell is current.{" "}
         <a
           href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html"
-          className="font-bold underline underline-offset-2 hover:text-primary"
+          className="link"
           target="_blank"
           rel="noopener noreferrer"
         >

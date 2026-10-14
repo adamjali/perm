@@ -52,7 +52,7 @@ export function GroupIndexTable({
       render: (r) => (
         <Link
           href={`${basePath}/${r.slug}`}
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link"
         >
           {r.label}
         </Link>

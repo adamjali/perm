@@ -209,7 +209,6 @@ export default async function I485ByFieldOfficePage() {
 
           <section id="busiest" className="mt-12 scroll-mt-24">
             <FigurePlate
-              n="01"
               title="Employment-based I-485 pending"
               subject="The fifteen field offices holding the most"
               caption={
@@ -228,7 +227,6 @@ export default async function I485ByFieldOfficePage() {
           {workRows.length > 0 ? (
             <section id="quarters-of-work" className="mt-12 scroll-mt-24">
               <FigurePlate
-                n="02"
                 title="Quarters of work in the pile"
                 subject={`Offices with ${WORK_FLOOR.toLocaleString("en-US")} or more employment-based pending`}
                 caption={
@@ -249,7 +247,6 @@ export default async function I485ByFieldOfficePage() {
 
           <section id="service-centers" className="mt-12 scroll-mt-24">
             <FigurePlate
-              n="03"
               title="Where employment-based I-485s are approved"
               subject="Service centers against the field offices"
               caption={
@@ -304,29 +301,29 @@ export default async function I485ByFieldOfficePage() {
         <h2 className="font-heading text-2xl font-bold">Read next</h2>{" "}
         <ul className="mt-4 space-y-2">
           <li>
-            <Link href="/guides/fastest-field-office-eb-i485" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/guides/fastest-field-office-eb-i485" className="link">
               Which field office is fastest for an employment-based I-485
             </Link>
           </li>{" "}
           <li>
-            <Link href="/tools/i485-queue-position" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/tools/i485-queue-position" className="link">
               Your place in USCIS&apos;s I-485 inventory by priority date
             </Link>
           </li>{" "}
           <li>
-            <Link href="/guides/i485-vs-i485j-supplement-j" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/guides/i485-vs-i485j-supplement-j" className="link">
               I-485 and Supplement J, told apart
             </Link>
           </li>{" "}
           <li>
-            <Link href="/guides/i693-medical-exam" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/guides/i693-medical-exam" className="link">
               The I-693 medical exam every I-485 needs
             </Link>
             , and{" "}
             <a
               href="https://www.uscis.gov/tools/find-a-civil-surgeon"
               rel="noopener"
-              className="font-bold underline underline-offset-2 hover:text-primary"
+              className="link"
             >
               USCIS&apos;s search for a civil surgeon near you
             </a>

@@ -362,7 +362,7 @@ export default async function PermProcessingTimesPage() {
               DOL&apos;s figure, as of {permAsOf}.{" "}
               <a
                 href={DOL_SOURCE}
-                className="font-bold underline underline-offset-2 hover:text-primary"
+                className="link"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -556,7 +556,7 @@ export default async function PermProcessingTimesPage() {
             Live figures are being fetched from the Department of Labor. Until they land,{" "}
             <a
               href={DOL_SOURCE}
-              className="font-bold underline underline-offset-2 hover:text-primary"
+              className="link"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -613,7 +613,7 @@ export default async function PermProcessingTimesPage() {
           )}{" "}
           <Link
             href="/green-card-timelines"
-            className="mt-4 inline-flex min-h-[44px] items-center font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            className="link mt-4 inline-flex min-h-[44px] items-center"
           >
             All green card timelines
           </Link>
@@ -674,7 +674,7 @@ export default async function PermProcessingTimesPage() {
         </Link>
         <p className="mt-3 text-sm text-muted-foreground">
           There’s no case limit. See the{" "}
-          <Link href="/guides/perm-recruitment-checklist" className="underline underline-offset-2">
+          <Link href="/guides/perm-recruitment-checklist" className="link">
             recruitment checklist
           </Link>{" "}
           for the deadline math itself.

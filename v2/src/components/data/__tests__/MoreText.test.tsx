@@ -48,7 +48,7 @@ describe("FigurePlate captions", () => {
 
   it("folds a long caption to its first sentence, the rest still in the HTML", () => {
     const html = renderToStaticMarkup(
-      <FigurePlate n="02" title="Position" caption={long}>
+      <FigurePlate title="Position" caption={long}>
         <svg />
       </FigurePlate>,
     );
@@ -59,7 +59,7 @@ describe("FigurePlate captions", () => {
 
   it("leaves a short caption as it is", () => {
     const html = renderToStaticMarkup(
-      <FigurePlate n="01" title="Queue" caption="Counted from DOL's live status.">
+      <FigurePlate title="Queue" caption="Counted from DOL's live status.">
         <svg />
       </FigurePlate>,
     );

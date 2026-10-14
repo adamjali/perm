@@ -381,7 +381,7 @@ export default async function EstimateScorecardPage() {
                 <tr key={p.caseNumber} className="border-b border-border/40 align-top">
                   <td className="py-3 pr-3 tabular-nums">{p.recorded}{" "}</td>
                   <td className="py-3 pr-3 font-mono text-sm">
-                    <Link href={`/perm-case-status?case=${p.caseNumber}`} className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                    <Link href={`/perm-case-status?case=${p.caseNumber}`} className="link">
                       {p.caseNumber}
                     </Link>
                   {" "}</td>

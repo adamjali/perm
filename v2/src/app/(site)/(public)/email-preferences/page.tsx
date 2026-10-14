@@ -89,7 +89,7 @@ function KindTile({ id }: { id: MailKindId }) {
       <p className="mt-1 flex-1 text-base leading-relaxed text-soft">{kind.what}</p>{" "}
       <Link
         href={kind.start.href}
-        className="group mt-4 inline-flex min-h-[44px] items-center gap-2 self-start text-sm font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
+        className="link group mt-4 inline-flex min-h-[44px] items-center gap-2 self-start text-sm"
       >
         {kind.start.label}{" "}
         <ArrowRightIcon aria-hidden="true" className="size-4 transition-transform" />
@@ -168,7 +168,7 @@ export default function EmailPreferencesPage() {
           Signed in? Everything sent to your address, alerts included, is in{" "}
           <Link
             href={NOTIFICATION_SETTINGS_PATH}
-            className="font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
+            className="link"
           >
             notification settings
           </Link>

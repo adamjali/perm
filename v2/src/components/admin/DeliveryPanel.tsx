@@ -238,7 +238,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           <ol className="mt-4 divide-y divide-border border-y border-border">
             {data.follows.top.map((f) => (
               <li key={f.slug} className="flex items-baseline justify-between gap-3 py-2 text-sm">
-                <Link href={`/perm-employers/${f.slug}`} className="min-w-0 font-bold underline decoration-primary-text decoration-2 underline-offset-2 [overflow-wrap:anywhere]">
+                <Link href={`/perm-employers/${f.slug}`} className="link min-w-0 [overflow-wrap:anywhere]">
                   {f.name}
                 </Link>{" "}
                 <span className="tabular-nums">{`${formatInt(f.followers)} following`}</span>

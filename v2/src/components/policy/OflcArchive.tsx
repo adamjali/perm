@@ -53,7 +53,7 @@ export function OflcArchive({ items, today, lead = 8 }: { items: readonly Policy
                       href={n.url}
                       rel="noopener"
                       target="_blank"
-                      className="underline decoration-primary/40 decoration-2 underline-offset-[3px] hover:decoration-primary"
+                      className="link"
                     >
                       {n.title}
                     </a>{" "}

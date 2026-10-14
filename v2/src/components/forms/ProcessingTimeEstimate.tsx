@@ -165,7 +165,7 @@ export function ProcessingTimeEstimate({
             href={PROCESSING_TIMES_SOURCE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline underline-offset-2"
+            className="link"
           >
             Check the current figures
           </a>

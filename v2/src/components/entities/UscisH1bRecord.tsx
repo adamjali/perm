@@ -61,7 +61,7 @@ export function UscisH1bRecord({
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Workers approved and denied on USCIS&apos;s first decision, FY{first} to FY{newest.fy}
         {throughLabel && through && through < `${newest.fy}-09-30` ? ` (through ${throughLabel})` : ""}, from{" "}
-        <a href={USCIS_H1B_HUB} rel="noopener noreferrer" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+        <a href={USCIS_H1B_HUB} rel="noopener noreferrer" className="link">
           USCIS&apos;s H-1B Employer Data Hub
         </a>
         .
@@ -147,7 +147,7 @@ export function UscisH1bRecord({
           </ul>{" "}
           <p>
             In USCIS&apos;s words on its{" "}
-            <a href={USCIS_H1B_GLOSSARY} rel="noopener noreferrer" className="font-bold underline underline-offset-2 hover:text-primary">
+            <a href={USCIS_H1B_GLOSSARY} rel="noopener noreferrer" className="link">
               data hub glossary
             </a>
             .

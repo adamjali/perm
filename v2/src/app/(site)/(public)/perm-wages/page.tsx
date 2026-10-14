@@ -146,7 +146,7 @@ export default async function PermWagesPage() {
             footer={
               <>
                 Have an offer?{" "}
-                <Link href="/tools/compare-my-offer" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                <Link href="/tools/compare-my-offer" className="link">
                   See where it falls
                 </Link>
               </>
@@ -195,7 +195,6 @@ export default async function PermWagesPage() {
 
           {ladders.length > 0 ? (
             <FigurePlate
-              n="01"
               title="Two pay scales, one process"
               subject={`${ladders.length} busiest occupations, ordered by filing volume`}
               caption={
@@ -224,7 +223,6 @@ export default async function PermWagesPage() {
 
           {bandsPooled.length > 0 ? (
             <FigurePlate
-              n="02"
               title="Denial rate by wage band"
               subject="Certified and denied cases, by fiscal year"
               caption="Measured rates, each with the decided cases behind it. Nothing here says what a particular wage does to a particular case."
@@ -261,7 +259,7 @@ export default async function PermWagesPage() {
           <p className="text-lg text-muted-foreground">
             The occupation aggregates land with the quarterly disclosure
             ingest. Until then, the{" "}
-            <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/perm-processing-times" className="link">
               processing times page
             </Link>{" "}
             carries the live queue.
@@ -274,7 +272,7 @@ export default async function PermWagesPage() {
           <h2 className="font-heading text-lg font-bold">Comparing an offer?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The{" "}
-            <Link href="/tools/salary-explorer" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/tools/salary-explorer" className="link">
               salary explorer
             </Link>{" "}
             recomputes the ladder over any occupation, state and year.
@@ -284,11 +282,11 @@ export default async function PermWagesPage() {
           <h2 className="font-heading text-lg font-bold">Wondering about pace?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             A case&apos;s speed depends on its filing month, not its wage. The{" "}
-            <Link href="/perm-decision-activity" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/perm-decision-activity" className="link">
               decision activity
             </Link>{" "}
             page carries how much DOL clears each day.{" "}
-            <Link href="/methodology" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/methodology" className="link">
               Methodology
             </Link>
             .
@@ -297,7 +295,7 @@ export default async function PermWagesPage() {
       </section>
       <PageBasics page="perm-wages" />{" "}
       <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-        Filings newer than DOL&apos;s last published file aren&apos;t in this table: DOL reports the occupation and the wage only when it publishes the decided case. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link>, by employer.
+        Filings newer than DOL&apos;s last published file aren&apos;t in this table: DOL reports the occupation and the wage only when it publishes the decided case. Those cases are on the <Link href="/perm-cases#live" className="link">live list</Link>, by employer.
       </p>{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>

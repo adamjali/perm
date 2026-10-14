@@ -318,7 +318,7 @@ export default function CalculatorsPage() {
                   <td className="p-3">{r.s}{" "}</td>
                   <td className="p-3 text-muted-foreground">{r.q}{" "}</td>
                   <td className="p-3">
-                    <a href={r.href} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                    <a href={r.href} className="link">
                       {r.tool}
                     </a>
                   {" "}</td>
@@ -431,7 +431,7 @@ export default function CalculatorsPage() {
           filing date.{" "}
           <Link
             href="/methodology"
-            className="font-bold underline underline-offset-2 hover:text-primary"
+            className="link"
           >
             How we compute ours, and why they differ
           </Link>

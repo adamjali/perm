@@ -141,7 +141,7 @@ export default async function BadgesPage() {
         </MoreText>{" "}
         <p className="mt-3 text-base leading-relaxed text-soft">
           The estimator&apos;s own accuracy is kept on{" "}
-          <Link href="/estimate-scorecard" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          <Link href="/estimate-scorecard" className="link">
             the scorecard
           </Link>{" "}
           and stays off the badges on purpose: a number with a margin of error needs the margin next to it, and a badge

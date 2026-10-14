@@ -584,7 +584,7 @@ export default async function PermDenialRiskPage() {
                 Volume, median wage and processing days sit on the{" "}
                 <Link
                   href="/perm-wages"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   occupation index
                 </Link>
@@ -617,7 +617,7 @@ export default async function PermDenialRiskPage() {
                 Volume, approval rate, median days and median wage sit on the{" "}
                 <Link
                   href="/perm-by-state"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   state map
                 </Link>
@@ -631,7 +631,7 @@ export default async function PermDenialRiskPage() {
           <p className="text-lg text-muted-foreground">
             The denial-rate tables land with the quarterly disclosure ingest.
             Until then, the{" "}
-            <Link href="/methodology" className="underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/methodology" className="link">
               methodology page
             </Link>{" "}
             sets out where every figure comes from.
@@ -645,7 +645,7 @@ export default async function PermDenialRiskPage() {
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             None of these changes what the regulations require, only what to
             document. The{" "}
-            <Link href="/tools/perm-deadline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/tools/perm-deadline-calculator" className="link">
               deadline calculator
             </Link>{" "}
             covers the dates side.
@@ -655,7 +655,7 @@ export default async function PermDenialRiskPage() {
           <h2 className="font-heading text-lg font-bold">Waiting on one?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Denials are rare; most of the wait is queue time. The{" "}
-            <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/tools/perm-timeline-calculator" className="link">
               decision estimator
             </Link>{" "}
             reads your filing month against where DOL is now.

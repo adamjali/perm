@@ -405,7 +405,7 @@ export default async function AttorneyPage({
         dek={
           <>
             Where it sits among {formatInt(kindTotal)} firms. The{" "}
-            <Link href={BASE} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href={BASE} className="link">
               full ranking
             </Link>{" "}
             sorts every column.
@@ -477,7 +477,7 @@ export default async function AttorneyPage({
           <h3 className="font-heading text-lg font-bold">Running the practice?</h3>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             The{" "}
-            <Link href="/signup" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            <Link href="/signup" className="link">
               free tracker
             </Link>{" "}
             carries the deadlines on every case, from the wage request to the I-140.
@@ -511,7 +511,7 @@ export default async function AttorneyPage({
                   stands overall is on the{" "}
                   <Link
                     href="/perm-processing-times"
-                    className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    className="link"
                   >
                     processing times page
                   </Link>
@@ -553,7 +553,7 @@ export default async function AttorneyPage({
                   Where the queue stands today is on the{" "}
                   <Link
                     href="/perm-processing-times"
-                    className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    className="link"
                   >
                     processing times page
                   </Link>

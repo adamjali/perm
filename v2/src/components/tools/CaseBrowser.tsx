@@ -1178,7 +1178,7 @@ function CaseTable({
               {r.employerSlug ? (
                 <Link
                   href={`/perm-employers/${r.employerSlug}`}
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   {r.employerName}
                 </Link>
@@ -1192,7 +1192,7 @@ function CaseTable({
                     {r.attorneySlug ? (
                       <Link
                         href={`/perm-attorneys/${r.attorneySlug}`}
-                        className="underline decoration-border decoration-2 underline-offset-2 hover:text-primary"
+                        className="link"
                       >
                         {r.attorneyName}
                       </Link>

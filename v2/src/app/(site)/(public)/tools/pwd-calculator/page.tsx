@@ -149,11 +149,11 @@ export default async function PwdCalculatorPage() {
 
       <p className="mt-8 max-w-3xl text-base leading-relaxed text-soft">
         No number for your request?{" "}
-        <Link href="/pwd-cases" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+        <Link href="/pwd-cases" className="link">
           Search wage requests by employer
         </Link>
         , or paste a P- number into the{" "}
-        <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+        <Link href="/perm-case-status" className="link">
           status lookup
         </Link>{" "}
         to see where it sits.

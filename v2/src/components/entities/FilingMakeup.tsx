@@ -120,7 +120,7 @@ export function OccupationMix({
         {lead.key ? (
           <Link
             href={`/perm-wages/${lead.key}`}
-            className="underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
+            className="link"
           >
             {lead.label}
           </Link>
@@ -146,7 +146,7 @@ export function OccupationMix({
                   {r.key ? (
                     <Link
                       href={`/perm-wages/${r.key}`}
-                      className="underline decoration-primary/60 decoration-2 underline-offset-2 hover:text-primary"
+                      className="link"
                     >
                       {r.label}
                     </Link>
@@ -191,7 +191,7 @@ export function StateMix({
           everyone is on the{" "}
           <Link
             href="/perm-by-state"
-            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            className="link"
           >
             state map
           </Link>
@@ -276,7 +276,7 @@ export function PartyMix({
                   {r.key ? (
                     <Link
                       href={`${hrefBase}/${r.key}`}
-                      className="font-bold leading-snug underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                      className="link leading-snug"
                     >
                       {r.label}
                     </Link>

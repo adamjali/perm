@@ -276,7 +276,7 @@ export function I485QueuePosition({
           it lands,{" "}
           <a
             href="https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data"
-            className="font-bold underline underline-offset-2 hover:text-primary"
+            className="link"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -414,7 +414,7 @@ export function I485QueuePosition({
               USCIS publishes no inventory for it.{" "}
               <a
                 href="/tools/priority-date-calculator"
-                className="font-bold underline underline-offset-2 hover:text-primary"
+                className="link"
               >
                 Track that cutoff
               </a>

@@ -222,7 +222,7 @@ export function UnpublishedEmployer({
             <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
               <Link
                 href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                className="link font-mono text-sm"
               >
                 {c.caseNumber}
               </Link>{" "}
@@ -277,7 +277,7 @@ export function UnpublishedEmployer({
             The{" "}
             <Link
               href="/perm-case-status"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               case-number lookup
             </Link>{" "}
@@ -290,7 +290,7 @@ export function UnpublishedEmployer({
             DOL works one national queue, oldest first, whoever filed the case.{" "}
             <Link
               href="/perm-processing-times"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               Processing times
             </Link>{" "}

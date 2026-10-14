@@ -73,7 +73,7 @@ function ClaimCard({ c }: { c: Claim }) {
   return (
     <li className="border border-border bg-card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <a href={`/perm-attorneys/${c.slug}`} className="font-heading text-lg font-bold underline decoration-primary decoration-2 underline-offset-2">
+        <a href={`/perm-attorneys/${c.slug}`} className="link font-heading text-lg">
           {c.firmName}
         </a>{" "}
         <span className="text-sm font-bold">{c.status.replace("_", " ")}</span>
@@ -190,7 +190,7 @@ function EditCard({ e }: { e: Edit }) {
   return (
     <li className="border border-border bg-card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <a href={`/perm-attorneys/${e.slug}`} className="font-heading text-lg font-bold underline decoration-primary decoration-2 underline-offset-2">
+        <a href={`/perm-attorneys/${e.slug}`} className="link font-heading text-lg">
           {e.firmName}
         </a>{" "}
         <span className="text-sm font-bold">{e.before ? "changes" : "first profile"}</span>

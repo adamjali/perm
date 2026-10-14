@@ -670,7 +670,7 @@ export function FlagCaseBrowser({
             decided ones come from DOL&apos;s quarterly files
             {disclosure?.latestDecision ? ` (through ${disclosure.latestDecision})` : ""}.
             Have the number? The{" "}
-            <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+            <Link href="/perm-case-status" className="link">
               status lookup
             </Link>{" "}
             asks DOL directly.
@@ -745,7 +745,7 @@ export function FlagCaseBrowser({
         Looking for everything one employer has filed?{" "}
         <Link
           href={`/case-search${query.employer ? `?q=${encodeURIComponent(query.employer)}` : ""}`}
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link"
         >
           Search every DOL program at once
         </Link>{" "}

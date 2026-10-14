@@ -4,125 +4,42 @@ import { cn } from "@/lib/utils";
 import { MoreText, firstSentence, plainText, wordCount } from "@/components/data/MoreText";
 
 /**
- * The figure plate: one drawing language for every chart on the site.
+ * The frame every chart on the site sits in: a 1px line, a title row naming
+ * what the drawing shows (and its scale or window), the drawing, then a
+ * caption saying what to take from it and where the numbers came from.
  *
- * The characteristic artifact of this subject is a federal document — the
- * ETA-9089, a quarterly disclosure appendix, the visa bulletin's monospaced
- * cutoff table. So the drawings are dressed as figures in one: a hairline
- * frame with corner ticks, a corner title block reading FIG 04 / DENIAL RATE
- * BY WAGE BAND, tracked mono labels, and a caption that states the source.
- *
- * This exists because the alternative is default chart library output on
- * white, indistinguishable from every other dashboard. A
- * plate makes a drawing look authored, and it makes ten different drawings
- * across ten pages read as one system rather than ten widgets.
- *
- * The number is not decoration. It is the figure's address, so a caption or
- * an article can refer to "Fig 04" and mean something.
+ * One frame for every chart makes ten drawings across ten pages read as one
+ * system. Long captions fold: past 28 words the first sentence shows and the
+ * rest opens on demand, every word still in the HTML.
  */
 
 export interface FigurePlateProps {
-  /** Two-digit figure number within its page, e.g. "04". */
-  n: string;
-  /** The title block's subject line. Rendered as tracked caps. */
+  /** What the drawing shows, in sentence case. */
   title: string;
-  /** Optional second line in the title block: the scale, the window, the unit. */
+  /** A second line beside the title: the scale, the window, the unit. */
   subject?: string;
   /** What the reader should take away. Sits under the drawing, in prose. */
   caption?: ReactNode;
   /** Where the numbers came from. Always name it. */
   source?: ReactNode;
-  tone?: "paper" | "ink";
   /** An anchor, for a page's list of parts to jump to. */
   id?: string;
   className?: string;
   children: ReactNode;
 }
 
-export function FigurePlate({
-  n,
-  title,
-  subject,
-  caption,
-  source,
-  tone = "paper",
-  id,
-  className,
-  children,
-}: FigurePlateProps) {
-  const ink = tone === "ink";
+export function FigurePlate({ title, subject, caption, source, id, className, children }: FigurePlateProps) {
   return (
-    <figure
-      id={id}
-      className={cn(
-        "relative m-0 border border-border",
-        ink ? "bg-foreground text-background" : "bg-card",
-        className,
-      )}
-    >
-      {/* Corner ticks. Four short rules that read as a drawing frame rather
-          than a card border, and cost nothing. */}
-      {(
-        [
-          "left-0 top-0 border-l-2 border-t-2",
-          "right-0 top-0 border-r-2 border-t-2",
-          "left-0 bottom-0 border-l-2 border-b-2",
-          "right-0 bottom-0 border-r-2 border-b-2",
-        ] as const
-      ).map((pos) => (
-        <span
-          key={pos}
-          aria-hidden="true"
-          className={cn(
-            "pointer-events-none absolute h-4 w-4",
-            ink ? "border-primary" : "border-foreground",
-            pos,
-          )}
-        />
-      ))}
-
-      {/* Title block, top-left, like a drawing sheet. */}
-      <div
-        className={cn(
-          "flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-5 py-3 sm:px-6",
-          ink ? "border-background/25" : "border-border",
-        )}
-      >
-        <span
-          className={cn(
-            "text-sm font-bold",
-            ink ? "text-primary-on-ink" : "text-muted-foreground",
-          )}
-        >
-          Fig {n}
-        </span>{" "}
-        <span className="text-sm font-bold">
-          {title}
-        </span>{" "}
-        {subject ? (
-          <span
-            className={cn(
-              "font-mono text-sm tracking-[0.08em]",
-              ink ? "text-background/70" : "text-muted-foreground",
-            )}
-          >
-            {subject}
-          </span>
-        ) : null}
+    <figure id={id} className={cn("m-0 border border-border bg-card", className)}>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-5 py-3 sm:px-6">
+        <span className="text-base font-semibold">{title}</span>{" "}
+        {subject ? <span className="text-sm text-muted-foreground">{subject}</span> : null}
       </div>
 
-      <div className="px-5 py-6 sm:px-6 sm:py-7">{children}</div>
+      <div className="px-5 py-6 sm:px-6">{children}</div>
 
       {caption || source ? (
-        <figcaption
-          className={cn(
-            "border-t px-5 py-3 text-sm leading-relaxed sm:px-6",
-            ink ? "border-background/25 text-background/70" : "border-border text-muted-foreground",
-          )}
-        >
-          {/* LONG CAPTIONS FOLD: over 28 words, the first
-              sentence shows and the rest opens on demand, every word still in
-              the HTML. Measured: plate captions ran to 75 words. */}
+        <figcaption className="border-t border-border px-5 py-3 text-sm leading-relaxed text-muted-foreground sm:px-6">
           {caption && wordCount(caption) > 28 ? (
             <MoreText gist={firstSentence(plainText(caption))} size="sm" className="max-w-none">
               <div>{caption}</div>
@@ -133,14 +50,7 @@ export function FigurePlate({
           {source ? (
             <>
               {caption ? " " : null}
-              <span
-                className={cn(
-                  "text-sm",
-                  ink ? "text-background/50" : "text-muted-foreground",
-                )}
-              >
-                {source}
-              </span>
+              <span className="text-sm text-muted-foreground">{source}</span>
             </>
           ) : null}
         </figcaption>
@@ -150,12 +60,12 @@ export function FigurePlate({
 }
 
 /**
- * A short tracked-caps label with a rule under it. The plate's own heading
- * device, for grouping inside a drawing without introducing an h-level.
+ * A short label with a rule under it, for grouping inside a drawing without
+ * introducing a heading level.
  */
 export function PlateLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-3 border-b border-border/40 pb-1.5 text-sm font-bold text-muted-foreground">
+    <p className="mb-3 border-b border-border pb-1.5 text-sm font-semibold text-muted-foreground">
       {children}
     </p>
   );

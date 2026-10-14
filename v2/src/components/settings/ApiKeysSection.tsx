@@ -394,11 +394,11 @@ export default function ApiKeysSection() {
             </p>
           </div>
           <p>
-            <Link href="/developers" className="font-bold underline underline-offset-4 hover:text-primary">
+            <Link href="/developers" className="link">
               Every endpoint, with examples
             </Link>
             {" · "}
-            <Link href="/api-terms" className="font-bold underline underline-offset-4 hover:text-primary">
+            <Link href="/api-terms" className="link">
               API terms
             </Link>
           </p>

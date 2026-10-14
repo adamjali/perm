@@ -26,7 +26,7 @@ export function WarnNoticeBand({ rows, pageName }: { rows: Notice[]; pageName: s
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Notices of a mass layoff or closing filed with the state under the WARN Act, as the state printed them,
         matched to this sponsor by name.{" "}
-        <Link href="/guides/employer-layoffs-and-your-perm" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+        <Link href="/guides/employer-layoffs-and-your-perm" className="link">
           What a layoff means for a PERM
         </Link>
         .
@@ -39,7 +39,7 @@ export function WarnNoticeBand({ rows, pageName }: { rows: Notice[]; pageName: s
             {r.employees !== null ? `, ${r.employees.toLocaleString("en-US")} ${r.employees === 1 ? "employee" : "employees"}` : ""}
             {r.county ? `, ${r.county}` : ""}
             {r.effectiveDate ? `, effective ${long(r.effectiveDate)}` : ""}.{" "}
-            <a href={r.sourceUrl} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">
+            <a href={r.sourceUrl} rel="noopener noreferrer" className="link">
               {STATE_NAME[r.state] ?? r.state} WARN report
             </a>{" "}
             {r.site ? <span className="block text-muted-foreground">{r.site}</span> : null}

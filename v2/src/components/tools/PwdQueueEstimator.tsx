@@ -67,7 +67,7 @@ export function PwdQueueEstimator({
           DOL&apos;s prevailing wage figures are being fetched. Until they land,{" "}
           <a
             href="https://flag.dol.gov/processingtimes"
-            className="font-bold underline underline-offset-2 hover:text-primary"
+            className="link"
             target="_blank"
             rel="noopener noreferrer"
           >

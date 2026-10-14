@@ -219,7 +219,7 @@ export default async function CohortPage({
               high. It isn&rsquo;t divided into a wait: the{" "}
               <Link
                 href="/tools/perm-timeline-calculator"
-                className="font-bold underline underline-offset-2 hover:text-primary"
+                className="link"
               >
                 timeline calculator
               </Link>{" "}
@@ -333,7 +333,7 @@ export default async function CohortPage({
             Every {label} filing is in DOL&apos;s published files. The{" "}
             <Link
               href="/perm-cases"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               case search
             </Link>{" "}
@@ -358,7 +358,7 @@ export default async function CohortPage({
           <p className="mt-4 text-base leading-relaxed">
             <Link
               href={`/perm-cases?filed=${month}#live`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               All {formatInt(liveMonth.total)} live {label} filings, pending and decided
             </Link>
@@ -733,7 +733,7 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
         })}
       </ol>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
-        <Link href={`/perm-cases?filed=${month}#live`} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+        <Link href={`/perm-cases?filed=${month}#live`} className="link">
           {`Every ${label} case, pending and decided`}
         </Link>
       </p>

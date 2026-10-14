@@ -73,7 +73,7 @@ export default function H1bLotteryCalculatorPage() {
       </section>
       <p className="mt-4 max-w-3xl text-base text-soft">
         Every year&apos;s registrations and selections, from USCIS&apos;s own table, are on{" "}
-        <Link href="/h1b-lottery-odds" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+        <Link href="/h1b-lottery-odds" className="link">
           H-1B lottery odds by year
         </Link>
         . Cap-exempt employers, such as universities and their affiliated nonprofits, file outside the lottery.

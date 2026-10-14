@@ -1282,7 +1282,7 @@ export function UnifiedCaseSearch({
             <p className="mb-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
               Where the employer&apos;s prevailing wage came from is a field of DOL&apos;s
               published LCA file alone, so setting it reads published LCAs only.{" "}
-              <Link href="/lca-wage-sources" className="font-semibold underline underline-offset-2">
+              <Link href="/lca-wage-sources" className="link">
                 How often each source is used
               </Link>
             </p>{" "}
@@ -1559,7 +1559,7 @@ export function UnifiedCaseSearch({
             Have a case number instead?{" "}
             <Link
               href="/perm-case-status"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               The status lookup
             </Link>{" "}
@@ -1643,7 +1643,7 @@ export function UnifiedCaseSearch({
                       {r.employerSlug && r.program === "perm" ? (
                         <Link
                           href={`/perm-employers/${r.employerSlug}`}
-                          className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                          className="link"
                         >
                           {r.employerName ?? "—"}
                         </Link>
@@ -1661,7 +1661,7 @@ export function UnifiedCaseSearch({
                       {r.firmSlug && r.firmName ? (
                         <Link
                           href={`/perm-attorneys/${r.firmSlug}`}
-                          className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                          className="link"
                         >
                           {r.firmName}
                         </Link>

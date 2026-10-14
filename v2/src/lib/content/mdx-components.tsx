@@ -287,7 +287,7 @@ export const mdxComponents: MDXComponents = {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
+          className="link"
           {...props}
         >
           {children}
@@ -297,7 +297,7 @@ export const mdxComponents: MDXComponents = {
     return (
       <Link
         href={href ?? "#"}
-        className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
+        className="link"
         {...props}
       >
         {children}

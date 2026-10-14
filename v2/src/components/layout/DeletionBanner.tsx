@@ -89,7 +89,7 @@ export default function DeletionBanner() {
             </span>
             <Link
               href="/settings"
-              className="underline font-medium hover:text-data-warn-ink whitespace-nowrap"
+              className="link hover:text-data-warn-ink whitespace-nowrap"
             >
               Go to settings
             </Link>{" "}

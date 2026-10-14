@@ -52,7 +52,7 @@ export function FirmProfileBlock({ firmName, profile }: { firmName: string; prof
           href={profile.website}
           rel="nofollow ugc noopener noreferrer"
           target="_blank"
-          className="inline-flex items-center gap-1 font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link inline-flex items-center gap-1"
         >
           {host(profile.website)}
           <ArrowSquareOutIcon aria-hidden className="size-4" />

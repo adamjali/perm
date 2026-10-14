@@ -51,7 +51,7 @@ export function QueueMonthChart({
         position is on the{" "}
         <a
           href="/perm-processing-times"
-          className="font-bold underline underline-offset-2 hover:text-primary"
+          className="link"
         >
           processing times page
         </a>

@@ -190,22 +190,22 @@ export default function TermsPage() {
               <li>
                 Use automated scripts, bots, or scrapers to access the Service,
                 except through the{" "}
-                <Link href="/developers" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                <Link href="/developers" className="link">
                   API
                 </Link>{" "}
                 within its limits and under the{" "}
-                <Link href="/api-terms" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                <Link href="/api-terms" className="link">
                   API Terms
                 </Link>
               </li>{" "}
               <li>
                 Extract the compiled dataset in bulk, or redistribute it as a
                 dataset, whether by automated means or otherwise (see{" "}
-                <a href="#intellectual-property" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                <a href="#intellectual-property" className="link">
                   Intellectual Property
                 </a>
                 ). The files on{" "}
-                <Link href="/open-data" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                <Link href="/open-data" className="link">
                   Open data
                 </Link>{" "}
                 are the exception: those you may download and reuse under
@@ -308,7 +308,7 @@ export default function TermsPage() {
             <p className="text-soft leading-relaxed mt-4">
               <strong>Two files are open.</strong> The visa bulletin archive and
               the history of DOL&rsquo;s processing-times readings, offered on{" "}
-              <Link href="/open-data" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              <Link href="/open-data" className="link">
                 Open data
               </Link>
               , are licensed under the Creative Commons Attribution 4.0
@@ -510,7 +510,7 @@ export default function TermsPage() {
             </ul>{" "}
             <p className="text-soft leading-relaxed mt-4">
               These providers don’t use your data to train AI models. See our{" "}
-              <a href="/privacy" className="text-primary hover:underline">
+              <a href="/privacy" className="link">
                 Privacy Policy
               </a>{" "}
               for detailed provider-specific data handling and retention policies.
@@ -558,7 +558,7 @@ export default function TermsPage() {
             <p className="text-soft leading-relaxed">
               By using PERM Tracker, you consent to the processing of your data
               by third-party AI service providers as described above and in our{" "}
-              <a href="/privacy" className="text-primary hover:underline">
+              <a href="/privacy" className="link">
                 Privacy Policy
               </a>
               . AI conversation data is retained for 90 days and then
@@ -589,7 +589,7 @@ export default function TermsPage() {
               interaction signals but doesn’t read the contents of form fields. We additionally enforce per-IP and per-email rate
               limits on these endpoints. By using the Service, you consent to
               this data collection as described in our{" "}
-              <a href="/privacy" className="text-primary hover:underline">
+              <a href="/privacy" className="link">
                 Privacy Policy
               </a>
               .
@@ -854,7 +854,7 @@ export default function TermsPage() {
                 <strong>Email:</strong>{" "}
                 <a
                   href="mailto:support@permtracker.app"
-                  className="text-primary hover:underline"
+                  className="link"
                 >
                   support@permtracker.app
                 </a>

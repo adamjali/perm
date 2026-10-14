@@ -144,7 +144,6 @@ export default async function SalaryExplorerPage() {
 
       {stateLadders.length > 0 ? (
         <FigurePlate
-          n="01"
           title="Every state on one axis"
           subject={`${stateLadders.length} states and territories with ${MIN_CASES_FOR_LADDER}+ certified cases`}
           caption={

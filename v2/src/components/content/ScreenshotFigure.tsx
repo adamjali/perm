@@ -76,7 +76,7 @@ export default function ScreenshotFigure({
           {caption && credit ? " " : null}
           {credit ? (
             creditHref ? (
-              <a href={creditHref} rel="noopener" target="_blank" className="underline underline-offset-4">
+              <a href={creditHref} rel="noopener" target="_blank" className="link">
                 {credit}
               </a>
             ) : (

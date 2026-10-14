@@ -161,14 +161,14 @@ export function OctoberNote() {
       <p className="mt-4 flex flex-col gap-2 text-base leading-relaxed text-soft sm:flex-row sm:gap-6">
         <a
           href={ARCHIVED_NOTICE_URL}
-          className="font-bold underline underline-offset-2 hover:text-primary"
+          className="link"
           rel="noopener"
         >
           DOL&rsquo;s announcement of 5 November 2025, archived
         </a>{" "}
         <a
           href={FLAG_NOTICE_URL}
-          className="font-bold underline underline-offset-2 hover:text-primary"
+          className="link"
           rel="noopener"
         >
           OFLC&rsquo;s resumption notice of 31 October 2025

@@ -189,7 +189,7 @@ export function VisaChooser({ className }: { className?: string }) {
                   <div className="mt-3 flex flex-wrap gap-x-5">
                     <Link
                       href={`/visa-bulletin/categories/${lineSlug(f.bulletin, country)}`}
-                      className="inline-flex min-h-[44px] items-center gap-2 font-semibold underline underline-offset-2 hover:text-primary"
+                      className="link inline-flex min-h-[44px] items-center gap-2"
                     >
                       This line in the bulletin
                       <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
@@ -197,7 +197,7 @@ export function VisaChooser({ className }: { className?: string }) {
                     {f.bulletin !== "EB1" ? (
                       <Link
                         href={`/tools/green-card-line?category=${encodeURIComponent(f.bulletin)}&country=${encodeURIComponent(country)}`}
-                        className="inline-flex min-h-[44px] items-center gap-2 font-semibold underline underline-offset-2 hover:text-primary"
+                        className="link inline-flex min-h-[44px] items-center gap-2"
                       >
                         People ahead in it
                         <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

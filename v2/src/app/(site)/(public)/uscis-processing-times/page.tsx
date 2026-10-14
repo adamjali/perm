@@ -286,7 +286,6 @@ export default async function UscisProcessingTimesPage() {
 
           <section id="green-card-forms" className="mt-12 scroll-mt-24">
             <FigurePlate
-              n="01"
               title="Median months to a decision"
               subject={`The employment green card's forms, ${quarterLabel(quarter.fy, quarter.quarter)}`}
               caption={
@@ -305,7 +304,6 @@ export default async function UscisProcessingTimesPage() {
           {i140 && i140.medianMonths !== null ? (
             <section id="median-or-80" className="mt-12 scroll-mt-24">
               <FigurePlate
-                n="02"
                 title="Two USCIS numbers for one form"
                 subject="The I-140: the quarterly median beside the processing-times page"
                 caption={
@@ -320,7 +318,7 @@ export default async function UscisProcessingTimesPage() {
                 source={
                   <>
                     Left: USCIS quarterly data, {quarterLabel(quarter.fy, quarter.quarter)}. Right:{" "}
-                    <a href={PROCESSING_TIMES_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                    <a href={PROCESSING_TIMES_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="link">
                       USCIS processing times
                     </a>{" "}
                     as of {formatAsOf(PROCESSING_TIMES_AS_OF)}.
@@ -356,7 +354,6 @@ export default async function UscisProcessingTimesPage() {
           {factsheetSeries.length > 0 && historical ? (
             <section id="history" className="mt-12 scroll-mt-24">
               <FigurePlate
-                n="03"
                 title="Median months, FY2016 to FY2024"
                 subject="The only history USCIS publishes for medians"
                 caption={
@@ -487,17 +484,17 @@ export default async function UscisProcessingTimesPage() {
         <h2 className="font-heading text-2xl font-bold">Read next</h2>{" "}
         <ul className="mt-4 space-y-2">
           <li>
-            <Link href="/guides/uscis-processing-times-median-vs-80-percent" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/guides/uscis-processing-times-median-vs-80-percent" className="link">
               Median or 80 percent: which USCIS processing time is which
             </Link>
           </li>{" "}
           <li>
-            <Link href="/tools/i140-calculator" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/tools/i140-calculator" className="link">
               The I-140 queue by category
             </Link>
           </li>{" "}
           <li>
-            <Link href="/i485-by-field-office" className="font-bold underline underline-offset-2 hover:text-primary">
+            <Link href="/i485-by-field-office" className="link">
               The I-485 by field office
             </Link>
           </li>

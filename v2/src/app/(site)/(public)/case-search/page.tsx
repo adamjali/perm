@@ -180,7 +180,7 @@ export default async function CaseSearchPage() {
               With a case number,{" "}
               <Link
                 href="/perm-case-status"
-                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                className="link"
               >
                 the status lookup
               </Link>{" "}

@@ -102,7 +102,7 @@ export default function PublicDataError({
                 href={s.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[44px] items-center gap-2 font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                className="link inline-flex min-h-[44px] items-center gap-2"
               >
                 {s.label}
                 <ArrowSquareOutIcon className="size-4" aria-hidden="true" />

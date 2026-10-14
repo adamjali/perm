@@ -306,7 +306,7 @@ export function StateLeaders({ states, className }: StateProfilesProps) {
           {r.employerKey ? (
             <a
               href={`/perm-employers/${r.employerKey}`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               {r.employer}
             </a>

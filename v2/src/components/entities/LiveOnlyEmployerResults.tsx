@@ -59,7 +59,7 @@ export function LiveOnlyEmployerResults({
           <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2.5">
             <Link
               href={`/perm-employers/${h.slug}`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="link"
             >
               {h.name}
             </Link>{" "}
@@ -80,7 +80,7 @@ export function LiveOnlyEmployerResults({
         middle finds nothing. If you have the case number,{" "}
         <Link
           href="/perm-case-status"
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link"
         >
           look the case up directly
         </Link>

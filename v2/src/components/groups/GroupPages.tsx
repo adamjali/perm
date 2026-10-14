@@ -158,7 +158,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
       {rows.length === 0 ? (
         <p className="mt-10 max-w-2xl text-base text-soft">
           This breakdown hasn&apos;t been built yet. DOL&apos;s case files are on the{" "}
-          <Link href="/case-search" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+          <Link href="/case-search" className="link">
             case search
           </Link>
           .
@@ -190,7 +190,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
                       >
                         <Link
                           href={`${path}/${r.slug}`}
-                          className="col-span-2 truncate text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary sm:col-span-1"
+                          className="link col-span-2 truncate text-sm sm:col-span-1"
                         >
                           {r.label}
                         </Link>{" "}

@@ -188,7 +188,6 @@ export function FieldPositionPlate({
   const { reliability, inCohort } = standing;
   return (
     <FigurePlate
-      n={n}
       title="Position in the field"
       subject={`${formatInt(dist.cohort)} ${plural} with ${dist.minDecided}+ decided`}
       caption={

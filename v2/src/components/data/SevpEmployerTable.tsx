@@ -36,7 +36,7 @@ function RowsTable({ list, rows, top }: { list: SevpList; rows: SevpList["rows"]
               <th scope="row" className="px-3 py-2 font-normal">
                 <Link
                   href={`/perm-employers?q=${encodeURIComponent(r.employer)}`}
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   {r.employer}
                 </Link>{" "}

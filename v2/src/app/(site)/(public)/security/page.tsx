@@ -212,7 +212,7 @@ export default function SecurityPage() {
                   by PERM Tracker, wasn’t directed to you by us, and doesn’t reflect our product or services. You may
                   safely delete the email. You won’t receive further messages from us unless you choose to sign up for
                   an account directly at{" "}
-                  <Link href="/" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text">
+                  <Link href="/" className="link">
                     permtracker.app
                   </Link>
                   .
@@ -233,7 +233,7 @@ export default function SecurityPage() {
         Questions about this page go to{" "}
         <a
           href="mailto:security@permtracker.app"
-          className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text"
+          className="link"
         >
           security@permtracker.app
         </a>

@@ -135,7 +135,7 @@ export default async function I140CalculatorPage() {
             <p className="mt-2 text-base leading-relaxed text-soft">
               An approved I-140 is what lets H-1B status continue past six years, in steps of up to three years, when no
               visa number is available (8 CFR 214.2(h)(13)(iii)(E)).{" "}
-              <Link href="/tools/h1b-six-year-limit" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              <Link href="/tools/h1b-six-year-limit" className="link">
                 Work out the date
               </Link>
             </p>
@@ -146,7 +146,7 @@ export default async function I140CalculatorPage() {
               After 180 days of approval, the employer withdrawing the I-140 doesn&apos;t undo it (8 CFR
               205.1(a)(3)(iii)(C)), and the priority date carries to a new petition (8 CFR 204.5(e)). Premium
               processing starts that clock sooner.{" "}
-              <Link href="/tools/priority-date-retention" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              <Link href="/tools/priority-date-retention" className="link">
                 Check a priority date
               </Link>
             </p>
@@ -156,7 +156,7 @@ export default async function I140CalculatorPage() {
             <p className="mt-2 text-base leading-relaxed text-soft">
               If the bulletin reaches the date before a regular I-140 would be decided, premium can be the difference
               between filing the green card application this month or later.{" "}
-              <Link href="/tools/priority-date-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              <Link href="/tools/priority-date-calculator" className="link">
                 Is it current?
               </Link>
             </p>

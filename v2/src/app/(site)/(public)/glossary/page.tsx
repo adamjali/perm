@@ -93,7 +93,7 @@ export default function GlossaryPage() {
           green card, then A to Z. The status words DOL prints on a case have{" "}
           <Link
             href="/perm-case-statuses"
-            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            className="link"
           >
             their own page
           </Link>
@@ -179,7 +179,7 @@ export default function GlossaryPage() {
                           <a
                             href={t.cite.href}
                             rel="noopener noreferrer"
-                            className="font-mono text-sm font-bold underline underline-offset-2 hover:text-primary"
+                            className="link font-mono text-sm"
                           >
                             {t.cite.label}
                           </a>
@@ -189,7 +189,7 @@ export default function GlossaryPage() {
                             {" "}
                             <Link
                               href={s.href}
-                              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                              className="link"
                             >
                               {s.label}
                             </Link>

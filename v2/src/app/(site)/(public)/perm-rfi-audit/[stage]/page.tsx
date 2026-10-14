@@ -280,7 +280,7 @@ export default async function StagePage({
                   <li className="grid min-h-11 grid-cols-[5.5rem_1fr_3.5rem] items-center gap-2 [&>*]:min-w-0 sm:gap-3">
                     <Link
                       href={`/perm-queue/${m.month}`}
-                      className="truncate text-sm underline underline-offset-2 hover:text-primary"
+                      className="link truncate text-sm"
                     >
                       {m.month}
                     </Link>{" "}
@@ -322,7 +322,7 @@ export default async function StagePage({
               month by month on{" "}
               <Link
                 href="/perm-queue"
-                className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                className="link"
               >
                 the backlog board
               </Link>{" "}
@@ -342,7 +342,7 @@ export default async function StagePage({
               this page is rebuilt daily.{" "}
               <Link
                 href="/perm-rfi-audit"
-                className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                className="link"
               >
                 The other stages
               </Link>{" "}
@@ -369,14 +369,14 @@ export default async function StagePage({
               <p className="mt-4 text-sm text-muted-foreground">
                 <a
                   href={`/api/stage-cases?stage=${encodeURIComponent(stage)}&format=csv`}
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   Download all {formatInt(cases)} as CSV
                 </a>{" "}
                 or{" "}
                 <Link
                   href={`/case-search?stage=${encodeURIComponent(stage)}`}
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   open this stage in case search
                 </Link>
@@ -397,7 +397,7 @@ export default async function StagePage({
                       {i > 0 ? ", " : ""}
                       <Link
                         href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                        className="underline underline-offset-2 hover:text-primary"
+                        className="link"
                       >
                         {c.caseNumber}
                       </Link>
