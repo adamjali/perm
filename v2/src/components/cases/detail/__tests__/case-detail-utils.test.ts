@@ -5,7 +5,6 @@ import {
   fmtTimestamp,
   fmtCurrency,
   computeWindowStatus,
-  STAGE_ACCENT_COLORS,
 } from "../case-detail-utils";
 
 // FORMATTERS
@@ -68,26 +67,6 @@ describe("fmtCurrency", () => {
 
   it("handles negative values", () => {
     expect(fmtCurrency(-1000)).toBe("-$1,000");
-  });
-});
-
-// STAGE_ACCENT_COLORS
-
-describe("STAGE_ACCENT_COLORS", () => {
-  it("has all 5 stages", () => {
-    expect(Object.keys(STAGE_ACCENT_COLORS)).toEqual([
-      "pwd",
-      "recruitment",
-      "eta9089",
-      "i140",
-      "closed",
-    ]);
-  });
-
-  it("uses CSS variables", () => {
-    for (const value of Object.values(STAGE_ACCENT_COLORS)) {
-      expect(value).toMatch(/^var\(--stage-/);
-    }
   });
 });
 

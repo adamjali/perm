@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { ArrowCounterClockwiseIcon as RotateCcw, CheckIcon, CheckCircleIcon as CheckCircle2, ClipboardTextIcon, ClockIcon, CopyIcon, FloppyDiskIcon as Save, PencilIcon, XIcon, XCircleIcon } from "@phosphor-icons/react";
 import {
   generateRecruitmentResultsText,
@@ -272,29 +271,7 @@ export function RecruitmentResultsCard({
                   className="icon-btn"
                   title={isCopied ? "Copied" : "Copy to clipboard"}
                 >
-                  <AnimatePresence initial={false} mode="wait">
-                    {isCopied ? (
-                      <motion.span
-                        key="check"
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.5, opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <CheckIcon className="h-3.5 w-3.5 text-primary" />
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="copy"
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.5, opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <CopyIcon className="h-3.5 w-3.5" />
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                  {isCopied ? <CheckIcon className="size-4 text-primary-text" /> : <CopyIcon className="size-4" />}
                 </button>
                 <button
                   type="button"
@@ -376,7 +353,7 @@ export function RecruitmentResultsCard({
               ref={textareaRef}
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
-              className="w-full min-w-0 min-h-[200px] bg-transparent text-sm leading-relaxed resize-none outline-none font-mono"
+              className="w-full min-w-0 min-h-[200px] bg-transparent text-sm leading-relaxed resize-none outline-none"
               placeholder="Enter custom recruitment results text..."
             />
           ) : (
@@ -387,7 +364,7 @@ export function RecruitmentResultsCard({
         </div>
 
         {/* ── Compact Summary ── */}
-        <div className="field-grid" style={{ padding: 0 }}>
+        <div className="field-grid">
           <div className="field-cell">
             <div className="fc-label">Mandatory steps</div>
             <div className="fc-val flex items-center gap-1.5">
@@ -414,13 +391,13 @@ export function RecruitmentResultsCard({
           )}
           <div className="field-cell">
             <div className="fc-label">Applicants</div>
-            <div className="fc-val mono">
+            <div className="fc-val num">
               {caseData.recruitmentApplicantsCount || "-"}
             </div>
           </div>
           <div className="field-cell">
             <div className="fc-label">Recruitment period</div>
-            <div className="fc-val mono">
+            <div className="fc-val num">
               {status.recruitmentEndDate
                 ? `${fmtISOShort(caseData.recruitmentStartDate)} to ${fmtISOShort(status.recruitmentEndDate)}`
                 : fmtISODate(caseData.recruitmentStartDate)}

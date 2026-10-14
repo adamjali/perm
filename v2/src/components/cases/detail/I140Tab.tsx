@@ -1,11 +1,11 @@
 "use client";
 
-import { motion } from "motion/react";
+import { ToneBadge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ClockIcon, ShieldIcon } from "@phosphor-icons/react";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, tabContainerVariants, fmtISODate, computeWindowStatus } from "./case-detail-utils";
+import { fmtISODate, computeWindowStatus } from "./case-detail-utils";
 import { WindowCard } from "./WindowCard";
 import { ResponseEntryGrid } from "./ResponseEntryGrid";
 
@@ -29,12 +29,7 @@ export function I140Tab({ caseData }: I140TabProps) {
   );
 
   return (
-    <motion.div
-      initial={false}
-      animate="visible"
-      variants={tabContainerVariants}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* I-140 Filing Window Card */}
       {ws && (
         <WindowCard
@@ -47,7 +42,7 @@ export function I140Tab({ caseData }: I140TabProps) {
       )}
 
       {/* I-140 Petition Card */}
-      <motion.div variants={itemVariants}>
+      <div>
         <Link href={buildEditUrl(caseData._id, "i140FilingDate")} className="detail-card-link" title="Edit in case form">
           <div className="detail-card">
             <div className="detail-card-head ch-i140">
@@ -60,7 +55,7 @@ export function I140Tab({ caseData }: I140TabProps) {
 
             {/* Filing Details */}
             <div className="detail-subhead">Filing details</div>
-            <div className="field-grid" style={{ padding: 0, borderTop: "2px solid var(--manila-dark)" }}>
+            <div className="field-grid" style={{ padding: 0, borderTop: "1px solid var(--border)" }}>
               <div className="field-cell">
                 <div className="fc-label">Category</div>
                 <div className={`fc-val ${!caseData.i140Category ? "dim" : ""}`}>
@@ -69,7 +64,7 @@ export function I140Tab({ caseData }: I140TabProps) {
               </div>
               <div className="field-cell">
                 <div className="fc-label">Filing date</div>
-                <div className={`fc-val mono ${!isFiled ? "dim" : ""}`}>{fmtISODate(caseData.i140FilingDate)}</div>
+                <div className={`fc-val num ${!isFiled ? "dim" : ""}`}>{fmtISODate(caseData.i140FilingDate)}</div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Premium processing</div>
@@ -80,11 +75,11 @@ export function I140Tab({ caseData }: I140TabProps) {
             </div>
 
             {/* Receipt & Processing */}
-            <div className="detail-subhead" style={{ borderTop: "3px solid var(--border)" }}>Receipt &amp; Processing</div>
-            <div className="field-grid" style={{ padding: 0, borderTop: "2px solid var(--manila-dark)" }}>
+            <div className="detail-subhead" style={{ borderTop: "1px solid var(--border)" }}>Receipt &amp; Processing</div>
+            <div className="field-grid" style={{ padding: 0, borderTop: "1px solid var(--border)" }}>
               <div className="field-cell">
                 <div className="fc-label">Receipt date</div>
-                <div className={`fc-val mono ${!caseData.i140ReceiptDate ? "dim" : ""}`}>{fmtISODate(caseData.i140ReceiptDate)}</div>
+                <div className={`fc-val num ${!caseData.i140ReceiptDate ? "dim" : ""}`}>{fmtISODate(caseData.i140ReceiptDate)}</div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Receipt number</div>
@@ -101,31 +96,22 @@ export function I140Tab({ caseData }: I140TabProps) {
             </div>
 
             {/* Outcome */}
-            <div className="detail-subhead" style={{ borderTop: "3px solid var(--border)" }}>Outcome</div>
-            <div className="field-grid" style={{ padding: 0, borderTop: "2px solid var(--manila-dark)" }}>
+            <div className="detail-subhead" style={{ borderTop: "1px solid var(--border)" }}>Outcome</div>
+            <div className="field-grid" style={{ padding: 0, borderTop: "1px solid var(--border)" }}>
               <div className="field-cell">
                 <div className="fc-label">Approval date</div>
-                <div className={`fc-val mono ${!isApproved ? "dim" : ""}`}>{fmtISODate(caseData.i140ApprovalDate)}</div>
+                <div className={`fc-val num ${!isApproved ? "dim" : ""}`}>{fmtISODate(caseData.i140ApprovalDate)}</div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Denial date</div>
-                <div className={`fc-val mono ${!isDenied ? "dim" : ""}`}>{fmtISODate(caseData.i140DenialDate)}</div>
+                <div className={`fc-val num ${!isDenied ? "dim" : ""}`}>{fmtISODate(caseData.i140DenialDate)}</div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Status</div>
                 <div className="fc-val">
-                  <span
-                    className="font-mono text-sm font-bold px-2 py-0.5 border border-border"
-                    style={
-                      isApproved
-                        ? { background: "var(--primary)", color: "var(--primary-foreground)" }
-                        : isDenied
-                          ? { background: "var(--destructive)", color: "var(--destructive-foreground)" }
-                          : { background: "var(--muted)" }
-                    }
-                  >
+                  <ToneBadge tone={isApproved ? "good" : isDenied ? "bad" : "flat"}>
                     {statusLabel}
-                  </span>
+                  </ToneBadge>
                 </div>
               </div>
             </div>
@@ -145,7 +131,7 @@ export function I140Tab({ caseData }: I140TabProps) {
             )}
           </div>
         </Link>
-      </motion.div>
+      </div>
 
       {/* RFE Section */}
       <Link href={buildEditSectionUrl(caseData._id, "i140")} className="detail-card-link" title="Edit in case form">
@@ -157,6 +143,6 @@ export function I140Tab({ caseData }: I140TabProps) {
           emptyDescription="Entries will appear here if USCIS issues a request during I-140 review."
         />
       </Link>
-    </motion.div>
+    </div>
   );
 }

@@ -3,8 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
-import { ArrowRightIcon, BriefcaseIcon, CalendarMinusIcon, CalendarPlusIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, CopyIcon, FilePlusIcon, FileTextIcon, FlagIcon, FloppyDiskIcon as Save, PencilIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
+import { ArrowCircleRightIcon, ArrowRightIcon, BriefcaseIcon, CaretDownIcon, CheckIcon, CopyIcon, FilePlusIcon, FlagIcon, FloppyDiskIcon as Save, PencilIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { ConvexError } from "convex/values";
 import type { Id } from "@convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
@@ -30,7 +29,7 @@ import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, tabContainerVariants, fmtISODate, fmtCurrency } from "./case-detail-utils";
+import { fmtISODate, fmtCurrency } from "./case-detail-utils";
 import { CharLimit } from "@/components/ui/char-limit";
 import { JOB_DESCRIPTION_MAX_LENGTH } from "@/components/job-description/shared";
 
@@ -48,9 +47,6 @@ interface OverviewTabProps {
   caseData: CaseDetailData;
   caseId: Id<"cases">;
   isMobile: boolean;
-  isOnTimeline: boolean;
-  isUpdating: boolean;
-  onToggleTimeline: () => void;
   onSaveRecruitmentText?: (text: string | null) => Promise<void>;
   jobDescProps?: JobDescEditProps;
 }
@@ -59,9 +55,6 @@ export function OverviewTab({
   caseData,
   caseId,
   isMobile,
-  isOnTimeline,
-  isUpdating,
-  onToggleTimeline,
   onSaveRecruitmentText,
   jobDescProps,
 }: OverviewTabProps) {
@@ -211,120 +204,84 @@ export function OverviewTab({
   const showJobDescCard = hasJobDesc || !!jobDescProps;
 
   return (
-    <motion.div
-      initial={false}
-      animate="visible"
-      variants={tabContainerVariants}
-      className="space-y-6"
-    >
+    <div className="space-y-8">
       {/* Next Up — expandable with quick-edit */}
       {caseData.caseStatus !== "closed" && (() => {
         const nextAction = calculateNextAction(caseData);
         const nextDeadline = calculateNextDeadline(caseData);
         if (!nextAction) return null;
         const canExpand = isEditableAction(nextAction.action);
-        const needsCaution = nextAction.urgency === "urgent" || nextAction.urgency === "overdue";
         const navigateUrl = isComplexAction(nextAction.action)
           ? buildEditSectionUrl(caseId, "recruitment")
           : null;
+        const late = nextDeadline ? nextDeadline.daysUntil < 0 : false;
+        const urgencyClass = !nextDeadline
+          ? ""
+          : nextDeadline.daysUntil <= 14
+            ? "text-destructive"
+            : nextDeadline.daysUntil <= 30
+              ? "text-data-warn-ink"
+              : "";
+        const isInteractive = !!navigateUrl || canExpand;
+        const mainContent = (
+          <>
+            <span className="next-up-icon" aria-hidden="true">
+              <ArrowCircleRightIcon className="size-6" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="next-up-label block">Next up</span>
+              <h3>{nextAction.action}</h3>{" "}
+              <p>{nextAction.description}</p>
+            </span>
+            {canExpand ? (
+              <CaretDownIcon
+                className={cn("size-5 shrink-0 text-muted-foreground transition-transform", isNextUpExpanded && "rotate-180")}
+                aria-hidden="true"
+              />
+            ) : navigateUrl ? (
+              <ArrowRightIcon className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            ) : null}
+          </>
+        );
         return (
-          <motion.div variants={itemVariants}>
-            <div className="next-up-caution">
-              {/* Caution tape only when the step is pressing; a wait is not a hazard. */}
-              {needsCaution && <div className="hazard-strip-yellow" aria-hidden="true" />}
-
-              <div className="next-up">
-                {(() => {
-                  const isInteractive = !!navigateUrl || canExpand;
-                  const mainContent = (
-                    <>
-                      <div className="next-up-icon">
-                        <FileTextIcon className="h-5 w-5" />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div className="next-up-label">Next up</div>
-                        <h3>{nextAction.action}</h3>{" "}
-                        <p>{nextAction.description}</p>
-                      </div>
-                      {canExpand && (
-                        <motion.div
-                          animate={{ rotate: isNextUpExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="shrink-0"
-                          aria-hidden="true"
-                        >
-                          <CaretDownIcon className="h-5 w-5 text-muted-foreground" />
-                        </motion.div>
-                      )}
-                      {navigateUrl && !canExpand && (
-                        <ArrowRightIcon className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden="true" />
-                      )}
-                    </>
-                  );
-                  if (!isInteractive) {
-                    return <div className="next-up-main">{mainContent}</div>;
-                  }
-                  return (
-                    <button
-                      type="button"
-                      className="next-up-main cursor-pointer w-full text-left bg-transparent border-0 m-0 font-[inherit] text-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                      onClick={
-                        navigateUrl
-                          ? () => router.push(navigateUrl)
-                          : () => setIsNextUpExpanded((v) => !v)
-                      }
-                      aria-expanded={canExpand ? isNextUpExpanded : undefined}
-                    >
-                      {mainContent}
-                    </button>
-                  );
-                })()}
-                {nextDeadline && (() => {
-                  const urgencyColor =
-                    nextDeadline.daysUntil <= 14 ? "var(--destructive-text)"
-                    : nextDeadline.daysUntil <= 30 ? "var(--data-warn-ink)"
-                    : "var(--primary-text)";
-                  return (
-                    <div className="next-up-stat">
-                      <div className="big" style={{ color: urgencyColor }}>{Math.abs(nextDeadline.daysUntil)}</div>
-                      <div className="label">
-                        {nextDeadline.daysUntil < 0
-                          ? `${Math.abs(nextDeadline.daysUntil) === 1 ? "day" : "days"} late: ${nextDeadline.label}`
-                          : nextDeadline.label}
-                      </div>
-                      <div className="date">{fmtISODate(nextDeadline.date)}</div>
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Expanded quick-edit */}
-              <AnimatePresence initial={false}>
-                {isNextUpExpanded && canExpand && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="overflow-hidden border-t border-border bg-card"
-                  >
-                    <div className="p-4">
-                      <QuickEditFields
-                        actionName={nextAction.action}
-                        caseId={caseId}
-                        caseData={caseData}
-                        onComplete={() => setIsNextUpExpanded(false)}
-                        onNavigateToForm={() => {}}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Caution tape — bottom */}
-              {needsCaution && <div className="hazard-strip-yellow" aria-hidden="true" />}
+          <section aria-label="Next up">
+            <div className="next-up">
+              {isInteractive ? (
+                <button
+                  type="button"
+                  className="next-up-main w-full cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  onClick={navigateUrl ? () => router.push(navigateUrl) : () => setIsNextUpExpanded((v) => !v)}
+                  aria-expanded={canExpand ? isNextUpExpanded : undefined}
+                >
+                  {mainContent}
+                </button>
+              ) : (
+                <div className="next-up-main">{mainContent}</div>
+              )}
+              {nextDeadline ? (
+                <div className="next-up-stat">
+                  <div className={cn("big", urgencyClass)}>{Math.abs(nextDeadline.daysUntil)}</div>
+                  <div className="label">
+                    {late
+                      ? `${Math.abs(nextDeadline.daysUntil) === 1 ? "day" : "days"} late: ${nextDeadline.label}`
+                      : `${nextDeadline.daysUntil === 1 ? "day" : "days"} until ${nextDeadline.label}`}
+                  </div>
+                  <div className="date">{fmtISODate(nextDeadline.date)}</div>
+                </div>
+              ) : null}
             </div>
-          </motion.div>
+            {isNextUpExpanded && canExpand ? (
+              <div className="border border-t-0 border-border bg-card p-4">
+                <QuickEditFields
+                  actionName={nextAction.action}
+                  caseId={caseId}
+                  caseData={caseData}
+                  onComplete={() => setIsNextUpExpanded(false)}
+                  onNavigateToForm={() => {}}
+                />
+              </div>
+            ) : null}
+          </section>
         );
       })()}
 
@@ -333,9 +290,9 @@ export function OverviewTab({
         {/* Sidebar: Vertical Timeline */}
         {!isMobile && (
           <div className="space-y-6">
-            <motion.div variants={itemVariants}>
+            <div>
               <VerticalTimeline caseData={caseData} />
-            </motion.div>
+            </div>
           </div>
         )}
 
@@ -343,7 +300,7 @@ export function OverviewTab({
         <div className="space-y-6">
           {/* PWD + Quick Stats side by side (mockup: 1.8fr 1fr) */}
           <div className="grid [&>*]:min-w-0 grid-cols-1 gap-6 md:grid-cols-[1.8fr_1fr]">
-            <motion.div variants={itemVariants}>
+            <div>
               <Link href={buildEditUrl(caseData._id, "pwdFilingDate")} className="detail-card-link" title="Edit in case form">
                 <div className="detail-card">
                   <div className="detail-card-head ch-pwd">
@@ -355,7 +312,7 @@ export function OverviewTab({
                       <span className="head-badge">Complete</span>
                     )}
                   </div>
-                  <div className="field-grid" style={{ padding: 0 }}>
+                  <div className="field-grid">
                     <div className="field-cell">
                       <div className="fc-label">PWD Case #</div>
                       <div className={`fc-val fc-val-text mono ${!caseData.pwdCaseNumber ? "dim" : ""}`} title={caseData.pwdCaseNumber || undefined}>
@@ -364,13 +321,13 @@ export function OverviewTab({
                     </div>
                     <div className="field-cell">
                       <div className="fc-label">Filed</div>
-                      <div className={`fc-val mono ${!caseData.pwdFilingDate ? "dim" : ""}`}>
+                      <div className={`fc-val num ${!caseData.pwdFilingDate ? "dim" : ""}`}>
                         {fmtISODate(caseData.pwdFilingDate)}
                       </div>
                     </div>
                     <div className="field-cell">
                       <div className="fc-label">Determined</div>
-                      <div className={`fc-val mono ${!caseData.pwdDeterminationDate ? "dim" : ""}`}>
+                      <div className={`fc-val num ${!caseData.pwdDeterminationDate ? "dim" : ""}`}>
                         {fmtISODate(caseData.pwdDeterminationDate)}
                       </div>
                     </div>
@@ -390,9 +347,9 @@ export function OverviewTab({
                     </div>
                     <div className="field-cell">
                       <div className="fc-label">Expires</div>
-                      <div className={`fc-val mono ${!caseData.pwdExpirationDate ? "dim" : ""}`}>
+                      <div className={`fc-val num ${!caseData.pwdExpirationDate ? "dim" : ""}`}>
                         {caseData.pwdExpirationDate ? (
-                          <span style={{ color: "var(--data-warn-ink)" }}>
+                          <span className="text-data-warn-ink">
                             {fmtISODate(caseData.pwdExpirationDate)}
                           </span>
                         ) : "-"}
@@ -401,18 +358,18 @@ export function OverviewTab({
                   </div>
                 </div>
               </Link>
-            </motion.div>
+            </div>
 
             {!isMobile && (
-              <motion.div variants={itemVariants}>
+              <div>
                 <QuickStatsPanel caseData={caseData} />
-              </motion.div>
+              </div>
             )}
           </div>
 
           {/* Job Description */}
           {showJobDescCard && (
-            <motion.div variants={itemVariants}>
+            <div>
               <div className="detail-card">
                 <div className="detail-card-head ch-yellow">
                   <span className="flex items-center gap-1.5">
@@ -445,7 +402,7 @@ export function OverviewTab({
 
                 {isEditingJobDesc && jobDescProps ? (
                   /* Edit mode */
-                  <div className="detail-card-body" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div className="detail-card-body flex flex-col gap-3">
                     {/* Template selector */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <TemplateSelector
@@ -472,7 +429,7 @@ export function OverviewTab({
                           value={editPositionTitle}
                           onChange={(e) => setEditPositionTitle(e.target.value)}
                           placeholder="e.g., Software Engineer"
-                          className="w-full min-w-0 border border-input bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
+                          className="w-full min-w-0 border border-input bg-card px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         />
                       </CharLimit>
                     </div>
@@ -492,77 +449,46 @@ export function OverviewTab({
                           onChange={(e) => setEditDescription(e.target.value)}
                           placeholder="Enter job requirements..."
                           rows={8}
-                          className="w-full min-w-0 border border-input bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
+                          className="w-full min-w-0 resize-y border border-input bg-card px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         />
                       </CharLimit>
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-dashed border-border">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
                       <div className="flex items-center gap-2">
-                        {hasJobDesc && (
-                          <button
-                            type="button"
-                            onClick={clearJobDesc}
-                            disabled={isClearingJobDesc}
-                            className="font-heading flex items-center gap-1 px-3 py-1.5 border border-border text-sm font-bold text-destructive hover:bg-destructive hover:text-white hover:border-destructive transition-colors disabled:text-muted-foreground"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            {isClearingJobDesc ? "Clearing..." : "Clear"}
-                          </button>
-                        )}
-                        <button
-                          type="button"
+                        {hasJobDesc ? (
+                          <Button variant="ghost" size="sm" className="text-destructive" onClick={clearJobDesc} loading={isClearingJobDesc} loadingText="Clearing...">
+                            <Trash2 aria-hidden="true" />
+                            Clear
+                          </Button>
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={handleSaveAsTemplate}
-                          disabled={isSavingTemplate || !editPositionTitle.trim() || !editDescription.trim()}
-                          className={cn(
-                            "font-heading flex items-center gap-1 px-3 py-1.5 border text-sm font-bold transition-colors disabled:text-muted-foreground",
-                            isExistingTemplateName
-                              ? "border-data-warn hover:bg-data-warn hover:text-primary-foreground"
-                              : "border-border hover:border-border hover:bg-accent"
-                          )}
+                          disabled={!editPositionTitle.trim() || !editDescription.trim()}
+                          loading={isSavingTemplate}
+                          loadingText={isExistingTemplateName ? "Updating..." : "Saving..."}
                         >
-                          {isSavingTemplate ? (
-                            <CircleNotchIcon className="h-3 w-3 animate-spin" />
-                          ) : isExistingTemplateName ? (
-                            <Save className="h-3 w-3" />
-                          ) : (
-                            <FilePlusIcon className="h-3 w-3" />
-                          )}
-                          {isSavingTemplate
-                            ? (isExistingTemplateName ? "Updating..." : "Saving...")
-                            : (isExistingTemplateName ? "Update template" : "Save template")}
-                        </button>
+                          {isExistingTemplateName ? <Save aria-hidden="true" /> : <FilePlusIcon aria-hidden="true" />}
+                          {isExistingTemplateName ? "Update template" : "Save as template"}
+                        </Button>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={cancelEditJobDesc}
-                          disabled={isSavingJobDesc}
-                          className="font-heading px-3 py-1.5 border border-border text-sm font-bold hover:bg-muted transition-colors"
-                        >
+                        <Button variant="outline" size="sm" onClick={cancelEditJobDesc} disabled={isSavingJobDesc}>
                           Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={saveJobDesc}
-                          disabled={isSavingJobDesc || !editDescription.trim()}
-                          className="font-heading px-3 py-1.5 border border-black bg-primary text-primary-foreground text-sm font-bold transition-colors disabled:text-muted-foreground"
-                        >
-                          {isSavingJobDesc ? (
-                            <span className="flex items-center gap-1">
-                              <CircleNotchIcon className="h-3 w-3 animate-spin" />
-                              Saving...
-                            </span>
-                          ) : "Save"}
-                        </button>
+                        </Button>
+                        <Button size="sm" onClick={saveJobDesc} disabled={!editDescription.trim()} loading={isSavingJobDesc} loadingText="Saving...">
+                          Save
+                        </Button>
                       </div>
                     </div>
                   </div>
                 ) : (
                   /* Read-only mode */
                   <>
-                    <div className="field-grid" style={{ padding: 0 }}>
+                    <div className="field-grid">
                       <div className="field-cell">
                         <div className="fc-label">Position</div>
                         <div className={`fc-val fc-val-text ${!caseData.jobDescriptionPositionTitle ? "dim" : ""}`} title={caseData.jobDescriptionPositionTitle || undefined}>
@@ -585,23 +511,21 @@ export function OverviewTab({
                       </div>
                     </div>
                     {caseData.jobDescription ? (
-                      <div className="detail-card-body" style={{ borderTop: "3px solid var(--border)" }}>
-                        <div style={{ border: "3px solid var(--border)", background: "var(--card)", padding: 16 }}>
-                          <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "", letterSpacing: "0.06em", color: "var(--muted-foreground)", marginBottom: 8 }}>Requirements</div>
-                          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, padding: 0, margin: 0, maxHeight: 300, overflow: "hidden", position: "relative" }}>
-                            {caseData.jobDescription.split("\n").filter(Boolean).slice(0, 20).map((line, i) => {
-                              const text = line.replace(/^[-•*]\s*/, "");
-                              return (
-                                <li key={i} className="req-item">
-                                  <span className="req-bullet">&gt;</span> {text.length > 500 ? text.slice(0, 500) + "..." : text}
-                                </li>
-                              );
-                            })}
-                            {caseData.jobDescription.split("\n").filter(Boolean).length > 20 && (
-                              <li className="req-item" style={{ color: "var(--muted-foreground)", fontStyle: "italic" }}>...and more</li>
-                            )}
-                          </ul>
-                        </div>
+                      <div className="detail-card-body">
+                        <p className="text-sm font-semibold">Requirements</p>
+                        <ul className="mt-2 space-y-1.5">
+                          {caseData.jobDescription.split("\n").filter(Boolean).slice(0, 20).map((line, i) => {
+                            const text = line.replace(/^[-•*]\s*/, "");
+                            return (
+                              <li key={i} className="req-item">
+                                <span className="req-bullet" aria-hidden="true">·</span> {text.length > 500 ? text.slice(0, 500) + "..." : text}
+                              </li>
+                            );
+                          })}
+                          {caseData.jobDescription.split("\n").filter(Boolean).length > 20 ? (
+                            <li className="req-item text-muted-foreground">And more, in the edit form</li>
+                          ) : null}
+                        </ul>
                       </div>
                     ) : (
                       <div className="detail-card-body">
@@ -616,17 +540,17 @@ export function OverviewTab({
                   </>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Recruitment Results — only after all recruitment is complete */}
           {onSaveRecruitmentText && isRecruitmentComplete(caseData) && (
-            <motion.div variants={itemVariants}>
+            <div>
               <RecruitmentResultsCard
                 caseData={caseData}
                 onSaveCustomText={onSaveRecruitmentText}
               />
-            </motion.div>
+            </div>
           )}
         </div>
       </div>
@@ -634,46 +558,23 @@ export function OverviewTab({
       {/* Mobile-only: Timeline + QuickStats below main content */}
       {isMobile && (
         <div className="space-y-6">
-          <motion.div variants={itemVariants}>
+          <div>
             <QuickStatsPanel caseData={caseData} />
-          </motion.div>
-          <motion.div variants={itemVariants}>
+          </div>
+          <div>
             <VerticalTimeline caseData={caseData} />
-          </motion.div>
+          </div>
         </div>
       )}
 
       {/* Case Timeline (Gantt) */}
-      <motion.div variants={itemVariants}>
+      <div>
         <div className="gantt-wrap">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 16px", borderBottom: "3px solid var(--border)", background: "var(--muted)" }}>
-            <span className="flex items-center gap-1.5" style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", fontWeight: 700, textTransform: "", letterSpacing: "0.06em" }}>
-              Case timeline
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onToggleTimeline}
-              disabled={isUpdating}
-              className="font-heading gap-1.5 border border-border text-sm font-bold transition-colors"
-            >
-              {isOnTimeline ? (
-                <>
-                  <CalendarMinusIcon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Remove</span>
-                </>
-              ) : (
-                <>
-                  <CalendarPlusIcon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Add to Timeline</span>
-                </>
-              )}
-            </Button>
-          </div>
+          <div className="detail-card-head">Case timeline</div>
           {/* The timeline scrolls its own months under a sticky stage column. */}
           <InlineCaseTimeline caseData={caseData} />
         </div>
-      </motion.div>
+      </div>
 
       {/* Confirmation dialog when server finds existing template */}
       <Dialog open={!!pendingTemplateUpdate} onOpenChange={(open) => { if (!open) setPendingTemplateUpdate(null); }}>
@@ -694,6 +595,6 @@ export function OverviewTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   );
 }

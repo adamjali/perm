@@ -1,15 +1,15 @@
 "use client";
 
-import { formatProgressStatus } from "@convex/lib/notificationHelpers";
+import { formatCaseStatus, formatProgressStatus } from "@convex/lib/notificationHelpers";
 import { use, useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
-import { motion } from "motion/react";
+import Link from "next/link";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, ArrowLeftIcon, BookmarkIcon, CalendarCheckIcon, CalendarXIcon, CheckIcon, CircleNotchIcon, DotsThreeVerticalIcon, PencilIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
+import { ArchiveIcon, ArrowCounterClockwiseIcon, ArrowLeftIcon, CalendarBlankIcon, CalendarCheckIcon, CalendarSlashIcon, ChartBarHorizontalIcon, DotsThreeVerticalIcon, PencilSimpleIcon, StarIcon, TrashIcon } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
@@ -46,14 +46,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { validateDocumentFile } from "@/lib/documents/validation";
-import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { useIsMobile } from "@/lib/animations";
 import { isRecruitmentComplete } from "@/lib/perm";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import type { CaseDetailData } from "@/components/cases/detail/case-detail-types";
-import { itemVariants, STAGE_ACCENT_COLORS } from "@/components/cases/detail/case-detail-utils";
+import { STAGE_VISUALS } from "@/components/status/stage-visuals";
+import { formatCompactDate } from "@/components/cases/case-card.utils";
 import { caseWriteErrorMessage } from "@/lib/caseWriteErrors";
 import {
   MAX_DOCUMENTS_PER_CASE,
@@ -61,41 +61,6 @@ import {
   DOCUMENT_CAP_MESSAGE,
   type DocumentCategory,
 } from "@/lib/documents";
-
-// ============================================================================
-// ANIMATION VARIANTS
-// ============================================================================
-
-/**
- * Container animation variants for staggered children entry
- */
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
-  },
-} as const;
-
-
-/**
- * Header animation variants - slide in from left
- */
-const headerVariants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      type: "spring" as const,
-      stiffness: 400,
-      damping: 28,
-    },
-  },
-};
 
 // ============================================================================
 // TYPES
@@ -111,88 +76,42 @@ interface CaseDetailPageProps {
 
 export function CaseDetailSkeleton() {
   return (
-    <div className="space-y-6">
-      {/* Hero Header Skeleton */}
-      <div className="bg-card border-b border-border overflow-hidden -mt-6 full-bleed">
-        <div className="h-1 bg-muted" />
-        <div className="p-3 sm:px-8 sm:py-3.5 space-y-2.5">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2">
-            <Skeleton variant="block" className="w-9 h-9" />
-            <Skeleton variant="line" className="w-24 h-4" />
+    <div className="space-y-8" aria-busy={true}>
+      <div className="space-y-4">
+        <Skeleton variant="line" className="h-5 w-40" />
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <Skeleton variant="line" className="h-9 w-72 max-w-full" />
+            <Skeleton variant="line" className="mt-2 h-5 w-56" />
           </div>
-          {/* Title + Actions */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <Skeleton variant="line" className="w-64 h-7 mb-1.5" />
-              <Skeleton variant="line" className="w-40 h-5" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Skeleton variant="block" className="w-[38px] h-[38px]" />
-              <Skeleton variant="block" className="w-[38px] h-[38px]" />
-              <Skeleton variant="block" className="w-24 h-[38px]" />
-              <Skeleton variant="block" className="w-[38px] h-[38px]" />
-            </div>
-          </div>
-          {/* Badges */}
-          <div className="flex flex-wrap items-center gap-2">
-            <Skeleton variant="line" className="w-24 h-6" />
-            <Skeleton variant="line" className="w-20 h-6" />
-            <Skeleton variant="line" className="w-28 h-6" />
+          <div className="flex items-center gap-1">
+            <Skeleton variant="block" className="size-11" />
+            <Skeleton variant="block" className="size-11" />
+            <Skeleton variant="block" className="h-11 w-32" />
+            <Skeleton variant="block" className="size-11" />
           </div>
         </div>
-        {/* Stage Bar */}
-        <div className="flex border-t border-border">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex-1 py-2.5 px-2 border-r border-border last:border-r-0">
-              <Skeleton variant="line" className="w-full h-4 mx-auto max-w-[80px]" />
-            </div>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          <Skeleton variant="line" className="h-7 w-40" />
+          <Skeleton variant="line" className="h-7 w-24" />
+          <Skeleton variant="line" className="h-7 w-28" />
+        </div>
+        <div className="max-w-md">
+          <Skeleton variant="line" className="h-5 w-48" />
+          <Skeleton variant="block" className="mt-2 h-1.5" />
         </div>
       </div>
-
-      {/* Tab Bar Skeleton */}
-      <div className="folder-tab-bar">
+      <div className="flex gap-2 border-b border-border pb-2">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="folder-tab" style={{ pointerEvents: "none" }}>
-            <Skeleton variant="line" className="w-4 h-4" />
-            <Skeleton variant="line" className="w-16 h-3.5 hidden sm:block" />
-          </div>
+          <Skeleton key={i} variant="line" className="h-7 w-24" />
         ))}
       </div>
-
-      {/* Content Skeleton — manila folder body */}
-      <div className="folder-body">
-        <div className="folder-content space-y-6">
-          {/* Next Up */}
-          <Skeleton variant="block" className="h-20" />
-          {/* 2-col layout */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
-            {/* Timeline sidebar */}
-            <div className="space-y-4">
-              <Skeleton variant="block" className="h-8" />
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <Skeleton variant="block" className="w-8 h-8 shrink-0" />
-                  <div className="flex-1">
-                    <Skeleton variant="line" className="w-24 h-3.5 mb-1" />
-                    <Skeleton variant="line" className="w-20 h-3" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-6">
-              {/* PWD + Quick Stats */}
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.8fr_1fr]">
-                <Skeleton variant="block" className="h-48" />
-                <Skeleton variant="block" className="h-48" />
-              </div>
-              {/* Job Desc */}
-              <Skeleton variant="block" className="h-40" />
-            </div>
-          </div>
-          {/* Gantt */}
-          <Skeleton variant="block" className="h-32" />
+      <Skeleton variant="block" className="h-24" />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
+        <Skeleton variant="block" className="h-96" />
+        <div className="space-y-6">
+          <Skeleton variant="block" className="h-48" />
+          <Skeleton variant="block" className="h-40" />
         </div>
       </div>
     </div>
@@ -283,7 +202,6 @@ interface CaseDetailProps {
 
 function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   const router = useRouter();
-  const { isNavigating, isAnyNavigating, targetPath, navigateTo } = useNavigationLoading();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -344,11 +262,6 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
   // Handlers
   const editPath = `/cases/${caseId}/edit`;
-  const isEditNavigating = isNavigating && targetPath === editPath;
-
-  const handleEdit = () => {
-    navigateTo(editPath);
-  };
 
   const handleUpdateNotes = useCallback(async (updatedNotes: import("@/lib/forms/case-form-schema").NoteEntry[]) => {
     try {
@@ -474,14 +387,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     setIsUpdating(true);
     try {
       const result = await reopenCaseMutation({ id: caseId });
-      // Format status for display (e.g., "eta9089" -> "ETA 9089", "i140" -> "I-140")
-      const formatStatus = (status: string) => {
-        if (status === "eta9089") return "ETA 9089";
-        if (status === "i140") return "I-140";
-        if (status === "pwd") return "PWD";
-        return status.charAt(0).toUpperCase() + status.slice(1);
-      };
-      toast.success(`Case reopened: ${formatStatus(result.newCaseStatus)} (${formatProgressStatus(result.newProgressStatus)})`);
+      toast.success(`Case reopened: ${formatCaseStatus(result.newCaseStatus)} (${formatProgressStatus(result.newProgressStatus)})`);
     } catch (error) {
       handleOperationError(error, {
         userMessage: "Couldn’t reopen the case. Try again.",
@@ -595,19 +501,12 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
   const isClosed = caseData.caseStatus === "closed";
   const caseName = `${caseData.employerName} - ${caseData.positionTitle}`;
-  const stageColor = STAGE_ACCENT_COLORS[caseData.caseStatus] ?? "var(--stage-closed)";
   const isProfessionalOccupation = caseData.isProfessionalOccupation;
   const isSample = caseData.isSample;
   const currentStage = getStageIndex(caseData.caseStatus);
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial={false}
-      animate="visible"
-      className="space-y-6"
-    >
-      {/* Delete Confirmation Dialog */}
+    <div className="space-y-8">
       <DeleteConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
@@ -616,387 +515,210 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         caseName={caseName}
       />
 
-      {/* ================================================================ */}
-      {/* CASE HERO HEADER — mockup-matching layout                       */}
-      {/* ================================================================ */}
-      <motion.div
-        variants={headerVariants}
-        className="bg-card border-b border-border relative z-[2] overflow-hidden -mt-6 full-bleed"
-      >
-        {/* Stage accent strip */}
-        <div className="h-1" style={{ backgroundColor: stageColor }} />
+      <header className="space-y-4">
+        <nav aria-label="Breadcrumb" className="text-sm">
+          <Link href="/cases" className="link">
+            Cases
+          </Link>{" "}
+          <span className="text-muted-foreground">/ {caseData.employerName}</span>
+        </nav>
 
-        <div className="px-4 py-3 sm:px-10 sm:py-4 space-y-3">
-          {/* Breadcrumb nav */}
-          <nav className="flex items-center gap-2 mb-3">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-heading text-3xl font-bold leading-[1.1] [overflow-wrap:anywhere] sm:text-4xl">
+              {caseData.employerName}
+            </h1>{" "}
+            <p className="mt-1 text-base text-muted-foreground [overflow-wrap:anywhere]">
+              {[caseData.positionTitle, caseData.beneficiaryIdentifier].filter(Boolean).join(" · ")}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              onClick={() => navigateTo("/cases")}
-              className={cn(
-                "shrink-0 h-9 w-9 border border-border bg-card hover:!bg-primary hover:text-black hover:border-black transition-colors",
-                isNavigating && "opacity-70 pointer-events-none"
-              )}
-              disabled={isAnyNavigating}
+              onClick={handleToggleFavorite}
+              disabled={isTogglingFavorite}
+              aria-label={caseData.isFavorite ? "Remove from favorites" : "Add to favorites"}
+              aria-pressed={caseData.isFavorite}
+              title={caseData.isFavorite ? "Favorite" : "Add to favorites"}
             >
-              {isNavigating ? (
-                <CircleNotchIcon className="h-5 w-5 animate-spin" />
-              ) : (
-                <ArrowLeftIcon className="h-5 w-5" />
-              )}
-              <span className="sr-only">Back to cases</span>
+              <StarIcon weight={caseData.isFavorite ? "fill" : "regular"} className={cn("size-5", caseData.isFavorite && "text-data-warn-ink")} />
             </Button>
-            <span className="font-mono text-sm text-muted-foreground">Cases / Detail</span>
-          </nav>
-
-          {/* Row 1: Title + Actions */}
-          <div className="flex items-center justify-between gap-3 sm:gap-4">
-            <div className="min-w-0 flex-1 overflow-hidden">
-              <div className="flex items-center gap-2">
-                <h1 className="min-w-0 font-heading text-2xl sm:text-2xl font-bold leading-[1.15] tracking-tight [overflow-wrap:anywhere]">
-                  {caseData.employerName}
-                </h1>
-                {isSample && (
-                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-sm font-semibold border border-dashed border-muted-foreground/50 text-muted-foreground" title="Sample case. Delete it anytime">
-                    Sample
-                  </span>
-                )}
-              </div>
-              <p className="font-heading text-sm text-muted-foreground font-medium mt-0.5 [overflow-wrap:anywhere]">
-                {caseData.positionTitle}
-                {caseData.beneficiaryIdentifier && (
-                  <span className="font-mono text-sm opacity-60">, {caseData.beneficiaryIdentifier}</span>
-                )}
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleToggleFavorite}
-                disabled={isTogglingFavorite}
-                className={cn(
-                  "shrink-0 border transition-colors cursor-pointer",
-                  "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
-                  caseData.isFavorite
-                    ? "border-data-warn bg-data-warn/8 hover:bg-data-warn/16 active:bg-data-warn/8 dark:active:bg-data-warn"
-                    : "border-border bg-card hover:bg-data-warn/16 hover:border-data-warn"
-                )}
-                aria-label={caseData.isFavorite ? "Remove bookmark" : "Bookmark case"}
-                aria-pressed={caseData.isFavorite}
-              >
-                {isTogglingFavorite ? (
-                  <CircleNotchIcon className="h-5 w-5 animate-spin" />
-                ) : (
-                  <BookmarkIcon
-                    className={cn(
-                      "h-5 w-5",
-                      caseData.isFavorite
-                        ? "fill-data-warn text-data-warn-ink"
-                        : "text-data-warn-ink"
-                    )}
-                  />
-                )}
-              </Button>
-
-              <Button
-                variant="outline"
-                size={caseData.calendarSyncEnabled && !isGoogleConnected ? "default" : "icon"}
-                onClick={handleToggleCalendarSync}
-                disabled={isTogglingCalendarSync}
-                className={cn(
-                  "shrink-0 border transition-colors cursor-pointer",
-                  caseData.calendarSyncEnabled && !isGoogleConnected
-                    ? "h-[38px] min-h-[38px] min-w-[38px] gap-1.5 px-2.5 text-sm font-bold text-foreground"
-                    : "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
-                  caseData.calendarSyncEnabled && isGoogleConnected
-                    ? "border-data-good hover: active: dark:active:bg-data-good"
-                    : caseData.calendarSyncEnabled && !isGoogleConnected
-                      ? "border-data-warn bg-data-warn/8 hover:bg-data-warn/16 active:bg-data-warn/8 dark:active:bg-data-warn"
-                      : "border-border bg-card hover:bg-data-bad/20 hover:border-data-bad"
-                )}
-                title={
-                  caseData.calendarSyncEnabled && isGoogleConnected
-                    ? "Calendar sync enabled"
-                    : caseData.calendarSyncEnabled && !isGoogleConnected
-                      ? "Calendar not connected: open settings to connect it"
-                      : "Calendar sync disabled"
-                }
-                aria-label={
-                  caseData.calendarSyncEnabled && !isGoogleConnected
-                    ? "Calendar not connected: open settings"
-                    : caseData.calendarSyncEnabled
-                      ? "Disable calendar sync"
-                      : "Enable calendar sync"
-                }
-                aria-pressed={caseData.calendarSyncEnabled && isGoogleConnected ? true : caseData.calendarSyncEnabled ? undefined : false}
-              >
-                {isTogglingCalendarSync ? (
-                  <CircleNotchIcon className="h-5 w-5 animate-spin text-primary" />
-                ) : caseData.calendarSyncEnabled && isGoogleConnected ? (
-                  <CalendarCheckIcon className="h-5 w-5 text-primary" />
-                ) : caseData.calendarSyncEnabled && !isGoogleConnected ? (
-                  <>
-                    <AlertTriangle className="h-5 w-5 text-data-warn-ink" aria-hidden="true" />
-                    <span className="hidden sm:inline">Calendar not connected</span>
-                  </>
-                ) : (
-                  <CalendarXIcon className="h-5 w-5 text-data-bad-ink" />
-                )}
-              </Button>
-
-              {/* Edit Case — prominent green button like mockup */}
-              <Button
-                onClick={handleEdit}
-                disabled={isAnyNavigating}
-                className={cn(
-                  "shrink-0 border border-border bg-primary text-primary-foreground font-heading font-bold text-sm",
-                  "transition-colors",
-                  "min-h-[38px] gap-1.5"
-                )}
-              >
-                {isEditNavigating ? (
-                  <CircleNotchIcon className="h-4 w-4 animate-spin" />
-                ) : (
-                  <PencilIcon className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">Edit case</span>
-              </Button>
-
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className={cn(
-                      "shrink-0 border border-border bg-card",
-                      "hover:!bg-primary hover:text-black hover:border-black transition-colors",
-                      "min-h-[38px] min-w-[38px] h-[38px] w-[38px]"
-                    )}
-                    disabled={isUpdating || isAnyNavigating}
-                  >
-                    <DotsThreeVerticalIcon className="h-5 w-5" />
-                    <span className="sr-only">Actions</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 will-change-transform border border-border rounded-none p-1" onCloseAutoFocus={(e) => e.preventDefault()}>
-                  {isClosed ? (
-                    <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px] font-heading font-bold text-sm rounded-none">
-                      <RotateCcw className="h-4 w-4" />
-                      Reopen case
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={handleArchive} disabled={isUpdating} className="min-h-[44px] font-heading font-bold text-sm rounded-none">
-                      <ArchiveIcon className="h-4 w-4" />
-                      Archive case
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator className="bg-border h-[2px]" />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setDeleteDialogOpen(true)}
-                    className="min-h-[44px] font-heading font-bold text-sm rounded-none"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete case
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-
-          {/* Row 2: Badges */}
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            {caseData.caseNumber &&
-              (normaliseCaseNumber(caseData.caseNumber) ? (
-                /* A well-formed DOL case number links to the live federal
-                   record: status, queue position, and the stage-aware
-                   estimate, on the public lookup page. This is the one thing
-                   the app could not show before - the DOL feed the public
-                   side already reads. Opens in a new tab so the working
-                   context stays put. */
-                <a
-                  href={`/perm-case-status?case=${encodeURIComponent(
-                    normaliseCaseNumber(caseData.caseNumber)!,
-                  )}`}
-                  target="_blank"
-                  rel="noopener"
-                  title={`${caseData.caseNumber} - check DOL's live status`}
-                  className="text-sm font-bold border border-border px-3 py-1 leading-none truncate max-w-[220px] underline decoration-primary-text decoration-2 underline-offset-4 transition-colors hover:bg-accent"
-                >
-                  {caseData.caseNumber}
-                </a>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleToggleCalendarSync}
+              disabled={isTogglingCalendarSync}
+              title={
+                caseData.calendarSyncEnabled && isGoogleConnected
+                  ? "Synced to Google Calendar"
+                  : caseData.calendarSyncEnabled
+                    ? "Calendar not connected: open settings to connect it"
+                    : "Not synced to Google Calendar"
+              }
+              aria-label={
+                caseData.calendarSyncEnabled && !isGoogleConnected
+                  ? "Calendar not connected: open settings"
+                  : caseData.calendarSyncEnabled
+                    ? "Stop syncing to Google Calendar"
+                    : "Sync to Google Calendar"
+              }
+              aria-pressed={caseData.calendarSyncEnabled && isGoogleConnected}
+            >
+              {caseData.calendarSyncEnabled && isGoogleConnected ? (
+                <CalendarCheckIcon className="size-5 text-primary-text" />
+              ) : caseData.calendarSyncEnabled ? (
+                <CalendarSlashIcon className="size-5 text-data-warn-ink" />
               ) : (
-                <span
-                  className="text-sm font-bold border border-border px-3 py-1 leading-none truncate max-w-[200px]"
-                  title={caseData.caseNumber}
-                >
-                  {caseData.caseNumber}
-                </span>
-              ))}
-            <CaseStageBadge stage={caseData.caseStatus} />
-            <ProgressStatusBadge status={caseData.progressStatus} />
-            {isProfessionalOccupation && (
-              <Badge variant="outline" className="text-sm" title="Professional occupation: the extra recruitment steps apply">
-                Professional
-              </Badge>
-            )}
+                <CalendarBlankIcon className="size-5 text-muted-foreground" />
+              )}
+            </Button>
+            <Link href={editPath} className={buttonVariants({ className: "ml-1" })}>
+              <PencilSimpleIcon aria-hidden="true" />
+              Edit case
+            </Link>
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" disabled={isUpdating} aria-label="More actions">
+                  <DotsThreeVerticalIcon className="size-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={(e) => e.preventDefault()}>
+                <DropdownMenuItem onSelect={handleToggleTimeline} disabled={isUpdating}>
+                  <ChartBarHorizontalIcon className="size-4" />
+                  {isOnTimeline ? "Remove from timeline" : "Show on timeline"}
+                </DropdownMenuItem>
+                {isClosed ? (
+                  <DropdownMenuItem onSelect={handleReopen} disabled={isUpdating}>
+                    <ArrowCounterClockwiseIcon className="size-4" />
+                    Reopen case
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onSelect={handleArchive} disabled={isUpdating}>
+                    <ArchiveIcon className="size-4" />
+                    Archive case
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" onSelect={() => setDeleteDialogOpen(true)}>
+                  <TrashIcon className="size-4" />
+                  Delete case
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        {/* Stage Bar — flat segments matching mockup */}
-        {!isClosed && (
-          <div
-            className="flex border-t border-border mt-3.5"
-            role="progressbar"
-            aria-valuenow={currentStage + 1}
-            aria-valuemin={1}
-            aria-valuemax={4}
-            aria-label="PERM case progress"
-          >
-            {(["pwd", "recruitment", "eta9089", "i140"] as const).map((stage) => {
-              const stageIdx = { pwd: 0, recruitment: 1, eta9089: 2, i140: 3 }[stage];
-              const isDone = stageIdx < currentStage;
-              const isActive = stageIdx === currentStage;
-              const labels = { pwd: "PWD", recruitment: "Recruitment", eta9089: "ETA 9089", i140: "I-140" } as const;
-              return (
-                <div
-                  key={stage}
-                  className={cn(
-                    "flex-1 py-2.5 px-2 text-center text-sm font-bold flex items-center justify-center gap-1.5",
-                    "border-r border-border last:border-r-0",
-                    isDone && "bg-card text-foreground",
-                    isActive && "text-white",
-                    !isDone && !isActive && "bg-muted text-muted-foreground"
-                  )}
-                  style={isActive ? { background: STAGE_ACCENT_COLORS[stage] } : undefined}
-                  data-s={stage}
-                >
-                  {isDone ? (
-                    <span className="w-[14px] h-[14px] rounded-full bg-data-good flex items-center justify-center shrink-0">
-                      <CheckIcon className="h-[9px] w-[9px] text-white" />
-                    </span>
-                  ) : (
-                    <span
-                      className={cn(
-                        "w-[9px] h-[9px] rounded-full border shrink-0",
-                        isActive && "bg-white border-white",
-                        !isActive && "border-current"
-                      )}
-                    />
-                  )}
-                  {labels[stage]}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-      </motion.div>
-
-      {/* ================================================================ */}
-      {/* MANILA FOLDER TABS — organized case detail sections              */}
-      {/* ================================================================ */}
-      <motion.div variants={itemVariants}>
-        <CaseDetailTabs activeTab={activeTab} onTabChange={setActiveTab}>
-          <TabPanel id="overview" activeTab={activeTab}>
-            <OverviewTab
-              caseData={caseData}
-              caseId={caseId}
-              isMobile={isMobile}
-              isOnTimeline={isOnTimeline}
-              isUpdating={isUpdating}
-              onToggleTimeline={handleToggleTimeline}
-              onSaveRecruitmentText={handleSaveRecruitmentText}
-              jobDescProps={{
-                templates: jobDescTemplates as import("@/components/job-description/JobDescriptionField").JobDescriptionTemplate[],
-                onSave: handleJobDescSave,
-                onClear: handleJobDescClear,
-                onLoadTemplate: (t) => loadJobDescTemplate({ ...t, _id: t._id as Id<"jobDescriptionTemplates"> }),
-                onDeleteTemplate: (id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">),
-                onUpdateTemplate: (id, name, desc) => updateJobDescTemplate(id as Id<"jobDescriptionTemplates">, name, desc),
-                onSaveAsNewTemplate: saveAsNewJobDescTemplate,
-              }}
-            />
-          </TabPanel>
-
-          <TabPanel id="recruitment" activeTab={activeTab}>
-            <RecruitmentTab caseData={caseData} />
-          </TabPanel>
-
-          <TabPanel id="eta9089" activeTab={activeTab}>
-            <ETA9089Tab
-              caseData={caseData}
-              filingWindowOpens={gatedFilingWindowOpens}
-              filingWindowCloses={gatedFilingWindowCloses}
-            />
-          </TabPanel>
-
-          <TabPanel id="i140" activeTab={activeTab}>
-            <I140Tab caseData={caseData} />
-          </TabPanel>
-
-          <TabPanel id="documents" activeTab={activeTab}>
-            <DocumentsTab
-              documents={caseData.documents || []}
-              onUpload={handleUploadDocument}
-              onDelete={handleDeleteDocument}
-            />
-          </TabPanel>
-
-          <TabPanel id="notes" activeTab={activeTab}>
-            <NotesTab notes={caseData.notes || []} onUpdateNotes={handleUpdateNotes} />
-          </TabPanel>
-        </CaseDetailTabs>
-      </motion.div>
-
-      {/* Delete Case — centered above footer */}
-      <motion.div variants={itemVariants} className="flex justify-center">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setDeleteDialogOpen(true)}
-          disabled={isDeleting}
-          className="border border-destructive bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground font-heading text-sm font-bold transition-colors gap-1.5"
-        >
-          {isDeleting ? (
-            <CircleNotchIcon className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Trash2 className="h-3.5 w-3.5" />
-          )}
-          Delete case
-        </Button>
-      </motion.div>
-
-      {/* Calculated-dates disclaimer — single quiet footnote below all tabs */}
-      <motion.div variants={itemVariants}>
-        <NotLegalAdviceNotice variant="deadline" className="justify-center text-center" />
-      </motion.div>
-
-      {/* Footer Metadata */}
-      <motion.div variants={itemVariants}>
-        <div className="text-sm text-muted-foreground border-t border-border pt-4 flex flex-wrap items-center justify-center gap-4 font-mono">
-          <span>
-            Created:{" "}
-            {new Date(caseData.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>{" "}
-          <span>
-            Updated:{" "}
-            {new Date(caseData.updatedAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {caseData.caseNumber ? (
+            normaliseCaseNumber(caseData.caseNumber) ? (
+              /* A well-formed DOL case number links to its live federal
+                 record on the public lookup page, in a new tab so the
+                 working context stays put. */
+              <a
+                href={`/perm-case-status?case=${encodeURIComponent(normaliseCaseNumber(caseData.caseNumber)!)}`}
+                target="_blank"
+                rel="noopener"
+                title={`${caseData.caseNumber}: check DOL's live status`}
+                className="link max-w-[220px] truncate font-mono text-sm"
+              >
+                {caseData.caseNumber}
+              </a>
+            ) : (
+              <span className="max-w-[200px] truncate font-mono text-sm" title={caseData.caseNumber}>
+                {caseData.caseNumber}
+              </span>
+            )
+          ) : null}
+          <CaseStageBadge stage={caseData.caseStatus} />
+          <ProgressStatusBadge status={caseData.progressStatus} />
+          {isProfessionalOccupation ? (
+            <Badge className="font-normal" title="Professional occupation: the extra recruitment steps apply">
+              Professional
+            </Badge>
+          ) : null}
+          {isSample ? (
+            <Badge className="border-dashed font-normal" title="Sample case. Delete it anytime">
+              Sample
+            </Badge>
+          ) : null}
         </div>
-      </motion.div>
-    </motion.div>
+
+        {!isClosed ? <StageProgress index={currentStage} /> : null}
+      </header>
+
+      <CaseDetailTabs activeTab={activeTab} onTabChange={setActiveTab}>
+        <TabPanel id="overview" activeTab={activeTab}>
+          <OverviewTab
+            caseData={caseData}
+            caseId={caseId}
+            isMobile={isMobile}
+            onSaveRecruitmentText={handleSaveRecruitmentText}
+            jobDescProps={{
+              templates: jobDescTemplates as import("@/components/job-description/JobDescriptionField").JobDescriptionTemplate[],
+              onSave: handleJobDescSave,
+              onClear: handleJobDescClear,
+              onLoadTemplate: (t) => loadJobDescTemplate({ ...t, _id: t._id as Id<"jobDescriptionTemplates"> }),
+              onDeleteTemplate: (id) => hardDeleteJobDescTemplate(id as Id<"jobDescriptionTemplates">),
+              onUpdateTemplate: (id, name, desc) => updateJobDescTemplate(id as Id<"jobDescriptionTemplates">, name, desc),
+              onSaveAsNewTemplate: saveAsNewJobDescTemplate,
+            }}
+          />
+        </TabPanel>
+        <TabPanel id="recruitment" activeTab={activeTab}>
+          <RecruitmentTab caseData={caseData} />
+        </TabPanel>
+        <TabPanel id="eta9089" activeTab={activeTab}>
+          <ETA9089Tab caseData={caseData} filingWindowOpens={gatedFilingWindowOpens} filingWindowCloses={gatedFilingWindowCloses} />
+        </TabPanel>
+        <TabPanel id="i140" activeTab={activeTab}>
+          <I140Tab caseData={caseData} />
+        </TabPanel>
+        <TabPanel id="documents" activeTab={activeTab}>
+          <DocumentsTab documents={caseData.documents || []} onUpload={handleUploadDocument} onDelete={handleDeleteDocument} />
+        </TabPanel>
+        <TabPanel id="notes" activeTab={activeTab}>
+          <NotesTab notes={caseData.notes || []} onUpdateNotes={handleUpdateNotes} />
+        </TabPanel>
+      </CaseDetailTabs>
+
+      <footer className="space-y-3 border-t border-border pt-4">
+        <NotLegalAdviceNotice variant="deadline" className="border-t-0 pt-0" />
+        <p className="text-sm text-muted-foreground">
+          Created {formatCompactDate(new Date(caseData.createdAt).toISOString())} · Updated{" "}
+          {formatCompactDate(new Date(caseData.updatedAt).toISOString())}
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+/** Where the case is in the four stages: "Stage 2 of 4: Recruitment" over a thin bar. */
+function StageProgress({ index }: { index: number }) {
+  const stages = ["pwd", "recruitment", "eta9089", "i140"] as const;
+  const stage = stages[Math.min(Math.max(index, 0), stages.length - 1)]!;
+  return (
+    <div className="max-w-md">
+      <p className="text-sm">
+        <span className="font-semibold">
+          Stage {index + 1} of {stages.length}:
+        </span>{" "}
+        {formatCaseStatus(stage)}
+      </p>
+      <div
+        role="progressbar"
+        aria-label="PERM case progress"
+        aria-valuemin={1}
+        aria-valuemax={stages.length}
+        aria-valuenow={index + 1}
+        className="mt-2 grid h-1.5 grid-cols-4 gap-1"
+      >
+        {stages.map((st, i) => (
+          <span key={st} className={cn(i <= index ? STAGE_VISUALS[stage].fill : "bg-muted")} />
+        ))}
+      </div>
+    </div>
   );
 }
 

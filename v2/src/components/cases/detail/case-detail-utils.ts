@@ -1,27 +1,11 @@
 /**
  * Case Detail Shared Utilities
  *
- * Formatters, animation variants, and window status calculation
+ * Formatters and the window status calculation
  * shared by all case detail tab components and the NextUp section.
  */
 import { format, parseISO, differenceInDays } from "date-fns";
 import type React from "react";
-import type { CaseStatus } from "@/lib/perm";
-
-/** Animation variant used by all 6 tab components. */
-export const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
-  },
-};
-
-/** Container variant with staggered children — shared by all 6 tab components. */
-export const tabContainerVariants = {
-  visible: { transition: { staggerChildren: 0.06 } },
-};
 
 /** ISO date string -> "MMM d, yyyy" */
 export function fmtISODate(d?: string | null): string {
@@ -44,15 +28,6 @@ export function fmtTimestamp(ts: number): string {
 export function fmtCurrency(amount: number | string): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(amount));
 }
-
-/** Stage accent colors matching CSS variables. */
-export const STAGE_ACCENT_COLORS: Record<CaseStatus, string> = {
-  pwd: "var(--stage-pwd)",
-  recruitment: "var(--stage-recruitment)",
-  eta9089: "var(--stage-eta9089)",
-  i140: "var(--stage-i140)",
-  closed: "var(--stage-closed)",
-};
 
 /* ------------------------------------------------------------------ */
 /*  Window status calculation — shared by RecruitmentTab, ETA9089Tab, */

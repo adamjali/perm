@@ -46,15 +46,3 @@ export const Z_INDEX = {
    */
   stickyLabel: 35,
 } as const;
-
-/**
- * Animation configuration for timeline staggered entrance.
- */
-export const TIMELINE_ANIMATION = {
-  staggerDelay: 0.03, // 30ms per row
-  spring: {
-    type: "spring" as const,
-    stiffness: 500,
-    damping: 30,
-  },
-} as const;

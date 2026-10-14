@@ -2,8 +2,7 @@
 
 import { WarningIcon } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
-import { motion } from "motion/react";
-import { itemVariants, fmtISODate } from "./case-detail-utils";
+import { fmtISODate } from "./case-detail-utils";
 
 interface ResponseEntry {
   receivedDate?: string;
@@ -39,14 +38,14 @@ export function ResponseEntryGrid({
   const fullLabel = type === "RFI" ? "RFI (Request for Information)" : "RFE (Request for Evidence)";
 
   return (
-    <motion.div variants={itemVariants}>
+    <div>
       <div className="detail-card">
         <div className="detail-card-head ch-muted">
           <span className="flex items-center gap-1.5">
             {alertTriangleIcon}
             {fullLabel}
           </span>{" "}
-          <span className="font-mono text-sm font-bold px-2 py-0.5 border border-border bg-muted text-muted-foreground">
+          <span className="head-badge">
             {subtitle}
           </span>
         </div>
@@ -54,19 +53,19 @@ export function ResponseEntryGrid({
           <div className="detail-card-body space-y-4">
             {entries.map((entry, i) => (
               <div key={i} className="border border-border p-3">
-                <div className="font-mono text-sm font-bold mb-1">{type} #{i + 1}</div>
-                <div className="field-grid" style={{ padding: 0 }}>
+                <div className="mb-1 text-sm font-semibold">{type} {i + 1}</div>
+                <div className="field-grid">
                   <div className="field-cell">
                     <div className="fc-label">Received</div>
-                    <div className="fc-val mono">{fmtISODate(entry.receivedDate)}</div>
+                    <div className="fc-val num">{fmtISODate(entry.receivedDate)}</div>
                   </div>
                   <div className="field-cell">
                     <div className="fc-label">Due</div>
-                    <div className="fc-val mono">{fmtISODate(entry.responseDueDate)}</div>
+                    <div className="fc-val num">{fmtISODate(entry.responseDueDate)}</div>
                   </div>
                   <div className="field-cell">
                     <div className="fc-label">Submitted</div>
-                    <div className={`fc-val mono ${!entry.responseSubmittedDate ? "dim" : ""}`}>{fmtISODate(entry.responseSubmittedDate)}</div>
+                    <div className={`fc-val num ${!entry.responseSubmittedDate ? "dim" : ""}`}>{fmtISODate(entry.responseSubmittedDate)}</div>
                   </div>
                 </div>
               </div>
@@ -84,6 +83,6 @@ export function ResponseEntryGrid({
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

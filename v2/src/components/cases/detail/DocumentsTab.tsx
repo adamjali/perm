@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { motion } from "motion/react";
 import { ArrowsOutIcon, CaretLeftIcon, CaretRightIcon, CircleNotchIcon, DownloadIcon, FileTextIcon, FileXlsIcon, FolderOpenIcon, ImageIcon as ImageIcon, TrashIcon as Trash2, UploadIcon, XIcon } from "@phosphor-icons/react";
 import {
   DOCUMENT_CATEGORIES,
   DOCUMENT_CATEGORY_LABELS,
   type DocumentCategory,
 } from "@/lib/documents";
-import { itemVariants, tabContainerVariants, fmtTimestamp } from "./case-detail-utils";
+import { fmtTimestamp } from "./case-detail-utils";
 import type { CaseDetailData } from "./case-detail-types";
 
 type DocumentEntry = NonNullable<CaseDetailData["documents"]>[number];
@@ -62,7 +61,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
           style={{
             width: "100%",
             height: 300,
-            border: "3px solid var(--border)",
+            border: "1px solid var(--border)",
             background: "var(--background)",
           }}
         />
@@ -85,7 +84,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
       <div
         style={{
           position: "relative",
-          border: "3px solid var(--border)",
+          border: "1px solid var(--border)",
           background: "var(--muted)",
           display: "flex",
           alignItems: "center",
@@ -125,7 +124,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
   return (
     <div
       style={{
-        border: "3px solid var(--border)",
+        border: "1px solid var(--border)",
         background: "var(--muted)",
         display: "flex",
         alignItems: "center",
@@ -137,8 +136,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
         {getFileIcon(doc.mimeType)}
         <div
           style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.7rem",
+            fontSize: "0.875rem",
             marginTop: 8,
           }}
         >
@@ -146,7 +144,7 @@ function DocumentPreview({ doc, onFullscreen }: { doc: DocumentEntry; onFullscre
         </div>
         <div
           style={{
-            fontSize: "0.7rem",
+            fontSize: "0.875rem",
             marginTop: 4,
             opacity: 0.7,
           }}
@@ -239,7 +237,7 @@ function FullscreenViewer({
         ) : (
           <div style={{ textAlign: "center", color: "var(--muted-foreground)", padding: 40 }}>
             {getFileIcon(doc.mimeType)}
-            <div style={{ marginTop: 12, fontSize: "0.9rem" }}>Preview not available. Download to view.</div>
+            <div style={{ marginTop: 12, fontSize: "0.875rem" }}>Preview not available. Download to view.</div>
           </div>
         )}
       </div>
@@ -377,13 +375,8 @@ export function DocumentsTab({
   const fullscreenIdx = fullscreenDoc ? documents.findIndex((d) => d.id === fullscreenDoc.id) : -1;
 
   return (
-    <motion.div
-      initial={false}
-      animate="visible"
-      variants={tabContainerVariants}
-      className="space-y-6"
-    >
-      <motion.div variants={itemVariants}>
+    <div className="space-y-6">
+      <div>
         <div className="detail-card" style={{ overflow: "hidden" }}>
           <div className="detail-card-head ch-dark" style={{ gap: 8 }}>
             <span className="flex items-center gap-1.5">
@@ -397,13 +390,11 @@ export function DocumentsTab({
                 style={{
                   height: 24,
                   padding: "0 6px",
-                  border: "2px solid var(--foreground)",
+                  border: "1px solid var(--border)",
                   background: "var(--card)",
                   color: "var(--foreground)",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.6rem",
+                  fontSize: "0.875rem",
                   fontWeight: 700,
-                  textTransform: "",
                   cursor: "pointer",
                 }}
               >
@@ -414,10 +405,9 @@ export function DocumentsTab({
               </select>
               <span
                 style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.6rem",
+                  fontSize: "0.875rem",
                   background: "var(--card)",
-                  border: "2px solid var(--foreground)",
+                  border: "1px solid var(--border)",
                   padding: "1px 8px",
                   color: "var(--foreground)",
                 }}
@@ -430,7 +420,7 @@ export function DocumentsTab({
                 <button
                   className="font-heading flex items-center gap-2 font-bold border border-current bg-card text-foreground"
                   style={{
-                    fontSize: "0.7rem",
+                    fontSize: "0.875rem",
                     padding: "3px 10px",
                     cursor: isUploading ? "wait" : "pointer",
                     opacity: isUploading ? 0.7 : 1,
@@ -467,14 +457,12 @@ export function DocumentsTab({
                 style={{
                   height: 26,
                   padding: "0 6px",
-                  border: "2px solid var(--foreground)",
+                  border: "1px solid var(--border)",
                   background: "var(--card)",
                   color: "var(--foreground)",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.6rem",
+                  fontSize: "0.875rem",
                   fontWeight: 700,
-                  textTransform: "",
-                }}
+                  }}
                 disabled={isUploading}
               >
                 {DOCUMENT_CATEGORIES.map((c) => (
@@ -489,12 +477,10 @@ export function DocumentsTab({
                   width: "auto",
                   padding: "3px 10px",
                   fontWeight: 700,
-                  fontSize: "0.65rem",
-                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.875rem",
                   background: "var(--primary)",
                   color: "var(--primary-foreground)",
-                  textTransform: "",
-                }}
+                  }}
                 onClick={handleConfirmUpload}
                 disabled={isUploading}
               >
@@ -690,12 +676,10 @@ export function DocumentsTab({
                     {selectedDoc.category && (
                       <span
                         style={{
-                          fontFamily: "var(--font-mono)",
                           fontWeight: 700,
-                          textTransform: "",
-                          fontSize: "0.62rem",
+                          fontSize: "0.875rem",
                           padding: "2px 6px",
-                          border: "2px solid var(--border)",
+                          border: "1px solid var(--border)",
                           background: "var(--muted)",
                         }}
                       >
@@ -762,7 +746,7 @@ export function DocumentsTab({
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Delete confirmation dialog */}
       {confirmDeleteId && (
@@ -781,7 +765,7 @@ export function DocumentsTab({
           <div
             style={{
               background: "var(--card)",
-              border: "3px solid var(--foreground)",
+              border: "1px solid var(--border)",
               padding: 24,
               maxWidth: 400,
               width: "90%",
@@ -801,7 +785,7 @@ export function DocumentsTab({
             </div>
             <div
               style={{
-                fontSize: "0.85rem",
+                fontSize: "0.875rem",
                 color: "var(--muted-foreground)",
                 marginBottom: 20,
               }}
@@ -847,6 +831,6 @@ export function DocumentsTab({
           onDelete={onDelete ? (id) => setConfirmDeleteId(id) : undefined}
         />
       )}
-    </motion.div>
+    </div>
   );
 }

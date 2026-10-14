@@ -39,7 +39,13 @@ describe("VerticalTimeline", () => {
       if (!m) throw new Error(`no rule for ${sel}`);
       return m[1]!;
     };
-    const background = (r: string) => r.match(/background:\s*([^;]+)/)?.[1]?.trim();
-    expect(background(rule(".vtl-icon.current"))).not.toBe(background(rule(".vtl-icon.done")));
+    const done = rule(".vtl-icon.done");
+    const current = rule(".vtl-icon.current");
+    // Neither is filled: a finished step is a green-ink tick on its edge, the
+    // next one a plain dark edge.
+    expect(done).not.toMatch(/background:\s*var\(--primary\)/);
+    expect(current).not.toMatch(/background:/);
+    expect(done).toMatch(/--primary-text/);
+    expect(current).not.toBe(done);
   });
 });

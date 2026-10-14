@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo, type CSSProperties } from "react";
-import { motion } from "motion/react";
 import { CalendarDotsIcon, CaretLeftIcon, CaretRightIcon, ChatCircleIcon, CheckCircleIcon, FlagIcon, PaperPlaneTiltIcon as Send, PencilIcon, TagIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react";
 import {
   NOTE_CATEGORY_LABELS,
@@ -20,7 +19,7 @@ interface NotesTabProps {
 
 const ITEMS_PER_PAGE = 10;
 
-import { itemVariants, tabContainerVariants, fmtTimestamp } from "./case-detail-utils";
+import { fmtTimestamp } from "./case-detail-utils";
 import { CharLimit, CharLimitNote, useCharLimit } from "@/components/ui/char-limit";
 import { NOTES_PER_CASE_MAX, notesLimitMessage } from "@/components/forms/notesLimit";
 
@@ -31,10 +30,7 @@ const PRIORITY_LABELS: Record<NotePriority, string> = {
 };
 
 const BADGE_BASE_STYLE: CSSProperties = {
-  fontFamily: "var(--font-mono)",
   fontWeight: 700,
-  textTransform: "",
-  letterSpacing: "0.04em",
   border: "3px solid",
   display: "inline-flex",
   alignItems: "center",
@@ -222,13 +218,8 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
   );
 
   return (
-    <motion.div
-      initial={false}
-      animate="visible"
-      variants={tabContainerVariants}
-      className="space-y-6"
-    >
-      <motion.div variants={itemVariants}>
+    <div className="space-y-6">
+      <div>
         <div className="detail-card" style={{ overflow: "hidden" }}>
           <div className="detail-card-head ch-yellow" style={{ gap: 8 }}>
             <span className="flex items-center gap-1.5">
@@ -242,13 +233,11 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                 style={{
                   height: 24,
                   padding: "0 6px",
-                  border: "2px solid var(--foreground)",
+                  border: "1px solid var(--border)",
                   background: "var(--card)",
                   color: "var(--foreground)",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.6rem",
+                  fontSize: "0.875rem",
                   fontWeight: 700,
-                  textTransform: "",
                   cursor: "pointer",
                 }}
               >
@@ -259,10 +248,9 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
               </select>
               <span
                 style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.6rem",
+                  fontSize: "0.875rem",
                   background: "var(--card)",
-                  border: "2px solid var(--foreground)",
+                  border: "1px solid var(--border)",
                   padding: "1px 8px",
                   color: "var(--foreground)",
                 }}
@@ -361,7 +349,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   </div>
 
                   {/* Created date */}
-                  <div className="preview-date" style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", marginBottom: 16 }}>
+                  <div className="preview-date" style={{ fontSize: "0.875rem", marginBottom: 16 }}>
                     Created: {fmtTimestamp(selectedNote.createdAt)}
                   </div>
 
@@ -403,7 +391,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                         <button className="icon-btn" style={{ width: "auto", padding: "4px 12px" }} onClick={cancelEdit}>
                           Cancel
                         </button>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.55rem", color: "var(--muted-foreground)" }}>
+                        <span style={{ fontSize: "0.875rem", color: "var(--muted-foreground)" }}>
                           {shortcutKey}+Enter to save · Esc to cancel
                         </span>
                       </div>
@@ -421,8 +409,8 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
 
                   {/* Due date box */}
                   {selectedNote.dueDate && (
-                    <div style={{ marginTop: 16, padding: "12px 16px", border: "3px solid var(--border)", background: "var(--muted)" }}>
-                      <span className="preview-date" style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", textTransform: "" }}>Due date</span>
+                    <div style={{ marginTop: 16, padding: "12px 16px", border: "1px solid var(--border)", background: "var(--muted)" }}>
+                      <span className="preview-date" style={{ fontSize: "0.875rem", }}>Due date</span>
                       <div style={{ fontWeight: 700, marginTop: 4 }}>{selectedNote.dueDate}</div>
                     </div>
                   )}
@@ -480,7 +468,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                     resize: "none",
                     minHeight: 44,
                     fontFamily: "inherit",
-                    fontSize: "0.85rem",
+                    fontSize: "0.875rem",
                   }}
                 />
                 <button
@@ -514,7 +502,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                     flexWrap: "wrap",
                     gap: 8,
                     padding: "8px 12px",
-                    borderTop: "2px solid var(--border)",
+                    borderTop: "1px solid var(--border)",
                     background: "var(--muted)",
                     alignItems: "center",
                   }}
@@ -529,14 +517,12 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                         height: 26,
                         minWidth: 0, // see the date input below
                         padding: "0 6px",
-                        border: "2px solid var(--border)",
+                        border: "1px solid var(--border)",
                         background: "var(--background)",
                         color: "var(--foreground)",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "0.65rem",
+                        fontSize: "0.875rem",
                         fontWeight: 700,
-                        textTransform: "",
-                      }}
+                        }}
                     >
                       {NOTE_PRIORITIES.map((p) => (
                         <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
@@ -553,11 +539,10 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                       style={{
                         height: 26,
                         padding: "0 6px",
-                        border: "2px solid var(--border)",
+                        border: "1px solid var(--border)",
                         background: "var(--background)",
                         color: "var(--foreground)",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "0.65rem",
+                        fontSize: "0.875rem",
                         fontWeight: 700,
                       }}
                     >
@@ -583,11 +568,10 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                         // on iPhone while measuring correctly on a desktop.
                         minWidth: 0,
                         padding: "0 6px",
-                        border: "2px solid var(--border)",
+                        border: "1px solid var(--border)",
                         background: "var(--background)",
                         color: "var(--foreground)",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "0.65rem",
+                        fontSize: "0.875rem",
                         fontWeight: 700,
                       }}
                     />
@@ -633,7 +617,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
             </div>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

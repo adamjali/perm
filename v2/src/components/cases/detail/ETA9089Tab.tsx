@@ -1,12 +1,11 @@
 "use client";
 
-import { motion } from "motion/react";
 import Link from "next/link";
 import { ClockIcon, FileTextIcon } from "@phosphor-icons/react";
 import { isRecruitmentComplete } from "@/lib/perm";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, tabContainerVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
+import { fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
 import { WindowCard } from "./WindowCard";
 import { ResponseEntryGrid } from "./ResponseEntryGrid";
 
@@ -36,12 +35,7 @@ export function ETA9089Tab({
   const isCertified = !!caseData.eta9089CertificationDate;
 
   return (
-    <motion.div
-      initial={false}
-      animate="visible"
-      variants={tabContainerVariants}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Filing Window Card — only shown when recruitment is complete or ETA already filed */}
       {ws && (
         <WindowCard
@@ -54,7 +48,7 @@ export function ETA9089Tab({
       )}
 
       {/* ETA Form 9089 Card */}
-      <motion.div variants={itemVariants}>
+      <div>
         <Link href={buildEditUrl(caseData._id, "eta9089FilingDate")} className="detail-card-link" title="Edit in case form">
           <div className="detail-card">
             <div className="detail-card-head ch-eta">
@@ -66,10 +60,10 @@ export function ETA9089Tab({
                 {isCertified ? "Certified" : isFiled ? "Filed" : "Pending"}
               </span>
             </div>
-            <div className="field-grid" style={{ padding: 0 }}>
+            <div className="field-grid">
               <div className="field-cell">
                 <div className="fc-label">Filing date</div>
-                <div className={`fc-val mono ${!isFiled ? "dim" : ""}`}>{fmtISODate(caseData.eta9089FilingDate)}</div>
+                <div className={`fc-val num ${!isFiled ? "dim" : ""}`}>{fmtISODate(caseData.eta9089FilingDate)}</div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Case number</div>
@@ -77,15 +71,15 @@ export function ETA9089Tab({
               </div>
               <div className="field-cell">
                 <div className="fc-label">Audit date</div>
-                <div className={`fc-val mono ${!caseData.eta9089AuditDate ? "dim" : ""}`}>{fmtISODate(caseData.eta9089AuditDate)}</div>
+                <div className={`fc-val num ${!caseData.eta9089AuditDate ? "dim" : ""}`}>{fmtISODate(caseData.eta9089AuditDate)}</div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Certification date</div>
-                <div className={`fc-val mono ${!isCertified ? "dim" : ""}`}>{fmtISODate(caseData.eta9089CertificationDate)}</div>
+                <div className={`fc-val num ${!isCertified ? "dim" : ""}`}>{fmtISODate(caseData.eta9089CertificationDate)}</div>
               </div>
               <div className="field-cell">
                 <div className="fc-label">Expiration date</div>
-                <div className={`fc-val mono ${!caseData.eta9089ExpirationDate ? "dim" : ""}`}>
+                <div className={`fc-val num ${!caseData.eta9089ExpirationDate ? "dim" : ""}`}>
                   {caseData.eta9089ExpirationDate ? (
                     <span style={{ color: "var(--data-warn-ink)" }}>{fmtISODate(caseData.eta9089ExpirationDate)}</span>
                   ) : "-"}
@@ -93,7 +87,7 @@ export function ETA9089Tab({
               </div>
               <div className="field-cell">
                 <div className="fc-label">Filing window</div>
-                <div className="fc-val mono" style={{ fontSize: "0.8rem" }}>
+                <div className="fc-val num" style={{ fontSize: "0.875rem" }}>
                   {filingWindowOpens && filingWindowCloses
                     ? `${fmtISOShort(filingWindowOpens)} to ${fmtISOShort(filingWindowCloses)}`
                     : "-"}
@@ -115,7 +109,7 @@ export function ETA9089Tab({
             )}
           </div>
         </Link>
-      </motion.div>
+      </div>
 
       {/* RFI Section */}
       <Link href={buildEditSectionUrl(caseData._id, "eta9089")} className="detail-card-link" title="Edit in case form">
@@ -127,6 +121,6 @@ export function ETA9089Tab({
           emptyDescription="Entries will appear here if DOL issues a request during audit."
         />
       </Link>
-    </motion.div>
+    </div>
   );
 }

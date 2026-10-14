@@ -17,7 +17,6 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { motion } from "motion/react";
 import {
   startOfMonth,
   endOfMonth,
@@ -26,7 +25,7 @@ import {
   eachMonthOfInterval,
 } from "date-fns";
 import { cn } from "@/lib/utils";
-import { SIDEBAR_WIDTH_CLASSES, SIDEBAR_WIDTHS, TIMELINE_ANIMATION } from "@/lib/timeline/constants";
+import { SIDEBAR_WIDTH_CLASSES, SIDEBAR_WIDTHS } from "@/lib/timeline/constants";
 import { MIN_MONTH_PX } from "@/lib/timeline/positioning";
 import { useScrollToToday } from "@/lib/timeline/useScrollToToday";
 import { TimelineHeader } from "./TimelineHeader";
@@ -143,7 +142,7 @@ export function TimelineGrid({
         className={cn(
           "flex items-center justify-center",
           "min-h-[200px] p-8",
-          "bg-muted/30 border border-dashed border-foreground/20 rounded-none"
+          "bg-muted/30 border border-dashed border-border rounded-none"
         )}
       >
         <div className="text-center">
@@ -161,7 +160,7 @@ export function TimelineGrid({
   return (
     <div
       className={cn(
-        "border border-foreground",
+        "border border-border",
         "bg-card",
         // The label column's width, for anything that must sit beside it
         // (the sticky "no dates" note, the scroll-to-today offset).
@@ -184,7 +183,7 @@ export function TimelineGrid({
               className={cn(
                 "sticky left-0 z-40",
                 "flex items-center px-2 sm:px-3",
-                "bg-card border-r-[3px] border-b border-foreground",
+                "bg-card border-r border-b border-border",
                 "h-11 min-h-[44px]",
                 SIDEBAR_WIDTH_CLASSES
               )}
@@ -200,30 +199,19 @@ export function TimelineGrid({
             </div>
           </div>
 
-          {/* Case rows, at rest when they mount: a staggered slide-in played
-              right after the loading skeleton, a second arrival of the list. */}
           <div role="rowgroup" className="relative">
-            {cases.map((caseData, index) => (
-              <motion.div
-                key={caseData.id}
-                initial={false}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  ...TIMELINE_ANIMATION.spring,
-                  delay: index * TIMELINE_ANIMATION.staggerDelay,
-                }}
-              >
+            {cases.map((caseData) => (
+              <div key={caseData.id}>
                 <TimelineRow
                   caseData={caseData}
                   startDate={startDate}
                   endDate={endDate}
                   months={months}
-                  isEven={index % 2 === 0}
                   rowHeight={rowHeight}
                   onCaseNameClick={onCaseNameClick}
                   onRowClick={onRowClick}
                 />
-              </motion.div>
+              </div>
             ))}
 
             {/* Today indicator line - positioned within the row group */}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { motion } from "motion/react";
 import { format, parseISO, differenceInDays, addDays } from "date-fns";
 import { ChartBarIcon, CheckIcon, ClockIcon, FileTextIcon, FlagIcon, InfoIcon, NewspaperIcon, UsersIcon } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -10,7 +9,7 @@ import { isBusinessDay, getFederalHolidays, getFirstRecruitmentDate, getLastRecr
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import type { CaseDetailData } from "./case-detail-types";
-import { itemVariants, tabContainerVariants, fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
+import { fmtISODate, fmtISOShort, computeWindowStatus } from "./case-detail-utils";
 import { WindowCard } from "./WindowCard";
 
 // NOF mini-calendar using central business day logic from @/lib/perm
@@ -156,12 +155,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
   }, [recruitEndDate]);
 
   return (
-    <motion.div
-      initial={false}
-      animate="visible"
-      variants={tabContainerVariants}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Recruitment Window Card */}
       {ws && (
         <WindowCard
@@ -174,7 +168,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
       )}
 
       {/* Recruitment Steps — 2x2 grid */}
-      <motion.div variants={itemVariants}>
+      <div>
         <div className="recruit-grid">
           {/* Job Order */}
           <Link href={buildEditUrl(caseData._id, "jobOrderStartDate")} className="detail-card-link" title="Edit in case form">
@@ -207,12 +201,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                       {caseData.jobOrderState && (
                         <span
                           style={{
-                            fontFamily: "var(--font-mono)",
-                            fontSize: "0.58rem",
+                            fontSize: "0.875rem",
                             fontWeight: 700,
-                            textTransform: "",
                             padding: "2px 8px",
-                            border: "2px solid var(--border)",
+                            border: "1px solid var(--border)",
                             background: "var(--muted)",
                           }}
                         >
@@ -323,7 +315,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                 </span>{" "}
                 <span className="head-badge">{methods.length} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
               </div>
-              <div className="detail-card-body" style={{ padding: 0 }}>
+              <div className="detail-card-body" >
                 {methods.length > 0 ? (
                   methods.map((method, i) => {
                   const hasDate = !!(method.date || method.startDate || (method.subEntries && method.subEntries.length > 0));
@@ -375,10 +367,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
           </div>
           </Link>
         </div>
-      </motion.div>
+      </div>
 
       {/* Summary */}
-      <motion.div variants={itemVariants}>
+      <div>
         <div className="detail-card">
           <div className="detail-card-head ch-muted">
             <span className="flex items-center gap-1.5">
@@ -386,7 +378,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               Summary
             </span>
           </div>
-          <div className="field-grid" style={{ padding: 0, borderBottom: "3px solid var(--border)" }}>
+          <div className="field-grid" style={{ padding: 0, borderBottom: "1px solid var(--border)" }}>
             <div className="field-cell">
               <div className="fc-label">Applicants</div>
               <div className="fc-val">{caseData.recruitmentApplicantsCount || "-"}</div>
@@ -401,7 +393,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   <StatusTooltip color="emerald" message="Recruitment complete. Dates are final." />
                 )}
               </div>
-              <div className="fc-val mono">
+              <div className="fc-val num">
                 {recruitStartDate && recruitEndDate
                   ? `${fmtISOShort(recruitStartDate)} to ${fmtISOShort(recruitEndDate)}`
                   : "-"}
@@ -417,21 +409,21 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                   <StatusTooltip color="emerald" message="Recruitment complete. Dates are final." />
                 )}
               </div>
-              <div className="fc-val mono">
+              <div className="fc-val num">
                 {quietPeriodEndDate ? fmtISODate(quietPeriodEndDate) : "-"}
               </div>
             </div>
           </div>
           {(caseData.recruitmentNotes || caseData.recruitmentSummaryCustom) && (
             <div style={{ padding: "16px 20px" }}>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "", color: "var(--muted-foreground)", marginBottom: 6 }}>Result</div>
-              <div className="line-clamp-4" style={{ fontSize: "0.88rem", lineHeight: 1.55 }} title={caseData.recruitmentSummaryCustom || caseData.recruitmentNotes || undefined}>
+              <div style={{ fontSize: "0.875rem", color: "var(--muted-foreground)", marginBottom: 6 }}>Result</div>
+              <div className="line-clamp-4" style={{ fontSize: "0.875rem", lineHeight: 1.55 }} title={caseData.recruitmentSummaryCustom || caseData.recruitmentNotes || undefined}>
                 {caseData.recruitmentSummaryCustom || caseData.recruitmentNotes}
               </div>
             </div>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

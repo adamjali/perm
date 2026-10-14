@@ -25,7 +25,7 @@ export function TimelineHeader({ months, today }: TimelineHeaderProps) {
   return (
     <div
       className={cn(
-        "flex border-b border-foreground",
+        "flex border-b border-border",
         // Match sidebar header height with minimum 44px touch target
         "h-11 min-h-[44px]"
       )}
@@ -44,11 +44,11 @@ export function TimelineHeader({ months, today }: TimelineHeaderProps) {
             className={cn(
               "flex-1 flex flex-col items-center justify-center",
               "text-sm font-medium",
-              "border-r border-foreground/20 last:border-r-0",
+              "border-r border-border last:border-r-0",
               // Current month highlight
               isCurrentMonth && "bg-primary/10",
               // First cell or January gets left border
-              index === 0 && "border-l border-foreground/20"
+              index === 0 && "border-l border-border"
             )}
             role="columnheader"
             aria-label={format(month, "MMMM yyyy")}

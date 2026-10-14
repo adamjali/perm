@@ -355,7 +355,7 @@ describe("CaseDetailPage - Case Details Rendering", () => {
 
     await renderPageAndWait("test-id");
 
-    expect(screen.getByText("Senior Developer")).toBeInTheDocument();
+    expect(screen.getByText(/^Senior Developer/)).toBeInTheDocument();
   });
 
   it("shows case status badge", async () => {
@@ -496,7 +496,7 @@ describe("CaseDetailPage - Section Headers", () => {
 
     await renderPageAndWait("test-id");
 
-    expect(screen.getByText(/created:/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Created /)).toBeInTheDocument();
   });
 
   it("renders last updated date in footer", async () => {
@@ -507,7 +507,7 @@ describe("CaseDetailPage - Section Headers", () => {
 
     await renderPageAndWait("test-id");
 
-    expect(screen.getByText(/updated:/i)).toBeInTheDocument();
+    expect(screen.getByText(/· Updated /)).toBeInTheDocument();
   });
 });
 
@@ -588,25 +588,20 @@ describe("CaseDetailPage - Quick Actions Dropdown", () => {
 describe("CaseDetailPage - Navigation", () => {
   beforeEach(resetMocks);
 
-  it("back button navigates to /cases", async () => {
-    mockCaseData.mockReturnValue(createMockCaseData());
-
-    const { user } = await renderPageAndWait("test-id");
-
-    const backButton = screen.getByRole("button", { name: /back to cases/i });
-    await user.click(backButton);
-
-    expect(mockPush).toHaveBeenCalledWith("/cases");
-  });
-
-  it("Edit Case button navigates to edit page", async () => {
+  it("the breadcrumb links back to the cases", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
 
     await renderPageAndWait("test-id");
 
-    // Edit Case is now a direct button in the hero, not in the dropdown
-    const editButton = screen.getByRole("button", { name: /edit case/i });
-    expect(editButton).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Cases" })).toHaveAttribute("href", "/cases");
+  });
+
+  it("Edit case is a link to the edit page", async () => {
+    mockCaseData.mockReturnValue(createMockCaseData());
+
+    await renderPageAndWait("test-id");
+
+    expect(screen.getByRole("link", { name: /edit case/i })).toHaveAttribute("href", "/cases/test-id/edit");
   });
 });
 
@@ -854,14 +849,13 @@ describe("CaseDetailPage - Timeline Toggle", () => {
     mockRemoveFromTimeline.mockResolvedValue(undefined);
   });
 
-  it("shows timeline toggle in overview tab gantt section", async () => {
+  it("offers the timeline toggle in the actions menu", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
 
-    await renderPageAndWait("test-id");
+    const { user } = await renderPageAndWait("test-id");
 
-    // Timeline toggle is now in the Gantt chart header, not the dropdown
-    const removeButton = screen.getByRole("button", { name: /remove/i });
-    expect(removeButton).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /actions/i }));
+    expect(await screen.findByRole("menuitem", { name: /timeline/i })).toBeInTheDocument();
   });
 });
 
@@ -874,13 +868,12 @@ describe("CaseDetailPage - Timeline Toggle", () => {
 describe("CaseDetailPage - Accessibility", () => {
   beforeEach(resetMocks);
 
-  it("back button has accessible name", async () => {
+  it("the breadcrumb is a labelled navigation", async () => {
     mockCaseData.mockReturnValue(createMockCaseData());
 
     await renderPageAndWait("test-id");
 
-    const backButton = screen.getByRole("button", { name: /back to cases/i });
-    expect(backButton).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toBeInTheDocument();
   });
 
   it("actions button has accessible name", async () => {

@@ -1,7 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
-import { itemVariants, fmtISOShort, type WindowStatus } from "./case-detail-utils";
+import { fmtISOShort, type WindowStatus } from "./case-detail-utils";
 
 interface WindowCardProps {
   ws: WindowStatus;
@@ -17,7 +16,7 @@ interface WindowCardProps {
  */
 export function WindowCard({ ws, title, stageColor, startDate, endDate }: WindowCardProps) {
   return (
-    <motion.div variants={itemVariants}>
+    <div>
       <div className="win-card">
         <div className="win-accent" style={{ background: stageColor }} />
         <div className="win-inner">
@@ -48,6 +47,6 @@ export function WindowCard({ ws, title, stageColor, startDate, endDate }: Window
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

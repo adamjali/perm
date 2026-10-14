@@ -273,14 +273,14 @@ export function InlineCaseTimeline({
           two match. The lanes are the case's four
           stages, and the stage column sticks while the months scroll under it
           on a phone, exactly as the case column does on the timeline. */}
-      <div className="border border-foreground bg-card [--tl-label:112px]">
+      <div className="border border-border bg-card [--tl-label:112px]">
         <div ref={scrollRef} className="overflow-x-auto overscroll-x-none">
           {/* Every month at least MIN_MONTH_PX wide, as on the timeline page. */}
           <div style={{ minWidth: `calc(var(--tl-label) + ${months.length * MIN_MONTH_PX}px)` }}>
             {/* Header row */}
             <div className="flex">
               <div
-                className="sticky left-0 flex h-11 min-h-[44px] w-28 shrink-0 items-center border-r-[3px] border-b border-foreground bg-card px-2 sm:px-3"
+                className="sticky left-0 flex h-11 min-h-[44px] w-28 shrink-0 items-center border-r border-b border-border bg-card px-2 sm:px-3"
                 style={{ zIndex: Z_INDEX.stickyLabel + 5 }}
               >
                 <span className="text-sm font-bold text-foreground">
@@ -294,7 +294,7 @@ export function InlineCaseTimeline({
 
             {/* Stage lanes */}
             <div className="relative">
-              {rowData.map((row, rowIndex) => {
+              {rowData.map((row) => {
                 // The first band runs through the markers, as on the timeline
                 // page; any further bands take a 20px slot each below them.
                 const laneHeight = TRACK + Math.max(0, row.rangeBars.length - 1) * SLOT + 8;
@@ -307,13 +307,13 @@ export function InlineCaseTimeline({
                     key={row.stage}
                     data-stage-lane={row.stage}
                     className={cn(
-                      "relative flex border-b border-foreground/20 last:border-b-0",
-                      rowIndex % 2 === 0 ? "bg-muted/20" : "bg-transparent"
+                      "relative flex border-b border-border last:border-b-0",
+                      "bg-transparent"
                     )}
                     style={{ height: `${laneHeight}px` }}
                   >
                     <div
-                      className="sticky left-0 flex w-28 shrink-0 items-center border-r-[3px] border-foreground bg-card px-2 sm:px-3"
+                      className="sticky left-0 flex w-28 shrink-0 items-center border-r border-border bg-card px-2 sm:px-3"
                       style={{ zIndex: Z_INDEX.stickyLabel }}
                     >
                       <span className={cn("truncate text-sm font-bold", row.textClass)}>
@@ -328,7 +328,7 @@ export function InlineCaseTimeline({
                         {months.map((month) => (
                           <div
                             key={month.toISOString()}
-                            className="flex-1 border-r border-foreground/10 last:border-r-0"
+                            className="flex-1 border-r border-border/60 last:border-r-0"
                           />
                         ))}
                       </div>

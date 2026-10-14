@@ -90,7 +90,6 @@ interface TimelineRowProps {
   startDate: Date;
   endDate: Date;
   months: Date[];
-  isEven: boolean;
   /** Dynamic row height (48-80px) */
   rowHeight?: number;
   /** Callback when case name is clicked (navigate to detail) */
@@ -110,7 +109,6 @@ export function TimelineRow({
   startDate,
   endDate,
   months,
-  isEven,
   rowHeight = 48,
   onCaseNameClick,
   onRowClick,
@@ -197,11 +195,11 @@ export function TimelineRow({
       className={cn(
         // Dynamic height based on rowHeight prop
         "flex relative",
-        "border-b border-foreground/20",
+        "border-b border-border",
         "group transition-colors duration-150",
         "hover:bg-accent",
         // Alternating row background
-        isEven ? "bg-muted/20" : "bg-transparent",
+        "bg-transparent",
         // Cursor pointer when row click is enabled
         onRowClick && "cursor-pointer"
       )}
@@ -215,7 +213,7 @@ export function TimelineRow({
         className={cn(
           "sticky left-0",
           "flex flex-col justify-center px-3",
-          "bg-card border-r-[3px] border-foreground",
+          "bg-card border-r border-border",
           SIDEBAR_WIDTH_CLASSES,
           // Match row hover (theme-aware)
           "group-hover:bg-accent"
@@ -253,7 +251,7 @@ export function TimelineRow({
               key={month.toISOString()}
               className={cn(
                 "flex-1",
-                "border-r border-foreground/10 last:border-r-0"
+                "border-r border-border/60 last:border-r-0"
               )}
             />
           ))}

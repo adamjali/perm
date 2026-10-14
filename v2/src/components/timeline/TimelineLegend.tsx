@@ -43,7 +43,7 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
   return (
     <div
       className={`
-        ${sticky ? "sticky bottom-0 z-10" : ""} bg-muted/50 dark:bg-muted/30 backdrop-blur-sm border-t border-t-border px-4 py-3 ${className}
+        ${sticky ? "sticky bottom-0 z-10" : ""} bg-card border-t border-t-border px-4 py-3 ${className}
       `.trim()}
     >
       {/* Legend items container - 2x2 grid on mobile, flex row on sm+ */}
