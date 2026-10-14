@@ -29,7 +29,6 @@ export function WarmAppQueries() {
   useQuery(api.deadlineEnforcement.getAutoClosureAlerts, skip);
   // Called without a skip argument by their widgets, so the same here; after
   // sign-out the whole tree unmounts and takes these with it.
-  useQuery(api.dashboard.getUpcomingDeadlines, { days: 30 });
   useQuery(api.dashboard.getRecentActivity);
   useQuery(api.dolProcessingTimes.getLatest);
   useQuery(api.deadlineEnforcement.isEnforcementEnabled);

@@ -836,7 +836,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   {caseData.caseNumber}
                 </span>
               ))}
-            <CaseStageBadge stage={caseData.caseStatus} bordered />
+            <CaseStageBadge stage={caseData.caseStatus} />
             <ProgressStatusBadge status={caseData.progressStatus} />
             {isProfessionalOccupation && (
               <Badge variant="outline" className="text-sm" title="Professional occupation: the extra recruitment steps apply">

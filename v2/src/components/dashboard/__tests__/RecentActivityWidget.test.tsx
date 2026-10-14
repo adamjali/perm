@@ -4,7 +4,6 @@ import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import RecentActivityWidget from "../RecentActivityWidget";
 import {
-  createMockActivityList,
   createEmptyActivityList,
   activityScenarios,
 } from "../../../../test-utils/activity-fixtures";
@@ -31,37 +30,20 @@ describe("RecentActivityWidget", () => {
     const { container } = renderWithProviders(<RecentActivityWidget />);
 
     expect(container.querySelectorAll('[class*="skeleton"]').length).toBeGreaterThan(0);
-    expect(screen.queryByText("View all")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "All cases" })).not.toBeInTheDocument();
   });
 
   describe("with data", () => {
-    it("renders heading, activity cards, and View All button", () => {
+    it("renders the heading, a row per change and a link to all cases", () => {
       mockUseQuery.mockReturnValue(activityScenarios.typical);
       const { container } = renderWithProviders(<RecentActivityWidget />);
 
-      expect(screen.getByText("Recent activity")).toBeInTheDocument();
-      expect(container.querySelectorAll('[data-testid="activity-card"]').length).toBeGreaterThan(0);
-      expect(screen.getByRole("button", { name: /view all/i })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Recent changes" })).toBeInTheDocument();
+      expect(container.querySelectorAll('[data-testid="activity-card"]')).toHaveLength(activityScenarios.typical.length);
+      expect(screen.getByRole("link", { name: "All cases" })).toHaveAttribute("href", "/cases?sort=updated");
     });
 
-    it("truncates to 4 items and shows +N more overflow link", () => {
-      mockUseQuery.mockReturnValue(createMockActivityList(10));
-      const { container } = renderWithProviders(<RecentActivityWidget />);
-
-      expect(container.querySelectorAll('[data-testid="activity-card"]').length).toBe(4);
-      const overflow = screen.getByText(/\+6 more/i);
-      expect(overflow.closest("a")).toHaveAttribute("href", "/cases?sort=updated");
-    });
-
-    it("shows no overflow when items <= 4", () => {
-      mockUseQuery.mockReturnValue(createMockActivityList(4));
-      const { container } = renderWithProviders(<RecentActivityWidget />);
-
-      expect(container.querySelectorAll('[data-testid="activity-card"]').length).toBe(4);
-      expect(screen.queryByText(/more/i)).not.toBeInTheDocument();
-    });
-
-    it("displays most recent activities first", () => {
+    it("keeps the server's order, newest first", () => {
       mockUseQuery.mockReturnValue(activityScenarios.mixedStages);
       const { container } = renderWithProviders(<RecentActivityWidget />);
 
@@ -71,17 +53,12 @@ describe("RecentActivityWidget", () => {
   });
 
   describe("empty state", () => {
-    it("shows empty message, CTA, and no View All", () => {
+    it("says there are no changes yet and offers no link", () => {
       mockUseQuery.mockReturnValue(createEmptyActivityList());
       renderWithProviders(<RecentActivityWidget />);
 
-      expect(screen.getByText(/No recent activity/i)).toBeInTheDocument();
-      expect(
-        screen.getByText(/Create your first case/i) ||
-        screen.getByText(/Get started/i) ||
-        screen.getByText(/Add a case/i)
-      ).toBeInTheDocument();
-      expect(screen.queryByText("View all")).not.toBeInTheDocument();
+      expect(screen.getByText("No changes yet")).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "All cases" })).not.toBeInTheDocument();
     });
   });
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { screen, act, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import {
   createMockDeadlineGroups,
@@ -16,11 +16,8 @@ import { useQuery } from "convex/react";
 import { getFunctionName } from "convex/server";
 import DeadlineHeroWidget from "../DeadlineHeroWidget";
 
-vi.useFakeTimers();
-
 describe("DeadlineHeroWidget", () => {
   beforeEach(() => vi.clearAllMocks());
-  afterEach(() => vi.runOnlyPendingTimers());
 
   it("renders skeleton when data is loading", () => {
     vi.mocked(useQuery).mockReturnValue(undefined);
@@ -29,29 +26,27 @@ describe("DeadlineHeroWidget", () => {
   });
 
   describe("with data", () => {
-    beforeEach(() => vi.mocked(useQuery).mockReturnValue(createMockDeadlineGroups()));
-
-    it("renders heading, total count badge, all 4 urgency groups, and refresh button", () => {
-      renderWithProviders(<DeadlineHeroWidget />);
-
-      expect(screen.getByRole("heading", { name: /deadline hub/i })).toBeInTheDocument();
-      expect(screen.getByText("8")).toBeInTheDocument();
-      expect(screen.getByText("Overdue")).toBeInTheDocument();
-      expect(screen.getByText("This week")).toBeInTheDocument();
-      expect(screen.getByText("This month")).toBeInTheDocument();
-      expect(screen.getByText("Later")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /refresh/i })).toBeInTheDocument();
+    beforeEach(() => {
+      vi.mocked(useQuery).mockImplementation(((fn: unknown) =>
+        getFunctionName(fn as never) === "dashboard:getSummary" ? undefined : createMockDeadlineGroups()) as never);
     });
 
-    it("updates last refresh time and shows spinner on refresh click", () => {
-      const { container } = renderWithProviders(<DeadlineHeroWidget />);
+    it("renders the heading with its total, the four groups and a calendar link", () => {
+      renderWithProviders(<DeadlineHeroWidget />);
 
-      act(() => {
-        fireEvent.click(screen.getByRole("button", { name: /refresh/i }));
-      });
+      const heading = screen.getByRole("heading", { level: 2 });
+      expect(heading).toHaveTextContent("Deadlines");
+      expect(heading).toHaveTextContent("8");
+      for (const group of ["Overdue", "This week", "This month", "Later"]) {
+        expect(screen.getByRole("heading", { level: 3, name: new RegExp(`^${group}`) })).toBeInTheDocument();
+      }
+      expect(screen.getByRole("link", { name: "Calendar" })).toHaveAttribute("href", "/calendar");
+    });
 
-      expect(screen.getByText(/just now/i)).toBeInTheDocument();
-      expect(container.querySelector(".animate-spin")).toBeInTheDocument();
+    it("leads with the late deadlines, then the next one", () => {
+      renderWithProviders(<DeadlineHeroWidget />);
+      expect(screen.getByText(/^2 deadlines are late/)).toBeInTheDocument();
+      expect(screen.getByText(/Next: .*in 2 days/)).toBeInTheDocument();
     });
   });
 
@@ -72,29 +67,23 @@ describe("DeadlineHeroWidget", () => {
           : createEmptyDeadlineGroups()) as never);
     }
 
-    it("asks an account with no cases to create one", () => {
+    it("asks an account with no cases to add one", () => {
       answer(summaryWith(0));
       renderWithProviders(<DeadlineHeroWidget />);
-
-      expect(screen.getByText(/no upcoming deadlines/i)).toBeInTheDocument();
-      expect(screen.getByText(/create a case/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Add a case and its deadlines appear here/)).toBeInTheDocument();
     });
 
-    it("tells an account with open cases that none has a date due, not to create one", () => {
+    it("tells an account with open cases that nothing is due, not to add one", () => {
       answer(summaryWith(44));
       renderWithProviders(<DeadlineHeroWidget />);
-
-      expect(screen.getByText(/none of your 44 open cases have a date due/i)).toBeInTheDocument();
-      expect(screen.queryByText(/create a case/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/^Nothing is due on your 44 open cases/)).toBeInTheDocument();
+      expect(screen.queryByText(/add a case/i)).not.toBeInTheDocument();
     });
 
     it("says nothing about cases while the summary loads", () => {
       answer(undefined);
       renderWithProviders(<DeadlineHeroWidget />);
-
-      expect(screen.getByText(/no upcoming deadlines/i)).toBeInTheDocument();
-      expect(screen.queryByText(/create a case/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/open case/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/open cases/i)).not.toBeInTheDocument();
     });
   });
 });

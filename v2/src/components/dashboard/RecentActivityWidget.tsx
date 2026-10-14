@@ -1,59 +1,28 @@
 "use client";
 
 /**
- * RecentActivityWidget Component
- *
- * Dashboard widget displaying up to 4 most recent case activities.
- *
- * @see v2/docs/DESIGN_SYSTEM.md
+ * The cases changed most recently, newest first (RECENT_ACTIVITY_SHOWN of them).
  */
 
 import { type ReactNode } from "react";
-import Link from "next/link";
 import { useQuery } from "convex/react";
-import { ClockCounterClockwiseIcon as History } from "@phosphor-icons/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@convex/_generated/api";
+import { RECENT_ACTIVITY_SHOWN } from "@convex/lib/dashboardTypes";
 import RecentActivityCard from "./RecentActivityCard";
-import { useNavigationLoading } from "@/hooks/useNavigationLoading";
-import {
-  WidgetHeader,
-  WidgetHeaderAction,
-  WidgetEmptyState,
-  WIDGET_CONTAINER_CLASSES,
-} from "./widget-primitives";
+import { WIDGET_CONTAINER_CLASSES, WidgetEmptyState, WidgetHeader, WidgetLink } from "./widget-primitives";
 
-const MAX_DISPLAY_ITEMS = 4;
 
-// ============================================================================
-// Sub-components
-// ============================================================================
-
-/**
- * Loading: the real header (fixed title and icon) over the real body padding.
- * It used to draw its own, differently sized header, so the whole widget
- * re-laid itself out when the data arrived. The dashboard's loading.tsx
- * renders this same component.
- */
+/** Loading: the real heading over rows of the real height. */
 export function RecentActivityLoadingSkeleton(): ReactNode {
   return (
-    <section
-      className={WIDGET_CONTAINER_CLASSES}
-      aria-label="Recent activity"
-      aria-busy={true}
-    >
-      <WidgetHeader
-        icon={History}
-        title="Recent activity"
-        action={<Skeleton variant="line" className="h-6 w-20" />}
-      />
-      <div className="space-y-4 p-5" role="status" aria-label="Loading recent activity">
-        {Array.from({ length: MAX_DISPLAY_ITEMS }, (_, i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton variant="line" className="w-3/4" />
-            <Skeleton variant="line" className="w-1/2" />
-            <Skeleton variant="line" className="w-full" />
-            {i < MAX_DISPLAY_ITEMS - 1 && <div className="border-t border-border mt-4" />}
+    <section className={WIDGET_CONTAINER_CLASSES} aria-label="Recent changes" aria-busy={true}>
+      <WidgetHeader title="Recent changes" />
+      <div className="divide-y divide-border px-5">
+        {Array.from({ length: RECENT_ACTIVITY_SHOWN }, (_, i) => (
+          <div key={i} className="flex min-h-14 flex-col justify-center gap-1.5 py-3">
+            <Skeleton variant="line" className="h-4 w-1/2" />
+            <Skeleton variant="line" className="h-4 w-3/4" />
           </div>
         ))}
       </div>
@@ -61,68 +30,29 @@ export function RecentActivityLoadingSkeleton(): ReactNode {
   );
 }
 
-// ============================================================================
-// Main Component
-// ============================================================================
-
 export default function RecentActivityWidget(): ReactNode {
   const activities = useQuery(api.dashboard.getRecentActivity);
-  const { isNavigating, navigateTo } = useNavigationLoading();
-
-  const isLoading = activities === undefined || activities === null;
-  const isEmpty = Array.isArray(activities) && activities.length === 0;
-  const totalCount = Array.isArray(activities) ? activities.length : 0;
-  const displayedActivities = Array.isArray(activities)
-    ? activities.slice(0, MAX_DISPLAY_ITEMS)
-    : [];
-  const overflowCount = totalCount - MAX_DISPLAY_ITEMS;
-
-  if (isLoading) {
-    return <RecentActivityLoadingSkeleton />;
-  }
+  if (!Array.isArray(activities)) return <RecentActivityLoadingSkeleton />;
 
   return (
     <section
+      id="recent-activity"
       data-tour="recent-activity"
+      aria-labelledby="recent-activity-title"
       className={WIDGET_CONTAINER_CLASSES}
-      aria-label="Recent activity"
     >
       <WidgetHeader
-        icon={History}
-        title="Recent activity"
-        action={
-          !isEmpty && (
-            <WidgetHeaderAction
-              href="/cases?sort=updated"
-              label="View all →"
-              ariaLabel="View all recent activity"
-              isNavigating={isNavigating}
-              onClick={() => navigateTo("/cases?sort=updated")}
-            />
-          )
-        }
+        id="recent-activity-title"
+        title="Recent changes"
+        action={activities.length > 0 ? <WidgetLink href="/cases?sort=updated">All cases</WidgetLink> : undefined}
       />
-
-      {isEmpty ? (
-        <WidgetEmptyState
-          icon={History}
-          message="No recent activity"
-          description="Get started by creating your first case"
-          cta={{ href: "/cases/new", label: "Create your first case" }}
-        />
+      {activities.length === 0 ? (
+        <WidgetEmptyState message="No changes yet" description="Changes to your cases show here, newest first." />
       ) : (
-        <div className="space-y-3 p-5">
-          {displayedActivities.map((activity) => (
+        <div className="divide-y divide-border px-5">
+          {activities.map((activity) => (
             <RecentActivityCard key={activity.id} activity={activity} />
           ))}
-          {overflowCount > 0 && (
-            <Link
-              href="/cases?sort=updated"
-              className="block text-center py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              +{overflowCount} more
-            </Link>
-          )}
         </div>
       )}
     </section>

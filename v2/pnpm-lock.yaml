@@ -28,6 +28,11 @@ overrides:
   nanoid: '>=3.3.18 <4'
   browserslist: '>=4.28.7 <5'
 
+patchedDependencies:
+  '@storybook/nextjs-vite@10.6.0':
+    hash: 623537bd497e3c95383f8fd4e462d64300b2b4de55d7261606e206be0abe9121
+    path: patches/@storybook__nextjs-vite@10.6.0.patch
+
 importers:
 
   .:
@@ -263,7 +268,7 @@ importers:
         version: 10.6.0(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.7))
       '@storybook/nextjs-vite':
         specifier: ^10.6.0
-        version: 10.6.0(@babel/core@7.29.7)(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(next@16.4.0(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rollup@4.63.1)(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.7))(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0))
+        version: 10.6.0(patch_hash=623537bd497e3c95383f8fd4e462d64300b2b4de55d7261606e206be0abe9121)(@babel/core@7.29.7)(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(next@16.4.0(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rollup@4.63.1)(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.7))(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0))
       '@tailwindcss/postcss':
         specifier: ^4.3.3
         version: 4.3.3
@@ -8717,7 +8722,7 @@ snapshots:
     dependencies:
       react: 19.2.7
 
-  '@storybook/nextjs-vite@10.6.0(@babel/core@7.29.7)(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(next@16.4.0(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rollup@4.63.1)(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.7))(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0))':
+  '@storybook/nextjs-vite@10.6.0(patch_hash=623537bd497e3c95383f8fd4e462d64300b2b4de55d7261606e206be0abe9121)(@babel/core@7.29.7)(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(next@16.4.0(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rollup@4.63.1)(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.7))(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0))':
     dependencies:
       '@storybook/builder-vite': 10.6.0(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.7))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0))
       '@storybook/react': 10.6.0(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.6)(react@19.2.7))(typescript@6.0.3)

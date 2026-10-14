@@ -1,15 +1,13 @@
 /**
  * Dashboard Queries
  *
- * Provides 4 main queries for the dashboard:
- * 1. getDeadlines - Get all deadlines grouped by urgency
- * 2. getSummary - Get case counts by status with subtexts
- * 3. getRecentActivity - Get last 5 updated cases
- * 4. getUpcomingDeadlines - Get upcoming deadlines for next N days
+ * The dashboard's three queries:
+ * 1. getDeadlines - every deadline, grouped by urgency
+ * 2. getSummary - case counts by stage, with subtexts
+ * 3. getRecentActivity - the cases changed most recently
  */
 
 import { query } from "./_generated/server";
-import { v } from "convex/values";
 import { getCurrentUserIdOrNull } from "./lib/auth";
 import { readUserCases } from "./lib/userCases";
 import {
@@ -30,9 +28,8 @@ import type {
   ProgressStatus,
   PwdBreakdown,
 } from "./lib/dashboardTypes";
+import { RECENT_ACTIVITY_SHOWN } from "./lib/dashboardTypes";
 
-/** Cases the recent-activity list shows. */
-const RECENT_ACTIVITY_SHOWN = 5;
 /** Cases read for it, so deleted ones dropped after the read still leave a full list. */
 const RECENT_ACTIVITY_READ = 20;
 
@@ -359,74 +356,5 @@ export const getRecentActivity = query({
       caseStatus: c.caseStatus,
       progressStatus: c.progressStatus,
     }));
-  },
-});
-
-/**
- * Get upcoming deadlines for next N days
- * Includes overdue deadlines (negative daysUntil)
- */
-export const getUpcomingDeadlines = query({
-  args: {
-    days: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    // Use null-safe auth check to gracefully handle sign-out transitions
-    const userId = await getCurrentUserIdOrNull(ctx);
-    if (userId === null) {
-      return [];
-    }
-    // Validate and clamp days to reasonable range (1-365)
-    const daysAhead = Math.max(1, Math.min(args.days ?? 30, 365));
-
-    // Fetch non-deleted cases for user with reasonable limit
-    const { cases } = await readUserCases(ctx, userId);
-
-    // Filter out closed cases
-    const activeCases = cases.filter((c) => c.caseStatus !== "closed");
-
-    // Extract deadlines from all active cases
-    const todayISO = dateToISODate(new Date());
-    const allDeadlines: DeadlineItem[] = [];
-
-    for (const caseDoc of activeCases) {
-      try {
-        const partialDeadlines = extractDeadlines(caseDoc, todayISO);
-
-        // Build full DeadlineItem objects from extracted deadlines
-        for (const extracted of partialDeadlines) {
-          const deadline = createDeadlineItem({
-            caseId: caseDoc._id,
-            caseNumber: caseDoc.caseNumber,
-            employerName: caseDoc.employerName,
-            beneficiaryName: caseDoc.beneficiaryIdentifier ?? "",
-            positionTitle: caseDoc.positionTitle,
-            type: mapDeadlineType(extracted.type, extracted.daysUntil),
-            label: extracted.label,
-            dueDate: extracted.date,
-            daysUntil: extracted.daysUntil,
-            caseStatus: caseDoc.caseStatus as CaseStatus,
-            progressStatus: caseDoc.progressStatus as ProgressStatus,
-          });
-
-          allDeadlines.push(deadline);
-        }
-      } catch (error) {
-        // Log error but continue processing other cases - don't fail entire query
-        log.error('Failed to extract upcoming deadlines for case', {
-          resourceId: caseDoc._id,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        // Note: no ctx.scheduler available in queries for error recording
-      }
-    }
-
-    // Filter to deadlines within N days (includes overdue)
-    const upcomingDeadlines = allDeadlines.filter(
-      (d) => d.daysUntil <= daysAhead
-    );
-
-    // Sort by daysUntil ascending (most urgent first)
-    return upcomingDeadlines.sort((a, b) => a.daysUntil - b.daysUntil);
   },
 });

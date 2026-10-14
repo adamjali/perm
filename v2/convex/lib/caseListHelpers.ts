@@ -5,7 +5,7 @@
  * All functions are testable without database dependencies.
  */
 
-import { FUZZY_MATCH_MIN, fuzzyScore } from "./fuzzy";
+import { FUZZY_MATCH_MIN, everyWordScore } from "./fuzzy";
 import type { CaseCardData, CaseListSortField, SortOrder, ClosedReason } from "./caseListTypes";
 import type { UrgencyGroup, DeadlineType, CaseDataForDeadlines } from "./dashboardTypes";
 import type { Id } from "../_generated/dataModel";
@@ -401,7 +401,8 @@ export function sortCases(
  *
  * It uses the site's one matcher (./fuzzy.ts), so a typo the public
  * searches forgive is forgiven here too: "Gogle" finds Google, "Mircosoft"
- * Microsoft. Results are sorted by relevance, best first.
+ * Microsoft. Every word typed has to be found somewhere in the case.
+ * Results are sorted by relevance, best first.
  *
  * @param cases - Array of case card data
  * @param query - Search query string
@@ -436,8 +437,12 @@ export function filterBySearch(
   // Calculate match scores for each case
   const casesWithScores = cases
     .map((caseData) => {
-      const fields = [caseData.employerName, caseData.beneficiaryIdentifier, caseData.positionTitle, caseData.notes];
-      const nameScore = Math.max(0, ...fields.map((f) => (f ? fuzzyScore(trimmedQuery, f) : 0)));
+      const nameScore = everyWordScore(trimmedQuery, [
+        caseData.employerName,
+        caseData.beneficiaryIdentifier,
+        caseData.positionTitle,
+        caseData.notes,
+      ]);
 
       // Best score across all fields; a number match outranks every name
       const score = numberMatch(caseData)

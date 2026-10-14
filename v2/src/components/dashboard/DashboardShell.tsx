@@ -4,7 +4,6 @@ import AddCaseButton from "@/components/dashboard/AddCaseButton";
 import { DeadlineHeroLoadingSkeleton } from "@/components/dashboard/DeadlineHeroWidget";
 import { QueuePulseSkeleton } from "@/components/dashboard/QueuePulseWidget";
 import { SummaryTilesSkeleton } from "@/components/dashboard/SummaryTilesGrid";
-import { UpcomingDeadlinesLoadingSkeleton } from "@/components/dashboard/UpcomingDeadlinesWidget";
 import { RecentActivityLoadingSkeleton } from "@/components/dashboard/RecentActivityWidget";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -31,13 +30,13 @@ export function DashboardHeading({
             <Skeleton variant="line" className="h-7 w-64 sm:h-8" />
           </div>
         ) : (
-          <h1 className="font-heading text-3xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-4xl">
+          <h1 className="font-heading text-3xl font-bold leading-[1.08] sm:text-4xl">
             {firstName ? `${greeting}, ${firstName}` : greeting}
           </h1>
         )}{" "}
         <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-muted-foreground">
           Every filing window, wage expiration and audit deadline in your
-          cases, computed from the dates you have entered.
+          cases, worked out from the dates you&apos;ve entered.
         </p>
       </div>
       <div className="shrink-0">
@@ -56,15 +55,14 @@ export function DashboardHeading({
  */
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-6">
-      <DashboardHeading firstName={undefined} />
-      <DeadlineHeroLoadingSkeleton />
-      <QueuePulseSkeleton />
-      <SummaryTilesSkeleton />
-      <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 md:grid-cols-2">
-        <UpcomingDeadlinesLoadingSkeleton />
-        <RecentActivityLoadingSkeleton />
+    <div className="space-y-8">
+      <div className="space-y-3">
+        <DashboardHeading firstName={undefined} />
+        <QueuePulseSkeleton />
       </div>
+      <DeadlineHeroLoadingSkeleton />
+      <SummaryTilesSkeleton />
+      <RecentActivityLoadingSkeleton />
     </div>
   );
 }

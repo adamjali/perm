@@ -173,7 +173,7 @@ export const CaseListRow = memo(function CaseListRow({
 
         {/* Stage badge */}
         <div className="shrink-0 hidden sm:block">
-          <CaseStageBadge stage={caseStatus} bordered />
+          <CaseStageBadge stage={caseStatus} />
         </div>
 
         {/* Next deadline: the number of days leads, then what is due and when */}

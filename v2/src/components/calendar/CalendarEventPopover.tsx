@@ -162,7 +162,7 @@ function UrgencyBadge({ urgency, daysUntil }: { urgency: Urgency; daysUntil: num
  * stage map; this used to put white on every colour, amber and teal included).
  */
 function CaseStatusBadge({ status }: { status: CaseStatus }) {
-  return <CaseStageBadge stage={status} bordered />;
+  return <CaseStageBadge stage={status} />;
 }
 
 // ============================================================================

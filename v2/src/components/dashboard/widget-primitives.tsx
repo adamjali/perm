@@ -1,220 +1,121 @@
 "use client";
 
 /**
- * Shared primitives for dashboard widgets
- *
- * Provides reusable loading, empty, and header states to maintain consistency
- * across dashboard widgets while reducing duplication.
+ * The dashboard's shared parts: a section with its heading, one row per case,
+ * and an empty state. Every list on the dashboard draws its rows the same
+ * way: the case on the left, the figure that matters on the right.
  */
 
 import { type ReactNode } from "react";
 import Link from "next/link";
-import { CircleNotchIcon, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 
-// Widget container base styles
-export const WIDGET_CONTAINER_CLASSES =
-  "bg-card border border-border overflow-hidden";
-
-// ============================================================================
-// WidgetHeader
-// ============================================================================
-
-interface WidgetHeaderProps {
-  /** Header icon */
-  icon: PhosphorIcon;
-  /** Icon color class override */
-  iconClassName?: string;
-  /** Title text */
-  title: string;
-  /** Optional count badge */
-  count?: number;
-  /** Badge variant */
-  badgeVariant?: "default" | "secondary" | "destructive";
-  /** Optional action button/link on the right */
-  action?: ReactNode;
-  /** Whether header has bottom border */
-  hasBorder?: boolean;
-}
+/** A dashboard section: a plain box with a heading row. */
+export const WIDGET_CONTAINER_CLASSES = "border border-border bg-card";
 
 export function WidgetHeader({
-  icon: Icon,
-  iconClassName,
+  id,
   title,
   count,
-  badgeVariant = "default",
   action,
-  hasBorder = true,
-}: WidgetHeaderProps): ReactNode {
+}: {
+  /** The heading's id, for the section's aria-labelledby. */
+  id?: string;
+  title: string;
+  /** How many the section holds, said beside the heading. */
+  count?: number;
+  /** A link on the right: "Calendar", "All cases". */
+  action?: ReactNode;
+}): ReactNode {
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between p-5",
-        hasBorder && "border-b border-border"
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <Icon className={cn("size-6", iconClassName ?? "text-foreground")} />
-        <h3 className="text-2xl font-bold font-heading">{title}</h3>
-        {count !== undefined && count > 0 && (
-          <Badge variant={badgeVariant} className="text-sm px-3 py-1">
-            {count}
-          </Badge>
-        )}
-      </div>
-      {action}
+    <div className="flex items-baseline justify-between gap-4 border-b border-border px-5 py-4">
+      <h2 id={id} className="font-heading text-lg font-bold">
+        {title}
+        {count !== undefined ? (
+          <span className="ml-2 font-sans text-base font-normal text-muted-foreground">{count}</span>
+        ) : null}
+      </h2>
+      {action ?? null}
     </div>
   );
 }
 
-// ============================================================================
-// WidgetHeaderAction - Standard action link with loading state
-// ============================================================================
+/** The heading row's link. */
+export function WidgetLink({ href, children }: { href: string; children: ReactNode }): ReactNode {
+  return (
+    <Link href={href} className="link text-sm">
+      {children}
+    </Link>
+  );
+}
 
-interface WidgetHeaderActionProps {
-  /** Link destination */
+/**
+ * One case in a dashboard list. The whole row is the link; the right side
+ * holds the figure (a countdown, a time) and its line under it.
+ */
+export function WidgetRow({
+  href,
+  title,
+  detail,
+  aside,
+  asideDetail,
+  asideClassName,
+  testId,
+}: {
   href: string;
-  /** Button label */
-  label: string;
-  /** Loading label (shown during navigation) */
-  loadingLabel?: string;
-  /** Accessible label for screen readers */
-  ariaLabel?: string;
-  /** Whether currently navigating */
-  isNavigating: boolean;
-  /** Click handler */
-  onClick: () => void;
-}
-
-export function WidgetHeaderAction({
-  label,
-  loadingLabel = "Loading...",
-  ariaLabel,
-  isNavigating,
-  onClick,
-}: WidgetHeaderActionProps): ReactNode {
+  title: ReactNode;
+  detail?: ReactNode;
+  aside?: ReactNode;
+  asideDetail?: ReactNode;
+  /** Colour for the figure: the urgency of a deadline. */
+  asideClassName?: string;
+  testId?: string;
+}): ReactNode {
   return (
-    <button
-      onClick={onClick}
-      disabled={isNavigating}
-      aria-label={ariaLabel}
-      className={cn(
-        "text-base font-semibold text-foreground hover:text-primary-text hover:underline",
-        "transition-colors duration-200 flex items-center gap-2",
-        isNavigating && "opacity-70 cursor-wait"
-      )}
+    <Link
+      href={href}
+      data-testid={testId}
+      className="group flex min-h-14 items-center justify-between gap-4 py-3 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      {isNavigating ? (
-        <>
-          <CircleNotchIcon className="size-4 animate-spin" />
-          {loadingLabel}
-        </>
-      ) : (
-        label
-      )}
-    </button>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-semibold group-hover:text-primary-text">{title}</span>
+        {detail ? <span className="line-clamp-2 text-sm text-muted-foreground">{detail}</span> : null}
+      </span>{" "}
+      {aside !== undefined || asideDetail !== undefined ? (
+        <span className="shrink-0 text-right">
+          {aside !== undefined ? (
+            <span className={cn("block whitespace-nowrap text-sm font-semibold tabular-nums", asideClassName)}>{aside}</span>
+          ) : null}
+          {asideDetail !== undefined ? (
+            <span className="block whitespace-nowrap text-sm text-muted-foreground">{asideDetail}</span>
+          ) : null}
+        </span>
+      ) : null}
+    </Link>
   );
 }
 
-// ============================================================================
-// WidgetLoadingSkeleton - Configurable skeleton for loading states
-// ============================================================================
-
-interface WidgetLoadingSkeletonProps {
-  /** Number of skeleton items to show */
-  itemCount?: number;
-  /** Custom render for each item (receives index) */
-  renderItem?: (index: number) => ReactNode;
-  /** Whether to include header skeleton */
-  showHeader?: boolean;
-  /** Optional header skeleton */
-  headerSkeleton?: ReactNode;
-}
-
-export function WidgetLoadingSkeleton({
-  itemCount = 3,
-  renderItem,
-  showHeader = true,
-  headerSkeleton,
-}: WidgetLoadingSkeletonProps): ReactNode {
-  const defaultRenderItem = (index: number) => (
-    <div key={index} className="p-3 border border-border">
-      <Skeleton className="h-4 w-full mb-2" />
-      <Skeleton className="h-3 w-3/4" />
-    </div>
-  );
-
-  const defaultHeaderSkeleton = (
-    <div className="flex items-center justify-between mb-4">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-6 w-20" />
-    </div>
-  );
-
-  return (
-    <div className={cn(WIDGET_CONTAINER_CLASSES, "p-6")}>
-      {showHeader && (headerSkeleton ?? defaultHeaderSkeleton)}
-      <div className="space-y-2">
-        {Array.from({ length: itemCount }).map((_, i) =>
-          renderItem ? renderItem(i) : defaultRenderItem(i)
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// WidgetEmptyState - Consistent empty state with optional CTA
-// ============================================================================
-
-interface WidgetEmptyStateProps {
-  /** Icon to display */
-  icon: PhosphorIcon;
-  /** Primary message */
-  message: string;
-  /** Secondary/description text */
-  description?: string;
-  /** CTA button/link */
-  cta?: {
-    href: string;
-    label: string;
-  };
-}
-
+/** A section with nothing in it: one line saying so, and where to go instead. */
 export function WidgetEmptyState({
-  icon: Icon,
   message,
   description,
   cta,
-}: WidgetEmptyStateProps): ReactNode {
+}: {
+  message: string;
+  description?: string;
+  cta?: { href: string; label: string };
+}): ReactNode {
   return (
-    <div className="p-10 text-center" role="status" aria-label={message}>
-      <Icon
-        className="w-12 h-12 mx-auto mb-2 text-muted-foreground opacity-30"
-        aria-hidden="true"
-      />
-      <p className="text-base text-muted-foreground mb-2">{message}</p>
-      {description && (
-        <p className="text-sm text-muted-foreground mb-6">{description}</p>
-      )}
-      {cta && (
-        <Link
-          href={cta.href}
-          className={cn(
-            "inline-block px-6 py-3",
-            "bg-primary text-primary-foreground",
-            "border border-border",
-            "",
-            "",
-            "transition-colors duration-200",
-            "font-heading font-bold text-sm"
-          )}
-        >
-          {cta.label}
-        </Link>
-      )}
+    <div className="px-5 py-8" role="status">
+      <p className="text-base font-semibold">{message}</p>
+      {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+      {cta ? (
+        <p className="mt-3 text-sm">
+          <Link href={cta.href} className="link">
+            {cta.label}
+          </Link>
+        </p>
+      ) : null}
     </div>
   );
 }

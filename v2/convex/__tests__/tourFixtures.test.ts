@@ -400,7 +400,6 @@ describe.skipIf(!process.env.UPDATE_TOUR_FIXTURES)("tour fixtures", () => {
       await record(api.timeline.getPreferences);
       await record(api.dashboard.getDeadlines);
       await record(api.dashboard.getSummary);
-      await record(api.dashboard.getUpcomingDeadlines);
       await record(api.dashboard.getRecentActivity);
       await record(api.calendar.getCalendarPreferences);
       await record(api.calendar.getCalendarEvents, {});

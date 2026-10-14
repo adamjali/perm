@@ -268,6 +268,9 @@ export function createDashboardSummary(counts: {
 // ACTIVITY TYPES
 // ============================================================================
 
+/** Cases the dashboard's recent-changes list shows. */
+export const RECENT_ACTIVITY_SHOWN = 5;
+
 export interface RecentActivityItem {
   id: Id<"cases">;
   caseNumber?: string;

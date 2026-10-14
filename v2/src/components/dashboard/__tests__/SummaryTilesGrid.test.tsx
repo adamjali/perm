@@ -21,11 +21,10 @@ describe("SummaryTilesGrid", () => {
     vi.mocked(useQuery).mockReturnValue(undefined);
     const { container } = renderWithProviders(<SummaryTilesGrid />);
 
-    // Four path blocks and the outcome tiles below them.
+    // Six cells of counts.
     expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThanOrEqual(6);
-    // The heading never changes, so it renders while the counts load: the
-    // skeleton used to draw a bar in its place and swap it for the text.
-    expect(screen.getByText("Case summary")).toBeInTheDocument();
+    // The heading never changes, so it renders while the counts load.
+    expect(screen.getByRole("heading", { name: "Cases" })).toBeInTheDocument();
     expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
   });
 
@@ -37,7 +36,7 @@ describe("SummaryTilesGrid", () => {
     it("renders heading and all 6 status tiles with correct data", () => {
       renderWithProviders(<SummaryTilesGrid />);
 
-      expect(screen.getByText("Case summary")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /^Cases/ })).toBeInTheDocument();
 
       // All status labels present
       for (const label of ["PWD", "Recruitment", "ETA 9089", "I-140", "Complete", "Closed"]) {
@@ -69,7 +68,7 @@ describe("SummaryTilesGrid", () => {
     it("all tiles are accessible links with names", () => {
       renderWithProviders(<SummaryTilesGrid />);
       const links = screen.getAllByRole("link");
-      expect(links.length).toBe(7); // Total badge + 6 tiles
+      expect(links.length).toBe(7); // All cases + 6 counts
       links.forEach((link) => expect(link).toHaveAccessibleName());
     });
   });

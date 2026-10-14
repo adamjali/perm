@@ -8,7 +8,6 @@ import { api } from "@convex/_generated/api";
 import SummaryTilesGrid from "@/components/dashboard/SummaryTilesGrid";
 import DeadlineHeroWidget from "@/components/dashboard/DeadlineHeroWidget";
 import RecentActivityWidget from "@/components/dashboard/RecentActivityWidget";
-import UpcomingDeadlinesWidget from "@/components/dashboard/UpcomingDeadlinesWidget";
 import { DashboardHeading } from "@/components/dashboard/DashboardShell";
 import AutoClosureAlertBanner from "@/components/dashboard/AutoClosureAlertBanner";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
@@ -72,31 +71,17 @@ export function DashboardPageClient() {
     currentUser !== undefined && mountedAt - currentUser._creationTime < NEW_ACCOUNT_MS;
 
   return (
-    <div className="space-y-6">
-      <DashboardHeading firstName={firstName} isNewAccount={isNewAccount} />
-
-      <CaseCapNotice />
-
-      {/* Auto-closure Alert Banner - Shows when cases have been auto-closed */}
-      <AutoClosureAlertBanner />
-
-      {/* Deadline Hero Widget - Crown jewel, most prominent */}
-      <DeadlineHeroWidget />
-
-      {/* Summary Tiles Grid */}
-      <QueuePulseWidget />
-      <SummaryTilesGrid />
-
-      {/* Onboarding Checklist - shown for new users after wizard */}
-      <OnboardingChecklist />
-
-      {/* Two-column layout: Upcoming Deadlines | Recent Activity */}
-      <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 md:grid-cols-2">
-        <UpcomingDeadlinesWidget />
-        <RecentActivityWidget />
+    <div className="space-y-8">
+      <div className="space-y-3">
+        <DashboardHeading firstName={firstName} isNewAccount={isNewAccount} />
+        <QueuePulseWidget />
       </div>
-
-
+      <CaseCapNotice />
+      <AutoClosureAlertBanner />
+      <DeadlineHeroWidget />
+      <OnboardingChecklist />
+      <SummaryTilesGrid />
+      <RecentActivityWidget />
     </div>
   );
 }

@@ -136,6 +136,31 @@ export function fuzzyScore(query: string, candidate: string): number {
   return scoreNormalized(normalizeText(query), normalizeText(candidate));
 }
 
+/**
+ * How well a query matches a record of several fields when EVERY word of the
+ * query has to be found: each word's best score across the fields, and the
+ * weakest of those. 0 when any word matches nothing. The app's case searches
+ * use it, where "acme devops" must find an Acme case about DevOps and never
+ * every Acme case.
+ */
+export function everyWordScore(query: string, fields: readonly (string | null | undefined)[]): number {
+  const words = normalizeText(query).split(" ").filter(Boolean);
+  const texts = fields.filter((f): f is string => typeof f === "string" && f.length > 0).map(normalizeText);
+  if (words.length === 0 || texts.length === 0) return 0;
+  let weakest = 1;
+  for (const w of words) {
+    let best = 0;
+    for (const t of texts) {
+      const sc = scoreNormalized(w, t);
+      if (sc > best) best = sc;
+      if (best === 1) break;
+    }
+    if (best < weakest) weakest = best;
+    if (weakest === 0) return 0;
+  }
+  return weakest;
+}
+
 export interface Ranked<T> {
   item: T;
   score: number;

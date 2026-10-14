@@ -1,146 +1,128 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
-import { NavigableCard } from "@/components/ui/navigable-card";
-import { PermPath, StatBlock } from "@/components/visuals/PermPath";
 import { STAGE_VISUALS } from "@/components/status/stage-visuals";
-import { CheckCircleIcon, CopyIcon } from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
+import { WIDGET_CONTAINER_CLASSES, WidgetHeader, WidgetLink } from "./widget-primitives";
 
 /**
- * Loading: the real heading (it never changes) and the stat blocks in the
- * real grid. Its grid classes must match the real ones exactly, or the blocks
- * change width on arrival.
- * The dashboard's loading.tsx renders this same component.
+ * The account's cases by stage, as one row of counts. Each count links to
+ * those cases; the stage's colour is a dot beside its name.
  */
+
+interface Cell {
+  key: string;
+  label: string;
+  dot: string;
+  count: number;
+  note?: string;
+  href: string;
+}
+
+function CountRow({ cells }: { cells: readonly Cell[] }) {
+  return (
+    <ul className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+      {cells.map((c) => (
+        <li key={c.key} data-status={c.key} className="border-b border-r border-border">
+          <Link
+            href={c.href}
+            className="group flex h-full min-h-24 flex-col p-4 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold">
+              <span aria-hidden="true" className={cn("size-2 shrink-0", c.dot)} />
+              {c.label}
+            </span>{" "}
+            <span className="mt-1 font-heading text-2xl font-bold tabular-nums group-hover:text-primary-text">{c.count}</span>{" "}
+            {c.note ? <span className="mt-0.5 text-sm text-muted-foreground">{c.note}</span> : null}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Loading: the real heading over six cells of the real height. */
 export function SummaryTilesSkeleton() {
   return (
-    <div aria-busy={true}>
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-heading text-2xl font-bold">Case summary</h2>
-        <Skeleton variant="block" className="h-[52px] w-28" />
-      </div>
-      {/* 155px: the path's and the outcome blocks' real height at desktop
-          (measured on production, Sep 30 2026). */}
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} variant="block" className="h-[155px]" />
+    <section className={cn(WIDGET_CONTAINER_CLASSES, "overflow-hidden")} aria-busy={true} aria-label="Cases by stage">
+      <WidgetHeader title="Cases" />
+      <div className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="min-h-24 border-b border-r border-border p-4">
+            <Skeleton variant="line" className="h-5 w-20" />
+            <Skeleton variant="line" className="mt-2 h-7 w-10" />
+          </div>
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
-        {Array.from({ length: 2 }).map((_, i) => (
-          <Skeleton key={i} variant="block" className="h-[155px]" />
-        ))}
-      </div>
-    </div>
+    </section>
   );
 }
 
 function SummaryTilesGridContent() {
-  // Get signing out state to skip queries during sign out
   const { isSigningOut } = useAuthContext();
-
-  // Skip query when signing out to prevent auth errors
-  const data = useQuery(
-    api.dashboard.getSummary,
-    isSigningOut ? "skip" : undefined
-  );
-
-  // Loading state (undefined means still loading)
-  // Note: Convex queries return undefined while loading, then the actual data.
-  // Query errors are thrown and caught by the ErrorBoundary wrapper.
+  const data = useQuery(api.dashboard.getSummary, isSigningOut ? "skip" : undefined);
   if (data === undefined) return <SummaryTilesSkeleton />;
 
   const total =
-    data.pwd.count +
-    data.recruitment.count +
-    data.eta9089.count +
-    data.i140.count +
-    data.complete.count +
-    data.closed.count;
+    data.pwd.count + data.recruitment.count + data.eta9089.count + data.i140.count + data.complete.count + data.closed.count;
+
+  const stage = (key: "pwd" | "recruitment" | "eta9089" | "i140"): Cell => ({
+    key,
+    label: STAGE_VISUALS[key].label,
+    dot: STAGE_VISUALS[key].fill,
+    count: data[key].count,
+    note: data[key].subtext || undefined,
+    href: `/cases?status=${key}`,
+  });
+  const cells: Cell[] = [
+    stage("pwd"),
+    stage("recruitment"),
+    stage("eta9089"),
+    stage("i140"),
+    {
+      key: "complete",
+      label: "Complete",
+      dot: "bg-data-good",
+      count: data.complete.count,
+      note: data.complete.subtext || undefined,
+      href: "/cases?status=i140&progress=approved",
+    },
+    {
+      key: "closed",
+      label: STAGE_VISUALS.closed.label,
+      dot: STAGE_VISUALS.closed.fill,
+      count: data.closed.count,
+      note: data.closed.subtext || undefined,
+      href: "/cases?status=closed",
+    },
+    ...(data.duplicates.count > 0
+      ? [
+          {
+            key: "duplicates",
+            label: "Duplicates",
+            dot: "bg-data-warn",
+            count: data.duplicates.count,
+            note: data.duplicates.subtext || undefined,
+            href: "/cases?duplicates=true",
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <div data-tour="summary-tiles">
-      {/* Section header with total badge */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-heading text-2xl font-bold">Case summary</h2>
-
-        {/* Clickable total badge - neobrutalist style */}
-        <NavigableCard
-          href="/cases"
-          loadingIndicator="spinner"
-          className="group relative bg-primary text-primary-foreground border border-border transition-colors duration-150 px-4 py-2 overflow-hidden"
-        >
-          <div className="flex items-center gap-2">
-            <span className="mono text-2xl font-bold">{total}</span>{" "}
-            <span className="text-sm font-semibold opacity-90">
-              Total
-            </span>
-          </div>
-        </NavigableCard>
-      </div>
-
-      {/* The four working stages as the PERM path, each linking to its cases. */}
-      <PermPath
-        label="Cases by stage"
-        className="mb-4"
-        steps={[
-          { stage: "pwd", count: data.pwd.count, note: data.pwd.subtext, href: "/cases?status=pwd" },
-          { stage: "recruitment", count: data.recruitment.count, note: data.recruitment.subtext, href: "/cases?status=recruitment" },
-          { stage: "eta9089", count: data.eta9089.count, note: data.eta9089.subtext, href: "/cases?status=eta9089" },
-          { stage: "i140", count: data.i140.count, note: data.i140.subtext, href: "/cases?status=i140" },
-        ]}
-      />
-
-      {/* Where cases end up, drawn in the same blocks as the path above. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
-        <div data-status="complete">
-          <StatBlock
-            fill="bg-primary"
-            onFill="text-primary-foreground"
-            icon={CheckCircleIcon}
-            label="Complete"
-            count={data.complete.count}
-            note={data.complete.subtext}
-            href="/cases?status=i140&progress=approved"
-          />
-        </div>
-        <div data-status="closed">
-          <StatBlock
-            fill={STAGE_VISUALS.closed.fill}
-            onFill={STAGE_VISUALS.closed.onFill}
-            icon={STAGE_VISUALS.closed.icon}
-            label="Closed"
-            count={data.closed.count}
-            note={data.closed.subtext}
-            href="/cases?status=closed"
-          />
-        </div>
-        {/* Only while there are any */}
-        {data.duplicates.count > 0 && (
-          <div data-status="duplicates">
-            <StatBlock
-              fill="bg-data-warn"
-              onFill="text-black"
-              icon={CopyIcon}
-              label="Duplicates"
-              count={data.duplicates.count}
-              note={data.duplicates.subtext}
-              href="/cases?duplicates=true"
-            />
-          </div>
-        )}
-      </div>
-    </div>
+    <section data-tour="summary-tiles" aria-labelledby="cases-title" className={cn(WIDGET_CONTAINER_CLASSES, "overflow-hidden")}>
+      <WidgetHeader id="cases-title" title="Cases" count={total} action={<WidgetLink href="/cases">All cases</WidgetLink>} />
+      <CountRow cells={cells} />
+    </section>
   );
 }
 
-/**
- * SummaryTilesGrid wrapped with ErrorBoundary to gracefully handle query errors.
- */
+/** Wrapped so a failed query shows the error state instead of the page. */
 export default function SummaryTilesGrid() {
   return (
     <ErrorBoundary>

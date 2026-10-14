@@ -40,10 +40,9 @@ const preview: Preview = {
         <Story />
       </ConvexProvider>
     ),
-    // Add grain overlay and font classes to all stories
+    // The page ground and body font for every story.
     (Story) => (
       <div className="relative min-h-[200px] p-4 bg-background font-body">
-        <div className="grain-overlay" aria-hidden="true" />
         <Story />
       </div>
     ),

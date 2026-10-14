@@ -1,0 +1,19 @@
+diff --git a/dist/_browser-chunks/chunk-342N7CWU.js b/dist/_browser-chunks/chunk-342N7CWU.js
+index 342f9b9b78c04e71bef8f43a5b6d1a00d14a45c1..6c3fecbe4376e5bb4ec6bb0dfb11607e2c346f4a 100644
+--- a/dist/_browser-chunks/chunk-342N7CWU.js
++++ b/dist/_browser-chunks/chunk-342N7CWU.js
+@@ -118,6 +118,8 @@ var getParallelRoutes = (segmentsList) => {
+           // @ts-ignore Only available in Next.js >= v15.1.1
+           parentCacheNode: newLazyCacheNode,
+           // END
++          // Next.js 16.4: useRouter reads parentRenderTree.data.bfcacheId.
++          parentRenderTree: { data: { bfcacheId: 0 }, slots: /* @__PURE__ */ new Map() },
+           url: pathname,
+           loading: null
+         }
+diff --git a/template/next-env.d.ts b/template/next-env.d.ts
+deleted file mode 100644
+index 77e567dab0a2139c2a5e3a1800fd57df87eb6c70..0000000000000000000000000000000000000000
+diff --git a/template/typings.d.ts b/template/typings.d.ts
+deleted file mode 100644
+index b8b55169fef8d0101ac1dc190c40c4306e96d677..0000000000000000000000000000000000000000

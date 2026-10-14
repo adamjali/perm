@@ -96,27 +96,19 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
     steps: [
       {
         element: "[data-tour='deadline-hero']",
-        title: "Deadline command center",
+        title: "Deadlines",
         description:
-          "Your most critical view, every deadline grouped by urgency. Overdue items surface first so nothing slips through the cracks.",
+          "Every deadline in your cases, grouped by when it falls, with the next one named at the top. Late ones come first.",
       },
       {
         element: "[data-tour='summary-tiles']",
-        title: "Case pipeline",
-        description:
-          "Instant snapshot of all cases by PERM stage. Click any tile to jump straight to those cases.",
-      },
-      {
-        element: "[data-tour='upcoming-deadlines']",
-        title: "30-Day Lookahead",
-        description:
-          "Deadlines approaching in the next month. Each links directly to its case for quick action.",
+        title: "Cases by stage",
+        description: "How many cases sit at each stage. Each count opens those cases.",
       },
       {
         element: "[data-tour='recent-activity']",
-        title: "Activity feed",
-        description:
-          "Every change across all your cases, status updates, date edits, new notes, in real time.",
+        title: "Recent changes",
+        description: "The cases changed most recently, newest first.",
       },
     ],
   },

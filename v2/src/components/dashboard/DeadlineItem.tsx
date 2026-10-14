@@ -1,293 +1,32 @@
 "use client";
 
-/**
- * DeadlineItem Component - V1-MATCHING compact card style.
- *
- * Layout (2-column):
- * - Left: Employer name (bold), deadline type (uppercase small)
- * - Right: Countdown (mono bold), date (small)
- *
- * Features:
- * - Links to case detail page
- * - Hazard stripes on LEFT edge for overdue items (v1 style)
- * - One-time slide-in animation (plays once, then stays)
- * - Smart hover card with portal rendering (no clipping)
- * - Neobrutalist styling (2px border, hover lift with shadow)
- *
- * V1 Reference: frontend/dist/dashboard.html (lines 219-270)
- */
-
-import { useState, useRef, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { CircleNotchIcon } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
-import { formatDeadlineDate } from "@/components/cases/case-card.utils";
-import { Z_INDEX } from "@/lib/constants/zIndex";
-import { useNavigationLoading } from "@/hooks/useNavigationLoading";
-
-/**
- * Hook to detect if the device has hover capability.
- * Returns true for desktop/mouse devices, false for touch-only devices.
- * Uses the `(hover: hover)` media query which is the most reliable way
- * to detect pointer devices vs touch devices.
- */
-function useHasHover(): boolean {
-  const [hasHover, setHasHover] = useState(false);
-
-  useEffect(() => {
-    // Check if device supports hover (has fine pointer like mouse)
-    const mediaQuery = window.matchMedia("(hover: hover)");
-    setHasHover(mediaQuery.matches);
-
-    const handleChange = (event: MediaQueryListEvent) => {
-      setHasHover(event.matches);
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
-
-  return hasHover;
-}
 import type { DeadlineItem as DeadlineItemType } from "@convex/lib/dashboardTypes";
+import { formatDeadlineDate } from "@/components/cases/case-card.utils";
+import { WidgetRow } from "./widget-primitives";
 
-interface DeadlineItemProps {
-  deadline: DeadlineItemType;
-  index: number;
+/** How a deadline reads on the dashboard: how long until it, or how late. */
+export function countdownWords(daysUntil: number): string {
+  if (daysUntil < 0) return `${Math.abs(daysUntil)} ${Math.abs(daysUntil) === 1 ? "day" : "days"} late`;
+  if (daysUntil === 0) return "Today";
+  return `In ${daysUntil} ${daysUntil === 1 ? "day" : "days"}`;
 }
 
-// Hover card position calculated from element position
-interface HoverCardPosition {
-  top: number;
-  left: number;
-  placement: "right" | "left";
-}
-
-export default function DeadlineItem({ deadline }: DeadlineItemProps) {
-  const { isNavigating: isLoading, navigateTo } = useNavigationLoading();
-  const hasHover = useHasHover();
-  const [showHoverCard, setShowHoverCard] = useState(false);
-  const [hoverPosition, setHoverPosition] = useState<HoverCardPosition | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  const isOverdue = deadline.urgency === "overdue";
-
-  // Handle click - navigate via shared loading context
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    if (isLoading) return; // Prevent double-clicks
-    navigateTo(`/cases/${deadline.caseId}`);
-  }, [isLoading, navigateTo, deadline.caseId]);
-
-
-  // Format countdown display
-  const countdownText = isOverdue
-    ? `${Math.abs(deadline.daysUntil)}d ago`
-    : `${deadline.daysUntil}d`;
-
-  // Set mounted state for portal rendering
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Calculate optimal hover card position based on element position in viewport
-  const calculatePosition = useCallback(() => {
-    if (!containerRef.current) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-
-    // Hover card dimensions (approximate)
-    const cardWidth = 224; // w-56 = 14rem = 224px
-    const gap = 8; // ml-2 = 0.5rem = 8px
-
-    // Determine horizontal position - prefer right side unless not enough space
-    const spaceOnRight = viewportWidth - rect.right;
-    const placement: "right" | "left" = spaceOnRight < cardWidth + gap ? "left" : "right";
-
-    // Calculate absolute position with boundary checking
-    let left: number;
-    if (placement === "right") {
-      left = rect.right + gap;
-      // Ensure card doesn’t overflow right edge
-      if (left + cardWidth > viewportWidth - gap) {
-        left = viewportWidth - cardWidth - gap;
-      }
-    } else {
-      left = rect.left - cardWidth - gap;
-      // Ensure card doesn’t overflow left edge (prevent negative values)
-      if (left < gap) {
-        left = gap;
-      }
-    }
-
-    setHoverPosition({
-      top: rect.top,
-      left,
-      placement,
-    });
-  }, []);
-
-  // Recalculate position when hover starts (only on devices with hover capability)
-  const handleMouseEnter = useCallback(() => {
-    if (!hasHover) return; // Skip hover card on touch devices
-    calculatePosition();
-    setShowHoverCard(true);
-  }, [hasHover, calculatePosition]);
-
-  const handleMouseLeave = useCallback(() => {
-    setShowHoverCard(false);
-  }, []);
-
-  // Recalculate on scroll/resize while hovering
-  const rafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!showHoverCard) return;
-
-    const handleReposition = () => {
-      // Throttle with requestAnimationFrame
-      if (rafRef.current !== null) return;
-
-      rafRef.current = requestAnimationFrame(() => {
-        calculatePosition();
-        rafRef.current = null;
-      });
-    };
-
-    window.addEventListener("scroll", handleReposition, { capture: true, passive: true });
-    window.addEventListener("resize", handleReposition, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleReposition, { capture: true } as EventListenerOptions);
-      window.removeEventListener("resize", handleReposition);
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, [showHoverCard, calculatePosition]);
-
-  // Render hover card via portal to escape overflow:hidden containers
-  const renderHoverCard = () => {
-    if (!showHoverCard || !hoverPosition || !mounted) return null;
-
-    return createPortal(
-      <div
-        className={cn(
-          "fixed w-56 bg-card border border-border",
-          "p-3 space-y-2 pointer-events-none",
-          "duration-150"
-        )}
-        style={{
-          top: hoverPosition.top,
-          left: hoverPosition.left,
-          zIndex: Z_INDEX.tooltip,
-        }}
-      >
-        <div>
-          <div className="text-sm font-semibold text-muted-foreground">
-            Case #
-          </div>
-          <div className="mono text-sm font-medium text-foreground truncate" title={deadline.caseNumber || "N/A"}>
-            {deadline.caseNumber || "N/A"}
-          </div>
-        </div>
-        <div>
-          <div className="text-sm font-semibold text-muted-foreground">
-            Position
-          </div>
-          <div className="text-sm font-medium text-foreground truncate" title={deadline.positionTitle || deadline.beneficiaryName || "N/A"}>
-            {deadline.positionTitle || deadline.beneficiaryName || "N/A"}
-          </div>
-        </div>
-        <div>
-          <div className="text-sm font-semibold text-muted-foreground">
-            Due
-          </div>
-          <div className="text-sm font-medium text-foreground">
-            {formatDeadlineDate(deadline.dueDate)}
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
-  };
-
+/**
+ * One deadline: the employer, what's due and the role, then how long until
+ * it and the date. The whole row opens the case.
+ */
+export default function DeadlineItem({ deadline }: { deadline: DeadlineItemType }) {
+  const overdue = deadline.urgency === "overdue";
+  const role = deadline.positionTitle || deadline.beneficiaryName;
   return (
-    <>
-      {/* No staggered slide-in: the items arrive with their widget, and the
-          per-item delay made each one show, vanish, then slide back. */}
-      <div
-        ref={containerRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <a
-          href={`/cases/${deadline.caseId}`}
-          onClick={handleClick}
-          className={cn(
-            "group relative flex items-center justify-between",
-            "px-4 py-3 bg-card border border-border",
-            "cursor-pointer transition-colors duration-150 ease-out",
-            "",
-            isOverdue && "border-destructive",
-            isLoading && "pointer-events-none"
-          )}
-          style={{ opacity: isLoading ? 0.7 : 1 }}
-        >
-          {/* Loading spinner overlay */}
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-              <CircleNotchIcon className="h-5 w-5 animate-spin text-primary" />
-            </div>
-          )}
-
-          {/* Hazard stripes on LEFT edge for overdue items (v1 style) */}
-          {isOverdue && (
-            <div
-              className="absolute top-0 left-0 w-1.5 h-full"
-              style={{
-                background: `repeating-linear-gradient(
-                  0deg,
-                  #dc2626,
-                  #dc2626 4px,
-                  #000 4px,
-                  #000 8px
-                )`,
-              }}
-            />
-          )}
-
-          {/* Left side: Employer + Type */}
-          <div className={cn("flex-1 min-w-0", isOverdue && "pl-2")}>
-            <div className="font-bold text-base truncate text-foreground" title={deadline.employerName}>
-              {deadline.employerName}
-            </div>
-            <div className="line-clamp-2 text-sm font-semibold text-muted-foreground" title={deadline.label}>
-              {deadline.label}
-            </div>
-          </div>
-
-          {/* Right side: Countdown + Date */}
-          <div className="text-right flex-shrink-0 ml-3">
-            <div
-              className={cn(
-                "font-mono font-bold text-base",
-                isOverdue ? "text-destructive" : "text-foreground"
-              )}
-            >
-              {countdownText}
-            </div>
-            <div className="whitespace-nowrap font-mono text-sm text-muted-foreground">
-              {formatDeadlineDate(deadline.dueDate)}
-            </div>
-          </div>
-        </a>
-      </div>
-
-      {/* Hover card rendered via portal */}
-      {renderHoverCard()}
-    </>
+    <WidgetRow
+      href={`/cases/${deadline.caseId}`}
+      title={deadline.employerName}
+      detail={role ? `${deadline.label} · ${role}` : deadline.label}
+      aside={countdownWords(deadline.daysUntil)}
+      asideClassName={overdue ? "text-destructive" : undefined}
+      asideDetail={formatDeadlineDate(deadline.dueDate)}
+      testId="deadline-item"
+    />
   );
 }

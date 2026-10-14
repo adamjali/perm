@@ -4,27 +4,22 @@ import type { CaseStatus } from "@/lib/perm"
 import { STAGE_VISUALS } from "./stage-visuals"
 
 /** Fallback for unknown/invalid stages (defensive coding) */
-const FALLBACK_CONFIG = { fill: "bg-muted-foreground", onFill: "text-white", label: "Unknown" }
+const FALLBACK = { fill: "bg-muted-foreground", label: "Unknown" }
 
 interface CaseStageBadgeProps {
   stage: CaseStatus
-  /** Use black border instead of color-matched border (neobrutalist style) */
-  bordered?: boolean
   className?: string
 }
 
-export function CaseStageBadge({ stage, bordered = false, className }: CaseStageBadgeProps) {
-  // Fill and ink come from the shared stage map, where each pairing is measured.
-  const config = STAGE_VISUALS[stage] ?? FALLBACK_CONFIG
-  const borderClass = bordered
-    ? "border border-border"
-    : "border-transparent"
-
+/**
+ * A case's stage as a quiet chip: the stage's own colour as a dot beside its
+ * name. The colour is a reminder of the stage, never the whole fill.
+ */
+export function CaseStageBadge({ stage, className }: CaseStageBadgeProps) {
+  const config = STAGE_VISUALS[stage] ?? FALLBACK
   return (
-    <Badge
-      className={cn("font-semibold", config.fill, config.onFill, borderClass, className)}
-      data-status={stage}
-    >
+    <Badge className={cn("font-normal", className)} data-status={stage}>
+      <span aria-hidden="true" className={cn("size-2 shrink-0", config.fill)} />
       {config.label}
     </Badge>
   )

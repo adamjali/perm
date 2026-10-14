@@ -1,77 +1,23 @@
 "use client";
 
-/**
- * RecentActivityCard Component
- *
- * Compact horizontal card displaying a single activity item.
- * Design: Neobrutalist with black-bordered case status badge.
- *
- * Layout (2-column):
- * - Left: Employer (bold), beneficiary (small), action (muted)
- * - Right: Case status badge (bordered), timestamp
- *
- * Requirements:
- * - v2/docs/DESIGN_SYSTEM.md
- * - perm_flow.md
- */
-
-import { cn } from "@/lib/utils";
-import { NavigableCard } from "@/components/ui/navigable-card";
 import { safeFormatDistanceToNow } from "@/lib/utils/date";
-import { CaseStageBadge } from "@/components/status/case-stage-badge";
+import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import type { RecentActivityItem } from "@convex/lib/dashboardTypes";
+import { WidgetRow } from "./widget-primitives";
 
-interface RecentActivityCardProps {
-  activity: RecentActivityItem;
-}
-
-export default function RecentActivityCard({ activity }: RecentActivityCardProps) {
-  // Format timestamp to compact relative time (with safe fallback)
-  const relativeTime = safeFormatDistanceToNow(activity.timestamp);
-
+/** One recent change: the case, what changed and its stage, and when. */
+export default function RecentActivityCard({ activity }: { activity: RecentActivityItem }) {
+  const stage = STAGE_VISUALS[activity.caseStatus]?.label;
   return (
-    <NavigableCard
+    <WidgetRow
       href={`/cases/${activity.id}`}
-      loadingIndicator="overlay"
-      className={cn(
-        "group flex items-center justify-between gap-4",
-        "bg-card border border-border",
-        "",
-        "transition-colors duration-150",
-        "px-4 py-3"
-      )}
-    >
-      {/* Left: Case info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary-text transition-colors" title={activity.employerName}>
-            {activity.employerName}
-          </span>{" "}
-          {/* No case number yet: nothing, rather than a stray dash. */}
-          {activity.caseNumber && (
-            <span className="text-sm text-muted-foreground mono shrink-0 truncate max-w-[120px]" title={activity.caseNumber}>
-              {activity.caseNumber}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="truncate" title={activity.positionTitle}>{activity.positionTitle}</span>{" "}
-          <span className="shrink-0">•</span>{" "}
-          <span className="truncate" title={activity.action}>{activity.action}</span>
-        </div>
-      </div>
-
-      {/* Right: Badge + timestamp */}
-      <div className="flex items-center gap-3 shrink-0">
-        <CaseStageBadge stage={activity.caseStatus} bordered className="text-sm" />
-        <time
-          dateTime={new Date(activity.timestamp).toISOString()}
-          className="text-sm text-muted-foreground whitespace-nowrap"
-          data-testid="activity-timestamp"
-        >
-          {relativeTime}
+      title={activity.employerName}
+      detail={[activity.action, activity.positionTitle, stage].filter(Boolean).join(" · ")}
+      asideDetail={
+        <time dateTime={new Date(activity.timestamp).toISOString()} data-testid="activity-timestamp">
+          {safeFormatDistanceToNow(activity.timestamp)}
         </time>
-      </div>
-    </NavigableCard>
+      }
+    />
   );
 }

@@ -1,129 +1,31 @@
 "use client";
 
-// `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here rather
-// than inherited from whichever importer happened to cross a boundary first.
-// Without it this module works until the chunk graph shifts, then fails with
-// `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx.
-
 /**
- * DeadlineHeroWidget Component
+ * The dashboard's deadlines: one sentence naming the next one (or the late
+ * ones), then every deadline in four groups by when it falls. Convex keeps
+ * the query live, so the list is always current.
  *
- * Horizontal 4-column grid layout for deadline display grouped by urgency.
- * Columns: Overdue, This Week, This Month, Later.
- *
- * @see v2/docs/DESIGN_SYSTEM.md
  * @see perm_flow.md (Deadlines/Windows section)
  */
 
-"use client";
-
 import { type ReactNode } from "react";
 import { useQuery } from "convex/react";
-import { useState, useEffect } from "react";
-import { ArrowsClockwiseIcon as RefreshCw, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
-
-import { MS_PER_MINUTE } from "@/lib/time";
 
 import { api } from "@convex/_generated/api";
+import type { DeadlineGroups, DeadlineItem } from "@convex/lib/dashboardTypes";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
-import { formatRelativeTime } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { formatDeadlineDate } from "@/components/cases/case-card.utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import UrgencyGroup from "./UrgencyGroup";
+import { countdownWords } from "./DeadlineItem";
+import { WIDGET_CONTAINER_CLASSES, WidgetHeader, WidgetLink } from "./widget-primitives";
 
-// Container styles shared across all states
-// border-2, the real widget's border. The skeleton drew 3px, so the widget
-// shifted by a pixel on every side when its data arrived.
-const CONTAINER_CLASSES =
-  "overflow-hidden rounded-none border border-border";
-
-// ============================================================================
-// Sub-components
-// ============================================================================
-
-export function DeadlineHeroLoadingSkeleton(): ReactNode {
-  return (
-    <div className={CONTAINER_CLASSES}>
-      <div  aria-hidden="true" />
-      {/* Sized to the real widget (measured on production): a 66px header
-          over four 194px columns, so nothing below it moves when the
-          deadlines land. */}
-      <div className="bg-card">
-        <div className="flex h-[66px] items-center justify-between px-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-9 w-24" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className={`p-4 min-h-[194px] ${i < 3 ? "md:border-r border-border" : ""}`}
-            >
-              <Skeleton className="h-6 w-24 mb-3" />
-              <Skeleton className="h-16" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface DeadlineHeroHeaderProps {
-  totalCount: number;
-  hasOverdue: boolean;
-  lastRefresh: number;
-  isRefreshing: boolean;
-  onRefresh: () => void;
-}
-
-function DeadlineHeroHeader({
-  totalCount,
-  hasOverdue,
-  lastRefresh,
-  isRefreshing,
-  onRefresh,
-}: DeadlineHeroHeaderProps): ReactNode {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b border-border">
-      <div className="flex items-center gap-2">
-        <AlertTriangle
-          className={`size-6 ${hasOverdue ? "text-destructive" : "text-muted-foreground"}`}
-        />
-        <h2 className="text-2xl font-bold font-heading">Deadline hub</h2>
-        <Badge variant={hasOverdue ? "destructive" : "secondary"}>
-          {totalCount}
-        </Badge>
-      </div>
-      <div className="flex items-center gap-4">
-        <span className="text-sm text-muted-foreground">
-          Updated {formatRelativeTime(lastRefresh)}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRefresh}
-          loading={isRefreshing}
-          aria-label="Refresh deadlines"
-        >
-          <RefreshCw className={isRefreshing ? "animate-spin" : ""} />
-          Refresh
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-interface DeadlineHeroEmptyStateProps {
-  lastRefresh: number;
-  isRefreshing: boolean;
-  onRefresh: () => void;
-  /** Open cases on the account; undefined while the summary loads. */
-  openCases: number | undefined;
-}
+const GROUPS = [
+  { key: "overdue", title: "Overdue" },
+  { key: "thisWeek", title: "This week" },
+  { key: "thisMonth", title: "This month" },
+  { key: "later", title: "Later" },
+] as const;
 
 /**
  * Open cases are every case the deadline list reads: all but closed ones.
@@ -144,140 +46,77 @@ export function openCaseCount(
   );
 }
 
-function DeadlineHeroEmptyState({
-  lastRefresh,
-  isRefreshing,
-  onRefresh,
-  openCases,
-}: DeadlineHeroEmptyStateProps): ReactNode {
-  // An account with open cases and no dates due has nothing to create; telling
-  // it to "create a case" read as if its 44 cases were missing.
-  const hasCases = openCases !== undefined && openCases > 0;
+function soonest(items: readonly DeadlineItem[]): DeadlineItem | undefined {
+  return items.reduce<DeadlineItem | undefined>((a, b) => (a === undefined || b.daysUntil < a.daysUntil ? b : a), undefined);
+}
+
+/** The one sentence the dashboard leads with. */
+export function deadlineAnswer(data: Pick<DeadlineGroups, "overdue" | "thisWeek" | "thisMonth" | "later">, openCases: number | undefined): string {
+  const late = data.overdue.length;
+  const next = soonest([...data.thisWeek, ...data.thisMonth, ...data.later]);
+  const nextLine = next
+    ? `Next: ${next.label} for ${next.employerName}, ${formatDeadlineDate(next.dueDate)} (${countdownWords(next.daysUntil).toLowerCase()}).`
+    : "";
+  if (late > 0) {
+    const first = soonest(data.overdue)!;
+    const lead = `${late} ${late === 1 ? "deadline is" : "deadlines are"} late, the earliest ${first.label} for ${first.employerName}.`;
+    return next ? `${lead} ${nextLine}` : lead;
+  }
+  if (next) return nextLine;
+  if (openCases !== undefined && openCases > 0) {
+    return `Nothing is due on your ${openCases.toLocaleString("en-US")} open ${openCases === 1 ? "case" : "cases"}. Deadlines appear as you add dates.`;
+  }
+  return "Add a case and its deadlines appear here, worked out from its dates.";
+}
+
+export function DeadlineHeroLoadingSkeleton(): ReactNode {
   return (
-    <div className={CONTAINER_CLASSES}>
-      <div  aria-hidden="true" />
-      <div className="space-y-4 bg-card p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="size-7 text-muted-foreground" />
-            <h2 className="text-2xl font-bold font-heading">Deadline hub</h2>
-            <Badge variant="secondary" className="text-sm px-3 py-1">
-              0
-            </Badge>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-base text-muted-foreground">
-              Updated {formatRelativeTime(lastRefresh)}
-            </span>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={onRefresh}
-              loading={isRefreshing}
-              aria-label="Refresh deadlines"
-            >
-              <RefreshCw className={isRefreshing ? "animate-spin" : ""} />
-              Refresh
-            </Button>
-          </div>
-        </div>
-        <div className="flex flex-col items-center justify-center rounded-none border border-border bg-background p-8 text-center">
-          <p className="mb-4 text-lg text-muted-foreground">
-            No upcoming deadlines
-          </p>{" "}
-          {hasCases ? (
-            <p className="text-sm text-muted-foreground">
-              None of your {openCases.toLocaleString("en-US")} open{" "}
-              {openCases === 1 ? "case has" : "cases have"} a date due. Deadlines
-              appear here as you add dates to a case.
-            </p>
-          ) : openCases === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Create a case to start tracking deadlines
-            </p>
-          ) : null}
+    <section className={WIDGET_CONTAINER_CLASSES} aria-busy={true} aria-label="Deadlines">
+      <WidgetHeader title="Deadlines" />
+      <div className="p-5">
+        <Skeleton variant="line" className="h-7 w-full max-w-xl" />
+        <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2 xl:grid-cols-4">
+          {GROUPS.map((g) => (
+            <div key={g.key}>
+              <Skeleton variant="line" className="h-6 w-28" />
+              <Skeleton variant="block" className="mt-3 h-14" />
+            </div>
+          ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
-// ============================================================================
-// Main Component
-// ============================================================================
-
 export default function DeadlineHeroWidget(): ReactNode {
   const { isSigningOut } = useAuthContext();
+  const data = useQuery(api.dashboard.getDeadlines, isSigningOut ? "skip" : undefined);
+  // The dashboard reads the summary with these arguments too, so this shares
+  // its subscription.
+  const summary = useQuery(api.dashboard.getSummary, isSigningOut ? "skip" : undefined);
 
-  const data = useQuery(
-    api.dashboard.getDeadlines,
-    isSigningOut ? "skip" : undefined
-  );
-  // The dashboard already reads the summary with these arguments, so this
-  // shares its subscription.
-  const summary = useQuery(
-    api.dashboard.getSummary,
-    isSigningOut ? "skip" : undefined
-  );
+  if (data === undefined) return <DeadlineHeroLoadingSkeleton />;
 
-  const [lastRefresh, setLastRefresh] = useState<number>(() => Date.now());
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Auto-refresh every 5 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLastRefresh(Date.now());
-    }, 5 * MS_PER_MINUTE);
-    return () => clearInterval(interval);
-  }, []);
-
-  function handleRefresh(): void {
-    setIsRefreshing(true);
-    setLastRefresh(Date.now());
-    setTimeout(() => setIsRefreshing(false), 500);
-  }
-
-  if (data === undefined) {
-    return <DeadlineHeroLoadingSkeleton />;
-  }
-
-  const totalCount =
-    data.overdue.length +
-    data.thisWeek.length +
-    data.thisMonth.length +
-    data.later.length;
-
-  if (totalCount === 0) {
-    return (
-      <DeadlineHeroEmptyState
-        lastRefresh={lastRefresh}
-        isRefreshing={isRefreshing}
-        onRefresh={handleRefresh}
-        openCases={openCaseCount(summary)}
-      />
-    );
-  }
-
-  const hasOverdue = data.overdue.length > 0;
+  const total = data.overdue.length + data.thisWeek.length + data.thisMonth.length + data.later.length;
 
   return (
-    <div data-tour="deadline-hero" className="overflow-hidden rounded-none border border-border">
-      <div  aria-hidden="true" />
-      <div className="bg-card">
-        <DeadlineHeroHeader
-          totalCount={totalCount}
-          hasOverdue={hasOverdue}
-          lastRefresh={lastRefresh}
-          isRefreshing={isRefreshing}
-          onRefresh={handleRefresh}
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-          <UrgencyGroup title="Overdue" urgency="overdue" items={data.overdue} />
-          <UrgencyGroup title="This week" urgency="thisWeek" items={data.thisWeek} />
-          <UrgencyGroup title="This month" urgency="thisMonth" items={data.thisMonth} />
-          <UrgencyGroup title="Later" urgency="later" items={data.later} isLast />
-        </div>
+    <section
+      id="deadlines"
+      data-tour="deadline-hero"
+      aria-labelledby="deadlines-title"
+      className={WIDGET_CONTAINER_CLASSES}
+    >
+      <WidgetHeader id="deadlines-title" title="Deadlines" count={total} action={<WidgetLink href="/calendar">Calendar</WidgetLink>} />
+      <div className="p-5">
+        <p className="bg-tint px-4 py-3 text-base font-semibold sm:text-lg">{deadlineAnswer(data, openCaseCount(summary))}</p>
+        {total > 0 ? (
+          <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2 xl:grid-cols-4">
+            {GROUPS.map((g) => (
+              <UrgencyGroup key={g.key} title={g.title} urgency={g.key} items={data[g.key]} />
+            ))}
+          </div>
+        ) : null}
       </div>
-    </div>
+    </section>
   );
 }

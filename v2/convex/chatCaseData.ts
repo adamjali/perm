@@ -9,7 +9,7 @@
  * @module chatCaseData
  */
 
-import { FUZZY_MATCH_MIN, fuzzyScore } from "./lib/fuzzy";
+import { FUZZY_MATCH_MIN, everyWordScore } from "./lib/fuzzy";
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
@@ -114,8 +114,9 @@ export function caseMatchesSearch(c: CaseDoc, query: string): boolean {
   // A number or name typed with its spaces and dashes left out.
   const compact = q.replace(/ /g, "");
   if (compact.length >= 4 && haystack.replace(/[ |]/g, "").includes(compact)) return true;
-  // A typo, forgiven the way every other search on the site forgives it.
-  return fields.some((f) => fuzzyScore(query, f) >= FUZZY_MATCH_MIN);
+  // A typo in a word, forgiven the way the site's searches forgive it; every
+  // word still has to be found.
+  return everyWordScore(query, fields) >= FUZZY_MATCH_MIN;
 }
 
 /**

@@ -286,47 +286,6 @@
       "subtext": "1 ready to start, 1 in progress"
     }
   },
-  "dashboard:getUpcomingDeadlines {}": [
-    {
-      "beneficiaryName": "A. Lindqvist",
-      "caseId": "000000000000000000000010009cases",
-      "caseStatus": "eta9089",
-      "daysUntil": 7,
-      "dueDate": "2026-10-08",
-      "employerName": "Juniper Biologics",
-      "label": "RFI response due",
-      "positionTitle": "Senior Statistician",
-      "progressStatus": "rfi_rfe",
-      "type": "rfi_response",
-      "urgency": "thisWeek"
-    },
-    {
-      "beneficiaryName": "S. Iyer",
-      "caseId": "000000000000000000000010012cases",
-      "caseStatus": "i140",
-      "daysUntil": 14,
-      "dueDate": "2026-10-15",
-      "employerName": "Cobalt Freight Systems",
-      "label": "I-140 filing deadline",
-      "positionTitle": "Software Engineer II",
-      "progressStatus": "working",
-      "type": "eta9089_expiration",
-      "urgency": "thisMonth"
-    },
-    {
-      "beneficiaryName": "R. Okafor",
-      "caseId": "000000000000000000000010003cases",
-      "caseStatus": "recruitment",
-      "daysUntil": 24,
-      "dueDate": "2026-10-25",
-      "employerName": "Northwind Analytics",
-      "label": "ETA 9089 filing window opens",
-      "positionTitle": "Senior Data Engineer",
-      "progressStatus": "filed",
-      "type": "filing_window_opens",
-      "urgency": "thisMonth"
-    }
-  ],
   "dashboard:getRecentActivity {}": [
     {
       "action": "Updated",

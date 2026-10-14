@@ -16,9 +16,9 @@ process.env.TZ = "America/New_York";
 const sharedConfig = {
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@/test-utils": path.resolve(__dirname, "./test-utils"),
-      "@convex": path.resolve(__dirname, "./convex"),
+      "@": path.resolve(import.meta.dirname, "./src"),
+      "@/test-utils": path.resolve(import.meta.dirname, "./test-utils"),
+      "@convex": path.resolve(import.meta.dirname, "./convex"),
       // `server-only` throws on import from anything with a DOM. Every vitest
       // project here runs happy-dom or edge-runtime, so a test of a SERVER
       // module - sitemap.ts, which reaches src/lib/turso/client.ts - fails to
@@ -35,7 +35,7 @@ const sharedConfig = {
       // module from a client component is a BUILD error, and `next build`
       // still catches it. There is a dedicated test asserting no "use client"
       // file imports lib/turso.
-      "server-only": path.resolve(__dirname, "./node_modules/server-only/empty.js"),
+      "server-only": path.resolve(import.meta.dirname, "./node_modules/server-only/empty.js"),
     },
   },
 };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { editDistance, FuzzyIndex, fuzzyScore, normalizeText, rankFuzzy } from "../fuzzy";
+import { editDistance, everyWordScore, FUZZY_MATCH_MIN, FuzzyIndex, fuzzyScore, normalizeText, rankFuzzy } from "../fuzzy";
 
 /**
  * The one fuzzy matcher every search on the site falls back on when an exact
@@ -122,5 +122,24 @@ describe("FuzzyIndex", () => {
     for (const q of ["amazn", "microsfot", "j p morgan", "nvdia"]) {
       expect(sliced.search(q).map((r) => r.item.name)).toEqual(index.search(q).map((r) => r.item.name));
     }
+  });
+});
+
+describe("everyWordScore", () => {
+  const acme = ["Acme Corp", "Senior DevOps Engineer"];
+  it("finds a record when every word is found in some field", () => {
+    expect(everyWordScore("acme devops", acme)).toBeGreaterThanOrEqual(FUZZY_MATCH_MIN);
+  });
+  it("forgives a typo in a word", () => {
+    expect(everyWordScore("acme devpos", acme)).toBeGreaterThanOrEqual(FUZZY_MATCH_MIN);
+    expect(everyWordScore("gogle", ["Google LLC"])).toBeGreaterThanOrEqual(FUZZY_MATCH_MIN);
+  });
+  it("fails when any word matches nothing", () => {
+    expect(everyWordScore("brightline inc", ["Brightline Labs", "Data Analyst"])).toBeLessThan(FUZZY_MATCH_MIN);
+    expect(everyWordScore("acme marketing", acme)).toBe(0);
+  });
+  it("is 0 for an empty query or no fields", () => {
+    expect(everyWordScore("", acme)).toBe(0);
+    expect(everyWordScore("acme", [undefined, null, ""])).toBe(0);
   });
 });

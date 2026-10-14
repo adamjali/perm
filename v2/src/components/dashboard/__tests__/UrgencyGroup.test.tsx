@@ -1,68 +1,28 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { describe, it, expect } from "vitest";
+import { screen, fireEvent } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
-import {
-  createManyDeadlinesGroup,
-  createOverdueDeadline,
-} from "../../../../test-utils/deadline-fixtures";
-import type { Id } from "@convex/_generated/dataModel";
+import { createManyDeadlinesGroup } from "../../../../test-utils/deadline-fixtures";
 import UrgencyGroup from "../UrgencyGroup";
 
 describe("UrgencyGroup", () => {
-  const overdueItems = [
-    createOverdueDeadline({ caseId: "case_001" as Id<"cases">, caseNumber: "CASE-001" }),
-    createOverdueDeadline({ caseId: "case_002" as Id<"cases">, caseNumber: "CASE-002" }),
-  ];
-
-  beforeEach(() => vi.clearAllMocks());
-
-  it("renders group title, item count, and all items", () => {
-    renderWithProviders(
-      <UrgencyGroup title="Overdue" items={overdueItems} urgency="overdue" />
-    );
-
-    expect(screen.getByText("Overdue")).toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getAllByText("Tech Corp Inc")).toHaveLength(2);
+  it("heads the group with its name and count", () => {
+    renderWithProviders(<UrgencyGroup title="This week" urgency="thisWeek" items={createManyDeadlinesGroup(2, "thisWeek")} />);
+    const heading = screen.getByRole("heading", { level: 3 });
+    expect(heading).toHaveTextContent("This week");
+    expect(heading).toHaveTextContent("2");
   });
 
-  it("shows empty state when no items", () => {
-    renderWithProviders(
-      <UrgencyGroup title="Overdue" items={[]} urgency="overdue" />
-    );
-    expect(screen.getByText(/no deadlines/i)).toBeInTheDocument();
+  it("says nothing is due when empty", () => {
+    renderWithProviders(<UrgencyGroup title="Overdue" urgency="overdue" items={[]} />);
+    expect(screen.getByText("Nothing due")).toBeInTheDocument();
   });
 
-  describe("overflow (+N more)", () => {
-    const manyItems = createManyDeadlinesGroup(8, "overdue");
-
-    it("shows only maxItems initially with +N more button", () => {
-      renderWithProviders(
-        <UrgencyGroup title="Overdue" items={manyItems} urgency="overdue" maxItems={5} />
-      );
-
-      expect(screen.getAllByText("Tech Corp Inc")).toHaveLength(5);
-      expect(screen.getByText("+3 more")).toBeInTheDocument();
-    });
-
-    it("expands all items and shows Show less on click", async () => {
-      const user = userEvent.setup();
-      renderWithProviders(
-        <UrgencyGroup title="Overdue" items={manyItems} urgency="overdue" maxItems={5} />
-      );
-
-      await user.click(screen.getByText("+3 more"));
-      expect(screen.getAllByText("Tech Corp Inc")).toHaveLength(8);
-      expect(screen.getByText("Show less")).toBeInTheDocument();
-    });
-
-    it("does not show +N more when items <= maxItems", () => {
-      renderWithProviders(
-        <UrgencyGroup title="Overdue" items={createManyDeadlinesGroup(3, "overdue")} urgency="overdue" maxItems={5} />
-      );
-      expect(screen.queryByText(/more/)).not.toBeInTheDocument();
-    });
+  it("shows the first five, then the rest on request", () => {
+    renderWithProviders(<UrgencyGroup title="Later" urgency="later" items={createManyDeadlinesGroup(8, "later")} />);
+    expect(screen.getAllByRole("link")).toHaveLength(5);
+    fireEvent.click(screen.getByRole("button", { name: "Show 3 more" }));
+    expect(screen.getAllByRole("link")).toHaveLength(8);
+    expect(screen.getByRole("button", { name: "Show fewer" })).toBeInTheDocument();
   });
 });

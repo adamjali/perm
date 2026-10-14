@@ -1,69 +1,13 @@
-/**
- * AddCaseButton Component
- *
- * Primary action button to create a new case.
- *
- * Features:
- * - Navigates to /cases/new with loading state
- * - Plus icon + "Add New Case" text
- * - Neobrutalist styling: 4px border, hard shadow, Forest Green background
- * - Hover lift effect (up and left)
- * - Active press effect (down and right, shadow removal)
- * - Space Grotesk heading font, bold, uppercase
- * - Loading spinner during navigation
- *
- * Design: Neobrutalist with tactile, pressable feel
- */
+import Link from "next/link";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
+import { buttonVariants } from "@/components/ui/button";
 
-"use client";
-
-import { CircleNotchIcon, PlusIcon } from "@phosphor-icons/react/ssr";
-import { cn } from "@/lib/utils";
-import { useNavigationLoading } from "@/hooks/useNavigationLoading";
-
+/** The dashboard's main action: start a new case. */
 export default function AddCaseButton() {
-  const { isNavigating, navigateTo } = useNavigationLoading();
-
-  const handleClick = () => {
-    navigateTo("/cases/new");
-  };
-
   return (
-    <button
-      onClick={handleClick}
-      disabled={isNavigating}
-      aria-label="Add new case"
-      className={cn(
-        // Base styling
-        "inline-flex items-center justify-center gap-2 px-6 py-3",
-        // Typography
-        "font-heading font-bold text-sm",
-        // Colors
-        "bg-primary text-primary-foreground",
-        // Neobrutalist border + shadow
-        "border border-border",
-        // No border radius (sharp corners)
-        "rounded-none",
-        // Cursor pointer for clickable state
-        "cursor-pointer",
-        // Hover: lift up-left (disabled when pending)
-        !isNavigating && "",
-        // Active: press down-right, remove shadow (disabled when pending)
-        !isNavigating && "",
-        // Loading state
-        isNavigating && "opacity-80 cursor-wait",
-        // Smooth transitions
-        "transition-colors duration-200"
-      )}
-    >
-      {isNavigating ? (
-        <CircleNotchIcon className="size-5 animate-spin" />
-      ) : (
-        <PlusIcon className="size-5" />
-      )}
-      <span>
-        {isNavigating ? "Loading..." : "Add new case"}
-      </span>
-    </button>
+    <Link href="/cases/new" className={buttonVariants({ size: "lg" })}>
+      <PlusIcon aria-hidden="true" />
+      Add case
+    </Link>
   );
 }
