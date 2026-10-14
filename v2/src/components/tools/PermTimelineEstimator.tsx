@@ -62,6 +62,7 @@ import { QueueMonthChart } from "@/components/tools/QueueMonthChart";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { trackEstimateShown } from "@/lib/funnelEvents";
+import { buttonVariants } from "@/components/ui/button";
 
 export interface PermTimelineEstimatorProps {
   frontier: DolFrontier | null;
@@ -683,7 +684,7 @@ export function PermTimelineEstimator({
                 {alertAnchor ? (
                   <a
                     href={`#${alertAnchor}`}
-                    className="inline-flex min-h-[48px] items-center gap-2 border border-border bg-primary px-4 py-2.5 font-heading text-base font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
+                    className={buttonVariants({ variant: "default", size: "lg" })}
                   >
                     <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
                     Email me when DOL reaches {formatMonth(month)}
@@ -733,7 +734,7 @@ export function PermTimelineEstimator({
               <p className="mt-4">
                 <Link
                   href="/perm-case-status"
-                  className="inline-block border border-border bg-primary px-4 py-2.5 font-heading text-base font-bold text-primary-foreground transition-transform"
+                  className={buttonVariants({ variant: "outline", size: "lg" })}
                 >
                   Check your case number
                 </Link>{" "}

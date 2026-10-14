@@ -38,7 +38,6 @@ const DESCRIPTION =
 const PATH = "/visa-issuances";
 const STATE_PAGE =
   "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-statistics/immigrant-visa-statistics/monthly-immigrant-visa-issuances.html";
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export const metadata: Metadata = withSocialCard(
   {
@@ -97,7 +96,7 @@ export default async function VisaIssuancesPage() {
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Immigrant visas issued abroad</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           State&apos;s monthly tables aren&apos;t loaded yet. They&apos;re on{" "}
-          <a href={STATE_PAGE} className={LINK} rel="noopener">
+          <a href={STATE_PAGE} className="link" rel="noopener">
             the State Department&apos;s page
           </a>
           .
@@ -244,7 +243,7 @@ export default async function VisaIssuancesPage() {
             Each row of State&apos;s tables carries a visa symbol. The categories follow State&apos;s own legend,{" "}
             <a
               href="https://travel.state.gov/content/dam/visas/Statistics/Immigrant-Statistics/MonthlyIVIssuances/Immigrant%20Visa%20Symbols_2024.pdf"
-              className={LINK}
+              className="link"
               rel="noopener"
             >
               Immigrant Visa Symbols
@@ -262,7 +261,7 @@ export default async function VisaIssuancesPage() {
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             These are visas consulates issued to people outside the country. Someone in the US on an H-1B gets the
             green card from USCIS instead, which counts it in its own{" "}
-            <Link href="/uscis-processing-times" className={LINK}>
+            <Link href="/uscis-processing-times" className="link">
               quarterly figures
             </Link>
             .
@@ -272,7 +271,7 @@ export default async function VisaIssuancesPage() {
           <h2 className="font-heading text-lg font-bold">The cutoff behind them</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             A consulate can issue a visa only to someone whose priority date is current in that month&apos;s{" "}
-            <Link href="/visa-bulletin" className={LINK}>
+            <Link href="/visa-bulletin" className="link">
               visa bulletin
             </Link>
             , so the bars move with the cutoffs.
@@ -282,7 +281,7 @@ export default async function VisaIssuancesPage() {
 
       <p className="mt-8 text-sm text-muted-foreground">
         Source:{" "}
-        <a href={STATE_PAGE} className={LINK} rel="noopener">
+        <a href={STATE_PAGE} className="link" rel="noopener">
           U.S. Department of State, Monthly Immigrant Visa Issuance Statistics
         </a>
         , {monthName(summary.months[0] ?? newest)} to {monthName(newest)}. Every month&apos;s rows are checked against

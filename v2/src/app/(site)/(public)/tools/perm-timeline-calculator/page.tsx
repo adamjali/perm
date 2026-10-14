@@ -20,6 +20,7 @@ import { getRangeCoverage } from "@/lib/turso/rangeCoverage";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";
+import { buttonVariants } from "@/components/ui/button";
 /**
  * PERM decision-date calculator.
  *
@@ -178,7 +179,7 @@ export default async function PermTimelineCalculatorPage() {
         </p>
         <Link
           href="/tools/perm-deadline-calculator"
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
+          className={buttonVariants({ variant: "outline", size: "lg", className: "mt-6" })}
         >
           Work out your deadlines
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

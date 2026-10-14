@@ -140,9 +140,9 @@ export function DeadlineDocket({ className }: { className?: string }) {
 
   return (
     <figure className={cn("@container border border-border bg-card", className)}>
-      <figcaption className="flex items-center justify-between gap-3 border-b border-border bg-foreground px-4 py-2.5 text-background dark:bg-muted dark:text-foreground">
+      <figcaption className="flex items-center justify-between gap-3 border-b border-border bg-muted px-4 py-2.5">
         <span className="font-heading text-base font-bold">Example case</span>{" "}
-        <span className="text-sm opacity-80">computed by the app</span>
+        <span className="text-sm text-muted-foreground">computed by the app</span>
       </figcaption>
 
       <div className="p-4 @md:p-5">

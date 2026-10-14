@@ -195,7 +195,7 @@ export default async function PermEmployersPage() {
             </div>
           </section>
 
-          <PendingLeaderboard leaders={leaders} asOf={mirrorAsOf} n="01" />
+          <PendingLeaderboard leaders={leaders} asOf={mirrorAsOf} />
           </div>
           </Chapter>
 

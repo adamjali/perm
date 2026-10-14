@@ -20,7 +20,6 @@ import type { SeasonalEmployerCase } from "@/lib/turso/seasonalEmployers";
  * slots, so each is the same component the PERM page renders.
  */
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 function longDate(iso: string | null): string | null {
   const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null;
@@ -85,7 +84,7 @@ function SeasonalCaseList({
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                   <Link
                     href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                    className={`-my-3 inline-block py-3 font-mono text-sm ${LINK}`}
+                    className="link -my-3 inline-block py-3 font-mono text-sm"
                   >
                     {c.caseNumber}
                   </Link>{" "}
@@ -101,7 +100,7 @@ function SeasonalCaseList({
       </ul>{" "}
       {more ? (
         <p className="mt-4 text-base text-soft">
-          <Link href={`/seasonal-cases?q=${encodeURIComponent(record.name)}`} className={LINK}>
+          <Link href={`/seasonal-cases?q=${encodeURIComponent(record.name)}`} className="link">
             Every seasonal filing under this name
           </Link>{" "}
           is in the seasonal search.
@@ -205,7 +204,7 @@ export function OtherEmployer({
         <div >
           <h2 className="font-heading text-lg font-bold">Every filing under this name</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
-            <Link href={`/case-search?q=${encodeURIComponent(record.name)}`} className={LINK}>
+            <Link href={`/case-search?q=${encodeURIComponent(record.name)}`} className="link">
               The case search
             </Link>{" "}
             holds them all, live and published together, with filters and a CSV.

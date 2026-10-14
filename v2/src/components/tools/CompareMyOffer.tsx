@@ -7,6 +7,7 @@ import type { WageOption } from "@/lib/turso/publicData";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { MIN_FOR_MEDIAN, placeOffer, type OfferPayload as Payload, type PlacedOffer as Placed } from "@/lib/wageStats";
 import { formatDollars } from "@/lib/format";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * Compare my offer: where a salary sits among what employers actually filed.
@@ -181,7 +182,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
           <button
             type="submit"
             disabled={busy}
-            className="flex min-h-11 items-center border border-border bg-primary px-5 font-heading text-sm font-bold text-black transition-transform disabled:text-muted-foreground motion-reduce:transition-none"
+            className={buttonVariants({ variant: "default", size: "lg" })}
           >
             {busy ? "Placing it…" : "Place my offer"}
           </button>{" "}

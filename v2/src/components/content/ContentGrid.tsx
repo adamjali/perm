@@ -1,14 +1,11 @@
-"use client";
-
 /**
  * ContentGrid
  *
  * Responsive grid layout for ContentCard items.
- * 1-col mobile, 2-col tablet, 3-col desktop.
- * Cards present at mount render at rest; filtered-in cards animate.
+ * 1-col mobile, 2-col tablet, 3-col desktop. Nothing animates: a filter
+ * shows its matches at once.
  */
 
-import { AnimatePresence, motion } from "motion/react";
 import type { PostSummary } from "@/lib/content/types";
 import ContentCard from "./ContentCard";
 
@@ -33,33 +30,11 @@ export default function ContentGrid({ posts, showType, headingLevel = 2 }: Conte
     );
   }
 
-  // `initial={false}` on AnimatePresence: the cards on screen when the grid
-  // MOUNTS render at rest, on a hard load and after a client navigation
-  // alike. Only cards a tag filter or search brings in animate. They used to
-  // cascade in on every visit, 0.06 s apart, so the 53 guides took over three
-  // seconds to appear and the ones below the fold sat blank meanwhile.
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <AnimatePresence mode="popLayout" initial={false}>
-        {posts.map((post, i) => (
-          <motion.div
-            key={`${post.type}-${post.slug}`}
-            layout
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{
-              duration: 0.25,
-              // Capped, so a filter that brings in 40 cards finishes in
-              // a quarter second rather than walking down the list.
-              delay: Math.min(i, 6) * 0.03,
-              ease: [0.4, 0, 0.2, 1],
-            }}
-          >
-            <ContentCard headingLevel={headingLevel} post={post} showType={showType} />
-          </motion.div>
-        ))}
-      </AnimatePresence>
+      {posts.map((post) => (
+        <ContentCard key={`${post.type}-${post.slug}`} headingLevel={headingLevel} post={post} showType={showType} />
+      ))}
     </div>
   );
 }

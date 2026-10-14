@@ -40,7 +40,6 @@ import { AppWindow, type WindowShots } from "@/components/marketing/AppWindow";
 import { TOUR_SHOTS } from "@/components/marketing/tourShots";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { withSocialCard } from "@/lib/socialCard";
-import { cn } from "@/lib/utils";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { SCHEMA_IDS } from "@/lib/structuredData";
 import { getRecordCounts } from "@/lib/turso/recordCounts";
@@ -60,6 +59,7 @@ import {
   X_PROFILE_URL,
 } from "@/lib/constants/externalLinks";
 import { SITE_URL } from "@/lib/constants/site";
+import { buttonVariants } from "@/components/ui/button";
 
 const TITLE = "About PERM Tracker";
 const DESCRIPTION =
@@ -93,8 +93,7 @@ function monthLabel(ym: string): string {
   return `${MONTHS[Number(m) - 1]} ${y}`;
 }
 
-const LINK =
-  "font-semibold underline decoration-primary decoration-2 underline-offset-[3px] transition-colors hover:text-primary";
+const LINK = "link";
 
 /** The public case lookup, as the guide's header picture captured it. */
 const CASE_PAGE: WindowShots = {
@@ -180,9 +179,6 @@ const ELSEWHERE = [
   { href: PRODUCT_HUNT_URL, label: "Product Hunt" },
 ] as const;
 
-const BUTTON =
-  "inline-flex min-h-[48px] items-center gap-2 border border-border px-5 font-heading text-base font-bold transition-transform motion-reduce:transition-none";
-
 function SectionHead({ id, title, line }: { id: string; title: string; line?: string }) {
   return (
     <>
@@ -217,16 +213,16 @@ export default async function AboutPage() {
       {/* The definition beside the person who runs it. */}
       <section className="grid grid-cols-1 items-center gap-12 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
         <div>
-          <h1 className="font-heading text-5xl font-bold leading-[1.02] sm:text-6xl">About PERM Tracker</h1>{" "}
+          <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">About PERM Tracker</h1>{" "}
           <p className="mt-6 max-w-xl text-xl leading-relaxed">{ABOUT_ONE_LINER}</p>{" "}
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
             It&apos;s free on both sides: for the person waiting on a case, and for the attorney who filed it.
           </p>{" "}
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/perm-case-status" className={cn(BUTTON, "bg-primary text-black")}>
+            <Link href="/perm-case-status" className={buttonVariants({ size: "lg" })}>
               Check a case <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
             </Link>{" "}
-            <Link href="/for-attorneys" className={cn(BUTTON, "bg-card")}>
+            <Link href="/for-attorneys" className={buttonVariants({ variant: "outline", size: "lg" })}>
               For attorneys
             </Link>
           </div>
@@ -244,13 +240,10 @@ export default async function AboutPage() {
             />{" "}
             <figcaption className="px-1 pb-1 pt-3">
               <span className="block font-heading text-xl font-bold leading-tight">{SABRINA.name}</span>{" "}
-              <span className="block text-base text-muted-foreground">{SABRINA.jobTitle}, runs PERM Tracker</span>
+              <span className="block text-base text-muted-foreground">{SABRINA.jobTitle}, runs PERM Tracker</span>{" "}
+              <span className="mt-1 block text-sm text-muted-foreground">Live since {monthLabel(LIVE_SINCE)}</span>
             </figcaption>
           </div>
-          {/* The site's own date, stamped across the card's edge. */}
-          <p className="absolute -left-3 top-6 border border-border bg-foreground px-3 py-2 font-mono text-sm font-bold text-background dark:bg-card dark:text-foreground sm:-left-6">
-            Live since {monthLabel(LIVE_SINCE)}
-          </p>
         </figure>
       </section>
 
@@ -292,9 +285,7 @@ export default async function AboutPage() {
           {HALVES.map((h) => (
             <article key={h.key} className="flex flex-col">
               <div className="flex items-center gap-3">
-                <span className="grid size-11 shrink-0 place-items-center border border-border bg-foreground text-primary-on-ink dark:bg-card dark:text-primary-text">
-                  <h.Icon aria-hidden="true" className="size-6" weight="bold" />
-                </span>{" "}
+                <h.Icon aria-hidden="true" className="size-7 shrink-0 text-primary-text" />{" "}
                 <h3 className="font-heading text-2xl font-bold">{h.title}</h3>
               </div>{" "}
               <p className="mt-3 max-w-xl text-base leading-relaxed text-soft">{h.line}</p>{" "}
@@ -302,7 +293,7 @@ export default async function AboutPage() {
                 {h.links.map((l) => (
                   <Fragment key={l.href}>
                     <li>
-                      <Link href={l.href} className={cn(BUTTON, "min-h-[44px] bg-card px-4 font-sans font-bold")}>
+                      <Link href={l.href} className={buttonVariants({ variant: "outline" })}>
                         {l.label} <ArrowRightIcon aria-hidden="true" className="size-4" weight="bold" />
                       </Link>
                     </li>{" "}
@@ -337,9 +328,9 @@ export default async function AboutPage() {
             <ArrowRightIcon className="hidden size-8 lg:block" weight="bold" />
             <ArrowDownIcon className="size-8 lg:hidden" weight="bold" />
           </span>{" "}
-          <div className="grid content-center border border-border bg-foreground p-5 text-background dark:bg-card dark:text-foreground">
-            <span className="block font-heading text-xl font-bold text-primary-on-ink dark:text-primary-text">PERM Tracker</span>{" "}
-            <span className="mt-2 block text-sm leading-relaxed opacity-80">
+          <div className="grid content-center border border-input bg-card p-5">
+            <span className="block font-heading text-xl font-bold text-primary-text">PERM Tracker</span>{" "}
+            <span className="mt-2 block text-sm leading-relaxed text-muted-foreground">
               Checks DOL several times a day, loads each new file the day it lands, and asks DOL again whenever a
               case is looked up.
             </span>
@@ -354,7 +345,7 @@ export default async function AboutPage() {
                 <li>
                   <Link
                     href={pg.href}
-                    className="flex min-h-[44px] items-center justify-between gap-3 border border-border bg-card px-4 font-bold transition-colors hover:bg-tint"
+                    className={buttonVariants({ variant: "outline", size: "lg", className: "justify-between" })}
                   >
                     {pg.label} <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
                   </Link>
@@ -391,7 +382,7 @@ export default async function AboutPage() {
                   aria-hidden="true"
                   className={`absolute left-0 top-0.5 size-5 border border-border lg:top-0 ${i === MILESTONES.length - 1 ? "bg-primary" : "bg-card"}`}
                 />{" "}
-                <span className="block font-mono text-sm font-bold">{monthLabel(m.when)}</span>{" "}
+                <span className="block font-mono text-sm text-muted-foreground">{monthLabel(m.when)}</span>{" "}
                 <span className="mt-1 block text-base leading-snug">
                   {m.href ? (
                     <Link href={m.href} className={LINK}>
@@ -416,8 +407,8 @@ export default async function AboutPage() {
         <ul className="mt-10 grid grid-cols-1 gap-5 [&>*]:min-w-0 md:grid-cols-3">
           {NOT_THIS.map((n) => (
             <Fragment key={n.title}>
-              <li className="border border-border bg-card p-6">
-                <n.Icon aria-hidden="true" className="size-9" weight="bold" />{" "}
+              <li className="border-t border-border pt-5">
+                <n.Icon aria-hidden="true" className="size-7 text-muted-foreground" />{" "}
                 <span className="mt-4 block font-heading text-xl font-bold">{n.title}</span>{" "}
                 <span className="mt-2 block text-base leading-relaxed text-soft">{n.line}</span>
               </li>{" "}
@@ -427,13 +418,13 @@ export default async function AboutPage() {
       </section>
 
       {/* One band for every way to reach it. */}
-      <section aria-labelledby="contact" className="mt-24 border border-border bg-foreground p-6 text-background dark:bg-card dark:text-foreground sm:p-12">
+      <section aria-labelledby="contact" className="mt-24 bg-tint p-6 sm:p-12">
         <h2 id="contact" className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
           Write to us
         </h2>{" "}
         <a
           href="mailto:support@permtracker.app"
-          className="mt-5 inline-block font-heading text-xl font-bold text-primary-on-ink underline decoration-2 dark:text-primary-text underline-offset-[6px] [overflow-wrap:anywhere] hover:decoration-4 sm:text-3xl lg:text-4xl"
+          className="link mt-5 inline-block font-heading text-xl font-bold [overflow-wrap:anywhere] sm:text-3xl"
         >
           support@permtracker.app
         </a>{" "}
@@ -445,7 +436,7 @@ export default async function AboutPage() {
                   href={e.href}
                   rel="me noopener"
                   target="_blank"
-                  className="inline-flex min-h-[44px] items-center gap-2 border border-current px-4 font-bold transition-colors hover:bg-background hover:text-foreground dark:hover:bg-foreground dark:hover:text-background"
+                  className={buttonVariants({ variant: "outline", size: "lg" })}
                 >
                   {e.label} <ArrowUpRightIcon aria-hidden="true" className="size-4" weight="bold" />
                 </a>
@@ -453,9 +444,9 @@ export default async function AboutPage() {
             </Fragment>
           ))}
         </ul>{" "}
-        <p className="mt-8 max-w-2xl text-base leading-relaxed opacity-80">
+        <p className="mt-8 max-w-2xl text-base leading-relaxed text-muted-foreground">
           Operated by {LEGAL_NAME}, {LEGAL_FORM}, the party named in the{" "}
-          <Link href="/terms" className="underline underline-offset-2 hover:text-primary-on-ink dark:hover:text-primary-text">
+          <Link href="/terms" className="link">
             terms
           </Link>
           . The domain was registered in {monthLabel(FOUNDED)}.

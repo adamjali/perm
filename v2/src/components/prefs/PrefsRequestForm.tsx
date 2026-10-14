@@ -14,6 +14,7 @@ import * as React from "react";
 import { isQueued, replyHeading } from "@/lib/alertReply";
 import { formText } from "@/lib/forms/formText";
 import { convexSiteUrl } from "@/lib/convexSite";
+import { buttonVariants } from "@/components/ui/button";
 
 export function PrefsRequestForm() {
   const [email, setEmail] = React.useState("");
@@ -84,7 +85,7 @@ export function PrefsRequestForm() {
         <button
           type="submit"
           disabled={state === "busy"}
-          className="inline-flex min-h-[48px] items-center justify-center border border-border bg-primary px-6 font-heading font-bold text-primary-foreground transition-transform duration-150 disabled:text-muted-foreground"
+          className={buttonVariants({ variant: "default", size: "lg", className: "justify-center" })}
         >
           {state === "busy" ? "Sending…" : "Email me the link"}
         </button>

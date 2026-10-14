@@ -85,7 +85,7 @@ export function FirmSiteSection() {
             <ol className="mt-4 space-y-3">
               {STEPS.map((step, i) => (
                 <li key={step} className="flex items-center gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-primary font-heading text-lg font-bold text-primary-foreground">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-input bg-card font-heading text-lg font-bold">
                     {i + 1}
                   </span>{" "}
                   <span className="text-lg font-semibold">{step}</span>{" "}

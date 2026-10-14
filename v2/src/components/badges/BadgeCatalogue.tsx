@@ -5,6 +5,7 @@ import { CheckIcon, CopyIcon } from "@phosphor-icons/react";
 
 import { BADGE_THEMES, type BadgeStyle, type BadgeTheme } from "@/lib/badge";
 import { choiceVariants } from "@/components/ui/choice";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The catalogue: pick a shape, a theme and a snippet format once, and every
@@ -116,7 +117,7 @@ export function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={copy}
-      className="flex min-h-11 shrink-0 items-center gap-2 border border-border bg-background px-3 font-heading text-sm font-bold transition-transform duration-150 motion-reduce:transition-none"
+      className={buttonVariants({ variant: "outline", size: "default", className: "shrink-0" })}
     >
       {state === "copied" ? <CheckIcon size={16} weight="bold" aria-hidden="true" /> : <CopyIcon size={16} weight="bold" aria-hidden="true" />}
       {state === "copied" ? "Copied" : state === "failed" ? "Select the line to copy" : "Copy"}

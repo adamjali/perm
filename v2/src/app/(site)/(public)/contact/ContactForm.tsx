@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PaperPlaneTiltIcon as Send } from "@phosphor-icons/react";
 import { CharLimit } from "@/components/ui/char-limit";
 import { convexSiteUrl } from "@/lib/convexSite";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The contact form. Posts to the Convex HTTP route, which owns the shape
@@ -131,7 +132,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={phase === "sending"}
-        className="mt-5 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150 disabled:cursor-not-allowed disabled:text-muted-foreground"
+        className={buttonVariants({ variant: "default", size: "lg", className: "mt-5" })}
       >
         {phase === "sending" ? "Sending…" : "Send message"}
         <Send className="h-4 w-4" aria-hidden="true" />

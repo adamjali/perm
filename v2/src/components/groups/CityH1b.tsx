@@ -10,7 +10,6 @@ import type { LcaCity } from "@/lib/turso/lcaCities";
  * three fiscal years. Plain server markup; absent with no record.
  */
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export function CityH1b({ city, className = "mt-10" }: { city: LcaCity | null; className?: string }) {
   if (!city) return null;
@@ -44,7 +43,7 @@ export function CityH1b({ city, className = "mt-10" }: { city: LcaCity | null; c
                     <li className="flex items-center gap-3 text-base">
                       {it.href ? (
                         // The link fills the row's height, so the tap target is 44px.
-                        <Link href={it.href} className={`min-w-0 truncate py-2.5 ${LINK}`}>
+                        <Link href={it.href} className="link min-w-0 truncate py-2.5">
                           {it.text}
                         </Link>
                       ) : (

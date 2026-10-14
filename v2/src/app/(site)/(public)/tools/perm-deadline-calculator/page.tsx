@@ -8,6 +8,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * Public PERM deadline calculator.
@@ -104,7 +105,7 @@ export default function PermDeadlineCalculatorPage() {
         </p>
         <Link
           href="/signup"
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
+          className={buttonVariants({ variant: "outline", size: "lg", className: "mt-6" })}
         >
           Start tracking free
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

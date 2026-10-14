@@ -20,6 +20,7 @@
  * @module
  */
 
+import { DEFAULT_REMINDER_DAYS } from "./lib/userDefaults";
 import { internalAction, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
@@ -200,7 +201,7 @@ export const getCasesNeedingReminders = internalQuery({
       if (!userEmail) continue;
 
       const userPrefs = profile ? buildUserNotificationPrefs(profile) : getDefaultPrefs();
-      const reminderDays = profile?.reminderDaysBefore ?? [1, 3, 7, 14, 30];
+      const reminderDays = profile?.reminderDaysBefore ?? DEFAULT_REMINDER_DAYS;
       const userTz = profile?.timezone || DEFAULT_USER_TIMEZONE;
 
       // Helper to check and add deadline reminders.

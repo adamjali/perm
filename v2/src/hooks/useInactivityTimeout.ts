@@ -15,22 +15,17 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MS_PER_MINUTE } from "@/lib/time";
+import { IDLE_SIGN_OUT_MINUTES, IDLE_WARNING_LEAD_MINUTES } from "@/lib/auth/session";
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
 export const TIMEOUT_CONFIG = {
-  /**
-   * Total inactivity timeout: 30 minutes (user is logged out after this).
-   * OWASP ASVS 4.0.3 requirement 3.3.2, Level 2 ("12 hours or 30 minutes of
-   * inactivity"): the standard level for apps holding sensitive data. Level
-   * 3's 15 minutes also requires two-factor sign-in, which this app does not
-   * have.
-   */
-  INACTIVITY_TIMEOUT: 30 * MS_PER_MINUTE,
-  /** Warning appears at 28 minutes (leaving 2 minutes for user response) */
-  WARNING_TIME: 28 * MS_PER_MINUTE,
+  /** Signed out after this long without activity (src/lib/auth/session.ts says why 30 minutes). */
+  INACTIVITY_TIMEOUT: IDLE_SIGN_OUT_MINUTES * MS_PER_MINUTE,
+  /** The warning shows this long before the sign-out. */
+  WARNING_TIME: (IDLE_SIGN_OUT_MINUTES - IDLE_WARNING_LEAD_MINUTES) * MS_PER_MINUTE,
   /** Activity debounce: 1 second */
   ACTIVITY_DEBOUNCE: 1000,
   /** Countdown update interval: 1 second */

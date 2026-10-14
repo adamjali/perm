@@ -3,18 +3,17 @@
 /**
  * ContentCard
  *
- * Article card for content listings.
- * Neobrutalist design: hard shadow, 0 radius, bold typography.
- * Motion whileHover lift + image zoom.
+ * Article card for content listings: the picture, the topic, the title and
+ * the date. Hover colours the title; nothing moves.
  */
 
 import Image from "next/image";
-import { motion } from "motion/react";
 import { CalendarIcon, CircleNotchIcon, ClockIcon } from "@phosphor-icons/react";
 import type { PostSummary } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { topicFor } from "@/lib/content/topics";
 import { NavLink, useNavigationContext } from "@/components/ui/nav-link";
+import { Badge } from "@/components/ui/badge";
 
 interface ContentCardProps {
   post: PostSummary;
@@ -50,16 +49,14 @@ export default function ContentCard({
   const isNavigating = context?.activeNavigation === href;
 
   return (
-    <motion.article
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-    >
+    <article>
       <NavLink href={href} className="group block" showLoading={false}>
         {/* ON A PHONE THE CARD LIES ON ITS SIDE: the picture a square at the
             left, the topic, title and date beside it, the excerpt left out.
             Stacked, each card ran about 430 px and the guides index 25,000. */}
         <div
           className={
-            "relative border border-border bg-card transition-shadow duration-150" +
+            "relative border border-border bg-card" +
             (meta.image ? " max-sm:grid max-sm:grid-cols-[7rem_minmax(0,1fr)]" : "")
           }
         >
@@ -88,9 +85,7 @@ export default function ContentCard({
               />
               {/* Type badge overlay */}
               {showType && (
-                <span className="absolute left-3 top-3 border border-black bg-primary px-2 py-0.5 font-heading text-sm font-bold text-black max-sm:hidden">
-                  {config.label}{" "}
-                </span>
+                <Badge className="absolute left-3 top-3 bg-card max-sm:hidden">{config.label}</Badge>
               )}
             </div>
           )}{" "}
@@ -136,6 +131,6 @@ export default function ContentCard({
           </div>
         </div>
       </NavLink>
-    </motion.article>
+    </article>
   );
 }

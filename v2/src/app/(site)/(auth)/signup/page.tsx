@@ -132,54 +132,13 @@ export default async function SignupPage() {
           is exactly how the earlier two-card version left a void. */}
       <section
         aria-label="Where the PERM queue stands"
-        // DARK IN BOTH THEMES, which is a deliberate departure from the
-        // site's usual inverted band. `bg-foreground text-background` is the
-        // established pairing here - 95 uses - and it FLIPS with the theme: in
-        // dark mode it paints near-white. That is right for a stat card and
-        // wrong for half a viewport, which would become a white slab on a
-        // #0A0A0A page. So light mode gets the ink and dark mode gets `--card`
-        // (#1A1A1A), a surface that still reads as a distinct panel against the
-        // page without inverting.
-        //
-        // Everything inside sets its muted tone with `opacity` on
-        // currentColor rather than a `--background`-derived token, because
-        // those invert too and would have needed a second definition each.
-        // CENTRED WHEN IT FITS, TOP-ALIGNED WHEN IT DOES NOT. The form
-        // drives this row's height and is taller than a laptop viewport, so
-        // centring the panel's content in the FULL column pushed it below the
-        // fold - a screen of empty black on load. Above `lg` the content
-        // top-aligns and then sticks, so it is visible immediately and travels
-        // with the reader while the long form scrolls past it.
-        className="relative flex flex-col items-center justify-center border-t border-border bg-foreground px-6 py-12 text-background dark:bg-card dark:text-foreground sm:px-10 lg:justify-start lg:border-r lg:border-t-0 lg:py-16"
+        // The page's one tinted panel. Centred when it fits; above `lg` it
+        // top-aligns and sticks, because the form beside it is taller than a
+        // laptop screen and centring would push it below the fold.
+        className="flex flex-col items-center justify-center border-t border-border bg-tint px-6 py-12 sm:px-10 lg:justify-start lg:border-r lg:border-t-0 lg:py-16"
       >
-        {/* The seam. Rather than a decoration on a plain rule, the panel's own
-            edge is castellated - the dark half steps 12px into the
-            light half in alternating teeth, so the two sides interlock instead
-            of merely abutting. It is one masked strip painted in the panel's
-            own colour, so it inverts with the panel and cannot drift from it.
-
-            A mask rather than a gradient of two colours: the tooth has to be
-            the panel and the gap has to be whatever is behind it - the dotted
-            ground in light, the page in dark - and only a mask leaves the gap
-            genuinely transparent.
-
-            `lg:` only. Below that the halves stack, so the seam is horizontal
-            and a vertical comb would be nonsense; the stacked join keeps the
-            plain `border-t-2` it already has.
-
-            Both `maskImage` and the `-webkit-` prefix: Safari still needs it. */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-full hidden w-3 bg-foreground dark:bg-card lg:block"
-          style={{
-            maskImage:
-              "repeating-linear-gradient(to bottom, #000 0 18px, transparent 18px 36px)",
-            WebkitMaskImage:
-              "repeating-linear-gradient(to bottom, #000 0 18px, transparent 18px 36px)",
-          }}
-        />
         <div className="w-full max-w-lg lg:sticky lg:top-24">
-          <p className="text-base font-semibold opacity-80">
+          <p className="text-base font-semibold text-muted-foreground">
             Where DOL is
             {snapshot?.permAsOf ? `, as of ${formatAsOf(snapshot.permAsOf)}` : null}
           </p>{" "}
@@ -187,7 +146,7 @@ export default async function SignupPage() {
             <dl className="mt-6 space-y-5">
               {figures.map((f) => (
                 <div key={f.label}>
-                  <dt className="text-sm font-bold opacity-75">
+                  <dt className="text-sm text-muted-foreground">
                     {f.label}
                   </dt>{" "}
                   <dd className="mt-1 font-heading text-4xl font-bold leading-none">
@@ -197,17 +156,16 @@ export default async function SignupPage() {
               ))}
             </dl>
           ) : null}
-          <div className="mt-8 border-t border-current/25 pt-6">
+          <div className="mt-8 border-t border-border pt-6">
             <ProductShot
               src={TOUR_SHOTS.dashboard.light.src}
               width={TOUR_SHOTS.dashboard.light.width}
               height={TOUR_SHOTS.dashboard.light.height}
               alt="The deadline hub, grouping sample cases into overdue, this week, this month and later, each entry naming the case, the deadline and the date"
               caption="Your dates, sorted into deadlines. Sample cases"
-              tone="dark"
             />
           </div>
-          <p className="mt-6 text-sm leading-relaxed opacity-75">
+          <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
             Looking up a case number needs no account.{" "}
             <Link
               href="/perm-case-status"
@@ -220,17 +178,9 @@ export default async function SignupPage() {
         </div>
       </section>
 
-      {/* RIGHT: the form, on the page ground rather than in a box. */}
-      {/* RIGHT: the form, centred in its column and back in a container -
-          "sign up can be in a container square thing". It lost the box while it
-          was the whole page; beside a solid two-thirds panel it needs an edge
-          of its own or it floats on the dotted ground. */}
+      {/* RIGHT: the form, centred in its column. */}
       <div className="flex items-center justify-center px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
         <div className="w-full max-w-xl">
-          {/* Who the account is for, and where everyone else should go. Above
-              the form because that is where the eye already is; the left
-              panel's version of this line was at 75% opacity under a
-              screenshot, which is disclosure rather than signposting. */}
           <SignupAudienceFork />
           <SignupPageClient />
         </div>

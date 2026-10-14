@@ -5,6 +5,7 @@
  * All functions are testable without database dependencies.
  */
 
+import { FUZZY_MATCH_MIN, fuzzyScore } from "./fuzzy";
 import type { CaseCardData, CaseListSortField, SortOrder, ClosedReason } from "./caseListTypes";
 import type { UrgencyGroup, DeadlineType, CaseDataForDeadlines } from "./dashboardTypes";
 import type { Id } from "../_generated/dataModel";
@@ -391,121 +392,6 @@ export function sortCases(
 // ============================================================================
 
 /**
- * Calculate Levenshtein distance between two strings.
- * Measures the minimum number of single-character edits (insertions, deletions, substitutions)
- * required to change one string into another.
- *
- * @param str1 - First string
- * @param str2 - Second string
- * @returns Edit distance (0 = identical, higher = more different)
- *
- * @example
- * levenshteinDistance("google", "gogle") // Returns 1 (one deletion)
- * levenshteinDistance("microsoft", "mircosoft") // Returns 2 (two substitutions)
- */
-function levenshteinDistance(str1: string, str2: string): number {
-  const len1 = str1.length;
-  const len2 = str2.length;
-
-  // Create distance matrix
-  const matrix: number[][] = Array.from({ length: len1 + 1 }, () =>
-    Array(len2 + 1).fill(0)
-  );
-
-  // Initialize first row and column
-  for (let i = 0; i <= len1; i++) {
-    matrix[i]![0] = i;
-  }
-  for (let j = 0; j <= len2; j++) {
-    matrix[0]![j] = j;
-  }
-
-  // Calculate distances
-  for (let i = 1; i <= len1; i++) {
-    for (let j = 1; j <= len2; j++) {
-      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-      matrix[i]![j] = Math.min(
-        matrix[i - 1]![j]! + 1, // deletion
-        matrix[i]![j - 1]! + 1, // insertion
-        matrix[i - 1]![j - 1]! + cost // substitution
-      );
-    }
-  }
-
-  return matrix[len1]![len2]!;
-}
-
-/**
- * Calculate fuzzy match score between query and target string.
- * Returns a similarity score between 0 (no match) and 1 (perfect match).
- *
- * Algorithm:
- * 1. Exact substring match → score 1.0
- * 2. Fuzzy match using Levenshtein distance → score based on similarity
- *
- * Tolerances (based on word length):
- * - 3-5 chars: max 1 typo (20% of length)
- * - 6-8 chars: max 2 typos (25% of length)
- * - 9+ chars: max 3 typos (30% of length)
- *
- * @param query - Search query (already lowercased)
- * @param target - Target string to match against (already lowercased)
- * @returns Similarity score 0-1 (higher = better match)
- *
- * @example
- * fuzzyMatchScore("gogle", "google") // ~0.83 (1 typo, close match)
- * fuzzyMatchScore("googel", "google") // ~0.67 (2 typos, decent match)
- * fuzzyMatchScore("mircosoft", "microsoft") // ~0.78 (2 typos, decent match)
- * fuzzyMatchScore("xyz", "google") // 0 (no match)
- */
-function fuzzyMatchScore(query: string, target: string): number {
-  // Exact substring match gets perfect score
-  if (target.includes(query)) {
-    return 1.0;
-  }
-
-  // Split target into words for word-level matching
-  const words = target.split(/\s+/);
-
-  let bestScore = 0;
-
-  for (const word of words) {
-    // Skip very short words for fuzzy matching
-    if (word.length < 3) continue;
-
-    // Calculate edit distance
-    const distance = levenshteinDistance(query, word);
-
-    // Only consider words that are close in length to the query
-    // (within ±3 characters to avoid false positives)
-    const lengthDiff = Math.abs(word.length - query.length);
-    if (lengthDiff > 3) continue;
-
-    // Calculate max allowed distance based on query length
-    // 3-5 chars: 1 typo, 6-8 chars: 2 typos, 9+ chars: 3 typos
-    let maxDistance: number;
-    const minLen = Math.min(query.length, word.length);
-    if (minLen <= 5) {
-      maxDistance = 1;
-    } else if (minLen <= 8) {
-      maxDistance = 2;
-    } else {
-      maxDistance = 3;
-    }
-
-    // If distance is within tolerance, calculate similarity score
-    if (distance <= maxDistance) {
-      // Similarity = 1 - (distance / word_length)
-      // Use word length for normalization (more consistent)
-      const similarity = 1 - distance / word.length;
-      bestScore = Math.max(bestScore, similarity);
-    }
-  }
-
-  return bestScore;
-}
-
-/**
  * Filter cases by search query with fuzzy matching.
  *
  * Searches across:
@@ -513,12 +399,9 @@ function fuzzyMatchScore(query: string, target: string): number {
  * - beneficiaryIdentifier (case-insensitive, fuzzy)
  * - notes (case-insensitive, fuzzy)
  *
- * Fuzzy matching tolerates typos:
- * - "Gogle" matches "Google"
- * - "Mircosoft" matches "Microsoft"
- * - "Amzon" matches "Amazon"
- *
- * Results are sorted by relevance (best matches first).
+ * It uses the site's one matcher (./fuzzy.ts), so a typo the public
+ * searches forgive is forgiven here too: "Gogle" finds Google, "Mircosoft"
+ * Microsoft. Results are sorted by relevance, best first.
  *
  * @param cases - Array of case card data
  * @param query - Search query string
@@ -541,9 +424,6 @@ export function filterBySearch(
     return [...cases];
   }
 
-  // Minimum similarity threshold for fuzzy matches
-  // 0.65 allows for 2-char typos in 6-char words (e.g., "googel" -> "google")
-  const SIMILARITY_THRESHOLD = 0.65;
 
   // A case number is matched exactly, with its dashes and spaces ignored, and
   // ranks above any name match. Four characters, so "g" alone matches nothing.
@@ -556,36 +436,20 @@ export function filterBySearch(
   // Calculate match scores for each case
   const casesWithScores = cases
     .map((caseData) => {
-      const employerScore = fuzzyMatchScore(
-        trimmedQuery,
-        caseData.employerName.toLowerCase()
-      );
-      const beneficiaryScore = fuzzyMatchScore(
-        trimmedQuery,
-        caseData.beneficiaryIdentifier.toLowerCase()
-      );
-      const positionScore = fuzzyMatchScore(
-        trimmedQuery,
-        caseData.positionTitle.toLowerCase()
-      );
-
-      // Also search in notes if available
-      let notesScore = 0;
-      if (caseData.notes) {
-        notesScore = fuzzyMatchScore(trimmedQuery, caseData.notes.toLowerCase());
-      }
+      const fields = [caseData.employerName, caseData.beneficiaryIdentifier, caseData.positionTitle, caseData.notes];
+      const nameScore = Math.max(0, ...fields.map((f) => (f ? fuzzyScore(trimmedQuery, f) : 0)));
 
       // Best score across all fields; a number match outranks every name
       const score = numberMatch(caseData)
         ? 2
-        : Math.max(employerScore, beneficiaryScore, positionScore, notesScore);
+        : nameScore;
 
       return {
         caseData,
         score,
       };
     })
-    .filter((item) => item.score >= SIMILARITY_THRESHOLD)
+    .filter((item) => item.score >= FUZZY_MATCH_MIN)
     .sort((a, b) => b.score - a.score); // Sort by score descending (best matches first)
 
   return casesWithScores.map((item) => item.caseData);

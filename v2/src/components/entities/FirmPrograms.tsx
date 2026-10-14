@@ -11,7 +11,6 @@ import type { FirmProgramLine, FirmPrograms as FirmProgramsData } from "@/lib/tu
  * firm on none of them.
  */
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 function monthYear(iso: string | null): string | null {
   const m = iso ? /^(\d{4})-(\d{2})/.exec(iso) : null;
@@ -52,7 +51,7 @@ function Column({ label, noun, line }: { label: string; noun: string; line: Firm
                 {" "}
                 <li className="flex items-baseline gap-3 py-1.5 text-base">
                   {e.slug ? (
-                    <Link href={`/perm-employers/${e.slug}`} className={`min-w-0 truncate ${LINK}`}>
+                    <Link href={`/perm-employers/${e.slug}`} className="link min-w-0 truncate">
                       {e.name}
                     </Link>
                   ) : (

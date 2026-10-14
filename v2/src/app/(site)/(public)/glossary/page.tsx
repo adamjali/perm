@@ -24,6 +24,7 @@ function splitLead(definition: string): string[] {
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { SITE_URL } from "@/lib/constants/site";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The glossary: every term the site uses, defined once, each pointing at the
@@ -217,7 +218,7 @@ function TermChips({ slugs, names }: { slugs: readonly string[]; names: Map<stri
         <li key={slug}>
           <a
             href={`#${slug}`}
-            className="inline-flex min-h-11 items-center border border-border bg-card px-3 text-base font-semibold hover:bg-tint"
+            className={buttonVariants({ variant: "outline", size: "default" })}
           >
             {names.get(slug) ?? slug}
           </a>{" "}
@@ -258,7 +259,7 @@ function TermMap({ names }: { names: Map<string, string> }) {
             {i < road.length - 1 ? (
               <span aria-hidden="true" className="absolute bottom-0 left-[1.3rem] top-11 w-[3px] bg-border" />
             ) : null}
-            <span className="relative flex h-11 w-11 items-center justify-center border border-border bg-primary font-heading text-lg font-bold text-primary-foreground">
+            <span className="relative flex h-11 w-11 items-center justify-center border border-input bg-card font-heading text-lg font-bold">
               {i + 1}
             </span>{" "}
             <StageName stage={stage} />{" "}

@@ -40,7 +40,7 @@ export default function ForAttorneysPage() {
       <FirmSiteSection />
       <StakesSection />
       <SecuritySection />
-      <CTASection />
+      <CTASection lead="app" />
     </>
   );
 }

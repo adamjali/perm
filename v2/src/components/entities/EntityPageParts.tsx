@@ -21,7 +21,6 @@ import {
   type RateReliability,
 } from "@/components/tools/EntityContext";
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 // ============================================================================
 // STANDING
@@ -158,7 +157,6 @@ const MIN_COHORT_FOR_PLATE = 8;
  * subject under it is marked but not ranked.
  */
 export function FieldPositionPlate({
-  n,
   singular,
   plural,
   dist,
@@ -169,7 +167,6 @@ export function FieldPositionPlate({
   outOfCohortNote,
   first,
 }: {
-  n: string;
   /** The kind's noun: "sponsor". */
   singular: string;
   /** Its plural: "sponsors". */
@@ -269,7 +266,7 @@ export function wageIsTheJobLimit({
         against the field and no percentile is given for it: that
         comparison would rank occupation mix and call it pay. Wages by
         occupation are on the{" "}
-        <Link href="/perm-wages" className={LINK}>
+        <Link href="/perm-wages" className="link">
           wages page
         </Link>
         .
@@ -287,7 +284,7 @@ export function UnpublishedFilingsNote({ subject }: { subject: string }) {
   return (
     <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
       {`Filings newer than DOL's last published file can't be attributed to this ${subject} until DOL publishes them. The `}
-      <Link href="/perm-cases#live" className={LINK}>live list</Link>
+      <Link href="/perm-cases#live" className="link">live list</Link>
       {" on the case search page carries them by employer."}
     </p>
   );

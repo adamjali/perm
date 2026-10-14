@@ -15,7 +15,6 @@ import { formatWage } from "@/lib/wageFormat";
  * (where they are the record). Absent when the employer has neither.
  */
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export function WageAndLcaFilings({
   name,
@@ -77,7 +76,7 @@ export function WageAndLcaFilings({
                 <p className="mt-2 text-sm text-muted-foreground">None confirmed yet.</p>
               )}{" "}
               <p className="mt-2 text-sm">
-                <Link href={col.href} className={LINK}>
+                <Link href={col.href} className="link">
                   {col.all} by this employer
                 </Link>
               </p>

@@ -9,17 +9,10 @@
  *  - "chat":     compact single line for the AI assistant surface (narrow panel).
  *  - "deadline": full-width footnote for calculated PERM dates/deadlines.
  *
- * Neobrutalist tokens: muted-foreground text, hard top border separator,
- * font-mono on the deadline variant to match adjacent metadata rows.
- * Animation (when enabled) uses the project's snappy springConfig and is
- * no pulse or glow; MotionConfig honours reduced motion.
+ * Muted text under a thin top line, with a small info icon.
  */
 
-"use client";
-
-import { motion } from "motion/react";
 import { InfoIcon } from "@phosphor-icons/react/ssr";
-import { springConfig } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
 export interface NotLegalAdviceNoticeProps {
@@ -42,10 +35,7 @@ export function NotLegalAdviceNotice({
   const isChat = variant === "chat";
 
   return (
-    <motion.div
-      initial={false}
-      animate={{ opacity: 1, y: 0 }}
-      transition={springConfig}
+    <div
       role="note"
       className={cn(
         "flex items-start gap-2 text-muted-foreground",
@@ -62,7 +52,7 @@ export function NotLegalAdviceNotice({
         )}
         aria-hidden="true"
       />
-      <p className={cn(!isChat && "font-mono")}>{COPY[variant]}</p>
-    </motion.div>
+      <p>{COPY[variant]}</p>
+    </div>
   );
 }

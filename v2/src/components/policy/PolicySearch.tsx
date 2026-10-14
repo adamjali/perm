@@ -46,7 +46,6 @@ export function filterPolicy(items: readonly PolicyItem[], q: PolicyQuery): Poli
 const CONTROL =
   "mt-1 block w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";
-const LINK = "font-semibold underline decoration-primary decoration-2 underline-offset-[3px] hover:text-primary";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
 
@@ -141,7 +140,7 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
                   <span className="shrink-0 font-mono text-sm text-muted-foreground sm:w-32">{day(i.date)}{" "}</span>{" "}
                   <span className="shrink-0 font-mono text-sm font-bold sm:w-32">{i.kind}{" "}</span>{" "}
                   <span className="min-w-0">
-                    <a href={i.url} rel="noopener" target="_blank" className={LINK}>
+                    <a href={i.url} rel="noopener" target="_blank" className="link">
                       {i.title}
                     </a>{" "}
                     {i.agencies ? <span className="block text-sm text-muted-foreground">{i.agencies}{" "}</span> : null}

@@ -41,12 +41,10 @@ function longDate(iso: string | null): string | null {
 export function PendingLeaderboard({
   leaders,
   asOf,
-  n = "02",
   className,
 }: {
   leaders: PendingLeader[];
   asOf: string | null;
-  n?: string;
   className?: string;
 }) {
   if (leaders.length === 0) return null;

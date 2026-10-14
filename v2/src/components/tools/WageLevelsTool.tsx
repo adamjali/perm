@@ -8,6 +8,7 @@ import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { seriesYearFor, SOC_RE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The four prevailing wage levels for one occupation in one area, read live
@@ -251,7 +252,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
           <button
             type="submit"
             disabled={!ready}
-            className="min-h-11 border border-border bg-primary px-6 font-bold text-primary-foreground transition-transform disabled:text-muted-foreground"
+            className={buttonVariants({ variant: "default", size: "lg" })}
           >
             {result.kind === "loading" ? "Asking DOL" : "Look up the four levels"}
           </button>

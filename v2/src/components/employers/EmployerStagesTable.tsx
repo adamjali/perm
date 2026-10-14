@@ -28,7 +28,6 @@ const at = (r: EmployerStageRow, s: string) => r.byStatus[s] ?? 0;
 const appeals = (r: EmployerStageRow) => APPEALS.reduce((a, s) => a + at(r, s), 0);
 const other = (r: EmployerStageRow) => r.review - at(r, HOLD) - at(r, RFI) - appeals(r);
 
-const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 /**
  * The hold's start as a short cell: the day when every held case shares it,
@@ -78,7 +77,7 @@ function columns(logFrom: string | null): StatColumn<EmployerStageRow>[] {
       sortValue: (r) => r.name,
       render: (r) =>
         r.slug ? (
-          <Link href={`/perm-employers/${r.slug}`} className={`font-bold ${LINK}`}>
+          <Link href={`/perm-employers/${r.slug}`} className="link">
             {r.name}
           </Link>
         ) : (

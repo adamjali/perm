@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 
+import { buttonVariants } from "@/components/ui/button";
 import { normaliseReceipt } from "@/lib/uscis/receipt";
 
 /**
@@ -52,9 +53,8 @@ function write(list: SavedReceipt[]): boolean {
   }
 }
 
-const LINK = "font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
-const BUTTON =
-  "min-h-[44px] border border-border bg-background px-3 text-sm font-bold hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+const LINK = "link font-mono text-sm";
+const BUTTON = buttonVariants({ variant: "outline", size: "sm" });
 
 export function SavedReceipts({ current }: { current: string | null }) {
   const [list, setList] = useState<SavedReceipt[] | null>(null);

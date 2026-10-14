@@ -14,6 +14,7 @@ import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";
+import { buttonVariants } from "@/components/ui/button";
 /**
  * Prevailing wage determination queue calculator.
  *
@@ -140,7 +141,7 @@ export default async function PwdCalculatorPage() {
         </p>
         <Link
           href="/tools/perm-deadline-calculator"
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
+          className={buttonVariants({ variant: "outline", size: "lg", className: "mt-6" })}
         >
           Work out those dates
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

@@ -8,6 +8,7 @@ import { RequestFailed } from "@/components/tools/RequestFailed";
 import { failureFromError, type FetchFailure } from "@/lib/fetchFailure";
 import { rankFuzzy } from "@/lib/fuzzy";
 import type { SuggestKind } from "@/lib/search/suggestTypes";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The searchable, filterable, paged table every entity index stands on.
@@ -423,7 +424,7 @@ export function FilterableStatTable<T>({
             <button
               type="button"
               onClick={downloadCsv}
-              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
+              className={buttonVariants({ variant: "outline", size: "default" })}
             >
               Download CSV
             </button>
@@ -487,7 +488,7 @@ export function FilterableStatTable<T>({
               <button
                 type="button"
                 onClick={ensureAll}
-                className="min-h-[44px] border border-border bg-primary px-4 text-sm font-bold text-primary-foreground transition-transform focus-visible:ring-2 focus-visible:ring-primary"
+                className={buttonVariants({ variant: "outline", size: "lg" })}
               >
                 Load all {corpusSize.toLocaleString("en-US")}
               </button>
@@ -619,7 +620,7 @@ export function FilterableStatTable<T>({
                 setPage((p) => Math.max(0, p - 1));
               }}
               disabled={safePage === 0}
-              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+              className={buttonVariants({ variant: "outline", size: "default" })}
             >
               ← Prev
             </button>{" "}
@@ -630,7 +631,7 @@ export function FilterableStatTable<T>({
                 setPage((p) => Math.min(pageCount - 1, p + 1));
               }}
               disabled={safePage >= pageCount - 1}
-              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+              className={buttonVariants({ variant: "outline", size: "default" })}
             >
               Next →
             </button>

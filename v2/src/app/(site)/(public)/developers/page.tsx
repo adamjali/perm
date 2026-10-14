@@ -137,7 +137,7 @@ export default function DevelopersPage() {
         {steps.map((s, i) => (
           <li key={s.title} className="border border-border bg-card p-5">
             <p className="flex items-center gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center border border-border bg-primary font-mono text-base font-bold text-foreground">
+              <span className="flex size-9 shrink-0 items-center justify-center border border-input bg-card font-mono text-base font-bold">
                 {i + 1}
               </span>{" "}
               <span className="font-heading text-xl font-bold">{s.title}</span>

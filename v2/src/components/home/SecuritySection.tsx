@@ -1,99 +1,28 @@
-"use client";
+import { RecordList } from "@/components/data/RecordList";
+import { IDLE_SIGN_OUT_MINUTES } from "@/lib/auth/session";
 
 /**
- * SecuritySection Component
- *
- * Neobrutalist table showing honest security posture.
- * AES-256-GCM, Convex SOC 2, 30-min timeout, row-level isolation, full export.
- *
+ * How a practice's client data is protected, as one plain list. Each line is
+ * a fact about the app, not a promise.
  */
-
-import { ShieldIcon } from "@phosphor-icons/react";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
-
-interface SecurityRow {
-  label: string;
-  detail: string;
-}
-
-const securityRows: SecurityRow[] = [
-  {
-    label: "Sensitive fields encrypted",
-    detail: "AES-256-GCM on employer FEIN and OAuth tokens",
-  },
-  {
-    label: "SOC 2 Type II infrastructure",
-    detail: "Hosted on Convex (SOC 2 certified) on AWS",
-  },
-  {
-    label: "Session security",
-    detail: "30-minute inactivity timeout with auto sign-out",
-  },
-  {
-    label: "Row-level isolation",
-    detail: "Your cases are invisible to every other user",
-  },
-  {
-    label: "Full data export",
-    detail: "CSV or JSON export of all cases, anytime",
-  },
+const ROWS = [
+  { label: "Sensitive fields encrypted", value: "AES-256-GCM on the employer's FEIN and on sign-in tokens" },
+  { label: "Database", value: "Convex, which holds a SOC 2 Type II report" },
+  { label: "Session", value: `Signed out after ${IDLE_SIGN_OUT_MINUTES} minutes without activity` },
+  { label: "Isolation", value: "Each account's cases are visible to that account only" },
+  { label: "Export", value: "Every case as CSV or JSON, at any time" },
 ];
 
 export function SecuritySection() {
   return (
-    <section id="security" className="relative bg-muted">
-      <div className="mx-auto max-w-[900px] px-4 py-16 sm:px-8 sm:py-20">
-        {/* Section header */}
-        <ScrollReveal direction="up" className="mb-10 text-center sm:mb-12">
-          <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
-            Your client data, protected
-          </h2>
-        </ScrollReveal>
-
-        {/* Neobrutalist table */}
-        <ScrollReveal direction="up" delay={0.1}>
-          <div className="border border-border overflow-hidden">
-            {/* Table header */}
-            <div className="grid grid-cols-[1fr_1.5fr] border-b border-border bg-foreground text-background">
-              <div className="px-5 py-3 font-heading text-sm font-bold">
-                What protects it
-              </div>{" "}
-              <div className="px-5 py-3 font-heading text-sm font-bold border-l border-background/20">
-                How
-              </div>
-            </div>
-
-            {/* Table rows */}
-            {securityRows.map((row, index) => (
-              <div
-                key={row.label}
-                className={`grid grid-cols-[1fr_1.5fr] border-border ${
-                  index < securityRows.length - 1 ? "border-b" : ""
-                } ${index % 2 === 0 ? "bg-background" : "bg-muted"}`}
-              >
-                <div className="px-5 py-4 font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                  <ShieldIcon
-                    className="h-4 w-4 flex-shrink-0 text-primary"
-                    aria-hidden="true"
-                  />
-                  {row.label}
-                </div>{" "}
-                <div className="px-5 py-4 text-sm text-muted-foreground leading-relaxed border-l border-border/30 flex items-center">
-                  {row.detail}
-                </div>
-              </div>
-            ))}
-          </div>
-        </ScrollReveal>
-
-        {/* Bottom statement */}
-        <ScrollReveal direction="up" delay={0.2}>
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            We don&apos;t sell your data or train AI on it.
-          </p>
-        </ScrollReveal>
+    <section id="security" aria-labelledby="security-title" className="border-t border-border">
+      <div className="mx-auto max-w-[1200px] px-4 py-16 sm:px-8 sm:py-20">
+        <h2 id="security-title" className="font-heading text-2xl font-bold sm:text-3xl">
+          Your client data, protected
+        </h2>{" "}
+        <RecordList rows={ROWS} className="mt-8" />{" "}
+        <p className="mt-6 text-base text-soft">We don&apos;t sell your data or train AI on it.</p>
       </div>
     </section>
   );
 }
-

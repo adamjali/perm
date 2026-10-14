@@ -1,13 +1,9 @@
-"use client";
-
 /**
  * RelatedPosts
  *
- * Displays a grid of related articles at the bottom of article pages.
- * GSAP scroll-triggered stagger on card entrance.
+ * Up to three related articles at the foot of an article page.
  */
 
-import { motion } from "motion/react";
 import type { PostSummary } from "@/lib/content/types";
 import ContentCard from "./ContentCard";
 
@@ -19,28 +15,12 @@ export default function RelatedPosts({ posts }: RelatedPostsProps) {
   if (posts.length === 0) return null;
 
   return (
-    <section className="border-t border-border bg-muted/30">
+    <section className="border-t border-border">
       <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-12">
-        <motion.h2
-          className="mb-6 font-heading text-xl font-bold"
-          initial={false}
-          transition={{ duration: 0.4 }}
-        >
-          Related Articles
-        </motion.h2>{" "}
+        <h2 className="mb-6 font-heading text-xl font-bold">Related articles</h2>{" "}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post, i) => (
-            <motion.div
-              key={`${post.type}-${post.slug}`}
-              initial={false}
-              transition={{
-                duration: 0.4,
-                delay: i * 0.1,
-                ease: [0.4, 0, 0.2, 1] as const,
-              }}
-            >
-              <ContentCard post={post} showType />
-            </motion.div>
+          {posts.slice(0, 3).map((post) => (
+            <ContentCard key={`${post.type}-${post.slug}`} post={post} showType />
           ))}
         </div>
       </div>

@@ -28,6 +28,7 @@ import {
   type DolRow,
 } from "@/lib/openData";
 import { getProcessingTimesArchive, getVisaBulletinsArchive } from "@/lib/turso/openData";
+import { buttonVariants } from "@/components/ui/button";
 
 const TITLE = "Open Data: Visa Bulletin and DOL History";
 const DESCRIPTION =
@@ -303,7 +304,7 @@ function DatasetPanel<T extends object>({
           <a
             href={files.csv}
             download
-            className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-4 py-2 font-heading text-sm font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
+            className={buttonVariants({ variant: "default", size: "lg" })}
           >
             <FileCsvIcon className="size-5" weight="bold" aria-hidden="true" />
             Download CSV
@@ -311,7 +312,7 @@ function DatasetPanel<T extends object>({
           </a>{" "}
           <a
             href={files.json}
-            className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-card px-4 py-2 font-heading text-sm font-bold transition-transform motion-reduce:transition-none"
+            className={buttonVariants({ variant: "outline", size: "default" })}
           >
             <BracketsCurlyIcon className="size-5" weight="bold" aria-hidden="true" />
             JSON

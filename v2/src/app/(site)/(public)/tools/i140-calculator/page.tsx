@@ -12,6 +12,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { getUscisFormMedian } from "@/lib/turso/uscisQuarterly";
 import { quarterLabel } from "@/lib/uscisQuarterlyShape";
 import { withSocialCard } from "@/lib/socialCard";
+import { buttonVariants } from "@/components/ui/button";
 /**
  * I-140 queue calculator.
  *
@@ -185,7 +186,7 @@ export default async function I140CalculatorPage() {
         </p>
         <Link
           href="/tools/perm-deadline-calculator"
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
+          className={buttonVariants({ variant: "outline", size: "lg", className: "mt-6" })}
         >
           Work out your filing window
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

@@ -9,7 +9,6 @@ import type { WarnNotice } from "@/lib/turso/warn";
 const long = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export const WARN_COLUMNS: StatColumn<WarnNotice>[] = [
   { key: "notice", label: "Notice", sortValue: (r) => r.noticeDate, render: (r) => long(r.noticeDate) },
@@ -30,7 +29,7 @@ export const WARN_COLUMNS: StatColumn<WarnNotice>[] = [
     sortValue: (r) => r.employerSlug,
     render: (r) =>
       r.employerSlug ? (
-        <Link href={`/perm-employers/${r.employerSlug}`} className={LINK}>
+        <Link href={`/perm-employers/${r.employerSlug}`} className="link">
           PERM record
         </Link>
       ) : null,

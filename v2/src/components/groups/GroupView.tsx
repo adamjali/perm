@@ -61,7 +61,6 @@ function Ranked({
   );
 }
 
-const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 /**
  * A title that repeats in one list carries its code. Agencies reuse a title
@@ -111,7 +110,7 @@ export function GroupView({
             key: e.slug ?? `name:${e.name}`,
             n: e.n,
             label: e.slug ? (
-              <Link href={`/perm-employers/${e.slug}`} className={LINK}>
+              <Link href={`/perm-employers/${e.slug}`} className="link">
                 {e.name}
               </Link>
             ) : (
@@ -131,7 +130,7 @@ export function GroupView({
             key: o.code,
             n: o.n,
             label: o.slug ? (
-              <Link href={`/perm-wages/${o.slug}`} className={LINK}>
+              <Link href={`/perm-wages/${o.slug}`} className="link">
                 {occName(o)}
               </Link>
             ) : (
@@ -158,7 +157,7 @@ export function GroupView({
             n: c.n,
             label:
               c.n >= FLOOR ? (
-                <Link href={`${GROUP_PATH.city}/${c.slug}`} className={LINK}>
+                <Link href={`${GROUP_PATH.city}/${c.slug}`} className="link">
                   {c.label}
                 </Link>
               ) : (
@@ -179,7 +178,7 @@ export function GroupView({
             n: i.n,
             label:
               i.n >= FLOOR && i.code.length === 6 ? (
-                <Link href={`${GROUP_PATH.industry}/${i.code}`} className={LINK}>
+                <Link href={`${GROUP_PATH.industry}/${i.code}`} className="link">
                   {named(i)}
                 </Link>
               ) : (
@@ -199,7 +198,7 @@ export function GroupView({
             n: c.n,
             label:
               c.n >= FLOOR ? (
-                <Link href={`${GROUP_PATH.country}/${c.slug}`} className={LINK}>
+                <Link href={`${GROUP_PATH.country}/${c.slug}`} className="link">
                   {c.label}
                 </Link>
               ) : (

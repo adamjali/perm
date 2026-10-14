@@ -1,6 +1,7 @@
 "use client";
 
 import type { FetchFailure } from "@/lib/fetchFailure";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * One failed public request, said the way the server said it.
@@ -36,7 +37,7 @@ export function RequestFailed({
         <button
           type="button"
           onClick={onRetry}
-          className="min-h-11 shrink-0 border border-border bg-card px-4 font-heading text-sm font-bold transition-transform"
+          className={buttonVariants({ variant: "outline", size: "default", className: "shrink-0" })}
         >
           Try again
         </button>

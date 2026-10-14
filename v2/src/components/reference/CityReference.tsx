@@ -22,7 +22,6 @@ import { PayBands, type PayBand } from "./PayBands";
  * left out when its source has nothing for this city.
  */
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
 /** Small counts as words, the way a sentence says them. */
@@ -191,7 +190,7 @@ export async function CityReference({
                     <tr key={b.key} className="border-b border-border/60">
                       <td className="py-2 pr-4">
                         {job?.slug ? (
-                          <Link href={`/perm-wages/${job.slug}`} className={LINK}>
+                          <Link href={`/perm-wages/${job.slug}`} className="link">
                             {b.label}
                           </Link>
                         ) : (
@@ -212,7 +211,7 @@ export async function CityReference({
           </div>
           {area ? (
             <p className="mt-3 text-sm text-muted-foreground">
-              <Link href="/tools/wage-levels" className={LINK}>
+              <Link href="/tools/wage-levels" className="link">
                 Any job in any area, and every wage year since 2021-22, in the wage-level tool
               </Link>
               .

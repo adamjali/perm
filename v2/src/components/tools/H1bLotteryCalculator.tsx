@@ -21,6 +21,7 @@ import {
 } from "@/lib/h1bLotteryCalc";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { seriesYearFor, SOC_RE, WAGE_SEARCH_PAGE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The weighted H-1B lottery for one job: the OEWS level an offer meets in
@@ -152,7 +153,7 @@ function Worksite({
         <button
           type="button"
           onClick={onRemove}
-          className="inline-flex min-h-11 items-center justify-center gap-1.5 border border-border px-3 text-sm font-bold hover:bg-muted"
+          className={buttonVariants({ variant: "outline", size: "default", className: "justify-center" })}
           aria-label={`Remove worksite ${index + 1}`}
         >
           <XIcon size={16} weight="bold" aria-hidden="true" /> Remove
@@ -277,7 +278,7 @@ export function H1bLotteryCalculator() {
           <button
             type="submit"
             disabled={!ready}
-            className="min-h-11 border border-border bg-primary px-6 font-bold text-primary-foreground transition-transform disabled:text-muted-foreground"
+            className={buttonVariants({ variant: "default", size: "lg" })}
           >
             {result.kind === "loading" ? "Asking DOL" : "Work out the level and the odds"}
           </button>{" "}
@@ -285,7 +286,7 @@ export function H1bLotteryCalculator() {
             <button
               type="button"
               onClick={() => setSites((all) => [...all, { key: Math.max(...all.map((x) => x.key)) + 1, state: "", area: "", areaLabel: "" }])}
-              className="inline-flex min-h-11 items-center gap-1.5 border border-border px-4 text-sm font-bold hover:bg-muted"
+              className={buttonVariants({ variant: "outline", size: "default" })}
             >
               <PlusIcon size={16} weight="bold" aria-hidden="true" /> Add another worksite
             </button>

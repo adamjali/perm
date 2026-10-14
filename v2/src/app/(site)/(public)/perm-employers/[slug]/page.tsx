@@ -824,7 +824,7 @@ export default async function EmployerPage({
             cases, and this is the only part that sees a case still waiting. */}
         <div className="grid grid-cols-1 gap-x-8 [&>*]:min-w-0 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:items-start">
           {pending ? (
-            <LiveQueueBand pending={pending} subject="sponsor" n="01" asOf={mirrorAsOf} className="mt-8" />
+            <LiveQueueBand pending={pending} subject="sponsor" asOf={mirrorAsOf} className="mt-8" />
           ) : null}{" "}
           <EmployerFollow
             slug={canonicalSlug}
@@ -941,7 +941,6 @@ export default async function EmployerPage({
         {/* Where does this sponsor sit in the field? A stat card states a
             number; only the distribution says whether that number is unusual. */}
         <FieldPositionPlate
-          n={pending ? "02" : "01"}
           singular="sponsor"
           plural="sponsors"
           dist={dist}

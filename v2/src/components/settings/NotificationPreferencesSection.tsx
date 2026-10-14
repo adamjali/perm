@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_REMINDER_DAYS, DEFAULT_URGENT_DAYS } from "@convex/lib/userDefaults";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { analytics } from "@/lib/analytics";
@@ -28,9 +29,7 @@ import {
 // CONSTANTS
 // ============================================================================
 
-const REMINDER_OPTIONS = [1, 3, 7, 14, 30] as const;
-const DEFAULT_REMINDER_DAYS = [7, 14, 30];
-const DEFAULT_URGENT_DAYS = 7;
+const REMINDER_OPTIONS = DEFAULT_REMINDER_DAYS;
 const MIN_URGENT_DAYS = 1;
 const MAX_URGENT_DAYS = 30;
 
@@ -258,7 +257,7 @@ export default function NotificationPreferencesSection({
     if (profile.reminderDaysBefore && profile.reminderDaysBefore.length > 0) {
       return profile.reminderDaysBefore.map(n => Number(n));
     }
-    return DEFAULT_REMINDER_DAYS;
+    return [...DEFAULT_REMINDER_DAYS];
   });
   const [urgentDays, setUrgentDays] = useState(() => {
     return profile.urgentDeadlineDays !== undefined ? Number(profile.urgentDeadlineDays) : DEFAULT_URGENT_DAYS;

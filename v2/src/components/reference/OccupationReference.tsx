@@ -30,7 +30,6 @@ import { PayBands, type PayBand } from "./PayBands";
  * is left out, and the PERM page above stands on its own.
  */
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const LEVELS = ["I", "II", "III", "IV"] as const;
 
 /** Up to `n` metros (DOL wage areas) where this job's PERM filings sit, busiest first. */
@@ -208,7 +207,7 @@ export async function OccupationReference({
             </table>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            <Link href={`/tools/wage-levels?soc=${soc}`} className={LINK}>
+            <Link href={`/tools/wage-levels?soc=${soc}`} className="link">
               Every area and both wage tables in the wage-level tool
             </Link>
             .
@@ -313,7 +312,7 @@ export async function OccupationReference({
                 return (
                   <span key={r.code}>
                     {slug ? (
-                      <Link href={`/perm-wages/${slug}`} className={LINK}>
+                      <Link href={`/perm-wages/${slug}`} className="link">
                         {r.title}
                       </Link>
                     ) : (
@@ -327,17 +326,17 @@ export async function OccupationReference({
           ) : null}
           <p className="mt-6 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             This section includes information from the{" "}
-            <a href="https://www.onetcenter.org/database.html" className={LINK} rel="noopener">
+            <a href="https://www.onetcenter.org/database.html" className="link" rel="noopener">
               {`O*NET${onet?.version ? ` ${onet.version}` : ""} Database`}
             </a>{" "}
             and O*NET OnLine by the U.S. Department of Labor, Employment and Training Administration (USDOL/ETA), used
             under the{" "}
-            <a href="https://creativecommons.org/licenses/by/4.0/" className={LINK} rel="noopener license">
+            <a href="https://creativecommons.org/licenses/by/4.0/" className="link" rel="noopener license">
               CC BY 4.0 license
             </a>
             . O*NET® is a trademark of USDOL/ETA. PERM Tracker has modified some of this information (the shares are
             rounded and only the top tasks are shown);{" "}
-            <Link href="/methodology#onet" className={LINK}>
+            <Link href="/methodology#onet" className="link">
               what changed
             </Link>
             . USDOL/ETA has not approved, endorsed, or tested these modifications.

@@ -17,6 +17,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { SITES } from "../../../../../extension/src/extract";
 import { panelFor, type PanelModel } from "../../../../../extension/src/model";
 import type { LookupAnswer } from "../../../../../extension/src/api";
+import { buttonVariants } from "@/components/ui/button";
 
 /** The listing's address, once the Chrome Web Store publishes it. */
 const CHROME_STORE_URL: string | null = null;
@@ -120,7 +121,7 @@ export default async function ExtensionPage() {
             {CHROME_STORE_URL ? (
               <a
                 href={CHROME_STORE_URL}
-                className="inline-flex min-h-11 items-center gap-2 border border-border bg-primary px-5 py-3 font-heading text-base font-bold text-black"
+                className={buttonVariants({ variant: "default", size: "lg" })}
               >
                 <PuzzlePieceIcon weight="bold" className="size-5" aria-hidden="true" />{" "}
                 Add to Chrome

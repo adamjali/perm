@@ -60,15 +60,12 @@ function longDate(iso: string): string {
 export function LiveQueueBand({
   pending,
   subject,
-  n = "02",
   asOf,
   className,
 }: {
   pending: EntityPending;
   /** What the page is about: "sponsor", "firm". */
   subject: string;
-  /** Figure number within the page. */
-  n?: string;
   /** As-of date of the live mirror, ISO. */
   asOf: string | null;
   className?: string;

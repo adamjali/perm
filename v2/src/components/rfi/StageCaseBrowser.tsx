@@ -42,7 +42,6 @@ function daysWaiting(filingDate: string | null): number | null {
   return Math.max(0, Math.floor((Date.now() - t) / MS_PER_DAY));
 }
 
-const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 const COLUMNS: StatColumn<StageCase>[] = [
   {
@@ -52,7 +51,7 @@ const COLUMNS: StatColumn<StageCase>[] = [
     render: (r) => (
       // Whole: a number broken at its hyphen reads as two (it broke in the
       // table at every desktop width).
-      <Link href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`} className={`whitespace-nowrap font-mono text-sm font-bold ${LINK}`}>
+      <Link href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`} className="link whitespace-nowrap font-mono text-sm">
         {r.caseNumber}
       </Link>
     ),
@@ -63,7 +62,7 @@ const COLUMNS: StatColumn<StageCase>[] = [
     sortValue: (r) => r.employer,
     render: (r) =>
       r.employer && r.employerSlug ? (
-        <Link href={`/perm-employers/${r.employerSlug}`} className={LINK}>
+        <Link href={`/perm-employers/${r.employerSlug}`} className="link">
           {r.employer}
         </Link>
       ) : (

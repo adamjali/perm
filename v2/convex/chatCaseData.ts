@@ -9,6 +9,7 @@
  * @module chatCaseData
  */
 
+import { FUZZY_MATCH_MIN, fuzzyScore } from "./lib/fuzzy";
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
@@ -87,9 +88,10 @@ function words(text: string): string {
 /**
  * Whether a case matches what someone typed, ignoring case and punctuation:
  * "Acme Inc" finds "ACME, Inc.", "G-100-26282-123456" finds the number written
- * without its dashes, and "acme devops" finds an Acme case whose title says
- * DevOps. Searches the employer, the worker, both job titles, the SOC title,
- * every case number the case carries, and the notes.
+ * without its dashes, "acme devops" finds an Acme case whose title says
+ * DevOps, and "gogle" finds Google (the site's one matcher, lib/fuzzy.ts).
+ * Searches the employer, the worker, both job titles, the SOC title, every
+ * case number the case carries, and the notes.
  */
 export function caseMatchesSearch(c: CaseDoc, query: string): boolean {
   const q = words(query);
@@ -111,7 +113,9 @@ export function caseMatchesSearch(c: CaseDoc, query: string): boolean {
   if (q.split(" ").every((token) => haystack.includes(token))) return true;
   // A number or name typed with its spaces and dashes left out.
   const compact = q.replace(/ /g, "");
-  return compact.length >= 4 && haystack.replace(/[ |]/g, "").includes(compact);
+  if (compact.length >= 4 && haystack.replace(/[ |]/g, "").includes(compact)) return true;
+  // A typo, forgiven the way every other search on the site forgives it.
+  return fields.some((f) => fuzzyScore(query, f) >= FUZZY_MATCH_MIN);
 }
 
 /**

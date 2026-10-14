@@ -387,9 +387,7 @@ function FilterGroup({
           <span className="block text-sm text-muted-foreground sm:ml-2 sm:inline">{holds}</span>
         </span>{" "}
         {count > 0 ? (
-          <span className="shrink-0 border border-border bg-primary px-2 py-0.5 text-sm font-bold text-black">
-            {count} set
-          </span>
+          <span className="shrink-0 text-sm font-semibold text-primary-text">{count} set</span>
         ) : null}
       </summary>
       <div className="border-t border-border p-4 sm:p-5">{children}</div>
@@ -1422,7 +1420,7 @@ export function UnifiedCaseSearch({
                     <button
                       type="button"
                       onClick={() => applyAlternative("firm", a.name)}
-                      className="min-h-[44px] border border-border bg-card px-3 text-sm font-bold hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
+                      className={buttonVariants({ variant: "outline", size: "default" })}
                     >
                       {a.name} ({formatInt(a.total)})
                     </button>{" "}
@@ -1450,7 +1448,7 @@ export function UnifiedCaseSearch({
                   <button
                     type="button"
                     onClick={() => applyAlternative("occupation", a.name)}
-                    className="min-h-[44px] border border-border bg-card px-3 text-sm font-bold hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
+                    className={buttonVariants({ variant: "outline", size: "default" })}
                   >
                     {a.name} ({formatInt(a.total)})
                   </button>{" "}
@@ -1601,7 +1599,7 @@ export function UnifiedCaseSearch({
               <a
                 href={`/api/case-search?${submitted}&format=csv`}
                 download="permtracker-case-search.csv"
-                className="inline-flex min-h-[44px] items-center border border-border bg-card px-4 text-sm font-bold hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
+                className={buttonVariants({ variant: "outline", size: "default" })}
               >
                 Download CSV ({formatInt(data.rows.length)} rows)
               </a>

@@ -67,8 +67,8 @@ export default function ContactPage() {
         <div className="mt-6 space-y-8">
           {/* Email */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center border border-black bg-primary dark:border-white">
-              <Mail className="h-6 w-6 text-primary-foreground" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-primary-text">
+              <Mail className="h-6 w-6" />
             </div>{" "}
             <div>
               <h2 className="font-heading text-lg font-bold mb-1">Email</h2>{" "}
@@ -108,7 +108,7 @@ export default function ContactPage() {
 
           {/* Bug Reports */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center border border-black bg-primary dark:border-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-primary-text">
               <BugIcon className="h-6 w-6 text-accent-foreground" />
             </div>{" "}
             <div>

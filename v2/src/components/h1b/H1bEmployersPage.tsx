@@ -27,6 +27,7 @@ import { getDatasetSchema } from "@/lib/structuredData";
 import { getH1bSummary, getH1bView } from "@/lib/turso/h1bRanks";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { choiceVariants } from "@/components/ui/choice";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * /h1b-employers and /h1b-employers/<state>: the busiest H-1B employers by
@@ -177,7 +178,7 @@ export async function H1bEmployersPage({ state }: { state: string }) {
           <ul className="mt-4 flex flex-wrap gap-2">
             {state !== NATION ? (
               <li>
-                <Link href={H1B_PATH} className="inline-flex min-h-[44px] items-center border border-border bg-card px-3 text-base font-semibold hover:bg-muted">
+                <Link href={H1B_PATH} className={buttonVariants({ variant: "outline", size: "default" })}>
                   Whole country
                 </Link>{" "}
               </li>

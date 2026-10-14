@@ -44,7 +44,6 @@ export const metadata: Metadata = withSocialCard({
 }, "sponsor-finder");
 
 const STATES = new Set(Object.keys(US_STATE_NAMES));
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const FIELD =
   "min-h-[44px] w-full border border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
 const pct = (x: number | null, d = 0) => (x === null ? "" : `${(x * 100).toFixed(d)}%`);
@@ -153,7 +152,7 @@ export default async function SponsorFinderPage({
           >
             Find sponsors
           </button>{" "}
-          <Link href={PATH} className={`min-h-[44px] content-center text-sm ${LINK}`}>
+          <Link href={PATH} className="link min-h-[44px] content-center text-sm">
             Clear
           </Link>
         </div>
@@ -196,7 +195,7 @@ export default async function SponsorFinderPage({
                     {found.rows.map((r) => (
                       <tr key={r.slug} className="border-b border-border/50 align-top">
                         <th scope="row" className="p-2 text-left font-normal">
-                          <Link href={`/perm-employers/${r.slug}`} className={LINK}>
+                          <Link href={`/perm-employers/${r.slug}`} className="link">
                             {r.name}
                           </Link>{" "}
                           {r.sector ? <span className="block text-muted-foreground">{r.sector} </span> : null}
@@ -218,7 +217,7 @@ export default async function SponsorFinderPage({
               {pages > 1 ? (
                 <nav aria-label="Result pages" className="mt-4 flex flex-wrap items-center gap-4 text-base">
                   {f.page > 1 ? (
-                    <Link href={finderHref(f, f.page - 1)} className={LINK}>
+                    <Link href={finderHref(f, f.page - 1)} className="link">
                       Previous {PAGE_SIZE}
                     </Link>
                   ) : null}{" "}
@@ -226,7 +225,7 @@ export default async function SponsorFinderPage({
                     Page {formatInt(f.page)} of {formatInt(pages)}
                   </span>{" "}
                   {f.page < pages ? (
-                    <Link href={finderHref(f, f.page + 1)} className={LINK}>
+                    <Link href={finderHref(f, f.page + 1)} className="link">
                       Next {PAGE_SIZE}
                     </Link>
                   ) : null}

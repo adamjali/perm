@@ -365,7 +365,6 @@ export default async function OccupationPage({
         dek="Where its median offer sits among every occupation, then the whole ladder of certified offers by year and by state."
       >
       <FieldPositionPlate
-        n="01"
         singular="occupation"
         plural="occupations"
         dist={dist}

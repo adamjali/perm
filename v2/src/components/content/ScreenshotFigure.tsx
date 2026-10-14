@@ -3,15 +3,12 @@
 /**
  * ScreenshotFigure
  *
- * Neobrutalist-styled screenshot display for MDX articles.
- * Shows a picture inside an article (a capture of the site, a page of a
- * form, a photograph) with an optional step badge, caption and credit.
- * Motion whileInView fade-up entrance animation.
+ * A picture inside an article (a capture of the site, a page of a form, a
+ * photograph) with an optional step number, caption and credit. A click
+ * opens it full size.
  */
 
 import Image from "next/image";
-import { motion } from "motion/react";
-import { fadeUp } from "@/lib/content/animations";
 import { Lightbox } from "@/components/ui/lightbox";
 
 interface ScreenshotFigureProps {
@@ -44,17 +41,12 @@ export default function ScreenshotFigure({
   creditHref,
 }: ScreenshotFigureProps) {
   return (
-    <motion.figure
-      className="not-prose my-8"
-      variants={fadeUp}
-      initial={false}
-      style={{ maxWidth }}
-    >
+    <figure className="not-prose my-8" style={{ maxWidth }}>
       <Lightbox src={src} alt={alt} caption={caption}>
         <div className="relative border border-border overflow-hidden">
           {/* Step badge */}
           {step !== undefined && (
-            <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b border-r border-border bg-primary font-mono text-sm font-bold text-black">
+            <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b border-r border-border bg-card font-mono text-sm font-bold">
               {step}
             </div>
           )}
@@ -85,6 +77,6 @@ export default function ScreenshotFigure({
           ) : null}
         </figcaption>
       ) : null}
-    </motion.figure>
+    </figure>
   );
 }

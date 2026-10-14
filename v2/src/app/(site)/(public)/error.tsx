@@ -27,6 +27,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { ArrowClockwiseIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/dist/ssr";
 import { claimAutoReload, isReloadCurable, reportCaughtError } from "@/components/error/recovery";
+import { buttonVariants } from "@/components/ui/button";
 
 /** Where each dataset actually comes from, for the outage case. */
 const PRIMARY_SOURCES = [
@@ -81,14 +82,14 @@ export default function PublicDataError({
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 py-3 font-heading text-sm font-bold text-primary-foreground transition-colors duration-200"
+          className={buttonVariants({ variant: "default", size: "lg" })}
         >
           <ArrowClockwiseIcon className="size-4" weight="bold" aria-hidden="true" />
           Try again
         </button>{" "}
         <Link
           href="/"
-          className="inline-flex min-h-[44px] items-center border border-border bg-card px-5 py-3 font-heading text-sm font-bold transition-colors duration-200"
+          className={buttonVariants({ variant: "outline", size: "default" })}
         >
           Home
         </Link>

@@ -35,6 +35,7 @@ import { dolDecisions, weekOnWeek, type MonthDetail } from "@/lib/monthDetail";
 import { getMonthDetail } from "@/lib/turso/monthDetail";
 import { formatShare } from "@/lib/format";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * One filing month, split across the queues DOL actually runs.
@@ -533,7 +534,7 @@ function SiblingLink({
   return (
     <Link
       href={`/perm-queue/${month}`}
-      className="flex min-h-11 items-center gap-2 border border-border bg-card px-4 py-2 text-base font-bold hover:text-primary"
+      className={buttonVariants({ variant: "outline", size: "lg" })}
     >
       {direction === "previous" ? (
         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />

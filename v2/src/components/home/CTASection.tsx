@@ -4,10 +4,11 @@ import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The page's last word: one door per audience, so a page built for both sides
- * ends by addressing both. The lookup is the main action (no account, and
- * what most visitors came for); the practice's door sits beside it.
+ * ends by addressing both. `lead` picks which door is the page's main action:
+ * the lookup on the homepage (no account, and what most visitors came for),
+ * the app on the attorney page.
  */
-export function CTASection() {
+export function CTASection({ lead = "lookup" }: { lead?: "lookup" | "app" }) {
   return (
     <section aria-labelledby="cta-title" className="border-t border-border">
       <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-8 sm:py-20">
@@ -18,10 +19,10 @@ export function CTASection() {
           Both free. The lookup needs no account; the app takes a few minutes to set up.
         </p>{" "}
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/perm-case-status" className={buttonVariants({ size: "lg" })}>
+          <Link href="/perm-case-status" className={buttonVariants({ variant: lead === "lookup" ? "default" : "outline", size: "lg" })}>
             Check my case
           </Link>{" "}
-          <Link href="/signup" className={buttonVariants({ variant: "outline", size: "lg" })}>
+          <Link href="/signup" className={buttonVariants({ variant: lead === "app" ? "default" : "outline", size: "lg" })}>
             Start tracking cases
           </Link>
         </div>{" "}

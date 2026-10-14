@@ -17,7 +17,6 @@ import { formatDollars, formatInt, formatShare } from "@/lib/format";
  * Plain server markup; every figure carries the count it rests on.
  */
 
-const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export function EmployerPrograms({
   name: _name,
@@ -114,14 +113,14 @@ export function EmployerPrograms({
               parts.length ? `: ${parts.join(", ")}` : ""
             }.${since ? ` The hold, from this site's daily record: ${since}.` : ""}`;
           })()}{" "}
-          <Link href="/perm-employers/under-review" className={LINK}>
+          <Link href="/perm-employers/under-review" className="link">
             Where that sits among every employer
           </Link>
           .
         </p>
       ) : null}{" "}
       <p className="mt-3 max-w-3xl text-sm text-soft">
-        <Link href={searchHref} className={LINK}>
+        <Link href={searchHref} className="link">
           Every case across these programs
         </Link>{" "}
         is in the search.

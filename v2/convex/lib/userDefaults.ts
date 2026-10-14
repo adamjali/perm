@@ -14,6 +14,12 @@ import { DEFAULT_USER_TIMEZONE } from "./perm/deadlines/timezones";
  * Matches the effective date on the /terms page (YYYY-MM-DD).
  * Update this when terms change.
  */
+/** The days before a deadline a reminder goes out, unless the account changes them. */
+export const DEFAULT_REMINDER_DAYS = [1, 3, 7, 14, 30] as const;
+
+/** A deadline this close counts as urgent, unless the account changes it. */
+export const DEFAULT_URGENT_DAYS = 7;
+
 export const TERMS_VERSION = "2026-02-17";
 
 /**
@@ -54,8 +60,8 @@ export function buildDefaultProfile(
     emailNotificationsEnabled: DEFAULT_NOTIFICATION_PREFS.emailNotificationsEnabled,
     smsNotificationsEnabled: false,
     pushNotificationsEnabled: DEFAULT_NOTIFICATION_PREFS.pushNotificationsEnabled,
-    urgentDeadlineDays: 7,
-    reminderDaysBefore: [1, 3, 7, 14, 30],
+    urgentDeadlineDays: DEFAULT_URGENT_DAYS,
+    reminderDaysBefore: [...DEFAULT_REMINDER_DAYS],
     emailDeadlineReminders: DEFAULT_NOTIFICATION_PREFS.emailDeadlineReminders,
     emailStatusUpdates: DEFAULT_NOTIFICATION_PREFS.emailStatusUpdates,
     emailRfeAlerts: DEFAULT_NOTIFICATION_PREFS.emailRfeAlerts,

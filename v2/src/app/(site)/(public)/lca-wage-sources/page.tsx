@@ -34,7 +34,6 @@ export const metadata: Metadata = withSocialCard({
 
 export const revalidate = 86400;
 
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const KIND_LABEL: Record<string, string> = {
   OES: "OES (DOL's wage data)",
   Survey: "A private salary survey",
@@ -192,7 +191,7 @@ export default async function LcaWageSourcesPage() {
                   {" "}
                   <li className="flex items-baseline gap-3 py-2 text-base">
                     {e.slug ? (
-                      <Link href={`/perm-employers/${e.slug}`} className={`min-w-0 truncate ${LINK}`}>
+                      <Link href={`/perm-employers/${e.slug}`} className="link min-w-0 truncate">
                         {e.name}
                       </Link>
                     ) : (

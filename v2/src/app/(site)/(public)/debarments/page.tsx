@@ -47,7 +47,6 @@ export const revalidate = 21600;
 const ORDER: DebarmentProgram[] = ["perm", "h1b", "h2a", "h2b"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
-const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export default async function DebarmentsPage() {
   const [all, summary] = await Promise.all([listDebarments(), getDebarmentsSummary()]);
@@ -74,11 +73,11 @@ export default async function DebarmentsPage() {
           The lists have not been read yet. The daily ingest reads DOL&apos;s
           program-debarments document and the H-1B page; until it has run, the
           originals are at{" "}
-          <a href="https://www.dol.gov/agencies/eta/foreign-labor/program-debarments" className={LINK} rel="noopener" target="_blank">
+          <a href="https://www.dol.gov/agencies/eta/foreign-labor/program-debarments" className="link" rel="noopener" target="_blank">
             dol.gov (OFLC)
           </a>{" "}
           and{" "}
-          <a href="https://www.dol.gov/agencies/whd/immigration/h1b/debarment" className={LINK} rel="noopener" target="_blank">
+          <a href="https://www.dol.gov/agencies/whd/immigration/h1b/debarment" className="link" rel="noopener" target="_blank">
             dol.gov (Wage and Hour)
           </a>
           .

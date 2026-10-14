@@ -45,6 +45,7 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
+import { buttonVariants } from "@/components/ui/button";
 
 export interface I485QueuePositionProps {
   /** How the past-pace arithmetic held on past bulletins (scripts/backtest_bulletin.py). */
@@ -770,7 +771,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
               type="button"
               onClick={() => setSupply(String(a.value))}
               title={a.note}
-              className="min-h-11 border border-border bg-card px-3 text-sm font-semibold transition-colors hover:bg-tint"
+              className={buttonVariants({ variant: "outline", size: "default" })}
             >
               {a.label}: {formatInt(a.value)}
             </button>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { EmployerStagesTable } from "@/components/employers/EmployerStagesTable";
@@ -85,11 +86,8 @@ function topHolder(rows: readonly EmployerStageRow[], status: string): EmployerS
   }
   return best;
 }
-const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
-const BUTTON =
-  "inline-flex min-h-[48px] items-center gap-2 border border-border bg-primary px-4 py-2.5 font-heading text-base font-bold text-primary-foreground transition-transform motion-reduce:transition-none";
-const QUIET_BUTTON =
-  "inline-flex min-h-[48px] items-center border border-border bg-background px-4 py-2.5 font-heading text-base font-bold transition-transform motion-reduce:transition-none";
+const BUTTON = buttonVariants({ size: "lg" });
+const QUIET_BUTTON = buttonVariants({ variant: "outline", size: "lg" });
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 
 /** "Thursday, October 8, 2026" from an ISO date. */
@@ -149,14 +147,14 @@ export default async function EmployersUnderReviewPage() {
             <span
               aria-hidden="true"
               className={
-                "inline-flex min-w-[4.5rem] shrink-0 justify-center border border-border px-1.5 font-mono text-sm font-bold tabular-nums " +
+                "inline-flex min-w-[4.5rem] shrink-0 justify-end font-mono text-sm font-bold tabular-nums " +
                 (m.dir === "on"
-                  ? "bg-data-warn-ink text-background"
+                  ? "text-data-warn-ink"
                   : m.to === "DENIED"
-                    ? "bg-data-bad-ink text-background"
+                    ? "text-data-bad-ink"
                     : m.to === "ANALYST REVIEW" || m.to === "CERTIFIED"
-                      ? "bg-primary text-black"
-                      : "bg-card")
+                      ? "text-data-good-ink"
+                      : "text-muted-foreground")
               }
             >
               {m.dir === "on" ? "+" : "\u2212"}
@@ -164,7 +162,7 @@ export default async function EmployersUnderReviewPage() {
             </span>{" "}
             <span className="min-w-0">
               {m.slug ? (
-                <Link href={`/perm-employers/${m.slug}`} className={`font-bold ${LINK}`}>
+                <Link href={`/perm-employers/${m.slug}`} className="link">
                   {m.name}
                 </Link>
               ) : (
@@ -196,7 +194,7 @@ export default async function EmployersUnderReviewPage() {
           The employer census has not been written yet, or is more than eight
           days old. It is rebuilt by the daily sweep of DOL&apos;s case system;
           until then the{" "}
-          <Link href="/perm-rfi-audit" className={LINK}>
+          <Link href="/perm-rfi-audit" className="link">
             stage pages
           </Link>{" "}
           carry the same cases one stage at a time.
@@ -250,7 +248,7 @@ export default async function EmployersUnderReviewPage() {
                       <span className="min-w-0">
                         <span className="block font-bold [overflow-wrap:anywhere]">
                           {r.slug ? (
-                            <Link href={`/perm-employers/${r.slug}`} className={LINK}>
+                            <Link href={`/perm-employers/${r.slug}`} className="link">
                               {r.name}
                             </Link>
                           ) : (
@@ -316,7 +314,7 @@ export default async function EmployersUnderReviewPage() {
                   <dt className="font-heading text-xl font-bold tabular-nums tracking-tight sm:text-2xl">{formatInt(n)}</dt>{" "}
                   <dd className="text-base leading-snug">
                     {hasStagePage(status) ? (
-                      <Link href={`/perm-rfi-audit/${stageSlug(status)}`} className={LINK}>
+                      <Link href={`/perm-rfi-audit/${stageSlug(status)}`} className="link">
                         {stageMeta(status).label}
                       </Link>
                     ) : (
@@ -350,7 +348,7 @@ export default async function EmployersUnderReviewPage() {
                   <span className="font-mono text-sm text-muted-foreground">{i + 1}</span>{" "}
                   <span>
                     {r.slug ? (
-                      <Link href={`/perm-employers/${r.slug}`} className={`font-bold ${LINK}`}>
+                      <Link href={`/perm-employers/${r.slug}`} className="link">
                         {r.name}
                       </Link>
                     ) : (
@@ -377,7 +375,7 @@ export default async function EmployersUnderReviewPage() {
                     {r.slug ? (
                       <Link
                         href={`/perm-employers/${r.slug}#follow`}
-                        className={`inline-flex min-h-[44px] items-center text-sm font-bold ${LINK}`}
+                        className="link inline-flex min-h-[44px] items-center text-sm"
                         aria-label={`Follow ${r.name}`}
                       >
                         Follow
@@ -406,7 +404,7 @@ export default async function EmployersUnderReviewPage() {
                   <span className="font-mono text-sm text-muted-foreground">{i + 1}</span>{" "}
                   <span>
                     {r.slug ? (
-                      <Link href={`/perm-employers/${r.slug}`} className={`font-bold ${LINK}`}>
+                      <Link href={`/perm-employers/${r.slug}`} className="link">
                         {r.name}
                       </Link>
                     ) : (
@@ -429,7 +427,7 @@ export default async function EmployersUnderReviewPage() {
                     {r.slug ? (
                       <Link
                         href={`/perm-employers/${r.slug}#follow`}
-                        className={`inline-flex min-h-[44px] items-center text-sm font-bold ${LINK}`}
+                        className="link inline-flex min-h-[44px] items-center text-sm"
                         aria-label={`Follow ${r.name}`}
                       >
                         Follow
@@ -449,7 +447,7 @@ export default async function EmployersUnderReviewPage() {
               {formatInt(doc.employers.length)} employers. Search by name, sort any column, or
               download the table. Each name opens the employer&apos;s page; to see the
               cases themselves, open the{" "}
-              <Link href={`/case-search?stage=${searchStageSlug(HOLD_STATUS) ?? ""}`} className={LINK}>
+              <Link href={`/case-search?stage=${searchStageSlug(HOLD_STATUS) ?? ""}`} className="link">
                 case search with a stage selected
               </Link>{" "}
               and type the employer.
@@ -476,7 +474,7 @@ export default async function EmployersUnderReviewPage() {
             <p className="mt-3 text-base leading-relaxed text-soft">
               This site&apos;s record of status changes began on {longDate(doc.logFrom ?? "2026-08-27")}, so a
               hold already in place then reads &ldquo;since before&rdquo; that date.{" "}
-              <Link href="/perm-decision-activity" className={LINK}>
+              <Link href="/perm-decision-activity" className="link">
                 Decision activity
               </Link>{" "}
               shows each day&apos;s changes since.

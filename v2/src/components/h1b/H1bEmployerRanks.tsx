@@ -46,7 +46,6 @@ import { choiceVariants } from "@/components/ui/choice";
 
 const FIELD =
   "min-h-[44px] w-full border border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
-const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const money = (n: number) => `$${formatInt(Math.round(n))}`;
 const rankOf = (r: H1bRankRow, by: H1bBasis) => (by === "lca" ? r.rankLca : r.rankUscis);
 const pct = (part: number, whole: number) => (whole > 0 ? `${Math.round((part / whole) * 100)}%` : "");
@@ -135,7 +134,7 @@ function Row({ r, rank, max, cols, by }: { r: H1bRankRow; rank: number; max: num
       </span>{" "}
       <div className="min-w-0">
         {r.linked ? (
-          <Link href={`/perm-employers/${r.slug}`} className={`${LINK} text-base [overflow-wrap:anywhere] lg:text-lg`}>
+          <Link href={`/perm-employers/${r.slug}`} className="link text-base [overflow-wrap:anywhere] lg:text-lg">
             {r.name}
           </Link>
         ) : (

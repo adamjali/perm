@@ -38,6 +38,7 @@ import { parseCutoff, type BulletinMonth, type ChartKind, type CountryKey } from
 import { withSocialCard } from "@/lib/socialCard";
 import { BOARD_COUNTRIES, categoriesIn } from "@/lib/turso/bulletin";
 import { getVisaBulletins } from "@/lib/turso/publicData";
+import { buttonVariants } from "@/components/ui/button";
 
 // A bulletin changes once a month; a day bounds any re-parse far below that.
 export const revalidate = 86400;
@@ -391,16 +392,16 @@ export default async function BulletinMonthPage({
 
       <nav aria-label="Other bulletins" className="mt-8 flex flex-wrap items-center gap-3">
         {prevMonth ? (
-          <Link href={`/visa-bulletin/${prevMonth}`} className="flex min-h-11 items-center gap-2 border border-border bg-background px-4 font-heading text-sm font-bold transition-transform motion-reduce:transition-none">
+          <Link href={`/visa-bulletin/${prevMonth}`} className={buttonVariants({ variant: "outline", size: "default" })}>
             <ArrowLeftIcon className="size-4" aria-hidden="true" /> {bulletinMonthLabel(prevMonth)}
           </Link>
         ) : null}{" "}
         {nextMonth ? (
-          <Link href={`/visa-bulletin/${nextMonth}`} className="flex min-h-11 items-center gap-2 border border-border bg-background px-4 font-heading text-sm font-bold transition-transform motion-reduce:transition-none">
+          <Link href={`/visa-bulletin/${nextMonth}`} className={buttonVariants({ variant: "outline", size: "default" })}>
             {bulletinMonthLabel(nextMonth)} <ArrowRightIcon className="size-4" aria-hidden="true" />
           </Link>
         ) : null}{" "}
-        <Link href="/tools/priority-date-calculator" className="flex min-h-11 items-center border border-border bg-primary px-4 font-heading text-sm font-bold text-black transition-transform motion-reduce:transition-none">
+        <Link href="/tools/priority-date-calculator" className={buttonVariants({ variant: "outline", size: "lg" })}>
           Is my priority date current?
         </Link>
       </nav>{" "}

@@ -6,16 +6,13 @@
  * A short silent recording inside an article: the video equivalent of
  * ScreenshotFigure, with the same frame, caption, credit and click-to-expand.
  *
- * It plays while it's on screen and loops, so it carries its own pause button
- * (WCAG 2.2.2: moving content that runs past five seconds needs a way to stop
- * it). A reader who has asked for reduced motion gets the poster frame and the
- * button, and the video waits for a press.
+ * It waits on its first frame until the reader presses play, then loops, and
+ * the same button pauses it (WCAG 2.2.2). Nothing on the page starts moving
+ * by itself.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
 import { PauseIcon, PlayIcon } from "@phosphor-icons/react";
-import { fadeUp } from "@/lib/content/animations";
 import { Lightbox } from "@/components/ui/lightbox";
 
 interface VideoFigureProps {
@@ -29,21 +26,14 @@ interface VideoFigureProps {
   step?: number;
   /** Optional max width constraint */
   maxWidth?: number;
-  /** The first frame, shown before it plays and under reduced motion */
+  /** The first frame, shown until the reader presses play */
   poster?: string;
   /** Who made the recording, printed after the caption */
   credit?: string;
 }
 
-function prefersReducedMotion(): boolean {
-  return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
-}
-
 export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, poster, credit }: VideoFigureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  // Set once the reader presses pause or play; from then on scrolling never
-  // overrides their choice.
-  const chosen = useRef(false);
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
@@ -53,19 +43,7 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
     const onPause = () => setPlaying(false);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (chosen.current || prefersReducedMotion()) continue;
-          if (entry.isIntersecting) video.play().catch(() => {});
-          else video.pause();
-        }
-      },
-      { threshold: 0.3 },
-    );
-    observer.observe(video);
     return () => {
-      observer.disconnect();
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
     };
@@ -74,23 +52,17 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
   const toggle = () => {
     const video = videoRef.current;
     if (!video) return;
-    chosen.current = true;
     if (video.paused) video.play().catch(() => {});
     else video.pause();
   };
 
   return (
-    <motion.figure
-      className="not-prose my-8"
-      variants={fadeUp}
-      initial={false}
-      style={{ maxWidth }}
-    >
+    <figure className="not-prose my-8" style={{ maxWidth }}>
       <div className="relative">
         <Lightbox videoSrc={src} alt={alt} caption={caption}>
           <div className="relative overflow-hidden border border-border">
             {step !== undefined && (
-              <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b border-r border-border bg-primary font-mono text-sm font-bold text-black">
+              <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b border-r border-border bg-card font-mono text-sm font-bold">
                 {step}
               </div>
             )}
@@ -113,7 +85,7 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
           type="button"
           onClick={toggle}
           aria-label={playing ? "Pause the recording" : "Play the recording"}
-          className="absolute bottom-2 right-2 z-10 flex size-11 items-center justify-center border border-border bg-background text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="absolute bottom-2 right-2 z-10 flex size-11 items-center justify-center border border-input bg-card text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {playing ? <PauseIcon className="size-5" weight="bold" aria-hidden="true" /> : <PlayIcon className="size-5" weight="bold" aria-hidden="true" />}
         </button>
@@ -126,6 +98,6 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
           {credit ? <span>{credit}</span> : null}
         </figcaption>
       ) : null}
-    </motion.figure>
+    </figure>
   );
 }

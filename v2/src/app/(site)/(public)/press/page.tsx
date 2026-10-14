@@ -24,6 +24,7 @@ import { PAGE_CARD_ALT, pageCardUrl, type PageCardSlug } from "@/lib/pageCards";
 import { pressCreditHtml } from "@/lib/pressCredit";
 import { withSocialCard } from "@/lib/socialCard";
 import { getEmployerStages } from "@/lib/turso/employerStages";
+import { buttonVariants } from "@/components/ui/button";
 
 const TITLE = "Press and Data for Journalists";
 const DESCRIPTION =
@@ -86,14 +87,14 @@ export default async function PressPage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <a
               href={`mailto:${PRESS_EMAIL}`}
-              className="inline-flex min-h-12 items-center gap-2 border border-border bg-primary px-5 font-heading text-base font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
+              className={buttonVariants({ variant: "default", size: "lg" })}
             >
               <EnvelopeSimpleIcon size={20} weight="bold" aria-hidden="true" />
               {PRESS_EMAIL}
             </a>{" "}
             <Link
               href="/open-data"
-              className="inline-flex min-h-12 items-center gap-2 border border-border bg-background px-5 font-heading text-base font-bold transition-transform motion-reduce:transition-none"
+              className={buttonVariants({ variant: "outline", size: "lg" })}
             >
               <FileCsvIcon size={20} weight="bold" aria-hidden="true" />
               Download the data
@@ -204,10 +205,8 @@ export default async function PressPage() {
         </h2>{" "}
         <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
           {SOURCES.map((s) => (
-            <li key={s.name} className="flex items-start gap-4 border border-border bg-card p-5">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-border bg-primary text-primary-foreground">
-                <s.icon size={26} weight="bold" aria-hidden="true" />
-              </span>{" "}
+            <li key={s.name} className="flex items-start gap-4 border-t border-border pt-5">
+              <s.icon size={26} className="shrink-0 text-primary-text" aria-hidden="true" />{" "}
               <span>
                 <span className="block font-heading text-lg font-bold">{s.name}</span>{" "}
                 <span className="mt-1 block text-base text-soft">{s.what}</span>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { EntityRow } from "@/lib/entityPayload";
 import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { searchEntities } from "@/lib/fetchEntities";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * Two employer pickers and a Compare button. Each box searches the entity
@@ -142,7 +143,7 @@ export function EmployerComparePicker({ a, b }: { a: Chosen | null; b: Chosen | 
         <button
           type="submit"
           disabled={!ready}
-          className="flex min-h-11 items-center border border-border bg-primary px-5 font-heading text-sm font-bold text-black transition-transform disabled:text-muted-foreground motion-reduce:transition-none"
+          className={buttonVariants({ variant: "default", size: "lg" })}
         >
           Compare
         </button>

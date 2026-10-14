@@ -41,6 +41,7 @@ import { getLineCounts } from "@/lib/turso/bulletinLine";
 import { categoriesIn, summariseBulletins, type BoardCell } from "@/lib/turso/bulletin";
 import { getVisaBulletins } from "@/lib/turso/publicData";
 import { DAYS_PER_MONTH, easternDay } from "@/lib/time";
+import { buttonVariants } from "@/components/ui/button";
 
 // A bulletin changes once a month and USCIS's counts monthly or quarterly.
 export const revalidate = 86400;
@@ -297,7 +298,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
           {GREEN_CARD_LINE.has(category) ? (
             <Link
               href={`/tools/green-card-line?category=${category}&country=${country}`}
-              className="mt-4 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
+              className={buttonVariants({ variant: "outline", size: "lg", className: "mt-4" })}
             >
               Count everyone ahead of your date in this line
               <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
@@ -335,7 +336,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             <li key={c}>
               <Link
                 href={`/visa-bulletin/categories/${lineSlug(category, c)}`}
-                className="inline-flex min-h-[44px] items-center border border-border px-3 font-semibold hover:bg-muted"
+                className={buttonVariants({ variant: "outline", size: "default" })}
               >
                 {cat} {LINE_COUNTRY_SHORT[c]}
               </Link>{" "}
@@ -348,7 +349,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             <li key={c}>
               <Link
                 href={`/visa-bulletin/categories/${lineSlug(c, country)}`}
-                className="inline-flex min-h-[44px] items-center border border-border px-3 font-semibold hover:bg-muted"
+                className={buttonVariants({ variant: "outline", size: "default" })}
               >
                 {LINE_CATEGORY_SHORT[c]}
               </Link>{" "}

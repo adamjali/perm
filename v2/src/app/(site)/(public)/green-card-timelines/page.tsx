@@ -6,6 +6,7 @@ import { api } from "@convex/_generated/api";
 import { BoardKey, BoardTable, RfeBars, StageMedians, WhoIsWaiting } from "@/components/community/TimelineBoard";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * Green card timelines, as the people waiting report them.
@@ -173,7 +174,7 @@ export default async function GreenCardTimelinesPage() {
         <p className="mt-4">
           <Link
             href="/perm-case-status"
-            className="inline-flex min-h-11 items-center border border-border bg-primary px-5 font-bold text-primary-foreground transition-transform"
+            className={buttonVariants({ variant: "outline", size: "lg" })}
           >
             Look up your case
           </Link>

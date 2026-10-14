@@ -10,6 +10,7 @@ import { getGuideData, type GuideData } from "@/lib/i18n/guideData";
 import { languageAlternates, localeByCode, type LocaleCode, type LocaleDef } from "@/lib/i18n/locales";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * One localized guide: the page body every `/zh`, `/es`, `/pt-br`, `/ko` and
@@ -137,7 +138,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
               <li>
                 <a
                   href={`#${id}`}
-                  className="inline-flex min-h-11 items-center gap-2 border border-border bg-background px-3 text-sm font-bold hover:bg-accent"
+                  className={buttonVariants({ variant: "outline", size: "default" })}
                 >
                   <span className="tabular-nums text-muted-foreground">{i + 1}</span> {copy.toc[id]}
                 </a>
@@ -295,7 +296,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
                 <a
                   href={l.href}
                   hrefLang="en"
-                  className="flex min-h-11 items-center border border-border bg-card px-4 py-2 font-bold hover:bg-accent"
+                  className={buttonVariants({ variant: "outline", size: "lg" })}
                 >
                   {l.label}
                 </a>

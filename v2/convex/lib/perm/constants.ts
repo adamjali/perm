@@ -82,6 +82,9 @@ export const ETA9089_EXPIRATION_DAYS = 179;
 /** The same rule from the I-140 side: file within this many days of certification. */
 export const I140_FILING_DAYS = ETA9089_EXPIRATION_DAYS;
 
+/** The regulation's own count, the certification day included: "180 calendar days". */
+export const CERTIFICATION_RULE_DAYS = ETA9089_EXPIRATION_DAYS + 1;
+
 // ============================================================================
 // RFI/RFE CONSTANTS
 // ============================================================================

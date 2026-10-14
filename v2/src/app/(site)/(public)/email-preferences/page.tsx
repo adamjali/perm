@@ -77,13 +77,8 @@ function KindTile({ id }: { id: MailKindId }) {
   return (
     <li className="flex flex-col border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
-        <span
-          aria-hidden="true"
-          className="grid size-11 shrink-0 place-items-center border border-border bg-primary text-black"
-        >
-          <Glyph className="size-6" weight="bold" />
-        </span>{" "}
-        <span className="border border-border px-2 py-0.5 text-sm font-semibold">{kind.when}</span>
+        <Glyph aria-hidden="true" className="size-6 shrink-0 text-primary-text" />{" "}
+        <span className="text-sm text-muted-foreground">{kind.when}</span>
       </div>{" "}
       <h4 className="mt-4 font-heading text-lg font-bold">{kind.name}</h4>{" "}
       <p className="mt-1 flex-1 text-base leading-relaxed text-soft">{kind.what}</p>{" "}

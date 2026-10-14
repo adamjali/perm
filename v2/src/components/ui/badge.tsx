@@ -2,7 +2,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
-import { prettyStatus, statusTone } from "@/lib/statusTone"
+import { prettyStatus, statusTone, type StatusTone } from "@/lib/statusTone"
 
 /**
  * A badge is a quiet chip: muted ground, plain text. Status colour, where it
@@ -46,24 +46,35 @@ const TONE_DOT = {
   flat: "bg-muted-foreground",
 } as const
 
+/** A quiet chip whose dot says good, bad, warning or neither, beside its own words. */
+function ToneBadge({
+  tone,
+  className,
+  children,
+}: {
+  tone: StatusTone
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <Badge className={cn("font-normal", className)}>
+      <span aria-hidden="true" className={cn("size-2 shrink-0", TONE_DOT[tone])} />
+      {children}
+    </Badge>
+  )
+}
+
 /**
  * A DOL status as a quiet chip: its own words (capitalised as a name, acronyms kept)
  * and a dot whose colour repeats what the words say. One look for every
  * status in every table and list.
  */
-function StatusBadge({
-  status,
-  className,
-}: {
-  status: string
-  className?: string
-}) {
+function StatusBadge({ status, className }: { status: string; className?: string }) {
   return (
-    <Badge className={cn("font-normal", className)} translate="no">
-      <span aria-hidden="true" className={cn("size-2 shrink-0", TONE_DOT[statusTone(status)])} />
-      {prettyStatus(status)}
-    </Badge>
+    <ToneBadge tone={statusTone(status)} className={className}>
+      <span translate="no">{prettyStatus(status)}</span>
+    </ToneBadge>
   )
 }
 
-export { Badge, badgeVariants, StatusBadge }
+export { Badge, badgeVariants, StatusBadge, ToneBadge }

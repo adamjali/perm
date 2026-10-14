@@ -31,7 +31,6 @@ export interface DebarmentQuery {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
-const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const CONTROL =
   "mt-1 block w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";
@@ -189,7 +188,7 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
                 {all.length === 0
                   ? `${s.emptyNote} `
                   : `${formatInt(all.filter((d) => d.phase === "in-force").length)} in force, ${formatInt(all.length)} listed${narrowed ? `, ${formatInt(list.length)} shown` : ""}. `}
-                <a href={s.sourceUrl} className={LINK} rel="noopener" target="_blank">
+                <a href={s.sourceUrl} className="link" rel="noopener" target="_blank">
                   DOL&apos;s list
                 </a>
               </p>{" "}

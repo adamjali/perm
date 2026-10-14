@@ -2,6 +2,7 @@ import { ChatDotsIcon, StarIcon } from "@phosphor-icons/react/ssr";
 
 import { REVIEW_URL } from "@/lib/constants/externalLinks";
 import { APP_RATING, shouldAdvertiseRating } from "@/lib/structuredData";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The site's review rating and the link to leave one.
@@ -30,7 +31,7 @@ export function ReviewsLine() {
         href={REVIEW_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-background px-4 font-bold transition-transform duration-150"
+        className={buttonVariants({ variant: "outline", size: "lg" })}
       >
         <ChatDotsIcon className="size-4" aria-hidden="true" />
         Leave a review

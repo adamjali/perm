@@ -4,6 +4,7 @@ import { ArrowRightIcon, BellSimpleRingingIcon, MagnifyingGlassIcon } from "@pho
 import { AppWindow } from "@/components/marketing/AppWindow";
 import { TOUR_SHOTS } from "@/components/marketing/tourShots";
 import { deadlineTitle } from "@convex/lib/notificationHelpers";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The attorney page's hero: the headline over the page an attorney opens every
@@ -22,9 +23,6 @@ const HUB_ALT =
   "The dashboard's deadline hub for eight sample cases: none overdue, an RFI response due this week, an I-140 filing and a filing window this month, and nine deadlines later.";
 const CARD_ALT =
   "A sample case's card on the cases page: Juniper Biologics, ETA 9089 stage, RFI response due in 7 days.";
-
-/** The light-on-band colour: the page background in light mode, the text colour in dark. */
-const BAND = "[--band-ink:var(--background)] dark:[--band-ink:var(--foreground)]";
 
 function Reminder({ className }: { className?: string }) {
   return (
@@ -47,7 +45,7 @@ function Reminder({ className }: { className?: string }) {
 export function AttorneyHero() {
   return (
     <section
-      className={`${BAND} relative overflow-hidden border-b border-border bg-foreground text-background dark:bg-card dark:text-foreground`}
+      className="relative overflow-hidden border-b border-border"
     >
       <div className="mx-auto max-w-[1400px] px-4 pt-8 pb-14 sm:px-8 sm:pt-12 lg:pb-20">
         <div className="grid gap-6 [&>*]:min-w-0 lg:grid-cols-12 lg:items-end lg:gap-12">
@@ -55,21 +53,21 @@ export function AttorneyHero() {
             Every PERM deadline, worked out from the dates you enter
           </h1>{" "}
           <div className="lg:col-span-5 lg:pb-2">
-            <p className="max-w-xl text-lg leading-relaxed opacity-80 sm:text-xl">
+            <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
               Free case management for immigration attorneys and their teams. Enter a case&apos;s dates once; the
               deadlines, reminders and calendar follow.
             </p>{" "}
             <div className="mt-6 flex flex-wrap gap-4">
               <Link
                 href="/signup"
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 border border-[var(--band-ink)] bg-primary px-6 font-heading font-bold text-primary-foreground transition-transform duration-150 motion-reduce:transition-none"
+                className={buttonVariants({ size: "lg" })}
               >
                 Start free
                 <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
               </Link>{" "}
               <Link
                 href="/perm-case-status"
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 border border-[var(--band-ink)] px-6 font-heading font-bold text-[var(--band-ink)] transition-transform duration-150 motion-reduce:transition-none"
+                className={buttonVariants({ variant: "outline", size: "lg" })}
               >
                 <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
                 Check a case first

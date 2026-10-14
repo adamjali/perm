@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 
 import { ENGLISH_GUIDE, LOCALES, type LocaleCode } from "@/lib/i18n/locales";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The switcher on every version of the guide, English included: each version
@@ -30,7 +31,7 @@ export function LanguageLinks({ current }: { current: LocaleCode | "en" }) {
               href={l.path}
               lang={l.tag}
               hrefLang={l.tag}
-              className="inline-flex min-h-11 items-center border border-border bg-card px-3 text-sm font-bold hover:bg-accent"
+              className={buttonVariants({ variant: "outline", size: "default" })}
             >
               {l.endonym}
             </a>

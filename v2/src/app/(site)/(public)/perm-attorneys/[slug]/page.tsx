@@ -413,7 +413,6 @@ export default async function AttorneyPage({
         }
       >
         <FieldPositionPlate
-          n="01"
           singular="firm"
           plural="firms"
           dist={dist}

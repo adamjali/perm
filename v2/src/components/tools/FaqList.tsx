@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
+import { cn } from "@/lib/utils";
+
 /**
  * Collapsible reference lists: the questions at the foot of a calculator page,
  * and any long run of term-and-definition entries.
@@ -42,44 +44,25 @@ function DisclosureShell({
   compact: boolean;
 }) {
   return (
-    <div className="mt-6 border border-border bg-card">
+    <div className="mt-6 divide-y divide-border border-y border-border">
       {items.map((item, i) => (
-        <details
-          key={item.term}
-          open={openFirst && i === 0}
-          className="group border-b border-border last:border-b-0"
-        >
+        <details key={item.term} open={openFirst && i === 0} className="group">
           <summary
-            className={
-              "flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary [&::-webkit-details-marker]:hidden " +
-              (compact
-                ? "px-5 py-3 font-heading text-base font-bold sm:px-6"
-                : "p-5 font-heading text-lg font-bold sm:p-6")
-            }
+            className={cn(
+              "flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 font-heading font-bold transition-colors hover:text-primary-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden",
+              compact ? "py-3 text-base" : "py-4 text-lg",
+            )}
           >
             <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
               <span>{item.term}</span>{" "}
-              {item.hint ? (
-                <span className="text-sm font-bold text-muted-foreground">
-                  {item.hint}
-                </span>
-              ) : null}
+              {item.hint ? <span className="text-sm font-normal text-muted-foreground">{item.hint}</span> : null}
             </span>{" "}
             <CaretDownIcon
-              className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+              className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
               aria-hidden="true"
             />
           </summary>{" "}
-          <div
-            className={
-              "border-t border-border/40 text-base leading-relaxed text-muted-foreground " +
-              (compact
-                ? "px-5 pb-4 pt-3 sm:px-6"
-                : "px-5 pb-5 pt-4 sm:px-6 sm:pb-6")
-            }
-          >
-            {item.body}
-          </div>
+          <div className={cn("max-w-3xl text-base leading-relaxed text-soft", compact ? "pb-4" : "pb-5")}>{item.body}</div>
         </details>
       ))}
     </div>

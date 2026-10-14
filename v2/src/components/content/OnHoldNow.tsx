@@ -22,7 +22,6 @@ import { formatInt, formatShare } from "@/lib/format";
  */
 
 const NAMED_FLOOR = 25;
-const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export async function OnHoldNow() {
   const doc = await getEmployerStages().catch(() => null);
@@ -30,7 +29,7 @@ export async function OnHoldNow() {
     return (
       <p>
         The live count is unavailable for the moment. The{" "}
-        <Link href="/perm-rfi-audit/application-on-hold" className={LINK}>
+        <Link href="/perm-rfi-audit/application-on-hold" className="link">
           application on hold stage page
         </Link>{" "}
         carries the same cases.
@@ -83,7 +82,7 @@ export async function OnHoldNow() {
                 <Fragment key={e.slug ?? e.name}>
                   <li>
                     {e.slug ? (
-                      <Link href={`/perm-employers/${e.slug}`} className={`font-bold ${LINK}`}>
+                      <Link href={`/perm-employers/${e.slug}`} className="link">
                         {e.name}
                       </Link>
                     ) : (
@@ -101,7 +100,7 @@ export async function OnHoldNow() {
         </>
       ) : null}{" "}
       <p className="mt-4 text-sm text-muted-foreground">
-        <Link href="/perm-employers/under-review" className={LINK}>
+        <Link href="/perm-employers/under-review" className="link">
           Every employer&apos;s count, and the days DOL moved them
         </Link>
       </p>

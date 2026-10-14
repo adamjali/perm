@@ -69,6 +69,7 @@ import {
 } from "@/lib/turso/rfi";
 import { getFreshness } from "@/lib/turso/publicData";
 import { formatInt } from "@/lib/format";
+import { buttonVariants } from "@/components/ui/button";
 
 /** Same window as the audit page this is a leaf of: the mirror moves daily. */
 export const revalidate = 86400;
@@ -432,7 +433,7 @@ export default async function StagePage({
                 <li>
                   <Link
                     href={`/perm-rfi-audit/${s.slug}`}
-                    className="inline-flex min-h-11 items-center gap-2 border border-border bg-card px-3 text-sm font-bold hover:bg-tint"
+                    className={buttonVariants({ variant: "outline", size: "default" })}
                   >
                     {stageMeta(s.status).label}
                     <span className="font-mono text-sm font-normal tabular-nums text-muted-foreground">

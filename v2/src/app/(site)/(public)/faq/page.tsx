@@ -13,7 +13,7 @@ import { BriefcaseIcon, CalculatorIcon, ChartBarIcon, ClockIcon } from "@phospho
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { FAQPageClient } from "./FAQPageClient";
+import { FaqList } from "@/components/tools/FaqList";
 import { averagePhrase, dolNow } from "@/lib/dolNow";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 
@@ -159,6 +159,12 @@ const faqData = [
   },
 ];
 
+const LEARN_MORE = [
+  { href: "/blog/what-is-perm-labor-certification", label: "What's PERM?", note: "the whole process, start to finish" },
+  { href: "/blog/perm-processing-times-2026", label: "Processing times in 2026", note: "where DOL's queue stands" },
+  { href: "/guides/getting-started", label: "Getting started", note: "the lookup, the alerts and the app" },
+] as const;
+
 export default async function FAQPage() {
   const average = averagePhrase(dolNow(await getProcessingTimes().catch(() => null)));
   const faq = faqData.map((section) => ({
@@ -196,14 +202,9 @@ export default async function FAQPage() {
                 {" "}
                 <Link
                   href={l.href}
-                  className="group flex flex-col border border-border bg-background p-4 transition-transform motion-reduce:transition-none"
+                  className="group flex flex-col border border-input bg-card p-4 transition-colors hover:bg-accent"
                 >
-                  <span
-                    aria-hidden="true"
-                    className="inline-flex size-10 items-center justify-center border border-border bg-primary text-black"
-                  >
-                    <l.Icon className="size-5" weight="bold" />
-                  </span>{" "}
+                  <l.Icon aria-hidden="true" className="size-6 text-primary-text" />{" "}
                   <span className="mt-3 font-heading text-base font-bold leading-tight">{l.label}</span>{" "}
                   <span className="mt-1 text-sm leading-snug text-muted-foreground">{l.note}</span>
                 </Link>
@@ -217,7 +218,7 @@ export default async function FAQPage() {
         {/* The groups, with how many questions each holds: a contents list
             that stays beside the questions on a wide screen. */}
         <nav aria-label="Question groups" className="max-lg:hidden">
-          <ol className="sticky top-[calc(var(--site-header-h)+1.5rem)] space-y-1 border-l-2 border-foreground pl-4">
+          <ol className="sticky top-[calc(var(--site-header-h)+1.5rem)] space-y-1 border-l border-border pl-4">
             {groups.map((g) => (
               <Fragment key={g.id}>
                 {" "}
@@ -234,42 +235,31 @@ export default async function FAQPage() {
             ))}
           </ol>
         </nav>{" "}
-        <div className="max-w-[820px]">
-        <FAQPageClient faqData={groups} />
+        <div className="max-w-[820px] space-y-12">
+        {groups.map((g) => (
+          <section key={g.id} id={g.id} aria-labelledby={`${g.id}-title`}>
+            <h2 id={`${g.id}-title`} className="font-heading text-xl font-bold">
+              {g.category}
+            </h2>
+            <FaqList items={g.items.map((i) => ({ q: i.question, a: i.answer }))} openFirst={false} />
+          </section>
+        ))}
 
-        <div className="mt-12 border-t border-border pt-8">
-          <h2 className="mb-4 font-heading text-xl font-bold">Learn more</h2>{" "}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Link
-              href="/blog/what-is-perm-labor-certification"
-              className="border border-border bg-card p-4 transition-shadow"
-            >
-              <span className="font-heading text-sm font-bold">What’s PERM?</span>{" "}
-              <p className="mt-1 text-sm text-muted-foreground">Complete overview of the PERM process</p>
-            </Link>{" "}
-            <Link
-              href="/guides/ultimate-perm-guide-2026"
-              className="border border-border bg-card p-4 transition-shadow"
-            >
-              <span className="font-heading text-sm font-bold">The ultimate PERM guide, 2026</span>{" "}
-              <p className="mt-1 text-sm text-muted-foreground">Comprehensive filing reference</p>
-            </Link>{" "}
-            <Link
-              href="/blog/perm-processing-times-2026"
-              className="border border-border bg-card p-4 transition-shadow"
-            >
-              <span className="font-heading text-sm font-bold">Processing times in 2026</span>{" "}
-              <p className="mt-1 text-sm text-muted-foreground">Current DOL timelines</p>
-            </Link>{" "}
-            <Link
-              href="/guides/getting-started"
-              className="border border-border bg-card p-4 transition-shadow"
-            >
-              <span className="font-heading text-sm font-bold">Getting started</span>{" "}
-              <p className="mt-1 text-sm text-muted-foreground">Set up your first case in minutes</p>
-            </Link>
-          </div>
-        </div>
+        <nav aria-labelledby="learn-more" className="border-t border-border pt-8">
+          <h2 id="learn-more" className="font-heading text-xl font-bold">Learn more</h2>{" "}
+          <ul className="mt-4 space-y-3 text-base">
+            {LEARN_MORE.map((l) => (
+              <Fragment key={l.href}>
+                <li>
+                  <Link href={l.href} className="link">
+                    {l.label}
+                  </Link>{" "}
+                  <span className="text-muted-foreground">{l.note}</span>
+                </li>{" "}
+              </Fragment>
+            ))}
+          </ul>
+        </nav>
         </div>
       </div>
     </>

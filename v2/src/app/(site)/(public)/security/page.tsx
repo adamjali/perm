@@ -18,7 +18,6 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 import { Fragment } from "react";
 import {
-  CheckCircleIcon as CheckCircle2,
   CloudIcon,
   EnvelopeSimpleIcon,
   KeyIcon,
@@ -26,6 +25,8 @@ import {
   PlusIcon,
   ShieldIcon,
 } from "@phosphor-icons/react/ssr";
+import { buttonVariants } from "@/components/ui/button";
+import { ToneBadge } from "@/components/ui/badge";
 
 export const dynamic = "force-static";
 
@@ -96,10 +97,8 @@ export default function SecurityPage() {
           {POSTURE.map(({ Icon, title, body }) => (
             <Fragment key={title}>
               {" "}
-              <li className="flex gap-4 border border-border bg-card p-5">
-                <span className="flex size-11 shrink-0 items-center justify-center border border-border bg-primary text-black">
-                  <Icon size={22} weight="bold" aria-hidden="true" />
-                </span>{" "}
+              <li className="flex gap-4 border-t border-border pt-5">
+                <Icon size={24} className="shrink-0 text-primary-text" aria-hidden="true" />{" "}
                 <span className="min-w-0">
                   <span className="block font-heading text-lg font-bold">{title}</span>{" "}
                   <span className="mt-1 block text-sm leading-relaxed text-soft">{body}</span>
@@ -121,7 +120,7 @@ export default function SecurityPage() {
         </p>{" "}
         <a
           href="mailto:security@permtracker.app"
-          className="mt-5 inline-flex min-h-11 items-center gap-2 border border-background bg-primary px-4 font-heading text-base font-bold text-black"
+          className={buttonVariants({ variant: "default", size: "lg", className: "mt-5" })}
         >
           <EnvelopeSimpleIcon size={18} weight="bold" aria-hidden="true" />
           security@permtracker.app
@@ -144,10 +143,7 @@ export default function SecurityPage() {
               </h3>{" "}
               <p className="mt-1 font-mono text-sm text-muted-foreground">April 19 to 20, 2026</p>
             </div>{" "}
-            <span className="inline-flex shrink-0 items-center gap-1.5 border border-border bg-primary px-2.5 py-1 font-heading text-sm font-bold text-black">
-              <CheckCircle2 size={16} weight="bold" aria-hidden="true" />
-              Resolved
-            </span>
+            <ToneBadge tone="good" className="shrink-0">Resolved</ToneBadge>
           </div>{" "}
           <dl className="grid grid-cols-1 border-b border-border sm:grid-cols-3 [&>*]:min-w-0">
             {INCIDENT_FACTS.map(({ value, label }, i) => (

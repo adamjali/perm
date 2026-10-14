@@ -10,6 +10,7 @@ import {
 } from "@/lib/decidedFilter";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
 import type { DecidedCase } from "@/lib/turso/decidedDays";
+import { buttonVariants } from "@/components/ui/button";
 
 const CONTROL =
   "mt-1 w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
@@ -129,7 +130,7 @@ export function DecidedFilters({
           <button
             type="button"
             onClick={() => onChange({})}
-            className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint focus-visible:ring-2 focus-visible:ring-primary"
+            className={buttonVariants({ variant: "outline", size: "default" })}
           >
             Clear these filters
           </button>

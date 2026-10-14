@@ -19,6 +19,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { MoreText } from "@/components/data/MoreText";
 import { describeDisclosureFiles } from "@/lib/disclosureFiles";
+import { buttonVariants } from "@/components/ui/button";
 
 const TITLE = "How PERM Tracker's Estimates Work";
 const DESCRIPTION =
@@ -476,7 +477,7 @@ export default async function MethodologyPage() {
         </div>
         <Link
           href="/tools"
-          className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 py-2.5 font-bold text-black transition-colors duration-150"
+          className={buttonVariants({ variant: "outline", size: "lg" })}
         >
           Open the calculators
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
