@@ -13,6 +13,7 @@ vi.mock("convex/react", () => ({
 }));
 
 import { useQuery } from "convex/react";
+import { getFunctionName } from "convex/server";
 import DeadlineHeroWidget from "../DeadlineHeroWidget";
 
 vi.useFakeTimers();
@@ -55,12 +56,45 @@ describe("DeadlineHeroWidget", () => {
   });
 
   describe("empty state", () => {
-    it("shows empty message and CTA when no deadlines", () => {
-      vi.mocked(useQuery).mockReturnValue(createEmptyDeadlineGroups());
+    const summaryWith = (open: number) => ({
+      pwd: { count: open },
+      recruitment: { count: 0 },
+      eta9089: { count: 0 },
+      i140: { count: 0 },
+      complete: { count: 0 },
+      closed: { count: 3 },
+      duplicates: { count: 0 },
+    });
+    function answer(summary: unknown) {
+      vi.mocked(useQuery).mockImplementation(((fn: unknown) =>
+        getFunctionName(fn as never) === "dashboard:getSummary"
+          ? summary
+          : createEmptyDeadlineGroups()) as never);
+    }
+
+    it("asks an account with no cases to create one", () => {
+      answer(summaryWith(0));
       renderWithProviders(<DeadlineHeroWidget />);
 
       expect(screen.getByText(/no upcoming deadlines/i)).toBeInTheDocument();
       expect(screen.getByText(/create a case/i)).toBeInTheDocument();
+    });
+
+    it("tells an account with open cases that none has a date due, not to create one", () => {
+      answer(summaryWith(44));
+      renderWithProviders(<DeadlineHeroWidget />);
+
+      expect(screen.getByText(/none of your 44 open cases have a date due/i)).toBeInTheDocument();
+      expect(screen.queryByText(/create a case/i)).not.toBeInTheDocument();
+    });
+
+    it("says nothing about cases while the summary loads", () => {
+      answer(undefined);
+      renderWithProviders(<DeadlineHeroWidget />);
+
+      expect(screen.getByText(/no upcoming deadlines/i)).toBeInTheDocument();
+      expect(screen.queryByText(/create a case/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/open case/i)).not.toBeInTheDocument();
     });
   });
 });

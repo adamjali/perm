@@ -9,6 +9,7 @@ import { isQueued } from "@/lib/alertReply";
 import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
 import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
+import { useAlertFormTelemetry } from "@/lib/funnelEvents";
 
 /**
  * Subscribe to status changes on ONE case.
@@ -73,6 +74,7 @@ export function CaseAlertForm({
   program?: FlagProgram;
   className?: string;
 }) {
+  const telemetry = useAlertFormTelemetry("case", program);
   const noun = programNoun(program);
   const inputId = useId();
   const noteId = useId();
@@ -152,6 +154,8 @@ export function CaseAlertForm({
 
   return (
     <form
+      ref={telemetry.ref}
+      onFocusCapture={telemetry.onFocusCapture}
       onSubmit={submit}
       className={cn(
         "border-2 border-border bg-card p-5 shadow-hard sm:p-6 print:hidden",
@@ -186,6 +190,7 @@ export function CaseAlertForm({
         />
         <button
           type="submit"
+          data-ph-capture-attribute-cta="case-alert"
           disabled={state.kind === "sending"}
           className="min-h-[48px] shrink-0 border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-background shadow-hard transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:hover:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
         >

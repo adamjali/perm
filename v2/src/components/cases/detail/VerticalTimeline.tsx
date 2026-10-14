@@ -120,7 +120,8 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
           steps.map((step, i) => {
             const isLast = i === steps.length - 1;
             const editField = getEditFieldForTimelineStep(step.field);
-            let dateStr = "Pending";
+            // The next step with no date yet says so; "Pending" read as every other step.
+            let dateStr = step.status === "current" ? "Next" : "Pending";
             if (step.status !== "pending" && step.date) {
               try {
                 if (step.field === "sundayAds" && caseData.sundayAdFirstDate) {
@@ -136,7 +137,7 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
                 if (process.env.NODE_ENV === "development") {
                   console.warn(`[VerticalTimeline] Failed to parse date for "${step.field}":`, step.date, e);
                 }
-                dateStr = "Pending";
+                dateStr = step.status === "current" ? "Next" : "Pending";
               }
             }
 

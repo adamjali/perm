@@ -16,7 +16,7 @@
  * their case runs past it.
  */
 
-import { Fragment, useEffect, useId, useMemo, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { BellIcon, CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 
@@ -61,6 +61,7 @@ import { CaseNumberField } from "@/components/tools/CaseNumberField";
 import { QueueMonthChart } from "@/components/tools/QueueMonthChart";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
+import { trackEstimateShown } from "@/lib/funnelEvents";
 
 export interface PermTimelineEstimatorProps {
   frontier: DolFrontier | null;
@@ -456,6 +457,15 @@ export function PermTimelineEstimator({
   const notes = shown?.fromLead
     ? estimate.caveats.filter((c) => c !== rangeNote)
     : estimate.caveats;
+
+  // The calculator has answered once someone gave it their own date; the
+  // default answer drawn before any input isn't counted.
+  const answerSent = useRef(false);
+  useEffect(() => {
+    if (!hasDate || answerSent.current) return;
+    answerSent.current = true;
+    trackEstimateShown(lead?.id ?? "none", Boolean(shown), "timeline-calculator");
+  }, [hasDate, lead, shown]);
 
 
   /**

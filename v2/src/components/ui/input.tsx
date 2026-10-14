@@ -10,7 +10,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       data-slot="input"
       className={cn(
         // Base styles - neobrutalist with hard shadow
-        "placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-border h-11 w-full min-w-0 border-2 bg-background px-3 py-1 text-base shadow-hard-sm transition-all duration-150 outline-none md:text-sm flex items-center",
+        "placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-border h-11 w-full min-w-0 border-2 bg-background px-3 py-1 text-base shadow-hard-sm transition-all duration-150 outline-none flex items-center",
         // File input button styling - neobrutalist
         "file:mr-3 file:h-7 file:px-3 file:my-auto file:border-2 file:border-border file:bg-secondary file:text-secondary-foreground file:text-sm file:font-semibold file:cursor-pointer file:transition-all file:duration-150 file:hover:bg-primary file:hover:text-primary-foreground file:hover:border-primary file:active:opacity-70 file:active:scale-95",
         // Hover state - slight lift

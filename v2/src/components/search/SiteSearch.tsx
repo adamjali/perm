@@ -15,6 +15,7 @@ import { CircleNotchIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 
 import type { SearchArticle } from "./SearchPalette";
 import { cn } from "@/lib/utils";
+import { trackPaletteOpened } from "@/lib/funnelEvents";
 
 const SearchPalette = dynamic(() => import("./SearchPalette"), { ssr: false });
 
@@ -42,6 +43,7 @@ export function SiteSearch({
   const openPalette = React.useCallback(() => {
     setEverOpened(true);
     setOpen(true);
+    trackPaletteOpened("button");
   }, []);
 
   React.useEffect(() => {
@@ -49,7 +51,10 @@ export function SiteSearch({
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setEverOpened(true);
-        setOpen((v) => !v);
+        setOpen((v) => {
+          if (!v) trackPaletteOpened("shortcut");
+          return !v;
+        });
       }
     };
     window.addEventListener("keydown", onKey);

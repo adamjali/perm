@@ -188,7 +188,7 @@ export default async function FAQPage() {
             {/* Most visits here come from a search for the site's name, and
                 the pages people open next are the lookup, processing times
                 and the data (PostHog, 30 days to Oct 6 2026). */}
-            <CaseLookupForm className="mt-8 max-w-2xl" />
+            <CaseLookupForm className="mt-8 max-w-2xl" source="faq" />
           </div>{" "}
           <nav aria-label="Main tools" className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
             {START_LINKS.map((l) => (

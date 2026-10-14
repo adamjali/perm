@@ -1025,4 +1025,38 @@ describe("filterBySearch", () => {
       expect(result[0]._id).toBe("case4");
     });
   });
+
+  describe("case numbers", () => {
+    const numbered = [
+      projectCaseForCard(
+        createMockCase({
+          _id: "n1",
+          employerName: "Gamma LLC",
+          caseNumber: "G-100-26254-230507",
+          i140ReceiptNumber: "IOE0912345678",
+        }),
+        "2025-01-15"
+      ),
+      projectCaseForCard(
+        createMockCase({ _id: "n2", employerName: "Delta Inc", internalCaseNumber: "ACM-2026-014" }),
+        "2025-01-15"
+      ),
+      projectCaseForCard(createMockCase({ _id: "n3", employerName: "Epsilon Co" }), "2025-01-15"),
+    ];
+
+    it("finds a case by its DOL case number, typed with or without dashes", () => {
+      expect(filterBySearch(numbered, "G-100-26254-230507").map((c) => c._id)).toEqual(["n1"]);
+      expect(filterBySearch(numbered, "g10026254230507").map((c) => c._id)).toEqual(["n1"]);
+      expect(filterBySearch(numbered, "230507").map((c) => c._id)).toEqual(["n1"]);
+    });
+
+    it("finds a case by its I-140 receipt or the firm's own reference", () => {
+      expect(filterBySearch(numbered, "IOE0912345678").map((c) => c._id)).toEqual(["n1"]);
+      expect(filterBySearch(numbered, "acm 2026 014").map((c) => c._id)).toEqual(["n2"]);
+    });
+
+    it("needs four characters before a number can match", () => {
+      expect(filterBySearch(numbered, "100").map((c) => c._id)).not.toContain("n1");
+    });
+  });
 });

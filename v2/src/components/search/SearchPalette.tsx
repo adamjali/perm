@@ -33,6 +33,7 @@ import { KIND_NOUN } from "@/lib/search/suggestTypes";
 // by shape the P- and I- numbers that share the current layout).
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import type { EntityPayload } from "@/lib/entityPayload";
+import { trackPaletteSelected } from "@/lib/funnelEvents";
 
 export interface SearchArticle {
   title: string;
@@ -141,6 +142,7 @@ export function SearchPalette({
 
   const go = React.useCallback(
     (href: string, label: string) => {
+      trackPaletteSelected(href);
       setNavTarget(label);
       startNav(() => {
         router.push(href);

@@ -26,6 +26,7 @@ import { isQueued, replyHeading } from "@/lib/alertReply";
 import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
 import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
+import { useAlertFormTelemetry } from "@/lib/funnelEvents";
 
 /**
  * Convex HTTP actions are served from the `.convex.site` twin of the
@@ -122,6 +123,7 @@ export function QueueAlertForm({
    */
   allowPwdChoice?: boolean;
 }) {
+  const telemetry = useAlertFormTelemetry("queue", source);
   const emailId = useId();
   const monthId = useId();
   const roleId = useId();
@@ -198,6 +200,8 @@ export function QueueAlertForm({
 
   return (
     <form
+      ref={telemetry.ref}
+      onFocusCapture={telemetry.onFocusCapture}
       onSubmit={handleSubmit}
       className="border-2 border-border bg-card p-6 shadow-hard sm:p-8"
     >
@@ -294,7 +298,8 @@ export function QueueAlertForm({
         </p>
       ) : null}
 
-      <Button type="submit" disabled={status === "sending"} className="mt-6 w-full sm:w-auto">
+      <Button type="submit"
+          data-ph-capture-attribute-cta="queue-alert" disabled={status === "sending"} className="mt-6 w-full sm:w-auto">
         {status === "sending" ? "Sending" : "Email me when it happens"}
       </Button>{" "}
 

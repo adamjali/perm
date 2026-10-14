@@ -121,13 +121,38 @@ interface DeadlineHeroEmptyStateProps {
   lastRefresh: number;
   isRefreshing: boolean;
   onRefresh: () => void;
+  /** Open cases on the account; undefined while the summary loads. */
+  openCases: number | undefined;
+}
+
+/**
+ * Open cases are every case the deadline list reads: all but closed ones.
+ * "complete" (I-140 approved) is still an open case there.
+ */
+export function openCaseCount(
+  summary:
+    | Record<"pwd" | "recruitment" | "eta9089" | "i140" | "complete", { count: number }>
+    | undefined,
+): number | undefined {
+  if (summary === undefined) return undefined;
+  return (
+    summary.pwd.count +
+    summary.recruitment.count +
+    summary.eta9089.count +
+    summary.i140.count +
+    summary.complete.count
+  );
 }
 
 function DeadlineHeroEmptyState({
   lastRefresh,
   isRefreshing,
   onRefresh,
+  openCases,
 }: DeadlineHeroEmptyStateProps): ReactNode {
+  // An account with open cases and no dates due has nothing to create; telling
+  // it to "create a case" read as if its 44 cases were missing.
+  const hasCases = openCases !== undefined && openCases > 0;
   return (
     <div className={CONTAINER_CLASSES}>
       <div className="hazard-strip-red" aria-hidden="true" />
@@ -160,9 +185,17 @@ function DeadlineHeroEmptyState({
           <p className="mb-4 text-lg text-muted-foreground">
             No upcoming deadlines
           </p>{" "}
-          <p className="text-sm text-muted-foreground">
-            Create a case to start tracking deadlines
-          </p>
+          {hasCases ? (
+            <p className="text-sm text-muted-foreground">
+              None of your {openCases.toLocaleString("en-US")} open{" "}
+              {openCases === 1 ? "case has" : "cases have"} a date due. Deadlines
+              appear here as you add dates to a case.
+            </p>
+          ) : openCases === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Create a case to start tracking deadlines
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
@@ -178,6 +211,12 @@ export default function DeadlineHeroWidget(): ReactNode {
 
   const data = useQuery(
     api.dashboard.getDeadlines,
+    isSigningOut ? "skip" : undefined
+  );
+  // The dashboard already reads the summary with these arguments, so this
+  // shares its subscription.
+  const summary = useQuery(
+    api.dashboard.getSummary,
     isSigningOut ? "skip" : undefined
   );
 
@@ -214,6 +253,7 @@ export default function DeadlineHeroWidget(): ReactNode {
         lastRefresh={lastRefresh}
         isRefreshing={isRefreshing}
         onRefresh={handleRefresh}
+        openCases={openCaseCount(summary)}
       />
     );
   }

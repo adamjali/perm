@@ -228,7 +228,7 @@ export default async function PermCaseStatusesPage() {
       {/* Searches like "perm case status" and "dol case status" land here, and
           most of those people want their own case, so the lookup comes first
           (Search Console, Oct 2026). The same plain GET form as the case page. */}
-      <CaseLookupForm className="mt-8 max-w-2xl" />{" "}
+      <CaseLookupForm className="mt-8 max-w-2xl" source="status-dictionary" />{" "}
 
       {/* Four doors, one per program, then every status behind one fold: the
           flat list of all of them was the first thing the page showed. */}

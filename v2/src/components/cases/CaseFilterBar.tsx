@@ -326,7 +326,7 @@ export function CaseFilterBar({
         <div data-testid="search-input-container" className="relative col-span-2 flex-1 group">
           <Input
             type="text"
-            placeholder="Search cases..."
+            placeholder="Name, job or case number"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-11 h-11 md:h-9 text-base"

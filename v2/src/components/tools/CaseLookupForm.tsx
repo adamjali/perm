@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 
-import { analytics } from "@/lib/analytics";
+import { trackLookup } from "@/lib/funnelEvents";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { looksLikeReceipt } from "@/lib/uscis/receipt";
 
@@ -73,9 +73,12 @@ export function CaseLookupForm({
       method="get"
       action="/perm-case-status"
       className={className}
-      // A plain GET still navigates; this only records which page sent it.
-      onSubmit={() => {
-        if (source) analytics.capture("case_lookup_submitted", { source });
+      // A plain GET still navigates; this only records which page sent it and
+      // the shape of what was typed (never the number itself).
+      onSubmit={(e) => {
+        if (!source) return;
+        const typed = new FormData(e.currentTarget).get("case");
+        trackLookup(source, typeof typed === "string" ? typed : "");
       }}
     >
       <label
@@ -110,6 +113,7 @@ export function CaseLookupForm({
         />
         <button
           type="submit"
+          data-ph-capture-attribute-cta="case-lookup"
           className="min-h-[52px] shrink-0 border-2 border-border bg-foreground px-6 font-mono text-sm font-bold uppercase tracking-[0.1em] text-background shadow-hard transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
         >
           Look it up

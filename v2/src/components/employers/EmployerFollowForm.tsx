@@ -13,6 +13,7 @@ import { useId, useState } from "react";
 import { AlertNote } from "@/components/alerts/AlertOptIns";
 import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
+import { useAlertFormTelemetry } from "@/lib/funnelEvents";
 
 function subscribeEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -21,6 +22,7 @@ function subscribeEndpoint(): string | null {
 }
 
 export function EmployerFollowForm({ slug, source }: { slug: string; source: string }) {
+  const telemetry = useAlertFormTelemetry("employer", source);
   const emailId = useId();
   const noteId = useId();
   const [email, setEmail] = useState("");
@@ -64,7 +66,12 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
   }
 
   return (
-    <form onSubmit={handleSubmit} aria-describedby={noteId}>
+    <form
+      ref={telemetry.ref}
+      onFocusCapture={telemetry.onFocusCapture}
+      onSubmit={handleSubmit}
+      aria-describedby={noteId}
+    >
       <label htmlFor={emailId} className="text-sm font-bold">
         Your email address
       </label>{" "}
@@ -83,6 +90,7 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
         />{" "}
         <button
           type="submit"
+          data-ph-capture-attribute-cta="employer-follow"
           disabled={status === "sending"}
           className="inline-flex min-h-[48px] shrink-0 items-center justify-center border-2 border-border bg-foreground px-6 text-base font-bold text-background shadow-hard transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:hover:translate-y-0 motion-reduce:transition-none"
         >

@@ -839,7 +839,8 @@
 .vtl-icon-col { display: flex; flex-direction: column; align-items: center; }
 .vtl-icon { width: 32px; height: 32px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .vtl-icon.done { background: var(--primary); color: var(--primary-foreground); }
-.vtl-icon.current { background: var(--primary); color: var(--primary-foreground); }
+/* The next step is outlined, never filled: a lime fill is what "done" looks like. */
+.vtl-icon.current { background: var(--card); color: var(--foreground); border-color: var(--foreground); }
 .vtl-icon.pending { background: var(--muted); color: var(--muted-foreground); }
 .vtl-line { width: 3px; flex: 1; min-height: 16px; }
 .vtl-line.done { background: var(--primary); }
@@ -2328,7 +2329,7 @@ input[type="week"] {
 }
 .rail-tab:hover {
   transform: translateX(3px);
-  background-color: var(--tint-primary);
+  background-color: color-mix(in srgb, var(--data-good-ink) 14%, var(--card));
   color: var(--foreground);
 }
 .rail-tab:focus-visible {

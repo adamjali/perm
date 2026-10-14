@@ -249,7 +249,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
           aria-invalid={error ? "true" : undefined}
           className={cn(
             // Base styles - neobrutalist
-            "h-11 w-full min-w-0 border-2 bg-background px-3 py-1 text-base shadow-hard-sm transition-all duration-150 outline-none md:text-sm",
+            "h-11 w-full min-w-0 border-2 bg-background px-3 py-1 text-base shadow-hard-sm transition-all duration-150 outline-none",
             // Hover state
             "hover:shadow-hard hover:-translate-y-[1px] active:translate-y-0 active:shadow-hard-sm",
             // Focus state

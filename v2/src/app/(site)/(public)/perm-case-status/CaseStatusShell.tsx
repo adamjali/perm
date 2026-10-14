@@ -40,7 +40,7 @@ export function CaseStatusHead({ typed, loading = false }: { typed: string; load
       </header>
 
       <div className="mt-8 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <CaseLookupForm defaultValue={typed} />
+        <CaseLookupForm defaultValue={typed} source="case-page" />
       </div>
     </>
   );

@@ -229,6 +229,8 @@ export interface CaseCardData {
   readonly calendarSyncEnabled?: boolean;
   readonly showOnTimeline?: boolean;
   readonly notes?: string; // Concatenated notes for preview
+  /** The case's own numbers (DOL, internal, PWD, ETA 9089, I-140 receipt), for search. */
+  readonly searchNumbers?: string;
   readonly dates: CaseCardDates;
   // Closed case fields
   readonly closedReason?: ClosedReason;
@@ -260,6 +262,7 @@ export function createCaseCardData(params: {
   calendarSyncEnabled?: boolean;
   showOnTimeline?: boolean;
   notes?: string;
+  searchNumbers?: string;
   // PWD dates
   pwdFilingDate?: string;
   pwdDeterminationDate?: string;
@@ -303,6 +306,7 @@ export function createCaseCardData(params: {
     calendarSyncEnabled: params.calendarSyncEnabled,
     showOnTimeline: params.showOnTimeline,
     notes: params.notes,
+    searchNumbers: params.searchNumbers,
     dates: {
       // PWD
       pwdFiled: params.pwdFilingDate,

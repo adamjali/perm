@@ -15,6 +15,7 @@ import { isQueued, replyHeading } from "@/lib/alertReply";
 import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
 import { formText } from "@/lib/forms/formText";
 import { trackAlertSignup } from "@/lib/alertSignupEvent";
+import { useAlertFormTelemetry } from "@/lib/funnelEvents";
 
 function subscribeEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -40,6 +41,7 @@ const COUNTRIES = [
 ] as const;
 
 export function BulletinAlertForm({ source }: { source: string }) {
+  const telemetry = useAlertFormTelemetry("bulletin", source);
   const emailId = useId();
   const catId = useId();
   const countryId = useId();
@@ -115,6 +117,8 @@ export function BulletinAlertForm({ source }: { source: string }) {
 
   return (
     <form
+      ref={telemetry.ref}
+      onFocusCapture={telemetry.onFocusCapture}
       onSubmit={handleSubmit}
       className="border-2 border-border bg-card p-6 shadow-hard sm:p-8"
     >
@@ -190,6 +194,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
       ) : null}
       <button
         type="submit"
+          data-ph-capture-attribute-cta="bulletin-alert"
         disabled={status === "sending"}
         className="mt-6 inline-flex min-h-[48px] items-center justify-center border-2 border-border bg-foreground px-6 font-mono text-sm font-bold uppercase tracking-[0.1em] text-background shadow-hard transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:hover:translate-y-0 motion-reduce:transition-none"
       >

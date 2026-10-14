@@ -149,6 +149,10 @@ interface NoteEntry {
 interface CaseDataForProjection extends CaseDataForDeadlines {
   _id: Id<"cases">;
   positionTitle: string;
+  internalCaseNumber?: string;
+  pwdCaseNumber?: string;
+  eta9089CaseNumber?: string;
+  i140ReceiptNumber?: string;
   notes?: NoteEntry[];
   isFavorite?: boolean;
   isPinned?: boolean;
@@ -167,6 +171,27 @@ interface CaseDataForProjection extends CaseDataForDeadlines {
   _creationTime: number;
   updatedAt: number;
 }
+
+/** Every number a case carries, space-joined, for the case list's search. */
+export function caseSearchNumbers(caseData: {
+  caseNumber?: string;
+  internalCaseNumber?: string;
+  pwdCaseNumber?: string;
+  eta9089CaseNumber?: string;
+  i140ReceiptNumber?: string;
+}): string | undefined {
+  const numbers = [
+    caseData.caseNumber,
+    caseData.internalCaseNumber,
+    caseData.pwdCaseNumber,
+    caseData.eta9089CaseNumber,
+    caseData.i140ReceiptNumber,
+  ].filter((n): n is string => typeof n === "string" && n.trim().length > 0);
+  return numbers.length > 0 ? numbers.join(" ") : undefined;
+}
+
+/** Letters and digits only: "G-100-26254-230507" and "g10026254230507" are one number. */
+const compactNumber = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 export function projectCaseForCard(caseData: CaseDataForProjection, todayISO: string): CaseCardData {
   const nextDeadline = calculateNextDeadline(caseData, todayISO);
@@ -207,6 +232,7 @@ export function projectCaseForCard(caseData: CaseDataForProjection, todayISO: st
     ),
     calendarSyncEnabled: caseData.calendarSyncEnabled,
     notes: notesPreview,
+    searchNumbers: caseSearchNumbers(caseData),
     // PWD dates
     pwdFilingDate: caseData.pwdFilingDate,
     pwdDeterminationDate: caseData.pwdDeterminationDate,
@@ -519,6 +545,14 @@ export function filterBySearch(
   // 0.65 allows for 2-char typos in 6-char words (e.g., "googel" -> "google")
   const SIMILARITY_THRESHOLD = 0.65;
 
+  // A case number is matched exactly, with its dashes and spaces ignored, and
+  // ranks above any name match. Four characters, so "g" alone matches nothing.
+  const compactQuery = compactNumber(trimmedQuery);
+  const numberMatch = (caseData: CaseCardData) =>
+    compactQuery.length >= 4 &&
+    !!caseData.searchNumbers &&
+    caseData.searchNumbers.split(" ").some((n) => compactNumber(n).includes(compactQuery));
+
   // Calculate match scores for each case
   const casesWithScores = cases
     .map((caseData) => {
@@ -541,8 +575,10 @@ export function filterBySearch(
         notesScore = fuzzyMatchScore(trimmedQuery, caseData.notes.toLowerCase());
       }
 
-      // Best score across all fields
-      const score = Math.max(employerScore, beneficiaryScore, positionScore, notesScore);
+      // Best score across all fields; a number match outranks every name
+      const score = numberMatch(caseData)
+        ? 2
+        : Math.max(employerScore, beneficiaryScore, positionScore, notesScore);
 
       return {
         caseData,

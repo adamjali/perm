@@ -42,6 +42,7 @@ import { isApproval } from "@/lib/caseStatusVocabulary";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
 import type { RangeCoverage, RfiClock } from "@/lib/perm";
 import { buildCaseEstimate, type CaseEstimate as Estimate } from "@/lib/caseEstimate";
+import { EstimateShown } from "@/components/analytics/EstimateShown";
 import type { SameDay } from "@/lib/sameDay";
 import type { CaseLookupResult } from "@/lib/turso/caseLookup";
 import type { CaseWageContext, CohortDuration } from "@/lib/turso/caseContext";
@@ -315,6 +316,13 @@ export function CaseStatusResult({
         <LineAhead rows={lineAhead} perDay={decisionPace?.pace ?? null} />
       ) : null}{" "}
       {estimate ? <CaseEstimatePanel est={estimate} dateShownAbove={!isFinal} /> : null}{" "}
+      {estimate ? (
+        <EstimateShown
+          model={estimate.kind === "date" ? estimate.modelId : "none"}
+          dated={estimate.kind === "date"}
+          source="case-page"
+        />
+      ) : null}
       {/* Only while the case can still change. On a decided one this would
           promise mail that can never arrive. Directly beneath the estimate on
           purpose: "email me when this changes" is the next step after reading

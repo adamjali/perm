@@ -52,7 +52,16 @@ describe("CaseNextStep", () => {
   it("records which page sent the lookup, and nothing else about it", () => {
     const { container } = render(<CaseNextStep question="Waiting on a PERM case?" source="article-end" />);
     fireEvent.submit(container.querySelector("form")!);
-    expect(capture).toHaveBeenCalledWith("case_lookup_submitted", { source: "article-end" });
+    expect(capture).toHaveBeenCalledWith("case_lookup_submitted", { source: "article-end", shape: "empty" });
+  });
+
+  it("sends the shape of what was typed, never the number", () => {
+    const { container } = render(<CaseLookupForm source="case-page" />);
+    const box = container.querySelector('input[name="case"]') as HTMLInputElement;
+    fireEvent.change(box, { target: { value: "G-100-26254-230507" } });
+    fireEvent.submit(container.querySelector("form")!);
+    expect(capture).toHaveBeenCalledWith("case_lookup_submitted", { source: "case-page", shape: "case" });
+    expect(JSON.stringify(capture.mock.calls)).not.toContain("230507");
   });
 
   it("leaves the plain lookup form quiet when no page is named", () => {
