@@ -30,6 +30,12 @@ trustPolicy: no-downgrade
 # maintainer, integrity matching the lockfile's), released after 7.5.x carried
 # provenance, which is the pattern no-downgrade misreads as a takeover. It
 # blocked the sharp 0.35.5 security update (GHSA-wq5f-xc86-pv6w) on Oct 7 2026.
+# eslint-import-resolver-typescript 3.10.1 is the same pattern: a patch to the
+# 3.x line (Apr 21 2025, published by a listed maintainer) after 4.0.0 (Mar 16
+# 2025) started carrying provenance; no 3.x version ever had it. Its registry
+# integrity matches the lockfile's, which held it before this policy. It
+# blocked eslint-config-next 16.4.0 on Oct 13 2026 (owner's call to exempt).
 trustPolicyExclude:
   - 'semver@6.3.1'
+  - 'eslint-import-resolver-typescript@3.10.1'
 blockExoticSubdeps: true

@@ -58,6 +58,7 @@ function UserMenu({ userName }: UserMenuProps) {
     beginSignOut();
     try {
       await signOut();
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load clears every signed-in query and cache
       window.location.href = "/login";
     } catch (error) {
       handleOperationError(error, {
@@ -149,6 +150,7 @@ export default function Header(): React.ReactElement {
     beginSignOut();
     try {
       await signOut();
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load clears every signed-in query and cache
       window.location.href = "/login";
     } catch (error) {
       handleOperationError(error, {

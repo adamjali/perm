@@ -423,6 +423,7 @@ export default function CalendarSyncSection({
   const handleConnect = useCallback(() => {
     setIsConnecting(true);
     // Redirect to OAuth endpoint
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- an API route that redirects to Google's sign-in, so it needs a real navigation
     window.location.href = "/api/google/connect";
   }, []);
 

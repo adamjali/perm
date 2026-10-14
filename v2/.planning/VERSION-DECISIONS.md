@@ -57,7 +57,6 @@ Routine dependency sweep alongside the PR-review fix pass. Researched changelogs
 | `@types/node` | 24.x | 25.x | Must track the **Node 24** production runtime major. 25.x would type APIs not present in Node 24. Bump only when the runtime moves to Node 25. |
 | `lucia` | 3.2.2 (deprecated) | — | Lucia was sunset upstream, but it's a **used direct dep**: `convex/admin.ts` imports `Scrypt` for test-user password hashing. Removal means migrating to `@oslojs/crypto` (already in deps) — a deliberate code change tracked in `.planning/AUTH_AUDIT.md`, not a version bump. |
 | `@react-email/components` | 1.0.12 | (deprecated tag) | Already the **latest published** version; the "Deprecated" flag is a package-level sunset (React Email v6 consolidation), not an upgrade you can take. `@react-email/render` 2.0.8 is current and not deprecated. No action available. |
-| `eslint-config-next` | 16.2.6 | 16.4.0 | **Held Oct 13 2026, when `next` moved to 16.4.0.** pnpm's `trustPolicy: no-downgrade` refuses 16.4.0's fresh resolve of `eslint-import-resolver-typescript@3.10.1` (ERR_PNPM_TRUST_DOWNGRADE: earlier versions carried provenance, this one has none). The lockfile already holds 3.10.1 from before the policy, so lint is unchanged by the hold. Take it when a resolver release with provenance appears, or after checking 3.10.1 by hand and excluding it by name (the `semver@6.3.1` precedent), which is the owner's call. Dev-only: lint runs in no workflow. |
 | `js-yaml` (transitive, via `gray-matter`) | <=4.1.1 | 4.2.0 | GHSA-h67p-54hq-rp68 (moderate — quadratic-complexity DoS via malicious YAML merge-key aliases). **Cannot pin to >=4.2.0 via override**: `gray-matter@4.0.3` calls js-yaml 3.x's removed `safeLoad()`, so forcing 4.x breaks ALL MDX frontmatter parsing (changelog/tutorials/resources/guides). **Non-exploitable here** — gray-matter only parses our own first-party `content/*.mdx` frontmatter, never user input, so the malicious-YAML vector doesn't apply. Revisit if gray-matter is replaced or if MDX ever parses untrusted YAML. |
 
 ---
@@ -158,3 +157,8 @@ old, so the release-age floor allowed them. `pnpm audit` clean afterwards.
 reason. Audit 10 had left both open because motion's SSR inline style and svix's signature check
 are the two places a silent regression costs most; both were tested directly this time.
 
+## eslint-config-next 16.4.0, with one trust exemption
+**Date:** 2026-10-13
+**Status:** RESOLVED
+
+`next` went to 16.4.0 the same evening. `eslint-config-next` 16.4.0 was first refused by pnpm's `trustPolicy: no-downgrade` over `eslint-import-resolver-typescript@3.10.1`: a 3.x patch (Apr 21 2025, published by a listed maintainer) released after 4.0.0 (Mar 16 2025) began carrying provenance, while no 3.x version ever did. Its registry integrity matches the lockfile's, which already held it. Exempted by name in `pnpm-workspace.yaml` (owner's call), the `semver@6.3.1` pattern. Lint over `src` and `convex`: 0 errors before and after; the new `@next/next/no-location-assign-relative-destination` rule flagged six deliberate full-page navigations (crash screens, sign-out, Google's sign-in), each now marked with its reason.

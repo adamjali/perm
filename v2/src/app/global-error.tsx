@@ -32,6 +32,7 @@ export default function GlobalError({
     }
 
     if (isExpiredSession) {
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load: the app has crashed, so nothing held in memory should survive
       window.location.href = "/login?expired=1";
       return;
     }

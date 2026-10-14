@@ -729,5 +729,5 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   changes and `ScrollProgress` draws without state; Next's router can still be the one that throws.
 - **Next 16.4.0** (owner's call, to test the router side of #185): its Back button now goes through React's popstate
   path (vercel/next.js #99612, read in the installed code), page caches still go to `.next/server/route-cache`, and the
-  whole suite passed (9,686 tests). `eslint-config-next` stays at 16.2.6: pnpm's trust check refuses its new resolver
-  (`.planning/VERSION-DECISIONS.md`). Whether #185 stops is a count to read in PostHog over the next week.
+  whole suite passed (9,686 tests). `eslint-config-next` moved to 16.4.0 with one resolver exempted from pnpm's trust
+  check by name (`.planning/VERSION-DECISIONS.md`). Whether #185 stops is a count to read in PostHog over the next week.

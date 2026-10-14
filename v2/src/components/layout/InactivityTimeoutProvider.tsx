@@ -75,6 +75,7 @@ export default function InactivityTimeoutProvider({
 
     // Hard redirect — always reached, whether signOut() succeeded or failed.
     // window.location always works even when the tab was backgrounded.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load clears every signed-in query and cache
     window.location.href = "/login";
   }, [isSigningOut, beginSignOut, signOut]);
 
