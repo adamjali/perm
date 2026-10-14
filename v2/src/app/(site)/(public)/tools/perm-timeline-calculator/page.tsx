@@ -157,7 +157,7 @@ export default async function PermTimelineCalculatorPage() {
 
       {/* The one thing here that genuinely needs an email, offered after the
           answer rather than in front of it. */}
-      <section id="queue-alert" className="mt-10 scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
+      <section id="queue-alert" className="mt-10">
         <QueueAlertForm source="perm-timeline-calculator" newestMonth={currentMonthUtc()} />
       </section>
 

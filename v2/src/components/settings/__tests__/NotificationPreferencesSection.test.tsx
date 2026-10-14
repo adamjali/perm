@@ -810,23 +810,4 @@ describe("NotificationPreferencesSection", () => {
   // NEOBRUTALIST STYLING
   // ============================================================================
 
-  describe("Neobrutalist Styling", () => {
-    it("applies neobrutalist border styling to sections", () => {
-      const { container } = renderWithProviders(
-        <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
-      );
-
-      const cards = container.querySelectorAll(".border-2.border-border");
-      expect(cards.length).toBeGreaterThanOrEqual(3); // 3 sections
-    });
-
-    it("draws each section as a card with the hard shadow", () => {
-      const { container } = renderWithProviders(
-        <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
-      );
-
-      const cardsWithShadow = container.querySelectorAll(".shadow-hard");
-      expect(cardsWithShadow.length).toBeGreaterThanOrEqual(3);
-    });
-  });
 });

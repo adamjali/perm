@@ -25,8 +25,7 @@ import { MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
-const ICON =
-  "size-5 transition-transform duration-300 ease-out group-active:rotate-0 group-active:scale-95";
+const ICON = "size-5";
 
 export default function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
@@ -50,7 +49,7 @@ export default function ThemeToggle() {
           ? `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`
           : "Toggle theme"
       }
-      className="group relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-none border border-transparent bg-transparent text-white transition-colors duration-150 hover:border-primary hover:bg-accent"
+      className="flex size-11 cursor-pointer items-center justify-center text-soft transition-colors duration-150 hover:bg-accent hover:text-foreground"
     >
       {/* Both render; CSS picks one from the .dark class next-themes sets
           before first paint. Never both, never neither, never a swap. */}

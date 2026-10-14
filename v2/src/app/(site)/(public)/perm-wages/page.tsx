@@ -159,7 +159,7 @@ export default async function PermWagesPage() {
         <>
           <ChapterNav items={chapters} className="mt-10" />
           {ladder ? (
-            <section id="ladder" className="mt-10 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border border-border bg-foreground p-6 text-background sm:p-8">
+            <section id="ladder" className="mt-10 border border-border bg-foreground p-6 text-background sm:p-8">
               <h2 className="font-heading text-2xl font-bold">
                 The whole wage ladder
               </h2>{" "}
@@ -207,7 +207,7 @@ export default async function PermWagesPage() {
                 </>
               }
               source="DOL PERM disclosure files, certified cases only"
-              className="mt-10 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]"
+              className="mt-10"
               id="by-job"
             >
               <LadderCombViews
@@ -229,14 +229,14 @@ export default async function PermWagesPage() {
               subject="Certified and denied cases, by fiscal year"
               caption="Measured rates, each with the decided cases behind it. Nothing here says what a particular wage does to a particular case."
               source="DOL PERM disclosure files"
-              className="mt-10 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]"
+              className="mt-10"
               id="denials"
             >
               <DenialByWageBand byYear={bandsByYear} pooled={bandsPooled} />
             </FigurePlate>
           ) : null}
 
-          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-foreground pt-4">
+          <section id="all" className="mt-16 border-t-2 border-foreground pt-4">
             <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
               All {occupationCount.toLocaleString("en-US")} occupations
             </h2>{" "}
@@ -252,7 +252,7 @@ export default async function PermWagesPage() {
               filtered in the browser, so a crawler sees the server-rendered
               seed links and none of the other occupation pages. The A-Z strip
               is the crawlable path to all of them. */}
-          <div id="a-z" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+          <div id="a-z" className="mt-16">
             <BrowseTeaser kind="occupation" />
           </div>
         </>

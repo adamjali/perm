@@ -160,13 +160,10 @@
   --stage-success-ink: #1A7A25;
   /* good had no -ink unlike warn/bad/none; this is the green ink. */
   --data-good-ink: #1A7A25;
-  /* The fixed site header's height BEFORE AuthHeader measures it: 71px at every
-     width, the logo kept on one line down to 320px (measured). The
-     layouts pad <main> by --site-header-max-h, so a wrong default slides every
-     page once the script publishes the real figure. Pixels, not rem: DataRail
-     parseFloat()s this value. */
-  --site-header-h: 71px;
-  --site-header-max-h: 71px;
+  /* The site header is one fixed 64px bar at every width (Oct 14 2026). Pages
+     pad by it and every in-page anchor lands below it (scroll-padding-top on
+     html, below), so nothing else repeats the number. */
+  --site-header-h: 64px;
 }
 
 .dark {
@@ -280,6 +277,14 @@
   /* Icons inherit via currentColor, so stroke/fill follow automatically. */
   .fill-primary { fill: var(--primary-text); }
   .stroke-primary { stroke: var(--primary-text); }
+}
+
+
+/* Every in-page anchor (#watch, #all, a FAQ question) lands below the fixed
+   header and any banner above it, with a little air. One rule, so no element
+   carries its own offset. */
+html {
+  scroll-padding-top: calc(var(--site-header-h) + 1.5rem);
 }
 
 @theme inline {
@@ -1329,86 +1334,6 @@ html.dark {
   scrollbar-color: hsl(0 0% 100% / 0.3) transparent;
 }
 
-/* Underline animation on hover - for nav links */
-.hover-underline {
-  position: relative;
-  display: inline-block;
-  /* `display: inline-block` alone does NOT shrink this to its text inside the
-     footer's `flex flex-col` columns, and the reason is two rules combining.
-     First, a flex item's inline-block is blockified to `block` by the spec, so
-     the declaration above is discarded before it applies. Second, a flex
-     container's default `align-items: stretch` sizes items across the cross
-     axis, which in a column IS the horizontal one. Result: every footer link
-     measured 304px wide around a 27-85px word, and since ::after is width:100%
-     of that box, the hover underline was a 304px rule under "Blog".
-     `fit-content` defeats the stretch (an explicit width beats it) and is a
-     no-op everywhere else, because the header nav and the compact footer are
-     horizontal rows whose items already shrink to fit. */
-  width: fit-content;
-}
-
-/* Grows on transform, not width. Identical to the eye (the fill is a flat
-   colour, so a scaled 100%-wide bar and a growing 0%-wide bar paint the same
-   pixels) but width runs layout on every frame of every hover while scaleX
-   stays on the compositor. Nav hover is the most-repeated interaction on the
-   site, so it is the one worth getting off the layout path. */
-.hover-underline::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--primary);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s ease-out;
-  /* Nav link animations keep working while a dropdown is open */
-  pointer-events: none;
-}
-
-.hover-underline:hover::after {
-  transform: none;
-}
-
-/* Footer link columns: a 44px tap target on touch devices.
-   The links are 20px tall with no padding and a 12px gap, which is a
-   comfortable target for a mouse and a poor one for a thumb. It clears WCAG
-   2.2 SC 2.5.8 (AA, 24px) via that standard's spacing exception, but misses
-   SC 2.5.5 (AAA), Apple's 44pt HIG, and this project's own 44px floor.
-
-   Widening cannot come from `fit-content` above — that shrank the box to the
-   word, which is right for the underline and makes the target NARROWER. The
-   height has to come from padding instead.
-
-   Scoped to `pointer: coarse` ("the primary input is imprecise", i.e. a
-   finger) so a mouse keeps the current tight rhythm and the footer does not
-   grow on desktop for no reason.
-
-   The arithmetic is exact: 20px line box + 24px padding = 44px, and the gap
-   drops to 0 so the pitch stays 44px. Leaving the 12px gap would push each
-   link 56px apart and balloon the footer; removing it entirely lets adjacent
-   targets touch without overlapping, which is what you want (overlapping hit
-   areas fire the wrong link near the boundary).
-
-   `bottom: 12px` on ::after is load-bearing, not cosmetic. Padding moves the
-   element's bottom edge 12px below the text, and the underline is positioned
-   against that edge, so without this the rule detaches and floats under the
-   word. */
-@media (pointer: coarse) {
-  .footer-links {
-    gap: 0;
-  }
-
-  .footer-links .hover-underline {
-    padding-block: 12px;
-  }
-
-  .footer-links .hover-underline::after {
-    bottom: 12px;
-  }
-}
-
 /* Caution tape wrapper for Next Up section */
 .next-up-caution {
   border: 1px solid #000000;
@@ -2088,164 +2013,9 @@ input[type="week"] {
 .doc-row.selected .doc-name { color: var(--manila-ink); }
 .doc-row.selected .doc-meta, .note.selected .note-when { color: var(--manila-ink-soft); }
 
-/* ---------------------------------------------------------------------------
-   Data rail: the repeated class strings, hoisted out of the markup.
-
-   MEASURED. The rail renders ~30 rows on every page that carries
-   it, and four of its Tailwind strings are long: one is 410 characters and
-   appears 30 times, which is 12 KB of a 243 KB entity page. The markup is then
-   serialised a SECOND time into the RSC flight payload, so the real cost is
-   about double that.
-
-   That matters beyond page weight: every byte is written to the page cache on
-   each regeneration, across tens of thousands of entity pages. Repeated
-   utility strings are the cheapest bytes on the site to remove: one
-   definition in the stylesheet, a short name in the markup, identical
-   rendering.
-
-   Kept as plain CSS rather than @apply so the declarations are readable and so
-   a Tailwind upgrade cannot silently change them.
---------------------------------------------------------------------------- */
-.rail-row {
-  position: relative;
-  display: flex;
-  min-height: 2.75rem;              /* min-h-11, the 44px tap target */
-  align-items: center;
-  gap: 0.625rem;                    /* gap-2.5 */
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  padding-right: 0.75rem;
-  transition-property: transform, background-color, box-shadow, color;
-  transition-duration: 150ms;
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
-}
-.rail-row:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: -3px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .rail-row { transition: none; }
-  .rail-row:hover { transform: none; }
-}
-
-/* The hairline that runs down the indented rows. */
-.rail-guide {
-  position: absolute;
-  left: 1rem;
-  top: 0;
-  height: 100%;
-  width: 1px;
-  background-color: color-mix(in oklab, var(--border) 60%, transparent);
-  transition: color 150ms, background-color 150ms;
-}
-
-/* The square state marker box at the start of each row. */
-.rail-marker {
-  display: flex;
-  width: 0.875rem;
-  height: 0.875rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-}
-
-/* The group header: its icon, its name, how many pages it holds, the caret.
-   Sentence case in the heading face (it was mono capitals until Oct 7 2026;
-   beside an icon the capitals read as a second label). */
-.rail-tab {
-  position: relative;
-  display: flex;
-  min-height: 2.75rem;
-  width: 100%;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.625rem 0.75rem 0.625rem 1rem;
-  text-align: left;
-  font-family: var(--font-heading);
-  /* 15px: between Overview (16px) and the pages under each group (14px). */
-  font-size: 0.9375rem;
-  font-weight: 700;
-  transition-property: transform, background-color, color;
-  transition-duration: 150ms;
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
-}
-.rail-tab:hover {
-  transform: none;
-  background-color: color-mix(in srgb, var(--data-good-ink) 14%, var(--card));
-  color: var(--foreground);
-}
-.rail-tab:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: -3px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .rail-tab { transition: none; }
-  .rail-tab:hover { transform: none; }
-}
-
-/* One square in the collapsed rail: Overview or a group, its icon alone, 44px
-   tall across the strip. The name is its tooltip and its accessible name. */
-.rail-square {
-  display: flex;
-  height: 2.75rem;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  transition-property: background-color, color;
-  transition-duration: 150ms;
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
-}
-.rail-square:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: -3px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .rail-square { transition: none; }
-}
-
-/* The desktop rail has to fit under the header with its largest group open,
-   because a sidebar whose bottom sits below the fold reads as truncated even
-   though nothing is clipped. The 44px tap-target floor stays on the touch
-   drawer below `lg`; this density applies only where the pointer is a mouse.
-
-   SIZED FOR THE WORST CASE, NOT A TYPICAL WINDOW. At 36px leaves and 40px
-   headers, an eight-item group runs past the fold on a short window (755px
-   against 661px of space).
-
-   Leaves 32px, group headers 38px. The headers stay four pixels taller than
-   the leaves, which is what carries the hierarchy; nothing here changes a
-   font size. Worst case is now ~664px, which fits the 669px under the header
-   on a 1366x768 laptop. `rail-fits.test.ts` recomputes that from these very
-   declarations and from `dataSections.ts`, so the next page added to a group
-   fails a test instead of quietly pushing the rail off screen again. */
-@media (min-width: 64rem) {
-  .rail-row { min-height: 2rem; padding-top: 0.125rem; padding-bottom: 0.125rem; }
-  .rail-tab { min-height: 2.375rem; padding-top: 0.375rem; padding-bottom: 0.375rem; }
-}
-
-/* THE FOOTER COLUMNS ARE `<details>`: an accordion on a phone, a plain column
-   at `lg`. Collapsing is native; EXPANDING at a breakpoint is the half CSS
-   cannot do by default, because a closed `<details>` has its content hidden by
-   the user agent. Both rules below are needed, and both were probed in a
-   browser before shipping: engines that hide the content by display on the
-   slot need the first, and engines that use `::details-content` need the
-   second.
-
-   The links are in the HTML either way - a closed `<details>` hides its
-   content, it does not remove it - so a crawler sees the whole footer on every
-   viewport. */
-.footer-col > summary { list-style: none; }
-.footer-col > summary::-webkit-details-marker { display: none; }
-
-@media (min-width: 64rem) {
-  .footer-col:not([open]) > .footer-col-body { display: flex; }
-  .footer-col::details-content { content-visibility: visible; }
-}
-
 /* PRINT. A case page or a calculator result is something people
    print for an attorney or an employer, and the screen chrome prints as noise:
-   the header, the footer, the data rail, the back-to-top button, the alert
-   forms. Everything the page collapsed behind a disclosure prints open, since
+   the header, the footer, the section list and the alert forms. Everything the page collapsed behind a disclosure prints open, since
    paper has no "show more". Hard shadows go; a grey slab behind a card wastes
    toner and adds nothing. Mark any other screen-only piece `print:hidden`. */
 @media print {
@@ -2256,7 +2026,6 @@ input[type="week"] {
   details > summary { list-style: none; }
   details:not([open]) > *:not(summary) { display: block !important; }
   details::details-content { content-visibility: visible !important; }
-  .shadow-hard, .shadow-hard-sm, .shadow-hard-lg { box-shadow: none !important; }
   a { color: #000 !important; }
   section, figure, table { break-inside: avoid-page; }
 }

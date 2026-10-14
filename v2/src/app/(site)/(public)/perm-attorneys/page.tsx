@@ -168,7 +168,7 @@ export default async function PermAttorneysPage() {
           </section>
           </Chapter>
 
-          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-foreground pt-4">
+          <section id="all" className="mt-16 border-t-2 border-foreground pt-4">
             <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
               All {firmCount.toLocaleString("en-US")} firms
             </h2>{" "}
@@ -194,7 +194,7 @@ export default async function PermAttorneysPage() {
               filtered in the browser, so a crawler sees the server-rendered
               seed links and none of the other firm pages. The A-Z strip is
               the crawlable path to all of them. */}
-          <div id="a-z" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+          <div id="a-z" className="mt-16">
             <BrowseTeaser kind="attorney" />
           </div>
         </>

@@ -156,7 +156,7 @@ export function LiveCaseBrowser({
   const busy = loading && shownPage !== undefined;
 
   return (
-    <section id="live" ref={liveTop} className="scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+    <section id="live" ref={liveTop} >
       <div className="border border-border bg-card p-5 sm:p-6">
         <p className="text-sm font-bold text-muted-foreground">
           Newer than DOL&apos;s published files

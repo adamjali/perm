@@ -36,8 +36,6 @@ export function CaseEstimate(props: CaseEstimateInput) {
 /** The anchor the case page's answer card links to. */
 export const ESTIMATE_ANCHOR = "estimate";
 
-const ANCHOR_OFFSET = "scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]";
-
 /**
  * The panel itself, for a caller that already built the estimate: the case
  * page builds it once and shows its date in the answer card too, so the two
@@ -58,7 +56,7 @@ export function CaseEstimatePanel({
     return (
       <section
         id={ESTIMATE_ANCHOR}
-        className={`mt-8 border border-border bg-card p-6 sm:p-8 ${ANCHOR_OFFSET}`}
+        className="mt-8 border border-border bg-card p-6 sm:p-8"
       >
         <p className="text-sm font-bold text-muted-foreground">
           Estimate
@@ -148,7 +146,7 @@ export function CaseEstimatePanel({
   return (
     <section
       id={ESTIMATE_ANCHOR}
-      className={`mt-8 border border-border bg-card p-6 sm:p-8 ${ANCHOR_OFFSET}`}
+      className="mt-8 border border-border bg-card p-6 sm:p-8"
     >
       <h2 className="font-heading text-2xl font-bold">When this case could be decided</h2>{" "}
       {dateShownAbove ? null : (

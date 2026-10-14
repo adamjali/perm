@@ -203,7 +203,7 @@ export default async function PermEmployersPage() {
             <WaitLeaders field={fieldWait} />
           </Chapter>
 
-          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-border pt-8">
+          <section id="all" className="mt-16 border-t-2 border-border pt-8">
             {/* "All N sponsors" was true of the published files and reads as
                 a claim about every sponsor that exists. It is now actively
                 misleading on this page: searching here also surfaces employers
@@ -239,7 +239,7 @@ export default async function PermEmployersPage() {
               the crawlable path to all of them. */}
           {/* The teaser carries its own heading ("Browse A to Z"), so this is the
               part's rule and anchor only. */}
-          <div id="a-z" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-border pt-8">
+          <div id="a-z" className="mt-16 border-t-2 border-border pt-8">
             <BrowseTeaser kind="employer" />
           </div>
         </>

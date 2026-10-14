@@ -209,7 +209,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
               </ChartTips>
             </div>
           </section>{" "}
-          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-foreground pt-4">
+          <section id="all" className="mt-16 border-t-2 border-foreground pt-4">
             <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">{`All ${formatInt(rows.length)} ${c.noun}`}</h2>{" "}
             <div className="mt-6">
               <GroupIndexTable

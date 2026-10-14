@@ -43,7 +43,7 @@ export default async function LayoffsPage() {
       <header>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Layoff notices against sponsors</h1>{" "}
         <MoreText gist={"Mass layoffs need 60 days' notice, filed with the state."} className="mt-4">
-          <p className=" max-w-2xl text-lg leading-relaxed text-muted-foreground">
+          <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
             The WARN Act makes an employer file 60 days&apos; notice of a mass layoff or closing with the state, and
             some states publish the filings. DOL&apos;s PERM files record no layoff, so these notices are the only public
             trace of one. Each row is a filing as the state printed it.

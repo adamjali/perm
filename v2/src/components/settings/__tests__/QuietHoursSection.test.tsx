@@ -476,23 +476,4 @@ describe("QuietHoursSection", () => {
   // NEOBRUTALIST STYLING TESTS
   // ============================================================================
 
-  describe("Neobrutalist Styling", () => {
-    it("applies neobrutalist border styling to main card", () => {
-      const { container } = renderWithProviders(
-        <QuietHoursSection profile={defaultProfile} />
-      );
-
-      const card = container.querySelector(".border-2.border-border");
-      expect(card).toBeInTheDocument();
-    });
-
-    it("applies box shadow styling via inline style", () => {
-      const { container } = renderWithProviders(
-        <QuietHoursSection profile={defaultProfile} />
-      );
-
-      const cardWithShadow = container.querySelector('[style*="box-shadow"]');
-      expect(cardWithShadow).toBeInTheDocument();
-    });
-  });
 });

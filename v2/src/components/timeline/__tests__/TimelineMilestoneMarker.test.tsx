@@ -199,27 +199,6 @@ describe("TimelineMilestoneMarker - Click Navigation", () => {
   });
 });
 
-describe("TimelineMilestoneMarker - Neobrutalist Styling", () => {
-  it.each([
-    [".size-4", "16px square marker"],
-    [".border-2", "2px border, the system weight"],
-    [".border-foreground", "foreground border color"],
-    [".shadow-hard-sm", "shadow-hard-sm"],
-  ])("dot has %s (%s)", (selector) => {
-    const { container } = renderWithProviders(
-      <TimelineMilestoneMarker {...getDefaultProps()} />
-    );
-    expect(container.querySelector(selector)).toBeInTheDocument();
-  });
-
-  it("is square, like every other mark in the app", () => {
-    const { container } = renderWithProviders(
-      <TimelineMilestoneMarker {...getDefaultProps()} />
-    );
-    expect(container.querySelector(".rounded-full")).toBeNull();
-  });
-});
-
 describe("TimelineMilestoneMarker - Calculated Milestones", () => {
   it("has dashed border for calculated milestones", () => {
     const { container } = renderWithProviders(

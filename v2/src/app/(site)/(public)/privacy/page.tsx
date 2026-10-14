@@ -71,7 +71,7 @@ export default function PrivacyPage() {
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="introduction" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">1. Introduction</h2>{" "}
+              <h2 id="introduction" className="font-heading text-2xl font-bold m-0">1. Introduction</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -92,7 +92,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="information-we-collect" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">2. Information We Collect</h2>{" "}
+              <h2 id="information-we-collect" className="font-heading text-2xl font-bold m-0">2. Information We Collect</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
 
@@ -196,7 +196,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="how-we-use-your-information" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">3. How We Use Your Information</h2>{" "}
+              <h2 id="how-we-use-your-information" className="font-heading text-2xl font-bold m-0">3. How We Use Your Information</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -217,7 +217,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="google-oauth-disclosure" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">4. Google OAuth Disclosure</h2>{" "}
+              <h2 id="google-oauth-disclosure" className="font-heading text-2xl font-bold m-0">4. Google OAuth Disclosure</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -263,7 +263,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="data-storage-security" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">5. Data Storage &amp; Security</h2>{" "}
+              <h2 id="data-storage-security" className="font-heading text-2xl font-bold m-0">5. Data Storage &amp; Security</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -318,7 +318,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="ai-chat-assistant" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">6. AI Chat Assistant</h2>{" "}
+              <h2 id="ai-chat-assistant" className="font-heading text-2xl font-bold m-0">6. AI Chat Assistant</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -422,7 +422,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="product-analytics" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">7. Product Analytics</h2>{" "}
+              <h2 id="product-analytics" className="font-heading text-2xl font-bold m-0">7. Product Analytics</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -548,7 +548,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="error-monitoring-session-replay" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">8. Error Monitoring &amp; Session Replay</h2>{" "}
+              <h2 id="error-monitoring-session-replay" className="font-heading text-2xl font-bold m-0">8. Error Monitoring &amp; Session Replay</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -608,7 +608,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="bot-fraud-prevention" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">9. Bot &amp; Fraud Prevention</h2>{" "}
+              <h2 id="bot-fraud-prevention" className="font-heading text-2xl font-bold m-0">9. Bot &amp; Fraud Prevention</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -728,7 +728,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="push-notifications" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">10. Push Notifications</h2>{" "}
+              <h2 id="push-notifications" className="font-heading text-2xl font-bold m-0">10. Push Notifications</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -779,7 +779,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="google-calendar-integration" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">11. Google Calendar Integration</h2>{" "}
+              <h2 id="google-calendar-integration" className="font-heading text-2xl font-bold m-0">11. Google Calendar Integration</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -816,7 +816,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="cookies-local-storage" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">12. Cookies &amp; Local Storage</h2>{" "}
+              <h2 id="cookies-local-storage" className="font-heading text-2xl font-bold m-0">12. Cookies &amp; Local Storage</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -856,7 +856,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="thirdparty-services" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">13. Third-Party Services</h2>{" "}
+              <h2 id="thirdparty-services" className="font-heading text-2xl font-bold m-0">13. Third-Party Services</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -960,7 +960,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="data-retention-deletion" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">14. Data Retention &amp; Deletion</h2>{" "}
+              <h2 id="data-retention-deletion" className="font-heading text-2xl font-bold m-0">14. Data Retention &amp; Deletion</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <ul className="list-disc list-inside text-soft space-y-2 ml-4">
@@ -1018,7 +1018,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="your-rights" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">15. Your Rights</h2>{" "}
+              <h2 id="your-rights" className="font-heading text-2xl font-bold m-0">15. Your Rights</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -1137,7 +1137,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="international-data-transfers" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">16. International Data Transfers</h2>{" "}
+              <h2 id="international-data-transfers" className="font-heading text-2xl font-bold m-0">16. International Data Transfers</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -1156,7 +1156,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="childrens-privacy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">17. Children&apos;s Privacy</h2>{" "}
+              <h2 id="childrens-privacy" className="font-heading text-2xl font-bold m-0">17. Children&apos;s Privacy</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -1169,7 +1169,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="uscis-case-status" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">18. USCIS Case Status Lookups</h2>{" "}
+              <h2 id="uscis-case-status" className="font-heading text-2xl font-bold m-0">18. USCIS Case Status Lookups</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -1197,7 +1197,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="changes-to-this-policy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">19. Changes to This Policy</h2>{" "}
+              <h2 id="changes-to-this-policy" className="font-heading text-2xl font-bold m-0">19. Changes to This Policy</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -1217,7 +1217,7 @@ export default function PrivacyPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">20. Contact Us</h2>{" "}
+              <h2 id="contact-us" className="font-heading text-2xl font-bold m-0">20. Contact Us</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -1251,7 +1251,7 @@ export default function PrivacyPage() {
         <div className="mt-12 text-center">
           <Link
             href="/"
-            className="hover-underline text-muted-foreground text-sm"
+            className="underline-offset-4 hover:underline text-muted-foreground text-sm"
           >
             &larr; Back to Home
           </Link>

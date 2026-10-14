@@ -29,7 +29,7 @@
  * affordable and is not necessary.
  */
 
-import type { DataSection } from "@/components/tools/dataSections";
+import type { DataSection } from "@/lib/siteMap";
 import type { EntityKind } from "@/lib/entityPayload";
 
 /** The bucket every slug that does not begin a-z falls into. */

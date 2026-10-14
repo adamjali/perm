@@ -500,7 +500,7 @@ describe("InlineCaseTimeline - Month Headers", () => {
 
     // Should have month headers based on auto-fitted window
     const monthHeaders = container.querySelectorAll(
-      ".flex.border-b-2 > div"
+      ".flex.border-b > div"
     );
     expect(monthHeaders.length).toBeGreaterThanOrEqual(1);
   });
@@ -516,7 +516,7 @@ describe("InlineCaseTimeline - Month Headers", () => {
 
     // Current month should have special styling (font-bold + bg-primary/10)
     const currentMonth = container.querySelector(
-      ".flex.border-b-2 .font-bold"
+      ".flex.border-b .font-bold"
     );
     expect(currentMonth).toBeTruthy();
   });

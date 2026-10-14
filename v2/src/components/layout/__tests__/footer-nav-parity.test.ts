@@ -1,87 +1,85 @@
 import { describe, expect, it } from "vitest";
+import { readdirSync, statSync, existsSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 
+import { LOCALES } from "@/lib/i18n/locales";
 import {
+  CALCULATOR_PAGES,
+  DATA_MENU_FOOTER,
   FOOTER_COLUMNS,
-  LEARN_NAV_LINKS,
-  TOOL_NAV_LINKS,
-} from "@/lib/constants/navigation";
-import { SECTIONS } from "@/components/tools/dataSections";
+  FOOTER_LEGAL,
+  HEADER_PAGES,
+  LEARN_PAGES,
+  PAGE_NAMES,
+  SECTIONS,
+} from "@/lib/siteMap";
 
 /**
- * The footer and the top nav have to agree, and the footer has to reach every
- * public page.
+ * Every public page can be reached from the header, its two menus or the
+ * footer, and every one of them is called by its one name.
  *
- * Adam: "drop down learn isnt same as footer, ensure footer is correct
- * everywhere adn vice versa". Measured at the time: the Learn dropdown listed
- * Blog, Guides, FAQ, Methodology, About and Changelog; the footer's Learn
- * column listed Blog, Guides, Changelog and "Processing Times". FAQ was under
- * Product, About was under Legal, and METHODOLOGY WAS IN THE DROPDOWN AND
- * NOWHERE IN THE FOOTER AT ALL.
- *
- * Underneath that was the bigger one: the whole Reference cluster - glossary,
- * status meanings, policy changes, debarments, the scorecard, badges - was
- * reachable only from the data rail. Pages that exist, sit in the sitemap, and
- * had nothing in the footer pointing at them.
- *
- * Both lists are now derived rather than transcribed, so this test is mostly
- * guarding that nobody transcribes them again.
+ * The old footer and menus were transcribed separately and drifted: FAQ sat
+ * under Product, Methodology was in the dropdown and nowhere in the footer,
+ * and a whole reference cluster was reachable only from a side menu. They're
+ * all read from lib/siteMap.ts now; this walks the page files so a new page
+ * that's in no menu fails here instead of shipping unreachable.
  */
-describe("footer and nav parity", () => {
-  const columns = Object.fromEntries(FOOTER_COLUMNS.map((c) => [c.title, c]));
-  const allFooterHrefs = FOOTER_COLUMNS.flatMap((c) => [
-    ...c.links.map((l) => l.href),
-    ...(c.publicOnly ?? []).map((l) => l.href),
-    ...(c.more ? [c.more.href] : []),
+
+const PUBLIC = resolve(__dirname, "..", "..", "..", "app", "(site)", "(public)");
+
+/** Every static public page (no [param] in its path). */
+function staticPages(dir = PUBLIC, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (!statSync(p).isDirectory() || name.startsWith("[") || name.startsWith("_") || name === "__tests__") continue;
+    if (existsSync(join(p, "page.tsx"))) out.push(`/${relative(PUBLIC, p)}`);
+    staticPages(p, out);
+  }
+  return out;
+}
+
+/** Reached from the page they belong to, not from a menu, and why. */
+const REACHED_FROM_PARENT: Record<string, string> = {
+  "/perm-employers/browse": "the A to Z link on the employers list",
+  "/perm-attorneys/browse": "the A to Z link on the law firms list",
+  "/perm-wages/browse": "the A to Z link on the wages list",
+  "/visa-bulletin/family": "a tab on the visa bulletin page",
+  "/visa-bulletin/categories": "a tab on the visa bulletin page",
+};
+
+describe("every page is reachable, under one name", () => {
+  const reachable = new Set<string>([
+    "/",
+    ...Object.values(HEADER_PAGES).map((p) => p.href),
+    ...SECTIONS.map((p) => p.href),
+    ...LEARN_PAGES.map((p) => p.href),
+    ...DATA_MENU_FOOTER.map((p) => p.href),
+    ...FOOTER_COLUMNS.flatMap((c) => c.pages.map((p) => p.href)),
+    ...FOOTER_LEGAL.map((p) => p.href),
+    ...LOCALES.map((l) => l.path),
+    // Calculators are in the Calculators index, its section list and the menu foot.
+    ...CALCULATOR_PAGES.map((p) => p.href),
+    ...Object.keys(REACHED_FROM_PARENT),
   ]);
 
-  it("has the columns it is about to make assertions about", () => {
-    // A renamed column would otherwise make every lookup below `undefined`
-    // and the assertions vacuous.
-    for (const title of ["Product", "Learn", "Reference", "Calculators", "Legal"]) {
-      expect(columns[title], `footer column "${title}"`).toBeDefined();
-    }
+  it("found the public pages", () => {
+    expect(staticPages().length).toBeGreaterThan(80);
   });
 
-  it("gives the Learn column exactly the Learn dropdown", () => {
-    expect(columns.Learn!.links.map((l) => `${l.href} ${l.label}`)).toEqual(
-      LEARN_NAV_LINKS.map((l) => `${l.href} ${l.label}`),
-    );
+  it("reaches every static public page from a menu, the footer or its parent", () => {
+    expect(staticPages().filter((p) => !reachable.has(p))).toEqual([]);
   });
 
-  it("links every Reference page the data rail lists", () => {
-    const railReference = SECTIONS.filter((s) => s.group === "Reference");
-    // Sanity: if the group were empty or renamed this test would pass while
-    // checking nothing.
-    expect(railReference.length).toBeGreaterThanOrEqual(4);
-
-    const missing = railReference
-      .map((s) => s.href)
-      .filter((href) => !allFooterHrefs.includes(href));
-    expect(
-      missing,
-      `these Reference pages are in the rail and nowhere in the footer: ${missing.join(", ")}`,
-    ).toEqual([]);
+  it("names every footer link by the page's one name", () => {
+    for (const c of FOOTER_COLUMNS) for (const p of c.pages) expect(p.name, p.href).toBe(PAGE_NAMES.get(p.href));
   });
 
-  it("samples the calculators rather than listing all of them", () => {
-    const cols = columns.Calculators!;
-    // The full list is what made the footer 760px tall on desktop and 1,882px
-    // on a phone. A sample plus a link to the hub is the whole point.
-    expect(cols.links.length).toBeLessThan(TOOL_NAV_LINKS.length);
-    expect(cols.more?.href).toBe("/calculators");
-    // The label counts the real total, so it cannot go stale when a tool ships.
-    expect(cols.more?.label).toContain(String(TOOL_NAV_LINKS.length));
-    for (const link of cols.links) {
-      expect(TOOL_NAV_LINKS.map((t) => t.href)).toContain(link.href);
-    }
+  it("never points two footer links at one page", () => {
+    const hrefs = [...FOOTER_COLUMNS.flatMap((c) => c.pages.map((p) => p.href)), ...FOOTER_LEGAL.map((p) => p.href)];
+    expect(hrefs.length).toBe(new Set(hrefs).size);
   });
 
-  it("never points two footer links at the same page", () => {
-    // Two links with one destination, or one visible label used for two
-    // destinations, is the defect `navigation.ts` already records for
-    // "Processing times". Duplicates are also a Lighthouse finding.
-    const seen = new Set<string>();
-    const dupes = allFooterHrefs.filter((h) => (seen.has(h) ? true : (seen.add(h), false)));
-    expect(dupes, `duplicated footer hrefs: ${dupes.join(", ")}`).toEqual([]);
+  it("keeps the footer to three columns", () => {
+    expect(FOOTER_COLUMNS.map((c) => c.title)).toEqual(["Cases and data", "Learn", "PERM Tracker"]);
   });
 });

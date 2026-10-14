@@ -217,7 +217,7 @@ export default async function FAQPage() {
         {/* The groups, with how many questions each holds: a contents list
             that stays beside the questions on a wide screen. */}
         <nav aria-label="Question groups" className="max-lg:hidden">
-          <ol className="sticky top-[calc(var(--site-header-h,71px)+1.5rem)] space-y-1 border-l-2 border-foreground pl-4">
+          <ol className="sticky top-[calc(var(--site-header-h)+1.5rem)] space-y-1 border-l-2 border-foreground pl-4">
             {groups.map((g) => (
               <Fragment key={g.id}>
                 {" "}

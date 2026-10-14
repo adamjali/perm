@@ -328,7 +328,7 @@ export function CaseStatusResult({
           purpose: "email me when this changes" is the next step after reading
           a window, and the answer card's button lands here. */}
       {!isFinal ? (
-        <div id={WATCH_ANCHOR} className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
+        <div id={WATCH_ANCHOR} >
           <CaseAlertForm caseNumber={result.caseNumber} className="mt-8" />{" "}
           <CasePushAlert caseNumber={result.caseNumber} className="mt-4" />
         </div>

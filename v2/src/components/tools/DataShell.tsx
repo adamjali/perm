@@ -2,63 +2,47 @@
 
 import { usePathname } from "next/navigation";
 
-import { isDataPath } from "./dataSections";
-import { DataRail } from "./DataRail";
+import { sectionForPath, sectionPages } from "@/lib/siteMap";
+import { SectionList } from "./SectionList";
 
 /**
- * Puts the data rail beside the data pages, and stays out of the way anywhere
- * else.
+ * Lays a data page out beside the pages of its section, and stays out of the
+ * way everywhere else.
  *
- * WHY THIS IS A WRAPPER IN THE LAYOUT AND NOT A COMPONENT ON 28 PAGES. The old
- * bar was rendered by each page, as a sibling at the top of its own container.
- * A sidebar cannot be a sibling - it has to be beside the content, which means
- * something has to own both - and the choice was between editing 28 pages to
- * wrap their bodies or putting the shell where the layout already is. The
- * layout wins: one file decides the arrangement, and a page added tomorrow
- * gets the rail by living at a data URL rather than by remembering to ask.
+ * In the layout rather than on each page, so a page added tomorrow gets its
+ * section list by living at a data URL. `children` is still a server
+ * component (it arrives as a prop), and `usePathname` keeps the pages static
+ * where reading a header would not.
  *
- * `children` IS STILL A SERVER COMPONENT. It arrives as a prop, so marking
- * this file `"use client"` draws the boundary around the shell and not around
- * the pages inside it. Nothing in the data tree is pulled into the client
- * bundle by this.
- *
- * `usePathname` and not `headers()`: the hook is a client API and does not opt
- * the route out of static rendering, which reading a header would. The 25
- * public pages on a one-day ISR window stay exactly as they were, and that
- * matters more here than it looks - a cookie read in the root layout is what
- * made the whole site dynamic once already.
+ * Desktop: the list in a narrow column beside the page. Phone: the list at the
+ * end of the page, after the content. Nothing sticks but the header.
  */
 export function DataShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-
-  if (!isDataPath(pathname)) return <>{children}</>;
+  const section = sectionPages(pathname);
+  if (!section) return <>{children}</>;
+  const current = sectionForPath(pathname)?.href ?? pathname;
 
   return (
-    // Full width: the rail takes a fixed column and each page sets its own
-    // measure. `lg:flex`, not `flex`: below `lg` the row doesn't exist, and a
-    // flex row there made the mobile disclosure a column of its own.
-    // `max-lg:pt-3` keeps the phone's 44px edge handle off the first line.
-    // No `mx-auto max-w-*`: the rail cancels the shell's padding with a fixed
-    // negative margin to reach the screen edge, which can't cancel a variable
-    // auto margin, so a centring cap would pull the rail off the edge on wide
-    // screens.
-    <div className="w-full px-4 max-lg:pt-3 sm:px-6 lg:flex lg:gap-8">
-      {/* `contents` keeps the wrapper out of the flex layout; it exists only so
-          the rail can be left off a printed page. */}
-      <div className="contents print:hidden">
-        <DataRail />
-      </div>
-      {/* `min-w-0` is the load-bearing class here. A flex item's default
-          minimum is its content, so one wide table or a long unbroken case
-          number would push the column past the viewport and take the whole
-          page into horizontal scroll - with the rail dragged off screen. */}
-      {/* Pages set their own measure (max-w-2xl to max-w-7xl) with mx-auto,
-          which centres a narrow page in the column, so the heading sat at a
-          different distance from the rail on every page (304 to 372px at 1440,
-          more on a wide screen). Beside the rail every page starts at the same
-          edge; only its width differs. */}
-      <div className="min-w-0 lg:flex-1 lg:[&>.mx-auto]:ml-0 lg:[&>*>.mx-auto]:ml-0">
+    <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
+      <SectionList
+        title={section.title}
+        pages={section.pages}
+        current={current}
+        placement="side"
+        className="hidden pt-10 lg:block"
+      />
+      {/* `min-w-0`: a grid item's minimum is its content, so one wide table
+          would otherwise push the column past the viewport. */}
+      <div className="min-w-0">
         {children}
+        <SectionList
+          title={section.title}
+          pages={section.pages}
+          current={current}
+          placement="end"
+          className="mt-16 border-t border-border pt-8 pb-4 lg:hidden"
+        />
       </div>
     </div>
   );

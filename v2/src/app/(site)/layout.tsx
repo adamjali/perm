@@ -1,34 +1,15 @@
-import AuthHeader from "@/components/layout/AuthHeader";
+import SiteHeader from "@/components/layout/SiteHeader";
 import Footer from "@/components/layout/Footer";
-import { SecurityIncidentBanner } from "@/components/layout/SecurityIncidentBanner";
 import { getAllPosts } from "@/lib/content";
 
 /**
  * The shell shared by every logged-out page: the marketing and data pages in
  * `(public)`, and sign in / sign up / reset in `(auth)`.
  *
- * WHY THIS FILE EXISTS. Mounted by each group layout, `AuthHeader` would be
- * two instances. Route groups are siblings, so crossing between them unmounts
- * one instance and mounts another, and the two are not identical, because
- * `AuthHeader` branches on `usePathname()`: the homepage renders section
- * anchors and both auth buttons, every other page renders Home / Data / Learn
- * and one. So a visitor clicking "Sign Up" would watch one header be replaced
- * by a visibly different one.
- *
- * Hoisting it here makes it ONE instance for both groups. A layout above the
- * segment that changed is preserved across navigation, so React reconciles
- * this header rather than tearing it down and building another. Nothing about
- * the URLs changes: `(site)`, `(public)` and `(auth)` are all route groups, so
- * `/`, `/signup` and `/blog` are still exactly those paths.
- *
- * WHAT LIVES HERE AND WHAT DOES NOT. Only the chrome both groups genuinely
- * shared: the flex column, the dotted ground, the skip link, the header, the
- * footer, and the incident banner the header's own `top` already reads. The
- * public group keeps its own ambient canvas, scroll progress, hash handling,
- * and back-to-top; the auth group keeps `ConvexProviders` and
- * its centred column. Each child still owns its own `<main id="main-content">`,
- * which is what the skip link above targets — only one of them is ever
- * mounted, so there is exactly one `<main>` on any page.
+ * The header and footer live here, above both groups, so moving between a
+ * public page and the sign-in form keeps ONE header instance instead of
+ * swapping one for another. Each child group owns its own
+ * `<main id="main-content">`, the skip link's target; only one is mounted.
  */
 export default function SiteLayout({
   children,
@@ -46,15 +27,10 @@ export default function SiteLayout({
         Skip to main content
       </a>
 
-      {/* Dismissible, auto-hides after 2026-04-27. It publishes
-          --security-banner-h, which the header's `top` and both children's
-          main padding read, so it belongs at the same level as the header. */}
-      <SecurityIncidentBanner />
-
       {/* The search palette's article index: titles only, read from the
           content directory at render time (a server layout, so this costs
           the client nothing until the palette opens). */}
-      <AuthHeader
+      <SiteHeader
         articles={getAllPosts().map((p) => ({
           title: p.meta.title,
           href: `/${p.type}/${p.slug}`,
@@ -64,7 +40,7 @@ export default function SiteLayout({
 
       {children}
 
-      <Footer variant="extended" />
+      <Footer />
     </div>
   );
 }

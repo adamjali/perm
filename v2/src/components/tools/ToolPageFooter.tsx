@@ -1,8 +1,6 @@
-import { Fragment } from "react";
 import Link from "next/link";
-import { ArrowRightIcon, ArrowUpRightIcon } from "@phosphor-icons/react/ssr";
+import { ArrowUpRightIcon } from "@phosphor-icons/react/ssr";
 
-import { TOOL_NAV_LINKS } from "@/lib/constants/navigation";
 
 /**
  * The end of a calculator page: the other calculators, and the writing that
@@ -22,21 +20,22 @@ export interface RelatedReading {
 }
 
 export interface ToolPageFooterProps {
-  /** The page rendering this, so it does not link to itself. */
-  currentHref: string;
+  /** The page rendering this. Kept for callers; its siblings are the section list. */
+  currentHref?: string;
   reading: readonly RelatedReading[];
 }
 
-export function ToolPageFooter({ currentHref, reading }: ToolPageFooterProps) {
-  const others = TOOL_NAV_LINKS.filter((t) => t.href !== currentHref);
+/** A page ends with a few related reads, never a wall of links. */
+const MAX_READING = 3;
 
+export function ToolPageFooter({ reading }: ToolPageFooterProps) {
   return (
     <>
       {reading.length > 0 ? (
         <section className="mt-12">
           <h2 className="font-heading text-2xl font-bold">The rules behind these numbers</h2>
           <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-            {reading.map((r) => (
+            {reading.slice(0, MAX_READING).map((r) => (
               <li key={r.href} className="flex">
                 <Link
                   href={r.href}
@@ -61,29 +60,6 @@ export function ToolPageFooter({ currentHref, reading }: ToolPageFooterProps) {
         </section>
       ) : null}
 
-      <section className="mt-12">
-        <h2 className="font-heading text-2xl font-bold">Other calculators</h2>
-        <ul className="mt-6 flex flex-wrap gap-3">
-          {others.map((t) => (
-            // Array items render with NOTHING between them, so the six labels
-            // reach every extractor as one word. Keyed Fragment with a leading
-            // space is the house fix; a whitespace-only text node is not laid
-            // out as a flex item, so it costs nothing visually.
-            <Fragment key={t.href}>
-              {" "}
-              <li>
-              <Link
-                href={t.href}
-                className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-card px-4 py-2 font-bold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
-                {t.label}
-                <ArrowRightIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-              </Link>
-              </li>
-            </Fragment>
-          ))}
-        </ul>
-      </section>
     </>
   );
 }

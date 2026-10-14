@@ -35,37 +35,33 @@ function zIndexIn(classes: string): number | null {
   return scale?.[1] ? Number(scale[1]) : null;
 }
 
-describe("header and footer stacking", () => {
+describe("header, footer and dialog stacking", () => {
   const footerSource = read("src/components/layout/Footer.tsx");
-  const headerSource = read("src/components/layout/AuthHeader.tsx");
+  const headerSource = read("src/components/layout/SiteHeader.tsx");
+  const dialogSource = read("src/components/ui/dialog.tsx");
 
-  const footerClasses = footerSource.match(/<footer className="([^"]*)"/)?.[1] ?? "";
-  // The header's own class list is built with cn(); the layer lives in the
-  // first string literal, which carries `fixed inset-x-0 z-50`.
-  const headerClasses = headerSource.match(/"(fixed inset-x-0 z-\[?\d+\]?[^"]*)"/)?.[1] ?? "";
+  const footerClasses = [...footerSource.matchAll(/<footer className="([^"]*)"/g)].map((m) => m[1] ?? "");
+  const headerClasses = headerSource.match(/"(fixed inset-x-0 top-0 z-\[?\d+\]?[^"]*)"/)?.[1] ?? "";
+  const dialogClasses = dialogSource.match(/"([^"]*fixed top-\[50%\][^"]*)"/)?.[1] ?? "";
 
   it("finds every class string it is about to compare", () => {
-    // Without this a regex miss would compare `null`s and pass vacuously,
-    // which is the usual way a gate of this shape reports green over a defect.
-    expect(footerClasses, "footer classes").not.toBe("");
-    expect(headerClasses, "header classes").not.toBe("");
-    expect(zIndexIn(footerClasses), "footer z-index").not.toBeNull();
+    // Without this a regex miss would compare nothing and pass vacuously.
+    expect(footerClasses.length, "footer classes").toBeGreaterThan(0);
     expect(zIndexIn(headerClasses), "header z-index").not.toBeNull();
+    expect(zIndexIn(dialogClasses), "dialog z-index").not.toBeNull();
   });
 
-  it("keeps the header strictly above the footer", () => {
-    // Strictly greater, not >=. Equal IS the bug: DOM order breaks the tie and
-    // the footer is last.
-    expect(zIndexIn(headerClasses)!).toBeGreaterThan(zIndexIn(footerClasses)!);
+  it("leaves the footer out of the stacking order, so it can never cover the header", () => {
+    // It once shared the header's z-50 and, last in the DOM, won the tie and
+    // ate the header menu's clicks. With no z-index and no positioning it
+    // paints in normal flow, under anything fixed.
+    for (const c of footerClasses) {
+      expect(zIndexIn(c), c).toBeNull();
+      expect(c).not.toMatch(/(?:^|\s)(?:relative|absolute|fixed|sticky)(?:\s|$)/);
+    }
   });
 
-  it("keeps the mobile data drawer above the footer", () => {
-    // An open drawer scrolled to the bottom of a page must paint over the
-    // footer, not under it.
-    const rail = read("src/components/tools/DataRail.tsx");
-    const drawer = rail.match(/"(fixed bottom-0 left-0 z-\[?\d+\]?[^"]*)"/)?.[1] ?? "";
-    expect(drawer, "mobile drawer classes").not.toBe("");
-    expect(zIndexIn(drawer), "drawer z-index").not.toBeNull();
-    expect(zIndexIn(drawer)!).toBeGreaterThan(zIndexIn(footerClasses)!);
+  it("keeps a dialog above the header", () => {
+    expect(zIndexIn(dialogClasses)!).toBeGreaterThan(zIndexIn(headerClasses)!);
   });
 });

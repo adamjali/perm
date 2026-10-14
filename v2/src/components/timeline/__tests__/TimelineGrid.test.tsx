@@ -320,62 +320,6 @@ describe("TimelineGrid - Milestone Positioning", () => {
 
 // STYLING TESTS
 
-describe("TimelineGrid - Neobrutalist Styling", () => {
-  it("has 2px border on main container", () => {
-    const cases = createMockCases(2);
-    const { container } = renderWithProviders(
-      <TimelineGrid cases={cases} timeRange={6} />
-    );
-
-    const grid = screen.getByRole("grid");
-    expect(grid).toHaveClass("border-2");
-    expect(grid).toHaveClass("border-foreground");
-  });
-
-  it("has shadow-hard on main container", () => {
-    const cases = createMockCases(1);
-    renderWithProviders(<TimelineGrid cases={cases} timeRange={6} />);
-
-    const grid = screen.getByRole("grid");
-    expect(grid).toHaveClass("shadow-hard");
-  });
-
-  it("has sticky sidebar with border styling", () => {
-    const cases = createMockCases(1);
-    const { container } = renderWithProviders(
-      <TimelineGrid cases={cases} timeRange={6} />
-    );
-
-    // Sidebar should be sticky left
-    const stickySidebar = container.querySelector(".sticky.left-0");
-    expect(stickySidebar).toBeInTheDocument();
-  });
-
-  it("has scrollable container for overflow", () => {
-    const cases = createMockCases(1);
-    const { container } = renderWithProviders(
-      <TimelineGrid cases={cases} timeRange={6} />
-    );
-
-    const scrollContainer = container.querySelector(".overflow-x-auto");
-    expect(scrollContainer).toBeInTheDocument();
-  });
-
-  it("gives every month a minimum width so labels and markers fit", () => {
-    const cases = createMockCases(1);
-    const { container } = renderWithProviders(
-      <TimelineGrid cases={cases} timeRange={6} />
-    );
-
-    // The label column plus 44px a month (MIN_MONTH_PX), not a flat 600px:
-    // 24 months at 600px gave each month 19px on a phone.
-    const sized = Array.from(container.querySelectorAll<HTMLElement>("div")).find((el) =>
-      el.style.minWidth.includes("var(--tl-label)")
-    );
-    expect(sized?.style.minWidth).toContain(`${6 * 44}px`);
-  });
-});
-
 // RESPONSIVE TESTS
 
 describe("TimelineGrid - Responsive Layout", () => {

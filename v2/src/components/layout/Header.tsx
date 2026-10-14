@@ -216,7 +216,7 @@ export default function Header(): React.ReactElement {
                     spinnerClassName="text-(--primary)"
                     data-tour={tourId}
                     className={cn(
-                      "hover-underline px-3 py-2 font-heading text-sm font-semibold transition-colors lg:px-4",
+                      "underline-offset-4 hover:underline px-3 py-2 font-heading text-sm font-semibold transition-colors lg:px-4",
                       isActive
                         ? "text-(--primary)"
                         : "text-white hover:text-(--primary)"

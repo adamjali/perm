@@ -47,7 +47,7 @@ export function DebarmentNotice({
         ? `A name matching ${pageName} is barred from filing from ${day(upcoming[0]!.startDate)}. The period has not started yet.`
         : `A name matching ${pageName} was barred from filing in the past; the period has ended.`;
   return (
-    <aside id="debarment" className={cn(className, "scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border border-foreground bg-card p-5 sm:p-6")} aria-label="Debarment notice">
+    <aside id="debarment" className={cn(className, " border border-foreground bg-card p-5 sm:p-6")} aria-label="Debarment notice">
       <p className="text-sm font-bold text-muted-foreground">
         On DOL&apos;s debarment list
       </p>{" "}

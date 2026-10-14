@@ -16,10 +16,8 @@ import { OpenOnHash } from "./OpenOnHash";
  * The list is derived from the same array the headings are rendered from, so a
  * new section cannot appear on the page and be missing from the index.
  *
- * `scroll-mt` on each heading is load-bearing: the site header is sticky and
- * publishes its own height, so an anchor without that offset lands the heading
- * underneath the bar. It uses `--site-header-max-h`, the variable that never
- * shrinks, because a jump is instantaneous and the bar has not resized yet.
+ * The headings land below the fixed header through `scroll-padding-top` on
+ * the page (globals.css), the one offset every anchor on the site uses.
  */
 
 export interface LegalSection {

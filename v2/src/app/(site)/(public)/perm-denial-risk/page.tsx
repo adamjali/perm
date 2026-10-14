@@ -390,7 +390,7 @@ export default async function PermDenialRiskPage() {
               how much of the denial pile it accounts for, and the two answers
               point in opposite directions. */}
           {flagShare !== null && topWageByShare && topWageShare !== null && topWageReach !== null ? (
-            <section id="where" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+            <section id="where" className="mt-12">
               <h2 className="font-heading text-2xl font-bold">
                 Where the denials actually are
               </h2>{" "}
@@ -452,7 +452,7 @@ export default async function PermDenialRiskPage() {
             </section>
           ) : null}
 
-          <section id="factors" className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+          <section id="factors" className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2">
             <div>
               <h2 className="font-heading text-2xl font-bold">
                 By what the form declares
@@ -529,7 +529,7 @@ export default async function PermDenialRiskPage() {
             </div>
           </section>
 
-          <section id="years" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+          <section id="years" className="mt-12">
             <h2 className="font-heading text-2xl font-bold">By fiscal year</h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-muted-foreground">
               The rate moves year to year.
@@ -561,7 +561,7 @@ export default async function PermDenialRiskPage() {
           </section>
 
           {occupationRows.length > 0 ? (
-            <section id="jobs" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+            <section id="jobs" className="mt-12">
               <h2 className="font-heading text-2xl font-bold">By occupation</h2>{" "}
               <p className="mt-2 max-w-2xl text-base text-muted-foreground">
                 Denials cluster in a handful of job families and are close to
@@ -594,7 +594,7 @@ export default async function PermDenialRiskPage() {
           ) : null}
 
           {stateRows.length > 0 ? (
-            <section id="states" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
+            <section id="states" className="mt-12">
               <h2 className="font-heading text-2xl font-bold">By worksite state</h2>{" "}
               <p className="mt-2 max-w-2xl text-base text-muted-foreground">
                 DOL works one national queue, so this ranks where denials land.

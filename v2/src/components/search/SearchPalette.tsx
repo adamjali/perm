@@ -25,6 +25,7 @@ import { Command } from "cmdk";
 import { CircleNotchIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 
 import { staticIndex } from "@/lib/search/siteIndex";
+import { GROUPS } from "@/lib/siteMap";
 import { fuzzyScore } from "@/lib/fuzzy";
 import { useNameSuggestions } from "@/components/search/DidYouMean";
 import { KIND_NOUN } from "@/lib/search/suggestTypes";
@@ -76,6 +77,14 @@ function paletteFilter(value: string, search: string): number {
   return s >= PALETTE_MIN ? s : 0;
 }
 
+/** One look for the palette's rows: a quiet grey for the row the keys are on. */
+const ROW = "flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2.5 text-base data-[selected=true]:bg-accent";
+/** A row that acts on what was typed (a case number, a month, every filing). */
+const ACTION_ROW = "cursor-pointer border-l-2 border-primary-text bg-tint px-3 py-3 text-base font-semibold data-[selected=true]:bg-accent";
+const GROUP_HEADING = "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground";
+/** The page groups, in the order the Data menu has them. */
+const PAGE_GROUPS = ["Go to", ...GROUPS, "Calculators", "Learn"] as const;
+
 /** Rows per kind in the palette. The route says whether more match. */
 const PALETTE_PER_KIND = 5;
 
@@ -84,16 +93,26 @@ export function SearchPalette({
   onOpenChange,
   articles,
   onReady,
+  initialQuery = "",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   articles: SearchArticle[];
   /** Fired once this module has mounted, so the trigger can stop spinning. */
   onReady?: () => void;
+  /** What was already typed in the header's box when the palette opened. */
+  initialQuery?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [query, setQuery] = React.useState("");
+  const [query, setQuery] = React.useState(initialQuery);
+  // Each opening starts from what the box held at that moment.
+  const [openedWith, setOpenedWith] = React.useState<string | null>(null);
+  if (open && openedWith !== initialQuery) {
+    setOpenedWith(initialQuery);
+    setQuery(initialQuery);
+  }
+  if (!open && openedWith !== null) setOpenedWith(null);
   const [entityHits, setEntityHits] = React.useState<EntityHit[]>([]);
   const [searchingEntities, setSearchingEntities] = React.useState(false);
   // A FAILED LOOKUP IS NOT AN EMPTY ONE. Each kind used to `catch { return [] }`
@@ -381,27 +400,9 @@ export function SearchPalette({
             <Command.Item
               value={`case ${caseNumber}`}
               onSelect={() => go(`/perm-case-status?case=${encodeURIComponent(caseNumber)}`, `case ${caseNumber}`)}
-              className="cursor-pointer border border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+              className={ACTION_ROW}
             >
               Check case {caseNumber}: live status and estimate
-            </Command.Item>
-          ) : null}
-          {!caseNumber && !month && query.trim().length >= 2 ? (
-            /* The bridge to the cross-program search. The entity rows below
-               answer "who is this employer"; this one answers "what have they
-               filed", across PERM, wage requests and LCAs at once, which no
-               other row on this list covers. */
-            <Command.Item
-              value={`all programs ${query.trim()}`}
-              onSelect={() =>
-                go(
-                  `/case-search?q=${encodeURIComponent(query.trim().slice(0, 120))}`,
-                  `every filing by "${query.trim()}"`,
-                )
-              }
-              className="cursor-pointer border border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
-            >
-              Search every DOL filing by &ldquo;{query.trim()}&rdquo;: PERM, wage requests and LCAs
             </Command.Item>
           ) : null}
           {month ? (
@@ -413,7 +414,7 @@ export function SearchPalette({
                   `cases filed ${month}`,
                 )
               }
-              className="cursor-pointer border border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+              className={ACTION_ROW}
             >
               Estimate for cases filed {month}
             </Command.Item>
@@ -434,7 +435,7 @@ export function SearchPalette({
             <Command.Group
               forceMount
               heading="Did you mean"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
+              className={GROUP_HEADING}
             >
               {suggestions.map((h) => (
                 <Command.Item
@@ -442,10 +443,10 @@ export function SearchPalette({
                   key={h.href}
                   value={`suggest ${h.name}`}
                   onSelect={() => go(h.href, h.name)}
-                  className="flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2.5 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+                  className={ROW}
                 >
-                  <span className="min-w-0 truncate font-semibold">{h.name}</span>{" "}
-                  <span className="shrink-0 font-mono text-sm text-muted-foreground data-[selected=true]:text-primary-foreground/80">
+                  <span className="min-w-0 truncate">{h.name}</span>{" "}
+                  <span className="shrink-0 text-sm text-muted-foreground">
                     {`${KIND_NOUN[h.kind]} · ${h.cases.toLocaleString("en-US")} ${h.cases === 1 ? "case" : "cases"}`}
                   </span>
                 </Command.Item>
@@ -456,17 +457,17 @@ export function SearchPalette({
           {entityHits.length > 0 ? (
             <Command.Group
               heading="In the data"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
+              className={GROUP_HEADING}
             >
               {entityHits.map((h) => (
                 <Command.Item
                   key={h.href}
                   value={`${h.kindLabel} ${h.name}`}
                   onSelect={() => go(h.href, h.name)}
-                  className="flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2.5 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+                  className={ROW}
                 >
-                  <span className="min-w-0 truncate font-semibold">{h.name}</span>{" "}
-                  <span className="shrink-0 font-mono text-sm text-muted-foreground data-[selected=true]:text-primary-foreground/80">
+                  <span className="min-w-0 truncate">{h.name}</span>{" "}
+                  <span className="shrink-0 text-sm text-muted-foreground">
                     {h.more
                       ? "More than fit here"
                       : `${h.kindLabel} · ${h.total.toLocaleString("en-US")} ${h.total === 1 ? "case" : "cases"}`}
@@ -476,21 +477,40 @@ export function SearchPalette({
             </Command.Group>
           ) : null}
 
-          {(["Go to", "Timelines and calculators", "Data", "Learn"] as const).map(
+          {!caseNumber && !month && query.trim().length >= 2 ? (
+            /* The bridge to the cross-program search. The entity rows below
+               answer "who is this employer"; this one answers "what have they
+               filed", across PERM, wage requests and LCAs at once, which no
+               other row on this list covers. */
+            <Command.Item
+              value={`all programs ${query.trim()}`}
+              onSelect={() =>
+                go(
+                  `/case-search?q=${encodeURIComponent(query.trim().slice(0, 120))}`,
+                  `every filing by "${query.trim()}"`,
+                )
+              }
+              className={ACTION_ROW}
+            >
+              All results for &ldquo;{query.trim()}&rdquo;
+            </Command.Item>
+          ) : null}
+          {PAGE_GROUPS.map(
             (group) => (
               <Command.Group
                 key={group}
                 heading={group}
-                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
+                className={GROUP_HEADING}
               >
                 {pages
-                  .filter((p) => p.group === group)
+                  // Before anything is typed, only the main jobs show.
+                  .filter((p) => p.group === group && (query.trim() !== "" || p.main))
                   .map((p) => (
                     <Command.Item
                       key={p.href}
                       value={`${p.label} ${p.keywords}`}
                       onSelect={() => go(p.href, p.label)}
-                      className="cursor-pointer px-3 py-2.5 font-semibold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+                      className={ROW}
                     >
                       {p.label}
                     </Command.Item>
@@ -502,17 +522,17 @@ export function SearchPalette({
           {articles.length > 0 ? (
             <Command.Group
               heading="Articles"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
+              className={GROUP_HEADING}
             >
               {articles.map((a) => (
                 <Command.Item
                   key={a.href}
                   value={`${a.title} ${a.kind}`}
                   onSelect={() => go(a.href, a.title)}
-                  className="flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2.5 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+                  className={ROW}
                 >
-                  <span className="min-w-0 truncate font-semibold">{a.title}</span>{" "}
-                  <span className="shrink-0 font-mono text-sm text-muted-foreground data-[selected=true]:text-primary-foreground/80">
+                  <span className="min-w-0 truncate">{a.title}</span>{" "}
+                  <span className="shrink-0 text-sm text-muted-foreground">
                     {a.kind}
                   </span>
                 </Command.Item>
@@ -520,7 +540,7 @@ export function SearchPalette({
             </Command.Group>
           ) : null}
         </Command.List>
-        <div className="border-t border-border px-4 py-2 font-mono text-sm text-muted-foreground">
+        <div className="border-t border-border px-4 py-2 text-sm text-muted-foreground">
           Esc closes · Enter opens · a case number goes straight to the lookup
         </div>
       </Command>

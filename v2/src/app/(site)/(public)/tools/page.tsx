@@ -8,7 +8,7 @@
  */
 
 import type { Metadata } from "next";
-import { TOOL_NAV_LINKS } from "@/lib/constants/navigation";
+import { CALCULATOR_PAGES } from "@/lib/siteMap";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
@@ -192,7 +192,7 @@ export default async function ToolsPage() {
 
       <section className="mt-10 flex flex-wrap items-center justify-between gap-4 border border-border bg-tint-primary p-6 sm:p-8">
         <div>
-          <h2 className="font-heading text-2xl font-bold">All {TOOL_NAV_LINKS.length} calculators</h2>{" "}
+          <h2 className="font-heading text-2xl font-bold">All {CALCULATOR_PAGES.length} calculators</h2>{" "}
           <p className="mt-1 max-w-xl text-base text-muted-foreground">
             Decision times, the wage, I-140 and I-485 queues, priority dates,
             the green card drawn to scale, and every statutory deadline.

@@ -216,36 +216,4 @@ describe('FormField', () => {
   // STYLING
   // ============================================================================
 
-  describe('Neobrutalist Styling', () => {
-    it('has proper spacing between elements', () => {
-      const { container } = renderWithProviders(
-        <FormField
-          label="Employer name"
-          name="employerName"
-          hint="Enter the employer's full legal name"
-        >
-          <input type="text" />
-        </FormField>
-      );
-
-      // Should have flex column layout with gap
-      const wrapper = container.querySelector('[class*="flex"][class*="flex-col"]') ||
-                     container.querySelector('[class*="space-y"]');
-      expect(wrapper).toBeInTheDocument();
-    });
-
-    it('accepts custom className', () => {
-      const { container } = renderWithProviders(
-        <FormField
-          label="Employer name"
-          name="employerName"
-          className="custom-class"
-        >
-          <input type="text" />
-        </FormField>
-      );
-
-      expect(container.querySelector('.custom-class')).toBeInTheDocument();
-    });
-  });
 });

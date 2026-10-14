@@ -48,7 +48,7 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
         <div
           key={section.category}
           id={section.id}
-          className="scroll-mt-[calc(var(--site-header-h,71px)+1.5rem)]"
+          
         >
           <Reveal on={sectionIndex > 0} direction="up">
             <h2 className="mb-4 font-heading text-lg font-bold tracking-tight sm:text-xl">

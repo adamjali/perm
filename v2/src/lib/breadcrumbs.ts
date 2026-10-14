@@ -12,16 +12,9 @@
  * its parent; its H1 names it.
  */
 
-import { OVERVIEW, SECTIONS, isDataPath, sectionForPath } from "@/components/tools/dataSections";
 import { detailName } from "@/lib/breadcrumbNames";
 import { SITE_URL } from "@/lib/constants/site";
-import {
-  CONTENT_NAV_LINKS,
-  FOOTER_COLUMNS,
-  LEARN_NAV_LINKS,
-  PUBLIC_NAV_LINKS,
-  TOOL_NAV_LINKS,
-} from "@/lib/constants/navigation";
+import { OVERVIEW, PAGE_NAMES, isDataPath, sectionForPath } from "@/lib/siteMap";
 
 export interface Crumb {
   name: string;
@@ -29,45 +22,7 @@ export interface Crumb {
 }
 
 const HOME: Crumb = { name: "Home", href: "/" };
-const DATA: Crumb = { name: "Data", href: OVERVIEW.href };
-
-/**
- * Names for pages the menus don't list, and a few the menus word for a
- * different place: "Next bulletin" is right in the side menu, but as the
- * parent of a month's bulletin the page is the visa bulletin.
- */
-const OWN_NAMES: Record<string, string> = {
-  "/visa-bulletin": "Visa bulletin",
-  // The side menu files these under a group heading (Queue, USCIS), which a
-  // trail doesn't carry, so the trail names the agency; two pages both called
-  // "Processing times" read as one.
-  "/perm-processing-times": "PERM processing times",
-  "/uscis-processing-times": "USCIS processing times",
-  "/uscis-case-status": "USCIS case status",
-  "/perm-employers/browse": "Browse A to Z",
-  "/perm-attorneys/browse": "Browse A to Z",
-  "/perm-wages/browse": "Browse A to Z",
-  "/es": "Español",
-  "/zh": "中文",
-  "/ko": "한국어",
-  "/vi": "Tiếng Việt",
-  "/pt-br": "Português",
-};
-
-/** Every page name the site gives, by path. The first source to name a path wins. */
-const NAMES: ReadonlyMap<string, string> = (() => {
-  const names = new Map<string, string>(Object.entries(OWN_NAMES));
-  const add = (links: readonly { href: string; label: string }[]) => {
-    for (const l of links) if (!names.has(l.href)) names.set(l.href, l.label);
-  };
-  add(SECTIONS);
-  add(TOOL_NAV_LINKS);
-  add(PUBLIC_NAV_LINKS);
-  add(LEARN_NAV_LINKS);
-  add(CONTENT_NAV_LINKS);
-  for (const col of FOOTER_COLUMNS) add(col.links);
-  return names;
-})();
+const DATA: Crumb = { name: OVERVIEW.name, href: OVERVIEW.href };
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -103,7 +58,7 @@ export function breadcrumbTrail(pathname: string): Crumb[] {
     // below.
     const section = sectionForPath(path);
     if (section && !(path === section.href || path.startsWith(`${section.href}/`))) {
-      push(section.href, NAMES.get(section.href) ?? section.label);
+      push(section.href, PAGE_NAMES.get(section.href) ?? section.name);
     }
   }
 
@@ -112,7 +67,7 @@ export function breadcrumbTrail(pathname: string): Crumb[] {
   for (let i = 1; i <= segments.length; i++) {
     const prefix = `/${segments.slice(0, i).join("/")}`;
     const last = i === segments.length;
-    push(prefix, NAMES.get(prefix) ?? (last ? segmentName(segments[i - 1]!) ?? detailName(path) : null));
+    push(prefix, PAGE_NAMES.get(prefix) ?? (last ? segmentName(segments[i - 1]!) ?? detailName(path) : null));
   }
 
   return trail.length > 1 ? trail : [];

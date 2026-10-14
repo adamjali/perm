@@ -58,7 +58,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
   return (
     <details className="legal-section group border-b border-border">
       <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-        <h2 id={id} className="m-0 scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold">
+        <h2 id={id} className="m-0 font-heading text-2xl font-bold">
           {title}
         </h2>{" "}
         <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />

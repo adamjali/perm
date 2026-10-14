@@ -5,11 +5,8 @@ import { usePathname } from "next/navigation";
 import { CaretRightIcon } from "@phosphor-icons/react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { isDataPath } from "@/components/tools/dataSections";
-import { WatchLink, showsWatchBanner } from "@/components/tools/WatchBanner";
 import { isArticlePath } from "@/lib/breadcrumbNames";
 import { breadcrumbSchema, breadcrumbTrail, trailEndsAtPage, trailNamesPage } from "@/lib/breadcrumbs";
-import { cn } from "@/lib/utils";
 
 /**
  * The breadcrumb bar under the header on every public page but the home page.
@@ -35,38 +32,29 @@ export function SiteBreadcrumbs({ pageName }: { pageName?: string } = {}) {
   const endsAtPage = Boolean(pageName) || trailEndsAtPage(pathname);
   const emitsList = !pageName && trailNamesPage(pathname);
 
-  const watch = isDataPath(pathname) && showsWatchBanner(pathname);
-
   return (
-    // One bar: the trail on the left and, on data pages, the free case alert
-    // as a tab at the right end (WatchLink).
-    <div
-      className={cn(
-        "flex items-stretch justify-between gap-4 border-b border-border bg-background pl-4 sm:pl-6",
-        watch ? "pr-0" : "pr-4 sm:pr-6",
-        // The data menu's edge handle sits at the left on a phone.
-        isDataPath(pathname) && "max-lg:pl-16",
-      )}
-    >
+    // One quiet line of text above the page, aligned with its content. It
+    // doesn't stick and carries nothing but the trail.
+    <div className="mx-auto w-full max-w-[1440px] px-4 pt-3 sm:px-6">
       <nav aria-label="Breadcrumb" className="min-w-0">
         {emitsList ? <JsonLdScript schema={breadcrumbSchema(pathname)} /> : null}
-        <ol className="flex flex-wrap items-center gap-x-1.5 text-sm">
+        <ol className="flex flex-wrap items-center gap-x-1 text-sm">
           {trail.map((crumb, i) => {
             const current = endsAtPage && i === trail.length - 1;
             return (
               <li key={crumb.href} className="flex items-center gap-1.5">
-                {i > 0 ? <CaretRightIcon aria-hidden="true" className="size-3.5 text-muted-foreground" /> : null}{" "}
+                {i > 0 ? <CaretRightIcon aria-hidden="true" className="size-3 text-muted-foreground" /> : null}{" "}
                 {current ? (
                   <span
                     aria-current="page"
-                    className="inline-flex min-h-[44px] max-w-[min(60ch,70vw)] items-center font-semibold text-foreground"
+                    className="inline-flex min-h-11 max-w-[min(60ch,70vw)] items-center text-soft"
                   >
                     <span className="truncate">{crumb.name}</span>
                   </span>
                 ) : (
                   <Link
                     href={crumb.href}
-                    className="inline-flex min-h-[44px] items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                    className="inline-flex min-h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                   >
                     {crumb.name}
                   </Link>
@@ -75,8 +63,7 @@ export function SiteBreadcrumbs({ pageName }: { pageName?: string } = {}) {
             );
           })}
         </ol>
-      </nav>{" "}
-      {watch ? <WatchLink /> : null}
+      </nav>
     </div>
   );
 }

@@ -2,9 +2,8 @@
  * Public Layout
  * Wraps the marketing and data pages (Home, Tools, Blog, legal, and so on).
  *
- * The header, footer, incident banner, dotted ground, skip link and the flex
- * column all moved up to `(site)/layout.tsx` so that ONE `AuthHeader` instance
- * spans this group and `(auth)`. See that file for why. What is left here is
+ * The header, footer, skip link and the flex column live in `(site)/layout.tsx`
+ * so that ONE header instance spans this group and `(auth)`. What is left here is
  * the chrome that genuinely belongs to the public pages and would be wrong on
  * a sign-in form: hash-anchor handling, the stale-page refresh and the
  * on-device diagnostic.
@@ -38,14 +37,10 @@ export default function PublicLayout({
           figures when the reader comes back to it after 30 minutes. */}
       <RefreshWhenStale />
 
-      {/* Main content - grows to fill space, pt accounts for the fixed header
-          plus the security banner if visible (--security-banner-h is published
-          by SecurityIncidentBanner in the (site) layout, cleared to 0 when
-          dismissed). The auth group uses this identical expression. */}
+      {/* Padded by the fixed header's height, the same token the auth group uses. */}
       <main
         id="main-content"
-        style={{ paddingTop: "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))" }}
-        className="relative flex-1"
+        className="relative flex-1 pt-(--site-header-h)"
         tabIndex={-1}
       >
         {/* The data rail lives here rather than on each of the 28 data

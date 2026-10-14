@@ -69,7 +69,7 @@ export default function TermsPage() {
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="agreement-to-terms" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">1. Agreement to Terms</h2>{" "}
+              <h2 id="agreement-to-terms" className="font-heading text-2xl font-bold m-0">1. Agreement to Terms</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -86,7 +86,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="description-of-service" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">2. Description of Service</h2>{" "}
+              <h2 id="description-of-service" className="font-heading text-2xl font-bold m-0">2. Description of Service</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -117,7 +117,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="user-accounts" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">3. User Accounts</h2>{" "}
+              <h2 id="user-accounts" className="font-heading text-2xl font-bold m-0">3. User Accounts</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
 
@@ -176,7 +176,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="acceptable-use" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">4. Acceptable Use</h2>{" "}
+              <h2 id="acceptable-use" className="font-heading text-2xl font-bold m-0">4. Acceptable Use</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -221,7 +221,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="user-content" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">5. User Content</h2>{" "}
+              <h2 id="user-content" className="font-heading text-2xl font-bold m-0">5. User Content</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
 
@@ -268,7 +268,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="intellectual-property" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">6. Intellectual Property</h2>{" "}
+              <h2 id="intellectual-property" className="font-heading text-2xl font-bold m-0">6. Intellectual Property</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
 
@@ -348,7 +348,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="disclaimers" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">7. Disclaimers</h2>{" "}
+              <h2 id="disclaimers" className="font-heading text-2xl font-bold m-0">7. Disclaimers</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed font-bold">
@@ -391,7 +391,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="limitation-of-liability" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">8. Limitation of Liability</h2>{" "}
+              <h2 id="limitation-of-liability" className="font-heading text-2xl font-bold m-0">8. Limitation of Liability</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed font-bold">
@@ -416,7 +416,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="aipowered-features" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">9. AI-Powered Features</h2>{" "}
+              <h2 id="aipowered-features" className="font-heading text-2xl font-bold m-0">9. AI-Powered Features</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
 
@@ -598,7 +598,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="indemnification" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">10. Indemnification</h2>{" "}
+              <h2 id="indemnification" className="font-heading text-2xl font-bold m-0">10. Indemnification</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -616,7 +616,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="service-modifications-pricing" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">11. Service Modifications & Pricing</h2>{" "}
+              <h2 id="service-modifications-pricing" className="font-heading text-2xl font-bold m-0">11. Service Modifications & Pricing</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -638,7 +638,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="termination" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">12. Termination</h2>{" "}
+              <h2 id="termination" className="font-heading text-2xl font-bold m-0">12. Termination</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -659,7 +659,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="governing-law-dispute-resolution" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">13. Governing Law &amp; Dispute Resolution</h2>{" "}
+              <h2 id="governing-law-dispute-resolution" className="font-heading text-2xl font-bold m-0">13. Governing Law &amp; Dispute Resolution</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -698,7 +698,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="changes-to-terms" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">14. Changes to Terms</h2>{" "}
+              <h2 id="changes-to-terms" className="font-heading text-2xl font-bold m-0">14. Changes to Terms</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -718,7 +718,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="severability" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">15. Severability</h2>{" "}
+              <h2 id="severability" className="font-heading text-2xl font-bold m-0">15. Severability</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -731,7 +731,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="entire-agreement-assignment" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">16. Entire Agreement &amp; Assignment</h2>{" "}
+              <h2 id="entire-agreement-assignment" className="font-heading text-2xl font-bold m-0">16. Entire Agreement &amp; Assignment</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -751,7 +751,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border" id="attorney-privilege">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="attorneyclient-privilege-data-storage" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">17. Attorney-Client Privilege & Data Storage</h2>{" "}
+              <h2 id="attorneyclient-privilege-data-storage" className="font-heading text-2xl font-bold m-0">17. Attorney-Client Privilege & Data Storage</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
 
@@ -842,7 +842,7 @@ export default function TermsPage() {
 
           <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
-              <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">18. Contact Us</h2>{" "}
+              <h2 id="contact-us" className="font-heading text-2xl font-bold m-0">18. Contact Us</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
             <p className="text-soft leading-relaxed">
@@ -876,7 +876,7 @@ export default function TermsPage() {
         <div className="mt-12 text-center">
           <Link
             href="/"
-            className="hover-underline text-muted-foreground text-sm"
+            className="underline-offset-4 hover:underline text-muted-foreground text-sm"
           >
             &larr; Back to Home
           </Link>

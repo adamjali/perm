@@ -82,7 +82,7 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
       ) : null}
 
       {sections.map(({ topic, posts: list }) => (
-        <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-h`} className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
+        <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-h`} >
           <div className="mb-5 border-b border-border pb-3">
             <h2 id={`${topic.id}-h`} className="font-heading text-2xl font-bold sm:text-3xl">
               {topic.label}

@@ -1,104 +1,90 @@
 import { describe, expect, it } from "vitest";
+import { existsSync, readdirSync, statSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 import {
+  CALCULATORS,
+  CALCULATOR_PAGES,
+  FOOTER_COLUMNS,
   GROUPS,
+  LEARN_PAGES,
   OVERVIEW,
+  PAGE_NAMES,
   SECTIONS,
   isDataPath,
   sectionForPath,
-} from "@/components/tools/dataSections";
+  sectionPages,
+} from "@/lib/siteMap";
 
 /**
- * Every data page highlights its own entry in the rail.
+ * The site map (lib/siteMap.ts): one name per page, and every data page in
+ * exactly one group of the Data menu.
  *
- * THIS TEST USED TO CHECK SOMETHING ELSE, AND THE CHANGE IS THE POINT. The old
- * two-tier bar was rendered by each of 28 pages, each passing an `active` prop
- * naming its own section - a fact stated twice, once by the route the page
- * lives at and once by hand. It drifted twice: `/perm-cases` shipped
- * `active="employers"`, telling a visitor they were on the Employers page, and
- * `/perm-queue` borrowed `"overview"`, whose entry points at `/tools`. Neither
- * was visible from reading the page it was on, which is why the gate existed.
- *
- * The rail derives the current section from the pathname, so the second copy
- * is gone and that class of drift is not possible rather than merely caught.
- * What is worth testing now is the derivation itself, and in particular the
- * two ways it could quietly be wrong.
+ * The section a page is in comes from its URL, never from a prop the page
+ * passes, so a page can't claim the wrong section. What's tested here is that
+ * derivation, and that the map points only at pages that exist.
  */
+
+const PUBLIC = resolve(__dirname, "..", "(site)", "(public)");
+
+/** Whether a public path has a page file (static or under a [param] folder). */
+function pageExists(href: string): boolean {
+  if (href === "/") return existsSync(join(PUBLIC, "page.tsx"));
+  return existsSync(join(PUBLIC, ...href.split("/").filter(Boolean), "page.tsx"));
+}
 
 describe("sectionForPath", () => {
   it("matches every section at its own href", () => {
-    // A gate that cannot see its subject reads exactly like a pass.
-    expect(SECTIONS.length).toBeGreaterThan(10);
-    for (const s of SECTIONS) {
-      expect(sectionForPath(s.href)?.key, `${s.href} should be ${s.key}`).toBe(
-        s.key,
-      );
-    }
+    expect(SECTIONS.length).toBeGreaterThan(30);
+    for (const s of SECTIONS) expect(sectionForPath(s.href)?.key, s.href).toBe(s.key);
   });
 
-  it("prefers the LONGEST match, not the first one in the list", () => {
-    // The trap this list actually contains: `/tools` is the Overview and
-    // `/tools/priority-date-calculator` is the visa bulletin. A first-match
-    // scan would file every calculator under whichever entry happened to be
-    // written earlier, and the list's order is not something anyone maintains
-    // deliberately.
-    expect(sectionForPath("/tools/priority-date-calculator")?.key).toBe(
-      "visa-bulletin",
-    );
-    // /tools itself belongs to no group: Overview sits above them.
-    expect(sectionForPath("/tools")).toBeNull();
+  it("prefers the longest match: a calculator with its own entry is in its group, not Calculators", () => {
+    expect(sectionForPath("/tools/priority-date-calculator")?.key).toBe("priority-dates");
+    expect(sectionForPath("/tools/perm-timeline-calculator")?.group).toBe("Wait times");
+    // /tools itself is the Data hub, above every group.
+    expect(sectionForPath(OVERVIEW.href)).toBeNull();
+  });
+
+  it("files a calculator without an entry under Calculators", () => {
+    expect(sectionForPath("/tools/rfi-deadline")?.key).toBe(CALCULATORS.key);
+    expect(sectionPages("/tools/rfi-deadline")?.pages).toBe(CALCULATOR_PAGES);
   });
 
   it("puts a detail page under its parent section", () => {
-    // The behaviour an earlier path-prefix audit got wrong, reporting eleven
-    // mismatches of which ten were this: a child route legitimately highlights
-    // the index it belongs to.
     expect(sectionForPath("/perm-employers/apple-inc")?.key).toBe("employers");
     expect(sectionForPath("/perm-queue/2025-11")?.key).toBe("queue");
     expect(sectionForPath("/perm-rfi-audit/rfi-issued")?.key).toBe("rfi-audit");
+    expect(sectionForPath("/visa-bulletin/2026-10")?.key).toBe("visa-bulletin");
   });
 
   it("does not match a route that merely starts with the same letters", () => {
-    // `/perm-cases` and `/perm-case-status` share a prefix up to the hyphen.
-    // A naive `startsWith` without the boundary would put the case search
-    // under case status, or the reverse, depending on order.
     expect(sectionForPath("/perm-cases")?.key).toBe("cases");
     expect(sectionForPath("/perm-case-status")?.key).toBe("case-status");
   });
 
-  it("returns null off the data surface, so the rail never appears there", () => {
-    for (const p of ["/", "/faq", "/contact", "/blog", "/privacy", "/signup"]) {
-      expect(sectionForPath(p), `${p} is not a data page`).toBeNull();
-    }
-  });
-
-  it("ignores a trailing slash", () => {
-    expect(sectionForPath("/perm-queue/")?.key).toBe("queue");
-  });
-});
-
-describe("isDataPath", () => {
-  it("covers Overview, every section, and every detail page", () => {
-    expect(isDataPath(OVERVIEW.href)).toBe(true);
-    for (const s of SECTIONS) expect(isDataPath(s.href), s.href).toBe(true);
-    expect(isDataPath("/perm-employers/apple-inc")).toBe(true);
-  });
-
-  it("excludes the marketing and legal pages", () => {
-    for (const p of ["/", "/faq", "/contact", "/privacy", "/terms", "/blog"]) {
+  it("returns null off the data surface", () => {
+    for (const p of ["/", "/faq", "/contact", "/blog", "/privacy", "/signup", "/glossary"]) {
+      expect(sectionForPath(p), p).toBeNull();
       expect(isDataPath(p), p).toBe(false);
     }
   });
+
+  it("ignores a trailing slash and a query", () => {
+    expect(sectionForPath("/perm-queue/")?.key).toBe("queue");
+    expect(sectionForPath("/perm-case-status?case=G-100-26005-533577")?.key).toBe("case-status");
+  });
 });
 
-describe("the section map itself", () => {
-  it("gives every section a group the rail actually renders", () => {
-    // An entry whose group is not in GROUPS is unreachable: the rail iterates
-    // GROUPS, so the page would exist and appear in no list. That is how
-    // /perm-rfi-audit ended up with zero inbound links once already.
-    for (const s of SECTIONS) {
-      expect(GROUPS, `${s.key} is in group "${s.group}"`).toContain(s.group);
-    }
+describe("the map itself", () => {
+  it("gives every section one of the six groups, and no group is empty", () => {
+    expect(GROUPS).toHaveLength(6);
+    for (const s of SECTIONS) expect(GROUPS, s.key).toContain(s.group);
+    for (const g of GROUPS) expect(SECTIONS.filter((s) => s.group === g).length, g).toBeGreaterThan(0);
+  });
+
+  it("keeps each group short enough to scan: at most nine pages", () => {
+    for (const g of GROUPS) expect(SECTIONS.filter((s) => s.group === g).length, g).toBeLessThanOrEqual(9);
   });
 
   it("has no duplicate keys or hrefs", () => {
@@ -106,15 +92,31 @@ describe("the section map itself", () => {
     expect(new Set(SECTIONS.map((s) => s.href)).size).toBe(SECTIONS.length);
   });
 
-  it("keeps Overview out of the groups", () => {
-    // It is the parent of every group rather than a peer of any item, and
-    // filing it under one is what made the old first group incoherent.
-    expect(SECTIONS.some((s) => s.href === OVERVIEW.href)).toBe(false);
+  it("points only at pages that exist", () => {
+    const hrefs = [
+      ...SECTIONS.map((s) => s.href),
+      ...CALCULATOR_PAGES.map((p) => p.href),
+      ...LEARN_PAGES.map((p) => p.href),
+      ...FOOTER_COLUMNS.flatMap((c) => c.pages.map((p) => p.href)),
+      OVERVIEW.href,
+      CALCULATORS.href,
+    ];
+    const missing = [...new Set(hrefs)].filter((h) => !pageExists(h));
+    expect(missing).toEqual([]);
   });
 
-  it("leaves no group empty", () => {
-    for (const g of GROUPS) {
-      expect(SECTIONS.filter((s) => s.group === g).length, g).toBeGreaterThan(0);
-    }
+  it("names every page it lists", () => {
+    for (const s of SECTIONS) expect(PAGE_NAMES.get(s.href), s.href).toBe(s.name);
+    for (const p of CALCULATOR_PAGES) expect(PAGE_NAMES.get(p.href), p.href).toBeTruthy();
+  });
+
+  it("lists every calculator page the site has", () => {
+    // A calculator page nobody lists is reachable only by search.
+    const tools = resolve(PUBLIC, "tools");
+    const onDisk = readdirSync(tools)
+      .filter((d) => statSync(join(tools, d)).isDirectory() && existsSync(join(tools, d, "page.tsx")))
+      .map((d) => `/tools/${d}`);
+    const listed = new Set(CALCULATOR_PAGES.map((p) => p.href));
+    expect(onDisk.filter((h) => !listed.has(h))).toEqual([]);
   });
 });

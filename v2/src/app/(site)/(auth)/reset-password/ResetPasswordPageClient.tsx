@@ -228,7 +228,7 @@ export function ResetPasswordPageClient() {
 
   if (step === "reset") {
     return (
-      <Card className="">
+      <Card >
         <CardHeader>
           <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
             Reset your password
@@ -315,7 +315,7 @@ export function ResetPasswordPageClient() {
   }
 
   return (
-    <Card className="">
+    <Card >
       <CardHeader>
         <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
           Reset your password

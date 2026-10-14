@@ -12,7 +12,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { ABOUT_ONE_LINER, PEOPLE } from "@/lib/constants/about";
-import { LEARN_NAV_LINKS } from "@/lib/constants/navigation";
+import { LEARN_PAGES } from "@/lib/siteMap";
 import { getOrganizationSchema } from "@/lib/structuredData";
 
 const ROOT = path.resolve(__dirname, "../../../../../..");
@@ -106,7 +106,7 @@ describe("the About surfaces", () => {
   });
 
   it("is reachable: Learn menu, homepage block, sitemap and llms.txt all name /about", () => {
-    expect(LEARN_NAV_LINKS.some((l) => l.href === "/about")).toBe(true);
+    expect(LEARN_PAGES.some((l) => l.href === "/about")).toBe(true);
     expect(read("src/components/home/AboutSection.tsx")).toContain('href="/about"');
     expect(read("src/lib/sitemap/build.ts")).toContain("${base}/about");
     expect(read("src/app/llms.txt/route.ts")).toContain("/about)");

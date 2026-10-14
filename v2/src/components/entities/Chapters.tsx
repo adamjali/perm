@@ -54,7 +54,7 @@ export function ChapterNav({ items, className }: { items: ChapterItem[]; classNa
     <nav
       aria-label="On this page"
       className={cn(
-        "sticky top-[var(--site-header-h,71px)] z-30 -mx-4 border-y border-border bg-background px-4 sm:-mx-6 sm:px-6",
+        "sticky top-[var(--site-header-h)] z-30 -mx-4 border-y border-border bg-background px-4 sm:-mx-6 sm:px-6",
         className,
       )}
     >

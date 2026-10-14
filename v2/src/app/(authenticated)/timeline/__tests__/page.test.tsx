@@ -422,18 +422,6 @@ describe("TimelinePage - Select Cases Button", () => {
     expect(selectButton).toBeInTheDocument();
   });
 
-  it("has neobrutalist styling on button", () => {
-    setupMocks({
-      preferences: { timeRange: 6 },
-      cases: [createMockTimelineCase()],
-    });
-
-    renderWithProviders(<TimelinePage />);
-
-    const button = screen.getByRole("button", { name: /select cases/i });
-    expect(button).toHaveClass("border-2");
-    expect(button).toHaveClass("shadow-hard");
-  });
 });
 
 // LAYOUT TESTS

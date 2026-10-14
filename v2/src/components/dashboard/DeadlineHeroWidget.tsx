@@ -47,7 +47,7 @@ const CONTAINER_CLASSES =
 export function DeadlineHeroLoadingSkeleton(): ReactNode {
   return (
     <div className={CONTAINER_CLASSES}>
-      <div className="" aria-hidden="true" />
+      <div  aria-hidden="true" />
       {/* Sized to the real widget (measured on production): a 66px header
           over four 194px columns, so nothing below it moves when the
           deadlines land. */}
@@ -155,7 +155,7 @@ function DeadlineHeroEmptyState({
   const hasCases = openCases !== undefined && openCases > 0;
   return (
     <div className={CONTAINER_CLASSES}>
-      <div className="" aria-hidden="true" />
+      <div  aria-hidden="true" />
       <div className="space-y-4 bg-card p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -262,7 +262,7 @@ export default function DeadlineHeroWidget(): ReactNode {
 
   return (
     <div data-tour="deadline-hero" className="overflow-hidden rounded-none border border-border">
-      <div className="" aria-hidden="true" />
+      <div  aria-hidden="true" />
       <div className="bg-card">
         <DeadlineHeroHeader
           totalCount={totalCount}

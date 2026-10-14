@@ -573,35 +573,6 @@ describe("ProfileSection", () => {
   // NEOBRUTALIST STYLING TESTS
   // ============================================================================
 
-  describe("Neobrutalist Styling", () => {
-    it("applies neobrutalist border styling to main card", () => {
-      const { container } = renderWithProviders(
-        <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
-      );
-
-      const card = container.querySelector(".border-2.border-border");
-      expect(card).toBeInTheDocument();
-    });
-
-    it("applies box shadow styling via inline style", () => {
-      const { container } = renderWithProviders(
-        <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
-      );
-
-      const cardWithShadow = container.querySelector('[style*="box-shadow"]');
-      expect(cardWithShadow).toBeInTheDocument();
-    });
-
-    it("applies neobrutalist styling to profile photo container", () => {
-      const { container } = renderWithProviders(
-        <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
-      );
-
-      const photoContainer = container.querySelector(".w-20.h-20.border-2.border-border");
-      expect(photoContainer).toBeInTheDocument();
-    });
-  });
-
   // ============================================================================
   // EDGE CASES
   // ============================================================================

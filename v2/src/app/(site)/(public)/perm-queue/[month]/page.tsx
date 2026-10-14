@@ -372,7 +372,7 @@ export default async function CohortPage({
       </details>{" "}
 
       {awaitingDol ? (
-        <section id="queue-alert" className="mt-8 scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
+        <section id="queue-alert" className="mt-8">
           <QueueAlertForm
             source="queue-month-page"
             newestMonth={currentMonthUtc()}

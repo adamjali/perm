@@ -349,7 +349,7 @@ export function SignupPageClient() {
 
   if (step === "verification") {
     return (
-      <Card className="">
+      <Card >
         <CardHeader>
           <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
             Verify your email
@@ -412,7 +412,7 @@ export function SignupPageClient() {
   }
 
   return (
-    <Card className="">
+    <Card >
       <CardHeader>
         <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
           Sign up
