@@ -26,12 +26,12 @@ export function DolUnanswered({
 }) {
   const retry = `/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
   const panel = (
-    <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-      <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">{label}</p>{" "}
-      <h2 className="mt-2 break-words font-heading text-2xl font-black">
+    <section className="border border-border bg-card p-5 sm:p-6">
+      <p className="text-sm font-bold text-muted-foreground">{label}</p>{" "}
+      <h2 className="mt-2 break-words font-heading text-2xl font-bold">
         {unsettledVerdict(miss)}
       </h2>{" "}
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
         {miss === "records" ? "We couldn't check" : "We hold no record for"}{" "}
         <span className="font-mono font-bold" translate="no">{caseNumber}</span>
         {miss === "records" ? " just now: " : " yet, "}

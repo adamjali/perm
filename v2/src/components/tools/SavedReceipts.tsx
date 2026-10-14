@@ -54,7 +54,7 @@ function write(list: SavedReceipt[]): boolean {
 
 const LINK = "font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const BUTTON =
-  "min-h-[44px] border-2 border-border bg-background px-3 font-mono text-sm font-bold uppercase tracking-[0.08em] hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "min-h-[44px] border border-border bg-background px-3 text-sm font-bold hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 
 export function SavedReceipts({ current }: { current: string | null }) {
   const [list, setList] = useState<SavedReceipt[] | null>(null);
@@ -76,11 +76,11 @@ export function SavedReceipts({ current }: { current: string | null }) {
   };
 
   return (
-    <section className="mt-6 border-2 border-border bg-card p-5 sm:p-6" aria-labelledby="saved-receipts">
-      <h2 id="saved-receipts" className="font-heading text-lg font-black">
+    <section className="mt-6 border border-border bg-card p-5 sm:p-6" aria-labelledby="saved-receipts">
+      <h2 id="saved-receipts" className="font-heading text-lg font-bold">
         Your receipt numbers
       </h2>{" "}
-      <p className="mt-1 text-sm text-foreground/70">
+      <p className="mt-1 text-sm text-muted-foreground">
         Kept in this browser only. This site never sees the list, and clearing the browser&apos;s site data
         removes it.
       </p>
@@ -93,7 +93,7 @@ export function SavedReceipts({ current }: { current: string | null }) {
                 <Link href={`/uscis-case-status?receipt=${encodeURIComponent(s.receipt)}`} className={LINK}>
                   {s.receipt}
                 </Link>{" "}
-                {s.label ? <span className="text-base text-foreground/80">{s.label}</span> : null}{" "}
+                {s.label ? <span className="text-base text-soft">{s.label}</span> : null}{" "}
                 <button
                   type="button"
                   onClick={() => update(list.filter((x) => x.receipt !== s.receipt))}
@@ -125,7 +125,7 @@ export function SavedReceipts({ current }: { current: string | null }) {
             onChange={(e) => setLabel(e.target.value)}
             maxLength={40}
             placeholder="A name, optional"
-            className="min-h-[44px] min-w-0 flex-1 basis-48 border-2 border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+            className="min-h-[44px] min-w-0 flex-1 basis-48 border border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
           />{" "}
           <button type="submit" className={BUTTON}>
             Save {receipt}
@@ -133,7 +133,7 @@ export function SavedReceipts({ current }: { current: string | null }) {
         </form>
       ) : null}{" "}
       {list.length >= MAX_SAVED ? (
-        <p className="mt-2 text-sm text-foreground/70">
+        <p className="mt-2 text-sm text-muted-foreground">
           The list keeps {MAX_SAVED}; saving another drops the oldest.
         </p>
       ) : null}{" "}

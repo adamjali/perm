@@ -99,26 +99,26 @@ export async function CityReference({
 
   return (
     <>
-      <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="city-where">
-        <h2 id="city-where" className="font-heading text-xl font-black sm:text-2xl">
+      <section className="mt-10 border border-border bg-card p-6 sm:p-8" aria-labelledby="city-where">
+        <h2 id="city-where" className="font-heading text-xl font-bold sm:text-2xl">
           Where {label} sits
         </h2>{" "}
-        <dl className="mt-4 grid grid-cols-1 gap-px border-2 border-border bg-border sm:grid-cols-3 [&>*]:min-w-0">
+        <dl className="mt-4 grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-3 [&>*]:min-w-0">
           {geo.counties ? (
             <div className="bg-card p-4">
-              <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">Counties</dt>{" "}
+              <dt className="text-sm font-bold text-muted-foreground">Counties</dt>{" "}
               <dd className="mt-1 text-base font-bold">
                 {geo.counties.length <= 6 ? countyPhrase(geo.counties) : `${geo.counties.length} counties`}
               </dd>{" "}
-              <dd className="mt-1 text-sm text-foreground/70">
+              <dd className="mt-1 text-sm text-muted-foreground">
                 {`Census places ${geo.placeName ?? label} in ${geo.counties.length === 2 ? "both" : `all ${countWord(geo.counties.length)}`}`}
               </dd>
             </div>
           ) : geo.countyName ? (
             <div className="bg-card p-4">
-              <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">County</dt>{" "}
+              <dt className="text-sm font-bold text-muted-foreground">County</dt>{" "}
               <dd className="mt-1 text-base font-bold">{geo.countyName}</dd>{" "}
-              <dd className="mt-1 text-sm text-foreground/70">
+              <dd className="mt-1 text-sm text-muted-foreground">
                 {geo.countyBasis === "nearest"
                   ? "The place spans several counties; this one is nearest its center"
                   : geo.countyBasis === "nearest-in-state"
@@ -128,19 +128,19 @@ export async function CityReference({
             </div>
           ) : null}{" "}
           <div className="bg-card p-4">
-            <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">Metro area</dt>{" "}
+            <dt className="text-sm font-bold text-muted-foreground">Metro area</dt>{" "}
             <dd className="mt-1 text-base font-bold">{geo.cbsaTitle ?? "Outside any metro area"}</dd>{" "}
             {geo.cbsaType ? (
-              <dd className="mt-1 text-sm text-foreground/70">
+              <dd className="mt-1 text-sm text-muted-foreground">
                 {geo.cbsaType === "metro" ? "Metropolitan statistical area" : "Micropolitan statistical area"}
               </dd>
             ) : null}
           </div>{" "}
           {geo.wageAreaName ? (
             <div className="bg-card p-4">
-              <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">DOL wage area</dt>{" "}
+              <dt className="text-sm font-bold text-muted-foreground">DOL wage area</dt>{" "}
               <dd className="mt-1 text-base font-bold">{geo.wageAreaName}</dd>{" "}
-              <dd className="mt-1 text-sm text-foreground/70">
+              <dd className="mt-1 text-sm text-muted-foreground">
                 {split
                   ? `For ${geo.countyName ?? "the county"}, at the city's center; its counties sit in ${countWord(geo.wageAreas ?? 0)} wage areas`
                   : geo.wageYear
@@ -152,7 +152,7 @@ export async function CityReference({
         </dl>
         {parity?.all != null ? (
           <p className="mt-4 max-w-3xl text-base leading-relaxed">
-            <span className="font-heading text-2xl font-black tabular-nums">{parity.all.toFixed(1)}</span>{" "}
+            <span className="font-heading text-2xl font-bold tabular-nums">{parity.all.toFixed(1)}</span>{" "}
             is BEA&apos;s price level for the {geo.cbsaTitle} metro area in {parity.year}, against 100 for the country
             as a whole
             {parity.housing != null ? `; for housing rents it's ${parity.housing.toFixed(1)}` : ""}. A salary here buys
@@ -175,7 +175,7 @@ export async function CityReference({
             <table className="w-full min-w-[40rem] text-left text-base">
               <caption className="sr-only">Market pay and DOL wage levels for the jobs filed most here{" "}</caption>
               <thead>
-                <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
+                <tr className="border-b border-border text-sm text-muted-foreground">
                   <th className="py-2 pr-4 font-bold">Job{" "}</th>
                   <th className="py-2 pr-4 text-right font-bold">BLS median{" "}</th>
                   {["I", "II", "III", "IV"].map((l) => (
@@ -212,7 +212,7 @@ export async function CityReference({
             </table>
           </div>
           {area ? (
-            <p className="mt-3 text-sm text-foreground/70">
+            <p className="mt-3 text-sm text-muted-foreground">
               <Link href="/tools/wage-levels" className={LINK}>
                 Any job in any area, and every wage year since 2021-22, in the wage-level tool
               </Link>

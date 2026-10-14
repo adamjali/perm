@@ -71,45 +71,17 @@ export function fillPath(edge: string): string {
   return `${edge} L1440,64 L0,64 Z`;
 }
 
-export function SectionDivider({
-  kind = "step",
-  fill,
-  above,
-  className,
-}: {
+/**
+ * The stepped seam between homepage bands. Retired with the bands themselves
+ * (Oct 14 2026): the page is one flat ground, so sections are separated by
+ * space and their headings. The props stay so callers compile until the
+ * homepage drops them.
+ */
+export function SectionDivider(_props: {
   kind?: SectionDividerKind;
-  /**
-   * CSS colour of the OPAQUE band below the seam. Leave it out when the
-   * section below is transparent; the edge is then drawn on its own.
-   */
   fill?: string;
-  /**
-   * CSS colour of the OPAQUE band above the seam. The strip above the edge
-   * is otherwise transparent, and the dotted page ground showing through it
-   * reads as a gap between two bands. Leave it out when the section above is
-   * transparent too.
-   */
   above?: string;
   className?: string;
 }) {
-  const edge = EDGES[kind];
-  return (
-    <div className={className} aria-hidden="true" style={{ lineHeight: 0, background: above }}>
-      <svg
-        viewBox="0 0 1440 64"
-        preserveAspectRatio="none"
-        className="block h-10 w-full sm:h-14"
-      >
-        {fill ? <path d={fillPath(edge)} fill={fill} /> : null}
-        <path
-          d={edge}
-          fill="none"
-          stroke="var(--border)"
-          strokeWidth={3}
-          strokeLinejoin="miter"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-    </div>
-  );
+  return null;
 }

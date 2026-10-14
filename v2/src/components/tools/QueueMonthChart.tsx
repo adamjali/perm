@@ -46,7 +46,7 @@ export function QueueMonthChart({
 }: QueueMonthChartProps) {
   if (months.length === 0) {
     return (
-      <p className={cn("text-base text-foreground/70", className)}>
+      <p className={cn("text-base text-muted-foreground", className)}>
         Per-month queue figures are not loaded right now. DOL&apos;s own queue
         position is on the{" "}
         <a
@@ -100,7 +100,7 @@ export function QueueMonthChart({
                 <span
                   className={cn(
                     "flex items-center gap-1.5 text-sm",
-                    isSelected ? "font-black" : "text-foreground/70",
+                    isSelected ? "font-bold" : "text-muted-foreground",
                   )}
                 >
                   {label}
@@ -109,7 +109,7 @@ export function QueueMonthChart({
                       // Real semantic state, not decoration: this month's
                       // filing volume collapsed and the note below says so.
                       // Its meaning is in the row's hover detail and aria-label.
-                      className="border border-border bg-muted px-1 font-mono text-sm font-bold text-foreground/80"
+                      className="border border-border bg-muted px-1 font-mono text-sm font-bold text-soft"
                     >
                       !
                     </span>
@@ -117,7 +117,7 @@ export function QueueMonthChart({
                 </span>{" "}
                 {/* The track is always full width, so a month DOL has not
                     started reads as untouched rather than as a missing row. */}
-                <span className="block h-6 w-full border-2 border-border bg-muted">
+                <span className="block h-6 w-full border border-border bg-muted">
                   <span
                     className={cn(
                       "block h-full",
@@ -135,7 +135,7 @@ export function QueueMonthChart({
                 <span
                   className={cn(
                     "text-right text-sm tabular-nums",
-                    isSelected ? "font-black" : "text-foreground/70",
+                    isSelected ? "font-bold" : "text-muted-foreground",
                   )}
                 >
                   {pct.toFixed(0)}%
@@ -143,7 +143,7 @@ export function QueueMonthChart({
                 <span
                   className={cn(
                     "text-right text-sm tabular-nums",
-                    isSelected ? "font-black" : "text-foreground/70",
+                    isSelected ? "font-bold" : "text-muted-foreground",
                   )}
                 >
                   {formatInt(m.pending)}
@@ -155,24 +155,24 @@ export function QueueMonthChart({
       </ol>
       </ChartTips>
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground/70">
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border-2 border-border bg-foreground/70" aria-hidden="true" />
+          <span className="h-3 w-3 border border-border bg-foreground/70" aria-hidden="true" />
           Ahead of yours
         </span>{" "}
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border-2 border-border bg-primary" aria-hidden="true" />
+          <span className="h-3 w-3 border border-border bg-primary" aria-hidden="true" />
           Your month
         </span>{" "}
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border-2 border-border bg-foreground/20" aria-hidden="true" />
+          <span className="h-3 w-3 border border-border bg-foreground/20" aria-hidden="true" />
           Filed after yours
         </span>{" "}
         <span>Columns: share of the month decided, then cases still pending.</span>
       </div>
 
       {anomalies.length > 0 ? (
-        <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           {anomalies.length === 1 ? "One month is marked" : `${anomalies.length} months are marked`}{" "}
           because far fewer cases were filed in{" "}
           {anomalies.length === 1 ? "it" : "them"} than in the months either

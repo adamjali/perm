@@ -233,7 +233,7 @@ export function ReliabilityBand({
   return (
     <section
       className={cn(
-        "border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6",
+        "border border-border bg-card p-5 sm:p-6",
         withheld ? "border-l-8 border-l-data-warn" : "border-l-8 border-l-data-none",
         className,
       )}
@@ -241,13 +241,13 @@ export function ReliabilityBand({
     >
       <p
         className={cn(
-          "font-mono text-sm font-bold uppercase tracking-[0.1em]",
-          withheld ? "text-data-warn-ink" : "text-foreground/60",
+          "text-sm font-bold",
+          withheld ? "text-data-warn-ink" : "text-muted-foreground",
         )}
       >
         {withheld ? "Too few cases for a rate" : "This rate is level with the field"}
       </p>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+      <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
         {withheld
           ? `${formatInt(decided)} decided ${decided === 1 ? unit.replace(/s$/, "") : unit}: too few for an approval rate.`
           : `Over ${formatInt(decided)} decided ${unit}, this rate can't be told apart from the field in either direction.`}
@@ -256,7 +256,7 @@ export function ReliabilityBand({
         <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-bold underline decoration-2 underline-offset-4">
           Why
         </summary>{" "}
-        <p className="mt-1 text-base leading-relaxed text-foreground/80">
+        <p className="mt-1 text-base leading-relaxed text-soft">
           {withheld ? (
             <>
               Across every PERM case DOL decided in this window,{" "}
@@ -318,13 +318,13 @@ export function PeerList({
   if (items.length === 0) return null;
   return (
     <section className={cn("", className)}>
-      <h2 className="font-heading text-2xl font-black">{heading}</h2>{" "}
+      <h2 className="font-heading text-2xl font-bold">{heading}</h2>{" "}
       {wordCount(note) > 28 ? (
         <MoreText gist={firstSentence(plainText(note))} className="mt-2">
-          <p className="text-base leading-relaxed text-foreground/70">{note}</p>
+          <p className="text-base leading-relaxed text-muted-foreground">{note}</p>
         </MoreText>
       ) : (
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">{note}</p>
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">{note}</p>
       )}{" "}
       <ul className="mt-5 grid list-none grid-cols-1 gap-4 p-0 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p) => (
@@ -336,14 +336,14 @@ export function PeerList({
             <li className="min-w-0">
               <Link
                 href={`${hrefBase}/${p.slug}`}
-                className="flex h-full min-h-[44px] flex-col border-2 border-border bg-card p-4 no-underline shadow-hard-sm transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="flex h-full min-h-[44px] flex-col border border-border bg-card p-4 no-underline transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
-                <span className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/60">
+                <span className="text-sm font-bold text-muted-foreground">
                   #{formatInt(p.rank)}
                   {p.state ? ` · ${p.state}` : ""}
                 </span>{" "}
                 <span className="mt-1 text-base font-bold leading-snug">{p.name}</span>{" "}
-                <span className="mt-2 font-mono text-sm tabular-nums text-foreground/70">
+                <span className="mt-2 font-mono text-sm tabular-nums text-muted-foreground">
                   {formatInt(p.total)} {unit}
                   {p.denied > 0 ? ` · ${formatInt(p.denied)} denied` : " · none denied"}
                 </span>
@@ -395,9 +395,9 @@ export function RankLadder({
   if (below) rows.push({ label: "Just below", item: below });
 
   return (
-    <section className={cn("border-2 border-border bg-card p-6 shadow-hard-sm", className)}>
-      <h2 className="font-heading text-lg font-black">Where this sits in the ranking</h2>{" "}
-      <p className="mt-2 text-base leading-relaxed text-foreground/70">
+    <section className={cn("border border-border bg-card p-6", className)}>
+      <h2 className="font-heading text-lg font-bold">Where this sits in the ranking</h2>{" "}
+      <p className="mt-2 text-base leading-relaxed text-muted-foreground">
         Ranked {formatInt(rank)} of {formatInt(kindTotal)} by volume: {formatInt(above_)} filed at
         least as many {unit}, and {formatInt(below_)} filed no more.
       </p>{" "}
@@ -406,7 +406,7 @@ export function RankLadder({
           <Fragment key={r.label}>
             {" "}
             <div className="min-w-0">
-              <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/60">
+              <dt className="text-sm font-bold text-muted-foreground">
                 {r.label}
               </dt>{" "}
               <dd className="mt-1 min-w-0">
@@ -416,7 +416,7 @@ export function RankLadder({
                 >
                   {r.item.name}
                 </Link>{" "}
-                <span className="block font-mono text-sm tabular-nums text-foreground/70">
+                <span className="block font-mono text-sm tabular-nums text-muted-foreground">
                   {formatInt(r.item.total)} {unit}
                 </span>
               </dd>
@@ -449,23 +449,23 @@ export function LimitsPanel({
     // click away, with the heading still in the outline; a reader meets the
     // heading and the count, not five paragraphs.
     <details
-      className={cn("group border-2 border-border bg-tint-primary shadow-hard-sm", className)}
+      className={cn("group border border-border bg-tint-primary", className)}
     >
       <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-4 px-6 py-4">
-        <h2 className="font-heading text-xl font-black">What these numbers don&apos;t say</h2>{" "}
-        <span className="shrink-0 text-sm font-bold text-foreground/70">
+        <h2 className="font-heading text-xl font-bold">What these numbers don&apos;t say</h2>{" "}
+        <span className="shrink-0 text-sm font-bold text-muted-foreground">
           {items.length} notes
         </span>
       </summary>{" "}
-      <dl className="grid grid-cols-1 gap-5 border-t-2 border-border px-6 py-5 [&>*]:min-w-0 md:grid-cols-2">
+      <dl className="grid grid-cols-1 gap-5 border-t border-border px-6 py-5 [&>*]:min-w-0 md:grid-cols-2">
         {items.map((i) => (
           <Fragment key={i.head}>
             {" "}
             <div className="min-w-0">
-              <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/70">
+              <dt className="text-sm font-bold text-muted-foreground">
                 {i.head}
               </dt>{" "}
-              <dd className="mt-1.5 text-base leading-relaxed text-foreground/80">{i.body}</dd>
+              <dd className="mt-1.5 text-base leading-relaxed text-soft">{i.body}</dd>
             </div>
           </Fragment>
         ))}
@@ -493,7 +493,7 @@ export function DisclosureNote({
   const files = sourceFiles.length ? describeDisclosureFiles(sourceFiles) : "";
   return (
     // ONE LINE: the window and the method link, no panel.
-    <p className={cn("max-w-3xl text-sm leading-relaxed text-foreground/75", className)}>
+    <p className={cn("max-w-3xl text-sm leading-relaxed text-soft", className)}>
       <span className="font-bold text-foreground">The window these figures cover: </span>
       {files ? `DOL's PERM disclosure files for ${files}` : "DOL's PERM disclosure files"}
       {uniqueCases ? `, ${formatInt(uniqueCases)} decided cases` : ""}. Nothing pending
@@ -526,9 +526,9 @@ export function EntityDataGap({
   backLabel: string;
 }) {
   return (
-    <section className="border-2 border-border bg-card p-6 shadow-hard-sm sm:p-8">
-      <h2 className="font-heading text-xl font-black">The figures didn’t load</h2>{" "}
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
+    <section className="border border-border bg-card p-6 sm:p-8">
+      <h2 className="font-heading text-xl font-bold">The figures didn’t load</h2>{" "}
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
         {what} is in DOL&apos;s disclosure files, but this page couldn’t read
         the current figures. That’s usually a few minutes around a data
         refresh rather than anything missing. Reload, or start from{" "}

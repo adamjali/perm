@@ -41,13 +41,13 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
 
   return (
     <figure className="m-0">
-      <div className="border-2 border-border bg-card p-4 sm:p-5">
+      <div className="border border-border bg-card p-4 sm:p-5">
         {/*
           The field rate, stated before the ranking rather than under it. A
           list of percentages with no reference point invites the reader to
           treat the top row as normal, and 29% is not normal.
         */}
-        <p className="mb-4 border-b-2 border-border pb-3 text-sm">
+        <p className="mb-4 border-b border-border pb-3 text-sm">
           <b className="font-bold">
             {cut.baseline.toFixed(2)}% of all {cut.filed.toLocaleString()} cases
             filed between {monthName(cut.from)} and {monthName(cut.to)}
@@ -77,7 +77,7 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
               <span className="order-3 col-span-2 sm:order-2 sm:col-span-1">
                 <span className="flex h-4 items-center">
                   <span
-                    className="block h-full border-2 border-border bg-[var(--data-warn-ink)]"
+                    className="block h-full border border-border bg-[var(--data-warn-ink)]"
                     style={{ width: width(r.rate) }}
                   />
                 </span>

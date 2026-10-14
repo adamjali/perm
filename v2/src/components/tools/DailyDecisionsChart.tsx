@@ -117,7 +117,7 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
   return (
     <div className={className}>
       {pace ? (
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        <p className="text-sm font-semibold text-muted-foreground">
           {pace.perBusinessDay.toLocaleString("en-US")} decisions per working day
         </p>
       ) : null}{" "}

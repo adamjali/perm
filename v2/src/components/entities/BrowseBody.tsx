@@ -189,10 +189,10 @@ export async function BrowseIndexBody({ kind }: { kind: EntityKind }) {
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Browse {cfg.plural} A to Z
         </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           All {formatInt(total)} {cfg.plural} with a page of their own, grouped by the
           first letter of the name DOL prints. {bucketLabel(busiest)} is the
           biggest group at {formatInt(counts[busiest] ?? 0)}. The ranked table on the{" "}
@@ -207,14 +207,14 @@ export async function BrowseIndexBody({ kind }: { kind: EntityKind }) {
       </header>
 
       <section className="mt-10">
-        <h2 className="font-heading text-2xl font-black">
+        <h2 className="font-heading text-2xl font-bold">
           Pick a letter
         </h2>{" "}
-        <p className="mt-2 max-w-2xl text-base text-foreground/70">
+        <p className="mt-2 max-w-2xl text-base text-muted-foreground">
           Every {cfg.singular} DOL&apos;s published files name has a page of its
           own, even one with a single case.
         </p>{" "}
-        <p className="mt-3 max-w-2xl text-base text-foreground/70">
+        <p className="mt-3 max-w-2xl text-base text-muted-foreground">
           {BROWSE_NOTE[kind]}
         </p>
         <BrowseIndexGrid
@@ -256,8 +256,8 @@ export async function BrowseTeaser({
 
   return (
     <section className={className}>
-      <h2 className="font-heading text-2xl font-black">Browse A to Z</h2>{" "}
-      <p className="mt-2 max-w-3xl text-base text-foreground/70">
+      <h2 className="font-heading text-2xl font-bold">Browse A to Z</h2>{" "}
+      <p className="mt-2 max-w-3xl text-base text-muted-foreground">
         {formatInt(total)} {cfg.plural} with a page of their own, by first letter. The{" "}
         <Link
           href={browseHref(cfg.base)}
@@ -307,12 +307,12 @@ export async function BrowseLetterBody({
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-3xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           {cfg.plural.charAt(0).toUpperCase() + cfg.plural.slice(1)} beginning
           with {phrase}
         </h1>{" "}
         {entries.length > 0 && busiest ? (
-          <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
             {formatInt(bucketTotal)} of the {formatInt(total)} {cfg.plural} with a page
             here, {pct(bucketTotal, total)}% of them. The busiest is{" "}
             <Link
@@ -326,7 +326,7 @@ export async function BrowseLetterBody({
             disclosure files.
           </p>
         ) : (
-          <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
             DOL&apos;s disclosure files name no {cfg.singular} beginning with{" "}
             {phrase}, so there is nothing to list under {label}. Every other
             letter is one click away.
@@ -343,16 +343,16 @@ export async function BrowseLetterBody({
 
       {shown > 0 ? (
         <section className="mt-10">
-          <h2 className="font-heading text-2xl font-black">
+          <h2 className="font-heading text-2xl font-bold">
             {capped
               ? `The first ${formatInt(shown)}, alphabetically`
               : `All ${formatInt(shown)}, alphabetically`}
           </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base text-foreground/70">
+          <p className="mt-2 max-w-3xl text-base text-muted-foreground">
             Each number is the PERM cases DOL&apos;s current files record for that {cfg.singular}.
           </p>{" "}
           {capped ? (
-            <p className="mt-3 max-w-3xl border-l-4 border-primary bg-tint-primary px-4 py-3 text-base text-foreground/80">
+            <p className="mt-3 max-w-3xl border-l-2 border-primary bg-tint-primary px-4 py-3 text-base text-soft">
               This letter holds {formatInt(bucketTotal)} {cfg.plural}; the list stops at {formatInt(shown)}. The other{" "}
               {formatInt(bucketTotal - shown)} still have their own pages.{" "}
               <Link href={cfg.base} className="underline underline-offset-2">
@@ -371,11 +371,11 @@ export async function BrowseLetterBody({
       ) : null}
 
       <section className="mt-12 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2">
-        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">
+        <div className="border border-border bg-tint-primary p-6">
+          <h2 className="font-heading text-lg font-bold">
             Looking for one in particular?
           </h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             The{" "}
             <Link
               href={cfg.base}
@@ -387,11 +387,11 @@ export async function BrowseLetterBody({
             small for a page of their own.
           </p>
         </div>
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">
             Holding a case number?
           </h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             A{" "}
             <Link
               href="/perm-case-status"

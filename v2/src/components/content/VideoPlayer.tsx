@@ -35,7 +35,7 @@ const DynamicPlayer = dynamic(() => import("./VideoPlayerInner"), {
   ssr: false,
   loading: () => (
     <div className="skeleton-pulse flex aspect-video items-center justify-center">
-      <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
+      <span className="text-sm text-muted-foreground">
         Loading video...
       </span>
     </div>
@@ -52,7 +52,7 @@ export default function VideoPlayer({
 
   return (
     <div
-      className={`relative overflow-hidden border-2 border-border bg-card shadow-hard ${className}`}
+      className={`relative overflow-hidden border border-border bg-card ${className}`}
     >
       <DynamicPlayer videoId={videoId} config={config} autoPlay={autoPlay} loop={loop} />
     </div>

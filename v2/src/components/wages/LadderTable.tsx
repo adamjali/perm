@@ -36,23 +36,23 @@ export function LadderTable({
   if (rows.length === 0) return null;
   return (
     <div className="-mx-1 overflow-x-auto px-1">
-      <table className="w-full min-w-[640px] border-2 border-border text-left text-sm shadow-hard-sm">
+      <table className="w-full min-w-[640px] border border-border text-left text-sm">
         <caption className="sr-only">
           {`Offered wage percentiles by ${subjectLabel.toLowerCase()}, with the number of ${unit} behind each row.`}
         </caption>
         <thead>
-          <tr className="border-b-2 border-border bg-muted">
-            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
+          <tr className="border-b border-border bg-muted">
+            <th scope="col" className="px-3 py-2 text-sm font-bold">
               {subjectLabel}{" "}
             </th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right text-sm font-bold">
               Cases{" "}
             </th>
             {RUNGS.map((r) => (
               <th
                 key={r}
                 scope="col"
-                className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider"
+                className="px-3 py-2 text-right text-sm font-bold"
               >
                 {RUNG_LABEL[r]}{" "}
               </th>

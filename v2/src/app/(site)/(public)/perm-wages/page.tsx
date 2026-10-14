@@ -159,8 +159,8 @@ export default async function PermWagesPage() {
         <>
           <ChapterNav items={chapters} className="mt-10" />
           {ladder ? (
-            <section id="ladder" className="mt-10 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-              <h2 className="font-heading text-2xl font-black">
+            <section id="ladder" className="mt-10 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border border-border bg-foreground p-6 text-background sm:p-8">
+              <h2 className="font-heading text-2xl font-bold">
                 The whole wage ladder
               </h2>{" "}
               <dl className="mt-6 grid [&>*]:min-w-0 grid-cols-2 gap-4 sm:grid-cols-5">
@@ -174,11 +174,11 @@ export default async function PermWagesPage() {
                   // Array items render with NOTHING between them, so the
                   // last figure of one rung glued to the next rung's label.
                   <Fragment key={d.k}>
-                    <div className={d.k === "Median" ? "border-2 border-primary bg-primary/15 p-3" : "p-3"}>
-                      <dt className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
+                    <div className={d.k === "Median" ? "border border-primary bg-primary/15 p-3" : "p-3"}>
+                      <dt className="text-sm font-bold text-background/60">
                         {d.k}
                       </dt>{" "}
-                      <dd className="mt-1 font-heading text-xl font-black tabular-nums sm:text-2xl">
+                      <dd className="mt-1 font-heading text-xl font-bold tabular-nums sm:text-2xl">
                         {d.v == null ? "—" : formatDollars(d.v)}
                       </dd>
                     </div>{" "}
@@ -236,11 +236,11 @@ export default async function PermWagesPage() {
             </FigurePlate>
           ) : null}
 
-          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-foreground pt-4">
-            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-foreground pt-4">
+            <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
               All {occupationCount.toLocaleString("en-US")} occupations
             </h2>{" "}
-            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
               Search, filter by job family, sort any column, or download the CSV.
             </p>
             <div className="mt-6">
@@ -257,8 +257,8 @@ export default async function PermWagesPage() {
           </div>
         </>
       ) : (
-        <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">
-          <p className="text-lg text-foreground/70">
+        <section className="mt-10 border border-border bg-card p-8 text-center">
+          <p className="text-lg text-muted-foreground">
             The occupation aggregates land with the quarterly disclosure
             ingest. Until then, the{" "}
             <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
@@ -270,9 +270,9 @@ export default async function PermWagesPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Comparing an offer?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-tint-primary p-6">
+          <h2 className="font-heading text-lg font-bold">Comparing an offer?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The{" "}
             <Link href="/tools/salary-explorer" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               salary explorer
@@ -280,9 +280,9 @@ export default async function PermWagesPage() {
             recomputes the ladder over any occupation, state and year.
           </p>
         </div>
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Wondering about pace?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Wondering about pace?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             A case&apos;s speed depends on its filing month, not its wage. The{" "}
             <Link href="/perm-decision-activity" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision activity
@@ -296,7 +296,7 @@ export default async function PermWagesPage() {
         </div>
       </section>
       <PageBasics page="perm-wages" />{" "}
-      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
+      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Filings newer than DOL&apos;s last published file aren&apos;t in this table: DOL reports the occupation and the wage only when it publishes the decided case. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link>, by employer.
       </p>{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />

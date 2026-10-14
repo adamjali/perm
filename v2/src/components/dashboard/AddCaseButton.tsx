@@ -41,19 +41,19 @@ export default function AddCaseButton() {
         // Colors
         "bg-primary text-primary-foreground",
         // Neobrutalist border + shadow
-        "border-2 border-border shadow-hard",
+        "border border-border",
         // No border radius (sharp corners)
         "rounded-none",
         // Cursor pointer for clickable state
         "cursor-pointer",
         // Hover: lift up-left (disabled when pending)
-        !isNavigating && "hover:-translate-x-1 hover:-translate-y-1",
+        !isNavigating && "",
         // Active: press down-right, remove shadow (disabled when pending)
-        !isNavigating && "active:translate-x-1 active:translate-y-1 active:shadow-none",
+        !isNavigating && "",
         // Loading state
         isNavigating && "opacity-80 cursor-wait",
         // Smooth transitions
-        "transition-all duration-200"
+        "transition-colors duration-200"
       )}
     >
       {isNavigating ? (

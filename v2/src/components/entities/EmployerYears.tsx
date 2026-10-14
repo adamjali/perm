@@ -43,10 +43,10 @@ export function EmployerYears({
     <section className={cn("mt-12", className)}>
       {showChart && peak ? (
         <>
-          <h2 className="font-heading text-2xl font-black">
+          <h2 className="font-heading text-2xl font-bold">
             Year by year since {first}
           </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base text-foreground/70">
+          <p className="mt-2 max-w-2xl text-base text-muted-foreground">
             {formatInt(total)} PERM decisions from FY{first} to FY{last}, busiest in
             FY{peak.fy} with{" "}
             {formatInt(peak.certified + peak.denied + peak.withdrawn)}.
@@ -67,11 +67,11 @@ export function EmployerYears({
       ) : null}
 
       {cases.length > 0 ? (
-        <div className="mt-6 border-2 border-border bg-card p-5 sm:p-6">
-          <h3 className="font-heading text-lg font-black">
+        <div className="mt-6 border border-border bg-card p-5 sm:p-6">
+          <h3 className="font-heading text-lg font-bold">
             Decided in FY2016 to FY2023
           </h3>{" "}
-          <p className="mt-1 text-sm text-foreground/70">
+          <p className="mt-1 text-sm text-muted-foreground">
             {cases.length < historyTotal
               ? `The ${formatInt(cases.length)} most recent of ${formatInt(historyTotal)}.`
               : `All ${formatInt(cases.length)}.`}{" "}
@@ -111,7 +111,7 @@ function CaseTable({ cases, head = true }: { cases: HistoryCase[]; head?: boolea
         </colgroup>
         {head ? (
           <thead>
-            <tr className="border-b-2 border-border">
+            <tr className="border-b border-border">
               <th className="py-1.5 pr-4 font-bold">Case </th>
               <th className="py-1.5 pr-4 font-bold">Decided </th>
               <th className="py-1.5 pr-4 font-bold">Outcome </th>

@@ -107,10 +107,10 @@ export default async function GreenCardLinePage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Your place in the green card line
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           Everyone ahead of your priority date in EB-2, EB-3 or EB-3 Other Workers, counted from what USCIS and the
           State Department publish, and how many years that is at the pace the line got green cards last year.
         </p>
@@ -121,7 +121,7 @@ export default async function GreenCardLinePage() {
       </section>{" "}
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
         <FaqList items={FAQS} />
       </section>
 

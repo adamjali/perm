@@ -103,7 +103,7 @@ export function Pager({
           <span>Page {page.toLocaleString("en-US")}</span>
         </p>{" "}
         {reason ? (
-          <p id={id} role={loading ? "status" : undefined} className="mt-1 text-sm text-foreground/70">
+          <p id={id} role={loading ? "status" : undefined} className="mt-1 text-sm text-muted-foreground">
             {reason}
           </p>
         ) : null}{" "}

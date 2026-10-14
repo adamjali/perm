@@ -38,7 +38,7 @@ import UrgencyGroup from "./UrgencyGroup";
 // border-2, the real widget's border. The skeleton drew 3px, so the widget
 // shifted by a pixel on every side when its data arrived.
 const CONTAINER_CLASSES =
-  "overflow-hidden rounded-none border-2 border-border shadow-hard";
+  "overflow-hidden rounded-none border border-border";
 
 // ============================================================================
 // Sub-components
@@ -47,7 +47,7 @@ const CONTAINER_CLASSES =
 export function DeadlineHeroLoadingSkeleton(): ReactNode {
   return (
     <div className={CONTAINER_CLASSES}>
-      <div className="hazard-strip-red" aria-hidden="true" />
+      <div className="" aria-hidden="true" />
       {/* Sized to the real widget (measured on production): a 66px header
           over four 194px columns, so nothing below it moves when the
           deadlines land. */}
@@ -60,7 +60,7 @@ export function DeadlineHeroLoadingSkeleton(): ReactNode {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className={`p-4 min-h-[194px] ${i < 3 ? "md:border-r-2 border-border" : ""}`}
+              className={`p-4 min-h-[194px] ${i < 3 ? "md:border-r border-border" : ""}`}
             >
               <Skeleton className="h-6 w-24 mb-3" />
               <Skeleton className="h-16" />
@@ -88,7 +88,7 @@ function DeadlineHeroHeader({
   onRefresh,
 }: DeadlineHeroHeaderProps): ReactNode {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b-2 border-border">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b border-border">
       <div className="flex items-center gap-2">
         <AlertTriangle
           className={`size-6 ${hasOverdue ? "text-destructive" : "text-muted-foreground"}`}
@@ -155,7 +155,7 @@ function DeadlineHeroEmptyState({
   const hasCases = openCases !== undefined && openCases > 0;
   return (
     <div className={CONTAINER_CLASSES}>
-      <div className="hazard-strip-red" aria-hidden="true" />
+      <div className="" aria-hidden="true" />
       <div className="space-y-4 bg-card p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -181,7 +181,7 @@ function DeadlineHeroEmptyState({
             </Button>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center rounded-none border-2 border-border bg-background p-8 text-center">
+        <div className="flex flex-col items-center justify-center rounded-none border border-border bg-background p-8 text-center">
           <p className="mb-4 text-lg text-muted-foreground">
             No upcoming deadlines
           </p>{" "}
@@ -261,8 +261,8 @@ export default function DeadlineHeroWidget(): ReactNode {
   const hasOverdue = data.overdue.length > 0;
 
   return (
-    <div data-tour="deadline-hero" className="overflow-hidden rounded-none border-2 border-border shadow-hard">
-      <div className="hazard-strip-red" aria-hidden="true" />
+    <div data-tour="deadline-hero" className="overflow-hidden rounded-none border border-border">
+      <div className="" aria-hidden="true" />
       <div className="bg-card">
         <DeadlineHeroHeader
           totalCount={totalCount}

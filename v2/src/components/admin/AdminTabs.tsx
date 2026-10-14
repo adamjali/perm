@@ -45,7 +45,7 @@ export function AdminTabs({ tabs }: { tabs: AdminTab[] }) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Admin sections" className="flex flex-wrap gap-2 border-b-2 border-border pb-3">
+      <div role="tablist" aria-label="Admin sections" className="flex flex-wrap gap-2 border-b border-border pb-3">
         {tabs.map((t, i) => {
           const selected = t.id === active;
           return (
@@ -61,8 +61,8 @@ export function AdminTabs({ tabs }: { tabs: AdminTab[] }) {
               tabIndex={selected ? 0 : -1}
               onClick={() => choose(t.id)}
               onKeyDown={(e) => onKey(e, i)}
-              className={`inline-flex min-h-[44px] items-center gap-2 border-2 border-border px-4 text-sm font-bold transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 motion-reduce:transition-none ${
-                selected ? "bg-foreground text-background shadow-hard-sm" : "bg-background hover:-translate-y-0.5"
+              className={`inline-flex min-h-[44px] items-center gap-2 border border-border px-4 text-sm font-bold transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 motion-reduce:transition-none ${
+                selected ? "bg-foreground text-background" : "bg-background"
               }`}
             >
               {t.label}

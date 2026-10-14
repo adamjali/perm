@@ -39,10 +39,10 @@ export function CaseNextStep({
   return (
     <section
       aria-label="Check your case"
-      className={cn("border-2 border-border bg-card p-5 shadow-hard sm:p-6", className)}
+      className={cn("border border-border bg-card p-5 sm:p-6", className)}
     >
-      <h2 className="font-heading text-xl font-black leading-tight sm:text-2xl">{question}</h2>{" "}
-      <p className="mt-1 max-w-2xl text-base leading-relaxed text-foreground/70">
+      <h2 className="font-heading text-xl font-bold leading-tight sm:text-2xl">{question}</h2>{" "}
+      <p className="mt-1 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Its number gives DOL&apos;s live status, an estimated decision date and an email when it moves.
       </p>{" "}
       <CaseLookupForm

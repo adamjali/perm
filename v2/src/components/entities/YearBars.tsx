@@ -57,12 +57,12 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
   const max = Math.max(...totals, 1);
   const total = totals.reduce((a, b) => a + b, 0);
   return (
-    <div className="border-2 border-border bg-card p-5 sm:p-6">
+    <div className="border border-border bg-card p-5 sm:p-6">
       {/* The tooltip sits outside the scrolling strip, which would clip it. */}
       <ChartTips label="PERM decisions by fiscal year">
       <div className="overflow-x-auto">
         <div
-          className="flex h-48 min-w-[640px] items-end gap-1.5 border-b-2 border-border"
+          className="flex h-48 min-w-[640px] items-end gap-1.5 border-b border-border"
           role="img"
           aria-label={`Decisions by fiscal year, FY${first} to FY${last}, ${formatInt(total)} in all. The table below has every figure.`}
         >
@@ -91,7 +91,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
         </div>
         <div className="mt-2 flex min-w-[640px] gap-1.5" aria-hidden="true">
           {series.map((y) => (
-            <span key={y.fy} className="flex-1 text-center font-mono text-sm tabular-nums text-foreground/70">
+            <span key={y.fy} className="flex-1 text-center font-mono text-sm tabular-nums text-muted-foreground">
               {/* The space sits inside the label, so the axis never reads as one run. */}
               {(y.fy - first) % 2 === 0 || y.fy === last ? `FY${String(y.fy).slice(2)} ` : " "}
             </span>
@@ -105,7 +105,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
           <Fragment key={k}>
             {" "}
             <li className="flex items-center gap-2">
-              <span className={cn("h-3 w-3 border-2 border-border", TONE[k])} aria-hidden="true" />{" "}
+              <span className={cn("h-3 w-3 border border-border", TONE[k])} aria-hidden="true" />{" "}
               <span className="font-bold capitalize">{k}</span>
             </li>
           </Fragment>
@@ -114,10 +114,10 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
       {note ? (
         wordCount(note) > 28 ? (
           <MoreText gist={firstSentence(plainText(note))} size="sm" className="mt-4 border-t border-border/40 pt-2">
-            <p className="text-sm leading-relaxed text-foreground/70">{note}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{note}</p>
           </MoreText>
         ) : (
-          <p className="mt-4 border-t border-border/40 pt-3 text-sm leading-relaxed text-foreground/70">{note}</p>
+          <p className="mt-4 border-t border-border/40 pt-3 text-sm leading-relaxed text-muted-foreground">{note}</p>
         )
       ) : null}{" "}
       <details className="mt-3 text-sm">
@@ -125,7 +125,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[360px] border-collapse text-left tabular-nums">
             <thead>
-              <tr className="border-b-2 border-border">
+              <tr className="border-b border-border">
                 <th className="py-1.5 pr-4 font-bold">Fiscal year{" "}</th>
                 <th className="py-1.5 pr-4 text-right font-bold">Certified{" "}</th>
                 <th className="py-1.5 pr-4 text-right font-bold">Denied{" "}</th>

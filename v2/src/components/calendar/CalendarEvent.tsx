@@ -52,7 +52,7 @@ function CaseSummary({ event }: { event: CalendarEventType }) {
 
   return (
     <div className="w-72">
-      <div className="border-b-2 border-border px-3 py-2" style={{ backgroundColor: fill, color: ink }}>
+      <div className="border-b border-border px-3 py-2" style={{ backgroundColor: fill, color: ink }}>
         <p className="truncate font-heading text-sm font-bold" title={event.employerName || undefined}>
           {event.employerName || "Unknown employer"}
         </p>{" "}
@@ -76,7 +76,7 @@ function CaseSummary({ event }: { event: CalendarEventType }) {
       </dl>
       <div
         className={cn(
-          "flex items-center justify-between gap-3 border-t-2 border-border px-3 py-2",
+          "flex items-center justify-between gap-3 border-t border-border px-3 py-2",
           urgent ? "bg-destructive/10" : soon ? "bg-data-warn/15" : "bg-muted",
         )}
       >
@@ -140,7 +140,7 @@ export function CalendarEvent({ event }: CalendarEventProps) {
             onClick={handleClick}
           />
         </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={8} collisionPadding={10} className="overflow-hidden p-0 shadow-hard">
+        <TooltipContent side="top" sideOffset={8} collisionPadding={10} className="overflow-hidden p-0">
           <CaseSummary event={event} />
         </TooltipContent>
       </Tooltip>

@@ -105,10 +105,10 @@ export default async function SeasonalCasesPage() {
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-3xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Find an H-2A, H-2B or CW-1 filing
         </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           Seasonal farm and non-farm work. Search the employer to get the number, the job and DOL&apos;s status.
         </p>
       </header>
@@ -125,13 +125,13 @@ export default async function SeasonalCasesPage() {
                 const share = summary.total > 0 ? Math.round((n / summary.total) * 100) : 0;
                 if (!f) return null;
                 return (
-                  <li key={p} className="border-2 border-border bg-card p-4 shadow-hard">
+                  <li key={p} className="border border-border bg-card p-4">
                     <p className="font-mono text-sm font-bold">
-                      {p}- <span className="text-foreground/60">· {f.form}</span>
+                      {p}- <span className="text-muted-foreground">· {f.form}</span>
                     </p>{" "}
-                    <p className="mt-1 font-heading text-lg font-black">{f.label}</p>{" "}
-                    <p className="mt-2 font-heading text-3xl font-black">{formatInt(n)}</p>{" "}
-                    <p className="text-sm text-foreground/70">{formatInt(pending)} still in process</p>{" "}
+                    <p className="mt-1 font-heading text-lg font-bold">{f.label}</p>{" "}
+                    <p className="mt-2 font-heading text-3xl font-bold">{formatInt(n)}</p>{" "}
+                    <p className="text-sm text-muted-foreground">{formatInt(pending)} still in process</p>{" "}
                     {/* Drawn to measure: the bar is this form's share of every filing held. */}
                     <div
                       className="mt-3 h-2 w-full bg-muted"
@@ -147,22 +147,22 @@ export default async function SeasonalCasesPage() {
             </ChartTips>
           ) : (
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
-              <div className="border-2 border-border bg-card p-4 shadow-hard">
-                <dt className="text-sm font-bold text-foreground/70">Confirmed in DOL&apos;s case status</dt>{" "}
-                <dd className="mt-1 font-heading text-3xl font-black">{formatInt(summary.total)}</dd>
+              <div className="border border-border bg-card p-4">
+                <dt className="text-sm font-bold text-muted-foreground">Confirmed in DOL&apos;s case status</dt>{" "}
+                <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.total)}</dd>
               </div>{" "}
-              <div className="border-2 border-border bg-card p-4 shadow-hard">
-                <dt className="text-sm font-bold text-foreground/70">Still in process</dt>{" "}
-                <dd className="mt-1 font-heading text-3xl font-black">{formatInt(summary.pending)}</dd>
+              <div className="border border-border bg-card p-4">
+                <dt className="text-sm font-bold text-muted-foreground">Still in process</dt>{" "}
+                <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.pending)}</dd>
               </div>{" "}
-              <div className="border-2 border-border bg-tint-primary p-4 shadow-hard">
-                <dt className="text-sm font-bold text-foreground/70">Decided</dt>{" "}
-                <dd className="mt-1 font-heading text-3xl font-black">{formatInt(summary.decided)}</dd>
+              <div className="border border-border bg-tint-primary p-4">
+                <dt className="text-sm font-bold text-muted-foreground">Decided</dt>{" "}
+                <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.decided)}</dd>
               </div>
             </dl>
           )}{" "}
           {earliest ? (
-            <p className="mt-3 text-sm text-foreground/70">
+            <p className="mt-3 text-sm text-muted-foreground">
               Filings from {longDate(`${earliest}-01`) ?? earliest} on; checked {longDate(summary.asOf) ?? "daily"}.
             </p>
           ) : null}
@@ -173,7 +173,7 @@ export default async function SeasonalCasesPage() {
           figures come from folds under one line. It had been a tinted block
           of five paragraphs above the search. */}
       <section className="mt-8 max-w-3xl">
-        <p className="text-base leading-relaxed text-foreground/80">
+        <p className="text-base leading-relaxed text-soft">
           Have the number? The{" "}
           <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text">
             status lookup
@@ -189,19 +189,19 @@ export default async function SeasonalCasesPage() {
           </Link>
           .
         </p>{" "}
-        <details className="group mt-4 border-2 border-border bg-card">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 font-heading text-base font-black [&::-webkit-details-marker]:hidden">
+        <details className="group mt-4 border border-border bg-card">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
             Where these figures come from{" "}
             <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
           </summary>
-          <div className="border-t-2 border-border p-4">
-            <p className="text-base leading-relaxed text-foreground/80">
+          <div className="border-t border-border p-4">
+            <p className="text-base leading-relaxed text-soft">
               Every status comes from DOL&apos;s case system, pending ones included. The wage, the workers and the
               worksite come from DOL&apos;s quarterly H-2A, H-2B and CW-1 files once a case is decided, and, for an
               application DOL has accepted but not yet decided, from its SeasonalJobs feed.
             </p>{" "}
             {published.length > 0 ? (
-              <ul className="mt-3 space-y-1 text-sm text-foreground/75">
+              <ul className="mt-3 space-y-1 text-sm text-soft">
                 {published.map(({ visa, summary: pub }) => (
                   <li key={visa}>
                     <span className="font-bold">{visa}:</span> {formatInt(pub.rows)} decided cases in DOL&apos;s file
@@ -222,10 +222,10 @@ export default async function SeasonalCasesPage() {
 
       {allDecided.length > 0 ? (
         <section aria-labelledby="seasonal-decided" className="mt-14">
-          <h2 id="seasonal-decided" className="font-heading text-2xl font-black">
+          <h2 id="seasonal-decided" className="font-heading text-2xl font-bold">
             What DOL decides, week by week
           </h2>{" "}
-          <p className="mt-1 text-sm text-foreground/70">
+          <p className="mt-1 text-sm text-muted-foreground">
             H-2A, H-2B and CW-1 together, by DOL&apos;s own decision date in its published files,{" "}
             {longDate(allDecided[0]!.date) ?? allDecided[0]!.date} to{" "}
             {longDate(allDecided[allDecided.length - 1]!.date) ?? allDecided[allDecided.length - 1]!.date}.
@@ -245,10 +245,10 @@ export default async function SeasonalCasesPage() {
                   { key: "withdrawn", n: v.withdrawn, word: "withdrawn", cls: "bg-data-none" },
                 ];
                 return (
-                  <li key={v.visa} className="border-2 border-border bg-card p-4">
-                    <p className="font-heading text-lg font-black">{v.visa}</p>{" "}
-                    <p className="mt-1 font-heading text-3xl font-black tabular-nums">{pct(v.certified, v.total)}%</p>{" "}
-                    <p className="text-sm text-foreground/70">certified, of {formatInt(v.total)} decided</p>{" "}
+                  <li key={v.visa} className="border border-border bg-card p-4">
+                    <p className="font-heading text-lg font-bold">{v.visa}</p>{" "}
+                    <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{pct(v.certified, v.total)}%</p>{" "}
+                    <p className="text-sm text-muted-foreground">certified, of {formatInt(v.total)} decided</p>{" "}
                     {/* Drawn to measure: each segment is that outcome's share of the visa's decisions. */}
                     <div className="mt-3 flex h-3 w-full overflow-hidden border border-border" aria-hidden="true">
                       {parts.map((part) =>
@@ -271,8 +271,8 @@ export default async function SeasonalCasesPage() {
       ) : null}{" "}
 
       <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">How this works</h2>{" "}
-        <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
+        <h2 className="font-heading text-2xl font-bold">How this works</h2>{" "}
+        <div className="mt-4 space-y-4 text-base leading-relaxed text-soft">
           <FinePrint summary="Where the rows come from">
             <p>
               DOL numbers every filing, PERM and H-1B included, from one running counter. This

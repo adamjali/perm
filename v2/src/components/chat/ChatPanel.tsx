@@ -269,7 +269,7 @@ export function ChatPanel({
           onClose();
         }
       }}
-      initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.95 }}
+      initial={false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}
       transition={springConfig}
@@ -284,12 +284,12 @@ export function ChatPanel({
         'md:bottom-20 md:right-4',
         'md:w-[380px] md:h-[560px] md:max-h-[80vh]',
         'flex flex-col',
-        'bg-background border-2 border-border shadow-hard-lg',
+        'bg-background border border-border',
         'overflow-hidden'
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b-2 border-border bg-muted gap-2">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted gap-2">
         <div className="flex items-center gap-2 flex-shrink-0">
           <ChatTextIcon className="h-5 w-5 text-primary" />
           <h2 id={titleId} className="font-heading font-semibold text-sm max-[389px]:sr-only">PERM Assistant</h2>
@@ -331,7 +331,7 @@ export function ChatPanel({
       </div>
 
       {/* The mode just chosen, named */}
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {modeNotice && (
           <motion.p
             role="status"
@@ -339,7 +339,7 @@ export function ChatPanel({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.15 }}
-            className="px-3 py-2 text-sm border-b-2 border-border bg-background overflow-hidden"
+            className="px-3 py-2 text-sm border-b border-border bg-background overflow-hidden"
           >
             {modeNotice}
           </motion.p>
@@ -374,7 +374,7 @@ export function ChatPanel({
                     size="sm"
                     variant="outline"
                     onClick={() => setPageSize((n) => n + MESSAGE_PAGE)}
-                    className="h-11 md:h-9 shadow-hard-sm"
+                    className="h-11 md:h-9"
                   >
                     {firstShown > MESSAGE_PAGE
                       ? `Show ${MESSAGE_PAGE} earlier messages (${firstShown} left)`
@@ -405,7 +405,7 @@ export function ChatPanel({
                       />
                     )}
                     <motion.div
-                      initial={isNew ? { opacity: 0, y: 6 } : false}
+                      initial={false}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.18, ease: 'easeOut' }}
                     >
@@ -425,7 +425,7 @@ export function ChatPanel({
                       {/* A cap ended this reply: say which, and offer to go on
                           while it is still the latest turn. */}
                       {message.cutShort && !message.isStreaming && (
-                        <div className="mt-2 flex items-start gap-2 border-2 border-border bg-muted p-2.5 text-sm">
+                        <div className="mt-2 flex items-start gap-2 border border-border bg-muted p-2.5 text-sm">
                           <InfoIcon className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
                           <div className="min-w-0 flex-1">
                             <p>{cutShortNotice(message.cutShort)}</p>{" "}
@@ -435,7 +435,7 @@ export function ChatPanel({
                                 size="sm"
                                 variant="outline"
                                 onClick={onContinue}
-                                className="mt-2 h-11 md:h-9 shadow-hard-sm"
+                                className="mt-2 h-11 md:h-9"
                               >
                                 Continue
                               </Button>
@@ -449,19 +449,19 @@ export function ChatPanel({
               })}
 
               {/* Typing indicator */}
-              <AnimatePresence>
+              <AnimatePresence initial={false}>
                 {showTyping && <TypingIndicator />}
               </AnimatePresence>
 
               {/* Error message */}
-              <AnimatePresence>
+              <AnimatePresence initial={false}>
                 {status === 'error' && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     role="alert"
-                    className="flex items-start gap-3 p-3 bg-destructive/10 border-2 border-destructive rounded-none"
+                    className="flex items-start gap-3 p-3 bg-destructive/10 border border-destructive rounded-none"
                   >
                     <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
@@ -482,7 +482,7 @@ export function ChatPanel({
                           size="sm"
                           variant="outline"
                           onClick={onRetry}
-                          className="mt-2 h-11 md:h-9 shadow-hard-sm"
+                          className="mt-2 h-11 md:h-9"
                         >
                           Try again
                         </Button>
@@ -497,7 +497,7 @@ export function ChatPanel({
         </div>
 
         {/* Newer content below while the reader is scrolled up */}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {showJump && (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
@@ -511,7 +511,7 @@ export function ChatPanel({
                 size="sm"
                 variant="outline"
                 onClick={jump}
-                className="h-11 md:h-9 gap-1.5 bg-background shadow-hard-sm"
+                className="h-11 md:h-9 gap-1.5 bg-background"
               >
                 <ArrowDownIcon className="h-4 w-4" />
                 Jump to latest

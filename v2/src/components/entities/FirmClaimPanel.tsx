@@ -40,11 +40,11 @@ type Status = "idle" | "sending" | "done" | "error";
 type FieldErrors = Partial<Record<ProfileField | "email" | "role", string>>;
 
 const INPUT =
-  "mt-1.5 block min-h-[48px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-1.5 block min-h-[48px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const LABEL = "block text-sm font-bold";
-const HINT = "block text-sm font-normal text-foreground/70";
+const HINT = "block text-sm font-normal text-muted-foreground";
 const BUTTON =
-  "inline-flex min-h-[48px] items-center justify-center border-2 border-border bg-foreground px-6 text-base font-bold text-background shadow-hard transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:hover:translate-y-0 motion-reduce:transition-none";
+  "inline-flex min-h-[48px] items-center justify-center border border-border bg-foreground px-6 text-base font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none";
 
 function FieldError({ id, text }: { id: string; text?: string }) {
   return text ? (
@@ -107,7 +107,7 @@ function ClaimForm({ slug }: { slug: string }) {
 
   if (status === "done") {
     return (
-      <p role="status" aria-live="polite" className="mt-4 border-2 border-border bg-primary px-4 py-3 text-base font-bold text-primary-foreground">
+      <p role="status" aria-live="polite" className="mt-4 border border-border bg-primary px-4 py-3 text-base font-bold text-primary-foreground">
         {message} Nothing shows on the page until you confirm and we&apos;ve read it.
       </p>
     );
@@ -207,7 +207,7 @@ function ClaimForm({ slug }: { slug: string }) {
         <button type="submit" disabled={status === "sending"} className={BUTTON}>
           {status === "sending" ? "Sending" : "Send the confirmation link"}
         </button>{" "}
-        <p className="mt-3 text-sm text-foreground/70">
+        <p className="mt-3 text-sm text-muted-foreground">
           Free. An address at a domain DOL&apos;s own filings list for this firm is confirmed by the link alone; any
           other address is checked by a person first. What you send shows here as the firm&apos;s own words once we&apos;ve
           read it, and we can take it down.
@@ -269,16 +269,16 @@ function EditLinkForm({ slug }: { slug: string }) {
 function FirmBadge({ slug, firmName }: { slug: string; firmName: string }) {
   const snippet = firmBadgeSnippet(SITE_URL, slug, firmName);
   return (
-    <div className="mb-8 border-b-2 border-border pb-6">
-      <h3 className="font-heading text-base font-black">A badge for your firm&apos;s site</h3>{" "}
-      <p className="mt-1 max-w-3xl text-base leading-relaxed text-foreground/80">
+    <div className="mb-8 border-b border-border pb-6">
+      <h3 className="font-heading text-base font-bold">A badge for your firm&apos;s site</h3>{" "}
+      <p className="mt-1 max-w-3xl text-base leading-relaxed text-soft">
         It says &ldquo;Verified firm&rdquo; and links to this page. Paste the code where your site lists the firm&apos;s
         other credentials.
       </p>{" "}
       {/* eslint-disable-next-line @next/next/no-img-element -- the badge is the SVG a firm's site will load, shown as it will look */}
       <img src={`/badge/firm/${slug}.svg`} alt={`${firmName} on PERM Tracker`} height={20} className="mt-3 h-5 w-auto" />{" "}
       <div className="mt-3 flex flex-wrap items-start gap-3">
-        <code className="block min-w-0 flex-1 break-all border-2 border-border bg-background px-3 py-2 font-mono text-sm">
+        <code className="block min-w-0 flex-1 break-all border border-border bg-background px-3 py-2 font-mono text-sm">
           {snippet}
         </code>{" "}
         <CopyButton text={snippet} />
@@ -290,26 +290,26 @@ function FirmBadge({ slug, firmName }: { slug: string; firmName: string }) {
 /** The fold at the foot of a firm's page. */
 export function FirmClaimPanel({ slug, firmName, claimed }: { slug: string; firmName: string; claimed: boolean }) {
   return (
-    <section aria-labelledby="claim-this-page" className="mt-10 border-2 border-border bg-card shadow-hard-sm">
+    <section aria-labelledby="claim-this-page" className="mt-10 border border-border bg-card">
       <details className="group">
         <summary className="flex min-h-[56px] cursor-pointer list-none items-center justify-between gap-4 px-6 py-4 [&::-webkit-details-marker]:hidden">
-          <h2 id="claim-this-page" className="font-heading text-lg font-black">
+          <h2 id="claim-this-page" className="font-heading text-lg font-bold">
             {claimed ? `Work at ${firmName}? Edit or claim this page` : `Work at ${firmName}? Claim this page`}
           </h2>{" "}
-          <span aria-hidden className="text-2xl font-black transition-transform group-open:rotate-45 motion-reduce:transition-none">
+          <span aria-hidden className="text-2xl font-bold transition-transform group-open:rotate-45 motion-reduce:transition-none">
             +
           </span>
         </summary>
-        <div className="border-t-2 border-border px-6 pb-6 pt-4">
-          <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
+        <div className="border-t border-border px-6 pb-6 pt-4">
+          <p className="max-w-3xl text-base leading-relaxed text-soft">
             Add the firm&apos;s website, a short description, languages, offices and what it handles. Once we&apos;ve read
             it, it shows on this page apart from DOL&apos;s figures, marked as the firm&apos;s own words.
             {claimed ? null : " A verified firm also gets a badge for its own site that links here."}
           </p>{" "}
           {claimed ? <FirmBadge slug={slug} firmName={firmName} /> : null}
           <ClaimForm slug={slug} />
-          <div className="mt-8 border-t-2 border-border pt-5">
-            <h3 className="font-heading text-base font-black">Already claimed it?</h3>{" "}
+          <div className="mt-8 border-t border-border pt-5">
+            <h3 className="font-heading text-base font-bold">Already claimed it?</h3>{" "}
             <EditLinkForm slug={slug} />
           </div>
         </div>

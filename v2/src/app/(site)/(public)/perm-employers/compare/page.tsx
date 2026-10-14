@@ -129,10 +129,10 @@ export default async function CompareEmployersPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+      <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
         Compare two employers
       </h1>{" "}
-      <p className="mt-4 max-w-3xl text-lg leading-relaxed text-foreground/70">
+      <p className="mt-4 max-w-3xl text-lg leading-relaxed text-muted-foreground">
         Two PERM sponsors next to each other, every figure from DOL&apos;s own
         files. No score: which one is the safer bet depends on your own case,
         and the numbers are here so you can weigh it.
@@ -157,22 +157,22 @@ export default async function CompareEmployersPage({
                 <Link
                   href={`/perm-employers/compare?a=${e.a}&b=${e.b}`}
                   rel="nofollow"
-                  className="inline-flex min-h-11 items-center border-2 border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint-primary"
+                  className="inline-flex min-h-11 items-center border border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint-primary"
                 >
                   {e.label}
                 </Link>{" "}
               </Fragment>
             ))}
           </div>{" "}
-          <figure className="mt-6 border-2 border-dashed border-foreground/40 p-4 sm:p-5">
-            <figcaption className="font-heading text-lg font-black">What a comparison lines up</figcaption>{" "}
+          <figure className="mt-6 border border-dashed border-foreground/40 p-4 sm:p-5">
+            <figcaption className="font-heading text-lg font-bold">What a comparison lines up</figcaption>{" "}
             <dl aria-hidden="true" className="mt-4 divide-y divide-border/30">
               {rows.slice(0, 8).map((r) => (
                 <div
                   key={r.label}
                   className="grid grid-cols-[minmax(0,1fr)_5rem_5rem] items-center gap-3 py-2 sm:grid-cols-[minmax(0,16rem)_8rem_8rem] [&>*]:min-w-0"
                 >
-                  <dt className="text-sm text-foreground/70">{r.label}{" "}</dt>{" "}
+                  <dt className="text-sm text-muted-foreground">{r.label}{" "}</dt>{" "}
                   <dd className="h-4 bg-foreground/10" />{" "}
                   <dd className="h-4 bg-foreground/10" />
                 </div>
@@ -183,21 +183,21 @@ export default async function CompareEmployersPage({
       ) : null}{" "}
 
       {(slugA && !left) || (slugB && !right) ? (
-        <p role="alert" className="mt-6 border-2 border-border bg-card p-4 text-sm font-bold">
+        <p role="alert" className="mt-6 border border-border bg-card p-4 text-sm font-bold">
           One of those employers is not in the index. Pick it again from the search.
         </p>
       ) : null}{" "}
 
       {both ? (
-        <div className="mt-10 overflow-x-auto overscroll-x-none border-2 border-border bg-card shadow-hard">
+        <div className="mt-10 overflow-x-auto overscroll-x-none border border-border bg-card">
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead className="bg-foreground text-background">
               <tr>
-                <th scope="col" className="px-4 py-3 text-left font-mono text-sm font-bold uppercase tracking-[0.1em]">Measure{" "} </th>
+                <th scope="col" className="px-4 py-3 text-left text-sm font-bold">Measure{" "} </th>
                 {[left, right].map((s) => (
                   <Fragment key={s.entity.canonicalSlug}>
                     <th scope="col" className="px-4 py-3 text-left">
-                      <Link href={`/perm-employers/${s.entity.canonicalSlug}`} className="font-heading text-base font-black underline decoration-primary decoration-2 underline-offset-2">
+                      <Link href={`/perm-employers/${s.entity.canonicalSlug}`} className="font-heading text-base font-bold underline decoration-primary decoration-2 underline-offset-2">
                         {s.entity.row.name}
                       </Link>{" "}
                     </th>
@@ -208,7 +208,7 @@ export default async function CompareEmployersPage({
             <tbody translate="no">
               {rows.map((r) => (
                 <Fragment key={r.label}>
-                  <tr className="border-t-2 border-border align-top">
+                  <tr className="border-t border-border align-top">
                     <th scope="row" className="px-4 py-3 text-left font-semibold">
                       {r.label}{" "}
                       {r.note ? <span className="block text-sm font-normal text-muted-foreground">{r.note}</span> : null}{" "}
@@ -218,12 +218,12 @@ export default async function CompareEmployersPage({
                   </tr>
                 </Fragment>
               ))}
-              <tr className="border-t-2 border-border align-top">
+              <tr className="border-t border-border align-top">
                 <th scope="row" className="px-4 py-3 text-left font-semibold">Top occupations filed{" "} </th>
                 <td className="px-4 py-3">{facetList(left, "occupation")}{" "} </td>
                 <td className="px-4 py-3">{facetList(right, "occupation")}{" "} </td>
               </tr>
-              <tr className="border-t-2 border-border align-top">
+              <tr className="border-t border-border align-top">
                 <th scope="row" className="px-4 py-3 text-left font-semibold">Top worksite states{" "} </th>
                 <td className="px-4 py-3">{facetList(left, "state")}{" "} </td>
                 <td className="px-4 py-3">{facetList(right, "state")}{" "} </td>
@@ -234,14 +234,14 @@ export default async function CompareEmployersPage({
       ) : null}{" "}
 
       {both ? (
-        <section className="mt-8 max-w-3xl border-2 border-border bg-card p-5 sm:p-6" aria-labelledby="switching">
-          <h2 id="switching" className="font-heading text-xl font-black">
+        <section className="mt-8 max-w-3xl border border-border bg-card p-5 sm:p-6" aria-labelledby="switching">
+          <h2 id="switching" className="font-heading text-xl font-bold">
             If you&apos;re moving from one to the other
           </h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/80">
+          <p className="mt-2 text-base leading-relaxed text-soft">
             Where your own case stands matters more than any figure above.
           </p>
-          <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/80">
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">
             <li>Before the I-140 is approved, a move usually means a new PERM with the new employer.</li>{" "}
             <li>
               Once it&apos;s approved, the priority date stays yours for a later employment-based petition unless

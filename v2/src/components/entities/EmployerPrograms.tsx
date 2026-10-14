@@ -50,20 +50,20 @@ export function EmployerPrograms({
   const gap = wageGap(perm, lca);
   return (
     <section className="mt-10">
-      <h2 className="font-heading text-xl font-black sm:text-2xl">Across DOL&apos;s programs</h2>{" "}
-      <p className="mt-2 max-w-3xl text-base text-foreground/75">
+      <h2 className="font-heading text-xl font-bold sm:text-2xl">Across DOL&apos;s programs</h2>{" "}
+      <p className="mt-2 max-w-3xl text-base text-soft">
         {perm ? "The wage request, the PERM and the H-1B labor condition application" : "Each program it files"}
         {perm && seasonal ? ", and its seasonal H-2A, H-2B and CW-1 work" : ""}, one line each.
       </p>{" "}
-      <dl className="mt-4 max-w-3xl border-t-2 border-border">
+      <dl className="mt-4 max-w-3xl border-t border-border">
         {lines.map((l) => (
           <div
             key={l.program}
-            className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_7rem_7rem_8rem] sm:items-baseline sm:gap-x-4"
+            className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[minmax(0,1fr)_7rem_7rem_8rem] sm:items-baseline sm:gap-x-4"
           >
             <dt className="text-base font-bold">{PROGRAM_LABEL[l.program]}</dt>{" "}
             <dd className="tabular-nums sm:text-right">
-              <span className="font-heading text-lg font-black">{formatInt(l.published)}</span>{" "}
+              <span className="font-heading text-lg font-bold">{formatInt(l.published)}</span>{" "}
               <span className="text-sm text-muted-foreground">published</span>
             </dd>{" "}
             <dd className="tabular-nums sm:text-right">
@@ -71,7 +71,7 @@ export function EmployerPrograms({
                 <span className="text-sm text-muted-foreground">no live read</span>
               ) : (
                 <>
-                  <span className="font-heading text-lg font-black">{formatInt(l.pending)}</span>{" "}
+                  <span className="font-heading text-lg font-bold">{formatInt(l.pending)}</span>{" "}
                   <span className="text-sm text-muted-foreground">pending</span>
                 </>
               )}
@@ -80,7 +80,7 @@ export function EmployerPrograms({
               {l.medianHourlyWage !== undefined ? (
                 l.medianHourlyWage !== null && l.wageN >= WAGE_FLOOR ? (
                   <>
-                    <span className="font-heading text-lg font-black">
+                    <span className="font-heading text-lg font-bold">
                       ${l.medianHourlyWage.toFixed(2)}
                     </span>{" "}
                     <span className="text-sm text-muted-foreground">an hour, median, n={formatInt(l.wageN)}</span>
@@ -92,7 +92,7 @@ export function EmployerPrograms({
                 )
               ) : l.medianAnnualWage !== null && l.wageN >= WAGE_FLOOR ? (
                 <>
-                  <span className="font-heading text-lg font-black">{formatDollars(l.medianAnnualWage)}</span>{" "}
+                  <span className="font-heading text-lg font-bold">{formatDollars(l.medianAnnualWage)}</span>{" "}
                   <span className="text-sm text-muted-foreground">median, n={formatInt(l.wageN)}</span>
                 </>
               ) : (
@@ -104,9 +104,9 @@ export function EmployerPrograms({
           </div>
         ))}
       </dl>{" "}
-      {gap ? <p className="mt-4 max-w-3xl text-base leading-relaxed text-foreground/85">{wageGapSentence(gap)}</p> : null}{" "}
+      {gap ? <p className="mt-4 max-w-3xl text-base leading-relaxed text-soft">{wageGapSentence(gap)}</p> : null}{" "}
       {stages && stages.review > 0 ? (
-        <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
+        <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
           {(() => {
             const parts = breakdownParts(stages);
             const since = holdSincePhrase(stages, logFrom);
@@ -120,7 +120,7 @@ export function EmployerPrograms({
           .
         </p>
       ) : null}{" "}
-      <p className="mt-3 max-w-3xl text-sm text-foreground/75">
+      <p className="mt-3 max-w-3xl text-sm text-soft">
         <Link href={searchHref} className={LINK}>
           Every case across these programs
         </Link>{" "}

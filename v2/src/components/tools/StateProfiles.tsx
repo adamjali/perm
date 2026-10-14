@@ -98,13 +98,13 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
             <p className="font-bold">
               {stateName(b.state)}
             </p>{" "}
-            <p className="font-mono text-sm tabular-nums text-foreground/70">
+            <p className="font-mono text-sm tabular-nums text-muted-foreground">
               {formatInt(b.count)} of {formatInt(b.total)}
             </p>
           </div>
           <div className="mt-1.5 flex items-center gap-3">
             <div
-              className="h-4 min-w-0 flex-1 border-2 border-border bg-background"
+              className="h-4 min-w-0 flex-1 border border-border bg-background"
               role="img"
               aria-label={`${pct(b.share)} of ${stateName(b.state)} filings are ${b.label}`}
             >
@@ -119,12 +119,12 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
                 style={{ width: `${Math.min(100, b.share)}%` }}
               />
             </div>
-            <p className="w-14 shrink-0 text-right font-heading text-lg font-black tabular-nums">
+            <p className="w-14 shrink-0 text-right font-heading text-lg font-bold tabular-nums">
               {pct(b.share)}
             </p>
           </div>
-          <p className="mt-1.5 text-sm leading-snug text-foreground/70">
-            <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="mt-1.5 text-sm leading-snug text-muted-foreground">
+            <span className="text-sm font-bold text-muted-foreground">
               {unit}
             </span>{" "}
             {b.label}
@@ -140,22 +140,22 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
 function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-2 border-border text-left text-sm">
+      <table className="w-full border border-border text-left text-sm">
         <caption className="sr-only">
           Every state by the share of its filings in its single biggest {unit.toLowerCase()}
         </caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-sm font-bold">
               State
             {" "}</th>
-            <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-sm font-bold">
               {unit}
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right text-sm font-bold">
               Cases
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right text-sm font-bold">
               Share{" "}
             </th>
           </tr>
@@ -195,7 +195,7 @@ export function StateConcentration({
         tableLabel="Every state"
         controls={
           <fieldset className="min-w-0">
-            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            <legend className="text-sm font-bold text-muted-foreground">
               Concentrated in
             </legend>{" "}
             {/* Buttons, not hover-select: this is a list of controls, so
@@ -210,10 +210,10 @@ export function StateConcentration({
                   onClick={() => setAxis(a.key)}
                   aria-pressed={axis === a.key}
                   className={
-                    "inline-flex min-h-[44px] items-center border-2 border-border px-4 py-2 text-sm font-bold transition-all duration-150 " +
+                    "inline-flex min-h-[44px] items-center border border-border px-4 py-2 text-sm font-bold transition-colors duration-150 " +
                     (axis === a.key
-                      ? "bg-foreground text-background shadow-hard-sm"
-                      : "bg-card hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0")
+                      ? "bg-foreground text-background"
+                      : "bg-card")
                   }
                 >
                   {a.label}
@@ -290,7 +290,7 @@ export function StateLeaders({ states, className }: StateProfilesProps) {
         <span>
           {r.occupation}{" "}
           {r.occupationShare !== null ? (
-            <span className="ml-2 font-mono text-sm tabular-nums text-foreground/60">
+            <span className="ml-2 font-mono text-sm tabular-nums text-muted-foreground">
               {pct(r.occupationShare)}
             </span>
           ) : null}
@@ -318,7 +318,7 @@ export function StateLeaders({ states, className }: StateProfilesProps) {
             <span className="font-bold">{r.employer}</span>
           )}{" "}
           {r.employerShare !== null ? (
-            <span className="ml-2 font-mono text-sm tabular-nums text-foreground/60">
+            <span className="ml-2 font-mono text-sm tabular-nums text-muted-foreground">
               {pct(r.employerShare)}
             </span>
           ) : null}

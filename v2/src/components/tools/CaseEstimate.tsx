@@ -58,15 +58,15 @@ export function CaseEstimatePanel({
     return (
       <section
         id={ESTIMATE_ANCHOR}
-        className={`mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8 ${ANCHOR_OFFSET}`}
+        className={`mt-8 border border-border bg-card p-6 sm:p-8 ${ANCHOR_OFFSET}`}
       >
-        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="text-sm font-bold text-muted-foreground">
           Estimate
         </p>{" "}
-        <h2 className="mt-1 font-heading text-2xl font-black">
+        <h2 className="mt-1 font-heading text-2xl font-bold">
           No date can honestly be put on this case
         </h2>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
           {est.note}
         </p>{" "}
         {/* ONE SENTENCE PER MEANING. This block said "Cases at this stage
@@ -107,7 +107,7 @@ export function CaseEstimatePanel({
             line. RFI ISSUED crossed it by Oct 8 2026: of the 324 RFIs watched
             for 30 days, 276 had left on day 30, so its median reads 30. */}
         {est.stageDuration ? (
-          <p className="mt-3 text-base leading-relaxed text-foreground/80">
+          <p className="mt-3 text-base leading-relaxed text-soft">
             Cases that reach this stage leave it after{" "}
             <b className="font-bold text-foreground">
               about {est.stageDuration.p50.toLocaleString("en-US")} days
@@ -120,7 +120,7 @@ export function CaseEstimatePanel({
           </p>
         ) : null}{" "}
         {est.nextStep ? (
-          <p className="mt-3 border-l-4 border-primary bg-tint-primary px-4 py-3 text-base leading-relaxed text-foreground/80">
+          <p className="mt-3 border-l-2 border-primary bg-tint-primary px-4 py-3 text-base leading-relaxed text-soft">
             What usually happens next:{" "}
             <b className="font-bold text-foreground">
               {Math.round(est.nextStep.share * 100)}%
@@ -148,15 +148,15 @@ export function CaseEstimatePanel({
   return (
     <section
       id={ESTIMATE_ANCHOR}
-      className={`mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8 ${ANCHOR_OFFSET}`}
+      className={`mt-8 border border-border bg-card p-6 sm:p-8 ${ANCHOR_OFFSET}`}
     >
-      <h2 className="font-heading text-2xl font-black">When this case could be decided</h2>{" "}
+      <h2 className="font-heading text-2xl font-bold">When this case could be decided</h2>{" "}
       {dateShownAbove ? null : (
-        <p className="mt-4 font-heading text-3xl font-black sm:text-4xl">
+        <p className="mt-4 font-heading text-3xl font-bold sm:text-4xl">
           Around {fmtDate(est.estimatedDate)}
         </p>
       )}{" "}
-      <p className={dateShownAbove ? "mt-3 text-base text-foreground/80" : "mt-1 text-base text-foreground/80"}>
+      <p className={dateShownAbove ? "mt-3 text-base text-soft" : "mt-1 text-base text-soft"}>
         {est.earliestDate && est.latestDate ? (
           <>
             {est.modelId === "decision-pace"
@@ -176,7 +176,7 @@ export function CaseEstimatePanel({
         {est.totalDays.toLocaleString("en-US")} days from filing. An estimate, not a promise.
       </p>{" "}
       {est.stage ? (
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">{est.stage.note}</p>
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">{est.stage.note}</p>
       ) : null}{" "}
       <FinePrint summary="How this is worked out" className="mt-4">
         <p>

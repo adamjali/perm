@@ -61,10 +61,10 @@ export default function H1bSixYearLimitPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           H-1B six-year limit and the PERM 365-day rule
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           The day H-1B status runs out, and the last day a PERM can be filed so
           the one-year extensions stay open. Dates and citations, nothing
           predicted.
@@ -74,7 +74,7 @@ export default function H1bSixYearLimitPage() {
         <H1bMaxOutCalculator />
       </section>
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
       <ToolPageFooter

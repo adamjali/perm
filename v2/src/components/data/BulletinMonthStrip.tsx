@@ -54,10 +54,10 @@ function YearRow({ year, held, newest, earliest }: { year: string; held: Set<str
                     href={`/visa-bulletin/${ym}`}
                     aria-current={current ? "page" : undefined}
                     className={
-                      "flex min-h-11 items-center justify-center border-2 border-border font-mono text-sm font-semibold transition-colors " +
+                      "flex min-h-11 items-center justify-center border border-border font-mono text-sm font-semibold transition-colors " +
                       (current
-                        ? "bg-primary text-primary-foreground shadow-hard-sm"
-                        : "bg-card hover:bg-primary/15 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary")
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary")
                     }
                   >
                     {m}
@@ -68,7 +68,7 @@ function YearRow({ year, held, newest, earliest }: { year: string; held: Set<str
                 ) : (
                   <span
                     title={`${label(ym)}: not held`}
-                    className="flex min-h-11 items-center justify-center border-2 border-dashed border-foreground/20 font-mono text-sm text-foreground/35"
+                    className="flex min-h-11 items-center justify-center border border-dashed border-foreground/20 font-mono text-sm text-muted-foreground"
                   >
                     <span aria-hidden="true">{m}</span>{" "}
                     <span className="sr-only">{`${label(ym)}, not held`}</span>
@@ -102,18 +102,18 @@ export function BulletinMonthStrip({ months, newest }: BulletinMonthStripProps) 
 
   return (
     <nav aria-label="Every bulletin held" className="mt-12">
-      <h2 className="font-heading text-2xl font-black tracking-tight">Every bulletin held</h2>{" "}
-      <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
+      <h2 className="font-heading text-2xl font-bold tracking-tight">Every bulletin held</h2>{" "}
+      <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
         {months.length} months, every employment and family cutoff, each on its own page with what moved since the month
         before. A dashed month is one the archive doesn&apos;t hold.
       </p>{" "}
       <ol className="mt-5 flex flex-col gap-3">{rows(open)}</ol>{" "}
       {folded.length > 0 ? (
-        <details className="mt-4 border-2 border-border">
+        <details className="mt-4 border border-border">
           <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
             {`Earlier years, ${folded.at(-1)} to ${folded[0]} (${foldedCount} bulletins)`}
           </summary>
-          <ol className="flex flex-col gap-3 border-t-2 border-border p-4">{rows(folded)}</ol>
+          <ol className="flex flex-col gap-3 border-t border-border p-4">{rows(folded)}</ol>
         </details>
       ) : null}
     </nav>

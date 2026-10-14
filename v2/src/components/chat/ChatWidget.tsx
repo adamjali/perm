@@ -111,10 +111,10 @@ export function ChatWidget({
               size="lg"
               className={cn(
                 'h-14 w-14 rounded-none p-0',
-                'bg-primary/80 hover:bg-primary',
-                'border-2 border-border shadow-hard',
+                'bg-primary/80 hover:bg-accent',
+                'border border-border',
                 'transition-transform duration-150',
-                'hover:-translate-y-1 active:translate-y-0'
+                ''
               )}
               aria-label="Open chat"
             >
@@ -125,7 +125,7 @@ export function ChatWidget({
       </AnimatePresence>
 
       {/* Chat Panel */}
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {isOpen && (
           <ChatPanel
             messages={messages}

@@ -42,8 +42,8 @@ export function MonitorPanel() {
   const report: DailyReport | null = readReport(data.report);
   if (!report) {
     return (
-      <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 className="font-heading text-xl font-black">Daily monitor</h2>{" "}
+      <section className="border border-border bg-card p-5 sm:p-6">
+        <h2 className="font-heading text-xl font-bold">Daily monitor</h2>{" "}
         <p className="mt-2 text-base text-muted-foreground">
           No report yet. The first one arrives the morning after the daily-monitor workflow is live, around 7:30 AM
           Eastern.
@@ -55,15 +55,15 @@ export function MonitorPanel() {
 
   return (
     <div className="space-y-6">
-      <section aria-labelledby="monitor-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 id="monitor-h" className="font-heading text-xl font-black">
+      <section aria-labelledby="monitor-h" className="border border-border bg-card p-5 sm:p-6">
+        <h2 id="monitor-h" className="font-heading text-xl font-bold">
           {`Daily report, ${dayLabel(report.day)}`}
         </h2>{" "}
         <ol className="mt-4 flex flex-wrap gap-2" aria-label="Verdicts, newest first">
           {data.history.map((h) => (
             <li
               key={h.day}
-              className={`border-2 border-border px-2 py-1 text-sm font-bold ${CHIP[asStatus(h.overall)]}`}
+              className={`border border-border px-2 py-1 text-sm font-bold ${CHIP[asStatus(h.overall)]}`}
             >
               {`${dayLabel(h.day)}: ${WORD[asStatus(h.overall)]}`}{" "}
             </li>
@@ -72,16 +72,16 @@ export function MonitorPanel() {
       </section>{" "}
       <ul className="space-y-4">
         {sections.map((s) => (
-          <li key={s.key} className="border-2 border-border bg-card p-4 shadow-hard-sm sm:p-5">
+          <li key={s.key} className="border border-border bg-card p-4 sm:p-5">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className={`border-2 border-border px-2 py-0.5 text-sm font-black ${CHIP[s.status]}`}>
+              <span className={`border border-border px-2 py-0.5 text-sm font-bold ${CHIP[s.status]}`}>
                 {WORD[s.status]}
               </span>{" "}
-              <h3 className="font-heading text-lg font-black">{s.title}</h3>{" "}
+              <h3 className="font-heading text-lg font-bold">{s.title}</h3>{" "}
               <p className="text-base">{s.summary}</p>
             </div>{" "}
             {s.lines.length > 0 ? (
-              <ul className="mt-3 space-y-1 border-l-2 border-border pl-3 font-mono text-sm">
+              <ul className="mt-3 space-y-1 border-l border-border pl-3 font-mono text-sm">
                 {s.lines.map((l, i) => (
                   <li key={i} className="[overflow-wrap:anywhere]">{l} </li>
                 ))}

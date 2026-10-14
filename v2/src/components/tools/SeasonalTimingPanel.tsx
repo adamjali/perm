@@ -53,12 +53,12 @@ export function SeasonalTimingPanel({
   const start = view.basis === "start";
   const share = view.onTimeShare === null ? null : Math.round(view.onTimeShare * 100);
   return (
-    <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6" aria-labelledby="seasonal-timing">
-      <h3 id="seasonal-timing" className="font-heading text-xl font-black">
+    <section className="border border-border bg-card p-5 sm:p-6" aria-labelledby="seasonal-timing">
+      <h3 id="seasonal-timing" className="font-heading text-xl font-bold">
         When DOL usually decides
       </h3>{" "}
       {view.group ? (
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/85">
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           {groupLead(view)} For this case{filingDate ? `, filed ${day(filingDate)}` : ""}, that&apos;s{" "}
           <span className="font-bold">
             {day(view.from)} to {day(view.to)}
@@ -66,7 +66,7 @@ export function SeasonalTimingPanel({
           , most often around {day(view.typical)}.
         </p>
       ) : (
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/85">
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         {start
           ? `Half of the H-2A applications DOL certified were decided ${view.days.to} to ${view.days.from} days before the work began. For this job, starting ${firstDay ? day(firstDay) : "on its first day"}, that's `
           : `Half of the ${view.visa} applications DOL certified${view.season ? ` that were filed ${view.season}` : ""} were decided ${view.days.from} to ${view.days.to} days after filing. For this case${filingDate ? `, filed ${day(filingDate)}` : ""}, that's `}
@@ -78,15 +78,15 @@ export function SeasonalTimingPanel({
       )}{" "}
       <div className="mt-5" aria-hidden="true">
         <div className="relative h-8">
-          <div className="absolute inset-x-0 top-3 h-2 border-2 border-border bg-muted" />{" "}
+          <div className="absolute inset-x-0 top-3 h-2 border border-border bg-muted" />{" "}
           <div
-            className="absolute top-2 h-4 border-2 border-border bg-primary"
+            className="absolute top-2 h-4 border border-border bg-primary"
             style={{ left: at(view, view.from), width: `calc(${at(view, view.to)} - ${at(view, view.from)})` }}
           />{" "}
           <div className="absolute top-0 h-8 w-1 -translate-x-1/2 bg-foreground" style={{ left: at(view, view.typical) }} />{" "}
           {view.ruleDay ? (
             <div
-              className="absolute top-0 h-8 w-0 -translate-x-1/2 border-l-2 border-dashed border-foreground"
+              className="absolute top-0 h-8 w-0 -translate-x-1/2 border-l border-dashed border-foreground"
               style={{ left: at(view, view.ruleDay) }}
             />
           ) : null}
@@ -97,7 +97,7 @@ export function SeasonalTimingPanel({
         </div>{" "}
         <div className="relative h-6 text-sm">
           <span
-            className="absolute -translate-x-1/2 whitespace-nowrap border-2 border-border bg-background px-1 font-bold"
+            className="absolute -translate-x-1/2 whitespace-nowrap border border-border bg-background px-1 font-bold"
             style={{ left: `clamp(3.5rem, ${(view.todayAt * 100).toFixed(2)}%, calc(100% - 3.5rem))` }}
           >
             {/* Dated, because off either end of the bar the label is held at the edge. */}
@@ -105,28 +105,28 @@ export function SeasonalTimingPanel({
           </span>
         </div>
       </div>{" "}
-      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-foreground/80">
+      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-soft">
         <li>
-          <span className="mr-1 inline-block h-3 w-5 border-2 border-border bg-primary align-middle" /> Middle half
+          <span className="mr-1 inline-block h-3 w-5 border border-border bg-primary align-middle" /> Middle half
         </li>{" "}
         <li>
           <span className="mr-1 inline-block h-3 w-1 bg-foreground align-middle" /> Most often
         </li>{" "}
         {view.ruleDay ? (
           <li>
-            <span className="mr-1 inline-block h-3 w-0 border-l-2 border-dashed border-foreground align-middle" /> 30 days
+            <span className="mr-1 inline-block h-3 w-0 border-l border-dashed border-foreground align-middle" /> 30 days
             before the work, the rule&apos;s deadline
           </li>
         ) : null}{" "}
         <li>Bar runs from 1 in 10 to 9 in 10 decided.</li>
       </ul>{" "}
       {view.pastMost ? (
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/85">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
           Three in four certified cases were decided by {day(view.to)}, so this one is taking longer than most.
         </p>
       ) : null}{" "}
       {share !== null && view.ruleDay ? (
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/85">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
           The rule has DOL decide by {day(view.ruleDay)}, 30 days before the work (
           <a href="https://www.ecfr.gov/current/title-20/chapter-V/part-655/section-655.160" className={LINK} rel="noopener">
             20 CFR 655.160
@@ -135,13 +135,13 @@ export function SeasonalTimingPanel({
         </p>
       ) : null}{" "}
       {checked ? (
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/85">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
           Tested on {checked.cases.toLocaleString("en-US")} later {view.visa} decisions,{" "}
           {Math.round(checked.share * 100)}% landed inside the middle half drawn this way. A perfect estimate puts half there.
         </p>
       ) : null}{" "}
       {view.group ? (
-        <p className="mt-4 text-sm text-foreground/70">
+        <p className="mt-4 text-sm text-muted-foreground">
           From DOL&apos;s {view.group.season} H-2B assignment-group list, which puts the applications filed in the
           season&apos;s first three days in groups by lottery and works them in order (
           <a href="https://www.federalregister.gov/documents/2019/03/04/2019-03809/selection-procedures-for-reviewing-applications-filed-by-employers-seeking-temporary-employment-of" className={LINK} rel="noopener">
@@ -150,7 +150,7 @@ export function SeasonalTimingPanel({
           ), and DOL&apos;s decisions on the {view.group.previous} groups. An estimate from past cases, not a promise.
         </p>
       ) : (
-      <p className="mt-4 text-sm text-foreground/70">
+      <p className="mt-4 text-sm text-muted-foreground">
         From {view.n.toLocaleString("en-US")} certifications in DOL&apos;s published {view.visa} files
         {view.season
           ? `, filed ${view.season}. That's the same months a year before this case, because ${view.visa} decisions run on a seasonal clock`

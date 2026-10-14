@@ -127,7 +127,7 @@ export default async function PermAttorneysPage() {
             dek="Approval rates cluster above 99% across every firm on this list, so the ranking is by volume alone."
           >
           <section className="pop mt-6">
-            <div className="border-2 border-border bg-card p-6 sm:p-8">
+            <div className="border border-border bg-card p-6 sm:p-8">
               <ChartTips label="The ten busiest firms, by filings">
               <div className="space-y-3">
                 {topTen.map((a) => (
@@ -150,7 +150,7 @@ export default async function PermAttorneysPage() {
                     <div className="flex min-w-0 items-center gap-2">
                       <div
                         aria-hidden="true"
-                        className="h-6 shrink-0 border-2 border-border bg-primary"
+                        className="h-6 shrink-0 border border-border bg-primary"
                         style={{
                           width: `${Math.max(4, (a.total / maxTotal) * 100)}%`,
                           maxWidth: "calc(100% - 64px)",
@@ -168,13 +168,13 @@ export default async function PermAttorneysPage() {
           </section>
           </Chapter>
 
-          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-foreground pt-4">
-            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-foreground pt-4">
+            <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
               All {firmCount.toLocaleString("en-US")} firms
             </h2>{" "}
             {/* The consequence stays visible because it changes how a row is
                 read. The pooling rule itself is method, so it collapses. */}
-            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
               A practice DOL prints several ways counts once here.
             </p>{" "}
             <FinePrint summary="How firms are pooled" className="mt-2">
@@ -199,8 +199,8 @@ export default async function PermAttorneysPage() {
           </div>
         </>
       ) : (
-        <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">
-          <p className="text-lg text-foreground/70">
+        <section className="mt-10 border border-border bg-card p-8 text-center">
+          <p className="text-lg text-muted-foreground">
             The firm aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}
             <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
@@ -212,8 +212,8 @@ export default async function PermAttorneysPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Running a PERM practice?</h2>{" "}
+        <div className="border border-border bg-foreground p-6 text-background">
+          <h2 className="font-heading text-lg font-bold">Running a PERM practice?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-background/70">
             Benchmark your volume and median against the field, then track every
             deadline.{" "}
@@ -223,9 +223,9 @@ export default async function PermAttorneysPage() {
             .
           </p>
         </div>
-        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Checking on your firm?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-tint-primary p-6">
+          <h2 className="font-heading text-lg font-bold">Checking on your firm?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             A firm&apos;s median sits near the national one because DOL works a
             single queue. Your own date comes from your filing month:{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -236,7 +236,7 @@ export default async function PermAttorneysPage() {
         </div>
       </section>
       <PageBasics page="perm-attorneys" />{" "}
-      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
+      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Filings newer than DOL&apos;s last published file aren&apos;t here: DOL names the firm only when it publishes the decided case. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link>, by employer.
       </p>{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />

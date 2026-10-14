@@ -68,15 +68,15 @@ export function EmbedFrame({ slug, children }: { slug: string; children: React.R
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <style dangerouslySetInnerHTML={{ __html: embedCss(slug) }} />
       <EmbedRuntime slug={slug} />
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b-2 border-border bg-card px-4 py-2">
-        <h1 className="font-heading text-lg font-black leading-tight">{def.title}</h1>{" "}
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-border bg-card px-4 py-2">
+        <h1 className="font-heading text-lg font-bold leading-tight">{def.title}</h1>{" "}
         <a href="/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-sm font-bold hover:text-primary">
           PERM Tracker
         </a>
       </header>
       <RefreshWhenStale />
       <div className="embed-root flex-1 py-4">{children}</div>
-      <footer className="border-t-2 border-border px-4 py-2 text-sm text-foreground/80">
+      <footer className="border-t border-border px-4 py-2 text-sm text-soft">
         <a href={def.href} target="_blank" rel="noopener noreferrer" className={link}>
           Open the full tool on PERM Tracker
         </a>

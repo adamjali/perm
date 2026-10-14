@@ -29,8 +29,8 @@ function markerClass(m: EmployerMove): string {
 function MoveItem({ m }: { m: EmployerMove }) {
   return (
     <li className="relative grid grid-cols-1 gap-y-0.5 py-2 pl-6 sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:gap-x-4">
-      <span aria-hidden="true" className={`absolute -left-[9px] top-3.5 h-4 w-4 border-2 border-border ${markerClass(m)}`} />{" "}
-      <span className="text-sm font-semibold tabular-nums text-foreground/70">{longDate(m.date).replace(/, \d{4}$/, "")}</span>{" "}
+      <span aria-hidden="true" className={`absolute -left-[9px] top-3.5 h-4 w-4 border border-border ${markerClass(m)}`} />{" "}
+      <span className="text-sm font-semibold tabular-nums text-muted-foreground">{longDate(m.date).replace(/, \d{4}$/, "")}</span>{" "}
       <span className="text-base font-bold [overflow-wrap:anywhere]">{m.sentence}</span>
     </li>
   );
@@ -67,9 +67,9 @@ export function EmployerFollow({
   const legend = parts ? ribbonLegend(parts) : [];
   const shown = moves.slice(0, RAIL_SHOWN);
   return (
-    <section id="follow" className="mt-10 scroll-mt-28 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-      <h2 className="font-heading text-xl font-black sm:text-2xl">Follow {name}</h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
+    <section id="follow" className="mt-10 scroll-mt-28 border border-border bg-card p-6 sm:p-8">
+      <h2 className="font-heading text-xl font-bold sm:text-2xl">Follow {name}</h2>{" "}
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         An email when DOL moves its cases as a group: five or more on or off hold in a day, or a batch decided well above its usual pace.
       </p>
 
@@ -85,7 +85,7 @@ export function EmployerFollow({
             {legend.map((l) => (
               <Fragment key={l.key}>
                 <li className="flex items-center gap-2">
-                  <span aria-hidden="true" className={`inline-block h-3.5 w-3.5 shrink-0 border-2 border-border ${l.cls}`} />{" "}
+                  <span aria-hidden="true" className={`inline-block h-3.5 w-3.5 shrink-0 border border-border ${l.cls}`} />{" "}
                   <span>{l.text}</span>
                 </li>{" "}
               </Fragment>
@@ -93,13 +93,13 @@ export function EmployerFollow({
           </ul>
         </div>
       ) : docMissing ? (
-        <p className="mt-6 text-base text-foreground/80">
+        <p className="mt-6 text-base text-soft">
           Today&apos;s picture of its pending cases isn&apos;t available: the site&apos;s
           employer census couldn&apos;t be read or is more than eight days old. It&apos;s
           rewritten every night, so this usually clears by the next day.
         </p>
       ) : !showPending ? null : (
-        <p className="mt-6 text-base text-foreground/80">
+        <p className="mt-6 text-base text-soft">
           {`Fewer than five of its PERM cases are pending${asOf ? ` as of ${longDate(asOf)}` : ""}, and the census that draws this bar starts at five.`}
         </p>
       )}{" "}
@@ -107,16 +107,16 @@ export function EmployerFollow({
       <div className="mt-7">
         <p className="text-base font-bold">What DOL has done to its cases as a group</p>{" "}
         {docMissing ? (
-          <p className="mt-2 text-base text-foreground/80">
+          <p className="mt-2 text-base text-soft">
             The record of group moves couldn&apos;t be read just now, so this can&apos;t say
             whether DOL has moved its cases as a group. Following still works.
           </p>
         ) : shown.length === 0 ? (
-          <p className="mt-2 text-base text-foreground/80">
+          <p className="mt-2 text-base text-soft">
             {logFrom ? `Nothing employer-wide since this site's record began on ${longDate(logFrom)}.` : "Nothing employer-wide in this site's record."}
           </p>
         ) : (
-          <ol className="mt-3 border-l-2 border-border">
+          <ol className="mt-3 border-l border-border">
             {shown.map((m) => (
               <Fragment key={m.key}>
                 <MoveItem m={m} />{" "}
@@ -129,7 +129,7 @@ export function EmployerFollow({
             <summary className="min-h-11 cursor-pointer py-2 text-sm font-bold underline decoration-primary decoration-2 underline-offset-2">
               {`Show the ${formatInt(moves.length - RAIL_SHOWN)} earlier ${moves.length - RAIL_SHOWN === 1 ? "move" : "moves"}`}
             </summary>
-            <ol className="mt-1 border-l-2 border-border">
+            <ol className="mt-1 border-l border-border">
               {moves.slice(RAIL_SHOWN).map((m) => (
                 <Fragment key={m.key}>
                   <MoveItem m={m} />{" "}
@@ -140,7 +140,7 @@ export function EmployerFollow({
         ) : null}
       </div>{" "}
 
-      <div className="mt-7 border-t-2 border-border pt-6">
+      <div className="mt-7 border-t border-border pt-6">
         <EmployerFollowForm slug={slug} source="employer-page" />
       </div>
     </section>

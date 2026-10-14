@@ -35,18 +35,18 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
   return (
     <section
       aria-labelledby="same-day-h"
-      className={cn("border-2 border-border bg-card p-5 shadow-hard sm:p-6", className)}
+      className={cn("border border-border bg-card p-5 sm:p-6", className)}
     >
-      <h2 id="same-day-h" className="font-heading text-xl font-black sm:text-2xl">
+      <h2 id="same-day-h" className="font-heading text-xl font-bold sm:text-2xl">
         Filed the same day
       </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         <b className="font-bold text-foreground">{data.total.toLocaleString("en-US")}</b> PERM cases were filed on{" "}
         {longDay(data.day)}.{" "}
         <b className="font-bold text-foreground">{decided.toLocaleString("en-US")}</b> have been decided.
       </p>{" "}
       <ChartTips label={`Cases filed on ${longDay(data.day)}, by what has happened to them`} className="mt-4">
-      <div className="flex h-5 w-full overflow-hidden border-2 border-border" aria-hidden="true">
+      <div className="flex h-5 w-full overflow-hidden border border-border" aria-hidden="true">
         {shown.map((g) => (
           <div
             key={g.key}
@@ -61,8 +61,8 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
         {shown.map((g) => (
           <Fragment key={g.key}>{" "}
           <li className="flex items-center gap-1.5">
-            <span className={cn("inline-block h-3.5 w-3.5 shrink-0 border-2 border-border", g.tone)} aria-hidden="true" />{" "}
-            <span className="text-foreground/80">{g.label}</span>{" "}
+            <span className={cn("inline-block h-3.5 w-3.5 shrink-0 border border-border", g.tone)} aria-hidden="true" />{" "}
+            <span className="text-soft">{g.label}</span>{" "}
             <span className="font-mono font-bold tabular-nums">{data.counts[g.key].toLocaleString("en-US")}</span>
           </li>
           </Fragment>
@@ -71,7 +71,7 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
 
       {data.nearby.length > 1 ? (
         <>
-          <h3 className="mt-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h3 className="mt-6 text-sm font-bold text-muted-foreground">
             The cases numbered beside it
           </h3>{" "}
           <ol className="mt-3 flex flex-wrap gap-1.5" translate="no">
@@ -83,7 +83,7 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
                   rel="nofollow"
                   title={`${n.caseNumber}: ${n.status ? prettyStatus(n.status) : "no status"}`}
                   className={cn(
-                    "flex h-11 w-11 items-center justify-center border-2 border-border font-mono text-sm font-bold tabular-nums transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none",
+                    "flex h-11 w-11 items-center justify-center border border-border font-mono text-sm font-bold tabular-nums transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none",
                     TONE[n.group],
                     n.isThis && "outline outline-4 outline-offset-2 outline-primary",
                   )}

@@ -47,29 +47,29 @@ export function DebarmentNotice({
         ? `A name matching ${pageName} is barred from filing from ${day(upcoming[0]!.startDate)}. The period has not started yet.`
         : `A name matching ${pageName} was barred from filing in the past; the period has ended.`;
   return (
-    <aside id="debarment" className={cn(className, "scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-2 border-foreground bg-card p-5 shadow-hard sm:p-6")} aria-label="Debarment notice">
-      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+    <aside id="debarment" className={cn(className, "scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border border-foreground bg-card p-5 sm:p-6")} aria-label="Debarment notice">
+      <p className="text-sm font-bold text-muted-foreground">
         On DOL&apos;s debarment list
       </p>{" "}
       <p className="mt-2 text-base leading-relaxed">
         {lede}{" "}
         DOL&apos;s row, as published:
       </p>{" "}
-      <ul className="mt-3 divide-y-2 divide-border border-y-2 border-border">
+      <ul className="mt-3 divide-y divide-border border-y border-border">
         {rows.map((d) => (
           <li key={`${d.program}-${d.entity}-${d.startDate}`} className="py-2 text-sm">
             <span className="font-bold">{d.entity}</span>
-            {d.location ? <span className="text-foreground/70"> · {d.location}</span> : null} ·{" "}
+            {d.location ? <span className="text-muted-foreground"> · {d.location}</span> : null} ·{" "}
             {PROGRAM_LABEL[d.program]} · {day(d.startDate)} to {day(d.endDate)}
             {phase(d, today) === "ended" ? " (ended)" : null}
             {phase(d, today) === "upcoming" ? (
               <span className="font-bold"> (not started)</span>
             ) : null}
-            {d.violation ? <span className="text-foreground/80"> · {d.violation}</span> : null}
+            {d.violation ? <span className="text-soft"> · {d.violation}</span> : null}
           </li>
         ))}
       </ul>{" "}
-      <p className="mt-3 text-sm text-foreground/70">
+      <p className="mt-3 text-sm text-muted-foreground">
         Matched on the normalised name, so read the listed name against this page&apos;s.{" "}
         <Link href="/debarments" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
           Every list, with DOL&apos;s originals

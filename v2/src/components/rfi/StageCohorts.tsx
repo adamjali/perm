@@ -91,7 +91,7 @@ export function StageCohortsChart({
                     counting to work out which month a bar belongs to.
                   */}
                   {i === 0 || m.slice(0, 4) !== months[i - 1]?.slice(0, 4) ? (
-                    <span className="block font-bold text-foreground/70">
+                    <span className="block font-bold text-muted-foreground">
                       {m.slice(2, 4)}
                     </span>
                   ) : null}{" "}
@@ -150,7 +150,7 @@ function Strip({
     <div
       className={
         "grid grid-cols-[9.5rem_1fr] items-end gap-3 py-1.5" +
-        (context ? " border-b-2 border-border/40 pb-3" : "")
+        (context ? " border-b border-border/40 pb-3" : "")
       }
     >
       <div className="min-w-0 pb-1">
@@ -235,7 +235,7 @@ export function StageCohortsTable({
     <div className="max-h-[32rem] overflow-auto">
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 bg-background">
-          <tr className="border-b-2 border-border text-left font-mono text-sm uppercase tracking-wider">
+          <tr className="border-b border-border text-left text-sm">
             {/* The space lives INSIDE each cell: a whitespace text node is
                 not legal as a child of <tr> or <tbody> and React warns that it
                 will cause a hydration error. */}

@@ -95,7 +95,7 @@ export function ChangeTable({
           {rows.map((c) => (
             <tr
               key={`${c.program}:${c.caseNumber}`}
-              className="border-t-2 border-border/30 align-top"
+              className="border-t border-border/30 align-top"
             >
               {/* A SEPARATOR INSIDE EVERY CELL. JSX puts nothing between
                   sibling cells, so a row reached extractors as one run:
@@ -114,21 +114,21 @@ export function ChangeTable({
                   {c.caseNumber}
                 </Link>{" "}
               </td>
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-soft">
                 {PROGRAM_LABEL[c.program]}{" "}
               </td>
               <td className="px-3 py-3 font-bold">
                 {c.employerName ?? (
-                  <span className="font-normal text-foreground/70">
+                  <span className="font-normal text-muted-foreground">
                     Not named in the live record yet
                   </span>
                 )}{" "}
               </td>
-              <td className="px-3 py-3 text-foreground/80">{c.jobTitle ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-soft">{c.jobTitle ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
                 {c.filingDate ?? ""}{" "}
               </td>
-              <td className="whitespace-nowrap px-3 py-3 text-sm text-foreground/70">
+              <td className="whitespace-nowrap px-3 py-3 text-sm text-muted-foreground">
                 {c.fromStatus}{" "}
               </td>
               <td

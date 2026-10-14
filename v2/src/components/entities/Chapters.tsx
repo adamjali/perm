@@ -54,7 +54,7 @@ export function ChapterNav({ items, className }: { items: ChapterItem[]; classNa
     <nav
       aria-label="On this page"
       className={cn(
-        "sticky top-[var(--site-header-h,71px)] z-30 -mx-4 border-y-2 border-border bg-background px-4 sm:-mx-6 sm:px-6",
+        "sticky top-[var(--site-header-h,71px)] z-30 -mx-4 border-y border-border bg-background px-4 sm:-mx-6 sm:px-6",
         className,
       )}
     >
@@ -71,7 +71,7 @@ export function ChapterNav({ items, className }: { items: ChapterItem[]; classNa
               <a
                 href={`#${i.id}`}
                 aria-current={active === i.id ? "location" : undefined}
-                className="inline-flex min-h-11 items-center whitespace-nowrap px-3 text-sm font-bold text-foreground/75 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary aria-[current=location]:bg-primary aria-[current=location]:text-black"
+                className="inline-flex min-h-11 items-center whitespace-nowrap px-3 text-sm font-bold text-soft hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary aria-[current=location]:bg-primary aria-[current=location]:text-black"
               >
                 {i.label}
               </a>

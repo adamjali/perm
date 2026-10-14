@@ -42,25 +42,25 @@ function DisclosureShell({
   compact: boolean;
 }) {
   return (
-    <div className="mt-6 border-2 border-border bg-card shadow-hard">
+    <div className="mt-6 border border-border bg-card">
       {items.map((item, i) => (
         <details
           key={item.term}
           open={openFirst && i === 0}
-          className="group border-b-2 border-border last:border-b-0"
+          className="group border-b border-border last:border-b-0"
         >
           <summary
             className={
               "flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary [&::-webkit-details-marker]:hidden " +
               (compact
                 ? "px-5 py-3 font-heading text-base font-bold sm:px-6"
-                : "p-5 font-heading text-lg font-black sm:p-6")
+                : "p-5 font-heading text-lg font-bold sm:p-6")
             }
           >
             <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
               <span>{item.term}</span>{" "}
               {item.hint ? (
-                <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="text-sm font-bold text-muted-foreground">
                   {item.hint}
                 </span>
               ) : null}
@@ -72,7 +72,7 @@ function DisclosureShell({
           </summary>{" "}
           <div
             className={
-              "border-t-2 border-border/40 text-base leading-relaxed text-foreground/70 " +
+              "border-t border-border/40 text-base leading-relaxed text-muted-foreground " +
               (compact
                 ? "px-5 pb-4 pt-3 sm:px-6"
                 : "px-5 pb-5 pt-4 sm:px-6 sm:pb-6")

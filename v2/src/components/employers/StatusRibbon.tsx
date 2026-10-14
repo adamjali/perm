@@ -77,13 +77,13 @@ export function StatusRibbon({
     <div
       role="img"
       aria-label={label}
-      className={`flex w-full overflow-hidden border-2 border-border bg-background ${size === "lg" ? "h-8" : "h-3"}`}
+      className={`flex w-full overflow-hidden border border-border bg-background ${size === "lg" ? "h-8" : "h-3"}`}
     >
       {segs.map((s, i) => (
         <span
           key={s.key}
           data-tip={ribbonTip(parts, s.key, name)}
-          className={`${s.cls} h-full ${i > 0 ? "border-l-2 border-border" : ""}`}
+          className={`${s.cls} h-full ${i > 0 ? "border-l border-border" : ""}`}
           style={{ width: `${(100 * s.value) / total}%`, minWidth: "4px" }}
         />
       ))}

@@ -130,9 +130,9 @@ const MONTHS = [
 const FIRST_YEAR = 2006;
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const EYEBROW_CLASS =
-  "font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground";
+  "text-sm font-semibold text-muted-foreground";
 
 function label(category: string): string {
   return CATEGORY_LABELS[category] ?? category;
@@ -270,7 +270,7 @@ export function I485QueuePosition({
     // that dropped a pair. Never a bad selection, since the options come from
     // the same release as the cells.
     return (
-      <div className={cn("border-2 border-border bg-card p-6 shadow-hard sm:p-8", className)}>
+      <div className={cn("border border-border bg-card p-6 sm:p-8", className)}>
         <p className="text-base leading-relaxed">
           USCIS’s pending inventory for this category is being fetched. Until
           it lands,{" "}
@@ -299,15 +299,15 @@ export function I485QueuePosition({
   const showLowLabel = split.solid < 72;
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <div className="border-b-2 border-border p-6 sm:p-8">
+    <div className={cn("border border-border bg-card", className)}>
+      <div className="border-b border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <UsersIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <h2 className="font-heading text-2xl font-black leading-tight">
+          <h2 className="font-heading text-2xl font-bold leading-tight">
             How many are ahead of you?
           </h2>
         </div>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           Employment-based adjustment applications USCIS had pending with a
           priority date earlier than yours
           {asOfLabel ? `, as of ${asOfLabel}` : ""}.
@@ -398,13 +398,13 @@ export function I485QueuePosition({
          * reader. It was bg-muted under a warning triangle, which styled the
          * ordinary case as an error.
          */
-        <div className="border-b-2 border-border p-6 sm:p-8">
+        <div className="border-b border-border p-6 sm:p-8">
           <p className={EYEBROW_CLASS}>{restated}</p>{" "}
-          <h3 className="mt-2 font-heading text-2xl font-black leading-tight">
+          <h3 className="mt-2 font-heading text-2xl font-bold leading-tight">
             USCIS doesn’t publish this queue past {latestPublishedLabel}
           </h3>{" "}
           {notYetFilable && filing?.kind === "date" ? (
-            <p className="mt-3 text-base leading-relaxed text-foreground/80">
+            <p className="mt-3 text-base leading-relaxed text-soft">
               Filing hasn’t opened for this priority date yet. The Dates for
               Filing chart for {label(activeCategory)}, {country} stands at{" "}
               {formatAsOf(filing.iso)}
@@ -421,7 +421,7 @@ export function I485QueuePosition({
               .
             </p>
           ) : (
-            <p className="mt-3 text-base leading-relaxed text-foreground/80">
+            <p className="mt-3 text-base leading-relaxed text-soft">
               Every application the release carries has an earlier priority date
               than yours, so all{" "}
               {position.categoryLow.toLocaleString("en-US")}
@@ -431,7 +431,7 @@ export function I485QueuePosition({
               of them sit in front of it.
             </p>
           )}{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
             It doesn’t mean nobody is behind you. USCIS reports this
             category by priority-date year from {coverageLabel} and stops there,
             so applications filed with later dates aren’t in the release at
@@ -440,7 +440,7 @@ export function I485QueuePosition({
         </div>
       ) : (
         <>
-          <div className="border-b-2 border-border p-6 sm:p-8">
+          <div className="border-b border-border p-6 sm:p-8">
             <p className={EYEBROW_CLASS}>{restated}</p>{" "}
             {position.exact ? (
               /* USCIS suppressed nothing in this span, so the floor and the
@@ -448,10 +448,10 @@ export function I485QueuePosition({
                  the same value printed twice under two different words. */
               <div className="mt-4">
                 <p className={EYEBROW_CLASS}>Ahead of you</p>{" "}
-                <p className="mt-2 font-heading text-5xl font-black leading-none tabular-nums">
+                <p className="mt-2 font-heading text-5xl font-bold leading-none tabular-nums">
                   {position.low.toLocaleString("en-US")}
                 </p>{" "}
-                <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                   Exact. USCIS suppressed no cell in this span, so every
                   application it holds ahead of your priority date is counted
                   individually.
@@ -462,13 +462,13 @@ export function I485QueuePosition({
                 <div className="mt-4 grid grid-cols-1 gap-6 [&>*]:min-w-0 sm:grid-cols-2 sm:gap-4">
                   <div>
                     <p className={EYEBROW_CLASS}>At least</p>{" "}
-                    <p className="mt-2 font-heading text-5xl font-black leading-none tabular-nums">
+                    <p className="mt-2 font-heading text-5xl font-bold leading-none tabular-nums">
                       {position.low.toLocaleString("en-US")}
                     </p>
                   </div>{" "}
                   <div>
                     <p className={EYEBROW_CLASS}>At most</p>{" "}
-                    <p className="mt-2 font-heading text-5xl font-black leading-none tabular-nums">
+                    <p className="mt-2 font-heading text-5xl font-bold leading-none tabular-nums">
                       {position.high.toLocaleString("en-US")}
                     </p>
                   </div>
@@ -482,14 +482,14 @@ export function I485QueuePosition({
                   if (!cell) return null;
                   if (!reach) {
                     return (
-                      <p className="mt-5 text-sm leading-relaxed text-foreground/70">
+                      <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
                         No pace to divide by: over the archived window this category was{" "}
                         {cell.latest.kind === "current" ? "current" : cell.latest.kind === "unavailable" ? "unavailable" : "not advancing"}, so no months-to-reach figure is printed.
                       </p>
                     );
                   }
                   return (
-                    <p className="mt-5 text-base leading-relaxed text-foreground/85">
+                    <p className="mt-5 text-base leading-relaxed text-soft">
                       {reach.months === 0 ? (
                         <>The final action cutoff is already past this priority date.</>
                       ) : (
@@ -512,12 +512,12 @@ export function I485QueuePosition({
                     empty track, and both ticks at their own coordinates. */}
                 <ChartTips label="Applications ahead, counted and withheld" className="mt-6">
                   <div
-                    className="flex h-10 w-full overflow-hidden border-2 border-border"
+                    className="flex h-10 w-full overflow-hidden border border-border"
                     role="img"
                     aria-label={`Between ${position.low.toLocaleString("en-US")} and ${position.high.toLocaleString("en-US")} applications are ahead. ${position.counted.toLocaleString("en-US")} are counted individually and ${position.suppressedCells.toLocaleString("en-US")} cells were withheld by USCIS.`}
                   >
                     <div
-                      className="h-full border-r-2 border-border bg-primary"
+                      className="h-full border-r border-border bg-primary"
                       style={{ width: `${split.solid}%` }}
                       data-tip={`At least ${position.low.toLocaleString("en-US")} ahead\n${position.counted.toLocaleString("en-US")} published individually`}
                     />
@@ -545,19 +545,19 @@ export function I485QueuePosition({
                     />
                     {showLowLabel ? (
                       <span
-                        className="absolute top-3 -translate-x-1/2 whitespace-nowrap font-mono text-sm tabular-nums text-foreground/70"
+                        className="absolute top-3 -translate-x-1/2 whitespace-nowrap font-mono text-sm tabular-nums text-muted-foreground"
                         style={{ left: `${split.solid}%` }}
                       >
                         {position.low.toLocaleString("en-US")}
                       </span>
                     ) : null}{" "}
                     <span className="absolute right-0 top-0 h-2 w-0.5 bg-border" />
-                    <span className="absolute right-0 top-3 whitespace-nowrap font-mono text-sm tabular-nums text-foreground/70">
+                    <span className="absolute right-0 top-3 whitespace-nowrap font-mono text-sm tabular-nums text-muted-foreground">
                       {position.high.toLocaleString("en-US")}
                     </span>{" "}
                   </div>{" "}
                 </ChartTips>
-                <p className="mt-1 text-base leading-relaxed text-foreground/70">
+                <p className="mt-1 text-base leading-relaxed text-muted-foreground">
                   <strong>{position.counted.toLocaleString("en-US")}</strong>{" "}
                   {position.counted === 1 ? "application is" : "applications are"}{" "}
                   published individually. USCIS withheld another{" "}
@@ -571,27 +571,27 @@ export function I485QueuePosition({
           </div>
 
 {" "}
-          <div className="grid grid-cols-1 gap-px [&>*]:min-w-0 border-b-2 border-border bg-border sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-px [&>*]:min-w-0 border-b border-border bg-border sm:grid-cols-2">
             <div className="bg-card p-6 sm:p-8">
               <p className={EYEBROW_CLASS}>Behind you</p>{" "}
-              <p className="mt-2 font-heading text-3xl font-black leading-none tabular-nums">
+              <p className="mt-2 font-heading text-3xl font-bold leading-none tabular-nums">
                 {position.behindLow === position.behindHigh
                   ? position.behindLow.toLocaleString("en-US")
                   : `${position.behindLow.toLocaleString("en-US")} to ${position.behindHigh.toLocaleString("en-US")}`}
               </p>{" "}
-              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 Applications the release carries with a later priority date than
                 yours. Anyone who hasn’t filed yet isn’t in this figure.
               </p>
             </div>{" "}
             <div className="bg-tint-primary p-6 sm:p-8">
               <p className={EYEBROW_CLASS}>The whole category</p>{" "}
-              <p className="mt-2 font-heading text-3xl font-black leading-none tabular-nums">
+              <p className="mt-2 font-heading text-3xl font-bold leading-none tabular-nums">
                 {position.categorySuppressedCells > 0
                   ? `${position.categoryLow.toLocaleString("en-US")} to ${position.categoryHigh.toLocaleString("en-US")}`
                   : position.categoryLow.toLocaleString("en-US")}
               </p>{" "}
-              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 {label(activeCategory)} applications pending for {country}, at
                 every priority date USCIS publishes, {coverageLabel}.
                 {position.categoryCounted === 0
@@ -604,11 +604,11 @@ export function I485QueuePosition({
       )}{" "}
 
       {trend.length > 1 ? (
-        <div className="border-b-2 border-border p-6 sm:p-8">
-          <h3 className="font-heading text-lg font-black">
+        <div className="border-b border-border p-6 sm:p-8">
+          <h3 className="font-heading text-lg font-bold">
             The whole pending inventory, release by release
           </h3>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Every employment-based adjustment application USCIS reports as
             pending, across all countries and categories, so this is the system
             rather than your own queue. Counted cells only, which makes each
@@ -640,10 +640,10 @@ export function I485QueuePosition({
                           "Aug 5, 2026August 5, 2026", and the long form
                           truncates in the 88px track below 640px anyway. The
                           short form fits everywhere and says the same thing. */}
-                      <span className="truncate text-sm text-foreground/70">
+                      <span className="truncate text-sm text-muted-foreground">
                         {formatAsOfShort(t.asOf)}
                       </span>{" "}
-                      <span className="flex h-6 w-full border-2 border-border bg-muted">
+                      <span className="flex h-6 w-full border border-border bg-muted">
                         <span
                           className="block h-full bg-primary"
                           style={{ width: `${Math.max(((t.available ?? t.total) / max) * 100, 1)}%` }}
@@ -663,7 +663,7 @@ export function I485QueuePosition({
               </ChartTips>
             );
           })()}{" "}
-          <p className="mt-4 text-sm text-foreground/60">
+          <p className="mt-4 text-sm text-muted-foreground">
             Lime: pending with a visa number available (USCIS&apos;s part). Grey: waiting for a number (the
             bulletin&apos;s part). Each release counts what was pending that day, so a month moves with both
             new filings and decisions. USCIS keeps no archive, so the series grows forward only.
@@ -673,13 +673,13 @@ export function I485QueuePosition({
 
       <div className="bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <div>
-            <h3 className="font-heading text-base font-black">
+            <h3 className="font-heading text-base font-bold">
               What this can’t tell you
             </h3>{" "}
             {/* The one that matters most stays in view; the rest fold. */}
-            <p className="mt-3 text-base leading-relaxed text-foreground/70">{LIMITS[0]}</p>{" "}
+            <p className="mt-3 text-base leading-relaxed text-muted-foreground">{LIMITS[0]}</p>{" "}
             <details className="group mt-3">
               <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center gap-2 font-bold [&::-webkit-details-marker]:hidden">
                 {LIMITS.length - 1} more limits{" "}
@@ -689,7 +689,7 @@ export function I485QueuePosition({
                 {LIMITS.slice(1).map((c) => (
                   <Fragment key={c}>
                     {" "}
-                    <li className="text-base leading-relaxed text-foreground/70">
+                    <li className="text-base leading-relaxed text-muted-foreground">
                       {c}
                     </li>
                   </Fragment>
@@ -697,7 +697,7 @@ export function I485QueuePosition({
               </ul>
             </details>{" "}
             {asOfLabel ? (
-              <p className="mt-4 text-sm text-foreground/60">
+              <p className="mt-4 text-sm text-muted-foreground">
                 USCIS employment-based pending inventory, as of {asOfLabel}.
               </p>
             ) : null}
@@ -743,11 +743,11 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
     return `${r} ${r === 1 ? "month" : "months"}`;
   };
   return (
-    <div className="mt-6 border-2 border-border bg-background p-4 sm:p-5">
-      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+    <div className="mt-6 border border-border bg-background p-4 sm:p-5">
+      <p className="text-sm font-bold text-muted-foreground">
         If the supply were
       </p>{" "}
-      <p className="mt-2 text-sm leading-relaxed text-foreground/75">
+      <p className="mt-2 text-sm leading-relaxed text-soft">
         A scenario, not a forecast: choose how many visas a year reach this line and the queue ahead is
         divided by it. Nobody publishes that supply in advance; the presets are the statute&apos;s figures.
       </p>{" "}
@@ -761,7 +761,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
             value={supply}
             onChange={(e) => setSupply(e.target.value)}
             placeholder="7,235"
-            className="mt-1 block min-h-11 w-40 border-2 border-border bg-card px-3 text-base tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="mt-1 block min-h-11 w-40 border border-input bg-card px-3 text-base tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           />
         </div>{" "}
         {SUPPLY_ANCHORS.map((a) => (
@@ -770,7 +770,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
               type="button"
               onClick={() => setSupply(String(a.value))}
               title={a.note}
-              className="min-h-11 border-2 border-border bg-card px-3 text-sm font-semibold transition-colors hover:bg-tint-primary"
+              className="min-h-11 border border-border bg-card px-3 text-sm font-semibold transition-colors hover:bg-tint-primary"
             >
               {a.label}: {formatInt(a.value)}
             </button>
@@ -778,7 +778,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
         ))}
       </div>{" "}
       {lo !== null && hi !== null ? (
-        <p className="mt-3 text-base leading-relaxed text-foreground/85" aria-live="polite">
+        <p className="mt-3 text-base leading-relaxed text-soft" aria-live="polite">
           At {formatInt(perYear)} a year, the {low === high ? formatInt(low) : `${formatInt(low)} to ${formatInt(high)}`} ahead
           would take about{" "}
           <strong className="font-semibold">{fmt(lo) === fmt(hi) ? fmt(lo) : `${fmt(lo)} to ${fmt(hi)}`}</strong>.

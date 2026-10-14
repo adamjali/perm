@@ -43,8 +43,8 @@ export default function ContactPage() {
     // the form on the right, staying in view. Below `lg` it stacks in source
     // order, routes first and the catch-all form last.
     <div className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Contact us</h1>{" "}
-      <p className="mt-3 max-w-2xl text-lg text-foreground/70">
+      <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Contact us</h1>{" "}
+      <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
         Questions, feature requests and bug reports all land in the same inbox.
       </p>{" "}
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14">
@@ -56,23 +56,23 @@ export default function ContactPage() {
         {/* The figure before the routes, because its point is the thing the
             headings below cannot say at a glance: these are three doors into
             one inbox, not three different teams. */}
-        <figure className="border-2 border-border bg-card p-6 shadow-hard-sm">
+        <figure className="border border-border bg-card p-6">
           <RoutingFigure className="h-auto w-full text-foreground" />{" "}
-          <figcaption className="mt-4 border-t-2 border-border pt-3 font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <figcaption className="mt-4 border-t border-border pt-3 text-sm font-bold text-muted-foreground">
             Three ways in, one inbox
           </figcaption>
         </figure>
 
-        <h2 className="mt-10 font-heading text-2xl font-black">Where to send it</h2>
+        <h2 className="mt-10 font-heading text-2xl font-bold">Where to send it</h2>
         <div className="mt-6 space-y-8">
           {/* Email */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-primary shadow-hard-sm dark:border-white">
+            <div className="flex h-12 w-12 items-center justify-center border border-black bg-primary dark:border-white">
               <Mail className="h-6 w-6 text-primary-foreground" />
             </div>{" "}
             <div>
               <h2 className="font-heading text-lg font-bold mb-1">Email</h2>{" "}
-              <p className="text-foreground/60 text-sm mb-2">
+              <p className="text-muted-foreground text-sm mb-2">
                 Best for general inquiries and support requests.
               </p>{" "}
               <a
@@ -86,14 +86,14 @@ export default function ContactPage() {
 
           {/* Feature Requests */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-secondary shadow-hard-sm dark:border-white">
+            <div className="flex h-12 w-12 items-center justify-center border border-black bg-secondary dark:border-white">
               <ChatTextIcon className="h-6 w-6 text-secondary-foreground" />
             </div>{" "}
             <div>
               <h2 className="font-heading text-lg font-bold mb-1">
                 Feature requests and feedback
               </h2>{" "}
-              <p className="text-foreground/60 text-sm mb-2">
+              <p className="text-muted-foreground text-sm mb-2">
                 Have an idea for PERM Tracker? Email it. Every idea is read by
                 the person who runs the site.
               </p>{" "}
@@ -108,14 +108,14 @@ export default function ContactPage() {
 
           {/* Bug Reports */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center border-2 border-black bg-primary shadow-hard-sm dark:border-white">
+            <div className="flex h-12 w-12 items-center justify-center border border-black bg-primary dark:border-white">
               <BugIcon className="h-6 w-6 text-accent-foreground" />
             </div>{" "}
             <div>
               <h2 className="font-heading text-lg font-bold mb-1">
                 Bug reports
               </h2>{" "}
-              <p className="text-foreground/60 text-sm mb-2">
+              <p className="text-muted-foreground text-sm mb-2">
                 Found something that&apos;s not working right? Report it here.
               </p>{" "}
               <a
@@ -129,9 +129,9 @@ export default function ContactPage() {
         </div>
 
         {/* Response time */}
-        <div className="mt-12 border-2 border-black bg-muted p-6 shadow-hard-sm dark:border-white">
+        <div className="mt-12 border border-black bg-muted p-6 dark:border-white">
           <h3 className="font-heading text-lg font-bold mb-2">Response time</h3>{" "}
-          <p className="text-foreground/60">
+          <p className="text-muted-foreground">
             We typically respond to inquiries within 24-48 hours during business
             days. For urgent matters related to case deadlines, please include
             &quot;URGENT&quot; in your email subject.
@@ -146,10 +146,10 @@ export default function ContactPage() {
           the routes; a normal block below `lg`. */}
       <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
         <div className="card-brutalist p-6 sm:p-8">
-          <h2 className="font-heading text-2xl font-black">
+          <h2 className="font-heading text-2xl font-bold">
             Or write to us here
           </h2>{" "}
-          <p className="mt-2 text-foreground/60">
+          <p className="mt-2 text-muted-foreground">
             Goes to the same inbox as the address above. No account needed.
           </p>{" "}
           <div className="mt-6">
@@ -163,7 +163,7 @@ export default function ContactPage() {
       <div className="mt-10 text-center">
         <Link
           href="/"
-          className="hover-underline text-foreground/60 text-sm"
+          className="hover-underline text-muted-foreground text-sm"
         >
           &larr; Back to Home
         </Link>

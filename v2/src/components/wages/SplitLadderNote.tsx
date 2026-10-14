@@ -53,7 +53,7 @@ export function SplitLadderNote({
 
   return (
     <MoreText gist={"A ladder that jumps is two populations sharing one row."}>
-      <p className={cn("text-sm leading-relaxed text-foreground/70", className)}>
+      <p className={cn("text-sm leading-relaxed text-muted-foreground", className)}>
         A few ladders jump rather than climb, and a jump is the signature of two
         populations sharing one row. {first.ladder.label} rises{" "}
         {first.step.ratio.toFixed(1)} times between the{" "}

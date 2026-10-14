@@ -38,35 +38,25 @@ function zIndexIn(classes: string): number | null {
 describe("header and footer stacking", () => {
   const footerSource = read("src/components/layout/Footer.tsx");
   const headerSource = read("src/components/layout/AuthHeader.tsx");
-  const ambientSource = read("src/components/home/AmbientMurmuration.tsx");
 
   const footerClasses = footerSource.match(/<footer className="([^"]*)"/)?.[1] ?? "";
   // The header's own class list is built with cn(); the layer lives in the
   // first string literal, which carries `fixed inset-x-0 z-50`.
   const headerClasses = headerSource.match(/"(fixed inset-x-0 z-\[?\d+\]?[^"]*)"/)?.[1] ?? "";
-  const ambientClasses = ambientSource.match(/className="(pointer-events-none fixed inset-0[^"]*)"/)?.[1] ?? "";
 
   it("finds every class string it is about to compare", () => {
     // Without this a regex miss would compare `null`s and pass vacuously,
     // which is the usual way a gate of this shape reports green over a defect.
     expect(footerClasses, "footer classes").not.toBe("");
     expect(headerClasses, "header classes").not.toBe("");
-    expect(ambientClasses, "ambient canvas classes").not.toBe("");
     expect(zIndexIn(footerClasses), "footer z-index").not.toBeNull();
     expect(zIndexIn(headerClasses), "header z-index").not.toBeNull();
-    expect(zIndexIn(ambientClasses), "ambient z-index").not.toBeNull();
   });
 
   it("keeps the header strictly above the footer", () => {
     // Strictly greater, not >=. Equal IS the bug: DOM order breaks the tie and
     // the footer is last.
     expect(zIndexIn(headerClasses)!).toBeGreaterThan(zIndexIn(footerClasses)!);
-  });
-
-  it("keeps the footer above the ambient canvas it has to cover", () => {
-    // The footer is opaque black over a full-viewport `fixed inset-0 z-0`
-    // canvas. Demoting it too far would let the murmuration show through.
-    expect(zIndexIn(footerClasses)!).toBeGreaterThan(zIndexIn(ambientClasses)!);
   });
 
   it("keeps the mobile data drawer above the footer", () => {

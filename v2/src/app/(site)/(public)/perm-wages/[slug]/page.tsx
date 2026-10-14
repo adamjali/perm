@@ -303,22 +303,22 @@ export default async function OccupationPage({
         facts={facts}
         tags={tags}
         aside={
-          <div className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-            <p className="font-heading text-xl font-black leading-tight">Weighing an offer for this job?</p>{" "}
-            <p className="mt-1.5 text-sm leading-relaxed text-foreground/70">
+          <div className="border border-border bg-card p-5 sm:p-6">
+            <p className="font-heading text-xl font-bold leading-tight">Weighing an offer for this job?</p>{" "}
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
               Where it falls among certified offers, and the four wage levels DOL sets for it by area.
             </p>{" "}
             <div className="mt-4 flex flex-col gap-2">
               <Link
                 href="/tools/compare-my-offer"
-                className="inline-flex min-h-11 items-center justify-center border-2 border-border bg-primary px-4 font-bold text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-[1px] motion-reduce:transition-none"
+                className="inline-flex min-h-11 items-center justify-center border border-border bg-primary px-4 font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
               >
                 Compare my offer
               </Link>{" "}
               {row.code ? (
                 <Link
                   href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
-                  className="inline-flex min-h-11 items-center justify-center border-2 border-border bg-background px-4 font-bold hover:bg-tint-primary"
+                  className="inline-flex min-h-11 items-center justify-center border border-border bg-background px-4 font-bold hover:bg-tint-primary"
                 >
                   DOL&apos;s wage levels for this job
                 </Link>
@@ -329,7 +329,7 @@ export default async function OccupationPage({
         figures={
           <>
             {row.title === UNUSABLE_TITLE ? (
-              <p className="mb-6 max-w-3xl text-base text-foreground/70">
+              <p className="mb-6 max-w-3xl text-base text-muted-foreground">
                 DOL&apos;s job-title cell is unusable on these rows, so the code is the only name they have.
               </p>
             ) : null}{" "}
@@ -524,9 +524,9 @@ export default async function OccupationPage({
 
       {h1b && h1b.n > 0 && row.code ? (
         <Chapter id="h1b" title="The same job on H-1B">
-        <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
-            <span className="font-heading text-2xl font-black tabular-nums">{formatInt(h1b.n)}</span> certified H-1B
+        <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+          <p className="max-w-3xl text-base leading-relaxed text-soft">
+            <span className="font-heading text-2xl font-bold tabular-nums">{formatInt(h1b.n)}</span> certified H-1B
             labor condition applications for this occupation since FY2020
             {h1b.p50 != null ? `, offering a median of ${formatDollars(h1b.p50)} a year` : ""}
             {h1b.p25 != null && h1b.p75 != null
@@ -547,9 +547,9 @@ export default async function OccupationPage({
 
       <Chapter id="notes" title="Notes on these numbers">
       {/* ONE LINE AND A LINK, THE READING FOLDED. */}
-      <section className="mt-6 border-2 border-border bg-tint-primary p-6 shadow-hard-sm sm:p-8">
-        <h3 className="font-heading text-xl font-black">Reading the wage</h3>{" "}
-        <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
+      <section className="mt-6 border border-border bg-tint-primary p-6 sm:p-8">
+        <h3 className="font-heading text-xl font-bold">Reading the wage</h3>{" "}
+        <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
           A floor, not a salary survey: every level and metro mixed.
           {row.code ? (
             <>
@@ -657,9 +657,9 @@ export default async function OccupationPage({
       />
 
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h3 className="font-heading text-lg font-black">Weighing an offer?</h3>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h3 className="font-heading text-lg font-bold">Weighing an offer?</h3>{" "}
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Compare it against this median, then check the{" "}
             <Link
               href="/perm-by-state"
@@ -670,9 +670,9 @@ export default async function OccupationPage({
             , where the same occupation&apos;s medians swing hard by worksite.
           </p>
         </div>
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h3 className="font-heading text-lg font-black">Setting one?</h3>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h3 className="font-heading text-lg font-bold">Setting one?</h3>{" "}
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             All {kindTotal > 0 ? formatInt(kindTotal) : ""} occupations sort together
             on the{" "}
             <Link

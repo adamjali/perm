@@ -24,14 +24,14 @@ export function FormHelpPanel() {
         className={cn(
           "hidden md:flex",
           "fixed z-40 items-center gap-1.5",
-          "rounded-l-lg border-2 border-r-0 px-2.5 py-3",
+          "rounded-l-lg border border-r-0 px-2.5 py-3",
           "text-sm font-mono font-bold",
-          "transition-all duration-200",
+          "transition-colors duration-200",
           // Position: right edge when closed, left edge of panel when open
           "top-20",
           isOpen
             ? "right-80 sm:right-96 border-destructive bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive dark:hover:bg-destructive dark:hover:text-destructive-foreground"
-            : "right-0 border-border bg-background text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-hard",
+            : "right-0 border-border bg-background text-foreground hover:bg-accent hover:border-primary",
         )}
         aria-label={isOpen ? "Close help panel" : "Open help panel"}
         aria-expanded={isOpen}
@@ -54,7 +54,7 @@ export function FormHelpPanel() {
         className={cn(
           "hidden md:block",
           "fixed right-0 top-16 z-30 h-[calc(100vh-4rem)] w-80 sm:w-96",
-          "border-l-2 border-border bg-background shadow-hard-lg",
+          "border-l border-border bg-background",
           "transition-transform duration-200 ease-out",
           "overflow-y-auto overscroll-contain",
           isOpen ? "translate-x-0" : "translate-x-full",
@@ -63,8 +63,8 @@ export function FormHelpPanel() {
         aria-label="Form help reference"
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 border-b-2 border-border bg-background px-5 py-4">
-          <h2 className="font-heading font-bold text-base uppercase tracking-wider">Form reference</h2>
+        <div className="sticky top-0 z-10 border-b border-border bg-background px-5 py-4">
+          <h2 className="font-heading font-bold text-base">Form reference</h2>
         </div>
 
         {/* Content */}
@@ -104,13 +104,13 @@ export function FormHelpPanel() {
             <p className="text-muted-foreground mb-2">
               All PERM cases require three basic recruitment steps. Professional occupations (Bachelor&rsquo;s+) require three additional methods.
             </p>{" "}
-            <h5 className="font-bold text-sm uppercase tracking-wider mt-3 mb-1">Basic requirements</h5>
+            <h5 className="font-bold text-sm mt-3 mb-1">Basic requirements</h5>
             <FieldList items={[
               { field: "Job order", desc: "Start date triggers auto-calculated end (30 calendar days inclusive per 20 CFR § 656.17(d))" },
               { field: "Sunday ads", desc: "Two newspaper ads on different Sundays, at least 7 days apart" },
               { field: "Notice of Filing", desc: "Start date triggers auto-calculated end (10 business days, skipping federal holidays)" },
             ]} />
-            <h5 className="font-bold text-sm uppercase tracking-wider mt-3 mb-1">Professional occupations</h5>{" "}
+            <h5 className="font-bold text-sm mt-3 mb-1">Professional occupations</h5>{" "}
             <p className="text-muted-foreground">
               Check &ldquo;Professional Occupation&rdquo; if the position requires a Bachelor&rsquo;s degree or higher. You must then add 3+ additional recruitment methods (from 11 options: campus placement, job fairs, trade publications, employer website, etc.).
             </p>
@@ -129,7 +129,7 @@ export function FormHelpPanel() {
               { field: "Certification date", desc: "When DOL certified the application. Fills in the expiration (certification + 179 days, the date DOL prints) and unlocks I-140." },
               { field: "Audit", desc: "If DOL audits the case, enter the audit received and submitted dates" },
             ]} />
-            <h5 className="font-bold text-sm uppercase tracking-wider mt-3 mb-1">RFI (Request for Information)</h5>{" "}
+            <h5 className="font-bold text-sm mt-3 mb-1">RFI (Request for Information)</h5>{" "}
             <p className="text-muted-foreground">
               If DOL requests additional info, enter the received date, the system auto-calculates a strict 30-day due date. Missing an RFI deadline means case denial.
             </p>
@@ -146,7 +146,7 @@ export function FormHelpPanel() {
               { field: "Receipt number", desc: "The USCIS receipt number (e.g., EAC-12-345-67890)" },
               { field: "Approval/Denial Date", desc: "The outcome date. Completing this marks the section done." },
             ]} />
-            <h5 className="font-bold text-sm uppercase tracking-wider mt-3 mb-1">RFE (Request for Evidence)</h5>{" "}
+            <h5 className="font-bold text-sm mt-3 mb-1">RFE (Request for Evidence)</h5>{" "}
             <p className="text-muted-foreground">
               If USCIS requests evidence, enter the received date and due date (typically ~87 days). Unlike RFI, the RFE due date is manually entered since USCIS sets it per case.
             </p>
@@ -209,7 +209,7 @@ export function FormHelpPanel() {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h4 className="font-bold font-mono text-sm uppercase tracking-wider mb-1.5 text-foreground border-b border-border pb-1">
+    <h4 className="font-bold text-sm mb-1.5 text-foreground border-b border-border pb-1">
       {children}
     </h4>
   );
@@ -230,8 +230,8 @@ function FieldList({ items }: { items: { field: string; desc: string }[] }) {
 
 function Example({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-2 bg-muted/50 border-2 border-border rounded px-3 py-2 text-sm text-muted-foreground">
-      <span className="font-bold font-mono uppercase tracking-wider text-foreground">Tip: </span>
+    <div className="mt-2 bg-muted/50 border border-border rounded px-3 py-2 text-sm text-muted-foreground">
+      <span className="font-bold text-foreground">Tip: </span>
       {children}
     </div>
   );

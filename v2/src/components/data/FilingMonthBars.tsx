@@ -61,10 +61,10 @@ export function FilingMonthBars({
     <figure className={cn("m-0", className)}>
       <div aria-hidden="true" className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 border-2 border-border bg-foreground" /> Decided
+          <span className="size-3 border border-border bg-foreground" /> Decided
         </span>{" "}
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 border-2 border-border bg-primary" /> Still waiting at DOL
+          <span className="size-3 border border-border bg-primary" /> Still waiting at DOL
         </span>
       </div>{" "}
       <ChartTips label={label} className="mt-4">
@@ -81,7 +81,7 @@ export function FilingMonthBars({
                   {flagged ? (
                     <span
                       className={cn(
-                        "absolute -top-8 z-10 whitespace-nowrap border-2 border-border bg-primary px-1.5 py-0.5 text-sm font-bold text-black",
+                        "absolute -top-8 z-10 whitespace-nowrap border border-border bg-primary px-1.5 py-0.5 text-sm font-bold text-black",
                         anchor,
                       )}
                     >
@@ -90,7 +90,7 @@ export function FilingMonthBars({
                   ) : null}
                   <div
                     data-tip={`Filed in ${MONTH_LONG(m.month)}\n${formatInt(m.total)} ${nouns}\n${formatInt(m.total - m.pending)} decided\n${formatInt(m.pending)} still waiting`}
-                    className={cn("flex flex-col border-2 border-border", flagged && "outline outline-2 outline-offset-2 outline-primary")}
+                    className={cn("flex flex-col border border-border", flagged && "outline outline-2 outline-offset-2 outline-primary")}
                     style={{ height: `${Math.max(2, h)}%` }}
                   >
                     {m.pending > 0 ? <div className="bg-primary" style={{ height: `${waitShare}%` }} /> : null}
@@ -104,12 +104,12 @@ export function FilingMonthBars({
           <div aria-hidden="true" className="mt-1.5 flex gap-1 sm:gap-2">
             {shown.map((m, i) => (
               <Fragment key={m.month}>
-                <span className="min-w-0 flex-1 text-center text-sm tabular-nums text-foreground/70">
+                <span className="min-w-0 flex-1 text-center text-sm tabular-nums text-muted-foreground">
                   {/* A phone's column is about 26px: the month's first letter there, its three letters from sm up. */}
                   <span className="sm:hidden">{MONTH_SHORT(m.month).charAt(0)}</span>{" "}
                   <span className="hidden sm:inline">{MONTH_SHORT(m.month)}</span>{" "}
                   {i === 0 || m.month.endsWith("-01") ? (
-                    <span className="block text-foreground/70">&rsquo;{m.month.slice(2, 4)}</span>
+                    <span className="block text-muted-foreground">&rsquo;{m.month.slice(2, 4)}</span>
                   ) : null}
                 </span>{" "}
               </Fragment>

@@ -58,30 +58,30 @@ function LeaderBar({ list }: { list: SevpList }) {
   if (s.all === 0) return null;
   const pct = Math.round(s.share * 100);
   return (
-    <figure className="m-0 border-2 border-border bg-card p-5 shadow-hard">
-      <figcaption className="font-heading text-lg font-black leading-snug">
+    <figure className="m-0 border border-border bg-card p-5">
+      <figcaption className="font-heading text-lg font-bold leading-snug">
         The {LEADERS} busiest hold {pct}% of the {list.year} list
       </figcaption>{" "}
       <span className="sr-only">{`The ${LEADERS} busiest employers: ${formatInt(s.lead)}. The other ${list.rows.length - LEADERS}: ${formatInt(s.rest)}.`}</span>
-      <div aria-hidden="true" className="mt-4 flex h-6 border-2 border-border">
+      <div aria-hidden="true" className="mt-4 flex h-6 border border-border">
         <span className="block h-full bg-primary" style={{ width: `${s.share * 100}%` }} />
         <span className="block h-full flex-1 bg-muted" />
       </div>{" "}
       <dl aria-hidden="true" className="mt-3 grid grid-cols-2 gap-3 text-sm [&>*]:min-w-0">
         <div>
-          <dt className="flex items-center gap-2 text-foreground/70">
-            <span className="size-3 shrink-0 border-2 border-border bg-primary" /> The {LEADERS} busiest{" "}
+          <dt className="flex items-center gap-2 text-muted-foreground">
+            <span className="size-3 shrink-0 border border-border bg-primary" /> The {LEADERS} busiest{" "}
           </dt>{" "}
           <dd className="mt-0.5 font-bold tabular-nums">{formatInt(s.lead)}</dd>
         </div>{" "}
         <div>
-          <dt className="flex items-center gap-2 text-foreground/70">
-            <span className="size-3 shrink-0 border-2 border-border bg-muted" /> The other {list.rows.length - LEADERS}{" "}
+          <dt className="flex items-center gap-2 text-muted-foreground">
+            <span className="size-3 shrink-0 border border-border bg-muted" /> The other {list.rows.length - LEADERS}{" "}
           </dt>{" "}
           <dd className="mt-0.5 font-bold tabular-nums">{formatInt(s.rest)}</dd>
         </div>
       </dl>{" "}
-      <p className="mt-3 text-sm text-foreground/70">A student at two of these employers counts at each.</p>
+      <p className="mt-3 text-sm text-muted-foreground">A student at two of these employers counts at each.</p>
     </figure>
   );
 }
@@ -119,7 +119,7 @@ export default async function OptEmployersPage() {
       />
 
       {lists.length === 0 ? (
-        <p className="mt-10 border-2 border-border bg-card p-5 text-base">
+        <p className="mt-10 border border-border bg-card p-5 text-base">
           The lists haven&apos;t been loaded yet. ICE&apos;s own PDFs are on its{" "}
           <a href={SOURCE} rel="noopener noreferrer" className="font-bold underline underline-offset-2 hover:text-primary">
             SEVIS &quot;What&apos;s New&quot; page
@@ -130,10 +130,10 @@ export default async function OptEmployersPage() {
 
       {current.map((l) => (
         <section key={`${l.year}-${l.list}`} className="mt-10" aria-labelledby={`h-${l.year}-${l.list}`}>
-          <h2 id={`h-${l.year}-${l.list}`} className="font-heading text-2xl font-black">
+          <h2 id={`h-${l.year}-${l.list}`} className="font-heading text-2xl font-bold">
             {l.year}: {label(l)}
           </h2>{" "}
-          <p className="mt-1 text-base text-foreground/70">
+          <p className="mt-1 text-base text-muted-foreground">
             {l.list === "opt"
               ? "Students on OPT or its STEM extension in the year, with each program's count. A student who worked for the same employer in both is counted in each, so the two can add up to more than the first column."
               : "Students on Curricular Practical Training in the year: work that's part of a degree program."}
@@ -147,15 +147,15 @@ export default async function OptEmployersPage() {
 
       {earlier.length > 0 ? (
         <section className="mt-12" aria-labelledby="earlier">
-          <h2 id="earlier" className="font-heading text-2xl font-black">
+          <h2 id="earlier" className="font-heading text-2xl font-bold">
             Earlier years
           </h2>{" "}
           <div className="mt-4 space-y-3">
             {earlier.map((l) => (
               <Fragment key={`${l.year}-${l.list}`}>
                 {" "}
-                <details className="group border-2 border-border">
-                  <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-lg font-black [&::-webkit-details-marker]:hidden">
+                <details className="group border border-border">
+                  <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-lg font-bold [&::-webkit-details-marker]:hidden">
                     <span>
                       {l.year}: {label(l)}, led by {l.rows[0]?.employer ?? "nobody"}
                     </span>{" "}
@@ -173,8 +173,8 @@ export default async function OptEmployersPage() {
       ) : null}
 
       <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">How to read these</h2>{" "}
-        <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
+        <h2 className="font-heading text-2xl font-bold">How to read these</h2>{" "}
+        <div className="mt-4 space-y-4 text-base leading-relaxed text-soft">
           <p>
             Names are ICE&apos;s and often a brand (&quot;Amazon&quot;) rather than the company that files, so each
             links a search of this site&apos;s employer records instead of claiming a match.

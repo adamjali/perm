@@ -459,7 +459,7 @@ export function ImportModal({
               {/* File Dropzone */}
               <div
                 className={cn(
-                  "relative border-2 border-dashed rounded-none p-8 text-center transition-all duration-150",
+                  "relative border border-dashed rounded-none p-8 text-center transition-colors duration-150",
                   isDragging
                     ? "border-primary bg-primary/5 scale-[1.01]"
                     : "border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/30",
@@ -503,7 +503,7 @@ export function ImportModal({
               {parseResult && (
                 <div className="space-y-3">
                   {/* Format Detection Badge */}
-                  <div className="flex items-center gap-3 p-3 border-2 border-border bg-muted/30">
+                  <div className="flex items-center gap-3 p-3 border border-border bg-muted/30">
                     <span className="text-sm font-medium text-muted-foreground">Detected Format:</span>
                     {getFormatBadge()}
                     {parseResult.isLegacyFormat && (
@@ -515,7 +515,7 @@ export function ImportModal({
 
                   {/* Legacy Format Warning */}
                   {parseResult.isLegacyFormat && (
-                    <div className="flex items-start gap-3 p-4 border-2 border-data-warn bg-data-warn/8">
+                    <div className="flex items-start gap-3 p-4 border border-data-warn bg-data-warn/8">
                       <InfoIcon className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-data-warn-ink">
@@ -531,7 +531,7 @@ export function ImportModal({
 
                   {/* Foreign Worker Warning Banner */}
                   {parseResult.casesNeedingBeneficiary > 0 && (
-                    <div className="flex items-start gap-3 p-4 border-2 border-data-warn bg-data-warn/8">
+                    <div className="flex items-start gap-3 p-4 border border-data-warn bg-data-warn/8">
                       <UserX className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-data-warn-ink">
@@ -555,7 +555,7 @@ export function ImportModal({
                     const filled = parseResult.filledExpirations;
                     const passed = filled.filter((f) => f.alreadyPassed);
                     return (
-                      <div className="border-2 border-data-warn bg-data-warn/8 p-4 space-y-3" data-testid="filled-expirations">
+                      <div className="border border-data-warn bg-data-warn/8 p-4 space-y-3" data-testid="filled-expirations">
                         <div className="flex items-start gap-3">
                           <InfoIcon className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" aria-hidden="true" />
                           <div>
@@ -580,7 +580,7 @@ export function ImportModal({
                           {filled.length > 8 && <li className="text-muted-foreground">and {filled.length - 8} more</li>}
                         </ul>
                         {passed.length > 0 && (
-                          <div className="flex items-start gap-3 border-2 border-destructive bg-destructive/8 p-3" role="alert">
+                          <div className="flex items-start gap-3 border border-destructive bg-destructive/8 p-3" role="alert">
                             <AlertTriangle className="h-5 w-5 text-destructive-text flex-shrink-0 mt-0.5" aria-hidden="true" />
                             <p className="text-sm text-destructive-text">
                               {passed.length === 1 ? "One of these dates has" : `${passed.length} of these dates have`} already passed
@@ -596,7 +596,7 @@ export function ImportModal({
 
                   {/* Conversion Warnings (Status mappings, etc.) */}
                   {parseResult.warnings.length > 0 && (
-                    <div className="border-2 border-border">
+                    <div className="border border-border">
                       {/* Header - always clickable */}
                       <div
                         className={cn(
@@ -709,7 +709,7 @@ export function ImportModal({
               {parseResult && (
                 <>
                   {/* Summary */}
-                  <div className="flex items-center justify-between p-4 border-2 border-border bg-muted/50">
+                  <div className="flex items-center justify-between p-4 border border-border bg-muted/50">
                     <div className="flex items-center gap-4">
                       <span className="font-medium">
                         {parseResult.valid.length} case{parseResult.valid.length !== 1 ? "s" : ""} ready to
@@ -726,7 +726,7 @@ export function ImportModal({
                   </div>
 
                   {/* Table with scrollable container */}
-                  <div className="border-2 border-border">
+                  <div className="border border-border">
                     <div
                       className={cn(
                         "overflow-x-auto overscroll-x-none",
@@ -735,7 +735,7 @@ export function ImportModal({
                     >
                       <table className="w-full min-w-[700px]">
                         <thead className="sticky top-0 z-10">
-                          <tr className="border-b-2 border-border bg-muted">
+                          <tr className="border-b border-border bg-muted">
                             <th className="px-3 py-3 text-left text-sm font-semibold w-[25%]">Employer</th>
                             <th className="px-3 py-3 text-left text-sm font-semibold w-[25%]">Foreign worker</th>
                             <th className="px-3 py-3 text-left text-sm font-semibold w-[35%]">Status</th>
@@ -757,12 +757,12 @@ export function ImportModal({
                                 <tr
                                   key={index}
                                   className={cn(
-                                    "group border-b border-border transition-all duration-150",
+                                    "group border-b border-border transition-colors duration-150",
  isError && "bg-data-bad/10 border-data-bad",
                                     isEditing && "bg-primary/5 dark:bg-primary/10 ring-1 ring-primary/50",
                                     !isError &&
                                       !isEditing &&
-                                      "hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer hover:shadow-hard-sm"
+                                      "hover:bg-accent dark:hover:bg-accent cursor-pointer"
                                   )}
                                   onClick={() => !isError && !isEditing && handleStartEdit(index)}
                                   role={!isError && !isEditing ? "button" : undefined}
@@ -842,7 +842,7 @@ export function ImportModal({
                         type="button"
                         onClick={() => setShowAllCases(!showAllCases)}
                         className={cn(
-                          "w-full px-4 py-3 bg-muted border-t-2 border-border text-sm",
+                          "w-full px-4 py-3 bg-muted border-t border-border text-sm",
                           "flex items-center justify-center gap-2",
                           "hover:bg-muted/80 transition-colors duration-150",
                           "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
@@ -867,7 +867,7 @@ export function ImportModal({
 
                   {/* Inline Edit Panel */}
                   {editingIndex !== null && editingCase && (
-                    <div className="border-2 border-primary bg-primary/5 dark:bg-primary/10 p-4 space-y-4">
+                    <div className="border border-primary bg-primary/5 dark:bg-primary/10 p-4 space-y-4">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-sm">
                           Editing Row {editingIndex + 1}:{" "}
@@ -930,7 +930,7 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("caseStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full min-w-0 rounded-md border-2 border-border bg-background px-3 py-1",
+                              "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:opacity-50",
@@ -957,7 +957,7 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("progressStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full min-w-0 rounded-md border-2 border-border bg-background px-3 py-1",
+                              "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:opacity-50",
@@ -997,7 +997,7 @@ export function ImportModal({
 
                   {/* Error Details */}
                   {parseResult.errors.length > 0 && (
-                    <div className="border-2 border-data-bad bg-data-bad/10 p-4">
+                    <div className="border border-data-bad bg-data-bad/10 p-4">
                       <div className="flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-data-bad-ink flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
@@ -1027,7 +1027,7 @@ export function ImportModal({
           {showDuplicateStep && (
             <>
               {/* Duplicate Warning */}
-              <div className="flex items-start gap-3 p-4 border-2 border-data-warn bg-data-warn/8">
+              <div className="flex items-start gap-3 p-4 border border-data-warn bg-data-warn/8">
                 <AlertTriangle className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-data-warn-ink">
@@ -1040,7 +1040,7 @@ export function ImportModal({
               </div>
 
               {/* Apply to All Buttons */}
-              <div className="flex items-center gap-4 p-4 border-2 border-border bg-muted/50">
+              <div className="flex items-center gap-4 p-4 border border-border bg-muted/50">
                 <span className="text-sm font-medium">Apply to all:</span>
                 <Button
                   variant="outline"
@@ -1061,10 +1061,10 @@ export function ImportModal({
               </div>
 
               {/* Duplicate List */}
-              <div className="border-2 border-border overflow-x-auto overscroll-x-none">
+              <div className="border border-border overflow-x-auto overscroll-x-none">
                 <table className="w-full min-w-[600px]">
                   <thead>
-                    <tr className="border-b-2 border-border bg-muted">
+                    <tr className="border-b border-border bg-muted">
                       <th className="px-3 py-3 text-left text-sm font-semibold w-[30%]">Employer</th>
                       <th className="px-3 py-3 text-left text-sm font-semibold w-[30%]">Foreign worker</th>
                       <th className="px-3 py-3 text-left text-sm font-semibold w-[40%]">Action</th>
@@ -1091,7 +1091,7 @@ export function ImportModal({
                               variant={resolutions[String(dup.index)] === "skip" ? "default" : "outline"}
                               size="sm"
                               onClick={() => handleResolutionChange(dup.index, "skip")}
-                              className="transition-all duration-150"
+                              className="transition-colors duration-150"
                             >
                               Skip
                             </Button>
@@ -1100,7 +1100,7 @@ export function ImportModal({
                               size="sm"
                               onClick={() => handleResolutionChange(dup.index, "replace")}
                               className={cn(
-                                "transition-all duration-150",
+                                "transition-colors duration-150",
                                 resolutions[String(dup.index)] !== "replace" &&
                                   "hover:bg-destructive/10 hover:text-destructive-text hover:border-destructive"
                               )}
@@ -1120,7 +1120,7 @@ export function ImportModal({
                 const { skipCount, replaceCount } = getResolutionSummary();
                 const nonDuplicateCount = (parseResult?.valid.length ?? 0) - duplicates.length;
                 return (
-                  <div className="p-4 border-2 border-border bg-muted/50 text-sm">
+                  <div className="p-4 border border-border bg-muted/50 text-sm">
                     <p>
                       <strong>{nonDuplicateCount}</strong> new case{nonDuplicateCount !== 1 ? "s" : ""} will be
                       imported.
@@ -1146,7 +1146,7 @@ export function ImportModal({
           {showSuccessStep && importSummary && (
             <>
               {/* Import Summary */}
-              <div className="flex items-start gap-3 p-4 border-2 border-data-good">
+              <div className="flex items-start gap-3 p-4 border border-data-good">
                 <CheckIcon className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-primary">
@@ -1170,7 +1170,7 @@ export function ImportModal({
 
               {/* Validation Warnings */}
               {importSummary.validationWarnings.length > 0 && (
-                <div className="border-2 border-data-warn bg-data-warn/8">
+                <div className="border border-data-warn bg-data-warn/8">
                   <div className="flex items-start gap-3 p-4 border-b border-data-warn">
                     <AlertTriangle className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                     <div>

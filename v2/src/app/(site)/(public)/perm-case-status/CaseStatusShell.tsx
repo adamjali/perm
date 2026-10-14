@@ -21,7 +21,7 @@ export const CASE_STATUS_FRAME = "mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm
  * is the `<h1>`.
  */
 export function CaseStatusHead({ typed, loading = false }: { typed: string; loading?: boolean }) {
-  const titleClass = "font-heading text-4xl font-black leading-tight sm:text-5xl";
+  const titleClass = "font-heading text-4xl font-bold leading-tight sm:text-5xl";
   return (
     <>
       <header>
@@ -32,14 +32,14 @@ export function CaseStatusHead({ typed, loading = false }: { typed: string; load
         ) : (
           <h1 className={titleClass}>Check a PERM case</h1>
         )}{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">
           Its status in plain English, where it sits in DOL&apos;s queue, an
           estimated decision date, and an email when it changes. Wage request,
           LCA, H-2A, H-2B and CW-1 numbers work too.
         </p>
       </header>
 
-      <div className="mt-8 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+      <div className="mt-8 border border-border bg-card p-5 sm:p-6">
         <CaseLookupForm defaultValue={typed} source="case-page" />
       </div>
     </>
@@ -65,10 +65,10 @@ function Bar({ className, ink = false }: { className: string; ink?: boolean }) {
  * FAQ jump up into view and back down again a second later.
  */
 export function LookupSkeleton() {
-  const card = "border-2 border-border bg-card p-6 shadow-hard sm:p-8";
+  const card = "border border-border bg-card p-6 sm:p-8";
   return (
     <div aria-hidden="true">
-      <div className="min-h-[602px] border-2 border-border bg-foreground p-6 shadow-hard sm:min-h-[509px] sm:p-8 lg:min-h-[392px]">
+      <div className="min-h-[602px] border border-border bg-foreground p-6 sm:min-h-[509px] sm:p-8 lg:min-h-[392px]">
         <Bar ink className="h-8 w-28" />
         <div className="mt-4 max-w-3xl space-y-3">
           <Bar ink className="h-6 w-full" />
@@ -85,7 +85,7 @@ export function LookupSkeleton() {
             <Bar ink className="h-9 w-64 max-w-full sm:w-80" />
             <Bar ink className="h-5 w-56 max-w-full" />
           </div>
-          <Bar ink className="h-12 w-52 max-w-full border-2 border-background/40" />
+          <Bar ink className="h-12 w-52 max-w-full border border-background/40" />
         </div>
         <Bar ink className="mt-4 h-4 w-3/4" />
       </div>
@@ -103,15 +103,15 @@ export function LookupSkeleton() {
         <Bar className="mt-6 h-5 w-48" />
       </div>
 
-      <div className="mt-8 min-h-[655px] border-2 border-border bg-card p-5 shadow-hard sm:min-h-[369px] sm:p-6 lg:min-h-[346px]">
+      <div className="mt-8 min-h-[655px] border border-border bg-card p-5 sm:min-h-[369px] sm:p-6 lg:min-h-[346px]">
         <Bar className="h-4 w-36" />
         <div className="mt-4 max-w-2xl space-y-2.5">
           <Bar className="h-4 w-full" />
           <Bar className="h-4 w-4/5" />
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
-          <div className="h-12 min-w-0 flex-1 basis-56 border-2 border-border bg-background" />
-          <Bar className="h-12 w-48 border-2 border-border" />
+          <div className="h-12 min-w-0 flex-1 basis-56 border border-border bg-background" />
+          <Bar className="h-12 w-48 border border-border" />
         </div>
         <div className="mt-5 space-y-3">
           <Bar className="h-4 w-3/4" />
@@ -119,7 +119,7 @@ export function LookupSkeleton() {
           <Bar className="h-4 w-5/6" />
         </div>
       </div>
-      <div className="mt-4 min-h-[273px] border-2 border-border bg-card p-5 shadow-hard sm:min-h-[212px] sm:p-6">
+      <div className="mt-4 min-h-[273px] border border-border bg-card p-5 sm:min-h-[212px] sm:p-6">
         <Bar className="h-5 w-64 max-w-full" />
         <div className="mt-3 space-y-2.5">
           <Bar className="h-4 w-full" />

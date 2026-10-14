@@ -226,7 +226,7 @@ export function RecruitmentResultsCard({
             <ClipboardTextIcon className="h-3.5 w-3.5" />
             Recruitment results
             {isCustom && !isEditing && (
-              <span className="ml-1 inline-flex items-center border-2 border-border bg-muted px-1.5 py-0.5 text-sm font-medium text-muted-foreground">
+              <span className="ml-1 inline-flex items-center border border-border bg-muted px-1.5 py-0.5 text-sm font-medium text-muted-foreground">
                 Custom
               </span>
             )}
@@ -272,7 +272,7 @@ export function RecruitmentResultsCard({
                   className="icon-btn"
                   title={isCopied ? "Copied" : "Copy to clipboard"}
                 >
-                  <AnimatePresence mode="wait">
+                  <AnimatePresence initial={false} mode="wait">
                     {isCopied ? (
                       <motion.span
                         key="check"
@@ -313,7 +313,7 @@ export function RecruitmentResultsCard({
         {status.status !== "incomplete" && (
           <div
             className={cn(
-              "border-b-2 border-border p-4",
+              "border-b border-border p-4",
               config.bg
             )}
           >
@@ -323,7 +323,7 @@ export function RecruitmentResultsCard({
               />
               <span
                 className={cn(
-                  "font-mono text-sm font-bold uppercase tracking-wide",
+                  "text-sm font-bold",
                   config.text
                 )}
               >
@@ -367,8 +367,8 @@ export function RecruitmentResultsCard({
         {/* ── DOL Text ── */}
         <div
           className={cn(
-            "border-b-2 border-border p-4",
-            isCustom && !isEditing && "border-l-2 border-l-primary"
+            "border-b border-border p-4",
+            isCustom && !isEditing && "border-l border-l-primary"
           )}
         >
           {isEditing ? (

@@ -217,7 +217,7 @@ export default async function PermCaseStatusPage({
           from bad input. A figure the reader has already absorbed cannot be
           un-absorbed by a note underneath it. */}
       {malformed ? (
-        <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
           <WarningIcon
             className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
@@ -239,7 +239,7 @@ export default async function PermCaseStatusPage({
           cross-program search answers the question they were actually asking
           instead of stopping at "wrong shape". */}
       {malformed && looksLikeReceipt(typed) ? (
-        <div className="mt-4 border-2 border-border bg-tint-primary p-5">
+        <div className="mt-4 border border-border bg-tint-primary p-5">
           <p className="text-base leading-relaxed">
             <b className="font-bold">Holding a USCIS receipt number?</b> Three
             letters and ten digits, like EAC2190123456, is USCIS&apos;s record
@@ -249,7 +249,7 @@ export default async function PermCaseStatusPage({
           <p className="mt-3">
             <Link
               href="/uscis-case-status"
-              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
+              className="inline-flex min-h-[44px] items-center border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent"
             >
               Check a USCIS receipt instead
             </Link>
@@ -257,7 +257,7 @@ export default async function PermCaseStatusPage({
         </div>
       ) : null}
       {malformed && looksLikeName(typed) ? (
-        <div className="mt-4 border-2 border-border bg-tint-primary p-5">
+        <div className="mt-4 border border-border bg-tint-primary p-5">
           <p className="text-base leading-relaxed">
             <b className="font-bold">Looking for an employer rather than a number?</b>{" "}
             Search every filing under that name across every DOL program:
@@ -267,7 +267,7 @@ export default async function PermCaseStatusPage({
           <p className="mt-3">
             <Link
               href={`/case-search?q=${encodeURIComponent(typed.trim().slice(0, 120))}`}
-              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
+              className="inline-flex min-h-[44px] items-center border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent"
             >
               Search DOL for &ldquo;{typed.trim().slice(0, 60)}&rdquo;
             </Link>
@@ -300,7 +300,7 @@ export default async function PermCaseStatusPage({
       </div>
 
       <section className="mt-14">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
         <FaqList items={FAQS} />
       </section>
 

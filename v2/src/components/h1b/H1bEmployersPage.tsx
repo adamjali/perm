@@ -149,8 +149,8 @@ export async function H1bEmployersPage({ state }: { state: string }) {
         <JsonLdScript key={i} schema={s} />
       ))}
       <header className="max-w-3xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">{heading}</h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">{heading}</h1>{" "}
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           Who files the most H-1B work each fiscal year
           {state === NATION ? ", nationally and by state" : ""}, from DOL&apos;s certified LCAs and USCIS&apos;s
           approvals. Each employer links to its full record.
@@ -162,7 +162,7 @@ export async function H1bEmployersPage({ state }: { state: string }) {
             <H1bEmployerRanks summary={forClient} initial={view} states={states} />
           </SearchParamsBoundary>
         ) : (
-          <p className="border-2 border-border bg-card p-5 text-base">
+          <p className="border border-border bg-card p-5 text-base">
             The rankings aren&apos;t built yet. They&apos;re made from DOL&apos;s LCA files and USCIS&apos;s Employer
             Data Hub after each load; the <Link href="/lca-cases" className="font-bold underline decoration-primary decoration-2 underline-offset-2">LCA case search</Link> answers one employer at a time meanwhile.
           </p>
@@ -170,13 +170,13 @@ export async function H1bEmployersPage({ state }: { state: string }) {
       </section>{" "}
       {states.length > 0 ? (
         <section aria-labelledby="h1b-by-state" className="mt-12">
-          <h2 id="h1b-by-state" className="font-heading text-2xl font-black">
+          <h2 id="h1b-by-state" className="font-heading text-2xl font-bold">
             By state
           </h2>{" "}
           <ul className="mt-4 flex flex-wrap gap-2">
             {state !== NATION ? (
               <li>
-                <Link href={H1B_PATH} className="inline-flex min-h-[44px] items-center border-2 border-border bg-card px-3 text-base font-semibold hover:bg-muted">
+                <Link href={H1B_PATH} className="inline-flex min-h-[44px] items-center border border-border bg-card px-3 text-base font-semibold hover:bg-muted">
                   Whole country
                 </Link>{" "}
               </li>
@@ -186,11 +186,11 @@ export async function H1bEmployersPage({ state }: { state: string }) {
               .map((code) => (
                 <li key={code}>
                   {code === state ? (
-                    <span aria-current="page" className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-3 text-base font-semibold text-background">
+                    <span aria-current="page" className="inline-flex min-h-[44px] items-center border border-border bg-foreground px-3 text-base font-semibold text-background">
                       {US_STATE_NAMES[code]}
                     </span>
                   ) : (
-                    <Link href={`${H1B_PATH}/${stateSlug(code)}`} className="inline-flex min-h-[44px] items-center border-2 border-border bg-card px-3 text-base font-semibold hover:bg-muted">
+                    <Link href={`${H1B_PATH}/${stateSlug(code)}`} className="inline-flex min-h-[44px] items-center border border-border bg-card px-3 text-base font-semibold hover:bg-muted">
                       {US_STATE_NAMES[code]}
                     </Link>
                   )}{" "}
@@ -200,7 +200,7 @@ export async function H1bEmployersPage({ state }: { state: string }) {
         </section>
       ) : null}{" "}
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} openFirst={false} />
       </section>{" "}
       <FinePrint summary="How these are counted" className="mt-8">

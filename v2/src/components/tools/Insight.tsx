@@ -78,7 +78,7 @@ const DIRECTION_INK: Record<Direction, string> = {
   good: "text-[var(--data-good-ink)]",
   warn: "text-[var(--data-warn-ink)]",
   bad: "text-[var(--data-bad-ink)]",
-  flat: "text-foreground/60",
+  flat: "text-muted-foreground",
 };
 
 const DIRECTION_MARK: Record<Direction, string> = {
@@ -102,7 +102,7 @@ export function Verdict({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 border-2 px-2.5 py-1 font-mono text-sm font-bold uppercase tracking-wider",
+        "inline-flex items-center gap-1.5 border px-2.5 py-1 text-sm font-bold",
         DIRECTION_STYLE[direction],
       )}
     >
@@ -133,13 +133,13 @@ export function InsightLede({
   actions?: ReactNode;
 }) {
   return (
-    <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
+    <div className="border border-border bg-foreground p-6 text-background sm:p-8">
       {verdict ? (
         <div className="mb-4">
           <Verdict direction={direction}>{verdict}</Verdict>
         </div>
       ) : null}
-      <p className="max-w-3xl font-heading text-xl font-black leading-snug sm:text-2xl">
+      <p className="max-w-3xl font-heading text-xl font-bold leading-snug sm:text-2xl">
         {children}
       </p>{" "}
       {actions ?? null}{" "}
@@ -156,7 +156,7 @@ export function InsightLede({
           Writing that rule out cost a second build, because spelling the
           comment delimiters literally inside a comment closes it early. */}
       {source ? (
-        <p className="mt-3 font-mono text-sm uppercase tracking-wider text-background/70">
+        <p className="mt-3 text-sm text-background/70">
           {source}
         </p>
       ) : null}{" "}
@@ -230,7 +230,7 @@ export function FreshnessDots({ items }: { items: Freshness[] }) {
               f.kind === "live" ? "bg-primary" : "bg-[var(--data-none)]",
             )}
           />
-          <span className="font-mono text-sm uppercase tracking-wider text-foreground/60">
+          <span className="text-sm text-muted-foreground">
             {f.label}: {f.asOf}
           </span>
         </span>

@@ -225,19 +225,19 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
   }, [pwdDate, firstRecruitment, lastRecruitment]);
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <div className="border-b-2 border-border p-6 sm:p-8">
+    <div className={cn("border border-border bg-card", className)}>
+      <div className="border-b border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
         {/* data-embed-hide: the embed's own title bar already says this. */}
         <div data-embed-hide className="flex items-center gap-3">
           <CalendarCheckIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <h2 className="font-heading text-2xl font-black leading-tight">
+          <h2 className="font-heading text-2xl font-bold leading-tight">
             Your PERM deadlines
           </h2>
         </div>
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           Every date here is fixed arithmetic on the prevailing wage
           determination under 20 CFR 656.
         </p>
@@ -261,7 +261,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           <div>
             <Label htmlFor={recruitId} className="text-sm font-bold">
               First recruitment step{" "}
-              <span className="font-normal text-foreground/60">(optional)</span>
+              <span className="font-normal text-muted-foreground">(optional)</span>
             </Label>
             {/* The shared DateInput, not a raw <input type="date">. It carries
                 min-w-0 on the control and its wrapper, which is what stops a
@@ -277,7 +277,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
           <div>
             <Label htmlFor={lastRecruitId} className="text-sm font-bold">
               Last recruitment step{" "}
-              <span className="font-normal text-foreground/60">(optional)</span>
+              <span className="font-normal text-muted-foreground">(optional)</span>
             </Label>
             {/* The shared DateInput, not a raw <input type="date">. It carries
                 min-w-0 on the control and its wrapper, which is what stops a
@@ -289,7 +289,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               onChange={(e) => setLastRecruitment(e.target.value)}
               className="mt-2"
             />
-            <p className="mt-2 text-sm text-foreground/60">
+            <p className="mt-2 text-sm text-muted-foreground">
               Needed for the date the filing window opens.
             </p>
           </div>
@@ -300,7 +300,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         // Warnings sit ABOVE the dates: a date computed from suspect input
         // must not read as more authoritative than the doubt about the input.
         <div
-          className="border-b-2 border-border bg-tint-primary p-6 sm:p-8"
+          className="border-b border-border bg-tint-primary p-6 sm:p-8"
           role="alert"
         >
           {result.warnings.map((w) => (
@@ -319,18 +319,18 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         // Under the warnings, above the dates. It qualifies a date this tool
         // prints, so a reader has to meet it before the date, but it is a
         // citation rather than an alarm and it is not styled as one.
-        <div className="border-b-2 border-border bg-muted p-6 sm:p-8">
+        <div className="border-b border-border bg-muted p-6 sm:p-8">
           <div className="flex items-start gap-3">
             <InfoIcon
               className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
               aria-hidden="true"
             />{" "}
             <div>
-              <p className="font-heading text-lg font-black leading-tight">
+              <p className="font-heading text-lg font-bold leading-tight">
                 This recruitment expired during the 2025 shutdown, and DOL took
                 filings on it anyway
               </p>{" "}
-              <p className="mt-2 text-base leading-relaxed text-foreground/70">
+              <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                 Recruitment from this date stops supporting a filing on{" "}
                 {formatAsOf(result.shutdownRecruitmentEnd)}. DOL shut down on 1 October 2025 and FLAG was
                 offline for 33 days. On 5 November 2025 it said, for recruitment or a wage determination that
@@ -343,13 +343,13 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
                   This is a pasted fragment of someone else's document, so it
                   gets the system's own bordered surface and the quote marks
                   carry the rest. */}
-              <blockquote className="mt-3 border-2 border-border bg-background p-4 text-base leading-relaxed">
+              <blockquote className="mt-3 border border-border bg-background p-4 text-base leading-relaxed">
                 &ldquo;{SHUTDOWN_QUOTE}&rdquo;
-                <cite className="mt-2 block font-mono text-sm font-bold uppercase not-italic tracking-wider text-muted-foreground">
+                <cite className="mt-2 block text-sm font-bold not-italic text-muted-foreground">
                   Office of Foreign Labor Certification, {formatAsOf(SHUTDOWN_ANNOUNCED)}
                 </cite>
               </blockquote>{" "}
-              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 FLAG shows a warning on such a filing and accepts it, and a denial on those grounds can go back
                 to the Certifying Officer. The dates below still follow 20 CFR 656; the exception covers only that
                 33-day window.
@@ -369,7 +369,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
       ) : null}{" "}
 
       {result && result.diagram && DATE_RE.test(pwdDate) ? (
-        <div className="border-b-2 border-border p-6 sm:p-8">
+        <div className="border-b border-border p-6 sm:p-8">
           <DeadlineWindowDiagram
             pwdDate={pwdDate}
             pwdExpiration={result.diagram.pwdExpiration}
@@ -383,16 +383,16 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
       ) : null}{" "}
 
       {result && result.rows.length > 0 ? (
-        <div className="divide-y-2 divide-border">
+        <div className="divide-y divide-border">
           {result.rows.map((row) => (
             <div key={row.label} className="p-6 sm:p-8">
-              <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+              <p className="text-sm font-bold text-muted-foreground">
                 {row.label}
               </p>{" "}
-              <p className="mt-2 font-heading text-2xl font-black leading-none sm:text-3xl">
+              <p className="mt-2 font-heading text-2xl font-bold leading-none sm:text-3xl">
                 {formatAsOf(row.date)}
               </p>{" "}
-              <p className="mt-3 text-base leading-relaxed text-foreground/70">{row.detail}</p>
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">{row.detail}</p>
             </div>
           ))}
         </div>
@@ -401,11 +401,11 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         // works out, named, with a hatched space where its date goes. The
         // sentence says which box unlocks which rows.
         <div className="p-6 sm:p-8">
-          <p className="text-base leading-relaxed text-foreground/70">
+          <p className="text-base leading-relaxed text-muted-foreground">
             Enter the prevailing wage determination date to see the dates it
             fixes. Add the first recruitment step for the full set.
           </p>{" "}
-          <ol aria-hidden="true" className="mt-5 divide-y-2 divide-dashed divide-foreground/20 border-2 border-dashed border-foreground/30">
+          <ol aria-hidden="true" className="mt-5 divide-y divide-dashed divide-foreground/20 border border-dashed border-foreground/30">
             {[
               "Prevailing wage determination expires",
               "Notice of filing must be posted by",
@@ -415,21 +415,21 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
               "ETA-9089 filing window closes",
             ].map((label) => (
               <li key={label} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
-                <span className="text-sm font-bold text-foreground/70">{label}</span>{" "}
-                <span className="h-6 w-36 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+                <span className="text-sm font-bold text-muted-foreground">{label}</span>{" "}
+                <span className="h-6 w-36 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
               </li>
             ))}
           </ol>
         </div>
       )}
 
-      <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
+      <div className="border-t border-border bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
           <WarningIcon
-            className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70"
+            className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
             aria-hidden="true"
           />
-          <p className="text-base leading-relaxed text-foreground/70">
+          <p className="text-base leading-relaxed text-muted-foreground">
             This works out the standard windows and isn’t legal advice.
             Professional roles need three additional recruitment steps beyond
             the ones listed here, and supervised recruitment runs on a different

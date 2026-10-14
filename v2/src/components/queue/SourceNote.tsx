@@ -31,7 +31,7 @@ export function SourceNote({ className }: { className?: string }) {
     // figure below should be read. Where the counts come from and how often
     // they are read is provenance, so it collapses; `<details>` keeps it in
     // the DOM for anything that reads the page.
-    <div className={className ?? "text-base leading-relaxed text-foreground/80"}>
+    <div className={className ?? "text-base leading-relaxed text-soft"}>
       <p>
         This is a sweep, not a live reading, so a case decided between sweeps
         still counts as waiting here: the backlog figures run a little high

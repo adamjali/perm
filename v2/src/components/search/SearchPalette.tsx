@@ -303,9 +303,9 @@ export function SearchPalette({
         role="dialog"
         aria-modal="true"
         aria-label="Search PERM Tracker"
-        className="w-full max-w-xl border-3 border-border bg-background text-foreground shadow-hard-lg"
+        className="w-full max-w-xl border border-border bg-background text-foreground"
       >
-        <div className="flex items-center gap-2 border-b-2 border-border px-4">
+        <div className="flex items-center gap-2 border-b border-border px-4">
           {navPending ? (
             <CircleNotchIcon
               aria-hidden="true"
@@ -333,14 +333,14 @@ export function SearchPalette({
         {/* The persistent hint. It does not truncate, it does not disappear
             the moment you type, and it is the only place that can hold the
             whole list of what this box accepts. */}
-        <p className="border-b-2 border-border px-4 py-2 text-sm leading-snug text-muted-foreground">
+        <p className="border-b border-border px-4 py-2 text-sm leading-snug text-muted-foreground">
           Employers, law firms, occupations, pages and articles. Paste a G-, A-,
           P-, I- or H- case number and it goes straight to the lookup.
         </p>
         {navTarget !== null ? (
           <p
             role="status"
-            className="flex items-center gap-2 border-b-2 border-border bg-tint-primary px-4 py-2 text-sm font-bold"
+            className="flex items-center gap-2 border-b border-border bg-tint-primary px-4 py-2 text-sm font-bold"
           >
             <CircleNotchIcon
               aria-hidden="true"
@@ -371,7 +371,7 @@ export function SearchPalette({
             </p>
           ) : null}
           {entityError ? (
-            <p role="status" className="px-3 py-2.5 text-sm text-foreground/80">
+            <p role="status" className="px-3 py-2.5 text-sm text-soft">
               The corpus lookup didn&apos;t load, so employers, firms and
               occupations are missing from this list. The pages below still
               work.
@@ -381,7 +381,7 @@ export function SearchPalette({
             <Command.Item
               value={`case ${caseNumber}`}
               onSelect={() => go(`/perm-case-status?case=${encodeURIComponent(caseNumber)}`, `case ${caseNumber}`)}
-              className="cursor-pointer border-2 border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+              className="cursor-pointer border border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
             >
               Check case {caseNumber}: live status and estimate
             </Command.Item>
@@ -399,7 +399,7 @@ export function SearchPalette({
                   `every filing by "${query.trim()}"`,
                 )
               }
-              className="cursor-pointer border-2 border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+              className="cursor-pointer border border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
             >
               Search every DOL filing by &ldquo;{query.trim()}&rdquo;: PERM, wage requests and LCAs
             </Command.Item>
@@ -413,7 +413,7 @@ export function SearchPalette({
                   `cases filed ${month}`,
                 )
               }
-              className="cursor-pointer border-2 border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+              className="cursor-pointer border border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
             >
               Estimate for cases filed {month}
             </Command.Item>
@@ -434,7 +434,7 @@ export function SearchPalette({
             <Command.Group
               forceMount
               heading="Did you mean"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
+              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
             >
               {suggestions.map((h) => (
                 <Command.Item
@@ -456,7 +456,7 @@ export function SearchPalette({
           {entityHits.length > 0 ? (
             <Command.Group
               heading="In the data"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
+              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
             >
               {entityHits.map((h) => (
                 <Command.Item
@@ -481,7 +481,7 @@ export function SearchPalette({
               <Command.Group
                 key={group}
                 heading={group}
-                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
               >
                 {pages
                   .filter((p) => p.group === group)
@@ -502,7 +502,7 @@ export function SearchPalette({
           {articles.length > 0 ? (
             <Command.Group
               heading="Articles"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
+              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted-foreground"
             >
               {articles.map((a) => (
                 <Command.Item
@@ -512,7 +512,7 @@ export function SearchPalette({
                   className="flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2.5 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
                 >
                   <span className="min-w-0 truncate font-semibold">{a.title}</span>{" "}
-                  <span className="shrink-0 font-mono text-sm uppercase text-muted-foreground data-[selected=true]:text-primary-foreground/80">
+                  <span className="shrink-0 font-mono text-sm text-muted-foreground data-[selected=true]:text-primary-foreground/80">
                     {a.kind}
                   </span>
                 </Command.Item>
@@ -520,7 +520,7 @@ export function SearchPalette({
             </Command.Group>
           ) : null}
         </Command.List>
-        <div className="border-t-2 border-border px-4 py-2 font-mono text-sm text-muted-foreground">
+        <div className="border-t border-border px-4 py-2 font-mono text-sm text-muted-foreground">
           Esc closes · Enter opens · a case number goes straight to the lookup
         </div>
       </Command>

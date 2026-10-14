@@ -240,10 +240,10 @@ export default async function MethodologyPage() {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <header className="pt-10 sm:pt-12">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           How these numbers are computed
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           On one day in August 2026, public PERM tools reported the same
           headline figure as anywhere from 335 to 503 days, while DOL&apos;s own
           published average was 372.
@@ -251,16 +251,16 @@ export default async function MethodologyPage() {
       </header>
 
       <section className="mt-10">
-        <h2 className="font-heading text-2xl font-black">
+        <h2 className="font-heading text-2xl font-bold">
           One number, six answers
         </h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           Readings taken 2026-08-24, all describing average PERM processing
           time. Most of the spread has a mechanical cause.
         </p>
         {/* Six readings of one figure on one scale, shortest first, DOL's own
             in ink: the spread is the point. */}
-        <div className="mt-6 max-w-3xl border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
+        <div className="mt-6 max-w-3xl border border-border bg-card p-5 sm:p-6">
           <BarRows
             rows={[...SPREAD]
               .sort((a, b) => a.days - b.days)
@@ -275,7 +275,7 @@ export default async function MethodologyPage() {
           />
         </div>
         <MoreText gist={"Four choices explain nearly every difference between tools' numbers."} className="mt-4">
-          <p className="max-w-2xl text-base leading-relaxed text-foreground/70">
+          <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
             Four causes account for nearly all of it. A tool can measure cases
             <em> decided</em> recently or cases <em>filed</em> in a month, and
             those are different populations. It can include audited cases or set
@@ -288,13 +288,13 @@ export default async function MethodologyPage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">What our figures are</h2>
+        <h2 className="font-heading text-2xl font-bold">What our figures are</h2>
         <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4">
           {SOURCES.map((s, i) => (
             <div
               key={s.name}
               className={
-                "border-2 border-border p-6 shadow-hard-sm " +
+                "border border-border p-6 " +
                 (i % 2 === 0 ? "bg-card" : "bg-tint-primary")
               }
             >
@@ -311,7 +311,7 @@ export default async function MethodologyPage() {
                     loading="lazy"
                     className="h-11 w-11 shrink-0"
                   />
-                  <h3 className="font-heading text-lg font-black">{s.name}</h3>
+                  <h3 className="font-heading text-lg font-bold">{s.name}</h3>
                 </div>{" "}
                 <a
                   href={s.href}
@@ -323,8 +323,8 @@ export default async function MethodologyPage() {
                   <ArrowSquareOutIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 </a>
               </div>
-              <p className="mt-2 text-base leading-relaxed text-foreground/70">{s.what}</p>{" "}
-              <p className="mt-2 font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="mt-2 text-base leading-relaxed text-muted-foreground">{s.what}</p>{" "}
+              <p className="mt-2 text-sm font-bold text-muted-foreground">
                 {s.cadence}
               </p>
             </div>
@@ -337,8 +337,8 @@ export default async function MethodologyPage() {
           denominator is where these go wrong. One record per published figure,
           each linking to the page it governs. */}
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Every figure, traced</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+        <h2 className="font-heading text-2xl font-bold">Every figure, traced</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           {corpus !== null && window ? (
             <>
               Most of these run over the same corpus: {corpus.toLocaleString("en-US")}{" "}
@@ -358,17 +358,17 @@ export default async function MethodologyPage() {
             hint: t.where.label,
             body: (
               <>
-                <p className="text-base leading-relaxed text-foreground/70">{t.how}</p>{" "}
+                <p className="text-base leading-relaxed text-muted-foreground">{t.how}</p>{" "}
                 <p className="mt-2 text-base leading-relaxed">
-                  <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-sm font-bold text-muted-foreground">
                     Counted over
                   </span>{" "}
-                  <span className="text-foreground/70">{t.population}</span>
+                  <span className="text-muted-foreground">{t.population}</span>
                 </p>{" "}
                 <p className="mt-2">
                   <Link
                     href={t.where.href}
-                    className="font-mono text-sm font-bold uppercase tracking-wider underline underline-offset-2 hover:text-primary"
+                    className="text-sm font-bold underline underline-offset-2 hover:text-primary"
                   >
                     Open {t.where.label}
                   </Link>
@@ -380,15 +380,15 @@ export default async function MethodologyPage() {
       </section>
 
       <section className="mt-12" id="reference-sources">
-        <h2 className="font-heading text-2xl font-black">The sources beside the PERM record</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+        <h2 className="font-heading text-2xl font-bold">The sources beside the PERM record</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           Occupation and city pages also draw on six other federal sources. Each is loaded from the agency&apos;s own
           file, checked against that file&apos;s own totals or shape before it&apos;s used, and dated on the page.
         </p>{" "}
         <dl className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0">
-          <div className="border-2 border-border bg-card p-5 shadow-hard-sm" id="onet">
-            <dt className="font-heading text-lg font-black">O*NET, what a job is</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-foreground/80">
+          <div className="border border-border bg-card p-5" id="onet">
+            <dt className="font-heading text-lg font-bold">O*NET, what a job is</dt>{" "}
+            <dd className="mt-2 text-base leading-relaxed text-soft">
               Descriptions, tasks, Job Zones and reported education from the O*NET Database, and the Bright Outlook list
               from O*NET OnLine, both by the U.S. Department of Labor, Employment and Training Administration
               (USDOL/ETA), used under the CC BY 4.0 license. O*NET® is a trademark of USDOL/ETA. What we changed: we show
@@ -397,18 +397,18 @@ export default async function MethodologyPage() {
               USDOL/ETA has not approved, endorsed, or tested these changes.
             </dd>
           </div>{" "}
-          <div className="border-2 border-border bg-card p-5 shadow-hard-sm">
-            <dt className="font-heading text-lg font-black">BLS, what a job pays and where it&apos;s heading</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-foreground/80">
+          <div className="border border-border bg-card p-5">
+            <dt className="font-heading text-lg font-bold">BLS, what a job pays and where it&apos;s heading</dt>{" "}
+            <dd className="mt-2 text-base leading-relaxed text-soft">
               Market pay from the Bureau of Labor Statistics&apos; Occupational Employment and Wage Statistics: what
               employers report paying everyone in a job, nationally, by state and by metro, as five percentiles. The
               ten-year employment projections and typical entry education come from BLS&apos;s projections tables. A
               percentile BLS publishes as top-coded is shown as &quot;at least&quot; its ceiling, never as a number.
             </dd>
           </div>{" "}
-          <div className="border-2 border-border bg-card p-5 shadow-hard-sm">
-            <dt className="font-heading text-lg font-black">DOL&apos;s wage tables, every year since 2021-22</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-foreground/80">
+          <div className="border border-border bg-card p-5">
+            <dt className="font-heading text-lg font-bold">DOL&apos;s wage tables, every year since 2021-22</dt>{" "}
+            <dd className="mt-2 text-base leading-relaxed text-soft">
               The four prevailing wage levels for every job in every area, from the tables the Office of Foreign Labor
               Certification publishes each July, both the all-industries table and the one for universities and research
               employers (ACWIA). Most levels are hourly in DOL&apos;s files and shown a year at 2,080 hours, as DOL
@@ -418,9 +418,9 @@ export default async function MethodologyPage() {
               is never shown as a level.
             </dd>
           </div>{" "}
-          <div className="border-2 border-border bg-card p-5 shadow-hard-sm">
-            <dt className="font-heading text-lg font-black">Census, where a city is</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-foreground/80">
+          <div className="border border-border bg-card p-5">
+            <dt className="font-heading text-lg font-bold">Census, where a city is</dt>{" "}
+            <dd className="mt-2 text-base leading-relaxed text-soft">
               A worksite city is matched to Census&apos;s place and county-subdivision files (which is where New England
               towns and New Jersey townships are), then to its county and metro area, then to the DOL wage area that
               county belongs to. A place in several counties takes the county nearest its center, and the page says
@@ -428,16 +428,16 @@ export default async function MethodologyPage() {
               than guessed.
             </dd>
           </div>{" "}
-          <div className="border-2 border-border bg-card p-5 shadow-hard-sm">
-            <dt className="font-heading text-lg font-black">BEA, what prices are where</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-foreground/80">
+          <div className="border border-border bg-card p-5">
+            <dt className="font-heading text-lg font-bold">BEA, what prices are where</dt>{" "}
+            <dd className="mt-2 text-base leading-relaxed text-soft">
               Regional price parities from the Bureau of Economic Analysis: a metro&apos;s price level against 100 for
               the country, for all items and for housing rents, read through BEA&apos;s API.
             </dd>
           </div>{" "}
-          <div className="border-2 border-border bg-card p-5 shadow-hard-sm">
-            <dt className="font-heading text-lg font-black">State, the visas issued</dt>{" "}
-            <dd className="mt-2 text-base leading-relaxed text-foreground/80">
+          <div className="border border-border bg-card p-5">
+            <dt className="font-heading text-lg font-bold">State, the visas issued</dt>{" "}
+            <dd className="mt-2 text-base leading-relaxed text-soft">
               The State Department&apos;s monthly immigrant visa issuances since March 2017, by visa class and by
               country or consulate. A month is used only when its rows add up exactly to State&apos;s own grand total.
               Categories follow State&apos;s symbol legend. These are consular issuances only.
@@ -446,37 +446,37 @@ export default async function MethodologyPage() {
         </dl>
       </section>
 
-      <section className="mt-12 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">What we refuse to publish</h2>{" "}
+      <section className="mt-12 border border-border bg-foreground p-6 text-background sm:p-8">
+        <h2 className="font-heading text-2xl font-bold">What we refuse to publish</h2>{" "}
         <ul className="mt-4 grid gap-3 text-base leading-relaxed text-background/80">
-          <li className="border-l-4 border-primary pl-4">
+          <li className="border-l-2 border-primary pl-4">
             A single blended estimate. Each calculator shows every model its
             data supports, labelled, and lets them disagree.
           </li>{" "}
-          <li className="border-l-4 border-primary pl-4">
+          <li className="border-l-2 border-primary pl-4">
             Medians over immature cohorts. A month whose only decided cases are
             instant withdrawals has a median of one day.
           </li>{" "}
-          <li className="border-l-4 border-primary pl-4">
+          <li className="border-l-2 border-primary pl-4">
             Stages nobody can measure. Where a wait depends on visa-number
             availability, the timeline says so instead of inventing a figure.
           </li>{" "}
-          <li className="border-l-4 border-primary pl-4">
+          <li className="border-l-2 border-primary pl-4">
             Undated numbers. Every figure carries the date of the data behind it.
           </li>
         </ul>
       </section>
 
-      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 border border-border bg-card p-6 sm:p-8">
         <div>
-          <h2 className="font-heading text-xl font-black">See it applied</h2>{" "}
-          <p className="mt-1 text-base text-foreground/70">
+          <h2 className="font-heading text-xl font-bold">See it applied</h2>{" "}
+          <p className="mt-1 text-base text-muted-foreground">
             The calculators put all of this into practice.
           </p>
         </div>
         <Link
           href="/tools"
-          className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+          className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 py-2.5 font-bold text-black transition-colors duration-150"
         >
           Open the calculators
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

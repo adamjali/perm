@@ -235,7 +235,7 @@ export default function QuietHoursSection({
 
   return (
     <div
-      className="bg-card border-2 border-border p-6"
+      className="bg-card border border-border p-6"
       style={{ boxShadow: "var(--shadow-hard)" }}
     >
       {/* Header */}
@@ -273,7 +273,7 @@ export default function QuietHoursSection({
         </div>
 
         {/* Time Range Section - Only show when enabled */}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {quietHoursEnabled && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -332,7 +332,7 @@ export default function QuietHoursSection({
               </div>
 
               {/* Timezone Display (Read-only) */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border-2 border-border text-sm">
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border text-sm">
                 <GlobeIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-muted-foreground">
                   Timezone: <strong className="text-foreground">{timezoneDisplay}</strong>
@@ -349,7 +349,7 @@ export default function QuietHoursSection({
               </div>
 
               {/* Info Box - Urgent notifications bypass */}
-              <div className="flex items-start gap-2 px-3 py-2 bg-data-info/10 border-2 border-data-info text-sm">
+              <div className="flex items-start gap-2 px-3 py-2 bg-data-info/10 border border-data-info text-sm">
                 <InfoIcon className="w-4 h-4 text-data-info-ink flex-shrink-0 mt-0.5" />
                 <span className="text-data-info-ink">
                   <strong>Note:</strong> Urgent notifications (overdue deadlines, critical alerts) will always be delivered, even during quiet hours.
@@ -360,14 +360,14 @@ export default function QuietHoursSection({
         </AnimatePresence>
 
         {/* Warning when disabled */}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {!quietHoursEnabled && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.15 }}
-              className="flex items-center gap-2 px-3 py-2 bg-muted border-2 border-border text-muted-foreground text-sm"
+              className="flex items-center gap-2 px-3 py-2 bg-muted border border-border text-muted-foreground text-sm"
             >
               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
               <span>
@@ -379,7 +379,7 @@ export default function QuietHoursSection({
       </div>
 
       {/* Save Button - Only show when there are time changes (toggle saves immediately) */}
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {quietHoursEnabled && isDirty && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
@@ -389,7 +389,7 @@ export default function QuietHoursSection({
             className="mt-6 pt-6 border-t border-border flex items-center justify-between"
           >
             <div className="text-sm text-muted-foreground">
-              <AnimatePresence mode="wait">
+              <AnimatePresence initial={false} mode="wait">
                 {justSaved ? (
                   <motion.span
                     key="saved"

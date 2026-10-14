@@ -99,7 +99,7 @@ export function QueueTape({
       <div className={cn("-mx-1 overflow-x-auto px-1", flagsCollide ? "pt-14" : "pt-7")}>
         <Reveal on={reveal}>
         <div
-          className="relative grid min-w-[560px] border-2 border-border shadow-hard-sm"
+          className="relative grid min-w-[560px] border border-border"
           style={{ gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))` }}
         >
           {months.map((m) => {
@@ -149,7 +149,7 @@ export function QueueTape({
                 {isFrontier ? (
                   <span
                     className={cn(
-                      "absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-foreground px-1.5 py-0.5 font-mono text-sm font-bold uppercase tracking-wider text-background",
+                      "absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-border bg-foreground px-1.5 py-0.5 text-sm font-bold text-background",
                       reveal && "qt-flag",
                     )}
                     style={reveal ? ({ "--i": frontierAt } as CSSProperties) : undefined}
@@ -160,7 +160,7 @@ export function QueueTape({
                 {isYou && !isFrontier ? (
                   <span
                     className={cn(
-                      "absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-primary px-1.5 py-0.5 font-mono text-sm font-bold uppercase tracking-wider text-black",
+                      "absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-border bg-primary px-1.5 py-0.5 text-sm font-bold text-black",
                       flagsCollide ? "-top-14" : "-top-7",
                     )}
                   >
@@ -183,7 +183,7 @@ export function QueueTape({
         </Reveal>
       </div>
       </ChartTips>
-      <figcaption className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground/70">
+      <figcaption className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">
           <span aria-hidden="true" className="h-3 w-3 border border-border bg-primary" />
           Processed

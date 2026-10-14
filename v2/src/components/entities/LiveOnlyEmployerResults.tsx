@@ -34,8 +34,8 @@ export function LiveOnlyEmployerResults({
 }) {
   if (hits.length === 0) return null;
   return (
-    <section className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
-      <h3 className="font-heading text-lg font-black sm:text-xl">
+    <section className="mt-6 border border-border bg-card p-5 sm:p-6">
+      <h3 className="font-heading text-lg font-bold sm:text-xl">
         {more ? "The first " : ""}
         {formatInt(hits.length)} more {hits.length === 1 ? "sponsor" : "sponsors"},
         not in a published DOL file yet
@@ -46,7 +46,7 @@ export function LiveOnlyEmployerResults({
           of the name to narrow it.
         </p>
       ) : null}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+      <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
         These match &ldquo;{query}&rdquo; in our live record of cases. DOL hasn&apos;t published them yet,
         so there&apos;s no approval rate, wait or wage, just the cases.
       </p>
@@ -63,7 +63,7 @@ export function LiveOnlyEmployerResults({
             >
               {h.name}
             </Link>{" "}
-            <span className="ml-auto whitespace-nowrap font-mono text-sm tabular-nums text-foreground/70">
+            <span className="ml-auto whitespace-nowrap font-mono text-sm tabular-nums text-muted-foreground">
               {formatInt(h.cases)} live {h.cases === 1 ? "case" : "cases"}
               {h.pending > 0 ? `, ${formatInt(h.pending)} waiting` : ""}
             </span>
@@ -75,7 +75,7 @@ export function LiveOnlyEmployerResults({
           the last list item's case count welds to "Name search here" for
           anything walking the DOM, and the source-level gate cannot see it
           because `ul` is not in its tag list. */}
-      <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-foreground/70">
+      <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
         Name search here matches from the START of the name, so a word from the
         middle finds nothing. If you have the case number,{" "}
         <Link

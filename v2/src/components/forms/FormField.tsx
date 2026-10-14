@@ -175,15 +175,8 @@ export function FormField({
         </p>
       )}
 
-      {/* Input wrapper — clip-path expands visible area by 5px so
-           neobrutalist hard shadows (4px offset on hover) aren’t clipped,
-           while still containing the shake animation */}
-      <div
-        className={cn(
-          "transition-all duration-200 [clip-path:inset(-5px)]",
-          error && "animate-shake"
-        )}
-      >
+      {/* An error says what's wrong under the field; the field doesn't shake. */}
+      <div data-error={error ? "true" : undefined}>
         {enhancedChildren}
       </div>
 

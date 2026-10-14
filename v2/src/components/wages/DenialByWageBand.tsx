@@ -62,11 +62,11 @@ function Panel({
 }) {
   const worst = worstBand(bands);
   return (
-    <div className="border-2 border-border bg-card p-4">
-      <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+    <div className="border border-border bg-card p-4">
+      <p className="text-sm font-bold text-muted-foreground">
         {title}
       </p>{" "}
-      <p className="mt-0.5 text-sm text-foreground/70">{note}</p>{" "}
+      <p className="mt-0.5 text-sm text-muted-foreground">{note}</p>{" "}
       <ChartTips label={`Denial rate by wage band, ${title}`} className="mt-3">
       <ul className="space-y-2">
         {bands.map((b) => {
@@ -90,12 +90,12 @@ function Panel({
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-sm font-bold">{b.band}</span>{" "}
-                <span className="font-mono text-sm font-bold tabular-nums text-foreground/70">
+                <span className="font-mono text-sm font-bold tabular-nums text-muted-foreground">
                   {b.deniedPct === null ? "withheld" : `${b.deniedPct.toFixed(2)}%`}
                 </span>
               </div>
               <div className="mt-1 flex items-center gap-2">
-                <div className="h-3 min-w-0 flex-1 border-2 border-border bg-background">
+                <div className="h-3 min-w-0 flex-1 border border-border bg-background">
                   {b.deniedPct === null ? null : (
                     <div
                       // The worst band in each panel is outlined rather than
@@ -112,7 +112,7 @@ function Panel({
                     />
                   )}
                 </div>
-                <span className="w-20 shrink-0 text-right font-mono text-sm tabular-nums text-foreground/60">
+                <span className="w-20 shrink-0 text-right font-mono text-sm tabular-nums text-muted-foreground">
                   {b.decided.toLocaleString("en-US")}
                 </span>
               </div>
@@ -122,7 +122,7 @@ function Panel({
                   the sub-$60k interval entirely, so the hump is a measurement
                   rather than an impression. */}
               {b.interval ? (
-                <p className="mt-0.5 font-mono text-sm tabular-nums text-foreground/55">
+                <p className="mt-0.5 font-mono text-sm tabular-nums text-muted-foreground">
                   95% interval {b.interval.lo.toFixed(2)} to{" "}
                   {b.interval.hi.toFixed(2)}%
                 </p>
@@ -161,7 +161,7 @@ export function DenialByWageBand({
           from the bars first and meets the caveat afterwards has already been
           misled, which is exactly how the retracted version worked. */}
       <MoreText gist={"Denials fall as the offered wage rises."}>
-        <p className="text-base leading-relaxed text-foreground/80">
+        <p className="text-base leading-relaxed text-soft">
           The denial rate broadly falls as the offered wage rises
           {lowest && highest ? (
             <>
@@ -190,7 +190,7 @@ export function DenialByWageBand({
           separates them.
         </p>
       </MoreText>{" "}
-      <p className="mt-6 font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+      <p className="mt-6 text-sm font-bold text-muted-foreground">
         Eleven bands, by fiscal year and pooled
       </p>
       <div className="mt-3 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -213,11 +213,11 @@ export function DenialByWageBand({
       </div>
 
       {/* The summary comes SECOND and says what it costs. */}
-      <div className="mt-8 border-2 border-border bg-muted p-4">
-        <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+      <div className="mt-8 border border-border bg-muted p-4">
+        <p className="text-sm font-bold text-muted-foreground">
           The same cases in five wide bands
         </p>{" "}
-        <p className="mt-1 text-sm leading-relaxed text-foreground/70">
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
           Summed from the eleven above, not measured separately. It averages the{" "}
           {peak ? peak.band.toLowerCase() : "peak"} band with its quieter
           neighbours, so a plateau appears where the finer view has a peak.
@@ -234,7 +234,7 @@ export function DenialByWageBand({
 
       {/* The denominator changes how every rate reads, so it stays visible.
           How the drawing works is provenance, and collapses. */}
-      <p className="mt-4 text-sm leading-relaxed text-foreground/60">
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         Withdrawn cases are excluded: a withdrawal is the employer stopping, not
         a decision going against anyone. A band with fewer than{" "}
         {MIN_DECIDED_FOR_BAND_RATE.toLocaleString("en-US")} decided cases is

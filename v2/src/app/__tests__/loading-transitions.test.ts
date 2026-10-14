@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
-import { PRELOADER_BOOT, PRELOADER_CSS } from "@/components/home/Preloader";
-
 /**
  * The loading-transition rules from the Sep 30 2026 pass. Each was a visible
  * defect first: a page arrived as two or three different pictures in a row
@@ -29,47 +27,23 @@ function walk(dir: string, out: string[] = []): string[] {
 
 const loadingFiles = walk(APP).filter((p) => p.endsWith("/loading.tsx"));
 
-describe("home curtain", () => {
+describe("nothing stands between the visitor and the page", () => {
   const layout = readFileSync(join(APP, "layout.tsx"), "utf8");
+  const siteLayout = readFileSync(join(APP, "(site)", "layout.tsx"), "utf8");
+  const publicLayout = readFileSync(join(APP, "(site)", "(public)", "layout.tsx"), "utf8");
+  const appLayout = readFileSync(join(APP, "(authenticated)", "layout.tsx"), "utf8");
 
-  it("renders its panel as the first child of <body>", () => {
-    // Server markup at the top of <body> paints in the same frame as the
-    // header it covers. Injected at DOMContentLoaded, it left a blank cover
-    // on screen until the whole document had parsed.
-    // The element, not the word: comments in <head> mention "<body>" too.
-    const open = layout.search(/<body\s+className=/);
-    expect(open).toBeGreaterThan(-1);
-    const body = layout.slice(open);
-    const afterOpen = body.slice(body.indexOf("}\n        >") + 1);
-    const firstElement = afterOpen
-      .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
-      .match(/<[A-Za-z][\w.]*/)?.[0];
-    expect(firstElement).toBe("<Preloader");
-  });
-
-  it("hides the panel unless the boot script arms it", () => {
-    expect(PRELOADER_CSS).toMatch(/\.pre\{display:none\}/);
-    expect(PRELOADER_CSS).toContain('html[data-pre="on"] .pre,html[data-pre="leaving"] .pre{display:flex}');
-  });
-
-  it("slides the panel over the PAGE, with no second cover behind it", () => {
-    // The old exit slid the logo away over a body::before cover that stayed
-    // until the slide ended, so the page snapped in afterwards.
-    expect(PRELOADER_CSS).not.toContain("body::before");
-    expect(PRELOADER_CSS).toMatch(/html\[data-pre="leaving"\] \.pre\{transform:translateY\(-101%\)/);
-    expect(PRELOADER_BOOT).toContain("h.setAttribute('data-pre','leaving')");
-  });
-
-  it("lifts at DOMContentLoaded, not window load, and never touches React's node", () => {
-    expect(PRELOADER_BOOT).toContain("'DOMContentLoaded'");
-    expect(PRELOADER_BOOT).not.toMatch(/addEventListener\('load'/);
-    expect(PRELOADER_BOOT).not.toMatch(/createElement\('div'\)|removeChild|classList\.add/);
-  });
-
-  it("has no client-navigation curtain", () => {
-    // A soft navigation home is a prefetched page that renders at once; the
-    // curtain there blanked the whole screen, header included, for 820ms.
+  it("has no curtain over the homepage (Oct 14 2026: the page loads straight in)", () => {
+    // The curtain covered the first paint with a logo panel and slid away; a
+    // page that renders on the server needs no cover.
+    expect(layout).not.toMatch(/Preloader|PRELOADER_|data-pre/);
     expect(layout).not.toContain("HomeCurtainNav");
+  });
+
+  it("draws no texture, particles or progress bar behind or over the page", () => {
+    for (const src of [layout, siteLayout, publicLayout, appLayout]) {
+      expect(src).not.toMatch(/grain-overlay|bg-dots|AmbientMurmuration|ScrollProgress|ScrollToTop/);
+    }
   });
 });
 

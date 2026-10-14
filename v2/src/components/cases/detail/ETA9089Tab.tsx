@@ -37,7 +37,7 @@ export function ETA9089Tab({
 
   return (
     <motion.div
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={tabContainerVariants}
       className="space-y-6"

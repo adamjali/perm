@@ -19,13 +19,11 @@ export default function RelatedPosts({ posts }: RelatedPostsProps) {
   if (posts.length === 0) return null;
 
   return (
-    <section className="border-t-2 border-border bg-muted/30">
+    <section className="border-t border-border bg-muted/30">
       <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-12">
         <motion.h2
           className="mb-6 font-heading text-xl font-bold"
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
+          initial={false}
           transition={{ duration: 0.4 }}
         >
           Related Articles
@@ -34,9 +32,7 @@ export default function RelatedPosts({ posts }: RelatedPostsProps) {
           {posts.map((post, i) => (
             <motion.div
               key={`${post.type}-${post.slug}`}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
+              initial={false}
               transition={{
                 duration: 0.4,
                 delay: i * 0.1,

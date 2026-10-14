@@ -35,8 +35,8 @@ function ordinal(n: number): string {
 }
 
 const field =
-  "min-h-11 w-full border-2 border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
-const label = "block font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground";
+  "min-h-11 w-full border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+const label = "block text-sm font-bold text-muted-foreground";
 
 /**
  * One population as a strip: the middle half as a block, the median as a
@@ -49,7 +49,7 @@ function OfferStrip({ placed, offer }: { placed: Placed | null; offer: number | 
     return (
       <div aria-hidden="true" className="relative mt-3 h-12">
         <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground/20" />
-        <span className="absolute inset-y-1 left-[30%] w-[38%] border-2 border-dashed border-foreground/30 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]" />
+        <span className="absolute inset-y-1 left-[30%] w-[38%] border border-dashed border-foreground/30 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]" />
         <span className="absolute inset-y-0 left-[48%] w-0.5 bg-foreground/30" />
       </div>
     );
@@ -64,14 +64,14 @@ function OfferStrip({ placed, offer }: { placed: Placed | null; offer: number | 
     <div className="mt-3">
       <div aria-hidden="true" className="relative h-12">
         <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground/30" />
-        <span className="absolute inset-y-1 border-2 border-border bg-primary/70" style={{ left: `${at(p25)}%`, width: `${at(p75) - at(p25)}%` }} />
+        <span className="absolute inset-y-1 border border-border bg-primary/70" style={{ left: `${at(p25)}%`, width: `${at(p75) - at(p25)}%` }} />
         <span className="absolute inset-y-0 w-1 -translate-x-1/2 bg-foreground" style={{ left: `${at(p50)}%` }} />
         <span className="absolute -top-1 bottom-[-4px] w-1.5 -translate-x-1/2 bg-data-warn-ink" style={{ left: `${mark}%` }} />
       </div>{" "}
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-data-warn-ink align-middle" />Your offer <b className="tabular-nums">{usd(offer)}</b>{" "}</li>{" "}
         <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-foreground align-middle" />Median <b className="tabular-nums">{usd(p50)}</b>{" "}</li>{" "}
-        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 border-2 border-border bg-primary/70 align-middle" />Middle half <b className="tabular-nums">{usd(p25)} to {usd(p75)}</b>{" "}</li>
+        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 border border-border bg-primary/70 align-middle" />Middle half <b className="tabular-nums">{usd(p25)} to {usd(p75)}</b>{" "}</li>
       </ul>
     </div>
   );
@@ -137,7 +137,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
   }
 
   return (
-    <div className="border-2 border-border bg-card p-5 shadow-hard sm:p-8">
+    <div className="border border-border bg-card p-5 sm:p-8">
       <form onSubmit={run} className="grid grid-cols-1 gap-5 [&>*]:min-w-0 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor={ids.soc} className={label}>Occupation </label>{" "}
@@ -181,7 +181,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
           <button
             type="submit"
             disabled={busy}
-            className="flex min-h-11 items-center border-2 border-border bg-primary px-5 font-heading text-sm font-black text-black shadow-hard-sm transition-transform hover:-translate-y-[1px] disabled:opacity-60 motion-reduce:transition-none"
+            className="flex min-h-11 items-center border border-border bg-primary px-5 font-heading text-sm font-bold text-black transition-transform disabled:opacity-60 motion-reduce:transition-none"
           >
             {busy ? "Placing it…" : "Place my offer"}
           </button>{" "}
@@ -192,16 +192,16 @@ export function CompareMyOffer({ occupations, states }: Props) {
       </form>{" "}
 
       {error ? (
-        <p role="alert" className="mt-5 border-2 border-border bg-background p-3 text-sm font-bold">{error}</p>
+        <p role="alert" className="mt-5 border border-border bg-background p-3 text-sm font-bold">{error}</p>
       ) : null}{" "}
 
       {!results ? (
         <div className="mt-8 grid grid-cols-1 gap-5 [&>*]:min-w-0 md:grid-cols-2" aria-hidden="true">
           {(Object.keys(PROGRAM) as Program[]).map((p) => (
-            <div key={p} className="border-2 border-dashed border-foreground/30 bg-background p-5">
+            <div key={p} className="border border-dashed border-foreground/30 bg-background p-5">
               <p className={label}>{PROGRAM[p].name} </p>{" "}
               <OfferStrip placed={null} offer={null} />{" "}
-              <p className="mt-2 text-sm text-foreground/70">Where the offer falls among {PROGRAM[p].noun} for the job.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Where the offer falls among {PROGRAM[p].noun} for the job.</p>
             </div>
           ))}
         </div>
@@ -213,7 +213,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
             const r = results[p];
             const meta = PROGRAM[p];
             return (
-              <div key={p} className="border-2 border-border bg-background p-5">
+              <div key={p} className="border border-border bg-background p-5">
                 <p className={label}>{meta.name} </p>{" "}
                 {r === "thin" || r === null ? (
                   <p className="mt-3 text-base leading-relaxed">
@@ -221,11 +221,11 @@ export function CompareMyOffer({ occupations, states }: Props) {
                   </p>
                 ) : (
                   <>
-                    <p className="mt-3 font-heading text-4xl font-black tracking-tight">
+                    <p className="mt-3 font-heading text-4xl font-bold tracking-tight">
                       {ordinal(r.percentile)} <span className="text-lg font-bold text-muted-foreground">percentile</span>
                     </p>{" "}
                     <OfferStrip placed={r} offer={annual} />{" "}
-                    <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                       Against {r.n.toLocaleString("en-US")} {meta.noun} for {occupationLabel}
                       {state ? ` in ${state}` : ""}, each as a yearly wage.
                     </p>{" "}

@@ -110,7 +110,7 @@ export function TemplateUpdateConfirmDialog({
       <AlertDialogContent className="sm:max-w-[440px]">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/20">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-500 bg-amber-50 dark:bg-amber-900/20">
               <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <AlertDialogTitle>
@@ -130,7 +130,7 @@ export function TemplateUpdateConfirmDialog({
               onClick={handleOverwrite}
               disabled={isProcessing}
               className={cn(
-                "w-full gap-2 border-2",
+                "w-full gap-2 border",
                 "bg-blue-600 hover:bg-blue-700 text-white border-blue-700",
                 "dark:bg-blue-600 dark:hover:bg-blue-700 dark:border-blue-500"
               )}
@@ -147,7 +147,7 @@ export function TemplateUpdateConfirmDialog({
                 setNewName(templateName + " (Copy)");
               }}
               disabled={isProcessing}
-              className="w-full gap-2 border-2"
+              className="w-full gap-2 border"
             >
               <SparkleIcon className="h-4 w-4" />
               Save as New Template
@@ -173,7 +173,7 @@ export function TemplateUpdateConfirmDialog({
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="e.g., Software Engineer (v2)"
                 className={cn(
-                  "border-2",
+                  "border",
                   isDuplicate && "border-destructive focus-visible:ring-destructive"
                 )}
                 autoFocus
@@ -193,7 +193,7 @@ export function TemplateUpdateConfirmDialog({
                   setNewName("");
                 }}
                 disabled={isProcessing}
-                className="flex-1 border-2"
+                className="flex-1 border"
               >
                 Back
               </Button>
@@ -201,7 +201,7 @@ export function TemplateUpdateConfirmDialog({
                 onClick={handleSaveAsNew}
                 disabled={!canSaveAsNew || isProcessing}
                 className={cn(
-                  "flex-1 gap-2 border-2",
+                  "flex-1 gap-2 border",
                   "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700",
                   "dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:border-emerald-500"
                 )}

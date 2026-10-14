@@ -626,8 +626,8 @@ export function PageBasics({
   const entries = BASICS[page];
   if (!entries || entries.length === 0) return null;
   return (
-    <section className="mt-14 border-t-3 border-border pt-8">
-      <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+    <section className="mt-14 border-t border-border pt-8">
+      <p className="text-sm font-bold text-muted-foreground">
         The basics
       </p>{" "}
       {/* QUESTIONS VISIBLE, ANSWERS ON DEMAND. This is the answer-engine
@@ -638,7 +638,7 @@ export function PageBasics({
           prose it was 100 to 250 words on each of twelve pages, and on the
           chart pages it was most of what remained after the captions were
           cut. The <h3> sits INSIDE the <summary> so the heading survives. */}
-      <div className="mt-4 divide-y-2 divide-border border-2 border-border bg-card shadow-hard">
+      <div className="mt-4 divide-y divide-border border border-border bg-card">
         {entries.map((e) => (
           <details key={e.q} className="group">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
@@ -648,7 +648,7 @@ export function PageBasics({
                 aria-hidden="true"
               />
             </summary>{" "}
-            <p className="max-w-prose border-t-2 border-border/40 px-5 pb-4 pt-3 text-base leading-relaxed text-foreground/70 sm:px-6">
+            <p className="max-w-prose border-t border-border/40 px-5 pb-4 pt-3 text-base leading-relaxed text-muted-foreground sm:px-6">
               {typeof e.a === "function" ? e.a(figures) : e.a}
             </p>
           </details>

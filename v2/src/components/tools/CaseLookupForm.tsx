@@ -86,7 +86,7 @@ export function CaseLookupForm({
         className={
           compact
             ? "sr-only"
-            : "block font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground"
+            : "block text-sm font-bold text-muted-foreground"
         }
       >
         {label}
@@ -109,12 +109,12 @@ export function CaseLookupForm({
           enterKeyHint="search"
           aria-invalid={malformed || undefined}
           aria-describedby={helpId}
-          className="min-h-[52px] w-full min-w-0 flex-1 basis-72 border-2 border-border bg-background px-4 py-3 font-mono text-lg tracking-tight focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="min-h-[52px] w-full min-w-0 flex-1 basis-72 border border-input bg-background px-4 py-3 font-mono text-lg tracking-tight focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         />
         <button
           type="submit"
           data-ph-capture-attribute-cta="case-lookup"
-          className="min-h-[52px] shrink-0 border-2 border-border bg-foreground px-6 font-mono text-sm font-bold uppercase tracking-[0.1em] text-background shadow-hard transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          className="min-h-[52px] shrink-0 border border-border bg-foreground px-6 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 motion-reduce:transition-none"
         >
           Look it up
         </button>

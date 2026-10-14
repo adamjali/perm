@@ -225,7 +225,7 @@ export const BADGE_DEFS: readonly BadgeDef[] = [
     "PERM cases pending at DOL"),
   recordCount("pwd-determinations", "Wage determinations", "/pwd-cases",
     "Prevailing wage determinations held with the wage DOL set, the figure the live index never returns.",
-    "prevailing wage determinations held with the wage"),
+    "prevailing wage determinations held with the"),
   recordCount("lca-decisions", "H-1B LCAs", "/lca-cases",
     "H-1B labour condition applications held with the wage the employer offered.",
     "H-1B LCAs held with the offered wage"),

@@ -72,8 +72,8 @@ export default async function Eb2VsEb3Page() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">EB-2 or EB-3, for your date</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">EB-2 or EB-3, for your date</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           The two lines side by side for one country and priority date: what this month&apos;s bulletin prints for each,
           and how many people stand ahead of you in each.
         </p>
@@ -84,7 +84,7 @@ export default async function Eb2VsEb3Page() {
       </section>{" "}
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
         <FaqList items={FAQS} />
       </section>
 

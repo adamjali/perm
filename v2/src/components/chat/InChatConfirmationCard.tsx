@@ -121,7 +121,7 @@ function StatusIcon({ status }: { status: ConfirmationStatus }) {
   const { Icon, className } = iconConfig;
   return (
     <motion.div
-      initial={{ scale: 0 }}
+      initial={false}
       animate={{ scale: 1 }}
       transition={springTransition}
       className={className}
@@ -201,15 +201,15 @@ export function InChatConfirmationCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={springConfig}
       className={cn(
         // Base styles - neobrutalist
         'relative overflow-hidden',
-        'border-2 border-border rounded-none',
-        'bg-card shadow-hard',
+        'border border-border rounded-none',
+        'bg-card',
         // Status-specific border
         borderStyles
       )}
@@ -221,7 +221,7 @@ export function InChatConfirmationCard({
             {/* Tool Icon */}
             <div
               className={cn(
-                'flex-shrink-0 p-1.5 border-2 border-border',
+                'flex-shrink-0 p-1.5 border border-border',
                 isDestructive && status === 'pending'
                   ? 'text-destructive  bg-destructive/10 '
                   : toolColor
@@ -245,7 +245,7 @@ export function InChatConfirmationCard({
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Duration badge */}
             {duration !== undefined && status === 'done' && (
-              <span className="font-mono text-sm text-muted-foreground bg-muted px-1.5 py-0.5 border-2 border-border">
+              <span className="font-mono text-sm text-muted-foreground bg-muted px-1.5 py-0.5 border border-border">
                 {duration}ms
               </span>
             )}
@@ -257,7 +257,7 @@ export function InChatConfirmationCard({
 
         {/* Arguments (mono font) */}
         {argEntries.length > 0 && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5 bg-muted/50 border-2 border-border">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5 bg-muted/50 border border-border">
             {argEntries.map(([key, value]) => (
               // An ID or URL has no spaces to wrap at: let it break anywhere
               // rather than run under the card's overflow-hidden edge.
@@ -281,7 +281,7 @@ export function InChatConfirmationCard({
 
         {/* What changes, a line each */}
         {changes && changes.length > 0 && (
-          <ul className="space-y-1 border-2 border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
+          <ul className="space-y-1 border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
             {changes.map((line, i) => (
               <li key={i} className="[overflow-wrap:anywhere]">
                 {line}{" "}
@@ -292,20 +292,20 @@ export function InChatConfirmationCard({
 
         {/* Warning (destructive cards) */}
         {warning && status === 'pending' && (
-          <p className="flex items-start gap-2 border-2 border-destructive bg-destructive/10 px-3 py-2 text-sm text-foreground">
+          <p className="flex items-start gap-2 border border-destructive bg-destructive/10 px-3 py-2 text-sm text-foreground">
             <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" aria-hidden="true" />{" "}
             <span className="[overflow-wrap:anywhere]">{warning}</span>
           </p>
         )}
 
         {/* Error message */}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {status === 'error' && error && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="text-sm text-destructive bg-destructive/10 border-2 border-destructive px-3 py-2 [overflow-wrap:anywhere]"
+              className="text-sm text-destructive bg-destructive/10 border border-destructive px-3 py-2 [overflow-wrap:anywhere]"
             >
               {error}
             </motion.div>
@@ -314,7 +314,7 @@ export function InChatConfirmationCard({
 
         {/* Status messages for non-pending states (focused after an answer) */}
         <div ref={statusRef} tabIndex={-1} role="status" className="focus:outline-none">
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {status === 'executing' && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -359,7 +359,7 @@ export function InChatConfirmationCard({
         </div>
 
         {/* Action buttons */}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {showButtons && (
             <motion.div
               initial={{ opacity: 0, y: 4 }}
@@ -407,7 +407,7 @@ export function InChatConfirmationCard({
       {/* Status transition animation - scale pulse */}
       {(status === 'approved' || status === 'done') && (
         <motion.div
-          initial={{ scale: 1 }}
+          initial={false}
           animate={{ scale: [1, 1.02, 1] }}
           transition={{ duration: 0.3 }}
           className="absolute inset-0 pointer-events-none"

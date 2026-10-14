@@ -86,7 +86,7 @@ export function DidYouMean({
 }) {
   if (suggestions.length === 0) return null;
   const chip =
-    "inline-flex min-h-[44px] flex-wrap items-baseline gap-x-2 gap-y-0.5 border-2 border-border bg-card px-3 py-2 text-left font-bold transition-colors hover:bg-tint-primary";
+    "inline-flex min-h-[44px] flex-wrap items-baseline gap-x-2 gap-y-0.5 border border-border bg-card px-3 py-2 text-left font-bold transition-colors hover:bg-tint-primary";
   return (
     <div className={cn("text-base", className)} role="status">
       <p className="font-bold">{label}:</p>{" "}
@@ -97,12 +97,12 @@ export function DidYouMean({
               {s.href ? (
                 <Link href={s.href} className={chip}>
                   {s.label}
-                  {s.note ? <span className="whitespace-nowrap text-sm font-normal text-foreground/70">{` ${s.note}`}</span> : null}
+                  {s.note ? <span className="whitespace-nowrap text-sm font-normal text-muted-foreground">{` ${s.note}`}</span> : null}
                 </Link>
               ) : (
                 <button type="button" onClick={s.onPick} className={chip}>
                   {s.label}
-                  {s.note ? <span className="whitespace-nowrap text-sm font-normal text-foreground/70">{` ${s.note}`}</span> : null}
+                  {s.note ? <span className="whitespace-nowrap text-sm font-normal text-muted-foreground">{` ${s.note}`}</span> : null}
                 </button>
               )}
             </li>{" "}

@@ -99,7 +99,7 @@ export function StakesSection() {
       {/* Header */}
       <div className="mx-auto max-w-[1400px] px-4 pb-12 text-center sm:px-8">
         <ScrollReveal direction="up">
-          <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
+          <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
             What a missed deadline costs
           </h2>{" "}
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
@@ -118,7 +118,7 @@ export function StakesSection() {
           aria-hidden="true"
         >
           <div
-            className="h-full transition-all duration-500 ease-out"
+            className="h-full transition-colors duration-500 ease-out"
             style={{
               width: `${scrollProgress}%`,
               background: `linear-gradient(90deg,
@@ -145,7 +145,7 @@ export function StakesSection() {
           {stakes.map((stake) => (
             <article
               key={stake.title}
-              className="group relative flex-shrink-0 w-80 border-3 border-border bg-background overflow-hidden shadow-hard transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
+              className="group relative flex-shrink-0 w-80 border border-border bg-background overflow-hidden transition-colors duration-300"
               style={{
                 scrollSnapAlign: "center",
                 borderLeftWidth: "6px",
@@ -180,7 +180,7 @@ export function StakesSection() {
               <div className="relative p-6">
                 {/* Warning icon */}
                 <div className="mb-4 flex h-[60px] items-center">
-                  <div className="transition-transform duration-500 group-hover:scale-110">
+                  <div className="transition-transform duration-500">
                     <AlertTriangle
                       className="h-12 w-12"
                       style={{ color: severityColors[stake.severity] }}
@@ -199,7 +199,7 @@ export function StakesSection() {
                 </p>
 
                 {/* Prevention line */}
-                <div className="border-t-2 border-border pt-4">
+                <div className="border-t border-border pt-4">
                   <div className="flex items-start gap-2">
                     <ShieldIcon
                       className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary"

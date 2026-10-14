@@ -30,7 +30,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
   const revised = Boolean(meta.updated && meta.updated !== meta.date);
 
   return (
-    <header className="border-b-2 border-border bg-card">
+    <header className="border-b border-border bg-card">
       <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-8 px-4 pb-10 pt-10 sm:px-6 sm:pt-14 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-center lg:gap-12 [&>*]:min-w-0">
         <div>
           {topic ? (
@@ -43,9 +43,9 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
           ) : type === "changelog" && meta.category ? (
             <p className="inline-flex min-h-11 items-center text-base font-semibold text-primary-text">{meta.category}</p>
           ) : null}{" "}
-          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">{meta.title}</h1>{" "}
-          <p className="article-description mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">{meta.description}</p>{" "}
-          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground/70">
+          <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">{meta.title}</h1>{" "}
+          <p className="article-description mt-4 max-w-2xl text-lg leading-relaxed text-soft">{meta.description}</p>{" "}
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <UserIcon aria-hidden="true" className="size-4" />
               {meta.author}
@@ -69,7 +69,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
 
         {meta.image ? (
           <figure className="m-0">
-            <div className="relative aspect-[4/3] overflow-hidden border-2 border-border bg-muted shadow-hard-lg">
+            <div className="relative aspect-[4/3] overflow-hidden border border-border bg-muted">
               <Image
                 src={meta.image}
                 alt={meta.imageAlt ?? ""}
@@ -81,7 +81,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
               />
             </div>{" "}
             {meta.imageCredit ? (
-              <figcaption className="mt-2 text-sm text-foreground/70">
+              <figcaption className="mt-2 text-sm text-muted-foreground">
                 {meta.imageSource ? (
                   <a href={meta.imageSource} rel="noopener" target="_blank" className="underline-offset-4 hover:underline">
                     {meta.imageCredit}

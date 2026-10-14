@@ -84,7 +84,7 @@ export function PendingLeaderboard({
                     {l.name}
                   </Link>
                 </p>{" "}
-                <p className="font-mono text-sm tabular-nums text-foreground/70">
+                <p className="font-mono text-sm tabular-nums text-muted-foreground">
                   <span className="font-bold text-foreground">{formatInt(l.pending)}</span> of{" "}
                   {formatInt(l.tracked)} tracked
                 </p>
@@ -99,7 +99,7 @@ export function PendingLeaderboard({
                 style={{ width: `${Math.max(2, (l.pending / max) * 100)}%` }}
               />
               {l.topStage ? (
-                <p className="mt-1 font-mono text-sm uppercase tracking-[0.1em] text-muted-foreground">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {formatInt(l.topStageN)} in {l.topStage.toLowerCase()}
                 </p>
               ) : null}

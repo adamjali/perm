@@ -48,9 +48,9 @@ export function SizeBandNote({
 
   return (
     <section
-      className={cn("border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6", className)}
+      className={cn("border border-border bg-card p-5 sm:p-6", className)}
     >
-      <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
+      <p className="text-sm font-bold text-muted-foreground">
         Against the {subject} ranked nearest
       </p>{" "}
       {/* DRAWN, NOT WRITTEN: the two medians as bars on one
@@ -58,7 +58,7 @@ export function SizeBandNote({
           "at a similar rate": rank is dense at the tail and sparse at the
           head, so the range is printed and the reader judges how alike they
           are. */}
-      <p className="mt-2 max-w-3xl text-base text-foreground/80">
+      <p className="mt-2 max-w-3xl text-base text-soft">
         The {formatInt(band.n)} {subject} ranked nearest filed {range}.
       </p>{" "}
       <ChartTips label="Median wait, this one against those ranked nearest" className="mt-4 max-w-xl">
@@ -86,8 +86,8 @@ export function SizeBandNote({
           const max = Math.max(band.medianDays ?? 1, subjectMedianDays ?? 0, 1);
           return (
             <div key={row.k} data-tip={row.tip} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-3">
-              <dt className="text-sm font-bold text-foreground/75">{row.k}</dt>{" "}
-              <dd className="m-0 h-4 border-2 border-border bg-background">
+              <dt className="text-sm font-bold text-soft">{row.k}</dt>{" "}
+              <dd className="m-0 h-4 border border-border bg-background">
                 <span
                   className={cn("block h-full", row.strong ? "bg-primary" : "bg-foreground/45")}
                   style={{ width: `${Math.max(2, ((row.v ?? 0) / max) * 100)}%` }}
@@ -99,7 +99,7 @@ export function SizeBandNote({
         })}
       </dl>
       </ChartTips>{" "}
-      <p className="mt-3 text-base text-foreground/80">
+      <p className="mt-3 text-base text-soft">
         {delta == null
           ? "This one has too few decided cases to place against them."
           : delta === 0

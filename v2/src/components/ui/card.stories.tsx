@@ -45,11 +45,11 @@ export const WithAction: Story = {
       <CardContent>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-foreground/70">Employer:</span>
+            <span className="text-muted-foreground">Employer:</span>
             <span className="font-semibold">TechCorp Inc.</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-foreground/70">Position:</span>
+            <span className="text-muted-foreground">Position:</span>
             <span className="font-semibold">Software Engineer</span>
           </div>
         </div>
@@ -84,7 +84,7 @@ export const WithMultipleCards: Story = {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">12</div>
-          <p className="text-xs text-foreground/70">Total this month</p>
+          <p className="text-sm text-muted-foreground">Total this month</p>
         </CardContent>
       </Card>
       <Card className="w-[250px]">
@@ -94,7 +94,7 @@ export const WithMultipleCards: Story = {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">8</div>
-          <p className="text-xs text-foreground/70">Total this month</p>
+          <p className="text-sm text-muted-foreground">Total this month</p>
         </CardContent>
       </Card>
       <Card className="w-[250px]">
@@ -104,7 +104,7 @@ export const WithMultipleCards: Story = {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">15</div>
-          <p className="text-xs text-foreground/70">Total this month</p>
+          <p className="text-sm text-muted-foreground">Total this month</p>
         </CardContent>
       </Card>
       <Card className="w-[250px]">
@@ -114,7 +114,7 @@ export const WithMultipleCards: Story = {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">7</div>
-          <p className="text-xs text-foreground/70">Total this month</p>
+          <p className="text-sm text-muted-foreground">Total this month</p>
         </CardContent>
       </Card>
     </div>
@@ -146,7 +146,7 @@ export const NeobrutalistShowcase: Story = {
           </CardContent>
         </Card>
       </div>
-      <div className="text-xs text-foreground/70 mt-4">
+      <div className="text-sm text-muted-foreground mt-4">
         Notice the hard shadows (shadow-hard) and the hover lift effect
       </div>
     </div>

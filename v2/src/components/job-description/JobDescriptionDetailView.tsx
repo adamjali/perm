@@ -282,8 +282,8 @@ export function JobDescriptionDetailView({
   return (
     <div
       className={cn(
-        "rounded-lg border-2 border-border bg-card shadow-hard-sm",
-        "transition-all duration-150 hover:shadow-hard hover:-translate-y-0.5",
+        "rounded-lg border border-border bg-card",
+        "transition-colors duration-150",
         className
       )}
     >
@@ -355,7 +355,7 @@ export function JobDescriptionDetailView({
                             variant="outline"
                             size="sm"
                             onClick={() => setManagementOpen(true)}
-                            className="border-2 gap-1.5 min-h-[44px]"
+                            className="border gap-1.5 min-h-[44px]"
                           >
                             <SlidersIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                             <span className="hidden sm:inline">Manage</span>
@@ -389,7 +389,7 @@ export function JobDescriptionDetailView({
                             size="sm"
                             onClick={handleCopy}
                             disabled={!editDescription}
-                            className="gap-1.5 border-2 min-h-[44px] min-w-[44px]"
+                            className="gap-1.5 border min-h-[44px] min-w-[44px]"
                           >
                             {isCopied ? (
                               <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
@@ -412,7 +412,7 @@ export function JobDescriptionDetailView({
                       value={editPositionTitle}
                       onChange={(e) => setEditPositionTitle(e.target.value)}
                       placeholder="e.g., Software Engineer"
-                      className="border-2 min-h-[44px]"
+                      className="border min-h-[44px]"
                     />
                   </div>
 
@@ -425,7 +425,7 @@ export function JobDescriptionDetailView({
                       onChange={(e) => setEditDescription(e.target.value)}
                       placeholder="Enter job description..."
                       className={cn(
-                        "border-2 resize-y min-h-[120px] sm:min-h-[180px]",
+                        "border resize-y min-h-[120px] sm:min-h-[180px]",
                         isOverLimit && "border-destructive focus-visible:ring-destructive"
                       )}
                       style={{ minHeight: "min(180px, 35vh)" }}
@@ -451,7 +451,7 @@ export function JobDescriptionDetailView({
                       {/* Single dynamic save button */}
                       <div
                         className={cn(
-                          "rounded-md border-2 transition-colors",
+                          "rounded-md border transition-colors",
                           isExistingTemplateName
                             ? "border-blue-500 dark:border-blue-400"
                             : "border-emerald-500 dark:border-emerald-400"
@@ -508,7 +508,7 @@ export function JobDescriptionDetailView({
                       size="sm"
                       onClick={handleCancelEdit}
                       disabled={isSaving}
-                      className="border-2 min-h-[44px]"
+                      className="border min-h-[44px]"
                     >
                       Cancel
                     </Button>
@@ -638,7 +638,7 @@ export function JobDescriptionDetailView({
                       </div>
                     </div>
                     {hasContent ? (
-                      <dd className="text-sm whitespace-pre-wrap rounded-lg border-2 border-border bg-muted/30 p-3">
+                      <dd className="text-sm whitespace-pre-wrap rounded-lg border border-border bg-muted/30 p-3">
                         {description}
                       </dd>
                     ) : (

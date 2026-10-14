@@ -61,8 +61,8 @@ export default function WhichGreenCardPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Which employment green card fits?</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Which employment green card fits?</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           A few questions about the job and about you, matched against the regulation&apos;s own definitions: which
           categories could apply, whether each needs a PERM or an employer, and where its queue stands.
         </p>
@@ -72,24 +72,24 @@ export default function WhichGreenCardPage() {
         <VisaChooser />
       </section>
 
-      <details className="group mt-12 border-2 border-border p-6 sm:p-8">
-        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-black marker:content-none">
+      <details className="group mt-12 border border-border p-6 sm:p-8">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
           What this can&apos;t tell you
         </summary>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/80">
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">
           <li>Whether your evidence meets a definition. That&apos;s USCIS&apos;s decision, and an attorney&apos;s job to judge first.</li>{" "}
           <li>Anything about family-sponsored or investment green cards beyond pointing to them.</li>{" "}
           <li>Temporary visas such as H-1B or L-1, which are a separate question from the green card category.</li>{" "}
           <li>How long a category takes. Each result links to its bulletin line and, for EB-2 and EB-3, the people ahead.</li>
         </ul>
-        <p className="mt-3 text-base text-foreground/75">
+        <p className="mt-3 text-base text-soft">
           Definitions from 8 CFR 204.5 (eCFR, read Sep 26, 2026) and USCIS&apos;s national interest waiver guidance
           (Policy Manual Volume 6, Part F, Chapter 5, current as of Sep 23, 2026).
         </p>
       </details>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
         <FaqList items={FAQS} />
       </section>
 

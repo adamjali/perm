@@ -92,10 +92,10 @@ export default async function I140TrendsPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           I-140 trends by category
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           What USCIS received, approved, denied and still has pending in each
           employment-based category, quarter by quarter, in its own words.
         </p>
@@ -105,12 +105,12 @@ export default async function I140TrendsPage() {
           before any chart, with the figures computed from the same rows the
           charts read. */}
       {bothRates && ratio !== null ? (
-        <section className="mt-8 border-2 border-border bg-tint-primary p-6 shadow-hard sm:p-8">
-          <h2 className="font-heading text-xl font-black sm:text-2xl">
+        <section className="mt-8 border border-border bg-tint-primary p-6 sm:p-8">
+          <h2 className="font-heading text-xl font-bold sm:text-2xl">
             An advanced degree and a national interest waiver are not the same
             category
           </h2>{" "}
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
             Both are EB-2, reported separately. Over these quarters,{" "}
             <b className="font-bold text-foreground">
               E21 was denied {e21.denialRate!.toFixed(2)}% of the time and a national interest waiver{" "}
@@ -127,7 +127,7 @@ export default async function I140TrendsPage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
 

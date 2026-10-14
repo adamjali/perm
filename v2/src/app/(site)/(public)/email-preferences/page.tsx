@@ -75,24 +75,24 @@ function KindTile({ id }: { id: MailKindId }) {
   const kind = MAIL_KINDS[id];
   const Glyph = KIND_ICONS[id];
   return (
-    <li className="flex flex-col border-2 border-border bg-card p-5 shadow-hard-sm">
+    <li className="flex flex-col border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <span
           aria-hidden="true"
-          className="grid size-11 shrink-0 place-items-center border-2 border-border bg-primary text-black"
+          className="grid size-11 shrink-0 place-items-center border border-border bg-primary text-black"
         >
           <Glyph className="size-6" weight="bold" />
         </span>{" "}
-        <span className="border-2 border-border px-2 py-0.5 text-sm font-semibold">{kind.when}</span>
+        <span className="border border-border px-2 py-0.5 text-sm font-semibold">{kind.when}</span>
       </div>{" "}
-      <h4 className="mt-4 font-heading text-lg font-black">{kind.name}</h4>{" "}
-      <p className="mt-1 flex-1 text-base leading-relaxed text-foreground/75">{kind.what}</p>{" "}
+      <h4 className="mt-4 font-heading text-lg font-bold">{kind.name}</h4>{" "}
+      <p className="mt-1 flex-1 text-base leading-relaxed text-soft">{kind.what}</p>{" "}
       <Link
         href={kind.start.href}
         className="group mt-4 inline-flex min-h-[44px] items-center gap-2 self-start text-sm font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
       >
         {kind.start.label}{" "}
-        <ArrowRightIcon aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" />
+        <ArrowRightIcon aria-hidden="true" className="size-4 transition-transform" />
       </Link>
     </li>
   );
@@ -101,7 +101,7 @@ function KindTile({ id }: { id: MailKindId }) {
 function KindGroup({ title, ids }: { title: string; ids: readonly MailKindId[] }) {
   return (
     <>
-      <h3 className="mt-10 font-heading text-xl font-black">{title}</h3>{" "}
+      <h3 className="mt-10 font-heading text-xl font-bold">{title}</h3>{" "}
       <ul className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
         {ids.map((id) => (
           /* Keyed Fragment with a real space: mapped siblings otherwise read
@@ -119,10 +119,10 @@ function KindGroup({ title, ids }: { title: string; ids: readonly MailKindId[] }
 export default function EmailPreferencesPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16">
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+      <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
         Your email, in one place
       </h1>{" "}
-      <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/75">
+      <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">
         See everything PERM Tracker sends you, and turn any of it off.
       </p>
 
@@ -132,9 +132,9 @@ export default function EmailPreferencesPage() {
         </div>{" "}
         {/* Beside the form: a reader deciding whether to give an address
             wants to see what arrives. */}
-        <figure className="m-0 border-2 border-border bg-card p-5 shadow-hard-sm lg:col-span-5">
+        <figure className="m-0 border border-border bg-card p-5 lg:col-span-5">
           <AlertLanesFigure className="text-foreground" />{" "}
-          <figcaption className="mt-3 border-t-2 border-border pt-3 text-sm font-semibold text-muted-foreground">
+          <figcaption className="mt-3 border-t border-border pt-3 text-sm font-semibold text-muted-foreground">
             One email per change. Nothing while nothing changes.
           </figcaption>
         </figure>
@@ -146,11 +146,11 @@ export default function EmailPreferencesPage() {
           return (
             <Fragment key={rule.title}>
               {" "}
-              <li className="flex gap-3 border-t-3 border-border pt-4">
+              <li className="flex gap-3 border-t border-border pt-4">
                 <Glyph aria-hidden="true" className="size-7 shrink-0 text-primary" weight="bold" />{" "}
                 <div>
-                  <p className="font-heading font-black">{rule.title}</p>{" "}
-                  <p className="mt-1 text-base text-foreground/75">{rule.body}</p>
+                  <p className="font-heading font-bold">{rule.title}</p>{" "}
+                  <p className="mt-1 text-base text-soft">{rule.body}</p>
                 </div>
               </li>
             </Fragment>
@@ -159,12 +159,12 @@ export default function EmailPreferencesPage() {
       </ul>
 
       <section aria-labelledby="kinds-heading" className="mt-16">
-        <h2 id="kinds-heading" className="font-heading text-2xl font-black sm:text-3xl">
+        <h2 id="kinds-heading" className="font-heading text-2xl font-bold sm:text-3xl">
           What you can get
         </h2>{" "}
         <KindGroup title="No account needed" ids={SUBSCRIBER_KINDS} />{" "}
         <KindGroup title="With an account" ids={ACCOUNT_KINDS} />
-        <p className="mt-6 text-base text-foreground/75">
+        <p className="mt-6 text-base text-soft">
           Signed in? Everything sent to your address, alerts included, is in{" "}
           <Link
             href={NOTIFICATION_SETTINGS_PATH}

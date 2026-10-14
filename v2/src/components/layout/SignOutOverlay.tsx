@@ -32,15 +32,13 @@ export default function SignOutOverlay() {
     >
       {/* Backdrop with blur - fast fade-in */}
       <div
-        className="absolute inset-0 bg-black/60 animate-in fade-in duration-150"
+        className="absolute inset-0 bg-black/60 duration-150"
         aria-hidden="true"
       />
 
       {/* Glass panel modal - slide up with scale */}
       <div
-        className="relative z-10 bg-background border-2 border-border shadow-hard-lg
-                   flex flex-col items-center gap-4 px-10 py-8
-                   animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-200"
+        className="relative z-10 bg-background border border-border flex flex-col items-center gap-4 px-10 py-8 duration-200"
       >
         {/* Spinner - Forest Green */}
         <CircleNotchIcon className="size-8 animate-spin text-primary" />

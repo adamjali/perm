@@ -21,16 +21,16 @@ export function EmbedGallery({ origin }: { origin: string }) {
   const lookup = EMBEDS.find((e) => e.slug === "case-status")!;
   return (
     <section id="embeds" className="mt-14 scroll-mt-24" aria-labelledby="embeds-h">
-      <h2 id="embeds-h" className="font-heading text-3xl font-black">
+      <h2 id="embeds-h" className="font-heading text-3xl font-bold">
         Embed a whole tool
       </h2>{" "}
-      <p className="mt-3 max-w-3xl text-lg leading-relaxed text-foreground/70">
+      <p className="mt-3 max-w-3xl text-lg leading-relaxed text-muted-foreground">
         Every calculator, estimate and chart on this site, and the case lookup, can sit on your page as a frame. It&apos;s
         the tool itself, so it shows the same figures as its page on the same day, with a link back.
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] [&>*]:min-w-0">
-        <div className="border-2 border-border bg-card shadow-hard">
+        <div className="border border-border bg-card">
           <iframe
             src={`/embed/${lookup.slug}`}
             title={lookup.title}
@@ -39,8 +39,8 @@ export function EmbedGallery({ origin }: { origin: string }) {
           />
         </div>{" "}
         <div className="self-center">
-          <p className="font-heading text-xl font-black">{lookup.title}</p>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/80">
+          <p className="font-heading text-xl font-bold">{lookup.title}</p>{" "}
+          <p className="mt-2 text-base leading-relaxed text-soft">
             {lookup.blurb} It asks DOL live, up to {EMBED_SITE_DAILY_LIVE} lookups a day from each site; past that it
             answers from PERM Tracker&apos;s own record and says so under the answer.
           </p>{" "}
@@ -51,14 +51,14 @@ export function EmbedGallery({ origin }: { origin: string }) {
       {GROUPS.filter((g) => g !== "lookup").map((g) => (
         <Fragment key={g}>
           {" "}
-          <h3 className="mt-10 font-heading text-xl font-black">{EMBED_GROUP_LABEL[g]}</h3>{" "}
+          <h3 className="mt-10 font-heading text-xl font-bold">{EMBED_GROUP_LABEL[g]}</h3>{" "}
           <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
             {EMBEDS.filter((e) => e.group === g).map((e) => (
               <Fragment key={e.slug}>
                 {" "}
-                <li className="flex flex-col border-2 border-border bg-card p-4">
-                  <p className="font-heading text-base font-black">{e.title}</p>{" "}
-                  <p className="mt-1 flex-1 text-sm leading-relaxed text-foreground/80">{e.blurb}</p>{" "}
+                <li className="flex flex-col border border-border bg-card p-4">
+                  <p className="font-heading text-base font-bold">{e.title}</p>{" "}
+                  <p className="mt-1 flex-1 text-sm leading-relaxed text-soft">{e.blurb}</p>{" "}
                   <p className="mt-2 text-sm">
                     <a href={`/embed/${e.slug}`} target="_blank" rel="noopener noreferrer" className={link}>
                       Preview the frame
@@ -72,11 +72,11 @@ export function EmbedGallery({ origin }: { origin: string }) {
         </Fragment>
       ))}
 
-      <details className="mt-8 max-w-3xl border-t-2 border-border pt-4">
-        <summary className="cursor-pointer list-none font-heading text-lg font-black marker:content-none">
+      <details className="mt-8 max-w-3xl border-t border-border pt-4">
+        <summary className="cursor-pointer list-none font-heading text-lg font-bold marker:content-none">
           <span className="inline-flex min-h-11 items-center">Sizing the frame, and what it sends</span>
         </summary>
-        <div className="mt-3 space-y-3 text-base leading-relaxed text-foreground/80">
+        <div className="mt-3 space-y-3 text-base leading-relaxed text-soft">
           <p>
             Each snippet starts at a height that fits the tool&apos;s first view. To fit the frame to its content,
             listen for the message the frame posts whenever its height changes:{" "}
@@ -98,7 +98,7 @@ export function EmbedGallery({ origin }: { origin: string }) {
 function Snippet({ html }: { html: string }) {
   return (
     <div className="mt-3 flex items-start gap-2">
-      <pre className="min-w-0 flex-1 overflow-x-auto border-2 border-border bg-background p-2 text-sm" translate="no">
+      <pre className="min-w-0 flex-1 overflow-x-auto border border-border bg-background p-2 text-sm" translate="no">
         <code>{html}</code>
       </pre>{" "}
       <CopyButton text={html} />

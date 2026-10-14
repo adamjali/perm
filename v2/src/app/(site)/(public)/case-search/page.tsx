@@ -167,8 +167,8 @@ export default async function CaseSearchPage() {
       </div>
 
       <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">How this search works</h2>{" "}
-        <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
+        <h2 className="font-heading text-2xl font-bold">How this search works</h2>{" "}
+        <div className="mt-4 space-y-4 text-base leading-relaxed text-soft">
           <MoreText gist={"Start with an employer, a law firm, a state or a job; everything else narrows it."}>
             <p>
               <b className="font-bold">One field has to lead.</b> An employer name

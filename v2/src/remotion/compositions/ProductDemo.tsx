@@ -232,7 +232,7 @@ const DashboardScene: React.FC<{ brandColor: string }> = ({ brandColor }) => {
                   color: "rgba(255,255,255,0.5)",
                   fontWeight: 500,
                   marginBottom: 8,
-                  textTransform: "uppercase",
+                  textTransform: "",
                   letterSpacing: 1,
                 }}
               >
@@ -383,7 +383,7 @@ const CaseScene: React.FC<{ brandColor: string }> = ({ brandColor }) => {
                     fontWeight: 600,
                     color: "#000",
                     border: "1.5px solid #1a1a1a",
-                    textTransform: "uppercase",
+                    textTransform: "",
                     letterSpacing: 0.5,
                   }}
                 >
@@ -570,7 +570,7 @@ const CalendarScene: React.FC<{ brandColor: string }> = ({ brandColor }) => {
                       fontSize: 10,
                       fontWeight: 700,
                       color: "#fff",
-                      textTransform: "uppercase",
+                      textTransform: "",
                       letterSpacing: 1,
                     }}
                   >
@@ -766,7 +766,7 @@ const CTAButton: React.FC<{ brandColor: string }> = ({ brandColor }) => {
           fontSize: 22,
           fontWeight: 700,
           color: "#000",
-          textTransform: "uppercase",
+          textTransform: "",
           letterSpacing: 1,
         }}
       >

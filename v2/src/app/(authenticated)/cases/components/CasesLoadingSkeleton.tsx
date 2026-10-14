@@ -19,7 +19,7 @@ function CaseCardSkeleton() {
 
       {/* Folder Body: 288px plus the 32px tab offset is the real card's
           height in a row of ordinary cases (measured Sep 30 2026). */}
-      <div className="border-2 border-border bg-manila shadow-hard p-6 pt-10 min-h-[288px]">
+      <div className="border border-border bg-manila p-6 pt-10 min-h-[288px]">
         {/* Left color bar skeleton */}
         <div className="absolute left-0 top-0 bottom-0 w-1.5">
           <Skeleton variant="block" className="w-full h-full" />
@@ -78,7 +78,7 @@ export function CasesLoadingSkeleton() {
           bordered p-5 box with two rows of 36px controls, the
           status tabs over the search and its menus, 136px in all. The first
           version was one 76px row, so the cards jumped 60px on arrival. */}
-      <div className="space-y-5 border-2 border-border bg-background p-5 shadow-hard">
+      <div className="space-y-5 border border-border bg-background p-5">
         <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
           <Skeleton variant="block" className="h-9 sm:w-20" />
           <Skeleton variant="block" className="h-9 sm:w-28" />

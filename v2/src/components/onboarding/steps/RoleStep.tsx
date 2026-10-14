@@ -82,15 +82,15 @@ export function RoleStep({ onNext }: RoleStepProps) {
               type="button"
               onClick={() => setSelectedRole(role)}
               className={cn(
-                "flex items-start gap-3 p-4 min-h-[56px] border-2 text-left transition-all duration-150 cursor-pointer",
+                "flex items-start gap-3 p-4 min-h-[56px] border text-left transition-colors duration-150 cursor-pointer",
                 isSelected
-                  ? "border-primary bg-primary/10 shadow-hard"
-                  : "border-border bg-card shadow-hard-sm hover:-translate-y-[2px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-card"
               )}
             >
               <div
                 className={cn(
-                  "flex-shrink-0 w-10 h-10 flex items-center justify-center border-2",
+                  "flex-shrink-0 w-10 h-10 flex items-center justify-center border",
                   isSelected
                     ? "bg-primary text-primary-foreground border-border"
                     : "bg-muted border-border"

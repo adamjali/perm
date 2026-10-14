@@ -97,7 +97,7 @@ export function DenialReach({
             <li data-tip={`${c.label}\n${formatInt(c.denied)} of ${formatInt(c.decided)} denied\n${pct(c.reach)} of all decided cases\n${pct(c.share)} of all denials`}>
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <p className="font-bold">{c.label}</p>{" "}
-              <p className="font-mono text-sm tabular-nums text-foreground/70">
+              <p className="font-mono text-sm tabular-nums text-muted-foreground">
                 {formatInt(c.denied)} of {formatInt(c.decided)} denied
               </p>
             </div>
@@ -105,20 +105,20 @@ export function DenialReach({
               <div className="flex items-center gap-3">
                 <div className="h-4 min-w-0 flex-1">
                   <div
-                    className="h-full border-2 border-border bg-background"
+                    className="h-full border border-border bg-background"
                     style={{ width: `${(c.reach / max) * 100}%` }}
                     role="img"
                     aria-label={`${pct(c.reach)} of all decided cases`}
                   />
                 </div>
-                <p className="w-32 shrink-0 font-mono text-sm tabular-nums text-foreground/70">
+                <p className="w-32 shrink-0 font-mono text-sm tabular-nums text-muted-foreground">
                   {pct(c.reach)} of cases
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="h-4 min-w-0 flex-1">
                   <div
-                    className="h-full border-2 border-border bg-data-good-ink"
+                    className="h-full border border-border bg-data-good-ink"
                     style={{ width: `${(c.share / max) * 100}%` }}
                     role="img"
                     aria-label={`${pct(c.share)} of all denials`}
@@ -130,14 +130,14 @@ export function DenialReach({
               </div>
             </div>
             {c.note ? (
-              <p className="mt-2 text-sm leading-snug text-foreground/60">{c.note}</p>
+              <p className="mt-2 text-sm leading-snug text-muted-foreground">{c.note}</p>
             ) : null}
             </li>
           </Fragment>
         ))}
       </ul>
       </ChartTips>{" "}
-      <p className="mt-6 text-sm leading-relaxed text-foreground/60">
+      <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
         Outlined is the {unitLabel.toLowerCase()}&apos;s share of decided cases,
         solid its share of denials. Solid longer than outlined means denials
         concentrate there.
@@ -147,23 +147,23 @@ export function DenialReach({
 
   const table = (
     <div className="overflow-x-auto">
-      <table className="w-full border-2 border-border text-left text-sm">
+      <table className="w-full border border-border text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-sm font-bold">
               {unitLabel}
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right text-sm font-bold">
               Decided
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right text-sm font-bold">
               Denied
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right text-sm font-bold">
               Share of cases
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right text-sm font-bold">
               Share of denials{" "}
             </th>
           </tr>

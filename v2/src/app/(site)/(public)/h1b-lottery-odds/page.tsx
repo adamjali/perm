@@ -92,20 +92,20 @@ export default function H1bLotteryOddsPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">H-1B lottery odds, year by year</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">H-1B lottery odds, year by year</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           How many H-1B cap registrations USCIS received and selected each year, from its own table, and how the odds
           change now that the draw is weighted by wage.
         </p>
       </header>
 
-      <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="latest">
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">FY{newest.fy} cap</p>{" "}
-        <h2 id="latest" className="mt-2 font-heading text-4xl font-black leading-tight tabular-nums sm:text-5xl">
+      <section className="mt-10 border border-border bg-card p-6 sm:p-8" aria-labelledby="latest">
+        <p className="text-sm font-semibold text-muted-foreground">FY{newest.fy} cap</p>{" "}
+        <h2 id="latest" className="mt-2 font-heading text-4xl font-bold leading-tight tabular-nums sm:text-5xl">
           {formatPercent(newestRate, 1)}
         </h2>{" "}
         <p className="mt-1 font-heading text-xl font-bold">of eligible registrations selected</p>{" "}
-        <p className="mt-4 max-w-3xl text-base leading-relaxed text-foreground/80">
+        <p className="mt-4 max-w-3xl text-base leading-relaxed text-soft">
           {newest.selected.toLocaleString("en-US")} of {newest.eligible.toLocaleString("en-US")}.
           {newest.uniqueBeneficiaries && perBen
             ? ` USCIS counted about ${newest.uniqueBeneficiaries.toLocaleString("en-US")} unique beneficiaries, with ${perBen.toFixed(2)} registrations each on average, so one person's chance was close to this rate.`
@@ -156,7 +156,7 @@ export default function H1bLotteryOddsPage() {
           </svg>
         </div>
         </ChartTips>{" "}
-        <p className="mt-3 text-base text-foreground/75">
+        <p className="mt-3 text-base text-soft">
           Outline: eligible registrations. Filled: selected. The share above each bar is selected over eligible. From FY
           {BENEFICIARY_CENTRIC_FROM} USCIS drew people rather than registrations, which is why the FY2024 pile of
           repeat registrations disappears.
@@ -164,14 +164,14 @@ export default function H1bLotteryOddsPage() {
       </section>
 
       <section className="mt-12" aria-labelledby="weighted">
-        <h2 id="weighted" className="font-heading text-2xl font-black">
+        <h2 id="weighted" className="font-heading text-2xl font-bold">
           From FY{WEIGHTED_FROM}, the odds depend on the wage
         </h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
           A registration now enters the draw once at OEWS wage level I and up to four times at level IV. DHS estimated
           what that does to one beneficiary&apos;s chance, in the final rule, before the first weighted lottery ran:
         </p>{" "}
-        <div className="mt-5 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+        <div className="mt-5 border border-border bg-card p-6 sm:p-8">
           <ChartTips label="DHS's estimated chance at each wage level">
           <ul className="space-y-4">
             {WEIGHTED_ESTIMATE.levels.map((l) => (
@@ -181,11 +181,11 @@ export default function H1bLotteryOddsPage() {
                   data-tip={`Level ${l.level}\n${l.percent.toFixed(1)}% estimated chance\nEntered in the draw ${timesWord(l.entries)}\n${WEIGHTED_ESTIMATE.randomPercent}% under the random draw`}
                   className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3 [&>*]:min-w-0"
                 >
-                  <span className="font-heading text-lg font-black">Level {l.level}</span>{" "}
-                  <span className="relative block h-8 border-2 border-border bg-background" aria-hidden="true">
+                  <span className="font-heading text-lg font-bold">Level {l.level}</span>{" "}
+                  <span className="relative block h-8 border border-border bg-background" aria-hidden="true">
                     <span className="absolute inset-y-0 left-0 bg-foreground" style={{ width: `${l.percent}%` }} />
                     <span
-                      className="absolute inset-y-0 border-l-2 border-dashed border-primary"
+                      className="absolute inset-y-0 border-l border-dashed border-primary"
                       style={{ left: `${WEIGHTED_ESTIMATE.randomPercent}%` }}
                     />
                   </span>{" "}
@@ -195,7 +195,7 @@ export default function H1bLotteryOddsPage() {
             ))}
           </ul>
           </ChartTips>{" "}
-          <p className="mt-4 text-base text-foreground/75">
+          <p className="mt-4 text-base text-soft">
             Dashed line: {WEIGHTED_ESTIMATE.randomPercent}%, DHS&apos;s figure for everyone under the random draw. Its
             estimate ({WEIGHTED_ESTIMATE.citation}) assumes employers keep their wages and pools the two caps; DHS
             notes it may understate selections at higher levels.{" "}
@@ -208,12 +208,12 @@ export default function H1bLotteryOddsPage() {
       </section>
 
       <section className="mt-12" aria-labelledby="table">
-        <h2 id="table" className="font-heading text-2xl font-black">
+        <h2 id="table" className="font-heading text-2xl font-bold">
           USCIS&apos;s table
         </h2>{" "}
-        <div className="mt-4 overflow-x-auto border-2 border-border">
+        <div className="mt-4 overflow-x-auto border border-border">
           <table className="w-full min-w-[720px] text-left text-base">
-            <thead className="border-b-2 border-border bg-muted/40">
+            <thead className="border-b border-border bg-muted/40">
               <tr>
                 <th scope="col" className="px-3 py-3 font-bold">Cap year{" "}</th>
                 <th scope="col" className="px-3 py-3 font-bold">Registrations{" "}</th>
@@ -239,7 +239,7 @@ export default function H1bLotteryOddsPage() {
             </tbody>
           </table>
         </div>{" "}
-        <p className="mt-3 text-base text-foreground/75">
+        <p className="mt-3 text-base text-soft">
           From USCIS&apos;s{" "}
           <a href={H1B_REGISTRATION_SOURCE} className="font-semibold underline underline-offset-2 hover:text-primary" rel="noopener" target="_blank">
             H-1B electronic registration page
@@ -250,11 +250,11 @@ export default function H1bLotteryOddsPage() {
         </p>
       </section>
 
-      <details className="group mt-12 border-2 border-border p-6 sm:p-8">
-        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-black marker:content-none">
+      <details className="group mt-12 border border-border p-6 sm:p-8">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
           What this can&apos;t tell you
         </summary>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/80">
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">
           <li>
             Your own odds. They depend on your wage level and on how many registrations came in at each level, which USCIS
             hasn&apos;t published for FY{WEIGHTED_FROM}. The percentages above are DHS&apos;s estimate, not a count.
@@ -273,7 +273,7 @@ export default function H1bLotteryOddsPage() {
       </details>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
         <FaqList items={FAQS} />
       </section>
 

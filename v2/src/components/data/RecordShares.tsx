@@ -30,28 +30,28 @@ export function RecordShares({ rows, className }: { rows: RecordShare[]; classNa
   const counted = rows.filter((r): r is RecordShare & { n: number } => r.n !== null && r.n > 0);
   const total = counted.reduce((sum, r) => sum + r.n, 0);
   return (
-    <section aria-labelledby="record-shares" className={cn("border-2 border-border bg-card p-5 shadow-hard sm:p-6", className)}>
-      <h2 id="record-shares" className="font-heading text-xl font-black leading-tight">
+    <section aria-labelledby="record-shares" className={cn("border border-border bg-card p-5 sm:p-6", className)}>
+      <h2 id="record-shares" className="font-heading text-xl font-bold leading-tight">
         {total > 0 ? `${formatInt(total)} filings, four programs` : "Four programs, one search"}
       </h2>{" "}
       {total > 0 ? (
-        <div aria-hidden="true" className="mt-4 flex h-9 border-2 border-border">
+        <div aria-hidden="true" className="mt-4 flex h-9 border border-border">
           {counted.map((r) => (
             <span
               key={r.key}
-              className={cn("h-full border-r-2 border-border last:border-r-0", r.swatch)}
+              className={cn("h-full border-r border-border last:border-r-0", r.swatch)}
               // A floor of 2% keeps the smallest program a visible sliver.
               style={{ width: `${Math.max(2, (r.n / total) * 100)}%` }}
             />
           ))}
         </div>
       ) : null}{" "}
-      <ul className="mt-4 divide-y-2 divide-border/20">
+      <ul className="mt-4 divide-y divide-border/20">
         {rows.map((r) => (
           <Fragment key={r.key}>
             {" "}
             <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 py-2.5">
-              <span aria-hidden="true" className={cn("mt-1 size-4 border-2 border-border", r.swatch)} />{" "}
+              <span aria-hidden="true" className={cn("mt-1 size-4 border border-border", r.swatch)} />{" "}
               <span className="min-w-0">
                 <Link
                   href={r.href}
@@ -59,7 +59,7 @@ export function RecordShares({ rows, className }: { rows: RecordShare[]; classNa
                 >
                   {r.label}
                 </Link>{" "}
-                <span className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-sm text-foreground/70">
+                <span className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-sm text-muted-foreground">
                   {/* One unit per prefix, so "P-400" never breaks at its hyphen. */}
                   {r.prefixes.map((x, i) => (
                     <Fragment key={x}>
@@ -68,7 +68,7 @@ export function RecordShares({ rows, className }: { rows: RecordShare[]; classNa
                   ))}
                 </span>
               </span>{" "}
-              <span className="font-heading text-lg font-black tabular-nums">{r.n === null ? "—" : formatInt(r.n)}</span>
+              <span className="font-heading text-lg font-bold tabular-nums">{r.n === null ? "—" : formatInt(r.n)}</span>
             </li>
           </Fragment>
         ))}

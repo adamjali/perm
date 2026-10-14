@@ -33,7 +33,7 @@ const PRIORITY_LABELS: Record<NotePriority, string> = {
 const BADGE_BASE_STYLE: CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontWeight: 700,
-  textTransform: "uppercase",
+  textTransform: "",
   letterSpacing: "0.04em",
   border: "3px solid",
   display: "inline-flex",
@@ -223,7 +223,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
 
   return (
     <motion.div
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={tabContainerVariants}
       className="space-y-6"
@@ -248,7 +248,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   fontFamily: "var(--font-mono)",
                   fontSize: "0.6rem",
                   fontWeight: 700,
-                  textTransform: "uppercase",
+                  textTransform: "",
                   cursor: "pointer",
                 }}
               >
@@ -422,7 +422,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   {/* Due date box */}
                   {selectedNote.dueDate && (
                     <div style={{ marginTop: 16, padding: "12px 16px", border: "3px solid var(--border)", background: "var(--muted)" }}>
-                      <span className="preview-date" style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", textTransform: "uppercase" }}>Due date</span>
+                      <span className="preview-date" style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", textTransform: "" }}>Due date</span>
                       <div style={{ fontWeight: 700, marginTop: 4 }}>{selectedNote.dueDate}</div>
                     </div>
                   )}
@@ -535,7 +535,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                         fontFamily: "var(--font-mono)",
                         fontSize: "0.65rem",
                         fontWeight: 700,
-                        textTransform: "uppercase",
+                        textTransform: "",
                       }}
                     >
                       {NOTE_PRIORITIES.map((p) => (

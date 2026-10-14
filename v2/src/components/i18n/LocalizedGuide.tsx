@@ -38,8 +38,8 @@ export function localizedGuideMetadata(code: LocaleCode): Metadata {
   };
 }
 
-const card = "border-2 border-border bg-card p-5 shadow-hard";
-const h2 = "scroll-mt-24 font-heading text-2xl font-black sm:text-3xl";
+const card = "border border-border bg-card p-5";
+const h2 = "scroll-mt-24 font-heading text-2xl font-bold sm:text-3xl";
 
 function month(ym: string | null, intl: string): string | null {
   if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return null;
@@ -52,12 +52,12 @@ function day(iso: string | null, intl: string): string | null {
 }
 
 function CutoffCell({ cutoff, locale, copy }: { cutoff: Cutoff | null; locale: LocaleDef; copy: (typeof GUIDE_COPY)[LocaleCode] }) {
-  if (!cutoff) return <span className="text-foreground/70">{copy.cutoffs.notPrinted}</span>;
+  if (!cutoff) return <span className="text-muted-foreground">{copy.cutoffs.notPrinted}</span>;
   if (cutoff.kind === "date") return <D>{day(cutoff.iso, locale.intl)}</D>;
   const [letter, gloss] = cutoff.kind === "current" ? ["C", copy.cutoffs.current] : ["U", copy.cutoffs.unavailable];
   return (
     <>
-      <b translate="no">{letter}</b> <span className="text-foreground/80">({gloss})</span>
+      <b translate="no">{letter}</b> <span className="text-soft">({gloss})</span>
     </>
   );
 }
@@ -66,9 +66,9 @@ function CutoffTable({ country, data, locale }: { country: CountryKey; data: Non
   const copy = GUIDE_COPY[locale.code];
   const rows = data.rows[country] ?? [];
   return (
-    <div className="overflow-x-auto border-2 border-border bg-card">
+    <div className="overflow-x-auto border border-border bg-card">
       <table className="w-full min-w-[34rem] border-collapse text-left text-base">
-        <caption className="border-b-2 border-border bg-muted px-4 py-2 text-left font-heading text-lg font-black">
+        <caption className="border-b border-border bg-muted px-4 py-2 text-left font-heading text-lg font-bold">
           {copy.cutoffs.countryName[country] ?? country}
         </caption>
         <thead>
@@ -80,7 +80,7 @@ function CutoffTable({ country, data, locale }: { country: CountryKey; data: Non
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.category} className="border-t-2 border-border/40">
+            <tr key={r.category} className="border-t border-border/40">
               <th scope="row" className="px-4 py-3 font-bold">{copy.cutoffs.category[r.category]}{" "}</th>
               <td className="px-4 py-3 tabular-nums">
                 <CutoffCell cutoff={r.finalAction} locale={locale} copy={copy} />{" "}
@@ -119,16 +119,16 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
       <LanguageLinks current={code} />
 
       <header className="mt-8">
-        <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{copy.eyebrow}</p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">{copy.h1}</h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/80">{copy.lede}</p>{" "}
-        <p className="mt-4 border-l-4 border-primary bg-card px-4 py-3 text-base leading-relaxed text-foreground/80">
+        <p className="text-sm font-bold text-muted-foreground">{copy.eyebrow}</p>{" "}
+        <h1 className="mt-3 font-heading text-4xl font-bold leading-tight sm:text-5xl">{copy.h1}</h1>{" "}
+        <p className="mt-4 text-lg leading-relaxed text-soft">{copy.lede}</p>{" "}
+        <p className="mt-4 border-l-2 border-primary bg-card px-4 py-3 text-base leading-relaxed text-soft">
           {copy.translationNote}
         </p>
       </header>
 
       <nav aria-label={copy.onThisPage} className="mt-8">
-        <p className="font-heading text-base font-black">{copy.onThisPage}</p>{" "}
+        <p className="font-heading text-base font-bold">{copy.onThisPage}</p>{" "}
         <ol className="mt-2 flex flex-wrap gap-2">
           {SECTION_IDS.map((id, i) => (
             <Fragment key={id}>
@@ -136,9 +136,9 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
               <li>
                 <a
                   href={`#${id}`}
-                  className="inline-flex min-h-11 items-center gap-2 border-2 border-border bg-background px-3 text-sm font-bold hover:bg-primary/20"
+                  className="inline-flex min-h-11 items-center gap-2 border border-border bg-background px-3 text-sm font-bold hover:bg-accent"
                 >
-                  <span className="tabular-nums text-foreground/70">{i + 1}</span> {copy.toc[id]}
+                  <span className="tabular-nums text-muted-foreground">{i + 1}</span> {copy.toc[id]}
                 </a>
               </li>
             </Fragment>
@@ -148,7 +148,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
 
       <section className="mt-12" aria-labelledby="check">
         <h2 id="check" className={h2}>{copy.check.h2}</h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">{copy.check.intro}</p>
+        <p className="mt-3 text-base leading-relaxed text-soft">{copy.check.intro}</p>
         <form method="get" action="/perm-case-status" className={`mt-5 grid grid-cols-1 gap-2 [&>*]:min-w-0 ${card}`}>
           <label htmlFor="guide-case" className="text-base font-bold">{copy.check.label}</label>{" "}
           <div className="flex gap-2">
@@ -160,19 +160,19 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
               autoComplete="off"
               spellCheck={false}
               maxLength={40}
-              className="min-h-11 min-w-0 flex-1 border-2 border-border bg-background px-3 text-base"
+              className="min-h-11 min-w-0 flex-1 border border-input bg-background px-3 text-base"
             />{" "}
             <button
               type="submit"
-              className="min-h-11 border-2 border-border bg-primary px-5 font-bold text-primary-foreground shadow-hard-sm"
+              className="min-h-11 border border-border bg-primary px-5 font-bold text-primary-foreground"
             >
               {copy.check.button}
             </button>
           </div>{" "}
-          <p className="text-sm leading-relaxed text-foreground/70">{copy.check.formats}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">{copy.check.formats}</p>
         </form>{" "}
-        <p className="mt-4 text-base leading-relaxed text-foreground/80">{copy.check.after}</p>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">{copy.check.noNumber}</p>
+        <p className="mt-4 text-base leading-relaxed text-soft">{copy.check.after}</p>{" "}
+        <p className="mt-3 text-base leading-relaxed text-soft">{copy.check.noNumber}</p>
       </section>
 
       <section className="mt-12" aria-labelledby="queue">
@@ -184,13 +184,13 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
                 <Fragment key={i}>
                   {" "}
                   <div className={card}>
-                    <dt className="text-sm leading-snug text-foreground/70">{f.label}</dt>{" "}
-                    <dd className="mt-2 font-heading text-2xl font-black leading-tight">{f.value}</dd>
+                    <dt className="text-sm leading-snug text-muted-foreground">{f.label}</dt>{" "}
+                    <dd className="mt-2 font-heading text-2xl font-bold leading-tight">{f.value}</dd>
                   </div>
                 </Fragment>
               ))}
             </dl>{" "}
-            {asOf ? <p className="mt-3 text-sm text-foreground/70">{copy.queue.asOf(<D>{asOf}</D>)}</p> : null}
+            {asOf ? <p className="mt-3 text-sm text-muted-foreground">{copy.queue.asOf(<D>{asOf}</D>)}</p> : null}
           </>
         ) : (
           <p className={`mt-5 text-base ${card}`}>{copy.queue.missing}</p>
@@ -198,36 +198,36 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
         {copy.queue.meaning.map((p, i) => (
           <Fragment key={i}>
             {" "}
-            <p className="mt-4 text-base leading-relaxed text-foreground/80">{p}</p>
+            <p className="mt-4 text-base leading-relaxed text-soft">{p}</p>
           </Fragment>
         ))}
       </section>
 
       <section className="mt-12" aria-labelledby="steps">
         <h2 id="steps" className={h2}>{copy.steps.h2}</h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">{copy.steps.intro}</p>
+        <p className="mt-3 text-base leading-relaxed text-soft">{copy.steps.intro}</p>
         <ol className="mt-5 grid grid-cols-1 gap-3 [&>*]:min-w-0">
           {copy.steps.items.map((s, i) => (
             <Fragment key={s.form}>
               {" "}
-              <li className="grid grid-cols-[2.75rem_1fr] gap-4 border-2 border-border bg-card p-4 [&>*]:min-w-0">
+              <li className="grid grid-cols-[2.75rem_1fr] gap-4 border border-border bg-card p-4 [&>*]:min-w-0">
                 <span
                   aria-hidden="true"
-                  className="flex size-11 items-center justify-center border-2 border-border bg-primary font-heading text-lg font-black text-primary-foreground"
+                  className="flex size-11 items-center justify-center border border-border bg-primary font-heading text-lg font-bold text-primary-foreground"
                 >
                   {i + 1}
                 </span>{" "}
                 <div>
-                  <p className="font-heading text-lg font-black leading-snug">
+                  <p className="font-heading text-lg font-bold leading-snug">
                     <F>{s.form}</F> <span className="font-bold">{s.name}</span>
                   </p>{" "}
-                  <p className="mt-1 text-base leading-relaxed text-foreground/80">{s.body}</p>
+                  <p className="mt-1 text-base leading-relaxed text-soft">{s.body}</p>
                 </div>
               </li>
             </Fragment>
           ))}
         </ol>{" "}
-        <p className="mt-4 text-base leading-relaxed text-foreground/80">{copy.steps.skipPerm}</p>
+        <p className="mt-4 text-base leading-relaxed text-soft">{copy.steps.skipPerm}</p>
       </section>
 
       <section className="mt-12" aria-labelledby="eb3-other-workers">
@@ -235,7 +235,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
         {copy.ew3.body.map((p, i) => (
           <Fragment key={i}>
             {" "}
-            <p className="mt-3 text-base leading-relaxed text-foreground/80">{p}</p>
+            <p className="mt-3 text-base leading-relaxed text-soft">{p}</p>
           </Fragment>
         ))}
       </section>
@@ -244,10 +244,10 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
         <h2 id="cutoffs" className={h2}>{copy.cutoffs.h2}</h2>{" "}
         {data?.bulletin && bulletinMonth ? (
           <>
-            <p className="mt-3 text-base leading-relaxed text-foreground/80">
+            <p className="mt-3 text-base leading-relaxed text-soft">
               {copy.cutoffs.intro(<D>{bulletinMonth}</D>)}
             </p>{" "}
-            <p className="mt-3 text-base leading-relaxed text-foreground/80">{copy.cutoffs.birth}</p>
+            <p className="mt-3 text-base leading-relaxed text-soft">{copy.cutoffs.birth}</p>
             <div className="mt-5 grid grid-cols-1 gap-5 [&>*]:min-w-0">
               {locale.countries.map((c) => (
                 <Fragment key={c}>
@@ -256,7 +256,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
                 </Fragment>
               ))}
             </div>
-            <ul className="mt-4 grid grid-cols-1 gap-2 text-base leading-relaxed text-foreground/80 [&>*]:min-w-0">
+            <ul className="mt-4 grid grid-cols-1 gap-2 text-base leading-relaxed text-soft [&>*]:min-w-0">
               {copy.cutoffs.legend.map((l, i) => (
                 <Fragment key={i}>
                   {" "}
@@ -272,14 +272,14 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
 
       <section className="mt-12" aria-labelledby="statuses">
         <h2 id="statuses" className={h2}>{copy.statuses.h2}</h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">{copy.statuses.intro}</p>
-        <dl className="mt-5 grid grid-cols-1 border-2 border-border bg-card [&>*]:min-w-0">
+        <p className="mt-3 text-base leading-relaxed text-soft">{copy.statuses.intro}</p>
+        <dl className="mt-5 grid grid-cols-1 border border-border bg-card [&>*]:min-w-0">
           {GLOSSED_STATUSES.map((s, i) => (
             <Fragment key={s}>
               {" "}
-              <div className={`grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[16rem_1fr] sm:gap-4 [&>*]:min-w-0 ${i > 0 ? "border-t-2 border-border/40" : ""}`}>
+              <div className={`grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[16rem_1fr] sm:gap-4 [&>*]:min-w-0 ${i > 0 ? "border-t border-border/40" : ""}`}>
                 <dt className="font-bold" translate="no">{s}</dt>{" "}
-                <dd className="text-base leading-relaxed text-foreground/80">{copy.statuses.gloss[s]}</dd>
+                <dd className="text-base leading-relaxed text-soft">{copy.statuses.gloss[s]}</dd>
               </div>
             </Fragment>
           ))}
@@ -288,11 +288,11 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
 
       <section className="mt-12" aria-labelledby="limits-h">
         <h2 id="limits-h" className={h2}>{copy.limits.h2}</h2>
-        <ul className="mt-3 grid grid-cols-1 gap-2 text-base leading-relaxed text-foreground/80 [&>*]:min-w-0">
+        <ul className="mt-3 grid grid-cols-1 gap-2 text-base leading-relaxed text-soft [&>*]:min-w-0">
           {copy.limits.items.map((l, i) => (
             <Fragment key={i}>
               {" "}
-              <li className="border-l-4 border-border pl-3">{l}</li>
+              <li className="border-l-2 border-border pl-3">{l}</li>
             </Fragment>
           ))}
         </ul>
@@ -308,7 +308,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
                 <a
                   href={l.href}
                   hrefLang="en"
-                  className="flex min-h-11 items-center border-2 border-border bg-card px-4 py-2 font-bold hover:bg-primary/20"
+                  className="flex min-h-11 items-center border border-border bg-card px-4 py-2 font-bold hover:bg-accent"
                 >
                   {l.label}
                 </a>

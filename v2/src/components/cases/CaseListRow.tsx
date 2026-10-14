@@ -102,7 +102,7 @@ export const CaseListRow = memo(function CaseListRow({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.12, delay: index * 0.05 }}
       className={cn(
@@ -117,8 +117,8 @@ export const CaseListRow = memo(function CaseListRow({
           "border-b border-t border-border border-t-transparent bg-background",
           "cursor-pointer select-none",
           // Hover effect
-          "transition-all duration-150",
-          isHovered && "-translate-y-0.5 shadow-hard-sm border-t-border",
+          "transition-colors duration-150",
+          isHovered && "-translate-y-0.5 border-t-border",
           // Selected state
           isSelected && "bg-muted/50",
           // Navigating state
@@ -144,7 +144,7 @@ export const CaseListRow = memo(function CaseListRow({
       )}
 
       {/* Stage swatch: the folder tab's colour, square like everything else */}
-      <div className={cn("size-3 shrink-0 border-2 border-border", stageFill)} aria-hidden="true" />
+      <div className={cn("size-3 shrink-0 border border-border", stageFill)} aria-hidden="true" />
 
       {/* Main content */}
       <div className="flex-1 min-w-0 flex items-center gap-4">
@@ -153,7 +153,7 @@ export const CaseListRow = memo(function CaseListRow({
           <div className="font-heading font-bold text-base truncate flex items-center gap-2" title={employerName}>
             <span className="truncate">{employerName}</span>{" "}
             {isSample && (
-              <span className="shrink-0 inline-flex items-center px-1.5 py-px text-sm font-semibold border-2 border-dashed border-muted-foreground/50 text-muted-foreground">
+              <span className="shrink-0 inline-flex items-center px-1.5 py-px text-sm font-semibold border border-dashed border-muted-foreground/50 text-muted-foreground">
                 Sample
               </span>
             )}
@@ -178,14 +178,14 @@ export const CaseListRow = memo(function CaseListRow({
 
         {/* Next deadline: the number of days leads, then what is due and when */}
         {countdown && (
-          <div className="shrink-0 hidden md:flex w-64 items-stretch border-2 border-border bg-card" title={nextDeadlineLabel}>
+          <div className="shrink-0 hidden md:flex w-64 items-stretch border border-border bg-card" title={nextDeadlineLabel}>
             <div
               className={cn(
-                "flex w-16 shrink-0 flex-col items-center justify-center border-r-2 border-border px-1",
+                "flex w-16 shrink-0 flex-col items-center justify-center border-r border-border px-1",
                 late ? "bg-data-bad text-black" : soon ? "bg-data-warn text-black" : "bg-foreground text-background",
               )}
             >
-              <span className="font-heading text-lg font-black leading-none tabular-nums">{countdown.value}</span>{" "}
+              <span className="font-heading text-lg font-bold leading-none tabular-nums">{countdown.value}</span>{" "}
               <span className="text-sm font-bold leading-tight">{countdown.unit}</span>
             </div>{" "}
             <div className="flex min-w-0 flex-col justify-center px-2.5 py-1">

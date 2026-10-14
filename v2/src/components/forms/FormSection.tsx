@@ -69,7 +69,7 @@ export function FormSection({
   return (
     <div
       className={cn(
-        "border-2 border-border bg-card shadow-hard-sm",
+        "border border-border bg-card",
         status === "has-errors" && "border-destructive",
         status === "complete" && "border-primary/50",
         className

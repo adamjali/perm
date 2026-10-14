@@ -21,7 +21,7 @@ export function LanguageLinks({ current }: { current: LocaleCode | "en" }) {
             <span
               lang={l.tag}
               aria-current="page"
-              className="inline-flex min-h-11 items-center border-2 border-border bg-primary px-3 text-sm font-bold text-primary-foreground"
+              className="inline-flex min-h-11 items-center border border-border bg-primary px-3 text-sm font-bold text-primary-foreground"
             >
               {l.endonym}
             </span>
@@ -30,7 +30,7 @@ export function LanguageLinks({ current }: { current: LocaleCode | "en" }) {
               href={l.path}
               lang={l.tag}
               hrefLang={l.tag}
-              className="inline-flex min-h-11 items-center border-2 border-border bg-card px-3 text-sm font-bold hover:bg-primary/20"
+              className="inline-flex min-h-11 items-center border border-border bg-card px-3 text-sm font-bold hover:bg-accent"
             >
               {l.endonym}
             </a>

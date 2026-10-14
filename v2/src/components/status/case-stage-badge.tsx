@@ -17,7 +17,7 @@ export function CaseStageBadge({ stage, bordered = false, className }: CaseStage
   // Fill and ink come from the shared stage map, where each pairing is measured.
   const config = STAGE_VISUALS[stage] ?? FALLBACK_CONFIG
   const borderClass = bordered
-    ? "border-2 border-border"
+    ? "border border-border"
     : "border-transparent"
 
   return (

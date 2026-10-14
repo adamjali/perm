@@ -176,8 +176,8 @@ export const CaseCard = memo(function CaseCard({
     <div
       data-testid="case-card"
       className={cn(
-        "relative cursor-pointer mt-8 transition-all duration-150 ease-out",
-        "hover:-translate-y-1",
+        "relative cursor-pointer mt-8 transition-colors duration-150 ease-out",
+        "",
         ui.isClicking && "translate-y-0.5 scale-[0.99]",
         isPinned && !ui.isClicking && "-translate-y-1"
       )}
@@ -201,7 +201,7 @@ export const CaseCard = memo(function CaseCard({
           <Checkbox
             checked={isSelected}
             onCheckedChange={() => onSelect?.(_id)}
-            className="size-5 border-2 border-border bg-white data-[state=checked]:border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+            className="size-5 border border-border bg-white data-[state=checked]:border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
             aria-label="Select case"
           />
         </div>
@@ -216,11 +216,11 @@ export const CaseCard = memo(function CaseCard({
           // text-black at the ROOT: manila stays tan in both themes, so every
           // inheriting child (the date values in ExpandedContent measured
           // 2.16:1 in dark) must default to ink, not to --foreground.
-          "relative border-2 shadow-hard p-6 pt-10 min-h-[180px] transition-shadow duration-150 ease-out text-black",
+          "relative border p-6 pt-10 min-h-[180px] transition-shadow duration-150 ease-out text-black",
           isSelected && "ring-4 ring-primary",
           isClosed && "grayscale border-black/40",
           !isClosed && "border-border",
-          shouldExpand && !isClosed && "shadow-hard-lg"
+          shouldExpand && !isClosed && ""
         )}
         // Always manila: the `grayscale` class above already renders a closed
         // card as a gray folder. The old var(--muted) swap put black text
@@ -253,14 +253,14 @@ export const CaseCard = memo(function CaseCard({
             {!isClosed && nextDeadline && nextDeadlineLabel && countdown ? (
               // The countdown leads: the number of days in the urgency colour,
               // the deadline and its date beside it.
-              <div className="flex min-h-[3.5rem] min-w-0 items-stretch border-2 border-black bg-white/60">
+              <div className="flex min-h-[3.5rem] min-w-0 items-stretch border border-black bg-white/60">
                 <div
                   className={cn(
-                    "flex min-w-[3.75rem] shrink-0 flex-col items-center justify-center border-r-2 border-black px-2 py-1",
+                    "flex min-w-[3.75rem] shrink-0 flex-col items-center justify-center border-r border-black px-2 py-1",
                     urgency === "urgent" ? "bg-data-bad text-black" : urgency === "soon" ? "bg-data-warn text-black" : "bg-black text-white"
                   )}
                 >
-                  <span className="font-heading text-2xl font-black leading-none tabular-nums">{countdown.value}</span>{" "}
+                  <span className="font-heading text-2xl font-bold leading-none tabular-nums">{countdown.value}</span>{" "}
                   <span className="text-sm font-bold">{countdown.unit}</span>
                 </div>{" "}
                 <div className="flex min-w-0 flex-col justify-center px-2.5 py-1">
@@ -278,7 +278,7 @@ export const CaseCard = memo(function CaseCard({
               </span>
             ) : (
               // Same footprint as the countdown, so cards in a row line up.
-              <span className="flex min-h-[3.5rem] items-center border-2 border-dashed border-black/40 px-3 text-sm font-semibold text-black/70">
+              <span className="flex min-h-[3.5rem] items-center border border-dashed border-black/40 px-3 text-sm font-semibold text-black/70">
                 No upcoming deadlines
               </span>
             )}
@@ -396,7 +396,7 @@ function ClosedCaseButtons({
         variant="outline"
         size="sm"
         disabled={isViewLoading}
-        className="flex-1 border-2 border-black/50 bg-transparent text-sm text-black/70 hover:bg-black/5 disabled:opacity-70"
+        className="flex-1 border border-black/50 bg-transparent text-sm text-black/70 hover:bg-black/5 disabled:opacity-70"
         onClick={onViewClick}
         aria-label="View"
       >
@@ -407,7 +407,7 @@ function ClosedCaseButtons({
         variant="outline"
         size="sm"
         disabled={isReopening}
-        className="border-2 border-border bg-transparent text-sm text-primary hover:bg-black/5 disabled:opacity-70"
+        className="border border-border bg-transparent text-sm text-primary hover:bg-black/5 disabled:opacity-70"
         onClick={onReopenClick}
         aria-label="Reopen"
       >
@@ -417,7 +417,7 @@ function ClosedCaseButtons({
       <Button
         variant="outline"
         size="sm"
-        className="border-2 border-black/50 bg-transparent text-sm text-black/70 hover:bg-black/5"
+        className="border border-black/50 bg-transparent text-sm text-black/70 hover:bg-black/5"
         onClick={onDeleteClick}
         aria-label="Delete"
       >
@@ -455,7 +455,7 @@ function ActiveCaseButtons({
         variant="default"
         size="sm"
         disabled={isViewLoading}
-        className="flex-1 text-sm font-bold border-black shadow-hard hover:shadow-hard-lg disabled:opacity-70 disabled:shadow-none"
+        className="flex-1 text-sm font-bold border-black disabled:opacity-70 disabled:shadow-none"
         onClick={onViewClick}
         aria-label="View"
       >
@@ -472,7 +472,7 @@ function ActiveCaseButtons({
         variant="outline"
         size="sm"
         disabled={isEditLoading}
-        className="text-sm bg-transparent border-2 border-black text-black hover:bg-black/10 disabled:opacity-70"
+        className="text-sm bg-transparent border border-black text-black hover:bg-black/10 disabled:opacity-70"
         onClick={onEditClick}
         aria-label="Edit"
       >
@@ -490,7 +490,7 @@ function ActiveCaseButtons({
           <Button
             variant="outline"
             size="icon-sm"
-            className="bg-transparent border-2 border-black text-black hover:bg-black/10 cursor-pointer"
+            className="bg-transparent border border-black text-black hover:bg-black/10 cursor-pointer"
             aria-label="More options"
             onClick={(e) => e.stopPropagation()}
           >

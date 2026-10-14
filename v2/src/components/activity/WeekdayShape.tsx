@@ -51,19 +51,19 @@ export function WeekdayShape({
               "py-2",
               // The rule sits between Friday and Saturday and says what it
               // separates. Structure carrying the meaning, not colour.
-              p.weekday === 5 && "mt-2 border-t-2 border-border pt-4",
+              p.weekday === 5 && "mt-2 border-t border-border pt-4",
             )}
           >
             <div className="flex items-baseline justify-between gap-3">
-              <span className="font-mono text-sm font-bold uppercase tracking-wider">
+              <span className="text-sm font-bold">
                 {p.label}
               </span>{" "}
-              <span className="font-mono text-sm font-bold tabular-nums text-foreground/70">
+              <span className="font-mono text-sm font-bold tabular-nums text-muted-foreground">
                 {p.mean.toLocaleString("en-US")} a day · {p.days} days ·{" "}
                 {p.zeroDays === 0 ? "never zero" : `${p.zeroDays} at zero`}
               </span>
             </div>
-            <div className="mt-1 h-4 w-full border-2 border-border bg-background">
+            <div className="mt-1 h-4 w-full border border-border bg-background">
               <div
                 // See WageLadderRow: --primary fails the 3:1 graphic floor
                 // in light mode, the -ink variant passes and is identical in dark.
@@ -77,7 +77,7 @@ export function WeekdayShape({
         ))}
       </ol>
       </ChartTips>
-      <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         A weekday clears about {meanOf(weekdays).toLocaleString("en-US")}{" "}
         decisions and a weekend day about{" "}
         {meanOf(weekend).toLocaleString("en-US")}.{" "}

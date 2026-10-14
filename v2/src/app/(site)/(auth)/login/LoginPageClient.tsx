@@ -278,14 +278,14 @@ export function LoginPageClient() {
 
   if (step === "verification") {
     return (
-      <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
+      <Card className="">
         <CardHeader>
-          <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+          <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
             Verify your email
           </h1>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-base leading-relaxed text-foreground/70">
+          <p className="text-base leading-relaxed text-muted-foreground">
             Your email hasn&apos;t been verified yet. We&apos;ve sent a 12-character
             verification code to{" "}
             <span className="font-semibold text-foreground">{email}</span>
@@ -296,7 +296,7 @@ export function LoginPageClient() {
             <input type="hidden" name="flow" value="email-verification" />
 
             <div className="space-y-2">
-              <Label htmlFor="code" className="text-sm uppercase mono font-bold tracking-widest">
+              <Label htmlFor="code" className="text-sm mono font-bold">
                 Verification Code
               </Label>
               <Input
@@ -307,7 +307,7 @@ export function LoginPageClient() {
                 maxLength={12}
                 required
                 disabled={isLoading}
-                className="mono text-lg tracking-wider text-center uppercase"
+                className="mono text-lg text-center"
               />
             </div>
 
@@ -321,7 +321,7 @@ export function LoginPageClient() {
             </Button>
           </form>
 
-          <div className="pt-4 text-center border-t-2 border-border">
+          <div className="pt-4 text-center border-t border-border">
             <button
               onClick={() => setStep("login")}
               className="text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
@@ -338,15 +338,15 @@ export function LoginPageClient() {
   }
 
   return (
-    <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
+    <Card className="">
       <CardHeader>
-        <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+        <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
           Sign in
         </h1>
       </CardHeader>
       <CardContent className="space-y-6">
         {showExpiredBanner && (
-          <div className="flex items-center gap-2 rounded-md border-2 border-data-warn/50 bg-data-warn/15 px-3 py-2.5 text-sm text-data-warn-ink">
+          <div className="flex items-center gap-2 rounded-md border border-data-warn/50 bg-data-warn/15 px-3 py-2.5 text-sm text-data-warn-ink">
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
@@ -376,7 +376,7 @@ export function LoginPageClient() {
           />
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm uppercase mono font-bold tracking-widest">
+            <Label htmlFor="password" className="text-sm mono font-bold">
               Password
             </Label>
             <PasswordInput
@@ -438,10 +438,10 @@ export function LoginPageClient() {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t-2 border-border" />
+            <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-card px-3 mono uppercase tracking-widest font-bold">
+            <span className="bg-card px-3 mono font-bold">
               Or continue with
             </span>
           </div>
@@ -500,8 +500,8 @@ export function LoginPageClient() {
           .
         </p>
 
-        <div className="pt-4 text-center border-t-2 border-border">
-          <p className="text-base leading-relaxed text-foreground/70">
+        <div className="pt-4 text-center border-t border-border">
+          <p className="text-base leading-relaxed text-muted-foreground">
             Don&apos;t have an account?{" "}
             <NavLink
               href="/signup"

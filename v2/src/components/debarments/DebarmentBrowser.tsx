@@ -33,7 +33,7 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const CONTROL =
-  "mt-1 block w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "mt-1 block w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";
 
 /**
@@ -63,13 +63,13 @@ function Row({ d }: { d: DebarmentView }) {
   // a live warning about a sponsor who is about to be barred, so it keeps full
   // contrast and says so.
   return (
-    <li className={`grid grid-cols-1 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_minmax(0,14rem)] sm:gap-x-4 ${d.phase === "ended" ? "text-foreground/60" : ""}`}>
+    <li className={`grid grid-cols-1 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_minmax(0,14rem)] sm:gap-x-4 ${d.phase === "ended" ? "text-muted-foreground" : ""}`}>
       <div>
         <span className="font-bold">{d.entity}</span>{" "}
-        {d.entityType ? <span className="text-sm text-foreground/70">{d.entityType}</span> : null}{" "}
-        {d.location ? <span className="text-sm text-foreground/70">· {d.location}</span> : null}
+        {d.entityType ? <span className="text-sm text-muted-foreground">{d.entityType}</span> : null}{" "}
+        {d.location ? <span className="text-sm text-muted-foreground">· {d.location}</span> : null}
       </div>{" "}
-      <div className="font-mono text-xs tabular-nums">
+      <div className="font-mono text-sm tabular-nums">
         {day(d.startDate)} to {day(d.endDate)}
         {d.phase === "ended" ? " (ended)" : null}
         {/* The start date is already the first half of this cell, so the
@@ -78,7 +78,7 @@ function Row({ d }: { d: DebarmentView }) {
       </div>{" "}
       <div className="text-sm">
         {d.violation ?? ""}
-        {d.citation ? <span className="text-foreground/60"> · {d.citation}</span> : null}
+        {d.citation ? <span className="text-muted-foreground"> · {d.citation}</span> : null}
       </div>
     </li>
   );
@@ -101,7 +101,7 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
 
   return (
     <>
-      <div className="mt-8 grid grid-cols-1 gap-3 border-2 border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+      <div className="mt-8 grid grid-cols-1 gap-3 border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         <label className="block lg:col-span-2" htmlFor={`${id}-q`}>
           <span className={LABEL}>Search the lists</span>{" "}
           <input
@@ -162,7 +162,7 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
         ) : null}
       </div>{" "}
       {narrowed ? (
-        <p className="mt-3 text-base text-foreground/80" role="status">
+        <p className="mt-3 text-base text-soft" role="status">
           {shown.length === 0
             ? "Nothing on DOL's lists matches that. Try part of the name: DOL prints each entity its own way."
             : `${formatInt(shown.length)} of ${formatInt(rows.length)} entries match.`}
@@ -184,8 +184,8 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
           <Fragment key={s.program}>
             {" "}
             <section className="mt-10">
-              <h2 className="font-heading text-xl font-black sm:text-2xl">{s.label}</h2>{" "}
-              <p className="mt-1 text-sm text-foreground/70">
+              <h2 className="font-heading text-xl font-bold sm:text-2xl">{s.label}</h2>{" "}
+              <p className="mt-1 text-sm text-muted-foreground">
                 {all.length === 0
                   ? `${s.emptyNote} `
                   : `${formatInt(all.filter((d) => d.phase === "in-force").length)} in force, ${formatInt(all.length)} listed${narrowed ? `, ${formatInt(list.length)} shown` : ""}. `}
@@ -194,7 +194,7 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
                 </a>
               </p>{" "}
               {list.length > 0 ? (
-                <ul className="mt-3 divide-y-2 divide-border border-y-2 border-border">
+                <ul className="mt-3 divide-y divide-border border-y border-border">
                   {list.map((d) => (
                     <Fragment key={`${d.program}-${d.entity}-${d.startDate}`}>
                       {" "}

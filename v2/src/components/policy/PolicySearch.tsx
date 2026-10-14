@@ -44,7 +44,7 @@ export function filterPolicy(items: readonly PolicyItem[], q: PolicyQuery): Poli
 // reads "AnyFinal rule" to anything that walks it. A browser strips an
 // option's surrounding whitespace, so nothing shows.
 const CONTROL =
-  "mt-1 block w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "mt-1 block w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";
 const LINK = "font-semibold underline decoration-primary decoration-2 underline-offset-[3px] hover:text-primary";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
@@ -75,7 +75,7 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
 
   return (
     <>
-      <section className="mt-12 border-2 border-border bg-card p-4 sm:p-5" aria-label="Search the documents">
+      <section className="mt-12 border border-border bg-card p-4 sm:p-5" aria-label="Search the documents">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           <label className="block lg:col-span-2" htmlFor={`${id}-q`}>
             <span className={LABEL}>Search every document</span>{" "}
@@ -127,7 +127,7 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
       </section>{" "}
       {active ? (
         <section className="mt-6">
-          <p className="text-base text-foreground/80" role="status">
+          <p className="text-base text-soft" role="status">
             {hits.length > 0
               ? `${hits.length.toLocaleString("en-US")} of ${items.length.toLocaleString("en-US")} documents match, newest first.`
               : near.length > 0
@@ -135,16 +135,16 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
                 : `None of the ${items.length.toLocaleString("en-US")} documents here match that.`}
           </p>{" "}
           {list.length > 0 ? (
-            <ul className="mt-4 divide-y-2 divide-border border-y-2 border-border">
+            <ul className="mt-4 divide-y divide-border border-y border-border">
               {list.map((i) => (
                 <li key={i.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-4">
                   <span className="shrink-0 font-mono text-sm text-muted-foreground sm:w-32">{day(i.date)}{" "}</span>{" "}
-                  <span className="shrink-0 font-mono text-sm font-bold uppercase sm:w-32">{i.kind}{" "}</span>{" "}
+                  <span className="shrink-0 font-mono text-sm font-bold sm:w-32">{i.kind}{" "}</span>{" "}
                   <span className="min-w-0">
                     <a href={i.url} rel="noopener" target="_blank" className={LINK}>
                       {i.title}
                     </a>{" "}
-                    {i.agencies ? <span className="block text-sm text-foreground/70">{i.agencies}{" "}</span> : null}
+                    {i.agencies ? <span className="block text-sm text-muted-foreground">{i.agencies}{" "}</span> : null}
                     {i.commentsOpen ? <span className="block text-sm font-bold">Open for comment{" "}</span> : null}
                   </span>
                 </li>

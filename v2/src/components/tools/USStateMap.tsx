@@ -406,10 +406,10 @@ export function USStateMap({
       {/* Legend: five buckets, and the range they actually span. A scale with
           no numbers on it is a decoration. */}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+        <span className="text-sm font-bold text-muted-foreground">
           {spec.label}
         </span>{" "}
-        <span className="text-sm text-foreground/60">
+        <span className="text-sm text-muted-foreground">
           {range ? spec.format(range.lo) : "—"}
         </span>{" "}
         {BUCKET_MIX.map((mix) => (
@@ -420,7 +420,7 @@ export function USStateMap({
             style={{ background: `color-mix(in srgb, var(--primary) ${mix}%, var(--card))` }}
           />
         ))}{" "}
-        <span className="text-sm text-foreground/60">
+        <span className="text-sm text-muted-foreground">
           {range ? spec.format(range.hi) : "—"}
         </span>{" "}
         {spec.floored && floor > 0 ? (
@@ -430,7 +430,7 @@ export function USStateMap({
               className="inline-block h-3.5 w-6 border border-border"
               style={{ background: "color-mix(in srgb, var(--data-none) 22%, var(--card))" }}
             />
-            <span className="text-sm text-foreground/60">
+            <span className="text-sm text-muted-foreground">
               Fewer than {formatInt(floor)} {spec.populationNoun}, not shaded
             </span>
           </span>
@@ -445,13 +445,13 @@ export function USStateMap({
       {/* The reading panel: preview follows the pointer, a click pins. */}
       <div
         aria-live="polite"
-        className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6"
+        className="mt-6 border border-border bg-card p-5 sm:p-6"
       >
         {active && activeName ? (
           <div>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="font-heading text-xl font-black">{activeName}</h2>{" "}
-              <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              <h2 className="font-heading text-xl font-bold">{activeName}</h2>{" "}
+              <p className="text-sm font-bold text-muted-foreground">
                 {pinned === activeAbbr
                   ? "Pinned. Another state replaces it"
                   : "Tapping pins it"}
@@ -470,14 +470,14 @@ export function USStateMap({
                 { k: "Median wage", v: fmtWage(active.medianAnnualWage) },
               ].map((d) => (
                 <div key={d.k}>
-                  <dt className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  <dt className="text-sm font-bold text-muted-foreground">
                     {d.k}
                   </dt>{" "}
-                  <dd className="mt-1 font-heading text-lg font-black tabular-nums">{d.v}</dd>
+                  <dd className="mt-1 font-heading text-lg font-bold tabular-nums">{d.v}</dd>
                 </div>
               ))}
             </dl>
-            <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               {metricValue.has(active.state) ? (
                 <>
                   {spec.label} here is{" "}
@@ -501,8 +501,8 @@ export function USStateMap({
           </div>
         ) : (
           <div>
-            <h2 className="font-heading text-xl font-black">The whole country</h2>{" "}
-            <p className="mt-2 text-base leading-relaxed text-foreground/70">
+            <h2 className="font-heading text-xl font-bold">The whole country</h2>{" "}
+            <p className="mt-2 text-base leading-relaxed text-muted-foreground">
               {formatInt(national.total)} PERM filings across {states.length} states and
               territories in the current disclosure window, {formatInt(national.certified)}{" "}
               certified. Hovering or tapping a state shows its own numbers.
@@ -696,7 +696,7 @@ export function StateExplorer({ states }: { states: StateStat[] }) {
   return (
     <Fragment>
       <section className="pop mt-10">
-        <div className="border-2 border-border bg-card p-4 sm:p-6">
+        <div className="border border-border bg-card p-4 sm:p-6">
           <USStateMap
             states={states}
             metric={metric}
@@ -707,8 +707,8 @@ export function StateExplorer({ states }: { states: StateStat[] }) {
         </div>
       </section>{" "}
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Every state, ranked</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base text-foreground/70">
+        <h2 className="font-heading text-2xl font-bold">Every state, ranked</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base text-muted-foreground">
           Every column sorts, every region filters, and the whole set downloads
           as a CSV. Approval rate never appears without the decided count
           behind it, because a rate is only worth what its denominator is.

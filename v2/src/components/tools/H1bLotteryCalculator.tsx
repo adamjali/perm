@@ -31,7 +31,7 @@ import { seriesYearFor, SOC_RE, WAGE_SEARCH_PAGE, type AreaOption, type WageLeve
  */
 
 const FIELD =
-  "mt-1.5 min-h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "mt-1.5 min-h-11 w-full min-w-0 border border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const MAX_SITES = 3;
 
 const STATES = Object.entries(US_STATE_NAMES)
@@ -109,7 +109,7 @@ function Worksite({
   }, [stateName, seriesYear]);
 
   return (
-    <div className="grid grid-cols-1 gap-3 border-2 border-border bg-background p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] sm:items-end [&>*]:min-w-0">
+    <div className="grid grid-cols-1 gap-3 border border-border bg-background p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] sm:items-end [&>*]:min-w-0">
       <div>
         <Label htmlFor={stateId}>{index === 0 ? "Work state" : `Work state ${index + 1}`}</Label>{" "}
         <select
@@ -152,7 +152,7 @@ function Worksite({
         <button
           type="button"
           onClick={onRemove}
-          className="inline-flex min-h-11 items-center justify-center gap-1.5 border-2 border-border px-3 text-sm font-bold hover:bg-muted"
+          className="inline-flex min-h-11 items-center justify-center gap-1.5 border border-border px-3 text-sm font-bold hover:bg-muted"
           aria-label={`Remove worksite ${index + 1}`}
         >
           <XIcon size={16} weight="bold" aria-hidden="true" /> Remove
@@ -212,7 +212,7 @@ export function H1bLotteryCalculator() {
   const limitingSite = done && assigned ? done.sites[assigned.limiting]! : null;
 
   return (
-    <div className="border-2 border-border bg-card p-5 shadow-hard sm:p-8">
+    <div className="border border-border bg-card p-5 sm:p-8">
       <form onSubmit={calculate} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           <div>
@@ -277,7 +277,7 @@ export function H1bLotteryCalculator() {
           <button
             type="submit"
             disabled={!ready}
-            className="min-h-11 border-2 border-border bg-primary px-6 font-bold text-primary-foreground shadow-hard transition-transform hover:-translate-y-[1px] disabled:opacity-60 disabled:hover:translate-y-0"
+            className="min-h-11 border border-border bg-primary px-6 font-bold text-primary-foreground transition-transform disabled:opacity-60"
           >
             {result.kind === "loading" ? "Asking DOL" : "Work out the level and the odds"}
           </button>{" "}
@@ -285,7 +285,7 @@ export function H1bLotteryCalculator() {
             <button
               type="button"
               onClick={() => setSites((all) => [...all, { key: Math.max(...all.map((x) => x.key)) + 1, state: "", area: "", areaLabel: "" }])}
-              className="inline-flex min-h-11 items-center gap-1.5 border-2 border-border px-4 text-sm font-bold hover:bg-muted"
+              className="inline-flex min-h-11 items-center gap-1.5 border border-border px-4 text-sm font-bold hover:bg-muted"
             >
               <PlusIcon size={16} weight="bold" aria-hidden="true" /> Add another worksite
             </button>
@@ -294,13 +294,13 @@ export function H1bLotteryCalculator() {
       </form>
 
       {result.kind === "error" ? (
-        <p className="mt-5 flex items-start gap-2 border-2 border-border bg-background p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 border border-border bg-background p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.message}
         </p>
       ) : null}
 
       {done && missing.length > 0 ? (
-        <p className="mt-5 flex items-start gap-2 border-2 border-border bg-background p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 border border-border bg-background p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> DOL publishes no OEWS wage
           for SOC {done.soc} in {missing.map((m) => m.label).join(" or ")} for this series. The rule then has the registrant
           pick the level from the job&apos;s requirements under DOL&apos;s prevailing wage guidance, which this page can&apos;t
@@ -309,8 +309,8 @@ export function H1bLotteryCalculator() {
       ) : null}
 
       {!done ? (
-        <div className="mt-6 border-t-2 border-border pt-5">
-          <p className="mb-3 text-sm font-bold text-foreground/70">
+        <div className="mt-6 border-t border-border pt-5">
+          <p className="mb-3 text-sm font-bold text-muted-foreground">
             DHS&apos;s estimated chance at each wage level, against {WEIGHTED_ESTIMATE.randomPercent}% for everyone under
             the old random draw (the dashed line). The lookup marks the level your job lands on.
           </p>{" "}
@@ -321,21 +321,21 @@ export function H1bLotteryCalculator() {
       {done && assigned && odds && limitingSite ? (
         <div className="mt-6 space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-            <div className="border-2 border-border bg-background p-5">
-              <p className="text-sm font-bold text-foreground/70">The level the rule assigns</p>{" "}
-              <p className="mt-1 font-heading text-4xl font-black">Level {assigned.level}</p>{" "}
+            <div className="border border-border bg-background p-5">
+              <p className="text-sm font-bold text-muted-foreground">The level the rule assigns</p>{" "}
+              <p className="mt-1 font-heading text-4xl font-bold">Level {assigned.level}</p>{" "}
               <p className="mt-1 text-base">Entered in the draw {timesWord(odds.entries)}.</p>
             </div>{" "}
-            <div className="border-2 border-border bg-tint-primary p-5">
-              <p className="text-sm font-bold text-foreground/70">DHS&apos;s estimated chance at that level</p>{" "}
-              <p className="mt-1 font-heading text-4xl font-black tabular-nums">{odds.percent.toFixed(1)}%</p>{" "}
+            <div className="border border-border bg-tint-primary p-5">
+              <p className="text-sm font-bold text-muted-foreground">DHS&apos;s estimated chance at that level</p>{" "}
+              <p className="mt-1 font-heading text-4xl font-bold tabular-nums">{odds.percent.toFixed(1)}%</p>{" "}
               <p className="mt-1 text-base">Against {WEIGHTED_ESTIMATE.randomPercent}% for everyone under the old random draw (the dashed line).</p>
             </div>
           </div>{" "}
           <LevelOdds assigned={assigned.level} />{" "}
-          <div className="overflow-x-auto border-2 border-border">
+          <div className="overflow-x-auto border border-border">
             <table className="w-full min-w-[560px] text-left text-base">
-              <thead className="border-b-2 border-border bg-muted/40">
+              <thead className="border-b border-border bg-muted/40">
                 <tr>
                   <th scope="col" className="px-3 py-2 font-bold">Worksite{" "}</th>
                   <th scope="col" className="px-3 py-2 font-bold">Level met{" "}</th>
@@ -360,7 +360,7 @@ export function H1bLotteryCalculator() {
               </tbody>
             </table>
           </div>{" "}
-          <p className="text-sm leading-relaxed text-foreground/80">
+          <p className="text-sm leading-relaxed text-soft">
             {usd(done.offer, done.unit)} for SOC {done.soc}, against DOL&apos;s figures for the July {done.seriesYear} to June{" "}
             {done.seriesYear + 1} series, read just now from the{" "}
             <a href={WAGE_SEARCH_PAGE} rel="noopener noreferrer" className="font-bold underline underline-offset-2 hover:text-primary">
@@ -409,16 +409,16 @@ function LevelOdds({ assigned }: { assigned?: string }) {
             data-tip={`Level ${l.level}${l.level === assigned ? ", the level the rule assigns" : ""}\n${l.percent.toFixed(1)}% estimated chance\nEntered in the draw ${timesWord(l.entries)}\n${WEIGHTED_ESTIMATE.randomPercent}% under the old random draw`}
             className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3 [&>*]:min-w-0"
           >
-            <span className={l.level === assigned ? "font-heading text-lg font-black" : "text-base font-bold text-foreground/70"}>
+            <span className={l.level === assigned ? "font-heading text-lg font-bold" : "text-base font-bold text-muted-foreground"}>
               Level {l.level}
             </span>{" "}
-            <span className="relative block h-7 border-2 border-border bg-background" aria-hidden="true">
+            <span className="relative block h-7 border border-border bg-background" aria-hidden="true">
               <span
                 className={`absolute inset-y-0 left-0 ${l.level === assigned ? "bg-foreground" : "bg-foreground/30"}`}
                 style={{ width: `${l.percent}%` }}
               />
               <span
-                className="absolute inset-y-0 border-l-2 border-dashed border-data-info-ink"
+                className="absolute inset-y-0 border-l border-dashed border-data-info-ink"
                 style={{ left: `${WEIGHTED_ESTIMATE.randomPercent}%` }}
               />
             </span>{" "}

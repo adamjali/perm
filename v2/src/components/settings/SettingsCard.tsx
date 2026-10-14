@@ -18,7 +18,7 @@ export function SettingsCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-2 border-border bg-card p-6 shadow-hard">
+    <div className="border border-border bg-card p-6">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Glyph aria-hidden="true" className="size-5 text-foreground" />

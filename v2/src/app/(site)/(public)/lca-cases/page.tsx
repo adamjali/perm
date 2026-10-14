@@ -102,9 +102,9 @@ export default async function LcaCasesPage() {
             program={LCA_PROGRAM}
             between={
               summary ? (
-                <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-                  <h2 className="font-heading text-xl font-black">LCAs by the month they were filed</h2>{" "}
-                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-foreground/70">
+                <section className="border border-border bg-card p-5 sm:p-6">
+                  <h2 className="font-heading text-xl font-bold">LCAs by the month they were filed</h2>{" "}
+                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                     DOL has seven working days to certify an LCA (20 CFR 655.740), so only the newest
                     filings are still waiting.
                   </p>{" "}
@@ -122,8 +122,8 @@ export default async function LcaCasesPage() {
       </div>
 
       <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">How this works</h2>{" "}
-        <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
+        <h2 className="font-heading text-2xl font-bold">How this works</h2>{" "}
+        <div className="mt-4 space-y-4 text-base leading-relaxed text-soft">
           <FinePrint summary="Where the rows come from">
             <p>DOL numbers every filing from one running counter. This site walks it two or three times a day for new filings, then re-checks each LCA until DOL decides. {" "}</p>
           </FinePrint>{" "}

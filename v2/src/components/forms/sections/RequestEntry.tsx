@@ -308,7 +308,7 @@ function RequestEntryComponent({
   return (
     <div
       className={cn(
-        "relative rounded-lg border-2 p-4 shadow-hard-sm transition-all",
+        "relative rounded-lg border p-4 transition-colors",
         URGENCY_CLASSES[urgency]
       )}
       data-testid={`${kind}-entry`}
@@ -316,12 +316,12 @@ function RequestEntryComponent({
       {/* ========== STATUS BADGES ========== */}
       <div className="mb-3 flex items-center justify-between gap-2">
         {isActive && (
-          <div className="flex items-center gap-1.5 rounded-md border-2 border-destructive bg-destructive px-2 py-1 text-sm font-bold text-white shadow-hard-sm">
+          <div className="flex items-center gap-1.5 rounded-md border border-destructive bg-destructive px-2 py-1 text-sm font-bold text-white">
             <span>{`Active ${copy.label}`}</span>
           </div>
         )}
         {isCompleted && (
-          <div className="flex items-center gap-1.5 rounded-md border-2 border-primary bg-primary/10 px-2 py-1 text-sm font-semibold text-primary">
+          <div className="flex items-center gap-1.5 rounded-md border border-primary bg-primary/10 px-2 py-1 text-sm font-semibold text-primary">
             <CheckCircle2 className="h-4 w-4" />
             <span>Completed</span>
           </div>

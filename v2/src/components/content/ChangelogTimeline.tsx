@@ -89,13 +89,13 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
         >
           {/* Dot on timeline. */}
           <div
-            className="absolute left-[11px] top-4 h-3 w-3 border-2 border-border bg-primary sm:left-[27px]"
+            className="absolute left-[11px] top-4 h-3 w-3 border border-border bg-primary sm:left-[27px]"
             aria-hidden="true"
           />
 
-          <div className="border-2 border-border bg-card shadow-hard transition-shadow duration-200 hover:shadow-hard-lg">
+          <div className="border border-border bg-card transition-shadow duration-200">
             {entry.post.meta.image ? (
-              <div className="relative aspect-[21/9] overflow-hidden border-b-2 border-border">
+              <div className="relative aspect-[21/9] overflow-hidden border-b border-border">
                 <Image
                   src={entry.post.meta.image}
                   alt={entry.post.meta.imageAlt ?? entry.post.meta.title}
@@ -114,7 +114,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                 </span>{" "}
                 {entry.post.meta.updated && entry.post.meta.updated !== entry.post.meta.date ? (
                   <span className="flex items-center gap-1.5">
-                    <span className="font-heading text-sm font-semibold uppercase tracking-wider text-primary">
+                    <span className="font-heading text-sm font-semibold text-primary">
                       Updated
                     </span>{" "}
                     <time dateTime={entry.post.meta.updated}>{fmtDate(entry.post.meta.updated)}</time>
@@ -138,7 +138,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                   {entry.post.meta.tags.map((tag) => (
                     <React.Fragment key={tag}>
                       {" "}
-                      <span className="border border-border bg-muted px-1.5 py-0.5 font-mono text-sm uppercase tracking-wider text-muted-foreground">
+                      <span className="border border-border bg-muted px-1.5 py-0.5 text-sm text-muted-foreground">
                         {tag}
                       </span>
                     </React.Fragment>

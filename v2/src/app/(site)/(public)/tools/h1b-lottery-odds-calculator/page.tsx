@@ -62,8 +62,8 @@ export default function H1bLotteryCalculatorPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">H-1B lottery odds for one job</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">H-1B lottery odds for one job</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           From the FY{WEIGHTED_FROM} cap the draw is weighted by wage. Put in the job, where it is and the offer, and see
           the level DOL&apos;s own figures give it and DHS&apos;s estimated chance at that level.
         </p>
@@ -71,7 +71,7 @@ export default function H1bLotteryCalculatorPage() {
       <section data-embed="h1b-lottery" className="mt-10">
         <H1bLotteryCalculator />
       </section>
-      <p className="mt-4 max-w-3xl text-base text-foreground/75">
+      <p className="mt-4 max-w-3xl text-base text-soft">
         Every year&apos;s registrations and selections, from USCIS&apos;s own table, are on{" "}
         <Link href="/h1b-lottery-odds" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
           H-1B lottery odds by year
@@ -79,7 +79,7 @@ export default function H1bLotteryCalculatorPage() {
         . Cap-exempt employers, such as universities and their affiliated nonprofits, file outside the lottery.
       </p>
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
       <ToolPageFooter

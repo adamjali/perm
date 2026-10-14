@@ -150,11 +150,11 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
                 onClick={() => setCaseStatus(stage.value)}
                 aria-pressed={caseStatus === stage.value}
                 className={cn(
-                  "inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-sm font-heading font-bold border-2 border-border transition-all duration-150 cursor-pointer",
+                  "inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-sm font-heading font-bold border border-border transition-colors duration-150 cursor-pointer",
                   // The chosen stage shows in its own colour, as it does everywhere else.
                   caseStatus === stage.value
-                    ? cn(STAGE_VISUALS[stage.value].fill, STAGE_VISUALS[stage.value].onFill, "shadow-hard-sm")
-                    : "bg-card text-foreground hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-hard-sm"
+                    ? cn(STAGE_VISUALS[stage.value].fill, STAGE_VISUALS[stage.value].onFill, "")
+                    : "bg-card text-foreground"
                 )}
               >
                 <StageIcon stage={stage.value} />

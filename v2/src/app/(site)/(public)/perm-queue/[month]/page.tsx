@@ -180,17 +180,17 @@ export default async function CohortPage({
     <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Filed {label}
         </h1>{" "}
         <MonthHeadline makeup={makeup} label={label} end={end} />{" "}
-        <SourceNote className="mt-4 text-base leading-relaxed text-foreground/70" />
+        <SourceNote className="mt-4 text-base leading-relaxed text-muted-foreground" />
       </header>{" "}
 
       {detail && dolDecisions(detail.days) >= 50 ? <MonthActivity detail={detail} label={label} month={month} /> : null}{" "}
 
       {!MIRROR_COMPLETE ? (
-        <p className="mt-8 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base text-foreground/80">
+        <p className="mt-8 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base text-soft">
           <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>{PROVISIONAL_NOTICE}</span>
         </p>
@@ -202,14 +202,14 @@ export default async function CohortPage({
         </div>
       ) : null}
 
-      <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-xl font-black sm:text-2xl">
+      <section className="mt-8 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-xl font-bold sm:text-2xl">
           Where this month sits
         </h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           <FrontierSentence month={month} dolMonth={dolMonth} dolAsOf={dolAsOf} />
         </p>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           {ahead > 0 ? (
             <>
               <b className="font-bold">{formatInt(ahead)}</b> cases filed before{" "}
@@ -244,16 +244,16 @@ export default async function CohortPage({
         className="mt-6"
       />{" "}
 
-      <details className="mt-6 border-2 border-border bg-card">
-        <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-black">
+      <details className="mt-6 border border-border bg-card">
+        <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
           {`Every status, pending and decided, and the ${label} cases themselves`}
         </summary>
-        <div className="border-t-2 border-border px-4 pb-6 sm:px-5">
+        <div className="border-t border-border px-4 pb-6 sm:px-5">
       <section className="mt-6">
-        <h2 className="font-heading text-xl font-black sm:text-2xl">
+        <h2 className="font-heading text-xl font-bold sm:text-2xl">
           Still pending
         </h2>{" "}
-        <p className="mt-2 text-base leading-relaxed text-foreground/80">
+        <p className="mt-2 text-base leading-relaxed text-soft">
           {split.ordinary > 0 ? (
             <>
               {split.outOfOrder.length > 0 ? (
@@ -285,7 +285,7 @@ export default async function CohortPage({
               <StageBar stages={split.stages} scale="composition" tipHeading={`Filed in ${label}`} />
             </ChartTips>
             <StageLegend stages={split.stages} className="mt-4" />
-            <div className="mt-8 border-t-2 border-border pt-6">
+            <div className="mt-8 border-t border-border pt-6">
               <PendingCensus
                 stages={split.stages}
                 caption={`Every DOL status a pending case filed in ${label} was last seen in, grouped by queue`}
@@ -293,7 +293,7 @@ export default async function CohortPage({
             </div>
           </>
         ) : (
-          <p className="mt-6 border-2 border-border bg-background p-4 text-base text-foreground/80">
+          <p className="mt-6 border border-border bg-background p-4 text-base text-soft">
             Every application filed in {label} has a decision. There is nothing
             left in the queue for this month.
           </p>
@@ -301,10 +301,10 @@ export default async function CohortPage({
       </section>{" "}
 
       <section className="mt-6">
-        <h2 className="font-heading text-xl font-black sm:text-2xl">
+        <h2 className="font-heading text-xl font-bold sm:text-2xl">
           Already decided
         </h2>{" "}
-        <p className="mt-2 text-base leading-relaxed text-foreground/80">
+        <p className="mt-2 text-base leading-relaxed text-soft">
           {formatInt(backlog.decided)} of the {formatInt(backlog.total)} applications filed
           in {label} {backlog.decided === 1 ? "has" : "have"} a final
           determination.{" "}
@@ -316,11 +316,11 @@ export default async function CohortPage({
       </section>{" "}
 
       <section className="mt-6">
-        <h2 className="font-heading text-xl font-black sm:text-2xl">
+        <h2 className="font-heading text-xl font-bold sm:text-2xl">
           Who filed in {label}
         </h2>{" "}
         {liveMonth ? (
-          <p className="mt-2 text-base leading-relaxed text-foreground/80">
+          <p className="mt-2 text-base leading-relaxed text-soft">
             {formatInt(liveMonth.total)} of the {formatInt(backlog.total)} {label} filings{" "}
             {liveMonth.total === 1 ? "isn't" : "aren't"} in DOL&apos;s published
             files yet: {formatInt(liveMonth.pending)} still waiting, {formatInt(liveMonth.decided)}{" "}
@@ -329,7 +329,7 @@ export default async function CohortPage({
             case.
           </p>
         ) : (
-          <p className="mt-2 text-base leading-relaxed text-foreground/80">
+          <p className="mt-2 text-base leading-relaxed text-soft">
             Every {label} filing is in DOL&apos;s published files. The{" "}
             <Link
               href="/perm-cases"
@@ -407,7 +407,7 @@ export default async function CohortPage({
             ? ["perm-case-status", "processing-times", "perm-cases"]
             : ["perm-case-status", "processing-times"]
         }
-        className="mt-8 border-t-2 border-border pt-4"
+        className="mt-8 border-t border-border pt-4"
       />
     </div>
   );
@@ -533,13 +533,13 @@ function SiblingLink({
   return (
     <Link
       href={`/perm-queue/${month}`}
-      className="flex min-h-11 items-center gap-2 border-2 border-border bg-card px-4 py-2 text-base font-bold shadow-hard-sm hover:text-primary"
+      className="flex min-h-11 items-center gap-2 border border-border bg-card px-4 py-2 text-base font-bold hover:text-primary"
     >
       {direction === "previous" ? (
         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
       ) : null}{" "}
       <span>
-        <span className="block font-mono text-sm font-normal uppercase tracking-wider text-foreground/70">
+        <span className="block text-sm font-normal text-muted-foreground">
           {direction === "previous" ? "Filed earlier" : "Filed later"}
         </span>{" "}
         <span>{label}</span>
@@ -570,14 +570,14 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
   ].filter((p) => p.n > 0);
   return (
     <div className="mt-5">
-      <p className="font-heading text-5xl font-black tabular-nums tracking-tight sm:text-6xl">
+      <p className="font-heading text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">
         {formatShare(pct)} <span className="text-2xl sm:text-3xl">decided</span>
       </p>{" "}
-      <p className="mt-2 text-lg text-foreground/80">
+      <p className="mt-2 text-lg text-soft">
         {`${formatInt(m.decided)} of the ${formatInt(m.total)} applications filed in ${label} have a decision.`}
       </p>{" "}
       <ChartTips label={`Applications filed in ${label}, by where they stand`} className="mt-5">
-        <div className="flex h-6 w-full border-2 border-border bg-muted" role="img" aria-label={parts.map((p) => `${formatInt(p.n)} ${p.text}`).join(", ")}>
+        <div className="flex h-6 w-full border border-border bg-muted" role="img" aria-label={parts.map((p) => `${formatInt(p.n)} ${p.text}`).join(", ")}>
           {parts.map((p) => (
             <span
               key={p.key}
@@ -599,34 +599,34 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
         ))}
       </ul>{" "}
       <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="border-2 border-border bg-card p-4 shadow-hard-sm">
+        <div className="border border-border bg-card p-4">
           <dt className="text-sm font-bold">In DOL&apos;s line</dt>{" "}
-          <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(m.inLine)}</dd>{" "}
-          <dd className="text-sm text-foreground/70">analyst review, worked in filing order</dd>
+          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.inLine)}</dd>{" "}
+          <dd className="text-sm text-muted-foreground">analyst review, worked in filing order</dd>
         </div>{" "}
-        <div className="border-2 border-border bg-card p-4 shadow-hard-sm">
+        <div className="border border-border bg-card p-4">
           <dt className="text-sm font-bold">Outside the line</dt>{" "}
-          <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(m.outside)}</dd>{" "}
-          <dd className="text-sm text-foreground/70">on hold, at an RFI or on appeal</dd>
+          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.outside)}</dd>{" "}
+          <dd className="text-sm text-muted-foreground">on hold, at an RFI or on appeal</dd>
         </div>{" "}
-        <div className="border-2 border-border bg-card p-4 shadow-hard-sm">
+        <div className="border border-border bg-card p-4">
           {end?.kind === "estimate" ? (
             <>
               <dt className="text-sm font-bold">The line reaches this month&apos;s end</dt>{" "}
-              <dd className="mt-1 font-heading text-2xl font-black sm:text-3xl">{`around ${longDay(end.date)}`}</dd>{" "}
-              <dd className="text-sm text-foreground/70">{`${formatInt(end.casesThrough)} cases in line through ${label}, at DOL's recent pace`}</dd>
+              <dd className="mt-1 font-heading text-2xl font-bold sm:text-3xl">{`around ${longDay(end.date)}`}</dd>{" "}
+              <dd className="text-sm text-muted-foreground">{`${formatInt(end.casesThrough)} cases in line through ${label}, at DOL's recent pace`}</dd>
             </>
           ) : end?.kind === "passed" ? (
             <>
               <dt className="text-sm font-bold">DOL&apos;s queue has passed this month</dt>{" "}
-              <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(end.inLine)}</dd>{" "}
-              <dd className="text-sm text-foreground/70">still in line, decided as DOL gets to them</dd>
+              <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(end.inLine)}</dd>{" "}
+              <dd className="text-sm text-muted-foreground">still in line, decided as DOL gets to them</dd>
             </>
           ) : (
             <>
               <dt className="text-sm font-bold">Waiting in all</dt>{" "}
-              <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(m.inLine + m.outside)}</dd>{" "}
-              <dd className="text-sm text-foreground/70">no date printed without a fresh pace</dd>
+              <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.inLine + m.outside)}</dd>{" "}
+              <dd className="text-sm text-muted-foreground">no date printed without a fresh pace</dd>
             </>
           )}
         </div>
@@ -653,35 +653,35 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
   const monthName = label.replace(/ \d{4}$/, "");
   const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map((l) => ({ l, v: detail.letters[l] ?? [0, 0] as [number, number] }));
   return (
-    <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="month-activity">
-      <h2 id="month-activity" className="font-heading text-xl font-black sm:text-2xl">
+    <section className="mt-8 border border-border bg-card p-6 sm:p-8" aria-labelledby="month-activity">
+      <h2 id="month-activity" className="font-heading text-xl font-bold sm:text-2xl">
         {`What DOL decided from ${label} lately`}
       </h2>{" "}
       <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {newest ? (
           <div>
             <dt className="text-sm font-bold">{`On ${shortDay(newest.date)}`}</dt>{" "}
-            <dd className="font-heading text-3xl font-black tabular-nums">{formatInt(newest.certified + newest.denied + newest.withdrawn)}</dd>{" "}
-            <dd className="text-sm text-foreground/70">{`decided, ${formatInt(newest.certified)} certified`}</dd>
+            <dd className="font-heading text-3xl font-bold tabular-nums">{formatInt(newest.certified + newest.denied + newest.withdrawn)}</dd>{" "}
+            <dd className="text-sm text-muted-foreground">{`decided, ${formatInt(newest.certified)} certified`}</dd>
           </div>
         ) : null}{" "}
         {wow ? (
           <div>
             <dt className="text-sm font-bold">The last seven days</dt>{" "}
-            <dd className="font-heading text-3xl font-black tabular-nums">{formatInt(wow.thisWeek)}</dd>{" "}
-            <dd className="text-sm text-foreground/70">{`against ${formatInt(wow.weekBefore)} the seven days before`}</dd>
+            <dd className="font-heading text-3xl font-bold tabular-nums">{formatInt(wow.thisWeek)}</dd>{" "}
+            <dd className="text-sm text-muted-foreground">{`against ${formatInt(wow.weekBefore)} the seven days before`}</dd>
           </div>
         ) : null}{" "}
         {detail.frontDay !== null ? (
           <div>
             <dt className="text-sm font-bold">Where DOL&apos;s decisions reach</dt>{" "}
-            <dd className="font-heading text-3xl font-black">{`${monthName} ${detail.frontDay}`}</dd>{" "}
-            <dd className="text-sm text-foreground/70">{`half of the last ${detail.frontDays} days' decisions went to cases filed by then`}</dd>
+            <dd className="font-heading text-3xl font-bold">{`${monthName} ${detail.frontDay}`}</dd>{" "}
+            <dd className="text-sm text-muted-foreground">{`half of the last ${detail.frontDays} days' decisions went to cases filed by then`}</dd>
           </div>
         ) : null}
       </dl>{" "}
       <ChartTips label={`Cases filed in ${label} decided each day`} className="mt-6">
-        <div className="flex h-32 items-end gap-[2px] border-b-2 border-border" role="img" aria-label={`Decisions per day for cases filed in ${label}, ${shortDay(days[0]!.date)} to ${shortDay(newest!.date)}`}>
+        <div className="flex h-32 items-end gap-[2px] border-b border-border" role="img" aria-label={`Decisions per day for cases filed in ${label}, ${shortDay(days[0]!.date)} to ${shortDay(newest!.date)}`}>
           {days.map((d) => {
             const total = d.certified + d.denied + d.withdrawn;
             return (
@@ -699,16 +699,16 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
           })}
         </div>
       </ChartTips>{" "}
-      <div className="mt-1 flex justify-between font-mono text-sm text-foreground/70">
+      <div className="mt-1 flex justify-between font-mono text-sm text-muted-foreground">
         <span>{shortDay(days[0]!.date)}</span>{" "}
         <span>{shortDay(newest!.date)}</span>
       </div>{" "}
-      <p className="mt-2 text-sm text-foreground/70">
+      <p className="mt-2 text-sm text-muted-foreground">
         Green certified, red denied, grey withdrawn by the employer. Days are when our sweep first saw each decision,
         not DOL&apos;s own date.
       </p>{" "}
-      <h3 className="mt-8 font-heading text-lg font-black">By the employer&apos;s first letter</h3>{" "}
-      <p className="mt-1 max-w-2xl text-base text-foreground/80">
+      <h3 className="mt-8 font-heading text-lg font-bold">By the employer&apos;s first letter</h3>{" "}
+      <p className="mt-1 max-w-2xl text-base text-soft">
         {`DOL tends to work a month loosely from A to Z. The share of ${label}'s cases decided, by the first letter of the employer's name.`}
       </p>{" "}
       <ol className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-7 lg:grid-cols-9">
@@ -717,11 +717,11 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
           return (
             <Fragment key={l}>{" "}
             <li
-              className="border-2 border-border bg-background p-2"
+              className="border border-border bg-background p-2"
               data-tip={`${l}: ${formatInt(v[1])} of ${formatInt(v[0])} decided`}
             >
               <span className="flex items-baseline justify-between gap-1">
-                <span className="font-heading text-lg font-black">{l}</span>{" "}
+                <span className="font-heading text-lg font-bold">{l}</span>{" "}
                 <span className="font-mono text-sm tabular-nums">{v[0] ? formatShare(share) : "none"}</span>
               </span>{" "}
               <span className="mt-1 block h-2 border border-border bg-muted" aria-hidden="true">
@@ -732,7 +732,7 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
           );
         })}
       </ol>{" "}
-      <p className="mt-3 text-sm text-foreground/70">
+      <p className="mt-3 text-sm text-muted-foreground">
         <Link href={`/perm-cases?filed=${month}#live`} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
           {`Every ${label} case, pending and decided`}
         </Link>

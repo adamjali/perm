@@ -101,7 +101,7 @@ export function I140QueueEstimator({
 
   if (subtypes.length === 0 || !estimate) {
     return (
-      <div className={cn("border-2 border-border bg-card p-6 shadow-hard", className)}>
+      <div className={cn("border border-border bg-card p-6", className)}>
         <p className="text-base leading-relaxed">
           USCIS&apos;s quarterly I-140 figures are being fetched. Until they land,{" "}
           <a
@@ -121,18 +121,18 @@ export function I140QueueEstimator({
   const maxPending = Math.max(...subtypes.map((s) => s.pending));
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <div className="border-b-2 border-border p-6 sm:p-8">
+    <div className={cn("border border-border bg-card", className)}>
+      <div className="border-b border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
         <div className="flex items-center gap-3">
           <FileTextIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <h2 className="font-heading text-2xl font-black leading-tight">
+          <h2 className="font-heading text-2xl font-bold leading-tight">
             How deep is the I-140 queue?
           </h2>
         </div>
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           Pick your petition type. The counts are USCIS&apos;s own, published
           quarterly.
         </p>
@@ -145,7 +145,7 @@ export function I140QueueEstimator({
             id={selectId}
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-md"
+            className="mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-md"
           >
             {subtypes.map((s) => (
               <option key={s.code} value={s.code}>
@@ -156,27 +156,27 @@ export function I140QueueEstimator({
         </div>
       </div>
 
-      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
+      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
         <div className="bg-tint-primary p-6 sm:p-8">
-          <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+          <p className="text-sm font-bold text-muted-foreground">
             Petitions waiting
           </p>{" "}
-          <p className="mt-2 font-heading text-4xl font-black leading-none">
+          <p className="mt-2 font-heading text-4xl font-bold leading-none">
             {estimate.pending.toLocaleString("en-US")}
           </p>{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
             {Math.round(estimate.shareOfAllPending * 100)}% of every I-140 USCIS
             has pending.
           </p>
         </div>
         <div className="bg-card p-6 sm:p-8">
-          <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+          <p className="text-sm font-bold text-muted-foreground">
             Decided last quarter
           </p>{" "}
-          <p className="mt-2 font-heading text-4xl font-black leading-none">
+          <p className="mt-2 font-heading text-4xl font-bold leading-none">
             {estimate.completedInQuarter.toLocaleString("en-US")}
           </p>{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
             Approvals and denials both, since either one clears a petition.
           </p>
         </div>
@@ -187,16 +187,16 @@ export function I140QueueEstimator({
           headlined the result as "N months" - an inventory-turnover figure
           that reads as a personal wait time. It answered a question nobody
           asks with a number experts read as wrong, so it is gone. */}
-      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
+      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
         {published ? (
           <div className="bg-card p-6 sm:p-8">
-            <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+            <p className="text-sm font-bold text-muted-foreground">
               USCIS published time
             </p>{" "}
-            <p className="mt-2 font-heading text-2xl font-black leading-none">
+            <p className="mt-2 font-heading text-2xl font-bold leading-none">
               {formatMonths(published.months80)}
             </p>{" "}
-            <p className="mt-3 text-base leading-relaxed text-foreground/70">
+            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
               80% of the petitions USCIS decided over the past six months finished
               within this.
             </p>
@@ -204,13 +204,13 @@ export function I140QueueEstimator({
         ) : null}
         {quarterlyMedian ? (
           <div className="bg-card p-6 sm:p-8">
-            <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+            <p className="text-sm font-bold text-muted-foreground">
               USCIS quarterly median, all I-140s
             </p>{" "}
-            <p className="mt-2 font-heading text-2xl font-black leading-none">
+            <p className="mt-2 font-heading text-2xl font-bold leading-none">
               {Number.isInteger(quarterlyMedian.months) ? quarterlyMedian.months : quarterlyMedian.months.toFixed(1)} months
             </p>{" "}
-            <p className="mt-3 text-base leading-relaxed text-foreground/70">
+            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
               Half of every I-140 decided in {quarterlyMedian.quarterLabel} took less
               {quarterlyMedian.completed !== null ? `, over ${quarterlyMedian.completed.toLocaleString("en-US")} decisions` : ""}.
               One median across every subtype; the figure beside it is per subtype and covers 80% of cases.{" "}
@@ -223,13 +223,13 @@ export function I140QueueEstimator({
         ) : null}
         {published?.premiumBusinessDays ? (
           <div className="bg-card p-6 sm:p-8">
-            <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+            <p className="text-sm font-bold text-muted-foreground">
               With premium processing
             </p>{" "}
-            <p className="mt-2 font-heading text-2xl font-black leading-none">
+            <p className="mt-2 font-heading text-2xl font-bold leading-none">
               {published.premiumBusinessDays} business days
             </p>{" "}
-            <p className="mt-3 text-base leading-relaxed text-foreground/70">
+            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
               USCIS commits to a decision or refunds the fee.{" "}
               <a
                 href="https://egov.uscis.gov/processing-times/"
@@ -246,8 +246,8 @@ export function I140QueueEstimator({
       </div>
 
       {estimate.backlogGrowing ? (
-        <div className="flex items-start gap-3 border-b-2 border-border bg-muted p-6 sm:p-8">
-          <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+        <div className="flex items-start gap-3 border-b border-border bg-muted p-6 sm:p-8">
+          <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <p className="text-base leading-relaxed">
             <strong>This queue is growing.</strong>{" "}
             {estimate.receivedInQuarter.toLocaleString("en-US")} arrived last
@@ -258,9 +258,9 @@ export function I140QueueEstimator({
         </div>
       ) : null}
 
-      <div className="border-b-2 border-border p-6 sm:p-8">
-        <h3 className="font-heading text-lg font-black">Where the backlog sits</h3>{" "}
-        <p className="mt-2 text-base leading-relaxed text-foreground/70">
+      <div className="border-b border-border p-6 sm:p-8">
+        <h3 className="font-heading text-lg font-bold">Where the backlog sits</h3>{" "}
+        <p className="mt-2 text-base leading-relaxed text-muted-foreground">
           Every I-140 petition type USCIS reports, and how many are waiting on
           each.
         </p>
@@ -281,13 +281,13 @@ export function I140QueueEstimator({
                   <span
                     className={cn(
                       "truncate text-sm",
-                      s.code === code ? "font-black" : "text-foreground/70",
+                      s.code === code ? "font-bold" : "text-muted-foreground",
                     )}
                   >
                     <span className="sm:hidden">{s.code}</span>{" "}
                     <span className="hidden sm:inline">{s.label}</span>
                   </span>{" "}
-                  <span className="h-6 w-full border-2 border-border bg-muted">
+                  <span className="h-6 w-full border border-border bg-muted">
                     <span
                       className={cn(
                         "block h-full",
@@ -299,7 +299,7 @@ export function I140QueueEstimator({
                   <span
                     className={cn(
                       "text-right text-sm tabular-nums",
-                      s.code === code ? "font-black" : "text-foreground/70",
+                      s.code === code ? "font-bold" : "text-muted-foreground",
                     )}
                   >
                     {s.pending.toLocaleString("en-US")}
@@ -313,18 +313,18 @@ export function I140QueueEstimator({
 
       <div className="bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
-          <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70" aria-hidden="true" />
+          <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <div>
-            <h3 className="font-heading text-base font-black">What this can’t tell you</h3>{" "}
+            <h3 className="font-heading text-base font-bold">What this can’t tell you</h3>{" "}
             <ul className="mt-3 space-y-2">
               {estimate.caveats.map((c) => (
-                <li key={c} className="text-base leading-relaxed text-foreground/70">
+                <li key={c} className="text-base leading-relaxed text-muted-foreground">
                   {c}
                 </li>
               ))}
             </ul>
             {asOfQuarter ? (
-              <p className="mt-4 text-sm text-foreground/60">
+              <p className="mt-4 text-sm text-muted-foreground">
                 USCIS counts for {asOfQuarter}
                 {sourceFile ? `, from ${sourceFile}` : ""}.
               </p>

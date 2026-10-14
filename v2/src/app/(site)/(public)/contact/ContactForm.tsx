@@ -57,21 +57,21 @@ export function ContactForm() {
 
   if (phase === "sent") {
     return (
-      <div className="border-2 border-border bg-tint-primary p-8 text-center shadow-hard">
-        <p className="font-heading text-xl font-black">Message sent</p>{" "}
-        <p className="mt-2 text-base text-foreground/70">{note}</p>
+      <div className="border border-border bg-tint-primary p-8 text-center">
+        <p className="font-heading text-xl font-bold">Message sent</p>{" "}
+        <p className="mt-2 text-base text-muted-foreground">{note}</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+    <form onSubmit={onSubmit} className="relative border border-border bg-card p-6 sm:p-8">
       {/* Placeholders show the shape of a good answer; the visible label above
           each field stays, because a placeholder used as the label vanishes
           as soon as someone types. */}
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+          <span className="text-sm font-bold text-muted-foreground">
             Name
           </span>{" "}
           <CharLimit max={120}>
@@ -81,12 +81,12 @@ export function ContactForm() {
               placeholder="Jordan Rivera"
               required
               autoComplete="name"
-              className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
+              className="mt-1.5 min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
             />
           </CharLimit>
         </label>
         <label className="block">
-          <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+          <span className="text-sm font-bold text-muted-foreground">
             Email
           </span>{" "}
           <CharLimit max={254}>
@@ -96,13 +96,13 @@ export function ContactForm() {
               placeholder="you@example.com"
               required
               autoComplete="email"
-              className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
+              className="mt-1.5 min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
             />
           </CharLimit>
         </label>
       </div>
       <label className="mt-4 block">
-        <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+        <span className="text-sm font-bold text-muted-foreground">
           Message
         </span>{" "}
         <CharLimit max={4000}>
@@ -112,7 +112,7 @@ export function ContactForm() {
             required
             minLength={10}
             rows={6}
-            className="mt-1.5 w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
+            className="mt-1.5 w-full min-w-0 border border-input bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
           />
         </CharLimit>
       </label>
@@ -125,7 +125,7 @@ export function ContactForm() {
       </div>
 
       {phase === "error" ? (
-        <p role="alert" className="mt-4 border-2 border-border bg-background p-3 text-sm font-bold">
+        <p role="alert" className="mt-4 border border-border bg-background p-3 text-sm font-bold">
           {note}
         </p>
       ) : null}
@@ -133,12 +133,12 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={phase === "sending"}
-        className="mt-5 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-5 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {phase === "sending" ? "Sending…" : "Send message"}
         <Send className="h-4 w-4" aria-hidden="true" />
       </button>
-      <p className="mt-3 text-sm text-foreground/60">
+      <p className="mt-3 text-sm text-muted-foreground">
         Lands in our inbox as email. Replies come from a person.
       </p>
     </form>

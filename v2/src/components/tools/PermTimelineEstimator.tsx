@@ -180,7 +180,7 @@ function StagesLine({
   const rest = subject.pending - accounted;
 
   return (
-    <p className="mt-4 text-base leading-relaxed text-foreground/70">
+    <p className="mt-4 text-base leading-relaxed text-muted-foreground">
       <b className="font-bold text-foreground">
         {formatInt(subject.pending)} still undecided in {formatMonth(month)}
       </b>
@@ -531,15 +531,15 @@ export function PermTimelineEstimator({
   }
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <div className="border-b-2 border-border p-6 sm:p-8">
+    <div className={cn("border border-border bg-card", className)}>
+      <div className="border-b border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
         {/* data-embed-hide: the embed's own title bar already says this. */}
         <div data-embed-hide className="flex items-center gap-3">
           <CalendarClock className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <h2 className="font-heading text-2xl font-black leading-tight">
+          <h2 className="font-heading text-2xl font-bold leading-tight">
             When will DOL decide my PERM?
           </h2>
         </div>
@@ -616,22 +616,22 @@ export function PermTimelineEstimator({
           the empty band says what it will hold instead of reading as a page
           that failed to load. Nothing in it is a figure. */}
       {!hasDate ? (
-        <div className="border-b-2 border-border p-6 sm:p-8">
-          <p className="text-sm font-bold text-foreground/70">Most likely</p>{" "}
+        <div className="border-b border-border p-6 sm:p-8">
+          <p className="text-sm font-bold text-muted-foreground">Most likely</p>{" "}
           <div aria-hidden="true" className="mt-2 h-11 w-80 max-w-full bg-foreground/10 sm:h-14" />{" "}
           <div aria-hidden="true" className="mt-3 h-6 w-[26rem] max-w-full bg-foreground/[0.07]" />{" "}
-          <div className="relative mt-6 flex h-12 items-center justify-center border-2 border-dashed border-foreground/40 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]">
-            <span className="bg-background px-2 text-center text-sm font-bold text-foreground/70">
+          <div className="relative mt-6 flex h-12 items-center justify-center border border-dashed border-foreground/40 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]">
+            <span className="bg-background px-2 text-center text-sm font-bold text-muted-foreground">
               Pick a date above and this fills in
             </span>
           </div>{" "}
-          <p className="mt-3 text-base text-foreground/70">
+          <p className="mt-3 text-base text-muted-foreground">
             When DOL is likely to decide, the range around it, and where the case sits in the queue.
           </p>
         </div>
       ) : null}
       {hasDate && (shown || estimate.position === "overdue") ? (
-        <div className="border-b-2 border-border p-6 sm:p-8">
+        <div className="border-b border-border p-6 sm:p-8">
           {shown ? (
             /* The anchor leads and the window follows. A range-only headline
                read as "we don't know" next to rivals printing one confident
@@ -641,13 +641,13 @@ export function PermTimelineEstimator({
                envelope right under it, and the models behind a disclosure
                rather than competing with it at display size. */
             <>
-              <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <p className="text-sm font-semibold text-muted-foreground">
                 Most likely
               </p>{" "}
               {/* A DAY ONLY WHEN A DAY IS EARNED: the counting model places a
                   case inside its filing month; the month-anchored models
                   cannot, so they print a month. */}
-              <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-5xl">
+              <p className="mt-2 font-heading text-3xl font-bold leading-[1.05] sm:text-5xl">
                 {dayEarned
                   ? `Around ${fmtDay(shown.anchor)}`
                   : `Around ${formatMonth(shown.anchor.slice(0, 7))}`}
@@ -670,7 +670,7 @@ export function PermTimelineEstimator({
                   </>
                 )}
               </p>{" "}
-              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 {shown.fromLead
                   ? `${rangeNote} The other models are under “How this was worked out” below.`
                   : envelope && envelope.modelCount === 1
@@ -683,7 +683,7 @@ export function PermTimelineEstimator({
                 {alertAnchor ? (
                   <a
                     href={`#${alertAnchor}`}
-                    className="inline-flex min-h-[48px] items-center gap-2 border-2 border-border bg-primary px-4 py-2.5 font-heading text-base font-black text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                    className="inline-flex min-h-[48px] items-center gap-2 border border-border bg-primary px-4 py-2.5 font-heading text-base font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
                   >
                     <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
                     Email me when DOL reaches {formatMonth(month)}
@@ -704,10 +704,10 @@ export function PermTimelineEstimator({
                a forecast. What a reader with a case this old needs is the
                CASE's own status, not month arithmetic. */
             <>
-              <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <p className="text-sm font-semibold text-muted-foreground">
                 Where your case stands
               </p>{" "}
-              <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-4xl">
+              <p className="mt-2 font-heading text-3xl font-bold leading-[1.05] sm:text-4xl">
                 DOL&apos;s queue has passed your filing month
                 {estimate.monthsBehindFrontier !== null &&
                 estimate.monthsBehindFrontier < 0
@@ -715,7 +715,7 @@ export function PermTimelineEstimator({
                   : ""}
               </p>{" "}
               {passedMonth && passedMonth.pending > 0 && typeof passedMonth.analystReview === "number" ? (
-                <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                   {`Of the ${passedMonth.pending.toLocaleString("en-US")} cases filed this month still waiting, ${passedMonth.analystReview.toLocaleString("en-US")} ${passedMonth.analystReview === 1 ? "is" : "are"} still in normal review`}
                   {stragglers
                     ? `, and DOL is finishing those about ${Math.round(stragglers.dailyRate * 100)}% a day: half within ${stragglers.medianDays} days, eight in ten within ${stragglers.p80Days}.`
@@ -724,7 +724,7 @@ export function PermTimelineEstimator({
                   number says which yours is, with an estimate for it.
                 </p>
               ) : (
-                <p className="mt-3 text-base leading-relaxed text-foreground/70">
+                <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                   A case from this month still waiting is either among the last in normal review or at an audit,
                   an RFI or a hold, which the filing month can&apos;t date. Your case number says which, with an
                   estimate for it.
@@ -733,7 +733,7 @@ export function PermTimelineEstimator({
               <p className="mt-4">
                 <Link
                   href="/perm-case-status"
-                  className="inline-block border-2 border-border bg-primary px-4 py-2.5 font-heading text-base font-black text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-0.5"
+                  className="inline-block border border-border bg-primary px-4 py-2.5 font-heading text-base font-bold text-primary-foreground transition-transform"
                 >
                   Check your case number
                 </Link>{" "}
@@ -747,7 +747,7 @@ export function PermTimelineEstimator({
           {progress ? (
             <div className="mt-6">
               <div
-                className="relative h-4 w-full border-2 border-border bg-muted"
+                className="relative h-4 w-full border border-border bg-muted"
                 role="img"
                 aria-label={`${progress.elapsedMonths} of about ${progress.totalMonths} months elapsed since filing`}
               >
@@ -779,43 +779,43 @@ export function PermTimelineEstimator({
               empty cell that reads as a card that failed to load. */}
           <div className="mt-6 flex flex-wrap gap-3">
             {pace ? (
-              <div className="min-w-0 flex-1 basis-60 border-2 border-border bg-background p-4">
-                <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <div className="min-w-0 flex-1 basis-60 border border-border bg-background p-4">
+                <p className="text-sm font-semibold text-muted-foreground">
                   DOL pace
                 </p>{" "}
-                <p className="mt-1 font-heading text-2xl font-black leading-none">
+                <p className="mt-1 font-heading text-2xl font-bold leading-none">
                   {pace.perBusinessDay.toLocaleString("en-US")}
                 </p>{" "}
-                <p className="mt-1 text-sm text-foreground/70">
+                <p className="mt-1 text-sm text-muted-foreground">
                   decisions per working day, last {pace.businessDays}
                 </p>
               </div>
             ) : null}
             {frontier ? (
-              <div className="min-w-0 flex-1 basis-60 border-2 border-border bg-background p-4">
-                <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <div className="min-w-0 flex-1 basis-60 border border-border bg-background p-4">
+                <p className="text-sm font-semibold text-muted-foreground">
                   Queue is at
                 </p>{" "}
-                <p className="mt-1 font-heading text-2xl font-black leading-none">
+                <p className="mt-1 font-heading text-2xl font-bold leading-none">
                   {formatMonth(frontier.analystQueueMonth)}
                 </p>{" "}
-                <p className="mt-1 text-sm text-foreground/70">
+                <p className="mt-1 text-sm text-muted-foreground">
                   DOL analyst review, {frontier.asOf}
                 </p>
               </div>
             ) : null}
             {estimate.monthsBehindFrontier !== null ? (
-              <div className="min-w-0 flex-1 basis-60 border-2 border-border bg-background p-4">
-                <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <div className="min-w-0 flex-1 basis-60 border border-border bg-background p-4">
+                <p className="text-sm font-semibold text-muted-foreground">
                   Your month
                 </p>{" "}
                 {/* Signed arithmetic reads backwards here: "-11 months behind
                     the queue" for a month the queue passed 11 months ago.
                     Say the direction in words and keep the number positive. */}
-                <p className="mt-1 font-heading text-2xl font-black leading-none">
+                <p className="mt-1 font-heading text-2xl font-bold leading-none">
                   {Math.abs(estimate.monthsBehindFrontier)}
                 </p>{" "}
-                <p className="mt-1 text-sm text-foreground/70">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {estimate.monthsBehindFrontier > 0
                     ? "months until the queue reaches your month"
                     : estimate.monthsBehindFrontier === 0
@@ -831,14 +831,14 @@ export function PermTimelineEstimator({
       {/* Where this case sits relative to DOL's published frontier. Skipped
           when the overdue hero above has already said exactly this. */}
       {hasDate && frontier && position && !(estimate.position === "overdue" && !envelope) ? (
-        <div className={cn("border-b-2 border-border p-6 sm:p-8", position.tone)}>
-          <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+        <div className={cn("border-b border-border p-6 sm:p-8", position.tone)}>
+          <p className="text-sm font-bold text-muted-foreground">
             Queue position
           </p>{" "}
-          <p className="mt-2 font-heading text-xl font-black leading-tight sm:text-2xl">
+          <p className="mt-2 font-heading text-xl font-bold leading-tight sm:text-2xl">
             {position.heading}
           </p>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             DOL&apos;s analyst review queue is working{" "}
             <strong>{formatMonth(frontier.analystQueueMonth)}</strong>, as of{" "}
             {frontier.asOf}.
@@ -852,11 +852,11 @@ export function PermTimelineEstimator({
       {/* The queue itself, drawn. This is the only band on the page built on
           pending counts, which is why it carries its own attribution. */}
       {hasDate && months.length > 0 ? (
-        <div className="border-b-2 border-border p-6 sm:p-8">
-          <h3 className="font-heading text-xl font-black leading-tight sm:text-2xl">
+        <div className="border-b border-border p-6 sm:p-8">
+          <h3 className="font-heading text-xl font-bold leading-tight sm:text-2xl">
             How far DOL has got through each month
           </h3>{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
             {activeRange ? (
               <>
                 Decisions are landing in{" "}
@@ -874,18 +874,18 @@ export function PermTimelineEstimator({
             )}
           </p>
 
-          <div className="mt-6 border-2 border-border bg-background p-4 sm:max-w-sm">
-            <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <div className="mt-6 border border-border bg-background p-4 sm:max-w-sm">
+            <p className="text-sm font-semibold text-muted-foreground">
               Cases ahead of you
             </p>{" "}
-            <p className="mt-1 font-heading text-4xl font-black leading-none">
+            <p className="mt-1 font-heading text-4xl font-bold leading-none">
               {queue.ahead.toLocaleString("en-US")}
             </p>{" "}
-            <p className="mt-1 text-sm text-foreground/70">
+            <p className="mt-1 text-sm text-muted-foreground">
               in DOL&apos;s normal queue, filed before {formatMonth(month)}
             </p>{" "}
             {sideAhead > 0 ? (
-              <p className="mt-2 text-sm text-foreground/70">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Not counted: {sideAhead.toLocaleString("en-US")} on hold, at an
                 RFI or on appeal, which are out of line.
               </p>
@@ -915,8 +915,8 @@ export function PermTimelineEstimator({
           {/* Provenance where the data is, not in a footnote: these are the
               only figures here that DOL does not publish itself. */}
           {queueSource ? (
-            <p className="mt-6 border-t-2 border-border pt-3 text-sm text-muted-foreground">
-              <span className="font-bold text-foreground/80">Pending counts:</span>{" "}
+            <p className="mt-6 border-t border-border pt-3 text-sm text-muted-foreground">
+              <span className="font-bold text-soft">Pending counts:</span>{" "}
               {queueSource}. DOL&apos;s own disclosure files carry a decision
               date on every record and no pending rows at all, so a count of
               what is still in front of you cannot be read from them.
@@ -930,12 +930,12 @@ export function PermTimelineEstimator({
           the reader to pick. The headline above is
           the answer; this is how it was reached, for anyone who wants it. */}
       {hasDate && estimate.models.length > 0 && !passed ? (
-        <details className="group border-t-2 border-border">
+        <details className="group border-t border-border">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-6 sm:p-8">
-            <span className="font-heading text-base font-black">
+            <span className="font-heading text-base font-bold">
               How this was worked out
             </span>{" "}
-            <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {estimate.models.length}{" "}
               {estimate.models.length === 1 ? "model" : "models"}
               <span className="ml-2 inline-block transition-transform group-open:rotate-90">
@@ -943,10 +943,10 @@ export function PermTimelineEstimator({
               </span>
             </span>
           </summary>
-          <div className="divide-y-2 divide-border border-t-2 border-border">
+          <div className="divide-y divide-border border-t border-border">
           {estimate.models.map((model, i) => (
             <div key={model.id} className="p-6 sm:p-8">
-              <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+              <p className="text-sm font-bold text-muted-foreground">
                 {model.label}
                 {i === 0 ? (
                   <span className="ml-2 text-primary">· the one above</span>
@@ -954,22 +954,22 @@ export function PermTimelineEstimator({
               </p>{" "}
               {/* Secondary size on purpose. A model in here is the WORKING,
                   and at display size it competes with the answer. */}
-              <p className="mt-2 font-heading text-xl font-black leading-tight sm:text-2xl">
+              <p className="mt-2 font-heading text-xl font-bold leading-tight sm:text-2xl">
                 {formatMonth(model.estimatedDate.slice(0, 7))}
               </p>{" "}
               {/* The separator has to sit here, before the conditional. When
                   the range is absent this <p> is followed directly by the
                   basis paragraph, and the two run together. */}
               {model.earliestDate && model.latestDate ? (
-                <p className="mt-2 text-base font-bold text-foreground/70">
+                <p className="mt-2 text-base font-bold text-muted-foreground">
                   Range {formatMonth(model.earliestDate.slice(0, 7))} to{" "}
                   {formatMonth(model.latestDate.slice(0, 7))}
                 </p>
               ) : null}{" "}
-              <p className="mt-3 text-base leading-relaxed text-foreground/70">
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 {model.basis}
               </p>{" "}
-              <p className="mt-2 text-sm text-foreground/60">Source: {model.source}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Source: {model.source}</p>
             </div>
           ))}
           </div>
@@ -989,8 +989,8 @@ export function PermTimelineEstimator({
       {/* The models above give dates. This gives the reasoning behind them, and
           it is the one series on the page that DOL does not publish. */}
       {hasDate && frontierHistory.length >= 2 ? (
-        <div className="border-t-2 border-border p-6 sm:p-8">
-          <h3 className="font-heading text-lg font-black">How fast the queue is moving</h3>
+        <div className="border-t border-border p-6 sm:p-8">
+          <h3 className="font-heading text-lg font-bold">How fast the queue is moving</h3>
           <FrontierProgressChart
             history={frontierHistory}
             filingMonth={month}
@@ -1001,17 +1001,17 @@ export function PermTimelineEstimator({
 
       {/* Caveats. Not boilerplate: each one is generated for this case. */}
       {hasDate && notes.length > 0 ? (
-        <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
+        <div className="border-t border-border bg-muted p-6 sm:p-8">
           <div className="flex items-start gap-3">
             <WarningIcon
-              className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70"
+              className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
               aria-hidden="true"
             />
             <div>
-              <h3 className="font-heading text-base font-black">What this can’t tell you</h3>{" "}
+              <h3 className="font-heading text-base font-bold">What this can’t tell you</h3>{" "}
               <ul className="mt-3 space-y-2">
                 {notes.map((c) => (
-                  <li key={c} className="text-base leading-relaxed text-foreground/70">
+                  <li key={c} className="text-base leading-relaxed text-muted-foreground">
                     {c}
                   </li>
                 ))}
@@ -1022,7 +1022,7 @@ export function PermTimelineEstimator({
       ) : null}
 
       {!compact && disclosure ? (
-        <div className="border-t-2 border-border p-6 text-sm leading-relaxed text-foreground/70 [overflow-wrap:anywhere] sm:px-8">
+        <div className="border-t border-border p-6 text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere] sm:px-8">
           <InfoIcon className="mr-2 inline h-4 w-4 align-text-bottom" aria-hidden="true" />
           Cohort figures are computed from{" "}
           {disclosure.uniqueCases.toLocaleString("en-US")} decided cases in DOL&apos;s

@@ -89,7 +89,7 @@ export default function AdminDashboardClient() {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
         {/* Header skeleton */}
-        <div className="flex items-center gap-4 border-b-2 border-border pb-6">
+        <div className="flex items-center gap-4 border-b border-border pb-6">
           <Skeleton className="h-12 w-12" />
           <div className="space-y-2">
             <Skeleton className="h-8 w-64" />
@@ -134,13 +134,13 @@ export default function AdminDashboardClient() {
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 border-b-2 border-border pb-6">
+      <div className="flex items-center justify-between gap-4 border-b border-border pb-6">
         <div className="flex items-center gap-4">
-          <div className="flex size-12 items-center justify-center border-2 border-border bg-primary shadow-hard">
+          <div className="flex size-12 items-center justify-center border border-border bg-primary">
             <ShieldIcon className="size-6 text-black" />
           </div>
           <div>
-            <h1 className="font-heading text-3xl font-black">
+            <h1 className="font-heading text-3xl font-bold">
               Admin dashboard
             </h1>{" "}
             <p className="text-muted-foreground">
@@ -150,7 +150,7 @@ export default function AdminDashboardClient() {
         </div>
         <Link
           href="/admin/security"
-          className="flex min-h-[44px] items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-sm font-bold shadow-hard-sm transition-all hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+          className="flex min-h-[44px] items-center gap-2 border border-foreground bg-background px-4 py-2 text-sm font-bold transition-colors"
         >
           <ShieldIcon className="h-4 w-4" aria-hidden />
           Security

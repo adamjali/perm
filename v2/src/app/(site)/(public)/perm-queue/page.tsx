@@ -144,22 +144,22 @@ export default async function PermQueuePage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Where the PERM queue stands
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">
           DOL publishes which month it&rsquo;s working and nothing about the
           size of what&rsquo;s behind it. Its disclosure files carry no pending
           rows, so the backlog cannot be derived from them.
         </p>{" "}
-        <SourceNote className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/70" />
+        <SourceNote className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground" />
       </header>
 
       {/* The provisional notice sits ABOVE every figure it qualifies, for the
           same reason a withheld statistic states its reason first: a number
           the reader has already absorbed cannot be un-absorbed by a footnote. */}
       {!MIRROR_COMPLETE ? (
-        <p className="mt-8 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base text-foreground/80">
+        <p className="mt-8 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base text-soft">
           <WarningIcon
             className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
@@ -169,7 +169,7 @@ export default async function PermQueuePage() {
         </p>
       ) : null}
 
-      <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+      <section className="mt-10 border border-border bg-card p-6 sm:p-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 [&>*]:min-w-0">
           <Figure
             label="Last seen undecided"
@@ -196,7 +196,7 @@ export default async function PermQueuePage() {
           />
         </div>{" "}
 
-        <div className="mt-8 max-w-3xl space-y-3 border-t-2 border-border pt-6 text-base leading-relaxed text-foreground/80">
+        <div className="mt-8 max-w-3xl space-y-3 border-t border-border pt-6 text-base leading-relaxed text-soft">
           {front ? (
             <p>
               The oldest filing month that isn&rsquo;t substantially decided is{" "}
@@ -279,11 +279,11 @@ export default async function PermQueuePage() {
         </div>
       </section>{" "}
 
-      <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black sm:text-3xl">
+      <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold sm:text-3xl">
           What those {formatInt(census.pending)} cases were doing
         </h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
           Analyst review moves in filing order; the other two queues
           don&rsquo;t, which is the answer when DOL has passed your month and
           you still have nothing.
@@ -291,7 +291,7 @@ export default async function PermQueuePage() {
 
         <StageLegend stages={stages} className="mt-6" />
 
-        <div className="mt-8 border-t-2 border-border pt-6">
+        <div className="mt-8 border-t border-border pt-6">
           <PendingCensus
             stages={stages}
             caption="Every DOL status a pending PERM case was last seen in, grouped by queue"
@@ -299,11 +299,11 @@ export default async function PermQueuePage() {
         </div>
       </section>{" "}
 
-      <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black sm:text-3xl">
+      <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold sm:text-3xl">
           The wall, by filing month
         </h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
           Bar length is cases still waiting, on one scale across every month.
           Colours split each month across the three queues. Any month opens its
           own page.
@@ -322,12 +322,12 @@ export default async function PermQueuePage() {
       </section>{" "}
 
       {alphabet ? (
-        <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h2 className="font-heading text-2xl font-black sm:text-3xl">
+        <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+          <h2 className="font-heading text-2xl font-bold sm:text-3xl">
             Your employer&rsquo;s first letter: small, and not in our estimates
           </h2>{" "}
           <MoreText gist={"DOL works a month roughly A to Z, too loosely for any estimate here to use."} className="mt-2">
-            <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
+            <p className="max-w-3xl text-base leading-relaxed text-soft">
               Across decided cases DOL tended to work a filing month roughly
               alphabetically:{" "}
               <b>
@@ -340,7 +340,7 @@ export default async function PermQueuePage() {
             </p>
           </MoreText>{" "}
 
-          <div className="mt-8 border-t-2 border-border pt-6">
+          <div className="mt-8 border-t border-border pt-6">
             <AlphabetEffect data={alphabet} />
           </div>
         </section>
@@ -353,7 +353,7 @@ export default async function PermQueuePage() {
       <PageBasics page="perm-queue" />{" "}
       <DataProvenance
         datasets={["perm-case-status", "processing-times", "perm-cases"]}
-        className="mt-8 border-t-2 border-border pt-4"
+        className="mt-8 border-t border-border pt-4"
       />
     </div>
   );
@@ -371,13 +371,13 @@ function Figure({
 }) {
   return (
     <div>
-      <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
+      <p className="text-sm font-bold text-soft">
         {label}
       </p>{" "}
-      <p className="mt-1 font-heading text-4xl font-black leading-none tabular-nums">
+      <p className="mt-1 font-heading text-4xl font-bold leading-none tabular-nums">
         {value}
       </p>{" "}
-      <p className="mt-2 text-sm leading-snug text-foreground/70">{note}</p>
+      <p className="mt-2 text-sm leading-snug text-muted-foreground">{note}</p>
     </div>
   );
 }

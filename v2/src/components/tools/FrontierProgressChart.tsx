@@ -264,23 +264,23 @@ function FrontierTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] border-2 border-border text-left text-sm shadow-hard-sm">
+      <table className="w-full min-w-[560px] border border-border text-left text-sm">
         <caption className="sr-only">
           The filing month DOL was deciding in each month of determinations,
           with the number of decisions behind each figure
         </caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-sm font-bold">
               Decisions in
             {" "}</th>
-            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-sm font-bold">
               Median filing month
             {" "}</th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right text-sm font-bold">
               Advanced
             {" "}</th>
-            <th scope="col" className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell">
+            <th scope="col" className="hidden px-3 py-2 text-right text-sm font-bold sm:table-cell">
               Decisions{" "}
             </th>
           </tr>
@@ -312,7 +312,7 @@ function FrontierTable({
                     `${a > 0 ? "+" : ""}${a} month${Math.abs(a) === 1 ? "" : "s"}`
                   )}
                 {" "}</td>
-                <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
+                <td className="hidden px-3 py-2.5 text-right tabular-nums text-muted-foreground sm:table-cell">
                   {p.decisions.toLocaleString("en-US")}
                 {" "}</td>
               </tr>
@@ -385,7 +385,7 @@ export function FrontierProgressChart({
           hint="Narrows the chart and the table to the most recent months of determinations."
           options={options}
         />{" "}
-        <p className="text-sm text-foreground/70">
+        <p className="text-sm text-muted-foreground">
           {formatMonth(first.decisionMonth)} to {formatMonth(last.decisionMonth)}
           {elapsed > 0 ? (
             <>
@@ -415,7 +415,7 @@ export function FrontierProgressChart({
           off the drawing, so it stays; what the reader is looking AT is now
           answered by pointing at it, and "the queue has already passed your
           month" is the overdue hero's own heading two sections up. */}
-      <figcaption className="mt-4 space-y-2 text-sm leading-relaxed text-foreground/70">
+      <figcaption className="mt-4 space-y-2 text-sm leading-relaxed text-muted-foreground">
         <p>
           <span className="font-bold text-foreground">Solid line</span>: the
           filing month DOL was deciding.{" "}

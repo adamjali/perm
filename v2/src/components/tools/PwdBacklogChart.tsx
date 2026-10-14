@@ -69,7 +69,7 @@ function Bars({
               <span
                 className={cn(
                   "text-sm",
-                  isSelected ? "font-black" : "text-foreground/70",
+                  isSelected ? "font-bold" : "text-muted-foreground",
                 )}
               >
                 {formatMonth(row.receiptMonth)}
@@ -77,7 +77,7 @@ function Bars({
 
               {/* The track is always full width, so a small bar reads as small
                   rather than as a missing row. */}
-              <span className="h-6 w-full border-2 border-border bg-muted">
+              <span className="h-6 w-full border border-border bg-muted">
                 <span
                   className={cn(
                     "block h-full",
@@ -100,7 +100,7 @@ function Bars({
               <span
                 className={cn(
                   "text-right text-sm tabular-nums",
-                  isSelected ? "font-black" : "text-foreground/70",
+                  isSelected ? "font-bold" : "text-muted-foreground",
                 )}
               >
                 {formatInt(row.remainingRequests)}
@@ -127,23 +127,23 @@ function BacklogTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] border-2 border-border text-left text-sm shadow-hard-sm">
+      <table className="w-full min-w-[560px] border border-border text-left text-sm">
         <caption className="sr-only">
           Prevailing wage requests still pending by month of receipt, with each
           month&apos;s share of the pile and the running total from the oldest month
         </caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-sm font-bold">
               Received
             {" "}</th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right text-sm font-bold">
               Still pending
             {" "}</th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right text-sm font-bold">
               Share
             {" "}</th>
-            <th scope="col" className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell">
+            <th scope="col" className="hidden px-3 py-2 text-right text-sm font-bold sm:table-cell">
               This month and older{" "}
             </th>
           </tr>
@@ -163,19 +163,19 @@ function BacklogTable({
               <td className="px-3 py-2.5 text-right tabular-nums">
                 {formatInt(row.remainingRequests)}
               {" "}</td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-foreground/70">
+              <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
                 {total > 0 ? `${((row.remainingRequests / total) * 100).toFixed(1)}%` : "—"}
               {" "}</td>
-              <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
+              <td className="hidden px-3 py-2.5 text-right tabular-nums text-muted-foreground sm:table-cell">
                 {formatInt(cumulative.get(row.receiptMonth) ?? 0)}
               {" "}</td>
             </tr>
           ))}
         </tbody>
         <tfoot className="bg-muted">
-          <tr className="border-t-2 border-border">
-            <td className="px-3 py-2.5 font-black">Whole pile{" "}</td>
-            <td className="px-3 py-2.5 text-right font-black tabular-nums">
+          <tr className="border-t border-border">
+            <td className="px-3 py-2.5 font-bold">Whole pile{" "}</td>
+            <td className="px-3 py-2.5 text-right font-bold tabular-nums">
               {formatInt(total)}
             {" "}</td>
             <td className="px-3 py-2.5" />
@@ -238,7 +238,7 @@ export function PwdBacklogChart({
             { value: "from", label: "Yours and later" },
           ]}
         />{" "}
-        <p className="text-sm text-foreground/70">
+        <p className="text-sm text-muted-foreground">
           {formatInt(rows.reduce((s, r) => s + r.remainingRequests, 0))} of {formatInt(total)}{" "}
           pending requests
         </p>
@@ -252,7 +252,7 @@ export function PwdBacklogChart({
         controls={scopeControl}
         chart={
           rows.length === 0 ? (
-            <p className="border-2 border-border bg-card p-6 text-base text-foreground/70 shadow-hard-sm">
+            <p className="border border-border bg-card p-6 text-base text-muted-foreground">
               No months in the published backlog fall in that part of the pile.
             </p>
           ) : (
@@ -269,7 +269,7 @@ export function PwdBacklogChart({
         }
       />
 
-      <figcaption className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-foreground/70">
+      <figcaption className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
         {selectedMonth === undefined ? (
           <span>
             Every month DOL still has undecided prevailing wage requests in, oldest
@@ -278,15 +278,15 @@ export function PwdBacklogChart({
         ) : (
           <>
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border-2 border-border bg-foreground/70" aria-hidden="true" />
+              <span className="h-3 w-3 border border-border bg-foreground/70" aria-hidden="true" />
               Ahead of yours
             </span>{" "}
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border-2 border-border bg-primary" aria-hidden="true" />
+              <span className="h-3 w-3 border border-border bg-primary" aria-hidden="true" />
               Your month
             </span>{" "}
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border-2 border-border bg-foreground/20" aria-hidden="true" />
+              <span className="h-3 w-3 border border-border bg-foreground/20" aria-hidden="true" />
               Received after yours
             </span>
           </>

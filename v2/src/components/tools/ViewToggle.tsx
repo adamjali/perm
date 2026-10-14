@@ -44,7 +44,7 @@ export function ViewToggle<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className={cn("inline-flex border-2 border-border shadow-hard-sm", className)}
+      className={cn("inline-flex border border-border", className)}
     >
       {options.map((o, i) => {
         const active = o.value === value;
@@ -61,11 +61,11 @@ export function ViewToggle<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              "min-h-[44px] px-4 font-mono text-sm font-bold uppercase tracking-wider transition-colors focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-primary",
-              i > 0 && "border-l-2 border-border",
+              "min-h-[44px] px-4 text-sm font-bold transition-colors focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-primary",
+              i > 0 && "border-l border-border",
               active
                 ? "bg-primary text-primary-foreground"
-                : "bg-card text-foreground/70 hover:bg-tint-primary hover:text-foreground",
+                : "bg-card text-muted-foreground hover:bg-tint-primary hover:text-foreground",
             )}
           >
             {o.label}

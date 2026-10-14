@@ -72,13 +72,11 @@ function SummaryTilesGridContent() {
         <NavigableCard
           href="/cases"
           loadingIndicator="spinner"
-          className="group relative bg-primary text-primary-foreground border-2 border-border shadow-hard-sm hover:shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5
-                     active:translate-x-0 active:translate-y-0 active:shadow-none
-                     transition-all duration-150 px-4 py-2 overflow-hidden"
+          className="group relative bg-primary text-primary-foreground border border-border transition-colors duration-150 px-4 py-2 overflow-hidden"
         >
           <div className="flex items-center gap-2">
             <span className="mono text-2xl font-bold">{total}</span>{" "}
-            <span className="text-sm font-semibold uppercase tracking-wide opacity-90">
+            <span className="text-sm font-semibold opacity-90">
               Total
             </span>
           </div>

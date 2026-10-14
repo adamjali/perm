@@ -33,7 +33,7 @@ export function OnboardingChecklist() {
   return (
     <div
       data-tour="onboarding-checklist"
-      className="relative overflow-hidden border-2 border-border bg-card shadow-hard"
+      className="relative overflow-hidden border border-border bg-card"
     >
       {/* Top accent stripe */}
       <div className="h-1.5 bg-primary" />
@@ -80,9 +80,9 @@ export function OnboardingChecklist() {
             {progressPercent}%
           </span>
         </div>
-        <div className="h-2 border-2 border-border bg-muted overflow-hidden">
+        <div className="h-2 border border-border bg-muted overflow-hidden">
           <div
-            className="h-full bg-primary transition-all duration-500 ease-out"
+            className="h-full bg-primary transition-colors duration-500 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -101,7 +101,7 @@ export function OnboardingChecklist() {
               onClick={() => handleItemClick(item.id, item.href)}
               disabled={!isClickable}
               className={cn(
-                "w-full flex items-center gap-3 p-2.5 min-h-[44px] text-left transition-all duration-150",
+                "w-full flex items-center gap-3 p-2.5 min-h-[44px] text-left transition-colors duration-150",
                 isClickable
                   ? "hover:bg-muted cursor-pointer"
                   : "cursor-default",
@@ -111,7 +111,7 @@ export function OnboardingChecklist() {
               {/* Checkbox */}
               <div
                 className={cn(
-                  "flex-shrink-0 w-5 h-5 border-2 flex items-center justify-center",
+                  "flex-shrink-0 w-5 h-5 border flex items-center justify-center",
                   isComplete
                     ? "bg-primary border-primary"
                     : "border-border bg-background"

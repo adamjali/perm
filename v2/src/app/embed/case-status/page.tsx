@@ -58,7 +58,7 @@ function Row({ term, value, noTranslate }: { term: string; value: string | null;
   if (!value) return null;
   return (
     <div className="grid grid-cols-[8rem_1fr] gap-3 border-t border-border/40 py-2 [&>*]:min-w-0">
-      <dt className="text-foreground/70">{term}</dt>{" "}
+      <dt className="text-muted-foreground">{term}</dt>{" "}
       <dd className="font-bold" translate={noTranslate ? "no" : undefined}>
         {value}
       </dd>{" "}
@@ -69,7 +69,7 @@ function Row({ term, value, noTranslate }: { term: string; value: string | null;
 function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | null }) {
   if (!answer) {
     return (
-      <p className="border-2 border-border bg-card p-4 text-base">
+      <p className="border border-border bg-card p-4 text-base">
         <b>{typed}</b> isn&apos;t a DOL case number. A PERM number looks like{" "}
         <span translate="no">G-100-26125-868956</span>.
       </p>
@@ -78,7 +78,7 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
   const full = `/perm-case-status?case=${encodeURIComponent(answer.caseNumber)}`;
   if (!answer.found) {
     return (
-      <div className="border-2 border-border bg-card p-4 text-base">
+      <div className="border border-border bg-card p-4 text-base">
         <p>
           {answer.capped
             ? "PERM Tracker holds no record of this number, and live checks with DOL from this site are used up for today."
@@ -96,12 +96,12 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
   }
   const meaning = answer.program === "perm" && answer.status ? getStatusMeaning(answer.status) : null;
   return (
-    <div className="border-2 border-border bg-card p-4 shadow-hard">
-      <p className="text-sm font-bold uppercase tracking-wider text-foreground/70">{PROGRAM[answer.program]}</p>{" "}
-      <p className="mt-1 font-heading text-2xl font-black leading-tight" translate="no">
+    <div className="border border-border bg-card p-4">
+      <p className="text-sm font-bold text-muted-foreground">{PROGRAM[answer.program]}</p>{" "}
+      <p className="mt-1 font-heading text-2xl font-bold leading-tight" translate="no">
         {prettyStatus(answer.status ?? "")}
       </p>{" "}
-      {meaning ? <p className="mt-2 text-base leading-relaxed text-foreground/80">{meaning.summary}</p> : null}{" "}
+      {meaning ? <p className="mt-2 text-base leading-relaxed text-soft">{meaning.summary}</p> : null}{" "}
       <dl className="mt-3 text-sm">
         <Row term="Case number" value={answer.caseNumber} noTranslate />
         <Row term="Filed" value={day(answer.filingDate)} />
@@ -109,7 +109,7 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
         <Row term="Employer" value={answer.employerName} noTranslate />
         <Row term="Job title" value={answer.jobTitle} />
       </dl>{" "}
-      <p className="mt-3 text-sm text-foreground/70">{sourceLine(answer)}</p>{" "}
+      <p className="mt-3 text-sm text-muted-foreground">{sourceLine(answer)}</p>{" "}
       <p className="mt-2">
         <a href={full} className="text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
           The full record on PERM Tracker
@@ -123,22 +123,22 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
 function QueueNow({ now }: { now: DolNow | null }) {
   if (!now || (now.frontier === null && now.days === null)) return null;
   return (
-    <div className="mt-5 border-2 border-border bg-card shadow-hard-sm">
+    <div className="mt-5 border border-border bg-card">
       <dl className="grid grid-cols-2 gap-px bg-border [&>*]:min-w-0 [&>*:last-child:nth-child(odd)]:col-span-2">
         {now.frontier ? (
           <div className="bg-card p-3">
-            <dt className="text-sm text-foreground/70">DOL is deciding PERMs filed in{" "}</dt>{" "}
-            <dd className="mt-0.5 font-heading text-xl font-black">{now.frontier}</dd>
+            <dt className="text-sm text-muted-foreground">DOL is deciding PERMs filed in{" "}</dt>{" "}
+            <dd className="mt-0.5 font-heading text-xl font-bold">{now.frontier}</dd>
           </div>
         ) : null}{" "}
         {now.days !== null ? (
           <div className="bg-card p-3">
-            <dt className="text-sm text-foreground/70">Its average, filing to decision{" "}</dt>{" "}
-            <dd className="mt-0.5 font-heading text-xl font-black tabular-nums">{now.days} days</dd>
+            <dt className="text-sm text-muted-foreground">Its average, filing to decision{" "}</dt>{" "}
+            <dd className="mt-0.5 font-heading text-xl font-bold tabular-nums">{now.days} days</dd>
           </div>
         ) : null}
       </dl>{" "}
-      {now.asOf ? <p className="border-t-2 border-border px-3 py-2 text-sm text-foreground/70">As DOL published them on {now.asOf}.</p> : null}
+      {now.asOf ? <p className="border-t border-border px-3 py-2 text-sm text-muted-foreground">As DOL published them on {now.asOf}.</p> : null}
     </div>
   );
 }
@@ -172,11 +172,11 @@ export default async function CaseStatusEmbed({
               autoComplete="off"
               spellCheck={false}
               maxLength={40}
-              className="min-h-11 min-w-0 flex-1 border-2 border-border bg-background px-3 text-base"
+              className="min-h-11 min-w-0 flex-1 border border-input bg-background px-3 text-base"
             />{" "}
             <button
               type="submit"
-              className="min-h-11 border-2 border-border bg-primary px-4 font-bold text-primary-foreground shadow-hard-sm"
+              className="min-h-11 border border-border bg-primary px-4 font-bold text-primary-foreground"
             >
               Check
             </button>

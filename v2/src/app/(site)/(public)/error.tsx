@@ -64,13 +64,13 @@ export default function PublicDataError({
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-16 sm:py-24">
-      <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+      <p className="text-sm font-semibold text-muted-foreground">
         Data unavailable
       </p>{" "}
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl mt-3">
+      <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl mt-3">
         This page&rsquo;s figures didn&rsquo;t load
       </h1>{" "}
-      <p className="mt-4 text-base leading-relaxed text-foreground/80">
+      <p className="mt-4 text-base leading-relaxed text-soft">
         Something went wrong reading our copy of the federal data. The
         underlying records are published by the agencies below and are
         unaffected.
@@ -81,19 +81,19 @@ export default function PublicDataError({
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="inline-flex min-h-[44px] items-center gap-2 border-3 border-border bg-primary px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-hard transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg"
+          className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 py-3 font-heading text-sm font-bold text-primary-foreground transition-colors duration-200"
         >
           <ArrowClockwiseIcon className="size-4" weight="bold" aria-hidden="true" />
           Try again
         </button>{" "}
         <Link
           href="/"
-          className="inline-flex min-h-[44px] items-center border-3 border-border bg-card px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider shadow-hard transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg"
+          className="inline-flex min-h-[44px] items-center border border-border bg-card px-5 py-3 font-heading text-sm font-bold transition-colors duration-200"
         >
           Home
         </Link>
       </div>{" "}
-      <section className="mt-12 border-t-2 border-border pt-6">
+      <section className="mt-12 border-t border-border pt-6">
         <h2 className="font-heading text-lg font-bold">Go straight to the source</h2>{" "}
         <ul className="mt-4 grid gap-3">
           {PRIMARY_SOURCES.map((s) => (

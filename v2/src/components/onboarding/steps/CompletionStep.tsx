@@ -26,7 +26,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
       </h2>
 
       {onboardingCaseInfo && (
-        <div className="inline-flex items-center gap-2 px-4 py-2 mb-4 border-2 border-border bg-primary/10 shadow-hard-sm">
+        <div className="inline-flex items-center gap-2 px-4 py-2 mb-4 border border-border bg-primary/10">
           <span className="text-sm">
             <span className="font-heading font-semibold">
               {onboardingCaseInfo.employerName}
@@ -40,7 +40,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
       )}
 
       {didSkip && (
-        <div className="inline-flex items-center gap-2 px-4 py-2 mb-4 border-2 border-dashed border-muted-foreground/30 bg-muted/50">
+        <div className="inline-flex items-center gap-2 px-4 py-2 mb-4 border border-dashed border-muted-foreground/30 bg-muted/50">
           <span className="text-sm text-muted-foreground">
             We added a <span className="font-semibold text-foreground">sample case</span> so you can explore.
             Delete it anytime.

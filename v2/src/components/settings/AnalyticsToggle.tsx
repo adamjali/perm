@@ -56,7 +56,7 @@ export default function AnalyticsToggle() {
 
   if (profile === undefined) {
     return (
-      <div className="border-2 border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
+      <div className="border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
         <Skeleton variant="line" className="mb-4 h-6 w-1/3" />
         <Skeleton variant="line" className="h-4 w-2/3" />
       </div>
@@ -64,7 +64,7 @@ export default function AnalyticsToggle() {
   }
 
   return (
-    <div className="border-2 border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
+    <div className="border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
       <div className="mb-2 flex items-center gap-2">
         <ChartBarIcon className="h-5 w-5 text-foreground" />
         <h3 className="font-heading text-lg font-bold text-foreground">Usage analytics</h3>

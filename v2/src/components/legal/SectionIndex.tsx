@@ -38,9 +38,9 @@ export function SectionIndex({
 }) {
   if (sections.length === 0) return null;
   return (
-    <nav aria-label={label} className="mt-8 border-2 border-border bg-card p-5 shadow-hard">
+    <nav aria-label={label} className="mt-8 border border-border bg-card p-5">
       <OpenOnHash />
-      <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="text-sm font-bold text-muted-foreground">
         {label}
       </p>{" "}
       <ol className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2 [&>*]:min-w-0">

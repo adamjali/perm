@@ -107,12 +107,12 @@ const SECTIONS: TourSection[] = [
 
 function Facts({ facts }: { facts: string[] }) {
   return (
-    <ul className="mt-6 border-t-2 border-border">
+    <ul className="mt-6 border-t border-border">
       {facts.map((f) => (
         <Fragment key={f}>
           {" "}
-          <li className="flex gap-3 border-b-2 border-border py-3 text-base leading-snug">
-            <span aria-hidden="true" className="mt-1.5 size-2.5 shrink-0 border-2 border-border bg-primary" />{" "}
+          <li className="flex gap-3 border-b border-border py-3 text-base leading-snug">
+            <span aria-hidden="true" className="mt-1.5 size-2.5 shrink-0 border border-border bg-primary" />{" "}
             <span>{f}</span>
           </li>
         </Fragment>
@@ -123,11 +123,11 @@ function Facts({ facts }: { facts: string[] }) {
 
 function Section({ s, flip, muted }: { s: TourSection; flip: boolean; muted: boolean }) {
   return (
-    <section id={s.id} className={cn("scroll-mt-24 overflow-hidden border-b-3 border-border", muted ? "bg-muted" : "bg-background")}>
+    <section id={s.id} className={cn("scroll-mt-24 overflow-hidden border-b border-border", muted ? "bg-muted" : "bg-background")}>
       <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-14 [&>*]:min-w-0 sm:px-8 sm:py-20 lg:grid-cols-12 lg:items-center lg:gap-14">
         <div className={cn("lg:col-span-4", flip && "lg:order-2")}>
-          <h2 className="font-heading text-3xl font-black leading-[1.05] tracking-[-0.02em] sm:text-4xl">{s.title}</h2>{" "}
-          <p className="mt-4 text-lg leading-relaxed text-foreground/75">{s.lead}</p>{" "}
+          <h2 className="font-heading text-3xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-4xl">{s.title}</h2>{" "}
+          <p className="mt-4 text-lg leading-relaxed text-soft">{s.lead}</p>{" "}
           <Facts facts={s.facts} />
         </div>{" "}
         {/* The window runs off the right edge; on a flipped row it stops at the page's own margin, because a
@@ -145,8 +145,8 @@ function Section({ s, flip, muted }: { s: TourSection; flip: boolean; muted: boo
 function EmailOverlay() {
   const shot = TOUR_SHOTS.email.light;
   return (
-    <figure className="relative mx-auto mt-10 w-[86%] max-w-md border-3 border-border bg-card shadow-hard lg:absolute lg:-bottom-16 lg:left-[-1%] lg:mt-0 lg:w-[44%]">
-      <div className="border-b-3 border-border bg-muted px-3 py-2 font-mono text-sm text-muted-foreground">
+    <figure className="relative mx-auto mt-10 w-[86%] max-w-md border border-border bg-card lg:absolute lg:-bottom-16 lg:left-[-1%] lg:mt-0 lg:w-[44%]">
+      <div className="border-b border-border bg-muted px-3 py-2 font-mono text-sm text-muted-foreground">
         The reminder email
       </div>
       <picture>
@@ -183,11 +183,11 @@ const EXTRAS: Record<string, ReactNode> = {
 function AssistantSection() {
   const shots = TOUR_SHOTS.assistant;
   return (
-    <section id="assistant" className="overflow-hidden border-b-3 border-border bg-background">
+    <section id="assistant" className="overflow-hidden border-b border-border bg-background">
       <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-14 [&>*]:min-w-0 sm:px-8 sm:py-20 lg:grid-cols-12 lg:items-center lg:gap-14">
         <div className="lg:col-span-5">
-          <h2 className="font-heading text-3xl font-black leading-[1.05] tracking-[-0.02em] sm:text-4xl">Ask about your caseload</h2>{" "}
-          <p className="mt-4 text-lg leading-relaxed text-foreground/75">
+          <h2 className="font-heading text-3xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-4xl">Ask about your caseload</h2>{" "}
+          <p className="mt-4 text-lg leading-relaxed text-soft">
             The assistant reads your cases and answers in plain words. It can update a case or sync a calendar, and asks
             before it changes anything.
           </p>{" "}
@@ -202,7 +202,7 @@ function AssistantSection() {
         <div className="lg:col-span-7">
           <figure className="mx-auto max-w-sm">
             <div className="relative">
-              <div aria-hidden="true" className="absolute inset-0 translate-x-3 translate-y-3 border-3 border-border bg-primary sm:translate-x-4 sm:translate-y-4" />
+              <div aria-hidden="true" className="absolute inset-0 translate-x-3 translate-y-3 border border-border bg-primary sm:translate-x-4 sm:translate-y-4" />
               <picture className="relative block dark:hidden">
                 <img src={shots.light.src} width={shots.light.width} height={shots.light.height} alt={ASSISTANT_ALT} loading="lazy" decoding="async" className="block h-auto w-full" />
               </picture>

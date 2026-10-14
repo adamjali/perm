@@ -41,14 +41,14 @@ export function IndexHeader({
     <header className={cn("pt-10 sm:pt-12", className)}>
       <div className="grid grid-cols-1 gap-8 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,25rem)] lg:items-start">
         <div>
-          <h1 className="font-heading text-4xl font-black leading-[1.05] sm:text-5xl">{title}</h1>{" "}
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">{lede}</p>{" "}
+          <h1 className="font-heading text-4xl font-bold leading-[1.05] sm:text-5xl">{title}</h1>{" "}
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">{lede}</p>{" "}
           {figures.length > 0 ? (
-            <dl className={cn("mt-6 grid grid-cols-1 gap-px border-2 border-border bg-border [&>*]:min-w-0", COLUMNS[figures.length])}>
+            <dl className={cn("mt-6 grid grid-cols-1 gap-px border border-border bg-border [&>*]:min-w-0", COLUMNS[figures.length])}>
               {figures.map((f) => (
                 <div key={f.label} className="bg-card px-4 py-3">
-                  <dt className="text-sm text-foreground/70">{f.label}{" "}</dt>{" "}
-                  <dd className="mt-0.5 font-heading text-lg font-black leading-snug [overflow-wrap:anywhere]">
+                  <dt className="text-sm text-muted-foreground">{f.label}{" "}</dt>{" "}
+                  <dd className="mt-0.5 font-heading text-lg font-bold leading-snug [overflow-wrap:anywhere]">
                     {f.href ? (
                       <Link href={f.href} className="underline decoration-primary decoration-2 underline-offset-4 hover:text-primary">
                         {f.value}
@@ -57,7 +57,7 @@ export function IndexHeader({
                       f.value
                     )}{" "}
                   </dd>
-                  {f.note ? <dd className="mt-0.5 text-sm text-foreground/70">{f.note}{" "}</dd> : null}
+                  {f.note ? <dd className="mt-0.5 text-sm text-muted-foreground">{f.note}{" "}</dd> : null}
                 </div>
               ))}
             </dl>
@@ -97,12 +97,12 @@ export function IndexSearch({
       method="get"
       action={action}
       role="search"
-      className="border-2 border-border bg-card p-5 shadow-hard sm:p-6"
+      className="border border-border bg-card p-5 sm:p-6"
     >
-      <label htmlFor="index-search" className="font-heading text-xl font-black leading-tight">
+      <label htmlFor="index-search" className="font-heading text-xl font-bold leading-tight">
         {title}
       </label>{" "}
-      {note ? <p className="mt-1.5 text-sm leading-relaxed text-foreground/70">{note}</p> : null}{" "}
+      {note ? <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{note}</p> : null}{" "}
       <div className="mt-4 flex gap-2">
         <input
           id="index-search"
@@ -112,17 +112,17 @@ export function IndexSearch({
           minLength={2}
           autoComplete="off"
           placeholder={placeholder}
-          className="min-h-11 min-w-0 flex-1 border-2 border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="min-h-11 min-w-0 flex-1 border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         />{" "}
         <button
           type="submit"
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 border-2 border-border bg-primary px-4 font-bold text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-[1px] motion-reduce:transition-none"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 border border-border bg-primary px-4 font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
         >
           <MagnifyingGlassIcon aria-hidden="true" className="size-4" weight="bold" />
           {button}
         </button>
       </div>{" "}
-      {footer ? <div className="mt-4 border-t-2 border-border pt-3 text-sm">{footer}</div> : null}
+      {footer ? <div className="mt-4 border-t border-border pt-3 text-sm">{footer}</div> : null}
     </form>
   );
 }

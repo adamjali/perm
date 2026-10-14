@@ -102,7 +102,7 @@ export function TemplateSelector({
             aria-label="Select template"
             disabled={disabled}
             className={cn(
-              "justify-between gap-2 border-2 min-w-[140px] sm:min-w-[180px] min-h-[44px]",
+              "justify-between gap-2 border min-w-[140px] sm:min-w-[180px] min-h-[44px]",
               !selectedTemplate && "text-muted-foreground",
               className
             )}
@@ -116,7 +116,7 @@ export function TemplateSelector({
             <CaretUpDownIcon className="h-5 w-5 sm:h-4 sm:w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[calc(100vw-2rem)] max-w-[300px] p-0 border-2" align="start">
+        <PopoverContent className="w-[calc(100vw-2rem)] max-w-[300px] p-0 border" align="start">
           <Command>
             <CommandInput placeholder="Search templates..." />
             <CommandList>

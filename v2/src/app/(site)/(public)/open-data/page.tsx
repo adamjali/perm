@@ -148,8 +148,8 @@ export default async function OpenDataPage() {
         <JsonLdScript key={s.name} schema={s} />
       ))}
       <header className="pt-10 sm:pt-12">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Open data</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/75">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Open data</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">
           Two histories the agencies don&rsquo;t keep in one place, as files you can download and reuse with credit.
         </p>
       </header>
@@ -191,21 +191,21 @@ export default async function OpenDataPage() {
         />
       </div>{" "}
 
-      <section className="mt-12 border-3 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 className="font-heading text-2xl font-black">Credit</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/75">
+      <section className="mt-12 border border-border bg-card p-5 sm:p-6">
+        <h2 className="font-heading text-2xl font-bold">Credit</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Free to copy, change and publish, commercially too, under{" "}
           <a href={OPEN_DATA_LICENSE.url} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary" rel="license">
             {OPEN_DATA_LICENSE.short}
           </a>
           . Credit us like this:
         </p>{" "}
-        <p className="mt-4 border-2 border-border bg-muted px-4 py-3 font-mono text-sm break-words">
+        <p className="mt-4 border border-border bg-muted px-4 py-3 font-mono text-sm break-words">
           Source: {OPEN_DATA_CREDIT}, from U.S. Department of State and Department of Labor records. {OPEN_DATA_LICENSE.short}.
         </p>{" "}
-        <p className="mt-4 text-base text-foreground/75">On a web page, with the link:</p>{" "}
+        <p className="mt-4 text-base text-soft">On a web page, with the link:</p>{" "}
         <div className="mt-2 flex flex-wrap items-start gap-3">
-          <code className="block min-w-0 flex-1 break-all border-2 border-border bg-muted px-4 py-3 font-mono text-sm">
+          <code className="block min-w-0 flex-1 break-all border border-border bg-muted px-4 py-3 font-mono text-sm">
             {openDataCreditHtml(SITE_URL)}
           </code>{" "}
           <CopyButton text={openDataCreditHtml(SITE_URL)} />
@@ -214,7 +214,7 @@ export default async function OpenDataPage() {
           <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center font-heading text-base font-bold underline decoration-primary decoration-2 underline-offset-4 [&::-webkit-details-marker]:hidden">
             What the licence covers
           </summary>{" "}
-          <div className="mt-3 max-w-2xl space-y-3 text-base leading-relaxed text-foreground/75">
+          <div className="mt-3 max-w-2xl space-y-3 text-base leading-relaxed text-soft">
             <p>
               The dates and figures themselves are federal records with no copyright, and you can always take them from
               the State Department and DOL directly. The licence covers our compilation of them in these files: the
@@ -256,13 +256,13 @@ function DatasetPanel<T extends object>({
   fields: Array<[keyof T & string, string]>;
 }) {
   return (
-    <section className="flex flex-col border-3 border-border bg-card shadow-hard">
-      <div className="border-b-3 border-border p-5 sm:p-6">
-        <h2 className="font-heading text-2xl font-black">{title}</h2>{" "}
-        <p className="mt-2 text-base leading-relaxed text-foreground/75">{summary}</p>{" "}
+    <section className="flex flex-col border border-border bg-card">
+      <div className="border-b border-border p-5 sm:p-6">
+        <h2 className="font-heading text-2xl font-bold">{title}</h2>{" "}
+        <p className="mt-2 text-base leading-relaxed text-soft">{summary}</p>{" "}
         <dl className="mt-5 grid grid-cols-3 gap-3">
           {stats.map(([label, value]) => (
-            <div key={label} className="min-w-0 border-2 border-border bg-background px-3 py-2">
+            <div key={label} className="min-w-0 border border-border bg-background px-3 py-2">
               <dt className="text-sm font-semibold text-muted-foreground">{label}</dt>{" "}
               <dd className="mt-0.5 font-heading text-base font-bold break-words">{value}</dd>
             </div>
@@ -271,11 +271,11 @@ function DatasetPanel<T extends object>({
       </div>{" "}
 
       {preview.length > 0 && (
-        <div className="overflow-x-auto border-b-3 border-border bg-muted/60">
+        <div className="overflow-x-auto border-b border-border bg-muted/60">
           <table className="w-full min-w-[26rem] border-collapse font-mono text-sm">
             <caption className="sr-only">{caption}</caption>
             <thead>
-              <tr className="border-b-2 border-border">
+              <tr className="border-b border-border">
                 {columns.map((c) => (
                   <th key={c} scope="col" className="px-3 py-2 text-left font-bold">
                     {c}{" "}
@@ -303,7 +303,7 @@ function DatasetPanel<T extends object>({
           <a
             href={files.csv}
             download
-            className="inline-flex min-h-[44px] items-center gap-2 border-3 border-border bg-primary px-4 py-2 font-heading text-sm font-bold text-primary-foreground shadow-hard transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 motion-reduce:transition-none"
+            className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-4 py-2 font-heading text-sm font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
           >
             <FileCsvIcon className="size-5" weight="bold" aria-hidden="true" />
             Download CSV
@@ -311,7 +311,7 @@ function DatasetPanel<T extends object>({
           </a>{" "}
           <a
             href={files.json}
-            className="inline-flex min-h-[44px] items-center gap-2 border-3 border-border bg-card px-4 py-2 font-heading text-sm font-bold shadow-hard transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 motion-reduce:transition-none"
+            className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-card px-4 py-2 font-heading text-sm font-bold transition-transform motion-reduce:transition-none"
           >
             <BracketsCurlyIcon className="size-5" weight="bold" aria-hidden="true" />
             JSON
@@ -332,7 +332,7 @@ function DatasetPanel<T extends object>({
             {fields.map(([name, what]) => (
               <div key={name}>
                 <dt className="inline font-mono font-bold">{name}</dt>{" "}
-                <dd className="inline text-foreground/75">{what}</dd>
+                <dd className="inline text-soft">{what}</dd>
               </div>
             ))}
           </dl>

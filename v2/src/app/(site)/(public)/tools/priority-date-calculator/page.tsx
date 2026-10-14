@@ -233,10 +233,10 @@ export default async function PriorityDateCalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Priority date calculator
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           Where an employment-based priority date sits against the visa bulletin
           cutoffs, and which way those cutoffs have been moving.
         </p>
@@ -266,7 +266,7 @@ export default async function PriorityDateCalculatorPage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
 

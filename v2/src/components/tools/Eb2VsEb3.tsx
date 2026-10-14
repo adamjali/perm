@@ -16,8 +16,8 @@ import type { CountryKey } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
-const EYEBROW_CLASS = "font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground";
+  "mt-2 block min-h-[44px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+const EYEBROW_CLASS = "text-sm font-semibold text-muted-foreground";
 
 const LINE_NAME = { EB2: "EB-2", EB3: "EB-3" } as const;
 type Pair = keyof typeof LINE_NAME;
@@ -65,11 +65,11 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
   );
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <div className="border-b-2 border-border p-6 sm:p-8">
+    <div className={cn("border border-border bg-card", className)}>
+      <div className="border-b border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <ScalesIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <h2 className="font-heading text-2xl font-black leading-tight">Compare the two lines</h2>
+          <h2 className="font-heading text-2xl font-bold leading-tight">Compare the two lines</h2>
         </div>{" "}
         <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2">
           <div>
@@ -102,18 +102,18 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
         // BEFORE A DATE, THE TWO LINES SIDE BY SIDE as they will be filled:
         // each with its cutoff and the people ahead, hatched.
         <div className="p-6 sm:p-8">
-          <p className="text-base text-foreground/70">
+          <p className="text-base text-muted-foreground">
             Pick a priority date and this sets EB-2 and EB-3 next to each other: what this month&apos;s bulletin prints
             for each, and how many people stand ahead of you in each line.
           </p>{" "}
           <div aria-hidden="true" className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
             {["EB-2", "EB-3"].map((line) => (
-              <div key={line} className="border-2 border-dashed border-foreground/40 p-4">
-                <p className="font-heading text-xl font-black text-foreground/70">{line}</p>{" "}
-                <p className="mt-3 text-sm text-foreground/70">This month&apos;s cutoff</p>{" "}
+              <div key={line} className="border border-dashed border-foreground/40 p-4">
+                <p className="font-heading text-xl font-bold text-muted-foreground">{line}</p>{" "}
+                <p className="mt-3 text-sm text-muted-foreground">This month&apos;s cutoff</p>{" "}
                 <div className="mt-1 h-6 w-32 bg-foreground/10" />{" "}
-                <p className="mt-3 text-sm text-foreground/70">People ahead of you</p>{" "}
-                <div className="mt-1 h-9 w-40 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+                <p className="mt-3 text-sm text-muted-foreground">People ahead of you</p>{" "}
+                <div className="mt-1 h-9 w-40 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
               </div>
             ))}
           </div>
@@ -135,11 +135,11 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
               />
             ))}
           </div>
-          <details className="group border-t-2 border-border p-6 sm:p-8">
-            <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-black marker:content-none">
+          <details className="group border-t border-border p-6 sm:p-8">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
               Before thinking about switching lines
             </summary>
-            <div className="mt-3 max-w-3xl space-y-3 text-base leading-relaxed text-foreground/80">
+            <div className="mt-3 max-w-3xl space-y-3 text-base leading-relaxed text-soft">
               <p>
                 A second I-140 in the other category can be filed on the same certified PERM when the job&apos;s
                 requirements support it, and it keeps the original priority date under 8 CFR 204.5(e).{" "}
@@ -154,11 +154,11 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
               </p>
             </div>
           </details>{" "}
-          <details className="group border-t-2 border-border p-6 sm:p-8">
-            <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-black marker:content-none">
+          <details className="group border-t border-border p-6 sm:p-8">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
               What this leaves out
             </summary>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/80">
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">
               <li>PERMs still at the Department of Labor with earlier priority dates.</li>{" "}
               <li>
                 People counted in both lines. Someone who downgraded holds an approved I-140 in each, and USCIS counts
@@ -220,10 +220,10 @@ function Verdict({
   }
   const good = fewer === "both-current" || ((fewer === "EB2" || fewer === "EB3") && cmp[fewer].kind === "current");
   return (
-    <div className={cn("border-b-2 border-border p-6 sm:p-8", good && "bg-tint-primary")}>
+    <div className={cn("border-b border-border p-6 sm:p-8", good && "bg-tint-primary")}>
       <p className={EYEBROW_CLASS}>{LINE_COUNTRY_LABEL[country]}</p>{" "}
-      <p className="mt-2 font-heading text-3xl font-black leading-tight sm:text-4xl">{head}</p>{" "}
-      {body ? <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">{body}</p> : null}
+      <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">{head}</p>{" "}
+      {body ? <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">{body}</p> : null}
     </div>
   );
 }
@@ -247,16 +247,16 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
   if (!rows.some(({ r }) => r.kind === "estimate")) return null;
   const pct = (n: number) => `${(n / max) * 100}%`;
   return (
-    <div className="border-b-2 border-border p-6 sm:p-8">
-      <h3 className="font-heading text-lg font-black">People ahead, on one scale</h3>{" "}
+    <div className="border-b border-border p-6 sm:p-8">
+      <h3 className="font-heading text-lg font-bold">People ahead, on one scale</h3>{" "}
       <ChartTips label="People ahead in EB-2 and EB-3, on one scale" className="mt-4">
       <div className="space-y-4">
         {rows.map(({ line, r }) => (
           <div key={line} className="grid grid-cols-[3.5rem_1fr] items-center gap-3 [&>*]:min-w-0 sm:grid-cols-[4.5rem_1fr]">
-            <span className="font-heading text-lg font-black">{LINE_NAME[line]}</span>{" "}
+            <span className="font-heading text-lg font-bold">{LINE_NAME[line]}</span>{" "}
             {r.kind === "estimate" ? (
               <div
-                className="relative h-8 border-2 border-border bg-background"
+                className="relative h-8 border border-border bg-background"
                 role="img"
                 aria-label={`${LINE_NAME[line]}: ${rangeLabel(r)} people ahead`}
                 data-tip={
@@ -267,7 +267,7 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
               >
                 {r.check?.scaled ? (
                   <span
-                    className="absolute inset-y-0 border-2 border-dashed border-foreground/60"
+                    className="absolute inset-y-0 border border-dashed border-foreground/60"
                     style={{ left: pct(plausibleRange(r).low), width: pct(plausibleRange(r).high - plausibleRange(r).low) }}
                     aria-hidden="true"
                   />
@@ -279,7 +279,7 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
                 />
               </div>
             ) : (
-              <span className="text-base font-semibold text-foreground/80">
+              <span className="text-base font-semibold text-soft">
                 {r.kind === "current" ? "Current, nobody ahead in the line" : "Not available"}
               </span>
             )}
@@ -315,32 +315,32 @@ function LineCard({
   return (
     <section
       className={cn(
-        "border-border p-6 sm:p-8 md:[&:first-child]:border-r-2 max-md:[&:first-child]:border-b-2",
+        "border-border p-6 sm:p-8 md:[&:first-child]:border-r max-md:[&:first-child]:border-b",
         fewer ? "bg-tint-primary" : "",
       )}
       aria-labelledby={headingId}
     >
-      <h3 id={headingId} className="font-heading text-2xl font-black">
+      <h3 id={headingId} className="font-heading text-2xl font-bold">
         {LINE_NAME[line]}
       </h3>{" "}
       <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-base [&>*]:min-w-0">
-        <dt className="text-foreground/70">Final action{month ? `, ${formatMonth(month)}` : ""}</dt>{" "}
+        <dt className="text-muted-foreground">Final action{month ? `, ${formatMonth(month)}` : ""}</dt>{" "}
         <dd className="font-bold tabular-nums">{cutoffLabel(fa)}</dd>{" "}
-        <dt className="text-foreground/70">Dates for filing</dt>{" "}
+        <dt className="text-muted-foreground">Dates for filing</dt>{" "}
         <dd className="font-bold tabular-nums">{cutoffLabel(dff)}</dd>
       </dl>{" "}
       {result.kind === "current" ? (
-        <p className="mt-5 font-heading text-3xl font-black leading-tight">Current for you</p>
+        <p className="mt-5 font-heading text-3xl font-bold leading-tight">Current for you</p>
       ) : result.kind === "no-data" ? (
-        <p className="mt-5 text-base text-foreground/80">{result.reason}</p>
+        <p className="mt-5 text-base text-soft">{result.reason}</p>
       ) : (
         <>
-          <p className="mt-5 font-heading text-3xl font-black leading-tight tabular-nums">
+          <p className="mt-5 font-heading text-3xl font-bold leading-tight tabular-nums">
             {rangeText(result.peopleAhead.low, result.peopleAhead.high)}
           </p>{" "}
           <p className="font-heading text-lg font-bold">people ahead</p>{" "}
           {result.counted && result.counted.low > 0 ? (
-            <p className="mt-2 text-base text-foreground/75">
+            <p className="mt-2 text-base text-soft">
               USCIS counted at least{" "}
               <b className="font-bold text-foreground tabular-nums">{result.counted.low.toLocaleString("en-US")}</b> of them
               in its I-485 inventory.
@@ -359,7 +359,7 @@ function LineCard({
         </>
       )}{" "}
       {result.kind === "estimate" && result.supply ? (
-        <p className="mt-4 text-base text-foreground/75">
+        <p className="mt-4 text-base text-soft">
           <b className="font-bold text-foreground tabular-nums">{result.supply.perYear.toLocaleString("en-US")}</b> green
           cards to this line and country in fiscal {result.supply.fy}, families included (State&apos;s Table V).
         </p>

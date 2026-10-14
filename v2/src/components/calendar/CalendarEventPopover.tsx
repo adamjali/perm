@@ -138,7 +138,7 @@ function UrgencyBadge({ urgency, daysUntil }: { urgency: Urgency; daysUntil: num
     <div className="flex items-center gap-2">
       <Badge
         variant="outline"
-        className="border-2 font-semibold"
+        className="border font-semibold"
         style={{
           color: color,
           borderColor: color,
@@ -226,12 +226,12 @@ export function CalendarEventPopover({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="sm:max-w-md border-border shadow-hard-lg p-0 gap-0"
+        className="sm:max-w-md border-border p-0 gap-0"
         showCloseButton={true}
       >
         {/* Header with stage color accent */}
         <div
-          className="border-b-2 border-border p-4"
+          className="border-b border-border p-4"
           style={{ backgroundColor: `${stageColor}15` }}
         >
           <DialogHeader className="gap-1">
@@ -257,7 +257,7 @@ export function CalendarEventPopover({
           <motion.div
             custom={0}
             variants={contentItemVariants}
-            initial="hidden"
+            initial={false}
             animate="visible"
           >
             <UrgencyBadge urgency={event.urgency} daysUntil={event.daysUntil} />
@@ -270,7 +270,7 @@ export function CalendarEventPopover({
               <motion.div
                 custom={1}
                 variants={contentItemVariants}
-                initial="hidden"
+                initial={false}
                 animate="visible"
                 className="flex items-center gap-2"
               >
@@ -284,7 +284,7 @@ export function CalendarEventPopover({
               <motion.div
                 custom={2}
                 variants={contentItemVariants}
-                initial="hidden"
+                initial={false}
                 animate="visible"
                 className="flex items-start gap-2"
               >
@@ -302,7 +302,7 @@ export function CalendarEventPopover({
               <motion.div
                 custom={3}
                 variants={contentItemVariants}
-                initial="hidden"
+                initial={false}
                 animate="visible"
                 className="flex items-start gap-2"
               >
@@ -320,7 +320,7 @@ export function CalendarEventPopover({
               <motion.div
                 custom={4}
                 variants={contentItemVariants}
-                initial="hidden"
+                initial={false}
                 animate="visible"
                 className="flex items-start gap-2"
               >
@@ -338,9 +338,9 @@ export function CalendarEventPopover({
               <motion.div
                 custom={5}
                 variants={contentItemVariants}
-                initial="hidden"
+                initial={false}
                 animate="visible"
-                className="flex items-center gap-2 p-2 bg-muted border-2 border-border"
+                className="flex items-center gap-2 p-2 bg-muted border border-border"
               >
                 <EyeIcon className="size-4 text-primary" aria-hidden="true" />
                 <span className="text-sm font-medium text-foreground">
@@ -352,7 +352,7 @@ export function CalendarEventPopover({
         </div>
 
         {/* Footer with actions */}
-        <DialogFooter className="border-t-2 border-border p-4 gap-2 sm:gap-2">
+        <DialogFooter className="border-t border-border p-4 gap-2 sm:gap-2">
           <Button
             variant="ghost"
             size="sm"

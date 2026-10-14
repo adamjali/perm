@@ -74,7 +74,7 @@ const COLUMNS: StatColumn<StageCase>[] = [
     key: "title",
     label: "Job title",
     sortValue: (r) => r.jobTitle,
-    render: (r) => <span className="text-foreground/80">{r.jobTitle ?? ""}</span>,
+    render: (r) => <span className="text-soft">{r.jobTitle ?? ""}</span>,
     secondary: true,
   },
   {

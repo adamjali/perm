@@ -14,7 +14,7 @@ import { APP_RATING, shouldAdvertiseRating } from "@/lib/structuredData";
  */
 export function ReviewsLine() {
   return (
-    <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t-2 border-border pt-6">
+    <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
       {shouldAdvertiseRating() ? (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="flex" aria-hidden="true">
@@ -30,7 +30,7 @@ export function ReviewsLine() {
         href={REVIEW_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-4 font-bold shadow-hard-sm transition-transform duration-150 hover:-translate-y-[1px] active:translate-y-0"
+        className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-background px-4 font-bold transition-transform duration-150"
       >
         <ChatDotsIcon className="size-4" aria-hidden="true" />
         Leave a review

@@ -6,8 +6,12 @@
  * column all moved up to `(site)/layout.tsx` so that ONE `AuthHeader` instance
  * spans this group and `(auth)`. See that file for why. What is left here is
  * the chrome that genuinely belongs to the public pages and would be wrong on
- * a sign-in form: the ambient canvas, the scroll progress bar, hash-anchor
- * handling, the back-to-top button and the on-device diagnostic.
+ * a sign-in form: hash-anchor handling, the stale-page refresh and the
+ * on-device diagnostic.
+ *
+ * Nothing on the page moves by itself (Oct 14 2026). The ambient particles,
+ * the scroll progress bar and the back-to-top button are gone: the ground is
+ * one flat colour, and the header is the only thing that stays on screen.
  *
  * No page transition, deliberately. A fade keyed on the pathname remounts the
  * whole tree, data rail included, on every click; the pathname commits WITH
@@ -16,12 +20,9 @@
  * after hydration and remounts the page a second time.
  */
 
-import { ScrollProgress } from "@/components/home";
-import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { HashScrollHandler } from "@/components/ui/hash-scroll-handler";
 import { RefreshWhenStale } from "@/components/ui/refresh-when-stale";
 import { ViewportDiag } from "@/components/diag/ViewportDiag";
-import { AmbientMurmuration } from "@/components/home/AmbientMurmuration";
 import { DataShell } from "@/components/tools/DataShell";
 import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 
@@ -32,12 +33,6 @@ export default function PublicLayout({
 }) {
   return (
     <>
-      {/* One ambient system for the whole public surface: a small murmuration
-          at field opacity, steered by scroll along an invisible path. Opaque
-          bands cover it; it lives on the dotted ground between them. */}
-      <AmbientMurmuration />
-      {/* Scroll progress indicator */}
-      <ScrollProgress />
       <HashScrollHandler />
       {/* A page left open (a phone tab, a home-screen app) asks for current
           figures when the reader comes back to it after 30 minutes. */}
@@ -60,9 +55,6 @@ export default function PublicLayout({
         <SiteBreadcrumbs />
         <DataShell>{children}</DataShell>
       </main>
-
-      {/* Back-to-top button */}
-      <ScrollToTop />
 
       {/* On-device layout diagnostic. Inert without ?diag=1 in the URL. */}
       <ViewportDiag />

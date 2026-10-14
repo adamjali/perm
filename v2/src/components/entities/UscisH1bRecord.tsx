@@ -56,9 +56,9 @@ export function UscisH1bRecord({
   const others = record.nameCount - record.names.length;
 
   return (
-    <section className={cn("mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8", className)}>
-      <h2 className="font-heading text-xl font-black sm:text-2xl">What USCIS decided on its H-1B petitions</h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+    <section className={cn("mt-10 border border-border bg-card p-6 sm:p-8", className)}>
+      <h2 className="font-heading text-xl font-bold sm:text-2xl">What USCIS decided on its H-1B petitions</h2>{" "}
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Workers approved and denied on USCIS&apos;s first decision, FY{first} to FY{newest.fy}
         {throughLabel && through && through < `${newest.fy}-09-30` ? ` (through ${throughLabel})` : ""}, from{" "}
         <a href={USCIS_H1B_HUB} rel="noopener noreferrer" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -68,25 +68,25 @@ export function UscisH1bRecord({
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
-        <div className="border-2 border-border p-4">
-          <p className="text-sm font-bold text-foreground/70">Approved, FY{y.fy}{lead.partial ? " so far" : ""}</p>{" "}
-          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(approved)}</p>
+        <div className="border border-border p-4">
+          <p className="text-sm font-bold text-muted-foreground">Approved, FY{y.fy}{lead.partial ? " so far" : ""}</p>{" "}
+          <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(approved)}</p>
         </div>{" "}
-        <div className="border-2 border-border p-4">
-          <p className="text-sm font-bold text-foreground/70">Denied</p>{" "}
-          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{formatInt(denied)}</p>
+        <div className="border border-border p-4">
+          <p className="text-sm font-bold text-muted-foreground">Denied</p>{" "}
+          <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(denied)}</p>
         </div>{" "}
-        <div className="border-2 border-border bg-tint-primary p-4">
-          <p className="text-sm font-bold text-foreground/70">Approved on first decision</p>{" "}
-          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{rate === null ? "Too few" : pct(rate)}</p>{" "}
-          {rate === null ? <p className="text-sm text-foreground/70">Under 20 decisions that year.</p> : null}
+        <div className="border border-border bg-tint-primary p-4">
+          <p className="text-sm font-bold text-muted-foreground">Approved on first decision</p>{" "}
+          <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{rate === null ? "Too few" : pct(rate)}</p>{" "}
+          {rate === null ? <p className="text-sm text-muted-foreground">Under 20 decisions that year.</p> : null}
         </div>
       </div>{" "}
       <p className="mt-3 text-base">
         New employment: <b className="font-bold tabular-nums">{formatInt(y.approved.new)}</b> approved. Moving here from another
         employer: <b className="font-bold tabular-nums">{formatInt(y.approved.chg)}</b> approved.
       </p>{" "}
-      <h3 className="mt-8 font-heading text-lg font-black">Every year</h3>{" "}
+      <h3 className="mt-8 font-heading text-lg font-bold">Every year</h3>{" "}
       <ChartTips label="Workers approved and denied each fiscal year" className="mt-3">
       <ul className="space-y-1.5" aria-label="Workers approved and denied each fiscal year">
         {[...record.years].reverse().map((v) => {
@@ -112,7 +112,7 @@ export function UscisH1bRecord({
                   <span className="h-full bg-data-good-ink" style={{ width: `${(a / peak) * 100}%` }} />
                   <span className="h-full bg-data-bad-ink" style={{ width: `${(d / peak) * 100}%` }} />
                 </span>{" "}
-                <span className="font-mono text-sm tabular-nums text-foreground/80">
+                <span className="font-mono text-sm tabular-nums text-soft">
                   {formatInt(a)} approved, {formatInt(d)} denied
                 </span>
               </li>
@@ -121,15 +121,15 @@ export function UscisH1bRecord({
         })}
       </ul>
       </ChartTips>{" "}
-      <p className="mt-2 text-sm text-foreground/70">Green: approved. Red: denied. Bars to the busiest year&apos;s scale.</p>{" "}
+      <p className="mt-2 text-sm text-muted-foreground">Green: approved. Red: denied. Bars to the busiest year&apos;s scale.</p>{" "}
 
-      <p className="mt-4 text-sm text-foreground/70">
+      <p className="mt-4 text-sm text-muted-foreground">
         Counted under {record.names.map((x) => x.name).join(", ")}
         {others > 0 ? ` and ${formatInt(others)} other ${others === 1 ? "spelling" : "spellings"}` : ""}, matched by name, the way
         the LCA counts above are.
       </p>{" "}
       <FinePrint summary="What these counts are, and aren't" className="mt-2">
-        <div className="mt-2 space-y-2 text-sm leading-relaxed text-foreground/80">
+        <div className="mt-2 space-y-2 text-sm leading-relaxed text-soft">
           <p>
             Counts of workers on USCIS&apos;s first decision, by the fiscal year USCIS recorded it. Appeals, revocations
             and petitions still pending aren&apos;t in them, and the location is the employer&apos;s mailing address,

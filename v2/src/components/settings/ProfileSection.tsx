@@ -183,7 +183,7 @@ export default function ProfileSection({
 
   return (
     <div
-      className="bg-card border-2 border-border p-6"
+      className="bg-card border border-border p-6"
       style={{ boxShadow: "var(--shadow-hard)" }}
     >
       {/* Header */}
@@ -197,7 +197,7 @@ export default function ProfileSection({
       {/* Profile Photo / Initials / Default Icon */}
       <div className="flex items-center gap-4 mb-6">
         <div
-          className="w-20 h-20 flex items-center justify-center border-2 border-border bg-primary/10 text-primary overflow-hidden"
+          className="w-20 h-20 flex items-center justify-center border border-border bg-primary/10 text-primary overflow-hidden"
           style={{ boxShadow: "var(--shadow-hard)" }}
         >
           {profile.profilePhotoUrl ? (
@@ -252,7 +252,7 @@ export default function ProfileSection({
               className="sm:pr-44"
             />
             {isGoogleSignIn && (
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-sm font-medium border-2 border-primary/20 sm:absolute sm:right-2 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2">
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-sm font-medium border border-primary/20 sm:absolute sm:right-2 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2">
                 <Mail className="w-3 h-3" />
                 <span>Signed in with Google</span>
               </div>
@@ -282,7 +282,7 @@ export default function ProfileSection({
       {/* Save Button */}
       <div className="mt-6 pt-6 border-t border-border flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          <AnimatePresence mode="wait">
+          <AnimatePresence initial={false} mode="wait">
             {justSaved ? (
               <motion.span
                 key="saved"

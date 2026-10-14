@@ -86,7 +86,7 @@ export function CaseWall({
                 <span
                   className={cn(
                     "font-mono text-sm font-bold tabular-nums",
-                    s.isSubject ? "text-foreground" : "text-foreground/60",
+                    s.isSubject ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
                   {formatInt(s.pending)}
@@ -97,7 +97,7 @@ export function CaseWall({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "mt-1 w-full border-2",
+                    "mt-1 w-full border",
                     // The fill is what says "this month is yours" against
                     // its neighbours, so it is a graphical object required to
                     // understand the content and owes 3:1. --primary is
@@ -113,15 +113,15 @@ export function CaseWall({
                 />
                 <span
                   className={cn(
-                    "mt-1.5 w-full border-t-2 pt-1.5 text-center font-mono text-sm uppercase tracking-wider",
+                    "mt-1.5 w-full border-t pt-1.5 text-center text-sm",
                     s.isSubject
                       ? "border-foreground font-bold text-foreground"
-                      : "border-border text-foreground/60",
+                      : "border-border text-muted-foreground",
                   )}
                 >
                   {label}
                 </span>{" "}
-                <span className="mt-1 min-h-[1.25rem] text-center font-mono text-sm font-bold uppercase tracking-[0.1em] text-primary">
+                <span className="mt-1 min-h-[1.25rem] text-center text-sm font-bold text-primary">
                   {s.isSubject ? subjectMark : s.isFront ? "DOL here" : null}
                 </span>
               </li>
@@ -132,7 +132,7 @@ export function CaseWall({
       </div>
       </ChartTips>
 
-      <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-foreground/70">
+      <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
         <b className="font-bold text-foreground">
           {formatInt(wall.drawnAhead)} undecided cases
         </b>{" "}
@@ -194,7 +194,7 @@ export function PastFrontNote({
   const behind = Math.abs(wall.monthsBehindFront);
   return (
     <div className={className}>
-      <p className="text-base leading-relaxed text-foreground/80">
+      <p className="text-base leading-relaxed text-soft">
         The oldest month still open is{" "}
         <b className="font-bold text-foreground">
           {formatMonth(wall.frontMonth)}
@@ -209,7 +209,7 @@ export function PastFrontNote({
         {formatMonth(wall.subject.month)} are still open, out of{" "}
         {formatInt(wall.subject.total)} filed that month.
       </p>{" "}
-      <p className="mt-3 text-base leading-relaxed text-foreground/80">
+      <p className="mt-3 text-base leading-relaxed text-soft">
         A case still open past its month is usually out of filing order: at an RFI, an audit, supervised
         recruitment or an appeal. The split below shows where the rest of its month sits.
       </p>
@@ -245,14 +245,14 @@ export function CohortNeighbours({
           <Fragment key={x.month}>{" "}
           <li
             className={cn(
-              "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b-2 pb-2",
+              "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-2",
               isSubject ? "border-foreground" : "border-border",
             )}
           >
             <span
               className={cn(
-                "font-mono text-sm uppercase tracking-wider",
-                isSubject ? "font-bold text-foreground" : "text-foreground/60",
+                "text-sm",
+                isSubject ? "font-bold text-foreground" : "text-muted-foreground",
               )}
             >
               {formatMonth(x.month)}
@@ -262,11 +262,11 @@ export function CohortNeighbours({
                 </span>
               ) : null}
             </span>{" "}
-            <span className="font-mono text-sm tabular-nums text-foreground/70">
+            <span className="font-mono text-sm tabular-nums text-muted-foreground">
               <b className="font-bold text-foreground">{formatInt(x.pending)}</b> of{" "}
               {formatInt(x.total)} still open
               {x.decidedPct !== null ? (
-                <span className="ml-2 text-foreground/60">
+                <span className="ml-2 text-muted-foreground">
                   ({x.decidedPct.toFixed(0)}% decided)
                 </span>
               ) : null}

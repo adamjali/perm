@@ -309,10 +309,10 @@ export function JobDescriptionField({
   return (
     <div
       className={cn(
-        "rounded-lg border-2 border-border bg-card",
-        "transition-all duration-150",
-        isExpanded && "shadow-hard-sm",
-        !isExpanded && "hover:shadow-hard-sm hover:-translate-y-0.5",
+        "rounded-lg border border-border bg-card",
+        "transition-colors duration-150",
+        isExpanded && "",
+        !isExpanded && "",
         className
       )}
     >
@@ -408,7 +408,7 @@ export function JobDescriptionField({
                         size="sm"
                         onClick={handleCopy}
                         disabled={!description || isLoading}
-                        className="gap-1.5 border-2 min-h-[44px] min-w-[44px]"
+                        className="gap-1.5 border min-h-[44px] min-w-[44px]"
                       >
                         {isCopied ? (
                           <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
@@ -432,7 +432,7 @@ export function JobDescriptionField({
                         size="sm"
                         onClick={handleClear}
                         disabled={!hasContent || isLoading}
-                        className="gap-1.5 border-2 text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[44px] min-w-[44px]"
+                        className="gap-1.5 border text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[44px] min-w-[44px]"
                       >
                         <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">Clear</span>
@@ -459,7 +459,7 @@ export function JobDescriptionField({
                     placeholder="e.g., Software Engineer"
                     disabled={isLoading}
                     maxLength={200}
-                    className="border-2 min-h-[44px]"
+                    className="border min-h-[44px]"
                   />
                   {positionTitle !== inheritedPositionTitle && positionTitle && (
                     <TooltipProvider>
@@ -500,7 +500,7 @@ export function JobDescriptionField({
                   placeholder="Enter the job description for PERM postings..."
                   disabled={isLoading}
                   className={cn(
-                    "border-2 resize-y min-h-[100px] sm:min-h-[120px]",
+                    "border resize-y min-h-[100px] sm:min-h-[120px]",
                     "rows-5 sm:rows-8", // Tailwind doesn’t support rows directly, handled via style
                     isOverLimit && "border-destructive focus-visible:ring-destructive"
                   )}
@@ -518,7 +518,7 @@ export function JobDescriptionField({
                 {/* Single dynamic save button */}
                 <div
                   className={cn(
-                    "rounded-md border-2 transition-colors",
+                    "rounded-md border transition-colors",
                     isExistingTemplateName
                       ? "border-blue-500 dark:border-blue-400"
                       : "border-emerald-500 dark:border-emerald-400"

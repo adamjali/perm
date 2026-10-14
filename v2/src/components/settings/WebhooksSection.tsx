@@ -128,12 +128,12 @@ export default function WebhooksSection() {
         }
       >
         {secret && (
-          <div className="mb-6 border-2 border-border bg-primary/15 p-4" role="status">
+          <div className="mb-6 border border-border bg-primary/15 p-4" role="status">
             <p className="mb-2 text-sm font-bold">
               The signing secret for {secret.url}. Copy it now: it isn&apos;t shown again.
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <code className="min-w-0 flex-1 break-all border-2 border-border bg-background px-3 py-2 font-mono text-sm">
+              <code className="min-w-0 flex-1 break-all border border-border bg-background px-3 py-2 font-mono text-sm">
                 {secret.secret}
               </code>{" "}
               <Button variant="outline" className="min-h-[44px]" onClick={() => copy(secret.secret)}>
@@ -147,7 +147,7 @@ export default function WebhooksSection() {
         )}
 
         {mine.endpoints.length > 0 && (
-          <ul className="mb-6 divide-y-2 divide-border border-y-2 border-border">
+          <ul className="mb-6 divide-y divide-border border-y border-border">
             {mine.endpoints.map((e) => (
               <li key={e.id} className="space-y-2 py-3">
                 <p className="break-all font-mono text-sm font-semibold">{e.url}</p>{" "}
@@ -157,7 +157,7 @@ export default function WebhooksSection() {
                   {e.lastDeliveryAt ? ` Last delivered ${checkedLabel(e.lastDeliveryAt)}.` : ""}
                 </p>{" "}
                 {e.pausedAt !== null && (
-                  <p className="border-2 border-border bg-muted px-3 py-2 text-sm">
+                  <p className="border border-border bg-muted px-3 py-2 text-sm">
                     Paused {checkedLabel(e.pausedAt)}. {e.pauseReason ?? ""} Events from the last 30 days wait for it and go out when you resume it.
                   </p>
                 )}
@@ -253,7 +253,7 @@ export default function WebhooksSection() {
         }
       >
         {mine.watches.length > 0 && (
-          <ul className="mb-6 divide-y-2 divide-border border-y-2 border-border">
+          <ul className="mb-6 divide-y divide-border border-y border-border">
             {mine.watches.map((w) => (
               <li key={w.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div className="min-w-0">
@@ -291,7 +291,7 @@ export default function WebhooksSection() {
             <label className="block text-sm font-semibold">
               Watch
               <select
-                className="mt-1 h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base md:text-sm"
+                className="mt-1 h-11 w-full min-w-0 border border-input bg-background px-3 text-base md:text-sm"
                 value={watchKind}
                 onChange={(ev) => setWatchKind(ev.target.value === "employer" ? "employer" : "case")}
               >
@@ -318,7 +318,7 @@ export default function WebhooksSection() {
 
       {mine.deliveries.length > 0 && (
         <SettingsCard icon={WebhooksLogoIcon} title="Recent deliveries" description="The last 30, newest first. Kept for 30 days.">
-          <ul className="divide-y-2 divide-border border-y-2 border-border">
+          <ul className="divide-y divide-border border-y border-border">
             {mine.deliveries.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div className="min-w-0 text-sm">

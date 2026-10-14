@@ -106,7 +106,7 @@ export function ChatCompactionDivider({
           aria-hidden
         />
         <span
-          className="shrink-0 whitespace-nowrap text-sm uppercase"
+          className="shrink-0 whitespace-nowrap text-sm"
           style={{
             fontFamily: 'var(--font-heading)',
             letterSpacing: '0.12em',
@@ -186,7 +186,7 @@ export function ChatCompactionDivider({
                     }}
                   >
                     <div
-                      className="col-span-2 text-sm uppercase"
+                      className="col-span-2 text-sm"
                       style={{
                         fontFamily: 'var(--font-heading)',
                         letterSpacing: '0.12em',

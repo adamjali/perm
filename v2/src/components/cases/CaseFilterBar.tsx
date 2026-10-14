@@ -285,7 +285,7 @@ export function CaseFilterBar({
   return (
     <div
       data-testid="case-filter-bar"
-      className="space-y-5 border-2 border-border bg-background p-5 shadow-hard"
+      className="space-y-5 border border-border bg-background p-5"
     >
       {/* Show By Tabs: a 2x2 block on phones, one row from sm up */}
       <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0 sm:flex sm:flex-wrap">
@@ -331,7 +331,7 @@ export function CaseFilterBar({
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-11 h-11 md:h-9 text-base"
           />
-          <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-foreground/60 dark:text-muted-foreground pointer-events-none transition-transform duration-150 group-hover:-translate-y-[calc(50%+1px)] active:translate-y-0 active:shadow-hard-sm" />
+          <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground dark:text-muted-foreground pointer-events-none transition-transform duration-150" />
         </div>
 
         {/* Case Status Dropdown */}

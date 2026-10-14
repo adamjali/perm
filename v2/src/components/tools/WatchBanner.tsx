@@ -21,14 +21,14 @@ import { BellIcon } from "@phosphor-icons/react/ssr";
 export function WatchLink() {
   return (
     <div className="flex shrink-0 items-stretch print:hidden">
-      <p className="hidden items-center pr-4 text-sm text-foreground/75 xl:flex">
+      <p className="hidden items-center pr-4 text-sm text-soft xl:flex">
         Waiting on a case? Get a free email within minutes of DOL moving it.
       </p>{" "}
       <Link
         href="/perm-case-status"
         // On a phone, a 44px bell square, the twin of the sections handle on
         // the left; the words come back from `sm`.
-        className="flex min-h-11 w-11 items-center justify-center gap-2 border-l-2 border-border bg-primary font-heading text-sm font-black text-primary-foreground transition-colors hover:bg-primary/85 motion-reduce:transition-none sm:w-auto sm:px-4"
+        className="flex min-h-11 w-11 items-center justify-center gap-2 border-l border-border bg-primary font-heading text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/85 motion-reduce:transition-none sm:w-auto sm:px-4"
       >
         <BellIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 sm:size-4" />
         <span className="sr-only sm:not-sr-only">Watch my case</span>

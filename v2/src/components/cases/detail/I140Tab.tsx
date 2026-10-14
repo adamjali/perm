@@ -30,7 +30,7 @@ export function I140Tab({ caseData }: I140TabProps) {
 
   return (
     <motion.div
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={tabContainerVariants}
       className="space-y-6"
@@ -115,7 +115,7 @@ export function I140Tab({ caseData }: I140TabProps) {
                 <div className="fc-label">Status</div>
                 <div className="fc-val">
                   <span
-                    className="font-mono text-sm font-bold uppercase px-2 py-0.5 border-2 border-border"
+                    className="font-mono text-sm font-bold px-2 py-0.5 border border-border"
                     style={
                       isApproved
                         ? { background: "var(--primary)", color: "var(--primary-foreground)" }

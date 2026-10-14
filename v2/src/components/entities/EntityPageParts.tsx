@@ -82,15 +82,15 @@ export function EntityStatCards({ cards: given }: { cards: (StatCard | null)[] }
   return (
     <div
       // A lone last tile on a phone spans the row: a spanning tile mid-grid left two black holes.
-      className={`grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 ${SM_COLUMNS[cards.length] ?? ""}`}
+      className={`grid [&>*]:min-w-0 grid-cols-2 gap-px border border-border bg-border max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 ${SM_COLUMNS[cards.length] ?? ""}`}
     >
       {cards.map((d) => (
         <div key={d.k} className="bg-card p-5">
-          <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+          <p className="text-sm font-bold text-muted-foreground">
             {d.k}
           </p>{" "}
-          <p className="mt-1.5 font-heading text-2xl font-black tabular-nums">{d.v}</p>{" "}
-          {d.sub ? <p className="mt-1 text-sm text-foreground/70">{d.sub}</p> : null}
+          <p className="mt-1.5 font-heading text-2xl font-bold tabular-nums">{d.v}</p>{" "}
+          {d.sub ? <p className="mt-1 text-sm text-muted-foreground">{d.sub}</p> : null}
         </div>
       ))}
     </div>
@@ -294,7 +294,7 @@ export function wageIsTheJobLimit({
  */
 export function UnpublishedFilingsNote({ subject }: { subject: string }) {
   return (
-    <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
+    <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
       {`Filings newer than DOL's last published file can't be attributed to this ${subject} until DOL publishes them. The `}
       <Link href="/perm-cases#live" className={LINK}>live list</Link>
       {" on the case search page carries them by employer."}

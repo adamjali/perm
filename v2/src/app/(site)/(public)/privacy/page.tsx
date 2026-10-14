@@ -60,8 +60,8 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
       <div>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Privacy policy</h1>{" "}
-        <p className="mb-8 mt-4 text-lg text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
+        <p className="mb-8 mt-4 text-lg text-muted-foreground">
           Effective Date: February 17, 2026 | Last Updated: October 12, 2026
         </p>{" "}
 
@@ -69,12 +69,12 @@ export default function PrivacyPage() {
 
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="introduction" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">1. Introduction</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Welcome to PERM Tracker. PERM Tracker is operated by {LEGAL_NAME},{" "}
               {LEGAL_FORM} (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), which
               runs permtracker.app. This Privacy Policy explains
@@ -83,14 +83,14 @@ export default function PrivacyPage() {
               application for tracking Permanent Labor Certification (PERM)
               cases.
             </p>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               By using PERM Tracker, you agree to the collection and use of
               information in accordance with this policy. If you don’t agree with
               this policy, please don’t use our service.
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="information-we-collect" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">2. Information We Collect</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -99,7 +99,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Account Information
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
                 <strong>Email address</strong>: Used for account creation,
                 authentication, and notifications
@@ -116,7 +116,7 @@ export default function PrivacyPage() {
             </ul>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">Case Data</h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>Employer names and position titles</li>{" "}
               <li>Beneficiary identifiers</li>{" "}
               <li>Case status and progress information</li>{" "}
@@ -128,7 +128,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               User Preferences
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>UI settings (dark mode, sorting preferences)</li>{" "}
               <li>Notification preferences (email, push, quiet hours)</li>{" "}
               <li>Dismissed deadline alerts</li>{" "}
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Contact Form Submissions
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
                 Name, email address and message text you submit through the
                 contact form, plus the submitting IP address (used only for
@@ -154,7 +154,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Technical Information
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>IP address and browser type</li>{" "}
               <li>Device information and screen resolution</li>{" "}
               <li>Usage patterns and interaction data</li>{" "}
@@ -165,7 +165,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               API Keys
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
                 If you make an API key, we keep its name, a one-way hash of it
                 (never the key itself) and the date you made it, until you
@@ -181,7 +181,7 @@ export default function PrivacyPage() {
             <h3 id="firm-claims" className="font-heading text-lg font-bold mt-6 mb-3">
               Claiming a Law Firm&rsquo;s Page
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               When someone claims a law firm&rsquo;s page, we keep the email
               address they used, the role they gave (shown to no one but us)
               and what they sent for the profile. The profile is public on the
@@ -194,15 +194,15 @@ export default function PrivacyPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="how-we-use-your-information" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">3. How We Use Your Information</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               We use the information we collect to:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>Provide and maintain the PERM tracking service</li>{" "}
               <li>Authenticate your account and ensure security</li>{" "}
               <li>Send email and push notifications about upcoming deadlines</li>{" "}
@@ -215,16 +215,16 @@ export default function PrivacyPage() {
             </ul>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="google-oauth-disclosure" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">4. Google OAuth Disclosure</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               PERM Tracker uses Google OAuth as one of our authentication methods.
               When you sign in with Google:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 We access only your <strong>email address</strong> and{" "}
                 <strong>display name</strong>
@@ -247,7 +247,7 @@ export default function PrivacyPage() {
                 We do <strong>not</strong> store your Google password
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               Our use of Google user data complies with the{" "}
               <a
                 href="https://developers.google.com/terms/api-services-user-data-policy"
@@ -261,15 +261,15 @@ export default function PrivacyPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="data-storage-security" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">5. Data Storage &amp; Security</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Your data is stored securely using industry-standard practices:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>Database:</strong> Convex backend platform hosted on
                 Amazon Web Services (AWS) in US East (N. Virginia)
@@ -309,19 +309,19 @@ export default function PrivacyPage() {
                 only when displayed to the authenticated case owner
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               While we implement robust security measures, no method of
               transmission over the Internet is 100% secure. We can’t guarantee
               absolute security of your data.
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="ai-chat-assistant" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">6. AI Chat Assistant</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               PERM Tracker includes an AI-powered chat assistant to help you
               understand your cases, deadlines, and PERM processes. When you use
               the AI chat feature:
@@ -330,7 +330,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               What Data Is Shared
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>Your chat messages and questions</li>{" "}
               <li>
                 Case data referenced in conversations (employer names, position
@@ -346,12 +346,12 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               AI Service Providers
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Your AI chat data is processed by the following third-party
               providers via their APIs. We use a multi-provider fallback system
               for reliability:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>Google Gemini</strong> (Google LLC): Primary AI provider.
                 Retains data for up to 55 days for abuse monitoring only. Does{" "}
@@ -378,11 +378,11 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Web Search
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               When the AI assistant performs web searches on your behalf, search
               queries are sent to:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>Tavily</strong>: Primary web search provider
               </li>{" "}
@@ -390,7 +390,7 @@ export default function PrivacyPage() {
                 <strong>Brave Search</strong>: Fallback web search provider
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               Search queries are derived from your questions and don’t include
               your personal information or case data.
             </p>{" "}
@@ -398,7 +398,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Your Controls
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>You can choose not to use the AI chat feature</li>{" "}
               <li>
                 You can configure AI action modes (off, confirm, auto) in
@@ -409,8 +409,8 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
 
-            <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
-              <p className="text-foreground/80 leading-relaxed font-medium">
+            <div className="border border-black bg-muted p-4 dark:border-white mt-4">
+              <p className="text-soft leading-relaxed font-medium">
                 <strong>IMPORTANT:</strong> Don’t share Social Security numbers,
                 passport numbers, financial account information, or other highly
                 sensitive personal data in AI chat messages. The AI assistant is
@@ -420,12 +420,12 @@ export default function PrivacyPage() {
             </div>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="product-analytics" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">7. Product Analytics</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               We use PostHog (PostHog, Inc.) for product analytics to understand
               how the application is used and to improve features.
             </p>{" "}
@@ -433,7 +433,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               What We Collect
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>Page views and navigation patterns</li>{" "}
               <li>Feature usage events (e.g., creating a case, using AI chat)</li>{" "}
               <li>Browser exceptions and JavaScript errors</li>{" "}
@@ -449,7 +449,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               User Identification
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               When you aren’t signed in, PostHog runs in cookie-free mode: it
               sets no cookies and stores nothing in your browser. PostHog’s
               servers count visits with a one-way hash of your IP address,
@@ -457,14 +457,14 @@ export default function PrivacyPage() {
               changes every day and is deleted once that day is processed, so a
               visit today can’t be linked to a visit tomorrow.
             </p>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               When you’re signed in, analytics events are linked to your
               account to help us understand usage patterns, and PostHog uses a
               cookie and local storage to keep that link. Your identity is
               reset when you sign out, and analytics goes back to cookie-free
               mode.
             </p>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               You can switch usage analytics off at any time in Settings, under
               Support. While it’s off, your browser sends PostHog nothing at
               all, signed in or not, and the setting follows your account to
@@ -474,7 +474,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Data Routing
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Analytics data is sent through a reverse proxy on our domain
               (permtracker.app/ingest) to PostHog&apos;s US servers
               (us.posthog.com). This means analytics requests appear as
@@ -482,7 +482,7 @@ export default function PrivacyPage() {
               as requests to a third-party domain.
             </p>{" "}
 
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               PostHog acts as our data processor. For details, see{" "}
               <a
                 href="https://posthog.com/privacy"
@@ -498,14 +498,14 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Session Replay
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               PostHog can also record session replays: playbacks of page
               interactions (clicks, scrolls, navigation and on-screen content).{" "}
               <strong>Session replay is switched off as of September 6, 2026</strong>{" "}
               and no replays are being recorded. If we turn it back on, this
               section will say so first, and the rules below will apply.
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>Form inputs are masked</strong>: values you type into
                 fields, and all passwords, are redacted and not captured.
@@ -527,7 +527,7 @@ export default function PrivacyPage() {
                 and session replay for your session.
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               Enabling Global Privacy Control in your browser opts you out of
               PostHog analytics (and replay, whenever it is on). The only other
               analytics on the site is Ahrefs Web Analytics (Section 13), which
@@ -538,7 +538,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Surveys
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               PostHog Surveys is switched off. If we ever use it to ask for
               in-app feedback, responses you choose to give are processed by
               PostHog as our data processor, and taking part is always
@@ -546,12 +546,12 @@ export default function PrivacyPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="error-monitoring-session-replay" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">8. Error Monitoring &amp; Session Replay</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               We use Sentry (Functional Software, Inc.) to monitor application
               errors and improve reliability.
             </p>{" "}
@@ -559,7 +559,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Error Tracking
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>JavaScript error messages and stack traces</li>{" "}
               <li>Browser and device information (browser type, OS, screen size)</li>{" "}
               <li>User actions leading to errors (page navigation, clicks)</li>{" "}
@@ -569,7 +569,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Session Replay
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Sentry does not record session replays for this site. That
               feature was removed on August 29, 2026; Sentry receives error
               reports and performance timings only.
@@ -578,7 +578,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Privacy Protections
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
                 <code>sendDefaultPii</code> is disabled, so cookies, user agent strings with PII, and request bodies aren’t sent
               </li>{" "}
@@ -591,7 +591,7 @@ export default function PrivacyPage() {
                 Development environment events are suppressed (not sent to Sentry)
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               Sentry acts as our data processor under a Data Processing Agreement.
               For details, see{" "}
               <a
@@ -606,12 +606,12 @@ export default function PrivacyPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="bot-fraud-prevention" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">9. Bot &amp; Fraud Prevention</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               To protect our sign-up, sign-in, and password-reset forms from
               automated abuse, we use Cloudflare Turnstile, operated by
               Cloudflare, Inc.
@@ -620,18 +620,18 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Signals Collected by Turnstile
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Per Cloudflare&apos;s Turnstile Privacy Addendum, the following
               signals are processed when a Turnstile challenge is rendered:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>Client IP address</li>{" "}
               <li>TLS fingerprint</li>{" "}
               <li>HTTP User-Agent header</li>{" "}
               <li>Your interactions with our forms (mouse movement, click timing)</li>{" "}
               <li>The PERM Tracker sitekey and origin URL</li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               Turnstile does <strong>not</strong> use third-party tracking
               cookies and does <strong>not</strong> read the contents of form
               fields you type (email, password, or name).
@@ -640,7 +640,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Cloudflare&apos;s Role
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Cloudflare acts as our data processor when providing Turnstile
               to us, and as an independent data controller when using
               aggregated signals to improve its own bot-detection capabilities.
@@ -649,7 +649,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               When Turnstile Appears
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
                 <strong>Sign-up:</strong> widget is always visible
               </li>{" "}
@@ -666,13 +666,13 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Legal Basis
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               We process this data on the basis of our legitimate interest
               in preventing fraud, spam, and abuse of our service (GDPR
               Art. 6(1)(f); CCPA service-provider disclosure).
             </p>{" "}
 
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               For more detail, see{" "}
               <a
                 href="https://www.cloudflare.com/turnstile-privacy-policy/"
@@ -697,7 +697,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-8 mb-3">
               Rate Limiting
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               We enforce multiple layers of rate limiting to prevent abuse:
               per-IP limits at the network edge (covering all traffic to
               sign-up, sign-in, password-reset, OTP verification, and AI
@@ -715,7 +715,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Automated Account Protection
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               If we detect an abnormal volume of failed sign-in attempts
               against the same account (for example, 10 failures within 30 minutes, which is the signature of credential-stuffing), we
               automatically place the account in a temporarily locked
@@ -726,12 +726,12 @@ export default function PrivacyPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="push-notifications" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">10. Push Notifications</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               When you enable push notifications, your browser generates a unique
               subscription including an endpoint URL and encryption keys. We store
               this subscription data on your user profile to deliver deadline
@@ -741,7 +741,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               What We Collect
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>
                 <strong>Endpoint URL</strong>: Browser-generated URL for
                 receiving notifications
@@ -750,7 +750,7 @@ export default function PrivacyPage() {
                 <strong>Encryption keys</strong> (p256dh, auth): Browser-generated keys for secure message delivery
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               This data doesn’t contain personally identifiable information and
               consists of technical identifiers generated by your browser.
             </p>{" "}
@@ -758,7 +758,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Delivery Services
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Notifications are delivered through your browser&apos;s push service
               (Google FCM for Chrome, Mozilla Push Service for Firefox, Apple Push
               Notification service for Safari). These services may collect
@@ -769,7 +769,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Your Controls
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>Push notifications require explicit opt-in via browser permission</li>{" "}
               <li>Disable anytime in browser settings or in-app notification preferences</li>{" "}
               <li>Configure quiet hours and notification types in Settings</li>{" "}
@@ -777,16 +777,16 @@ export default function PrivacyPage() {
             </ul>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="google-calendar-integration" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">11. Google Calendar Integration</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               You may optionally connect your Google Calendar to sync PERM
               deadlines as calendar events.
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>OAuth Scope:</strong> We request access only to create,
                 update, and delete calendar events
@@ -808,21 +808,21 @@ export default function PrivacyPage() {
                 tokens
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               We don’t access your existing calendar events, contacts, or other
               Google services through this integration.
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="cookies-local-storage" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">12. Cookies &amp; Local Storage</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               We use the following storage technologies:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>Session Cookies:</strong> Essential for authentication and
                 maintaining your login session
@@ -847,22 +847,22 @@ export default function PrivacyPage() {
                 PostHog
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               These storage technologies are used for application functionality
               and service improvement. They don’t track you across other
               websites.
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="thirdparty-services" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">13. Third-Party Services</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               We use the following third-party services to operate PERM Tracker:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>Convex:</strong> Backend platform, database, and
                 authentication (SOC 2 Type II, hosted on AWS)
@@ -927,7 +927,7 @@ export default function PrivacyPage() {
                 Section 18.
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               Each of these services has their own privacy policies. We recommend
               reviewing their policies for additional information. Convex
               maintains a public list of sub-processors at{" "}
@@ -942,8 +942,8 @@ export default function PrivacyPage() {
               .
             </p>{" "}
 
-            <div className="border-2 border-black bg-muted p-4 shadow-hard-sm dark:border-white mt-4">
-              <p className="text-foreground/80 leading-relaxed font-medium">
+            <div className="border border-black bg-muted p-4 dark:border-white mt-4">
+              <p className="text-soft leading-relaxed font-medium">
                 <strong>
                   We don’t sell or share your personal information.
                 </strong>{" "}
@@ -958,12 +958,12 @@ export default function PrivacyPage() {
             </div>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="data-retention-deletion" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">14. Data Retention &amp; Deletion</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>Your data is retained for as long as your account is active</li>{" "}
               <li>
                 You may request deletion of your account and all associated data
@@ -996,7 +996,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               AI Provider Retention
             </h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>Google Gemini: Up to 55 days (abuse monitoring), then deleted</li>{" "}
               <li>OpenRouter: Not stored (Zero Data Retention)</li>{" "}
               <li>Mistral AI: Per their data processing terms</li>{" "}
@@ -1004,7 +1004,7 @@ export default function PrivacyPage() {
               <li>Cerebras: Per their data processing terms</li>
             </ul>{" "}
 
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               To request data deletion, please email us at{" "}
               <a
                 href="mailto:support@permtracker.app"
@@ -1016,16 +1016,16 @@ export default function PrivacyPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="your-rights" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">15. Your Rights</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Depending on your location, you may have the following rights
               regarding your personal data:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>Access:</strong> Download all your data at any time via
                 the &quot;Download everything (.json)&quot; button in Settings, or request a copy by
@@ -1049,7 +1049,7 @@ export default function PrivacyPage() {
                 <strong>AI Opt-Out:</strong> Choose not to use AI chat features
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               To exercise any of these rights, please contact us at{" "}
               <a
                 href="mailto:support@permtracker.app"
@@ -1063,7 +1063,7 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               California Residents (CCPA/CPRA)
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               If you’re a California resident, you have the right to know what
               personal information we collect and how we use it, to access and
               delete it, to correct inaccurate information, to opt out of the
@@ -1071,7 +1071,7 @@ export default function PrivacyPage() {
               sensitive personal information. We won’t discriminate against
               you for exercising these rights.
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>
                   We don’t sell or share your personal information
@@ -1104,14 +1104,14 @@ export default function PrivacyPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               EEA, UK &amp; Switzerland (GDPR / UK GDPR)
             </h3>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               If you’re located in the European Economic Area, the United
               Kingdom, or Switzerland, you have the rights of access,
               rectification, erasure, restriction, portability, and objection,
               and the right to withdraw consent at any time. Our legal bases for
               processing are:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>Performance of a contract</strong>: to provide the
                 case-tracking service you sign up for.
@@ -1125,7 +1125,7 @@ export default function PrivacyPage() {
                 marketing emails, which you can withdraw at any time.
               </li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               You also have the right to lodge a complaint with your local data
               protection authority (in the UK, the Information
               Commissioner&apos;s Office). International transfers of your data to
@@ -1135,31 +1135,31 @@ export default function PrivacyPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="international-data-transfers" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">16. International Data Transfers</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               Your data is primarily stored and processed in the United States.
               If you’re located in the European Economic Area (EEA), United
               Kingdom, or Switzerland, your data may be transferred to the United
               States by our service providers (Convex, AI providers, Sentry,
               PostHog).
             </p>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               These transfers are protected by Standard Contractual Clauses (SCCs)
               approved by the European Commission, as well as Data Processing
               Agreements with our service providers.
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="childrens-privacy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">17. Children&apos;s Privacy</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               PERM Tracker isn’t intended for use by individuals under the age of
               13. We don’t knowingly collect personal information from children
               under 13. If you become aware that a child has provided us with
@@ -1167,12 +1167,12 @@ export default function PrivacyPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="uscis-case-status" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">18. USCIS Case Status Lookups</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               The USCIS case status lookup lets you enter a receipt number and see what
               USCIS says about that case. It runs on USCIS&apos;s Case Status API under
               credentials issued to PERM Tracker LLC, and it&apos;s available only once
@@ -1180,13 +1180,13 @@ export default function PrivacyPage() {
               nothing up.
             </p>{" "}
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">What you give and what we send</h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>You type a receipt number (thirteen characters, such as IOE0912345678). No account is needed and no name is asked for.</li>{" "}
               <li>We send that receipt number to USCIS over an encrypted connection with our API credentials. USCIS&apos;s own terms of use and privacy policy apply to what USCIS does with the request.</li>{" "}
               <li>USCIS answers with the form type, the current status text, and a dated history of status changes. It doesn&apos;t return your name or any other identifier.</li>
             </ul>{" "}
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">What we store</h3>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>The receipt number, the form type, the status text, the dated history, and the time of the lookup.</li>{" "}
               <li>We store it so a later lookup of the same receipt can show what changed, and so we can count lookups by form type and status. Counts are published only in aggregate; a receipt number is never published or shared.</li>{" "}
               <li>A receipt number identifies a case rather than a person, and we treat it as personal data anyway: it&apos;s encrypted at rest with the rest of the database, it&apos;s not sold, and it&apos;s not used for advertising.</li>{" "}
@@ -1195,36 +1195,36 @@ export default function PrivacyPage() {
             </ul>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="changes-to-this-policy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">19. Changes to This Policy</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               We may update this Privacy Policy from time to time. We’ll notify
               you of any changes by:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>Posting the new Privacy Policy on this page</li>{" "}
               <li>Updating the &quot;Last Updated&quot; date at the top</li>{" "}
               <li>Sending an email notification for material changes</li>
             </ul>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
+            <p className="text-soft leading-relaxed mt-4">
               Your continued use of the service after changes constitutes
               acceptance of the updated policy.
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b-2 border-border">
+          <details className="legal-section group border-b border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">20. Contact Us</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
             </summary>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               If you have any questions about this Privacy Policy or our data
               practices, please contact us:
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4 mt-4">
               <li>
                 <strong>Email:</strong>{" "}
                 <a
@@ -1251,7 +1251,7 @@ export default function PrivacyPage() {
         <div className="mt-12 text-center">
           <Link
             href="/"
-            className="hover-underline text-foreground/60 text-sm"
+            className="hover-underline text-muted-foreground text-sm"
           >
             &larr; Back to Home
           </Link>

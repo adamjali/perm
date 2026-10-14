@@ -157,7 +157,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
 
   return (
     <motion.div
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={tabContainerVariants}
       className="space-y-6"
@@ -210,7 +210,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
                             fontFamily: "var(--font-mono)",
                             fontSize: "0.58rem",
                             fontWeight: 700,
-                            textTransform: "uppercase",
+                            textTransform: "",
                             padding: "2px 8px",
                             border: "2px solid var(--border)",
                             background: "var(--muted)",
@@ -424,7 +424,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
           </div>
           {(caseData.recruitmentNotes || caseData.recruitmentSummaryCustom) && (
             <div style={{ padding: "16px 20px" }}>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", color: "var(--muted-foreground)", marginBottom: 6 }}>Result</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "", color: "var(--muted-foreground)", marginBottom: 6 }}>Result</div>
               <div className="line-clamp-4" style={{ fontSize: "0.88rem", lineHeight: 1.55 }} title={caseData.recruitmentSummaryCustom || caseData.recruitmentNotes || undefined}>
                 {caseData.recruitmentSummaryCustom || caseData.recruitmentNotes}
               </div>

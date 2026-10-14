@@ -61,9 +61,9 @@ export function CollapsibleSection({
     <div
       data-section={name}
       className={cn(
-        "rounded-lg border-2 border-border bg-background",
+        "rounded-lg border border-border bg-background",
         !isEnabled && "opacity-70",
-        isEnabled && "shadow-hard",
+        isEnabled && "",
         className
       )}
     >
@@ -120,7 +120,7 @@ export function CollapsibleSection({
             <span className={cn(
               "text-sm font-medium px-2 py-1 rounded hidden sm:inline",
               !isEnabled
-                ? "bg-data-warn/15 text-data-warn-ink border-2 border-data-warn"
+                ? "bg-data-warn/15 text-data-warn-ink border border-data-warn"
                 : "text-muted-foreground bg-muted"
             )}>
               {statusInfo}
@@ -166,7 +166,7 @@ export function CollapsibleSection({
           >
             {/* Prerequisite warning when opened without prerequisites */}
             {!isEnabled && (
-              <div className="mx-4 mb-3 flex items-center gap-2 text-sm px-3 py-2.5 rounded-md border-2 border-data-warn/50 bg-data-warn/15 text-data-warn-ink">
+              <div className="mx-4 mb-3 flex items-center gap-2 text-sm px-3 py-2.5 rounded-md border border-data-warn/50 bg-data-warn/15 text-data-warn-ink">
                 <AlertTriangle className="h-4 w-4 shrink-0 text-data-warn-ink" />
                 <span className="font-medium">{disabledReason || "Complete earlier sections first for accurate validation."}</span>
               </div>

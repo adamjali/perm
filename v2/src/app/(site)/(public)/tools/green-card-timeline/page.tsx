@@ -157,17 +157,17 @@ export default async function GreenCardTimelinePage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Green card timeline
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           Every stage of an employment-based green card, drawn to scale from what
           DOL and USCIS publish.
         </p>
       </header>
 
       <div className="pop mt-10">
-      <section data-embed="green-card-timeline" className="border-2 border-border bg-card p-6 sm:p-8">
+      <section data-embed="green-card-timeline" className="border border-border bg-card p-6 sm:p-8">
         <GreenCardTimelineView
           timeline={timeline}
           slots={{
@@ -187,7 +187,7 @@ export default async function GreenCardTimelinePage() {
           }}
         />
         {i140Label ? (
-          <p className="mt-6 text-sm text-foreground/60">
+          <p className="mt-6 text-sm text-muted-foreground">
             The I-140 stage uses USCIS&apos;s published time for {i140Label}, the time it took to finish 80% of
             the petitions it decided over six months. The queue runs longer, as the{" "}
             <Link href="/tools/i140-calculator" className="underline underline-offset-2">
@@ -202,31 +202,31 @@ export default async function GreenCardTimelinePage() {
       {/* Who controls what: the single most useful fact about the timeline,
           drawn as structure rather than said in a paragraph. */}
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+        <div className="border border-border bg-tint-primary p-6">
+          <p className="text-sm font-bold text-muted-foreground">
             You control
           </p>{" "}
-          <p className="mt-2 font-heading text-lg font-black">Recruitment and filing</p>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+          <p className="mt-2 font-heading text-lg font-bold">Recruitment and filing</p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The recruitment window and the filing dates are the only stages an
             employer paces. Missing one restarts the case.
           </p>
         </div>
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+        <div className="border border-border bg-card p-6">
+          <p className="text-sm font-bold text-muted-foreground">
             DOL controls
           </p>{" "}
-          <p className="mt-2 font-heading text-lg font-black">The two queues</p>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+          <p className="mt-2 font-heading text-lg font-bold">The two queues</p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The prevailing wage determination and the PERM decision move at
             DOL&apos;s published pace, oldest first.
           </p>
         </div>
-        <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard-sm">
-          <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
+        <div className="border border-border bg-foreground p-6 text-background">
+          <p className="text-sm font-bold text-background/60">
             USCIS and State control
           </p>{" "}
-          <p className="mt-2 font-heading text-lg font-black">The petition and the number</p>{" "}
+          <p className="mt-2 font-heading text-lg font-bold">The petition and the number</p>{" "}
           <p className="mt-2 text-sm leading-relaxed text-background/70">
             The I-140 runs on USCIS&apos;s queue. The visa number depends on the
             bulletin, which is why that stage carries no figure.
@@ -244,14 +244,14 @@ export default async function GreenCardTimelinePage() {
           <Link
             key={t.href}
             href={t.href}
-            className="group flex flex-col border-2 border-border bg-card p-6 shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-0 active:shadow-hard-sm"
+            className="group flex flex-col border border-border bg-card p-6 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <span className="font-heading text-lg font-black">{t.name}</span>{" "}
-            <p className="mt-2 flex-1 text-base leading-relaxed text-foreground/70">{t.blurb}</p>{" "}
+            <span className="font-heading text-lg font-bold">{t.name}</span>{" "}
+            <p className="mt-2 flex-1 text-base leading-relaxed text-muted-foreground">{t.blurb}</p>{" "}
             <span className="mt-4 inline-flex items-center gap-2 font-bold text-foreground underline decoration-primary decoration-2 underline-offset-4">
               Open
               <ArrowRightIcon
-                className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+                className="h-4 w-4 transition-transform duration-150 motion-reduce:transition-none"
                 aria-hidden="true"
               />
             </span>
@@ -260,7 +260,7 @@ export default async function GreenCardTimelinePage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
 

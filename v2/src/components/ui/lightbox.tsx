@@ -113,7 +113,7 @@ export function Lightbox({
               className={cn(
                 "absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center",
                 "bg-black/60 text-white hover:bg-black/80",
-                "border-2 border-white/20 transition-colors",
+                "border border-white/20 transition-colors",
                 "focus:outline-none focus:ring-2 focus:ring-white/50"
               )}
             >
@@ -130,12 +130,12 @@ export function Lightbox({
                 loop
                 muted
                 playsInline
-                className="max-w-[90vw] max-h-[85vh] border-2 border-white/20 shadow-hard-lg"
+                className="max-w-[90vw] max-h-[85vh] border border-white/20"
               >
                 <track kind="captions" />
               </video>
             ) : src ? (
-              <div className="relative border-2 border-white/20 shadow-hard-lg overflow-hidden">
+              <div className="relative border border-white/20 overflow-hidden">
                 <Image
                   src={src}
                   alt={alt}

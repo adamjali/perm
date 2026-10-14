@@ -82,7 +82,7 @@ function card(c: (typeof GROUND)[EntityKind], eyebrow: string, rawName: string, 
         }}
       >
         {/* One text child per box: Satori refuses a div with several children unless it is display:flex. */}
-        <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", opacity: 0.72 }}>
+        <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: "0.14em", textTransform: "", opacity: 0.72 }}>
           {eyebrow}
         </div>
         <div style={{ fontSize: size, fontWeight: 800, lineHeight: 1.02, letterSpacing: "-0.03em", marginTop: 22, maxWidth: 1040 }}>

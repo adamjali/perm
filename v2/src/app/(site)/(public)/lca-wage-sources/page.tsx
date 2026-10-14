@@ -62,8 +62,8 @@ export default async function LcaWageSourcesPage() {
     <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header className="max-w-3xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Where H-1B prevailing wages come from</h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Where H-1B prevailing wages come from</h1>{" "}
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           {latest
             ? `In FY${latest.fy}, ${formatShare(latest.OES / latest.total)} of LCAs set their prevailing wage from DOL's OES data and ${formatShare(latest.Survey / latest.total)} from a private salary survey. A union contract's rate applies where one covers the job; otherwise the employer picks the source, and DOL's file says which.`
             : "Each H-1B labor condition application names where its prevailing wage came from: DOL's OES data, a private survey or a union contract."}
@@ -71,11 +71,11 @@ export default async function LcaWageSourcesPage() {
       </header>
 
       {!doc ? (
-        <p className="mt-8 border-2 border-border bg-card p-5 text-base">These figures are being built. Try again tomorrow.</p>
+        <p className="mt-8 border border-border bg-card p-5 text-base">These figures are being built. Try again tomorrow.</p>
       ) : (
         <>
           <section className="mt-10" aria-labelledby="by-year">
-            <h2 id="by-year" className="font-heading text-2xl font-black">By fiscal year</h2>{" "}
+            <h2 id="by-year" className="font-heading text-2xl font-bold">By fiscal year</h2>{" "}
             <ChartTips label="Prevailing wage sources by fiscal year">
               <ul className="mt-4 grid grid-cols-1 gap-3">
                 {years.map((y) => (
@@ -83,7 +83,7 @@ export default async function LcaWageSourcesPage() {
                     {" "}
                     <li className="grid grid-cols-[4.5rem_1fr_7.5rem] items-center gap-3 text-sm">
                       <span className="font-bold tabular-nums">FY{y.fy}</span>{" "}
-                      <span className="flex h-5 overflow-hidden border-2 border-border" aria-hidden="true">
+                      <span className="flex h-5 overflow-hidden border border-border" aria-hidden="true">
                         {KINDS.map((k) =>
                           y[k] > 0 ? (
                             <span
@@ -95,7 +95,7 @@ export default async function LcaWageSourcesPage() {
                           ) : null,
                         )}
                       </span>{" "}
-                      <span className="text-right tabular-nums text-foreground/70">{`${formatInt(y.total)} LCAs`}</span>
+                      <span className="text-right tabular-nums text-muted-foreground">{`${formatInt(y.total)} LCAs`}</span>
                     </li>
                   </Fragment>
                 ))}
@@ -113,7 +113,7 @@ export default async function LcaWageSourcesPage() {
               ))}
             </ul>{" "}
             {pending.length > 0 ? (
-              <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {pending.length === 1 ? `FY${pending[0]} appears` : `FY${pending[0]} to FY${pending[pending.length - 1]} appear`}{" "}
                 once this site has read the wage source on most of {pending.length === 1 ? "its" : "their"} LCAs.
               </p>
@@ -146,7 +146,7 @@ export default async function LcaWageSourcesPage() {
 
           <section className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2 [&>*]:min-w-0" aria-label="Surveys">
             <div>
-              <h2 className="font-heading text-2xl font-black">Survey publishers</h2>{" "}
+              <h2 className="font-heading text-2xl font-bold">Survey publishers</h2>{" "}
               <ol className="mt-3 divide-y divide-border/60">
                 {doc.publishers.map((p) => (
                   <Fragment key={p.name}>
@@ -155,7 +155,7 @@ export default async function LcaWageSourcesPage() {
                       <span className="min-w-0">
                         <span className="font-bold">{p.name}</span>{" "}
                         {p.spellings.length > 1 ? (
-                          <span className="block text-sm text-foreground/70">{`as ${p.spellings.join("; ")}`}</span>
+                          <span className="block text-sm text-muted-foreground">{`as ${p.spellings.join("; ")}`}</span>
                         ) : null}
                       </span>{" "}
                       <span className="ml-auto font-mono text-sm tabular-nums">{formatInt(p.n)}</span>
@@ -165,7 +165,7 @@ export default async function LcaWageSourcesPage() {
               </ol>
             </div>{" "}
             <div>
-              <h2 className="font-heading text-2xl font-black">Surveys named</h2>{" "}
+              <h2 className="font-heading text-2xl font-bold">Surveys named</h2>{" "}
               <ol className="mt-3 divide-y divide-border/60">
                 {doc.surveys.slice(0, 15).map((s) => (
                   <Fragment key={s.name}>
@@ -181,8 +181,8 @@ export default async function LcaWageSourcesPage() {
           </section>
 
           <section className="mt-12" aria-labelledby="employers">
-            <h2 id="employers" className="font-heading text-2xl font-black">Employers that use private surveys most</h2>{" "}
-            <p className="mt-2 max-w-3xl text-base text-foreground/70">
+            <h2 id="employers" className="font-heading text-2xl font-bold">Employers that use private surveys most</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base text-muted-foreground">
               LCAs whose prevailing wage came from a private survey, and that count&apos;s share of the employer&apos;s
               LCAs with a wage source on file.
             </p>

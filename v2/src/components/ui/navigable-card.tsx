@@ -106,7 +106,7 @@ export function NavigableCard({
       href={href}
       onClick={handleClick}
       className={cn(
-        "relative block cursor-pointer transition-all duration-150",
+        "relative block cursor-pointer transition-colors duration-150",
         isNavigating && "pointer-events-none",
         isActive && "ring-2 ring-primary ring-offset-2",
         className

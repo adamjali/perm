@@ -61,10 +61,10 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
       <h2 id="warn-overview" className="sr-only">
         The notices, by month and by sponsor
       </h2>{" "}
-      <figure className="m-0 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+      <figure className="m-0 border border-border bg-card p-5 sm:p-6">
         <figcaption>
-          <span className="block font-heading text-xl font-black">By the state that published them</span>{" "}
-          <span className="mt-1 block text-sm text-foreground/70">
+          <span className="block font-heading text-xl font-bold">By the state that published them</span>{" "}
+          <span className="mt-1 block text-sm text-muted-foreground">
             Each state publishes its own window, so each bar says the dates its notices span.
           </span>
         </figcaption>{" "}
@@ -78,13 +78,13 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
                 >
                   <span className="text-sm">
                     <span className="block font-bold">{STATE_NAME[st] ?? st}</span>{" "}
-                    <span className="block text-foreground/70">
+                    <span className="block text-muted-foreground">
                       {monthShort(b.first)} to {monthShort(b.last)}
                     </span>
                   </span>{" "}
                   <span aria-hidden="true" className="block h-5">
                     <span
-                      className="block h-full border-2 border-border bg-data-warn-ink"
+                      className="block h-full border border-border bg-data-warn-ink"
                       style={{ width: `${Math.max(3, (b.employees / maxState) * 100)}%` }}
                     />
                   </span>{" "}
@@ -95,10 +95,10 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
           </ol>
         </ChartTips>
       </figure>{" "}
-      <figure className="m-0 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+      <figure className="m-0 border border-border bg-card p-5 sm:p-6">
         <figcaption>
-          <span className="block font-heading text-xl font-black">The sponsors whose notices named the most</span>{" "}
-          <span className="mt-1 block text-sm text-foreground/70">Every notice held, each sponsor by its own page.</span>
+          <span className="block font-heading text-xl font-bold">The sponsors whose notices named the most</span>{" "}
+          <span className="mt-1 block text-sm text-muted-foreground">Every notice held, each sponsor by its own page.</span>
         </figcaption>{" "}
         <ChartTips label="Sponsors by employees named in their layoff notices" className="mt-5">
           <ol className="space-y-2">
@@ -116,7 +116,7 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
                   </Link>{" "}
                   <span aria-hidden="true" className="block h-5">
                     <span
-                      className="block h-full border-2 border-border bg-data-warn-ink"
+                      className="block h-full border border-border bg-data-warn-ink"
                       style={{ width: `${Math.max(3, (s.employees / maxTop) * 100)}%` }}
                     />
                   </span>{" "}

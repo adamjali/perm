@@ -51,7 +51,7 @@ export function RecruitmentDeadlineIndicator({
   // If no PWD determination, show initial state
   if (!pwdDeterminationDate) {
     return (
-      <div className="rounded-lg border-2 border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <CalendarClock className="h-4 w-4" />
           <span>Enter PWD determination date to see recruitment deadline</span>
@@ -63,7 +63,7 @@ export function RecruitmentDeadlineIndicator({
   // If we have determination but no expiration, something is off
   if (!pwdExpirationDate) {
     return (
-      <div className="rounded-lg border-2 border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <CalendarClock className="h-4 w-4" />
           <span>PWD expiration date will be calculated...</span>
@@ -84,7 +84,7 @@ export function RecruitmentDeadlineIndicator({
     const expirationDate = parseISO(pwdExpirationDate);
     const daysToExpiration = differenceInDays(expirationDate, today);
     return (
-      <div className="rounded-lg border-2 border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <CalendarClock className="h-4 w-4" />
           <span>PWD expires {format(expirationDate, "MMM d, yyyy")} ({daysToExpiration} days)</span>
@@ -142,7 +142,7 @@ export function RecruitmentDeadlineIndicator({
   return (
     <div
       className={cn(
-        "rounded-lg border-2 p-4 space-y-2",
+        "rounded-lg border p-4 space-y-2",
         config.bgColor,
         config.borderColor
       )}
@@ -156,7 +156,7 @@ export function RecruitmentDeadlineIndicator({
 
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-muted-foreground text-sm uppercase tracking-wide">
+          <span className="text-muted-foreground text-sm">
             Must complete by
           </span>{" "}
           <p className="font-medium">
@@ -169,7 +169,7 @@ export function RecruitmentDeadlineIndicator({
           </p>
         </div>
         <div>
-          <span className="text-muted-foreground text-sm uppercase tracking-wide">
+          <span className="text-muted-foreground text-sm">
             PWD expires
           </span>{" "}
           <p className="font-medium">

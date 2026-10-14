@@ -102,10 +102,10 @@ export default async function PermByStatePage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           PERM filings, state by state
         </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           Every certified, denied and withdrawn case, at its worksite state.
           Hover a state to read it.
         </p>
@@ -117,25 +117,25 @@ export default async function PermByStatePage() {
 
           {/* The three facts the map cannot say at a glance. */}
           <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard-sm">
-              <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
+            <div className="border border-border bg-foreground p-6 text-background">
+              <p className="text-sm font-bold text-background/60">
                 Cases in this window
               </p>{" "}
-              <p className="mt-2 font-heading text-3xl font-black tabular-nums">
+              <p className="mt-2 font-heading text-3xl font-bold tabular-nums">
                 {formatInt(uniqueCases)}
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-background/70">
                 De-duplicated by case number across the quarterly files.
               </p>
             </div>
-            <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-              <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+            <div className="border border-border bg-tint-primary p-6">
+              <p className="text-sm font-bold text-muted-foreground">
                 Busiest state
               </p>{" "}
-              <p className="mt-2 font-heading text-3xl font-black">
+              <p className="mt-2 font-heading text-3xl font-bold">
                 {top ? top.state : "Not yet"}
               </p>{" "}
-              <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {!top
                   ? "Awaiting the next quarterly ingest."
                   : topBeatsSmallHalf
@@ -143,11 +143,11 @@ export default async function PermByStatePage() {
                     : `${formatInt(top.total)} filings, ${((top.total / (uniqueCases || 1)) * 100).toFixed(0)}% of the window.`}
               </p>
             </div>
-            <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-              <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+            <div className="border border-border bg-card p-6">
+              <p className="text-sm font-bold text-muted-foreground">
                 Why states differ
               </p>{" "}
-              <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 DOL works one national queue, so median days barely move by
                 state. Volume and wages move a lot, which is industry mix.{" "}
                 <Link href="/methodology" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -161,10 +161,10 @@ export default async function PermByStatePage() {
           {stateProfiles.length > 0 ? (
             <>
               <section className="mt-12">
-                <h2 className="font-heading text-2xl font-black">
+                <h2 className="font-heading text-2xl font-bold">
                   What each state actually files
                 </h2>{" "}
-                <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+                <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
                   Shaded by volume, PERM looks like one national software
                   program. It isn&apos;t.
                   {mostConcentrated && mostConcentrated.topOccupations[0] ? (
@@ -184,7 +184,7 @@ export default async function PermByStatePage() {
               </section>
 
               <section className="mt-12">
-                <h2 className="font-heading text-2xl font-black">
+                <h2 className="font-heading text-2xl font-bold">
                   Every state&apos;s biggest occupation and biggest employer
                 </h2>{" "}
                 {/* How the names were grouped, and the worked example that
@@ -202,11 +202,11 @@ export default async function PermByStatePage() {
             </>
           ) : null}
 
-          <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-            <h2 className="font-heading text-lg font-black">
+          <section className="mt-10 border border-border bg-tint-primary p-6">
+            <h2 className="font-heading text-lg font-bold">
               Reading a rate off a small state
             </h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
               The smallest jurisdictions decide a couple of dozen cases, where
               one denial swings a rate by several points, so they stay
               uncoloured on rates and medians. Ranked denial rates with a 95%
@@ -227,8 +227,8 @@ export default async function PermByStatePage() {
           </section>
         </>
       ) : (
-        <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">
-          <p className="text-lg text-foreground/70">
+        <section className="mt-10 border border-border bg-card p-8 text-center">
+          <p className="text-lg text-muted-foreground">
             The state aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}
             <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
@@ -241,9 +241,9 @@ export default async function PermByStatePage() {
 
       {/* Both doors, as everywhere on the data surface. */}
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Waiting on a case here?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-tint-primary p-6">
+          <h2 className="font-heading text-lg font-bold">Waiting on a case here?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             The state doesn’t change your place in line. The filing month
             does. The{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -252,9 +252,9 @@ export default async function PermByStatePage() {
             reads your month against the live queue.
           </p>
         </div>
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Filing them?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Filing them?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Benchmark a case against the national medians, then track its
             deadlines.{" "}
             <Link href="/signup" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -265,7 +265,7 @@ export default async function PermByStatePage() {
         </div>
       </section>
       <PageBasics page="perm-by-state" />{" "}
-      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
+      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Filings newer than DOL&apos;s last published file aren&apos;t in these figures: DOL reports the worksite state only when it publishes the decided case. Those are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link>, by employer.
       </p>{" "}
       <DataProvenance datasets={["perm-cases"]} />

@@ -47,16 +47,16 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
   // step. Every row is still listed, so a reader sees what will be measured.
   if (measured.length === 0) {
     return (
-      <div className="border-2 border-dashed border-foreground/40 p-4 sm:p-5">
-        <p className="text-base text-foreground/70">
+      <div className="border border-dashed border-foreground/40 p-4 sm:p-5">
+        <p className="text-base text-muted-foreground">
           {`No step has the ${METRIC_MIN_N} reports a median needs yet. Each fills in as timelines arrive.`}
         </p>{" "}
         <ol className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
           {metrics.map((m, i) => (
             <Fragment key={m.id}>
               {" "}
-              <li className="flex items-start gap-3 border-2 border-border bg-card p-3">
-                <span className="flex size-7 shrink-0 items-center justify-center border-2 border-border font-mono text-sm font-bold">
+              <li className="flex items-start gap-3 border border-border bg-card p-3">
+                <span className="flex size-7 shrink-0 items-center justify-center border border-border font-mono text-sm font-bold">
                   {i + 1}
                 </span>{" "}
                 <span className="min-w-0 flex-1">
@@ -69,7 +69,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
                       />
                     ))}
                   </span>{" "}
-                  <span className="mt-1 block text-sm text-foreground/70">
+                  <span className="mt-1 block text-sm text-muted-foreground">
                     {`${Math.min(m.n, METRIC_MIN_N)} of ${METRIC_MIN_N} reports`}
                   </span>
                 </span>
@@ -87,10 +87,10 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
       {metrics.map((m) => (
         <Fragment key={m.id}>
           {" "}
-          <li className="border-2 border-border bg-card p-4">
+          <li className="border border-border bg-card p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <p className="font-heading text-base font-black">{m.label}</p>{" "}
-              <p className="text-sm text-foreground/70">
+              <p className="font-heading text-base font-bold">{m.label}</p>{" "}
+              <p className="text-sm text-muted-foreground">
                 {m.verified ? "DOL's record" : "self-reported"}, {m.n.toLocaleString("en-US")}{" "}
                 {m.n === 1 ? "timeline" : "timelines"}
               </p>
@@ -98,25 +98,25 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
             {m.median !== null && m.p25 !== null && m.p75 !== null ? (
               <>
                 <div
-                  className="relative mt-3 h-6 border-2 border-border bg-background"
+                  className="relative mt-3 h-6 border border-border bg-background"
                   aria-hidden="true"
                   data-tip={`${m.label}\nMedian ${days(m.median)}\nMiddle half ${m.p25.toLocaleString("en-US")} to ${days(m.p75)}\n${m.n.toLocaleString("en-US")} ${m.n === 1 ? "timeline" : "timelines"}, ${m.verified ? "DOL's record" : "self-reported"}`}
                 >
                   <span
-                    className={cn("absolute inset-y-0 border-x-2 border-border", m.verified ? "bg-primary/60" : "bg-primary/30")}
+                    className={cn("absolute inset-y-0 border-x border-border", m.verified ? "bg-primary/60" : "bg-primary/30")}
                     style={{ left: pct(m.p25), width: `calc(${pct(m.p75)} - ${pct(m.p25)})` }}
                   />{" "}
                   <span className="absolute inset-y-[-4px] w-1 bg-foreground" style={{ left: pct(m.median) }} />
                 </div>{" "}
                 <p className="mt-2 text-base">
                   <b>Median {days(m.median)}</b>,{" "}
-                  <span className="text-foreground/70">
+                  <span className="text-muted-foreground">
                     the middle half {m.p25.toLocaleString("en-US")} to {days(m.p75)}
                   </span>
                 </p>
               </>
             ) : (
-              <p className="mt-2 text-base text-foreground/70">
+              <p className="mt-2 text-base text-muted-foreground">
                 Not enough timelines yet: a median needs {METRIC_MIN_N}, and this stage has {m.n}.
               </p>
             )}
@@ -155,7 +155,7 @@ export function BoardKey() {
           <li className="inline-flex items-center gap-2">
             <span
               className={cn(
-                "inline-block size-3 border-2 border-border",
+                "inline-block size-3 border border-border",
                 DOT[s.id],
                 s.id === "greenCardOn" ? "rotate-45" : "rounded-full",
               )}
@@ -176,7 +176,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
   return (
     // The tooltip sits outside the scrolling table, which would clip it.
     <ChartTips label="Shared timelines, each step by days from PERM filing">
-    <div className="overflow-x-auto border-2 border-border">
+    <div className="overflow-x-auto border border-border">
       <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
         <thead className="bg-muted">
           <tr>
@@ -194,18 +194,18 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
             const shown = r.stops.filter((s) => s.day !== null && s.day >= 0);
             const words = shown.map((s) => `${STOPS.find((x) => x.id === s.id)?.short ?? s.id} day ${s.day}`).join(", ");
             return (
-              <tr key={`${r.filedMonth}-${i}`} className="border-t-2 border-border/40 align-middle">
+              <tr key={`${r.filedMonth}-${i}`} className="border-t border-border/40 align-middle">
                 <td className="px-3 py-3 tabular-nums">
                   {r.filedMonth ? monthName(r.filedMonth) : "Not found at DOL"}
                   {r.permVerified ? null : (
-                    <span className="block text-foreground/70">PERM dates not checked yet</span>
+                    <span className="block text-muted-foreground">PERM dates not checked yet</span>
                   )}{" "}
                 </td>
                 <td className="px-3 py-3">{label(CATEGORIES, r.category) ?? ""}{" "}</td>
                 <td className="px-3 py-3">{label(COUNTRIES, r.country) ?? ""}{" "}</td>
                 <td className="px-3 py-3">
                   {r.route ? (label(ROUTES, r.route) ?? "").replace(/ \(.*\)$/, "") : ""}
-                  {r.premium ? <span className="block text-foreground/70">premium I-140</span> : null}{" "}
+                  {r.premium ? <span className="block text-muted-foreground">premium I-140</span> : null}{" "}
                 </td>
                 <td className="px-3 py-3">
                   <div className="relative h-5" role="img" aria-label={words || "No dated steps yet"}>
@@ -215,7 +215,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
                         key={s.id}
                         data-tip={`${STOPS.find((x) => x.id === s.id)?.short ?? s.id}\nDay ${(s.day as number).toLocaleString("en-US")} from PERM filing${s.month ? `\n${monthName(s.month)}` : ""}${r.filedMonth ? `\nPERM filed ${monthName(r.filedMonth)}` : ""}`}
                         className={cn(
-                          "absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 border-2 border-border",
+                          "absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 border border-border",
                           DOT[s.id],
                           s.id === "greenCardOn" ? "rotate-45" : "rounded-full",
                         )}
@@ -225,7 +225,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
                     ))}
                   </div>
                   {r.rfe ? (
-                    <span className="mt-1 block text-foreground/70">
+                    <span className="mt-1 block text-muted-foreground">
                       RFE on the {r.rfe.form === "i140" ? "I-140" : "I-485"}
                       {r.rfe.outcome === "approved" ? ", approved after it" : r.rfe.outcome === "denied" ? ", denied" : ""}{" "}
                     </span>
@@ -243,7 +243,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
 
 export function RfeBars({ rfe }: { rfe: RfeSummary }) {
   if (rfe.total === 0) {
-    return <p className="text-base text-foreground/70">Nobody has reported an RFE yet.</p>;
+    return <p className="text-base text-muted-foreground">Nobody has reported an RFE yet.</p>;
   }
   const most = Math.max(...rfe.byReason.map((r) => r.count), 1);
   return (
@@ -258,7 +258,7 @@ export function RfeBars({ rfe }: { rfe: RfeSummary }) {
               className="grid grid-cols-[minmax(0,14rem)_1fr_auto] items-center gap-3 text-sm"
             >
               <span className="font-bold">{r.label}</span>{" "}
-              <span className="h-4 border-2 border-border bg-background" aria-hidden="true">
+              <span className="h-4 border border-border bg-background" aria-hidden="true">
                 <span className="block h-full bg-primary/50" style={{ width: `${(r.count / most) * 100}%` }} />
               </span>{" "}
               <span className="tabular-nums">{r.count}</span>
@@ -267,7 +267,7 @@ export function RfeBars({ rfe }: { rfe: RfeSummary }) {
         ))}
       </ul>
       </ChartTips>{" "}
-      <dl className="grid grid-cols-1 gap-2 self-start border-2 border-border bg-card p-4 text-sm">
+      <dl className="grid grid-cols-1 gap-2 self-start border border-border bg-card p-4 text-sm">
         {rfe.byForm.map((f) => (
           <Fragment key={f.id}>
             {" "}
@@ -310,7 +310,7 @@ export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: 
                 className="grid grid-cols-[minmax(0,15rem)_1fr_auto] items-center gap-3 text-sm"
               >
                 <span className="font-bold">{s.label}</span>{" "}
-                <span className="h-4 border-2 border-border bg-background" aria-hidden="true">
+                <span className="h-4 border border-border bg-background" aria-hidden="true">
                   <span className="block h-full bg-primary/50" style={{ width: `${(s.count / most) * 100}%` }} />
                 </span>{" "}
                 <span className="tabular-nums">{s.count.toLocaleString("en-US")}</span>
@@ -320,11 +320,11 @@ export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: 
         </ul>
       </ChartTips>{" "}
       {waiting.lines.length ? (
-        <div className="overflow-x-auto border-2 border-border">
+        <div className="overflow-x-auto border border-border">
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <caption className="sr-only">Timelines by category, country and step</caption>
             <thead>
-              <tr className="border-b-2 border-border bg-muted text-left">
+              <tr className="border-b border-border bg-muted text-left">
                 <th scope="col" className="p-2 font-bold">
                   Category and country{" "}
                 </th>
@@ -353,7 +353,7 @@ export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: 
         </div>
       ) : null}{" "}
       {waiting.unlisted ? (
-        <p className="text-sm text-foreground/70">
+        <p className="text-sm text-muted-foreground">
           {waiting.unlisted.toLocaleString("en-US")} more {waiting.unlisted === 1 ? "timeline sits" : "timelines sit"} on a
           category and country with fewer than 5 timelines, or gave neither, so {waiting.unlisted === 1 ? "it isn't" : "they aren't"}{" "}
           listed by line.

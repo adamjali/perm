@@ -47,13 +47,13 @@ export function PendingCensus({
         <tr>
           <th
             scope="col"
-            className="border-b-2 border-border pb-2 font-mono text-sm font-bold uppercase tracking-wider text-foreground/80"
+            className="border-b border-border pb-2 text-sm font-bold text-soft"
           >
             DOL status{" "}
           </th>
           <th
             scope="col"
-            className="border-b-2 border-border pb-2 text-right font-mono text-sm font-bold uppercase tracking-wider text-foreground/80"
+            className="border-b border-border pb-2 text-right text-sm font-bold text-soft"
           >
             Cases{" "}
           </th>
@@ -72,21 +72,21 @@ export function PendingCensus({
                 >
                   <span className="flex items-center gap-2">
                     <span
-                      className={`inline-block h-3 w-3 shrink-0 border-2 border-border ${meta.fill}`}
+                      className={`inline-block h-3 w-3 shrink-0 border border-border ${meta.fill}`}
                       aria-hidden="true"
                     />{" "}
-                    <span className="font-heading text-base font-black">
+                    <span className="font-heading text-base font-bold">
                       {meta.label}
                     </span>{" "}
-                    <span className="font-mono text-sm tabular-nums text-foreground/70">
+                    <span className="font-mono text-sm tabular-nums text-muted-foreground">
                       {formatInt(group.count)}
                     </span>
                   </span>{" "}
                 </th>
               </tr>
               {group.statuses.map((s) => (
-                <tr key={s.status} className="border-b-2 border-border">
-                  <td className="py-2 pr-4 text-base text-foreground/80">
+                <tr key={s.status} className="border-b border-border">
+                  <td className="py-2 pr-4 text-base text-soft">
                     {prettyStatus(s.status)}{" "}
                   </td>
                   <td className="py-2 text-right text-base font-bold tabular-nums">
@@ -120,8 +120,8 @@ export function DecidedList({
       {statuses.map((s) => (
         <Fragment key={s.status}>
           {" "}
-          <li className="flex items-baseline justify-between gap-4 border-b-2 border-border pb-2 text-base">
-            <span className="text-foreground/80">{prettyStatus(s.status)}</span>{" "}
+          <li className="flex items-baseline justify-between gap-4 border-b border-border pb-2 text-base">
+            <span className="text-soft">{prettyStatus(s.status)}</span>{" "}
             <span className="font-bold tabular-nums">{formatInt(s.count)}</span>
           </li>
         </Fragment>

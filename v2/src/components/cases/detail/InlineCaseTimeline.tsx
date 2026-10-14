@@ -273,17 +273,17 @@ export function InlineCaseTimeline({
           two match. The lanes are the case's four
           stages, and the stage column sticks while the months scroll under it
           on a phone, exactly as the case column does on the timeline. */}
-      <div className="border-2 border-foreground bg-card shadow-hard [--tl-label:112px]">
+      <div className="border border-foreground bg-card [--tl-label:112px]">
         <div ref={scrollRef} className="overflow-x-auto overscroll-x-none">
           {/* Every month at least MIN_MONTH_PX wide, as on the timeline page. */}
           <div style={{ minWidth: `calc(var(--tl-label) + ${months.length * MIN_MONTH_PX}px)` }}>
             {/* Header row */}
             <div className="flex">
               <div
-                className="sticky left-0 flex h-11 min-h-[44px] w-28 shrink-0 items-center border-r-[3px] border-b-2 border-foreground bg-card px-2 sm:px-3"
+                className="sticky left-0 flex h-11 min-h-[44px] w-28 shrink-0 items-center border-r-[3px] border-b border-foreground bg-card px-2 sm:px-3"
                 style={{ zIndex: Z_INDEX.stickyLabel + 5 }}
               >
-                <span className="text-sm font-bold uppercase tracking-wide text-foreground">
+                <span className="text-sm font-bold text-foreground">
                   Stage
                 </span>
               </div>

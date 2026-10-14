@@ -208,13 +208,13 @@ function TallyBar({ name, t }: { name: string; t: ReturnType<typeof tally> }) {
   const parts = TALLY_PARTS.filter((p) => t[p.key] > 0);
   return (
     <div className="mt-5">
-      <p className="font-heading text-base font-black">{name}</p>{" "}
+      <p className="font-heading text-base font-bold">{name}</p>{" "}
       <p className="sr-only">{tallySentence(name, t)}</p>{" "}
-      <div aria-hidden="true" className="mt-2 flex h-7 border-2 border-border">
+      <div aria-hidden="true" className="mt-2 flex h-7 border border-border">
         {parts.map((p, i) => (
           <span
             key={p.key}
-            className={`h-full ${p.fill} ${i > 0 ? "border-l-2 border-border" : ""}`}
+            className={`h-full ${p.fill} ${i > 0 ? "border-l border-border" : ""}`}
             style={{ width: `${(t[p.key] / total) * 100}%` }}
           />
         ))}
@@ -222,9 +222,9 @@ function TallyBar({ name, t }: { name: string; t: ReturnType<typeof tally> }) {
       <ul aria-hidden="true" className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         {parts.map((p) => (
           <li key={p.key} className="flex items-center gap-1.5">
-            <span className={`size-3 border-2 border-border ${p.fill}`} />{" "}
+            <span className={`size-3 border border-border ${p.fill}`} />{" "}
             <span className="font-bold tabular-nums">{t[p.key]}</span>{" "}
-            <span className="text-foreground/75">{`${p.word} `}</span>
+            <span className="text-soft">{`${p.word} `}</span>
           </li>
         ))}
       </ul>
@@ -245,18 +245,18 @@ function ChartTable({
 }) {
   return (
     <div className="mt-8">
-      <h2 className="font-heading text-xl font-black tracking-tight sm:text-2xl">{title}</h2>{" "}
+      <h2 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">{title}</h2>{" "}
       <p className="mt-1 text-sm text-muted-foreground">
         {since ? `Each cell shows the cutoff and its move since the ${since} bulletin.` : first}
       </p>{" "}
-      <div className="mt-4 overflow-x-auto overscroll-x-none border-2 border-border bg-card shadow-hard-sm">
+      <div className="mt-4 overflow-x-auto overscroll-x-none border border-border bg-card">
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead className="bg-foreground text-background">
             <tr>
-              <th scope="col" className="px-3 py-3 text-left font-mono text-sm font-bold uppercase tracking-[0.1em]">Category{" "} </th>
+              <th scope="col" className="px-3 py-3 text-left text-sm font-bold">Category{" "} </th>
               {BOARD_COUNTRIES.map((c) => (
                 <Fragment key={c}>
-                  <th scope="col" className="px-3 py-3 text-left font-mono text-sm font-bold uppercase tracking-[0.1em]">{COUNTRY_LABEL[c]}{" "} </th>
+                  <th scope="col" className="px-3 py-3 text-left text-sm font-bold">{COUNTRY_LABEL[c]}{" "} </th>
                 </Fragment>
               ))}
             </tr>
@@ -267,7 +267,7 @@ function ChartTable({
               if (!first) return null;
               return (
                 <Fragment key={first.category}>
-                  <tr className="border-t-2 border-border align-top">
+                  <tr className="border-t border-border align-top">
                     <th scope="row" className="px-3 py-3 text-left font-semibold">
                       {CATEGORY_LABEL[first.category] ?? first.category}{" "}
                     </th>
@@ -322,10 +322,10 @@ export default async function BulletinMonthPage({
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
 
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+      <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
         The {label} visa bulletin
       </h1>{" "}
-      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90">
+      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-soft">
         Every employment-based cutoff the State Department published for {label},
         on both charts, for the five countries the bulletin lists separately.
         {sinceLabel ? ` Beside each cutoff is what it did since the ${sinceLabel} bulletin.` : ""}{" "}
@@ -349,11 +349,11 @@ export default async function BulletinMonthPage({
       </p>{" "}
 
       {prev ? (
-        <section aria-labelledby="moved" className="mt-8 border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
-          <h2 id="moved" className="font-heading text-xl font-black">
+        <section aria-labelledby="moved" className="mt-8 border border-border bg-card p-5 sm:p-6">
+          <h2 id="moved" className="font-heading text-xl font-bold">
             {`What moved since ${sinceLabel ?? "the bulletin before"}`}
           </h2>{" "}
-          <p className="mt-1 text-sm text-foreground/70">
+          <p className="mt-1 text-sm text-muted-foreground">
             {`Every one of the ${categories.length * BOARD_COUNTRIES.length} cells on each chart, by what it did.`}
           </p>{" "}
           <TallyBar name="Final action dates" t={faTally} />{" "}
@@ -363,7 +363,7 @@ export default async function BulletinMonthPage({
 
       <ChartTable title="Final action dates" rows={fa} since={sinceLabel} />{" "}
       {noFilingChart ? (
-        <p className="mt-6 border-2 border-dashed border-border p-4 text-base leading-relaxed text-foreground/80">
+        <p className="mt-6 border border-dashed border-border p-4 text-base leading-relaxed text-soft">
           The dates for filing chart began with the October 2015 bulletin. This one printed final
           action dates only.
         </p>
@@ -376,7 +376,7 @@ export default async function BulletinMonthPage({
         />
       )}{" "}
 
-      <p className="mt-6 text-sm leading-relaxed text-foreground/75">
+      <p className="mt-6 text-sm leading-relaxed text-soft">
         A date means applications with a priority date earlier than it can act
         that month. <strong className="font-semibold text-foreground">Current</strong> means
         every priority date can; <strong className="font-semibold text-foreground">Unavailable</strong>{" "}
@@ -391,16 +391,16 @@ export default async function BulletinMonthPage({
 
       <nav aria-label="Other bulletins" className="mt-8 flex flex-wrap items-center gap-3">
         {prevMonth ? (
-          <Link href={`/visa-bulletin/${prevMonth}`} className="flex min-h-11 items-center gap-2 border-2 border-border bg-background px-4 font-heading text-sm font-black shadow-hard-sm transition-transform hover:-translate-y-[1px] motion-reduce:transition-none">
+          <Link href={`/visa-bulletin/${prevMonth}`} className="flex min-h-11 items-center gap-2 border border-border bg-background px-4 font-heading text-sm font-bold transition-transform motion-reduce:transition-none">
             <ArrowLeftIcon className="size-4" aria-hidden="true" /> {bulletinMonthLabel(prevMonth)}
           </Link>
         ) : null}{" "}
         {nextMonth ? (
-          <Link href={`/visa-bulletin/${nextMonth}`} className="flex min-h-11 items-center gap-2 border-2 border-border bg-background px-4 font-heading text-sm font-black shadow-hard-sm transition-transform hover:-translate-y-[1px] motion-reduce:transition-none">
+          <Link href={`/visa-bulletin/${nextMonth}`} className="flex min-h-11 items-center gap-2 border border-border bg-background px-4 font-heading text-sm font-bold transition-transform motion-reduce:transition-none">
             {bulletinMonthLabel(nextMonth)} <ArrowRightIcon className="size-4" aria-hidden="true" />
           </Link>
         ) : null}{" "}
-        <Link href="/tools/priority-date-calculator" className="flex min-h-11 items-center border-2 border-border bg-primary px-4 font-heading text-sm font-black text-black shadow-hard-sm transition-transform hover:-translate-y-[1px] motion-reduce:transition-none">
+        <Link href="/tools/priority-date-calculator" className="flex min-h-11 items-center border border-border bg-primary px-4 font-heading text-sm font-bold text-black transition-transform motion-reduce:transition-none">
           Is my priority date current?
         </Link>
       </nav>{" "}

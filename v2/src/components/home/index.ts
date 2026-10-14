@@ -10,5 +10,4 @@ export { SecuritySection } from "./SecuritySection";
 export { FAQSection } from "./FAQSection";
 export { AboutSection } from "./AboutSection";
 export { CTASection } from "./CTASection";
-export { ScrollProgress } from "./ScrollProgress";
 export { AudienceBlocks } from "./AudienceBlocks";

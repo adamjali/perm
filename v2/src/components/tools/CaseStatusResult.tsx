@@ -235,7 +235,7 @@ export function CaseStatusResult({
       />
 
       {check?.stale && !isFinal ? (
-        <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
           <WarningIcon
             className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
@@ -261,7 +261,7 @@ export function CaseStatusResult({
       ) : null}
 
       {reopened && decided && live ? (
-        <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
           <WarningIcon
             className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
@@ -289,7 +289,7 @@ export function CaseStatusResult({
       ) : null}
 
       {sourcesDisagree && decided && live ? (
-        <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
           <WarningIcon
             className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
@@ -384,7 +384,7 @@ export function CaseStatusResult({
       ) : null}
 
       {!isFinal && result.censusMissing ? (
-        <p role="status" className="mt-10 max-w-2xl border-2 border-border bg-tint-primary p-4 text-base leading-relaxed">
+        <p role="status" className="mt-10 max-w-2xl border border-border bg-tint-primary p-4 text-base leading-relaxed">
           <span className="font-bold">Some sections are missing today.</span> The daily count of every
           pending case, which places this one in its filing month and against its neighbours,
           couldn&apos;t be read or is more than eight days old. The status above is current; the
@@ -398,10 +398,10 @@ export function CaseStatusResult({
           duration comparison in the section above. */}
       {!isFinal && neighbours.length > 1 && cohort ? (
         <section className="mt-12">
-          <h2 className="font-heading text-2xl font-black">
+          <h2 className="font-heading text-2xl font-bold">
             This filing month against its neighbours
           </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             A month is not slow or fast on its own. Two either side is enough
             to see whether this one is ordinary, and{" "}
             {formatMonth(cohort.month)} is not the only thing DOL is holding.
@@ -579,10 +579,10 @@ function NextSteps({ estimate }: { estimate: Estimate | null }) {
     <div className="mt-6 flex flex-col gap-4 border-t border-background/25 pt-5 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
       {estimate?.kind === "date" ? (
         <p>
-          <span className="block font-mono text-sm uppercase tracking-wider text-background/70">
+          <span className="block text-sm text-background/70">
             Estimated decision
           </span>{" "}
-          <span className="block font-heading text-2xl font-black sm:text-3xl">
+          <span className="block font-heading text-2xl font-bold sm:text-3xl">
             Around {formatAsOf(estimate.estimatedDate) ?? estimate.estimatedDate}
           </span>{" "}
           <a href={`#${ESTIMATE_ANCHOR}`} className={link}>
@@ -599,7 +599,7 @@ function NextSteps({ estimate }: { estimate: Estimate | null }) {
       ) : null}{" "}
       <a
         href={`#${WATCH_ANCHOR}`}
-        className="inline-flex min-h-[48px] items-center justify-center gap-2 self-start border-2 border-background bg-primary px-5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-primary-foreground transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:self-auto"
+        className="inline-flex min-h-[48px] items-center justify-center gap-2 self-start border border-background bg-primary px-5 text-sm font-bold text-primary-foreground transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none sm:self-auto"
       >
         <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
         {/* The alert form's own button label, so the action keeps one name. */}
@@ -665,15 +665,15 @@ function TheRecord({
   ];
 
   return (
-    <div className="border-2 border-border bg-card shadow-hard">
-      <p className="border-b-2 border-border px-4 py-2 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground sm:px-5">
+    <div className="border border-border bg-card">
+      <p className="border-b border-border px-4 py-2 text-sm font-bold text-muted-foreground sm:px-5">
         The record
       </p>
-      <div className={`border-b-2 border-border px-4 py-4 sm:px-5 ${statusTone}`}>
-        <p className={`font-mono text-sm font-bold uppercase tracking-[0.1em] ${kind === "decided" ? "text-background/80" : "text-muted-foreground"}`}>
+      <div className={`border-b border-border px-4 py-4 sm:px-5 ${statusTone}`}>
+        <p className={`text-sm font-bold ${kind === "decided" ? "text-background/80" : "text-muted-foreground"}`}>
           {kind ? KIND_LABEL[kind] : "Status"}
         </p>{" "}
-        <p className="mt-1 font-heading text-2xl font-black leading-tight" translate={status ? "no" : undefined}>
+        <p className="mt-1 font-heading text-2xl font-bold leading-tight" translate={status ? "no" : undefined}>
           {status ? prettyStatus(status) : "Not recorded"}
         </p>
       </div>
@@ -681,7 +681,7 @@ function TheRecord({
         {rows.map((r) => (
           <Fragment key={r.label}>{" "}
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 border-b border-border/50 py-2 last:border-b-0">
-            <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <dt className="text-sm font-bold text-muted-foreground">
               {r.label}
             </dt>{" "}
             <dd className="min-w-0 text-right text-base font-bold" translate={r.raw ? "no" : undefined}>
@@ -713,17 +713,17 @@ function Stat({
   return (
     <div
       className={cn(
-        "min-w-0 flex-1 basis-56 border-2 p-4",
-        emphasis ? "border-foreground bg-card shadow-hard" : "border-border bg-background",
+        "min-w-0 flex-1 basis-56 border p-4",
+        emphasis ? "border-foreground bg-card" : "border-border bg-background",
       )}
     >
-      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <p className="text-sm font-bold text-muted-foreground">
         {label}
       </p>{" "}
-      <p className="mt-1 font-heading text-4xl font-black leading-none tabular-nums">
+      <p className="mt-1 font-heading text-4xl font-bold leading-none tabular-nums">
         {value}
       </p>{" "}
-      <p className="mt-1.5 text-sm leading-snug text-foreground/70">{note}</p>
+      <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{note}</p>
     </div>
   );
 }
@@ -743,8 +743,8 @@ function Position({
 
   return (
     <section className="mt-12">
-      <h2 className="font-heading text-2xl font-black">Where it sits</h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+      <h2 className="font-heading text-2xl font-bold">Where it sits</h2>{" "}
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Counts from DOL&apos;s live status of every pending case, by filing
         month.
       </p>{" "}
@@ -789,7 +789,7 @@ function Position({
       </div>
 
       {wall.isPastFront ? (
-        <div className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+        <div className="mt-6 border border-border bg-card p-6 sm:p-8">
           <PastFrontNote wall={wall} />
         </div>
       ) : (
@@ -816,7 +816,7 @@ function Position({
       )}
 
       {cohort ? (
-        <p className="mt-5 max-w-3xl text-base leading-relaxed text-foreground/70">
+        <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground">
           {formatInt(cohort.total)} cases were filed in {formatMonth(cohort.month)}.{" "}
           <b className="font-bold text-foreground">
             {formatInt(cohort.decided)} of them have been decided
@@ -858,10 +858,10 @@ function TheDecision({
 
   return (
     <section className="mt-12">
-      <h2 className="font-heading text-2xl font-black">
+      <h2 className="font-heading text-2xl font-bold">
         What DOL recorded when it decided
       </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Straight from the quarterly disclosure file, which carries fields the
         live status page does not.
       </p>
@@ -893,7 +893,7 @@ function TheDecision({
       </div>
 
       {quotable && duration && cohort && decided.days !== null ? (
-        <p className="mt-6 max-w-3xl border-2 border-border bg-card p-5 text-base leading-relaxed text-foreground/80 shadow-hard">
+        <p className="mt-6 max-w-3xl border border-border bg-card p-5 text-base leading-relaxed text-soft">
           Across {formatInt(duration.n)} decided cases filed in{" "}
           {formatMonth(cohort.month)}, the middle one took{" "}
           <b className="font-bold text-foreground">
@@ -985,14 +985,14 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
             is delimited by a 2px near-black border, so the fill is not the
             only thing carrying it. */}
         <span
-          className="absolute top-0 -translate-x-1/2 whitespace-nowrap border-2 border-foreground bg-primary px-2 py-0.5 font-mono text-sm font-bold tabular-nums text-primary-foreground"
+          className="absolute top-0 -translate-x-1/2 whitespace-nowrap border border-foreground bg-primary px-2 py-0.5 font-mono text-sm font-bold tabular-nums text-primary-foreground"
           style={{ left: `${subject}%` }}
         >
           {money(wage.wage)}
         </span>
 
         <div
-          className="relative h-4 border-2 border-border bg-background"
+          className="relative h-4 border border-border bg-background"
           data-tip={[
             scope,
             `This case: ${money(wage.wage)}`,
@@ -1036,7 +1036,7 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
             reads "$63,695$109,283 median$158,683". The rendered glue detector
             misses this one because it requires a word character on both sides
             and "$" is not one; the source gate is what caught it. */}
-        <p className="absolute bottom-0 left-0 font-mono text-sm tabular-nums text-foreground/70">
+        <p className="absolute bottom-0 left-0 font-mono text-sm tabular-nums text-muted-foreground">
           {money(p5)}
         </p>{" "}
         <p
@@ -1045,7 +1045,7 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
         >
           {money(p50)} median
         </p>{" "}
-        <p className="absolute bottom-0 right-0 font-mono text-sm tabular-nums text-foreground/70">
+        <p className="absolute bottom-0 right-0 font-mono text-sm tabular-nums text-muted-foreground">
           {money(p95)}
         </p>
       </ChartTips>
@@ -1066,11 +1066,11 @@ function StatusExplainer({
 }) {
   return (
     <section className="mt-12">
-      <h2 className="font-heading text-2xl font-black">
+      <h2 className="font-heading text-2xl font-bold">
         What &ldquo;{meaning.label}&rdquo; means
       </h2>
-      <div className="mt-5 border-2 border-border bg-card shadow-hard">
-        <div className="flex flex-wrap items-center gap-3 border-b-2 border-border px-6 py-3">
+      <div className="mt-5 border border-border bg-card">
+        <div className="flex flex-wrap items-center gap-3 border-b border-border px-6 py-3">
           <Verdict direction={meaning.kind === "action" ? "warn" : "flat"}>
             {KIND_LABEL[meaning.kind]}
           </Verdict>{" "}
@@ -1090,7 +1090,7 @@ function StatusExplainer({
         </div>
 
         <div className="px-6 py-5">
-          <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
+          <p className="max-w-3xl text-base leading-relaxed text-soft">
             {meaning.summary}
           </p>{" "}
           <p className="mt-2 text-sm">
@@ -1103,21 +1103,21 @@ function StatusExplainer({
           </p>{" "}
 
           {meaning.deadline ? (
-            <p className="mt-4 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed">
+            <p className="mt-4 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed">
               <b className="font-bold text-data-warn-ink">The clock:</b>{" "}
               {meaning.deadline}
             </p>
           ) : null}
 
           {meaning.action ? (
-            <p className="mt-4 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <p className="mt-4 max-w-3xl text-base leading-relaxed text-soft">
               <b className="font-bold text-foreground">Who acts:</b>{" "}
               {meaning.action}
             </p>
           ) : null}
 
           {nowInStatus !== null ? (
-            <p className="mt-4 border-t-2 border-border pt-4 text-base leading-relaxed text-foreground/70">
+            <p className="mt-4 border-t border-border pt-4 text-base leading-relaxed text-muted-foreground">
               <b className="font-bold text-foreground">
                 {formatInt(nowInStatus)} cases
               </b>{" "}
@@ -1135,10 +1135,10 @@ function StatusExplainer({
 function UndecodedStatus({ status }: { status: string }) {
   return (
     <section className="mt-12">
-      <h2 className="font-heading text-2xl font-black">
+      <h2 className="font-heading text-2xl font-bold">
         What &ldquo;{prettyStatus(status)}&rdquo; means
       </h2>{" "}
-      <p className="mt-4 max-w-3xl border-2 border-border bg-card p-6 text-base leading-relaxed text-foreground/80 shadow-hard">
+      <p className="mt-4 max-w-3xl border border-border bg-card p-6 text-base leading-relaxed text-soft">
         Not written up here yet, and DOL publishes no glossary, so this page won&apos;t guess. The notice DOL
         sent the employer explains it; their attorney has it.
       </p>
@@ -1162,16 +1162,16 @@ function CohortQueues({
 
   return (
     <section className="mt-12">
-      <h2 className="font-heading text-2xl font-black">
+      <h2 className="font-heading text-2xl font-bold">
         Which queue the rest of {formatMonth(month)} is in
       </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Analyst review moves in filing order. A hold, an RFI, an audit or an
         appeal takes a case out of that order.
       </p>
 
-      <div className="mt-5 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <p className="text-base leading-relaxed text-foreground/80">
+      <div className="mt-5 border border-border bg-card p-6 sm:p-8">
+        <p className="text-base leading-relaxed text-soft">
           <b className="font-bold text-foreground">{formatInt(split.ordinary)}</b> of
           the {formatInt(split.pending)} still open are in analyst review.
         </p>
@@ -1235,16 +1235,16 @@ function EmployerRecord({
 
   return (
     <section className="mt-12">
-      <h2 className="font-heading text-2xl font-black">
+      <h2 className="font-heading text-2xl font-bold">
         This employer&apos;s own record
       </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Every decided PERM case DOL published for {employer.name}, across
         FY2024 to FY2026. It describes the employer&apos;s filings, not this
         case.
       </p>
 
-      <div className="mt-5 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+      <div className="mt-5 border border-border bg-card p-5 sm:p-6">
         <dl className="flex flex-wrap items-baseline gap-x-8 gap-y-4">
           {figures.map((f) => (
             <Fragment key={f.label + f.value}>{" "}
@@ -1252,10 +1252,10 @@ function EmployerRecord({
                 twin. The twin version rendered every label TWICE into
                 textContent, which is what Google reads. */}
             <div className="flex min-w-0 flex-row-reverse items-baseline justify-end gap-2">
-              <dt className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              <dt className="text-sm font-bold text-muted-foreground">
                 {f.label}
               </dt>{" "}
-              <dd className="font-heading text-3xl font-black leading-none tabular-nums">
+              <dd className="font-heading text-3xl font-bold leading-none tabular-nums">
                 {f.value}
               </dd>
             </div>
@@ -1263,7 +1263,7 @@ function EmployerRecord({
           ))}
         </dl>
 
-        <p className="mt-5 border-t-2 border-border pt-4 text-base leading-relaxed text-foreground/80">
+        <p className="mt-5 border-t border-border pt-4 text-base leading-relaxed text-soft">
           {thin ? (
             employer.total === employer.certified ? (
               <>
@@ -1306,8 +1306,8 @@ function EmployerRecord({
 
 export function WontSay({ isFinal }: { isFinal: boolean }) {
   return (
-    <section className="mt-12 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-      <h2 className="font-heading text-2xl font-black">
+    <section className="mt-12 border border-border bg-foreground p-6 text-background sm:p-8">
+      <h2 className="font-heading text-2xl font-bold">
         What this page will not tell you
       </h2>{" "}
       <ul className="mt-4 max-w-3xl space-y-4 text-base leading-relaxed text-background/85">

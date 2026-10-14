@@ -181,15 +181,15 @@ const ELSEWHERE = [
 ] as const;
 
 const BUTTON =
-  "inline-flex min-h-[48px] items-center gap-2 border-2 border-border px-5 font-heading text-base font-black shadow-hard-sm transition-transform hover:-translate-y-[1px] active:translate-y-0 motion-reduce:transition-none";
+  "inline-flex min-h-[48px] items-center gap-2 border border-border px-5 font-heading text-base font-bold transition-transform motion-reduce:transition-none";
 
 function SectionHead({ id, title, line }: { id: string; title: string; line?: string }) {
   return (
     <>
-      <h2 id={id} className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+      <h2 id={id} className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
         {title}
       </h2>{" "}
-      {line ? <p className="mt-3 max-w-2xl text-lg leading-relaxed text-foreground/70">{line}</p> : null}
+      {line ? <p className="mt-3 max-w-2xl text-lg leading-relaxed text-muted-foreground">{line}</p> : null}
     </>
   );
 }
@@ -217,9 +217,9 @@ export default async function AboutPage() {
       {/* The definition beside the person who runs it. */}
       <section className="grid grid-cols-1 items-center gap-12 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
         <div>
-          <h1 className="font-heading text-5xl font-black leading-[1.02] sm:text-6xl">About PERM Tracker</h1>{" "}
+          <h1 className="font-heading text-5xl font-bold leading-[1.02] sm:text-6xl">About PERM Tracker</h1>{" "}
           <p className="mt-6 max-w-xl text-xl leading-relaxed">{ABOUT_ONE_LINER}</p>{" "}
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-foreground/70">
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
             It&apos;s free on both sides: for the person waiting on a case, and for the attorney who filed it.
           </p>{" "}
           <div className="mt-8 flex flex-wrap gap-3">
@@ -232,24 +232,24 @@ export default async function AboutPage() {
           </div>
         </div>{" "}
         <figure className="relative mx-auto w-full max-w-sm lg:mr-0">
-          <div aria-hidden="true" className="absolute inset-0 translate-x-4 translate-y-4 border-2 border-border bg-primary" />
-          <div className="relative border-2 border-border bg-card p-3">
+          <div aria-hidden="true" className="absolute inset-0 translate-x-4 translate-y-4 border border-border bg-primary" />
+          <div className="relative border border-border bg-card p-3">
             <Image
               src={SABRINA.image}
               alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
               width={SABRINA.imageSize[0]}
               height={SABRINA.imageSize[1]}
               sizes="(min-width: 1024px) 24rem, 90vw"
-              className="aspect-[4/5] w-full border-2 border-border object-cover object-top"
+              className="aspect-[4/5] w-full border border-border object-cover object-top"
               priority
             />{" "}
             <figcaption className="px-1 pb-1 pt-3">
-              <span className="block font-heading text-xl font-black leading-tight">{SABRINA.name}</span>{" "}
-              <span className="block text-base text-foreground/70">{SABRINA.jobTitle}, runs PERM Tracker</span>
+              <span className="block font-heading text-xl font-bold leading-tight">{SABRINA.name}</span>{" "}
+              <span className="block text-base text-muted-foreground">{SABRINA.jobTitle}, runs PERM Tracker</span>
             </figcaption>
           </div>
           {/* The site's own date, stamped across the card's edge. */}
-          <p className="absolute -left-3 top-6 border-2 border-border bg-foreground px-3 py-2 font-mono text-sm font-bold text-background shadow-hard-sm dark:bg-card dark:text-foreground sm:-left-6">
+          <p className="absolute -left-3 top-6 border border-border bg-foreground px-3 py-2 font-mono text-sm font-bold text-background dark:bg-card dark:text-foreground sm:-left-6">
             Live since {monthLabel(LIVE_SINCE)}
           </p>
         </figure>
@@ -265,10 +265,10 @@ export default async function AboutPage() {
             clients&apos; questions still shape what the site answers first.
           </p>
         </div>{" "}
-        <dl className="grid grid-cols-1 gap-px self-start border-2 border-border bg-border">
+        <dl className="grid grid-cols-1 gap-px self-start border border-border bg-border">
           <div className="bg-card px-5 py-4">
-            <dt className="text-sm text-foreground/70">Admitted</dt>{" "}
-            <dd className="mt-0.5 font-heading text-lg font-black">
+            <dt className="text-sm text-muted-foreground">Admitted</dt>{" "}
+            <dd className="mt-0.5 font-heading text-lg font-bold">
               D.C. Bar, 2025.{" "}
               <a href={DC_BAR_SABRINA_URL} className={LINK} rel="noopener" target="_blank">
                 Her bar record
@@ -276,8 +276,8 @@ export default async function AboutPage() {
             </dd>
           </div>{" "}
           <div className="bg-card px-5 py-4">
-            <dt className="text-sm text-foreground/70">Also on</dt>{" "}
-            <dd className="mt-0.5 font-heading text-lg font-black">
+            <dt className="text-sm text-muted-foreground">Also on</dt>{" "}
+            <dd className="mt-0.5 font-heading text-lg font-bold">
               <a href={LINKEDIN_SABRINA_URL} className={LINK} rel="me noopener" target="_blank">
                 LinkedIn
               </a>
@@ -293,12 +293,12 @@ export default async function AboutPage() {
           {HALVES.map((h) => (
             <article key={h.key} className="flex flex-col">
               <div className="flex items-center gap-3">
-                <span className="grid size-11 shrink-0 place-items-center border-2 border-border bg-foreground text-primary-on-ink dark:bg-card dark:text-primary-text">
+                <span className="grid size-11 shrink-0 place-items-center border border-border bg-foreground text-primary-on-ink dark:bg-card dark:text-primary-text">
                   <h.Icon aria-hidden="true" className="size-6" weight="bold" />
                 </span>{" "}
-                <h3 className="font-heading text-2xl font-black">{h.title}</h3>
+                <h3 className="font-heading text-2xl font-bold">{h.title}</h3>
               </div>{" "}
-              <p className="mt-3 max-w-xl text-base leading-relaxed text-foreground/80">{h.line}</p>{" "}
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-soft">{h.line}</p>{" "}
               <ul className="mt-5 flex flex-wrap gap-3">
                 {h.links.map((l) => (
                   <Fragment key={l.href}>
@@ -327,9 +327,9 @@ export default async function AboutPage() {
           <ol className="grid grid-cols-1 gap-3">
             {SOURCES.map((s) => (
               <Fragment key={s.agency}>
-                <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
-                  <span className="block font-heading text-lg font-black">{s.agency}</span>{" "}
-                  <span className="mt-1 block text-sm leading-snug text-foreground/70">{s.what}</span>
+                <li className="border border-border bg-card p-4">
+                  <span className="block font-heading text-lg font-bold">{s.agency}</span>{" "}
+                  <span className="mt-1 block text-sm leading-snug text-muted-foreground">{s.what}</span>
                 </li>{" "}
               </Fragment>
             ))}
@@ -338,8 +338,8 @@ export default async function AboutPage() {
             <ArrowRightIcon className="hidden size-8 lg:block" weight="bold" />
             <ArrowDownIcon className="size-8 lg:hidden" weight="bold" />
           </span>{" "}
-          <div className="grid content-center border-2 border-border bg-foreground p-5 text-background shadow-hard dark:bg-card dark:text-foreground">
-            <span className="block font-heading text-xl font-black text-primary-on-ink dark:text-primary-text">PERM Tracker</span>{" "}
+          <div className="grid content-center border border-border bg-foreground p-5 text-background dark:bg-card dark:text-foreground">
+            <span className="block font-heading text-xl font-bold text-primary-on-ink dark:text-primary-text">PERM Tracker</span>{" "}
             <span className="mt-2 block text-sm leading-relaxed opacity-80">
               Checks DOL several times a day, loads each new file the day it lands, and asks DOL again whenever a
               case is looked up.
@@ -355,7 +355,7 @@ export default async function AboutPage() {
                 <li>
                   <Link
                     href={pg.href}
-                    className="flex min-h-[44px] items-center justify-between gap-3 border-2 border-border bg-card px-4 font-bold transition-colors hover:bg-tint-primary"
+                    className="flex min-h-[44px] items-center justify-between gap-3 border border-border bg-card px-4 font-bold transition-colors hover:bg-tint-primary"
                   >
                     {pg.label} <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
                   </Link>
@@ -366,7 +366,7 @@ export default async function AboutPage() {
         </div>{" "}
         <div className="mt-12 max-w-3xl">
           <RecordStrip record={record} />{" "}
-          <p className="mt-4 text-base text-foreground/70">
+          <p className="mt-4 text-base text-muted-foreground">
             Estimated dates are labelled as estimates and graded in public on the{" "}
             <Link href="/estimate-scorecard" className={LINK}>estimate scorecard</Link>.{" "}
             <Link href="/methodology" className={LINK}>The methodology page</Link> traces every number.
@@ -390,7 +390,7 @@ export default async function AboutPage() {
                 ) : null}
                 <span
                   aria-hidden="true"
-                  className={`absolute left-0 top-0.5 size-5 border-2 border-border lg:top-0 ${i === MILESTONES.length - 1 ? "bg-primary" : "bg-card"}`}
+                  className={`absolute left-0 top-0.5 size-5 border border-border lg:top-0 ${i === MILESTONES.length - 1 ? "bg-primary" : "bg-card"}`}
                 />{" "}
                 <span className="block font-mono text-sm font-bold">{monthLabel(m.when)}</span>{" "}
                 <span className="mt-1 block text-base leading-snug">
@@ -406,7 +406,7 @@ export default async function AboutPage() {
             </Fragment>
           ))}
         </ol>{" "}
-        <p className="mt-8 text-base text-foreground/70">
+        <p className="mt-8 text-base text-muted-foreground">
           Every change since is on the <Link href="/changelog" className={LINK}>changelog</Link>, corrections included.
         </p>
       </section>
@@ -417,10 +417,10 @@ export default async function AboutPage() {
         <ul className="mt-10 grid grid-cols-1 gap-5 [&>*]:min-w-0 md:grid-cols-3">
           {NOT_THIS.map((n) => (
             <Fragment key={n.title}>
-              <li className="border-2 border-border bg-card p-6">
+              <li className="border border-border bg-card p-6">
                 <n.Icon aria-hidden="true" className="size-9" weight="bold" />{" "}
-                <span className="mt-4 block font-heading text-xl font-black">{n.title}</span>{" "}
-                <span className="mt-2 block text-base leading-relaxed text-foreground/75">{n.line}</span>
+                <span className="mt-4 block font-heading text-xl font-bold">{n.title}</span>{" "}
+                <span className="mt-2 block text-base leading-relaxed text-soft">{n.line}</span>
               </li>{" "}
             </Fragment>
           ))}
@@ -428,13 +428,13 @@ export default async function AboutPage() {
       </section>
 
       {/* One band for every way to reach it. */}
-      <section aria-labelledby="contact" className="mt-24 border-2 border-border bg-foreground p-6 text-background shadow-hard dark:bg-card dark:text-foreground sm:p-12">
-        <h2 id="contact" className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+      <section aria-labelledby="contact" className="mt-24 border border-border bg-foreground p-6 text-background dark:bg-card dark:text-foreground sm:p-12">
+        <h2 id="contact" className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
           Write to us
         </h2>{" "}
         <a
           href="mailto:support@permtracker.app"
-          className="mt-5 inline-block font-heading text-xl font-black text-primary-on-ink underline decoration-2 dark:text-primary-text underline-offset-[6px] [overflow-wrap:anywhere] hover:decoration-4 sm:text-3xl lg:text-4xl"
+          className="mt-5 inline-block font-heading text-xl font-bold text-primary-on-ink underline decoration-2 dark:text-primary-text underline-offset-[6px] [overflow-wrap:anywhere] hover:decoration-4 sm:text-3xl lg:text-4xl"
         >
           support@permtracker.app
         </a>{" "}
@@ -446,7 +446,7 @@ export default async function AboutPage() {
                   href={e.href}
                   rel="me noopener"
                   target="_blank"
-                  className="inline-flex min-h-[44px] items-center gap-2 border-2 border-current px-4 font-bold transition-colors hover:bg-background hover:text-foreground dark:hover:bg-foreground dark:hover:text-background"
+                  className="inline-flex min-h-[44px] items-center gap-2 border border-current px-4 font-bold transition-colors hover:bg-background hover:text-foreground dark:hover:bg-foreground dark:hover:text-background"
                 >
                   {e.label} <ArrowUpRightIcon aria-hidden="true" className="size-4" weight="bold" />
                 </a>

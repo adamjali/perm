@@ -93,12 +93,12 @@ export function I140Trends({ rows }: I140TrendsProps) {
   const maxDecided = Math.max(1, ...points.map((p) => p.approved + p.denied));
 
   return (
-    <div className="border-2 border-border bg-card shadow-hard">
-      <div className="border-b-2 border-border p-6 sm:p-8">
-        <h2 className="font-heading text-2xl font-black leading-tight">
+    <div className="border border-border bg-card">
+      <div className="border-b border-border p-6 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold leading-tight">
           I-140 petitions, quarter by quarter
         </h2>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
           USCIS&rsquo;s own figures, and its own category names.
         </p>
 
@@ -115,7 +115,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
               id={selectId}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               {/* Grouped because the categories are a HIERARCHY: a preference
                   is the sum of its subtypes, so a flat list invites adding a
@@ -160,20 +160,20 @@ export function I140Trends({ rows }: I140TrendsProps) {
           ].map((c) => (
             <div
               key={c.k}
-              className="min-w-0 flex-1 basis-52 border-2 border-border bg-background p-4"
+              className="min-w-0 flex-1 basis-52 border border-border bg-background p-4"
             >
-              <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <p className="text-sm font-semibold text-muted-foreground">
                 {c.k}
               </p>{" "}
-              <p className="mt-1 font-heading text-2xl font-black leading-none tabular-nums">
+              <p className="mt-1 font-heading text-2xl font-bold leading-none tabular-nums">
                 {c.v}
               </p>{" "}
-              <p className="mt-1 text-sm text-foreground/70">{c.n}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{c.n}</p>
             </div>
           ))}
         </div>
 
-        <p className="mt-4 text-base leading-relaxed text-foreground/70">
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground">
           Both rates are over petitions USCIS{" "}
           <b className="font-bold text-foreground">decided</b>, not over receipts, which would fall whenever
           USCIS simply decided less. Pending is the newest quarter&apos;s snapshot, since summing it would count
@@ -183,8 +183,8 @@ export function I140Trends({ rows }: I140TrendsProps) {
         {points.length > 0 ? (
           <>
             <section className="mt-10">
-              <h3 className="font-heading text-xl font-black">Receipts per quarter</h3>{" "}
-              <p className="mt-2 text-base text-foreground/70">
+              <h3 className="font-heading text-xl font-bold">Receipts per quarter</h3>{" "}
+              <p className="mt-2 text-base text-muted-foreground">
                 Only quarters USCIS has reported.
               </p>
               <ChartTips label="I-140 receipts per quarter" className="mt-4">
@@ -197,14 +197,14 @@ export function I140Trends({ rows }: I140TrendsProps) {
                       aria-label={`${p.label}: ${formatInt(p.received)} received`}
                       data-tip={`${p.label}\n${formatInt(p.received)} received\n${formatInt(p.approved)} approved, ${formatInt(p.denied)} denied\n${formatInt(p.pending)} pending at quarter end`}
                     >
-                      <span className="text-sm tabular-nums text-foreground/70">{p.label}</span>{" "}
-                      <span className="block h-6 w-full border-2 border-border bg-muted">
+                      <span className="text-sm tabular-nums text-muted-foreground">{p.label}</span>{" "}
+                      <span className="block h-6 w-full border border-border bg-muted">
                         <span
                           className="block h-full bg-primary"
                           style={{ width: `${Math.max((p.received / maxReceived) * 100, 1)}%` }}
                         />
                       </span>{" "}
-                      <span className="text-right text-sm tabular-nums text-foreground/70">
+                      <span className="text-right text-sm tabular-nums text-muted-foreground">
                         {formatInt(p.received)}
                       </span>
                     </li>
@@ -215,10 +215,10 @@ export function I140Trends({ rows }: I140TrendsProps) {
             </section>
 
             <section className="mt-10">
-              <h3 className="font-heading text-xl font-black">
+              <h3 className="font-heading text-xl font-bold">
                 Approved against denied
               </h3>{" "}
-              <p className="mt-2 text-base text-foreground/70">
+              <p className="mt-2 text-base text-muted-foreground">
                 Bars are scaled to the busiest quarter, so a shorter track
                 means fewer decisions rather than a different mix.
               </p>
@@ -236,8 +236,8 @@ export function I140Trends({ rows }: I140TrendsProps) {
                         aria-label={`${p.label}: ${formatInt(p.approved)} approved, ${formatInt(p.denied)} denied`}
                         data-tip={`${p.label}\n${formatInt(p.approved)} approved\n${formatInt(p.denied)} denied\n${formatInt(decided)} decided${p.denialRate !== null ? `\n${pct(p.denialRate)} denied` : ""}`}
                       >
-                        <span className="text-sm tabular-nums text-foreground/70">{p.label}</span>{" "}
-                        <span className="block h-6 w-full border-2 border-border bg-muted">
+                        <span className="text-sm tabular-nums text-muted-foreground">{p.label}</span>{" "}
+                        <span className="block h-6 w-full border border-border bg-muted">
                           <span className="flex h-full" style={{ width: `${Math.max(width, 1)}%` }}>
                             <span
                               className="block h-full bg-primary"
@@ -249,7 +249,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
                             />
                           </span>
                         </span>{" "}
-                        <span className="text-right text-sm tabular-nums text-foreground/70">
+                        <span className="text-right text-sm tabular-nums text-muted-foreground">
                           {formatInt(p.denied)}
                         </span>
                       </li>
@@ -258,13 +258,13 @@ export function I140Trends({ rows }: I140TrendsProps) {
                 })}
               </ol>
               </ChartTips>
-              <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground/70">
+              <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2">
-                  <span className="h-3 w-3 border-2 border-border bg-primary" aria-hidden="true" />
+                  <span className="h-3 w-3 border border-border bg-primary" aria-hidden="true" />
                   Approved
                 </span>{" "}
                 <span className="flex items-center gap-2">
-                  <span className="h-3 w-3 border-2 border-border bg-data-bad" aria-hidden="true" />
+                  <span className="h-3 w-3 border border-border bg-data-bad" aria-hidden="true" />
                   Denied
                 </span>{" "}
                 <span>The number on the right is denials.</span>
@@ -274,11 +274,11 @@ export function I140Trends({ rows }: I140TrendsProps) {
             <DenialRateLine points={points} />
 
             {split ? (
-              <section className="mt-12 border-2 border-border bg-tint-primary p-6 sm:p-8">
-                <h3 className="font-heading text-xl font-black">
+              <section className="mt-12 border border-border bg-tint-primary p-6 sm:p-8">
+                <h3 className="font-heading text-xl font-bold">
                   What the {category} rate is an average of
                 </h3>{" "}
-                <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70">
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
                   {pct(totals.denialRate)} is the blend. Nobody files under{" "}
                   {category} itself: every petition goes in under one of its
                   subtypes, and they aren&rsquo;t deciding alike.
@@ -295,7 +295,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
                         <span className="text-sm font-bold">
                           {c.code} · {c.label}
                         </span>{" "}
-                        <span className="relative block h-6 border-2 border-border bg-background">
+                        <span className="relative block h-6 border border-border bg-background">
                           <span
                             className="absolute inset-y-0 left-0 block bg-data-bad"
                             style={{
@@ -311,7 +311,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
                   ))}
                 </ul>
                 </ChartTips>{" "}
-                <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                   Denial rates over the{" "}
                   {formatInt(split.children.reduce((n, c) => n + c.decided, 0))}{" "}
                   petitions USCIS decided in these {totals.quarters}{" "}
@@ -326,7 +326,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
             ) : null}
           </>
         ) : (
-          <p className="mt-8 text-base text-foreground/70">
+          <p className="mt-8 text-base text-muted-foreground">
             USCIS has not reported any quarter for this category.
           </p>
         )}
@@ -418,8 +418,8 @@ function DenialRateLine({
 
   return (
     <section className="mt-10">
-      <h3 className="font-heading text-xl font-black">Denial rate over time</h3>{" "}
-      <p className="mt-2 text-base text-foreground/70">
+      <h3 className="font-heading text-xl font-bold">Denial rate over time</h3>{" "}
+      <p className="mt-2 text-base text-muted-foreground">
         Denials as a share of the petitions decided in that quarter.
       </p>
       {/* min-width plus its own scroller: SVG text scales with the viewBox, so

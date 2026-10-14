@@ -199,14 +199,14 @@ export default async function PermCasesPage() {
 
             {/* The live browser carries its own heading and the #live anchor; this
                 is the part's rule. */}
-            <div className="mt-16 border-t-4 border-border pt-8">
+            <div className="mt-16 border-t-2 border-border pt-8">
               <LiveCaseBrowser summary={liveSummary} publishedThrough={meta.lastDecisionDate} />
             </div>
           </SearchParamsBoundary>
         </>
       ) : (
-        <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">
-          <p className="text-lg text-foreground/70">
+        <section className="mt-10 border border-border bg-card p-8 text-center">
+          <p className="text-lg text-muted-foreground">
             The case-level table is written by the quarterly disclosure ingest. Until it has run, the{" "}
             <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
               processing times page
@@ -221,9 +221,9 @@ export default async function PermCasesPage() {
       )}
 
       <section className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Waiting on a case?</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Waiting on a case?</h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Its number gives DOL&apos;s status today and an estimated date. With only a filing month, the{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator
@@ -231,9 +231,9 @@ export default async function PermCasesPage() {
             reads it against where DOL is working now.
           </p>
         </div>
-        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Comparing a whole docket?</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <div className="border border-border bg-tint-primary p-6">
+          <h2 className="font-heading text-lg font-bold">Comparing a whole docket?</h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Per-firm and per-sponsor totals sit on the{" "}
             <Link href="/perm-attorneys" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               law firm table

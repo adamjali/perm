@@ -77,19 +77,19 @@ function Movement({ cell }: { cell: BoardCell | null }) {
 function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note: string }) {
   return (
     <section className="mt-10">
-      <h2 className="font-heading text-2xl font-black tracking-tight">{title}</h2>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">{note}</p>{" "}
-      <p className="mt-2 max-w-3xl text-sm text-foreground/70">
+      <h2 className="font-heading text-2xl font-bold tracking-tight">{title}</h2>{" "}
+      <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">{note}</p>{" "}
+      <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
         Each bar is the cutoff&apos;s pace: full means it kept up with the calendar, half means it moved six months
         a year, red means it ended further back than it started.
       </p>{" "}
       <div className="mt-4 overflow-x-auto overscroll-x-none">
-        <table className="w-full min-w-[720px] border-2 border-border text-sm">
+        <table className="w-full min-w-[720px] border border-border text-sm">
           <thead className="bg-foreground text-background">
             <tr>
-              <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Category{" "}</th>
+              <th className="p-3 text-left text-sm">Category{" "}</th>
               {BOARD_COUNTRIES.map((c) => (
-                <th key={c} className="p-3 text-left font-mono text-sm uppercase tracking-wider">
+                <th key={c} className="p-3 text-left text-sm">
                   {COUNTRY_LABEL[c]}{" "}
                 </th>
               ))}
@@ -97,7 +97,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
           </thead>
           <tbody>
             {ORDER.map((cat) => (
-              <tr key={cat} className="border-t-2 border-border align-top">
+              <tr key={cat} className="border-t border-border align-top">
                 <td className="p-3">
                   <span className="font-semibold">{CATEGORY[cat]?.label ?? cat}</span>{" "}
                   <span className="block text-sm text-muted-foreground">{CATEGORY[cat]?.who ?? ""}</span>{" "}
@@ -147,8 +147,8 @@ export default async function FamilyBulletinPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={dataset} />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Family-sponsored cutoffs, month by month</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Family-sponsored cutoffs, month by month</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           {board
             ? `Every family cutoff State printed in ${board.bulletinCount} bulletins from ${formatMonth(board.firstMonth)} to ${formatMonth(board.lastMonth)}, by category and country, with how far each moved and every month it went backwards.`
             : "The family charts are being read from the bulletin archive; check back shortly."}
@@ -171,13 +171,13 @@ export default async function FamilyBulletinPage() {
       ) : null}
 
       <section className="mt-10 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">What this page does not do</h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <h2 className="font-heading text-2xl font-bold">What this page does not do</h2>{" "}
+        <p className="mt-3 text-base leading-relaxed text-soft">
           No queue position and no forecast. USCIS publishes its I-485 inventory by priority date only for
           employment categories, so a family &ldquo;queue position&rdquo; from any source is a guess. The history
           above is what can be measured.
         </p>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           Each bulletin is read from the State Department&apos;s pages the day it appears. Employment history is
           on{" "}
           <Link href="/tools/priority-date-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">

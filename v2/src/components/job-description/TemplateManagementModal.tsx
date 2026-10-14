@@ -229,7 +229,7 @@ export function TemplateManagementModal({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="!max-w-[98vw] sm:!max-w-[96vw] md:!max-w-[94vw] lg:!max-w-[1400px] xl:!max-w-[1600px] w-[98vw] sm:w-[96vw] md:w-[94vw] h-[92vh] sm:h-[88vh] flex flex-col p-0 overflow-hidden">
-          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b-2 border-border shrink-0">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-border shrink-0">
             {/* Mobile: Show back button when in detail view */}
             {isMobile && mobileView === "detail" && selectedTemplate && (
               <Button
@@ -258,7 +258,7 @@ export function TemplateManagementModal({
             {/* Left panel - Template list (hidden on mobile when viewing detail) */}
             <div
               className={cn(
-                "sm:w-[380px] md:w-[420px] lg:w-[480px] shrink-0 border-b-2 sm:border-b-0 sm:border-r-2 border-border flex flex-col overflow-hidden",
+                "sm:w-[380px] md:w-[420px] lg:w-[480px] shrink-0 border-b sm:border-b-0 sm:border-r border-border flex flex-col overflow-hidden",
                 isMobile && mobileView === "detail" && "hidden"
               )}
             >
@@ -269,9 +269,9 @@ export function TemplateManagementModal({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
-                    className="pl-8 border-2 text-sm min-h-[44px]"
+                    className="pl-8 border text-sm min-h-[44px]"
                   />
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/60 pointer-events-none" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 </div>
               </div>
 
@@ -297,7 +297,7 @@ export function TemplateManagementModal({
                           "hover:bg-muted/50 active:bg-muted/70",
                           "min-h-[64px]", // Touch-friendly minimum height
                           selectedTemplate?._id === template._id &&
-                            "bg-muted border-2 border-border"
+                            "bg-muted border border-border"
                         )}
                       >
                         <div className="flex items-center justify-between gap-2 min-w-0">
@@ -324,7 +324,7 @@ export function TemplateManagementModal({
                 isMobile && mobileView === "list" && "hidden"
               )}
             >
-              <AnimatePresence mode="wait">
+              <AnimatePresence initial={false} mode="wait">
                 {selectedTemplate ? (
                   <motion.div
                     key={selectedTemplate._id}
@@ -343,7 +343,7 @@ export function TemplateManagementModal({
                         <Input
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="font-heading text-base sm:text-lg font-semibold border-2 flex-1 min-w-0 max-w-sm min-h-[44px]"
+                          className="font-heading text-base sm:text-lg font-semibold border flex-1 min-w-0 max-w-sm min-h-[44px]"
                           placeholder="Template name"
                         />
                       ) : (
@@ -463,7 +463,7 @@ export function TemplateManagementModal({
                         <Input
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="font-heading text-base font-semibold border-2 min-h-[44px]"
+                          className="font-heading text-base font-semibold border min-h-[44px]"
                           placeholder="Template name"
                         />
                         <div className="flex items-center justify-end gap-2">
@@ -472,7 +472,7 @@ export function TemplateManagementModal({
                             size="sm"
                             onClick={handleCancelEdit}
                             disabled={isProcessing}
-                            className="min-h-[44px] border-2"
+                            className="min-h-[44px] border"
                           >
                             Cancel
                           </Button>
@@ -502,7 +502,7 @@ export function TemplateManagementModal({
                               value={editDescription}
                               onChange={(e) => setEditDescription(e.target.value)}
                               rows={isMobile ? 8 : 12}
-                              className="border-2 resize-y min-h-[120px]"
+                              className="border resize-y min-h-[120px]"
                               placeholder="Job description..."
                             />
                           </div>
@@ -522,7 +522,7 @@ export function TemplateManagementModal({
                             <p className="text-sm text-muted-foreground mb-2">
                               Description
                             </p>
-                            <div className="rounded-lg border-2 border-border bg-muted/30 p-3 sm:p-4 overflow-auto">
+                            <div className="rounded-lg border border-border bg-muted/30 p-3 sm:p-4 overflow-auto">
                               <p className="text-sm whitespace-pre-wrap break-words">
                                 {selectedTemplate.description}
                               </p>
@@ -584,7 +584,7 @@ export function TemplateManagementModal({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-2">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isProcessing}

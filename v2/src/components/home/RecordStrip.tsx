@@ -32,21 +32,21 @@ export function RecordStrip({ record }: { record: RecordFigure[] }) {
   if (record.length === 0) return null;
   return (
     <div className="mt-10">
-      <p className="text-base leading-relaxed text-foreground/90 sm:text-lg">
+      <p className="text-base leading-relaxed text-soft sm:text-lg">
         What it holds, and the date each figure is true for:
       </p>{" "}
-      <dl className="mt-4 border-t-2 border-border">
+      <dl className="mt-4 border-t border-border">
         {record.map((f) => (
           <div
             // Several figures may point at one section (the policy page sends
             // three at #register), so the key is the pair, not the route alone.
             key={`${f.href} ${f.label}`}
-            className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4"
+            className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4"
           >
-            <dt className="font-heading text-xl font-black tabular-nums tracking-tight sm:text-2xl">
+            <dt className="font-heading text-xl font-bold tabular-nums tracking-tight sm:text-2xl">
               {f.value.toLocaleString("en-US")}
             </dt>{" "}
-            <dd className="text-base leading-snug text-foreground/90">
+            <dd className="text-base leading-snug text-soft">
               <Link
                 href={f.href}
                 className="underline decoration-primary/30 decoration-2 underline-offset-[3px] transition-colors hover:decoration-primary"

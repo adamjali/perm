@@ -412,7 +412,7 @@ export function NotesJournal({
               onKeyDown={handleKeyDown}
               placeholder={`Add a note... (${shortcutKey}+Enter to save)`}
               rows={3}
-              className="border-2 border-border shadow-hard-sm"
+              className="border border-border"
             />
           </CharLimit>
         </div>
@@ -441,7 +441,7 @@ export function NotesJournal({
         )}
 
         {/* New note options (priority, category) */}
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {showNewNoteOptions && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -455,7 +455,7 @@ export function NotesJournal({
                 <select
                   value={newNotePriority}
                   onChange={(e) => setNewNotePriority(e.target.value as NotePriority)}
-                  className="h-7 rounded border-2 border-border bg-background px-2 text-sm font-medium"
+                  className="h-7 rounded border border-input bg-background px-2 text-sm font-medium"
                 >
                   {NOTE_PRIORITIES.map((p) => (
                     <option key={p} value={p}>
@@ -471,7 +471,7 @@ export function NotesJournal({
                 <select
                   value={newNoteCategory}
                   onChange={(e) => setNewNoteCategory(e.target.value as NoteCategory)}
-                  className="h-7 rounded border-2 border-border bg-background px-2 text-sm font-medium"
+                  className="h-7 rounded border border-input bg-background px-2 text-sm font-medium"
                 >
                   {NOTE_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
@@ -494,7 +494,7 @@ export function NotesJournal({
               type="button"
               onClick={() => setFilterBy("all")}
               className={cn(
-                "px-2 py-1 rounded text-sm font-medium transition-colors border-2",
+                "px-2 py-1 rounded text-sm font-medium transition-colors border",
                 filterBy === "all"
                   ? "bg-foreground text-background border-foreground"
                   : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
@@ -507,7 +507,7 @@ export function NotesJournal({
                 type="button"
                 onClick={() => setFilterBy("highPriority")}
                 className={cn(
-                  "px-2 py-1 rounded text-sm font-medium transition-colors border-2",
+                  "px-2 py-1 rounded text-sm font-medium transition-colors border",
                   filterBy === "highPriority"
                     ? "bg-data-warn text-black border-data-warn"
                     : "bg-data-warn/15 text-data-warn-ink border-data-warn hover:border-data-warn"
@@ -520,7 +520,7 @@ export function NotesJournal({
               type="button"
               onClick={() => setFilterBy("pending")}
               className={cn(
-                "px-2 py-1 rounded text-sm font-medium transition-colors border-2",
+                "px-2 py-1 rounded text-sm font-medium transition-colors border",
                 filterBy === "pending"
                   ? "bg-data-info text-white border-data-info"
                   : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
@@ -532,7 +532,7 @@ export function NotesJournal({
               type="button"
               onClick={() => setFilterBy("done")}
               className={cn(
-                "px-2 py-1 rounded text-sm font-medium transition-colors border-2",
+                "px-2 py-1 rounded text-sm font-medium transition-colors border",
                 filterBy === "done"
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
@@ -548,7 +548,7 @@ export function NotesJournal({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="h-7 rounded border-2 border-border bg-background px-2 text-sm font-medium"
+              className="h-7 rounded border border-input bg-background px-2 text-sm font-medium"
             >
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
@@ -561,7 +561,7 @@ export function NotesJournal({
       {/* ========== NOTES LIST ========== */}
       {processedNotes.length > 0 && (
         <div className="space-y-3">
-          <AnimatePresence>
+          <AnimatePresence initial={false}>
             {processedNotes.slice(0, shownCount).map((note) => {
               const timestamp = formatTimestamp(note.createdAt);
               const priorityConfig = PRIORITY_CONFIG[note.priority || "medium"];
@@ -576,9 +576,9 @@ export function NotesJournal({
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
                   className={cn(
-                    "group rounded-lg border-2 p-3 transition-all duration-150",
-                    "shadow-hard",
-                    "hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] hover:-translate-y-0.5",
+                    "group rounded-lg border p-3 transition-colors duration-150",
+                    "",
+                    "",
                     note.status === "done"
                       ? "bg-muted/50 opacity-60 border-muted"
                       : "bg-background border-border hover:border-muted-foreground/50",
@@ -605,7 +605,7 @@ export function NotesJournal({
                         {/* Priority badge */}
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-sm font-bold uppercase tracking-wide",
+                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-sm font-bold",
                             priorityConfig.bgColor,
                             priorityConfig.color
                           )}
@@ -636,7 +636,7 @@ export function NotesJournal({
                               onChange={(e) => setEditingContent(e.target.value)}
                               onKeyDown={handleEditKeyDown}
                               rows={4}
-                              className="text-sm border-2 border-primary/50"
+                              className="text-sm border border-primary/50"
                             />
                           </CharLimit>
                           <div className="flex items-center gap-2">
@@ -694,7 +694,7 @@ export function NotesJournal({
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDelete(note.id)}
-                      className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive-text hover:bg-destructive/10 transition-all"
+                      className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive-text hover:bg-destructive/10 transition-colors"
                       aria-label="Delete note"
                     >
                       <Trash2 className="h-4 w-4" />

@@ -99,12 +99,12 @@ export function BulletinAlertForm({ source }: { source: string }) {
   if (status === "done") {
     return (
       <div
-        className="border-2 border-border bg-card p-6 shadow-hard sm:p-8"
+        className="border border-border bg-card p-6 sm:p-8"
         role="status"
         aria-live="polite"
       >
-        <p className="font-heading text-xl font-black">{replyHeading(queued)}</p>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+        <p className="font-heading text-xl font-bold">{replyHeading(queued)}</p>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           {message} Once confirmed, you&apos;ll hear from us when a new
           bulletin moves your cutoff, and not otherwise.
         </p>
@@ -113,22 +113,22 @@ export function BulletinAlertForm({ source }: { source: string }) {
   }
 
   const inputClasses =
-    "min-h-[48px] w-full border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+    "min-h-[48px] w-full border border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 
   return (
     <form
       ref={telemetry.ref}
       onFocusCapture={telemetry.onFocusCapture}
       onSubmit={handleSubmit}
-      className="border-2 border-border bg-card p-6 shadow-hard sm:p-8"
+      className="border border-border bg-card p-6 sm:p-8"
     >
-      <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="text-sm font-bold text-muted-foreground">
         Alert
       </p>{" "}
-      <h2 className="mt-1 font-heading text-2xl font-black">
+      <h2 className="mt-1 font-heading text-2xl font-bold">
         Email me when my cutoff moves
       </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Pick your category and country. When a new bulletin changes that
         final-action cutoff, we email the change, before and after. Nothing on
         the months it doesn&apos;t move.
@@ -196,7 +196,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
         type="submit"
           data-ph-capture-attribute-cta="bulletin-alert"
         disabled={status === "sending"}
-        className="mt-6 inline-flex min-h-[48px] items-center justify-center border-2 border-border bg-foreground px-6 font-mono text-sm font-bold uppercase tracking-[0.1em] text-background shadow-hard transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:hover:translate-y-0 motion-reduce:transition-none"
+        className="mt-6 inline-flex min-h-[48px] items-center justify-center border border-border bg-foreground px-6 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
       >
         {status === "sending" ? "Sending" : "Email me when it moves"}
       </button>{" "}

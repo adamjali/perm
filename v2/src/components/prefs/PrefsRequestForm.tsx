@@ -57,9 +57,9 @@ export function PrefsRequestForm() {
 
   if (state === "done") {
     return (
-      <div className="border-3 border-border bg-card p-5 shadow-hard">
-        <p className="font-heading text-lg font-black">{replyHeading(queued)}</p>{" "}
-        <p className="mt-2 text-base leading-relaxed text-foreground/70">
+      <div className="border border-border bg-card p-5">
+        <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
+        <p className="mt-2 text-base leading-relaxed text-muted-foreground">
           {message}
         </p>
       </div>
@@ -69,9 +69,9 @@ export function PrefsRequestForm() {
   return (
     <form
       onSubmit={submit}
-      className="border-3 border-border bg-card p-5 shadow-hard"
+      className="border border-border bg-card p-5"
     >
-      <label htmlFor="prefs-email" className="font-heading text-lg font-black">
+      <label htmlFor="prefs-email" className="font-heading text-lg font-bold">
         Get your preferences link
       </label>{" "}
       <div className="mt-3 flex flex-col gap-3 sm:flex-row">
@@ -84,12 +84,12 @@ export function PrefsRequestForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
           autoComplete="email"
-          className="min-h-[48px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-h-[48px] w-full min-w-0 flex-1 border border-input bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />{" "}
         <button
           type="submit"
           disabled={state === "busy"}
-          className="inline-flex min-h-[48px] items-center justify-center border-3 border-border bg-primary px-6 font-heading font-black text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-60"
+          className="inline-flex min-h-[48px] items-center justify-center border border-border bg-primary px-6 font-heading font-bold text-primary-foreground transition-transform duration-150 disabled:opacity-60"
         >
           {state === "busy" ? "Sending…" : "Email me the link"}
         </button>

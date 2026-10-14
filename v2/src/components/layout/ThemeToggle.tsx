@@ -26,7 +26,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 const ICON =
-  "size-5 transition-transform duration-300 ease-out group-hover:rotate-[20deg] group-hover:scale-110 group-active:rotate-0 group-active:scale-95";
+  "size-5 transition-transform duration-300 ease-out group-active:rotate-0 group-active:scale-95";
 
 export default function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
@@ -50,7 +50,7 @@ export default function ThemeToggle() {
           ? `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`
           : "Toggle theme"
       }
-      className="group relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-none border-2 border-transparent bg-transparent text-white transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-black hover:shadow-hard-sm active:translate-x-0 active:translate-y-0 active:shadow-none"
+      className="group relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-none border border-transparent bg-transparent text-white transition-colors duration-150 hover:border-primary hover:bg-accent"
     >
       {/* Both render; CSS picks one from the .dark class next-themes sets
           before first paint. Never both, never neither, never a swap. */}

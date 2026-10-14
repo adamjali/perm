@@ -46,7 +46,7 @@ export default function ReengagementBanner() {
 
   return (
     <div
-      className="relative z-10 border-b-2 border-border bg-muted px-4 py-3 sm:px-6"
+      className="relative z-10 border-b border-border bg-muted px-4 py-3 sm:px-6"
       role="status"
       aria-label="Weekly case summary paused"
     >

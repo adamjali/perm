@@ -209,7 +209,7 @@ function NotificationListItem({
       className={cn(
         "group w-full text-left relative cursor-pointer",
         "flex items-start gap-4 p-4",
-        "border-b-2 border-border last:border-b-0",
+        "border-b border-border last:border-b-0",
         "transition-colors duration-150",
         "hover:bg-muted",
         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset",
@@ -226,7 +226,7 @@ function NotificationListItem({
       <div
         className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center",
-          "rounded-none border-2 border-border",
+          "rounded-none border border-border",
           "bg-card"
         )}
       >
@@ -240,7 +240,7 @@ function NotificationListItem({
             className={cn(
               "text-base leading-tight truncate",
               notification.isRead
-                ? "font-medium text-foreground/80"
+                ? "font-medium text-soft"
                 : "font-bold text-foreground font-heading"
             )}
             title={notification.title}
@@ -278,10 +278,10 @@ function NotificationListItem({
             onClick={handleMarkRead}
             className={cn(
               "flex h-8 w-8 items-center justify-center",
-              "border-2 border-transparent rounded-none",
+              "border border-transparent rounded-none",
               "text-muted-foreground",
-              "hover:bg-primary/10 hover:text-primary-text hover:border-primary/20",
-              "transition-all duration-150",
+              "hover:bg-accent hover:text-primary-text hover:border-primary/20",
+              "transition-colors duration-150",
               "focus:outline-none focus:ring-1 focus:ring-primary"
             )}
             aria-label="Mark as read"
@@ -295,10 +295,10 @@ function NotificationListItem({
           onClick={handleDelete}
           className={cn(
             "flex h-8 w-8 items-center justify-center",
-            "border-2 border-transparent rounded-none",
+            "border border-transparent rounded-none",
             "text-muted-foreground",
             "hover:bg-destructive/10 hover:text-destructive-text hover:border-destructive/20",
-            "transition-all duration-150",
+            "transition-colors duration-150",
             "focus:outline-none focus:ring-1 focus:ring-destructive"
           )}
           aria-label="Delete notification"
@@ -316,11 +316,11 @@ function NotificationListSkeleton() {
   return (
     <div className="space-y-4">
       <Skeleton variant="line" className="h-6 w-24" />
-      <div className="border-2 border-border shadow-hard">
+      <div className="border border-border">
         {[...Array(3)].map((_, i) => (
           <div
             key={i}
-            className="flex items-start gap-4 p-4 border-b-2 border-border last:border-b-0"
+            className="flex items-start gap-4 p-4 border-b border-border last:border-b-0"
           >
             <Skeleton className="w-1.5 h-16" />
             <Skeleton className="h-10 w-10 shrink-0" />
@@ -368,7 +368,7 @@ function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
       <div
         className={cn(
           "flex h-16 w-16 items-center justify-center mb-4",
-          "rounded-none border-2 border-border",
+          "rounded-none border border-border",
           "bg-muted"
         )}
       >
@@ -525,12 +525,12 @@ export default function NotificationList({
       {Array.from(groupedNotifications.entries()).map(([group, notifications]) => (
         <div key={group}>
           {/* Group header */}
-          <h3 className="text-sm font-heading font-bold uppercase tracking-wide text-muted-foreground mb-3">
+          <h3 className="text-sm font-heading font-bold text-muted-foreground mb-3">
             {group}
           </h3>
 
           {/* Notifications in group */}
-          <div className="border-2 border-border shadow-hard">
+          <div className="border border-border">
             {notifications.map((notification) => (
               <NotificationListItem
                 key={notification._id}

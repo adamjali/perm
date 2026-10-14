@@ -74,7 +74,7 @@ export function AuthField({
     <div className="space-y-2">
       <Label
         htmlFor={id}
-        className="text-sm uppercase mono font-bold tracking-widest"
+        className="text-sm mono font-bold"
       >
         {label}
       </Label>

@@ -108,7 +108,7 @@ export function DeadlineWindowDiagram({
           viewBox={`0 0 ${W} ${H}`}
           role="img"
           aria-label="The case's regulatory windows drawn on one date axis"
-          className="block h-auto w-full min-w-[560px] border-2 border-border bg-card shadow-hard-sm"
+          className="block h-auto w-full min-w-[560px] border border-border bg-card"
         >
           {/* Date rails at the domain's ends. */}
           {/* The rails mark the domain's two ends, so the label must sit at
@@ -204,7 +204,7 @@ export function DeadlineWindowDiagram({
         </svg>
       </div>
       </ChartTips>
-      <figcaption className="mt-3 text-sm text-foreground/70">
+      <figcaption className="mt-3 text-sm text-muted-foreground">
         Every span from the dates entered, drawn to one scale.
       </figcaption>
     </figure>

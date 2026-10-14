@@ -148,10 +148,10 @@ export default async function DecisionActivityPage() {
       <JsonLdScript schema={schema} />
 
       <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           How fast the queue is moving
         </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           Every PERM decision DOL makes, counted by day.
         </p>
       </header>
@@ -172,7 +172,7 @@ export default async function DecisionActivityPage() {
         // same four figures with no second heading, never a second slab
         // restating their pace.
         <section className="mt-6" aria-label={`The last ${currentPace.weekdays + currentPace.weekendDays} days`}>
-          <dl className="grid [&>*]:min-w-0 grid-cols-2 gap-x-6 gap-y-4 border-y-2 border-border py-4 sm:grid-cols-4">
+          <dl className="grid [&>*]:min-w-0 grid-cols-2 gap-x-6 gap-y-4 border-y border-border py-4 sm:grid-cols-4">
             {[
               {
                 k: "Per weekday",
@@ -208,18 +208,18 @@ export default async function DecisionActivityPage() {
               // NOTHING between them, so "852" glues to "10 weekdays counted".
               <Fragment key={d.k}>
               <div>
-                <dt className="text-sm font-bold text-foreground/70">
+                <dt className="text-sm font-bold text-muted-foreground">
                   {d.k}
                 </dt>{" "}
-                <dd className="mt-1 font-heading text-3xl font-black tabular-nums">
+                <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                   {d.v}
                 </dd>{" "}
-                <dd className="mt-1 text-sm text-foreground/70">{d.sub}</dd>
+                <dd className="mt-1 text-sm text-muted-foreground">{d.sub}</dd>
               </div>{" "}
               </Fragment>
             ))}
           </dl>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/70">
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             {longDate(currentPace.from)} to {longDate(currentPace.to)}. Weekdays
             and weekends counted apart: one rate over both understates the
             weekday pace by about a fifth.
@@ -229,17 +229,17 @@ export default async function DecisionActivityPage() {
 
       {activity ? (
         <section className="mt-10">
-          <h2 className="font-heading text-2xl font-black">
+          <h2 className="font-heading text-2xl font-bold">
             The cases DOL moved, day by day
           </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base text-foreground/75">
+          <p className="mt-2 max-w-3xl text-base text-soft">
             Pick a day, or a range, and filter every case DOL moved.
           </p>{" "}
           <details className="mt-2 max-w-3xl">
             <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-bold underline decoration-2 underline-offset-4">
               What each date gives you
             </summary>{" "}
-            <p className="mt-1 text-base leading-relaxed text-foreground/75">
+            <p className="mt-1 text-base leading-relaxed text-soft">
             Pick any date back to{" "}
             {monthYear(windows.decidedByProgram?.perm?.from ?? windows.decided?.from) ?? "October 2023"}{" "}
             for PERM
@@ -257,7 +257,7 @@ export default async function DecisionActivityPage() {
             with what each case changed from and to. Search, filter and sort
             either one, and pick a range to cross both.
           </p>{" "}
-            <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               A change row is dated when our scan <b>saw</b> it, not when DOL
               made it: a Friday determination read on Monday is a Monday row. A
               decided row carries DOL&apos;s own determination date.
@@ -274,9 +274,9 @@ export default async function DecisionActivityPage() {
               these answers it from the same corpus. */}
           <nav
             aria-label="Related records"
-            className="mt-6 max-w-3xl border-2 border-border bg-card p-4"
+            className="mt-6 max-w-3xl border border-border bg-card p-4"
           >
-            <p className="font-mono text-sm font-bold uppercase tracking-wider">
+            <p className="text-sm font-bold">
               The same cases, other ways in
             </p>{" "}
             <ul className="mt-2 grid grid-cols-1 gap-2 text-base sm:grid-cols-2">
@@ -435,10 +435,10 @@ export default async function DecisionActivityPage() {
 
       {extremes.busiest.length > 0 ? (
         <section className="mt-10">
-          <h2 className="font-heading text-2xl font-black">
+          <h2 className="font-heading text-2xl font-bold">
             The heaviest and lightest days
           </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             Weekdays only: a quietest list full of Sundays says nothing.
           </p>
           <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
@@ -449,14 +449,14 @@ export default async function DecisionActivityPage() {
               ] as const
             ).map((col) => (
               <Fragment key={col.title}>
-              <div className="border-2 border-border bg-card p-5 shadow-hard-sm">
-                <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+              <div className="border border-border bg-card p-5">
+                <h3 className="text-sm font-bold text-muted-foreground">
                   {col.title}
                 </h3>{" "}
                 <ol className="mt-3 m-0 list-none p-0">
                   {col.rows.map((d) => (
                     <Fragment key={d.date}>
-                    <li className="flex items-baseline justify-between gap-3 border-t-2 border-border py-2 first:border-t-0 first:pt-0">
+                    <li className="flex items-baseline justify-between gap-3 border-t border-border py-2 first:border-t-0 first:pt-0">
                       <span className="text-sm font-bold">{longDate(d.date)}</span>{" "}
                       <span className="font-mono text-sm font-bold tabular-nums">
                         {formatInt(d.total)}
@@ -471,7 +471,7 @@ export default async function DecisionActivityPage() {
           </div>
           {idleWeekdays.length > 0 ? (
             <>
-              <p className="mt-4 max-w-3xl text-sm leading-relaxed text-foreground/60">
+              <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
                 {formatInt(idleWeekdays.length)} weekdays carry no determination at
                 all, so the quietest list is a list of ties: federal holidays,
                 the January 2018 shutdown and the October 2025 stoppage.
@@ -489,9 +489,9 @@ export default async function DecisionActivityPage() {
       ) : null}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Waiting on a case?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-tint-primary p-6">
+          <h2 className="font-heading text-lg font-bold">Waiting on a case?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Pace alone does not place a case in the queue. The{" "}
             <Link
               href="/tools/perm-timeline-calculator"
@@ -509,9 +509,9 @@ export default async function DecisionActivityPage() {
             carries DOL&apos;s own position.
           </p>
         </div>
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Want the cases themselves?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Want the cases themselves?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Every decision counted here is one row in the{" "}
             <Link
               href="/perm-cases"

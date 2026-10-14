@@ -97,7 +97,7 @@ export function BacklogWall({
       <Header />
 
       {passed.length > 0 ? (
-        <details className="mt-4 border-2 border-border bg-background">
+        <details className="mt-4 border border-border bg-background">
           <summary className="cursor-pointer px-4 py-3 text-base font-bold marker:text-primary hover:text-primary">
             {passed.length} earlier {passed.length === 1 ? "month" : "months"} DOL
             has worked past. {formatInt(passedPending)}{" "}
@@ -105,7 +105,7 @@ export function BacklogWall({
             {passedPending === 1 ? "is" : "are"} still open
           </summary>
           <ChartTips label="Earlier filing months, cases still pending by stage">
-          <ol className="space-y-1 border-t-2 border-border px-4 py-3">
+          <ol className="space-y-1 border-t border-border px-4 py-3">
             {passed.map((m) => (
               <Fragment key={m.month}>
                 {" "}
@@ -164,23 +164,23 @@ export function BacklogWall({
 function Header() {
   return (
     <div
-      className="grid grid-cols-[5rem_1fr_3.5rem_3rem] items-end gap-2 border-b-2 border-border pb-2 [&>*]:min-w-0 sm:grid-cols-[7rem_1fr_5rem_4rem] sm:gap-3"
+      className="grid grid-cols-[5rem_1fr_3.5rem_3rem] items-end gap-2 border-b border-border pb-2 [&>*]:min-w-0 sm:grid-cols-[7rem_1fr_5rem_4rem] sm:gap-3"
       aria-hidden="true"
     >
-      <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
+      <span className="text-sm font-bold text-soft">
         Filed
       </span>{" "}
       {/* "Still pending" everywhere, not "Still waiting". One vocabulary for
           one state: the queue tape legend, the month page heading and this
           column header all describe the same cases, and three wordings for one
           idea is drift a reader has to translate. */}
-      <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
+      <span className="text-sm font-bold text-soft">
         Still pending
       </span>{" "}
-      <span className="text-right font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
+      <span className="text-right text-sm font-bold text-soft">
         Cases
       </span>{" "}
-      <span className="text-right font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
+      <span className="text-right text-sm font-bold text-soft">
         Decided
       </span>
     </div>
@@ -227,7 +227,7 @@ function MonthRow({
           href={`/perm-queue/${month.month}`}
           className={cn(
             "flex min-h-11 items-center truncate text-sm underline underline-offset-2 hover:text-primary",
-            isFront ? "font-black" : "text-foreground/80",
+            isFront ? "font-bold" : "text-soft",
           )}
         >
           {short}
@@ -237,12 +237,12 @@ function MonthRow({
       <span
         className={cn(
           "text-right text-sm tabular-nums",
-          isFront ? "font-black" : "text-foreground/80",
+          isFront ? "font-bold" : "text-soft",
         )}
       >
         {formatInt(month.pending)}
       </span>{" "}
-      <span className="text-right text-sm tabular-nums text-foreground/70">
+      <span className="text-right text-sm tabular-nums text-muted-foreground">
         {pct.toFixed(0)}%
       </span>
     </li>
@@ -266,12 +266,12 @@ function FrontierRule({ month, asOf }: { month: string; asOf: string | null }) {
   const label = formatMonth(month) ?? month;
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-1 pt-4">
-      <span className="min-w-0 max-w-full border-2 border-primary bg-primary px-2 py-1 font-mono text-sm font-bold uppercase tracking-wide text-primary-foreground">
+      <span className="min-w-0 max-w-full border border-primary bg-primary px-2 py-1 text-sm font-bold text-primary-foreground">
         DOL is working {label}
       </span>{" "}
-      <span className="h-0 min-w-8 flex-1 border-t-4 border-primary" aria-hidden="true" />{" "}
+      <span className="h-0 min-w-8 flex-1 border-t-2 border-primary" aria-hidden="true" />{" "}
       {asOf ? (
-        <span className="ml-auto whitespace-nowrap font-mono text-sm text-foreground/70">
+        <span className="ml-auto whitespace-nowrap font-mono text-sm text-muted-foreground">
           as of {asOf}
         </span>
       ) : null}

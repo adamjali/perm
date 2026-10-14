@@ -304,7 +304,7 @@ export function CalendarFilters({
   return (
     <div className="space-y-4">
       {/* Filter Controls Bar */}
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 p-3 sm:p-4 bg-card border-2 border-border shadow-hard">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 p-3 sm:p-4 bg-card border border-border">
         {/* Top row on mobile: Cases button + Filters toggle */}
         <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
           {/* Case Selection Button */}
@@ -319,7 +319,7 @@ export function CalendarFilters({
             <span>Cases</span>{" "}
             <span
               className={cn(
-                "ml-1 px-2 py-0.5 text-sm font-bold border-2 border-border",
+                "ml-1 px-2 py-0.5 text-sm font-bold border border-border",
                 selectedCaseIds.size === allCases.length
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground"
@@ -355,7 +355,7 @@ export function CalendarFilters({
             onCheckedChange={(checked) =>
               onShowCompletedChange(checked === true)
             }
-            className="border-2 size-5"
+            className="border size-5"
             data-testid="show-completed-checkbox"
           />
           <Label
@@ -374,7 +374,7 @@ export function CalendarFilters({
             onCheckedChange={(checked) =>
               onShowClosedChange(checked === true)
             }
-            className="border-2 size-5"
+            className="border size-5"
             data-testid="show-closed-checkbox"
           />
           <Label
@@ -390,7 +390,7 @@ export function CalendarFilters({
       </div>
 
       {/* Expandable Deadline Type Filters with animation */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence initial={false} mode="wait">
         {isFiltersExpanded && (
           <motion.div
             key="filter-panel"
@@ -401,7 +401,7 @@ export function CalendarFilters({
             className="overflow-hidden"
           >
             <div
-              className="p-4 bg-card border-2 border-border shadow-hard"
+              className="p-4 bg-card border border-border"
               data-testid="deadline-filters-panel"
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -418,7 +418,7 @@ export function CalendarFilters({
                     {/* Group Header with Stage Color */}
                     <div className="flex items-center gap-2">
                       <div
-                        className="w-3 h-3 border-2 border-border shrink-0"
+                        className="w-3 h-3 border border-border shrink-0"
                         style={{ backgroundColor: group.color }}
                         aria-hidden="true"
                       />
@@ -447,7 +447,7 @@ export function CalendarFilters({
                             onCheckedChange={(checked) =>
                               handleDeadlineTypeToggle(type.value, checked === true)
                             }
-                            className="border-2"
+                            className="border"
                             data-testid={`filter-checkbox-${type.value}`}
                             aria-label={`Show ${type.label} deadlines`}
                           />

@@ -175,10 +175,10 @@ export default async function FAQPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
 
-      <section className="border-b-2 border-border bg-card">
+      <section className="border-b border-border bg-card">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-10 sm:px-8 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:items-start [&>*]:min-w-0">
           <div>
-            <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl mb-3">
+            <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl mb-3">
               Frequently asked questions
             </h1>{" "}
             <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -196,15 +196,15 @@ export default async function FAQPage() {
                 {" "}
                 <Link
                   href={l.href}
-                  className="group flex flex-col border-2 border-border bg-background p-4 shadow-hard-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none"
+                  className="group flex flex-col border border-border bg-background p-4 transition-transform motion-reduce:transition-none"
                 >
                   <span
                     aria-hidden="true"
-                    className="inline-flex size-10 items-center justify-center border-2 border-border bg-primary text-black"
+                    className="inline-flex size-10 items-center justify-center border border-border bg-primary text-black"
                   >
                     <l.Icon className="size-5" weight="bold" />
                   </span>{" "}
-                  <span className="mt-3 font-heading text-base font-black leading-tight">{l.label}</span>{" "}
+                  <span className="mt-3 font-heading text-base font-bold leading-tight">{l.label}</span>{" "}
                   <span className="mt-1 text-sm leading-snug text-muted-foreground">{l.note}</span>
                 </Link>
               </Fragment>
@@ -217,7 +217,7 @@ export default async function FAQPage() {
         {/* The groups, with how many questions each holds: a contents list
             that stays beside the questions on a wide screen. */}
         <nav aria-label="Question groups" className="max-lg:hidden">
-          <ol className="sticky top-[calc(var(--site-header-h,71px)+1.5rem)] space-y-1 border-l-4 border-foreground pl-4">
+          <ol className="sticky top-[calc(var(--site-header-h,71px)+1.5rem)] space-y-1 border-l-2 border-foreground pl-4">
             {groups.map((g) => (
               <Fragment key={g.id}>
                 {" "}
@@ -237,33 +237,33 @@ export default async function FAQPage() {
         <div className="max-w-[820px]">
         <FAQPageClient faqData={groups} />
 
-        <div className="mt-12 border-t-2 border-border pt-8">
+        <div className="mt-12 border-t border-border pt-8">
           <h2 className="mb-4 font-heading text-xl font-bold">Learn more</h2>{" "}
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
               href="/blog/what-is-perm-labor-certification"
-              className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
+              className="border border-border bg-card p-4 transition-shadow"
             >
               <span className="font-heading text-sm font-bold">What’s PERM?</span>{" "}
               <p className="mt-1 text-sm text-muted-foreground">Complete overview of the PERM process</p>
             </Link>{" "}
             <Link
               href="/guides/ultimate-perm-guide-2026"
-              className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
+              className="border border-border bg-card p-4 transition-shadow"
             >
               <span className="font-heading text-sm font-bold">The ultimate PERM guide, 2026</span>{" "}
               <p className="mt-1 text-sm text-muted-foreground">Comprehensive filing reference</p>
             </Link>{" "}
             <Link
               href="/blog/perm-processing-times-2026"
-              className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
+              className="border border-border bg-card p-4 transition-shadow"
             >
               <span className="font-heading text-sm font-bold">Processing times in 2026</span>{" "}
               <p className="mt-1 text-sm text-muted-foreground">Current DOL timelines</p>
             </Link>{" "}
             <Link
               href="/guides/getting-started"
-              className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
+              className="border border-border bg-card p-4 transition-shadow"
             >
               <span className="font-heading text-sm font-bold">Getting started</span>{" "}
               <p className="mt-1 text-sm text-muted-foreground">Set up your first case in minutes</p>

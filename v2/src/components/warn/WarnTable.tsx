@@ -20,7 +20,7 @@ export const WARN_COLUMNS: StatColumn<WarnNotice>[] = [
     render: (r) => (
       <>
         {r.company}{" "}
-        {r.site ? <span className="block text-foreground/70">{r.site}{" "}</span> : null}
+        {r.site ? <span className="block text-muted-foreground">{r.site}{" "}</span> : null}
       </>
     ),
   },

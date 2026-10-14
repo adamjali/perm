@@ -39,7 +39,7 @@ export function CaseListEmptyState({
     return (
       <div
         data-testid="empty-state-new-user"
-        className="flex flex-col items-center justify-center py-20 px-6 border-2 border-border bg-background shadow-hard"
+        className="flex flex-col items-center justify-center py-20 px-6 border border-border bg-background"
       >
         <DocketFolderArt variant="empty" className="mb-6 w-52" />
 
@@ -60,7 +60,7 @@ export function CaseListEmptyState({
   return (
     <div
       data-testid="empty-state-no-results"
-      className="flex flex-col items-center justify-center py-20 px-6 border-2 border-border bg-background shadow-hard"
+      className="flex flex-col items-center justify-center py-20 px-6 border border-border bg-background"
     >
       <DocketFolderArt variant="no-match" className="mb-6 w-52" />
 

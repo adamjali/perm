@@ -157,14 +157,14 @@ export function LiveCaseBrowser({
 
   return (
     <section id="live" ref={liveTop} className="scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
-      <div className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="border border-border bg-card p-5 sm:p-6">
+        <p className="text-sm font-bold text-muted-foreground">
           Newer than DOL&apos;s published files
         </p>{" "}
-        <h2 className="mt-2 font-heading text-2xl font-black sm:text-3xl">
+        <h2 className="mt-2 font-heading text-2xl font-bold sm:text-3xl">
           Live from DOL&apos;s case-status service
         </h2>{" "}
-        <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
           {cohort ? (
             <>
               {formatInt(cohort.total)} live {cohort.total === 1 ? "case was" : "cases were"} filed in{" "}
@@ -197,7 +197,7 @@ export function LiveCaseBrowser({
                 aria-pressed={kind === k}
                 onClick={() => pickKind(k)}
                 className={
-                  "min-h-[44px] border-2 border-border px-4 font-mono text-sm font-bold uppercase tracking-wider transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary " +
+                  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary " +
                   (kind === k ? "bg-foreground text-background hover:bg-foreground" : "bg-card")
                 }
               >
@@ -207,8 +207,8 @@ export function LiveCaseBrowser({
               </Fragment>
             ))}
           </div>{" "}
-          <label className="flex min-h-[44px] flex-1 items-center gap-2 border-2 border-border bg-card px-3 text-sm font-bold sm:max-w-md">
-            <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">Search</span>{" "}
+          <label className="flex min-h-[44px] flex-1 items-center gap-2 border border-border bg-card px-3 text-sm font-bold sm:max-w-md">
+            <span className="text-sm text-muted-foreground">Search</span>{" "}
             <input
               type="search"
               value={qInput}
@@ -223,7 +223,7 @@ export function LiveCaseBrowser({
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as LiveSort)}
-              className="min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="filed">Filing date</option>
               <option value="employer">Employer</option>
@@ -235,7 +235,7 @@ export function LiveCaseBrowser({
             <select
               value={month}
               onChange={(e) => pickMonth(e.target.value)}
-              className="min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="">Any month</option>
               {months.map((m) => (
@@ -254,7 +254,7 @@ export function LiveCaseBrowser({
             failure={fetched.failure}
             onRetry={fetched.retry}
             after="The case search above still answers by number or employer."
-            className="mt-5 border-2 border-border bg-tint-primary p-4"
+            className="mt-5 border border-border bg-tint-primary p-4"
           />
         ) : null}
 
@@ -273,7 +273,7 @@ export function LiveCaseBrowser({
                     <Fragment key={h}>
                     <th
                       scope="col"
-                      className="whitespace-nowrap px-3 py-3 font-mono text-sm font-bold uppercase tracking-wider"
+                      className="whitespace-nowrap px-3 py-3 text-sm font-bold"
                     >
                       {h}{" "}
                     </th>
@@ -284,20 +284,20 @@ export function LiveCaseBrowser({
               <tbody translate="no" className="bg-card">
                 {loading && !shownPage ? (
                   <tr>
-                    <td colSpan={6} className="px-3 py-6 text-foreground/70">
+                    <td colSpan={6} className="px-3 py-6 text-muted-foreground">
                       Loading the live list…
                     {" "}</td>
                   </tr>
                 ) : null}
                 {page && page.rows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 py-6 text-foreground/70">
+                    <td colSpan={6} className="px-3 py-6 text-muted-foreground">
                       Nothing live matches that filter.
                     {" "}</td>
                   </tr>
                 ) : null}
                 {shownPage?.rows.map((r) => (
-                  <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
+                  <tr key={r.caseNumber} className="border-t border-border/30 align-top">
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                       {/* PendingLink: /perm-case-status is dynamic and can
                           ask DOL live, so a bare link is seconds of silence. */}
@@ -311,7 +311,7 @@ export function LiveCaseBrowser({
                     <td className="whitespace-nowrap px-3 py-3">
                       <span
                         className={
-                          "border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " +
+                          "border border-border px-2 py-0.5 font-mono text-sm font-bold " +
                           statusClass(r.status, r.isFinal)
                         }
                       >
@@ -330,11 +330,11 @@ export function LiveCaseBrowser({
                         <span className="font-bold">{r.employerName}</span>
                       )}
                     {" "}</td>
-                    <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}{" "}</td>
+                    <td className="px-3 py-3 text-soft">{r.jobTitle ?? ""}{" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
                       {r.filingDate ?? ""}
                     {" "}</td>
-                    <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
+                    <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-soft">
                       {r.decidedSeen ?? ""}
                     {" "}</td>
                   </tr>
@@ -355,12 +355,12 @@ export function LiveCaseBrowser({
             previousLabel="Newer"
             nextLabel="Older"
             labelClassName="text-sm font-bold"
-            buttonClassName="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+            buttonClassName="min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             scrollTo={liveTop}
             onPrevious={() => setCursors((c) => c.slice(0, -1))}
             onNext={() => page && setCursors((c) => [...c, page.continueCursor])}
           >
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-muted-foreground">
               Newest filing first. &ldquo;Seen&rdquo; is the day this site first saw the
               decision. It&apos;s blank for cases decided before the daily check began.
             </p>

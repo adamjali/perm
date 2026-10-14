@@ -30,13 +30,13 @@ function Reminder({ className }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
-      className={`items-start gap-3 border-3 border-border bg-card p-3 text-foreground shadow-hard ${className ?? ""}`}
+      className={`items-start gap-3 border border-border bg-card p-3 text-foreground ${className ?? ""}`}
     >
-      <span className="grid size-10 shrink-0 place-items-center border-2 border-border bg-primary text-primary-foreground">
+      <span className="grid size-10 shrink-0 place-items-center border border-border bg-primary text-primary-foreground">
         <BellSimpleRingingIcon weight="bold" className="size-5" />
       </span>{" "}
       <span className="min-w-0">
-        <span className="block font-heading text-base font-black leading-tight">{deadlineTitle("rfi_due", 7)}</span>{" "}
+        <span className="block font-heading text-base font-bold leading-tight">{deadlineTitle("rfi_due", 7)}</span>{" "}
         <span className="mt-0.5 block text-sm text-muted-foreground">Juniper Biologics, Senior Statistician</span>{" "}
         <span className="mt-1 block font-mono text-sm text-muted-foreground">Reminder email</span>
       </span>
@@ -47,11 +47,11 @@ function Reminder({ className }: { className?: string }) {
 export function AttorneyHero() {
   return (
     <section
-      className={`${BAND} relative overflow-hidden border-b-3 border-border bg-foreground text-background dark:bg-card dark:text-foreground`}
+      className={`${BAND} relative overflow-hidden border-b border-border bg-foreground text-background dark:bg-card dark:text-foreground`}
     >
       <div className="mx-auto max-w-[1400px] px-4 pt-8 pb-14 sm:px-8 sm:pt-12 lg:pb-20">
         <div className="grid gap-6 [&>*]:min-w-0 lg:grid-cols-12 lg:items-end lg:gap-12">
-          <h1 className="font-heading text-4xl font-black leading-[1.02] tracking-[-0.03em] sm:text-5xl lg:col-span-7 xl:text-[3.5rem]">
+          <h1 className="font-heading text-4xl font-bold leading-[1.02] tracking-[-0.03em] sm:text-5xl lg:col-span-7 xl:text-[3.5rem]">
             Every PERM deadline, worked out from the dates you enter
           </h1>{" "}
           <div className="lg:col-span-5 lg:pb-2">
@@ -62,14 +62,14 @@ export function AttorneyHero() {
             <div className="mt-6 flex flex-wrap gap-4">
               <Link
                 href="/signup"
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 border-3 border-[var(--band-ink)] bg-primary px-6 font-heading font-black text-primary-foreground transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5 motion-reduce:transition-none"
+                className="inline-flex min-h-[52px] items-center justify-center gap-2 border border-[var(--band-ink)] bg-primary px-6 font-heading font-bold text-primary-foreground transition-transform duration-150 motion-reduce:transition-none"
               >
                 Start free
                 <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
               </Link>{" "}
               <Link
                 href="/perm-case-status"
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 border-3 border-[var(--band-ink)] px-6 font-heading font-black text-[var(--band-ink)] transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0.5 motion-reduce:transition-none"
+                className="inline-flex min-h-[52px] items-center justify-center gap-2 border border-[var(--band-ink)] px-6 font-heading font-bold text-[var(--band-ink)] transition-transform duration-150 motion-reduce:transition-none"
               >
                 <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
                 Check a case first

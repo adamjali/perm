@@ -30,9 +30,9 @@ function Switch({
         // Base styles
         "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full",
         // Border and shadow
-        "border-2 border-border shadow-hard-sm",
+        "border border-border",
         // Transition - snappy 150ms
-        "transition-all duration-150 ease-out",
+        "transition-colors duration-150 ease-out",
         // OFF state
         "bg-muted",
         // ON state - Forest Green
@@ -42,7 +42,7 @@ function Switch({
         // Disabled state
         "disabled:cursor-not-allowed disabled:opacity-50",
         // Active state - push effect like buttons
-        "active:scale-95",
+        "",
         className
       )}
       {...props}
@@ -53,7 +53,7 @@ function Switch({
           // Base thumb styles
           "pointer-events-none block h-5 w-5 rounded-full bg-white",
           // Border for neobrutalist look
-          "border-2 border-border",
+          "border border-border",
           // Shadow
           "shadow-hard-xs",
           // Transition - snappy 150ms

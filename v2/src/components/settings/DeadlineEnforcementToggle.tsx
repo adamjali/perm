@@ -64,7 +64,7 @@ export default function DeadlineEnforcementToggle() {
   // Show loading state while profile loads
   if (profile === undefined) {
     return (
-      <div className="border-2 border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
+      <div className="border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
         <Skeleton variant="line" className="mb-4 h-6 w-1/3" />
         <Skeleton variant="line" className="h-4 w-2/3" />
       </div>
@@ -73,7 +73,7 @@ export default function DeadlineEnforcementToggle() {
 
   return (
     <div
-      className="border-2 border-border bg-card p-6"
+      className="border border-border bg-card p-6"
       style={{ boxShadow: "var(--shadow-hard)" }}
     >
       {/* Header */}
@@ -109,7 +109,7 @@ export default function DeadlineEnforcementToggle() {
 
       {/* Warning message */}
       <div
-        className="flex items-start gap-3 p-3 bg-data-warn/15 border-2 border-data-warn rounded-sm"
+        className="flex items-start gap-3 p-3 bg-data-warn/15 border border-data-warn rounded-sm"
         id="enforcement-description"
       >
         <AlertTriangle className="w-5 h-5 text-data-warn-ink flex-shrink-0 mt-0.5" />

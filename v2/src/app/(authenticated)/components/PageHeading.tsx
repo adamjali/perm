@@ -34,16 +34,16 @@ export function PageHeading({ eyebrow, title, lede }: PageHeadingProps) {
     <div className="min-w-0">
       {eyebrow ? (
         <>
-          <p className="mb-2 font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <p className="mb-2 text-sm font-semibold text-muted-foreground">
             {eyebrow}
           </p>{" "}
         </>
       ) : null}
-      <h1 className="font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">
+      <h1 className="font-heading text-3xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-4xl">
         {title}
       </h1>{" "}
       {lede ? (
-        <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
           {lede}
         </p>
       ) : null}

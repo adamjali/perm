@@ -59,8 +59,8 @@ export function ProductShot({
       <div
         className={
           dark
-            ? "overflow-hidden border-2 border-current/40 bg-card"
-            : "overflow-hidden border-2 border-border bg-card shadow-hard-sm"
+            ? "overflow-hidden border border-current/40 bg-card"
+            : "overflow-hidden border border-border bg-card"
         }
       >
         <Image
@@ -76,8 +76,8 @@ export function ProductShot({
       <figcaption
         className={
           dark
-            ? "mt-3 font-mono text-sm font-bold uppercase tracking-wider opacity-60"
-            : "mt-3 border-t-2 border-border pt-3 font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground"
+            ? "mt-3 text-sm font-bold opacity-60"
+            : "mt-3 border-t border-border pt-3 text-sm font-bold text-muted-foreground"
         }
       >
         {caption}

@@ -498,7 +498,7 @@ export function QuickEditFields({
         className={cn(
           "w-full flex items-center justify-center gap-2 px-4 py-2",
           "font-medium text-sm transition-colors",
-          "border-2",
+          "border",
           canSubmit && hasChanges && submitStatus !== "saving"
             ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
             : "bg-muted text-muted-foreground border-border cursor-not-allowed"

@@ -195,15 +195,15 @@ export default async function StagePage({
         schema={breadcrumbSchema(`/perm-rfi-audit/${stage}`, meta.label)}
       />
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           <span
-            className="mr-3 inline-block h-4 w-4 shrink-0 border-2 border-border align-middle"
+            className="mr-3 inline-block h-4 w-4 shrink-0 border border-border align-middle"
             style={{ backgroundColor: GROUP_STYLE[meta.group].fill }}
             aria-hidden="true"
           />{" "}
           {meta.label}
         </h1>{" "}
-        <p className="mt-2 text-base text-foreground/70">
+        <p className="mt-2 text-base text-muted-foreground">
           DOL&apos;s record prints it as <span className="font-mono text-sm font-bold text-foreground">{status}</span>
         </p>
 
@@ -211,17 +211,17 @@ export default async function StagePage({
           <div className="mt-6 max-w-3xl grid gap-3 text-lg leading-relaxed">
             <p>{entry.what}</p>{" "}
             {entry.deadline ? (
-              <p className="border-l-4 border-[var(--data-warn)] bg-[var(--data-warn)]/10 px-4 py-3 text-base">
+              <p className="border-l-2 border-[var(--data-warn)] bg-[var(--data-warn)]/10 px-4 py-3 text-base">
                 <b className="font-bold">Deadline.</b> {entry.deadline}
               </p>
             ) : null}{" "}
             {entry.next ? (
-              <p className="text-base text-foreground/70">{entry.next}</p>
+              <p className="text-base text-muted-foreground">{entry.next}</p>
             ) : null}
           </div>
         ) : null}
 
-        <section className="mt-10 grid gap-px border-2 border-border bg-border sm:grid-cols-3">
+        <section className="mt-10 grid gap-px border border-border bg-border sm:grid-cols-3">
           {[
             {
               k: "Cases at this stage",
@@ -248,14 +248,14 @@ export default async function StagePage({
           ].map((d) => (
             <Fragment key={d.k}>{" "}
             <div className="bg-card p-5">
-              <p className="text-sm font-bold text-foreground/70">
+              <p className="text-sm font-bold text-muted-foreground">
                 {d.k}
               </p>{" "}
-              <p className="mt-1.5 font-heading text-2xl font-black tabular-nums">
+              <p className="mt-1.5 font-heading text-2xl font-bold tabular-nums">
                 {d.v}
               </p>{" "}
               {d.sub ? (
-                <p className="mt-1 text-sm text-foreground/70">{d.sub}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{d.sub}</p>
               ) : null}
             </div>
             </Fragment>
@@ -263,11 +263,11 @@ export default async function StagePage({
         </section>
 
         {months.length > 0 ? (
-          <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-            <h2 className="font-heading text-xl font-black sm:text-2xl">
+          <section className="mt-10 border border-border bg-card p-6 sm:p-8">
+            <h2 className="font-heading text-xl font-bold sm:text-2xl">
               Which filing months these come from
             </h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
               Where cases are held today, not how often DOL issues one: a live
               status shows only where a case stands now.
             </p>
@@ -293,7 +293,7 @@ export default async function StagePage({
                       aria-hidden="true"
                       data-tip={`Filed in ${formatMonth(m.month) ?? m.month}\n${formatInt(m.n)} ${m.n === 1 ? "case" : "cases"} at ${meta.label}\n${share.toFixed(1)}% of the ${formatInt(cases)}`}
                     />{" "}
-                    <span className="text-right text-sm tabular-nums text-foreground/80">
+                    <span className="text-right text-sm tabular-nums text-soft">
                       {formatInt(m.n)}
                     </span>
                   </li>
@@ -303,7 +303,7 @@ export default async function StagePage({
             </ol>
             </ChartTips>{" "}
             {months.length > 18 ? (
-              <p className="mt-4 text-sm text-foreground/70">
+              <p className="mt-4 text-sm text-muted-foreground">
                 {formatInt(months.length - 18)} further months hold smaller numbers.
                 {oldestMonth ? ` The oldest is ${oldestMonth}.` : ""}
               </p>
@@ -311,8 +311,8 @@ export default async function StagePage({
           </section>
         ) : null}
 
-        <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h2 className="font-heading text-xl font-black sm:text-2xl">
+        <section className="mt-10 border border-border bg-card p-6 sm:p-8">
+          <h2 className="font-heading text-xl font-bold sm:text-2xl">
             {listing === "list" ? `All ${formatInt(cases)} of them` : "The cases themselves"}
           </h2>{" "}
 
@@ -352,7 +352,7 @@ export default async function StagePage({
 
           {listing === "list" ? (
             <>
-              <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
                 Longest wait first. Search by case number, employer or job title, sort any column, or filter
                 by filing year. Wage, law firm and worksite arrive only when DOL publishes a case, so they&apos;re
                 absent here.
@@ -366,7 +366,7 @@ export default async function StagePage({
                   asOf={asOf ?? null}
                 />
               </div>{" "}
-              <p className="mt-4 text-sm text-foreground/70">
+              <p className="mt-4 text-sm text-muted-foreground">
                 <a
                   href={`/api/stage-cases?stage=${encodeURIComponent(stage)}&format=csv`}
                   className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -387,11 +387,11 @@ export default async function StagePage({
                   lookup URLs themselves are kept out of crawlers on purpose
                   (each is a live render), so this list is the only place
                   a pending number is indexable. */}
-              <details className="mt-6 border-t-2 border-border pt-4">
+              <details className="mt-6 border-t border-border pt-4">
                 <summary className="cursor-pointer text-sm font-bold">
                   All {formatInt(allRecords.length)} case numbers at this stage, as text
                 </summary>{" "}
-                <p className="mt-3 font-mono text-sm leading-relaxed text-foreground/80">
+                <p className="mt-3 font-mono text-sm leading-relaxed text-soft">
                   {allRecords.map((c, i) => (
                     <Fragment key={c.caseNumber}>
                       {i > 0 ? ", " : ""}
@@ -407,7 +407,7 @@ export default async function StagePage({
               </details>
             </>
           ) : null}
-          <p className="mt-5 border-t-2 border-border pt-3 text-sm text-foreground/70">
+          <p className="mt-5 border-t border-border pt-3 text-sm text-muted-foreground">
             {asOf
               ? `DOL live case record, as of ${formatAsOf(asOf) ?? asOf}`
               : "DOL live case record"}
@@ -415,7 +415,7 @@ export default async function StagePage({
         </section>
 
         <section className="mt-10">
-          <h2 className="font-heading text-xl font-black sm:text-2xl">
+          <h2 className="font-heading text-xl font-bold sm:text-2xl">
             The other stages
           </h2>{" "}
           <ul className="mt-4 flex flex-wrap gap-2">
@@ -432,10 +432,10 @@ export default async function StagePage({
                 <li>
                   <Link
                     href={`/perm-rfi-audit/${s.slug}`}
-                    className="inline-flex min-h-11 items-center gap-2 border-2 border-border bg-card px-3 text-sm font-bold shadow-hard-sm hover:bg-tint-primary"
+                    className="inline-flex min-h-11 items-center gap-2 border border-border bg-card px-3 text-sm font-bold hover:bg-tint-primary"
                   >
                     {stageMeta(s.status).label}
-                    <span className="font-mono text-sm font-normal tabular-nums text-foreground/70">
+                    <span className="font-mono text-sm font-normal tabular-nums text-muted-foreground">
                       {formatInt(stages.find((x) => x.status === s.status)?.cases ?? 0)}
                     </span>
                   </Link>

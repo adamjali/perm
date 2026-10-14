@@ -199,7 +199,7 @@ export function TimelineRow({
         "flex relative",
         "border-b border-foreground/20",
         "group transition-colors duration-150",
-        "hover:bg-primary/5",
+        "hover:bg-accent",
         // Alternating row background
         isEven ? "bg-muted/20" : "bg-transparent",
         // Cursor pointer when row click is enabled
@@ -218,7 +218,7 @@ export function TimelineRow({
           "bg-card border-r-[3px] border-foreground",
           SIDEBAR_WIDTH_CLASSES,
           // Match row hover (theme-aware)
-          "group-hover:bg-primary/5"
+          "group-hover:bg-accent"
         )}
         style={{ zIndex: Z_INDEX.stickyLabel }}
         role="rowheader"
@@ -279,7 +279,7 @@ export function TimelineRow({
           // shows beside the names; "No dates in this range yet" ran off the
           // edge there.
           <div className="absolute inset-0 z-[25] flex items-center">
-            <span className="sticky left-[calc(var(--tl-label,120px)+12px)] ml-3 whitespace-nowrap border-2 border-dashed border-muted-foreground/50 bg-card px-2 py-0.5 text-sm text-muted-foreground">
+            <span className="sticky left-[calc(var(--tl-label,120px)+12px)] ml-3 whitespace-nowrap border border-dashed border-muted-foreground/50 bg-card px-2 py-0.5 text-sm text-muted-foreground">
               {/* Below 360px wide the months beside the names are ~134px. */}
               No dates<span className="hidden min-[360px]:inline"> in range</span>
             </span>

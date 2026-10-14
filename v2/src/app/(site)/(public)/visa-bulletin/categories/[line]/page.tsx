@@ -146,10 +146,10 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
       <JsonLdScript schema={breadcrumb} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           <span translate="no">{cat}</span>, {where}
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           Where this line&apos;s cutoff stands, how it has moved a fiscal year at a time, and what USCIS counts behind
           it. From the State Department&apos;s bulletins, {bulletinMonthLabel(board.firstMonth)} to{" "}
           {bulletinMonthLabel(board.lastMonth)}.
@@ -160,19 +160,19 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
         <h2 id="now" className="sr-only">
           This month
         </h2>
-        <dl className="border-t-2 border-border">
-          <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
-            <dt className="text-base text-foreground/75">Final action, {bulletinMonthLabel(fa.latestMonth)}</dt>{" "}
-            <dd className="font-heading text-2xl font-black tabular-nums">{cutoffLabel(fa.latest)}</dd>
+        <dl className="border-t border-border">
+          <div className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
+            <dt className="text-base text-soft">Final action, {bulletinMonthLabel(fa.latestMonth)}</dt>{" "}
+            <dd className="font-heading text-2xl font-bold tabular-nums">{cutoffLabel(fa.latest)}</dd>
           </div>{" "}
-          <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
-            <dt className="text-base text-foreground/75">
+          <div className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
+            <dt className="text-base text-soft">
               Dates for filing{dff ? `, ${bulletinMonthLabel(dff.latestMonth)}` : ""}
             </dt>{" "}
-            <dd className="font-heading text-2xl font-black tabular-nums">{cutoffLabel(dff?.latest ?? null)}</dd>
+            <dd className="font-heading text-2xl font-bold tabular-nums">{cutoffLabel(dff?.latest ?? null)}</dd>
           </div>{" "}
-          <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
-            <dt className="text-base text-foreground/75">Since October 2014</dt>{" "}
+          <div className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
+            <dt className="text-base text-soft">Since October 2014</dt>{" "}
             <dd className="text-base leading-relaxed">
               {paceSentence(fa)}{" "}
               {fa.retrogressions.length > 0
@@ -181,7 +181,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             </dd>
           </div>
         </dl>{" "}
-        <p className="mt-3 text-base text-foreground/70">
+        <p className="mt-3 text-base text-muted-foreground">
           Final action decides when a green card can be approved; dates for filing, when USCIS allows it, decides when
           an I-485 can be filed.{" "}
           <Link href="/guides/how-the-visa-bulletin-works" className="font-semibold underline underline-offset-2 hover:text-primary">
@@ -192,7 +192,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Check your priority date</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Check your priority date</h2>{" "}
         <PriorityDateEstimator
           bulletins={bulletins}
           categoryCodes={board.categories}
@@ -204,16 +204,16 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
       </section>
 
       <section className="mt-12" aria-labelledby="by-year">
-        <h2 id="by-year" className="font-heading text-2xl font-black">
+        <h2 id="by-year" className="font-heading text-2xl font-bold">
           A fiscal year at a time
         </h2>{" "}
-        <p className="mt-2 max-w-3xl text-base text-foreground/70">
+        <p className="mt-2 max-w-3xl text-base text-muted-foreground">
           The final action cutoff in each year&apos;s first bulletin (October) against its last (September), the year the
           State Department plans visa numbers for. Newest first.
         </p>{" "}
-        <div className="mt-4 overflow-x-auto border-2 border-border">
+        <div className="mt-4 overflow-x-auto border border-border">
           <table className="w-full min-w-[560px] text-left text-base">
-            <thead className="border-b-2 border-border bg-muted/40">
+            <thead className="border-b border-border bg-muted/40">
               <tr>
                 <th scope="col" className="px-4 py-3 font-bold">Fiscal year{" "}</th>
                 <th scope="col" className="px-4 py-3 font-bold">First bulletin{" "}</th>
@@ -227,7 +227,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
                 <tr key={y.fy} className="border-b border-border last:border-b-0">
                   <th scope="row" className="px-4 py-3 font-bold tabular-nums">
                     FY{y.fy}
-                    {y.partial ? <span className="font-normal text-foreground/70"> (part)</span> : null}{" "}
+                    {y.partial ? <span className="font-normal text-muted-foreground"> (part)</span> : null}{" "}
                   </th>
                   <td className="px-4 py-3 tabular-nums">{cutoffLabel(y.start.cutoff)}{" "}</td>
                   <td className="px-4 py-3 tabular-nums">{cutoffLabel(y.end.cutoff)}{" "}</td>
@@ -257,14 +257,14 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
 
       {counts.awaiting || counts.inventory ? (
         <section className="mt-12" aria-labelledby="counts">
-          <h2 id="counts" className="font-heading text-2xl font-black">
+          <h2 id="counts" className="font-heading text-2xl font-bold">
             What USCIS counts in this line
           </h2>{" "}
           <dl className="mt-4 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-3">
             {counts.awaiting ? (
-              <div className="border-2 border-border bg-card p-4 shadow-hard">
-                <dt className="text-base text-foreground/75">Approved petitions waiting for a visa number</dt>{" "}
-                <dd className="mt-1 font-heading text-3xl font-black tabular-nums">
+              <div className="border border-border bg-card p-4">
+                <dt className="text-base text-soft">Approved petitions waiting for a visa number</dt>{" "}
+                <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                   {counts.awaiting.count.toLocaleString("en-US")}
                 </dd>{" "}
                 <dd className="font-mono text-sm text-muted-foreground">as of {bulletinMonthLabel(counts.awaiting.asOf)}, primary applicants</dd>
@@ -273,16 +273,16 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             {counts.inventory ? (
               <Fragment>
                 {" "}
-                <div className="border-2 border-border bg-card p-4 shadow-hard">
-                  <dt className="text-base text-foreground/75">I-485s pending, visa number available</dt>{" "}
-                  <dd className="mt-1 font-heading text-3xl font-black tabular-nums">
+                <div className="border border-border bg-card p-4">
+                  <dt className="text-base text-soft">I-485s pending, visa number available</dt>{" "}
+                  <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                     {rangeLabel(counts.inventory.available)}
                   </dd>{" "}
                   <dd className="font-mono text-sm text-muted-foreground">inventory of {counts.inventory.asOf}</dd>
                 </div>{" "}
-                <div className="border-2 border-border bg-card p-4 shadow-hard">
-                  <dt className="text-base text-foreground/75">I-485s pending, waiting for a visa number</dt>{" "}
-                  <dd className="mt-1 font-heading text-3xl font-black tabular-nums">
+                <div className="border border-border bg-card p-4">
+                  <dt className="text-base text-soft">I-485s pending, waiting for a visa number</dt>{" "}
+                  <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                     {rangeLabel(counts.inventory.awaiting)}
                   </dd>{" "}
                   <dd className="font-mono text-sm text-muted-foreground">inventory of {counts.inventory.asOf}</dd>
@@ -290,14 +290,14 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
               </Fragment>
             ) : null}
           </dl>{" "}
-          <p className="mt-4 max-w-3xl text-base text-foreground/70">
+          <p className="mt-4 max-w-3xl text-base text-muted-foreground">
             Approved counts are petitions, not people. I-485 counts are ranges (USCIS withholds cells of 1 to 10)
             and leave out people getting their visa abroad.
           </p>{" "}
           {GREEN_CARD_LINE.has(category) ? (
             <Link
               href={`/tools/green-card-line?category=${category}&country=${country}`}
-              className="mt-4 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
+              className="mt-4 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
             >
               Count everyone ahead of your date in this line
               <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
@@ -307,14 +307,14 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
       ) : null}
 
       {issued ? (
-        <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="issued">
-          <h2 id="issued" className="font-heading text-xl font-black sm:text-2xl">
+        <section className="mt-12 border border-border bg-card p-6 sm:p-8" aria-labelledby="issued">
+          <h2 id="issued" className="font-heading text-xl font-bold sm:text-2xl">
             What State issued abroad in this line
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed">
-            <span className="font-heading text-3xl font-black tabular-nums">{issued.total.toLocaleString("en-US")}</span>{" "}
+            <span className="font-heading text-3xl font-bold tabular-nums">{issued.total.toLocaleString("en-US")}</span>{" "}
             {issued.wholeCategory ? "EB-5 visas (all EB-5, which State doesn't split by set-aside)" : `${cat} visas`}{" "}
-            {country === "worldwide" ? "to people outside the four countries listed apart" : `to people chargeable to ${where}`}{" "}
+            {country === "worldwide" ? "to people outside the four countries listed apart" : `to people chargeable ${where}`}{" "}
             from {monthName(issued.from)} to {monthName(issued.to)}, {issued.newest.toLocaleString("en-US")} of them in{" "}
             {monthName(issued.to)}. Consulates only: a green card granted inside the US isn&apos;t in this count.{" "}
             <Link href="/visa-issuances" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -326,7 +326,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
       ) : null}
 
       <nav className="mt-12" aria-labelledby="other-lines">
-        <h2 id="other-lines" className="font-heading text-2xl font-black">
+        <h2 id="other-lines" className="font-heading text-2xl font-bold">
           Other lines
         </h2>{" "}
         <p className="mt-3 text-base font-semibold">{cat} elsewhere</p>{" "}
@@ -335,7 +335,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             <li key={c}>
               <Link
                 href={`/visa-bulletin/categories/${lineSlug(category, c)}`}
-                className="inline-flex min-h-[44px] items-center border-2 border-border px-3 font-semibold hover:bg-muted"
+                className="inline-flex min-h-[44px] items-center border border-border px-3 font-semibold hover:bg-muted"
               >
                 {cat} {LINE_COUNTRY_SHORT[c]}
               </Link>{" "}
@@ -348,7 +348,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             <li key={c}>
               <Link
                 href={`/visa-bulletin/categories/${lineSlug(c, country)}`}
-                className="inline-flex min-h-[44px] items-center border-2 border-border px-3 font-semibold hover:bg-muted"
+                className="inline-flex min-h-[44px] items-center border border-border px-3 font-semibold hover:bg-muted"
               >
                 {LINE_CATEGORY_SHORT[c]}
               </Link>{" "}

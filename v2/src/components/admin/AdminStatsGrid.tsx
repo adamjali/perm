@@ -88,7 +88,7 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
             <CardTitle className="text-sm font-bold text-muted-foreground">
               {stat.label}
             </CardTitle>
-            <div className={`p-2 border-2 border-border ${stat.bgColor} shadow-hard-sm`}>
+            <div className={`p-2 border border-border ${stat.bgColor}`}>
               <stat.icon className={`size-4 ${stat.color}`} />
             </div>
           </CardHeader>

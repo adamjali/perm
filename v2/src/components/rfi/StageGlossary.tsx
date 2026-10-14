@@ -30,7 +30,7 @@ function CountBadge({
     : null;
   const figure = (
     <>
-      <span className="block font-heading text-xl font-black tabular-nums sm:text-2xl">
+      <span className="block font-heading text-xl font-bold tabular-nums sm:text-2xl">
         {n.toLocaleString("en-US")}
         <span className="sr-only">{`${n === 1 ? " case" : " cases"}${shown ? `, as of ${shown}` : ""}`}</span>
       </span>{" "}
@@ -296,7 +296,7 @@ export function StageGlossary({
         invalid markup; the `<h3>` in each summary keeps the heading outline,
         which is the part an extractor actually reads.
       */}
-      <div className="grid gap-px border-2 border-border bg-border">
+      <div className="grid gap-px border border-border bg-border">
         {ENTRIES.map((e) => {
           const meta = e.status ? stageMeta(e.status) : null;
           const label = e.term ?? meta?.label ?? e.status ?? "";
@@ -312,9 +312,9 @@ export function StageGlossary({
                         aria-hidden="true"
                       />
                     ) : null}{" "}
-                    <h3 className="font-heading text-base font-black">{label}</h3>{" "}
+                    <h3 className="font-heading text-base font-bold">{label}</h3>{" "}
                     {e.status ? (
-                      <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">
+                      <code className="text-sm text-muted-foreground">
                         {e.status}
                       </code>
                     ) : null}{" "}
@@ -339,10 +339,10 @@ export function StageGlossary({
                   aria-hidden="true"
                 />
               </summary>{" "}
-              <div className="grid gap-2 border-t-2 border-border/40 px-4 pb-4 pt-3 text-sm leading-relaxed sm:px-5 sm:pb-5">
+              <div className="grid gap-2 border-t border-border/40 px-4 pb-4 pt-3 text-sm leading-relaxed sm:px-5 sm:pb-5">
                 <p>{e.what}</p>{" "}
                 {e.deadline ? (
-                  <p className="border-l-2 border-[var(--data-warn)] bg-[var(--data-warn)]/10 px-3 py-2">
+                  <p className="border-l border-[var(--data-warn)] bg-[var(--data-warn)]/10 px-3 py-2">
                     <b className="font-bold">Deadline.</b> {e.deadline}
                   </p>
                 ) : null}{" "}

@@ -42,7 +42,7 @@ export function TimelineSkeleton() {
       </div>
       {/* The key is static, so the skeleton draws the real one where the page does. */}
       <TimelineLegendCompact className="mb-3" />
-      <div className="min-h-[160px] border-2 border-foreground bg-card shadow-hard">
+      <div className="min-h-[160px] border border-foreground bg-card">
         <Skeleton variant="block" className="h-[320px] border-0" />
       </div>
     </div>
@@ -254,7 +254,7 @@ export function TimelinePageClient() {
         </div>
 
         {/* Empty state message */}
-        <div className="flex flex-col items-center justify-center py-16 px-4 border-2 border-dashed border-border rounded-lg bg-muted/20">
+        <div className="flex flex-col items-center justify-center py-16 px-4 border border-dashed border-border rounded-lg bg-muted/20">
           <div className="text-center max-w-md">
             <h2 className="font-heading text-xl font-semibold mb-2">
               No cases to display
@@ -265,7 +265,7 @@ export function TimelinePageClient() {
             </p>
             <button
               onClick={() => router.push("/cases/new")}
-              className="inline-flex min-h-[44px] items-center justify-center border-2 border-border bg-primary px-6 py-3 font-heading font-bold text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+              className="inline-flex min-h-[44px] items-center justify-center border border-border bg-primary px-6 py-3 font-heading font-bold text-primary-foreground transition-transform duration-150"
             >
               Add your first case
             </button>
@@ -314,7 +314,7 @@ export function TimelinePageClient() {
               variant="outline"
               size="sm"
               onClick={handleClearFilter}
-              className="border-2 border-border shadow-hard hover:shadow-hard-lg transition-all"
+              className="border border-border transition-colors"
               data-testid="back-to-all-cases"
             >
               <ArrowLeftIcon className="size-4 mr-2" />

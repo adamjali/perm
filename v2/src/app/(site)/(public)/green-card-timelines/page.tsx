@@ -51,8 +51,8 @@ export default async function GreenCardTimelinesPage() {
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Green card timelines</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Green card timelines</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           How long each step after PERM took, from the people who went through it. The PERM dates are checked against
           DOL&apos;s record; the rest is self-reported, because USCIS doesn&apos;t publish it case by case.
         </p>
@@ -61,25 +61,25 @@ export default async function GreenCardTimelinesPage() {
       {board ? (
         <>
           <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0" aria-label="The record so far">
-            <div className="border-2 border-border bg-card p-5 shadow-hard">
-              <p className="text-sm text-foreground/70">Timelines added</p>{" "}
-              <p className="mt-1 font-heading text-3xl font-black tabular-nums">{board.total.toLocaleString("en-US")}</p>
+            <div className="border border-border bg-card p-5">
+              <p className="text-sm text-muted-foreground">Timelines added</p>{" "}
+              <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{board.total.toLocaleString("en-US")}</p>
             </div>{" "}
-            <div className="border-2 border-border bg-card p-5 shadow-hard">
-              <p className="text-sm text-foreground/70">Shared on the public board</p>{" "}
-              <p className="mt-1 font-heading text-3xl font-black tabular-nums">{board.shared.toLocaleString("en-US")}</p>
+            <div className="border border-border bg-card p-5">
+              <p className="text-sm text-muted-foreground">Shared on the public board</p>{" "}
+              <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{board.shared.toLocaleString("en-US")}</p>
             </div>{" "}
-            <div className="border-2 border-border bg-card p-5 shadow-hard">
-              <p className="text-sm text-foreground/70">RFEs reported</p>{" "}
-              <p className="mt-1 font-heading text-3xl font-black tabular-nums">{board.rfe.total.toLocaleString("en-US")}</p>
+            <div className="border border-border bg-card p-5">
+              <p className="text-sm text-muted-foreground">RFEs reported</p>{" "}
+              <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{board.rfe.total.toLocaleString("en-US")}</p>
             </div>
           </section>
 
           <section className="mt-10" aria-labelledby="stages-h">
-            <h2 id="stages-h" className="font-heading text-2xl font-black sm:text-3xl">
+            <h2 id="stages-h" className="font-heading text-2xl font-bold sm:text-3xl">
               How long each step took
             </h2>{" "}
-            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
               The bar is the middle half of the reports and the dark tick is the median. Every timeline counts here,
               shared on the board or not
               {board.scanCapped ? `, up to the newest ${board.scanCap.toLocaleString("en-US")}` : ""}.
@@ -90,12 +90,12 @@ export default async function GreenCardTimelinesPage() {
           </section>
 
           <section className="mt-12" aria-labelledby="board-h">
-            <h2 id="board-h" className="font-heading text-2xl font-black sm:text-3xl">
+            <h2 id="board-h" className="font-heading text-2xl font-bold sm:text-3xl">
               The board
             </h2>{" "}
             {board.open ? (
               <>
-                <p className="mt-2 max-w-2xl text-base text-foreground/70">
+                <p className="mt-2 max-w-2xl text-base text-muted-foreground">
                   {board.shared > board.rows.length
                     ? `The newest ${board.rows.length.toLocaleString("en-US")} of ${board.shared.toLocaleString("en-US")} shared timelines, one row each. `
                     : "One row per shared timeline, newest first. "}
@@ -110,11 +110,11 @@ export default async function GreenCardTimelinesPage() {
                 </div>
               </>
             ) : (
-              <div className="mt-4 max-w-2xl border-2 border-border bg-card p-5 shadow-hard">
-                <p className="font-heading text-xl font-black">
+              <div className="mt-4 max-w-2xl border border-border bg-card p-5">
+                <p className="font-heading text-xl font-bold">
                   Opens at {board.opensAt} shared timelines. {board.shared.toLocaleString("en-US")} so far.
                 </p>{" "}
-                <p className="mt-2 text-base leading-relaxed text-foreground/80">
+                <p className="mt-2 text-base leading-relaxed text-soft">
                   A board with a handful of rows lets anyone pick one person out, so it stays shut until there are
                   enough to read as a crowd. The medians above already count every timeline added.
                 </p>
@@ -123,10 +123,10 @@ export default async function GreenCardTimelinesPage() {
           </section>
 
           <section className="mt-12" aria-labelledby="waiting-h">
-            <h2 id="waiting-h" className="font-heading text-2xl font-black sm:text-3xl">
+            <h2 id="waiting-h" className="font-heading text-2xl font-bold sm:text-3xl">
               Who&apos;s waiting, and where
             </h2>{" "}
-            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
               Each timeline at the furthest step it reports, by category and country. Counts only, from every timeline
               here, so no line can be traced to a person.
             </p>
@@ -135,7 +135,7 @@ export default async function GreenCardTimelinesPage() {
               {board.waiting?.open ? (
                 <WhoIsWaiting waiting={board.waiting} total={board.total} />
               ) : (
-                <p className="text-base text-foreground/70">
+                <p className="text-base text-muted-foreground">
                   Opens at {board.opensAt} timelines, like the board. {board.total.toLocaleString("en-US")} so far.
                 </p>
               )}
@@ -143,10 +143,10 @@ export default async function GreenCardTimelinesPage() {
           </section>
 
           <section className="mt-12" aria-labelledby="rfe-h">
-            <h2 id="rfe-h" className="font-heading text-2xl font-black sm:text-3xl">
+            <h2 id="rfe-h" className="font-heading text-2xl font-bold sm:text-3xl">
               Requests for evidence
             </h2>{" "}
-            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
               What the RFEs people reported asked about, and how they ended. Self-reported, and people who got one are
               likelier to say so than people who didn&apos;t, so this is a list of reasons, not a rate.
             </p>
@@ -156,16 +156,16 @@ export default async function GreenCardTimelinesPage() {
           </section>
         </>
       ) : (
-        <p className="mt-8 max-w-2xl border-2 border-border bg-card p-5 text-base shadow-hard">
+        <p className="mt-8 max-w-2xl border border-border bg-card p-5 text-base">
           The timelines can&apos;t be read right now. Try again in a few minutes.
         </p>
       )}
 
       <section className="mt-12 max-w-3xl" aria-labelledby="add-h">
-        <h2 id="add-h" className="font-heading text-2xl font-black sm:text-3xl">
+        <h2 id="add-h" className="font-heading text-2xl font-bold sm:text-3xl">
           Add yours
         </h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           Look up your PERM case and choose <b>Add your dates</b>. DOL supplies the PERM dates; you type the rest.
           No account: your browser keeps a key so you can edit it later, and it joins the board only if you tick
           the box.
@@ -173,18 +173,18 @@ export default async function GreenCardTimelinesPage() {
         <p className="mt-4">
           <Link
             href="/perm-case-status"
-            className="inline-flex min-h-11 items-center border-2 border-border bg-primary px-5 font-bold text-primary-foreground shadow-hard transition-transform hover:-translate-y-[1px]"
+            className="inline-flex min-h-11 items-center border border-border bg-primary px-5 font-bold text-primary-foreground transition-transform"
           >
             Look up your case
           </Link>
         </p>
       </section>
 
-      <details className="mt-10 max-w-3xl border-t-2 border-border pt-4">
-        <summary className="cursor-pointer list-none font-heading text-lg font-black marker:content-none">
+      <details className="mt-10 max-w-3xl border-t border-border pt-4">
+        <summary className="cursor-pointer list-none font-heading text-lg font-bold marker:content-none">
           <span className="inline-flex min-h-11 items-center">What these figures can&apos;t tell you</span>
         </summary>
-        <div className="mt-3 space-y-3 text-base leading-relaxed text-foreground/80">
+        <div className="mt-3 space-y-3 text-base leading-relaxed text-soft">
           <p>
             <b>They aren&apos;t a sample of everyone.</b> People with a fast or a stuck case are likelier to add their
             dates than people whose case went as expected, and nobody can check a date after PERM. Read a median here

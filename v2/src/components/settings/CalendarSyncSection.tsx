@@ -95,7 +95,7 @@ function ToggleRow({
 }: ToggleRowProps) {
   return (
     <div
-      className={`flex items-center justify-between ${indented ? "ml-6 pl-4 border-l-2 border-border" : ""}`}
+      className={`flex items-center justify-between ${indented ? "ml-6 pl-4 border-l border-border" : ""}`}
     >
       <div className="space-y-0.5 flex-1">
         <Label
@@ -132,7 +132,7 @@ interface ConnectionStatusBadgeProps {
 function ConnectionStatusBadge({ connected }: ConnectionStatusBadgeProps) {
   if (connected) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-primary/10 text-primary border-2 border-primary">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-primary/10 text-primary border border-primary">
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
         Connected
       </span>
@@ -140,7 +140,7 @@ function ConnectionStatusBadge({ connected }: ConnectionStatusBadgeProps) {
   }
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border-2 border-border">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border border-border">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
       Not connected
     </span>
@@ -515,7 +515,7 @@ export default function CalendarSyncSection({
     <div className="space-y-6">
       {/* Calendar Sync Section */}
       <div
-        className="bg-card border-2 border-border p-6"
+        className="bg-card border border-border p-6"
         style={{ boxShadow: "var(--shadow-hard)" }}
       >
         {/* Header */}
@@ -534,12 +534,12 @@ export default function CalendarSyncSection({
 
         {/* Google Calendar Connection Status with Connect/Disconnect buttons */}
         <div
-          className="flex items-center justify-between p-4 bg-muted/50 border-2 border-border mb-5"
+          className="flex items-center justify-between p-4 bg-muted/50 border border-border mb-5"
           style={{ boxShadow: "var(--shadow-hard-sm)" }}
         >
           <div className="flex items-center gap-3">
             <div
-              className={`p-2 border-2 ${
+              className={`p-2 border ${
                 isConnected
                   ? "bg-primary/10 border-primary"
                   : "bg-background border-border"
@@ -572,7 +572,7 @@ export default function CalendarSyncSection({
               size="sm"
               onClick={handleDisconnect}
               disabled={isDisconnecting}
-              className="border-2 border-destructive text-destructive bg-destructive/10 hover:bg-destructive/10 hover:border-destructive transition-colors"
+              className="border border-destructive text-destructive bg-destructive/10 hover:bg-destructive/10 hover:border-destructive transition-colors"
               style={{ boxShadow: "var(--shadow-hard-sm)" }}
             >
               {isDisconnecting ? (
@@ -592,7 +592,7 @@ export default function CalendarSyncSection({
               size="sm"
               onClick={handleConnect}
               disabled={isConnecting}
-              className="border-2 border-black dark:border-white bg-primary hover:bg-primary/90 text-black font-semibold"
+              className="border border-black dark:border-white bg-primary hover:bg-primary/90 text-black font-semibold"
               style={{ boxShadow: "var(--shadow-hard-sm)" }}
             >
               {isConnecting ? (
@@ -613,7 +613,7 @@ export default function CalendarSyncSection({
         {/* Sync All Button - Only show when connected */}
         {isConnected && masterEnabled && (
           <div
-            className="p-4 bg-muted/30 border-2 border-border mb-5 space-y-3"
+            className="p-4 bg-muted/30 border border-border mb-5 space-y-3"
             style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             <div className="flex items-center justify-between">
@@ -636,7 +636,7 @@ export default function CalendarSyncSection({
                 size="sm"
                 onClick={handleSyncAll}
                 disabled={isSyncingAll || syncEligibleCount === 0}
-                className="border-2 border-primary text-primary bg-primary/10 hover:bg-primary/10 hover:border-primary transition-colors"
+                className="border border-primary text-primary bg-primary/10 hover:bg-accent hover:border-primary transition-colors"
                 style={{ boxShadow: "var(--shadow-hard-sm)" }}
               >
                 {isSyncingAll ? (
@@ -654,7 +654,7 @@ export default function CalendarSyncSection({
             </div>
 
             {/* Progress indicator during sync */}
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {isSyncingAll && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
@@ -678,7 +678,7 @@ export default function CalendarSyncSection({
                     return (
                       <>
                         {/* Progress bar - neobrutalist with hard edges */}
-                        <div className="relative h-3 bg-muted border-2 border-border overflow-hidden">
+                        <div className="relative h-3 bg-muted border border-border overflow-hidden">
                           {/* Background pulse */}
                           <motion.div
                             className="absolute inset-0 bg-primary/20 dark:bg-primary/30"
@@ -721,7 +721,7 @@ export default function CalendarSyncSection({
         {/* Clear All Calendar Events - Only show when connected */}
         {isConnected && (
           <div
-            className="p-4 bg-muted/30 border-2 border-border mb-5 space-y-3"
+            className="p-4 bg-muted/30 border border-border mb-5 space-y-3"
             style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             <div className="flex items-center justify-between">
@@ -744,7 +744,7 @@ export default function CalendarSyncSection({
                 size="sm"
                 onClick={handleClearAllEvents}
                 disabled={isClearingEvents || isSyncingAll}
-                className="border-2 border-data-warn text-data-warn-ink bg-data-warn/15 hover:bg-data-warn/15 hover:border-data-warn transition-colors"
+                className="border border-data-warn text-data-warn-ink bg-data-warn/15 hover:bg-data-warn/15 hover:border-data-warn transition-colors"
                 style={{ boxShadow: "var(--shadow-hard-sm)" }}
               >
                 {isClearingEvents ? (
@@ -762,7 +762,7 @@ export default function CalendarSyncSection({
             </div>
 
             {/* Progress indicator during clear */}
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {isClearingEvents && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
@@ -788,7 +788,7 @@ export default function CalendarSyncSection({
                     return (
                       <>
                         {/* Progress bar - neobrutalist with hard edges */}
-                        <div className="relative h-3 bg-muted border-2 border-border overflow-hidden">
+                        <div className="relative h-3 bg-muted border border-border overflow-hidden">
                           {/* Background pulse */}
                           <motion.div
                             className="absolute inset-0 bg-data-warn/20"
@@ -844,14 +844,14 @@ export default function CalendarSyncSection({
           />
 
           {/* Warning when disabled */}
-          <AnimatePresence>
+          <AnimatePresence initial={false}>
             {!masterEnabled && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 px-3 py-2 bg-data-warn/15 border-2 border-data-warn text-data-warn-ink text-sm"
+                className="flex items-center gap-2 px-3 py-2 bg-data-warn/15 border border-data-warn text-data-warn-ink text-sm"
               >
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 <span>Calendar sync is turned off for all deadline types</span>
@@ -860,14 +860,14 @@ export default function CalendarSyncSection({
           </AnimatePresence>
 
           {/* Not connected warning */}
-          <AnimatePresence>
+          <AnimatePresence initial={false}>
             {masterEnabled && !isConnected && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 px-3 py-2 bg-muted border-2 border-border text-muted-foreground text-sm"
+                className="flex items-center gap-2 px-3 py-2 bg-muted border border-border text-muted-foreground text-sm"
               >
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 <span>

@@ -131,11 +131,11 @@ export function CaseAlertForm({
     return (
       <div
         className={cn(
-          "border-2 border-border bg-card p-5 shadow-hard sm:p-6",
+          "border border-border bg-card p-5 sm:p-6",
           className,
         )}
       >
-        <p className="flex items-start gap-2 text-base leading-relaxed text-foreground/80">
+        <p className="flex items-start gap-2 text-base leading-relaxed text-soft">
           <CheckCircleIcon
             className="mt-1 h-5 w-5 shrink-0 text-data-good-ink"
             weight="fill"
@@ -158,15 +158,15 @@ export function CaseAlertForm({
       onFocusCapture={telemetry.onFocusCapture}
       onSubmit={submit}
       className={cn(
-        "border-2 border-border bg-card p-5 shadow-hard sm:p-6 print:hidden",
+        "border border-border bg-card p-5 sm:p-6 print:hidden",
         className,
       )}
     >
-      <p className="flex items-center gap-2 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
+      <p className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
         <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
         Watch this case
       </p>{" "}
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
         Get an email when DOL&apos;s status for this {noun} changes. A watched
         case is checked against DOL every 5 minutes on weekdays and every half
         hour otherwise, and for a year after it&apos;s decided, in case it&apos;s
@@ -186,13 +186,13 @@ export function CaseAlertForm({
           placeholder="you@example.com"
           autoComplete="email"
           aria-describedby={noteId}
-          className="min-h-[48px] w-full min-w-0 flex-1 basis-64 border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="min-h-[48px] w-full min-w-0 flex-1 basis-64 border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         />
         <button
           type="submit"
           data-ph-capture-attribute-cta="case-alert"
           disabled={state.kind === "sending"}
-          className="min-h-[48px] shrink-0 border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-background shadow-hard transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:hover:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          className="min-h-[48px] shrink-0 border border-border bg-foreground px-5 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
         >
           {state.kind === "sending" ? "Sending" : "Email me changes"}
         </button>

@@ -56,24 +56,24 @@ export function ProfileHeader({
     <header className="pt-10 sm:pt-12">
       <div className="grid grid-cols-1 gap-8 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,25rem)] lg:items-start">
         <div>
-          <p className="text-sm font-bold text-foreground/70">{eyebrow}</p>{" "}
+          <p className="text-sm font-bold text-muted-foreground">{eyebrow}</p>{" "}
           <h1
             translate="no"
-            className="mt-2 font-heading text-4xl font-black leading-[1.05] [overflow-wrap:anywhere] sm:text-5xl"
+            className="mt-2 font-heading text-4xl font-bold leading-[1.05] [overflow-wrap:anywhere] sm:text-5xl"
           >
             {name}
           </h1>{" "}
           {facts.length > 0 ? (
             <dl
               className={cn(
-                "mt-6 grid grid-cols-1 gap-px border-2 border-border bg-border [&>*]:min-w-0",
+                "mt-6 grid grid-cols-1 gap-px border border-border bg-border [&>*]:min-w-0",
                 FACT_COLUMNS[facts.length],
               )}
             >
               {facts.map((f) => (
                 <div key={f.label} className="bg-card px-4 py-3">
-                  <dt className="text-sm text-foreground/70">{f.label}{" "}</dt>{" "}
-                  <dd className="mt-0.5 font-heading text-lg font-black leading-snug [overflow-wrap:anywhere]">
+                  <dt className="text-sm text-muted-foreground">{f.label}{" "}</dt>{" "}
+                  <dd className="mt-0.5 font-heading text-lg font-bold leading-snug [overflow-wrap:anywhere]">
                     {f.href ? (
                       <Link
                         href={f.href}
@@ -85,7 +85,7 @@ export function ProfileHeader({
                       f.value
                     )}{" "}
                   </dd>
-                  {f.note ? <dd className="mt-0.5 text-sm text-foreground/70">{f.note}{" "}</dd> : null}
+                  {f.note ? <dd className="mt-0.5 text-sm text-muted-foreground">{f.note}{" "}</dd> : null}
                 </div>
               ))}
             </dl>
@@ -98,7 +98,7 @@ export function ProfileHeader({
                   <li>
                     <a
                       href={t.href}
-                      className="inline-flex min-h-11 items-center gap-2 border-2 border-border bg-card px-3 text-sm font-bold shadow-hard-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none"
+                      className="inline-flex min-h-11 items-center gap-2 border border-border bg-card px-3 text-sm font-bold transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none"
                     >
                       <span aria-hidden="true" className={cn("size-3 shrink-0", TONE[t.tone])} />
                       {t.text}

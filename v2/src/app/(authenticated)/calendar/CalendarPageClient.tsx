@@ -63,7 +63,7 @@ export function CalendarSkeleton() {
 
       {/* Filter row: the real one is a bordered box around a row of 44px
           controls, 80px in all (measured on production, Sep 30 2026). */}
-      <div className="mb-4 border-2 border-border p-4">
+      <div className="mb-4 border border-border p-4">
         <Skeleton variant="block" className="h-11" />
       </div>
 
@@ -92,9 +92,9 @@ export function CalendarSkeleton() {
       </div>
 
       {/* Calendar grid skeleton, the real calendar's 700px minimum */}
-      <div className="min-h-[700px] flex-1 border-2 border-border bg-card shadow-hard">
+      <div className="min-h-[700px] flex-1 border border-border bg-card">
         {/* Month header row */}
-        <div className="grid grid-cols-7 border-b-2 border-border bg-muted">
+        <div className="grid grid-cols-7 border-b border-border bg-muted">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <div
               key={day}
@@ -152,9 +152,9 @@ function CalendarEmptyState() {
       </div>
 
       {/* Empty state message */}
-      <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 border-2 border-dashed border-border bg-muted/20">
+      <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 border border-dashed border-border bg-muted/20">
         <div className="text-center max-w-md">
-          <div className="mb-4 p-4 bg-muted inline-block border-2 border-border shadow-hard">
+          <div className="mb-4 p-4 bg-muted inline-block border border-border">
             <CalendarIcon className="size-12 text-muted-foreground" />
           </div>
           <h2 className="font-heading text-xl font-semibold mb-2">
@@ -166,7 +166,7 @@ function CalendarEmptyState() {
           </p>
           <Button
             onClick={() => router.push("/cases/new")}
-            className="bg-primary text-primary-foreground font-semibold border-2 border-border shadow-hard hover:shadow-hard-lg transition-all"
+            className="bg-primary text-primary-foreground font-semibold border border-border transition-colors"
           >
             <PlusIcon className="size-4 mr-2" />
             Add your first case
@@ -328,9 +328,9 @@ export function CalendarPageClient() {
         </div>
 
         {/* Calendar view with empty state message */}
-        <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 border-2 border-border bg-card shadow-hard">
+        <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 border border-border bg-card">
           <div className="text-center max-w-md">
-            <div className="mb-4 p-4 bg-muted inline-block border-2 border-border shadow-hard">
+            <div className="mb-4 p-4 bg-muted inline-block border border-border">
               <CalendarIcon className="size-12 text-muted-foreground" />
             </div>
             <h2 className="font-heading text-xl font-semibold mb-2">
@@ -362,11 +362,11 @@ export function CalendarPageClient() {
       {/* Google Calendar Connection Banner - shown when not connected */}
       {!isGoogleConnected && (
         <div
-          className="mb-4 flex items-center justify-between gap-4 border-2 border-border bg-muted px-4 py-3"
+          className="mb-4 flex items-center justify-between gap-4 border border-border bg-muted px-4 py-3"
           style={{ boxShadow: "var(--shadow-hard-sm)" }}
         >
           <div className="flex items-center gap-3">
-            <div className="border-2 border-border bg-card p-1.5">
+            <div className="border border-border bg-card p-1.5">
               <InfoIcon className="h-4 w-4 text-foreground" />
             </div>
             <div>
@@ -380,7 +380,7 @@ export function CalendarPageClient() {
           </div>
           <Link
             href="/settings?tab=calendar-sync"
-            className="inline-flex items-center gap-1.5 border-2 border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5"
+            className="inline-flex items-center gap-1.5 border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-transform duration-150"
             style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             Connect

@@ -48,7 +48,7 @@ export function EditPageSkeleton() {
       {/* The title block: employer (h1 line), position (mono line), and the
           lede, which never changes. */}
       <div className="relative">
-        <div className="absolute -top-2 -left-2 h-6 w-6 border-2 border-foreground bg-primary shadow-hard-sm" />
+        <div className="absolute -top-2 -left-2 h-6 w-6 border border-foreground bg-primary" />
         <div className="min-w-0 pl-6">
           <div className="flex h-[2.025rem] items-center sm:h-[2.43rem]">
             <Skeleton variant="line" className="h-7 w-2/3 sm:h-8" />
@@ -56,7 +56,7 @@ export function EditPageSkeleton() {
           <div className="mt-2 flex h-5 items-center">
             <Skeleton variant="line" className="h-4 w-1/3" />
           </div>
-          <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
             Update case details below. All changes will be saved to your account.
           </p>
         </div>
@@ -75,14 +75,14 @@ function NotFoundState() {
     <div className="mx-auto max-w-4xl px-4 py-16">
       <div className="text-center space-y-6">
         <div className="space-y-2">
-          <h1 className="font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">Case not found</h1>{" "}
-          <p className="text-base leading-relaxed text-foreground/70">
+          <h1 className="font-heading text-3xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-4xl">Case not found</h1>{" "}
+          <p className="text-base leading-relaxed text-muted-foreground">
             The case you&apos;re looking for doesn&apos;t exist or you don&apos;t have access.
           </p>
         </div>
         <Link
           href="/cases"
-          className="inline-flex min-h-[44px] items-center justify-center border-2 border-border bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+          className="inline-flex min-h-[44px] items-center justify-center border border-border bg-primary px-6 py-3 font-semibold text-primary-foreground transition-transform duration-150"
         >
           Back to cases
         </Link>
@@ -332,16 +332,16 @@ export function EditCasePageClient() {
       {/* Page Title with neobrutalist accent */}
       <div className="relative">
         {/* Corner accent decoration */}
-        <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border-2 border-foreground shadow-hard-sm" />
+        <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border border-foreground" />
         <div className="pl-6 min-w-0">
-          <h1 className="truncate font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl" title={`Edit Case: ${caseData.employerName} - ${caseData.positionTitle}`}>
+          <h1 className="truncate font-heading text-3xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-4xl" title={`Edit Case: ${caseData.employerName} - ${caseData.positionTitle}`}>
             {caseData.employerName}
           </h1>{" "}
-          <p className="mt-2 truncate font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
+          <p className="mt-2 truncate text-sm font-semibold text-muted-foreground" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
             {caseData.positionTitle}
             {caseData.beneficiaryIdentifier && <>, {caseData.beneficiaryIdentifier}</>}
           </p>{" "}
-          <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
             Update case details below. All changes will be saved to your account.
           </p>
         </div>

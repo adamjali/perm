@@ -291,10 +291,10 @@ export default async function PermDenialRiskPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           What gets denied
         </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           The rates DOL&apos;s own files record: by what the form asks, by job,
           and by worksite.
         </p>
@@ -335,12 +335,12 @@ export default async function PermDenialRiskPage() {
           </section>
 
           {/* The baseline every other number on the page is read against. */}
-          <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm sm:p-8">
+          <section className="mt-6 border border-border bg-card p-6 sm:p-8">
             <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-              <p className="font-heading text-5xl font-black tabular-nums">
+              <p className="font-heading text-5xl font-bold tabular-nums">
                 {baseline.denialRate}%
               </p>{" "}
-              <p className="max-w-lg text-base leading-relaxed text-foreground/70">
+              <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
                 is the field baseline. Withdrawn cases sit on neither side of
                 that ratio.
               </p>
@@ -348,11 +348,11 @@ export default async function PermDenialRiskPage() {
           </section>
 
           {/* Read this before the bars, not after. */}
-          <section className="mt-6 border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-            <h2 className="font-heading text-lg font-black">
+          <section className="mt-6 border border-border bg-tint-primary p-6">
+            <h2 className="font-heading text-lg font-bold">
               What these rates can and can’t tell you
             </h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
               Each bar is a group’s rate, not the odds on one case.
             </p>{" "}
             <FinePrint summary="Why there is no single score" className="mt-3">
@@ -391,10 +391,10 @@ export default async function PermDenialRiskPage() {
               point in opposite directions. */}
           {flagShare !== null && topWageByShare && topWageShare !== null && topWageReach !== null ? (
             <section id="where" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
-              <h2 className="font-heading text-2xl font-black">
+              <h2 className="font-heading text-2xl font-bold">
                 Where the denials actually are
               </h2>{" "}
-              <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
                 A rate is not a share: the declared factors carry the highest
                 rates and <strong>{flagShare.toFixed(1)}% of all denials</strong>;
                 the {topWageByShare.bucket.toLowerCase()} band a middling rate
@@ -402,7 +402,7 @@ export default async function PermDenialRiskPage() {
               </p>
               <div className="mt-8 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2">
                 <div>
-                  <h3 className="font-heading text-lg font-black">
+                  <h3 className="font-heading text-lg font-bold">
                     Which wage bands hold the denials
                   </h3>{" "}
                   <DenialReach
@@ -420,7 +420,7 @@ export default async function PermDenialRiskPage() {
                   />
                 </div>
                 <div>
-                  <h3 className="font-heading text-lg font-black">
+                  <h3 className="font-heading text-lg font-bold">
                     Which declared factors hold them
                   </h3>{" "}
                   <DenialReach
@@ -454,7 +454,7 @@ export default async function PermDenialRiskPage() {
 
           <section id="factors" className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
             <div>
-              <h2 className="font-heading text-2xl font-black">
+              <h2 className="font-heading text-2xl font-bold">
                 By what the form declares
               </h2>{" "}
               <div className="mt-6">
@@ -473,7 +473,7 @@ export default async function PermDenialRiskPage() {
                 />
               </div>
               {protectiveFlag ? (
-                <p className="mt-4 text-sm leading-relaxed text-foreground/60">
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                   One runs the other way:{" "}
                   {FLAG_LABELS[protectiveFlag.bucket]?.label ?? protectiveFlag.bucket} is
                   denied {protectiveFlag.denialRate}% of the time, below the field,
@@ -484,7 +484,7 @@ export default async function PermDenialRiskPage() {
             </div>
 
             <div>
-              <h2 className="font-heading text-2xl font-black">By offered wage</h2>{" "}
+              <h2 className="font-heading text-2xl font-bold">By offered wage</h2>{" "}
               <div className="mt-6">
                 <RateViews
                   label="Denial rate by offered wage"
@@ -503,7 +503,7 @@ export default async function PermDenialRiskPage() {
                 />
               </div>
               {wageEnds ? (
-                <p className="mt-4 text-sm leading-relaxed text-foreground/60">
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                   {wageEnds.first.denialRate}% down to {wageEnds.lowest.denialRate}%
                   at {wageEnds.lowest.bucket.toLowerCase()}, {wageEnds.multiple}-fold.{" "}
                   {wageMonotonic
@@ -514,7 +514,7 @@ export default async function PermDenialRiskPage() {
                 </p>
               ) : null}
               {wagePeak && wagePeak.hiddenByCoarse ? (
-                <p className="mt-3 text-sm leading-relaxed text-foreground/60">
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   The highest rate in the data is <strong>{wagePeak.fine.denialRate}%</strong> at{" "}
                   {wagePeak.fine.bucket.toLowerCase()}, on{" "}
                   {wagePeak.fine.decided.toLocaleString("en-US")} decided cases.
@@ -522,7 +522,7 @@ export default async function PermDenialRiskPage() {
                   reporting {wagePeak.coarse.denialRate}%.
                 </p>
               ) : null}
-              <p className="mt-3 text-sm leading-relaxed text-foreground/60">
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 What the bumps mean isn&apos;t something this data can say: DOL
                 denies on the record, not on the salary.
               </p>
@@ -530,8 +530,8 @@ export default async function PermDenialRiskPage() {
           </section>
 
           <section id="years" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
-            <h2 className="font-heading text-2xl font-black">By fiscal year</h2>{" "}
-            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            <h2 className="font-heading text-2xl font-bold">By fiscal year</h2>{" "}
+            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
               The rate moves year to year.
               {yearSwing ? (
                 <>
@@ -562,8 +562,8 @@ export default async function PermDenialRiskPage() {
 
           {occupationRows.length > 0 ? (
             <section id="jobs" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
-              <h2 className="font-heading text-2xl font-black">By occupation</h2>{" "}
-              <p className="mt-2 max-w-2xl text-base text-foreground/70">
+              <h2 className="font-heading text-2xl font-bold">By occupation</h2>{" "}
+              <p className="mt-2 max-w-2xl text-base text-muted-foreground">
                 Denials cluster in a handful of job families and are close to
                 absent in others.
               </p>
@@ -579,7 +579,7 @@ export default async function PermDenialRiskPage() {
                   csvFilename="perm-denial-rate-by-occupation.csv"
                 />
               </div>
-              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-foreground/60">
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                 Only the occupations with the most cases; a rare job isn’t here.
                 Volume, median wage and processing days sit on the{" "}
                 <Link
@@ -595,8 +595,8 @@ export default async function PermDenialRiskPage() {
 
           {stateRows.length > 0 ? (
             <section id="states" className="mt-12 scroll-mt-[calc(var(--site-header-h,71px)+4rem)]">
-              <h2 className="font-heading text-2xl font-black">By worksite state</h2>{" "}
-              <p className="mt-2 max-w-2xl text-base text-foreground/70">
+              <h2 className="font-heading text-2xl font-bold">By worksite state</h2>{" "}
+              <p className="mt-2 max-w-2xl text-base text-muted-foreground">
                 DOL works one national queue, so this ranks where denials land.
               </p>
               <div className="mt-6">
@@ -613,7 +613,7 @@ export default async function PermDenialRiskPage() {
                   pageSize={100}
                 />
               </div>
-              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-foreground/60">
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                 Volume, approval rate, median days and median wage sit on the{" "}
                 <Link
                   href="/perm-by-state"
@@ -627,8 +627,8 @@ export default async function PermDenialRiskPage() {
           ) : null}
         </>
       ) : (
-        <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">
-          <p className="text-lg text-foreground/70">
+        <section className="mt-10 border border-border bg-card p-8 text-center">
+          <p className="text-lg text-muted-foreground">
             The denial-rate tables land with the quarterly disclosure ingest.
             Until then, the{" "}
             <Link href="/methodology" className="underline decoration-primary decoration-2 underline-offset-2">
@@ -640,9 +640,9 @@ export default async function PermDenialRiskPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Filing a case?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Filing a case?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             None of these changes what the regulations require, only what to
             document. The{" "}
             <Link href="/tools/perm-deadline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -651,9 +651,9 @@ export default async function PermDenialRiskPage() {
             covers the dates side.
           </p>
         </div>
-        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Waiting on one?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-tint-primary p-6">
+          <h2 className="font-heading text-lg font-bold">Waiting on one?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Denials are rare; most of the wait is queue time. The{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator

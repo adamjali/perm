@@ -183,10 +183,10 @@ export default async function I485ByFieldOfficePage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           The I-485 by field office
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           What each USCIS office received, decided and still holds
           {data ? ` in ${quarterLabel(data.fy, data.quarter)}` : ""}, employment-based first, and how many
           quarters of work each has at last quarter&apos;s pace.
@@ -199,7 +199,7 @@ export default async function I485ByFieldOfficePage() {
         <>
           <RecordStrip record={ledger} />
           {workNational !== null ? (
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
               Nationally, that pending pile is{" "}
               <b className="font-bold text-foreground">{workNational.toFixed(1)} quarters of work</b>{" "}
               at the quarter&apos;s pace of {decidedNational!.toLocaleString("en-US")} decisions, every
@@ -270,8 +270,8 @@ export default async function I485ByFieldOfficePage() {
           </section>
 
           <section id="every-office" className="mt-12 scroll-mt-24">
-            <h2 className="font-heading text-2xl font-black">Every office, by state</h2>{" "}
-            <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+            <h2 className="font-heading text-2xl font-bold">Every office, by state</h2>{" "}
+            <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
               {fieldOffices.length} field offices and {serviceCenters.length} service
               centers, busiest first. Search for yours, filter by state, or sort on
               any column; every count is USCIS&apos;s, for the employment-based half,
@@ -296,12 +296,12 @@ export default async function I485ByFieldOfficePage() {
       )}
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">Read next</h2>{" "}
+      <section className="mt-12 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold">Read next</h2>{" "}
         <ul className="mt-4 space-y-2">
           <li>
             <Link href="/guides/fastest-field-office-eb-i485" className="font-bold underline underline-offset-2 hover:text-primary">

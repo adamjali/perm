@@ -26,9 +26,9 @@ export function SeasonalFilings({
 }) {
   if (rows.length === 0) return null;
   return (
-    <section className={`${className} border-2 border-border bg-card p-6 shadow-hard sm:p-8`}>
-      <h2 className="font-heading text-xl font-black sm:text-2xl">Seasonal work: H-2A, H-2B and CW-1</h2>{" "}
-      <p className="mt-2 text-base leading-relaxed text-foreground/70">
+    <section className={`${className} border border-border bg-card p-6 sm:p-8`}>
+      <h2 className="font-heading text-xl font-bold sm:text-2xl">Seasonal work: H-2A, H-2B and CW-1</h2>{" "}
+      <p className="mt-2 text-base leading-relaxed text-muted-foreground">
         Filed by {name}, as DOL&apos;s case-status service shows them.
       </p>{" "}
       <ul className="mt-4 divide-y divide-border/60">
@@ -43,8 +43,8 @@ export function SeasonalFilings({
                 {r.caseNumber}
               </Link>{" "}
               <span className="text-sm font-bold">{seasonalForm(r.caseNumber)?.label ?? "H-2A, H-2B or CW-1 filing"}</span>{" "}
-              {r.jobTitle ? <span className="text-foreground/80">{r.jobTitle}</span> : null}{" "}
-              <span className="ml-auto font-mono text-sm font-bold uppercase text-foreground/70">
+              {r.jobTitle ? <span className="text-soft">{r.jobTitle}</span> : null}{" "}
+              <span className="ml-auto font-mono text-sm font-bold text-muted-foreground">
                 {r.filingDate ? `${r.filingDate} · ` : ""}
                 {r.status}
               </span>

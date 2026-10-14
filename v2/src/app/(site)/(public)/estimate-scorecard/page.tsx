@@ -67,10 +67,10 @@ const HORIZON_LABEL: Record<(typeof HORIZONS)[number], string> = {
 
 function Figure({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="min-w-0 border-2 border-border bg-background p-4">
-      <p className="text-sm font-bold text-foreground/70">{label}</p>{" "}
-      <p className="mt-1 font-heading text-3xl font-black tabular-nums">{value}</p>{" "}
-      <p className="mt-1 text-sm text-foreground/70">{note}</p>
+    <div className="min-w-0 border border-border bg-background p-4">
+      <p className="text-sm font-bold text-muted-foreground">{label}</p>{" "}
+      <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{value}</p>{" "}
+      <p className="mt-1 text-sm text-muted-foreground">{note}</p>
     </div>
   );
 }
@@ -135,27 +135,27 @@ export default async function EstimateScorecardPage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Estimate scorecard</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Estimate scorecard</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           How close our PERM decision dates land, graded against what DOL actually did.
         </p>
       </header>
 
       {shortAnswer.length > 0 ? (
-        <section aria-labelledby="short-h" className="mt-8 max-w-3xl border-l-4 border-primary pl-5">
-          <h2 id="short-h" className="font-heading text-2xl font-black">The short answer</h2>{" "}
+        <section aria-labelledby="short-h" className="mt-8 max-w-3xl border-l-2 border-primary pl-5">
+          <h2 id="short-h" className="font-heading text-2xl font-bold">The short answer</h2>{" "}
           <ul className="mt-3 list-disc space-y-2 pl-5 text-lg leading-relaxed">
             {shortAnswer.slice(0, LEAD_READINGS).map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ul>{" "}
           {shortAnswer.length > LEAD_READINGS ? (
-            <details className="group mt-4 border-2 border-border bg-card">
-              <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 font-heading text-base font-black [&::-webkit-details-marker]:hidden">
+            <details className="group mt-4 border border-border bg-card">
+              <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
                 {shortAnswer.length - LEAD_READINGS} more {shortAnswer.length - LEAD_READINGS === 1 ? "reading" : "readings"}{" "}
                 <PlusIcon aria-hidden="true" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
               </summary>{" "}
-              <ul className="list-disc space-y-2 px-4 pb-4 pl-9 text-base leading-relaxed text-foreground/85">
+              <ul className="list-disc space-y-2 px-4 pb-4 pl-9 text-base leading-relaxed text-soft">
                 {shortAnswer.slice(LEAD_READINGS).map((line) => (
                   <li key={line}>{line}</li>
                 ))}
@@ -166,14 +166,14 @@ export default async function EstimateScorecardPage() {
       ) : null}
 
       {backtest && cur && cur.typicalMissDays !== null ? (
-        <section aria-labelledby="backtest-h" className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h2 id="backtest-h" className="text-base font-bold text-foreground/70">
+        <section aria-labelledby="backtest-h" className="mt-8 border border-border bg-card p-6 sm:p-8">
+          <h2 id="backtest-h" className="text-base font-bold text-muted-foreground">
             Typical miss on real decisions
           </h2>{" "}
-          <p className="mt-2 font-heading text-6xl font-black leading-none tabular-nums sm:text-7xl">
+          <p className="mt-2 font-heading text-6xl font-bold leading-none tabular-nums sm:text-7xl">
             {days(cur.typicalMissDays)}
           </p>{" "}
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
             Across {formatInt(cur.decided)} cases DOL decided between {longNoYear(backtest.t0)} and {long(backtest.end)},
             each dated from the queue as it stood on the first of those days, at DOL&apos;s measured pace. This scores
             decided cases only; the daily sample below also counts the ones still waiting past their date.
@@ -228,9 +228,9 @@ export default async function EstimateScorecardPage() {
         </section>
       ) : null}
 
-      <section aria-labelledby="sample-h" className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 id="sample-h" className="font-heading text-2xl font-black sm:text-3xl">A fresh sample, every morning</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
+      <section aria-labelledby="sample-h" className="mt-8 border border-border bg-card p-6 sm:p-8">
+        <h2 id="sample-h" className="font-heading text-2xl font-bold sm:text-3xl">A fresh sample, every morning</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Each day a few random pending cases from every filing month get the estimate the case page would show them,
           written down before DOL decides and graded once it has. Nobody picks the cases.
         </p>{" "}
@@ -255,9 +255,9 @@ export default async function EstimateScorecardPage() {
             {sample && sample.recent.length > 0 ? (
               <div className="mt-6 overflow-x-auto">
                 <table className="w-full min-w-[40rem] border-collapse text-left text-base">
-                  <caption className="mb-2 text-left text-sm font-bold text-foreground/70">Newest graded</caption>
+                  <caption className="mb-2 text-left text-sm font-bold text-muted-foreground">Newest graded</caption>
                   <thead>
-                    <tr className="border-b-2 border-border">
+                    <tr className="border-b border-border">
                       <th scope="col" className="py-2 pr-3 font-bold">{"Case "}</th>
                       <th scope="col" className="py-2 pr-3 font-bold">{"Recorded "}</th>
                       <th scope="col" className="py-2 pr-3 font-bold">{"Predicted "}</th>
@@ -282,23 +282,23 @@ export default async function EstimateScorecardPage() {
               </div>
             ) : null}
             {perm.all.graded > 0 ? null : (
-              <p className="mt-4 text-base text-foreground/80">
+              <p className="mt-4 text-base text-soft">
                 None graded yet. The nearest sampled cases are due within weeks, and the grades appear here the morning
                 after DOL decides each one.
               </p>
             )}{" "}
-            {watchedLine ? <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">{watchedLine}</p> : null}
+            {watchedLine ? <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">{watchedLine}</p> : null}
           </>
         ) : (
-          <p className="mt-4 text-base text-foreground/80">
+          <p className="mt-4 text-base text-soft">
             The first sample is recorded the morning after this page went live. Grades follow as DOL decides.
           </p>
         )}
       </section>
 
       <section aria-labelledby="other-h" className="mt-12">
-        <h2 id="other-h" className="font-heading text-2xl font-black sm:text-3xl">The other estimates</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base text-foreground/80">
+        <h2 id="other-h" className="font-heading text-2xl font-bold sm:text-3xl">The other estimates</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base text-soft">
           The wage-request date and the H-2A, H-2B and CW-1 dates, written down and graded the same way. Each H-2A,
           H-2B and CW-1 application is recorded once, in its first week, as its case page dated it.
         </p>{" "}
@@ -306,7 +306,7 @@ export default async function EstimateScorecardPage() {
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[44rem] border-collapse text-left text-base">
               <thead>
-                <tr className="border-b-2 border-border">
+                <tr className="border-b border-border">
                   <th scope="col" className="py-2 pr-3 font-bold">Estimate{" "}</th>
                   <th scope="col" className="py-2 pr-3 text-right font-bold">Written down{" "}</th>
                   <th scope="col" className="py-2 pr-3 text-right font-bold">Graded{" "}</th>
@@ -336,7 +336,7 @@ export default async function EstimateScorecardPage() {
             </table>
           </div>
         ) : (
-          <p className="mt-4 text-base text-foreground/80">The first of these are recorded the morning after this section went live.</p>
+          <p className="mt-4 text-base text-soft">The first of these are recorded the morning after this section went live.</p>
         )}{" "}
         <FinePrint summary="How these are graded">
           The wage-request estimate names a month, so it is graded against the middle of the month, and the month is its
@@ -354,15 +354,15 @@ export default async function EstimateScorecardPage() {
         </FinePrint>
       </section>
 
-      <h2 className="mt-12 font-heading text-2xl font-black sm:text-3xl">Worked examples</h2>{" "}
-      <p className="mt-2 max-w-2xl text-base text-foreground/80">
+      <h2 className="mt-12 font-heading text-2xl font-bold sm:text-3xl">Worked examples</h2>{" "}
+      <p className="mt-2 max-w-2xl text-base text-soft">
         Cases we wrote down by hand, before the outcome, exactly as the case page printed them.
       </p>
 
       <section className="mt-10 overflow-x-auto">
         <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b-2 border-border">
+            <tr className="border-b border-border">
               <th scope="col" className="py-2 pr-3 font-bold">Recorded{" "}</th>
               <th scope="col" className="py-2 pr-3 font-bold">Case{" "}</th>
               <th scope="col" className="py-2 pr-3 font-bold">Filed{" "}</th>
@@ -406,10 +406,10 @@ export default async function EstimateScorecardPage() {
 
       {rows.some((r) => r.prediction.note) ? (
         <section className="mt-8 max-w-3xl">
-          <h2 className="font-heading text-xl font-black">Notes on the record</h2>{" "}
+          <h2 className="font-heading text-xl font-bold">Notes on the record</h2>{" "}
           {/* One note per distinct text, with every case it covers: several
               predictions recorded together share one explanation. */}
-          <ul className="mt-3 space-y-3 text-sm leading-relaxed text-foreground/80">
+          <ul className="mt-3 space-y-3 text-sm leading-relaxed text-soft">
             {[...Map.groupBy(rows.filter((r) => r.prediction.note), (r) => r.prediction.note!)].map(([note, group]) => (
               <li key={note}>
                 <span className="font-mono text-sm font-bold">{group.map((r) => r.prediction.caseNumber).join(", ")}</span>

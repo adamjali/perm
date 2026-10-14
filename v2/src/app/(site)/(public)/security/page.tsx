@@ -79,9 +79,9 @@ export default function SecurityPage() {
       <header className="max-w-2xl">
         <div className="flex items-center gap-3">
           <ShieldIcon className="h-9 w-9 text-primary-text" weight="bold" aria-hidden="true" />
-          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Security</h1>
+          <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Security</h1>
         </div>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           How permtracker.app is run, how to report a problem, and every security incident on the record.
         </p>
       </header>{" "}
@@ -89,20 +89,20 @@ export default function SecurityPage() {
       {/* THE POSTURE AS FOUR FACTS, each one a sentence the page already made.
           It had been one paragraph behind a "More" link. */}
       <section aria-labelledby="posture" className="mt-10">
-        <h2 id="posture" className="font-heading text-2xl font-black">
+        <h2 id="posture" className="font-heading text-2xl font-bold">
           How it&apos;s run
         </h2>{" "}
         <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
           {POSTURE.map(({ Icon, title, body }) => (
             <Fragment key={title}>
               {" "}
-              <li className="flex gap-4 border-2 border-border bg-card p-5 shadow-hard-sm">
-                <span className="flex size-11 shrink-0 items-center justify-center border-2 border-border bg-primary text-black">
+              <li className="flex gap-4 border border-border bg-card p-5">
+                <span className="flex size-11 shrink-0 items-center justify-center border border-border bg-primary text-black">
                   <Icon size={22} weight="bold" aria-hidden="true" />
                 </span>{" "}
                 <span className="min-w-0">
-                  <span className="block font-heading text-lg font-black">{title}</span>{" "}
-                  <span className="mt-1 block text-sm leading-relaxed text-foreground/75">{body}</span>
+                  <span className="block font-heading text-lg font-bold">{title}</span>{" "}
+                  <span className="mt-1 block text-sm leading-relaxed text-soft">{body}</span>
                 </span>
               </li>
             </Fragment>
@@ -110,8 +110,8 @@ export default function SecurityPage() {
         </ul>
       </section>{" "}
 
-      <section aria-labelledby="report" className="mt-12 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-        <h2 id="report" className="font-heading text-2xl font-black">
+      <section aria-labelledby="report" className="mt-12 border border-border bg-foreground p-6 text-background sm:p-8">
+        <h2 id="report" className="font-heading text-2xl font-bold">
           Report a vulnerability
         </h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
@@ -121,7 +121,7 @@ export default function SecurityPage() {
         </p>{" "}
         <a
           href="mailto:security@permtracker.app"
-          className="mt-5 inline-flex min-h-11 items-center gap-2 border-2 border-background bg-primary px-4 font-heading text-base font-black text-black shadow-hard-sm"
+          className="mt-5 inline-flex min-h-11 items-center gap-2 border border-background bg-primary px-4 font-heading text-base font-bold text-black"
         >
           <EnvelopeSimpleIcon size={18} weight="bold" aria-hidden="true" />
           security@permtracker.app
@@ -129,48 +129,48 @@ export default function SecurityPage() {
       </section>{" "}
 
       <section aria-labelledby="incidents" className="mt-12">
-        <h2 id="incidents" className="font-heading text-2xl font-black">
+        <h2 id="incidents" className="font-heading text-2xl font-bold">
           Incident record
         </h2>{" "}
-        <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <p className="mt-2 text-base leading-relaxed text-muted-foreground">
           Every security-relevant incident, kept permanently. One so far.
         </p>{" "}
 
-        <article id="2026-04-19-signup-abuse" className="mt-6 border-2 border-border bg-card shadow-hard">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-border p-5 sm:p-6">
+        <article id="2026-04-19-signup-abuse" className="mt-6 border border-border bg-card">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border p-5 sm:p-6">
             <div className="min-w-0">
-              <h3 className="font-heading text-xl font-black">
+              <h3 className="font-heading text-xl font-bold">
                 The sign-up form was used to send unsolicited email
               </h3>{" "}
-              <p className="mt-1 font-mono text-sm text-foreground/70">April 19 to 20, 2026</p>
+              <p className="mt-1 font-mono text-sm text-muted-foreground">April 19 to 20, 2026</p>
             </div>{" "}
-            <span className="inline-flex shrink-0 items-center gap-1.5 border-2 border-border bg-primary px-2.5 py-1 font-heading text-sm font-black text-black">
+            <span className="inline-flex shrink-0 items-center gap-1.5 border border-border bg-primary px-2.5 py-1 font-heading text-sm font-bold text-black">
               <CheckCircle2 size={16} weight="bold" aria-hidden="true" />
               Resolved
             </span>
           </div>{" "}
-          <dl className="grid grid-cols-1 border-b-2 border-border sm:grid-cols-3 [&>*]:min-w-0">
+          <dl className="grid grid-cols-1 border-b border-border sm:grid-cols-3 [&>*]:min-w-0">
             {INCIDENT_FACTS.map(({ value, label }, i) => (
               <Fragment key={label}>
                 {" "}
-                <div className={`p-5 ${i > 0 ? "border-t-2 border-border sm:border-l-2 sm:border-t-0" : ""}`}>
-                  <dt className="text-sm text-foreground/70">{label}</dt>{" "}
-                  <dd className="mt-1 font-heading text-2xl font-black">{value}</dd>
+                <div className={`p-5 ${i > 0 ? "border-t border-border sm:border-l sm:border-t-0" : ""}`}>
+                  <dt className="text-sm text-muted-foreground">{label}</dt>{" "}
+                  <dd className="mt-1 font-heading text-2xl font-bold">{value}</dd>
                 </div>
               </Fragment>
             ))}
           </dl>{" "}
           <div className="p-5 sm:p-6">
-            <p className="text-base leading-relaxed text-foreground/80">
+            <p className="text-base leading-relaxed text-soft">
               An automated script sent sign-up requests with marketing text in the name field, so that text reached the
               addresses it supplied inside our welcome email. Three safeguards went in the same day.
             </p>{" "}
-            <details className="group mt-4 border-2 border-border">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 font-heading text-base font-black [&::-webkit-details-marker]:hidden">
+            <details className="group mt-4 border border-border">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
                 The full account{" "}
                 <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
               </summary>
-              <div className="space-y-4 border-t-2 border-border p-4 text-base leading-relaxed text-foreground/80">
+              <div className="space-y-4 border-t border-border p-4 text-base leading-relaxed text-soft">
                 <p>
                   <strong>What happened.</strong> Between approximately{" "}
                   <span className="font-mono text-sm">2026-04-19 22:38 UTC</span> and{" "}
@@ -228,7 +228,7 @@ export default function SecurityPage() {
         </article>
       </section>{" "}
 
-      <p className="mt-10 border-t-2 border-border pt-6 text-sm leading-relaxed text-foreground/70">
+      <p className="mt-10 border-t border-border pt-6 text-sm leading-relaxed text-muted-foreground">
         The incident record was last amended on April 20, 2026, and is amended whenever a security-relevant event occurs.
         Questions about this page go to{" "}
         <a

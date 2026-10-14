@@ -41,16 +41,10 @@ export default function SiteLayout({
           child group is mounted. */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-hard-sm focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none"
       >
         Skip to main content
       </a>
-
-      {/* Fixed dot pattern background */}
-      <div
-        className="bg-dots pointer-events-none fixed inset-0 opacity-30"
-        aria-hidden="true"
-      />
 
       {/* Dismissible, auto-hides after 2026-04-27. It publishes
           --security-banner-h, which the header's `top` and both children's

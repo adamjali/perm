@@ -53,8 +53,8 @@ export function CaseSelectionItem({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "flex items-center gap-3 px-3 py-2.5 border-b border-border/50 cursor-pointer transition-all duration-150",
-        "hover:bg-accent/10 hover:-translate-y-[1px] active:translate-y-0 active:shadow-hard-sm",
+        "flex items-center gap-3 px-3 py-2.5 border-b border-border/50 cursor-pointer transition-colors duration-150",
+        "hover:bg-accent/10",
         isSelected && "bg-primary/5"
       )}
       data-testid={`case-selection-item-${caseData._id}`}

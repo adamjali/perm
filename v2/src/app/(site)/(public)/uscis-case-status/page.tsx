@@ -162,10 +162,10 @@ export default async function UscisCaseStatusPage({
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Check a USCIS case by receipt number
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">
           The number at the top of an I-797 notice. See which office issued it, what the digits mean,
           and{" "}
           {enabled
@@ -179,14 +179,14 @@ export default async function UscisCaseStatusPage({
         </p>
       </header>
 
-      <div className="mt-8 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+      <div className="mt-8 border border-border bg-card p-5 sm:p-6">
         <UscisReceiptForm defaultValue={typed} />
       </div>
 
       <SavedReceipts current={receipt} />
 
       {malformed ? (
-        <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
           <WarningIcon className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>
             <b className="font-bold text-data-warn-ink">That is not the shape of a USCIS receipt number,</b>{" "}
@@ -196,7 +196,7 @@ export default async function UscisCaseStatusPage({
       ) : null}
 
       {dolNumber ? (
-        <div className="mt-6 border-2 border-border bg-tint-primary p-5">
+        <div className="mt-6 border border-border bg-tint-primary p-5">
           <p className="text-base leading-relaxed">
             <b className="font-bold">That is a Department of Labor number.</b> USCIS has no record
             under it; DOL does, and the PERM case page reads it.
@@ -204,7 +204,7 @@ export default async function UscisCaseStatusPage({
           <p className="mt-3">
             <Link
               href={`/perm-case-status?case=${encodeURIComponent(dolNumber)}`}
-              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
+              className="inline-flex min-h-[44px] items-center border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent"
             >
               Look up {dolNumber} at DOL
             </Link>
@@ -214,12 +214,12 @@ export default async function UscisCaseStatusPage({
 
       {decoded ? (
         <section className="mt-8" aria-labelledby="decoded-heading">
-          <h2 id="decoded-heading" className="font-heading text-2xl font-black">
+          <h2 id="decoded-heading" className="font-heading text-2xl font-bold">
             What {decoded.receipt} encodes
           </h2>{" "}
-          <dl className="mt-4 grid gap-x-8 gap-y-4 border-2 border-border bg-card p-5 text-sm shadow-hard sm:grid-cols-3 sm:p-6">
+          <dl className="mt-4 grid gap-x-8 gap-y-4 border border-border bg-card p-5 text-sm sm:grid-cols-3 sm:p-6">
             <div>
-              <dt className="font-mono font-bold uppercase tracking-[0.1em] text-muted-foreground">Prefix {decoded.prefix}</dt>{" "}
+              <dt className="font-bold text-muted-foreground">Prefix {decoded.prefix}</dt>{" "}
               <dd className="mt-1 text-base">
                 {decoded.office ? decoded.office.name : "An office USCIS's glossary does not name"}
                 {decoded.office?.source === "notices" ? " (seen on notices; not in USCIS's glossary list)" : ""}
@@ -228,11 +228,11 @@ export default async function UscisCaseStatusPage({
             {decoded.convention ? (
               <>
                 <div>
-                  <dt className="font-mono font-bold uppercase tracking-[0.1em] text-muted-foreground">Fiscal year, by convention</dt>{" "}
+                  <dt className="font-bold text-muted-foreground">Fiscal year, by convention</dt>{" "}
                   <dd className="mt-1 text-base">FY{decoded.convention.fiscalYear}</dd>
                 </div>{" "}
                 <div>
-                  <dt className="font-mono font-bold uppercase tracking-[0.1em] text-muted-foreground">Workday and sequence, by convention</dt>{" "}
+                  <dt className="font-bold text-muted-foreground">Workday and sequence, by convention</dt>{" "}
                   <dd className="mt-1 text-base">
                     Day {decoded.convention.workday}, number {decoded.convention.sequence}
                   </dd>
@@ -240,7 +240,7 @@ export default async function UscisCaseStatusPage({
               </>
             ) : (
               <div className="sm:col-span-2">
-                <dt className="font-mono font-bold uppercase tracking-[0.1em] text-muted-foreground">Digits</dt>{" "}
+                <dt className="font-bold text-muted-foreground">Digits</dt>{" "}
                 <dd className="mt-1 text-base">Masked by USCIS; nothing to read.</dd>
               </div>
             )}
@@ -268,9 +268,9 @@ export default async function UscisCaseStatusPage({
       ) : null}
 
       <section className="mt-14">
-        <h2 className="font-heading text-2xl font-black">The three letters</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">The three letters</h2>{" "}
         <MoreText gist={"Seven office prefixes from USCIS's glossary, plus one seen on notices."} className="mt-3">
-          <p className="max-w-2xl text-base leading-relaxed text-foreground/80">
+          <p className="max-w-2xl text-base leading-relaxed text-soft">
             USCIS&apos;s glossary names seven prefixes. One more, YSC, appears on
             notices from the Potomac Service Center and is listed here as seen on
             notices rather than as USCIS&apos;s own definition. Any three letters
@@ -278,18 +278,18 @@ export default async function UscisCaseStatusPage({
             look up.
           </p>
         </MoreText>{" "}
-        <details className="group mt-4 border-2 border-border bg-card shadow-hard">
+        <details className="group mt-4 border border-border bg-card">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 font-heading text-base font-bold transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
             <span>Every prefix, and the office it names</span>{" "}
             <span aria-hidden="true" className="font-mono text-sm text-primary transition-transform duration-200 group-open:rotate-90 motion-reduce:transition-none">
               &gt;
             </span>
           </summary>{" "}
-          <dl className="divide-y-2 divide-border border-t-2 border-border">
+          <dl className="divide-y divide-border border-t border-border">
             {prefixes.map(([code, p]) => (
               <div key={code} className="grid gap-x-6 gap-y-1 px-5 py-3 sm:grid-cols-[6rem_1fr] sm:px-6">
                 <dt className="font-mono text-base font-bold">{code}</dt>{" "}
-                <dd className="text-base leading-relaxed text-foreground/80">
+                <dd className="text-base leading-relaxed text-soft">
                   {p.name}
                   {p.source === "notices" ? " (seen on notices; not in USCIS's glossary list)" : ""}
                   {p.note ? ` ${p.note}` : ""}{" "}
@@ -301,7 +301,7 @@ export default async function UscisCaseStatusPage({
       </section>
 
       <section className="mt-14">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
         <FaqList items={faqs} />
       </section>
 
@@ -337,14 +337,14 @@ export default async function UscisCaseStatusPage({
  */
 function PendingPanel({ receipt }: { receipt?: string }) {
   return (
-    <section aria-labelledby="pending-heading" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-      <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
+    <section aria-labelledby="pending-heading" className="border border-border bg-card p-5 sm:p-6">
+      <p className="text-sm font-bold text-muted-foreground">
         Live status
       </p>{" "}
-      <h2 id="pending-heading" className="mt-2 font-heading text-2xl font-black">
+      <h2 id="pending-heading" className="mt-2 font-heading text-2xl font-bold">
         USCIS access is pending
       </h2>{" "}
-      <p className="mt-3 max-w-prose text-base leading-relaxed text-foreground/80">
+      <p className="mt-3 max-w-prose text-base leading-relaxed text-soft">
         This page will check live once USCIS issues API keys. PERM Tracker&apos;s
         application for USCIS Case Status API access is in progress, and until it
         is granted nothing here is looked up at USCIS.{" "}
@@ -355,7 +355,7 @@ function PendingPanel({ receipt }: { receipt?: string }) {
           <a
             href={USCIS_STATUS_URL}
             rel="noopener noreferrer"
-            className="flex min-h-[44px] w-full flex-col justify-center border-2 border-border bg-background px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex min-h-[44px] w-full flex-col justify-center border border-border bg-background px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <span className="font-heading text-base font-bold">USCIS Case Status Online</span>{" "}
             <span className="text-sm text-muted-foreground">
@@ -367,7 +367,7 @@ function PendingPanel({ receipt }: { receipt?: string }) {
           <a
             href={USCIS_EMMA_URL}
             rel="noopener noreferrer"
-            className="flex min-h-[44px] w-full flex-col justify-center border-2 border-border bg-background px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex min-h-[44px] w-full flex-col justify-center border border-border bg-background px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <span className="font-heading text-base font-bold">Emma, USCIS&apos;s virtual assistant</span>{" "}
             <span className="text-sm text-muted-foreground">

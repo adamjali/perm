@@ -103,7 +103,7 @@ export function TimelineRangeBar({
       {/* A band in the stage colour: a clear outline over a light fill, so it
           reads as that stage instead of a pastel */}
       <div
-        className="absolute inset-0 border-2"
+        className="absolute inset-0 border"
         style={{
           borderColor: rangeBar.color,
           backgroundColor: `color-mix(in srgb, ${rangeBar.color} 30%, transparent)`,
@@ -118,9 +118,9 @@ export function TimelineRangeBar({
           className={cn(
             "absolute bottom-full left-1/2 -translate-x-1/2 mb-3",
             "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
-            "whitespace-nowrap shadow-hard-sm",
+            "whitespace-nowrap",
             "pointer-events-none z-[45]",
-            "border-2 border-foreground"
+            "border border-foreground"
           )}
         >
           <div className="font-semibold">{rangeBar.label}</div>

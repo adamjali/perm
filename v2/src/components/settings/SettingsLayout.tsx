@@ -127,7 +127,7 @@ function NavButton({
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={cn(
-        "flex items-center gap-3 text-sm font-heading font-bold border-2 transition-all duration-150",
+        "flex items-center gap-3 text-sm font-heading font-bold border transition-colors duration-150",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         // Mobile-first: 44px minimum touch target (py-3 on mobile for tabs, sidebar always has py-3)
         variant === "sidebar" && "w-full px-4 py-3 text-left",
@@ -135,7 +135,7 @@ function NavButton({
         isActive
           ? cn(
               "border-foreground bg-foreground text-background",
-              variant === "sidebar" && "shadow-hard"
+              variant === "sidebar" && ""
             )
           : "border-transparent text-muted-foreground hover:border-foreground/50 hover:text-foreground"
       )}
@@ -234,7 +234,7 @@ export default function SettingsLayout({
   return (
     <div className="flex flex-col md:flex-row gap-8">
       {/* Mobile tabs */}
-      <div className="md:hidden overflow-x-auto overscroll-x-none -mx-4 px-4 pb-4 mb-4 border-b-2 border-border">
+      <div className="md:hidden overflow-x-auto overscroll-x-none -mx-4 px-4 pb-4 mb-4 border-b border-border">
         <NavList
           activeSection={activeSection}
           onSectionChange={handleSectionChange}

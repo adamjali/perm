@@ -150,7 +150,7 @@ export default async function SignupPage() {
         // fold - a screen of empty black on load. Above `lg` the content
         // top-aligns and then sticks, so it is visible immediately and travels
         // with the reader while the long form scrolls past it.
-        className="relative flex flex-col items-center justify-center border-t-2 border-border bg-foreground px-6 py-12 text-background dark:bg-card dark:text-foreground sm:px-10 lg:justify-start lg:border-r-2 lg:border-t-0 lg:py-16"
+        className="relative flex flex-col items-center justify-center border-t border-border bg-foreground px-6 py-12 text-background dark:bg-card dark:text-foreground sm:px-10 lg:justify-start lg:border-r lg:border-t-0 lg:py-16"
       >
         {/* The seam. Rather than a decoration on a plain rule, the panel's own
             edge is castellated - the dark half steps 12px into the
@@ -187,17 +187,17 @@ export default async function SignupPage() {
             <dl className="mt-6 space-y-5">
               {figures.map((f) => (
                 <div key={f.label}>
-                  <dt className="font-mono text-sm font-bold uppercase tracking-wider opacity-75">
+                  <dt className="text-sm font-bold opacity-75">
                     {f.label}
                   </dt>{" "}
-                  <dd className="mt-1 font-heading text-4xl font-black leading-none">
+                  <dd className="mt-1 font-heading text-4xl font-bold leading-none">
                     {f.value}
                   </dd>
                 </div>
               ))}
             </dl>
           ) : null}
-          <div className="mt-8 border-t-2 border-current/25 pt-6">
+          <div className="mt-8 border-t border-current/25 pt-6">
             <ProductShot
               src={TOUR_SHOTS.dashboard.light.src}
               width={TOUR_SHOTS.dashboard.light.width}

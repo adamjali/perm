@@ -89,7 +89,7 @@ export function OnboardingWizard() {
               "absolute top-3 right-3 z-50",
               "inline-flex h-11 items-center gap-1.5 px-3 md:h-9",
               "font-heading text-sm font-bold text-muted-foreground",
-              "border-2 border-transparent transition-colors duration-150",
+              "border border-transparent transition-colors duration-150",
               "hover:border-border hover:bg-accent hover:text-foreground",
               "outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
               "disabled:cursor-wait disabled:text-muted-foreground"
@@ -113,11 +113,11 @@ export function OnboardingWizard() {
             <div
               key={s}
               className={cn(
-                "w-2.5 h-2.5 border-2 border-border transition-colors duration-200",
+                "w-2.5 h-2.5 border border-border transition-colors duration-200",
                 i < currentIndex
                   ? "bg-primary"
                   : i === currentIndex
-                    ? "bg-primary shadow-hard-sm"
+                    ? "bg-primary"
                     : "bg-muted"
               )}
             />
@@ -126,7 +126,7 @@ export function OnboardingWizard() {
 
         {/* Step content — scrollable with generous max height */}
         <div className="px-4 sm:px-6 pb-6 sm:pb-8 pt-2 sm:pt-4 overflow-y-auto flex-1 min-h-0">
-          <AnimatePresence mode="wait">
+          <AnimatePresence initial={false} mode="wait">
             <motion.div
               key={currentStep}
               variants={stepVariants}

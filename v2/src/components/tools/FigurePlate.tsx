@@ -55,7 +55,7 @@ export function FigurePlate({
     <figure
       id={id}
       className={cn(
-        "relative m-0 border-2 border-border shadow-hard",
+        "relative m-0 border border-border",
         ink ? "bg-foreground text-background" : "bg-card",
         className,
       )}
@@ -64,10 +64,10 @@ export function FigurePlate({
           than a card border, and cost nothing. */}
       {(
         [
-          "left-0 top-0 border-l-4 border-t-4",
-          "right-0 top-0 border-r-4 border-t-4",
-          "left-0 bottom-0 border-l-4 border-b-4",
-          "right-0 bottom-0 border-r-4 border-b-4",
+          "left-0 top-0 border-l-2 border-t-2",
+          "right-0 top-0 border-r-2 border-t-2",
+          "left-0 bottom-0 border-l-2 border-b-2",
+          "right-0 bottom-0 border-r-2 border-b-2",
         ] as const
       ).map((pos) => (
         <span
@@ -84,19 +84,19 @@ export function FigurePlate({
       {/* Title block, top-left, like a drawing sheet. */}
       <div
         className={cn(
-          "flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b-2 px-5 py-3 sm:px-6",
+          "flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-5 py-3 sm:px-6",
           ink ? "border-background/25" : "border-border",
         )}
       >
         <span
           className={cn(
-            "font-mono text-sm font-bold uppercase tracking-[0.1em]",
+            "text-sm font-bold",
             ink ? "text-primary-on-ink" : "text-muted-foreground",
           )}
         >
           Fig {n}
         </span>{" "}
-        <span className="font-mono text-sm font-bold uppercase tracking-[0.1em]">
+        <span className="text-sm font-bold">
           {title}
         </span>{" "}
         {subject ? (
@@ -116,8 +116,8 @@ export function FigurePlate({
       {caption || source ? (
         <figcaption
           className={cn(
-            "border-t-2 px-5 py-3 text-sm leading-relaxed sm:px-6",
-            ink ? "border-background/25 text-background/70" : "border-border text-foreground/70",
+            "border-t px-5 py-3 text-sm leading-relaxed sm:px-6",
+            ink ? "border-background/25 text-background/70" : "border-border text-muted-foreground",
           )}
         >
           {/* LONG CAPTIONS FOLD: over 28 words, the first
@@ -135,7 +135,7 @@ export function FigurePlate({
               {caption ? " " : null}
               <span
                 className={cn(
-                  "font-mono text-sm uppercase tracking-wider",
+                  "text-sm",
                   ink ? "text-background/50" : "text-muted-foreground",
                 )}
               >
@@ -155,7 +155,7 @@ export function FigurePlate({
  */
 export function PlateLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-3 border-b border-border/40 pb-1.5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
+    <p className="mb-3 border-b border-border/40 pb-1.5 text-sm font-bold text-muted-foreground">
       {children}
     </p>
   );

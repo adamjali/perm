@@ -44,7 +44,7 @@ import { US_STATE_NAMES } from "@/lib/usStateNames";
  */
 
 const FIELD =
-  "min-h-[44px] w-full border-2 border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
+  "min-h-[44px] w-full border border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
 const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const money = (n: number) => `$${formatInt(Math.round(n))}`;
 const rankOf = (r: H1bRankRow, by: H1bBasis) => (by === "lca" ? r.rankLca : r.rankUscis);
@@ -114,7 +114,7 @@ function Marks({ r }: { r: H1bRankRow }) {
   return (
     <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="On the record">
       {marks.map((m) => (
-        <li key={m.key} className={`inline-flex min-h-7 items-center border-2 bg-card px-2 text-sm font-semibold ${m.tone}`}>
+        <li key={m.key} className={`inline-flex min-h-7 items-center border bg-card px-2 text-sm font-semibold ${m.tone}`}>
           {m.text}{" "}
         </li>
       ))}
@@ -128,8 +128,8 @@ function Row({ r, rank, max, cols, by }: { r: H1bRankRow; rank: number; max: num
   const value = by === "lca" ? r.lcas : r.uscisAppr;
   const width = max > 0 ? Math.max(1, Math.round((value / max) * 100)) : 0;
   return (
-    <li className={`${ROW_GRID} border-t-2 border-border py-4`}>
-      <span className="font-heading text-2xl font-black leading-none tabular-nums lg:text-3xl" aria-label={`Rank ${rank}`}>
+    <li className={`${ROW_GRID} border-t border-border py-4`}>
+      <span className="font-heading text-2xl font-bold leading-none tabular-nums lg:text-3xl" aria-label={`Rank ${rank}`}>
         {rank}
       </span>{" "}
       <div className="min-w-0">
@@ -140,7 +140,7 @@ function Row({ r, rank, max, cols, by }: { r: H1bRankRow; rank: number; max: num
         ) : (
           <span className="text-base font-bold [overflow-wrap:anywhere] lg:text-lg">{r.name}</span>
         )}{" "}
-        <span className="mt-2 block h-3.5 border-2 border-border bg-background" aria-hidden="true">
+        <span className="mt-2 block h-3.5 border border-border bg-background" aria-hidden="true">
           <span className="block h-full bg-foreground" style={{ width: `${width}%` }} />
         </span>{" "}
         <Marks r={r} />
@@ -179,31 +179,31 @@ function Headline({ view, rows }: { view: H1bView; rows: H1bRankRow[] }) {
     { key: "rest", n: c.rest, count: c.restCount, label: `${formatInt(c.restCount)} other employers`, swatch: "bg-data-none" },
   ].filter((b) => b.n > 0);
   return (
-    <section aria-label="The year in three figures" className="mt-8 border-2 border-border bg-card p-5 sm:p-6">
+    <section aria-label="The year in three figures" className="mt-8 border border-border bg-card p-5 sm:p-6">
       <dl className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 [&>*]:min-w-0">
         <div className="col-span-2 sm:col-span-1">
           <dt className="sr-only">{what}</dt>{" "}
-          <dd className="font-heading text-4xl font-black leading-none tabular-nums sm:text-5xl">{formatInt(c.whole)}</dd>{" "}
+          <dd className="font-heading text-4xl font-bold leading-none tabular-nums sm:text-5xl">{formatInt(c.whole)}</dd>{" "}
           <dd className="mt-2 text-base">{what}</dd>
         </div>{" "}
         <div>
           <dt className="sr-only">Employers</dt>{" "}
-          <dd className="font-heading text-3xl font-black leading-none tabular-nums sm:text-5xl">{formatInt(c.employers)}</dd>{" "}
+          <dd className="font-heading text-3xl font-bold leading-none tabular-nums sm:text-5xl">{formatInt(c.employers)}</dd>{" "}
           <dd className="mt-2 text-base">employers</dd>
         </div>{" "}
         {c.topCount >= TOP_SHARE ? (
           <div>
             <dt className="sr-only">Share of the {TOP_SHARE} busiest</dt>{" "}
-            <dd className="font-heading text-3xl font-black leading-none sm:text-5xl">{shareWords(c.top, c.whole)}</dd>{" "}
+            <dd className="font-heading text-3xl font-bold leading-none sm:text-5xl">{shareWords(c.top, c.whole)}</dd>{" "}
             <dd className="mt-2 text-base">came from the {TOP_SHARE} busiest</dd>
           </div>
         ) : null}
       </dl>{" "}
-      <div className="mt-6 flex h-7 border-2 border-border" aria-hidden="true">
+      <div className="mt-6 flex h-7 border border-border" aria-hidden="true">
         {bands.map((b, i) => (
           <span
             key={b.key}
-            className={`${b.swatch} ${i < bands.length - 1 ? "border-r-2 border-border" : ""}`}
+            className={`${b.swatch} ${i < bands.length - 1 ? "border-r border-border" : ""}`}
             style={{ width: `${seg(b.n)}%` }}
           />
         ))}
@@ -211,7 +211,7 @@ function Headline({ view, rows }: { view: H1bView; rows: H1bRankRow[] }) {
       <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {bands.map((b) => (
           <li key={b.key} className="flex items-center gap-2">
-            <span className={`inline-block size-3.5 border-2 border-border ${b.swatch}`} aria-hidden="true" />{" "}
+            <span className={`inline-block size-3.5 border border-border ${b.swatch}`} aria-hidden="true" />{" "}
             <span>
               {b.label}: <span className="font-mono font-bold tabular-nums">{formatInt(b.n)}</span>
             </span>
@@ -270,7 +270,7 @@ export function H1bEmployerRanks({
 
   return (
     <div>
-      <div className="border-2 border-border bg-card p-4 shadow-hard sm:p-5">
+      <div className="border border-border bg-card p-4 sm:p-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end [&>*]:min-w-0">
           <label className="block text-sm font-bold">
             Fiscal year
@@ -308,7 +308,7 @@ export function H1bEmployerRanks({
                     aria-pressed={on}
                     disabled={!usable}
                     onClick={() => go(year.fy, b)}
-                    className={`min-h-[44px] border-2 border-border px-2 text-sm font-bold sm:px-3 sm:text-base ${i > 0 ? "-ml-0.5" : ""} ${
+                    className={`min-h-[44px] border border-border px-2 text-sm font-bold sm:px-3 sm:text-base ${i > 0 ? "-ml-0.5" : ""} ${
                       on ? "bg-foreground text-background" : "bg-background hover:bg-muted"
                     } disabled:cursor-not-allowed disabled:opacity-50`}
                   >
@@ -333,13 +333,13 @@ export function H1bEmployerRanks({
       </div>
 
       {q.failed ? (
-        <RequestFailed what="This ranking" failure={q.failure} onRetry={q.retry} className="mt-6 border-2 border-border bg-tint-primary p-4" />
+        <RequestFailed what="This ranking" failure={q.failure} onRetry={q.retry} className="mt-6 border border-border bg-tint-primary p-4" />
       ) : null}
 
       <div className={loading ? "opacity-60 transition-opacity motion-reduce:transition-none" : ""} aria-busy={loading}>
         {view ? <Headline view={view} rows={rows} /> : null}{" "}
         {view && rows.length === 0 ? (
-          <p className="mt-8 border-2 border-border bg-card p-5 text-base">
+          <p className="mt-8 border border-border bg-card p-5 text-base">
             {by === "lca"
               ? `DOL's files hold no certified H-1B LCAs for ${placeName(state)} in FY${year.fy}.`
               : `USCIS's counts hold no H-1B approvals for ${placeName(state)} in FY${year.fy}.`}
@@ -347,7 +347,7 @@ export function H1bEmployerRanks({
         ) : null}{" "}
         {rows.length > 0 ? (
           <section aria-labelledby="h1b-ranked" className="mt-10">
-            <h2 id="h1b-ranked" className="font-heading text-2xl font-black sm:text-3xl">
+            <h2 id="h1b-ranked" className="font-heading text-2xl font-bold sm:text-3xl">
               The {rows.length} busiest, FY{year.fy}
             </h2>{" "}
             <div className={`${ROW_GRID} mt-4 hidden pb-2 text-sm font-bold lg:grid`} aria-hidden="true">
@@ -365,12 +365,12 @@ export function H1bEmployerRanks({
               ))}
             </ol>{" "}
             {folded.length > 0 ? (
-              <details className="group border-t-2 border-border">
+              <details className="group border-t border-border">
                 <summary className="flex min-h-[48px] cursor-pointer list-none items-center gap-2 py-3 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
-                  <span className="inline-flex min-h-[44px] items-center border-2 border-border bg-card px-4 shadow-hard-sm group-open:hidden">
+                  <span className="inline-flex min-h-[44px] items-center border border-border bg-card px-4 group-open:hidden">
                     Show ranks {LIST_SHOWN + 1} to {rows.length}
                   </span>{" "}
-                  <span className="hidden min-h-[44px] items-center border-2 border-border bg-card px-4 group-open:inline-flex">
+                  <span className="hidden min-h-[44px] items-center border border-border bg-card px-4 group-open:inline-flex">
                     Hide ranks {LIST_SHOWN + 1} to {rows.length}
                   </span>
                 </summary>{" "}

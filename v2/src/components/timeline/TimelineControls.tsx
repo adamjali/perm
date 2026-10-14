@@ -82,7 +82,7 @@ export function TimelineControls({
         {/* Zoom Control */}
         {onZoomChange && (
           <div
-            className="flex items-center justify-between gap-2 min-[360px]:col-span-2 px-3 py-2 border-2 border-border bg-background shadow-hard min-h-[44px] sm:justify-start"
+            className="flex items-center justify-between gap-2 min-[360px]:col-span-2 px-3 py-2 border border-border bg-background min-h-[44px] sm:justify-start"
             data-testid="zoom-control"
           >
             <MagnifyingGlassMinusIcon className="size-4 text-muted-foreground" />
@@ -109,7 +109,7 @@ export function TimelineControls({
             <Button
               variant="outline"
               size="default"
-              className="border-2 border-border bg-background shadow-hard hover:shadow-hard-lg hover:-translate-y-0.5 transition-all min-h-[44px] justify-between sm:justify-center"
+              className="border border-border bg-background transition-colors min-h-[44px] justify-between sm:justify-center"
             >
               <div className="flex items-center">
                 <CalendarIcon className="size-4 mr-2" />
@@ -123,7 +123,7 @@ export function TimelineControls({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-40 border-2 border-border bg-popover shadow-hard"
+            className="w-40 border border-border bg-popover"
           >
             <DropdownMenuRadioGroup
               value={String(timeRange)}
@@ -149,7 +149,7 @@ export function TimelineControls({
           variant="outline"
           size="default"
           onClick={onOpenCaseSelector}
-          className="border-2 border-border bg-background shadow-hard hover:shadow-hard-lg hover:-translate-y-0.5 transition-all min-h-[44px] justify-between xs:justify-center"
+          className="border border-border bg-background transition-colors min-h-[44px] justify-between xs:justify-center"
           data-testid="case-selector-button"
         >
           <div className="flex items-center">
@@ -158,7 +158,7 @@ export function TimelineControls({
             <span className="sm:hidden">Cases</span>
           </div>
           <span
-            className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground border-2 border-border text-sm font-bold min-w-[1.5rem] text-center"
+            className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground border border-border text-sm font-bold min-w-[1.5rem] text-center"
             data-testid="case-count-badge"
           >
             {badgeText}

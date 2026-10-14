@@ -52,7 +52,7 @@ export function UpcomingDeadlinesLoadingSkeleton(): ReactNode {
       <div className="p-5">
         <ul className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <li key={i} className="border-2 border-border p-3">
+            <li key={i} className="border border-border p-3">
               <Skeleton variant="line" className="mb-2 h-5 w-2/3" />
               <Skeleton variant="line" className="h-4 w-1/2" />
             </li>

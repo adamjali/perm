@@ -33,13 +33,13 @@ export function AlphabetEffect({ data }: { data: Alphabet }) {
 
   return (
     <div>
-      <ul className="m-0 mb-5 flex list-none flex-wrap items-center gap-x-6 gap-y-2 p-0 text-sm text-foreground/70">
+      <ul className="m-0 mb-5 flex list-none flex-wrap items-center gap-x-6 gap-y-2 p-0 text-sm text-muted-foreground">
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-8 border-2 border-border bg-data-good-ink" />{" "}
+          <span aria-hidden="true" className="h-3 w-8 border border-border bg-data-good-ink" />{" "}
           <span>Decided faster than average</span>
         </li>{" "}
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-8 border-2 border-border bg-data-warn-ink" />{" "}
+          <span aria-hidden="true" className="h-3 w-8 border border-border bg-data-warn-ink" />{" "}
           <span>Decided slower than average</span>
         </li>{" "}
       </ul>{" "}
@@ -52,11 +52,11 @@ export function AlphabetEffect({ data }: { data: Alphabet }) {
                 <span className="font-mono text-sm font-bold">{l.letter}</span>{" "}
                 <span
                   aria-hidden="true"
-                  className="relative block h-3 border-l-2 border-border"
+                  className="relative block h-3 border-l border-border"
                   style={{ marginLeft: "50%", width: "50%" }}
                 >
                   <span
-                    className={`absolute top-0 h-3 border-2 border-border ${
+                    className={`absolute top-0 h-3 border border-border ${
                       faster ? "bg-data-good-ink" : "bg-data-warn-ink"
                     }`}
                     style={
@@ -66,7 +66,7 @@ export function AlphabetEffect({ data }: { data: Alphabet }) {
                     }
                   />
                 </span>{" "}
-                <span className="text-right font-mono text-sm tabular-nums text-foreground/70">
+                <span className="text-right font-mono text-sm tabular-nums text-muted-foreground">
                   {l.deltaDays > 0 ? "+" : ""}
                   {l.deltaDays.toFixed(1)}d
                 </span>
@@ -75,7 +75,7 @@ export function AlphabetEffect({ data }: { data: Alphabet }) {
           );
         })}
       </ol>{" "}
-      <p className="mt-5 text-sm leading-relaxed text-foreground/70">
+      <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
         Against a corpus mean of{" "}
         <b className="text-foreground">{Math.round(data.meanDays)} days</b> over{" "}
         {data.cases.toLocaleString("en-US")} decided cases. The whole alphabet

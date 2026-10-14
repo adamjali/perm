@@ -145,8 +145,8 @@ export default async function PermEmployersPage() {
           <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 xl:grid-cols-2">
           {/* The drawing first: the top ten as a volume ladder. */}
           <section className="pop h-full">
-            <div className="flex h-full flex-col border-2 border-border bg-card p-6 sm:p-8">
-              <h3 className="font-heading text-xl font-black">The top ten, by filings</h3>
+            <div className="flex h-full flex-col border border-border bg-card p-6 sm:p-8">
+              <h3 className="font-heading text-xl font-bold">The top ten, by filings</h3>
               <ChartTips label="The top ten sponsors, by filings" className="mt-6">
               {/* Each name opens its employer page: visitors clicked the plain
                   names over and over expecting it (PostHog, Oct 2026). */}
@@ -174,7 +174,7 @@ export default async function PermEmployersPage() {
                     <div className="flex min-w-0 items-center gap-2">
                       <div
                         aria-hidden="true"
-                        className="h-6 shrink-0 border-2 border-border bg-primary"
+                        className="h-6 shrink-0 border border-border bg-primary"
                         style={{
                           width: `${Math.max(4, (e.total / maxTotal) * 100)}%`,
                           maxWidth: "calc(100% - 64px)",
@@ -188,7 +188,7 @@ export default async function PermEmployersPage() {
                 ))}
               </div>
               </ChartTips>
-              <p className="mt-auto pt-5 text-sm text-foreground/70">
+              <p className="mt-auto pt-5 text-sm text-muted-foreground">
                 DOL works one national queue, oldest first, whoever filed the
                 case.
               </p>
@@ -203,21 +203,21 @@ export default async function PermEmployersPage() {
             <WaitLeaders field={fieldWait} />
           </Chapter>
 
-          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-border pt-8">
+          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-border pt-8">
             {/* "All N sponsors" was true of the published files and reads as
                 a claim about every sponsor that exists. It is now actively
                 misleading on this page: searching here also surfaces employers
                 we hold only from DOL's live feed, 21,495 of which have never
                 appeared in a disclosure file. The heading says which corpus the
                 TABLE is, and the sentence under it says where the rest are. */}
-            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+            <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
               All {employerCount.toLocaleString("en-US")} sponsors in the
               published files
             </h2>{" "}
             {/* The consequence stays visible because it changes how a row is
                 read: one company can hold several of them. The pooling
                 mechanics are provenance, so they collapse. */}
-            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
               A group filing through several subsidiaries appears as several
               rows.
             </p>{" "}
@@ -239,13 +239,13 @@ export default async function PermEmployersPage() {
               the crawlable path to all of them. */}
           {/* The teaser carries its own heading ("Browse A to Z"), so this is the
               part's rule and anchor only. */}
-          <div id="a-z" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-border pt-8">
+          <div id="a-z" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-border pt-8">
             <BrowseTeaser kind="employer" />
           </div>
         </>
       ) : (
-        <section className="mt-10 border-2 border-border bg-card p-8 text-center shadow-hard">
-          <p className="text-lg text-foreground/70">
+        <section className="mt-10 border border-border bg-card p-8 text-center">
+          <p className="text-lg text-muted-foreground">
             The employer aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}
             <Link href="/perm-processing-times" className="underline decoration-primary decoration-2 underline-offset-2">
@@ -257,9 +257,9 @@ export default async function PermEmployersPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Your employer is on the list?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-tint-primary p-6">
+          <h2 className="font-heading text-lg font-bold">Your employer is on the list?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Their volume doesn’t change your place in line. The{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator
@@ -267,9 +267,9 @@ export default async function PermEmployersPage() {
             takes your filing month.
           </p>
         </div>
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Managing a docket?</h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Managing a docket?</h2>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             <Link href="/perm-wages" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               Wages by occupation
             </Link>

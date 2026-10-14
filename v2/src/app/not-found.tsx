@@ -49,7 +49,6 @@ export default function NotFound() {
   const articles = getAllPosts().map((p) => ({ title: p.meta.title, href: `/${p.type}/${p.slug}`, kind: p.type }));
   return (
     <main className="relative min-h-screen bg-background">
-      <div className="bg-dots pointer-events-none fixed inset-0 opacity-30" aria-hidden="true" />
 
       <div className="relative mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-20">
         {/* The way home when this page stands alone; under the site's own
@@ -57,25 +56,25 @@ export default function NotFound() {
             carries the name, so this one steps aside. */}
         <Link
           href="/"
-          className="inline-flex min-h-[44px] items-center font-heading text-xl font-black [body:has([data-site-header])_&]:hidden"
+          className="inline-flex min-h-[44px] items-center font-heading text-xl font-bold [body:has([data-site-header])_&]:hidden"
         >
           <span className="text-primary-text">PERM</span>&nbsp;Tracker
         </Link>{" "}
 
-        <div className="relative mt-10 overflow-hidden border-2 border-border bg-card p-6 shadow-hard sm:p-10">
+        <div className="relative mt-10 overflow-hidden border border-border bg-card p-6 sm:p-10">
           {/* An oversized 404 clipped by the card. */}
           <div
-            className="pointer-events-none absolute -right-4 -top-10 select-none font-heading text-[11rem] font-black leading-none text-foreground/[0.07] sm:text-[15rem]"
+            className="pointer-events-none absolute -right-4 -top-10 select-none font-heading text-[11rem] font-bold leading-none text-foreground/[0.07] sm:text-[15rem]"
             aria-hidden="true"
           >
             404
           </div>
           <div className="relative">
-            <p className="inline-block border-2 border-destructive/40 bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive">
+            <p className="inline-block border border-destructive/40 bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive">
               Page not found
             </p>{" "}
-            <h1 className="mt-5 font-heading text-5xl font-black leading-none sm:text-6xl">Dead end</h1>{" "}
-            <p className="mt-4 max-w-md text-lg leading-relaxed text-foreground/75">
+            <h1 className="mt-5 font-heading text-5xl font-bold leading-none sm:text-6xl">Dead end</h1>{" "}
+            <p className="mt-4 max-w-md text-lg leading-relaxed text-soft">
               This page doesn&apos;t exist or has moved. If you were after a case, put its number in here.
             </p>{" "}
             <form action="/perm-case-status" method="get" className="mt-7 flex max-w-xl flex-col gap-3 sm:flex-row">
@@ -90,11 +89,11 @@ export default function NotFound() {
                 autoComplete="off"
                 spellCheck={false}
                 placeholder="G-100-26125-868956"
-                className="min-h-[48px] w-full min-w-0 flex-1 border-2 border-border bg-background px-4 font-mono text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="min-h-[48px] w-full min-w-0 flex-1 border border-input bg-background px-4 font-mono text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />{" "}
               <button
                 type="submit"
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 border-2 border-border bg-primary px-6 font-heading font-black text-black shadow-hard-sm transition-transform hover:-translate-y-[1px] active:translate-y-0 motion-reduce:transition-none"
+                className="inline-flex min-h-[48px] items-center justify-center gap-2 border border-border bg-primary px-6 font-heading font-bold text-black transition-transform motion-reduce:transition-none"
               >
                 Check a case
               </button>
@@ -103,14 +102,14 @@ export default function NotFound() {
           </div>
         </div>{" "}
 
-        <h2 className="mt-12 font-heading text-xl font-black">Or go to</h2>{" "}
+        <h2 className="mt-12 font-heading text-xl font-bold">Or go to</h2>{" "}
         <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
           {DOORS.map((d) => (
             <Fragment key={d.href}>
               <li>
                 <Link
                   href={d.href}
-                  className="flex min-h-[56px] items-center gap-3 border-2 border-border bg-card px-4 font-bold transition-colors hover:bg-tint-primary"
+                  className="flex min-h-[56px] items-center gap-3 border border-border bg-card px-4 font-bold transition-colors hover:bg-tint-primary"
                 >
                   <d.Icon aria-hidden="true" className="size-5 shrink-0" weight="bold" />{" "}
                   <span className="flex-1">{d.label}</span>{" "}

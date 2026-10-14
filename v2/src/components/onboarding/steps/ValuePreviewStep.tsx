@@ -31,7 +31,7 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
 
       <ul className="mb-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
         <Preview caption="Every deadline worked out">
-          <div className="flex items-center justify-between gap-3 border-2 border-border bg-card px-3 py-2">
+          <div className="flex items-center justify-between gap-3 border border-border bg-card px-3 py-2">
             <span className="min-w-0">
               <span className="block truncate font-heading text-sm font-bold">Acme Technology Inc.</span>{" "}
               <span className="block truncate text-sm text-muted-foreground">9089 window opens</span>
@@ -41,8 +41,8 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
         </Preview>
 
         <Preview caption="A reminder before each one">
-          <div className="flex items-center gap-3 border-2 border-border bg-card px-3 py-2">
-            <span className="grid size-9 shrink-0 place-items-center border-2 border-border bg-primary text-primary-foreground">
+          <div className="flex items-center gap-3 border border-border bg-card px-3 py-2">
+            <span className="grid size-9 shrink-0 place-items-center border border-border bg-primary text-primary-foreground">
               <EnvelopeSimpleIcon className="size-5" weight="bold" aria-hidden="true" />
             </span>{" "}
             <span className="min-w-0">
@@ -54,11 +54,11 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
 
         <Preview caption="On your calendar">
           <div className="flex items-stretch gap-3">
-            <span className="flex w-14 shrink-0 flex-col items-center border-2 border-border bg-card">
+            <span className="flex w-14 shrink-0 flex-col items-center border border-border bg-card">
               <span className="w-full bg-foreground py-0.5 text-center font-mono text-sm font-bold text-background">{dates.opensMonth}</span>{" "}
-              <span className="py-1 font-heading text-2xl font-black leading-none">{dates.opensDay}</span>
+              <span className="py-1 font-heading text-2xl font-bold leading-none">{dates.opensDay}</span>
             </span>{" "}
-            <span className={cn("flex flex-1 items-center border-2 border-border px-3 font-heading text-sm font-bold", eta.fill, eta.onFill)}>
+            <span className={cn("flex flex-1 items-center border border-border px-3 font-heading text-sm font-bold", eta.fill, eta.onFill)}>
               Filing window opens
             </span>
           </div>
@@ -66,10 +66,10 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
 
         <Preview caption="Ask about any case">
           <div className="space-y-2">
-            <p className="ml-auto w-fit max-w-[85%] border-2 border-border bg-primary px-3 py-1.5 text-sm text-primary-foreground">
+            <p className="ml-auto w-fit max-w-[85%] border border-border bg-primary px-3 py-1.5 text-sm text-primary-foreground">
               When does my window close?
             </p>{" "}
-            <p className="flex w-fit max-w-[90%] items-start gap-2 border-2 border-border bg-card px-3 py-1.5 text-sm">
+            <p className="flex w-fit max-w-[90%] items-start gap-2 border border-border bg-card px-3 py-1.5 text-sm">
               <RobotIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> {dates.closesLong}, {dates.closesInDays} days from today.
             </p>
           </div>
@@ -85,7 +85,7 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
 
 function Preview({ caption, children }: { caption: string; children: React.ReactNode }) {
   return (
-    <li className="flex flex-col gap-3 border-2 border-border bg-muted/40 p-3 shadow-hard-sm">
+    <li className="flex flex-col gap-3 border border-border bg-muted/40 p-3">
       <div aria-hidden="true" className="flex flex-1 flex-col justify-center">{children}</div>
       <p className="font-heading text-sm font-bold">{caption}</p>
     </li>

@@ -137,7 +137,7 @@ export function DecisionPaceChart({
 
   return (
     <div className={className}>
-      <ul className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/70">
+      <ul className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
         {series.map((s) => (
           <li key={s.label} className="flex items-center gap-2">
             <span

@@ -12,9 +12,9 @@ import {
 import type { DecidedCase } from "@/lib/turso/decidedDays";
 
 const CONTROL =
-  "mt-1 w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "mt-1 w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL =
-  "block font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground";
+  "block text-sm font-bold text-muted-foreground";
 
 /** More options than this and a select stops being a way to choose. */
 const MAX_OPTIONS = 250;
@@ -53,7 +53,7 @@ export function DecidedFilters({
     .map((x) => x.f.label.toLowerCase());
 
   return (
-    <div className="mt-4 border-2 border-border bg-card p-4">
+    <div className="mt-4 border border-border bg-card p-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         {shown.map(({ f, opts }) => (
           <Fragment key={f.key}>
@@ -118,7 +118,7 @@ export function DecidedFilters({
         </div>
       </div>{" "}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm leading-relaxed text-foreground/80">
+        <p className="text-sm leading-relaxed text-soft">
           Filters run over the rows loaded for these dates. Wages are as filed,
           so an hourly and a yearly figure compare as numbers.
           {missing.length > 0
@@ -129,7 +129,7 @@ export function DecidedFilters({
           <button
             type="button"
             onClick={() => onChange({})}
-            className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+            className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
           >
             Clear these filters
           </button>

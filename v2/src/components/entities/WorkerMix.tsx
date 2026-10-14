@@ -27,8 +27,8 @@ const PANELS: { facet: WorkerFacet; title: string }[] = [
 function Panel({ title, rows }: { title: string; rows: WorkerFacetRow[] }) {
   const top = rows[0]?.n ?? 0;
   return (
-    <section className="border-2 border-border bg-card p-5 sm:p-6">
-      <h3 className="font-heading text-lg font-black">{title}</h3>{" "}
+    <section className="border border-border bg-card p-5 sm:p-6">
+      <h3 className="font-heading text-lg font-bold">{title}</h3>{" "}
       <ChartTips label={`${title}, FY2016 to FY2023 cases`} className="mt-4">
       <ul className="space-y-2.5">
         {rows.map((r, i) => (
@@ -37,7 +37,7 @@ function Panel({ title, rows }: { title: string; rows: WorkerFacetRow[] }) {
             <li data-tip={`${r.label}\n${formatInt(r.n)} ${r.n === 1 ? "case" : "cases"}, FY2016 to FY2023\n#${i + 1} of the top ${rows.length}`}>
               <span className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
-                <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{formatInt(r.n)}</span>
+                <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">{formatInt(r.n)}</span>
               </span>{" "}
               <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
                 <span
@@ -68,10 +68,10 @@ export function WorkerMix({
   if (panels.length === 0) return null;
   return (
     <section className={cn("mt-12", className)}>
-      <h2 className="font-heading text-2xl font-black">
+      <h2 className="font-heading text-2xl font-bold">
         {subject === "employer" ? "Who they sponsored, FY2016 to FY2023" : "Who filled these jobs, FY2016 to FY2023"}
       </h2>{" "}
-      <p className="mt-2 max-w-2xl text-base text-foreground/70">
+      <p className="mt-2 max-w-2xl text-base text-muted-foreground">
         From DOL&apos;s old form; the form in use since mid-2023 doesn&apos;t carry
         them. Top six of each.
       </p>

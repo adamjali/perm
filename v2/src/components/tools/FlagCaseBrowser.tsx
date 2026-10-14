@@ -110,11 +110,11 @@ const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const PAGE_SIZE = 50;
 
 const CONTROL =
-  "w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
-  "min-h-[44px] border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
 const CHIP =
-  "min-h-[44px] border-2 border-border px-4 font-mono text-sm font-bold uppercase tracking-wider transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary ";
+  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary ";
 
 
 function chip(status: string, isFinal: boolean): string {
@@ -190,7 +190,7 @@ function Rows({
           {ordered.map((r) => (
             <tr
               key={r.caseNumber}
-              className="border-t-2 border-border/30 align-top max-sm:grid max-sm:grid-cols-1 max-sm:gap-y-1 max-sm:py-3 max-sm:[&>td]:p-0 max-sm:[&>td]:whitespace-normal"
+              className="border-t border-border/30 align-top max-sm:grid max-sm:grid-cols-1 max-sm:gap-y-1 max-sm:py-3 max-sm:[&>td]:p-0 max-sm:[&>td]:whitespace-normal"
             >
               {/* `whitespace-nowrap!`: the row's phone rule lets every other cell wrap, and a case number broken at a hyphen reads as two. */}
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base max-sm:whitespace-nowrap! max-sm:text-sm">
@@ -211,12 +211,12 @@ function Rows({
                 {" "}</td>
               ) : null}
               <td className="whitespace-nowrap px-3 py-3">
-                <span className={"border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " + chip(r.status, r.isFinal)}>
+                <span className={"border border-border px-2 py-0.5 font-mono text-sm font-bold " + chip(r.status, r.isFinal)}>
                   {r.status}
                 </span>
               {" "}</td>
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
-              <td className="px-3 py-3 text-foreground/80 max-sm:text-sm">{r.jobTitle ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-soft max-sm:text-sm">{r.jobTitle ?? ""}{" "}</td>
               {withWage ? (
                 <td className="whitespace-nowrap px-3 py-3 font-mono text-sm max-sm:empty:hidden">
                   {formatWage(wages?.get(r.caseNumber)?.wage ?? null, wages?.get(r.caseNumber)?.wageUnit ?? null) ?? ""}{" "}
@@ -229,15 +229,15 @@ function Rows({
                 {" "}</td>
               ) : null}
               {withWage ? (
-                <td className="px-3 py-3 text-sm text-foreground/80 max-sm:hidden">
+                <td className="px-3 py-3 text-sm text-soft max-sm:hidden">
                   {wages?.get(r.caseNumber)?.attorneyName ?? ""}
                 {" "}</td>
               ) : null}
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm max-sm:mt-1 max-sm:font-sans max-sm:text-foreground/70">
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm max-sm:mt-1 max-sm:font-sans max-sm:text-muted-foreground">
                 <span className="sm:hidden">Filed</span>{" "}
                 <span>{r.filingDate ?? ""}</span>
               {" "}</td>
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80 max-sm:font-sans max-sm:text-foreground/70">
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-soft max-sm:font-sans max-sm:text-muted-foreground">
                 <span className="sm:hidden">Checked</span>{" "}
                 <span>{r.lastCheckedAt?.slice(0, 10) ?? ""}</span>
               {" "}</td>
@@ -287,7 +287,7 @@ function DisclosedRows({
         />
         <tbody translate="no" className="bg-card">
           {ordered.map((r) => (
-            <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
+            <tr key={r.caseNumber} className="border-t border-border/30 align-top">
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                 {/* PendingLink, not Link: /perm-case-status is dynamic, and a
                     number this site does not hold is asked of DOL live at
@@ -301,22 +301,22 @@ function DisclosedRows({
                 </PendingLink>
               {" "}</td>
               <td className="whitespace-nowrap px-3 py-3">
-                <span className={"border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " + chip(r.status, true)}>
+                <span className={"border border-border px-2 py-0.5 font-mono text-sm font-bold " + chip(r.status, true)}>
                   {r.status}
                 </span>
               {" "}</td>
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
-              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-soft">{r.jobTitle ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
                 {formatWage(r.wage, r.wageUnit) ?? ""}{" "}
                 <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
               </td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.worksiteState ?? ""}{" "}</td>
-              <td className="px-3 py-3 text-sm text-foreground/80">{r.socTitle ?? r.socCode ?? ""}{" "}</td>
-              <td className="px-3 py-3 text-sm text-foreground/80">{r.attorneyName ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-sm text-soft">{r.socTitle ?? r.socCode ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-sm text-soft">{r.attorneyName ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.visaClass ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.receivedDate ?? ""}{" "}</td>
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">{r.decisionDate ?? ""}{" "}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-soft">{r.decisionDate ?? ""}{" "}</td>
             </tr>
           ))}
         </tbody>
@@ -357,7 +357,7 @@ function FlagSearchFilters({
   const hasWage = items.some((i) => i.file?.wage != null);
   if (fields.length === 0 && !hasWage) return null;
   return (
-    <div className="mt-4 border-2 border-border bg-background p-4">
+    <div className="mt-4 border border-border bg-background p-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         {fields.map(({ f, opts }) => (
           <Fragment key={f.key}>
@@ -412,7 +412,7 @@ function FlagSearchFilters({
         ) : null}
       </div>{" "}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-2xl text-sm leading-relaxed text-foreground/80">
+        <p className="max-w-2xl text-sm leading-relaxed text-soft">
           These narrow the rows already loaded. State, occupation, firm, visa class and wage come from
           DOL&apos;s quarterly file, so a case still in process drops out under them. Wages are as filed:
           hourly and yearly figures compare as plain numbers.
@@ -553,9 +553,9 @@ export function FlagCaseBrowser({
 
   return (
     <div className="space-y-10">
-      <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 className="font-heading text-xl font-black">Find {program.article ?? "a"} {program.noun} by employer</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
+      <section className="border border-border bg-card p-5 sm:p-6">
+        <h2 className="font-heading text-xl font-bold">Find {program.article ?? "a"} {program.noun} by employer</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           The start of the employer&apos;s name is enough. Add a word from the job
           title or a filing month if the employer files a lot.
         </p>{" "}
@@ -659,7 +659,7 @@ export function FlagCaseBrowser({
           </p>
         ) : null}
         {typedCaseNumber ? (
-          <p className="mt-4 border-2 border-primary bg-tint-primary p-4 text-base leading-relaxed">
+          <p className="mt-4 border border-primary bg-tint-primary p-4 text-base leading-relaxed">
             That is a case number.{" "}
             <PendingLink
               href={`/perm-case-status?case=${encodeURIComponent(typedCaseNumber)}`}
@@ -672,10 +672,10 @@ export function FlagCaseBrowser({
           </p>
         ) : null}
         {searching && searchFailed ? (
-          <RequestFailed what="The search" failure={searchFailure} onRetry={retrySearch} className="mt-4 border-2 border-border bg-tint-primary p-4" />
+          <RequestFailed what="The search" failure={searchFailure} onRetry={retrySearch} className="mt-4 border border-border bg-tint-primary p-4" />
         ) : null}
         {searching && search && found === 0 ? (
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
             Nothing under that employer yet. Pending filings arrive from DOL&apos;s
             nightly check and reach back only as far as the backfill has walked;
             decided ones come from DOL&apos;s quarterly files
@@ -705,7 +705,7 @@ export function FlagCaseBrowser({
           <FlagSearchFilters items={filterItems} value={filters} onChange={setFilters} />
         ) : null}
         {searching && search && filtering && shownLive.length + shownFile.length === 0 && found > 0 ? (
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
             None of the {formatInt(found)} loaded {found === 1 ? program.noun : program.nouns} match those filters.
             A filing still in process has no state, occupation, firm, visa class or wage until DOL&apos;s
             quarterly file publishes it.
@@ -713,7 +713,7 @@ export function FlagCaseBrowser({
         ) : null}
         {searching && search && shownLive.length > 0 ? (
           <>
-            <p className="mt-4 text-sm text-foreground/70">
+            <p className="mt-4 text-sm text-muted-foreground">
               {filtering ? `${formatInt(shownLive.length)} of ` : ""}
               {formatInt(search.cases.length)} {search.cases.length === 1 ? program.noun : program.nouns} from DOL&apos;s
               daily check, newest filing first
@@ -733,10 +733,10 @@ export function FlagCaseBrowser({
         ) : null}
         {searching && halves && shownFile.length > 0 ? (
           <>
-            <h3 className="mt-8 font-heading text-lg font-black">
+            <h3 className="mt-8 font-heading text-lg font-bold">
               {shownLive.length > 0 ? "Earlier, from DOL\u2019s quarterly file" : "From DOL\u2019s quarterly file"}
             </h3>{" "}
-            <p className="mt-1 text-sm text-foreground/70">
+            <p className="mt-1 text-sm text-muted-foreground">
               {filtering ? `${formatInt(shownFile.length)} of ` : ""}
               {formatInt(halves.fileOnly.length)} decided {halves.fileOnly.length === 1 ? program.noun : program.nouns} with the{" "}
               {program.wageLabel.toLowerCase()}
@@ -752,7 +752,7 @@ export function FlagCaseBrowser({
         ) : null}
       </section>
 
-      <p className="text-base leading-relaxed text-foreground/80">
+      <p className="text-base leading-relaxed text-soft">
         Looking for everything one employer has filed?{" "}
         <Link
           href={`/case-search${query.employer ? `?q=${encodeURIComponent(query.employer)}` : ""}`}
@@ -764,10 +764,10 @@ export function FlagCaseBrowser({
       </p>
 
       {between}{" "}
-      <section id="browse" ref={browseTop} className="scroll-mt-28 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 className="font-heading text-xl font-black">Browse every {program.noun} DOL has confirmed</h2>{" "}
+      <section id="browse" ref={browseTop} className="scroll-mt-28 border border-border bg-card p-5 sm:p-6">
+        <h2 className="font-heading text-xl font-bold">Browse every {program.noun} DOL has confirmed</h2>{" "}
         {summary ? (
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
             {formatInt(summary.total)} {program.nouns} so far: {formatInt(summary.pending)} still in process,{" "}
             {formatInt(summary.decided)} {program.decidedLabel.toLowerCase()}.
           </p>
@@ -799,7 +799,7 @@ export function FlagCaseBrowser({
                 setOrder(e.target.value === "oldest" ? "oldest" : "newest");
                 setCursors([]);
               }}
-              className="min-h-[44px] min-w-0 max-w-full flex-1 border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] min-w-0 max-w-full flex-1 border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="newest">{"Newest filing first "}</option>
               <option value="oldest">{"Oldest filing first "}</option>
@@ -813,7 +813,7 @@ export function FlagCaseBrowser({
                 setMonth(e.target.value);
                 setCursors([]);
               }}
-              className="min-h-[44px] min-w-0 max-w-full flex-1 border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] min-w-0 max-w-full flex-1 border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="">Any month</option>
               {months.map((m) => (
@@ -825,13 +825,13 @@ export function FlagCaseBrowser({
           </label>
         </div>{" "}
         {listFailed ? (
-          <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 border-2 border-border bg-tint-primary p-4" />
+          <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 border border-border bg-tint-primary p-4" />
         ) : null}
         {!withheld && !listFailed && shownPage === undefined ? (
-          <p className="mt-4 text-base text-foreground/70">Loading…</p>
+          <p className="mt-4 text-base text-muted-foreground">Loading…</p>
         ) : null}
         {!withheld && page && page.rows.length === 0 ? (
-          <p className="mt-4 text-base text-foreground/70">Nothing matches that filter.</p>
+          <p className="mt-4 text-base text-muted-foreground">Nothing matches that filter.</p>
         ) : null}
         {!withheld && !listFailed && shownPage && shownPage.rows.length > 0 && (page === undefined || page.rows.length > 0) ? (
           <div className={listBusy ? "opacity-60 transition-opacity" : "transition-opacity"} aria-busy={listBusy}>
@@ -854,7 +854,7 @@ export function FlagCaseBrowser({
             onPrevious={() => setCursors((c) => c.slice(0, -1))}
             onNext={() => page && setCursors((c) => [...c, page.continueCursor])}
           >
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-muted-foreground">
               &ldquo;Checked&rdquo; is the last day this site asked DOL about it.
             </p>
           </Pager>

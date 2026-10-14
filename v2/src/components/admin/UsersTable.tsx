@@ -244,7 +244,7 @@ function StatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <span className={`border-2 text-sm font-bold px-2 py-0.5 whitespace-nowrap ${styles[status] || "bg-muted text-foreground border-border"}`}>
+    <span className={`border text-sm font-bold px-2 py-0.5 whitespace-nowrap ${styles[status] || "bg-muted text-foreground border-border"}`}>
       {labels[status] || status}
     </span>
   );
@@ -305,7 +305,7 @@ export function UsersTable({
   return (
     <>
       <Card>
-        <CardHeader className="border-b-2 border-border">
+        <CardHeader className="border-b border-border">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle className="font-heading text-xl font-bold">
               Users ({totalCount})
@@ -318,7 +318,7 @@ export function UsersTable({
                   onChange={(e) => onSearchChange(e.target.value)}
                   className="pl-10"
                 />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/60 pointer-events-none" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
               </div>
               <ExportButton users={users} />
             </div>
@@ -327,7 +327,7 @@ export function UsersTable({
         <CardContent className="p-0">
           <div className="overflow-x-auto overscroll-x-none">
             <table className="w-full border-collapse">
-              <thead className="border-b-2 border-border bg-muted/50 sticky top-0 z-10">
+              <thead className="border-b border-border bg-muted/50 sticky top-0 z-10">
                 <tr>
                   {COLUMNS.map((col) => (
                     <th
@@ -345,7 +345,7 @@ export function UsersTable({
                       </button>
                     </th>
                   ))}
-                  <th className="p-3 text-right text-sm font-bold sticky right-0 z-20 bg-muted min-w-[90px] border-l-2 border-border">
+                  <th className="p-3 text-right text-sm font-bold sticky right-0 z-20 bg-muted min-w-[90px] border-l border-border">
                     Actions
                   </th>
                 </tr>
@@ -370,7 +370,7 @@ export function UsersTable({
                         )}
                       {" "}</td>
                     ))}
-                    <td className="p-3 sticky right-0 z-20 bg-card border-l-2 border-border">
+                    <td className="p-3 sticky right-0 z-20 bg-card border-l border-border">
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           size="icon-sm"
@@ -412,7 +412,7 @@ export function UsersTable({
 
           {/* Pagination */}
           {showPagination && (
-            <div className="flex items-center justify-between border-t-2 border-border px-4 py-3">
+            <div className="flex items-center justify-between border-t border-border px-4 py-3">
               <span className="text-sm text-muted-foreground">
                 Showing {page * PAGE_SIZE + 1} to {Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
               </span>

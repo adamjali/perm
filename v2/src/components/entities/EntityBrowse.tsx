@@ -63,7 +63,7 @@ export function BrowseStrip({
           const n = counts[b] ?? 0;
           const isActive = b === active;
           const chip =
-            "inline-flex min-h-[44px] min-w-[44px] items-center justify-center border-2 px-2 font-heading text-sm font-black uppercase no-underline";
+            "inline-flex min-h-[44px] min-w-[44px] items-center justify-center border px-2 font-heading text-sm font-bold no-underline";
           return (
             // Keyed Fragment with a real space: React renders array items with
             // NOTHING between them, so 27 chips reach every extractor as
@@ -138,16 +138,16 @@ export function BrowseIndexGrid({
       {BROWSE_BUCKETS.map((b) => {
         const n = counts[b] ?? 0;
         const card =
-          "flex min-h-[44px] flex-col justify-center border-2 p-4 no-underline";
+          "flex min-h-[44px] flex-col justify-center border p-4 no-underline";
         return (
           <Fragment key={b}>{" "}
             <li className="min-w-0">
               {n === 0 ? (
                 <div className={cn(card, "border-border/40 bg-card")}>
-                  <span className="font-heading text-2xl font-black uppercase text-muted-foreground">
+                  <span className="font-heading text-2xl font-bold text-muted-foreground">
                     {bucketLabel(b)}
                   </span>{" "}
-                  <span className="mt-1 font-mono text-sm font-bold text-foreground/60">
+                  <span className="mt-1 font-mono text-sm font-bold text-muted-foreground">
                     none
                   </span>
                 </div>
@@ -156,13 +156,13 @@ export function BrowseIndexGrid({
                   href={browseHref(base, b)}
                   className={cn(
                     card,
-                    "border-border bg-card shadow-hard-sm transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                    "border-border bg-card transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                   )}
                 >
-                  <span className="font-heading text-2xl font-black uppercase">
+                  <span className="font-heading text-2xl font-bold">
                     {bucketLabel(b)}
                   </span>{" "}
-                  <span className="mt-1 font-mono text-sm font-bold tabular-nums text-foreground/70">
+                  <span className="mt-1 font-mono text-sm font-bold tabular-nums text-muted-foreground">
                     {formatInt(n)} {plural}
                   </span>{" "}
                   <span aria-hidden="true" className="mt-2 block h-1.5 bg-foreground/10">
@@ -207,7 +207,7 @@ export function BrowseList({
         "list-none columns-1 gap-x-8 p-0 sm:columns-2 lg:columns-3 xl:columns-4",
         "[&>li]:flex [&>li]:break-inside-avoid [&>li]:items-center [&>li]:justify-between [&>li]:gap-3 [&>li]:border-b [&>li]:border-border/40",
         "[&_a]:inline-flex [&_a]:min-h-[44px] [&_a]:min-w-0 [&_a]:items-center [&_a]:text-base [&_a]:font-bold [&_a]:leading-snug [&_a]:underline [&_a]:decoration-primary [&_a]:decoration-2 [&_a]:underline-offset-2 [&_a]:hover:text-primary-text",
-        "[&_span]:shrink-0 [&_span]:font-mono [&_span]:text-sm [&_span]:font-bold [&_span]:tabular-nums [&_span]:text-foreground/70",
+        "[&_span]:shrink-0 [&_span]:font-mono [&_span]:text-sm [&_span]:font-bold [&_span]:tabular-nums [&_span]:text-muted-foreground",
         className,
       )}
     >

@@ -118,7 +118,7 @@ export default function AutoClosureAlertBanner() {
 
   return (
     <div
-      className="mb-6 bg-data-warn/15 border-2 border-data-warn p-4 relative"
+      className="mb-6 bg-data-warn/15 border border-data-warn p-4 relative"
       style={{ boxShadow: "var(--shadow-hard)" }}
       role="alert"
       aria-live="polite"
@@ -169,7 +169,7 @@ export default function AutoClosureAlertBanner() {
         {visibleAlerts.map((alert) => (
           <li
             key={alert.notificationId}
-            className="flex items-center justify-between bg-background border-2 border-data-warn p-3"
+            className="flex items-center justify-between bg-background border border-data-warn p-3"
           >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">

@@ -51,13 +51,13 @@ function SeasonalCaseList({
 }) {
   if (cases.length === 0) return null;
   return (
-    <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-      <h2 className="font-heading text-xl font-black sm:text-2xl">
+    <section className="mt-10 border border-border bg-card p-6 sm:p-8">
+      <h2 className="font-heading text-xl font-bold sm:text-2xl">
         {more
           ? `Its newest ${formatInt(cases.length)} H-2A, H-2B and CW-1 filings`
           : `Its ${formatInt(cases.length)} H-2A, H-2B and CW-1 ${cases.length === 1 ? "filing" : "filings"}`}
       </h2>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+      <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
         DOL&apos;s live status on each, and, once a case is decided, the wage, workers and worksite from its
         quarterly file. Each number opens the case.
       </p>
@@ -89,25 +89,25 @@ function SeasonalCaseList({
                   >
                     {c.caseNumber}
                   </Link>{" "}
-                  {c.form ? <span className="text-sm text-foreground/70">{c.form}</span> : null}{" "}
+                  {c.form ? <span className="text-sm text-muted-foreground">{c.form}</span> : null}{" "}
                   <span className="ml-auto text-sm font-bold">{statusText(c)}</span>
                 </div>{" "}
-                {c.jobTitle ? <p className="mt-0.5 text-foreground/80">{c.jobTitle}</p> : null}{" "}
-                {detail.length ? <p className="mt-0.5 text-sm text-foreground/70">{detail.join(" · ")}</p> : null}
+                {c.jobTitle ? <p className="mt-0.5 text-soft">{c.jobTitle}</p> : null}{" "}
+                {detail.length ? <p className="mt-0.5 text-sm text-muted-foreground">{detail.join(" · ")}</p> : null}
               </li>
             </Fragment>
           );
         })}
       </ul>{" "}
       {more ? (
-        <p className="mt-4 text-base text-foreground/80">
+        <p className="mt-4 text-base text-soft">
           <Link href={`/seasonal-cases?q=${encodeURIComponent(record.name)}`} className={LINK}>
             Every seasonal filing under this name
           </Link>{" "}
           is in the seasonal search.
         </p>
       ) : null}{" "}
-      <p className="mt-5 border-t-2 border-border pt-3 font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+      <p className="mt-5 border-t border-border pt-3 text-sm font-bold text-muted-foreground">
         {asOf ? `DOL live case record, as of ${longDate(asOf) ?? asOf}` : "DOL live case record"}
       </p>
     </section>
@@ -163,10 +163,10 @@ export function OtherEmployer({
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-3xl">
-        <h1 translate="no" className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 translate="no" className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           {record.name}
         </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           {mix} in DOL&apos;s records{first ? `, the first filed ${first}` : ""}.{" "}
           {record.perm > 0
             ? `It also filed ${formatInt(record.perm)} PERM ${record.perm === 1 ? "case" : "cases"} in DOL's FY2016 to FY2023 files, and none since.`
@@ -178,14 +178,14 @@ export function OtherEmployer({
       {nextStep ? <div className="mt-8">{nextStep}</div> : null}{" "}
 
       <section className="pop mt-8">
-        <div className="grid grid-cols-1 gap-px border-2 border-border bg-border sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+        <div className="grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           {stats.map((d) => (
             <Fragment key={d.k}>
               {" "}
               <div className="bg-card p-5">
-                <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">{d.k}</p>{" "}
-                <p className="mt-1.5 font-heading text-2xl font-black tabular-nums">{d.v}</p>{" "}
-                {d.sub ? <p className="mt-1 text-sm text-foreground/70">{d.sub}</p> : null}
+                <p className="text-sm font-bold text-muted-foreground">{d.k}</p>{" "}
+                <p className="mt-1.5 font-heading text-2xl font-bold tabular-nums">{d.v}</p>{" "}
+                {d.sub ? <p className="mt-1 text-sm text-muted-foreground">{d.sub}</p> : null}
               </div>
             </Fragment>
           ))}
@@ -202,9 +202,9 @@ export function OtherEmployer({
       {/* The case-number box sits under the header now; this card points at
           the full list for anyone reading to the end. */}
       <section className="mt-10 max-w-2xl">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Every filing under this name</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Every filing under this name</h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             <Link href={`/case-search?q=${encodeURIComponent(record.name)}`} className={LINK}>
               The case search
             </Link>{" "}

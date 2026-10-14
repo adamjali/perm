@@ -39,10 +39,10 @@ export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemP
       loadingIndicator="overlay"
       className={cn(
         "group flex items-center justify-between gap-3 px-4 py-3",
-        "border-2 border-border",
-        "bg-card hover:-translate-y-0.5 hover:shadow-hard-sm",
-        "transition-all duration-150",
-        "active:translate-y-0 active:shadow-none"
+        "border border-border",
+        "bg-card",
+        "transition-colors duration-150",
+        ""
       )}
       data-testid="deadline-item"
     >
@@ -51,7 +51,7 @@ export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemP
         <p className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary-text transition-colors" title={employerName}>
           {employerName}
         </p>{" "}
-        <p className="text-sm text-muted-foreground uppercase tracking-wide truncate" title={label}>
+        <p className="text-sm text-muted-foreground truncate" title={label}>
           {label}
         </p>
       </div>

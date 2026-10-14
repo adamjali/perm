@@ -45,20 +45,20 @@ export function SecuritySection() {
       <div className="mx-auto max-w-[900px] px-4 py-16 sm:px-8 sm:py-20">
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-10 text-center sm:mb-12">
-          <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
+          <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
             Your client data, protected
           </h2>
         </ScrollReveal>
 
         {/* Neobrutalist table */}
         <ScrollReveal direction="up" delay={0.1}>
-          <div className="border-3 border-border shadow-hard overflow-hidden">
+          <div className="border border-border overflow-hidden">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_1.5fr] border-b-3 border-border bg-foreground text-background">
+            <div className="grid grid-cols-[1fr_1.5fr] border-b border-border bg-foreground text-background">
               <div className="px-5 py-3 font-heading text-sm font-bold">
                 What protects it
               </div>{" "}
-              <div className="px-5 py-3 font-heading text-sm font-bold border-l-2 border-background/20">
+              <div className="px-5 py-3 font-heading text-sm font-bold border-l border-background/20">
                 How
               </div>
             </div>
@@ -68,7 +68,7 @@ export function SecuritySection() {
               <div
                 key={row.label}
                 className={`grid grid-cols-[1fr_1.5fr] border-border ${
-                  index < securityRows.length - 1 ? "border-b-2" : ""
+                  index < securityRows.length - 1 ? "border-b" : ""
                 } ${index % 2 === 0 ? "bg-background" : "bg-muted"}`}
               >
                 <div className="px-5 py-4 font-heading text-sm font-semibold text-foreground flex items-center gap-2">
@@ -78,7 +78,7 @@ export function SecuritySection() {
                   />
                   {row.label}
                 </div>{" "}
-                <div className="px-5 py-4 text-sm text-muted-foreground leading-relaxed border-l-2 border-border/30 flex items-center">
+                <div className="px-5 py-4 text-sm text-muted-foreground leading-relaxed border-l border-border/30 flex items-center">
                   {row.detail}
                 </div>
               </div>

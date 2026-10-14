@@ -30,9 +30,9 @@ export default function ContentSearch({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full min-w-0 border-2 border-border bg-card py-2.5 pl-10 pr-12 font-mono text-sm transition-all duration-200 focus:border-primary focus:shadow-hard-sm focus:outline-none focus:ring-0"
+        className="w-full min-w-0 border border-input bg-card py-2.5 pl-10 pr-12 font-mono text-sm transition-colors duration-200 focus:border-primary focus:outline-none focus:ring-0"
       />
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {value && (
           <motion.button
             type="button"

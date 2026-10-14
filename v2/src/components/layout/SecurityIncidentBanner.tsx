@@ -87,7 +87,7 @@ export function SecurityIncidentBanner() {
       ref={ref}
       role="region"
       aria-label="Security notice"
-      className="fixed inset-x-0 top-0 z-[60] border-b-2 border-data-warn bg-data-warn/15"
+      className="fixed inset-x-0 top-0 z-[60] border-b border-data-warn bg-data-warn/15"
     >
       <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-2 sm:px-8">
         <AlertTriangle
@@ -95,7 +95,7 @@ export function SecurityIncidentBanner() {
           aria-hidden="true"
         />
         <p className="flex-1 text-sm text-data-warn-ink">
-          <span className="font-bold mono uppercase tracking-wider text-sm mr-2">
+          <span className="font-bold mono text-sm mr-2">
             Security notice
           </span>
           Unsolicited emails sent on Apr 19-20 didn’t originate from PERM Tracker.{" "}

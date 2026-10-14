@@ -78,7 +78,7 @@ function UserMenu({ userName }: UserMenuProps) {
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger
-        className="group flex min-h-[44px] cursor-pointer items-center gap-2 rounded-none border-2 border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/10 focus:outline-none focus-visible:border-white/50"
+        className="group flex min-h-[44px] cursor-pointer items-center gap-2 rounded-none border border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-colors hover:border-white/50 hover:bg-white/10 focus:outline-none focus-visible:border-white/50"
       >
         <span className="max-w-[100px] truncate">{userName}</span>
         <CaretDownIcon className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />
@@ -86,14 +86,14 @@ function UserMenu({ userName }: UserMenuProps) {
 
       <DropdownMenuContent
         align="end"
-        className="min-w-[180px] rounded-none border-3 border-border bg-popover p-0 text-popover-foreground shadow-hard"
+        className="min-w-[180px] rounded-none border border-border bg-popover p-0 text-popover-foreground"
       >
         <DropdownMenuItem
           onSelect={handleSettingsClick}
           disabled={isNavigatingToSettings || isOnSettingsPage}
           className={cn(
             "flex cursor-pointer items-center gap-3 rounded-none px-4 py-3 text-sm font-semibold",
-            "border-b-2 border-border",
+            "border-b border-border",
             isOnSettingsPage
               ? "cursor-default bg-muted text-muted-foreground"
               : "hover:bg-muted"
@@ -173,12 +173,12 @@ export default function Header(): React.ReactElement {
     : AUTHENTICATED_NAV_LINKS;
 
   return (
-    <header className="sticky top-0 z-50 border-b-3 border-white/20 bg-black">
+    <header className="sticky top-0 z-50 border-b border-white/20 bg-black">
       <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-3 sm:px-8">
         {/* Logo */}
         <Link
           href="/dashboard"
-          className="group flex min-h-[44px] shrink-0 items-center gap-2 px-2 py-1 font-heading text-xl font-bold transition-colors hover:bg-primary sm:text-2xl"
+          className="group flex min-h-[44px] shrink-0 items-center gap-2 px-2 py-1 font-heading text-xl font-bold transition-colors hover:bg-accent sm:text-2xl"
         >
           <FileTextIcon
             className="size-6 text-(--primary) transition-colors group-hover:text-black"
@@ -216,7 +216,7 @@ export default function Header(): React.ReactElement {
                     spinnerClassName="text-(--primary)"
                     data-tour={tourId}
                     className={cn(
-                      "hover-underline px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors lg:px-4",
+                      "hover-underline px-3 py-2 font-heading text-sm font-semibold transition-colors lg:px-4",
                       isActive
                         ? "text-(--primary)"
                         : "text-white hover:text-(--primary)"
@@ -252,7 +252,7 @@ export default function Header(): React.ReactElement {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="flex lg:hidden h-11 w-11 items-center justify-center border-2 border-white/20 text-white transition-colors hover:bg-white/10"
+            className="flex lg:hidden h-11 w-11 items-center justify-center border border-white/20 text-white transition-colors hover:bg-white/10"
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -263,7 +263,7 @@ export default function Header(): React.ReactElement {
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
-        <div className="absolute inset-x-0 top-full z-50 border-b-3 border-white/20 bg-black px-4 py-4 lg:hidden">
+        <div className="absolute inset-x-0 top-full z-50 border-b border-white/20 bg-black px-4 py-4 lg:hidden">
           <nav className="flex flex-col gap-1">
             {/* Navigation Links */}
             {navLinks.map((link) => {
@@ -274,7 +274,7 @@ export default function Header(): React.ReactElement {
                   href={link.href}
                   spinnerClassName="text-(--primary)"
                   className={cn(
-                    "block py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide transition-colors",
+                    "block py-3 px-2 font-heading text-base font-semibold transition-colors",
                     isActive ? "text-(--primary)" : "text-white hover:text-(--primary)"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -292,7 +292,7 @@ export default function Header(): React.ReactElement {
                 </span>
                 <NavLink
                   href="/settings"
-                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary-text"
+                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold text-white transition-colors hover:text-primary-text"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Settings className="size-4" />
@@ -301,7 +301,7 @@ export default function Header(): React.ReactElement {
                 <button
                   onClick={handleMobileSignOut}
                   disabled={isSigningOut}
-                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary-text text-left disabled:opacity-50"
+                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold text-white transition-colors hover:text-primary-text text-left disabled:opacity-50"
                 >
                   {isSigningOut ? (
                     <CircleNotchIcon className="size-4 animate-spin" />

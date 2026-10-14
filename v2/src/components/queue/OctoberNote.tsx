@@ -76,12 +76,12 @@ export function OctoberNote() {
   return (
     <section
       id={OCTOBER_2025.anchorId}
-      className="scroll-mt-32 border-2 border-data-warn bg-data-warn/8 p-6 sm:p-8"
+      className="scroll-mt-32 border border-data-warn bg-data-warn/8 p-6 sm:p-8"
       aria-labelledby="october-2025-heading"
     >
       <h2
         id="october-2025-heading"
-        className="flex items-start gap-2 font-heading text-xl font-black sm:text-2xl"
+        className="flex items-start gap-2 font-heading text-xl font-bold sm:text-2xl"
       >
         <WarningIcon
           className="mt-1 h-5 w-5 shrink-0 text-data-warn-ink"
@@ -91,13 +91,13 @@ export function OctoberNote() {
         <span>October 2025: DOL shut the filing system</span>
       </h2>{" "}
 
-      <p className="mt-4 text-base leading-relaxed text-foreground/80">
+      <p className="mt-4 text-base leading-relaxed text-soft">
         1,616 applications carry an October 2025 filing date in the per-case
         scan, against 13,629 in September and 15,034 in November.
         That&rsquo;s a real event at DOL rather than a hole in the scan.
       </p>{" "}
 
-      <p className="mt-3 text-base leading-relaxed text-foreground/80">
+      <p className="mt-3 text-base leading-relaxed text-soft">
         In an announcement dated 5 November 2025, DOL wrote that{" "}
         <b className="font-bold">
           &ldquo;due to the government shutdown, beginning October 1, OFLC
@@ -108,7 +108,7 @@ export function OctoberNote() {
       </p>{" "}
 
       <MoreText gist={"October holds mailed applications DOL backdated to their postmark."} className="mt-3">
-        <p className="text-base leading-relaxed text-foreground/80">
+        <p className="text-base leading-relaxed text-soft">
           October isn&rsquo;t empty because paper kept moving. DOL says employers
           who couldn&rsquo;t file electronically posted their applications, that
           OFLC entered those by hand once FLAG was back, and that each one
@@ -158,7 +158,7 @@ export function OctoberNote() {
         </p>
       </FinePrint>{" "}
 
-      <p className="mt-4 flex flex-col gap-2 text-base leading-relaxed text-foreground/80 sm:flex-row sm:gap-6">
+      <p className="mt-4 flex flex-col gap-2 text-base leading-relaxed text-soft sm:flex-row sm:gap-6">
         <a
           href={ARCHIVED_NOTICE_URL}
           className="font-bold underline underline-offset-2 hover:text-primary"

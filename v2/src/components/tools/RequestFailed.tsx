@@ -16,7 +16,7 @@ export function RequestFailed({
   failure,
   onRetry,
   after,
-  className = "border-2 border-border bg-tint-primary p-4",
+  className = "border border-border bg-tint-primary p-4",
 }: {
   what: string;
   failure: FetchFailure | null;
@@ -36,7 +36,7 @@ export function RequestFailed({
         <button
           type="button"
           onClick={onRetry}
-          className="min-h-11 shrink-0 border-2 border-border bg-card px-4 font-heading text-sm font-bold shadow-hard-sm transition-transform hover:-translate-y-px active:translate-y-px"
+          className="min-h-11 shrink-0 border border-border bg-card px-4 font-heading text-sm font-bold transition-transform"
         >
           Try again
         </button>

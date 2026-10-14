@@ -175,9 +175,9 @@ export default function DeadlineItem({ deadline }: DeadlineItemProps) {
     return createPortal(
       <div
         className={cn(
-          "fixed w-56 bg-card border-2 border-border",
-          "shadow-hard p-3 space-y-2 pointer-events-none",
-          "animate-in fade-in-0 zoom-in-95 duration-150"
+          "fixed w-56 bg-card border border-border",
+          "p-3 space-y-2 pointer-events-none",
+          "duration-150"
         )}
         style={{
           top: hoverPosition.top,
@@ -186,7 +186,7 @@ export default function DeadlineItem({ deadline }: DeadlineItemProps) {
         }}
       >
         <div>
-          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="text-sm font-semibold text-muted-foreground">
             Case #
           </div>
           <div className="mono text-sm font-medium text-foreground truncate" title={deadline.caseNumber || "N/A"}>
@@ -194,7 +194,7 @@ export default function DeadlineItem({ deadline }: DeadlineItemProps) {
           </div>
         </div>
         <div>
-          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="text-sm font-semibold text-muted-foreground">
             Position
           </div>
           <div className="text-sm font-medium text-foreground truncate" title={deadline.positionTitle || deadline.beneficiaryName || "N/A"}>
@@ -202,7 +202,7 @@ export default function DeadlineItem({ deadline }: DeadlineItemProps) {
           </div>
         </div>
         <div>
-          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="text-sm font-semibold text-muted-foreground">
             Due
           </div>
           <div className="text-sm font-medium text-foreground">
@@ -228,9 +228,9 @@ export default function DeadlineItem({ deadline }: DeadlineItemProps) {
           onClick={handleClick}
           className={cn(
             "group relative flex items-center justify-between",
-            "px-4 py-3 bg-card border-2 border-border",
-            "cursor-pointer transition-all duration-150 ease-out",
-            "hover:-translate-y-0.5 hover:shadow-hard",
+            "px-4 py-3 bg-card border border-border",
+            "cursor-pointer transition-colors duration-150 ease-out",
+            "",
             isOverdue && "border-destructive",
             isLoading && "pointer-events-none"
           )}
@@ -264,7 +264,7 @@ export default function DeadlineItem({ deadline }: DeadlineItemProps) {
             <div className="font-bold text-base truncate text-foreground" title={deadline.employerName}>
               {deadline.employerName}
             </div>
-            <div className="line-clamp-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide" title={deadline.label}>
+            <div className="line-clamp-2 text-sm font-semibold text-muted-foreground" title={deadline.label}>
               {deadline.label}
             </div>
           </div>
@@ -273,7 +273,7 @@ export default function DeadlineItem({ deadline }: DeadlineItemProps) {
           <div className="text-right flex-shrink-0 ml-3">
             <div
               className={cn(
-                "font-mono font-extrabold text-base",
+                "font-mono font-bold text-base",
                 isOverdue ? "text-destructive" : "text-foreground"
               )}
             >

@@ -16,12 +16,12 @@ export function CityH1b({ city, className = "mt-10" }: { city: LcaCity | null; c
   if (!city) return null;
   const span = city.fyFrom && city.fyTo ? `FY${city.fyFrom} to FY${city.fyTo}` : null;
   return (
-    <section className={`${className} border-2 border-border bg-card p-6 shadow-hard sm:p-8`} aria-labelledby="city-h1b">
-      <h2 id="city-h1b" className="font-heading text-xl font-black sm:text-2xl">
+    <section className={`${className} border border-border bg-card p-6 sm:p-8`} aria-labelledby="city-h1b">
+      <h2 id="city-h1b" className="font-heading text-xl font-bold sm:text-2xl">
         H-1B in {city.label}
       </h2>{" "}
-      <p className="mt-2 text-base leading-relaxed text-foreground/70">
-        <span className="font-heading text-2xl font-black tabular-nums text-foreground">{formatInt(city.total)}</span>{" "}
+      <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+        <span className="font-heading text-2xl font-bold tabular-nums text-foreground">{formatInt(city.total)}</span>{" "}
         labor condition applications name a worksite here{span ? `, ${span}` : ""}, and DOL certified{" "}
         {formatInt(city.certified)}
         {city.total > 0 ? ` (${formatShare(city.certified / city.total)})` : ""}. An LCA is the employer&apos;s wage
@@ -34,7 +34,7 @@ export function CityH1b({ city, className = "mt-10" }: { city: LcaCity | null; c
         ].map((col) =>
           col.items.length ? (
             <div key={col.label}>
-              <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">
+              <h3 className="text-sm font-bold text-muted-foreground">
                 {`${col.label}, certified LCAs${city.since ? ` since FY${city.since}` : ""}`}
               </h3>
               <ol className="mt-2 divide-y divide-border/60">
@@ -50,7 +50,7 @@ export function CityH1b({ city, className = "mt-10" }: { city: LcaCity | null; c
                       ) : (
                         <span className="min-w-0 truncate py-2.5">{it.text}</span>
                       )}{" "}
-                      <span className="ml-auto font-mono text-sm tabular-nums text-foreground/70">{formatInt(it.n)}</span>
+                      <span className="ml-auto font-mono text-sm tabular-nums text-muted-foreground">{formatInt(it.n)}</span>
                     </li>
                   </Fragment>
                 ))}

@@ -196,7 +196,7 @@ export function CalendarMobileList({
   if (groupedEvents.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className="mb-4 p-4 bg-muted inline-block border-2 border-border shadow-hard">
+        <div className="mb-4 p-4 bg-muted inline-block border border-border">
           <CalendarIcon className="size-10 text-muted-foreground" />
         </div>
         <h3 className="font-heading text-lg font-semibold mb-2">
@@ -216,7 +216,7 @@ export function CalendarMobileList({
         <div key={group.weekLabel} className="space-y-2">
           {/* Week Header */}
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-2">
-            <h3 className="font-heading text-sm font-bold text-muted-foreground uppercase tracking-wide px-1">
+            <h3 className="font-heading text-sm font-bold text-muted-foreground px-1">
               {group.weekLabel}
             </h3>
           </div>
@@ -237,18 +237,16 @@ export function CalendarMobileList({
                   key={event.id}
                   custom={eventIndex}
                   variants={listItemVariants}
-                  initial="hidden"
+                  initial={false}
                   animate="visible"
-                  whileHover={{ x: -4, y: -4 }}
-                  whileTap={{ x: 2, y: 2 }}
                   transition={springTransition}
                   type="button"
                   onClick={() => handleEventTap(event.caseId as string)}
                   className={cn(
                     "w-full min-h-[68px] p-3 flex items-center gap-3",
-                    "bg-card border-2 border-border shadow-hard",
-                    "hover:shadow-hard-lg",
-                    "active:shadow-none",
+                    "bg-card border border-border",
+                    "",
+                    "",
                     "text-left",
                     "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   )}

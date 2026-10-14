@@ -97,10 +97,10 @@ export function UnpublishedEmployer({
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-3xl">
-        <h1 translate="no" className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 translate="no" className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           {name}
         </h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           We hold {formatInt(total)} PERM {total === 1 ? "case" : "cases"} for this
           sponsor{first ? `, filed from ${first}` : ""}
           {last && last !== first ? ` to ${last}` : ""}. Name as DOL prints it
@@ -112,11 +112,11 @@ export function UnpublishedEmployer({
           A caveat under a number reads as a footnote to a fact; over it, the
           number arrives already qualified. Here the caveat is the larger part
           of the page's honesty budget, so it is the first thing after the H1. */}
-      <section className="mt-8 border-2 border-data-warn bg-data-warn/8 p-5 sm:p-6">
-        <h2 className="font-heading text-lg font-black sm:text-xl">
+      <section className="mt-8 border border-data-warn bg-data-warn/8 p-5 sm:p-6">
+        <h2 className="font-heading text-lg font-bold sm:text-xl">
           DOL hasn&apos;t published any of this sponsor&apos;s cases yet
         </h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
           A case reaches DOL&apos;s quarterly files only once it&apos;s decided, so this sponsor has no
           approval rate, decision time, wage or rank yet. Below are its cases, with DOL&apos;s status on each.
         </p>
@@ -127,7 +127,7 @@ export function UnpublishedEmployer({
       {/* Only the counts we can stand behind, and each one labelled with the
           corpus it came from rather than presented as a lifetime figure. */}
       <section className="pop mt-8">
-        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-3">
+        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border border-border bg-border max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-3">
           {[
             {
               k: "Cases we hold",
@@ -146,24 +146,24 @@ export function UnpublishedEmployer({
             },
           ].map((d) => (
             <div key={d.k} className="bg-card p-5">
-              <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+              <p className="text-sm font-bold text-muted-foreground">
                 {d.k}
               </p>{" "}
-              <p className="mt-1.5 font-heading text-2xl font-black tabular-nums">
+              <p className="mt-1.5 font-heading text-2xl font-bold tabular-nums">
                 {d.v}
               </p>{" "}
-              {d.sub ? <p className="mt-1 text-sm text-foreground/70">{d.sub}</p> : null}
+              {d.sub ? <p className="mt-1 text-sm text-muted-foreground">{d.sub}</p> : null}
             </div>
           ))}
         </div>
       </section>
 
       {stages.length > 0 ? (
-        <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h2 className="font-heading text-xl font-black sm:text-2xl">
+        <section className="mt-10 border border-border bg-card p-6 sm:p-8">
+          <h2 className="font-heading text-xl font-bold sm:text-2xl">
             Where those cases are standing
           </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
             DOL&apos;s own status on each case, counted. Ordered biggest first:
             these are not steps in a sequence, and a case can reach an audit
             without an RFI or re-enter after a decision.
@@ -179,7 +179,7 @@ export function UnpublishedEmployer({
                 <Fragment key={`${s.status}-${String(s.isFinal)}`}>{" "}
                 <div>
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                    <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em]">
+                    <dt className="text-sm font-bold">
                       {s.status}
                     </dt>{" "}
                     <dd className="font-mono text-sm font-bold tabular-nums">
@@ -190,7 +190,7 @@ export function UnpublishedEmployer({
                     </dd>
                   </div>
                   {meaning ? (
-                    <p className="mt-1.5 text-sm leading-relaxed text-foreground/70">
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                       {meaning}
                     </p>
                   ) : null}
@@ -204,13 +204,13 @@ export function UnpublishedEmployer({
 
       {follow}{" "}
       {wait}{" "}
-      <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-xl font-black sm:text-2xl">
+      <section className="mt-10 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-xl font-bold sm:text-2xl">
           {listed === total
             ? `All ${formatInt(total)} ${total === 1 ? "case" : "cases"}`
             : `The newest ${formatInt(listed)} of ${formatInt(total)} cases`}
         </h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
           DOL&apos;s live record carries the case number, the job title and the
           status. The wage, the law firm and the worksite state arrive with
           publication, which is why they are missing here rather than blank.
@@ -227,9 +227,9 @@ export function UnpublishedEmployer({
                 {c.caseNumber}
               </Link>{" "}
               {c.jobTitle ? (
-                <span className="text-foreground/70">{c.jobTitle}</span>
+                <span className="text-muted-foreground">{c.jobTitle}</span>
               ) : null}{" "}
-              <span className="ml-auto text-sm text-foreground/70">
+              <span className="ml-auto text-sm text-muted-foreground">
                 {c.filingDate ? `filed ${c.filingDate}` : ""}
                 {c.status ? ` · ${c.status}` : ""}
               </span>
@@ -241,7 +241,7 @@ export function UnpublishedEmployer({
             this pair reached the DOM as "...ANALYST REVIEWDOL live case
             record..." with the source check green. Caught by the RENDERED
             audit, which is why that one is the authoritative gate. */}
-        <p className="mt-5 border-t-2 border-border pt-3 font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+        <p className="mt-5 border-t border-border pt-3 text-sm font-bold text-muted-foreground">
           {asOf
             ? `DOL live case record, as of ${longDate(asOf) ?? asOf}`
             : "DOL live case record"}
@@ -249,11 +249,11 @@ export function UnpublishedEmployer({
       </section>
 
       {otherNames.length > 0 ? (
-        <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">
+        <section className="mt-10 border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">
             Other spellings on the same applications
           </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
             DOL prints whatever went on the form, so one sponsor arrives under
             several spellings. These reduce to the same name and are counted
             together above.
@@ -261,7 +261,7 @@ export function UnpublishedEmployer({
           <ul className="mt-3 space-y-1">
             {otherNames.map((n) => (
               <Fragment key={n}>{" "}
-              <li className="text-base text-foreground/80">{n}</li>
+              <li className="text-base text-soft">{n}</li>
               </Fragment>
             ))}
           </ul>
@@ -271,9 +271,9 @@ export function UnpublishedEmployer({
       {programs}{" "}
 
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Your case is with them?</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Your case is with them?</h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             The{" "}
             <Link
               href="/perm-case-status"
@@ -284,9 +284,9 @@ export function UnpublishedEmployer({
             reads DOL live and can set an alert for the next change.
           </p>
         </div>
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Where the queue stands</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Where the queue stands</h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             DOL works one national queue, oldest first, whoever filed the case.{" "}
             <Link
               href="/perm-processing-times"
@@ -299,7 +299,7 @@ export function UnpublishedEmployer({
         </div>
       </section>
 
-      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
+      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         This page is rebuilt periodically, so a status on it can lag DOL by
         days. The case lookup does not lag: it asks DOL at the moment you ask
         it.

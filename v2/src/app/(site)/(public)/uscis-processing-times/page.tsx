@@ -268,10 +268,10 @@ export default async function UscisProcessingTimesPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           USCIS processing times, the median, by form
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           How many months USCIS took to decide the typical case of every form
           {quarter ? ` in ${quarterLabel(quarter.fy, quarter.quarter)}` : " last quarter"}, from its own quarterly
           workbook, beside the different figure on USCIS&apos;s processing-times page.
@@ -328,15 +328,15 @@ export default async function UscisProcessingTimesPage() {
                 }
               >
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] [&>*]:min-w-0">
-                  <div className="border-2 border-border bg-tint-primary p-5">
-                    <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">Quarterly median, all I-140s</p>{" "}
-                    <p className="mt-2 font-heading text-5xl font-black leading-none tabular-nums">{monthsLabel(i140.medianMonths)}</p>{" "}
-                    <p className="mt-2 text-sm text-foreground/70">
+                  <div className="border border-border bg-tint-primary p-5">
+                    <p className="text-sm font-bold text-muted-foreground">Quarterly median, all I-140s</p>{" "}
+                    <p className="mt-2 font-heading text-5xl font-bold leading-none tabular-nums">{monthsLabel(i140.medianMonths)}</p>{" "}
+                    <p className="mt-2 text-sm text-muted-foreground">
                       months, over {(i140.completed ?? 0).toLocaleString("en-US")} petitions decided in the quarter
                     </p>
                   </div>
                   <div>
-                    <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">Processing-times page, 80% within</p>{" "}
+                    <p className="text-sm font-bold text-muted-foreground">Processing-times page, 80% within</p>{" "}
                     <ul className="mt-2 divide-y divide-border">
                       {egovSubtypes.map((s) => (
                         <Fragment key={s.code}>{" "}
@@ -382,11 +382,11 @@ export default async function UscisProcessingTimesPage() {
                 </ul>
                 {i140History.length > 0 || i485ebHistory.length > 0 ? (
                   <div className="mt-6 border-t border-border/60 pt-4">
-                    <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">Since the factsheet, by quarter</p>{" "}
+                    <p className="text-sm font-bold text-muted-foreground">Since the factsheet, by quarter</p>{" "}
                     <div className="mt-2 overflow-x-auto">
                       <table className="min-w-[420px] text-sm">
                         <thead>
-                          <tr className="border-b-2 border-border text-left">
+                          <tr className="border-b border-border text-left">
                             <th className="py-1.5 pr-4 font-bold">Quarter{" "}</th>
                             <th className="py-1.5 pr-4 text-right font-bold">I-140{" "}</th>
                             <th className="py-1.5 text-right font-bold">I-485, employment{" "}</th>
@@ -415,8 +415,8 @@ export default async function UscisProcessingTimesPage() {
           ) : null}
 
           <section id="every-form" className="mt-12 scroll-mt-24">
-            <h2 className="font-heading text-2xl font-black">Every form USCIS reports</h2>{" "}
-            <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+            <h2 className="font-heading text-2xl font-bold">Every form USCIS reports</h2>{" "}
+            <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
               {forms.length} form lines in {categories.length} categories, as USCIS
               groups them. Open a category for its table; the figures are the
               quarter&apos;s, and the median is the months from receipt to decision.
@@ -426,12 +426,12 @@ export default async function UscisProcessingTimesPage() {
                 const rowsIn = forms.filter((r) => r.category === cat);
                 return (
                   <Fragment key={cat}>{" "}
-                  <details className="group border-2 border-border bg-card">
+                  <details className="group border border-border bg-card">
                     <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-lg font-bold [&::-webkit-details-marker]:hidden">
                       <span>{cat}</span>{" "}
                       <span className="font-mono text-sm font-bold text-muted-foreground">{rowsIn.length} lines</span>
                     </summary>{" "}
-                    <div className="overflow-x-auto border-t-2 border-border">
+                    <div className="overflow-x-auto border-t border-border">
                       <table className="min-w-[760px] w-full text-sm">
                         <thead>
                           <tr className="border-b border-border text-left">
@@ -479,12 +479,12 @@ export default async function UscisProcessingTimesPage() {
       )}
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">Read next</h2>{" "}
+      <section className="mt-12 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold">Read next</h2>{" "}
         <ul className="mt-4 space-y-2">
           <li>
             <Link href="/guides/uscis-processing-times-median-vs-80-percent" className="font-bold underline underline-offset-2 hover:text-primary">

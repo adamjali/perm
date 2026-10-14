@@ -43,7 +43,7 @@ export function SortableHeader<T>({
           <Fragment key={h}>
             <th
               scope="col"
-              className="whitespace-nowrap px-3 py-3 font-mono text-sm font-bold uppercase tracking-wider"
+              className="whitespace-nowrap px-3 py-3 text-sm font-bold"
             >
               {h}{" "}
             </th>
@@ -56,14 +56,14 @@ export function SortableHeader<T>({
               <th
                 scope="col"
                 aria-sort={active ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
-                className="whitespace-nowrap p-0 font-mono text-sm font-bold uppercase tracking-wider"
+                className="whitespace-nowrap p-0 text-sm font-bold"
               >
                 <button
                   type="button"
                   disabled={disabled}
                   onClick={() => onSort(c.key)}
                   className={
-                    "flex min-h-[44px] w-full items-center gap-1 px-3 py-3 text-left uppercase underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary " +
+                    "flex min-h-[44px] w-full items-center gap-1 px-3 py-3 text-left underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary " +
                     (active ? "underline" : "")
                   }
                 >

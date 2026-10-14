@@ -83,16 +83,14 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
     <motion.figure
       className="not-prose my-8"
       variants={fadeUp}
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: "-40px" }}
+      initial={false}
       style={{ maxWidth }}
     >
       <div className="relative">
         <Lightbox videoSrc={src} alt={alt} caption={caption}>
-          <div className="relative overflow-hidden border-2 border-border shadow-hard">
+          <div className="relative overflow-hidden border border-border">
             {step !== undefined && (
-              <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b-2 border-r-2 border-border bg-primary font-mono text-sm font-bold text-black">
+              <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b border-r border-border bg-primary font-mono text-sm font-bold text-black">
                 {step}
               </div>
             )}
@@ -115,7 +113,7 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
           type="button"
           onClick={toggle}
           aria-label={playing ? "Pause the recording" : "Play the recording"}
-          className="absolute bottom-2 right-2 z-10 flex size-11 items-center justify-center border-2 border-border bg-background text-foreground shadow-hard-sm hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="absolute bottom-2 right-2 z-10 flex size-11 items-center justify-center border border-border bg-background text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {playing ? <PauseIcon className="size-5" weight="bold" aria-hidden="true" /> : <PlayIcon className="size-5" weight="bold" aria-hidden="true" />}
         </button>

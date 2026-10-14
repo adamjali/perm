@@ -29,7 +29,6 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 // Viewport configuration for proper mobile scaling
-import { Preloader, PRELOADER_BOOT, PRELOADER_CSS } from "@/components/home/Preloader";
 import { SITE_URL } from "@/lib/constants/site";
 
 export const viewport: Viewport = {
@@ -174,27 +173,6 @@ export default async function RootLayout({
     // (authenticated), where it lives.
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
         <head>
-          {/*
-            The home curtain: its CSS and boot script FIRST in <head>, inline,
-            so the rules exist before anything paints (WebKit paints before a
-            pending external stylesheet). The script gates on
-            location.pathname, so other routes are untouched. The panel itself
-            is the first child of <body> below. See Preloader.tsx.
-          */}
-          <style dangerouslySetInnerHTML={{ __html: PRELOADER_CSS }} />
-          {/*
-            A RAW <script>, deliberately, not next/script.
-            Verified against Next's own source (client/script.tsx +
-            client/app-bootstrap.ts): in the App Router a
-            `strategy="beforeInteractive"` script does NOT render as a real
-            script tag. It pushes metadata onto `self.__next_s`, and
-            appBootstrap creates the element later, with hydration blocked
-            until that queue drains. A curtain that runs after the JS bundle
-            has loaded is useless — it would paint over content the visitor
-            can already see. This runs at parse time, which is the only thing
-            that works here.
-          */}
-          <script dangerouslySetInnerHTML={{ __html: PRELOADER_BOOT }} />
           <link rel="alternate" type="application/rss+xml" title="PERM Tracker RSS Feed" href="/feed.xml" />
           {/* JSON-LD structured data for rich search results
               Note: Using dangerouslySetInnerHTML is safe here because structuredData
@@ -209,13 +187,6 @@ export default async function RootLayout({
         <body
           className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} font-body antialiased`}
         >
-          {/*
-            The home curtain's panel, FIRST in <body> on every route so it
-            paints in the same frame as the header it covers. Hidden unless
-            the boot script arms it (hard loads of "/" only).
-          */}
-          <Preloader />
-          <div className="grain-overlay" aria-hidden="true" />
           <SharedProviders>{children}</SharedProviders>
           {/*
             Ahrefs Web Analytics. EXTERNAL-SCRIPT form deliberately - Ahrefs

@@ -36,7 +36,7 @@ export function CiteThis({ dataThrough }: { dataThrough: string | null }) {
   }
   return (
     <details className="group mt-1" onToggle={(e) => build(e.currentTarget.open)}>
-      <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-1.5 font-mono text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-1.5 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
         <CaretRightIcon
           className="h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none"
           weight="bold"

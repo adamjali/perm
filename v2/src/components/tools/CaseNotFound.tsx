@@ -136,11 +136,11 @@ export function CaseNotFound({
         is the authority either way.
       </InsightLede>
 
-      <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-xl font-black">
+      <section className="mt-8 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-xl font-bold">
           Three reasons a real case is missing here
         </h2>{" "}
-        <ul className="mt-4 max-w-3xl space-y-3 text-base leading-relaxed text-foreground/80">
+        <ul className="mt-4 max-w-3xl space-y-3 text-base leading-relaxed text-soft">
           <li>
             <b className="font-bold text-foreground">DOL doesn&apos;t return it.</b>{" "}
             A number we don&apos;t already hold is asked of DOL directly, at the
@@ -171,18 +171,18 @@ export function CaseNotFound({
       </section>
 
       {isLegacy ? (
-        <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h2 className="font-heading text-xl font-black">
+        <section className="mt-8 border border-border bg-card p-6 sm:p-8">
+          <h2 className="font-heading text-xl font-bold">
             This is the older case-number format
           </h2>{" "}
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
             Numbers like{" "}
             <b className="font-mono font-bold text-foreground">{caseNumber}</b>{" "}
             are the older three-part format, used mostly in 2022 and 2023. Its middle digits aren&apos;t a
             filing date: read as one, they match DOL&apos;s receipt date only{" "}
             <b className="font-bold text-foreground">13% of the time</b>, against 90% for the current format.
           </p>{" "}
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
             Every case in this format is already decided and published, so a real one would be found here.
             Check the digits against the receipt.
           </p>
@@ -209,10 +209,10 @@ export function CaseNotFound({
               chart. Everything in this section is about a month, and a
               reader who only reads headings must still not come away
               thinking any of it was measured on their case. */}
-          <h2 className="font-heading text-2xl font-black">
+          <h2 className="font-heading text-2xl font-bold">
             Cases filed in {formatMonth(cohort.month)}
           </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             The number decodes to a filing month, so here is what DOL is
             holding from that month.{" "}
             <b className="font-bold text-foreground">
@@ -318,14 +318,14 @@ function Cell({
   note: string;
 }) {
   return (
-    <div className="min-w-0 flex-1 basis-56 border-2 border-border bg-background p-4">
-      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+    <div className="min-w-0 flex-1 basis-56 border border-border bg-background p-4">
+      <p className="text-sm font-bold text-muted-foreground">
         {label}
       </p>{" "}
-      <p className="mt-1 font-heading text-4xl font-black leading-none tabular-nums">
+      <p className="mt-1 font-heading text-4xl font-bold leading-none tabular-nums">
         {value}
       </p>{" "}
-      <p className="mt-1.5 text-sm leading-snug text-foreground/70">{note}</p>
+      <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{note}</p>
     </div>
   );
 }
@@ -384,11 +384,11 @@ export function CaseStatusEmpty({
           ))}
         </div>
       ) : null}{" "}
-      <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-xl font-black">
+      <section className="mt-8 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-xl font-bold">
           What a case number gets you here
         </h2>{" "}
-        <ul className="mt-4 max-w-3xl space-y-3 text-base leading-relaxed text-foreground/80">
+        <ul className="mt-4 max-w-3xl space-y-3 text-base leading-relaxed text-soft">
           <li>
             <b className="font-bold text-foreground">The status, decoded.</b>{" "}
             DOL shows one word and explains none of them. Some mean waiting and
@@ -415,7 +415,7 @@ export function CaseStatusEmpty({
           </li>
         </ul>
         {mirrorSize ? (
-          <p className="mt-5 border-t-2 border-border pt-4 text-sm text-muted-foreground">
+          <p className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
             Searched against {formatInt(mirrorSize)} per-case statuses, read from DOL&apos;s own case-status search, plus DOL&apos;s published decisions for FY2024 to FY2026.
             Nothing is stored and nothing is sent anywhere else.
           </p>

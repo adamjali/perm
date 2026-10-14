@@ -110,15 +110,15 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
   if (!mounted || !visible) return null;
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {visible && (
         <motion.div
           className={cn(
             "fixed z-[9999] -translate-x-1/2 -translate-y-full",
             "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
-            "whitespace-nowrap shadow-hard-sm",
+            "whitespace-nowrap",
             "pointer-events-none",
-            "border-2 border-foreground"
+            "border border-foreground"
           )}
           style={{ top: position.top, left: position.left }}
           initial={{ opacity: 0, y: 4 }}
@@ -129,8 +129,7 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
           {children}
           {/* Arrow pointer */}
           <div
-            className="absolute top-full left-1/2 -translate-x-1/2
-            border-2 border-transparent border-t-foreground"
+            className="absolute top-full left-1/2 -translate-x-1/2 border border-transparent border-t-foreground"
           />
         </motion.div>
       )}
@@ -178,8 +177,8 @@ export function ActionModeToggle({
       className={cn(
         // Container styling
         "relative inline-flex",
-        "border-2 border-border bg-background",
-        "shadow-hard-sm",
+        "border border-border bg-background",
+        "",
         // Disabled state
         disabled && "opacity-50 pointer-events-none",
         className
@@ -216,7 +215,7 @@ export function ActionModeToggle({
                 "transition-colors duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 // Border between segments (not on last)
-                "border-r-2 border-border last:border-r-0",
+                "border-r border-border last:border-r-0",
                 // Active state - Forest Green
                 isActive
                   ? "bg-primary text-primary-foreground"

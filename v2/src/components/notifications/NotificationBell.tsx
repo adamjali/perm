@@ -61,8 +61,8 @@ export default function NotificationBell({ className, children }: NotificationBe
           className={cn(
             // Base styles matching ThemeToggle
             "group relative flex h-11 w-11 cursor-pointer items-center justify-center",
-            "rounded-none border-2 border-transparent bg-transparent",
-            "text-white transition-all duration-200",
+            "rounded-none border border-transparent bg-transparent",
+            "text-white transition-colors duration-200",
             // Hover/active states
             "hover:border-white/20 hover:bg-white/10",
             "active:bg-white/15",
@@ -76,7 +76,7 @@ export default function NotificationBell({ className, children }: NotificationBe
             className={cn(
               "size-5 transition-transform duration-300 ease-out",
               // Hover animation matching ThemeToggle
-              "group-hover:rotate-[15deg] group-hover:scale-110",
+              "",
               "group-active:rotate-0 group-active:scale-95"
             )}
           />
@@ -97,9 +97,9 @@ export default function NotificationBell({ className, children }: NotificationBe
                 "text-sm font-bold font-heading leading-none",
                 // Border carves the badge off the icon. The header bar is
                 // bg-black in both themes, so this ring does not follow --border.
-                "border-2 border-black",
+                "border border-black",
                 // Animation: scale in
-                "animate-in zoom-in-50 duration-200"
+                "duration-200"
               )}
               aria-hidden="true"
             >
@@ -118,8 +118,8 @@ export default function NotificationBell({ className, children }: NotificationBe
           // Remove default shadcn rounded corners
           "rounded-none",
           // Neobrutalist styling - use design token for proper dark mode
-          "border-2 border-border bg-popover",
-          "shadow-hard",
+          "border border-border bg-popover",
+          "",
           // Size - let inner content handle overflow (no max-h here to avoid double scroll)
           // Override default padding
           "p-0",

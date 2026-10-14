@@ -88,7 +88,7 @@ export function OwnCaseStep() {
           inputMode="text"
           maxLength={64}
           aria-describedby="own-case-note"
-          className="min-h-[48px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 font-mono text-base uppercase focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="min-h-[48px] w-full min-w-0 border border-input bg-background px-3 py-2 font-mono text-base uppercase focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         />{" "}
         <p id="own-case-note" role="status" className="mt-2 min-h-[1.25rem] text-sm text-data-warn-ink">
           {note ?? ""}

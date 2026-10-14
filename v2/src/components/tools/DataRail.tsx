@@ -184,7 +184,7 @@ export function DataRail() {
                   // `group/tab` stays because a child targets it; the rest
                   // is the `rail-tab` class in globals.css.
                   "group/tab rail-tab",
-                  isOpen ? "text-foreground" : "text-foreground/65",
+                  isOpen ? "text-foreground" : "text-muted-foreground",
                 )}
               >
                 {/* The spine: four pixels of lime marking the group that holds
@@ -282,7 +282,7 @@ export function DataRail() {
           "-ml-4 hidden bg-background sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch",
           // Open or collapsed, the rail has an edge: collapsed, it's the strip
           // of group squares, and the toggle tab sits on this border.
-          "lg:border-r-2 lg:border-border",
+          "lg:border-r lg:border-border",
           // Collapsing changes this column's width; the content beside it is
           // `lg:flex-1` and takes the space back. No overlay, no scrim.
           "transition-[width] duration-200 ease-out motion-reduce:transition-none",
@@ -325,7 +325,7 @@ export function DataRail() {
                 className={cn(
                   // `-mt-1` takes the nav's 4px top padding, so the 44px button costs
                   // the rail the 40px the old tab did (rail-fits.test.ts).
-                  "-mt-1 flex size-11 shrink-0 items-center justify-center self-end text-foreground/65",
+                  "-mt-1 flex size-11 shrink-0 items-center justify-center self-end text-muted-foreground",
                   "transition-colors duration-150 hover:bg-tint-primary hover:text-foreground",
                   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
                   "motion-reduce:transition-none",
@@ -355,7 +355,7 @@ export function DataRail() {
                   focusAfterToggle.current = "rail-collapse";
                   setRailOpen(true);
                 }}
-                className="rail-square text-foreground/65 hover:bg-tint-primary hover:text-foreground"
+                className="rail-square text-muted-foreground hover:bg-tint-primary hover:text-foreground"
               >
                 <span className="sr-only">Expand data sections</span>
                 <SidebarSimpleIcon className="size-5" weight="bold" aria-hidden="true" />
@@ -383,7 +383,7 @@ export function DataRail() {
                         setOpen(g);
                         setRailOpen(true);
                       }}
-                      className={cn("rail-square", here ? "bg-primary text-black" : "text-foreground/65 hover:bg-tint-primary hover:text-foreground")}
+                      className={cn("rail-square", here ? "bg-primary text-black" : "text-muted-foreground hover:bg-tint-primary hover:text-foreground")}
                     >
                       <GroupIcon className="size-4" weight="bold" aria-hidden="true" />
                     </button>
@@ -411,7 +411,7 @@ export function DataRail() {
           // `z-[41]`: above the panel, below the header's 50. At equal z-index
           // the panel (rendered later) would paint its border over the handle.
           "fixed left-0 z-[41] flex size-11 items-center justify-center",
-          "border-y-2 border-r-2 border-border bg-background shadow-hard-sm",
+          "border-y border-r border-border bg-background",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
           "lg:hidden",
@@ -460,7 +460,7 @@ export function DataRail() {
           // scrolls, and a scrolling box can't let a tab protrude (one axis
           // `auto` makes the other `auto`), so its negative margin is zeroed.
           // The protrusion stays a desktop move.
-          "fixed bottom-0 left-0 z-40 flex w-[17rem] flex-col overflow-y-auto border-r-2 border-border bg-background pb-4 pt-[52px] [&_[aria-current=page]]:mr-0 [&_ul]:w-full",
+          "fixed bottom-0 left-0 z-40 flex w-[17rem] flex-col overflow-y-auto border-r border-border bg-background pb-4 pt-[52px] [&_[aria-current=page]]:mr-0 [&_ul]:w-full",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "lg:hidden",
           panelOpen ? "translate-x-0" : "-translate-x-full",
@@ -560,12 +560,12 @@ function Tab({
             // The label keeps its sibling's indent, so a selected leaf still
             // reads as inside its group.
             cn(
-              "bg-primary pr-4 font-heading font-black text-black shadow-hard-sm",
+              "bg-primary pr-4 font-heading font-bold text-black",
               kind === "home" && "-mr-[20px]",
             )
           : cn(
-              "text-foreground/75 hover:translate-x-[3px] hover:bg-tint-primary hover:text-foreground",
-              kind === "home" ? "font-heading font-black" : "font-semibold",
+              "text-soft hover:bg-tint-primary hover:text-foreground",
+              kind === "home" ? "font-heading font-bold" : "font-semibold",
             ),
       )}
     >
@@ -602,23 +602,23 @@ function Tab({
 function RailFooter() {
   return (
     // Tighter padding at `lg`, where the rail has to fit under the header.
-    <div className="mt-auto border-t-2 border-border px-4 pb-2 pt-3 lg:pb-1 lg:pt-2">
-      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+    <div className="mt-auto border-t border-border px-4 pb-2 pt-3 lg:pb-1 lg:pt-2">
+      <p className="text-sm font-bold text-muted-foreground">
         Track a case
       </p>{" "}
       {/* The sentence shows only in the touch drawer, which scrolls; on the
           desktop rail the label and button say enough in less height. */}
-      <p className="mt-1 text-sm leading-snug text-foreground/75 lg:hidden">
+      <p className="mt-1 text-sm leading-snug text-soft lg:hidden">
         Its DOL record and its place in the queue.
       </p>{" "}
       <Link
         href="/perm-case-status"
         className={cn(
-          "mt-2.5 flex min-h-11 items-center justify-center gap-2 border-2 border-border bg-primary px-3 lg:mt-2",
-          "font-heading text-sm font-black text-black shadow-hard-sm",
-          "transition-transform duration-150 ease-out hover:-translate-y-[1px] active:translate-y-0",
+          "mt-2.5 flex min-h-11 items-center justify-center gap-2 border border-border bg-primary px-3 lg:mt-2",
+          "font-heading text-sm font-bold text-black",
+          "transition-transform duration-150 ease-out",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-          "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+          "motion-reduce:transition-none",
         )}
       >
         {/* The case page can ask DOL live (seconds), so it shows a pending

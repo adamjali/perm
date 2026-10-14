@@ -60,9 +60,9 @@ function BarRow({
         <span className="min-w-0 text-sm font-bold">
           {label}
           {sub ? " " : null}
-          {sub ? <span className="ml-0.5 font-mono text-sm font-bold text-foreground/60">{sub}</span> : null}
+          {sub ? <span className="ml-0.5 font-mono text-sm font-bold text-muted-foreground">{sub}</span> : null}
         </span>{" "}
-        <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">
+        <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">
           {formatInt(n)}
           {pct !== null ? ` · ${pct}%` : ""}
         </span>
@@ -97,9 +97,9 @@ export function LcaProfile({
   const filed = longDate(p.newest?.filed ?? null);
 
   return (
-    <section className={cn("mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8", className)}>
-      <h2 className="font-heading text-xl font-black sm:text-2xl">What its H-1B LCAs were for</h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+    <section className={cn("mt-10 border border-border bg-card p-6 sm:p-8", className)}>
+      <h2 className="font-heading text-xl font-bold sm:text-2xl">What its H-1B LCAs were for</h2>{" "}
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         From DOL&apos;s quarterly LCA files: {formatInt(p.filings)} {p.filings === 1 ? "LCA" : "LCAs"} filed by {name}
         {p.detailRows > 0
           ? `, ${formatInt(p.detailRows)} of them certified with the worker breakdown on Form ETA-9035.`
@@ -108,11 +108,11 @@ export function LcaProfile({
       {p.detailRows > 0 ? (
         <div className="mt-6 grid grid-cols-1 gap-6 [&>*]:min-w-0 lg:grid-cols-2">
           <div>
-            <h3 className="font-heading text-lg font-black">New hires and transfers</h3>{" "}
+            <h3 className="font-heading text-lg font-bold">New hires and transfers</h3>{" "}
             {split ? (
               <p className="mt-1 text-base">
-                <b className="font-heading text-2xl font-black">{formatInt(split.newN)}</b> positions for new
-                employment, <b className="font-heading text-2xl font-black">{formatInt(split.transferN)}</b> moving here
+                <b className="font-heading text-2xl font-bold">{formatInt(split.newN)}</b> positions for new
+                employment, <b className="font-heading text-2xl font-bold">{formatInt(split.transferN)}</b> moving here
                 from another employer.
               </p>
             ) : null}{" "}
@@ -134,12 +134,12 @@ export function LcaProfile({
               ))}
             </ul>
             </ChartTips>{" "}
-            <p className="mt-3 text-sm text-foreground/70">
+            <p className="mt-3 text-sm text-muted-foreground">
               Shares of the {formatInt(p.positions)} worker positions requested. These are positions on certified
               LCAs, not people hired: DOL certifies an LCA before any petition, and many are never used.
             </p>{" "}
             <FinePrint summary="What each box on the form means" className="mt-2">
-              <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-foreground/80">
+              <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-soft">
                 {p.kinds.map((k) => (
                   <Fragment key={k.kind.key}>
                     {" "}
@@ -152,14 +152,14 @@ export function LcaProfile({
                   </Fragment>
                 ))}
               </ul>{" "}
-              <p className="mt-2 text-sm text-foreground/70">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Form ETA-9035, Section B, Item 7, in DOL&apos;s words from its LCA record layout. One LCA can
                 tick several boxes.
               </p>
             </FinePrint>
           </div>{" "}
           <div>
-            <h3 className="font-heading text-lg font-black">Wage level it chose</h3>{" "}
+            <h3 className="font-heading text-lg font-bold">Wage level it chose</h3>{" "}
             {leveled > 0 ? (
               <ChartTips label="Certified LCAs by OES wage level" className="mt-4">
               <ul className="space-y-3">
@@ -172,7 +172,7 @@ export function LcaProfile({
               </ul>
               </ChartTips>
             ) : null}{" "}
-            <p className="mt-3 text-sm text-foreground/70">
+            <p className="mt-3 text-sm text-muted-foreground">
               {leveled > 0
                 ? `Shares of the ${formatInt(leveled)} certified LCAs that named an OES level. `
                 : "None of its certified LCAs named an OES level. "}
@@ -185,27 +185,27 @@ export function LcaProfile({
       ) : null}{" "}
 
       {declared ? (
-        <div className="mt-8 border-t-2 border-border/60 pt-6">
-          <h3 className="font-heading text-lg font-black">What it declared on Section H</h3>{" "}
+        <div className="mt-8 border-t border-border/60 pt-6">
+          <h3 className="font-heading text-lg font-bold">What it declared on Section H</h3>{" "}
           {p.newest ? (
             <dl className="mt-3 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
-              <div className="border-2 border-border p-4">
-                <dt className="text-sm font-bold text-foreground/70">H-1B-dependent</dt>{" "}
-                <dd className="mt-1 font-heading text-2xl font-black">{yesNo(p.newest.dependent)}</dd>
+              <div className="border border-border p-4">
+                <dt className="text-sm font-bold text-muted-foreground">H-1B-dependent</dt>{" "}
+                <dd className="mt-1 font-heading text-2xl font-bold">{yesNo(p.newest.dependent)}</dd>
               </div>{" "}
-              <div className="border-2 border-border p-4">
-                <dt className="text-sm font-bold text-foreground/70">Found a willful violator</dt>{" "}
-                <dd className="mt-1 font-heading text-2xl font-black">{yesNo(p.newest.violator)}</dd>
+              <div className="border border-border p-4">
+                <dt className="text-sm font-bold text-muted-foreground">Found a willful violator</dt>{" "}
+                <dd className="mt-1 font-heading text-2xl font-bold">{yesNo(p.newest.violator)}</dd>
               </div>
             </dl>
           ) : null}{" "}
-          <p className="mt-3 text-sm text-foreground/70">
+          <p className="mt-3 text-sm text-muted-foreground">
             {p.newest ? `As answered on its newest LCA${filed ? `, filed ${filed}` : ""}. ` : ""}
             Declared H-1B-dependent on {formatInt(p.dependent.yes)} of {formatInt(p.dependent.of)} LCAs, and a willful
             violator on {formatInt(p.violator.yes)} of {formatInt(p.violator.of)}. Both are the employer&apos;s own answers.
           </p>{" "}
           <FinePrint summary="What the two answers mean" className="mt-2">
-            <div className="mt-2 space-y-2 text-sm leading-relaxed text-foreground/80">
+            <div className="mt-2 space-y-2 text-sm leading-relaxed text-soft">
               <p>
                 <b className="font-bold">H-1B-dependent</b> (20 CFR 655.736(a)): 25 or fewer full-time-equivalent
                 employees in the US and more than 7 H-1B workers; 26 to 50 and more than 12; or 51 or more, with
@@ -234,7 +234,7 @@ export function LcaProfile({
       ) : null}{" "}
 
       {visas.length > 1 || p.otherVisa > 0 || (visas.length === 1 && visas[0]!.key !== "h1b") ? (
-        <p className="mt-6 text-sm text-foreground/80">
+        <p className="mt-6 text-sm text-soft">
           <b className="font-bold">Visas these LCAs support:</b>{" "}
           {visas.map((v, i) => (
             <Fragment key={v.key}>

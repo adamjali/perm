@@ -44,8 +44,8 @@ export default function AccessibilityPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
       <div>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Accessibility</h1>{" "}
-        <p className="mb-8 mt-4 text-lg text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Accessibility</h1>{" "}
+        <p className="mb-8 mt-4 text-lg text-muted-foreground">
           Statement dated {STATEMENT_DATE}. Operated by {LEGAL_NAME}.
         </p>{" "}
 
@@ -53,7 +53,7 @@ export default function AccessibilityPage() {
           <section>
             <h2 className="font-heading text-2xl font-bold mt-2 mb-4">The standard</h2>{" "}
             <MoreText gist={"Built to WCAG 2.2 AA, which covers Section 508; no third-party audit yet."}>
-              <p className="text-foreground/80 leading-relaxed">
+              <p className="text-soft leading-relaxed">
                 PERM Tracker builds to the Web Content Accessibility Guidelines (WCAG) 2.2
                 at level AA. Section 508 of the Rehabilitation Act incorporates WCAG 2.0 AA
                 for web content, and 2.2 AA includes every one of those success criteria,
@@ -66,7 +66,7 @@ export default function AccessibilityPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">What that means here</h2>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>Body text is at least 16px and text contrast is at least 4.5:1 (3:1 for large text), in light and dark mode.</li>{" "}
               <li>Every control can be reached and operated from a keyboard, with a visible focus state, and nothing depends on hovering.</li>{" "}
               <li>Standalone tap targets are at least 44px so they work on a phone.</li>{" "}
@@ -79,7 +79,7 @@ export default function AccessibilityPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">Known limits</h2>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+            <ul className="list-disc list-inside text-soft space-y-2 ml-4">
               <li>Some government documents are shown as the printed first page of a PDF; the text of each is linked beside the image.</li>{" "}
               <li>Third-party widgets (the review carousel, the contact form&apos;s bot check) render their own markup, which this site can&apos;t change.</li>{" "}
               <li>Screenshots inside the guides describe the screen in their alt text, not every figure on it.</li>
@@ -88,7 +88,7 @@ export default function AccessibilityPage() {
 
           <section>
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">Report a barrier</h2>{" "}
-            <p className="text-foreground/80 leading-relaxed">
+            <p className="text-soft leading-relaxed">
               If something on this site is hard or impossible for you to use, email{" "}
               <a href="mailto:support@permtracker.app?subject=Accessibility" className={LINK}>
                 support@permtracker.app

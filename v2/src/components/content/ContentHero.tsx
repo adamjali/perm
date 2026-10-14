@@ -25,12 +25,12 @@ interface ContentHeroProps {
 export default function ContentHero({ type, title, description, postCount }: ContentHeroProps) {
   const config = CONTENT_TYPE_CONFIG[type];
   return (
-    <section className="border-b-2 border-border bg-card">
+    <section className="border-b border-border bg-card">
       <div className="mx-auto max-w-[1400px] px-4 pb-10 pt-10 sm:px-6 sm:pt-14">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">{title ?? config.plural}</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">{description ?? config.description}</p>
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">{title ?? config.plural}</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">{description ?? config.description}</p>
         {postCount !== undefined ? (
-          <p className="mt-3 text-base text-foreground/70">
+          <p className="mt-3 text-base text-muted-foreground">
             {postCount} {postCount === 1 ? "article" : "articles"}
           </p>
         ) : null}

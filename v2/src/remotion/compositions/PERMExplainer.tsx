@@ -561,7 +561,7 @@ const CTAButton: React.FC<{ brandColor: string }> = ({ brandColor }) => {
           fontSize: 20,
           fontWeight: 700,
           color: "#000",
-          textTransform: "uppercase",
+          textTransform: "",
           letterSpacing: 1,
         }}
       >

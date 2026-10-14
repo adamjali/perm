@@ -134,7 +134,7 @@ export function StackedBar({
           <Fragment key={s.key}>{" "}
           <li className="flex items-center gap-1.5">
             <span className={cn("inline-block h-3 w-3 shrink-0", STACK_TONES[i % STACK_TONES.length])} aria-hidden="true" />{" "}
-            <span className="text-foreground/80">{s.label}</span>{" "}
+            <span className="text-soft">{s.label}</span>{" "}
             <span className="font-mono font-bold tabular-nums">{s.value.toLocaleString("en-US")}</span>{" "}
             {sum > 0 ? (
               <span className="text-muted-foreground">({Math.round((s.value / sum) * 100)}%)</span>
@@ -150,9 +150,9 @@ export function StackedBar({
 /** The empty state every USCIS quarterly page shares: the file has not arrived. */
 export function QuarterlyEmpty({ file, children }: { file: string; children?: ReactNode }) {
   return (
-    <section className="mt-8 border-2 border-border bg-muted p-6 sm:p-8">
-      <h2 className="font-heading text-xl font-black">Nothing loaded yet</h2>{" "}
-      <p className="mt-3 max-w-2xl leading-relaxed text-foreground/70">
+    <section className="mt-8 border border-border bg-muted p-6 sm:p-8">
+      <h2 className="font-heading text-xl font-bold">Nothing loaded yet</h2>{" "}
+      <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
         USCIS&apos;s quarterly file ({file}) has not been read into this site&apos;s
         record yet, so there are no figures to show. The file itself is on{" "}
         <a

@@ -121,7 +121,7 @@ export const MixedSizes: Story = {
   },
   render: () => (
     <div className="flex flex-wrap gap-3 items-center">
-      <Badge className="text-xs">Extra Small</Badge>
+      <Badge className="text-sm">Extra Small</Badge>
       <Badge>Default</Badge>
       <Badge className="text-sm px-3 py-1">Larger</Badge>
     </div>

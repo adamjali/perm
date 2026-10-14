@@ -70,8 +70,8 @@ export function CaseNumberPlate({
     !!recordedFilingDate && recordedFilingDate !== parsed.filingDate;
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <p className="border-b-2 border-border px-4 py-2 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground sm:px-5">
+    <div className={cn("border border-border bg-card", className)}>
+      <p className="border-b border-border px-4 py-2 text-sm font-bold text-muted-foreground sm:px-5">
         Case number
       </p>
 
@@ -82,17 +82,17 @@ export function CaseNumberPlate({
           {segments.map((s, i) => (
             <div key={s.label} className="flex items-end">
               <span className="block">
-                <span className="block font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                <span className="block text-sm font-bold text-muted-foreground">
                   {s.label}
                 </span>{" "}
-                <span className="block font-mono text-xl font-black leading-none tracking-tight tabular-nums sm:text-2xl">
+                <span className="block font-mono text-xl font-bold leading-none tracking-tight tabular-nums sm:text-2xl">
                   {s.text}
                 </span>
               </span>
               {i < segments.length - 1 ? (
                 <span
                   aria-hidden="true"
-                  className="px-1 font-mono text-xl font-black leading-none text-foreground/35 sm:text-2xl"
+                  className="px-1 font-mono text-xl font-bold leading-none text-muted-foreground sm:text-2xl"
                 >
                   -
                 </span>
@@ -101,7 +101,7 @@ export function CaseNumberPlate({
           ))}
         </div>
 
-        <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-foreground/70">
+        <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
           The middle five digits are a date:{" "}
           <b className="font-bold text-foreground">
             day {Number(dayOfYear)} of 20{yy}

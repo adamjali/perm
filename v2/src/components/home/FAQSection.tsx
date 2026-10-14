@@ -32,13 +32,13 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
   return (
     <div
       className={cn(
-        "relative border-3 border-border bg-background",
-        "transition-all duration-150",
+        "relative border border-border bg-background",
+        "transition-colors duration-150",
         // Cubic bezier for snappy neobrutalist feel
         "[transition-timing-function:cubic-bezier(0.165,0.84,0.44,1)]",
         isOpen
-          ? "shadow-hard"
-          : "shadow-hard hover:shadow-hard"
+          ? ""
+          : ""
       )}
     >
       {/* Question header - clickable */}
@@ -75,13 +75,13 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
         role="region"
         aria-labelledby={headerId}
         className={cn(
-          "grid transition-all duration-300 ease-out",
+          "grid transition-colors duration-300 ease-out",
           isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         )}
       >
         <div ref={contentRef} className="overflow-hidden">
-          <div className="border-t-2 border-border px-5 pb-5 pt-5">
-            <p className="text-base leading-7 text-foreground/80">
+          <div className="border-t border-border px-5 pb-5 pt-5">
+            <p className="text-base leading-7 text-soft">
               {item.rich}
             </p>
           </div>
@@ -105,10 +105,10 @@ export function FAQSection() {
           question on the left, the answers on the right. */}
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-8 px-4 [&>*]:min-w-0 sm:px-8 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-14">
         <div>
-          <h2 id="faq-h" className="font-heading text-3xl font-black tracking-tight sm:text-4xl">
+          <h2 id="faq-h" className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
             Questions about PERM Tracker
           </h2>{" "}
-          <p className="mt-3 max-w-sm text-base leading-relaxed text-foreground/80 sm:text-lg">
+          <p className="mt-3 max-w-sm text-base leading-relaxed text-soft sm:text-lg">
             About the site and the app. How PERM itself works has its own page.
           </p>{" "}
           <Link

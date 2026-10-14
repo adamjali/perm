@@ -114,16 +114,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
   }, [views]);
 
   // Neobrutalist button base styles
-  const btnBase = `
-    border-2 border-border bg-card text-foreground
-    shadow-hard
-    hover:shadow-hard-lg
-    hover:-translate-y-0.5
-    active:shadow-hard-sm
-    active:translate-y-0
-    transition-all duration-150
-    font-semibold
-  `;
+  const btnBase = ` border border-border bg-card text-foreground transition-colors duration-150 font-semibold `;
 
   const btnIcon = `${btnBase} p-3`;
   const btnText = `${btnBase} px-4 py-3`;
@@ -152,7 +143,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
         {isPickerOpen && (
           <div
             ref={dropdownRef}
-            className="absolute top-full mt-2 bg-card border-2 border-border shadow-hard-lg p-4"
+            className="absolute top-full mt-2 bg-card border border-border p-4"
             style={{ minWidth: 260, zIndex: 100 }}
           >
             {/* Year nav */}
@@ -160,7 +151,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
               <button
                 type="button"
                 onClick={() => setPickerYear((y) => y - 1)}
-                className="p-2 hover:bg-muted border-2 border-border bg-card text-foreground transition-colors"
+                className="p-2 hover:bg-muted border border-border bg-card text-foreground transition-colors"
               >
                 <CaretLeftIcon className="size-4" />
               </button>
@@ -168,7 +159,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
               <button
                 type="button"
                 onClick={() => setPickerYear((y) => y + 1)}
-                className="p-2 hover:bg-muted border-2 border-border bg-card text-foreground transition-colors"
+                className="p-2 hover:bg-muted border border-border bg-card text-foreground transition-colors"
               >
                 <CaretRightIcon className="size-4" />
               </button>
@@ -183,9 +174,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
                     key={name}
                     type="button"
                     onClick={() => selectMonth(i)}
-                    className={`
-                      px-2 py-2 text-sm font-medium border-2 transition-colors
-                      ${isCurrent
+                    className={` px-2 py-2 text-sm font-medium border transition-colors ${isCurrent
                         ? "bg-primary text-primary-foreground border-primary"
                         : "border-border bg-card text-foreground hover:bg-muted"
                       }
@@ -204,7 +193,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
                 onNavigate(Navigate.TODAY);
                 setIsPickerOpen(false);
               }}
-              className="w-full mt-3 py-2 text-sm font-semibold border-2 border-border bg-card text-foreground hover:bg-muted transition-colors"
+              className="w-full mt-3 py-2 text-sm font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors"
             >
               Today
             </button>
@@ -244,7 +233,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
         </div>
 
         {/* View toggle - same neobrutalist style */}
-        <div className="flex border-2 border-border shadow-hard">
+        <div className="flex border border-border">
           {viewArray.map((v, index) => (
             <button
               key={v}
@@ -252,7 +241,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
               onClick={() => onView(v)}
               className={`
                 px-4 py-3 font-semibold text-sm transition-colors
-                ${index > 0 ? "border-l-2 border-border" : ""}
+                ${index > 0 ? "border-l border-border" : ""}
                 ${view === v
                   ? "bg-primary text-primary-foreground"
                   : "bg-card text-foreground hover:bg-muted"
@@ -267,7 +256,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
             <button
               type="button"
               onClick={toggleList}
-              className="flex items-center gap-1.5 border-l-2 border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+              className="flex items-center gap-1.5 border-l border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
               aria-label="Switch to list view"
             >
               <ListIcon className="size-4" aria-hidden="true" />

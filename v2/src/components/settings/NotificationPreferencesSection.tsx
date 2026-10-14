@@ -88,7 +88,7 @@ function ToggleRow({
   disabled = false, icon, indented = false,
 }: ToggleRowProps): React.ReactElement {
   return (
-    <div className={`flex items-center justify-between ${indented ? "ml-6 pl-4 border-l-2 border-border" : ""}`}>
+    <div className={`flex items-center justify-between ${indented ? "ml-6 pl-4 border-l border-border" : ""}`}>
       <div className="space-y-0.5 flex-1">
         <Label htmlFor={id} className={`text-sm font-medium flex items-center gap-2 ${disabled ? "opacity-50" : ""}`}>
           {icon}
@@ -115,14 +115,14 @@ function WarningBanner({ visible, children, variant = "warning" }: WarningBanner
     : "bg-muted border-border text-muted-foreground";
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {visible && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.15 }}
-          className={`flex items-center gap-2 px-3 py-2 border-2 text-sm ${styles}`}
+          className={`flex items-center gap-2 px-3 py-2 border text-sm ${styles}`}
         >
           <AlertTriangle className="w-4 h-4 flex-shrink-0" />
           <span>{children}</span>
@@ -144,7 +144,7 @@ interface TestButtonProps {
 function TestButton({ onClick, disabled, loading, justSent, label, sentLabel = "Sent" }: TestButtonProps): React.ReactElement {
   return (
     <Button variant="outline" size="sm" onClick={onClick} disabled={disabled} loading={loading} loadingText="Sending...">
-      <AnimatePresence mode="wait">
+      <AnimatePresence initial={false} mode="wait">
         {justSent ? (
           <motion.span key="sent" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: "spring", stiffness: 500, damping: 15 }}>
             <CheckIcon className="w-4 h-4 text-primary" />
@@ -171,21 +171,21 @@ interface PushStatusBadgeProps {
 
 function PushStatusBadge({ status, enabled }: PushStatusBadgeProps): React.ReactElement {
   if (!status?.supported) {
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border-2 border-border">Not supported</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border border-border">Not supported</span>;
   }
   if (status.permission === "denied") {
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-destructive/10 text-destructive border-2 border-destructive">Blocked</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-destructive/10 text-destructive border border-destructive">Blocked</span>;
   }
   if (enabled && status.subscribed) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-primary/10 text-primary border-2 border-primary">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-primary/10 text-primary border border-primary">
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
         Enabled
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border-2 border-border">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border border-border">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
       Disabled
     </span>
@@ -486,7 +486,7 @@ export default function NotificationPreferencesSection({
 
           <div className="space-y-4 pt-2">
             {/* Expandable Deadline Reminders Section */}
-            <div className="ml-6 pl-4 border-l-2 border-border">
+            <div className="ml-6 pl-4 border-l border-border">
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -523,7 +523,7 @@ export default function NotificationPreferencesSection({
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div className="mt-4 ml-6 pl-4 border-l-2 border-border/50 space-y-3 pb-1">
+                    <div className="mt-4 ml-6 pl-4 border-l border-border/50 space-y-3 pb-1">
                       <p className="text-sm text-muted-foreground mb-2">
                         Choose which deadline types to receive reminders for:
                       </p>

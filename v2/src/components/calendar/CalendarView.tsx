@@ -220,15 +220,13 @@ export function CalendarView({
           itself, so this row only shows on phones and in list view. */}
       <div className={cn("flex justify-end mb-4", userViewMode !== "list" && "md:hidden")}>
         <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
           transition={springTransition}
         >
           <Button
             variant="outline"
             size="sm"
             onClick={handleViewModeToggle}
-            className="gap-2 min-h-[44px] hover-lift"
+            className="gap-2 min-h-[44px]"
             aria-label={
               userViewMode === "list" ? "Switch to calendar view" : "Switch to list view"
             }

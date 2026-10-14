@@ -101,7 +101,7 @@ export function DecidedTable({
           {rows.map((c) => (
             <tr
               key={`${c.program}:${c.caseNumber}`}
-              className="border-t-2 border-border/30 align-top"
+              className="border-t border-border/30 align-top"
             >
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                 <Link
@@ -111,7 +111,7 @@ export function DecidedTable({
                   {c.caseNumber}
                 </Link>{" "}
               </td>
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-soft">
                 {PROGRAM_LABEL[c.program]}{" "}
               </td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
@@ -129,21 +129,21 @@ export function DecidedTable({
                   (c.employerName ?? "")
                 )}{" "}
               </td>
-              <td className="px-3 py-3 text-foreground/80">{c.jobTitle ?? ""}{" "}</td>
-              <td className="px-3 py-3 text-sm text-foreground/80">
+              <td className="px-3 py-3 text-soft">{c.jobTitle ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-sm text-soft">
                 {c.socTitle ?? c.socCode ?? ""}{" "}
               </td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
                 {c.state ?? ""}{" "}
               </td>
-              <td className="px-3 py-3 text-sm text-foreground/80">
+              <td className="px-3 py-3 text-sm text-soft">
                 {c.worksiteCity ?? ""}{" "}
               </td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm tabular-nums">
                 {wageText(c)}{" "}
                 <YearlyPayNote wage={c.wage} unit={c.wageUnit} short />
               </td>
-              <td className="px-3 py-3 text-sm text-foreground/80">
+              <td className="px-3 py-3 text-sm text-soft">
                 {c.attorneySlug ? (
                   <Link
                     href={`/perm-attorneys/${c.attorneySlug}`}
@@ -155,9 +155,9 @@ export function DecidedTable({
                   (c.attorneyName ?? "")
                 )}{" "}
               </td>
-              <td className="px-3 py-3 text-sm text-foreground/80">{c.citizenship ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-sm text-soft">{c.citizenship ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{c.visaClass ?? ""}{" "}</td>
-              <td className="px-3 py-3 text-sm text-foreground/80">{c.education ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-sm text-soft">{c.education ?? ""}{" "}</td>
               <td
                 className={
                   "whitespace-nowrap px-3 py-3 text-sm font-bold " + toneOf(c.status)

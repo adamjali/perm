@@ -56,12 +56,12 @@ export function NameSpellings({
 
   return (
     <section
-      className={cn("border-2 border-border bg-tint-primary p-6 shadow-hard-sm sm:p-8", className)}
+      className={cn("border border-border bg-tint-primary p-6 sm:p-8", className)}
     >
-      <h2 className="font-heading text-xl font-black">
+      <h2 className="font-heading text-xl font-bold">
         What this rank counts, and what it doesn&apos;t
       </h2>{" "}
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
         DOL prints the name that went on the form, so one {subject} can appear
         under several.{" "}
         {absorbed > 0 ? (
@@ -86,7 +86,7 @@ export function NameSpellings({
 
       {variants.length > 0 ? (
         <>
-          <ul className="mt-5 divide-y-2 divide-border border-t-2 border-border">
+          <ul className="mt-5 divide-y divide-border border-t border-border">
             {variants.map((v) => (
               <Fragment key={v.slug}>{" "}
                 <li >
@@ -100,7 +100,7 @@ export function NameSpellings({
                     <span className="min-w-0 flex-1 text-sm font-bold leading-snug underline decoration-primary/50 decoration-2 underline-offset-2">
                       {v.name}
                     </span>{" "}
-                    <span className="font-mono text-sm tabular-nums text-foreground/70">
+                    <span className="font-mono text-sm tabular-nums text-muted-foreground">
                       {formatInt(v.total)} filing{v.total === 1 ? "" : "s"}
                     </span>
                   </Link>
@@ -108,7 +108,7 @@ export function NameSpellings({
               </Fragment>
             ))}
           </ul>{" "}
-          <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
             {formatInt(residue)} filing{residue === 1 ? "" : "s"} sit on those pages
             rather than this one. The{" "}
             <Link

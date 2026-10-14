@@ -51,12 +51,12 @@ export function BudgetPools({
   const refused = pools.reduce((a, p) => a + p.refusedLast7d, 0);
   const waited = pools.reduce((a, p) => a + p.queuedLast7d, 0);
   return (
-    <section aria-labelledby="pools-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-      <h2 id="pools-h" className="font-heading text-xl font-black">
+    <section aria-labelledby="pools-h" className="border border-border bg-card p-5 sm:p-6">
+      <h2 id="pools-h" className="font-heading text-xl font-bold">
         Daily email budgets
       </h2>{" "}
       {refused > 0 ? (
-        <p className="mt-3 border-2 border-border bg-data-warn-ink px-4 py-3 text-base font-bold text-background">
+        <p className="mt-3 border border-border bg-data-warn-ink px-4 py-3 text-base font-bold text-background">
           {`${formatInt(refused)} ${refused === 1 ? "person was" : "people were"} turned away in the last 7 days: the queue was full or a request waited more than seven days.`}
         </p>
       ) : (
@@ -80,7 +80,7 @@ export function BudgetPools({
         </p>
       ) : null}{" "}
       {queue && queue.waiting > 0 ? (
-        <p className="mt-2 border-2 border-border bg-background px-4 py-3 text-sm font-bold">
+        <p className="mt-2 border border-border bg-background px-4 py-3 text-sm font-bold">
           {`${formatInt(queue.waiting)} waiting now${queue.oldestQueuedAt ? `, the oldest since ${new Date(queue.oldestQueuedAt).toLocaleString("en-US", { timeZone: EASTERN_TIMEZONE, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} Eastern` : ""}.`}
         </p>
       ) : null}
@@ -93,11 +93,11 @@ export function BudgetPools({
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-sm font-bold">{p.label}</span>{" "}
                 <span className="text-sm tabular-nums">
-                  <span className="font-heading text-base font-black">{formatInt(p.usedLast24h)}</span>
+                  <span className="font-heading text-base font-bold">{formatInt(p.usedLast24h)}</span>
                   {` of ${formatInt(p.limit)}`}
                 </span>
               </div>{" "}
-              <div className="mt-1.5 h-3 w-full border-2 border-border bg-background" role="img" aria-label={`${p.usedLast24h} of ${p.limit} used in the last 24 hours`}>
+              <div className="mt-1.5 h-3 w-full border border-border bg-background" role="img" aria-label={`${p.usedLast24h} of ${p.limit} used in the last 24 hours`}>
                 <div className={`h-full ${full ? "bg-destructive" : "bg-foreground"}`} style={{ width: `${share * 100}%` }} />
               </div>{" "}
               {p.refusedLast7d > 0 ? (
@@ -119,8 +119,8 @@ export function BudgetPools({
 
 function Figure({ value, label, tone }: { value: string; label: string; tone?: "warn" }) {
   return (
-    <div className={`border-2 border-border p-3 ${tone === "warn" ? "bg-data-warn-ink text-background" : "bg-background"}`}>
-      <p className="font-heading text-2xl font-black tabular-nums">{value}</p>{" "}
+    <div className={`border border-border p-3 ${tone === "warn" ? "bg-data-warn-ink text-background" : "bg-background"}`}>
+      <p className="font-heading text-2xl font-bold tabular-nums">{value}</p>{" "}
       <p className={`text-sm font-semibold ${tone === "warn" ? "" : "text-muted-foreground"}`}>{label}</p>
     </div>
   );
@@ -133,8 +133,8 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
   const stale = data.outbox.oldestQueuedAt !== null && now - data.outbox.oldestQueuedAt > 26 * MS_PER_HOUR;
   return (
     <div className="space-y-8">
-      <section aria-labelledby="outbox-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 id="outbox-h" className="font-heading text-xl font-black">
+      <section aria-labelledby="outbox-h" className="border border-border bg-card p-5 sm:p-6">
+        <h2 id="outbox-h" className="font-heading text-xl font-bold">
           Alert delivery, last 7 days
         </h2>{" "}
         <p className="mt-1 text-sm text-muted-foreground">
@@ -156,7 +156,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
       </section>{" "}
 
       <section aria-labelledby="recent-h">
-        <h2 id="recent-h" className="font-heading text-xl font-black">
+        <h2 id="recent-h" className="font-heading text-xl font-bold">
           Latest alerts
         </h2>{" "}
         {data.recent.length === 0 ? (
@@ -172,7 +172,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
               {`The newest ${formatInt(data.recent.length)} of ${formatInt(data.recentTotal ?? 0)} in the last 7 days.`}
             </p>
           ) : null}
-          <div className="mt-3 overflow-x-auto border-2 border-border">
+          <div className="mt-3 overflow-x-auto border border-border">
             <table className="w-full min-w-[880px] text-left text-sm">
               <thead className="bg-muted">
                 <tr>
@@ -185,7 +185,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
               </thead>
               <tbody>
                 {data.recent.map((r, i) => (
-                  <tr key={`${r.email}-${r.createdAt}-${i}`} className="border-t-2 border-border align-top">
+                  <tr key={`${r.email}-${r.createdAt}-${i}`} className="border-t border-border align-top">
                     <td className="whitespace-nowrap px-3 py-2 tabular-nums">{`${when(r.sentAt ?? r.createdAt)} `}</td>
                     <td className="whitespace-nowrap px-3 py-2 tabular-nums">
                       {r.signedUpAt ? (
@@ -220,8 +220,8 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
         )}
       </section>{" "}
 
-      <section aria-labelledby="follows-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 id="follows-h" className="font-heading text-xl font-black">
+      <section aria-labelledby="follows-h" className="border border-border bg-card p-5 sm:p-6">
+        <h2 id="follows-h" className="font-heading text-xl font-bold">
           Employer follows
         </h2>{" "}
         <div className="mt-3 grid grid-cols-3 gap-3 sm:max-w-md">
@@ -235,7 +235,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           </p>
         ) : null}{" "}
         {data.follows.top.length > 0 ? (
-          <ol className="mt-4 divide-y-2 divide-border border-y-2 border-border">
+          <ol className="mt-4 divide-y divide-border border-y border-border">
             {data.follows.top.map((f) => (
               <li key={f.slug} className="flex items-baseline justify-between gap-3 py-2 text-sm">
                 <Link href={`/perm-employers/${f.slug}`} className="min-w-0 font-bold underline decoration-primary-text decoration-2 underline-offset-2 [overflow-wrap:anywhere]">

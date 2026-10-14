@@ -32,21 +32,21 @@ export function QueuePulseWidget() {
   return (
     <section
       aria-label="Live DOL queue position"
-      className="border-2 border-border bg-card p-4 shadow-hard sm:p-5"
+      className="border border-border bg-card p-4 sm:p-5"
     >
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <p className="text-sm leading-relaxed">
-          <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="text-sm font-bold text-muted-foreground">
             DOL queue
             {snapshot?.permAsOf ? ` · ${formatAsOf(snapshot.permAsOf)}` : null}
           </span>{" "}
-          <span className="mt-1 block font-heading text-lg font-black">
+          <span className="mt-1 block font-heading text-lg font-bold">
             Deciding cases filed {formatMonth(frontier)}
           </span>
         </p>{" "}
         <Link
           href="/tools/perm-timeline-calculator"
-          className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-4 py-2 text-sm font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+          className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-background px-4 py-2 text-sm font-bold transition-colors duration-150"
         >
           Estimate a decision
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
@@ -64,7 +64,7 @@ export function QueuePulseSkeleton() {
     <section
       aria-label="Live DOL queue position"
       aria-busy={true}
-      className="border-2 border-border bg-card p-4 shadow-hard sm:p-5"
+      className="border border-border bg-card p-4 sm:p-5"
     >
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <div>

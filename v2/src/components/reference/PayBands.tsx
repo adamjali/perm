@@ -100,7 +100,7 @@ function Track({ band, domain, ends }: { band: PayBand; domain: [number, number]
           />
           <span
             aria-hidden="true"
-            className="absolute top-5 h-4 -translate-y-1/2 border-2 border-border bg-data-good-ink"
+            className="absolute top-5 h-4 -translate-y-1/2 border border-border bg-data-good-ink"
             style={{ left: `${pct(band.p25!, domain)}%`, width: `${pct(band.p75!, domain) - pct(band.p25!, domain)}%` }}
           />
           <span
@@ -135,10 +135,10 @@ function Track({ band, domain, ends }: { band: PayBand; domain: [number, number]
       ) : null}
       {ends ? (
         <>
-          <span aria-hidden="true" className="absolute left-0 top-12 font-mono text-sm tabular-nums text-foreground/70">
+          <span aria-hidden="true" className="absolute left-0 top-12 font-mono text-sm tabular-nums text-muted-foreground">
             {moneyShort(domain[0])}
           </span>{" "}
-          <span aria-hidden="true" className="absolute right-0 top-12 font-mono text-sm tabular-nums text-foreground/70">
+          <span aria-hidden="true" className="absolute right-0 top-12 font-mono text-sm tabular-nums text-muted-foreground">
             {moneyShort(domain[1])}
           </span>{" "}
         </>
@@ -172,7 +172,7 @@ export function PayBands({
             <li key={b.key} className="grid grid-cols-1 gap-1 sm:grid-cols-[13rem_1fr] sm:items-center sm:gap-4 [&>*]:min-w-0">
               <div className="min-w-0">
                 <div className="truncate text-base font-bold">{b.label}</div>
-                {b.sub ? <div className="truncate text-sm text-foreground/70">{b.sub}</div> : null}
+                {b.sub ? <div className="truncate text-sm text-muted-foreground">{b.sub}</div> : null}
               </div>{" "}
               <Track band={b} domain={perRow ? (bandDomain([b]) ?? domain) : domain} ends={perRow} />
             </li>
@@ -180,7 +180,7 @@ export function PayBands({
         </ul>
       </ChartTips>
       {perRow ? (
-        <p className="mt-2 text-sm text-foreground/70">
+        <p className="mt-2 text-sm text-muted-foreground">
           Each row has its own scale, marked at its ends: these jobs pay too differently to share one. The table
           compares them.
         </p>
@@ -189,9 +189,9 @@ export function PayBands({
           <WageAxis domain={domain} />
         </div>
       )}
-      <ul className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/70">
+      <ul className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-4 w-8 border-2 border-border bg-data-good-ink" /> middle
+          <span aria-hidden="true" className="inline-block h-4 w-8 border border-border bg-data-good-ink" /> middle
           half of pay (BLS)
         </li>{" "}
         <li className="flex items-center gap-2">

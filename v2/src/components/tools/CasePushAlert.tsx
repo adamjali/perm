@@ -121,24 +121,24 @@ export function CasePushAlert({ caseNumber, className }: { caseNumber: string; c
   }
 
   return (
-    <div className={cn("border-2 border-border bg-card p-5 shadow-hard sm:p-6 print:hidden", className)}>
-      <h3 className="flex items-center gap-2 font-heading text-base font-black">
+    <div className={cn("border border-border bg-card p-5 sm:p-6 print:hidden", className)}>
+      <h3 className="flex items-center gap-2 font-heading text-base font-bold">
         <BellIcon size={18} weight="bold" aria-hidden="true" /> Or a notification in this browser
       </h3>{" "}
-      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/70">
+      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         No email and no account: the browser hands this site a delivery address that identifies the browser, not
         you, and one notification goes out minutes after DOL&apos;s status for this case changes. Turn it off
         here or in the browser&apos;s settings.
       </p>{" "}
       {state.kind === "on" || state.kind === "off" ? (
-        <p className="mt-3 text-sm leading-relaxed text-foreground/80">{state.message}</p>
+        <p className="mt-3 text-sm leading-relaxed text-soft">{state.message}</p>
       ) : (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={turnOn}
             disabled={state.kind === "working"}
-            className="min-h-11 border-2 border-border bg-background px-5 font-bold shadow-hard transition-transform hover:-translate-y-[1px] disabled:opacity-60 disabled:hover:translate-y-0"
+            className="min-h-11 border border-border bg-background px-5 font-bold transition-transform disabled:opacity-60"
           >
             {state.kind === "working" ? "Asking the browser" : "Notify this browser"}
           </button>{" "}

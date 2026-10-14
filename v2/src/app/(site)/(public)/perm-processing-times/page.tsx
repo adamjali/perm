@@ -133,10 +133,10 @@ function Figure({
   caption?: string;
 }) {
   return (
-    <div className="border-2 border-border bg-card p-5 shadow-hard">
-      <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{label}</p>{" "}
-      <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">{value}</p>{" "}
-      {caption ? <p className="mt-2 text-sm text-foreground/60">{caption}</p> : null}
+    <div className="border border-border bg-card p-5">
+      <p className="text-sm font-bold text-muted-foreground">{label}</p>{" "}
+      <p className="mt-2 font-heading text-3xl font-bold leading-none sm:text-4xl">{value}</p>{" "}
+      {caption ? <p className="mt-2 text-sm text-muted-foreground">{caption}</p> : null}
     </div>
   );
 }
@@ -324,10 +324,10 @@ export default async function PermProcessingTimesPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           PERM processing times
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           Where DOL&apos;s queues stand, from its own published figures, checked
           daily.
         </p>
@@ -345,20 +345,20 @@ export default async function PermProcessingTimesPage() {
       {snapshot ? (
         <>
           {/* The headline. This one sentence is what the whole search cluster asks for. */}
-          <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard sm:p-8">
-            <p className="text-sm font-bold text-foreground/70">The analyst review queue</p>{" "}
-            <p className="mt-3 font-heading text-3xl font-black leading-tight sm:text-4xl">
+          <section className="mt-10 border border-border bg-tint-primary p-6 sm:p-8">
+            <p className="text-sm font-bold text-muted-foreground">The analyst review queue</p>{" "}
+            <p className="mt-3 font-heading text-3xl font-bold leading-tight sm:text-4xl">
               {analystMonth
                 ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
                 : "DOL hasn’t published a filing month for the analyst review queue."}
             </p>
             {!analystMonth && analyst?.raw ? (
-              <p className="mt-3 text-sm text-foreground/70">
+              <p className="mt-3 text-sm text-muted-foreground">
                 Its latest update prints{" "}
                 <span className="font-bold">&ldquo;{analyst.raw}&rdquo;</span> in that row.
               </p>
             ) : null}
-            <p className="mt-4 text-sm text-foreground/70">
+            <p className="mt-4 text-sm text-muted-foreground">
               DOL&apos;s figure, as of {permAsOf}.{" "}
               <a
                 href={DOL_SOURCE}
@@ -405,8 +405,8 @@ export default async function PermProcessingTimesPage() {
 
           {analyst?.priorityDate ? (
             <section className="mt-8">
-              <h2 className="font-heading text-2xl font-black">The queue, drawn</h2>{" "}
-              <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+              <h2 className="font-heading text-2xl font-bold">The queue, drawn</h2>{" "}
+              <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
                 Every PERM waits in filing-month order. Solid months are cleared.
               </p>
               <QueueTape frontierMonth={analyst.priorityDate} className="mt-6" />
@@ -458,9 +458,9 @@ export default async function PermProcessingTimesPage() {
                 </p>
               </FinePrint>
 
-              <div className="mt-6 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
+              <div className="mt-6 border border-border bg-foreground p-6 text-background sm:p-8">
                 <p className="text-sm font-bold text-background/75">Measured advance</p>{" "}
-                <p className="mt-3 font-heading text-4xl font-black leading-none tabular-nums sm:text-5xl">
+                <p className="mt-3 font-heading text-4xl font-bold leading-none tabular-nums sm:text-5xl">
                   {advance.rate.toFixed(2)}
                 </p>{" "}
                 <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
@@ -514,13 +514,13 @@ export default async function PermProcessingTimesPage() {
             dek={`DOL's figures as of ${permAsOf}: the filing month each PERM queue is working, and the wage requests still waiting.`}
           >
             <div className="mt-6 overflow-x-auto">
-              <table className="w-full border-2 border-border text-left text-sm">
+              <table className="w-full border border-border text-left text-sm">
                 <thead className="bg-muted">
                   <tr>
-                    <th scope="col" className="border-b-2 border-border p-3 font-black">
+                    <th scope="col" className="border-b border-border p-3 font-bold">
                       Queue
                     {" "}</th>
-                    <th scope="col" className="border-b-2 border-border p-3 font-black">
+                    <th scope="col" className="border-b border-border p-3 font-bold">
                       Currently working
                     {" "}</th>
                   </tr>
@@ -537,10 +537,10 @@ export default async function PermProcessingTimesPage() {
             </div>
           {snapshot.pwdPermBacklog.length > 0 ? (
             <div className="mt-10">
-              <h3 className="font-heading text-xl font-black">
+              <h3 className="font-heading text-xl font-bold">
                 Prevailing wage requests still pending
               </h3>{" "}
-              <p className="mt-2 max-w-2xl text-foreground/70">
+              <p className="mt-2 max-w-2xl text-muted-foreground">
                 Requests DOL hasn&apos;t decided yet, by the month it received
                 them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}.
                 Each month&apos;s running total is how many sit ahead of it.
@@ -551,7 +551,7 @@ export default async function PermProcessingTimesPage() {
           </Chapter>
         </>
       ) : (
-        <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard">
+        <section className="mt-10 border border-border bg-card p-6">
           <p className="text-base leading-relaxed">
             Live figures are being fetched from the Department of Labor. Until they land,{" "}
             <a
@@ -575,14 +575,14 @@ export default async function PermProcessingTimesPage() {
         title="Where your case sits"
         dek="Your own filing month against these figures, the steps after PERM as people report them, and an email when DOL reaches your month."
       >
-      <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h3 className="font-heading text-2xl font-black">Your filing month, against the queue</h3>{" "}
-        <p className="mt-3 leading-relaxed text-foreground/70">
+      <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+        <h3 className="font-heading text-2xl font-bold">Your filing month, against the queue</h3>{" "}
+        <p className="mt-3 leading-relaxed text-muted-foreground">
           The calculator reads your own filing month against these figures.
         </p>
         <Link
           href="/tools/perm-timeline-calculator"
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
+          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
         >
           Open the processing time calculator
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
@@ -593,11 +593,11 @@ export default async function PermProcessingTimesPage() {
           per case once the PERM is certified, so this is the only way to show
           the I-140, I-485 and card steps; it says which half is checked. */}
       {board ? (
-        <section aria-labelledby="after-perm-h" className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <h3 id="after-perm-h" className="font-heading text-2xl font-black">After PERM, as people report it</h3>{" "}
+        <section aria-labelledby="after-perm-h" className="mt-10 border border-border bg-card p-6 sm:p-8">
+          <h3 id="after-perm-h" className="font-heading text-2xl font-bold">After PERM, as people report it</h3>{" "}
           {afterPerm.length > 0 ? (
             <>
-              <p className="mt-2 max-w-2xl text-base text-foreground/70">
+              <p className="mt-2 max-w-2xl text-base text-muted-foreground">
                 From {board.total.toLocaleString("en-US")} shared timelines: the PERM dates are checked against
                 DOL&apos;s record, and everything after is self-reported.
               </p>
@@ -606,7 +606,7 @@ export default async function PermProcessingTimesPage() {
               </div>
             </>
           ) : (
-            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+            <p className="mt-2 max-w-2xl text-base text-muted-foreground">
               Not enough reports yet for a median at any step. Add yours from a certified case&apos;s page; the PERM
               half is filled in from DOL&apos;s record.
             </p>
@@ -635,11 +635,11 @@ export default async function PermProcessingTimesPage() {
       <Chapter id="questions" title="Common questions">
         <FaqList items={FAQ.map((item) => ({ q: item.question, a: item.answer }))} openFirst={false} />
 
-      <section className="mt-12 border-2 border-border bg-muted p-6">
-        <h3 className="font-heading text-xl font-black">Where these numbers come from</h3>{" "}
+      <section className="mt-12 border border-border bg-muted p-6">
+        <h3 className="font-heading text-xl font-bold">Where these numbers come from</h3>{" "}
         {/* The absence rule changes how a blank cell reads, so it stays in
             the open. The provenance behind it collapses. */}
-        <p className="mt-3 leading-relaxed text-foreground/70">
+        <p className="mt-3 leading-relaxed text-muted-foreground">
           Where a number is missing here, DOL didn’t publish one.
         </p>{" "}
         <FinePrint summary="Sources" className="mt-3">
@@ -656,18 +656,18 @@ export default async function PermProcessingTimesPage() {
         </FinePrint>
       </section>
 
-      <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h3 className="font-heading text-2xl font-black">
+      <section className="mt-12 border border-border bg-card p-6 sm:p-8">
+        <h3 className="font-heading text-2xl font-bold">
           The deadlines you control
         </h3>{" "}
-        <p className="mt-3 leading-relaxed text-foreground/70">
+        <p className="mt-3 leading-relaxed text-muted-foreground">
           The recruitment window, the quiet period and the filing window are
           fixed arithmetic on your prevailing wage determination date. PERM
           Tracker computes them per case and reminds you before each one.
         </p>
         <Link
           href="/signup"
-          className="mt-6 inline-flex items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
+          className="mt-6 inline-flex items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
         >
           Start tracking free
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

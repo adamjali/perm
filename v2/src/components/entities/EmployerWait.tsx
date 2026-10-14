@@ -58,13 +58,13 @@ export function EmployerWait({
   return (
     <section
       aria-labelledby="wait-h"
-      className={cn("border-2 border-border bg-card p-6 shadow-hard sm:p-8", className)}
+      className={cn("border border-border bg-card p-6 sm:p-8", className)}
     >
-      <h2 id="wait-h" className="font-heading text-xl font-black sm:text-2xl">
+      <h2 id="wait-h" className="font-heading text-xl font-bold sm:text-2xl">
         How long their cases are taking
       </h2>{" "}
       {rows.length > 0 ? <BarRows label="Median days to a decision, this employer against every employer" className="mt-5 max-w-3xl" rows={rows} /> : null}{" "}
-      <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
+      <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
         {mine.p50 === null
           ? `${mine.n === 0 ? "None" : `Only ${formatInt(mine.n)}`} of their cases ${mine.n === 1 ? "was" : "were"} decided in the last ${field?.windowDays ?? 90} days, too few for a median of their own. `
           : gap !== null && Math.abs(gap) <= 14
@@ -77,7 +77,7 @@ export function EmployerWait({
         Filing to decision, over decisions we watched DOL make; withdrawals left out.
       </p>{" "}
       {today ? (
-        <p className="mt-4 max-w-2xl border-t-2 border-border pt-4 text-base leading-relaxed text-foreground/80">
+        <p className="mt-4 max-w-2xl border-t border-border pt-4 text-base leading-relaxed text-soft">
           <b className="font-bold text-foreground">Filed today:</b> a new case joins the same line as anyone&apos;s
           {today.casesAhead !== null ? <>, behind {formatInt(today.casesAhead)} cases</> : null}, and would be decided around{" "}
           <b className="font-bold text-foreground">{day(today.estimatedDate)}</b>

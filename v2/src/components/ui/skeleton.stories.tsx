@@ -34,7 +34,7 @@ export const Circle: Story = {
 
 export const CardSkeleton: Story = {
   render: () => (
-    <div className="w-[300px] p-4 border-2 border-border shadow-hard space-y-3">
+    <div className="w-[300px] p-4 border border-border space-y-3">
       <Skeleton variant="block" className="h-32" />
       <Skeleton variant="line" className="w-3/4" />
       <Skeleton variant="line" className="w-1/2" />
@@ -53,7 +53,7 @@ export const ListSkeleton: Story = {
   render: () => (
     <div className="w-[300px] space-y-3">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-3 p-3 border-2 border-border">
+        <div key={i} className="flex items-center gap-3 p-3 border border-border">
           <Skeleton variant="circle" />
           <div className="flex-1 space-y-2">
             <Skeleton variant="line" className="w-3/4" />

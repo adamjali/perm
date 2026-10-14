@@ -183,7 +183,7 @@ export function FilingWindowIndicator({
     return (
       <div
         className={cn(
-          "rounded-lg border-2 p-3",
+          "rounded-lg border p-3",
           config.bgColor,
           config.borderColor,
           className
@@ -204,7 +204,7 @@ export function FilingWindowIndicator({
     return (
       <div
         className={cn(
-          "rounded-lg border-2 p-3",
+          "rounded-lg border p-3",
           config.bgColor,
           config.borderColor,
           className
@@ -224,7 +224,7 @@ export function FilingWindowIndicator({
     return (
       <div
         className={cn(
-          "rounded-md border-2 px-3 py-2",
+          "rounded-md border px-3 py-2",
           config.bgColor,
           config.borderColor,
           className
@@ -250,7 +250,7 @@ export function FilingWindowIndicator({
   return (
     <motion.div
       className={cn(
-        "rounded-lg border-2 p-4",
+        "rounded-lg border p-4",
         config.bgColor,
         config.borderColor,
         className
@@ -266,7 +266,7 @@ export function FilingWindowIndicator({
         </div>
         <span
           className={cn(
-            "px-2 py-1 rounded-md text-sm font-bold uppercase tracking-wide",
+            "px-2 py-1 rounded-md text-sm font-bold",
             config.bgColor,
             config.textColor,
             "border",
@@ -283,7 +283,7 @@ export function FilingWindowIndicator({
           <div className="h-2 bg-accent rounded-full overflow-hidden">
             <motion.div
               className={cn("h-full rounded-full", config.progressColor)}
-              initial={{ width: 0 }}
+              initial={false}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             />
@@ -298,7 +298,7 @@ export function FilingWindowIndicator({
       {/* Window dates */}
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-muted-foreground text-sm uppercase tracking-wide">
+          <span className="text-muted-foreground text-sm">
             Opens
           </span>{" "}
           <p className="font-medium">
@@ -306,7 +306,7 @@ export function FilingWindowIndicator({
           </p>
         </div>
         <div>
-          <span className="text-muted-foreground text-sm uppercase tracking-wide">
+          <span className="text-muted-foreground text-sm">
             Closes
           </span>{" "}
           <p className="font-medium">
@@ -353,7 +353,7 @@ export function FilingWindowIndicator({
 
       {/* PWD expiration warning */}
       {window.isPwdLimited && (
-        <div className="mt-3 flex items-start gap-2 rounded-md bg-data-warn/15 p-2 border-2 border-data-warn">
+        <div className="mt-3 flex items-start gap-2 rounded-md bg-data-warn/15 p-2 border border-data-warn">
           <AlertTriangle className="h-4 w-4 text-data-warn-ink shrink-0 mt-0.5" />
           <p className="text-sm text-data-warn-ink">
             <strong>Note:</strong> This window closes early due to PWD expiration date.

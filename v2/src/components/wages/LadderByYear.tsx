@@ -79,12 +79,12 @@ export function LadderByYear({
           // array items, so each row's text glues to the next one's for every
           // extractor that walks the DOM.
           <Fragment key={l.key}>
-          <li className="border-t-2 border-border py-3 first:border-t-0 first:pt-0">
+          <li className="border-t border-border py-3 first:border-t-0 first:pt-0">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <p className="font-mono text-sm font-bold uppercase tracking-wider">
+              <p className="text-sm font-bold">
                 {l.label}
               </p>{" "}
-              <p className="font-mono text-sm font-bold tabular-nums text-foreground/60">
+              <p className="font-mono text-sm font-bold tabular-nums text-muted-foreground">
                 {formatDollars(l.p50 as number)} median ·{" "}
                 {l.count.toLocaleString("en-US")} {unit}
               </p>
@@ -99,21 +99,21 @@ export function LadderByYear({
 
       {/* Rung by rung, so a reader can see which part of the distribution
           actually moved rather than inferring it from two medians. */}
-      <dl className="mt-6 grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border sm:grid-cols-4">
+      <dl className="mt-6 grid [&>*]:min-w-0 grid-cols-2 gap-px border border-border bg-border sm:grid-cols-4">
         {(["p10", "p50", "p90", "p95"] as const).map((r) => {
           const pct = move(r);
           return (
             <div key={r} className="bg-card p-3">
-              <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+              <dt className="text-sm font-bold text-muted-foreground">
                 {RUNG_LABEL[r]}
               </dt>{" "}
-              <dd className="mt-1 font-heading text-lg font-black tabular-nums">
+              <dd className="mt-1 font-heading text-lg font-bold tabular-nums">
                 {formatDollars(last[r] as number)}
               </dd>{" "}
               {/* No second line at all when the change cannot be computed. A
                   placeholder glyph in a numeric column reads as a value. */}
               {pct === null ? null : (
-                <dd className="mt-0.5 font-mono text-sm tabular-nums text-foreground/70">
+                <dd className="mt-0.5 font-mono text-sm tabular-nums text-muted-foreground">
                   {`${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% since ${first.label}`}
                 </dd>
               )}
@@ -125,7 +125,7 @@ export function LadderByYear({
       <p
         className={cn(
           "mt-4 text-sm leading-relaxed",
-          composition ? "border-2 border-data-warn bg-data-warn/8 p-3 text-foreground/80" : "text-foreground/60",
+          composition ? "border border-data-warn bg-data-warn/8 p-3 text-soft" : "text-muted-foreground",
         )}
       >
         {composition ? (

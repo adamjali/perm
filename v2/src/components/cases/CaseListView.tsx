@@ -219,7 +219,7 @@ export function CaseListView({
   let globalIndex = 0;
 
   return (
-    <div className="border-2 border-border bg-background shadow-hard overflow-visible">
+    <div className="border border-border bg-background overflow-visible">
       {groups.map((group) => (
         <div key={group.key}>
           {/* Group header - only show if there’s a label */}
@@ -228,11 +228,11 @@ export function CaseListView({
               className={cn(
                 "sticky top-0 z-10",
                 "bg-background",
-                "border-b-2 border-border",
+                "border-b border-border",
                 "py-2 px-4"
               )}
             >
-              <h3 className="font-heading font-bold text-sm uppercase tracking-wide text-muted-foreground">
+              <h3 className="font-heading font-bold text-sm text-muted-foreground">
                 {group.label}{" "}
                 <span className="text-sm font-normal">({group.cases.length})</span>
               </h3>
@@ -241,7 +241,7 @@ export function CaseListView({
 
           {/* Rows */}
           <motion.div
-            initial="hidden"
+            initial={false}
             animate="visible"
             variants={{
               hidden: { opacity: 0 },

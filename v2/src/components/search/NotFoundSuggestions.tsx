@@ -38,12 +38,12 @@ export function NotFoundSuggestions({ articles }: { articles: ArticleRef[] }) {
   if (!family && pages.length === 0) return null;
 
   return (
-    <div className="mt-8 border-t-2 border-border pt-6">
+    <div className="mt-8 border-t border-border pt-6">
       {family ? (
         <>
           <Link
             href={family.searchHref}
-            className="inline-flex min-h-[48px] items-center gap-2 border-2 border-border bg-tint-primary px-4 font-bold transition-colors hover:bg-primary hover:text-black"
+            className="inline-flex min-h-[48px] items-center gap-2 border border-border bg-tint-primary px-4 font-bold transition-colors hover:bg-accent"
           >
             <MagnifyingGlassIcon aria-hidden="true" className="size-5" weight="bold" />
             {family.searchable ? `Search ${family.noun} for “${family.query}”` : `Every page of ${family.noun}`}

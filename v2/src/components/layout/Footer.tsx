@@ -101,7 +101,7 @@ export default function Footer({ audience = "public" }: FooterProps) {
     // drawer. Raising each of those past the footer one at a time treats the
     // symptom; the footer is what is wrong. Gated by
     // `footer-stacking.test.ts`.
-    <footer className="relative z-10 border-t-3 border-black bg-black dark:border-white dark:bg-black">
+    <footer className="relative z-10 border-t border-black bg-black dark:border-white dark:bg-black">
       <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8">
         {/* Multi-column grid */}
         {/* SIX cells, not five: the brand block plus five link columns. At
@@ -141,7 +141,7 @@ export default function Footer({ audience = "public" }: FooterProps) {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={"flex min-h-[44px] min-w-[44px] items-center justify-center transition-all " + brand}
+                    className={"flex min-h-[44px] min-w-[44px] items-center justify-center transition-colors " + brand}
                     aria-label={label}
                   >
                     <Icon className="h-5 w-5" />
@@ -164,7 +164,7 @@ export default function Footer({ audience = "public" }: FooterProps) {
           {columns.map((col) => (
             <details key={col.title} className="footer-col group border-b border-white/10 pb-3 last:border-0 lg:border-0 lg:pb-0">
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between py-2 lg:min-h-0 lg:pointer-events-none lg:py-0">
-                <span className="font-heading text-sm font-bold uppercase tracking-wider text-white">
+                <span className="font-heading text-sm font-bold text-white">
                   {col.title}
                 </span>{" "}
                 <CaretDownIcon

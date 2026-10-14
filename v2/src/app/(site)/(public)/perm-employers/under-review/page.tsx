@@ -87,9 +87,9 @@ function topHolder(rows: readonly EmployerStageRow[], status: string): EmployerS
 }
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const BUTTON =
-  "inline-flex min-h-[48px] items-center gap-2 border-2 border-border bg-primary px-4 py-2.5 font-heading text-base font-black text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+  "inline-flex min-h-[48px] items-center gap-2 border border-border bg-primary px-4 py-2.5 font-heading text-base font-bold text-primary-foreground transition-transform motion-reduce:transition-none";
 const QUIET_BUTTON =
-  "inline-flex min-h-[48px] items-center border-2 border-border bg-background px-4 py-2.5 font-heading text-base font-black shadow-hard-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+  "inline-flex min-h-[48px] items-center border border-border bg-background px-4 py-2.5 font-heading text-base font-bold transition-transform motion-reduce:transition-none";
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 
 /** "Thursday, October 8, 2026" from an ISO date. */
@@ -149,7 +149,7 @@ export default async function EmployersUnderReviewPage() {
             <span
               aria-hidden="true"
               className={
-                "inline-flex min-w-[4.5rem] shrink-0 justify-center border-2 border-border px-1.5 font-mono text-sm font-bold tabular-nums " +
+                "inline-flex min-w-[4.5rem] shrink-0 justify-center border border-border px-1.5 font-mono text-sm font-bold tabular-nums " +
                 (m.dir === "on"
                   ? "bg-data-warn-ink text-background"
                   : m.to === "DENIED"
@@ -182,17 +182,17 @@ export default async function EmployersUnderReviewPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+      <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
         Employers with PERM cases on hold, at RFI or under appeal
       </h1>{" "}
-      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90">
+      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-soft">
         Most pending PERM cases wait in DOL&apos;s normal queue. This page counts the rest by employer: cases on
         hold, questioned (an RFI or a deficiency notice), in supervised recruitment, or under the employer&apos;s
         appeal.
       </p>{" "}
 
       {!doc ? (
-        <p className="mt-10 border-2 border-border bg-card p-5 text-base">
+        <p className="mt-10 border border-border bg-card p-5 text-base">
           The employer census has not been written yet, or is more than eight
           days old. It is rebuilt by the daily sweep of DOL&apos;s case system;
           until then the{" "}
@@ -204,14 +204,14 @@ export default async function EmployersUnderReviewPage() {
       ) : (
         <>
           {newest ? (
-            <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="newest-move">
-              <h2 id="newest-move" className="font-heading text-lg font-black sm:text-xl">
+            <section className="mt-8 border border-border bg-card p-6 sm:p-8" aria-labelledby="newest-move">
+              <h2 id="newest-move" className="font-heading text-lg font-bold sm:text-xl">
                 {`DOL's newest move: ${weekdayDate(newest.date)}`}
               </h2>{" "}
-              <p className="mt-3 max-w-3xl font-heading text-2xl font-black leading-snug tracking-tight sm:text-3xl">
+              <p className="mt-3 max-w-3xl font-heading text-2xl font-bold leading-snug tracking-tight sm:text-3xl">
                 {dayHoldSentence(newest)}
               </p>{" "}
-              <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
+              <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
                 DOL publishes no reason with a status change. Held cases stay filed and wait outside the ordinary line.
               </p>{" "}
               <div className="mt-5 flex flex-wrap gap-3">
@@ -232,12 +232,12 @@ export default async function EmployersUnderReviewPage() {
 
           {held.length > 0 ? (
             <section className="mt-10" aria-labelledby="on-hold-now">
-              <h2 id="on-hold-now" className="font-heading text-xl font-black sm:text-2xl">On hold right now</h2>{" "}
-              <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+              <h2 id="on-hold-now" className="font-heading text-xl font-bold sm:text-2xl">On hold right now</h2>{" "}
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
                 {`${formatInt(onHold)} PERM cases are on hold, ${formatShare(doc.pendingTotal ? onHold / doc.pendingTotal : 0)} of the ${formatInt(doc.pendingTotal)} DOL has pending, as of ${longDate(doc.asOf)}.`}
               </p>{" "}
               <ChartTips label="PERM cases on hold, by employer" className="mt-4">
-              <ol className="divide-y-2 divide-border border-y-2 border-border">
+              <ol className="divide-y divide-border border-y border-border">
                 {held.map((r) => {
                   const n = r.byStatus[HOLD_STATUS] ?? 0;
                   const since = shortSince(r, doc.logFrom);
@@ -257,14 +257,14 @@ export default async function EmployersUnderReviewPage() {
                             r.name
                           )}
                         </span>{" "}
-                        <span className="block text-sm text-foreground/70">
+                        <span className="block text-sm text-muted-foreground">
                           {`${n === r.pending ? "Every pending case" : `${formatInt(n)} of ${formatInt(r.pending)} pending`}${since ? `, ${since}` : ""}`}
                         </span>
                       </span>{" "}
-                      <span className="col-span-2 row-start-2 block h-4 border-2 border-border bg-background sm:col-span-1 sm:row-start-auto" aria-hidden="true">
+                      <span className="col-span-2 row-start-2 block h-4 border border-border bg-background sm:col-span-1 sm:row-start-auto" aria-hidden="true">
                         <span className="block h-full bg-data-warn-ink" style={{ width: `${Math.max(2, Math.round((n / heldMax) * 100))}%` }} />
                       </span>{" "}
-                      <span className="col-start-2 row-start-1 text-right font-heading text-xl font-black tabular-nums sm:col-start-auto sm:row-start-auto">
+                      <span className="col-start-2 row-start-1 text-right font-heading text-xl font-bold tabular-nums sm:col-start-auto sm:row-start-auto">
                         {formatInt(n)}
                       </span>
                     </li>
@@ -278,11 +278,11 @@ export default async function EmployersUnderReviewPage() {
 
           {doc.logFrom && days.length > 0 ? (
             <section className="mt-10" aria-labelledby="when-moved">
-              <h2 id="when-moved" className="font-heading text-xl font-black sm:text-2xl">When DOL moved them</h2>{" "}
-              <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+              <h2 id="when-moved" className="font-heading text-xl font-bold sm:text-2xl">When DOL moved them</h2>{" "}
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
                 {`Days DOL moved five or more of one employer's cases into or out of hold, from this site's daily record since ${longDate(doc.logFrom)}.`}
               </p>{" "}
-              <ol className="mt-4 divide-y-2 divide-border border-y-2 border-border">
+              <ol className="mt-4 divide-y divide-border border-y border-border">
                 {shownDays.map(dayItem)}
               </ol>{" "}
               {earlierDays.length > 0 ? (
@@ -290,7 +290,7 @@ export default async function EmployersUnderReviewPage() {
                   <summary className="min-h-11 cursor-pointer py-2 text-base font-bold underline decoration-primary decoration-2 underline-offset-2">
                     {`Show the ${formatInt(earlierDays.length)} earlier days`}
                   </summary>
-                  <ol className="mt-2 divide-y-2 divide-border border-y-2 border-border">
+                  <ol className="mt-2 divide-y divide-border border-y border-border">
                     {earlierDays.map(dayItem)}
                   </ol>
                 </details>
@@ -298,22 +298,22 @@ export default async function EmployersUnderReviewPage() {
             </section>
           ) : null}{" "}
 
-          <details className="mt-10 border-2 border-border bg-card">
-            <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-black">
+          <details className="mt-10 border border-border bg-card">
+            <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
               {`Every stage outside the line: holds, RFIs and appeals (${formatInt(outside)} cases)`}
             </summary>
-            <div className="border-t-2 border-border px-5 pb-6">
-          <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-            <h2 className="font-heading text-xl font-black sm:text-2xl">Nationwide, as of {longDate(doc.asOf)}</h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <div className="border-t border-border px-5 pb-6">
+          <section className="mt-10 border border-border bg-card p-6 sm:p-8">
+            <h2 className="font-heading text-xl font-bold sm:text-2xl">Nationwide, as of {longDate(doc.asOf)}</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {formatInt(doc.pendingTotal)} PERM cases are pending. {formatInt(doc.nationwide[QUEUE_STATUS] ?? 0)} of them
               are in analyst review; the rest sit at one of these stages.
             </p>{" "}
-            <dl className="mt-5 border-t-2 border-border">
+            <dl className="mt-5 border-t border-border">
               {stages.map(([status, n]) => (
                 <Fragment key={status}>{" "}
-                <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
-                  <dt className="font-heading text-xl font-black tabular-nums tracking-tight sm:text-2xl">{formatInt(n)}</dt>{" "}
+                <div className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+                  <dt className="font-heading text-xl font-bold tabular-nums tracking-tight sm:text-2xl">{formatInt(n)}</dt>{" "}
                   <dd className="text-base leading-snug">
                     {hasStagePage(status) ? (
                       <Link href={`/perm-rfi-audit/${stageSlug(status)}`} className={LINK}>
@@ -337,13 +337,13 @@ export default async function EmployersUnderReviewPage() {
 
 
           <section className="mt-10">
-            <h2 className="font-heading text-xl font-black sm:text-2xl">Most cases outside the normal queue</h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <h2 className="font-heading text-xl font-bold sm:text-2xl">Most cases outside the normal queue</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               By count. The biggest filers lead this list because they file the
               most; the share list below corrects for size.
             </p>{" "}
             <ChartTips label="Pending cases outside the normal queue, by employer" className="mt-4">
-            <ol className="divide-y-2 divide-border border-y-2 border-border">
+            <ol className="divide-y divide-border border-y border-border">
               {byReview.map((r, i) => (
                 <Fragment key={r.slug ?? r.name}>{" "}
                 <li className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-baseline gap-x-3 py-3">
@@ -356,7 +356,7 @@ export default async function EmployersUnderReviewPage() {
                     ) : (
                       <span className="font-bold">{r.name}</span>
                     )}{" "}
-                    <span className="text-sm text-foreground/70">
+                    <span className="text-sm text-muted-foreground">
                       {`${formatInt(r.review)} of ${formatInt(r.pending)} pending${breakdown(r)}`}
                     </span>{" "}
                     <span className="mt-2 block max-w-sm">
@@ -369,11 +369,11 @@ export default async function EmployersUnderReviewPage() {
                     </span>{" "}
                     {(() => {
                       const since = holdSincePhrase(r, doc.logFrom);
-                      return since ? <span className="mt-0.5 block text-sm text-foreground/70">{`${since.charAt(0).toUpperCase()}${since.slice(1)}.`}</span> : null;
+                      return since ? <span className="mt-0.5 block text-sm text-muted-foreground">{`${since.charAt(0).toUpperCase()}${since.slice(1)}.`}</span> : null;
                     })()}
                   </span>{" "}
                   <span className="flex flex-col items-end">
-                    <span className="font-heading text-lg font-black tabular-nums">{formatShare(r.share)}</span>{" "}
+                    <span className="font-heading text-lg font-bold tabular-nums">{formatShare(r.share)}</span>{" "}
                     {r.slug ? (
                       <Link
                         href={`/perm-employers/${r.slug}#follow`}
@@ -392,14 +392,14 @@ export default async function EmployersUnderReviewPage() {
           </section>{" "}
 
           <section className="mt-10">
-            <h2 className="font-heading text-xl font-black sm:text-2xl">Highest share of their own queue</h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <h2 className="font-heading text-xl font-bold sm:text-2xl">Highest share of their own queue</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               Employers with at least {SHARE_FLOOR} pending cases, ranked by the
               share outside the normal queue. Below that floor a share is noise:
               two of two is not a pattern.
             </p>{" "}
             <ChartTips label="Share of each employer's queue outside the normal queue" className="mt-4">
-            <ol className="divide-y-2 divide-border border-y-2 border-border">
+            <ol className="divide-y divide-border border-y border-border">
               {byShare.map((r, i) => (
                 <Fragment key={r.slug ?? r.name}>{" "}
                 <li className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-baseline gap-x-3 py-3">
@@ -412,7 +412,7 @@ export default async function EmployersUnderReviewPage() {
                     ) : (
                       <span className="font-bold">{r.name}</span>
                     )}{" "}
-                    <span className="text-sm text-foreground/70">
+                    <span className="text-sm text-muted-foreground">
                       {`${formatInt(r.review)} of ${formatInt(r.pending)} pending${breakdown(r)}`}
                     </span>{" "}
                     <span className="mt-2 block max-w-sm">
@@ -425,7 +425,7 @@ export default async function EmployersUnderReviewPage() {
                     </span>
                   </span>{" "}
                   <span className="flex flex-col items-end">
-                    <span className="font-heading text-lg font-black tabular-nums">{formatShare(r.share)}</span>{" "}
+                    <span className="font-heading text-lg font-bold tabular-nums">{formatShare(r.share)}</span>{" "}
                     {r.slug ? (
                       <Link
                         href={`/perm-employers/${r.slug}#follow`}
@@ -444,8 +444,8 @@ export default async function EmployersUnderReviewPage() {
           </section>{" "}
 
           <section className="mt-10">
-            <h2 className="font-heading text-xl font-black sm:text-2xl">Every employer with five or more pending cases</h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <h2 className="font-heading text-xl font-bold sm:text-2xl">Every employer with five or more pending cases</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {formatInt(doc.employers.length)} employers. Search by name, sort any column, or
               download the table. Each name opens the employer&apos;s page; to see the
               cases themselves, open the{" "}
@@ -462,18 +462,18 @@ export default async function EmployersUnderReviewPage() {
             </div>
           </details>{" "}
 
-          <details className="mt-4 border-2 border-border bg-card">
-            <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-black">
+          <details className="mt-4 border border-border bg-card">
+            <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
               What a count here does and doesn&apos;t mean
             </summary>
-            <div className="border-t-2 border-border px-5 pb-6">
+            <div className="border-t border-border px-5 pb-6">
           <section className="mt-4 max-w-3xl">
-            <p className="mt-3 text-base leading-relaxed text-foreground/85">
+            <p className="mt-3 text-base leading-relaxed text-soft">
               These are DOL&apos;s own status words, confirmed on the date above. They say where a case is,
               never why: a hold can be administrative, an RFI is routine, and an appeal is the
               employer&apos;s own filing.
             </p>{" "}
-            <p className="mt-3 text-base leading-relaxed text-foreground/85">
+            <p className="mt-3 text-base leading-relaxed text-soft">
               This site&apos;s record of status changes began on {longDate(doc.logFrom ?? "2026-08-27")}, so a
               hold already in place then reads &ldquo;since before&rdquo; that date.{" "}
               <Link href="/perm-decision-activity" className={LINK}>

@@ -52,7 +52,7 @@ function SettingsPageSkeleton() {
       {/* Layout Skeleton */}
       <div className="flex flex-col md:flex-row gap-8">
         {/* Mobile tabs skeleton */}
-        <div className="md:hidden flex gap-2 overflow-hidden pb-4 border-b-2 border-border">
+        <div className="md:hidden flex gap-2 overflow-hidden pb-4 border-b border-border">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-10 w-24 flex-shrink-0" />
           ))}

@@ -37,15 +37,15 @@ export const AllSizes: Story = {
     <div className="flex items-center gap-6">
       <div className="flex flex-col items-center gap-2">
         <Spinner size="sm" />
-        <span className="text-xs text-foreground/70">Small</span>
+        <span className="text-sm text-muted-foreground">Small</span>
       </div>
       <div className="flex flex-col items-center gap-2">
         <Spinner />
-        <span className="text-xs text-foreground/70">Default</span>
+        <span className="text-sm text-muted-foreground">Default</span>
       </div>
       <div className="flex flex-col items-center gap-2">
         <Spinner size="lg" />
-        <span className="text-xs text-foreground/70">Large</span>
+        <span className="text-sm text-muted-foreground">Large</span>
       </div>
     </div>
   ),
@@ -56,11 +56,11 @@ export const AllVariants: Story = {
     <div className="flex items-center gap-8">
       <div className="flex flex-col items-center gap-2">
         <Spinner variant="default" />
-        <span className="text-xs text-foreground/70">Default (Black)</span>
+        <span className="text-sm text-muted-foreground">Default (Black)</span>
       </div>
       <div className="flex flex-col items-center gap-2">
         <Spinner variant="accent" />
-        <span className="text-xs text-foreground/70">Accent (Forest Green)</span>
+        <span className="text-sm text-muted-foreground">Accent (Forest Green)</span>
       </div>
     </div>
   ),
@@ -84,7 +84,7 @@ export const WithButton: Story = {
           Loading...
         </Button>
       </div>
-      <div className="text-xs text-foreground/70 mt-2">
+      <div className="text-sm text-muted-foreground mt-2">
         Spinners automatically match button size (sm buttons get sm spinner)
       </div>
     </div>
@@ -100,13 +100,13 @@ export const SizeVariants: Story = {
           <Spinner size="sm" variant="default" />
           <Spinner size="default" variant="default" />
           <Spinner size="lg" variant="default" />
-          <span className="text-xs text-foreground/70">Default (Black)</span>
+          <span className="text-sm text-muted-foreground">Default (Black)</span>
         </div>
         <div className="flex items-center gap-4">
           <Spinner size="sm" variant="accent" />
           <Spinner size="default" variant="accent" />
           <Spinner size="lg" variant="accent" />
-          <span className="text-xs text-foreground/70">Accent (Forest Green #228B22)</span>
+          <span className="text-sm text-muted-foreground">Accent (Forest Green #228B22)</span>
         </div>
       </div>
     </div>

@@ -21,10 +21,10 @@ export default function OfflinePage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         {/* Main card */}
-        <div className="bg-card border-2 border-border shadow-hard p-8">
+        <div className="bg-card border border-border p-8">
           {/* Icon container */}
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-muted border-2 border-border shadow-hard-sm flex items-center justify-center">
+            <div className="w-20 h-20 bg-muted border border-border flex items-center justify-center">
               <WifiSlashIcon className="w-10 h-10 text-muted-foreground" />
             </div>
           </div>
@@ -37,7 +37,7 @@ export default function OfflinePage() {
           </p>{" "}
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-primary text-primary-foreground font-heading font-bold text-lg py-4 px-6 border-2 border-border shadow-hard hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-150"
+            className="w-full bg-primary text-primary-foreground font-heading font-bold text-lg py-4 px-6 border border-border transition-colors duration-150"
           >
             <span className="flex items-center justify-center gap-2">
               <RefreshCw className="w-5 h-5" />

@@ -45,25 +45,18 @@ export default function UrgencyGroup({
       className={`
         p-4 md:min-h-[120px]
         ${style.tint}
-        ${!isLast ? "border-r-2 border-border" : ""}
-        md:border-b-0
-        border-b-2 md:border-b-0 last:border-b-0
-      `}
+        ${!isLast ? "border-r border-border" : ""} md:border-b-0 border-b last:border-b-0 `}
     >
       {/* Header with label + count - v1 style dashed border */}
       <div
-        className={`
-          flex items-center justify-between
-          mb-4 pb-2
-          border-b-2 border-dashed
-          ${style.color}
+        className={` flex items-center justify-between mb-4 pb-2 border-b border-dashed ${style.color}
         `}
         style={{ borderColor: "currentColor" }}
       >
-        <span className="font-heading font-extrabold text-sm uppercase tracking-widest flex items-center gap-2">
+        <span className="font-heading font-bold text-sm flex items-center gap-2">
           {title}
         </span>{" "}
-        <span className="font-mono font-extrabold text-xl">{items.length}</span>
+        <span className="font-mono font-bold text-xl">{items.length}</span>
       </div>
 
       {/* Items list */}
@@ -89,7 +82,7 @@ export default function UrgencyGroup({
             <button
               type="button"
               onClick={() => setShowAllItems(!showAllItems)}
-              className="w-full py-2 text-sm font-semibold text-foreground/70 hover:text-foreground transition-colors duration-200"
+              className="w-full py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
               {showAllItems ? "Show less" : `+${remainingCount} more`}
             </button>

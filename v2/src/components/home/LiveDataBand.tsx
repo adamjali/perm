@@ -156,23 +156,23 @@ export function LiveDataBand({
   return (
     <section
       aria-label="DOL's queue and its pace"
-      className="border-y-2 border-border bg-card"
+      className="border-y border-border bg-card"
     >
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div>
-            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+            <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
               How fast DOL works through the line
             </h2>{" "}
             {asOf ? (
-              <p className="mt-2 text-sm text-foreground/70">
+              <p className="mt-2 text-sm text-muted-foreground">
                 From DOL&apos;s own processing times, as of {formatAsOf(asOf)}
               </p>
             ) : null}
           </div>{" "}
           <Link
             href="/tools"
-            className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-5 py-2.5 font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+            className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-background px-5 py-2.5 font-bold transition-colors duration-150"
           >
             Browse every dataset
             <ArrowRight />
@@ -201,12 +201,12 @@ export function LiveDataBand({
  */
 export function DataShelf({ figures }: { figures?: DataPageFigures }) {
   return (
-    <section aria-labelledby="data-shelf-heading" className="border-b-3 border-border bg-card">
+    <section aria-labelledby="data-shelf-heading" className="border-b border-border bg-card">
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
         <div className="grid grid-cols-1 items-end gap-6 [&>*]:min-w-0 lg:grid-cols-12">
           <h2
             id="data-shelf-heading"
-            className="font-heading text-3xl font-black leading-tight sm:text-4xl lg:col-span-5"
+            className="font-heading text-3xl font-bold leading-tight sm:text-4xl lg:col-span-5"
           >
             Search every filing
           </h2>{" "}
@@ -220,11 +220,11 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
               type="search"
               autoComplete="off"
               placeholder="An employer's name"
-              className="min-h-[48px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[48px] w-full min-w-0 flex-1 border border-input bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />{" "}
             <button
               type="submit"
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 border-3 border-border bg-foreground px-6 font-heading font-black text-background shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 border border-border bg-foreground px-6 font-heading font-bold text-background transition-transform duration-150"
             >
               Search{" "}
               <ArrowRight className="shrink-0" />
@@ -283,7 +283,7 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
                     <Fragment key={rung}>
                       {" "}
                       <span className="flex items-baseline justify-between gap-2 border-b border-border/25 py-[3px] font-mono text-sm last:border-b-0">
-                        <span className="text-foreground/55">{rung}</span>{" "}
+                        <span className="text-muted-foreground">{rung}</span>{" "}
                         <span className="font-semibold tabular-nums">
                           ${value.toLocaleString("en-US")}
                         </span>
@@ -328,13 +328,13 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
               what: "View why cases are denied",
               figure: figures?.denial ? (
                 <>
-                  <span className="block font-heading text-2xl font-black leading-none">
+                  <span className="block font-heading text-2xl font-bold leading-none">
                     {figures.denial.rate}%
                   </span>{" "}
-                  <span className="mt-1 block font-mono text-sm font-semibold text-foreground/60">
+                  <span className="mt-1 block font-mono text-sm font-semibold text-muted-foreground">
                     denied
                   </span>{" "}
-                  <span className="mt-1 block font-mono text-sm text-foreground/55">
+                  <span className="mt-1 block font-mono text-sm text-muted-foreground">
                     {figures.denial.denied.toLocaleString("en-US")} of{" "}
                     {figures.denial.decided.toLocaleString("en-US")}
                   </span>{" "}
@@ -365,17 +365,17 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
             <Link
               key={d.href}
               href={d.href}
-              className="group flex flex-col border-2 border-border bg-background p-4 shadow-hard-sm transition-all duration-150 hover:-translate-y-[2px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+              className="group flex flex-col border border-border bg-background p-4 transition-colors duration-150"
             >
               {/* THE PICTURE AND THE NAME: no "View ..." line or OPEN row
                   restating the label; the whole card is the link, and `what`
                   names it for screen readers. */}
-              <span className="flex items-center justify-between gap-2 font-heading text-lg font-black">
+              <span className="flex items-center justify-between gap-2 font-heading text-lg font-bold">
                 {d.label}{" "}
-                <ArrowRight className="shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
+                <ArrowRight className="shrink-0 transition-transform duration-150" />
               </span>{" "}
               {d.figure ? (
-                <span className="mt-3 block border-t-2 border-border/30 pt-3">
+                <span className="mt-3 block border-t border-border/30 pt-3">
                   {d.figure}
                 </span>
               ) : null}{" "}

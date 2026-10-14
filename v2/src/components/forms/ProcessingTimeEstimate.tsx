@@ -51,7 +51,7 @@ export function ProcessingTimeEstimate({
     return (
       <div
         className={cn(
-          "rounded-lg border-2 border-border bg-muted/30 p-3 text-sm text-muted-foreground",
+          "rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground",
           className,
         )}
       >
@@ -71,7 +71,7 @@ export function ProcessingTimeEstimate({
 
   if (compact) {
     return (
-      <div className={cn("rounded-md border-2 px-3 py-2", tone, className)}>
+      <div className={cn("rounded-md border px-3 py-2", tone, className)}>
         <div className="flex items-center gap-2">
           {isPremiumProcessing ? (
             <Zap className="h-4 w-4 text-data-warn-ink" aria-hidden="true" />
@@ -92,10 +92,10 @@ export function ProcessingTimeEstimate({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -5 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className={cn("rounded-lg border-2 p-4", tone, className)}
+      className={cn("rounded-lg border p-4", tone, className)}
     >
       <div className="mb-3 flex items-center gap-2">
         {isPremiumProcessing ? (

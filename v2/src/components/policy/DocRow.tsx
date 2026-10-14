@@ -59,11 +59,11 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
   const isOflc = doc.type === OFLC_TYPE;
 
   return (
-    <details id={`doc-${doc.documentNumber}`} className="group border-b-2 border-border last:border-b-0">
+    <details id={`doc-${doc.documentNumber}`} className="group border-b border-border last:border-b-0">
       <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <span className={`inline-block border-2 border-foreground px-2 py-0.5 font-mono text-sm font-bold uppercase tracking-[0.06em] ${badgeClass(doc.type)}`}>
+            <span className={`inline-block border border-foreground px-2 py-0.5 text-sm font-bold ${badgeClass(doc.type)}`}>
               {typeLabel(doc.type)}
             </span>{" "}
             <span className="font-mono text-sm text-muted-foreground">{dayLabel(doc.publicationDate)}</span>{" "}
@@ -74,7 +74,7 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
               </span>
             ) : null}
           </span>{" "}
-          <h3 className="mt-2 font-heading text-lg font-black leading-snug">{doc.title}</h3>{" "}
+          <h3 className="mt-2 font-heading text-lg font-bold leading-snug">{doc.title}</h3>{" "}
           {line ? <span className="mt-1.5 block font-heading text-base font-bold">{line}</span> : null}
         </span>{" "}
         <CaretDownIcon
@@ -82,7 +82,7 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
           aria-hidden="true"
         />
       </summary>{" "}
-      <div className="border-t-2 border-border/40 px-5 pb-5 pt-4 text-base leading-relaxed text-foreground/80 sm:px-6">
+      <div className="border-t border-border/40 px-5 pb-5 pt-4 text-base leading-relaxed text-soft sm:px-6">
         {abstract ? <p>{abstract}</p> : null}{" "}
         {doc.dates ? (
           <p className="mt-3">
@@ -129,7 +129,7 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
           ))}
         </p>{" "}
         {shot ? (
-          <figure className="mt-5 max-w-xl border-2 border-border bg-background p-2 shadow-hard-sm">
+          <figure className="mt-5 max-w-xl border border-border bg-background p-2">
             <Image
               src={`/images/policy/${doc.documentNumber}.webp`}
               width={shot.w}

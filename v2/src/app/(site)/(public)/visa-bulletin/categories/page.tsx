@@ -34,7 +34,7 @@ export const metadata: Metadata = withSocialCard({
 
 /** A final action cell's fill says its state before its words do. */
 const STATE_FILL: Record<string, string> = {
-  current: "bg-primary/20 hover:bg-primary/35",
+  current: "bg-primary/20 hover:bg-accent",
   unavailable: "bg-foreground/10 hover:bg-foreground/20",
 };
 
@@ -63,8 +63,8 @@ export default async function BulletinCategoriesPage() {
       <div className="pt-10 sm:pt-12" />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Every line in the bulletin</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Every line in the bulletin</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           {board
             ? `The ${bulletinMonthLabel(board.lastMonth)} bulletin's cutoffs for every employment-based category and country. Pick a line for its history back to ${bulletinMonthLabel(board.firstMonth)}.`
             : "The bulletin archive is unavailable right now."}
@@ -73,12 +73,12 @@ export default async function BulletinCategoriesPage() {
 
       {board && categories.length ? (
         <section className="mt-10">
-          <div className="overflow-x-auto border-2 border-border bg-card shadow-hard">
+          <div className="overflow-x-auto border border-border bg-card">
             <table className="w-full min-w-[760px] text-left text-base">
               <caption className="sr-only">
                 Final action and dates for filing cutoffs, {bulletinMonthLabel(board.lastMonth)}, by category and country
               </caption>
-              <thead className="border-b-2 border-border bg-muted/40">
+              <thead className="border-b border-border bg-muted/40">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>
                   {LINE_PAGE_COUNTRIES.map((c) => (
@@ -107,11 +107,11 @@ export default async function BulletinCategoriesPage() {
                             >
                               <span className="block font-bold tabular-nums underline underline-offset-2">{cutoffLabel(fa.latest)}</span>{" "}
                               {dff ? (
-                                <span className="block text-sm text-foreground/70 tabular-nums">filing {cutoffLabel(dff.latest)}</span>
+                                <span className="block text-sm text-muted-foreground tabular-nums">filing {cutoffLabel(dff.latest)}</span>
                               ) : null}
                             </Link>
                           ) : (
-                            <span className="block px-2 py-2 text-foreground/60">not listed</span>
+                            <span className="block px-2 py-2 text-muted-foreground">not listed</span>
                           )}{" "}
                         </td>
                       );
@@ -124,14 +124,14 @@ export default async function BulletinCategoriesPage() {
           <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {MATRIX_KEY.map((k) => (
               <li key={k.label} className="flex items-center gap-2">
-                <span aria-hidden="true" className={`size-4 shrink-0 border-2 border-border ${k.fill}`} />{" "}
+                <span aria-hidden="true" className={`size-4 shrink-0 border border-border ${k.fill}`} />{" "}
                 <span>
                   <span className="font-bold">{k.label}</span>: {k.means}
                 </span>{" "}
               </li>
             ))}
           </ul>{" "}
-          <p className="mt-3 text-base text-foreground/70">
+          <p className="mt-3 text-base text-muted-foreground">
             Top of each cell: the final action date, when a green card can be approved, which sets the cell&apos;s fill.
             Under it: the dates for filing, when USCIS allows it for filing an I-485.
           </p>
@@ -139,11 +139,11 @@ export default async function BulletinCategoriesPage() {
       ) : null}
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Each line&apos;s page</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Each line&apos;s page</h2>{" "}
         <div className="mt-4 grid grid-cols-1 gap-6 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((cat) => (
             <div key={cat}>
-              <h3 className="font-heading text-lg font-black" translate="no">
+              <h3 className="font-heading text-lg font-bold" translate="no">
                 {LINE_CATEGORY_SHORT[cat]}
               </h3>{" "}
               <ul className="mt-2 space-y-1">

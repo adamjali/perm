@@ -105,12 +105,12 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
       <div
         role="status"
         aria-live="polite"
-        className="border-2 border-border bg-card p-5 shadow-hard sm:p-6"
+        className="border border-border bg-card p-5 sm:p-6"
       >
-        <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <p className="text-sm font-bold text-muted-foreground">
           Asking USCIS
         </p>{" "}
-        <p className="mt-2 text-base text-foreground/80">
+        <p className="mt-2 text-base text-soft">
           Checking {receipt} against USCIS&apos;s Case Status API.
         </p>
       </div>
@@ -155,22 +155,22 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
   const modified = longDate(status.modifiedAt);
 
   return (
-    <section aria-labelledby="uscis-result-heading" className="border-2 border-border bg-card shadow-hard">
-      <div className="border-b-2 border-border p-5 sm:p-6">
-        <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
+    <section aria-labelledby="uscis-result-heading" className="border border-border bg-card">
+      <div className="border-b border-border p-5 sm:p-6">
+        <p className="text-sm font-bold text-muted-foreground">
           {status.formType ? `${status.formType} · ` : ""}
           {status.receipt}
         </p>{" "}
-        <h2 id="uscis-result-heading" className="mt-2 font-heading text-2xl font-black sm:text-3xl">
+        <h2 id="uscis-result-heading" className="mt-2 font-heading text-2xl font-bold sm:text-3xl">
           {status.statusText}
         </h2>{" "}
         {status.statusDesc ? (
-          <p className="mt-3 max-w-prose text-base leading-relaxed text-foreground/80">{status.statusDesc}</p>
+          <p className="mt-3 max-w-prose text-base leading-relaxed text-soft">{status.statusDesc}</p>
         ) : null}
       </div>{" "}
 
       {stale ? (
-        <p className="flex items-start gap-2 border-b-2 border-data-warn bg-data-warn/8 px-5 py-3 text-sm leading-relaxed text-foreground/80 sm:px-6">
+        <p className="flex items-start gap-2 border-b border-data-warn bg-data-warn/8 px-5 py-3 text-sm leading-relaxed text-soft sm:px-6">
           <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>
             <b className="font-bold text-data-warn-ink">This is our stored copy.</b> USCIS could
@@ -183,31 +183,31 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
       <dl className="grid gap-x-8 gap-y-3 p-5 text-sm sm:grid-cols-2 sm:p-6">
         {submitted ? (
           <div>
-            <dt className="font-mono font-bold uppercase tracking-[0.1em] text-muted-foreground">Received by USCIS</dt>{" "}
+            <dt className="font-bold text-muted-foreground">Received by USCIS</dt>{" "}
             <dd className="mt-1 text-base">{submitted}</dd>
           </div>
         ) : null}{" "}
         {modified ? (
           <div>
-            <dt className="font-mono font-bold uppercase tracking-[0.1em] text-muted-foreground">Last updated by USCIS</dt>{" "}
+            <dt className="font-bold text-muted-foreground">Last updated by USCIS</dt>{" "}
             <dd className="mt-1 text-base">{modified}</dd>
           </div>
         ) : null}{" "}
         <div>
-          <dt className="font-mono font-bold uppercase tracking-[0.1em] text-muted-foreground">Status seen</dt>{" "}
+          <dt className="font-bold text-muted-foreground">Status seen</dt>{" "}
           <dd className="mt-1 text-base">
             {whenEt(status.seenAt)}
             {source === "stored" && !stale ? " (our copy, under six hours old)" : ""}
           </dd>
         </div>{" "}
         <div>
-          <dt className="font-mono font-bold uppercase tracking-[0.1em] text-muted-foreground">Status last changed</dt>{" "}
+          <dt className="font-bold text-muted-foreground">Status last changed</dt>{" "}
           <dd className="mt-1 text-base">{whenEt(status.lastChangeAt)}</dd>
         </div>
       </dl>{" "}
 
       {status.history.length > 0 ? (
-        <div className="border-t-2 border-border p-5 sm:p-6">
+        <div className="border-t border-border p-5 sm:p-6">
           <h3 className="font-heading text-lg font-bold">History, as USCIS lists it</h3>{" "}
           <ol className="mt-3 space-y-2 text-sm">
             {status.history.map((h) => (
@@ -220,7 +220,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
         </div>
       ) : null}{" "}
 
-      <p className="border-t-2 border-border px-5 py-3 text-sm text-muted-foreground sm:px-6">
+      <p className="border-t border-border px-5 py-3 text-sm text-muted-foreground sm:px-6">
         USCIS&apos;s own words, from its Case Status API. Nothing on this panel is
         estimated. This lookup is stored as{" "}
         <a href="/privacy#uscis-case-status" className="font-bold underline underline-offset-2 hover:text-primary">
@@ -238,9 +238,9 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
 
 function Refusal({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div role="status" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-      <p className="font-heading text-xl font-black">{title}</p>{" "}
-      <p className="mt-2 max-w-prose text-base leading-relaxed text-foreground/80">{children}</p>
+    <div role="status" className="border border-border bg-card p-5 sm:p-6">
+      <p className="font-heading text-xl font-bold">{title}</p>{" "}
+      <p className="mt-2 max-w-prose text-base leading-relaxed text-soft">{children}</p>
     </div>
   );
 }

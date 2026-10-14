@@ -45,7 +45,7 @@ export function PermPath({
           {i < steps.length - 1 && (
             <span
               aria-hidden="true"
-              className="absolute top-1/2 -right-[26px] z-10 hidden size-7 -translate-y-1/2 place-items-center border-2 border-border bg-background text-foreground sm:grid"
+              className="absolute top-1/2 -right-[26px] z-10 hidden size-7 -translate-y-1/2 place-items-center border border-border bg-background text-foreground sm:grid"
             >
               <ArrowRightIcon className="size-3.5" weight="bold" />
             </span>
@@ -95,14 +95,14 @@ interface StatBlockProps {
 export function StatBlock({ fill, onFill, icon: IconCmp, label, marker, count, note, href, active = false }: StatBlockProps) {
   const body = (
     <>
-      <div className={cn("flex items-center justify-between gap-2 border-b-2 border-border px-3 py-2", fill, onFill)}>
+      <div className={cn("flex items-center justify-between gap-2 border-b border-border px-3 py-2", fill, onFill)}>
         <span className="font-mono text-sm font-bold tabular-nums">{marker}</span>
         <IconCmp className="size-5" weight="bold" aria-hidden="true" />
       </div>
       <div className="flex flex-1 flex-col px-3 py-3">
         <span className="font-heading text-base font-bold leading-tight">{label}</span>{" "}
         {count !== undefined && (
-          <span className="mt-2 font-heading text-4xl font-black leading-none tabular-nums">{count}</span>
+          <span className="mt-2 font-heading text-4xl font-bold leading-none tabular-nums">{count}</span>
         )}{" "}
         {note && <span className="mt-1.5 text-sm leading-snug text-muted-foreground">{note}</span>}
       </div>
@@ -110,8 +110,8 @@ export function StatBlock({ fill, onFill, icon: IconCmp, label, marker, count, n
   );
 
   const frame = cn(
-    "flex w-full min-w-0 flex-col border-2 border-border bg-card text-left",
-    active ? "shadow-hard" : "shadow-hard-sm",
+    "flex w-full min-w-0 flex-col border border-border bg-card text-left",
+    active ? "" : "",
   );
 
   if (href) {
@@ -120,7 +120,7 @@ export function StatBlock({ fill, onFill, icon: IconCmp, label, marker, count, n
         href={href}
         className={cn(
           frame,
-          "transition-all duration-150 hover:-translate-y-0.5 hover:shadow-hard active:translate-y-0 active:shadow-none",
+          "transition-colors duration-150",
           "outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
         )}
         aria-label={count !== undefined ? `${label}: ${count} ${count === 1 ? "case" : "cases"}` : label}

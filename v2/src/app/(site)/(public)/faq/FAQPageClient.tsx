@@ -67,9 +67,9 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
                 <div
                   key={key}
                   className={cn(
-                    "border-3 border-border bg-background transition-all duration-200",
+                    "border border-border bg-background transition-colors duration-200",
                     "[transition-timing-function:cubic-bezier(0.165,0.84,0.44,1)]",
-                    isOpen ? "shadow-hard" : "hover:shadow-hard"
+                    isOpen ? "" : ""
                   )}
                 >
                   <button
@@ -102,12 +102,12 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
                     role="region"
                     aria-labelledby={headerId}
                     className={cn(
-                      "grid transition-all duration-300 ease-out",
+                      "grid transition-colors duration-300 ease-out",
                       isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                     )}
                   >
                     <div className="overflow-hidden">
-                      <div className="border-t-2 border-border px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
+                      <div className="border-t border-border px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
                         <p className="text-sm leading-relaxed text-muted-foreground sm:text-base sm:leading-7">
                           {item.answer}
                         </p>

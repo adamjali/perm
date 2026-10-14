@@ -27,7 +27,7 @@ export function FolderTab({ caseStatus, isClosed }: FolderTabProps) {
   return (
     <div
       className={cn(
-        "absolute -top-5 left-6 w-32 h-6 flex items-center justify-center z-10 border-2 border-b-0",
+        "absolute -top-5 left-6 w-32 h-6 flex items-center justify-center z-10 border border-b-0",
         isClosed ? "border-black/40" : "border-foreground"
       )}
       style={{
@@ -37,7 +37,7 @@ export function FolderTab({ caseStatus, isClosed }: FolderTabProps) {
     >
       <span
         className={cn(
-          "font-mono text-sm font-bold uppercase tracking-wider",
+          "text-sm font-bold",
           // Ink measured against each stage fill (black on the amber and teal).
           isClosed ? "text-black/60" : STAGE_VISUALS[caseStatus]?.onFill ?? "text-white"
         )}
@@ -72,8 +72,8 @@ export function FavoriteBookmark({
       className={cn(
         "absolute -top-6 right-6 z-0 flex items-start justify-center pt-0.5 cursor-pointer",
         // A second folder tab: manila with an ink frame, amber once starred.
-        "w-10 h-12 border-2 border-b-0 border-black transition-all duration-150",
-        "hover:-translate-y-2 active:-translate-y-1",
+        "w-10 h-12 border border-b-0 border-black transition-colors duration-150",
+        "",
         "disabled:cursor-wait",
         isFavorite ? "bg-data-warn -translate-y-2" : "bg-manila-dark translate-y-0"
       )}
@@ -114,9 +114,9 @@ export function PinIndicator({
         "flex items-center justify-center",
         "w-6 h-6 rounded-full",
  "bg-data-good text-black",
-        "shadow-hard-sm border-2 border-black",
+        "border border-black",
         "transform rotate-45",
-        "transition-all duration-150",
+        "transition-colors duration-150",
         isClicking && "scale-90",
         isToggling && "opacity-70"
       )}
@@ -152,7 +152,7 @@ export function CaseBadges({
 }: CaseBadgesProps) {
   // Plain words, same chip shape as the progress status beside them. An open
   // RFI or RFE leads because it carries a response deadline.
-  const chip = "text-sm border-2 border-black text-black";
+  const chip = "text-sm border border-black text-black";
   return (
     <>
       {hasActiveRfi && (
@@ -245,7 +245,7 @@ function DateSection({ title, dates }: DateSectionProps) {
 
   return (
     <div className="space-y-1">
-      <div className="font-mono font-bold text-sm uppercase text-black border-b border-black/30 pb-0.5 mb-1">
+      <div className="font-mono font-bold text-sm text-black border-b border-black/30 pb-0.5 mb-1">
         {title}
       </div>
       {validDates.map((d) => (
@@ -287,7 +287,7 @@ export function ExpandedContent({
       id={id}
       data-testid="expanded-content"
       className={cn(
-        "overflow-hidden relative z-10 -mx-6 px-6 transition-all duration-150 ease-out motion-reduce:transition-none",
+        "overflow-hidden relative z-10 -mx-6 px-6 transition-colors duration-150 ease-out motion-reduce:transition-none",
         // Phones: open only when the card's row (or a pin) opens it.
         // Desktop (md+): respect hover/pin state.
         isClosed
@@ -339,7 +339,7 @@ export function ExpandedContent({
       </div>
       {notes && (
         <div className="mt-3 pt-3 border-t border-black/30">
-          <div className="font-mono font-bold text-sm uppercase text-black border-b border-black/30 pb-0.5 mb-1">
+          <div className="font-mono font-bold text-sm text-black border-b border-black/30 pb-0.5 mb-1">
             Notes
           </div>
           <div className="text-sm line-clamp-2 text-black" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notes}>{notes}</div>

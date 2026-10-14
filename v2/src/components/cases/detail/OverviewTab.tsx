@@ -220,7 +220,7 @@ export function OverviewTab({
 
   return (
     <motion.div
-      initial={animateIn ? "hidden" : false}
+      initial={false}
       animate="visible"
       variants={tabContainerVariants}
       className="space-y-6"
@@ -314,7 +314,7 @@ export function OverviewTab({
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="overflow-hidden border-t-2 border-border bg-card"
+                    className="overflow-hidden border-t border-border bg-card"
                   >
                     <div className="p-4">
                       <QuickEditFields
@@ -469,7 +469,7 @@ export function OverviewTab({
                     <div>
                       <label
                         htmlFor="jd-edit-title"
-                        className="block font-mono text-sm uppercase tracking-wider text-muted-foreground mb-1"
+                        className="block text-sm text-muted-foreground mb-1"
                       >
                         Position title
                       </label>
@@ -480,7 +480,7 @@ export function OverviewTab({
                           value={editPositionTitle}
                           onChange={(e) => setEditPositionTitle(e.target.value)}
                           placeholder="e.g., Software Engineer"
-                          className="w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
+                          className="w-full min-w-0 border border-input bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
                         />
                       </CharLimit>
                     </div>
@@ -489,7 +489,7 @@ export function OverviewTab({
                     <div>
                       <label
                         htmlFor="jd-edit-desc"
-                        className="block font-mono text-sm uppercase tracking-wider text-muted-foreground mb-1"
+                        className="block text-sm text-muted-foreground mb-1"
                       >
                         Description
                       </label>
@@ -500,20 +500,20 @@ export function OverviewTab({
                           onChange={(e) => setEditDescription(e.target.value)}
                           placeholder="Enter job requirements..."
                           rows={8}
-                          className="w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
+                          className="w-full min-w-0 border border-input bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
                         />
                       </CharLimit>
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t-2 border-dashed border-border">
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-dashed border-border">
                       <div className="flex items-center gap-2">
                         {hasJobDesc && (
                           <button
                             type="button"
                             onClick={clearJobDesc}
                             disabled={isClearingJobDesc}
-                            className="font-heading flex items-center gap-1 px-3 py-1.5 border-2 border-border text-sm font-bold text-destructive hover:bg-destructive hover:text-white hover:border-destructive hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm"
+                            className="font-heading flex items-center gap-1 px-3 py-1.5 border border-border text-sm font-bold text-destructive hover:bg-destructive hover:text-white hover:border-destructive transition-colors disabled:opacity-50"
                           >
                             <Trash2 className="h-3 w-3" />
                             {isClearingJobDesc ? "Clearing..." : "Clear"}
@@ -524,10 +524,10 @@ export function OverviewTab({
                           onClick={handleSaveAsTemplate}
                           disabled={isSavingTemplate || !editPositionTitle.trim() || !editDescription.trim()}
                           className={cn(
-                            "font-heading flex items-center gap-1 px-3 py-1.5 border-2 text-sm font-bold hover:-translate-y-[1px] hover:shadow-hard-sm transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm",
+                            "font-heading flex items-center gap-1 px-3 py-1.5 border text-sm font-bold transition-colors disabled:opacity-50",
                             isExistingTemplateName
                               ? "border-data-warn hover:bg-data-warn hover:text-primary-foreground"
-                              : "border-border hover:border-border hover:bg-primary hover:text-primary-foreground"
+                              : "border-border hover:border-border hover:bg-accent"
                           )}
                         >
                           {isSavingTemplate ? (
@@ -547,7 +547,7 @@ export function OverviewTab({
                           type="button"
                           onClick={cancelEditJobDesc}
                           disabled={isSavingJobDesc}
-                          className="font-heading px-3 py-1.5 border-2 border-border text-sm font-bold hover:bg-muted hover:-translate-y-[1px] hover:shadow-hard-sm transition-all active:translate-y-0 active:shadow-hard-sm"
+                          className="font-heading px-3 py-1.5 border border-border text-sm font-bold hover:bg-muted transition-colors"
                         >
                           Cancel
                         </button>
@@ -555,7 +555,7 @@ export function OverviewTab({
                           type="button"
                           onClick={saveJobDesc}
                           disabled={isSavingJobDesc || !editDescription.trim()}
-                          className="font-heading px-3 py-1.5 border-2 border-black bg-primary text-primary-foreground text-sm font-bold shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all disabled:opacity-50 active:translate-y-0 active:shadow-hard-sm"
+                          className="font-heading px-3 py-1.5 border border-black bg-primary text-primary-foreground text-sm font-bold transition-colors disabled:opacity-50"
                         >
                           {isSavingJobDesc ? (
                             <span className="flex items-center gap-1">
@@ -595,7 +595,7 @@ export function OverviewTab({
                     {caseData.jobDescription ? (
                       <div className="detail-card-body" style={{ borderTop: "3px solid var(--border)" }}>
                         <div style={{ border: "3px solid var(--border)", background: "var(--card)", padding: 16 }}>
-                          <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted-foreground)", marginBottom: 8 }}>Requirements</div>
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textTransform: "", letterSpacing: "0.06em", color: "var(--muted-foreground)", marginBottom: 8 }}>Requirements</div>
                           <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, padding: 0, margin: 0, maxHeight: 300, overflow: "hidden", position: "relative" }}>
                             {caseData.jobDescription.split("\n").filter(Boolean).slice(0, 20).map((line, i) => {
                               const text = line.replace(/^[-•*]\s*/, "");
@@ -655,7 +655,7 @@ export function OverviewTab({
       <motion.div variants={itemVariants}>
         <div className="gantt-wrap">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 16px", borderBottom: "3px solid var(--border)", background: "var(--muted)" }}>
-            <span className="flex items-center gap-1.5" style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            <span className="flex items-center gap-1.5" style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", fontWeight: 700, textTransform: "", letterSpacing: "0.06em" }}>
               Case timeline
             </span>
             <Button
@@ -663,7 +663,7 @@ export function OverviewTab({
               size="sm"
               onClick={onToggleTimeline}
               disabled={isUpdating}
-              className="font-heading gap-1.5 border-2 border-border text-sm font-bold shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard transition-all active:translate-y-0 active:shadow-hard-sm"
+              className="font-heading gap-1.5 border border-border text-sm font-bold transition-colors"
             >
               {isOnTimeline ? (
                 <>

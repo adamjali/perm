@@ -89,21 +89,21 @@ export function AppWindow({
         <div
           aria-hidden="true"
           className={cn(
-            "absolute inset-0 translate-x-3 translate-y-3 border-3 bg-primary sm:translate-x-4 sm:translate-y-4",
+            "absolute inset-0 translate-x-3 translate-y-3 border bg-primary sm:translate-x-4 sm:translate-y-4",
             edge,
           )}
         />
         <div
           className={cn(
-            "relative border-3 bg-background text-foreground",
+            "relative border bg-background text-foreground",
             edge,
           )}
         >
-          <div className="flex items-center gap-3 border-b-3 border-border bg-muted px-3 py-2">
+          <div className="flex items-center gap-3 border-b border-border bg-muted px-3 py-2">
             <span aria-hidden="true" className="flex gap-1.5">
-              <span className="size-3 border-2 border-border bg-background" />{" "}
-              <span className="size-3 border-2 border-border bg-background" />{" "}
-              <span className="size-3 border-2 border-border bg-primary" />
+              <span className="size-3 border border-border bg-background" />{" "}
+              <span className="size-3 border border-border bg-background" />{" "}
+              <span className="size-3 border border-border bg-primary" />
             </span>{" "}
             <span className="truncate font-mono text-sm text-muted-foreground">
               {url}

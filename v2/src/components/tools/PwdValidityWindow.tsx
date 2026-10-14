@@ -64,14 +64,14 @@ function Row({ regime }: { regime: Regime }) {
   return (
     <div className="p-6 sm:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="text-sm font-bold text-muted-foreground">
           Issued {formatAsOf(regime.from)} to {formatAsOf(regime.to)}
         </p>{" "}
-        <p className="font-heading text-2xl font-black tabular-nums">
+        <p className="font-heading text-2xl font-bold tabular-nums">
           {flat ? `${longest} days` : `${shortest} to ${longest} days`}
         </p>
       </div>{" "}
-      <p className="mt-2 text-base leading-relaxed text-foreground/70">{regime.rule}</p>
+      <p className="mt-2 text-base leading-relaxed text-muted-foreground">{regime.rule}</p>
     </div>
   );
 }
@@ -93,11 +93,11 @@ export function PwdValidityWindow({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-        <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
+      <div className="border border-border bg-foreground p-6 text-background sm:p-8">
+        <p className="text-sm font-bold text-background/60">
           One day, {multiple} times the runway
         </p>{" "}
-        <p className="mt-3 font-heading text-2xl font-black leading-tight sm:text-3xl">
+        <p className="mt-3 font-heading text-2xl font-bold leading-tight sm:text-3xl">
           A determination issued {formatAsOf(cliffBefore)} is valid {shortDays}{" "}
           days. One issued {formatAsOf(cliffAfter)} is valid {longDays}.
         </p>{" "}
@@ -107,13 +107,13 @@ export function PwdValidityWindow({ className }: { className?: string }) {
         </p>
       </div>
 
-      <div className="mt-6 divide-y-2 divide-border border-2 border-border bg-card shadow-hard">
+      <div className="mt-6 divide-y divide-border border border-border bg-card">
         {rows.map((r) => (
           <Row key={r.from} regime={r} />
         ))}
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-foreground/60">
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         20 CFR 656.40(c), computed for {year} by the same rule a tracked case uses. The queue position above
         says roughly when your determination is coming.
       </p>

@@ -83,10 +83,10 @@ export default async function PwdCalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Prevailing wage queue calculator
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           How many prevailing wage requests sit ahead of yours, counted from the
           Department of Labor&apos;s own published backlog.
         </p>
@@ -102,10 +102,10 @@ export default async function PwdCalculatorPage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">
+        <h2 className="font-heading text-2xl font-bold">
           What the determination is worth when it lands
         </h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           The queue above says roughly when yours is coming. This says how much
           time it buys you when it does, which is not the same for everyone and
           is not a fixed number of days.
@@ -126,28 +126,28 @@ export default async function PwdCalculatorPage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">
+      <section className="mt-12 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold">
           The determination sets every date that follows
         </h2>{" "}
-        <p className="mt-3 leading-relaxed text-foreground/70">
+        <p className="mt-3 leading-relaxed text-muted-foreground">
           The recruitment window, the quiet period and the filing window all
           run from the determination date, and missing one restarts the case.
         </p>
         <Link
           href="/tools/perm-deadline-calculator"
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
+          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
         >
           Work out those dates
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
 
-      <p className="mt-8 max-w-3xl text-base leading-relaxed text-foreground/80">
+      <p className="mt-8 max-w-3xl text-base leading-relaxed text-soft">
         No number for your request?{" "}
         <Link href="/pwd-cases" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
           Search wage requests by employer

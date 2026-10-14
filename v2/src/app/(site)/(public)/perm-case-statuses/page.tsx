@@ -57,7 +57,7 @@ export const revalidate = 21600;
  */
 function Count({ n, href }: { n: number | null; href?: string }) {
   if (n === null) return null;
-  const cls = "font-heading text-xl font-black tabular-nums sm:text-2xl";
+  const cls = "font-heading text-xl font-bold tabular-nums sm:text-2xl";
   const body = (
     <>
       {formatInt(n)}
@@ -132,17 +132,17 @@ function FlagEntry({ e, anchor, n, max }: { e: FlagStatusEntry; anchor: string; 
       <summary className="relative flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
           <h3 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-            <span className="font-heading text-base font-black">{e.label}</span>{" "}
-            <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">{e.status}</code>
+            <span className="font-heading text-base font-bold">{e.label}</span>{" "}
+            <code className="text-sm text-muted-foreground">{e.status}</code>
           </h3>{" "}
-          <span className="mt-1 block text-sm leading-relaxed text-foreground/80">{lead}</span>
+          <span className="mt-1 block text-sm leading-relaxed text-soft">{lead}</span>
         </span>{" "}
         <Count n={n} />{" "}
         <ShareBar n={n} max={max} />
         <CaretDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
       </summary>{" "}
-      <div className="max-w-3xl border-t-2 border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-        {rest ? <p className="text-sm leading-relaxed text-foreground/80">{rest}</p> : null}{" "}
+      <div className="max-w-3xl border-t border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+        {rest ? <p className="text-sm leading-relaxed text-soft">{rest}</p> : null}{" "}
         <Source cite={e.cite} unsourced={e.unsourced} />
       </div>
     </details>
@@ -216,10 +216,10 @@ export default async function PermCaseStatusesPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={termSet} />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Every case status, explained
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           What each status DOL shows on a PERM, wage request, LCA, H-2A or H-2B case means, the rule behind
           it, and how many cases carry it today.
         </p>
@@ -238,9 +238,9 @@ export default async function PermCaseStatusesPage() {
             <li key={pr.id}>
               <a
                 href={`#${pr.id}`}
-                className="flex min-h-[44px] items-baseline justify-between gap-3 border-2 border-border bg-card px-4 py-3 shadow-hard transition-transform hover:-translate-y-0.5 motion-reduce:transition-none"
+                className="flex min-h-[44px] items-baseline justify-between gap-3 border border-border bg-card px-4 py-3 transition-transform motion-reduce:transition-none"
               >
-                <span className="font-heading font-black">{pr.label}</span>{" "}
+                <span className="font-heading font-bold">{pr.label}</span>{" "}
                 <span className="font-mono text-sm text-muted-foreground">
                   {anchors.filter((a) => a.program === pr.program).length} statuses
                 </span>
@@ -248,12 +248,12 @@ export default async function PermCaseStatusesPage() {
             </li>
           ))}
         </ul>{" "}
-        <details className="group mt-3 border-2 border-border bg-card">
+        <details className="group mt-3 border border-border bg-card">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 font-bold hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
             Find one status
             <CaretDownIcon className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
           </summary>{" "}
-          <div className="grid gap-6 border-t-2 border-border/40 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 border-t border-border/40 p-4 sm:grid-cols-2 lg:grid-cols-4">
             {PROGRAMS.map((pr) => (
               <div key={pr.id}>
                 <p className="text-sm font-bold">{pr.label}</p>{" "}
@@ -275,8 +275,8 @@ export default async function PermCaseStatusesPage() {
       </nav>
 
       <section id="program-perm" className="mt-12 scroll-mt-28">
-        <h2 className="font-heading text-2xl font-black">PERM (ETA-9089)</h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+        <h2 className="font-heading text-2xl font-bold">PERM (ETA-9089)</h2>{" "}
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
           Counts are cases in that status across every filing month
           {permAsOf ? `, as DOL showed them on ${formatAsOf(permAsOf)}` : ""}. A count says how common
           the state is and nothing about how long any one case stays in it.
@@ -286,9 +286,9 @@ export default async function PermCaseStatusesPage() {
         </p>
         {groups.map((g) => (
           <div key={g.kind} className="mt-8">
-            <h3 className="font-heading text-xl font-black">{KIND_HEADING[g.kind].title}</h3>{" "}
-            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">{KIND_HEADING[g.kind].lede}</p>{" "}
-            <div className="mt-4 grid gap-px border-2 border-border bg-border">
+            <h3 className="font-heading text-xl font-bold">{KIND_HEADING[g.kind].title}</h3>{" "}
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{KIND_HEADING[g.kind].lede}</p>{" "}
+            <div className="mt-4 grid gap-px border border-border bg-border">
               {g.entries.map((m, _i, all) => {
                 const groupMax = Math.max(0, ...all.map((x) => permCount(x.status) ?? 0));
                 const anchor = statusAnchor(m.status);
@@ -299,24 +299,24 @@ export default async function PermCaseStatusesPage() {
                     <summary className="relative flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
                       <span className="min-w-0 flex-1">
                         <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                          <span className="font-heading text-base font-black">{m.label}</span>{" "}
-                          <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">{m.status}</code>
+                          <span className="font-heading text-base font-bold">{m.label}</span>{" "}
+                          <code className="text-sm text-muted-foreground">{m.status}</code>
                         </span>{" "}
-                        <span className="mt-1 block text-sm leading-relaxed text-foreground/80">{lead}</span>
+                        <span className="mt-1 block text-sm leading-relaxed text-soft">{lead}</span>
                       </span>{" "}
                       <Count n={permCount(m.status)} href={stagePage} />{" "}
                       <ShareBar n={permCount(m.status)} max={groupMax} />
                       <CaretDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
                     </summary>{" "}
-                    <div className="max-w-3xl border-t-2 border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-                      {rest ? <p className="text-sm leading-relaxed text-foreground/80">{rest}</p> : null}{" "}
+                    <div className="max-w-3xl border-t border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+                      {rest ? <p className="text-sm leading-relaxed text-soft">{rest}</p> : null}{" "}
                       {m.deadline ? (
                         <p className="mt-2 text-sm leading-relaxed">
                           <b className="font-bold">The clock:</b> {m.deadline}
                         </p>
                       ) : null}{" "}
                       {m.action ? (
-                        <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+                        <p className="mt-2 text-sm leading-relaxed text-soft">
                           <b className="font-bold text-foreground">Who acts:</b> {m.action}
                         </p>
                       ) : null}{" "}
@@ -331,14 +331,14 @@ export default async function PermCaseStatusesPage() {
       </section>
 
       <section id="program-wage" className="mt-12 scroll-mt-28">
-        <h2 className="font-heading text-2xl font-black">Prevailing wage requests (ETA-9141)</h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+        <h2 className="font-heading text-2xl font-bold">Prevailing wage requests (ETA-9141)</h2>{" "}
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
           The wage request comes before the PERM and has its own review chain under 20 CFR 656.41.
           {pwd?.asOf
             ? ` Counts are from DOL's live index as of ${formatAsOf(pwd.asOf)}.`
             : " The counts are missing today: their summary couldn't be read."}
         </p>{" "}
-        <div className="mt-4 grid gap-px border-2 border-border bg-border">
+        <div className="mt-4 grid gap-px border border-border bg-border">
           {PWD_STATUSES.map((e) => (
             <FlagEntry key={e.status} e={e} anchor={`pwd-${statusAnchor(e.status)}`} n={flagCount(pwd, e.status)} max={programMax(pwd, PWD_STATUSES)} />
           ))}
@@ -346,14 +346,14 @@ export default async function PermCaseStatusesPage() {
       </section>
 
       <section id="program-lca" className="mt-12 scroll-mt-28">
-        <h2 className="font-heading text-2xl font-black">H-1B labor condition applications (ETA-9035)</h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+        <h2 className="font-heading text-2xl font-bold">H-1B labor condition applications (ETA-9035)</h2>{" "}
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
           An LCA is certified or returned within seven working days, so the live index holds almost nothing pending.
           {lca?.asOf
             ? ` Counts are from DOL's live index as of ${formatAsOf(lca.asOf)}.`
             : " The counts are missing today: their summary couldn't be read."}
         </p>{" "}
-        <div className="mt-4 grid gap-px border-2 border-border bg-border">
+        <div className="mt-4 grid gap-px border border-border bg-border">
           {LCA_STATUSES.map((e) => (
             <FlagEntry key={e.status} e={e} anchor={`lca-${statusAnchor(e.status)}`} n={flagCount(lca, e.status)} max={programMax(lca, LCA_STATUSES)} />
           ))}
@@ -361,15 +361,15 @@ export default async function PermCaseStatusesPage() {
       </section>
 
       <section id="program-h2" className="mt-12 scroll-mt-28">
-        <h2 className="font-heading text-2xl font-black">H-2A and H-2B (ETA-9142A, ETA-9142B and their wage requests)</h2>{" "}
-        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+        <h2 className="font-heading text-2xl font-bold">H-2A and H-2B (ETA-9142A, ETA-9142B and their wage requests)</h2>{" "}
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
           Temporary farm and non-farm work, under 20 CFR part 655. Each entry says which of the three forms it
           appears on.
           {seasonal?.asOf
             ? ` Counts are from DOL's live index as of ${formatAsOf(seasonal.asOf)}.`
             : " The counts are missing today: their summary couldn't be read."}
         </p>{" "}
-        <div className="mt-4 grid gap-px border-2 border-border bg-border">
+        <div className="mt-4 grid gap-px border border-border bg-border">
           {SEASONAL_STATUSES.map((e) => (
             <FlagEntry
               key={e.status}
@@ -383,13 +383,13 @@ export default async function PermCaseStatusesPage() {
       </section>
 
       <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">Where these words come from</h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <h2 className="font-heading text-2xl font-bold">Where these words come from</h2>{" "}
+        <p className="mt-3 text-base leading-relaxed text-soft">
           DOL&apos;s case-status search shows one status per case and never explains it. The regulations (20 CFR
           part 656 for PERM and wage requests, part 655 for LCAs, H-2A and H-2B) define the steps with a deadline;
           the rest are workflow words, described here by what the workflow shows.
         </p>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
             Look up a case number
           </Link>{" "}

@@ -40,10 +40,8 @@ export default function ArticleBody({ title, url, children }: ArticleBodyProps) 
 
           {/* Share buttons */}
           <motion.div
-            className="mt-10 border-t-2 border-border pt-6"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
+            className="mt-10 border-t border-border pt-6"
+            initial={false}
             transition={{ duration: 0.4 }}
           >
             <ShareButtons title={title} url={url} />

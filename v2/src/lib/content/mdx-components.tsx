@@ -38,9 +38,9 @@ function Callout({
   // Stat variant: neobrutalist card with large stat badge
   if (type === "stat") {
     return (
-      <div className="not-prose my-6 flex flex-col gap-4 border-2 border-border p-4 shadow-hard-sm sm:flex-row sm:items-center sm:gap-5 sm:p-5">
+      <div className="not-prose my-6 flex flex-col gap-4 border border-border p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
         {stat && (
-          <div className="flex min-h-16 min-w-16 max-w-[10rem] flex-shrink-0 items-center justify-center self-start border-2 border-border bg-primary px-3 py-2 text-center font-heading text-xl font-bold leading-tight text-black sm:min-h-20 sm:min-w-20 sm:self-auto sm:text-2xl">
+          <div className="flex min-h-16 min-w-16 max-w-[10rem] flex-shrink-0 items-center justify-center self-start border border-border bg-primary px-3 py-2 text-center font-heading text-xl font-bold leading-tight text-black sm:min-h-20 sm:min-w-20 sm:self-auto sm:text-2xl">
             {stat}
           </div>
         )}
@@ -57,10 +57,10 @@ function Callout({
   }
 
   const styles = {
-    info: "border-l-4 border-primary bg-primary/5",
-    warning: "border-l-4 border-yellow-500 bg-yellow-500/5",
-    tip: "border-l-4 border-blue-500 bg-blue-500/5",
-    important: "border-l-4 border-destructive bg-destructive/5",
+    info: "border-l-2 border-primary bg-primary/5",
+    warning: "border-l-2 border-yellow-500 bg-yellow-500/5",
+    tip: "border-l-2 border-blue-500 bg-blue-500/5",
+    important: "border-l-2 border-destructive bg-destructive/5",
   };
 
   const icons = {
@@ -72,7 +72,7 @@ function Callout({
   const { Icon, tone } = icons[type];
 
   return (
-    <div className={cn("my-6 p-4 border-2 border-border", styles[type])}>
+    <div className={cn("my-6 p-4 border border-border", styles[type])}>
       {title && (
         <p className="mb-2 flex items-start gap-2 font-heading text-base font-bold">
           <Icon aria-hidden className={cn("mt-0.5 size-5 shrink-0", tone)} weight="bold" />
@@ -98,12 +98,12 @@ function ProductCTA({
   buttonText?: string;
 }) {
   return (
-    <div className="not-prose my-8 border-2 border-border bg-primary/5 p-6 shadow-hard">
+    <div className="not-prose my-8 border border-border bg-primary/5 p-6">
       <p className="mb-2 font-heading text-lg font-bold text-foreground">{title}</p>{" "}
       <p className="mb-4 text-sm text-muted-foreground">{description}</p>
       <NavLink
         href={href}
-        className="inline-block border-2 border-black bg-primary px-5 py-2.5 font-heading text-sm font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-white"
+        className="inline-block border border-black bg-primary px-5 py-2.5 font-heading text-sm font-bold transition-colors duration-150 dark:border-white"
         style={{ color: "black" }}
         spinnerClassName="text-black"
         spinnerSize={14}
@@ -116,7 +116,7 @@ function ProductCTA({
 
 function StepByStep({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-6 space-y-4 border-l-2 border-primary/30 pl-6">
+    <div className="my-6 space-y-4 border-l border-primary/30 pl-6">
       {children}
     </div>
   );
@@ -133,7 +133,7 @@ function Step({
 }) {
   return (
     <div className="relative">
-      <div className="absolute -left-[33px] flex h-6 w-6 items-center justify-center border-2 border-border bg-primary font-mono text-xs font-bold text-black">
+      <div className="absolute -left-[33px] flex h-6 w-6 items-center justify-center border border-border bg-primary font-mono text-sm font-bold text-black">
         {number}
       </div>
       <p className="mb-1 font-heading text-base font-bold">{title}</p>
@@ -162,13 +162,13 @@ function ComparisonTable({
 
   return (
     <div className="my-6 overflow-x-auto overscroll-x-none">
-      <table className="w-full border-2 border-border text-sm">
+      <table className="w-full border border-border text-sm">
         <thead>
           <tr className="bg-muted">
             {headers.map((h, i) => (
               <th
                 key={i}
-                className="border-2 border-border px-4 py-2 text-left font-heading font-bold uppercase tracking-wide"
+                className="border border-border px-4 py-2 text-left font-heading font-bold"
               >
                 {h}{" "}
               </th>
@@ -182,7 +182,7 @@ function ComparisonTable({
               className="transition-colors hover:bg-muted/50"
             >
               {row.map((cell, ci) => (
-                <td key={ci} className="border-2 border-border px-4 py-2">
+                <td key={ci} className="border border-border px-4 py-2">
                   {cell}{" "}
                 </td>
               ))}
@@ -272,7 +272,7 @@ export const mdxComponents: MDXComponents = {
   // Body text
   p: ({ children, ...props }) => (
     <>
-      <p className="mb-4 leading-relaxed text-foreground/90" {...props}>
+      <p className="mb-4 leading-relaxed text-soft" {...props}>
         {children}
       </p>{" "}
     </>
@@ -317,7 +317,7 @@ export const mdxComponents: MDXComponents = {
     </ol>
   ),
   li: ({ children, ...props }) => (
-    <li className="leading-relaxed text-foreground/90" {...props}>
+    <li className="leading-relaxed text-soft" {...props}>
       {children}
     </li>
   ),
@@ -333,7 +333,7 @@ export const mdxComponents: MDXComponents = {
   ),
   pre: ({ children, ...props }) => (
     <pre
-      className="my-6 overflow-x-auto overscroll-x-none border-2 border-border bg-[#0d1117] p-4 text-sm shadow-hard-sm"
+      className="my-6 overflow-x-auto overscroll-x-none border border-border bg-[#0d1117] p-4 text-sm"
       {...props}
     >
       {children}
@@ -343,7 +343,7 @@ export const mdxComponents: MDXComponents = {
   // Blockquote
   blockquote: ({ children, ...props }) => (
     <blockquote
-      className="my-6 border-l-4 border-primary pl-4 italic text-muted-foreground"
+      className="my-6 border-l-2 border-primary pl-4 italic text-muted-foreground"
       {...props}
     >
       {children}
@@ -352,7 +352,7 @@ export const mdxComponents: MDXComponents = {
 
   // Horizontal rule
   hr: (props) => (
-    <hr className="my-8 border-t-2 border-border" {...props} />
+    <hr className="my-8 border-t border-border" {...props} />
   ),
 
   // Images
@@ -364,12 +364,12 @@ export const mdxComponents: MDXComponents = {
           alt={alt ?? ""}
           width={800}
           height={450}
-          className="w-full border-2 border-border shadow-hard"
+          className="w-full border border-border"
           {...props}
         />
       </Lightbox>
       {alt && (
-        <figcaption className="mt-2 text-center text-xs text-muted-foreground">
+        <figcaption className="mt-2 text-center text-sm text-muted-foreground">
           {alt}
         </figcaption>
       )}
@@ -379,7 +379,7 @@ export const mdxComponents: MDXComponents = {
   // Table
   table: ({ children, ...props }) => (
     <div className="my-6 overflow-x-auto overscroll-x-none">
-      <table className="w-full border-2 border-border text-sm" {...props}>
+      <table className="w-full border border-border text-sm" {...props}>
         {children}
       </table>
     </div>
@@ -395,14 +395,14 @@ export const mdxComponents: MDXComponents = {
   // article, invisible in a browser because cells are laid out separately.
   th: ({ children, ...props }) => (
     <th
-      className="border-2 border-border px-4 py-2 text-left font-heading font-bold"
+      className="border border-border px-4 py-2 text-left font-heading font-bold"
       {...props}
     >
       {children}{" "}
     </th>
   ),
   td: ({ children, ...props }) => (
-    <td className="border-2 border-border px-4 py-2" {...props}>
+    <td className="border border-border px-4 py-2" {...props}>
       {children}{" "}
     </td>
   ),

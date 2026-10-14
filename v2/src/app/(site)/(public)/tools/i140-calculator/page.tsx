@@ -88,10 +88,10 @@ export default async function I140CalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           I-140 queue calculator
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           How many petitions are waiting in your category, and how that compares
           to the processing time USCIS publishes.
         </p>
@@ -120,19 +120,19 @@ export default async function I140CalculatorPage() {
           one place, each with the rule it rests on. Checked against eCFR on
           2026-09-26: 8 CFR 214.2(h)(13)(iii)(E), 204.5(e), 205.1(a)(3)(iii)(C);
           the fee is 91 FR 1059 (in force March 1, 2026). */}
-      <section aria-labelledby="premium-h" className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 id="premium-h" className="font-heading text-2xl font-black">
+      <section aria-labelledby="premium-h" className="mt-12 border border-border bg-card p-6 sm:p-8">
+        <h2 id="premium-h" className="font-heading text-2xl font-bold">
           When premium processing is worth $2,965
         </h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           It buys a first decision within 15 business days (45 for multinational managers and national interest
           waivers). It doesn&apos;t move the priority date, and a request for evidence stops the clock. It tends to
           pay for itself in three situations:
         </p>{" "}
         <ol className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3 [&>*]:min-w-0">
-          <li className="border-2 border-border bg-background p-5">
-            <p className="font-heading text-lg font-black">The H-1B six years are running out</p>{" "}
-            <p className="mt-2 text-base leading-relaxed text-foreground/80">
+          <li className="border border-border bg-background p-5">
+            <p className="font-heading text-lg font-bold">The H-1B six years are running out</p>{" "}
+            <p className="mt-2 text-base leading-relaxed text-soft">
               An approved I-140 is what lets H-1B status continue past six years, in steps of up to three years, when no
               visa number is available (8 CFR 214.2(h)(13)(iii)(E)).{" "}
               <Link href="/tools/h1b-six-year-limit" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -140,9 +140,9 @@ export default async function I140CalculatorPage() {
               </Link>
             </p>
           </li>{" "}
-          <li className="border-2 border-border bg-background p-5">
-            <p className="font-heading text-lg font-black">The worker might change jobs</p>{" "}
-            <p className="mt-2 text-base leading-relaxed text-foreground/80">
+          <li className="border border-border bg-background p-5">
+            <p className="font-heading text-lg font-bold">The worker might change jobs</p>{" "}
+            <p className="mt-2 text-base leading-relaxed text-soft">
               After 180 days of approval, the employer withdrawing the I-140 doesn&apos;t undo it (8 CFR
               205.1(a)(3)(iii)(C)), and the priority date carries to a new petition (8 CFR 204.5(e)). Premium
               processing starts that clock sooner.{" "}
@@ -151,9 +151,9 @@ export default async function I140CalculatorPage() {
               </Link>
             </p>
           </li>{" "}
-          <li className="border-2 border-border bg-background p-5">
-            <p className="font-heading text-lg font-black">The priority date is about to be current</p>{" "}
-            <p className="mt-2 text-base leading-relaxed text-foreground/80">
+          <li className="border border-border bg-background p-5">
+            <p className="font-heading text-lg font-bold">The priority date is about to be current</p>{" "}
+            <p className="mt-2 text-base leading-relaxed text-soft">
               If the bulletin reaches the date before a regular I-140 would be decided, premium can be the difference
               between filing the green card application this month or later.{" "}
               <Link href="/tools/priority-date-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -169,15 +169,15 @@ export default async function I140CalculatorPage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">
+      <section className="mt-12 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold">
           The I-140 comes after the part you control
         </h2>{" "}
-        <p className="mt-3 leading-relaxed text-foreground/70">
+        <p className="mt-3 leading-relaxed text-muted-foreground">
           A petition can only be filed once the labor certification is approved,
           and that certification has to be filed inside a window fixed by the
           prevailing wage determination. Miss the window and the recruitment
@@ -185,7 +185,7 @@ export default async function I140CalculatorPage() {
         </p>
         <Link
           href="/tools/perm-deadline-calculator"
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-6 py-3 font-bold text-primary-foreground shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
+          className="mt-6 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150"
         >
           Work out your filing window
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

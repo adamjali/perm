@@ -20,8 +20,8 @@ const FLOOR = 20;
 
 function Box({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="border-2 border-border bg-card p-5 sm:p-6">
-      <h2 className="font-heading text-lg font-black">{title}</h2>{" "}
+    <section className="border border-border bg-card p-5 sm:p-6">
+      <h2 className="font-heading text-lg font-bold">{title}</h2>{" "}
       {children}
     </section>
   );
@@ -45,7 +45,7 @@ function Ranked({
           <li data-tip={`${plainText(it.label)}\n${formatInt(it.n)} ${it.n === 1 ? "case" : "cases"}\n#${i + 1} of ${items.length} shown`}>
             <span className="flex items-baseline justify-between gap-3">
               <span className="min-w-0 truncate text-sm font-bold">{it.label}</span>{" "}
-              <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{formatInt(it.n)}</span>
+              <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">{formatInt(it.n)}</span>
             </span>{" "}
             <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
               <span
@@ -236,9 +236,9 @@ export function GroupView({
         ].map(([k, v]) => (
           <Fragment key={k}>
             {" "}
-            <div className="border-2 border-border bg-card p-4">
-              <dt className="text-sm font-bold text-foreground/70">{k}</dt>{" "}
-              <dd className="mt-1 font-heading text-2xl font-black tabular-nums">{v}</dd>
+            <div className="border border-border bg-card p-4">
+              <dt className="text-sm font-bold text-muted-foreground">{k}</dt>{" "}
+              <dd className="mt-1 font-heading text-2xl font-bold tabular-nums">{v}</dd>
             </div>
           </Fragment>
         ))}
@@ -246,7 +246,7 @@ export function GroupView({
 
       {years.length > 1 ? (
         <section className="mt-10">
-          <h2 className="font-heading text-2xl font-black">Year by year</h2>{" "}
+          <h2 className="font-heading text-2xl font-bold">Year by year</h2>{" "}
           <div className="mt-4">
             <YearBars
               years={years}

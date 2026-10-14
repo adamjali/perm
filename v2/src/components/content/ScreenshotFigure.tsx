@@ -47,16 +47,14 @@ export default function ScreenshotFigure({
     <motion.figure
       className="not-prose my-8"
       variants={fadeUp}
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: "-40px" }}
+      initial={false}
       style={{ maxWidth }}
     >
       <Lightbox src={src} alt={alt} caption={caption}>
-        <div className="relative border-2 border-border shadow-hard overflow-hidden">
+        <div className="relative border border-border overflow-hidden">
           {/* Step badge */}
           {step !== undefined && (
-            <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b-2 border-r-2 border-border bg-primary font-mono text-sm font-bold text-black">
+            <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b border-r border-border bg-primary font-mono text-sm font-bold text-black">
               {step}
             </div>
           )}

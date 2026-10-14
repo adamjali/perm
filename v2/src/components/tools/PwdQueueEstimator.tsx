@@ -62,7 +62,7 @@ export function PwdQueueEstimator({
 
   if (backlog.length === 0) {
     return (
-      <div className={cn("border-2 border-border bg-card p-6 shadow-hard", className)}>
+      <div className={cn("border border-border bg-card p-6", className)}>
         <p className="text-base leading-relaxed">
           DOL&apos;s prevailing wage figures are being fetched. Until they land,{" "}
           <a
@@ -80,18 +80,18 @@ export function PwdQueueEstimator({
   }
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <div className="border-b-2 border-border p-6 sm:p-8">
+    <div className={cn("border border-border bg-card", className)}>
+      <div className="border-b border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
         <div className="flex items-center gap-3">
           <Scale className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <h2 className="font-heading text-2xl font-black leading-tight">
+          <h2 className="font-heading text-2xl font-bold leading-tight">
             How long is the prevailing wage queue?
           </h2>
         </div>
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           Pick the month DOL received your ETA-9141. The number of requests
           ahead of yours is DOL&apos;s own published count.
         </p>
@@ -104,7 +104,7 @@ export function PwdQueueEstimator({
             id={selectId}
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
+            className="mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
           >
             {options.map((o) => (
               <option key={o.value} value={o.value}>
@@ -115,14 +115,14 @@ export function PwdQueueEstimator({
         </div>
       </div>
 
-      <div className="border-b-2 border-border bg-tint-primary p-6 sm:p-8">
-        <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+      <div className="border-b border-border bg-tint-primary p-6 sm:p-8">
+        <p className="text-sm font-bold text-muted-foreground">
           Requests ahead of yours
         </p>{" "}
-        <p className="mt-2 font-heading text-4xl font-black leading-none sm:text-5xl">
+        <p className="mt-2 font-heading text-4xl font-bold leading-none sm:text-5xl">
           {estimate.requestsAhead.toLocaleString("en-US")}
         </p>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           Still pending from months before {formatMonth(month)}, out of{" "}
           {estimate.totalPending.toLocaleString("en-US")} pending in total.
           {estimate.requestsSameMonth > 0 ? (
@@ -135,7 +135,7 @@ export function PwdQueueEstimator({
           ) : null}
         </p>
         {frontier && frontier.oewsMonth ? (
-          <p className="mt-3 text-sm text-foreground/60">
+          <p className="mt-3 text-sm text-muted-foreground">
             DOL is issuing determinations for requests received{" "}
             {formatMonth(frontier.oewsMonth)} where the wage comes from the OEWS
             survey
@@ -150,9 +150,9 @@ export function PwdQueueEstimator({
       {/* The count above says how many. This says where they sit, which is the
           part that changes what someone expects: DOL has nearly cleared
           everything before March and then it jumps by an order of magnitude. */}
-      <div className="border-b-2 border-border p-6 sm:p-8">
-        <h3 className="font-heading text-lg font-black">Where the backlog sits</h3>{" "}
-        <p className="mt-2 text-base leading-relaxed text-foreground/70">
+      <div className="border-b border-border p-6 sm:p-8">
+        <h3 className="font-heading text-lg font-bold">Where the backlog sits</h3>{" "}
+        <p className="mt-2 text-base leading-relaxed text-muted-foreground">
           Every month DOL still has prevailing wage requests pending for, and how
           many.
         </p>
@@ -164,14 +164,14 @@ export function PwdQueueEstimator({
       </div>
 
       {estimate.estimatedMonth ? (
-        <div className="border-b-2 border-border p-6 sm:p-8">
-          <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
+        <div className="border-b border-border p-6 sm:p-8">
+          <p className="text-sm font-bold text-muted-foreground">
             Estimated determination
           </p>{" "}
-          <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">
+          <p className="mt-2 font-heading text-3xl font-bold leading-none sm:text-4xl">
             {formatMonth(estimate.estimatedMonth)}
           </p>{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
             At the {Math.round(clearancePerMonth || 0).toLocaleString("en-US")}{" "}
             requests a month DOL has been clearing.
           </p>
@@ -181,14 +181,14 @@ export function PwdQueueEstimator({
       <div className="bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
           <WarningIcon
-            className="mt-0.5 h-5 w-5 shrink-0 text-foreground/70"
+            className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
             aria-hidden="true"
           />
           <div>
-            <h3 className="font-heading text-base font-black">What this can’t tell you</h3>{" "}
+            <h3 className="font-heading text-base font-bold">What this can’t tell you</h3>{" "}
             <ul className="mt-3 space-y-2">
               {estimate.caveats.map((c) => (
-                <li key={c} className="text-base leading-relaxed text-foreground/70">
+                <li key={c} className="text-base leading-relaxed text-muted-foreground">
                   {c}
                 </li>
               ))}

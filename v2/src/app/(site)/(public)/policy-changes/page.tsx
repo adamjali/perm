@@ -96,16 +96,16 @@ export default async function PolicyChangesPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+      <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
         Policy changes, on the record
       </h1>{" "}
-      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90">
+      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-soft">
         Every rule, proposed rule and notice on PERM, prevailing wages, H-1B and
         green cards, as the Federal Register and OFLC published them.
       </p>{" "}
 
       {empty ? (
-        <p className="mt-10 border-2 border-border bg-card p-5 text-base">
+        <p className="mt-10 border border-border bg-card p-5 text-base">
           No documents are held yet. The feed reads the Federal Register every
           morning; until it has run, the Register&apos;s own search is at{" "}
           <a href="https://www.federalregister.gov/documents/search?conditions%5Bterm%5D=%22labor+certification%22" className={LINK} rel="noopener" target="_blank">federalregister.gov</a>.
@@ -115,8 +115,8 @@ export default async function PolicyChangesPage() {
           <RecordStrip record={record} />{" "}
 
           <section className="mt-12">
-            <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">The last twelve months</h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">The last twelve months</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               One mark per document, on the day it was published. The bar under a
               proposed rule is its comment window, lime while it is open.
             </p>{" "}
@@ -131,13 +131,13 @@ export default async function PolicyChangesPage() {
 
           <PolicySearch items={searchable}>
           <section className="mt-12" id="register">
-            <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">In the Federal Register</h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">In the Federal Register</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {feed.register.length} {feed.register.length === 1 ? "document" : "documents"}
               {ledger.earliest ? ` since ${monthYear(ledger.earliest)}` : ""}, newest first. Open one
               for the abstract, the dates as published, and the first page as printed.
             </p>{" "}
-            <div className="mt-6 border-2 border-border bg-card shadow-hard">
+            <div className="mt-6 border border-border bg-card">
               {feed.register.map((d) => (
                 <DocRow key={d.documentNumber} doc={d} today={today} />
               ))}
@@ -145,8 +145,8 @@ export default async function PolicyChangesPage() {
           </section>{" "}
 
           <section className="mt-12" id="oflc">
-            <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">From OFLC</h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">From OFLC</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {feed.oflc.length} announcements on PERM, prevailing wages, H-1B and the
               disclosure files{ledger.oflcSince ? `, back to ${ledger.oflcSince.slice(0, 4)}` : ""}.
               {feed.oflcOther > 0 ? (
@@ -165,8 +165,8 @@ export default async function PolicyChangesPage() {
           </PolicySearch>{" "}
 
           <section className="mt-12">
-            <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">How documents are selected</h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">How documents are selected</h2>{" "}
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               By rule, not by judgement. A document that is missing was not
               matched, which is different from not mattering.
             </p>{" "}

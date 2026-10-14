@@ -113,7 +113,7 @@ export function CaseDetailSkeleton() {
   return (
     <div className="space-y-6">
       {/* Hero Header Skeleton */}
-      <div className="bg-card border-b-2 border-border overflow-hidden -mt-6 full-bleed">
+      <div className="bg-card border-b border-border overflow-hidden -mt-6 full-bleed">
         <div className="h-1 bg-muted" />
         <div className="p-3 sm:px-8 sm:py-3.5 space-y-2.5">
           {/* Breadcrumb */}
@@ -142,9 +142,9 @@ export function CaseDetailSkeleton() {
           </div>
         </div>
         {/* Stage Bar */}
-        <div className="flex border-t-2 border-border">
+        <div className="flex border-t border-border">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex-1 py-2.5 px-2 border-r-2 border-border last:border-r-0">
+            <div key={i} className="flex-1 py-2.5 px-2 border-r border-border last:border-r-0">
               <Skeleton variant="line" className="w-full h-4 mx-auto max-w-[80px]" />
             </div>
           ))}
@@ -628,7 +628,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       {/* ================================================================ */}
       <motion.div
         variants={headerVariants}
-        className="bg-card border-b-2 border-border relative z-[2] overflow-hidden -mt-6 full-bleed"
+        className="bg-card border-b border-border relative z-[2] overflow-hidden -mt-6 full-bleed"
       >
         {/* Stage accent strip */}
         <div className="h-1" style={{ backgroundColor: stageColor }} />
@@ -641,7 +641,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               size="icon"
               onClick={() => navigateTo("/cases")}
               className={cn(
-                "shrink-0 h-9 w-9 border-2 border-border bg-card hover:!bg-primary hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
+                "shrink-0 h-9 w-9 border border-border bg-card hover:!bg-primary hover:text-black hover:border-black transition-colors",
                 isNavigating && "opacity-70 pointer-events-none"
               )}
               disabled={isAnyNavigating}
@@ -664,7 +664,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   {caseData.employerName}
                 </h1>
                 {isSample && (
-                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-sm font-semibold border-2 border-dashed border-muted-foreground/50 text-muted-foreground" title="Sample case. Delete it anytime">
+                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-sm font-semibold border border-dashed border-muted-foreground/50 text-muted-foreground" title="Sample case. Delete it anytime">
                     Sample
                   </span>
                 )}
@@ -685,11 +685,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleToggleFavorite}
                 disabled={isTogglingFavorite}
                 className={cn(
-                  "shrink-0 border-2 transition-all cursor-pointer",
+                  "shrink-0 border transition-colors cursor-pointer",
                   "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.isFavorite
                     ? "border-data-warn bg-data-warn/8 hover:bg-data-warn/16 active:bg-data-warn/8 dark:active:bg-data-warn"
-                    : "border-border bg-card hover:bg-data-warn/16 hover:border-data-warn hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
+                    : "border-border bg-card hover:bg-data-warn/16 hover:border-data-warn"
                 )}
                 aria-label={caseData.isFavorite ? "Remove bookmark" : "Bookmark case"}
                 aria-pressed={caseData.isFavorite}
@@ -714,7 +714,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleToggleCalendarSync}
                 disabled={isTogglingCalendarSync}
                 className={cn(
-                  "shrink-0 border-2 transition-all cursor-pointer",
+                  "shrink-0 border transition-colors cursor-pointer",
                   caseData.calendarSyncEnabled && !isGoogleConnected
                     ? "h-[38px] min-h-[38px] min-w-[38px] gap-1.5 px-2.5 text-sm font-bold text-foreground"
                     : "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
@@ -722,7 +722,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     ? "border-data-good hover: active: dark:active:bg-data-good"
                     : caseData.calendarSyncEnabled && !isGoogleConnected
                       ? "border-data-warn bg-data-warn/8 hover:bg-data-warn/16 active:bg-data-warn/8 dark:active:bg-data-warn"
-                      : "border-border bg-card hover:bg-data-bad/20 hover:border-data-bad hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none"
+                      : "border-border bg-card hover:bg-data-bad/20 hover:border-data-bad"
                 )}
                 title={
                   caseData.calendarSyncEnabled && isGoogleConnected
@@ -759,8 +759,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 onClick={handleEdit}
                 disabled={isAnyNavigating}
                 className={cn(
-                  "shrink-0 border-2 border-border bg-primary text-primary-foreground font-heading font-bold text-sm",
-                  "shadow-hard-sm hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm transition-all",
+                  "shrink-0 border border-border bg-primary text-primary-foreground font-heading font-bold text-sm",
+                  "transition-colors",
                   "min-h-[38px] gap-1.5"
                 )}
               >
@@ -778,8 +778,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     variant="outline"
                     size="icon"
                     className={cn(
-                      "shrink-0 border-2 border-border bg-card",
-                      "hover:!bg-primary hover:text-black hover:border-black hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-none transition-all",
+                      "shrink-0 border border-border bg-card",
+                      "hover:!bg-primary hover:text-black hover:border-black transition-colors",
                       "min-h-[38px] min-w-[38px] h-[38px] w-[38px]"
                     )}
                     disabled={isUpdating || isAnyNavigating}
@@ -788,7 +788,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     <span className="sr-only">Actions</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 will-change-transform border-2 border-border shadow-hard-sm rounded-none p-1" onCloseAutoFocus={(e) => e.preventDefault()}>
+                <DropdownMenuContent align="end" className="w-52 will-change-transform border border-border rounded-none p-1" onCloseAutoFocus={(e) => e.preventDefault()}>
                   {isClosed ? (
                     <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px] font-heading font-bold text-sm rounded-none">
                       <RotateCcw className="h-4 w-4" />
@@ -831,13 +831,13 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   target="_blank"
                   rel="noopener"
                   title={`${caseData.caseNumber} - check DOL's live status`}
-                  className="font-mono text-sm font-bold uppercase tracking-wide border-2 border-border px-3 py-1 leading-none truncate max-w-[220px] underline decoration-primary-text decoration-2 underline-offset-4 transition-colors hover:bg-primary hover:text-primary-foreground"
+                  className="text-sm font-bold border border-border px-3 py-1 leading-none truncate max-w-[220px] underline decoration-primary-text decoration-2 underline-offset-4 transition-colors hover:bg-accent"
                 >
                   {caseData.caseNumber}
                 </a>
               ) : (
                 <span
-                  className="font-mono text-sm font-bold uppercase tracking-wide border-2 border-border px-3 py-1 leading-none truncate max-w-[200px]"
+                  className="text-sm font-bold border border-border px-3 py-1 leading-none truncate max-w-[200px]"
                   title={caseData.caseNumber}
                 >
                   {caseData.caseNumber}
@@ -856,7 +856,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         {/* Stage Bar — flat segments matching mockup */}
         {!isClosed && (
           <div
-            className="flex border-t-2 border-border mt-3.5"
+            className="flex border-t border-border mt-3.5"
             role="progressbar"
             aria-valuenow={currentStage + 1}
             aria-valuemin={1}
@@ -872,8 +872,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 <div
                   key={stage}
                   className={cn(
-                    "flex-1 py-2.5 px-2 text-center font-mono text-sm font-bold uppercase tracking-wide flex items-center justify-center gap-1.5",
-                    "border-r-2 border-border last:border-r-0",
+                    "flex-1 py-2.5 px-2 text-center text-sm font-bold flex items-center justify-center gap-1.5",
+                    "border-r border-border last:border-r-0",
                     isDone && "bg-card text-foreground",
                     isActive && "text-white",
                     !isDone && !isActive && "bg-muted text-muted-foreground"
@@ -888,7 +888,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   ) : (
                     <span
                       className={cn(
-                        "w-[9px] h-[9px] rounded-full border-2 shrink-0",
+                        "w-[9px] h-[9px] rounded-full border shrink-0",
                         isActive && "bg-white border-white",
                         !isActive && "border-current"
                       )}
@@ -967,7 +967,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           size="sm"
           onClick={() => setDeleteDialogOpen(true)}
           disabled={isDeleting}
-          className="border-2 border-destructive bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground font-heading text-sm font-bold transition-all gap-1.5"
+          className="border border-destructive bg-card text-destructive hover:bg-destructive hover:text-destructive-foreground font-heading text-sm font-bold transition-colors gap-1.5"
         >
           {isDeleting ? (
             <CircleNotchIcon className="h-3.5 w-3.5 animate-spin" />

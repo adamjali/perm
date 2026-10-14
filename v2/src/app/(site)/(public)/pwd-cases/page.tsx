@@ -121,9 +121,9 @@ export default async function PwdCasesPage() {
             program={PWD_PROGRAM}
             between={
               summary ? (
-                <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-                  <h2 className="font-heading text-xl font-black">Where DOL is in the line</h2>{" "}
-                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-foreground/70">
+                <section className="border border-border bg-card p-5 sm:p-6">
+                  <h2 className="font-heading text-xl font-bold">Where DOL is in the line</h2>{" "}
+                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                     Wage requests by the month they were filed, from DOL&apos;s case-status service.
                     {now.frontier ? ` DOL is issuing determinations on ${now.frontier}.` : ""}
                   </p>{" "}
@@ -142,8 +142,8 @@ export default async function PwdCasesPage() {
       </div>
 
       <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">How this works</h2>{" "}
-        <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
+        <h2 className="font-heading text-2xl font-bold">How this works</h2>{" "}
+        <div className="mt-4 space-y-4 text-base leading-relaxed text-soft">
           <p>
             <b className="font-bold">Why a request might be missing.</b> One filed
             today appears after the next check, which runs at least twice a day. A pending one from before the

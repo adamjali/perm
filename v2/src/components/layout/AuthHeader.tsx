@@ -184,7 +184,7 @@ export default function AuthHeader({
       data-site-header=""
       style={{ top: "var(--security-banner-h, 0px)" }}
       className={cn(
-        "fixed inset-x-0 z-50 border-b-3 border-white/20 bg-black",
+        "fixed inset-x-0 z-50 border-b border-white/20 bg-black",
         motionArmed && "transition-[padding,top] duration-200",
         isScrolled ? "py-1.5" : "py-3"
       )}
@@ -195,7 +195,7 @@ export default function AuthHeader({
           href="/"
           // One line at every width: the text steps down below 400px and the
           // icon drops below 360px, so the bar is one height everywhere.
-          className="group flex min-h-[44px] items-center gap-2 whitespace-nowrap px-2 py-1 font-heading text-xl font-bold transition-colors hover:bg-primary min-[400px]:text-2xl"
+          className="group flex min-h-[44px] items-center gap-2 whitespace-nowrap px-2 py-1 font-heading text-xl font-bold transition-colors hover:bg-accent min-[400px]:text-2xl"
           spinnerClassName="text-(--primary) group-hover:text-black"
         >
           <FileTextIcon
@@ -224,7 +224,7 @@ export default function AuthHeader({
                   <NavLink
                     href={link.href}
                     className={cn(
-                      "relative px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
+                      "relative px-3 py-2 font-heading text-sm font-semibold transition-colors",
                       // text-(--primary), not text-primary: the header is black in
                       // both themes, and text-primary resolves to the darkened
                       // light-mode reading colour there.
@@ -271,7 +271,7 @@ export default function AuthHeader({
                 type="button"
                 onClick={() => setIsLearnOpen(!isLearnOpen)}
                 className={cn(
-                  "flex items-center gap-1 px-3 py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
+                  "flex items-center gap-1 px-3 py-2 font-heading text-sm font-semibold transition-colors",
                   learnActive
                     ? "text-(--primary)"
                     : "text-white hover:text-(--primary)"
@@ -287,7 +287,7 @@ export default function AuthHeader({
                 aria-hidden={!isLearnOpen}
                 inert={!isLearnOpen}
                 className={cn(
-                  "absolute left-0 top-full z-50 mt-1 w-44 border-2 border-white/20 bg-black py-1 shadow-[4px_4px_0_rgba(255,255,255,0.2)] transition-opacity duration-150",
+                  "absolute left-0 top-full z-50 mt-1 w-44 border border-white/20 bg-black py-1 transition-opacity duration-150",
                   !isLearnOpen && "invisible pointer-events-none opacity-0"
                 )}
               >
@@ -319,7 +319,7 @@ export default function AuthHeader({
             {showSignIn && (
               <NavLink
                 href="/login"
-                className="inline-flex min-h-[44px] items-center justify-center border-2 px-4 font-heading text-sm font-bold shadow-[2px_2px_0px_rgba(255,255,255,0.3)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none border-white bg-transparent text-white"
+                className="inline-flex min-h-[44px] items-center justify-center border px-4 font-heading text-sm font-bold transition-colors duration-150 border-white bg-transparent text-white"
                 spinnerClassName="text-white"
                 spinnerSize={14}
               >
@@ -330,7 +330,7 @@ export default function AuthHeader({
             {showSignUp && (
               <NavLink
                 href="/signup"
-                className="inline-flex min-h-[44px] items-center justify-center border-2 px-4 font-heading text-sm font-bold shadow-[2px_2px_0px_rgba(255,255,255,0.3)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none border-primary bg-primary text-black"
+                className="inline-flex min-h-[44px] items-center justify-center border px-4 font-heading text-sm font-bold transition-colors duration-150 border-primary bg-primary text-black"
                 spinnerClassName="text-black"
                 spinnerSize={14}
               >
@@ -350,7 +350,7 @@ export default function AuthHeader({
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             // 44px, not 40: the hamburger is the only way into the menu on a phone.
-            className="flex h-11 w-11 items-center justify-center border-2 border-white/20 text-white transition-colors hover:bg-white/10"
+            className="flex h-11 w-11 items-center justify-center border border-white/20 text-white transition-colors hover:bg-white/10"
             aria-label="Toggle menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -366,14 +366,14 @@ export default function AuthHeader({
           so the SEO sitelinks contract is satisfied at the page level. Mobile
           is purely a viewport-specific UX surface. */}
       {isMobileMenuOpen && (
-        <div className="absolute left-0 right-0 top-full border-b-3 border-white/20 bg-black px-4 py-4 xl:hidden">
+        <div className="absolute left-0 right-0 top-full border-b border-white/20 bg-black px-4 py-4 xl:hidden">
           <nav className="flex flex-col gap-3">
             {PUBLIC_NAV_LINKS.map((link) => (
               <React.Fragment key={link.href}>
                 <NavLink
                   href={link.href}
                   className={cn(
-                    "block py-2 font-heading text-sm font-semibold uppercase tracking-wide transition-colors",
+                    "block py-2 font-heading text-sm font-semibold transition-colors",
                     pathname === link.href
                       ? "text-(--primary)"
                       : "text-white hover:text-(--primary)"
@@ -389,7 +389,7 @@ export default function AuthHeader({
 
             {/* Learn section */}
             <div className="border-t border-white/10 pt-2 mt-1">
-              <p className="py-1 font-heading text-sm font-bold uppercase tracking-widest text-white/70">
+              <p className="py-1 font-heading text-sm font-bold text-white/70">
                 Learn
               </p>{" "}
               {LEARN_NAV_LINKS.map((link) => (
@@ -415,7 +415,7 @@ export default function AuthHeader({
               {showSignIn && (
                 <NavLink
                   href="/login"
-                  className="flex min-h-[48px] items-center justify-center border-2 px-4 text-center font-heading text-base font-bold shadow-[2px_2px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none border-white bg-transparent text-white"
+                  className="flex min-h-[48px] items-center justify-center border px-4 text-center font-heading text-base font-bold border-white bg-transparent text-white"
                   spinnerClassName="text-white"
                   spinnerSize={14}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -426,7 +426,7 @@ export default function AuthHeader({
               {showSignUp && (
                 <NavLink
                   href="/signup"
-                  className="flex min-h-[48px] items-center justify-center border-2 px-4 text-center font-heading text-base font-bold shadow-[2px_2px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none border-primary bg-primary text-black"
+                  className="flex min-h-[48px] items-center justify-center border px-4 text-center font-heading text-base font-bold border-primary bg-primary text-black"
                   spinnerClassName="text-black"
                   spinnerSize={14}
                   onClick={() => setIsMobileMenuOpen(false)}

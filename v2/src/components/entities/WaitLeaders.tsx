@@ -26,8 +26,8 @@ function Column({
   max: number;
 }) {
   return (
-    <div className="min-w-0 border-2 border-border bg-background p-5">
-      <h3 className="font-heading text-lg font-black">{title}</h3>{" "}
+    <div className="min-w-0 border border-border bg-background p-5">
+      <h3 className="font-heading text-lg font-bold">{title}</h3>{" "}
       <BarRows
         label={`${title}, median days to a decision`}
         className="mt-4"
@@ -67,9 +67,9 @@ export function WaitLeaders({ field, className }: { field: FieldWait | null; cla
   const max = Math.max(field.p50, ...field.slowest.map((r) => r.p50));
   return (
     // The page's own part heading names this ("Whose cases DOL decides fastest, and slowest").
-    <section aria-label="Sponsors whose cases DOL decides fastest and slowest" className={cn("border-2 border-border bg-card p-6 shadow-hard sm:p-8", className)}>
+    <section aria-label="Sponsors whose cases DOL decides fastest and slowest" className={cn("border border-border bg-card p-6 sm:p-8", className)}>
       <MoreText gist={"Median days from filing to decision, last 90 days, busier sponsors only."}>
-        <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
+        <p className="max-w-3xl text-base leading-relaxed text-soft">
           Filing to decision, median, over the last {field.windowDays} days, for the {formatInt(field.employersRanked ?? 0)}{" "}
           sponsors with at least {field.minDecisions ?? 20} decisions in that time. A sponsor well under the
           all-employers figure had cases decided out of filing order; one well over it usually had audits or requests

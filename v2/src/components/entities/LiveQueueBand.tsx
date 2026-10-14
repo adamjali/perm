@@ -106,18 +106,18 @@ export function LiveQueueBand({
         <>
           <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 sm:grid-cols-[minmax(0,15rem)_1fr] sm:gap-8">
             <div>
-              <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
+              <p className="text-sm font-bold text-muted-foreground">
                 Waiting on a decision
               </p>{" "}
-              <p className="mt-1 font-heading text-5xl font-black leading-none tabular-nums">
+              <p className="mt-1 font-heading text-5xl font-bold leading-none tabular-nums">
                 {formatInt(waiting)}
               </p>{" "}
-              <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 of {formatInt(tracked)} tracked cases. The other {formatInt(decided)} have
                 been decided.
               </p>
               {oldest ? (
-                <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-foreground/80">
+                <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-soft">
                   The oldest one still waiting was filed{" "}
                   <span className="font-bold">{longDate(oldest)}</span>
                   {months != null && months >= 1 ? (
@@ -131,7 +131,7 @@ export function LiveQueueBand({
             </div>
 
             <div>
-              <p className="mb-3 border-b border-border/40 pb-1.5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
+              <p className="mb-3 border-b border-border/40 pb-1.5 text-sm font-bold text-muted-foreground">
                 Where those {formatInt(waiting)} are standing
               </p>
               <ChartTips label={`Where those ${formatInt(waiting)} cases are standing`}>
@@ -150,7 +150,7 @@ export function LiveQueueBand({
                       data-tip={`${s.status}\n${formatInt(s.n)} waiting\n${share >= 0.5 ? `${share.toFixed(0)}%` : "Under 1%"} of the ${formatInt(waiting)} waiting`}
                     >
                       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                        <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em]">
+                        <dt className="text-sm font-bold">
                           {s.status}
                         </dt>{" "}
                         <dd className="font-mono text-sm font-bold tabular-nums">
@@ -178,7 +178,7 @@ export function LiveQueueBand({
                         }}
                       />
                       {meaning ? (
-                        <p className="mt-1.5 text-sm leading-relaxed text-foreground/70">
+                        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                           {meaning}
                         </p>
                       ) : null}
@@ -191,7 +191,7 @@ export function LiveQueueBand({
             </div>
           </div>
 
-          <p className="mt-6 border-t-2 border-border pt-4 text-sm leading-relaxed text-foreground/70">
+          <p className="mt-6 border-t border-border pt-4 text-sm leading-relaxed text-muted-foreground">
             None of this changes one case&apos;s wait: DOL works one national
             line.{" "}
             <Link
@@ -207,7 +207,7 @@ export function LiveQueueBand({
           </p>
         </>
       ) : (
-        <p className="max-w-2xl text-base leading-relaxed text-foreground/80">
+        <p className="max-w-2xl text-base leading-relaxed text-soft">
           Nothing for this {subject} is waiting on a decision. All{" "}
           {formatInt(tracked)} of their cases in the live tracker are closed.
         </p>

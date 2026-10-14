@@ -37,21 +37,21 @@ export function CaseNumberAnatomy({ id, employerName = true }: { id: string; emp
             {i > 0 ? <span className="text-lg font-bold text-muted-foreground">-</span> : null}{" "}
             {/* Dashed, so the example reads as an example: drawn as solid boxes,
                 visitors clicked the parts as if they were buttons. */}
-            <span className="border-2 border-dashed border-foreground/40 px-2 py-1 text-base font-bold">{p.seg}</span>{" "}
+            <span className="border border-dashed border-foreground/40 px-2 py-1 text-base font-bold">{p.seg}</span>{" "}
           </Fragment>
         ))}
         {parts.map((p, i) => (
           <Fragment key={`${p.seg}-label`}>
             {i > 0 ? <span /> : null}{" "}
-            <span className="mt-1 whitespace-nowrap text-sm text-foreground/70">{p.what}</span>{" "}
+            <span className="mt-1 whitespace-nowrap text-sm text-muted-foreground">{p.what}</span>{" "}
           </Fragment>
         ))}
       </div>{" "}
       <div aria-hidden="true" className="mt-3 flex flex-wrap gap-2">
         {PREFIX_CHIPS.filter((c) => employerName || c.prefix !== null).map((c) => (
           <Fragment key={c.what}>
-            <span className="inline-flex items-center gap-1.5 border-2 border-border/60 px-2 py-0.5 text-sm">
-              {c.prefix ? <b className="font-mono font-black">{c.prefix}</b> : null}{" "}
+            <span className="inline-flex items-center gap-1.5 border border-border/60 px-2 py-0.5 text-sm">
+              {c.prefix ? <b className="font-mono font-bold">{c.prefix}</b> : null}{" "}
               {c.what}
             </span>{" "}
           </Fragment>

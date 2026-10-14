@@ -161,7 +161,7 @@ export default async function PermRfiAuditPage() {
       />
             <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">        <div className="pt-10 sm:pt-12" />
         <header className="max-w-3xl">
-          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+          <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
             RFIs, audits and appeals
           </h1>{" "}
           <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
@@ -288,7 +288,7 @@ export default async function PermRfiAuditPage() {
           {funnel ? (
             <>
               <RfiOutcomes funnel={funnel} />
-              <div className="mt-5 grid gap-4 border-2 border-border bg-secondary p-4 sm:p-5">
+              <div className="mt-5 grid gap-4 border border-border bg-secondary p-4 sm:p-5">
                 {funnel.medianDaysToDecision !== null ? (
                   <p className="text-sm leading-relaxed">
                     <b className="font-bold">
@@ -444,8 +444,8 @@ export default async function PermRfiAuditPage() {
           saying out loud rather than letting a reader discover the chain
           later, which would turn a genuine scoop into a credibility problem.
         */}
-        <section className="mt-14 max-w-3xl border-2 border-border bg-card p-5 sm:mt-20">
-          <h2 className="font-heading text-lg font-black">
+        <section className="mt-14 max-w-3xl border border-border bg-card p-5 sm:mt-20">
+          <h2 className="font-heading text-lg font-bold">
             Where these numbers come from
           </h2>
           {/* Provenance, not correction: it says where the numbers came from
@@ -474,7 +474,7 @@ export default async function PermRfiAuditPage() {
           <PageBasics page="perm-rfi-audit" />{" "}
           <DataProvenance
             datasets={["perm-case-status", "rfi-funnel", "processing-times"]}
-            className="mt-4 border-t-2 border-border pt-3"
+            className="mt-4 border-t border-border pt-3"
           />
         </section>
       </div>
@@ -514,7 +514,7 @@ function Section({
 }) {
   return (
     <section id={id} className="mt-14 scroll-mt-32 sm:mt-20">
-      <h2 className="font-heading text-2xl font-black leading-tight sm:text-3xl">
+      <h2 className="font-heading text-2xl font-bold leading-tight sm:text-3xl">
         {title}
       </h2>{" "}
       {lede ? (
@@ -562,11 +562,11 @@ function Concentration({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="border-2 border-border bg-card p-5">
-        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="border border-border bg-card p-5">
+        <p className="text-sm font-bold text-muted-foreground">
           Most concentrated
         </p>{" "}
-        <p className="mt-2 font-heading text-xl font-black leading-snug">
+        <p className="mt-2 font-heading text-xl font-bold leading-snug">
           {pctInt(most.topEmployerCases, most.cases)} of the{" "}
           {stageMeta(most.status).phrase} are one employer
         </p>{" "}
@@ -578,11 +578,11 @@ function Concentration({
           company&rsquo;s filings.
         </p>
       </div>
-      <div className="border-2 border-border bg-card p-5">
-        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="border border-border bg-card p-5">
+        <p className="text-sm font-bold text-muted-foreground">
           Most spread out
         </p>{" "}
-        <p className="mt-2 font-heading text-xl font-black leading-snug">
+        <p className="mt-2 font-heading text-xl font-bold leading-snug">
           {least.employerNames.toLocaleString()} employers hold the{" "}
           {least.cases.toLocaleString()} {stageMeta(least.status).phrase}
         </p>{" "}
@@ -659,7 +659,7 @@ function Limits({
 function Limit({ head, children }: { head: string; children: React.ReactNode }) {
   // FOLDED: five headings to scan, each opening its answer.
   return (
-    <li className="border-l-4 border-border pl-4">
+    <li className="border-l-2 border-border pl-4">
       <details className="group">
         <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
           <CaretRightIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" />{" "}
@@ -675,7 +675,7 @@ function Limit({ head, children }: { head: string; children: React.ReactNode }) 
 
 function EmptyState({ what }: { what: string }) {
   return (
-    <p className="border-2 border-border bg-secondary p-5 text-sm leading-relaxed">
+    <p className="border border-border bg-secondary p-5 text-sm leading-relaxed">
       {what} is not loading right now. DOL publishes the underlying case
       statuses at{" "}
       <a

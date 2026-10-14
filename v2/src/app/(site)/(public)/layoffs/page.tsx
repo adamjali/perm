@@ -41,9 +41,9 @@ export default async function LayoffsPage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Layoff notices against sponsors</h1>{" "}
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Layoff notices against sponsors</h1>{" "}
         <MoreText gist={"Mass layoffs need 60 days' notice, filed with the state."} className="mt-4">
-          <p className=" max-w-2xl text-lg leading-relaxed text-foreground/70">
+          <p className=" max-w-2xl text-lg leading-relaxed text-muted-foreground">
             The WARN Act makes an employer file 60 days&apos; notice of a mass layoff or closing with the state, and
             some states publish the filings. DOL&apos;s PERM files record no layoff, so these notices are the only public
             trace of one. Each row is a filing as the state printed it.
@@ -52,17 +52,17 @@ export default async function LayoffsPage() {
       </header>
 
       <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
-        <div className="border-2 border-border bg-card p-5 shadow-hard">
-          <p className="text-sm text-foreground/70">Notices held{asOf ? `, to ${formatAsOf(asOf)}` : ""}</p>{" "}
-          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{totals.notices.toLocaleString("en-US")}</p>
+        <div className="border border-border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Notices held{asOf ? `, to ${formatAsOf(asOf)}` : ""}</p>{" "}
+          <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{totals.notices.toLocaleString("en-US")}</p>
         </div>{" "}
-        <div className="border-2 border-border bg-card p-5 shadow-hard">
-          <p className="text-sm text-foreground/70">Filed by a PERM sponsor</p>{" "}
-          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{totals.matched.toLocaleString("en-US")}</p>
+        <div className="border border-border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Filed by a PERM sponsor</p>{" "}
+          <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{totals.matched.toLocaleString("en-US")}</p>
         </div>{" "}
-        <div className="border-2 border-border bg-card p-5 shadow-hard">
-          <p className="text-sm text-foreground/70">Employees in those notices</p>{" "}
-          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{totals.employees.toLocaleString("en-US")}</p>
+        <div className="border border-border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Employees in those notices</p>{" "}
+          <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{totals.employees.toLocaleString("en-US")}</p>
         </div>
       </section>
 
@@ -70,7 +70,7 @@ export default async function LayoffsPage() {
 
       <section className="mt-10">
         {matched.length === 0 ? (
-          <p className="text-sm text-foreground/70">No notice held matches a PERM sponsor by name.</p>
+          <p className="text-sm text-muted-foreground">No notice held matches a PERM sponsor by name.</p>
         ) : (
           <WarnTable rows={matched} />
         )}{" "}
@@ -82,9 +82,9 @@ export default async function LayoffsPage() {
       </section>
 
       <section className="mt-10 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">What is read, and what is not</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">What is read, and what is not</h2>{" "}
         <MoreText gist={"Four states' WARN records only: a sponsor with layoffs elsewhere isn't cleared here."} className="mt-3">
-          <p className="text-base leading-relaxed text-foreground/80">
+          <p className="text-base leading-relaxed text-soft">
             Four states are read, each from the record it publishes, and all four refresh on their own. California&apos;s
             Employment Development Department posts its WARN report as a spreadsheet; New York&apos;s current notices sit
             in a public dashboard that also serves them as a table; Washington keeps a searchable database of every
@@ -99,7 +99,7 @@ export default async function LayoffsPage() {
             company; a subsidiary filing under its own name does not match its parent, on purpose.
           </p>
         </MoreText>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           A notice is not a finding about a PERM. What a layoff does to a filing, and to a pending case, is on{" "}
           <Link href="/guides/employer-layoffs-and-your-perm" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
             the layoffs guide

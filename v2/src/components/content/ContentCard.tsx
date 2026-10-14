@@ -51,7 +51,6 @@ export default function ContentCard({
 
   return (
     <motion.article
-      whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <NavLink href={href} className="group block" showLoading={false}>
@@ -60,7 +59,7 @@ export default function ContentCard({
             Stacked, each card ran about 430 px and the guides index 25,000. */}
         <div
           className={
-            "relative border-2 border-border bg-card shadow-hard transition-shadow duration-150 group-hover:shadow-hard-lg" +
+            "relative border border-border bg-card transition-shadow duration-150" +
             (meta.image ? " max-sm:grid max-sm:grid-cols-[7rem_minmax(0,1fr)]" : "")
           }
         >
@@ -70,7 +69,7 @@ export default function ContentCard({
               flashes it; only a slow one shows it. */}
           {isNavigating && (
             <div
-              className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 animate-in fade-in fill-mode-both duration-150 motion-reduce:animate-none"
+              className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 fill-mode-both duration-150 motion-reduce:animate-none"
               style={{ animationDelay: "150ms" }}
             >
               <CircleNotchIcon className="h-6 w-6 animate-spin text-primary" />
@@ -78,7 +77,7 @@ export default function ContentCard({
           )}
           {/* Image */}
           {meta.image && (
-            <div className="relative aspect-[16/9] overflow-hidden border-b-2 border-border max-sm:aspect-auto max-sm:min-h-28 max-sm:border-b-0 max-sm:border-r-2">
+            <div className="relative aspect-[16/9] overflow-hidden border-b border-border max-sm:aspect-auto max-sm:min-h-28 max-sm:border-b-0 max-sm:border-r">
               <Image
                 src={meta.image}
                 alt={meta.imageAlt ?? meta.title}
@@ -89,7 +88,7 @@ export default function ContentCard({
               />
               {/* Type badge overlay */}
               {showType && (
-                <span className="absolute left-3 top-3 border-2 border-black bg-primary px-2 py-0.5 font-heading text-sm font-bold text-black max-sm:hidden">
+                <span className="absolute left-3 top-3 border border-black bg-primary px-2 py-0.5 font-heading text-sm font-bold text-black max-sm:hidden">
                   {config.label}{" "}
                 </span>
               )}

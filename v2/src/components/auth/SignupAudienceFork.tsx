@@ -59,28 +59,28 @@ export function SignupAudienceFork() {
       {/* Plane one: the offset slab. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[6px] border-2 border-border bg-primary"
+        className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[6px] border border-border bg-primary"
       />
 
-      <div className="relative border-2 border-border bg-card">
+      <div className="relative border border-border bg-card">
         {/* Plane two: the tape. */}
-        <div className="h-2.5 border-b-2 border-border" style={TAPE} aria-hidden="true" />
+        <div className="h-2.5 border-b border-border" style={TAPE} aria-hidden="true" />
 
         <div className="relative px-4 py-3.5 sm:px-5">
           {/* Plane three: the tile, overlapping the tape above it. */}
           <div
             aria-hidden="true"
-            className="absolute -top-[22px] left-4 flex size-9 items-center justify-center border-2 border-border bg-black sm:left-5"
+            className="absolute -top-[22px] left-4 flex size-9 items-center justify-center border border-border bg-black sm:left-5"
           >
             <WarningIcon size={20} weight="fill" className="text-primary" />
           </div>
 
           <div className="mt-3.5 sm:flex sm:items-end sm:justify-between sm:gap-5">
             <div className="min-w-0">
-              <p className="font-heading text-[15px] font-black leading-snug">
+              <p className="font-heading text-[15px] font-bold leading-snug">
                 This account is for people who <span className="bg-primary px-1 text-black">file</span> PERM cases
               </p>{" "}
-              <p className="mt-1 text-sm leading-snug text-foreground/70">
+              <p className="mt-1 text-sm leading-snug text-muted-foreground">
                 Attorneys, paralegals, HR and employers. Waiting on your own case? You don&rsquo;t need an account.
               </p>
             </div>
@@ -89,7 +89,7 @@ export function SignupAudienceFork() {
               <Link
                 href="/perm-case-status"
                 onClick={() => analytics.capture("signup_fork_taken", { door: "track_my_case" })}
-                className="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap border-2 border-border bg-primary px-3.5 font-heading text-sm font-black text-black shadow-hard-sm transition-transform duration-150 hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-0 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0"
+                className="flex min-h-11 items-center justify-center gap-2 whitespace-nowrap border border-border bg-primary px-3.5 font-heading text-sm font-bold text-black transition-transform duration-150 motion-reduce:transition-none"
               >
                 <MagnifyingGlassIcon size={15} weight="bold" aria-hidden="true" />
                 Check my case
@@ -97,7 +97,7 @@ export function SignupAudienceFork() {
               <Link
                 href="/perm-queue"
                 onClick={() => analytics.capture("signup_fork_taken", { door: "queue" })}
-                className="flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap border-2 border-border bg-background px-3.5 font-heading text-sm font-black transition-colors duration-150 hover:bg-foreground hover:text-background motion-reduce:transition-none"
+                className="flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap border border-border bg-background px-3.5 font-heading text-sm font-bold transition-colors duration-150 hover:bg-foreground hover:text-background motion-reduce:transition-none"
               >
                 The queue
                 <ArrowRightIcon size={15} weight="bold" aria-hidden="true" />
@@ -106,7 +106,7 @@ export function SignupAudienceFork() {
           </div>
         </div>
 
-        <div className="h-2.5 border-t-2 border-border" style={TAPE} aria-hidden="true" />
+        <div className="h-2.5 border-t border-border" style={TAPE} aria-hidden="true" />
       </div>
     </section>
   );

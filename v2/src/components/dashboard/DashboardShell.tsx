@@ -31,11 +31,11 @@ export function DashboardHeading({
             <Skeleton variant="line" className="h-7 w-64 sm:h-8" />
           </div>
         ) : (
-          <h1 className="font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">
+          <h1 className="font-heading text-3xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-4xl">
             {firstName ? `${greeting}, ${firstName}` : greeting}
           </h1>
         )}{" "}
-        <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-muted-foreground">
           Every filing window, wage expiration and audit deadline in your
           cases, computed from the dates you have entered.
         </p>

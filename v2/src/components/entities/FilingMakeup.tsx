@@ -62,7 +62,7 @@ function Shell({
   className?: string;
 }) {
   return (
-    <section className={cn("border-2 border-border bg-card p-5 sm:p-6", className)}>
+    <section className={cn("border border-border bg-card p-5 sm:p-6", className)}>
       {/* The spaces are load-bearing, not formatting. Without them the title
           welds to the first row and the last row welds to the note - "What the
           jobs are||Software Developers", "15-2051.01111||These are the 6
@@ -116,7 +116,7 @@ export function OccupationMix({
       }
       className={className}
     >
-      <p className="font-heading text-2xl font-black leading-tight">
+      <p className="font-heading text-2xl font-bold leading-tight">
         {lead.key ? (
           <Link
             href={`/perm-wages/${lead.key}`}
@@ -128,7 +128,7 @@ export function OccupationMix({
           lead.label
         )}
       </p>{" "}
-      <p className="mt-1.5 font-mono text-sm tabular-nums text-foreground/70">
+      <p className="mt-1.5 font-mono text-sm tabular-nums text-muted-foreground">
         {lead.code ? <>SOC {lead.code} &middot; </> : null}
         {formatInt(lead.n)} filings
         {leadShare >= 1 ? `, ${leadShare.toFixed(0)}% of everything they file` : null}
@@ -136,7 +136,7 @@ export function OccupationMix({
       </p>
 
       {rest.length > 0 ? (
-        <ul className="mt-5 space-y-2 border-t-2 border-border pt-4">
+        <ul className="mt-5 space-y-2 border-t border-border pt-4">
           {rest.map((r) => (
             <Fragment key={r.key ?? r.label}>{" "}
               <li
@@ -154,7 +154,7 @@ export function OccupationMix({
                     r.label
                   )}
                 </span>{" "}
-                <span className="font-mono text-sm tabular-nums text-foreground/70">
+                <span className="font-mono text-sm tabular-nums text-muted-foreground">
                   {r.code ? (
                     <span className="mr-2 font-normal text-muted-foreground">{r.code}</span>
                   ) : null}
@@ -210,9 +210,9 @@ export function StateMix({
         {rows.map((r) => (
           <Fragment key={r.key ?? r.label}>{" "}
             <li
-              className="border-2 border-border bg-background px-3 py-1.5"
+              className="border border-border bg-background px-3 py-1.5"
             >
-              <span className="block font-mono text-sm font-bold uppercase tracking-[0.1em]">
+              <span className="block text-sm font-bold">
                 {r.key ? stateName(r.key) : r.label}
               </span>{" "}
               <span className="block font-mono text-sm font-bold tabular-nums">{formatInt(r.n)}</span>
@@ -283,7 +283,7 @@ export function PartyMix({
                   ) : (
                     <span className="font-bold leading-snug">{r.label}</span>
                   )}{" "}
-                  <span className="mt-0.5 block font-mono text-sm tabular-nums text-foreground/70">
+                  <span className="mt-0.5 block font-mono text-sm tabular-nums text-muted-foreground">
                     {formatInt(r.n)} filings
                     {rate != null ? ` · ${rate.toFixed(1)}% approved` : null}
                   </span>
@@ -339,7 +339,7 @@ export function CityMix({
             >
               <span className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
-                <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{formatInt(r.n)}</span>
+                <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">{formatInt(r.n)}</span>
               </span>{" "}
               <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
                 <span
@@ -402,18 +402,18 @@ export function IndustryMix({
       }
       className={className}
     >
-      <p className="font-heading text-xl font-black leading-tight">{lead.label}</p>{" "}
-      <p className="mt-1.5 font-mono text-sm tabular-nums text-foreground/70">
+      <p className="font-heading text-xl font-bold leading-tight">{lead.label}</p>{" "}
+      <p className="mt-1.5 font-mono text-sm tabular-nums text-muted-foreground">
         NAICS {lead.codes.join(", ")} &middot; {formatInt(lead.n)} filings
       </p>
       {rest.length > 0 ? (
-        <ul className="mt-4 space-y-2 border-t-2 border-border pt-3">
+        <ul className="mt-4 space-y-2 border-t border-border pt-3">
           {rest.map((r) => (
             <Fragment key={r.label}>
               {" "}
               <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
                 <span className="min-w-0 flex-1 text-sm font-bold leading-snug">{r.label}</span>{" "}
-                <span className="font-mono text-sm tabular-nums text-foreground/70">
+                <span className="font-mono text-sm tabular-nums text-muted-foreground">
                   <span className="mr-2 font-normal text-muted-foreground">{r.codes.join(", ")}</span>
                   {formatInt(r.n)}
                 </span>

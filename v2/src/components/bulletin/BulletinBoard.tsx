@@ -149,14 +149,14 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
   const window = `${formatMonth(board.firstMonth)} to ${formatMonth(board.lastMonth)}`;
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <div className="border-b-2 border-border p-6 sm:p-8">
+    <div className={cn("border border-border bg-card", className)}>
+      <div className="border-b border-border p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="font-heading text-2xl font-black leading-tight">
+            <h2 className="font-heading text-2xl font-bold leading-tight">
               Which queues are actually moving
             </h2>{" "}
-            <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70">
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
               A cutoff that advances thirty days in a month has stood still:
               everyone waiting behind it is exactly as far back as they were.
               Across the {board.bulletinCount} bulletins held here, {window},
@@ -172,12 +172,12 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
         </div>
       </div>
 
-      <div className="border-b-2 border-border p-6 sm:p-8">
-        <h3 className="font-heading text-lg font-black">
+      <div className="border-b border-border p-6 sm:p-8">
+        <h3 className="font-heading text-lg font-bold">
           Where every category stood in {formatMonth(board.lastMonth)}
         </h3>{" "}
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[640px] border-2 border-border text-left text-sm shadow-hard-sm">
+          <table className="w-full min-w-[640px] border border-border text-left text-sm">
             <caption className="sr-only">
               {`Employment-based ${chart === "finalAction" ? "final action" : "dates for filing"} cutoffs by category and country of birth, from the ${formatMonth(board.lastMonth)} visa bulletin.`}
             </caption>
@@ -185,7 +185,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
               <tr>
                 <th
                   scope="col"
-                  className="px-3 py-2.5 font-mono text-sm font-bold uppercase tracking-wider"
+                  className="px-3 py-2.5 text-sm font-bold"
                 >
                   Category{" "}
                 </th>
@@ -197,7 +197,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                   <Fragment key={c}>
                     <th
                       scope="col"
-                      className="px-3 py-2.5 text-right font-mono text-sm font-bold uppercase tracking-wider"
+                      className="px-3 py-2.5 text-right text-sm font-bold"
                     >
                       {COUNTRY_SHORT[c]}{" "}
                     </th>
@@ -233,7 +233,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                                 {stateText(cell)}
                               </span>{" "}
                               {cell.pace !== null ? (
-                                <span className="block text-sm text-foreground/60">
+                                <span className="block text-sm text-muted-foreground">
                                   {cell.pace.toFixed(2)}x pace
                                 </span>
                               ) : null}
@@ -250,7 +250,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
             </tbody>
           </table>
         </div>{" "}
-        <p className="mt-3 text-sm leading-relaxed text-foreground/60">
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Cutoffs as published in the {formatMonth(board.lastMonth)} bulletin.{" "}
           <strong className="font-bold text-primary-text">Current</strong> means
           every priority date qualified that month.{" "}
@@ -260,11 +260,11 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
       </div>
 
       {paced.length > 0 ? (
-        <div className="border-b-2 border-border p-6 sm:p-8">
-          <h3 className="font-heading text-lg font-black">
+        <div className="border-b border-border p-6 sm:p-8">
+          <h3 className="font-heading text-lg font-bold">
             Cutoff days gained per calendar month
           </h3>{" "}
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
             Between the first and last bulletin with a real cutoff for each line. At 1.00 the cutoff keeps
             pace with the calendar; below it, the wait got longer even as the date moved forward.
           </p>{" "}
@@ -297,7 +297,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                   <span className="text-sm font-bold">
                     {categoryLabel(c.category)} {COUNTRY_LABELS[c.country]}
                   </span>{" "}
-                  <span className="relative block h-6 border-2 border-border bg-muted">
+                  <span className="relative block h-6 border border-border bg-muted">
                     <span
                       className="absolute inset-y-0 block"
                       style={{
@@ -326,7 +326,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
           </ul>
           </ChartTips>{" "}
 
-          <p className="mt-4 text-sm leading-relaxed text-foreground/60">
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
             The upright rule is 1.00, holding station. Bars reaching{" "}
             <strong className="font-bold text-primary-text">right</strong> of it
             are queues that shortened. Bars reaching{" "}
@@ -334,7 +334,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
             are queues that lengthened while their cutoff was still moving
             forward.
           </p>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-foreground/60">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {paced.filter((c) => c.pace < 1).length} of the {paced.length}{" "}
             queues measured here moved slower than one month per month.
           </p>
@@ -343,21 +343,21 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
 
       {withheld.length > 0 ? (
         <div className="p-6 sm:p-8">
-          <h3 className="font-heading text-base font-black">
+          <h3 className="font-heading text-base font-bold">
             Queues with no pace to report
           </h3>{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
             A pace needs two real cutoff dates to measure between.
           </p>{" "}
           {openLines.length > 0 ? (
             <>
-              <p className="mt-5 text-base text-foreground/70">
+              <p className="mt-5 text-base text-muted-foreground">
                 These published no cutoff date in this window; each was open to every priority date:
               </p>{" "}
               <ul className="mt-3 flex flex-wrap gap-2">
                 {openLines.map((g) => (
                   <Fragment key={g.category}>
-                    <li className="border-2 border-border bg-tint-primary px-3 py-1.5 text-sm font-bold">
+                    <li className="border border-border bg-tint-primary px-3 py-1.5 text-sm font-bold">
                       {g.everyCountry
                         ? `${categoryLabel(g.category)}, every country`
                         : `${categoryLabel(g.category)}: ${g.countries.map((k) => COUNTRY_LABELS[k]).join(", ")}`}
@@ -368,7 +368,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
             </>
           ) : null}{" "}
           {otherWithheld.some((c) => c.latest.kind === "unavailable") ? (
-            <p className="mt-5 text-base leading-relaxed text-foreground/70">
+            <p className="mt-5 text-base leading-relaxed text-muted-foreground">
               A shut queue&rsquo;s pace is withheld too: measured up to the month it
               stopped, it would describe a queue that no longer exists.
             </p>
@@ -378,7 +378,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
               {otherWithheld.map((c) => (
                 <Fragment key={`${c.category}|${c.country}`}>
                   {" "}
-                  <li className="text-base leading-relaxed text-foreground/70">
+                  <li className="text-base leading-relaxed text-muted-foreground">
                   <strong className="font-bold text-foreground">
                     {categoryLabel(c.category)} {COUNTRY_LABELS[c.country]}
                   </strong>{" "}

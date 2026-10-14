@@ -37,7 +37,7 @@ const REASON: Record<string, string> = {
 };
 
 const BTN =
-  "inline-flex min-h-[44px] items-center border-2 border-border px-3 text-sm font-bold shadow-hard-sm transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none";
+  "inline-flex min-h-[44px] items-center border border-border px-3 text-sm font-bold transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none";
 
 function when(ms: number | undefined): string {
   if (!ms) return "";
@@ -71,9 +71,9 @@ function ClaimCard({ c }: { c: Claim }) {
   };
   const id = c._id as Id<"firmClaims">;
   return (
-    <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
+    <li className="border border-border bg-card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <a href={`/perm-attorneys/${c.slug}`} className="font-heading text-lg font-black underline decoration-primary decoration-2 underline-offset-2">
+        <a href={`/perm-attorneys/${c.slug}`} className="font-heading text-lg font-bold underline decoration-primary decoration-2 underline-offset-2">
           {c.firmName}
         </a>{" "}
         <span className="text-sm font-bold">{c.status.replace("_", " ")}</span>
@@ -108,7 +108,7 @@ function ClaimCard({ c }: { c: Claim }) {
           </>
         ) : null}
       </dl>{" "}
-      {c.draft.description ? <p className="mt-2 whitespace-pre-line border-l-4 border-border pl-3 text-sm">{c.draft.description}</p> : null}{" "}
+      {c.draft.description ? <p className="mt-2 whitespace-pre-line border-l-2 border-border pl-3 text-sm">{c.draft.description}</p> : null}{" "}
       <div className="mt-3 flex flex-wrap gap-2">
         {c.status === "pending_review" ? (
           <button type="button" disabled={busy} onClick={() => run(() => approve({ claimId: id }))} className={`${BTN} bg-primary text-primary-foreground`}>
@@ -188,9 +188,9 @@ function EditCard({ e }: { e: Edit }) {
   const after = fieldRows(e.after);
   const reasonId = `decline-${e.slug}`;
   return (
-    <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
+    <li className="border border-border bg-card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <a href={`/perm-attorneys/${e.slug}`} className="font-heading text-lg font-black underline decoration-primary decoration-2 underline-offset-2">
+        <a href={`/perm-attorneys/${e.slug}`} className="font-heading text-lg font-bold underline decoration-primary decoration-2 underline-offset-2">
           {e.firmName}
         </a>{" "}
         <span className="text-sm font-bold">{e.before ? "changes" : "first profile"}</span>
@@ -205,7 +205,7 @@ function EditCard({ e }: { e: Edit }) {
           const changed = e.before !== null && was !== row.value;
           if (!row.value && !was) return null;
           return (
-            <div key={row.label} className={changed ? "border-l-4 border-primary pl-3" : "pl-4"}>
+            <div key={row.label} className={changed ? "border-l-2 border-primary pl-3" : "pl-4"}>
               <dt className="font-bold">
                 {row.label}
                 {changed ? " (changed)" : ""}
@@ -213,7 +213,7 @@ function EditCard({ e }: { e: Edit }) {
               </dt>{" "}
               {changed ? (
                 <dd className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2 [&>*]:min-w-0">
-                  <span className="whitespace-pre-line break-words text-foreground/70">
+                  <span className="whitespace-pre-line break-words text-muted-foreground">
                     <span className="font-bold">Now: </span>
                     {was || "nothing"}
                   </span>{" "}
@@ -230,7 +230,7 @@ function EditCard({ e }: { e: Edit }) {
         })}
       </dl>{" "}
       <label htmlFor={reasonId} className="mt-4 block text-sm font-bold">
-        Reason for a decline <span className="font-normal text-foreground/70">(optional; the firm sees it)</span>
+        Reason for a decline <span className="font-normal text-muted-foreground">(optional; the firm sees it)</span>
       </label>{" "}
       <textarea
         id={reasonId}
@@ -239,7 +239,7 @@ function EditCard({ e }: { e: Edit }) {
         placeholder="What should the firm change?"
         onChange={(ev) => setReason(ev.target.value)}
         rows={2}
-        className="mt-1 w-full min-w-0 border-2 border-border bg-background p-2 text-sm"
+        className="mt-1 w-full min-w-0 border border-input bg-background p-2 text-sm"
       />{" "}
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" disabled={busy} onClick={() => run(() => approve({ slug: e.slug }))} className={`${BTN} bg-primary text-primary-foreground`}>
@@ -266,10 +266,10 @@ function EditCard({ e }: { e: Edit }) {
 function Group({ title, note, claims }: { title: string; note: string; claims: Claim[] }) {
   return (
     <section>
-      <h2 className="font-heading text-xl font-black">
-        {title} <span className="tabular-nums text-foreground/70">{claims.length}</span>
+      <h2 className="font-heading text-xl font-bold">
+        {title} <span className="tabular-nums text-muted-foreground">{claims.length}</span>
       </h2>{" "}
-      <p className="mt-1 text-sm text-foreground/70">{note}</p>{" "}
+      <p className="mt-1 text-sm text-muted-foreground">{note}</p>{" "}
       {claims.length === 0 ? (
         <p className="mt-3 text-sm">None.</p>
       ) : (
@@ -293,10 +293,10 @@ export function FirmClaimsPanel({ data }: { data: FirmClaimsData | undefined }) 
         claims={data.review}
       />{" "}
       <section>
-        <h2 className="font-heading text-xl font-black">
-          Profile changes waiting <span className="tabular-nums text-foreground/70">{data.edits.length}</span>
+        <h2 className="font-heading text-xl font-bold">
+          Profile changes waiting <span className="tabular-nums text-muted-foreground">{data.edits.length}</span>
         </h2>{" "}
-        <p className="mt-1 text-sm text-foreground/70">
+        <p className="mt-1 text-sm text-muted-foreground">
           A verified firm&apos;s words show on its page only after you approve them. The page keeps what it shows until then. Either way the firm gets an email.
         </p>{" "}
         {data.edits.length === 0 ? (

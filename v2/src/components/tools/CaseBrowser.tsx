@@ -153,10 +153,10 @@ function unreadMonthLabels(from: string, to: string): string[] {
 }
 
 const CONTROL =
-  "min-h-[44px] w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-base outline-none shadow-hard-sm focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] w-full min-w-0 border border-border bg-card px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
-  "min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary";
-const LABEL = "font-mono text-sm font-bold uppercase tracking-wider text-foreground/60";
+  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary";
+const LABEL = "text-sm font-bold text-muted-foreground";
 
 function fmtWage(n: number | null): string {
   return n === null ? "—" : `$${formatInt(n)}`;
@@ -515,8 +515,8 @@ export function CaseBrowser({
       {/* Look up one case                                                  */}
       {/* ---------------------------------------------------------------- */}
       {showLookup || caseQuery !== "" ? (
-      <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 className="font-heading text-xl font-black">Look up a case number</h2>{" "}
+      <section className="border border-border bg-card p-5 sm:p-6">
+        <h2 className="font-heading text-xl font-bold">Look up a case number</h2>{" "}
         <form
           className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] [&>*]:min-w-0"
           onSubmit={(e) => {
@@ -565,17 +565,17 @@ export function CaseBrowser({
             what="The lookup"
             failure={caseFailure}
             onRetry={() => setCaseSubmit((s) => s + 1)}
-            className="mt-4 border-2 border-border bg-tint-primary p-4"
+            className="mt-4 border border-border bg-tint-primary p-4"
           />
         ) : null}
         {caseQuery !== "" && lookupData && !caseHit && liveHit ? (
           /* Not published yet, but DOL's live system knows it - the case the
              disclosure files cannot show for another quarter. */
-          <div className="mt-4 border-2 border-border bg-tint-primary p-4">
+          <div className="mt-4 border border-border bg-tint-primary p-4">
             <p className="text-base font-bold">
               Found in DOL&apos;s live system - not yet in the published files.
             </p>{" "}
-            <p className="mt-2 text-base leading-relaxed text-foreground/70">
+            <p className="mt-2 text-base leading-relaxed text-muted-foreground">
               {liveHit.employerName ?? "This case"}
               {liveHit.jobTitle ? ` · ${liveHit.jobTitle}` : ""}
               {liveHit.filingDate ? ` · filed ${liveHit.filingDate}` : ""} ·
@@ -585,7 +585,7 @@ export function CaseBrowser({
             </p>{" "}
             <Link
               href={`/perm-case-status?case=${encodeURIComponent(liveHit.caseNumber)}`}
-              className="mt-3 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-4 font-heading font-black text-primary-foreground shadow-hard-sm"
+              className="mt-3 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-4 font-heading font-bold text-primary-foreground"
             >
               <LinkPending />
               View the live status
@@ -593,11 +593,11 @@ export function CaseBrowser({
           </div>
         ) : null}
         {caseQuery !== "" && lookupData && !caseHit && !liveHit ? (
-          <div className="mt-4 border-2 border-border bg-tint-primary p-4">
+          <div className="mt-4 border border-border bg-tint-primary p-4">
             <p className="text-base font-bold">
               No case with that number in this window.
             </p>{" "}
-            <p className="mt-2 text-base leading-relaxed text-foreground/70">
+            <p className="mt-2 text-base leading-relaxed text-muted-foreground">
               DOL&apos;s disclosure files carry decided cases only, and our live
               feed hasn&apos;t seen this number either. It may be very new:{" "}
               <PendingLink
@@ -611,7 +611,7 @@ export function CaseBrowser({
           </div>
         ) : null}
         {caseHit ? (
-          <div className="mt-4 overflow-x-auto border-2 border-border">
+          <div className="mt-4 overflow-x-auto border border-border">
             <CaseTable
               rows={[caseHit]}
               columns={columns}
@@ -630,8 +630,8 @@ export function CaseBrowser({
       {/* Filters                                                           */}
       {/* ---------------------------------------------------------------- */}
       <section>
-        <h2 className="font-heading text-xl font-black">Browse the cases</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+        <h2 className="font-heading text-xl font-bold">Browse the cases</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           Slice by one of state, occupation, employer or law firm, then narrow
           by outcome and year. One slice at a time: picking a new one clears the
           last.
@@ -705,7 +705,7 @@ export function CaseBrowser({
           ) : null}
 
           {dimension === "employer" && employerSlug ? (
-            <div className="flex min-h-[44px] items-center justify-between gap-2 border-2 border-border bg-tint-primary px-3 shadow-hard-sm">
+            <div className="flex min-h-[44px] items-center justify-between gap-2 border border-border bg-tint-primary px-3">
               <span className="truncate text-base font-bold">{employerSlug}</span>{" "}
               <button type="button" onClick={clearAll} className="shrink-0 text-sm underline">
                 Clear
@@ -714,7 +714,7 @@ export function CaseBrowser({
           ) : null}
 
           {dimension === "attorney" && attorneySlug ? (
-            <div className="flex min-h-[44px] items-center justify-between gap-2 border-2 border-border bg-tint-primary px-3 shadow-hard-sm">
+            <div className="flex min-h-[44px] items-center justify-between gap-2 border border-border bg-tint-primary px-3">
               <span className="truncate text-base font-bold">{attorneySlug}</span>{" "}
               <button type="button" onClick={clearAll} className="shrink-0 text-sm underline">
                 Clear
@@ -792,8 +792,8 @@ export function CaseBrowser({
       {/* ---------------------------------------------------------------- */}
       {/* Search by name                                                    */}
       {/* ---------------------------------------------------------------- */}
-      <section className="border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
-        <h2 className="font-heading text-lg font-black">Search by employer or law firm</h2>{" "}
+      <section className="border border-border bg-card p-5 sm:p-6">
+        <h2 className="font-heading text-lg font-bold">Search by employer or law firm</h2>{" "}
         <form
           className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[auto_1fr_auto] [&>*]:min-w-0"
           onSubmit={(e) => {
@@ -912,7 +912,7 @@ export function CaseBrowser({
         {searching && nameField === "employer" && liveHits.length > 0 ? (
           /* The live strip: filings newer than the last disclosure file, from
              DOL's live feed, each linking to its own status page. */
-          <div className="mt-4 border-2 border-border bg-tint-primary p-4">
+          <div className="mt-4 border border-border bg-tint-primary p-4">
             <p className="text-base font-bold">
               {narrow.title || narrow.from || narrow.to
                 ? "Matching filings - live from DOL, not yet in the published files"
@@ -934,9 +934,9 @@ export function CaseBrowser({
                   </PendingLink>{" "}
                   <span className="font-medium">{h.employerName}</span>{" "}
                   {h.jobTitle ? (
-                    <span className="text-foreground/70">{h.jobTitle}</span>
+                    <span className="text-muted-foreground">{h.jobTitle}</span>
                   ) : null}{" "}
-                  <span className="ml-auto text-sm text-foreground/70">
+                  <span className="ml-auto text-sm text-muted-foreground">
                     {h.filingDate ? `filed ${h.filingDate} · ` : ""}
                     {h.status ?? ""}
                   </span>
@@ -944,20 +944,20 @@ export function CaseBrowser({
                 </Fragment>
               ))}
             </ul>{" "}
-            <p className="mt-2 text-sm text-foreground/70">
+            <p className="mt-2 text-sm text-muted-foreground">
               The law firm and wage for these appear when DOL publishes the
               decided case.
             </p>
           </div>
         ) : null}
         {searching && nameField === "attorney" ? (
-          <p className="mt-3 text-sm text-foreground/70">
+          <p className="mt-3 text-sm text-muted-foreground">
             Newer, unpublished cases can&apos;t be listed by firm: DOL only
             names the firm when it publishes a decided case.
           </p>
         ) : null}
         {searching ? (
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
             {nameHits === undefined ? (
               "Searching the case table…"
             ) : (
@@ -988,7 +988,7 @@ export function CaseBrowser({
       {/* ---------------------------------------------------------------- */}
       <section>
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <p aria-live="polite" className="text-base text-foreground/70">
+          <p aria-live="polite" className="text-base text-muted-foreground">
             {searching ? (
               <span>Name matches</span>
             ) : exactTotal !== null ? (
@@ -1005,7 +1005,7 @@ export function CaseBrowser({
             )}
           </p>
           {!searching && !sortable && rows.length > 0 ? (
-            <p className="text-sm text-foreground/60">
+            <p className="text-sm text-muted-foreground">
               More than one page matches, so the table stays in decision-date
               order. Narrow the filter, or raise the rows per page, to sort by
               any column.
@@ -1014,8 +1014,8 @@ export function CaseBrowser({
         </div>
 
         {awaitingValue && !searching ? (
-          <div className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm">
-            <p className="text-base text-foreground/70">
+          <div className="mt-6 border border-border bg-card p-6">
+            <p className="text-base text-muted-foreground">
               Pick {dimensionLabel} to see its cases.
             </p>
           </div>
@@ -1029,7 +1029,7 @@ export function CaseBrowser({
         !pageFailed &&
         !awaitingValue &&
         prevRows.length === 0 ? (
-          <p className="mt-6 text-base text-foreground/60">Reading the case table…</p>
+          <p className="mt-6 text-base text-muted-foreground">Reading the case table…</p>
         ) : null}
 
         {(searching ? nameFailed : pageFailed) ? (
@@ -1042,15 +1042,15 @@ export function CaseBrowser({
                 : setListSubmit((s) => s + 1)
             }
             after="Nothing is missing from the record."
-            className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm"
+            className="mt-6 border border-border bg-card p-6"
           />
         ) : null}
 
         {shown.length === 0 &&
         !awaitingValue &&
         (searching ? nameHits !== undefined : page !== undefined) ? (
-          <div className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm">
-            <p className="text-base text-foreground/70">
+          <div className="mt-6 border border-border bg-card p-6">
+            <p className="text-base text-muted-foreground">
               Nothing matches that combination in this disclosure window.
             </p>{" "}
             <DidYouMean
@@ -1070,7 +1070,7 @@ export function CaseBrowser({
 
         {displayRows.length > 0 ? (
           <div
-            className={`mt-4 overflow-x-auto border-2 border-border shadow-hard-sm transition-opacity ${
+            className={`mt-4 overflow-x-auto border border-border transition-opacity ${
               tableBusy ? "opacity-60" : ""
             }`}
             aria-busy={tableBusy}
@@ -1144,7 +1144,7 @@ function CaseTable({
                 scope="col"
                 aria-sort={active ? (sortAsc ? "ascending" : "descending") : undefined}
                 className={
-                  "whitespace-nowrap px-3 py-3 font-mono text-sm font-bold uppercase tracking-wider " +
+                  "whitespace-nowrap px-3 py-3 text-sm font-bold " +
                   (c.numeric ? "text-right " : "") +
                   (c.hideOnPhone ? "hidden sm:table-cell " : "")
                 }
@@ -1168,12 +1168,12 @@ function CaseTable({
       </thead>
       <tbody translate="no" className="bg-card">
         {rows.map((r) => (
-          <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
+          <tr key={r.caseNumber} className="border-t border-border/30 align-top">
             <td className="whitespace-nowrap px-3 py-3 font-mono text-base">{r.caseNumber}{" "}</td>
             <td className="whitespace-nowrap px-3 py-3">
               <span
                 className={
-                  "border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " +
+                  "border border-border px-2 py-0.5 font-mono text-sm font-bold " +
                   (r.status === "certified"
                     ? "bg-primary text-primary-foreground"
                     : r.status === "denied"
@@ -1198,7 +1198,7 @@ function CaseTable({
               {r.attorneyName ? (
                 <>
                   {" "}
-                  <span className="block text-sm text-foreground/70">
+                  <span className="block text-sm text-muted-foreground">
                     {r.attorneySlug ? (
                       <Link
                         href={`/perm-attorneys/${r.attorneySlug}`}
@@ -1220,7 +1220,7 @@ function CaseTable({
               {r.socCode ? (
                 <>
                   {" "}
-                  <span className="block font-mono text-sm text-foreground/60">{r.socCode}</span>
+                  <span className="block font-mono text-sm text-muted-foreground">{r.socCode}</span>
                 </>
               ) : null}{" "}
             </td>

@@ -125,12 +125,12 @@ export function FieldPosition({
   return (
     <div className={cn("", className)}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/60">
+        <p className="text-sm font-bold text-muted-foreground">
           {measure}
         </p>{" "}
         <p className="font-mono text-sm font-bold tabular-nums">
           {valueLabel}
-          <span className="ml-2 font-normal text-foreground/70">
+          <span className="ml-2 font-normal text-muted-foreground">
             {ranked ? (
               <>
                 {aheadVerb} {aheadPct.toFixed(aheadPct >= 99 || aheadPct < 1 ? 1 : 0)}%
@@ -147,7 +147,7 @@ export function FieldPosition({
 
       {/* The field, as its own distribution. */}
       <ChartTips label={`${measure}, across the field`} className="mt-2">
-      <div className="relative flex h-14 items-end gap-px border-b-2 border-border">
+      <div className="relative flex h-14 items-end gap-px border-b border-border">
         {counts.map((c, i) => {
           const binMid = min + ((i + 0.5) / BINS) * (max - min);
           return (
@@ -171,7 +171,7 @@ export function FieldPosition({
       </div>
       </ChartTips>
 
-      <div className="mt-1.5 flex justify-between font-mono text-sm text-foreground/60">
+      <div className="mt-1.5 flex justify-between font-mono text-sm text-muted-foreground">
         <span>{format(min)}</span>{" "}
         <span>{format(max)}</span>
       </div>

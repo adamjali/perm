@@ -63,7 +63,7 @@ export function InlineEdit({
     return (
       <button
         onClick={() => setIsEditing(true)}
-        className="w-full text-left px-1 py-0.5 -mx-1 hover:bg-primary/10 hover:outline hover:outline-2 hover:outline-primary/30 transition-all cursor-text rounded-sm truncate block max-w-[180px]"
+        className="w-full text-left px-1 py-0.5 -mx-1 hover:bg-accent hover:outline hover:outline-2 hover:outline-primary/30 transition-colors cursor-text rounded-sm truncate block max-w-[180px]"
         title="Click to edit"
       >
         {field === "userType" ? value.replace(/_/g, " ") : value || "(empty)"}
@@ -80,7 +80,7 @@ export function InlineEdit({
           onKeyDown={handleKeyDown}
           autoFocus
           disabled={isSaving}
-          className="h-8 border-2 border-primary bg-background px-2 text-sm outline-none"
+          className="h-8 border border-primary bg-background px-2 text-sm outline-none"
         >
           <option value="individual">individual</option>
         </select>
@@ -103,7 +103,7 @@ export function InlineEdit({
         onKeyDown={handleKeyDown}
         autoFocus
         disabled={isSaving}
-        className="h-8 w-full min-w-0 border-2 border-primary bg-background px-2 text-sm outline-none"
+        className="h-8 w-full min-w-0 border border-primary bg-background px-2 text-sm outline-none"
       />
       <button onClick={handleSave} disabled={isSaving} className="text-primary hover:text-primary-text p-0.5 flex-shrink-0">
         <CheckIcon className="size-3.5" />

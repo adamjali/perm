@@ -378,7 +378,7 @@ export function DocumentsTab({
 
   return (
     <motion.div
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={tabContainerVariants}
       className="space-y-6"
@@ -403,7 +403,7 @@ export function DocumentsTab({
                   fontFamily: "var(--font-mono)",
                   fontSize: "0.6rem",
                   fontWeight: 700,
-                  textTransform: "uppercase",
+                  textTransform: "",
                   cursor: "pointer",
                 }}
               >
@@ -428,7 +428,7 @@ export function DocumentsTab({
               {/* Upload button */}
               {onUpload && (
                 <button
-                  className="font-heading flex items-center gap-2 font-bold border-2 border-current bg-card text-foreground shadow-hard-sm"
+                  className="font-heading flex items-center gap-2 font-bold border border-current bg-card text-foreground"
                   style={{
                     fontSize: "0.7rem",
                     padding: "3px 10px",
@@ -473,7 +473,7 @@ export function DocumentsTab({
                   fontFamily: "var(--font-mono)",
                   fontSize: "0.6rem",
                   fontWeight: 700,
-                  textTransform: "uppercase",
+                  textTransform: "",
                 }}
                 disabled={isUploading}
               >
@@ -493,7 +493,7 @@ export function DocumentsTab({
                   fontFamily: "var(--font-mono)",
                   background: "var(--primary)",
                   color: "var(--primary-foreground)",
-                  textTransform: "uppercase",
+                  textTransform: "",
                 }}
                 onClick={handleConfirmUpload}
                 disabled={isUploading}
@@ -692,7 +692,7 @@ export function DocumentsTab({
                         style={{
                           fontFamily: "var(--font-mono)",
                           fontWeight: 700,
-                          textTransform: "uppercase",
+                          textTransform: "",
                           fontSize: "0.62rem",
                           padding: "2px 6px",
                           border: "2px solid var(--border)",

@@ -17,7 +17,7 @@ import { seriesYearFor, SOC_RE, type AreaOption, type WageLevel } from "@/lib/wa
  * Nothing is computed here.
  */
 
-const SELECT = "mt-1.5 min-h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+const SELECT = "mt-1.5 min-h-11 w-full min-w-0 border border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const usd = (n: number, digits = 0) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: digits, minimumFractionDigits: digits });
 
 type Result =
@@ -58,25 +58,25 @@ function WageLadder({ levels }: { levels: WageLevel[] | null }) {
       {rows.map((l, i) => (
         <li key={l.level} className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-3 [&>*]:min-w-0">
           <span className="leading-tight">
-            <span className="block font-heading text-base font-black">Level {l.level}</span>{" "}
-            <span className="block text-sm text-foreground/70">{LEVEL_WORDS[l.level]}</span>
+            <span className="block font-heading text-base font-bold">Level {l.level}</span>{" "}
+            <span className="block text-sm text-muted-foreground">{LEVEL_WORDS[l.level]}</span>
           </span>{" "}
           {levels ? (
             <span className="flex items-center gap-3">
               <span
                 aria-hidden="true"
-                className="h-9 shrink-0 border-2 border-border bg-primary"
+                className="h-9 shrink-0 border border-border bg-primary"
                 style={{ width: `${Math.max(8, (l.yearly / top) * 70)}%` }}
               />{" "}
               <span className="whitespace-nowrap">
-                <span className="block font-heading text-lg font-black tabular-nums">{usd(l.yearly)}</span>{" "}
-                <span className="block font-mono text-sm tabular-nums text-foreground/70">{usd(l.hourly, 2)} an hour</span>
+                <span className="block font-heading text-lg font-bold tabular-nums">{usd(l.yearly)}</span>{" "}
+                <span className="block font-mono text-sm tabular-nums text-muted-foreground">{usd(l.hourly, 2)} an hour</span>
               </span>
             </span>
           ) : (
             <span
               aria-hidden="true"
-              className="block h-9 border-2 border-dashed border-foreground/30 text-foreground/15 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]"
+              className="block h-9 border border-dashed border-foreground/30 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]"
               style={{ width: `${GHOST_WIDTHS[i]}%` }}
             />
           )}
@@ -94,7 +94,7 @@ function YearTable({ years, caption }: { years: StoredYear[]; caption: string })
       <table className="w-full min-w-[32rem] text-left text-base">
         <caption className="sr-only">{caption}{" "}</caption>
         <thead>
-          <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
+          <tr className="border-b border-border text-sm text-muted-foreground">
             <th className="py-2 pr-4 font-bold">Wage year{" "}</th>
             {["I", "II", "III", "IV"].map((l) => (
               <th key={l} className="py-2 pr-4 text-right font-bold">
@@ -196,7 +196,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
   }
 
   return (
-    <div className="border-2 border-border bg-card p-5 shadow-hard sm:p-8">
+    <div className="border border-border bg-card p-5 sm:p-8">
       <form ref={formRef} onSubmit={lookUp} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         <div>
           <Label htmlFor={socId}>SOC code</Label>{" "}
@@ -251,7 +251,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
           <button
             type="submit"
             disabled={!ready}
-            className="min-h-11 border-2 border-border bg-primary px-6 font-bold text-primary-foreground shadow-hard transition-transform hover:-translate-y-[1px] disabled:opacity-60 disabled:hover:translate-y-0"
+            className="min-h-11 border border-border bg-primary px-6 font-bold text-primary-foreground transition-transform disabled:opacity-60"
           >
             {result.kind === "loading" ? "Asking DOL" : "Look up the four levels"}
           </button>
@@ -259,15 +259,15 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
       </form>
 
       {result.kind === "error" || result.kind === "none" ? (
-        <p className="mt-5 flex items-start gap-2 border-2 border-border bg-background p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 border border-border bg-background p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.message}
         </p>
       ) : null}
 
       {result.kind === "idle" || result.kind === "loading" ? (
-        <div className="mt-6 border-t-2 border-border pt-5">
+        <div className="mt-6 border-t border-border pt-5">
           <WageLadder levels={null} />{" "}
-          <p className="mt-3 text-sm text-foreground/70">
+          <p className="mt-3 text-sm text-muted-foreground">
             {result.kind === "loading" ? "Asking DOL for the four figures." : "Pick an occupation and an area: DOL's four levels for that job draw here, with the yearly and hourly figure for each."}
           </p>
         </div>
@@ -275,7 +275,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
 
       {result.kind === "levels" ? (
         <div className="mt-6">
-          <p className="text-sm text-foreground/70">
+          <p className="text-sm text-muted-foreground">
             SOC {result.soc}, {result.areaLabel}, the July {result.seriesYear} to June {result.seriesYear + 1} series. DOL&apos;s figures, read just now.
           </p>{" "}
           <div className="mt-4">
@@ -297,7 +297,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
             <p className="max-w-3xl text-base leading-relaxed">
               <span className="font-bold">The market here: </span>
               employers in this area report paying everyone in this job a median of{" "}
-              <span className="font-heading text-xl font-black tabular-nums">{usd(history.market.median)}</span>
+              <span className="font-heading text-xl font-bold tabular-nums">{usd(history.market.median)}</span>
               {history.market.p25 != null && history.market.p75 != null
                 ? `, the middle half ${usd(history.market.p25)} to ${usd(history.market.p75)}`
                 : ""}{" "}
@@ -306,8 +306,8 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
           ) : null}
           {history.alc.length > 0 ? (
             <div>
-              <h3 className="font-heading text-lg font-black">Every wage year DOL has published, from its own tables</h3>{" "}
-              <p className="mt-1 text-sm text-foreground/70">
+              <h3 className="font-heading text-lg font-bold">Every wage year DOL has published, from its own tables</h3>{" "}
+              <p className="mt-1 text-sm text-muted-foreground">
                 A year at 2,080 hours, as DOL computes it. A determination keeps the figures of the year it was issued in.
               </p>{" "}
               <div className="mt-3">
@@ -316,11 +316,11 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
             </div>
           ) : null}
           {history.edc.some((y) => y.levels.some((v) => v != null)) ? (
-            <details className="border-2 border-border bg-background p-4">
+            <details className="border border-border bg-background p-4">
               <summary className="cursor-pointer font-bold">
                 Universities and research employers (DOL&apos;s ACWIA table)
               </summary>{" "}
-              <p className="mt-2 text-sm text-foreground/70">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Institutions of higher education and their related or affiliated nonprofits, and nonprofit and
                 government research organizations, are set from this table instead (20 CFR 656.40(e)).
               </p>{" "}

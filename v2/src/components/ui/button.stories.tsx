@@ -113,7 +113,7 @@ export const LoadingVariants: Story = {
         <Button variant="destructive" loading loadingText="Deleting...">Destructive</Button>
         <Button variant="outline" loading loadingText="Saving...">Outline</Button>
       </div>
-      <div className="text-xs text-foreground/70 mt-2">
+      <div className="text-sm text-muted-foreground mt-2">
         Loading state prevents interaction and displays spinner
       </div>
     </div>
@@ -129,7 +129,7 @@ export const LoadingSizes: Story = {
         <Button loading loadingText="Processing...">Default</Button>
         <Button size="lg" loading loadingText="Loading...">Large</Button>
       </div>
-      <div className="text-xs text-foreground/70 mt-2">
+      <div className="text-sm text-muted-foreground mt-2">
         Spinner size automatically matches button size
       </div>
     </div>
@@ -149,7 +149,7 @@ export const NeobrutalistShowcase: Story = {
         <Button variant="destructive">Destructive</Button>
         <Button variant="outline">Outline</Button>
       </div>
-      <div className="text-xs text-foreground/70 mt-4">
+      <div className="text-sm text-muted-foreground mt-4">
         Notice the hard shadows (4px 4px 0px #000) and the press effect (translate + shadow removal)
       </div>
     </div>

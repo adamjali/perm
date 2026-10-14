@@ -84,7 +84,7 @@ export function generateArticleOG(meta: PostMeta, type: ContentType) {
                 fontWeight: 700,
                 color: "white",
                 letterSpacing: "2px",
-                textTransform: "uppercase",
+                textTransform: "",
               }}
             >
               {typeLabel}

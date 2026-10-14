@@ -89,7 +89,7 @@ function Chip({
       onClick={onClick}
       aria-pressed={active}
       className={
-        "min-h-11 border-2 border-border px-4 font-heading text-sm font-black shadow-hard-sm transition-transform duration-150 hover:-translate-y-[1px] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0 " +
+        "min-h-11 border border-border px-4 font-heading text-sm font-bold transition-transform duration-150 motion-reduce:transition-none " +
         (active ? "bg-primary text-black" : "bg-background text-foreground")
       }
     >
@@ -118,7 +118,7 @@ export function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={copy}
-      className="flex min-h-11 shrink-0 items-center gap-2 border-2 border-border bg-background px-3 font-heading text-sm font-black shadow-hard-sm transition-transform duration-150 hover:-translate-y-[1px] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className="flex min-h-11 shrink-0 items-center gap-2 border border-border bg-background px-3 font-heading text-sm font-bold transition-transform duration-150 motion-reduce:transition-none"
     >
       {state === "copied" ? <CheckIcon size={16} weight="bold" aria-hidden="true" /> : <CopyIcon size={16} weight="bold" aria-hidden="true" />}
       {state === "copied" ? "Copied" : state === "failed" ? "Select the line to copy" : "Copy"}
@@ -172,8 +172,8 @@ function MatrixGroup({
   const code = v ? snippet(row, v, format, origin) : "";
   const ground = theme === "dark" ? "bg-black" : "bg-white";
   return (
-    <div className="mt-5 border-2 border-border bg-card shadow-hard">
-      <p className="border-b-2 border-border p-4 text-sm leading-relaxed text-foreground/75">
+    <div className="mt-5 border border-border bg-card">
+      <p className="border-b border-border p-4 text-sm leading-relaxed text-soft">
         {`The final action cutoff the State Department published for each category and country. A priority date earlier than its cutoff has a visa number available. Pick a badge for its line.`}
       </p>{" "}
       <div className="overflow-x-auto overscroll-x-none">
@@ -183,10 +183,10 @@ function MatrixGroup({
         <table className="w-full min-w-[44rem] table-fixed border-collapse text-sm">
           <caption className="sr-only">{`Visa bulletin badges by category and country. Pick one to copy its line.`}</caption>
           <thead>
-            <tr className="border-b-2 border-border">
-              <th scope="col" className="w-24 p-3 text-left font-heading font-black">Category{" "}</th>
+            <tr className="border-b border-border">
+              <th scope="col" className="w-24 p-3 text-left font-heading font-bold">Category{" "}</th>
               {grid.places.map((place) => (
-                <th key={place} scope="col" className="p-3 text-left font-heading font-black">
+                <th key={place} scope="col" className="p-3 text-left font-heading font-bold">
                   {`${place.charAt(0).toUpperCase()}${place.slice(1)} `}
                 </th>
               ))}
@@ -194,8 +194,8 @@ function MatrixGroup({
           </thead>
           <tbody>
             {grid.cats.map((cat) => (
-              <tr key={cat} className="border-b-2 border-border last:border-b-0">
-                <th scope="row" className="p-3 text-left font-heading text-base font-black">
+              <tr key={cat} className="border-b border-border last:border-b-0">
+                <th scope="row" className="p-3 text-left font-heading text-base font-bold">
                   {cat}{" "}
                 </th>
                 {grid.places.map((place) => {
@@ -217,7 +217,7 @@ function MatrixGroup({
                         aria-label={`${cell.label}${on ? ", picked" : ""}`}
                         onClick={() => setPicked(cell.kind)}
                         className={
-                          `flex min-h-11 w-full items-center justify-center border-2 px-1.5 py-2 [&_svg]:h-auto [&_svg]:max-w-full ${ground} ` +
+                          `flex min-h-11 w-full items-center justify-center border px-1.5 py-2 [&_svg]:h-auto [&_svg]:max-w-full ${ground} ` +
                           (on ? "border-primary outline outline-2 outline-offset-2 outline-primary" : "border-border")
                         }
                         /* Our own string from the renderer; the trailing space
@@ -232,9 +232,9 @@ function MatrixGroup({
           </tbody>
         </table>
       </div>{" "}
-      <div className="flex flex-col gap-2 border-t-2 border-border p-4 sm:flex-row sm:items-stretch [&>*]:min-w-0">
-        <p className="shrink-0 self-center font-heading text-base font-black sm:w-40">{row.label}</p>{" "}
-        <pre className="flex-1 overflow-x-auto whitespace-nowrap border-2 border-border bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
+      <div className="flex flex-col gap-2 border-t border-border p-4 sm:flex-row sm:items-stretch [&>*]:min-w-0">
+        <p className="shrink-0 self-center font-heading text-base font-bold sm:w-40">{row.label}</p>{" "}
+        <pre className="flex-1 overflow-x-auto whitespace-nowrap border border-border bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
           <code>{code}</code>
         </pre>{" "}
         <CopyButton text={code} />
@@ -272,15 +272,15 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
 
   return (
     <>
-      <section className="mt-10 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 className="font-heading text-2xl font-black">Set them up</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+      <section className="mt-10 border border-border bg-card p-5 sm:p-6">
+        <h2 className="font-heading text-2xl font-bold">Set them up</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           These three choices apply to every badge below, so you only make them once.
         </p>
 
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3 [&>*]:min-w-0">
           <div>
-            <p className="font-heading text-sm font-black">Shape</p>{" "}
+            <p className="font-heading text-sm font-bold">Shape</p>{" "}
             <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Badge shape">
               {styles.map((s) => (
                 <Chip key={s} active={style === s} onClick={() => setStyle(s)}>{STYLE_LABELS[s]}</Chip>
@@ -290,7 +290,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
           </div>
 
           <div>
-            <p className="font-heading text-sm font-black">Background</p>{" "}
+            <p className="font-heading text-sm font-bold">Background</p>{" "}
             <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Badge background">
               {BADGE_THEMES.map((t) => (
                 <Chip key={t} active={theme === t} onClick={() => setTheme(t)}>
@@ -304,7 +304,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
           </div>
 
           <div>
-            <p className="font-heading text-sm font-black">Snippet</p>{" "}
+            <p className="font-heading text-sm font-bold">Snippet</p>{" "}
             <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Snippet format">
               {FORMATS.map((f) => (
                 <Chip key={f.id} active={format === f.id} onClick={() => setFormat(f.id)}>{f.label}</Chip>
@@ -317,7 +317,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
 
       {groups.map((group) => (
         <section key={group} className="mt-12">
-          <h2 className="font-heading text-2xl font-black">{group}</h2>{" "}
+          <h2 className="font-heading text-2xl font-bold">{group}</h2>{" "}
           {matrixOf(rows.filter((r) => r.group === group)) ? (
             <MatrixGroup
               rows={rows.filter((r) => r.group === group)}
@@ -345,10 +345,10 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
               return (
                 <Fragment key={row.kind}>
                   {" "}
-                  <li className="flex flex-col border-2 border-border bg-card shadow-hard">
+                  <li className="flex flex-col border border-border bg-card">
                     <div
                       className={
-                        "flex min-h-[4.5rem] items-center justify-center overflow-x-auto border-b-2 border-border px-4 py-4 " +
+                        "flex min-h-[4.5rem] items-center justify-center overflow-x-auto border-b border-border px-4 py-4 " +
                         (theme === "dark" ? "bg-black" : "bg-white")
                       }
                       /* Our own string from the renderer, which escapes its
@@ -358,8 +358,8 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
                       dangerouslySetInnerHTML={{ __html: `${v.svg} ` }}
                     />{" "}
                     <div className="flex flex-1 flex-col p-4">
-                      <p className="font-heading text-lg font-black">{row.label}</p>{" "}
-                      <p className="mt-1 text-sm leading-relaxed text-foreground/75">{row.meaning}</p>{" "}
+                      <p className="font-heading text-lg font-bold">{row.label}</p>{" "}
+                      <p className="mt-1 text-sm leading-relaxed text-soft">{row.meaning}</p>{" "}
                       {substituted ? (
                         <p className="mt-2 text-sm text-muted-foreground">
                           Shown as {STYLE_LABELS[v.style].toLowerCase()}: {STYLE_LABELS[style].toLowerCase()} needs a
@@ -367,13 +367,13 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
                         </p>
                       ) : null}{" "}
                       {row.unavailable ? (
-                        <p className="mt-2 text-sm font-bold text-foreground/60">
+                        <p className="mt-2 text-sm font-bold text-muted-foreground">
                           Nothing was published for this one today, so the badge says so rather than showing an old
                           number.
                         </p>
                       ) : null}{" "}
                       <div className="mt-auto flex items-stretch gap-2 pt-4 [&>*]:min-w-0">
-                        <pre className="flex-1 overflow-x-auto whitespace-nowrap border-2 border-border bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
+                        <pre className="flex-1 overflow-x-auto whitespace-nowrap border border-border bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
                           <code>{code}</code>
                         </pre>{" "}
                         <CopyButton text={code} />

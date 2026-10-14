@@ -59,7 +59,7 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
 
   if (status === "done") {
     return (
-      <p role="status" aria-live="polite" className="border-2 border-border bg-primary px-4 py-3 text-base font-bold text-primary-foreground">
+      <p role="status" aria-live="polite" className="border border-border bg-primary px-4 py-3 text-base font-bold text-primary-foreground">
         {message} Nothing is sent until you confirm.
       </p>
     );
@@ -86,13 +86,13 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
           placeholder="you@example.com"
           autoComplete="email"
           aria-invalid={status === "error" ? true : undefined}
-          className="min-h-[48px] w-full min-w-0 flex-1 border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="min-h-[48px] w-full min-w-0 flex-1 border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         />{" "}
         <button
           type="submit"
           data-ph-capture-attribute-cta="employer-follow"
           disabled={status === "sending"}
-          className="inline-flex min-h-[48px] shrink-0 items-center justify-center border-2 border-border bg-foreground px-6 text-base font-bold text-background shadow-hard transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:hover:translate-y-0 motion-reduce:transition-none"
+          className="inline-flex min-h-[48px] shrink-0 items-center justify-center border border-border bg-foreground px-6 text-base font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
         >
           {status === "sending" ? "Sending" : "Follow"}
         </button>

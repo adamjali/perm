@@ -307,7 +307,7 @@ function QueueHistorySvg({
     <div className="-mx-1 overflow-x-auto px-1">
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="block h-auto w-full min-w-[560px] border-2 border-border bg-card shadow-hard-sm"
+        className="block h-auto w-full min-w-[560px] border border-border bg-card"
         role="img"
         aria-label={KIND_COPY[kind].svg}
       >
@@ -429,21 +429,21 @@ function QueueHistoryTable({
   const showGap = kind === "readings";
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] border-2 border-border text-left text-sm shadow-hard-sm">
+      <table className="w-full min-w-[560px] border border-border text-left text-sm">
         <caption className="sr-only">{copy.caption}</caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-sm font-bold">
               {copy.dateHead}
             {" "}</th>
-            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-sm font-bold">
               {copy.monthHead}
             {" "}</th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right text-sm font-bold">
               Moved
             {" "}</th>
             {showGap ? (
-              <th scope="col" className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell">
+              <th scope="col" className="hidden px-3 py-2 text-right text-sm font-bold sm:table-cell">
                 Days since last{" "}
               </th>
             ) : null}
@@ -471,7 +471,7 @@ function QueueHistoryTable({
                   )}
                 {" "}</td>
                 {showGap ? (
-                  <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
+                  <td className="hidden px-3 py-2.5 text-right tabular-nums text-muted-foreground sm:table-cell">
                     {g === null ? "—" : g}
                   {" "}</td>
                 ) : null}
@@ -540,7 +540,7 @@ export function QueueHistoryChart({ points, className, kind = "readings" }: Queu
           hint={copy.hint}
           options={options}
         />{" "}
-        <p className="text-sm text-foreground/70">
+        <p className="text-sm text-muted-foreground">
           {pointLabel(kind, first.asOf, false)} to{" "}
           {pointLabel(kind, last.asOf, false)}
           {spanMonths > 0 ? (
@@ -565,7 +565,7 @@ export function QueueHistoryChart({ points, className, kind = "readings" }: Queu
         controls={rangeControl}
         chart={
           chart ?? (
-            <p className="border-2 border-border bg-card p-6 text-base text-foreground/70 shadow-hard-sm">
+            <p className="border border-border bg-card p-6 text-base text-muted-foreground">
               The queue month didn’t change across these {shown.length} readings, so
               there’s no step to draw. The table has every reading and its date.
             </p>
@@ -575,7 +575,7 @@ export function QueueHistoryChart({ points, className, kind = "readings" }: Queu
       />
       {/* Provenance only. The second sentence used to describe the flat
           stretches; the readout now names each one, with its length in days. */}
-      <figcaption className="mt-3 text-sm text-foreground/70">
+      <figcaption className="mt-3 text-sm text-muted-foreground">
         {copy.figcaption}
       </figcaption>
     </figure>
@@ -677,7 +677,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                 hint="Narrows the bars and the table to the most recent months of decisions."
                 options={options}
               />{" "}
-              <p className="text-sm text-foreground/70">
+              <p className="text-sm text-muted-foreground">
                 {shown.length.toLocaleString("en-US")} months,{" "}
                 {windowTotal.toLocaleString("en-US")} decisions
               </p>
@@ -714,7 +714,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
               {med > 0 && med <= max ? (
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-foreground/60"
+                  className="pointer-events-none absolute inset-x-0 border-t border-dashed border-foreground/60"
                   style={{ bottom: `${(med / max) * 100}%` }}
                 >
                   <span className="absolute -top-6 right-0 bg-background px-1 text-sm font-bold tabular-nums">
@@ -735,7 +735,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                     : "";
                 return (
                   <Fragment key={p.month}>
-                    <span className="min-w-0 flex-1 overflow-visible whitespace-nowrap text-sm tabular-nums text-foreground/70">
+                    <span className="min-w-0 flex-1 overflow-visible whitespace-nowrap text-sm tabular-nums text-muted-foreground">
                       {label}
                     </span>{" "}
                   </Fragment>
@@ -746,23 +746,23 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
         }
         table={
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] border-2 border-border text-left text-sm shadow-hard-sm">
+            <table className="w-full min-w-[560px] border border-border text-left text-sm">
               <caption className="sr-only">
                 PERM determinations recorded in DOL&apos;s disclosure files, by month
                 of decision
               </caption>
               <thead className="bg-foreground text-background">
                 <tr>
-                  <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
+                  <th scope="col" className="px-3 py-2 text-sm font-bold">
                     Month
                   {" "}</th>
-                  <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
+                  <th scope="col" className="px-3 py-2 text-right text-sm font-bold">
                     Decisions
                   {" "}</th>
-                  <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
+                  <th scope="col" className="px-3 py-2 text-right text-sm font-bold">
                     Change
                   {" "}</th>
-                  <th scope="col" className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell">
+                  <th scope="col" className="hidden px-3 py-2 text-right text-sm font-bold sm:table-cell">
                     Share of window{" "}
                   </th>
                 </tr>
@@ -776,12 +776,12 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                       <td className="px-3 py-2.5 text-right tabular-nums">
                         {p.decisions.toLocaleString("en-US")}
                       {" "}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-foreground/70">
+                      <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
                         {c === null
                           ? "—"
                           : `${c > 0 ? "+" : ""}${c.toLocaleString("en-US")}`}
                       {" "}</td>
-                      <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
+                      <td className="hidden px-3 py-2.5 text-right tabular-nums text-muted-foreground sm:table-cell">
                         {windowTotal > 0
                           ? `${((p.decisions / windowTotal) * 100).toFixed(1)}%`
                           : "—"}
@@ -794,7 +794,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
           </div>
         }
       />
-      <figcaption className="mt-3 space-y-2 text-sm leading-relaxed text-foreground/70">
+      <figcaption className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
         <p>
           Determinations recorded in DOL&apos;s quarterly disclosure files, counted
           by the month the decision was issued. The median month in this record

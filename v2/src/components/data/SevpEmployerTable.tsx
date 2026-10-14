@@ -18,9 +18,9 @@ const fmt = (n: number | null) => (n === null ? "" : formatInt(n));
 function RowsTable({ list, rows, top }: { list: SevpList; rows: SevpList["rows"]; top: number }) {
   const opt = list.list === "opt";
   return (
-    <div className="overflow-x-auto border-2 border-border">
+    <div className="overflow-x-auto border border-border">
       <table className="w-full min-w-[560px] text-left text-base">
-        <thead className="border-b-2 border-border bg-muted/40">
+        <thead className="border-b border-border bg-muted/40">
           <tr>
             <th scope="col" className="w-12 px-3 py-2 font-bold">#{" "}</th>
             <th scope="col" className="px-3 py-2 font-bold">Employer, as ICE names it{" "}</th>
@@ -85,8 +85,8 @@ export function SevpEmployerTable({ list, open }: { list: SevpList; open?: numbe
     <ChartTips label={`ICE's top employers for ${opt ? "OPT and STEM OPT" : "CPT"}, ${list.year}`}>
       <RowsTable list={list} rows={shown} top={top} />{" "}
       {rest.length > 0 ? (
-        <details className="group mt-3 border-2 border-border">
-          <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 font-heading text-base font-black [&::-webkit-details-marker]:hidden">
+        <details className="group mt-3 border border-border">
+          <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
             Ranks {rest[0]!.rank} to {rest[rest.length - 1]!.rank}{" "}
             <PlusIcon aria-hidden="true" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
           </summary>{" "}
@@ -103,7 +103,7 @@ export function SevpEmployerTable({ list, open }: { list: SevpList; open?: numbe
 export function AsPrinted({ notes }: { notes: string[] }) {
   if (notes.length === 0) return null;
   return (
-    <p className="mt-2 text-sm text-foreground/70">
+    <p className="mt-2 text-sm text-muted-foreground">
       As ICE printed it:{" "}
       {notes.map((n, i) => (
         <Fragment key={n}>

@@ -228,14 +228,14 @@ export function ResetPasswordPageClient() {
 
   if (step === "reset") {
     return (
-      <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
+      <Card className="">
         <CardHeader>
-          <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+          <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
             Reset your password
           </h1>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-base leading-relaxed text-foreground/70">
+          <p className="text-base leading-relaxed text-muted-foreground">
             Enter the code sent to{" "}
             <span className="font-semibold text-foreground">{email}</span> and
             choose a new password.
@@ -243,7 +243,7 @@ export function ResetPasswordPageClient() {
 
           <form ref={resetFormRef} onSubmit={handleResetSubmit} className="space-y-5" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="code" className="text-sm uppercase mono font-bold tracking-widest">
+              <Label htmlFor="code" className="text-sm mono font-bold">
                 Reset Code
               </Label>
               <Input
@@ -256,7 +256,7 @@ export function ResetPasswordPageClient() {
                 disabled={isLoading}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className="mono text-lg tracking-wider text-center uppercase"
+                className="mono text-lg text-center"
               />
             </div>
 
@@ -301,7 +301,7 @@ export function ResetPasswordPageClient() {
             </Button>
           </form>
 
-          <div className="pt-4 text-center border-t-2 border-border">
+          <div className="pt-4 text-center border-t border-border">
             <button
               onClick={() => setStep("email")}
               className="text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
@@ -315,14 +315,14 @@ export function ResetPasswordPageClient() {
   }
 
   return (
-    <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
+    <Card className="">
       <CardHeader>
-        <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+        <h1 className="font-heading text-3xl font-bold leading-none tracking-tight sm:text-4xl">
           Reset your password
         </h1>
       </CardHeader>
       <CardContent className="space-y-6">
-        <p className="text-base leading-relaxed text-foreground/70">
+        <p className="text-base leading-relaxed text-muted-foreground">
           Enter your email address and we&apos;ll send you a code to reset your
           password.
         </p>
@@ -367,7 +367,7 @@ export function ResetPasswordPageClient() {
             {turnstileError && (
               <p
                 role="alert"
-                className="mono text-center text-sm font-bold uppercase tracking-wider text-destructive"
+                className="mono text-center text-sm font-bold text-destructive"
               >
                 Verification check failed. Refresh the page and try again.
               </p>
@@ -385,8 +385,8 @@ export function ResetPasswordPageClient() {
           </Button>
         </form>
 
-        <div className="pt-4 text-center border-t-2 border-border">
-          <p className="text-base leading-relaxed text-foreground/70">
+        <div className="pt-4 text-center border-t border-border">
+          <p className="text-base leading-relaxed text-muted-foreground">
             Remember your password?{" "}
             <Link
               href="/login"

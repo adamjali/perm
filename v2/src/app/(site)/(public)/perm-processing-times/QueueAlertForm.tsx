@@ -80,10 +80,10 @@ function filingMonthOptions(
 
 /** Native select styled to match the Input component (no Select primitive exists here). */
 const selectClasses = cn(
-  "border-input h-11 w-full min-w-0 border-2 bg-background px-3 py-1 text-base",
-  "shadow-hard-sm transition-all duration-150 outline-none md:text-sm",
-  "hover:shadow-hard hover:-translate-y-[1px] active:translate-y-0 active:shadow-hard-sm",
-  "focus:shadow-hard focus:ring-2 focus:ring-ring focus-visible:border-ring focus:-translate-y-[1px]",
+  "border-input h-11 w-full min-w-0 border bg-background px-3 py-1 text-base",
+  "transition-colors duration-150 outline-none md:text-sm",
+  "",
+  "focus:ring-2 focus:ring-ring focus-visible:border-ring",
   "disabled:shadow-none disabled:pointer-events-none disabled:opacity-50",
 );
 
@@ -183,15 +183,15 @@ export function QueueAlertForm({
   if (status === "done") {
     return (
       <div
-        className="border-2 border-border bg-card p-6 shadow-hard sm:p-8"
+        className="border border-border bg-card p-6 sm:p-8"
         role="status"
         aria-live="polite"
       >
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <div>
-            <p className="font-heading text-lg font-black">{replyHeading(queued)}</p>{" "}
-            <p className="mt-1 text-sm leading-relaxed text-foreground/70">{message}</p>
+            <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{message}</p>
           </div>
         </div>
       </div>
@@ -203,11 +203,11 @@ export function QueueAlertForm({
       ref={telemetry.ref}
       onFocusCapture={telemetry.onFocusCapture}
       onSubmit={handleSubmit}
-      className="border-2 border-border bg-card p-6 shadow-hard sm:p-8"
+      className="border border-border bg-card p-6 sm:p-8"
     >
       <div className="flex items-center gap-2">
         <BellIcon className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h2 className="font-heading text-xl font-black sm:text-2xl">
+        <h2 className="font-heading text-xl font-bold sm:text-2xl">
           Get notified when DOL reaches your month
         </h2>
       </div>{" "}
@@ -215,7 +215,7 @@ export function QueueAlertForm({
           on the prevailing wage pages, where "analyst review" is the wrong
           queue entirely: it is the PERM stage, and a reader was being told the
           alert watched a line their request is not in. */}
-      <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
         {selectedQueue === "perm"
           ? "We’ll email you when the analyst-review queue reaches the month your case was filed."
           : "We’ll email you when the prevailing wage queue you pick reaches the month your request was filed."}{" "}

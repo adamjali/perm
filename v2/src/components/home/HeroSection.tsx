@@ -72,23 +72,23 @@ function Door({
     <Link
       href={href}
       aria-label={`${title}: ${label}`}
-      className={`group flex flex-col border-3 border-border shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:translate-x-0.5 active:translate-y-0.5 sm:flex-row ${
+      className={`group flex flex-col border border-border transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-row ${
         ink ? "bg-foreground text-background" : "bg-card text-foreground"
       }`}
     >
       <span
-        className={`flex items-center justify-center border-b-2 bg-manila px-4 py-3 text-black sm:w-48 sm:shrink-0 sm:border-b-0 sm:border-r-2 ${
+        className={`flex items-center justify-center border-b bg-manila px-4 py-3 text-black sm:w-48 sm:shrink-0 sm:border-b-0 sm:border-r ${
           ink ? "border-background/40" : "border-border"
         }`}
       >
         <span className="block w-full max-w-[170px]">{figure}</span>
       </span>{" "}
       <span className="flex flex-1 flex-col justify-center px-4 py-3">
-        <span className="flex items-center justify-between gap-3 font-heading text-lg font-black leading-tight">
+        <span className="flex items-center justify-between gap-3 font-heading text-lg font-bold leading-tight">
           {title}{" "}
-          <ArrowRight className="shrink-0 transition-transform duration-150 group-hover:translate-x-1" />
+          <ArrowRight className="shrink-0 transition-transform duration-150" />
         </span>{" "}
-        <span className={`mt-1 text-base leading-snug ${ink ? "text-background/85" : "text-foreground/75"}`}>
+        <span className={`mt-1 text-base leading-snug ${ink ? "text-background/85" : "text-soft"}`}>
           {body}
         </span>
       </span>
@@ -128,34 +128,34 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
   const boardRows = boardRowsFor(board);
 
   return (
-    <section id="hero" className="relative border-b-3 border-border">
+    <section id="hero" className="relative border-b border-border">
       {/* Phone order: headline, lookup, board, doors. Wide: the board stands
           beside the headline and lookup, and the doors run underneath both. */}
       <div className="relative z-10 mx-auto grid max-w-[1400px] grid-cols-1 items-stretch gap-x-10 gap-y-6 px-4 pb-10 pt-8 [&>*]:min-w-0 sm:px-8 sm:pt-7 lg:grid-cols-12 lg:pb-12 lg:pt-8">
         <div className="flex flex-col lg:col-span-7">
-          <h1 className="font-heading text-[1.875rem] font-black leading-[1.08] tracking-[-0.03em] sm:text-[2.75rem] lg:text-5xl xl:text-[3.5rem]">
+          <h1 className="font-heading text-[1.875rem] font-bold leading-[1.08] tracking-[-0.03em] sm:text-[2.75rem] lg:text-5xl xl:text-[3.5rem]">
             {/* The brand, small, inside the H1: the measured wait leads, and
                 the name tells search engines whose site this is. */}
-            <span className="block font-mono text-sm font-semibold uppercase tracking-[0.1em] text-foreground/60 sm:text-sm">
+            <span className="block text-sm font-semibold text-muted-foreground sm:text-sm">
               PERM Tracker
             </span>{" "}
             {wait ? (
               <>
                 A PERM case takes{" "}
-                <span className="inline-block bg-primary px-[0.22em] text-primary-foreground shadow-hard">
+                <span className="inline-block bg-primary px-[0.22em] text-primary-foreground">
                   {wait} months
                 </span>
               </>
             ) : (
               <>
                 The whole PERM process,{" "}
-                <span className="inline-block bg-primary px-[0.22em] text-primary-foreground shadow-hard">
+                <span className="inline-block bg-primary px-[0.22em] text-primary-foreground">
                   tracked
                 </span>
               </>
             )}
           </h1>{" "}
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80 sm:text-lg">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft sm:text-lg">
             {ABOUT_ONE_LINER}
           </p>{" "}
           {/* The two halves as two short lines, so both audiences are named
@@ -173,9 +173,9 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
           <form
             action="/perm-case-status"
             method="get"
-            className="mt-6 border-3 border-border bg-card p-4 shadow-hard sm:p-5"
+            className="mt-6 border border-border bg-card p-4 sm:p-5"
           >
-            <label htmlFor="hero-case" className="font-heading text-lg font-black leading-tight">
+            <label htmlFor="hero-case" className="font-heading text-lg font-bold leading-tight">
               Check a case
             </label>{" "}
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
@@ -190,12 +190,12 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
                 spellCheck={false}
                 placeholder="Case number or employer"
                 aria-describedby="hero-case-anatomy"
-                className="min-h-[52px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[52px] w-full min-w-0 flex-1 border border-input bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />{" "}
               <button
                 type="submit"
           data-ph-capture-attribute-cta="hero-lookup"
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 border-3 border-border bg-primary px-6 font-heading font-black text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+                className="inline-flex min-h-[52px] items-center justify-center gap-2 border border-border bg-primary px-6 font-heading font-bold text-primary-foreground transition-transform duration-150"
               >
                 Check{" "}
                 <ArrowRight className="shrink-0" />

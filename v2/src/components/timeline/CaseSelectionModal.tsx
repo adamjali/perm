@@ -286,12 +286,12 @@ export function CaseSelectionModal({
         <div
           className={cn(
             "flex-1 min-h-[200px] max-h-[320px] overflow-y-auto",
-            "border-2 border-border shadow-hard-sm"
+            "border border-border"
           )}
           data-testid="case-list-container"
         >
           {filteredCases.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground py-8 animate-in fade-in duration-150">
+            <div className="flex items-center justify-center h-full text-muted-foreground py-8 duration-150">
               {searchQuery || filterBy !== "all"
                 ? "No cases match your search or filter"
                 : "No cases available"}
@@ -300,7 +300,7 @@ export function CaseSelectionModal({
             filteredCases.map((caseData, index) => (
               <div
                 key={caseData._id}
-                className="animate-in fade-in slide-in-from-top-2 duration-150"
+                className="duration-150"
                 style={{
                   animationDelay: `${Math.min(index * 20, 200)}ms`,
                   animationFillMode: "both",

@@ -45,7 +45,7 @@ export function NotLegalAdviceNotice({
 
   return (
     <motion.div
-      initial={reducedMotion ? false : { opacity: 0, y: 4 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       transition={springConfig}
       role="note"
@@ -53,7 +53,7 @@ export function NotLegalAdviceNotice({
         "flex items-start gap-2 text-muted-foreground",
         isChat
           ? "border-t border-border bg-muted/40 px-3 py-2 text-sm leading-snug"
-          : "border-t border-border pt-4 text-xs leading-snug",
+          : "border-t border-border pt-4 text-sm leading-snug",
         className,
       )}
     >

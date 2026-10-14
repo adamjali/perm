@@ -27,16 +27,16 @@ export function LineAhead({
   const max = Math.max(...rows.map((r) => r.n));
   const days = perDay && perDay > 0 ? Math.max(1, Math.round(total / perDay)) : null;
   return (
-    <section aria-labelledby="line-ahead" className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+    <section aria-labelledby="line-ahead" className="mt-8 border border-border bg-card p-6 sm:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 id="line-ahead" className="font-heading text-2xl font-black">
+        <h2 id="line-ahead" className="font-heading text-2xl font-bold">
           The line ahead of you
         </h2>{" "}
-        <p className="font-heading text-3xl font-black tabular-nums">
+        <p className="font-heading text-3xl font-bold tabular-nums">
           {formatInt(total)} <span className="text-base font-bold">cases</span>
         </p>
       </div>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         Filed before yours and still in DOL&apos;s ordinary line.
         {days !== null && perDay
           ? ` DOL decides about ${formatInt(Math.round(perDay))} a day lately, so that's about ${formatInt(days)} ${days === 1 ? "day" : "days"} of work.`
@@ -51,7 +51,7 @@ export function LineAhead({
               data-tip={`${r.label}${r.own ? ", your own month, filed before you" : ""}\n${formatInt(r.n)} cases still in line`}
             >
               <span className={`font-mono text-sm ${r.own ? "font-bold" : ""}`}>{r.label}</span>{" "}
-              <span className="block h-4 border-2 border-border bg-background" aria-hidden="true">
+              <span className="block h-4 border border-border bg-background" aria-hidden="true">
                 <span
                   className={`block h-full ${r.own ? "bg-data-warn-ink" : "bg-foreground"}`}
                   style={{ width: `${Math.max(1, Math.round((r.n / max) * 100))}%` }}
@@ -63,7 +63,7 @@ export function LineAhead({
           ))}
         </ol>
       </ChartTips>{" "}
-      <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         {rows.some((r) => r.own) ? "The last bar is your own filing month, counting only the days before yours. " : ""}Cases
         on hold, at an RFI or on appeal aren&apos;t in the line and aren&apos;t counted.
       </p>

@@ -20,9 +20,9 @@ export function H1bLotteryHistory({ years, className }: { years: LotteryYear[] |
   if (!years || years.length === 0) return null;
   const peak = Math.max(...years.map((y) => y.registrations), 1);
   return (
-    <section className={cn("mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8", className)}>
-      <h2 className="font-heading text-xl font-black sm:text-2xl">In the H-1B lottery, FY{years[0]!.fy} to FY{years[years.length - 1]!.fy}</h2>{" "}
-      <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+    <section className={cn("mt-10 border border-border bg-card p-6 sm:p-8", className)}>
+      <h2 className="font-heading text-xl font-bold sm:text-2xl">In the H-1B lottery, FY{years[0]!.fy} to FY{years[years.length - 1]!.fy}</h2>{" "}
+      <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Registrations entered and selected, and the petitions that followed. Until FY2025 one person could be registered
         more than once, so a registration isn&apos;t a person.
       </p>{" "}
@@ -38,7 +38,7 @@ export function H1bLotteryHistory({ years, className }: { years: LotteryYear[] |
               >
                 <span className="flex flex-wrap items-baseline justify-between gap-x-3">
                   <span className="font-mono text-sm font-bold">FY{y.fy}</span>{" "}
-                  <span className="text-sm tabular-nums text-foreground/80">
+                  <span className="text-sm tabular-nums text-soft">
                     {formatInt(y.selected)} of {formatInt(y.registrations)} selected ({share}%), {formatInt(y.petitioned)} petitions filed,{" "}
                     {formatInt(y.approved)} approved, {formatInt(y.denied)} denied
                   </span>
@@ -53,7 +53,7 @@ export function H1bLotteryHistory({ years, className }: { years: LotteryYear[] |
         })}
       </ul>
       </ChartTips>{" "}
-      <p className="mt-3 text-sm text-foreground/70">
+      <p className="mt-3 text-sm text-muted-foreground">
         Dark: selected. Light: not selected. From USCIS&apos;s registration records, obtained by Bloomberg News under
         FOIA and{" "}
         <a href={SOURCE} rel="noopener noreferrer" className="font-bold underline underline-offset-2 hover:text-primary">

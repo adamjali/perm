@@ -27,7 +27,7 @@ export function NewCaseHeading() {
       {/* Page Title with neobrutalist accent */}
       <div className="relative">
         {/* Corner accent decoration */}
-        <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border-2 border-foreground shadow-hard-sm" />
+        <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border border-foreground" />
         <div className="pl-6">
           <PageHeading
             title="Add new case"

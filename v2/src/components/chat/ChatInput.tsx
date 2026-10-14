@@ -316,7 +316,7 @@ export function ChatInput({
   const showStopButton = isProcessing && onStop;
 
   return (
-    <div className="p-3 border-t-2 border-border bg-background">
+    <div className="p-3 border-t border-border bg-background">
     <div className="flex gap-2">
       <textarea
         ref={textareaRef}
@@ -335,7 +335,7 @@ export function ChatInput({
         className={cn(
           // 16px on phones: iOS Safari zooms the page into any field under 16px.
           'flex-1 resize-none px-3 py-2 text-base md:text-sm',
-          'border-2 border-border bg-background rounded-none',
+          'border border-input bg-background rounded-none',
           'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0',
           'placeholder:text-muted-foreground',
           'disabled:opacity-50 disabled:cursor-not-allowed'
@@ -349,7 +349,7 @@ export function ChatInput({
           disabled={disabled}
           size="icon"
           variant={isRecording ? 'destructive' : 'outline'}
-          className="shrink-0 shadow-hard-sm"
+          className="shrink-0"
           aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
         >
           {isRecording ? (
@@ -366,7 +366,7 @@ export function ChatInput({
           onClick={onStop}
           size="icon"
           variant="destructive"
-          className="shrink-0 shadow-hard-sm"
+          className="shrink-0"
           aria-label="Stop generating"
         >
           <SquareIcon className="h-4 w-4 fill-current" />
@@ -376,7 +376,7 @@ export function ChatInput({
           onClick={onSend}
           disabled={disabled || !value.trim()}
           size="icon"
-          className="shrink-0 shadow-hard-sm"
+          className="shrink-0"
           aria-label="Send message"
         >
           <Send className="h-4 w-4" />

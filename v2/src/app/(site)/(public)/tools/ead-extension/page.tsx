@@ -63,8 +63,8 @@ export default function EadExtensionPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
       <header className="max-w-3xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Was my work permit extended?</h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Was my work permit extended?</h1>{" "}
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           A renewal received on or after October 30, 2025 no longer extends an expiring EAD. Before that, most
           employment-based cards were extended up to 540 days while the renewal was pending.
         </p>
@@ -75,7 +75,7 @@ export default function EadExtensionPage() {
       </div>
 
       <section className="mt-10 max-w-4xl">
-        <h2 className="font-heading text-2xl font-black">Where the card prints them</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Where the card prints them</h2>{" "}
         <ScreenshotFigure
           src="/images/tools/ead-cards.webp"
           alt="USCIS sample work permits, the older design and the 2023 redesign, each showing a Category code and a Card Expires date"
@@ -88,8 +88,8 @@ export default function EadExtensionPage() {
       </section>
 
       <section className="mt-10 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">The rules, from the source</h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <h2 className="font-heading text-2xl font-bold">The rules, from the source</h2>{" "}
+        <p className="mt-3 text-base leading-relaxed text-soft">
           The October 30, 2025 interim final rule,{" "}
           <a href={FR_URL} rel="noopener" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
             90 FR 48799
@@ -104,7 +104,7 @@ export default function EadExtensionPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
 

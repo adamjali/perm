@@ -62,7 +62,7 @@ export function MoreText({
 }) {
   return (
     <details className={`group max-w-3xl ${className}`}>
-      <summary className={`flex min-h-[44px] cursor-pointer list-none items-baseline gap-x-2 py-1 leading-relaxed text-foreground/80 [&::-webkit-details-marker]:hidden ${size === "sm" ? "text-sm" : "text-base"}`}>
+      <summary className={`flex min-h-[44px] cursor-pointer list-none items-baseline gap-x-2 py-1 leading-relaxed text-soft [&::-webkit-details-marker]:hidden ${size === "sm" ? "text-sm" : "text-base"}`}>
         <span>
           {gist}{" "}
           <span className="whitespace-nowrap font-bold text-foreground underline decoration-primary decoration-2 underline-offset-4 group-open:hidden">

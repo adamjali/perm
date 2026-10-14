@@ -61,16 +61,16 @@ export default async function DebarmentsPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+      <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
         Who DOL will not accept a filing from
       </h1>{" "}
-      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90">
+      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-soft">
         Employers, attorneys and agents DOL has barred from a program for a set period, as DOL publishes
         them: the violation in DOL&apos;s words, and whether the bar is in force today.
       </p>{" "}
 
       {all.length === 0 ? (
-        <p className="mt-10 border-2 border-border bg-card p-5 text-base">
+        <p className="mt-10 border border-border bg-card p-5 text-base">
           The lists have not been read yet. The daily ingest reads DOL&apos;s
           program-debarments document and the H-1B page; until it has run, the
           originals are at{" "}
@@ -85,7 +85,7 @@ export default async function DebarmentsPage() {
         </p>
       ) : (
         <>
-          <p className="mt-6 max-w-3xl text-base leading-relaxed text-foreground/80">
+          <p className="mt-6 max-w-3xl text-base leading-relaxed text-soft">
             {formatInt(active)} debarments in force today of {formatInt(all.length)} on the lists
             {upcoming > 0
               ? `, and ${formatInt(upcoming)} ${upcoming === 1 ? "that has" : "that have"} been ordered but ${upcoming === 1 ? "has" : "have"} not begun`
@@ -114,11 +114,11 @@ export default async function DebarmentsPage() {
       )}{" "}
 
       <section className="mt-10 max-w-3xl">
-        <h2 className="font-heading text-xl font-black sm:text-2xl">What a debarment is, and is not</h2>{" "}
+        <h2 className="font-heading text-xl font-bold sm:text-2xl">What a debarment is, and is not</h2>{" "}
         {/* The regulation behind the list, on demand. The rows above are what
             a reader came for; this stays in the DOM for search either way. */}
         <FinePrint summary="The rule, and what this page does not count as one" className="mt-3">
-        <p className="mt-3 text-base leading-relaxed text-foreground/85">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           Under 20 CFR 656.31(f), DOL may debar an employer, attorney or agent
           from PERM for one to three years for conduct the regulation lists,
           including failing to respond to an audit. During the period OFLC will
@@ -128,7 +128,7 @@ export default async function DebarmentsPage() {
           apart. Employer and law-firm pages carry a notice when a name on these
           lists matches theirs.
         </p>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/85">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           Wage and Hour Division debarments arise from its own H-1B, H-2A and
           H-2B investigations, and the H-2A list also carries plea and settlement
           agreements from criminal cases; the violation column says which. A

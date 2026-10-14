@@ -45,7 +45,7 @@ export const metadata: Metadata = withSocialCard({
 const STATES = new Set(Object.keys(US_STATE_NAMES));
 const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 const FIELD =
-  "min-h-[44px] w-full border-2 border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
+  "min-h-[44px] w-full border border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
 const pct = (x: number | null, d = 0) => (x === null ? "" : `${(x * 100).toFixed(d)}%`);
 
 export default async function SponsorFinderPage({
@@ -61,14 +61,14 @@ export default async function SponsorFinderPage({
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header className="max-w-3xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Find a green card sponsor</h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Find a green card sponsor</h1>{" "}
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           Employers that file PERM cases, filtered by what DOL&apos;s records show about them. Each one links to its
           full record.
         </p>
       </header>
 
-      <form method="get" action={PATH} className="mt-8 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+      <form method="get" action={PATH} className="mt-8 border border-border bg-card p-5 sm:p-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           <label className="block text-sm font-bold">
             State
@@ -148,7 +148,7 @@ export default async function SponsorFinderPage({
           </label>{" "}
           <button
             type="submit"
-            className="min-h-[44px] border-2 border-border bg-foreground px-6 font-mono text-sm font-bold uppercase tracking-[0.1em] text-background shadow-hard focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="min-h-[44px] border border-border bg-foreground px-6 text-sm font-bold text-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             Find sponsors
           </button>{" "}
@@ -158,31 +158,31 @@ export default async function SponsorFinderPage({
         </div>
       </form>
 
-      <p className="mt-6 max-w-3xl border-l-4 border-primary pl-4 text-base text-foreground/80">
+      <p className="mt-6 max-w-3xl border-l-2 border-primary pl-4 text-base text-soft">
         These employers filed PERM cases. Whether one will sponsor you depends on the job and on them; DOL&apos;s
         records can&apos;t say. Debarred employers are left out unless you ask for them.
       </p>
 
       {found === null ? (
-        <p className="mt-8 border-2 border-border bg-card p-5 text-base">
+        <p className="mt-8 border border-border bg-card p-5 text-base">
           The sponsor index is being built. Try again in a few minutes.
         </p>
       ) : (
         <section className="mt-8" aria-labelledby="results">
-          <h2 id="results" className="font-heading text-2xl font-black">
+          <h2 id="results" className="font-heading text-2xl font-bold">
             {found.total === 0
               ? "No sponsor matches every filter"
               : `${formatInt(found.total)} ${found.total === 1 ? "sponsor matches" : "sponsors match"}`}
           </h2>{" "}
           {found.total === 0 ? (
-            <p className="mt-2 text-base text-foreground/70">Drop a filter or two and search again.</p>
+            <p className="mt-2 text-base text-muted-foreground">Drop a filter or two and search again.</p>
           ) : (
             <>
-              <div className="mt-4 overflow-x-auto border-2 border-border">
+              <div className="mt-4 overflow-x-auto border border-border">
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <caption className="sr-only">Sponsors matching the filters</caption>
                   <thead>
-                    <tr className="border-b-2 border-border bg-muted text-left">
+                    <tr className="border-b border-border bg-muted text-left">
                       <th scope="col" className="p-2 font-bold">Employer </th>
                       <th scope="col" className="p-2 font-bold">State </th>
                       <th scope="col" className="p-2 text-right font-bold">PERM, 12 months </th>
@@ -198,8 +198,8 @@ export default async function SponsorFinderPage({
                           <Link href={`/perm-employers/${r.slug}`} className={LINK}>
                             {r.name}
                           </Link>{" "}
-                          {r.sector ? <span className="block text-foreground/70">{r.sector} </span> : null}
-                          {r.capExempt ? <span className="block text-foreground/70">Likely cap-exempt </span> : null}
+                          {r.sector ? <span className="block text-muted-foreground">{r.sector} </span> : null}
+                          {r.capExempt ? <span className="block text-muted-foreground">Likely cap-exempt </span> : null}
                           {r.debarred ? <span className="block font-bold text-data-bad-ink">Debarred </span> : null}
                         </th>
                         <td className="p-2">{r.state ? `${r.state} ` : ""}</td>
@@ -221,7 +221,7 @@ export default async function SponsorFinderPage({
                       Previous {PAGE_SIZE}
                     </Link>
                   ) : null}{" "}
-                  <span className="text-foreground/70">
+                  <span className="text-muted-foreground">
                     Page {formatInt(f.page)} of {formatInt(pages)}
                   </span>{" "}
                   {f.page < pages ? (

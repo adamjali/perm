@@ -164,10 +164,10 @@ export default async function I140AwaitingVisaPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Approved, and waiting for a visa number
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           USCIS&apos;s count of approved I-140, I-360 and I-526 petitions whose beneficiary can&apos;t file
           for a green card yet, by category and country of birth
           {awaiting ? `, as of ${monthLabel(awaiting.asOf)}` : ""}, and how it moved since the last count.
@@ -249,15 +249,15 @@ export default async function I140AwaitingVisaPage() {
           ) : null}
 
           <section id="every-cell" className="mt-12 scroll-mt-24">
-            <h2 className="font-heading text-2xl font-black">The whole table</h2>{" "}
-            <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+            <h2 className="font-heading text-2xl font-bold">The whole table</h2>{" "}
+            <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
               USCIS&apos;s nine columns and six rows, as printed. The TOTAL row is USCIS&apos;s,
               and this site refuses the file if the countries don&apos;t sum to it.
             </p>{" "}
-            <div className="mt-4 overflow-x-auto border-2 border-border bg-card">
+            <div className="mt-4 overflow-x-auto border border-border bg-card">
               <table className="min-w-[880px] w-full text-sm">
                 <thead>
-                  <tr className="border-b-2 border-border text-left">
+                  <tr className="border-b border-border text-left">
                     <th className="px-4 py-2 font-bold">Country of birth{" "}</th>
                     {table.categories.map((cat) => (
                       <th key={cat} className="px-2 py-2 text-right font-bold">{CATEGORY_LABEL[cat] ?? cat}{" "}</th>
@@ -266,7 +266,7 @@ export default async function I140AwaitingVisaPage() {
                 </thead>
                 <tbody>
                   {table.countries.map((c) => (
-                    <tr key={c} className={c === "TOTAL" ? "border-t-2 border-border font-bold" : "border-b border-border/50"}>
+                    <tr key={c} className={c === "TOTAL" ? "border-t border-border font-bold" : "border-b border-border/50"}>
                       <td className="px-4 py-1.5 font-semibold">{c === "TOTAL" ? "All countries" : c}{" "}</td>
                       {table.categories.map((cat) => (
                         <td key={cat} className="px-2 py-1.5 text-right font-mono tabular-nums">{n(table.cells[c]?.[cat])}{" "}</td>
@@ -322,7 +322,7 @@ export default async function I140AwaitingVisaPage() {
             />
             {latestFullFy !== null ? (
               <div className="mt-6 border-t border-border/60 pt-4">
-                <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                <p className="text-sm font-bold text-muted-foreground">
                   Approvals by class, FY{latestFullFy}, petitions received that year
                 </p>{" "}
                 <div className="mt-2 overflow-x-auto">
@@ -357,12 +357,12 @@ export default async function I140AwaitingVisaPage() {
       ) : null}
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <h2 className="font-heading text-2xl font-black">Read next</h2>{" "}
+      <section className="mt-12 border border-border bg-card p-6 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold">Read next</h2>{" "}
         <ul className="mt-4 space-y-2">
           <li>
             <Link href="/guides/approved-i140-no-visa-number-eb2-india" className="font-bold underline underline-offset-2 hover:text-primary">

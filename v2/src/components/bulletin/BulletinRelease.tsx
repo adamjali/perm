@@ -55,7 +55,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
   const plotH = H - PAD.t - PAD.b;
 
   return (
-    <div className="mt-4 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+    <div className="mt-4 border border-border bg-card p-6 sm:p-8">
       <p className="text-lg leading-relaxed">
         Of the {summary.months} bulletins the archive caught before their month began ({monthName(summary.first)} to{" "}
         {monthName(summary.last)}), half were out by the{" "}
@@ -68,7 +68,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
         . The earliest came out by the {summary.earliestDay ? ordinal(summary.earliestDay) : "start"}.
       </p>{" "}
       {byToday ? (
-        <p className="mt-3 border-l-4 border-primary pl-3 text-base leading-relaxed">
+        <p className="mt-3 border-l-2 border-primary pl-3 text-base leading-relaxed">
           Today is {priorName} {todayDay}.{" "}
           {byToday.captured === 0 ? (
             <>
@@ -128,7 +128,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
       </div>
       </ChartTips>{" "}
       <MoreText gist={"When past bulletins were first seen online, by day of the month: a floor, from the Internet Archive."} className="mt-3">
-        <p className="text-base text-foreground/75">
+        <p className="text-base text-soft">
           Each bar is the share of those {summary.months} bulletins the Internet Archive had captured by that day of the
           month before. A capture only shows the page was up by then, so the real share is at least this high.
           {summary.setAside > 0

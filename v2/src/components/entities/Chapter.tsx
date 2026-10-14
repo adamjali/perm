@@ -21,11 +21,11 @@ export function Chapter({
 }) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className={cn("mt-16", SCROLL_MARGIN, className)}>
-      <div className="border-t-4 border-foreground pt-4">
-        <h2 id={`${id}-title`} className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+      <div className="border-t-2 border-foreground pt-4">
+        <h2 id={`${id}-title`} className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
           {title}
         </h2>{" "}
-        {dek ? <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">{dek}</p> : null}
+        {dek ? <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">{dek}</p> : null}
       </div>{" "}
       {children}
     </section>

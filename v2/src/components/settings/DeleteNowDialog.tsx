@@ -89,7 +89,7 @@ export default function DeleteNowDialog({
             <div className="text-muted-foreground text-sm space-y-3 pt-2">
               {/* Danger callout */}
               <div
-                className="flex items-start gap-2 p-3 bg-destructive/10 border-2 border-destructive/30"
+                className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30"
                 style={{ boxShadow: "var(--shadow-hard-sm)" }}
               >
                 <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
@@ -127,7 +127,7 @@ export default function DeleteNowDialog({
           <div>
             <p className="text-sm font-medium mb-2">
               Type{" "}
-              <span className="font-mono bg-muted px-1.5 py-0.5 border-2 border-border">
+              <span className="font-mono bg-muted px-1.5 py-0.5 border border-border">
                 {DELETE_CONFIRMATION_TEXT}
               </span>{" "}
               to confirm:

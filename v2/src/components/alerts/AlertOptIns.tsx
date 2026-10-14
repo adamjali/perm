@@ -37,7 +37,7 @@ export function OptInBox({
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         className={cn(
-          "mt-0.5 size-5 shrink-0 cursor-pointer appearance-none border-2 border-border bg-background checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "mt-0.5 size-5 shrink-0 cursor-pointer appearance-none border border-input bg-background checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           TICK,
         )}
       />{" "}

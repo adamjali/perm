@@ -84,7 +84,7 @@ export function deriveRecordCounts(docs: RecordDocs): RecordFigure[] {
     out.push({
       href: "/pwd-cases",
       value: pw.rows,
-      label: "prevailing wage determinations, with the wage",
+      label: "prevailing wage determinations, with the",
       asOf: pw.latestDecision.slice(0, 10),
       asOfKind: "through",
     });

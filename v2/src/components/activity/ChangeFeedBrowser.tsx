@@ -61,11 +61,11 @@ import { RequestFailed } from "@/components/tools/RequestFailed";
 const PAGE_SIZES = [25, 50, 100, 250] as const;
 
 const CONTROL =
-  "w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50";
 const NAV =
-  "min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-tint-primary disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL =
-  "block font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground";
+  "block text-sm font-bold text-muted-foreground";
 
 /**
  * What DOL does not return on a live case, and therefore what this feed cannot
@@ -374,7 +374,7 @@ export function ChangeFeedBrowser({
             }}
             className={`${CONTROL} mt-1`}
           />{" "}
-          <p id={`${id}-span`} className="mt-1 text-sm text-foreground/70">
+          <p id={`${id}-span`} className="mt-1 text-sm text-muted-foreground">
             {span === 1 ? "One day. Widen to see a range." : `${formatInt(span)} days.`}
           </p>
         </div>{" "}
@@ -429,7 +429,7 @@ export function ChangeFeedBrowser({
             aria-describedby={`${id}-q-hint`}
             className={`${CONTROL} mt-1`}
           />{" "}
-          <p id={`${id}-q-hint`} className="mt-1 text-sm text-foreground/70">
+          <p id={`${id}-q-hint`} className="mt-1 text-sm text-muted-foreground">
             Case number, employer, job title. Occupation and state too on
             published dates.
           </p>
@@ -579,7 +579,7 @@ export function ChangeFeedBrowser({
       {/* ONE LINE FIRST, THE REST FOLDED. The answer to "what
           do these dates hold" is one of four short facts; the detail behind it
           stays a click away, in the DOM for search either way. */}
-      <details className="mt-6 border-2 border-border bg-tint-primary">
+      <details className="mt-6 border border-border bg-tint-primary">
         <summary className="flex min-h-[44px] cursor-pointer items-center px-4 py-2 text-base font-bold">
           {hasDecided && hasObserved
             ? "These dates cross DOL's published files and our own daily check"
@@ -589,8 +589,8 @@ export function ChangeFeedBrowser({
                 ? "Newer than DOL's last file: what our daily check saw change"
                 : "We hold nothing for these dates"}
         </summary>{" "}
-        <div className="border-t-2 border-border px-4 py-3">
-        <p className="mt-2 text-base leading-relaxed text-foreground/80">
+        <div className="border-t border-border px-4 py-3">
+        <p className="mt-2 text-base leading-relaxed text-soft">
           {hasDecided && hasObserved ? (
             <>
               This range crosses both records. DOL&apos;s published files cover{" "}
@@ -626,7 +626,7 @@ export function ChangeFeedBrowser({
           ) : null}
         </p>
         {!hasDecided && !hasObserved ? (
-          <p className="mt-2 text-base leading-relaxed text-foreground/80">
+          <p className="mt-2 text-base leading-relaxed text-soft">
             DOL&apos;s published files run to{" "}
             <strong>{windows.decided?.to ?? "no loaded file"}</strong> and our
             own record starts{" "}
@@ -650,15 +650,15 @@ export function ChangeFeedBrowser({
           `open` prop alone would stick at its first value. */}
       <details
         key={hasDecided ? "filters-live" : "filters-off"}
-        className="mt-4 border-2 border-border bg-card"
+        className="mt-4 border border-border bg-card"
       >
-        <summary className="cursor-pointer px-4 py-3 font-mono text-sm font-bold uppercase tracking-wider hover:bg-tint-primary">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-bold hover:bg-tint-primary">
           {hasDecided
             ? "Wage, law firm, worksite and occupation: available for these dates"
             : "Why wage, law firm, worksite and occupation are off for these dates"}
         </summary>{" "}
-        <div className="border-t-2 border-border px-4 py-3">
-          <p className="text-base leading-relaxed text-foreground/80">
+        <div className="border-t border-border px-4 py-3">
+          <p className="text-base leading-relaxed text-soft">
             {hasDecided ? (
               <>
                 These four arrive with the quarterly disclosure file, and the
@@ -693,9 +693,9 @@ export function ChangeFeedBrowser({
             <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
               {UNAVAILABLE.map((u) => (
                 <Fragment key={u.slug}>
-                  <li className="border-2 border-border/40 p-3">
+                  <li className="border border-border/40 p-3">
                     <span className={LABEL}>{u.label}</span>{" "}
-                    <span className="mt-1 block text-sm leading-relaxed text-foreground/80">
+                    <span className="mt-1 block text-sm leading-relaxed text-soft">
                       {u.why}
                     </span>
                   </li>{" "}
@@ -715,7 +715,7 @@ export function ChangeFeedBrowser({
           </h3>{" "}
           {decided ? (
             <>
-              <p className="mt-2 text-base leading-relaxed text-foreground/80">
+              <p className="mt-2 text-base leading-relaxed text-soft">
                 {decided.totals ? (
                   <>
                     DOL decided {formatInt(
@@ -750,7 +750,7 @@ export function ChangeFeedBrowser({
                 />
               ) : null}
               {decidedRows.length === 0 && decided.cases.length > 0 ? (
-                <div className="mt-4 border-2 border-border bg-card p-4 text-base">
+                <div className="mt-4 border border-border bg-card p-4 text-base">
                   <p>
                     None of the {formatInt(decided.cases.length)} decisions loaded for
                     these dates match
@@ -760,7 +760,7 @@ export function ChangeFeedBrowser({
                   <DidYouMean className="mt-3" suggestions={nameSuggestions} />
                 </div>
               ) : decidedRows.length === 0 ? (
-                <p className="mt-4 border-2 border-border bg-card p-4 text-base">
+                <p className="mt-4 border border-border bg-card p-4 text-base">
                   DOL published no decisions for these dates. That is a real
                   answer, not a missing one.
                 </p>
@@ -780,10 +780,10 @@ export function ChangeFeedBrowser({
               what="Those decisions"
               failure={decidedFailure}
               onRetry={retryDecided}
-              className="mt-4 border-2 border-border bg-tint-primary p-4"
+              className="mt-4 border border-border bg-tint-primary p-4"
             />
           ) : (
-            <p className="mt-4 text-base text-foreground/80" role="status">
+            <p className="mt-4 text-base text-soft" role="status">
               Loading decisions for these dates…
             </p>
           )}
@@ -808,16 +808,16 @@ export function ChangeFeedBrowser({
                         reset();
                       }}
                       className={
-                        "min-h-[44px] border-2 border-border px-3 py-2 text-sm hover:bg-tint-primary disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary " +
+                        "min-h-[44px] border border-border px-3 py-2 text-sm hover:bg-tint-primary disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary " +
                         (on ? "bg-foreground text-background" : "bg-card")
                       }
                     >
-                      <span className={on ? "text-background/70" : "text-foreground/70"}>
+                      <span className={on ? "text-background/70" : "text-muted-foreground"}>
                         {t.fromStatus}
                       </span>{" "}
                       <span aria-hidden="true">&rarr;</span>{" "}
                       <span className="font-bold">{t.toStatus}</span>{" "}
-                      <b className="ml-1 font-black tabular-nums">{formatInt(t.n)}</b>
+                      <b className="ml-1 font-bold tabular-nums">{formatInt(t.n)}</b>
                     </button>
                   </li>{" "}
                 </Fragment>
@@ -829,12 +829,12 @@ export function ChangeFeedBrowser({
               type="button"
               onClick={() => setAllChips((v) => !v)}
               aria-expanded={allChips}
-              className="mb-4 inline-flex min-h-[44px] items-center border-2 border-border bg-background px-3 text-sm font-bold hover:bg-tint-primary"
+              className="mb-4 inline-flex min-h-[44px] items-center border border-border bg-background px-3 text-sm font-bold hover:bg-tint-primary"
             >
               {allChips ? "Show the busiest only" : `Show all ${feed.transitions.length} kinds of change`}
             </button>
           ) : null}{" "}
-          <p className="text-base text-foreground/80" aria-live="polite">
+          <p className="text-base text-soft" aria-live="polite">
             {/* TRUE WITH THE SCRIPT BROKEN, TOO. This branch is what the
                 prerendered HTML carries, and it is also what a reader with no
                 JavaScript keeps: the sentence therefore says what is on screen
@@ -868,7 +868,7 @@ export function ChangeFeedBrowser({
             )}
           </p>
           {capped ? (
-            <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+            <p className="mt-2 text-sm leading-relaxed text-soft">
               This day holds {formatInt(feed.total)} changes and the feed carries the
               first {formatInt(feed.changes.length)} of them, ordered by employer.
               Search and sorting cover the loaded rows.
@@ -879,7 +879,7 @@ export function ChangeFeedBrowser({
               page was built for while the reader looked at a different one, and
               a disclosure that names the wrong day is worse than none. */}
           {feed.expiriesExcluded > 0 || feed.bulkExcluded > 0 ? (
-            <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+            <p className="mt-2 text-sm leading-relaxed text-soft">
               Left out of that count:{" "}
               {feed.expiriesExcluded > 0 ? (
                 <>
@@ -900,7 +900,7 @@ export function ChangeFeedBrowser({
             </p>
           ) : null}
           {ordered.length === 0 && ready ? (
-            <div className="mt-4 border-2 border-border bg-card p-4 text-base">
+            <div className="mt-4 border border-border bg-card p-4 text-base">
               <p>
                 Nothing on {longDate(feed.date)} matches that. The day itself
                 holds {formatInt(feed.total)} changes, so clearing the filters will
@@ -930,7 +930,7 @@ export function ChangeFeedBrowser({
               >
                 Previous
               </button>{" "}
-              <span className="font-mono text-sm font-bold uppercase tracking-wider">
+              <span className="text-sm font-bold">
                 Page {formatInt(current + 1)} of {formatInt(pages)}
               </span>{" "}
               <button
@@ -950,10 +950,10 @@ export function ChangeFeedBrowser({
           failure={failure}
           onRetry={retry}
           after="The other days still work."
-          className="mt-6 border-2 border-border bg-tint-primary p-4"
+          className="mt-6 border border-border bg-tint-primary p-4"
         />
       ) : (
-        <p className="mt-6 text-base text-foreground/80" role="status">
+        <p className="mt-6 text-base text-soft" role="status">
           Loading that day&apos;s changes…
         </p>
       )}

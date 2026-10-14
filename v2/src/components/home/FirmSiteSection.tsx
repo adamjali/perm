@@ -28,23 +28,23 @@ export function FirmSiteSection() {
   return (
     <section id="for-your-site" aria-labelledby="for-your-site-h" className="bg-background">
       <div className="mx-auto max-w-[1200px] px-4 py-16 sm:px-8 sm:py-24">
-        <h2 id="for-your-site-h" className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+        <h2 id="for-your-site-h" className="font-heading text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
           Put PERM Tracker on your firm&apos;s site
         </h2>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">
           Clients check their own case on your page. Free, and it links back to their full record.
         </p>{" "}
 
         <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] [&>*]:min-w-0">
           <div>
-            <div className="border-3 border-border bg-card shadow-hard">
-              <div className="flex items-center gap-3 border-b-3 border-border bg-muted px-4 py-2.5">
+            <div className="border border-border bg-card">
+              <div className="flex items-center gap-3 border-b border-border bg-muted px-4 py-2.5">
                 <span className="flex gap-1.5" aria-hidden="true">
-                  <span className="h-3 w-3 border-2 border-border bg-background" />
-                  <span className="h-3 w-3 border-2 border-border bg-background" />
-                  <span className="h-3 w-3 border-2 border-border bg-background" />
+                  <span className="h-3 w-3 border border-border bg-background" />
+                  <span className="h-3 w-3 border border-border bg-background" />
+                  <span className="h-3 w-3 border border-border bg-background" />
                 </span>{" "}
-                <span className="min-w-0 flex-1 truncate border-2 border-border bg-background px-3 py-1 font-mono text-sm text-foreground/70">
+                <span className="min-w-0 flex-1 truncate border border-border bg-background px-3 py-1 font-mono text-sm text-muted-foreground">
                   yourfirm.com/check-your-case
                 </span>
               </div>
@@ -57,7 +57,7 @@ export function FirmSiteSection() {
             </div>{" "}
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <CopyButton text={snippet} />{" "}
-              <span className="text-base text-foreground/75">the code for this checker, ready to paste</span>{" "}
+              <span className="text-base text-soft">the code for this checker, ready to paste</span>{" "}
               <Link href="/badges#embeds" className={`ml-auto inline-flex min-h-11 items-center ${link}`}>
                 Every tool you can embed
               </Link>
@@ -65,7 +65,7 @@ export function FirmSiteSection() {
           </div>{" "}
 
           <div className="flex flex-col">
-            <div className="grid grid-cols-1 border-3 border-border shadow-hard sm:grid-cols-2 lg:grid-cols-1">
+            <div className="grid grid-cols-1 border border-border sm:grid-cols-2 lg:grid-cols-1">
               <div className="flex min-h-36 items-center justify-center bg-neutral-950 p-6 sm:p-8">
                 <span
                   aria-hidden="true"
@@ -73,7 +73,7 @@ export function FirmSiteSection() {
                   dangerouslySetInnerHTML={{ __html: badge("dark") }}
                 />
               </div>{" "}
-              <div className="flex min-h-36 items-center justify-center border-t-3 border-border bg-neutral-50 p-6 sm:border-l-3 sm:border-t-0 sm:p-8 lg:border-l-0 lg:border-t-3">
+              <div className="flex min-h-36 items-center justify-center border-t border-border bg-neutral-50 p-6 sm:border-l sm:border-t-0 sm:p-8 lg:border-l-0 lg:border-t">
                 <span
                   aria-hidden="true"
                   className="block w-full max-w-[22rem] [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
@@ -81,18 +81,18 @@ export function FirmSiteSection() {
                 />
               </div>
             </div>{" "}
-            <h3 className="mt-8 font-heading text-xl font-black">A badge for a verified firm</h3>{" "}
+            <h3 className="mt-8 font-heading text-xl font-bold">A badge for a verified firm</h3>{" "}
             <ol className="mt-4 space-y-3">
               {STEPS.map((step, i) => (
                 <li key={step} className="flex items-center gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-border bg-primary font-heading text-lg font-black text-primary-foreground">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-primary font-heading text-lg font-bold text-primary-foreground">
                     {i + 1}
                   </span>{" "}
                   <span className="text-lg font-semibold">{step}</span>{" "}
                 </li>
               ))}
             </ol>{" "}
-            <p className="mt-6 flex items-start gap-2 text-base text-foreground/75">
+            <p className="mt-6 flex items-start gap-2 text-base text-soft">
               <CheckCircleIcon size={20} weight="bold" className="mt-0.5 shrink-0 text-primary-text" aria-hidden="true" />
               <span>It says &ldquo;Verified firm&rdquo; only after we&apos;ve confirmed the claim, and links to your record.</span>
             </p>{" "}

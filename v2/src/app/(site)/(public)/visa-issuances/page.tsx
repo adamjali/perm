@@ -94,8 +94,8 @@ export default async function VisaIssuancesPage() {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
         <div className="pt-10 sm:pt-12" />
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Immigrant visas issued abroad</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Immigrant visas issued abroad</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           State&apos;s monthly tables aren&apos;t loaded yet. They&apos;re on{" "}
           <a href={STATE_PAGE} className={LINK} rel="noopener">
             the State Department&apos;s page
@@ -129,10 +129,10 @@ export default async function VisaIssuancesPage() {
     <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Immigrant visas issued abroad</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Immigrant visas issued abroad</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           State&apos;s consulates issued{" "}
-          <span className="font-heading font-black tabular-nums text-foreground">{formatInt(monthTotal)}</span> immigrant
+          <span className="font-heading font-bold tabular-nums text-foreground">{formatInt(monthTotal)}</span> immigrant
           visas in {monthName(newest)}, {formatInt(ebLatest)} of them employment-based. Green cards granted inside the
           United States aren&apos;t counted here, and for employment categories that&apos;s most of them.
         </p>
@@ -152,7 +152,7 @@ export default async function VisaIssuancesPage() {
           <table className="w-full text-left text-base">
             <caption className="sr-only">Employment immigrant visas issued abroad by month{" "}</caption>
             <thead>
-              <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
+              <tr className="border-b border-border text-sm text-muted-foreground">
                 <th className="py-2 pr-4 font-bold">Category{" "}</th>
                 <th className="hidden py-2 pr-4 font-bold sm:table-cell">Each month{" "}</th>
                 <th className="py-2 pr-4 text-right font-bold">{`${monthName(newest).split(" ")[0]}`}{" "}</th>
@@ -183,10 +183,10 @@ export default async function VisaIssuancesPage() {
       </FigurePlate>
 
       <section className="mt-12" aria-labelledby="iv-countries">
-        <h2 id="iv-countries" className="font-heading text-2xl font-black">
+        <h2 id="iv-countries" className="font-heading text-2xl font-bold">
           Who got them, the last 12 months
         </h2>{" "}
-        <p className="mt-2 max-w-3xl text-base text-foreground/70">
+        <p className="mt-2 max-w-3xl text-base text-muted-foreground">
           By foreign state of chargeability (usually the country of birth), {monthName(yearFrom)} to {monthName(newest)},
           spouses and children included.
         </p>
@@ -194,8 +194,8 @@ export default async function VisaIssuancesPage() {
           {(["EB-2", "EB-3", "EB-1", "EB-5", "EB-3 other workers"] as const).map((c) => {
             const rows = topRows(byCountry, c, 7);
             return rows.length ? (
-              <div key={c} className="border-2 border-border bg-card p-5 shadow-hard-sm">
-                <h3 className="font-heading text-lg font-black">{c}{" "}</h3>
+              <div key={c} className="border border-border bg-card p-5">
+                <h3 className="font-heading text-lg font-bold">{c}{" "}</h3>
                 <BarRows className="mt-3" label={`${c} visas issued abroad by country`} rows={rows} />
               </div>
             ) : null;
@@ -205,10 +205,10 @@ export default async function VisaIssuancesPage() {
 
       {postRows.length ? (
         <section className="mt-12" aria-labelledby="iv-posts">
-          <h2 id="iv-posts" className="font-heading text-2xl font-black">
+          <h2 id="iv-posts" className="font-heading text-2xl font-bold">
             Where they were issued
           </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base text-foreground/70">
+          <p className="mt-2 max-w-3xl text-base text-muted-foreground">
             The consulates that issued the most employment visas, the last 12 months.
           </p>
           <BarRows className="mt-5" label="Employment visas by consulate" rows={postRows} />
@@ -216,13 +216,13 @@ export default async function VisaIssuancesPage() {
       ) : null}
 
       <section className="mt-12" aria-labelledby="iv-all">
-        <h2 id="iv-all" className="font-heading text-2xl font-black">
+        <h2 id="iv-all" className="font-heading text-2xl font-bold">
           Every category
         </h2>{" "}
-        <div className="mt-4 overflow-x-auto border-2 border-border bg-card shadow-hard">
+        <div className="mt-4 overflow-x-auto border border-border bg-card">
           <table className="w-full min-w-[32rem] text-left text-base">
             <caption className="sr-only">Immigrant visas issued abroad by category{" "}</caption>
-            <thead className="border-b-2 border-border bg-muted/40">
+            <thead className="border-b border-border bg-muted/40">
               <tr>
                 <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>
                 <th scope="col" className="px-4 py-3 text-right font-bold">{monthName(newest)}{" "}</th>
@@ -258,9 +258,9 @@ export default async function VisaIssuancesPage() {
       </section>
 
       <section className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Abroad, not in the US</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">Abroad, not in the US</h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             These are visas consulates issued to people outside the country. Someone in the US on an H-1B gets the
             green card from USCIS instead, which counts it in its own{" "}
             <Link href="/uscis-processing-times" className={LINK}>
@@ -269,9 +269,9 @@ export default async function VisaIssuancesPage() {
             .
           </p>
         </div>{" "}
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">The cutoff behind them</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-bold">The cutoff behind them</h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             A consulate can issue a visa only to someone whose priority date is current in that month&apos;s{" "}
             <Link href="/visa-bulletin" className={LINK}>
               visa bulletin
@@ -281,7 +281,7 @@ export default async function VisaIssuancesPage() {
         </div>
       </section>
 
-      <p className="mt-8 text-sm text-foreground/70">
+      <p className="mt-8 text-sm text-muted-foreground">
         Source:{" "}
         <a href={STATE_PAGE} className={LINK} rel="noopener">
           U.S. Department of State, Monthly Immigrant Visa Issuance Statistics

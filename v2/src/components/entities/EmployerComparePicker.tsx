@@ -73,7 +73,7 @@ function Picker({
 
   return (
     <div className="min-w-0">
-      <label htmlFor={id} className="block text-sm font-bold text-foreground/75">
+      <label htmlFor={id} className="block text-sm font-bold text-soft">
         {label}
       </label>{" "}
       <input
@@ -86,11 +86,11 @@ function Picker({
           setChosen(null);
           onChoose(null);
         }}
-        className="mt-1.5 min-h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="mt-1.5 min-h-11 w-full min-w-0 border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       />{" "}
       {busy ? <p className="mt-2 text-sm text-muted-foreground">Searching…</p> : null}{" "}
       {!chosen && hits.length > 0 ? (
-        <ul className="mt-2 border-2 border-border bg-card">
+        <ul className="mt-2 border border-border bg-card">
           {hits.map((h) => (
             <li key={h.slug}>
               <button
@@ -134,7 +134,7 @@ export function EmployerComparePicker({ a, b }: { a: Chosen | null; b: Chosen | 
         if (!ready || !left || !right) return;
         router.push(`/perm-employers/compare?a=${encodeURIComponent(left.slug)}&b=${encodeURIComponent(right.slug)}`);
       }}
-      className="grid grid-cols-1 gap-5 border-2 border-border bg-card p-5 shadow-hard [&>*]:min-w-0 sm:grid-cols-2 sm:p-6"
+      className="grid grid-cols-1 gap-5 border border-border bg-card p-5 [&>*]:min-w-0 sm:grid-cols-2 sm:p-6"
     >
       <Picker label="First employer" initial={a} onChoose={setLeft} />{" "}
       <Picker label="Second employer" initial={b} onChoose={setRight} />{" "}
@@ -142,7 +142,7 @@ export function EmployerComparePicker({ a, b }: { a: Chosen | null; b: Chosen | 
         <button
           type="submit"
           disabled={!ready}
-          className="flex min-h-11 items-center border-2 border-border bg-primary px-5 font-heading text-sm font-black text-black shadow-hard-sm transition-transform hover:-translate-y-[1px] disabled:opacity-60 motion-reduce:transition-none"
+          className="flex min-h-11 items-center border border-border bg-primary px-5 font-heading text-sm font-bold text-black transition-transform disabled:opacity-60 motion-reduce:transition-none"
         >
           Compare
         </button>

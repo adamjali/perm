@@ -74,7 +74,7 @@ export function WageAxis({
   const [lo, hi] = domain;
   const at = (v: number) => ((v - lo) / Math.max(1, hi - lo)) * 100;
   return (
-    <div className={cn("relative h-9 w-full border-t-2 border-border", className)}>
+    <div className={cn("relative h-9 w-full border-t border-border", className)}>
       {values.map((v, i) => {
         const anchor = tickAnchor(i, values.length);
         return (
@@ -86,7 +86,7 @@ export function WageAxis({
             />
             <span
               className={cn(
-                "absolute top-3 font-mono text-sm font-bold tabular-nums text-foreground/60",
+                "absolute top-3 font-mono text-sm font-bold tabular-nums text-muted-foreground",
                 ANCHOR_CLASS[anchor],
               )}
               style={{ left: `${at(v)}%` }}

@@ -96,14 +96,14 @@ export function ToolCallCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+      initial={false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={springConfig}
       className={cn(
         // Base styles - neobrutalist
         'relative overflow-hidden',
-        'border-2 border-border rounded-none',
-        'bg-card shadow-hard-sm',
+        'border border-border rounded-none',
+        'bg-card',
         // Status reads from the whole outline (the site's 2px border), not a
         // thick left bar; the spinner and status icon carry "in progress".
         status === 'success' && 'border-primary ',
@@ -160,7 +160,7 @@ export function ToolCallCard({
         <div className="flex items-center gap-1.5">
           {status === 'pending' && (
             <motion.span
-              initial={{ opacity: 0 }}
+              initial={false}
               animate={{ opacity: 1 }}
               className={cn(
                 "text-sm italic",
@@ -175,7 +175,7 @@ export function ToolCallCard({
 
           {status === 'success' && resultSummary && (
             <motion.span
-              initial={{ opacity: 0, x: -4 }}
+              initial={false}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, ...springConfig }}
               className="text-sm font-medium text-primary-text"
@@ -186,7 +186,7 @@ export function ToolCallCard({
 
           {status === 'error' && !wasDenied && (
             <motion.span
-              initial={{ opacity: 0, x: -4 }}
+              initial={false}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, ...springConfig }}
               className="text-sm font-medium text-destructive"
@@ -197,7 +197,7 @@ export function ToolCallCard({
 
           {wasDenied && (
             <motion.span
-              initial={{ opacity: 0, x: -4 }}
+              initial={false}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, ...springConfig }}
               className="text-sm text-muted-foreground"
@@ -245,7 +245,7 @@ function StatusIcon({
 
   return (
     <motion.div
-      initial={{ scale: 0 }}
+      initial={false}
       animate={{ scale: 1 }}
       transition={springTransition}
       className={className}
@@ -360,7 +360,7 @@ export function ToolCallList({
 
   return (
     <motion.div
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={{
         hidden: { opacity: 0 },

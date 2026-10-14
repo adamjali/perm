@@ -76,29 +76,29 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
       </div>
 
       {closest ? (
-        <p role="status" className="border-l-4 border-primary bg-tint-primary px-4 py-3 text-base">
+        <p role="status" className="border-l-2 border-primary bg-tint-primary px-4 py-3 text-base">
           No article holds &ldquo;{search}&rdquo; exactly. These are the closest.
         </p>
       ) : null}
 
       {sections.map(({ topic, posts: list }) => (
         <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-h`} className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)]">
-          <div className="mb-5 border-b-2 border-border pb-3">
-            <h2 id={`${topic.id}-h`} className="font-heading text-2xl font-black sm:text-3xl">
+          <div className="mb-5 border-b border-border pb-3">
+            <h2 id={`${topic.id}-h`} className="font-heading text-2xl font-bold sm:text-3xl">
               {topic.label}
             </h2>{" "}
-            <p className="mt-1 text-base text-foreground/75">{topic.blurb}</p>
+            <p className="mt-1 text-base text-soft">{topic.blurb}</p>
           </div>
           <ContentGrid posts={list} headingLevel={3} />
         </section>
       ))}
 
       {shown === 0 ? (
-        <p className="py-16 text-center text-base text-foreground/75">
+        <p className="py-16 text-center text-base text-soft">
           Nothing matches &ldquo;{search}&rdquo;. Try a shorter word, or show all topics.
         </p>
       ) : search || active ? (
-        <p className="text-center text-sm text-foreground/70">
+        <p className="text-center text-sm text-muted-foreground">
           Showing {shown} of {posts.length}
           {search ? (closest ? ` close to "${search}"` : ` matching "${search}"`) : null}
         </p>
@@ -114,12 +114,12 @@ function TopicButton({ pressed, onClick, label, count }: { pressed: boolean; onC
       aria-pressed={pressed}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-11 items-center gap-2 border-2 border-border px-3 text-sm font-semibold transition-colors",
+        "inline-flex min-h-11 items-center gap-2 border border-border px-3 text-sm font-semibold transition-colors",
         pressed ? "bg-foreground text-background" : "bg-card text-foreground hover:bg-muted",
       )}
     >
       {label}{" "}
-      <span className={cn("font-mono text-sm", pressed ? "text-background/75" : "text-foreground/60")}>{count}</span>
+      <span className={cn("font-mono text-sm", pressed ? "text-background/75" : "text-muted-foreground")}>{count}</span>
     </button>
   );
 }

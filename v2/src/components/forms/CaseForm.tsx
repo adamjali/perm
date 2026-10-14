@@ -610,7 +610,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
                 <div
                   key={s}
                   className={cn(
-                    "h-2.5 w-10 border-2 border-border rounded-sm transition-colors",
+                    "h-2.5 w-10 border border-border rounded-sm transition-colors",
                     sectionStates[s].isComplete ? "bg-primary" : "bg-muted"
                   )}
                 />
@@ -704,7 +704,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
 
 function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors: Record<string, string>; errorCount: number; onDismiss: () => void; onFieldClick: (field: string) => void }) {
   return (
-    <div className="rounded-lg border-2 border-destructive bg-destructive/10 p-4 animate-shake">
+    <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
       <div className="flex items-start gap-3">
         <XCircleIcon className="size-6 text-destructive shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -734,7 +734,7 @@ function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors:
 
 function WarningSummary({ warnings, warningCount }: { warnings: Record<string, string>; warningCount: number }) {
   return (
-    <div className="rounded-lg border-2 border-data-warn bg-data-warn/15 p-4">
+    <div className="rounded-lg border border-data-warn bg-data-warn/15 p-4">
       <div className="flex items-start gap-3">
         <AlertTriangle className="size-5 text-data-warn-ink shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -752,7 +752,7 @@ function WarningSummary({ warnings, warningCount }: { warnings: Record<string, s
 
 function SettingsToggles({ formData, onChange }: { formData: CaseFormData; onChange: (field: string, value: boolean) => void }) {
   return (
-    <div className="pt-4 border-t-2 border-border space-y-4">
+    <div className="pt-4 border-t border-border space-y-4">
       <SettingsToggle id="calendarSync" label="Calendar sync" description="Sync deadlines to your Google Calendar" checked={formData.calendarSyncEnabled} onChange={(checked) => onChange("calendarSyncEnabled", checked)} />
       <SettingsToggle id="favorite" label="Favorite" description="Mark as favorite for quick access" checked={formData.isFavorite} onChange={(checked) => onChange("isFavorite", checked)} />
       <SettingsToggle id="showOnTimeline" label="Show on Timeline" description="Display this case on the timeline view" checked={formData.showOnTimeline} onChange={(checked) => onChange("showOnTimeline", checked)} />
@@ -778,7 +778,7 @@ function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCance
   return (
     // No entrance animation: it slid in 350ms after the form had appeared, a
     // late second arrival of the page's main controls.
-    <div ref={barRef} className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-border rounded-t-lg p-4 z-10 shadow-hard-sm sm:shadow-hard">
+    <div ref={barRef} className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border border-border rounded-t-lg p-4 z-10">
       {/* Mobile: stacked layout, Desktop: horizontal */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4 max-w-5xl mx-auto">
         <div className="flex items-center gap-3 md:gap-4 order-2 md:order-1">

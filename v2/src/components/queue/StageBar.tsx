@@ -96,7 +96,7 @@ const MIN_SEGMENT_PX = 4;
  * 150px to 400px bar that is under 2%, every count is printed beside it, and
  * the alternative is a bar whose composition cannot be read at all.
  */
-const SEGMENT_EDGE = "border-r-2 border-muted";
+const SEGMENT_EDGE = "border-r border-muted";
 
 export function StageBar({ stages, scale, tipHeading, className }: StageBarProps) {
   const own = stages.reduce((n, s) => n + s.count, 0);
@@ -104,7 +104,7 @@ export function StageBar({ stages, scale, tipHeading, className }: StageBarProps
   if (denominator <= 0 || own === 0) {
     return (
       <span
-        className={`block h-5 w-full border-2 border-border bg-muted ${className ?? ""}`}
+        className={`block h-5 w-full border border-border bg-muted ${className ?? ""}`}
         aria-hidden="true"
       />
     );
@@ -112,7 +112,7 @@ export function StageBar({ stages, scale, tipHeading, className }: StageBarProps
 
   return (
     <span
-      className={`flex h-5 w-full overflow-hidden border-2 border-border bg-muted ${className ?? ""}`}
+      className={`flex h-5 w-full overflow-hidden border border-border bg-muted ${className ?? ""}`}
       aria-hidden="true"
     >
       {STAGE_ORDER.map((stage) => {
@@ -158,20 +158,20 @@ export function StageLegend({
           // one run of text.
           <Fragment key={stage}>
             {" "}
-            <li className="border-t-2 border-border pt-3">
+            <li className="border-t border-border pt-3">
               <span className="flex items-center gap-2">
                 <span
-                  className={`inline-block h-3 w-3 shrink-0 border-2 border-border ${meta.fill}`}
+                  className={`inline-block h-3 w-3 shrink-0 border border-border ${meta.fill}`}
                   aria-hidden="true"
                 />{" "}
-                <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
+                <span className="text-sm font-bold text-soft">
                   {meta.label}
                 </span>
               </span>{" "}
-              <span className="mt-1 block font-heading text-2xl font-black tabular-nums">
+              <span className="mt-1 block font-heading text-2xl font-bold tabular-nums">
                 {formatInt(group?.count ?? 0)}
               </span>{" "}
-              <span className="mt-1 block text-sm leading-snug text-foreground/70">
+              <span className="mt-1 block text-sm leading-snug text-muted-foreground">
                 {meta.gloss}
               </span>
             </li>

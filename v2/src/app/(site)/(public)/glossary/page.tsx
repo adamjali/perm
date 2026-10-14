@@ -85,10 +85,10 @@ export default function GlossaryPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={termSet} />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Glossary
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           Every term this site uses, placed where it comes up on the way to a
           green card, then A to Z. The status words DOL prints on a case have{" "}
           <Link
@@ -103,7 +103,7 @@ export default function GlossaryPage() {
 
       <TermMap names={names} />
 
-      <h2 className="mt-14 font-heading text-2xl font-black sm:text-3xl">A to Z</h2>{" "}
+      <h2 className="mt-14 font-heading text-2xl font-bold sm:text-3xl">A to Z</h2>{" "}
       <nav aria-label="Jump to a letter" className="mt-5 flex flex-wrap gap-2">
         {letters.map((l) => (
           // Mapped siblings arrive with nothing between them; the space is part
@@ -113,7 +113,7 @@ export default function GlossaryPage() {
             {" "}
             <a
               href={`#letter-${l}`}
-              className="flex size-11 items-center justify-center border-2 border-border bg-card font-heading text-base font-black shadow-hard-sm hover:-translate-y-[1px] hover:bg-tint-primary"
+              className="flex size-11 items-center justify-center border border-border bg-card font-heading text-base font-bold hover:bg-tint-primary"
             >
               {l}
             </a>
@@ -126,7 +126,7 @@ export default function GlossaryPage() {
           <section key={g.letter} aria-labelledby={`letter-${g.letter}`}>
             <h3
               id={`letter-${g.letter}`}
-              className="mt-10 scroll-mt-28 border-b-2 border-border pb-2 font-heading text-2xl font-black first:mt-0"
+              className="mt-10 scroll-mt-28 border-b border-border pb-2 font-heading text-2xl font-bold first:mt-0"
             >
               {g.letter}
             </h3>{" "}
@@ -150,16 +150,16 @@ export default function GlossaryPage() {
                 >
                   <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:grid sm:grid-cols-[14rem_minmax(0,1fr)_1.25rem] sm:gap-x-8 [&::-webkit-details-marker]:hidden">
                     <span className="min-w-0">
-                      <span className="font-heading text-lg font-black">
+                      <span className="font-heading text-lg font-bold">
                         {t.term}
                       </span>{" "}
                       {t.aka && t.aka.length > 0 ? (
-                        <span className="mt-1 block text-sm text-foreground/60">
+                        <span className="mt-1 block text-sm text-muted-foreground">
                           {t.aka.join(", ")}
                         </span>
                       ) : null}
                     </span>{" "}
-                    <span className="mt-1 block text-base leading-relaxed text-foreground/85 sm:mt-0">
+                    <span className="mt-1 block text-base leading-relaxed text-soft sm:mt-0">
                       {lead}
                     </span>{" "}
                     <CaretDownIcon
@@ -169,7 +169,7 @@ export default function GlossaryPage() {
                   </summary>{" "}
                   <div className="max-w-3xl pb-4 sm:ml-[calc(14rem+2rem)]">
                     {rest.length > 0 ? (
-                      <p className="text-base leading-relaxed text-foreground/85">
+                      <p className="text-base leading-relaxed text-soft">
                         {rest.join(" ")}
                       </p>
                     ) : null}{" "}
@@ -217,7 +217,7 @@ function TermChips({ slugs, names }: { slugs: readonly string[]; names: Map<stri
         <li key={slug}>
           <a
             href={`#${slug}`}
-            className="inline-flex min-h-11 items-center border-2 border-border bg-card px-3 text-base font-semibold hover:bg-tint-primary"
+            className="inline-flex min-h-11 items-center border border-border bg-card px-3 text-base font-semibold hover:bg-tint-primary"
           >
             {names.get(slug) ?? slug}
           </a>{" "}
@@ -230,7 +230,7 @@ function TermChips({ slugs, names }: { slugs: readonly string[]; names: Map<stri
 function StageName({ stage }: { stage: GlossaryStage }) {
   return (
     <span className="block">
-      <span className="block font-heading text-lg font-black leading-tight">{stage.name}</span>{" "}
+      <span className="block font-heading text-lg font-bold leading-tight">{stage.name}</span>{" "}
       <span className="block text-sm text-muted-foreground">{stage.who}</span>
     </span>
   );
@@ -245,7 +245,7 @@ function TermMap({ names }: { names: Map<string, string> }) {
   const beside = GLOSSARY_STAGES.filter((s) => !s.onRoad);
   return (
     <section aria-labelledby="glossary-map" className="mt-10">
-      <h2 id="glossary-map" className="font-heading text-2xl font-black sm:text-3xl">
+      <h2 id="glossary-map" className="font-heading text-2xl font-bold sm:text-3xl">
         Where each term comes up
       </h2>{" "}
       <ol className="mt-6">
@@ -258,7 +258,7 @@ function TermMap({ names }: { names: Map<string, string> }) {
             {i < road.length - 1 ? (
               <span aria-hidden="true" className="absolute bottom-0 left-[1.3rem] top-11 w-[3px] bg-border" />
             ) : null}
-            <span className="relative flex h-11 w-11 items-center justify-center border-2 border-border bg-primary font-heading text-lg font-black text-primary-foreground">
+            <span className="relative flex h-11 w-11 items-center justify-center border border-border bg-primary font-heading text-lg font-bold text-primary-foreground">
               {i + 1}
             </span>{" "}
             <StageName stage={stage} />{" "}
@@ -270,7 +270,7 @@ function TermMap({ names }: { names: Map<string, string> }) {
       </ol>{" "}
       <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 [&>*]:min-w-0">
         {beside.map((stage) => (
-          <div key={stage.id} className="border-2 border-dashed border-border p-4">
+          <div key={stage.id} className="border border-dashed border-border p-4">
             <StageName stage={stage} />{" "}
             <div className="mt-3">
               <TermChips slugs={stage.slugs} names={names} />

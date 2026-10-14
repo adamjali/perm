@@ -60,14 +60,14 @@ export function OutcomeMix({
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                   {/* The strip's own label is its legend: the swatch beside the name. */}
                   <p className="flex items-center gap-2 text-sm font-bold">
-                    <span aria-hidden="true" className={`h-3 w-8 border-2 border-border ${s.bg}`} />{" "}
+                    <span aria-hidden="true" className={`h-3 w-8 border border-border ${s.bg}`} />{" "}
                     <span>{s.label}</span>
                   </p>{" "}
-                  <p className="font-mono text-sm tabular-nums text-foreground/70">
+                  <p className="font-mono text-sm tabular-nums text-muted-foreground">
                     {`${newest[s.key].toFixed(2)}% in ${newest.quarter}; lowest ${low[s.key].toFixed(2)}% (${low.quarter}), highest ${high[s.key].toFixed(2)}% (${high.quarter})`}
                   </p>
                 </div>{" "}
-                <div className="mt-2 flex h-24 items-end gap-[2px] border-b-2 border-border sm:gap-1">
+                <div className="mt-2 flex h-24 items-end gap-[2px] border-b border-border sm:gap-1">
                   {quarters.map((q) => (
                     <div
                       key={q.quarter}
@@ -86,7 +86,7 @@ export function OutcomeMix({
         <div aria-hidden="true" className="mt-1.5 flex gap-[2px] sm:gap-1">
           {quarters.map((q, i) => (
             <Fragment key={q.quarter}>
-              <span className="min-w-0 flex-1 overflow-visible whitespace-nowrap text-sm tabular-nums text-foreground/70">
+              <span className="min-w-0 flex-1 overflow-visible whitespace-nowrap text-sm tabular-nums text-muted-foreground">
                 {q.quarter.endsWith("-Q1") || (i === 0 && (firstQ1 < 0 || firstQ1 >= 3))
                   ? `’${q.quarter.slice(2, 4)}`
                   : ""}
@@ -95,11 +95,11 @@ export function OutcomeMix({
           ))}
         </div>
       </ChartTips>{" "}
-      <details className="mt-4 border-2 border-border">
+      <details className="mt-4 border border-border">
         <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
           Every quarter&apos;s figures
         </summary>
-        <div className="overflow-x-auto border-t-2 border-border">
+        <div className="overflow-x-auto border-t border-border">
           <table className="w-full min-w-[30rem] text-left text-sm tabular-nums">
             <caption className="sr-only">Decided PERM cases by quarter: certified, denied and withdrawn shares</caption>
             <thead className="bg-muted">
@@ -125,7 +125,7 @@ export function OutcomeMix({
           </table>
         </div>
       </details>{" "}
-      <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         Both strips share one scale. Each quarter is when DOL decided, not when the cases were filed, and the
         quarters at the ends are partial.
       </p>

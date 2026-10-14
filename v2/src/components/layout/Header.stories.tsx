@@ -34,7 +34,7 @@ function StaticHeader({
   userName?: string;
 }) {
   return (
-    <header className="sticky top-0 z-50 border-b-4 border-black bg-background">
+    <header className="sticky top-0 z-50 border-b-2 border-black bg-background">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-8">
         {/* Logo */}
         <Link
@@ -55,7 +55,7 @@ function StaticHeader({
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "border-b-2 px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
+                    "border-b px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
                     isActive
                       ? "border-primary text-foreground"
                       : "border-transparent text-muted-foreground"

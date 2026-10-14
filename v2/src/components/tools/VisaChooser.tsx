@@ -17,9 +17,9 @@ import {
 } from "@/lib/visaChooser";
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const OPTION_CLASS =
-  "flex min-h-[44px] cursor-pointer items-center gap-3 border-2 border-border bg-background px-3 py-2 text-base has-[:checked]:bg-tint-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary";
+  "flex min-h-[44px] cursor-pointer items-center gap-3 border border-border bg-background px-3 py-2 text-base has-[:checked]:bg-tint-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary";
 
 const SPONSORS: Array<{ value: Sponsor; label: string }> = [
   { value: "employer", label: "A US employer offering me a job" },
@@ -66,7 +66,7 @@ function Radios<T extends string>({
 }) {
   return (
     <fieldset className="min-w-0">
-      <legend className="font-heading text-lg font-black">{legend}</legend>{" "}
+      <legend className="font-heading text-lg font-bold">{legend}</legend>{" "}
       <div className="mt-3 grid grid-cols-1 gap-2 [&>*]:min-w-0">
         {options.map((o) => (
           <Fragment key={o.value}>
@@ -106,8 +106,8 @@ export function VisaChooser({ className }: { className?: string }) {
   const result = useMemo(() => chooseCategories(a), [a]);
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <div className="flex items-start gap-3 border-b-2 border-border bg-muted/40 p-4 sm:px-8">
+    <div className={cn("border border-border bg-card", className)}>
+      <div className="flex items-start gap-3 border-b border-border bg-muted/40 p-4 sm:px-8">
         <InfoIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />{" "}
         <p className="text-base leading-relaxed">
           This matches your answers against the regulation&apos;s definitions. It isn&apos;t legal advice: whether a case
@@ -122,7 +122,7 @@ export function VisaChooser({ className }: { className?: string }) {
         ) : null}{" "}
         <Radios legend="What do you hold?" name={`${uid}-qual`} options={QUALS} value={a.qualification} onChange={(v) => set("qualification", v)} />{" "}
         <fieldset className="min-w-0">
-          <legend className="font-heading text-lg font-black">Tick any that are true</legend>{" "}
+          <legend className="font-heading text-lg font-bold">Tick any that are true</legend>{" "}
           <div className="mt-3 grid grid-cols-1 gap-2 [&>*]:min-w-0">
             {STATEMENTS.map((s) => (
               <Fragment key={s.key}>
@@ -141,7 +141,7 @@ export function VisaChooser({ className }: { className?: string }) {
           </div>
         </fieldset>{" "}
         <div className="max-w-sm">
-          <label htmlFor={`${uid}-country`} className="font-heading text-lg font-black">
+          <label htmlFor={`${uid}-country`} className="font-heading text-lg font-bold">
             Country of chargeability
           </label>
           <select id={`${uid}-country`} value={country} onChange={(e) => setCountry(e.target.value as CountryKey)} className={SELECT_CLASS}>
@@ -151,14 +151,14 @@ export function VisaChooser({ className }: { className?: string }) {
               </option>
             ))}
           </select>{" "}
-          <p className="mt-1 text-sm text-foreground/70">Usually your country of birth. It only changes the links below.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Usually your country of birth. It only changes the links below.</p>
         </div>
       </div>
 
-      <section className="border-t-2 border-border p-6 sm:p-8" aria-live="polite" aria-labelledby={`${uid}-result`}>
+      <section className="border-t border-border p-6 sm:p-8" aria-live="polite" aria-labelledby={`${uid}-result`}>
         <div className="flex items-center gap-3">
           <CompassIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />{" "}
-          <h2 id={`${uid}-result`} className="font-heading text-2xl font-black leading-tight">
+          <h2 id={`${uid}-result`} className="font-heading text-2xl font-bold leading-tight">
             {result.fits.length === 0
               ? "No employment category matches these answers"
               : result.fits.length === 1
@@ -171,19 +171,19 @@ export function VisaChooser({ className }: { className?: string }) {
             {result.fits.map((f) => (
               <Fragment key={f.code}>
                 {" "}
-                <li className="border-2 border-border bg-background p-5">
-                  <h3 className="font-heading text-xl font-black" translate="no">
+                <li className="border border-border bg-background p-5">
+                  <h3 className="font-heading text-xl font-bold" translate="no">
                     {f.name}
                   </h3>{" "}
-                  <p className="mt-2 text-base leading-relaxed text-foreground/85">{f.why}</p>{" "}
+                  <p className="mt-2 text-base leading-relaxed text-soft">{f.why}</p>{" "}
                   <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-base [&>*]:min-w-0">
-                    <dt className="text-foreground/70">PERM needed</dt>{" "}
+                    <dt className="text-muted-foreground">PERM needed</dt>{" "}
                     <dd className="font-bold">{f.needsPerm ? "Yes" : "No"}</dd>{" "}
-                    <dt className="text-foreground/70">Job offer needed</dt>{" "}
+                    <dt className="text-muted-foreground">Job offer needed</dt>{" "}
                     <dd className="font-bold">{f.needsJobOffer ? "Yes" : "No"}</dd>{" "}
-                    <dt className="text-foreground/70">Who files</dt>{" "}
+                    <dt className="text-muted-foreground">Who files</dt>{" "}
                     <dd className="font-bold">{f.whoFiles}</dd>{" "}
-                    <dt className="text-foreground/70">Rule</dt>{" "}
+                    <dt className="text-muted-foreground">Rule</dt>{" "}
                     <dd>{f.rule}</dd>
                   </dl>{" "}
                   <div className="mt-3 flex flex-wrap gap-x-5">
@@ -210,7 +210,7 @@ export function VisaChooser({ className }: { className?: string }) {
           </ul>
         ) : null}{" "}
         {result.notes.length ? (
-          <ul className="mt-5 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/85">
+          <ul className="mt-5 list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">
             {result.notes.map((n) => (
               <Fragment key={n}>
                 {" "}

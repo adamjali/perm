@@ -191,8 +191,8 @@ export default async function VisaBulletinPage() {
   if (series.length === 0 || !board) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">The next visa bulletin</h1>{" "}
-        <p className="mt-4 text-base text-foreground/80">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">The next visa bulletin</h1>{" "}
+        <p className="mt-4 text-base text-soft">
           The bulletin archive is not available right now. The State Department publishes the current bulletin at{" "}
           <a href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html" className="font-semibold underline" rel="noopener" target="_blank">travel.state.gov</a>.
         </p>
@@ -239,19 +239,19 @@ export default async function VisaBulletinPage() {
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-8 sm:px-6 sm:pb-24">
       <JsonLdScript schema={faqSchema} />
 
-      <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+      <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
         The {monthLabel(next)} visa bulletin, from the last {series.length}
       </h1>{" "}
-      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/85">
+      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-soft">
         What every earlier {monthName(targetMonth)} bulletin did for each employment category and country, from{" "}
         {series.length} bulletins ({monthLabel(series[0]!.bulletinMonth)} to {monthLabel(last.bulletinMonth)}), beside
         USCIS&apos;s count of applications ahead of each cutoff. Measured, not predicted.
       </p>
 
       {isFiscalStart ? (
-        <div className="mt-8 border-2 border-border bg-primary/10 p-5 shadow-hard">
+        <div className="mt-8 border border-border bg-primary/10 p-5">
           <p className="font-heading text-base font-bold">October is the fiscal-year start</p>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/85">
+          <p className="mt-2 text-base leading-relaxed text-soft">
             October 1 opens a new year of employment numbers, plus family numbers unused last year, so October
             often reopens categories shut in August and September. The carry-over isn&apos;t published on the day,
             so this page prints no figure for it.
@@ -259,8 +259,8 @@ export default async function VisaBulletinPage() {
         </div>
       ) : null}
 
-      <h2 className="mt-12 font-heading text-2xl font-black tracking-tight">When it comes out</h2>{" "}
-      <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
+      <h2 className="mt-12 font-heading text-2xl font-bold tracking-tight">When it comes out</h2>{" "}
+      <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
         The State Department announces no date. The only evidence of the day is when the Internet Archive first
         captured each bulletin: it was out by then. Expect {monthLabel(next)} in{" "}
         {monthName(targetMonth === 1 ? 12 : targetMonth - 1)}; the day is the Department&apos;s.
@@ -276,8 +276,8 @@ export default async function VisaBulletinPage() {
 
       {spill ? (
         <>
-          <h2 className="mt-12 font-heading text-2xl font-black tracking-tight">The spillover, as the Department set it</h2>{" "}
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
+          <h2 className="mt-12 font-heading text-2xl font-bold tracking-tight">The spillover, as the Department set it</h2>{" "}
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
             For fiscal year {spill.fiscalYear}, the State Department set the employment-based limit at{" "}
             {formatInt(spill.employmentTotal)} worldwide: the statutory {formatInt(spill.employmentBase)} plus{" "}
             {formatInt(spill.spillover)} family-sponsored numbers that went unused in fiscal year {spill.fiscalYear - 1}.
@@ -287,7 +287,7 @@ export default async function VisaBulletinPage() {
           <div className="mt-4 max-w-3xl overflow-x-auto">
             <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b-2 border-border">
+                <tr className="border-b border-border">
                   <th scope="col" className="py-2 pr-3 font-bold">Category, fiscal year {spill.fiscalYear}{" "}</th>
                   <th scope="col" className="py-2 pr-3 text-right font-bold">Worldwide{" "}</th>
                   <th scope="col" className="py-2 text-right font-bold">Any one country{" "}</th>
@@ -295,7 +295,7 @@ export default async function VisaBulletinPage() {
               </thead>
               <tbody>
                 {spill.rows.map((r) => (
-                  <tr key={r.label} className={r.label.startsWith("All") ? "border-t-2 border-border font-bold" : "border-b border-border/40"}>
+                  <tr key={r.label} className={r.label.startsWith("All") ? "border-t border-border font-bold" : "border-b border-border/40"}>
                     <td className="py-2 pr-3">{r.label}{" "}</td>
                     <td className="py-2 pr-3 text-right tabular-nums">{formatInt(r.worldwide)}{" "}</td>
                     <td className="py-2 text-right tabular-nums">{r.foreignState === null ? "" : formatInt(r.foreignState)}{" "}</td>
@@ -306,7 +306,7 @@ export default async function VisaBulletinPage() {
           </div>{" "}
           {usage ? (
             <MoreText gist={"Last year's use, counted from Table V of the Visa Office report."} className="mt-4">
-              <p className="max-w-3xl text-base leading-relaxed text-foreground/85">
+              <p className="max-w-3xl text-base leading-relaxed text-soft">
                 The year before is counted, not estimated. In fiscal year {usage.fiscalYear}, {formatInt(usage.familyUsed)} family-sponsored
                 and {formatInt(usage.employmentUsed)} employment-based numbers were used, by Table V of the Department&apos;s Report of the
                 Visa Office {usage.fiscalYear}; the {formatInt(usage.familyUnused)} family numbers left unused against the{" "}
@@ -329,36 +329,36 @@ export default async function VisaBulletinPage() {
 
       {latestMoves.some((s) => s.rows.some((r) => r.move)) ? (
         <>
-          <h2 className="mt-12 font-heading text-2xl font-black tracking-tight">
+          <h2 className="mt-12 font-heading text-2xl font-bold tracking-tight">
             What the {monthLabel(last.bulletinMonth)} bulletin did
           </h2>{" "}
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
             Final action dates, each measured against {monthLabel(monthBefore(last.bulletinMonth))}.
           </p>{" "}
           <ul aria-hidden="true" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border-2 border-border bg-primary/20" /> Moved forward
+              <span className="size-3 border border-border bg-primary/20" /> Moved forward
             </li>{" "}
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border-2 border-border bg-data-bad/15" /> Moved back or shut
+              <span className="size-3 border border-border bg-data-bad/15" /> Moved back or shut
             </li>{" "}
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border-2 border-border bg-card" /> Unchanged or current
+              <span className="size-3 border border-border bg-card" /> Unchanged or current
             </li>
           </ul>
           <div className="mt-3 overflow-x-auto overscroll-x-none">
-            <table className="w-full min-w-[640px] border-2 border-border text-sm">
+            <table className="w-full min-w-[640px] border border-border text-sm">
               <thead className="bg-foreground text-background">
                 <tr>
-                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Category{" "}</th>
+                  <th className="p-3 text-left text-sm">Category{" "}</th>
                   {BOARD_COUNTRIES.map((c) => (
-                    <th key={c} className="p-3 text-left font-mono text-sm uppercase tracking-wider">{COUNTRY_LABEL[c]}{" "}</th>
+                    <th key={c} className="p-3 text-left text-sm">{COUNTRY_LABEL[c]}{" "}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {latestMoves.map((s) => (
-                  <tr key={s.key} className="border-t-2 border-border">
+                  <tr key={s.key} className="border-t border-border">
                     <td className="p-3 font-semibold">{s.label}{" "}</td>
                     {s.rows.map((r) => (
                       <td key={r.country} className={`p-3 ${moveTone(r.move)}`}>
@@ -374,20 +374,20 @@ export default async function VisaBulletinPage() {
         </>
       ) : null}
 
-      <h2 className="mt-12 font-heading text-2xl font-black tracking-tight">
+      <h2 className="mt-12 font-heading text-2xl font-bold tracking-tight">
         What earlier {monthName(targetMonth)} bulletins did, by category
       </h2>{" "}
       <MoreText gist={"One row per country: the newest cutoff, what this month did in past years, and the line ahead of it."} className="mt-3">
-        <p className="max-w-3xl text-base leading-relaxed text-foreground/85">
+        <p className="max-w-3xl text-base leading-relaxed text-soft">
           Each row is one country. The cutoff is the newest final action date we hold. The moves are every {monthName(targetMonth)} bulletin in the archive, measured against its own September; a median is printed only when there were date-to-date moves to take it over. &ldquo;Ahead of the cutoff&rdquo; is {inventoryAsOf ?? "USCIS's inventory"}: pending adjustment applications with an earlier priority date than the cutoff, a floor because USCIS withholds small cells.
         </p>
       </MoreText>
 
       {/* One fold per category: ten tables open ran the page past 10,000px,
           and a reader comes for one category. The rows stay in the HTML. */}
-      <div className="mt-6 border-2 border-border bg-card shadow-hard">
+      <div className="mt-6 border border-border bg-card">
       {sections.map((s) => (
-        <details key={s.key} className="group border-b-2 border-border last:border-b-0">
+        <details key={s.key} className="group border-b border-border last:border-b-0">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
             <h3 className="font-heading text-lg font-bold tracking-tight">{s.label}</h3>{" "}
             <span className="flex items-center gap-3">
@@ -395,22 +395,22 @@ export default async function VisaBulletinPage() {
               <CaretDownIcon className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
             </span>
           </summary>{" "}
-          <div className="overflow-x-auto overscroll-x-none border-t-2 border-border/40 p-3 sm:p-4">
-            <table className="w-full min-w-[720px] border-2 border-border text-sm">
+          <div className="overflow-x-auto overscroll-x-none border-t border-border/40 p-3 sm:p-4">
+            <table className="w-full min-w-[720px] border border-border text-sm">
               <thead className="bg-foreground text-background">
                 <tr>
-                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Country{" "}</th>
-                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Cutoff, {monthLabel(last.bulletinMonth)}{" "}</th>
-                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Earlier {monthName(targetMonth)}s{" "}</th>
-                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Each one{" "}</th>
-                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Ahead of the cutoff{" "}</th>
+                  <th className="p-3 text-left text-sm">Country{" "}</th>
+                  <th className="p-3 text-left text-sm">Cutoff, {monthLabel(last.bulletinMonth)}{" "}</th>
+                  <th className="p-3 text-left text-sm">Earlier {monthName(targetMonth)}s{" "}</th>
+                  <th className="p-3 text-left text-sm">Each one{" "}</th>
+                  <th className="p-3 text-left text-sm">Ahead of the cutoff{" "}</th>
                 </tr>
               </thead>
               <tbody>
                 {s.rows.map((r) => {
                   const sum = summariseMoves(r.moves);
                   return (
-                    <tr key={r.country} className="border-t-2 border-border align-top">
+                    <tr key={r.country} className="border-t border-border align-top">
                       <td className="p-3 font-semibold">{COUNTRY_LABEL[r.country]}{" "}</td>
                       <td className="p-3 font-mono">{cutoffLabel(r.cell?.latest ?? null)}{" "}</td>
                       <td className="p-3">
@@ -471,7 +471,7 @@ export default async function VisaBulletinPage() {
       </div>
 
       <div className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
         <FaqList items={FAQS} />
       </div>
 

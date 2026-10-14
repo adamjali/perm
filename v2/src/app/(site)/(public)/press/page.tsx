@@ -77,23 +77,23 @@ export default async function PressPage() {
     <div className="mx-auto w-full max-w-[1200px] px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
       <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] [&>*]:min-w-0">
         <div>
-          <h1 className="font-heading text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="font-heading text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
             Data for journalists
           </h1>{" "}
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-foreground/80 sm:text-xl">
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-soft sm:text-xl">
             The Department of Labor&apos;s own case records, read every day. Quote any figure with credit and a link.
           </p>{" "}
           <div className="mt-8 flex flex-wrap gap-3">
             <a
               href={`mailto:${PRESS_EMAIL}`}
-              className="inline-flex min-h-12 items-center gap-2 border-2 border-border bg-primary px-5 font-heading text-base font-black text-primary-foreground shadow-hard transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="inline-flex min-h-12 items-center gap-2 border border-border bg-primary px-5 font-heading text-base font-bold text-primary-foreground transition-transform motion-reduce:transition-none"
             >
               <EnvelopeSimpleIcon size={20} weight="bold" aria-hidden="true" />
               {PRESS_EMAIL}
             </a>{" "}
             <Link
               href="/open-data"
-              className="inline-flex min-h-12 items-center gap-2 border-2 border-border bg-background px-5 font-heading text-base font-black shadow-hard transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="inline-flex min-h-12 items-center gap-2 border border-border bg-background px-5 font-heading text-base font-bold transition-transform motion-reduce:transition-none"
             >
               <FileCsvIcon size={20} weight="bold" aria-hidden="true" />
               Download the data
@@ -102,14 +102,14 @@ export default async function PressPage() {
         </div>{" "}
 
         {doc && rows.length > 0 ? (
-          <figure className="border-3 border-border bg-card p-5 shadow-hard sm:p-6">
-            <p className="font-mono text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
+          <figure className="border border-border bg-card p-5 sm:p-6">
+            <p className="text-sm font-bold text-muted-foreground">
               Today&apos;s record, {longDate(doc.asOf)}
             </p>{" "}
-            <p className="mt-2 font-heading text-3xl font-black tabular-nums sm:text-4xl">
+            <p className="mt-2 font-heading text-3xl font-bold tabular-nums sm:text-4xl">
               {formatInt(onHold)} PERM cases on hold
             </p>{" "}
-            <p className="mt-1 text-base text-foreground/75">
+            <p className="mt-1 text-base text-soft">
               {formatShare(doc.pendingTotal ? onHold / doc.pendingTotal : 0)} of the {formatInt(doc.pendingTotal)} DOL has pending. The biggest:
             </p>{" "}
             <BarRows rows={rows} label="PERM cases on hold, by employer" className="mt-5" />
@@ -123,7 +123,7 @@ export default async function PressPage() {
       </div>{" "}
 
       <section aria-labelledby="press-topics" className="mt-20">
-        <h2 id="press-topics" className="font-heading text-2xl font-black sm:text-3xl">
+        <h2 id="press-topics" className="font-heading text-2xl font-bold sm:text-3xl">
           What you can report on
         </h2>{" "}
         <ul className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
@@ -131,7 +131,7 @@ export default async function PressPage() {
             <li key={t.slug}>
               <Link
                 href={t.href}
-                className="group block h-full border-2 border-border bg-card shadow-hard-sm transition-transform hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className="group block h-full border border-border bg-card transition-transform motion-reduce:transition-none"
               >
                 <Image
                   src={pageCardUrl(t.slug)}
@@ -139,13 +139,13 @@ export default async function PressPage() {
                   width={1200}
                   height={630}
                   sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                  className="block h-auto w-full border-b-2 border-border"
+                  className="block h-auto w-full border-b border-border"
                 />{" "}
                 <span className="block p-4">
-                  <span className="block font-heading text-lg font-black group-hover:underline group-hover:decoration-primary group-hover:decoration-2 group-hover:underline-offset-4">
+                  <span className="block font-heading text-lg font-bold group-hover:underline group-hover:decoration-primary group-hover:decoration-2 group-hover:underline-offset-4">
                     {t.name}
                   </span>{" "}
-                  <span className="mt-1 block text-base text-foreground/75">{t.line}</span>
+                  <span className="mt-1 block text-base text-soft">{t.line}</span>
                 </span>
               </Link>{" "}
             </li>
@@ -155,22 +155,22 @@ export default async function PressPage() {
 
       <section aria-labelledby="press-credit" className="mt-20 grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] [&>*]:min-w-0">
         <div>
-          <h2 id="press-credit" className="font-heading text-2xl font-black sm:text-3xl">
+          <h2 id="press-credit" className="font-heading text-2xl font-bold sm:text-3xl">
             Credit it like this
           </h2>{" "}
-          <p className="mt-3 max-w-md text-lg leading-relaxed text-foreground/80">
+          <p className="mt-3 max-w-md text-lg leading-relaxed text-soft">
             Name PERM Tracker and link the page the figure came from. Every data page has a &ldquo;Cite this page&rdquo;
             line under its sources.
           </p>{" "}
           <div className="mt-5 flex flex-wrap items-start gap-3">
-            <code className="block min-w-0 flex-1 whitespace-pre-wrap break-words border-2 border-border bg-muted px-3 py-2 font-mono text-sm">
+            <code className="block min-w-0 flex-1 whitespace-pre-wrap break-words border border-border bg-muted px-3 py-2 font-mono text-sm">
               {credit}
             </code>{" "}
             <CopyButton text={credit} />
           </div>
         </div>{" "}
         {/* A specimen of the credit in running text: what it looks like in a story. */}
-        <div aria-hidden="true" className="border-3 border-border bg-background p-6 shadow-hard sm:p-8">
+        <div aria-hidden="true" className="border border-border bg-background p-6 sm:p-8">
           <div className="h-3 w-24 bg-foreground/80" />
           <div className="mt-4 h-5 w-11/12 bg-foreground" />
           <div className="mt-2 h-5 w-3/4 bg-foreground" />
@@ -179,7 +179,7 @@ export default async function PressPage() {
             <div className="h-2.5 w-full bg-foreground/15" />
             <div className="h-2.5 w-5/6 bg-foreground/15" />
           </div>
-          <p className="mt-5 font-serif text-lg leading-relaxed text-foreground/90">
+          <p className="mt-5 font-serif text-lg leading-relaxed text-soft">
             {/* Today's figure, so the specimen shows a real cited line. */}
             {doc && onHold > 0 ? (
               <>
@@ -199,18 +199,18 @@ export default async function PressPage() {
       </section>{" "}
 
       <section aria-labelledby="press-sources" className="mt-20">
-        <h2 id="press-sources" className="font-heading text-2xl font-black sm:text-3xl">
+        <h2 id="press-sources" className="font-heading text-2xl font-bold sm:text-3xl">
           Federal records only
         </h2>{" "}
         <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
           {SOURCES.map((s) => (
-            <li key={s.name} className="flex items-start gap-4 border-2 border-border bg-card p-5 shadow-hard-sm">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-border bg-primary text-primary-foreground">
+            <li key={s.name} className="flex items-start gap-4 border border-border bg-card p-5">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-border bg-primary text-primary-foreground">
                 <s.icon size={26} weight="bold" aria-hidden="true" />
               </span>{" "}
               <span>
-                <span className="block font-heading text-lg font-black">{s.name}</span>{" "}
-                <span className="mt-1 block text-base text-foreground/75">{s.what}</span>
+                <span className="block font-heading text-lg font-bold">{s.name}</span>{" "}
+                <span className="mt-1 block text-base text-soft">{s.what}</span>
               </span>{" "}
             </li>
           ))}

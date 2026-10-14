@@ -158,17 +158,17 @@ export function RoadSection(props: RoadSectionProps) {
       aria-labelledby="road-heading"
       // No fill: the dotted ground and the particles show
       // through, alternating with the white bands either side.
-      className="border-b-3 border-border"
+      className="border-b border-border"
     >
       <div className="mx-auto max-w-[1400px] px-4 py-14 sm:px-8 sm:py-20">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
           <h2
             id="road-heading"
-            className="font-heading text-3xl font-black tracking-tight sm:text-4xl"
+            className="font-heading text-3xl font-bold tracking-tight sm:text-4xl"
           >
             The road to a green card
           </h2>{" "}
-          <p className="max-w-md text-base text-foreground/75">
+          <p className="max-w-md text-base text-soft">
             Six stops, three agencies. Each one has a calculator.
           </p>
         </div>{" "}

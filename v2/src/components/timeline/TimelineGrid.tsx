@@ -143,7 +143,7 @@ export function TimelineGrid({
         className={cn(
           "flex items-center justify-center",
           "min-h-[200px] p-8",
-          "bg-muted/30 border-2 border-dashed border-foreground/20 rounded-none"
+          "bg-muted/30 border border-dashed border-foreground/20 rounded-none"
         )}
       >
         <div className="text-center">
@@ -161,8 +161,8 @@ export function TimelineGrid({
   return (
     <div
       className={cn(
-        "border-2 border-foreground",
-        "bg-card shadow-hard",
+        "border border-foreground",
+        "bg-card",
         // The label column's width, for anything that must sit beside it
         // (the sticky "no dates" note, the scroll-to-today offset).
         "[--tl-label:120px] sm:[--tl-label:180px] md:[--tl-label:250px]"
@@ -184,12 +184,12 @@ export function TimelineGrid({
               className={cn(
                 "sticky left-0 z-40",
                 "flex items-center px-2 sm:px-3",
-                "bg-card border-r-[3px] border-b-2 border-foreground",
+                "bg-card border-r-[3px] border-b border-foreground",
                 "h-11 min-h-[44px]",
                 SIDEBAR_WIDTH_CLASSES
               )}
             >
-              <span className="text-sm font-bold text-foreground uppercase tracking-wide">
+              <span className="text-sm font-bold text-foreground">
                 Case
               </span>
             </div>
@@ -265,7 +265,7 @@ export function TodayIndicator({ startDate, endDate, today, labelWidth }: TodayI
     left: `calc(${sidebarWidth}px + (100% - ${sidebarWidth}px) * ${positionPercent / 100})`,
   });
 
-  const labelBaseClasses = "font-heading text-sm font-bold text-destructive-foreground bg-destructive px-1.5 py-0.5 whitespace-nowrap border-2 border-border shadow-hard-sm";
+  const labelBaseClasses = "font-heading text-sm font-bold text-destructive-foreground bg-destructive px-1.5 py-0.5 whitespace-nowrap border border-border";
 
   return (
     <>

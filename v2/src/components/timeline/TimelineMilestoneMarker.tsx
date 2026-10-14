@@ -149,8 +149,8 @@ export function TimelineMilestoneMarker({
       <motion.div
         className={cn(
           all.length > 1 ? "flex size-[22px] items-center justify-center" : "size-4",
-          "border-2 border-foreground",
-          "shadow-hard-sm",
+          "border border-foreground",
+          "",
           // Dashed border for calculated milestones
           all.length === 1 && milestone.isCalculated && "border-dashed",
           all.length > 1 && !oneStage && "bg-background text-foreground"
@@ -160,9 +160,8 @@ export function TimelineMilestoneMarker({
             ? { backgroundColor: milestone.color, color: STAGE_ON_FILL[milestone.stage] }
             : undefined
         }
-        initial={{ scale: 1 }}
+        initial={false}
         animate={{ scale: isHovered ? 1.3 : 1 }}
-        whileTap={{ scale: 1.1 }}
         transition={springConfig}
       >
         {all.length > 1 && (
@@ -173,15 +172,15 @@ export function TimelineMilestoneMarker({
       </motion.div>
 
       {/* Tooltip - animated fade-in with spring */}
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {isHovered && (
           <motion.div
             className={cn(
               "absolute bottom-full left-1/2 mb-3",
               "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
-              "whitespace-nowrap shadow-hard-sm",
+              "whitespace-nowrap",
               "pointer-events-none z-50",
-              "border-2 border-foreground"
+              "border border-foreground"
             )}
             initial={{ opacity: 0, y: 4, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
@@ -199,8 +198,7 @@ export function TimelineMilestoneMarker({
 
             {/* Arrow pointer */}
             <div
-              className="absolute top-full left-1/2 -translate-x-1/2
-              border-2 border-transparent border-t-foreground"
+              className="absolute top-full left-1/2 -translate-x-1/2 border border-transparent border-t-foreground"
             />
           </motion.div>
         )}

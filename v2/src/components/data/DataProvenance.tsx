@@ -32,7 +32,7 @@ export async function DataProvenance({ datasets, className }: { datasets: string
   return (
     // A source can be a bare web address with no spaces; on a phone it must wrap
     // anywhere or it pushes the whole page sideways (a State URL did, Oct 5 2026).
-    <div className={cn(className ?? "mt-6 border-t-2 border-border pt-3", "[overflow-wrap:anywhere]")}>
+    <div className={cn(className ?? "mt-6 border-t border-border pt-3", "[overflow-wrap:anywhere]")}>
       {rows.map((r) => (
         // Keyed Fragment with a leading space: array items render with nothing
         // between them, so two lines would otherwise read as one run of text.
@@ -40,7 +40,7 @@ export async function DataProvenance({ datasets, className }: { datasets: string
           {" "}
           {r.stale ? <StaleLine r={r} /> : (
             <p className="text-sm text-muted-foreground">
-              <span className="font-bold text-foreground/80">{label(r.dataset)}:</span> {r.source}
+              <span className="font-bold text-soft">{label(r.dataset)}:</span> {r.source}
               {r.asOf ? <> · data through {fmt(r.asOf)}</> : null} · {r.cadence.toLowerCase()}
             </p>
           )}
@@ -50,7 +50,7 @@ export async function DataProvenance({ datasets, className }: { datasets: string
         <FinePrint summary={covered.length === 1 ? "What this data includes" : "What each source includes"} className="mt-1">
           {covered.map((c) => (
             <p key={c.dataset}>
-              <span className="font-bold text-foreground/80">{label(c.dataset)}:</span> {c.text}
+              <span className="font-bold text-soft">{label(c.dataset)}:</span> {c.text}
             </p>
           ))}
         </FinePrint>
@@ -76,7 +76,7 @@ function latest(rows: DatasetFreshness[]): string | null {
  */
 function StaleLine({ r }: { r: DatasetFreshness }) {
   return (
-    <p className="mt-2 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-3 py-2 text-sm text-foreground/80 first:mt-0">
+    <p className="mt-2 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-3 py-2 text-sm text-soft first:mt-0">
       <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
       <span>
         <b className="font-bold text-data-warn-ink">

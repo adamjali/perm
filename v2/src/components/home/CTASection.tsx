@@ -40,7 +40,7 @@ export function CTASection() {
             {/* /70, not /60. Black at 60% over the lime panel measures 4.37:1
                 against a 4.5 floor; 70% gives 5.80:1. Computed against the
                 real token (#2ecc40), not eyeballed. */}
-            <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
+            <h2 className="font-heading text-2xl font-bold text-black sm:text-3xl lg:text-4xl">
               Check a case, or track a caseload
             </h2>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-black/70">
@@ -58,7 +58,7 @@ export function CTASection() {
               <MagneticButton>
                 <Button
                   size="lg"
-                  className="h-12 border-3 border-black bg-black px-6 font-heading text-base font-bold text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
+                  className="h-12 border border-black bg-black px-6 font-heading text-base font-bold text-white transition-colors duration-150 hover:bg-white hover:text-black dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
                   style={{ boxShadow: "4px 4px 0px #000" }}
                   onClick={() => navigateTo("/perm-case-status")}
                   disabled={isNavigating}
@@ -74,7 +74,7 @@ export function CTASection() {
               <Button
                 size="lg"
                 variant="outline"
-                className="h-12 border-3 border-black bg-transparent px-6 font-heading text-base font-bold text-black transition-all duration-150 hover:bg-black hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:text-black dark:hover:bg-black dark:hover:text-white"
+                className="h-12 border border-black bg-transparent px-6 font-heading text-base font-bold text-black transition-colors duration-150 hover:bg-black hover:text-white dark:border-black dark:text-black dark:hover:bg-black dark:hover:text-white"
                 onClick={() => navigateTo("/signup")}
                 disabled={isNavigating}
               >

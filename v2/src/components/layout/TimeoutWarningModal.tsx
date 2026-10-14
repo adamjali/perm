@@ -81,21 +81,19 @@ export default function TimeoutWarningModal({
     >
       {/* Backdrop with blur */}
       <div
-        className="absolute inset-0 bg-black/60 animate-in fade-in duration-150"
+        className="absolute inset-0 bg-black/60 duration-150"
         aria-hidden="true"
         onClick={onExtend}
       />
 
       {/* Modal */}
       <div
-        className="relative z-10 bg-background border-2 border-border shadow-hard-lg
-                   w-full max-w-md mx-4 p-8
-                   animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-300"
+        className="relative z-10 bg-background border border-border w-full max-w-md mx-4 p-8 duration-300"
       >
         {/* Header with icon */}
         <div className="flex flex-col items-center gap-4 mb-6">
           <div
-            className={`p-3 border-2 border-border ${
+            className={`p-3 border border-border ${
               isUrgent ? "bg-destructive/10" : "bg-data-warn/15"
             }`}
           >
@@ -122,7 +120,7 @@ export default function TimeoutWarningModal({
 
         {/* Countdown */}
         <div
-          className={`text-center py-4 px-6 mb-6 border-2 border-border ${
+          className={`text-center py-4 px-6 mb-6 border border-border ${
             isUrgent
               ? "bg-destructive/10"
               : "bg-muted"
@@ -163,7 +161,7 @@ export default function TimeoutWarningModal({
 
         {/* Keyboard hint */}
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Press <kbd className="mono border-2 border-border bg-muted px-1.5 py-0.5">Esc</kbd> to stay logged in
+          Press <kbd className="mono border border-border bg-muted px-1.5 py-0.5">Esc</kbd> to stay logged in
         </p>
       </div>
     </div>

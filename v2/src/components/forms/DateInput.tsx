@@ -249,13 +249,13 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
           aria-invalid={error ? "true" : undefined}
           className={cn(
             // Base styles - neobrutalist
-            "h-11 w-full min-w-0 border-2 bg-background px-3 py-1 text-base shadow-hard-sm transition-all duration-150 outline-none",
+            "h-11 w-full min-w-0 border bg-background px-3 py-1 text-base transition-colors duration-150 outline-none",
             // Hover state
-            "hover:shadow-hard hover:-translate-y-[1px] active:translate-y-0 active:shadow-hard-sm",
+            "",
             // Focus state
-            "focus:shadow-hard focus:ring-2 focus:ring-ring focus-visible:border-ring focus:-translate-y-[1px]",
+            "focus:ring-2 focus:ring-ring focus-visible:border-ring",
             // Disabled state
-            "disabled:shadow-none disabled:hover:shadow-none disabled:hover:translate-y-0 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/50",
+            "disabled:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/50",
             // Error state (highest priority)
             (error || validationState === 'error') && "border-destructive ring-2 ring-destructive/20 dark:ring-destructive/40",
             // Warning state

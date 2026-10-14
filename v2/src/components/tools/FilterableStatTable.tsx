@@ -372,8 +372,8 @@ export function FilterableStatTable<T>({
       {/* Controls */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex min-h-[44px] flex-1 items-center gap-2 border-2 border-border bg-card px-3 shadow-hard-sm focus-within:ring-2 focus-within:ring-primary sm:max-w-sm">
-            <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <label className="flex min-h-[44px] flex-1 items-center gap-2 border border-border bg-card px-3 focus-within:ring-2 focus-within:ring-primary sm:max-w-sm">
+            <span className="text-sm font-bold text-muted-foreground">
               Search
             </span>{" "}
             <input
@@ -392,8 +392,8 @@ export function FilterableStatTable<T>({
 
           {facets.map((f) => (
             <Fragment key={f.key}>{" "}
-            <label className="flex min-h-[44px] items-center gap-2 border-2 border-border bg-card px-3 shadow-hard-sm focus-within:ring-2 focus-within:ring-primary">
-              <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            <label className="flex min-h-[44px] items-center gap-2 border border-border bg-card px-3 focus-within:ring-2 focus-within:ring-primary">
+              <span className="text-sm font-bold text-muted-foreground">
                 {f.label}
               </span>{" "}
               <select
@@ -423,7 +423,7 @@ export function FilterableStatTable<T>({
             <button
               type="button"
               onClick={downloadCsv}
-              className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
             >
               Download CSV
             </button>
@@ -433,7 +433,7 @@ export function FilterableStatTable<T>({
         {/* Status. Never let a filtered count read as the whole corpus, and
             never let a partial dataset read as a complete answer. */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p role="status" aria-live="polite" className="text-sm text-foreground/70">
+          <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
             {loading ? (
               <>Loading all {corpusSize.toLocaleString("en-US")} {noun}…</>
             ) : loadError ? (
@@ -487,13 +487,13 @@ export function FilterableStatTable<T>({
               <button
                 type="button"
                 onClick={ensureAll}
-                className="min-h-[44px] border-2 border-border bg-primary px-4 font-mono text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-primary"
+                className="min-h-[44px] border border-border bg-primary px-4 text-sm font-bold text-primary-foreground transition-transform focus-visible:ring-2 focus-visible:ring-primary"
               >
                 Load all {corpusSize.toLocaleString("en-US")}
               </button>
             ) : null}{" "}
-            <label className="flex min-h-[44px] items-center gap-2 text-sm text-foreground/60">
-              <span className="font-mono text-sm font-bold uppercase tracking-wider">
+            <label className="flex min-h-[44px] items-center gap-2 text-sm text-muted-foreground">
+              <span className="text-sm font-bold">
                 Rows
               </span>{" "}
               <select
@@ -502,7 +502,7 @@ export function FilterableStatTable<T>({
                   setPageSize(Number(e.target.value));
                   setPage(0);
                 }}
-                className="border-2 border-border bg-card px-2 py-1.5 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="border border-input bg-card px-2 py-1.5 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {PAGE_SIZES.map((n) => (
                   <option key={n} value={n}>{`${n === 0 ? "All" : n} `}</option>
@@ -515,7 +515,7 @@ export function FilterableStatTable<T>({
 
       {/* The table scrolls inside its own box; the page never scrolls sideways. */}
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[560px] border-2 border-border text-left text-sm shadow-hard-sm">
+        <table className="w-full min-w-[560px] border border-border text-left text-sm">
           <caption className="sr-only">{caption}</caption>
           <thead className="bg-foreground text-background">
             <tr>
@@ -536,7 +536,7 @@ export function FilterableStatTable<T>({
                         type="button"
                         onClick={() => toggleSort(c.key, c.numeric)}
                         className={
-                          "min-h-[44px] w-full px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
+                          "min-h-[44px] w-full px-3 py-2 text-sm font-bold transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
                           (c.numeric ? "text-right" : "text-left") +
                           (isSorted ? " text-primary-on-ink" : "")
                         }
@@ -580,7 +580,7 @@ export function FilterableStatTable<T>({
             ))}
             {pageRows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-3 py-8 text-center text-foreground/60">
+                <td colSpan={columns.length} className="px-3 py-8 text-center text-muted-foreground">
                   {remoteBusy
                     ? `Searching all ${noun}\u2026`
                     : remoteFailure
@@ -608,7 +608,7 @@ export function FilterableStatTable<T>({
           aria-label={`${noun} pages`}
           className="mt-4 flex flex-wrap items-center justify-between gap-3"
         >
-          <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+          <p className="text-sm font-bold text-muted-foreground">
             Page {safePage + 1} of {pageCount.toLocaleString("en-US")}
           </p>{" "}
           <div className="flex gap-2">
@@ -619,7 +619,7 @@ export function FilterableStatTable<T>({
                 setPage((p) => Math.max(0, p - 1));
               }}
               disabled={safePage === 0}
-              className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             >
               ← Prev
             </button>{" "}
@@ -630,7 +630,7 @@ export function FilterableStatTable<T>({
                 setPage((p) => Math.min(pageCount - 1, p + 1));
               }}
               disabled={safePage >= pageCount - 1}
-              className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             >
               Next →
             </button>
@@ -647,7 +647,7 @@ export function FilterableStatTable<T>({
           what={`The search across all ${noun}`}
           failure={remoteFailure}
           onRetry={() => setRemoteAttempt((n) => n + 1)}
-          className="mt-4 border-2 border-border bg-tint-primary p-4"
+          className="mt-4 border border-border bg-tint-primary p-4"
         />
       ) : null}
       {remoteExtra}

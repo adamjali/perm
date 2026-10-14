@@ -61,7 +61,7 @@ function Meter({ label, used, limit }: { label: string; used: number; limit: num
         </span>
       </div>
       <div
-        className="h-3 border-2 border-border bg-muted"
+        className="h-3 border border-border bg-muted"
         role="meter"
         aria-label={label}
         aria-valuemin={0}
@@ -210,7 +210,7 @@ export default function ApiKeysSection() {
         description={`For the PERM Tracker API and AI assistants. ${plan.label} plan: ${plan.perMinute} calls a minute, ${plan.perDay.toLocaleString("en-US")} a day.`}
       >
         {!mine.paywall && (
-          <p className="mb-4 border-2 border-border bg-muted px-3 py-2 text-sm">
+          <p className="mb-4 border border-border bg-muted px-3 py-2 text-sm">
             Paid features are free for now: every account gets the Plus plan&apos;s limits, exports, live DOL lookups and
             webhooks until billing opens. Your account is on {mine.accountPlan === "plus" ? "Plus" : "Free"}.
           </p>
@@ -226,13 +226,13 @@ export default function ApiKeysSection() {
         )}
 
         {newKey && (
-          <div className="mb-6 border-2 border-border bg-primary/15 p-4" role="status">
+          <div className="mb-6 border border-border bg-primary/15 p-4" role="status">
             <p className="mb-2 text-sm font-bold">
               Your new {newKey.sandbox ? "sandbox " : ""}key, {newKey.name}. Copy it now: it isn&apos;t shown again.
               {newKey.rotated ? " The old key keeps working for 24 hours, then stops." : ""}
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <code className="min-w-0 flex-1 break-all border-2 border-border bg-background px-3 py-2 font-mono text-sm">
+              <code className="min-w-0 flex-1 break-all border border-border bg-background px-3 py-2 font-mono text-sm">
                 {newKey.key}
               </code>{" "}
               <Button variant="outline" className="min-h-[44px]" onClick={() => copy(newKey.key, "Key")}>
@@ -246,7 +246,7 @@ export default function ApiKeysSection() {
         )}
 
         {mine.keys.length > 0 && (
-          <ul className="mb-6 divide-y-2 divide-border border-y-2 border-border">
+          <ul className="mb-6 divide-y divide-border border-y border-border">
             {mine.keys.map((k) => {
               const u = perKey.get(k.keyId);
               const state = keyState(k, now);
@@ -339,7 +339,7 @@ export default function ApiKeysSection() {
             <label className="block text-sm font-semibold">
               How long it lasts
               <select
-                className="mt-1 h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base md:text-sm"
+                className="mt-1 h-11 w-full min-w-0 border border-input bg-background px-3 text-base md:text-sm"
                 value={lifetime === null ? "" : String(lifetime)}
                 onChange={(e) => setLifetime(e.target.value === "" ? null : Number(e.target.value))}
               >
@@ -377,14 +377,14 @@ export default function ApiKeysSection() {
         <div className="space-y-4 text-sm">
           <div>
             <p className="mb-1 font-semibold">From a script</p>
-            <code className="block overflow-x-auto border-2 border-border bg-muted px-3 py-2 font-mono text-sm whitespace-pre">
+            <code className="block overflow-x-auto border border-border bg-muted px-3 py-2 font-mono text-sm whitespace-pre">
               {`curl -H "Authorization: Bearer YOUR_KEY" \\\n  https://permtracker.app/v1/queue`}
             </code>
           </div>
           <div>
             <p className="mb-1 font-semibold">In an AI assistant</p>
             <div className="flex flex-wrap items-center gap-2">
-              <code className="border-2 border-border bg-muted px-3 py-2 font-mono text-sm">{MCP_URL}</code>{" "}
+              <code className="border border-border bg-muted px-3 py-2 font-mono text-sm">{MCP_URL}</code>{" "}
               <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => copy(MCP_URL, "Address")}>
                 <CopyIcon aria-hidden="true" className="size-4" /> Copy
               </Button>

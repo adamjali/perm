@@ -42,7 +42,7 @@ export function SiteBreadcrumbs({ pageName }: { pageName?: string } = {}) {
     // as a tab at the right end (WatchLink).
     <div
       className={cn(
-        "flex items-stretch justify-between gap-4 border-b-2 border-border bg-background pl-4 sm:pl-6",
+        "flex items-stretch justify-between gap-4 border-b border-border bg-background pl-4 sm:pl-6",
         watch ? "pr-0" : "pr-4 sm:pr-6",
         // The data menu's edge handle sits at the left on a phone.
         isDataPath(pathname) && "max-lg:pl-16",
@@ -66,7 +66,7 @@ export function SiteBreadcrumbs({ pageName }: { pageName?: string } = {}) {
                 ) : (
                   <Link
                     href={crumb.href}
-                    className="inline-flex min-h-[44px] items-center text-foreground/70 underline-offset-4 hover:text-foreground hover:underline"
+                    className="inline-flex min-h-[44px] items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                   >
                     {crumb.name}
                   </Link>

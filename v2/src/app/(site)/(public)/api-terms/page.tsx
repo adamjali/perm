@@ -56,14 +56,14 @@ const SECTIONS: readonly LegalSection[] = [
  */
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <details className="legal-section group border-b-2 border-border">
+    <details className="legal-section group border-b border-border">
       <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
         <h2 id={id} className="m-0 scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold">
           {title}
         </h2>{" "}
         <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
       </summary>{" "}
-      <div className="space-y-3 pb-6 leading-relaxed text-foreground/80">{children}</div>
+      <div className="space-y-3 pb-6 leading-relaxed text-soft">{children}</div>
     </details>
   );
 }
@@ -73,8 +73,8 @@ export default function ApiTermsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
       <div>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">API terms</h1>{" "}
-        <p className="mb-8 mt-4 text-lg text-foreground/70">Effective Date: October 9, 2026</p>{" "}
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">API terms</h1>{" "}
+        <p className="mb-8 mt-4 text-lg text-muted-foreground">Effective Date: October 9, 2026</p>{" "}
 
         <SectionIndex sections={SECTIONS} />{" "}
 

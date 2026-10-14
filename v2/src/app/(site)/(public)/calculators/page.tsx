@@ -289,10 +289,10 @@ export default function CalculatorsPage() {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={itemList} />      <header className="pt-10 sm:pt-12">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           PERM calculators
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           {TOOLS.length} calculators about your case, {EXPLORERS.length}{" "}
           explorers about the field you filed into. Free, on the
           government&apos;s own data.
@@ -302,9 +302,9 @@ export default function CalculatorsPage() {
       {/* The hub's real job: route the reader's situation to the right
           tool, in the order the process happens. */}
       <section className="mt-10">
-        <h2 className="font-heading text-2xl font-black">Which one answers your question?</h2>
+        <h2 className="font-heading text-2xl font-bold">Which one answers your question?</h2>
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full border-2 border-border text-left text-sm shadow-hard-sm">
+          <table className="w-full border border-border text-left text-sm">
             <thead className="bg-foreground text-background">
               <tr>
                 <th scope="col" className="p-3 text-sm font-bold">Your situation{" "}</th>
@@ -333,7 +333,7 @@ export default function CalculatorsPage() {
               ].map((r) => (
                 <tr key={r.href} className="border-t border-border/40">
                   <td className="p-3">{r.s}{" "}</td>
-                  <td className="p-3 text-foreground/70">{r.q}{" "}</td>
+                  <td className="p-3 text-muted-foreground">{r.q}{" "}</td>
                   <td className="p-3">
                     <a href={r.href} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                       {r.tool}
@@ -355,14 +355,14 @@ export default function CalculatorsPage() {
                 key={t.href}
                 href={t.href}
                 className={
-                  "group flex h-full flex-col border-2 border-border p-6 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 " +
+                  "group flex h-full flex-col border border-border p-6 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 " +
                   (t.tone === "ink"
-                    ? "bg-foreground text-background shadow-hard hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
+                    ? "bg-foreground text-background"
                     : t.tone === "tint"
-                      ? "bg-tint-primary shadow-hard hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm"
+                      ? "bg-tint-primary"
                       : t.tone === "pop"
-                        ? "bg-card hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-y-0 active:shadow-hard-sm"
-                        : "bg-card shadow-hard hover:-translate-y-[1px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm")
+                        ? "bg-card"
+                        : "bg-card")
                 }
               >
                 <div className="flex items-center gap-3">
@@ -376,7 +376,7 @@ export default function CalculatorsPage() {
                     {t.kind}
                   </span>
                 </div>
-                <h3 className="mt-4 font-heading text-xl font-black leading-tight">
+                <h3 className="mt-4 font-heading text-xl font-bold leading-tight">
                   {t.name}
                 </h3>{" "}
                 {/* The tool's idea, drawn in the shared mini-diagram system. */}
@@ -393,7 +393,7 @@ export default function CalculatorsPage() {
                 <p
                   className={
                     "mt-3 flex-1 text-base leading-relaxed " +
-                    (t.tone === "ink" ? "text-background/70" : "text-foreground/70")
+                    (t.tone === "ink" ? "text-background/70" : "text-muted-foreground")
                   }
                 >
                   {t.blurb}
@@ -409,7 +409,7 @@ export default function CalculatorsPage() {
                 >
                   Open
                   <ArrowRightIcon
-                    className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+                    className="h-4 w-4 transition-transform duration-150 motion-reduce:transition-none"
                     aria-hidden="true"
                   />
                 </span>
@@ -431,14 +431,14 @@ export default function CalculatorsPage() {
           input about you, so they get a row of plain records rather than
           another card with a diagram of a mechanism they do not have. */}
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">
+        <h2 className="font-heading text-2xl font-bold">
           And the field you filed into
         </h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           These ask nothing about your case. They tell you whether a wage or a
           category is ordinary.
         </p>
-        <div className="mt-6 divide-y-2 divide-border border-2 border-border bg-card shadow-hard">
+        <div className="mt-6 divide-y divide-border border border-border bg-card">
           {EXPLORERS.map((t) => {
             const Icon = t.icon;
             return (
@@ -452,15 +452,15 @@ export default function CalculatorsPage() {
                   <span className="text-sm font-bold text-muted-foreground">
                     {t.kind}
                   </span>{" "}
-                  <h3 className="mt-1 font-heading text-xl font-black leading-tight">
+                  <h3 className="mt-1 font-heading text-xl font-bold leading-tight">
                     {t.name}
                   </h3>{" "}
-                  <p className="mt-2 text-base leading-relaxed text-foreground/70">
+                  <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                     {t.blurb}
                   </p>
                 </div>
                 <ArrowRightIcon
-                  className="mt-1 h-5 w-5 shrink-0 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+                  className="mt-1 h-5 w-5 shrink-0 transition-transform duration-150 motion-reduce:transition-none"
                   aria-hidden="true"
                 />
               </Link>
@@ -469,11 +469,11 @@ export default function CalculatorsPage() {
         </div>
       </section>
 
-      <section className="mt-12 border-2 border-border bg-muted p-6 sm:p-8">
-        <h2 className="font-heading text-xl font-black">
+      <section className="mt-12 border border-border bg-muted p-6 sm:p-8">
+        <h2 className="font-heading text-xl font-bold">
           Why some of these refuse to give you a number
         </h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           A queue estimate is a forecast; a deadline is arithmetic in the
           regulations, so those dates are exact.
         </p>{" "}
@@ -483,7 +483,7 @@ export default function CalculatorsPage() {
             it doesn’t, you get the count that’s real and what’s missing.
           </p>
         </FinePrint>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           Public estimators disagree with each other by months on the same
           filing date.{" "}
           <Link

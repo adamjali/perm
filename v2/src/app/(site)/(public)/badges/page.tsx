@@ -84,8 +84,8 @@ export default async function BadgesPage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header className="max-w-2xl">
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Badges</h1>{" "}
-        <p className="mt-4 text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Badges</h1>{" "}
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
           {rows.length} live federal figures you can paste anywhere. Each updates itself and names its source
           and date.
         </p>
@@ -99,7 +99,7 @@ export default async function BadgesPage() {
           (measured rgb(250,250,250)) - the bright-panel-in-a-dark-page problem
           the sign-up split already ran into. The header and footer are black in
           both themes for the same reason. */}
-      <section className="mt-8 border-2 border-border bg-black p-5 shadow-hard sm:p-8">
+      <section className="mt-8 border border-border bg-black p-5 sm:p-8">
         <ul className="flex flex-wrap items-center gap-x-3 gap-y-3">
           {wall.map((v) => (
             <li
@@ -129,9 +129,9 @@ export default async function BadgesPage() {
       <EmbedGallery origin={ORIGIN} />
 
       <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-black">What a badge will not do</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">What a badge will not do</h2>{" "}
         <MoreText gist={"Each badge prints only a federal figure, with its publisher and date drawn in."} className="mt-3">
-          <p className="text-base leading-relaxed text-foreground/80">
+          <p className="text-base leading-relaxed text-soft">
             It will not predict anything. Every figure is one a federal source printed or one this site counted from
             federal files, and each badge draws the publisher and the date into the image, because a number on a page
             that is not ours has to say where it came from. On a day nothing was published for a figure, that badge says
@@ -139,7 +139,7 @@ export default async function BadgesPage() {
             watching.
           </p>
         </MoreText>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           The estimator&apos;s own accuracy is kept on{" "}
           <Link href="/estimate-scorecard" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
             the scorecard
@@ -147,7 +147,7 @@ export default async function BadgesPage() {
           and stays off the badges on purpose: a number with a margin of error needs the margin next to it, and a badge
           has nowhere to put one.
         </p>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
+        <p className="mt-3 text-base leading-relaxed text-soft">
           Hot-linking is fine and expected. Every variant is a static image cached for a day at the edge, so a badge on
           a busy page costs this site one read, not one per viewer.
         </p>

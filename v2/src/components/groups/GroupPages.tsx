@@ -156,7 +156,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
         }
       />{" "}
       {rows.length === 0 ? (
-        <p className="mt-10 max-w-2xl text-base text-foreground/80">
+        <p className="mt-10 max-w-2xl text-base text-soft">
           This breakdown hasn&apos;t been built yet. DOL&apos;s case files are on the{" "}
           <Link href="/case-search" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
             case search
@@ -166,8 +166,8 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
       ) : (
         <>
           <section className="pop mt-10">
-            <div className="border-2 border-border bg-card p-6 sm:p-8">
-              <h2 className="font-heading text-xl font-black">{`The ${top.length} busiest, by decisions`}</h2>{" "}
+            <div className="border border-border bg-card p-6 sm:p-8">
+              <h2 className="font-heading text-xl font-bold">{`The ${top.length} busiest, by decisions`}</h2>{" "}
               <ChartTips label={`The ${top.length} busiest ${c.noun}, by PERM decisions`} className="mt-5">
                 <ol className="space-y-2.5">
                   {top.map((r) => {
@@ -196,7 +196,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
                         </Link>{" "}
                         <span aria-hidden="true" className="block h-5">
                           <span
-                            className="block h-full border-2 border-border bg-primary"
+                            className="block h-full border border-border bg-primary"
                             style={{ width: `${Math.max(3, (r.total / topMax) * 100)}%` }}
                           />
                         </span>{" "}
@@ -209,8 +209,8 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
               </ChartTips>
             </div>
           </section>{" "}
-          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-4 border-foreground pt-4">
-            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">{`All ${formatInt(rows.length)} ${c.noun}`}</h2>{" "}
+          <section id="all" className="mt-16 scroll-mt-[calc(var(--site-header-h,71px)+4rem)] border-t-2 border-foreground pt-4">
+            <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">{`All ${formatInt(rows.length)} ${c.noun}`}</h2>{" "}
             <div className="mt-6">
               <GroupIndexTable
                 rows={rows}
@@ -223,7 +223,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
           </section>
         </>
       )}
-      <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">{c.coverage}</p>
+      <p className="mt-6 max-w-3xl text-sm leading-relaxed text-muted-foreground">{c.coverage}</p>
       <DataProvenance datasets={["perm-cases"]} />
     </div>
   );
@@ -297,8 +297,8 @@ export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: s
         <div className="pt-10 sm:pt-12" />
         <JsonLdScript schema={breadcrumbSchema(`${GROUP_PATH.city}/${slug}`, city.label)} />
         <header>
-          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">H-1B jobs in {city.label}</h1>{" "}
-          <p className="mt-4 max-w-3xl text-lg leading-relaxed text-foreground/70">
+          <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">H-1B jobs in {city.label}</h1>{" "}
+          <p className="mt-4 max-w-3xl text-lg leading-relaxed text-muted-foreground">
             Fewer than 20 PERM green card cases name {city.label} as the worksite, so this city has no PERM page; its
             H-1B record is below.
           </p>
@@ -323,9 +323,9 @@ export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: s
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={breadcrumb} />
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">{c.detailH1(g.label)}</h1>{" "}
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">{c.detailH1(g.label)}</h1>{" "}
         {kind === "industry" ? (
-          <p className="mt-3 font-mono text-sm tabular-nums text-foreground/70">NAICS {g.key}</p>
+          <p className="mt-3 font-mono text-sm tabular-nums text-muted-foreground">NAICS {g.key}</p>
         ) : null}
       </header>
       <GroupView kind={kind} group={g} yearsOverride={years} />
@@ -338,7 +338,7 @@ export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: s
           jobsNoun="PERM decisions"
         />
       ) : null}
-      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">{c.coverage}</p>
+      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">{c.coverage}</p>
       <DataProvenance
         datasets={[
           "perm-cases",

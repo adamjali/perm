@@ -93,7 +93,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
   const max = Math.max(baseline, ...rows.map((r) => r.rate)) * 1.08;
 
   return (
-    <div className="border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
+    <div className="border border-border bg-card p-5 sm:p-6">
       <ChartTips label="Denial rate by group, against the field baseline">
       <div className="space-y-5">
         {rows.map((r) => {
@@ -122,7 +122,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
               </div>
               {/* The track carries the baseline marker, so every bar is read
                   against the field rather than against itself. */}
-              <div className="relative mt-2 h-6 border-2 border-border bg-background">
+              <div className="relative mt-2 h-6 border border-border bg-background">
                 <div
                   className="h-full"
                   style={{
@@ -137,14 +137,14 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
                 />
               </div>
               {r.note ? (
-                <p className="mt-1.5 text-sm leading-relaxed text-foreground/60">{r.note}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{r.note}</p>
               ) : null}
             </div>
           );
         })}
       </div>
       </ChartTips>
-      <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground/60">
+      <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block h-3 w-0.5 bg-foreground/40" />
           Field baseline, {baseline.toFixed(2)}%
@@ -213,7 +213,7 @@ export function RateTable({
           }
         }}
         className={
-          "min-h-[44px] w-full px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
+          "min-h-[44px] w-full px-3 py-2 text-sm font-bold transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
           (numeric ? "text-right" : "text-left") +
           (sortKey === key ? " text-primary-on-ink" : "")
         }
@@ -226,7 +226,7 @@ export function RateTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] border-2 border-border text-left text-sm shadow-hard-sm">
+      <table className="w-full min-w-[560px] border border-border text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-foreground text-background">
           <tr>
@@ -237,7 +237,7 @@ export function RateTable({
             {head("rate", "Denial rate")}
             <th
               scope="col"
-              className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell"
+              className="hidden px-3 py-2 text-right text-sm font-bold sm:table-cell"
             >
               95% range
             {" "}</th>
@@ -245,7 +245,7 @@ export function RateTable({
             {head("decided", "Decided")}
             <th
               scope="col"
-              className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell"
+              className="hidden px-3 py-2 text-right text-sm font-bold sm:table-cell"
             >
               vs field{" "}
             </th>
@@ -259,13 +259,13 @@ export function RateTable({
                 <td className="px-3 py-2.5 font-bold">
                   {r.label}
                   {r.note ? (
-                    <span className="block text-sm font-normal leading-relaxed text-foreground/60">
+                    <span className="block text-sm font-normal leading-relaxed text-muted-foreground">
                       {r.note}
                     </span>
                   ) : null}
                 {" "}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums">{r.rate.toFixed(2)}%{" "}</td>
-                <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/60 sm:table-cell">
+                <td className="hidden px-3 py-2.5 text-right tabular-nums text-muted-foreground sm:table-cell">
                   {ci ? `${ci.lo.toFixed(2)}–${ci.hi.toFixed(2)}%` : "—"}
                 {" "}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums">
@@ -482,7 +482,7 @@ export function RankedRateViews({
           label: `${n.toLocaleString("en-US")}+ decided`,
         }))}
       />{" "}
-      <p className="text-sm text-foreground/70">
+      <p className="text-sm text-muted-foreground">
         {kept.length.toLocaleString("en-US")} {noun} clear this floor
         {hidden > 0 ? (
           <>
@@ -499,7 +499,7 @@ export function RankedRateViews({
   const shown = kept.slice(0, chartLimit);
   const showingAll = shown.length === kept.length;
   const empty = (
-    <p className="border-2 border-border bg-card p-6 text-base text-foreground/70 shadow-hard-sm">
+    <p className="border border-border bg-card p-6 text-base text-muted-foreground">
       No {noun} clear a floor of {floor.toLocaleString("en-US")} decided cases in this
       window. Lower the floor to see what the files hold.
     </p>
@@ -517,7 +517,7 @@ export function RankedRateViews({
         ) : (
           <div>
             <RateBars rows={shown} baseline={baseline} />
-            <p className="mt-3 text-sm text-foreground/60">
+            <p className="mt-3 text-sm text-muted-foreground">
               {showingAll ? (
                 <>
                   All {kept.length.toLocaleString("en-US")} {noun} with{" "}

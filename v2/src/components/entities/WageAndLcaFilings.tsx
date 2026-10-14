@@ -32,9 +32,9 @@ export function WageAndLcaFilings({
 }) {
   if (wageReqs.length === 0 && lcas.length === 0) return null;
   return (
-    <section className={`${className} border-2 border-border bg-card p-6 shadow-hard sm:p-8`}>
-      <h2 className="font-heading text-xl font-black sm:text-2xl">{heading}</h2>{" "}
-      <p className="mt-2 text-base leading-relaxed text-foreground/70">
+    <section className={`${className} border border-border bg-card p-6 sm:p-8`}>
+      <h2 className="font-heading text-xl font-bold sm:text-2xl">{heading}</h2>{" "}
+      <p className="mt-2 text-base leading-relaxed text-muted-foreground">
         Filed by {name}, newest first. Decided ones carry the wage from DOL&apos;s quarterly files.
       </p>{" "}
       <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 [&>*]:min-w-0">
@@ -45,7 +45,7 @@ export function WageAndLcaFilings({
           <Fragment key={col.label}>
             {" "}
             <div>
-              <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">{col.label}</h3>{" "}
+              <h3 className="text-sm font-bold text-muted-foreground">{col.label}</h3>{" "}
               {col.rows.length > 0 ? (
                 <ul className="mt-2 divide-y divide-border/60">
                   {col.rows.map((r) => (
@@ -58,14 +58,14 @@ export function WageAndLcaFilings({
                         >
                           {r.caseNumber}
                         </Link>{" "}
-                        {r.jobTitle ? <span className="text-foreground/80">{r.jobTitle}</span> : null}{" "}
+                        {r.jobTitle ? <span className="text-soft">{r.jobTitle}</span> : null}{" "}
                         {formatWage(r.wage, r.wageUnit) ? (
                           <span className="font-mono text-sm font-bold">
                             {formatWage(r.wage, r.wageUnit)}
                             <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
                           </span>
                         ) : null}{" "}
-                        <span className="ml-auto font-mono text-sm font-bold uppercase text-foreground/70">
+                        <span className="ml-auto font-mono text-sm font-bold text-muted-foreground">
                           {r.date ? `${r.date} · ` : ""}
                           {r.status}
                         </span>
@@ -74,7 +74,7 @@ export function WageAndLcaFilings({
                   ))}
                 </ul>
               ) : (
-                <p className="mt-2 text-sm text-foreground/70">None confirmed yet.</p>
+                <p className="mt-2 text-sm text-muted-foreground">None confirmed yet.</p>
               )}{" "}
               <p className="mt-2 text-sm">
                 <Link href={col.href} className={LINK}>

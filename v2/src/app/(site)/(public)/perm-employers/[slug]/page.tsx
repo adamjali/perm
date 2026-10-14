@@ -842,11 +842,11 @@ export default async function EmployerPage({
             with publication; until then the case number carries the reader
             to its own live status. */}
         {recentLive.length > 0 ? (
-          <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="latest-live">
-            <h3 id="latest-live" className="font-heading text-xl font-black sm:text-2xl">
+          <section className="mt-10 border border-border bg-card p-6 sm:p-8" aria-labelledby="latest-live">
+            <h3 id="latest-live" className="font-heading text-xl font-bold sm:text-2xl">
               Its newest filings
             </h3>{" "}
-            <p className="mt-2 text-base leading-relaxed text-foreground/70">
+            <p className="mt-2 text-base leading-relaxed text-muted-foreground">
               Filed since DOL&apos;s last quarterly file, so the wage and law firm aren&apos;t published yet.
             </p>{" "}
             <ul className="mt-4 divide-y divide-border/60">
@@ -861,8 +861,8 @@ export default async function EmployerPage({
                     >
                       {c.caseNumber}
                     </Link>{" "}
-                    {c.jobTitle ? <span className="text-foreground/70">{c.jobTitle}</span> : null}{" "}
-                    <span className="ml-auto text-sm text-foreground/70">
+                    {c.jobTitle ? <span className="text-muted-foreground">{c.jobTitle}</span> : null}{" "}
+                    <span className="ml-auto text-sm text-muted-foreground">
                       {c.filingDate ? `filed ${c.filingDate}` : ""}
                       {c.status ? ` · ${c.status}` : ""}
                     </span>

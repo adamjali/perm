@@ -71,7 +71,7 @@ export function SiteSearch({
         className={cn(
           // `h-11`, not `min-h-11`: this is the search affordance on every
           // public page and 44px is the tap-target floor.
-          "flex h-11 items-center gap-2 border-2 border-white/20 px-3 text-white transition-colors hover:bg-white/10",
+          "flex h-11 items-center gap-2 border border-white/20 px-3 text-white transition-colors hover:bg-white/10",
           className,
         )}
       >

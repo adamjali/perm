@@ -43,7 +43,7 @@ export const WithDescription: Story = {
     <div className="grid w-full max-w-sm gap-1.5">
       <Label htmlFor="pwd-date">PWD Determination Date</Label>
       <Input type="date" id="pwd-date" />
-      <p className="text-xs text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         The date shown on your PWD determination letter
       </p>
     </div>

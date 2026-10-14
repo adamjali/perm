@@ -135,7 +135,7 @@ export async function OccupationReference({
             <table className="w-full min-w-[40rem] text-left text-base">
               <caption className="sr-only">Market pay and DOL wage levels, by area{" "}</caption>
               <thead>
-                <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
+                <tr className="border-b border-border text-sm text-muted-foreground">
                   <th className="py-2 pr-4 font-bold">Area{" "}</th>
                   <th className="py-2 pr-4 text-right font-bold">BLS median{" "}</th>
                   {LEVELS.map((l) => (
@@ -173,11 +173,11 @@ export async function OccupationReference({
       ) : null}
 
       {busiest && history.length >= 2 ? (
-        <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="occ-dol-years">
-          <h2 id="occ-dol-years" className="font-heading text-xl font-black sm:text-2xl">
+        <section className="mt-10 border border-border bg-card p-6 sm:p-8" aria-labelledby="occ-dol-years">
+          <h2 id="occ-dol-years" className="font-heading text-xl font-bold sm:text-2xl">
             DOL&apos;s levels for this job in {busiest.name}, year by year
           </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
             Each July DOL resets the four levels from BLS&apos;s newest survey. A determination keeps the figures of
             the year it was issued in.
           </p>
@@ -185,7 +185,7 @@ export async function OccupationReference({
             <table className="w-full min-w-[34rem] text-left text-base">
               <caption className="sr-only">DOL wage levels by wage year, {busiest.name}{" "}</caption>
               <thead>
-                <tr className="border-b-2 border-border font-mono text-sm uppercase tracking-wider text-foreground/70">
+                <tr className="border-b border-border text-sm text-muted-foreground">
                   <th className="py-2 pr-4 font-bold">Wage year{" "}</th>
                   {LEVELS.map((l) => (
                     <th key={l} className="py-2 pr-4 text-right font-bold">
@@ -208,7 +208,7 @@ export async function OccupationReference({
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-sm text-foreground/70">
+          <p className="mt-3 text-sm text-muted-foreground">
             <Link href={`/tools/wage-levels?soc=${soc}`} className={LINK}>
               Every area and both wage tables in the wage-level tool
             </Link>
@@ -219,45 +219,45 @@ export async function OccupationReference({
 
       {main ? (
         <section className="mt-12" aria-labelledby="occ-onet">
-          <h2 id="occ-onet" className="font-heading text-2xl font-black">
+          <h2 id="occ-onet" className="font-heading text-2xl font-bold">
             What the job is
           </h2>{" "}
           <p className="mt-3 max-w-3xl text-lg leading-relaxed">{main.description}</p>{" "}
-          <dl className="mt-6 grid grid-cols-1 gap-px border-2 border-border bg-border sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+          <dl className="mt-6 grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
             {zone ? (
               <div className="bg-card p-4">
-                <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">Preparation</dt>{" "}
+                <dt className="text-sm font-bold text-muted-foreground">Preparation</dt>{" "}
                 <dd className="mt-1 text-base font-bold">{zone.name.replace(/^Job Zone [\w-]+: /, "")}</dd>{" "}
-                <dd className="mt-1 text-sm text-foreground/70">{`O*NET Job Zone ${main.jobZone === 2 ? "1-2" : main.jobZone}`}</dd>
+                <dd className="mt-1 text-sm text-muted-foreground">{`O*NET Job Zone ${main.jobZone === 2 ? "1-2" : main.jobZone}`}</dd>
               </div>
             ) : null}{" "}
             {basis?.education ? (
               <div className="bg-card p-4">
-                <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">DOL&apos;s education basis</dt>{" "}
+                <dt className="text-sm font-bold text-muted-foreground">DOL&apos;s education basis</dt>{" "}
                 <dd className="mt-1 text-base font-bold">{basis.education}</dd>{" "}
-                <dd className="mt-1 text-sm text-foreground/70">
+                <dd className="mt-1 text-sm text-muted-foreground">
                   {`Wage year ${wageYearLabel(basis.wageYear)}${basis.appendixA ? ", on DOL's Appendix A list" : ""}`}
                 </dd>
               </div>
             ) : null}{" "}
             {projection?.changePct != null ? (
               <div className="bg-card p-4">
-                <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">
+                <dt className="text-sm font-bold text-muted-foreground">
                   {`Jobs, ${projection.baseYear} to ${projection.projYear}`}
                 </dt>{" "}
                 <dd className="mt-1 text-base font-bold">
                   {`${projection.changePct > 0 ? "+" : ""}${projection.changePct.toFixed(1)}%`}
                 </dd>{" "}
-                <dd className="mt-1 text-sm text-foreground/70">
+                <dd className="mt-1 text-sm text-muted-foreground">
                   {projection.openings != null ? `About ${formatInt(Math.round(projection.openings * 1000))} openings a year (BLS)` : "BLS projection"}
                 </dd>
               </div>
             ) : null}{" "}
             {projection?.education ? (
               <div className="bg-card p-4">
-                <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">Typical entry</dt>{" "}
+                <dt className="text-sm font-bold text-muted-foreground">Typical entry</dt>{" "}
                 <dd className="mt-1 text-base font-bold">{projection.education}</dd>{" "}
-                <dd className="mt-1 text-sm text-foreground/70">
+                <dd className="mt-1 text-sm text-muted-foreground">
                   {projection.experience && projection.experience !== "None" ? `${projection.experience} of related work (BLS)` : "BLS"}
                 </dd>
               </div>
@@ -265,14 +265,14 @@ export async function OccupationReference({
           </dl>
           {main.bright.length ? (
             <p className="mt-4 text-base">
-              <span className="mr-2 inline-block border-2 border-border bg-tint-primary px-2 py-0.5 font-bold">Bright Outlook</span>{" "}
+              <span className="mr-2 inline-block border border-border bg-tint-primary px-2 py-0.5 font-bold">Bright Outlook</span>{" "}
               O*NET OnLine lists this job for {main.bright.map((b) => b.toLowerCase()).join(" and ")}.
             </p>
           ) : null}
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 [&>*]:min-w-0">
             {main.tasks.length ? (
               <div>
-                <h3 className="font-heading text-lg font-black">The work, most important first</h3>{" "}
+                <h3 className="font-heading text-lg font-bold">The work, most important first</h3>{" "}
                 <ol className="mt-3 list-decimal space-y-2 pl-6 text-base leading-relaxed">
                   {main.tasks.map((t) => (
                     <li key={t}>{t}{" "}</li>
@@ -283,7 +283,7 @@ export async function OccupationReference({
             <div className="space-y-8">
               {main.education.length ? (
                 <div>
-                  <h3 className="font-heading text-lg font-black">The education workers in it report</h3>{" "}
+                  <h3 className="font-heading text-lg font-bold">The education workers in it report</h3>{" "}
                   <BarRows
                     className="mt-3"
                     label="Required education reported by workers"
@@ -293,14 +293,14 @@ export async function OccupationReference({
               ) : null}{" "}
               {main.titles.length ? (
                 <div>
-                  <h3 className="font-heading text-lg font-black">Titles people use for it</h3>{" "}
-                  <p className="mt-2 text-base leading-relaxed text-foreground/80">{main.titles.join(", ")}.</p>
+                  <h3 className="font-heading text-lg font-bold">Titles people use for it</h3>{" "}
+                  <p className="mt-2 text-base leading-relaxed text-soft">{main.titles.join(", ")}.</p>
                 </div>
               ) : null}
             </div>
           </div>
           {onet && onet.occupations.length > 1 ? (
-            <p className="mt-6 max-w-3xl text-base text-foreground/70">
+            <p className="mt-6 max-w-3xl text-base text-muted-foreground">
               O*NET also describes{" "}
               {onet.occupations.slice(1).map((o, i, a) => `${o.title}${i < a.length - 2 ? ", " : i === a.length - 2 ? " and " : ""}`)}{" "}
               under this SOC code.
@@ -326,7 +326,7 @@ export async function OccupationReference({
               })}
             </p>
           ) : null}
-          <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">
+          <p className="mt-6 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             This section includes information from the{" "}
             <a href="https://www.onetcenter.org/database.html" className={LINK} rel="noopener">
               {`O*NET${onet?.version ? ` ${onet.version}` : ""} Database`}

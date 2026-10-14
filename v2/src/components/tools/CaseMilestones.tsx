@@ -85,7 +85,7 @@ const monthDay = (iso: string) =>
 const EMPTY: TimelineInput = { route: "adjustment", public: false };
 
 const selectCls =
-  "mt-1.5 block min-h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "mt-1.5 block min-h-11 w-full min-w-0 border border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 export function CaseMilestones({ caseNumber, className }: { caseNumber: string; className?: string }) {
   const uid = useId();
@@ -207,10 +207,10 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
   return (
     <section
       id="timeline"
-      className={cn("scroll-mt-28 border-2 border-border bg-card p-5 shadow-hard sm:p-6", className)}
+      className={cn("scroll-mt-28 border border-border bg-card p-5 sm:p-6", className)}
     >
-      <h2 className="font-heading text-xl font-black sm:text-2xl">After PERM: the rest of the timeline</h2>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+      <h2 className="font-heading text-xl font-bold sm:text-2xl">After PERM: the rest of the timeline</h2>{" "}
+      <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
         USCIS doesn&apos;t publish the I-140 or the I-485 case by case, so this part comes from the people waiting.
         Dates here are self-reported. The PERM dates beside them come from DOL&apos;s own record.
       </p>{" "}
@@ -223,8 +223,8 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
               {" "}
               <li
                 className={cn(
-                  "flex items-center justify-between gap-2 border-2 px-3 py-2 sm:flex-col sm:items-start",
-                  s.count > 0 ? "border-border bg-primary/15" : "border-border/40 bg-background text-foreground/60",
+                  "flex items-center justify-between gap-2 border px-3 py-2 sm:flex-col sm:items-start",
+                  s.count > 0 ? "border-border bg-primary/15" : "border-border/40 bg-background text-muted-foreground",
                 )}
               >
                 <span className="text-sm font-bold leading-tight">{s.label}</span>{" "}
@@ -237,22 +237,22 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
         </ol>
       ) : null}{" "}
       {summary && reported === 0 && !mine ? (
-        <p className="mt-3 text-sm text-foreground/70">Nobody has added dates for this case yet.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Nobody has added dates for this case yet.</p>
       ) : null}
 
       <details
-        className="group mt-6 border-t-2 border-border pt-4"
+        className="group mt-6 border-t border-border pt-4"
         open={open}
         onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
       >
-        <summary className="cursor-pointer list-none font-heading text-lg font-black marker:content-none">
+        <summary className="cursor-pointer list-none font-heading text-lg font-bold marker:content-none">
           <span className="inline-flex min-h-11 items-center gap-2 underline decoration-primary decoration-2 underline-offset-4">
             {mine ? "Your timeline for this case" : "Add your dates"}
           </span>
         </summary>
 
         {mine?.permCertifiedOn ? (
-          <p className="mt-3 flex items-start gap-2 text-sm text-foreground/80">
+          <p className="mt-3 flex items-start gap-2 text-sm text-soft">
             <CheckIcon size={18} weight="bold" className="mt-0.5 shrink-0 text-primary-text" aria-hidden="true" />
             <span>
               DOL&apos;s record for this case: filed{" "}
@@ -337,7 +337,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             ))}
           </fieldset>{" "}
 
-          <details className="border-2 border-border/60 p-4" open={Boolean(form.rfeForm)}>
+          <details className="border border-border/60 p-4" open={Boolean(form.rfeForm)}>
             <summary className="cursor-pointer list-none text-base font-bold marker:content-none">
               <span className="inline-flex min-h-11 items-center">Got a request for evidence (RFE)?</span>
             </summary>
@@ -386,7 +386,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             </div>
           </details>{" "}
 
-          <div className="border-2 border-border bg-background p-4">
+          <div className="border border-border bg-background p-4">
             <label className="flex min-h-11 items-start gap-3 text-base">
               <input
                 type="checkbox"
@@ -399,7 +399,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
                 the filing month and how many days each step took.
               </span>
             </label>{" "}
-            <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Either way, your dates count toward the anonymous medians on the{" "}
               <Link href="/green-card-timelines" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
                 green card timelines
@@ -412,7 +412,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             <button
               type="submit"
               disabled={state.kind === "sending"}
-              className="min-h-11 border-2 border-border bg-primary px-5 font-bold text-primary-foreground shadow-hard transition-transform hover:-translate-y-[1px] active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0"
+              className="min-h-11 border border-border bg-primary px-5 font-bold text-primary-foreground transition-transform disabled:opacity-60"
             >
               {state.kind === "sending" ? "Saving" : mine ? "Save changes" : "Save my timeline"}
             </button>{" "}
@@ -421,7 +421,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
                 type="button"
                 onClick={remove}
                 disabled={state.kind === "sending"}
-                className="min-h-11 border-2 border-border bg-background px-5 font-bold transition-transform hover:-translate-y-[1px] disabled:opacity-60"
+                className="min-h-11 border border-border bg-background px-5 font-bold transition-transform disabled:opacity-60"
               >
                 Remove my timeline
               </button>

@@ -87,7 +87,7 @@ export function UnsavedChangesDialog({
         <DialogHeader>
           <div className="flex items-center gap-3">
             {/* Warning Icon */}
-            <div className="flex items-center justify-center w-12 h-12 bg-data-warn/15 border-2 border-black dark:border-white shadow-hard-sm">
+            <div className="flex items-center justify-center w-12 h-12 bg-data-warn/15 border border-black dark:border-white">
               <AlertTriangle className="w-6 h-6 text-data-warn-ink" />
             </div>
             <DialogTitle>

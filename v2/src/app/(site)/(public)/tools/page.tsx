@@ -82,10 +82,10 @@ export default async function ToolsPage() {
             figure and calculator, and the queue is one of the things it links
             to. The H1 now says what the page is, matching its own title and
             the sentence directly under it. */}
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Live PERM data and free calculators
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           DOL&apos;s own figures, each with its date, and calculators built on them.
           {snapshot?.permAsOf ? ` DOL's figures below are as of ${formatAsOf(snapshot.permAsOf)}.` : null}
         </p>
@@ -95,36 +95,36 @@ export default async function ToolsPage() {
           different facts rather than three identical boxes. */}
       {snapshot ? (
         <section aria-label="Live DOL position" className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-4">
-          <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard">
-            <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
+          <div className="border border-border bg-foreground p-6 text-background">
+            <p className="text-sm font-bold text-background/60">
               DOL is deciding cases filed
             </p>{" "}
-            <p className="mt-2 font-heading text-3xl font-black leading-none">
+            <p className="mt-2 font-heading text-3xl font-bold leading-none">
               {formatMonth(frontierMonth) ?? "—"}
             </p>{" "}
             <p className="mt-3 text-sm leading-relaxed text-background/70">
               Analyst review, the queue nearly every case sits in.
             </p>
           </div>
-          <div className="border-2 border-border bg-tint-primary p-6 shadow-hard">
-            <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+          <div className="border border-border bg-tint-primary p-6">
+            <p className="text-sm font-bold text-muted-foreground">
               Average to a determination
             </p>{" "}
-            <p className="mt-2 font-heading text-3xl font-black leading-none">
+            <p className="mt-2 font-heading text-3xl font-bold leading-none">
               {analystAvg?.calendarDays != null ? `${analystAvg.calendarDays} days` : "—"}
             </p>{" "}
-            <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Across cases DOL decided recently. An RFI or audit can make one case take longer.
             </p>
           </div>
-          <div className="border-2 border-border bg-card p-6 shadow-hard">
-            <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
+          <div className="border border-border bg-card p-6">
+            <p className="text-sm font-bold text-muted-foreground">
               Wage requests pending
             </p>{" "}
-            <p className="mt-2 font-heading text-3xl font-black leading-none">
+            <p className="mt-2 font-heading text-3xl font-bold leading-none">
               {pwd != null ? pwd.toLocaleString("en-US") : "—"}
             </p>{" "}
-            <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Prevailing wage, the stage before recruitment.
             </p>
           </div>
@@ -133,13 +133,13 @@ export default async function ToolsPage() {
 
       {/* The case lookup first: a person holding a case number outranks every
           aggregate below. A plain GET form, like the homepage's. */}
-      <section className="mt-10 border-3 border-border bg-card p-6 shadow-hard sm:p-8">
+      <section className="mt-10 border border-border bg-card p-6 sm:p-8">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div className="min-w-0">
-            <h2 className="font-heading text-2xl font-black">
+            <h2 className="font-heading text-2xl font-bold">
               Where&apos;s your case? When could it be decided?
             </h2>{" "}
-            <p className="mt-2 max-w-xl text-base leading-relaxed text-foreground/70">
+            <p className="mt-2 max-w-xl text-base leading-relaxed text-muted-foreground">
               Live DOL status, your place in the queue and an estimate. Free,
               no account.
             </p>
@@ -152,11 +152,11 @@ export default async function ToolsPage() {
               id="tools-case"
               name="case"
               placeholder="G-100-24339-516453"
-              className="min-h-[44px] w-64 min-w-0 max-w-full border-2 border-border bg-background px-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="min-h-[44px] w-64 min-w-0 max-w-full border border-input bg-background px-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />{" "}
             <button
               type="submit"
-              className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 font-heading font-black text-primary-foreground shadow-hard-sm transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+              className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 font-heading font-bold text-primary-foreground transition-transform duration-150"
             >
               Check my case
             </button>{" "}
@@ -173,8 +173,8 @@ export default async function ToolsPage() {
       {/* The queue as a tape: the one drawing that carries the mental model. */}
       {frontierMonth ? (
         <section className="mt-10">
-          <h2 className="font-heading text-2xl font-black">The queue, oldest first</h2>{" "}
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
+          <h2 className="font-heading text-2xl font-bold">The queue, oldest first</h2>{" "}
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             Every PERM waits in filing-month order.{" "}
             <Link
               href="/tools/perm-timeline-calculator"
@@ -190,17 +190,17 @@ export default async function ToolsPage() {
 
 
 
-      <section className="mt-10 flex flex-wrap items-center justify-between gap-4 border-2 border-border bg-tint-primary p-6 shadow-hard sm:p-8">
+      <section className="mt-10 flex flex-wrap items-center justify-between gap-4 border border-border bg-tint-primary p-6 sm:p-8">
         <div>
-          <h2 className="font-heading text-2xl font-black">All {TOOL_NAV_LINKS.length} calculators</h2>{" "}
-          <p className="mt-1 max-w-xl text-base text-foreground/70">
+          <h2 className="font-heading text-2xl font-bold">All {TOOL_NAV_LINKS.length} calculators</h2>{" "}
+          <p className="mt-1 max-w-xl text-base text-muted-foreground">
             Decision times, the wage, I-140 and I-485 queues, priority dates,
             the green card drawn to scale, and every statutory deadline.
           </p>
         </div>
         <Link
           href="/calculators"
-          className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+          className="inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 py-2.5 font-bold text-black transition-colors duration-150"
         >
           Open the calculators
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
@@ -210,7 +210,7 @@ export default async function ToolsPage() {
       {/* The two sides of the product, connected in one band. */}
       {/* The disclosure aggregates: three cuts of the same quarterly files. */}
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">The whole field</h2>
+        <h2 className="font-heading text-2xl font-bold">The whole field</h2>
         {/* Flex-wrap, not a 3-column grid: the card count changes as pages are
             added, and a fixed third column leaves an empty cell in the last
             row that reads as a card that failed to load. Wrapping lets the
@@ -292,15 +292,15 @@ export default async function ToolsPage() {
               key={c.href}
               href={c.href}
               className={
-                "group flex flex-col border-2 border-border p-6 transition-all duration-150 hover:-translate-y-[2px] hover:shadow-hard-lg active:translate-y-0 active:shadow-hard-sm " +
+                "group flex flex-col border border-border p-6 transition-colors duration-150 " +
                 (c.tone === "ink"
-                  ? "bg-foreground text-background shadow-hard"
+                  ? "bg-foreground text-background"
                   : c.tone === "tint"
-                    ? "bg-tint-primary shadow-hard"
-                    : "bg-card shadow-hard")
+                    ? "bg-tint-primary"
+                    : "bg-card")
               }
             >
-              <h3 className="font-heading text-lg font-black">{c.label}</h3>{" "}
+              <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
               {/* The card's own subject, drawn. */}
               <div
                 className={
@@ -320,14 +320,14 @@ export default async function ToolsPage() {
               <p
                 className={
                   "mt-2 flex-1 text-sm leading-relaxed " +
-                  (c.tone === "ink" ? "text-background/70" : "text-foreground/70")
+                  (c.tone === "ink" ? "text-background/70" : "text-muted-foreground")
                 }
               >
                 {c.blurb}
               </p>{" "}
               <span
                 className={
-                  "mt-4 font-mono text-sm font-bold uppercase tracking-wider " +
+                  "mt-4 text-sm font-bold " +
                   // NOT `text-primary` ON THE INK CARD. That card is
                   // `bg-foreground`, which is near-black in light and
                   // near-WHITE in dark, while the lime holds still at #2ecc40
@@ -337,7 +337,7 @@ export default async function ToolsPage() {
                   // Same defect as the verdict chip, same fix.
                   (c.tone === "ink"
                     ? "text-background/80 group-hover:text-background"
-                    : "text-foreground/60 group-hover:text-primary")
+                    : "text-muted-foreground group-hover:text-primary")
                 }
               >
                 Open →
@@ -350,7 +350,7 @@ export default async function ToolsPage() {
       {/* The queue, day by day - the pages the strip's Queue and Risk groups
           hold, so the hub reaches everything the nav does. */}
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">The queue, day by day</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">The queue, day by day</h2>{" "}
         <div className="mt-6 flex flex-wrap gap-4 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:basis-64">
           {[
             { href: "/perm-queue", label: "Queue backlog", blurb: "Every filing month's pending cases, by DOL queue.", viz: <TapeMini /> },
@@ -361,13 +361,13 @@ export default async function ToolsPage() {
             <Link
               key={c.href}
               href={c.href}
-              className="group flex flex-col border-2 border-border bg-card p-5 shadow-hard transition-all duration-150 hover:-translate-y-[2px] hover:shadow-hard-lg active:translate-y-0"
+              className="group flex flex-col border border-border bg-card p-5 transition-colors duration-150"
             >
-              <h3 className="font-heading text-lg font-black">{c.label}</h3>{" "}
+              <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
               {/* The page's subject, drawn, as on the tiles above. */}
               <div className="mt-3 max-w-[150px] text-foreground">{c.viz}</div>{" "}
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-foreground/70">{c.blurb}</p>{" "}
-              <span className="mt-3 font-mono text-sm font-bold uppercase tracking-wider text-foreground/60 group-hover:text-primary">
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{c.blurb}</p>{" "}
+              <span className="mt-3 text-sm font-bold text-muted-foreground group-hover:text-primary">
                 Open →
               </span>
             </Link>
@@ -383,14 +383,14 @@ export default async function ToolsPage() {
       </section>
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+        <div className="border border-border bg-card p-6 sm:p-8">
+          <p className="text-sm font-bold text-muted-foreground">
             For your own case
           </p>{" "}
-          <h2 className="mt-2 font-heading text-xl font-black">
+          <h2 className="mt-2 font-heading text-xl font-bold">
             Get notified when DOL reaches your month
           </h2>{" "}
-          <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
             Set it on the{" "}
             <Link
               href="/perm-processing-times"
@@ -408,11 +408,11 @@ export default async function ToolsPage() {
             .
           </p>
         </div>
-        <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-          <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
+        <div className="border border-border bg-foreground p-6 text-background sm:p-8">
+          <p className="text-sm font-bold text-background/60">
             For a caseload
           </p>{" "}
-          <h2 className="mt-2 font-heading text-xl font-black">
+          <h2 className="mt-2 font-heading text-xl font-bold">
             Track every deadline in every case
           </h2>{" "}
           <p className="mt-3 text-base leading-relaxed text-background/70">
@@ -421,7 +421,7 @@ export default async function ToolsPage() {
           </p>{" "}
           <Link
             href="/signup"
-            className="mt-5 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-5 py-2.5 font-bold text-black shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
+            className="mt-5 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-5 py-2.5 font-bold text-black transition-colors duration-150"
           >
             Start tracking
             <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />

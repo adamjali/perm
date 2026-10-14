@@ -17,10 +17,10 @@ export function YearlyPayNote({
 }) {
   if (!looksYearly(wage, unit)) return null;
   return short ? (
-    <span className="block whitespace-normal text-sm font-normal text-foreground/70" title={LOOKS_YEARLY_NOTE}>
+    <span className="block whitespace-normal text-sm font-normal text-muted-foreground" title={LOOKS_YEARLY_NOTE}>
       {LOOKS_YEARLY_SHORT}
     </span>
   ) : (
-    <p className="mt-1 text-sm text-foreground/70">{LOOKS_YEARLY_NOTE}</p>
+    <p className="mt-1 text-sm text-muted-foreground">{LOOKS_YEARLY_NOTE}</p>
   );
 }

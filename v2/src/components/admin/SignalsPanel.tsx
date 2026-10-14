@@ -63,7 +63,7 @@ function SubList({ title, rows, open, capped }: { title: string; rows: Sub[]; op
   const confirmed = rows.filter((r) => r.status === "confirmed").length;
   const shown = all ? rows : rows.slice(0, SHOWN);
   return (
-    <details open={open} className="border-2 border-border bg-card">
+    <details open={open} className="border border-border bg-card">
       <summary className="flex min-h-[48px] cursor-pointer flex-wrap items-center gap-x-3 px-4 py-2">
         <span className="font-bold">{title}</span>{" "}
         <span className="text-sm tabular-nums text-muted-foreground">
@@ -71,9 +71,9 @@ function SubList({ title, rows, open, capped }: { title: string; rows: Sub[]; op
         </span>
       </summary>
       {rows.length === 0 ? (
-        <p className="border-t-2 border-border px-4 py-3 text-sm text-muted-foreground">None match.</p>
+        <p className="border-t border-border px-4 py-3 text-sm text-muted-foreground">None match.</p>
       ) : (
-        <ul className="divide-y divide-border border-t-2 border-border">
+        <ul className="divide-y divide-border border-t border-border">
           {shown.map((r, i) => (
             <li key={`${r.email}-${r.subject}-${i}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2 text-sm">
               <span className="min-w-0 font-medium [overflow-wrap:anywhere]">{r.email}</span>{" "}
@@ -88,7 +88,7 @@ function SubList({ title, rows, open, capped }: { title: string; rows: Sub[]; op
         <button
           type="button"
           onClick={() => setAll((v) => !v)}
-          className="min-h-[44px] w-full border-t-2 border-border px-4 text-left text-sm font-bold hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+          className="min-h-[44px] w-full border-t border-border px-4 text-left text-sm font-bold hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
         >
           {all ? "Show the first 10" : `Show all ${rows.length}`}
         </button>
@@ -115,7 +115,7 @@ export function SubscriptionsPanel({ signals }: { signals: Signals }) {
   return (
     <section aria-labelledby="subs-h" className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 id="subs-h" className="font-heading text-xl font-black">
+        <h2 id="subs-h" className="font-heading text-xl font-bold">
           Subscriptions
         </h2>{" "}
         <label className="flex w-full flex-col gap-1 text-sm font-bold sm:w-80">
@@ -124,7 +124,7 @@ export function SubscriptionsPanel({ signals }: { signals: Signals }) {
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            className="min-h-[44px] border-2 border-border bg-background px-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-primary"
+            className="min-h-[44px] border border-input bg-background px-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </label>
       </div>
@@ -138,8 +138,8 @@ export function SubscriptionsPanel({ signals }: { signals: Signals }) {
 export function ActivityPanel({ signals }: { signals: Signals }) {
   const { totals, recentUsers, recentCases } = signals;
   return (
-    <section aria-labelledby="activity-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-      <h2 id="activity-h" className="font-heading text-xl font-black">
+    <section aria-labelledby="activity-h" className="border border-border bg-card p-5 sm:p-6">
+      <h2 id="activity-h" className="font-heading text-xl font-bold">
         Recent activity
       </h2>{" "}
       <p className="mt-1 text-sm text-muted-foreground">
@@ -182,8 +182,8 @@ export function ActivityPanel({ signals }: { signals: Signals }) {
 export function DigestPanel({ signals }: { signals: Signals }) {
   const { newsletter } = signals;
   return (
-    <section aria-labelledby="digest-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-      <h2 id="digest-h" className="font-heading text-xl font-black">
+    <section aria-labelledby="digest-h" className="border border-border bg-card p-5 sm:p-6">
+      <h2 id="digest-h" className="font-heading text-xl font-bold">
         Weekly digest
       </h2>{" "}
       <p className="mt-2 text-base">
@@ -197,14 +197,14 @@ export function DigestPanel({ signals }: { signals: Signals }) {
         {newsletter.health.message}
       </p>{" "}
       {newsletter.latest ? (
-        <details className="mt-3 border-2 border-border bg-background">
+        <details className="mt-3 border border-border bg-background">
           <summary className="min-h-[44px] cursor-pointer px-3 py-2 text-sm">
             <span className="font-bold">{newsletter.latest.subject}</span>{" "}
             <span className="text-sm text-muted-foreground">
               {`${newsletter.latest.status}${newsletter.latest.sentCount > 0 ? `, ${newsletter.latest.sentCount} sent` : ""}, built ${when(newsletter.latest.builtAt)}`}
             </span>
           </summary>{" "}
-          <pre className="max-h-96 overflow-auto whitespace-pre-wrap border-t-2 border-border p-3 font-mono text-sm leading-relaxed">
+          <pre className="max-h-96 overflow-auto whitespace-pre-wrap border-t border-border p-3 font-mono text-sm leading-relaxed">
             {newsletter.latest.text}
           </pre>
         </details>

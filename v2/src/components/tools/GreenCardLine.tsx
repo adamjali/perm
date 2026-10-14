@@ -26,8 +26,8 @@ import { cn } from "@/lib/utils";
 import { DAYS_PER_MONTH_2DP } from "@/lib/time";
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
-const EYEBROW_CLASS = "font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground";
+  "mt-2 block min-h-[44px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+const EYEBROW_CLASS = "text-sm font-semibold text-muted-foreground";
 
 /** Rounded the way a count this uncertain deserves: tens, hundreds, then thousands. */
 export function roundPeople(n: number): string {
@@ -125,11 +125,11 @@ export function GreenCardLine({
   const lineLabel = `${LINE_CATEGORY_LABEL[category]}, ${LINE_COUNTRY_LABEL[country]}`;
 
   return (
-    <div className={cn("border-2 border-border bg-card shadow-hard", className)}>
-      <div className="border-b-2 border-border p-6 sm:p-8">
+    <div className={cn("border border-border bg-card", className)}>
+      <div className="border-b border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <UsersThreeIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
-          <h2 className="font-heading text-2xl font-black leading-tight">Who is ahead of you?</h2>
+          <h2 className="font-heading text-2xl font-bold leading-tight">Who is ahead of you?</h2>
         </div>{" "}
         <div className={cn("mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0", lockCategory ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
           {lockCategory ? null : (
@@ -187,37 +187,37 @@ export function GreenCardLine({
         // the line split into the three places they wait, hatched, with the
         // sentence that says what fills it in. Nothing in it is a figure.
         <div className="p-6 sm:p-8">
-          <p className="text-sm font-bold text-foreground/70">People ahead of you</p>{" "}
+          <p className="text-sm font-bold text-muted-foreground">People ahead of you</p>{" "}
           <div aria-hidden="true" className="mt-2 h-12 w-56 max-w-full bg-foreground/10" />{" "}
           <div
             aria-hidden="true"
-            className="mt-5 flex h-8 border-2 border-dashed border-foreground/40 text-foreground/15 [&>*]:min-w-0"
+            className="mt-5 flex h-8 border border-dashed border-foreground/40 text-muted-foreground [&>*]:min-w-0"
           >
-            <span className="w-1/4 border-r-2 border-dashed border-foreground/30 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
-            <span className="w-2/5 border-r-2 border-dashed border-foreground/30 bg-[repeating-linear-gradient(45deg,currentColor_0_2px,transparent_2px_8px)]" />
+            <span className="w-1/4 border-r border-dashed border-foreground/30 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+            <span className="w-2/5 border-r border-dashed border-foreground/30 bg-[repeating-linear-gradient(45deg,currentColor_0_2px,transparent_2px_8px)]" />
             <span className="flex-1 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
           </div>{" "}
-          <ul aria-hidden="true" className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-foreground/70">
+          <ul aria-hidden="true" className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
             <li>Current, not finished</li>{" "}
             <li>Approved, waiting for the bulletin</li>{" "}
             <li>Waiting for I-140 approval</li>
           </ul>{" "}
-          <p className="mt-4 text-base text-foreground/70">
+          <p className="mt-4 text-base text-muted-foreground">
             Pick a priority date and this fills in: how many people stand ahead of you in
             this line, where they sit, and how long that is at the pace the line last moved.
           </p>
         </div>
       ) : result.kind === "no-data" ? (
         <div className="p-6 sm:p-8">
-          <p className="text-base text-foreground/80">{result.reason}</p>
+          <p className="text-base text-soft">{result.reason}</p>
         </div>
       ) : result.kind === "current" ? (
         <div className="bg-tint-primary p-6 sm:p-8">
           <p className={EYEBROW_CLASS}>{lineLabel}</p>{" "}
-          <p className="mt-2 font-heading text-3xl font-black leading-tight sm:text-4xl">
+          <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">
             Your priority date is current
           </p>{" "}
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
             {result.cutoff.kind === "current"
               ? `The ${formatMonth(result.bulletinMonth)} bulletin's final action chart reads C for this line: every priority date is current.`
               : result.cutoff.kind === "date"
@@ -271,16 +271,16 @@ function LineAnswer({
 
   return (
     <>
-      <div className="border-b-2 border-border p-6 sm:p-8">
+      <div className="border-b border-border p-6 sm:p-8">
         <p className={EYEBROW_CLASS}>{lineLabel}</p>{" "}
-        <p className="mt-2 font-heading text-4xl font-black leading-[1.05] tabular-nums sm:text-5xl">
+        <p className="mt-2 font-heading text-4xl font-bold leading-[1.05] tabular-nums sm:text-5xl">
           {rangeText(result.peopleAhead.low, result.peopleAhead.high)}
         </p>{" "}
         <p className="mt-1 font-heading text-xl font-bold">people ahead of you</p>{" "}
         {showYears && result.years && result.supply ? (
           <p className="mt-4 text-lg leading-relaxed">
             <b className="font-bold">{yearsText(result.years.low, result.years.high)} years</b>{" "}
-            <span className="text-foreground/75">
+            <span className="text-soft">
               at FY{result.supply.fy}&apos;s pace: {result.supply.perYear.toLocaleString("en-US")} green cards
               went to this line and country that year (State&apos;s Table V), families included.
             </span>
@@ -288,14 +288,14 @@ function LineAnswer({
         ) : result.supply ? (
           <p className="mt-4 text-lg leading-relaxed">
             <b className="font-bold tabular-nums">{result.supply.perYear.toLocaleString("en-US")}</b>{" "}
-            <span className="text-foreground/75">
+            <span className="text-soft">
               green cards went to this line and country in fiscal {result.supply.fy}, families included
               (State&apos;s Table V). The yearly number moves with spillover, so it isn&apos;t a promise.
             </span>
           </p>
         ) : null}{" "}
         {result.counted && result.counted.low > 0 ? (
-          <p className="mt-2 text-base text-foreground/75">
+          <p className="mt-2 text-base text-soft">
             USCIS counted at least{" "}
             <b className="font-bold text-foreground tabular-nums">{result.counted.low.toLocaleString("en-US")}</b> of
             them in its I-485 inventory{result.i485AsOf ? ` of ${formatAsOf(result.i485AsOf)}` : ""}.
@@ -303,7 +303,7 @@ function LineAnswer({
         ) : null}
 
         {result.check?.disagrees && result.check.scaled ? (
-          <div className="mt-5 flex items-start gap-3 border-2 border-data-warn bg-data-warn/10 p-4">
+          <div className="mt-5 flex items-start gap-3 border border-data-warn bg-data-warn/10 p-4">
             <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
             <p className="text-base leading-relaxed">
               <b className="font-bold">Treat this as rough for this line.</b>{" "}
@@ -321,10 +321,10 @@ function LineAnswer({
         ) : null}
       </div>
 
-      <div className="border-b-2 border-border p-6 sm:p-8">
-        <h3 className="font-heading text-lg font-black">Who they are</h3>{" "}
+      <div className="border-b border-border p-6 sm:p-8">
+        <h3 className="font-heading text-lg font-bold">Who they are</h3>{" "}
         <ChartTips label="The three groups ahead of you" className="mt-4">
-        <div className="flex h-8 w-full overflow-hidden border-2 border-border" role="img" aria-label="The three groups ahead of you, to scale">
+        <div className="flex h-8 w-full overflow-hidden border border-border" role="img" aria-label="The three groups ahead of you, to scale">
           {total > 0
             ? segs.map((s) => (
                 <span
@@ -343,11 +343,11 @@ function LineAnswer({
             <Fragment key={s.key}>
               {" "}
               <li className="flex items-start gap-2">
-                <span className={cn("mt-1.5 h-3 w-3 shrink-0 border-2 border-border", s.cls)} aria-hidden="true" />{" "}
+                <span className={cn("mt-1.5 h-3 w-3 shrink-0 border border-border", s.cls)} aria-hidden="true" />{" "}
                 <span>
                   <b className="block font-bold tabular-nums">{roundPeople(s.value)}</b>{" "}
                   <span className="block text-base font-semibold">{s.label}</span>{" "}
-                  <span className="block text-sm text-foreground/70">{s.note}</span>
+                  <span className="block text-sm text-muted-foreground">{s.note}</span>
                 </span>
               </li>
             </Fragment>
@@ -358,9 +358,9 @@ function LineAnswer({
       <LineStrip histogram={result.histogram} front={result.front.iso} you={priorityDate} />
 
       {reach ? (
-        <div className="border-b-2 border-border p-6 sm:p-8">
-          <h3 className="font-heading text-lg font-black">The bulletin&apos;s own pace, for comparison</h3>{" "}
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+        <div className="border-b border-border p-6 sm:p-8">
+          <h3 className="font-heading text-lg font-bold">The bulletin&apos;s own pace, for comparison</h3>{" "}
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
             Over the {reach.basis.spanMonths} months since October 2014, this line&apos;s final action date moved{" "}
             {Math.round(reach.basis.movedDays / DAYS_PER_MONTH_2DP)} months of priority dates
             {reach.basis.retrogressions > 0 ? `, with ${reach.basis.retrogressions} step${reach.basis.retrogressions === 1 ? "" : "s"} backwards` : ""}.
@@ -368,15 +368,15 @@ function LineAnswer({
             <b className="font-bold">{formatYears(reach.months / 12)} years</b>. That&apos;s the past pace, and the
             line behind the cutoff grew fastest in the last three years, so the count above is the better guide.
           </p>{" "}
-          {tested ? <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">{tested}</p> : null}
+          {tested ? <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">{tested}</p> : null}
         </div>
       ) : null}
 
-      <details className="group border-b-2 border-border p-6 sm:p-8">
-        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-black marker:content-none">
+      <details className="group border-b border-border p-6 sm:p-8">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
           What this leaves out
         </summary>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/80">
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">
           <li>PERMs still at the Department of Labor with an earlier priority date. They join ahead of you once certified.</li>{" "}
           <li>Consular cases already current and waiting for an interview abroad.</li>{" "}
           <li>
@@ -395,10 +395,10 @@ function LineAnswer({
       </details>
 
       <details className="group p-6 sm:p-8">
-        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-black marker:content-none">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
           How this is worked out
         </summary>
-        <div className="mt-3 max-w-3xl space-y-3 text-base leading-relaxed text-foreground/80">
+        <div className="mt-3 max-w-3xl space-y-3 text-base leading-relaxed text-soft">
           <p>
             USCIS counted <b className="font-bold">{result.awaitingTotal.toLocaleString("en-US")}</b> approved
             petitions in this line waiting for a visa number as of {formatMonth(result.awaitingAsOf)}, primary
@@ -461,9 +461,9 @@ function LineStrip({ histogram, front, you }: { histogram: Array<{ month: string
   const first = bars[0]!.label;
   const last = bars[bars.length - 1]!.label;
   return (
-    <div className="border-b-2 border-border p-6 sm:p-8">
-      <h3 className="font-heading text-lg font-black">Where they sit in the line</h3>{" "}
-      <p className="mt-1 text-base text-foreground/70">
+    <div className="border-b border-border p-6 sm:p-8">
+      <h3 className="font-heading text-lg font-bold">Where they sit in the line</h3>{" "}
+      <p className="mt-1 text-base text-muted-foreground">
         People ahead of you by priority date, from the bulletin&apos;s cutoff ({formatAsOf(front)}) to yours.
       </p>{" "}
       {/* The tooltip sits outside the scrolling strip, which would clip it. */}

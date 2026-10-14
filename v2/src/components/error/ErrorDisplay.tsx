@@ -38,7 +38,7 @@ export function ErrorDisplay({
     <div
       className={`flex min-h-[50vh] flex-col items-center justify-center gap-6 p-8 ${className || ""}`}
     >
-      <div className="flex size-16 items-center justify-center rounded-lg border-2 border-destructive bg-destructive/10 shadow-hard-sm">
+      <div className="flex size-16 items-center justify-center rounded-lg border border-destructive bg-destructive/10">
         <Icon className="size-8 text-destructive" />
       </div>
 
@@ -48,7 +48,7 @@ export function ErrorDisplay({
         </h2>{" "}
         <p className="mt-2 max-w-md text-sm text-muted-foreground">{message}</p>
         {details && (
-          <p className="mt-1 font-mono text-xs text-muted-foreground">
+          <p className="mt-1 font-mono text-sm text-muted-foreground">
             {details}
           </p>
         )}

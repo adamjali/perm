@@ -92,7 +92,7 @@ export const DifferentTypes: Story = {
 export const CaseForm: Story = {
   args: {},
   render: () => (
-    <div className="grid w-full max-w-md gap-4 p-6 border-2 border-border">
+    <div className="grid w-full max-w-md gap-4 p-6 border border-border">
       <h3 className="text-lg font-semibold">New Case</h3>
       <div className="grid gap-1.5">
         <Label htmlFor="beneficiary">Foreign Worker Name</Label>
@@ -124,7 +124,7 @@ export const NeobrutalistShowcase: Story = {
         <Input placeholder="Watch the shadow change..." />
         <Input placeholder="Hard shadow on focus!" />
       </div>
-      <div className="text-xs text-foreground/70 mt-4">
+      <div className="text-sm text-muted-foreground mt-4">
         Notice the hard shadow (shadow-hard-sm → shadow-hard) and focus ring
       </div>
     </div>

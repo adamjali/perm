@@ -47,7 +47,7 @@ export default function NotificationTabs({
   return (
     <div
       className={cn(
-        "flex flex-wrap gap-2 border-b-2 border-border pb-4",
+        "flex flex-wrap gap-2 border-b border-border pb-4",
         className
       )}
       role="tablist"
@@ -68,8 +68,8 @@ export default function NotificationTabs({
             className={cn(
               // Base styles - Mobile-first: 44px touch target (py-3), smaller on desktop
               "flex items-center gap-2 px-4 py-3 md:py-2",
-              "text-sm font-heading font-bold uppercase tracking-wide",
-              "border-2 transition-all duration-150",
+              "text-sm font-heading font-bold",
+              "border transition-colors duration-150",
               // Active state
               isActive
                 ? "border-foreground bg-foreground text-background"

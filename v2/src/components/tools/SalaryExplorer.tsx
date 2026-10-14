@@ -90,7 +90,7 @@ const usd = (n: number | null) =>
   n === null ? "n/a" : formatDollars(n);
 
 const FIELD =
-  "mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50";
+  "mt-2 block w-full min-w-0 min-h-[44px] border border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50";
 
 /**
  * A city as typed, committed on Enter or on leaving the field, so a reader
@@ -229,16 +229,16 @@ export function SalaryExplorer({
   const maxBin = Math.max(1, ...data.bins.map((b) => b.count));
 
   return (
-    <div className="border-2 border-border bg-card shadow-hard">
+    <div className="border border-border bg-card">
       {/* Filters. grid-cols-1 unprefixed and min-w-0 on the items are both
           required: without a mobile column track the items land in an implicit
           content-sized column, which on WebKit sizes a form control from its
           own UA stylesheet and runs it off the card. */}
-      <div className="border-b-2 border-border p-6 sm:p-8">
-        <h2 className="font-heading text-2xl font-black leading-tight">
+      <div className="border-b border-border p-6 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold leading-tight">
           {heading}
         </h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           Every offered wage in DOL&apos;s disclosure files, filtered. The
           figures describe the {nounPlural} you select, not the whole corpus.
         </p>
@@ -252,7 +252,7 @@ export function SalaryExplorer({
               id={ids.soc}
               value={soc}
               onChange={(e) => setParam("soc", e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               <option value="">All occupations</option>
               {occupations.map((o) => (
@@ -272,7 +272,7 @@ export function SalaryExplorer({
               id={ids.state}
               value={state}
               onChange={(e) => setParam("state", e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               <option value="">Every state</option>
               {states.map((s) => (
@@ -291,7 +291,7 @@ export function SalaryExplorer({
               id={ids.fy}
               value={fy}
               onChange={(e) => setParam("fy", e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               <option value="">All years</option>
               {fiscalYears.map((y) => (
@@ -310,7 +310,7 @@ export function SalaryExplorer({
               id={ids.status}
               value={status}
               onChange={(e) => setParam("status", e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               {STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -361,7 +361,7 @@ export function SalaryExplorer({
           ) : null}
         </div>
         {placeFilters ? (
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-foreground/70">
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             A city narrows a state, and an industry a state or an occupation. Cities are as DOL prints them.
             For one across the whole country, see the{" "}
             <Link href="/perm-cities" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
@@ -400,20 +400,20 @@ export function SalaryExplorer({
       {/* Warnings ABOVE the figures, always. A number computed from a suspect
           population must not read as more authoritative than the doubt. */}
       {error ? (
-        <p className="flex items-start gap-2 border-b-2 border-border bg-data-warn/8 px-6 py-4 text-base text-foreground/80 sm:px-8">
+        <p className="flex items-start gap-2 border-b border-border bg-data-warn/8 px-6 py-4 text-base text-soft sm:px-8">
           <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>{error}</span>
         </p>
       ) : null}
       {report.note ? (
-        <p className="flex items-start gap-2 border-b-2 border-border bg-data-warn/8 px-6 py-4 text-base text-foreground/80 sm:px-8">
+        <p className="flex items-start gap-2 border-b border-border bg-data-warn/8 px-6 py-4 text-base text-soft sm:px-8">
           <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>{report.note}</span>
         </p>
       ) : null}
 
       <div className={cn("p-6 sm:p-8", loading && "opacity-60")} aria-busy={loading}>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        <p className="text-sm font-semibold text-muted-foreground">
           {formatInt(data.stats.n)} {data.stats.n === 1 ? noun : nounPlural} with a usable wage
         </p>
 
@@ -430,18 +430,18 @@ export function SalaryExplorer({
                 .map((c) => (
                   <div
                     key={c.label}
-                    className="min-w-0 flex-1 basis-52 border-2 border-border bg-background p-4"
+                    className="min-w-0 flex-1 basis-52 border border-border bg-background p-4"
                   >
-                    <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                    <p className="text-sm font-semibold text-muted-foreground">
                       {c.label}
                     </p>{" "}
-                    <p className="mt-1 font-heading text-2xl font-black leading-none tabular-nums">
+                    <p className="mt-1 font-heading text-2xl font-bold leading-none tabular-nums">
                       {usd(c.v)}
                     </p>
                   </div>
                 ))}
             </div>
-            <p className="mt-3 text-base text-foreground/70">
+            <p className="mt-3 text-base text-muted-foreground">
               Half of these {nounPlural} fall between{" "}
               <b className="font-bold text-foreground tabular-nums">{usd(data.stats.p25)}</b> and{" "}
               <b className="font-bold text-foreground tabular-nums">{usd(data.stats.p75)}</b>, the
@@ -450,8 +450,8 @@ export function SalaryExplorer({
 
             {data.bins.length > 0 ? (
               <div className="mt-8">
-                <h3 className="font-heading text-xl font-black">Where the wages land</h3>{" "}
-                <p className="mt-2 text-base text-foreground/70">
+                <h3 className="font-heading text-xl font-bold">Where the wages land</h3>{" "}
+                <p className="mt-2 text-base text-muted-foreground">
                   Each bar is a {usd(data.binWidth)} band.
                   {data.below > 0 || data.above > 0 ? (
                     <>
@@ -473,14 +473,14 @@ export function SalaryExplorer({
                         aria-label={`${usd(b.from)} to ${usd(b.from + data.binWidth)}: ${formatInt(b.count)} ${nounPlural}`}
                         data-tip={`${usd(b.from)} to ${usd(b.from + data.binWidth)}\n${formatInt(b.count)} ${nounPlural}`}
                       >
-                        <span className="text-sm tabular-nums text-foreground/70">{usd(b.from)}</span>{" "}
-                        <span className="block h-5 w-full border-2 border-border bg-muted">
+                        <span className="text-sm tabular-nums text-muted-foreground">{usd(b.from)}</span>{" "}
+                        <span className="block h-5 w-full border border-border bg-muted">
                           <span
                             className="block h-full bg-primary"
                             style={{ width: `${Math.max((b.count / maxBin) * 100, 1)}%` }}
                           />
                         </span>{" "}
-                        <span className="text-right text-sm tabular-nums text-foreground/70">
+                        <span className="text-right text-sm tabular-nums text-muted-foreground">
                           {formatInt(b.count)}
                         </span>
                       </li>
@@ -493,8 +493,8 @@ export function SalaryExplorer({
 
             {data.byState.length > 0 ? (
               <div className="mt-10">
-                <h3 className="font-heading text-xl font-black">By worksite state</h3>{" "}
-                <p className="mt-2 text-base text-foreground/70">
+                <h3 className="font-heading text-xl font-bold">By worksite state</h3>{" "}
+                <p className="mt-2 text-base text-muted-foreground">
                   States with at least {MIN_FOR_MEDIAN} matching {nounPlural}, most first. Each bar runs from the 5th
                   to the 95th percentile on one shared scale; the black mark is the median.
                 </p>
@@ -532,7 +532,7 @@ export function SalaryExplorer({
                                 {r.ends ? (
                                   <span
                                     aria-hidden="true"
-                                    className="absolute inset-y-0.5 border-2 border-border bg-tint-primary"
+                                    className="absolute inset-y-0.5 border border-border bg-tint-primary"
                                     style={{ left: at(r.ends.p5), width: `${((r.ends.p95 - r.ends.p5) / span) * 100}%` }}
                                   />
                                 ) : null}
@@ -547,7 +547,7 @@ export function SalaryExplorer({
                           </Fragment>
                         ))}
                       </ol>
-                      <div aria-hidden="true" className="mt-2 grid grid-cols-[2.5rem_minmax(0,1fr)_5.5rem] gap-3 text-sm tabular-nums text-foreground/70 [&>*]:min-w-0">
+                      <div aria-hidden="true" className="mt-2 grid grid-cols-[2.5rem_minmax(0,1fr)_5.5rem] gap-3 text-sm tabular-nums text-muted-foreground [&>*]:min-w-0">
                         <span />{" "}
                         <span className="flex justify-between">
                           <span>{usd(lo)}</span>{" "}
@@ -556,18 +556,18 @@ export function SalaryExplorer({
                         <span className="text-right">median</span>
                       </div>
                       {ranged.length < drawn.length ? (
-                        <p className="mt-2 text-sm text-foreground/70">
+                        <p className="mt-2 text-sm text-muted-foreground">
                           A state with fewer than 100 {nounPlural} shows its median alone.
                         </p>
                       ) : null}
                     </ChartTips>
                   );
                 })()}
-                <details className="mt-5 border-2 border-border">
+                <details className="mt-5 border border-border">
                   <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
                     {`All ${formatInt(data.byState.length)} states, as a table`}
                   </summary>
-                <div className="overflow-x-auto border-t-2 border-border">
+                <div className="overflow-x-auto border-t border-border">
                   <table className="w-full min-w-[36rem] text-left text-sm">
                     <thead className="bg-foreground text-background">
                       <tr>
@@ -576,7 +576,7 @@ export function SalaryExplorer({
                             key={h}
                             scope="col"
                             className={cn(
-                              "px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider",
+                              "px-3 py-2 text-sm font-bold",
                               i > 0 && "text-right",
                             )}
                           >
@@ -589,7 +589,7 @@ export function SalaryExplorer({
                       {data.byState.map((r, i) => (
                         <tr
                           key={r.state}
-                          className={cn("border-t-2 border-border", i % 2 === 1 && "bg-muted")}
+                          className={cn("border-t border-border", i % 2 === 1 && "bg-muted")}
                         >
                           <th scope="row" className="px-3 py-2 font-bold">
                             {r.state}{" "}

@@ -139,9 +139,9 @@ export function DeadlineDocket({ className }: { className?: string }) {
   const at = (iso: string) => `${((dayNumber(iso) - from) / span) * 100}%`;
 
   return (
-    <figure className={cn("@container border-3 border-border bg-card shadow-hard-lg", className)}>
-      <figcaption className="flex items-center justify-between gap-3 border-b-3 border-border bg-foreground px-4 py-2.5 text-background dark:bg-muted dark:text-foreground">
-        <span className="font-heading text-base font-black">Example case</span>{" "}
+    <figure className={cn("@container border border-border bg-card", className)}>
+      <figcaption className="flex items-center justify-between gap-3 border-b border-border bg-foreground px-4 py-2.5 text-background dark:bg-muted dark:text-foreground">
+        <span className="font-heading text-base font-bold">Example case</span>{" "}
         <span className="text-sm opacity-80">computed by the app</span>
       </figcaption>
 
@@ -151,7 +151,7 @@ export function DeadlineDocket({ className }: { className?: string }) {
           {d.entered.map((e) => (
             <Fragment key={e.label}>
               {" "}
-              <li className="inline-flex items-baseline gap-2 border-2 border-border bg-background px-2.5 py-1.5 text-sm">
+              <li className="inline-flex items-baseline gap-2 border border-border bg-background px-2.5 py-1.5 text-sm">
                 <span className="text-muted-foreground">{e.label}</span>{" "}
                 <span className="font-mono font-bold tabular-nums">{formatAsOfShort(e.date)}</span>
               </li>
@@ -170,10 +170,10 @@ export function DeadlineDocket({ className }: { className?: string }) {
 
         {/* Recruitment, the 30-day wait, then the filing window, to scale. */}
         <div className="mt-4" aria-hidden="true">
-          <div className="relative h-7 border-2 border-border bg-background">
+          <div className="relative h-7 border border-border bg-background">
             <div className="absolute inset-y-0 left-0 bg-stage-recruitment" style={{ width: at(d.lastRecruitment) }} />
             <div
-              className="absolute inset-y-0 border-l-2 border-border bg-primary"
+              className="absolute inset-y-0 border-l border-border bg-primary"
               style={{ left: at(d.window.opens), right: 0 }}
             />
           </div>
@@ -190,7 +190,7 @@ export function DeadlineDocket({ className }: { className?: string }) {
           </ul>
         </div>
 
-        <div className="mt-5 border-t-2 border-dashed border-border pt-4">
+        <div className="mt-5 border-t border-dashed border-border pt-4">
           <p className="text-sm font-bold text-muted-foreground">
             When DOL certifies it, you enter{" "}
             <span className="font-mono text-foreground tabular-nums">{formatAsOfShort(d.certification.entered)}</span>

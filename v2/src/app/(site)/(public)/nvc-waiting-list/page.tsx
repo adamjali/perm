@@ -72,10 +72,10 @@ function CategoryTable({ rows, caption }: { rows: CategorySeries[]; caption: str
   return (
     // The tooltip sits outside the scrolling table, which would clip it.
     <ChartTips label={caption} className="mt-4">
-    <div className="overflow-x-auto border-2 border-border bg-card shadow-hard">
+    <div className="overflow-x-auto border border-border bg-card">
       <table className="w-full min-w-[640px] text-left text-base">
         <caption className="sr-only">{caption}</caption>
-        <thead className="border-b-2 border-border bg-muted/40">
+        <thead className="border-b border-border bg-muted/40">
           <tr>
             <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>
             <th scope="col" className="px-4 py-3 font-bold">Each November, oldest to newest{" "}</th>
@@ -115,14 +115,14 @@ export default async function NvcWaitingListPage() {
       <div className="pt-10 sm:pt-12" />
 
       <header>
-        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">The immigrant visa waiting list</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
+        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">The immigrant visa waiting list</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           The State Department&apos;s yearly count of people with approved petitions waiting for an immigrant visa at the
           National Visa Center, by category.
         </p>
       </header>
 
-      <div className="mt-8 border-l-4 border-primary bg-card p-5 shadow-hard">
+      <div className="mt-8 border-l-2 border-primary bg-card p-5">
         <p className="text-base leading-relaxed">
           <b className="font-bold">Consular cases only, families included.</b> Everyone adjusting status inside the US
           is left out, so for employment categories it understates demand (&ldquo;significantly&rdquo;, in
@@ -132,7 +132,7 @@ export default async function NvcWaitingListPage() {
       </div>
 
       {!wl || !newest ? (
-        <p className="mt-10 max-w-2xl text-base text-foreground/80">
+        <p className="mt-10 max-w-2xl text-base text-soft">
           The waiting list hasn&apos;t been loaded yet. The State Department publishes it on its{" "}
           <a
             href="https://travel.state.gov/content/travel/en/legal/visa-law0/visa-statistics/immigrant-visa-statistics.html"
@@ -158,9 +158,9 @@ export default async function NvcWaitingListPage() {
               ].map((t) => (
                 <Fragment key={t.label}>
                   {" "}
-                  <div className="border-2 border-border bg-card p-5 shadow-hard">
-                    <dt className="text-base text-foreground/75">{t.label}</dt>{" "}
-                    <dd className="mt-1 font-heading text-3xl font-black tabular-nums">{t.now.toLocaleString("en-US")}</dd>{" "}
+                  <div className="border border-border bg-card p-5">
+                    <dt className="text-base text-soft">{t.label}</dt>{" "}
+                    <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{t.now.toLocaleString("en-US")}</dd>{" "}
                     <dd className="font-mono text-sm text-muted-foreground">
                       {dateLabel(newest.asOf)}
                       {t.prev ? `, ${changeLabel((t.now - t.prev) / t.prev)} in a year` : ""}
@@ -172,10 +172,10 @@ export default async function NvcWaitingListPage() {
           </section>
 
           <section className="mt-12" aria-labelledby="employment">
-            <h2 id="employment" className="font-heading text-2xl font-black">
+            <h2 id="employment" className="font-heading text-2xl font-bold">
               Employment-based, by category
             </h2>{" "}
-            <p className="mt-2 max-w-3xl text-base text-foreground/75">
+            <p className="mt-2 max-w-3xl text-base text-soft">
               November {yearOf(series[0]!.asOf)} to November {yearOf(newest.asOf)}, one bar a year, all categories on one
               scale. People counted here are waiting abroad; the{" "}
               <Link href="/tools/green-card-line" className="font-semibold underline underline-offset-2 hover:text-primary">
@@ -188,7 +188,7 @@ export default async function NvcWaitingListPage() {
 
           {wl.employmentByCountry.length ? (
             <section className="mt-12" aria-labelledby="countries">
-              <h2 id="countries" className="font-heading text-2xl font-black">
+              <h2 id="countries" className="font-heading text-2xl font-bold">
                 Employment-based, by country, {dateLabel(newest.asOf)}
               </h2>{" "}
               <ul className="mt-4 grid grid-cols-1 gap-2 [&>*]:min-w-0 sm:grid-cols-2">
@@ -206,17 +206,17 @@ export default async function NvcWaitingListPage() {
           ) : null}
 
           <section className="mt-12" aria-labelledby="family">
-            <h2 id="family" className="font-heading text-2xl font-black">
+            <h2 id="family" className="font-heading text-2xl font-bold">
               Family-sponsored, by category
             </h2>{" "}
             <CategoryTable rows={family} caption="Family-sponsored applicants at the National Visa Center, each November" />
           </section>
 
-          <details className="group mt-12 border-2 border-border p-6 sm:p-8">
-            <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-black marker:content-none">
+          <details className="group mt-12 border border-border p-6 sm:p-8">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
               How it&apos;s read, and what it can&apos;t tell you
             </summary>
-            <div className="mt-3 max-w-3xl space-y-3 text-base leading-relaxed text-foreground/80">
+            <div className="mt-3 max-w-3xl space-y-3 text-base leading-relaxed text-soft">
               <p>
                 Each report prints two Novembers. Every report is checked against itself (each sub-total and total adds
                 up) and against the report before it (its earlier column must match that report&apos;s own figures).

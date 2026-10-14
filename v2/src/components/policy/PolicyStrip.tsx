@@ -64,7 +64,7 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
   return (
     // The tooltip sits outside the scrolling strip, which would clip it.
     <ChartTips label="Twelve months of policy documents" className="mt-6">
-    <div className="overflow-x-auto border-2 border-border bg-card shadow-hard">
+    <div className="overflow-x-auto border border-border bg-card">
       <svg
         viewBox={`0 0 ${STRIP_W} ${H}`}
         className="block h-auto min-w-[880px] w-full"
@@ -164,10 +164,10 @@ export function StripLegend() {
     </li>
   );
   return (
-    <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm text-foreground/80">
-      {item("inline-block size-3 border-2 border-foreground bg-primary", "final rule")}{" "}
-      {item("inline-block size-3 border-2 border-foreground bg-foreground", "proposed rule")}{" "}
-      {item("inline-block size-3 border-2 border-foreground bg-background", "notice")}{" "}
+    <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm text-soft">
+      {item("inline-block size-3 border border-foreground bg-primary", "final rule")}{" "}
+      {item("inline-block size-3 border border-foreground bg-foreground", "proposed rule")}{" "}
+      {item("inline-block size-3 border border-foreground bg-background", "notice")}{" "}
       {item("inline-block h-1.5 w-6 bg-primary", "comment window, open")}{" "}
       {item("inline-block h-1.5 w-6 bg-foreground/35", "comment window, closed")}{" "}
       {item("inline-block h-3.5 w-[3px] bg-foreground", "OFLC announcement")}
