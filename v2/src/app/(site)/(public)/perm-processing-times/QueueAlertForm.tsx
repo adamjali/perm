@@ -84,7 +84,7 @@ const selectClasses = cn(
   "transition-colors duration-150 outline-none md:text-sm",
   "",
   "focus:ring-2 focus:ring-ring focus-visible:border-ring",
-  "disabled:shadow-none disabled:pointer-events-none disabled:opacity-50",
+  "disabled:shadow-none disabled:pointer-events-none disabled:text-muted-foreground",
 );
 
 export function QueueAlertForm({

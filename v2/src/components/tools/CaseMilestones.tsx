@@ -412,7 +412,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             <button
               type="submit"
               disabled={state.kind === "sending"}
-              className="min-h-11 border border-border bg-primary px-5 font-bold text-primary-foreground transition-transform disabled:opacity-60"
+              className="min-h-11 border border-border bg-primary px-5 font-bold text-primary-foreground transition-transform disabled:text-muted-foreground"
             >
               {state.kind === "sending" ? "Saving" : mine ? "Save changes" : "Save my timeline"}
             </button>{" "}
@@ -421,7 +421,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
                 type="button"
                 onClick={remove}
                 disabled={state.kind === "sending"}
-                className="min-h-11 border border-border bg-background px-5 font-bold transition-transform disabled:opacity-60"
+                className="min-h-11 border border-border bg-background px-5 font-bold transition-transform disabled:text-muted-foreground"
               >
                 Remove my timeline
               </button>

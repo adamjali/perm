@@ -338,7 +338,7 @@ export function ChatInput({
           'border border-input bg-background rounded-none',
           'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0',
           'placeholder:text-muted-foreground',
-          'disabled:opacity-50 disabled:cursor-not-allowed'
+          'disabled:text-muted-foreground disabled:cursor-not-allowed'
         )}
       />
 

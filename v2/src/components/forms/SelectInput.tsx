@@ -54,7 +54,7 @@ export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>
           // Focus state
           "focus:ring-2 focus:ring-ring focus-visible:border-ring",
           // Disabled state
-          "disabled:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+          "disabled:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:text-muted-foreground",
           // Error state
           error && "border-destructive ring-destructive/20 dark:ring-destructive/40",
           // Normal state

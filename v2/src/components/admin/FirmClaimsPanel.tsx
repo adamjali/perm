@@ -37,7 +37,7 @@ const REASON: Record<string, string> = {
 };
 
 const BTN =
-  "inline-flex min-h-[44px] items-center border border-border px-3 text-sm font-bold transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none";
+  "inline-flex min-h-[44px] items-center border border-border px-3 text-sm font-bold transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none";
 
 function when(ms: number | undefined): string {
   if (!ms) return "";

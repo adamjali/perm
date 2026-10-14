@@ -44,7 +44,7 @@ function DropdownMenuContent({
         sideOffset={sideOffset}
         className={cn(
           // Base styles
-          "bg-popover text-popover-foreground z-50 min-w-[8rem] border border-border p-1",
+          "bg-popover text-popover-foreground z-50 min-w-[8rem] border border-border p-1 shadow-overlay",
           // Sizing
           "max-h-(--radix-dropdown-menu-content-available-height) origin-(--radix-dropdown-menu-content-transform-origin)",
           // Overflow
@@ -52,10 +52,7 @@ function DropdownMenuContent({
           // Snappy animations (100ms duration)
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-          "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
-          "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2",
-          "data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-          // GPU acceleration - prevents jank during animations
+                                        // GPU acceleration - prevents jank during animations
           "will-change-[transform,opacity]",
           // Fast duration override
           "duration-150",
@@ -93,7 +90,7 @@ function DropdownMenuItem({
         // Mobile-first: 44px touch target (py-3 = 12px * 2 + line height), smaller on desktop
         // Use data-[highlighted] (Radix's managed state) alongside focus: for consistent
         // styling even when the browser window is unfocused (macOS drops :focus styles)
-        "focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground focus:[&_svg:not([class*='text-'])]:text-accent-foreground data-[highlighted]:[&_svg:not([class*='text-'])]:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:data-[highlighted]:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 dark:data-[variant=destructive]:data-[highlighted]:bg-destructive/20 data-[variant=destructive]:focus:text-destructive-text data-[variant=destructive]:data-[highlighted]:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-pointer items-center gap-2 rounded-sm px-3 py-3 md:px-2 md:py-1.5 text-base md:text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground focus:[&_svg:not([class*='text-'])]:text-accent-foreground data-[highlighted]:[&_svg:not([class*='text-'])]:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:data-[highlighted]:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 dark:data-[variant=destructive]:data-[highlighted]:bg-destructive/20 data-[variant=destructive]:focus:text-destructive-text data-[variant=destructive]:data-[highlighted]:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-pointer items-center gap-2 rounded-sm px-3 py-3 md:px-2 md:py-1.5 text-base md:text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:text-muted-foreground data-[disabled]:cursor-not-allowed data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
@@ -112,7 +109,7 @@ function DropdownMenuCheckboxItem({
       data-slot="dropdown-menu-checkbox-item"
       className={cn(
         // Mobile-first: 44px touch target (py-3), smaller on desktop (py-1.5)
-        "focus:bg-accent focus:text-accent-foreground relative flex cursor-pointer items-center gap-2 rounded-sm py-3 md:py-1.5 pr-3 md:pr-2 pl-9 md:pl-8 text-base md:text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "focus:bg-accent focus:text-accent-foreground relative flex cursor-pointer items-center gap-2 rounded-sm py-3 md:py-1.5 pr-3 md:pr-2 pl-9 md:pl-8 text-base md:text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:text-muted-foreground data-[disabled]:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       checked={checked}
@@ -149,7 +146,7 @@ function DropdownMenuRadioItem({
       data-slot="dropdown-menu-radio-item"
       className={cn(
         // Mobile-first: 44px touch target (py-3), smaller on desktop (py-1.5)
-        "focus:bg-accent focus:text-accent-foreground relative flex cursor-pointer items-center gap-2 rounded-sm py-3 md:py-1.5 pr-3 md:pr-2 pl-9 md:pl-8 text-base md:text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "focus:bg-accent focus:text-accent-foreground relative flex cursor-pointer items-center gap-2 rounded-sm py-3 md:py-1.5 pr-3 md:pr-2 pl-9 md:pl-8 text-base md:text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:text-muted-foreground data-[disabled]:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
@@ -252,7 +249,7 @@ function DropdownMenuSubContent({
     <DropdownMenuPrimitive.SubContent
       data-slot="dropdown-menu-sub-content"
       className={cn(
-        "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden border border-border p-1",
+        "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden border border-border p-1",
         className
       )}
       {...props}

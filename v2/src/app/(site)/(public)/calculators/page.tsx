@@ -417,7 +417,7 @@ export default function CalculatorsPage() {
             );
             // One offset block in the grid, on the exact-answer tool.
             return t.tone === "pop" ? (
-              <div key={t.href} className="pop">
+              <div key={t.href}>
                 {card}
               </div>
             ) : (

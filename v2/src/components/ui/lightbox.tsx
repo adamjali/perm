@@ -93,7 +93,6 @@ export function Lightbox({
             "fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-            "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
             "duration-150 outline-none"
           )}
           onClick={(e) => {

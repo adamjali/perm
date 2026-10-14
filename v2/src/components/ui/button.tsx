@@ -5,32 +5,39 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 import { Spinner } from "@/components/ui/spinner"
 
+/**
+ * The site's buttons. The lime one is the main action and there is one per
+ * screen; it keeps a small hard edge in light mode, the only hard shadow left.
+ * Hover and press darken the fill; nothing lifts or moves. The focus ring is
+ * the green ink, shown for the keyboard only.
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-heading text-sm font-bold border border-border transition-colors duration-150 cursor-pointer disabled:pointer-events-none disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-heading text-sm font-bold border transition-colors duration-150 cursor-pointer disabled:pointer-events-none disabled:cursor-not-allowed disabled:shadow-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-invalid:border-destructive",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground",
+        default:
+          "border-foreground bg-primary text-primary-foreground shadow-press hover:bg-primary-hover active:bg-primary-press",
         destructive:
-          "bg-destructive text-destructive-foreground focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+          "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80",
         outline:
-          "bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
+          "border-input bg-card text-foreground hover:bg-accent active:bg-muted",
         secondary:
-          "bg-secondary text-secondary-foreground",
+          "border-transparent bg-secondary text-secondary-foreground hover:bg-accent active:bg-muted",
         ghost:
-          "border-transparent shadow-none text-foreground hover:bg-accent hover:text-accent-foreground dark:text-foreground dark:hover:bg-accent/50",
-        link: "border-transparent shadow-none text-primary underline-offset-4 hover:underline",
+          "border-transparent text-foreground hover:bg-accent active:bg-muted",
+        link: "border-transparent text-primary underline underline-offset-4 decoration-1 hover:decoration-2",
       },
       size: {
-        // Mobile-first: 44px (h-11) touch targets on mobile, smaller on desktop (md:)
-        default: "h-11 md:h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-11 md:h-8 gap-1.5 px-3 has-[>svg]:px-2.5",
-        xs: "h-10 md:h-6 gap-1 px-2 text-sm has-[>svg]:px-1.5",
-        lg: "h-11 md:h-10 px-6 has-[>svg]:px-4",
-        icon: "size-11 md:size-9",
-        "icon-sm": "size-11 md:size-8",
-        "icon-xs": "size-10 md:size-6",
-        "icon-lg": "size-11 md:size-10",
+        // 44px (h-11) on touch screens; smaller from md, where a pointer is precise.
+        default: "h-11 md:h-10 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-11 md:h-9 gap-1.5 px-3 has-[>svg]:px-2.5",
+        xs: "h-10 md:h-8 gap-1 px-2 text-sm has-[>svg]:px-1.5",
+        lg: "h-12 px-6 text-base has-[>svg]:px-4",
+        icon: "size-11 md:size-10",
+        "icon-sm": "size-11 md:size-9",
+        "icon-xs": "size-10 md:size-8",
+        "icon-lg": "size-12",
       },
     },
     defaultVariants: {
@@ -83,7 +90,7 @@ function Button({
         // quieter border. Fading the whole control to 50% turned the lime into
         // a washed pastel with unreadable text. A loading button keeps its own
         // colours, because the action is under way, not unavailable.
-        disabled && !loading && "bg-muted text-muted-foreground border-muted-foreground/40",
+        disabled && !loading && "bg-muted text-muted-foreground border-border",
         loading && "cursor-wait"
       )}
       disabled={disabled || loading}

@@ -396,7 +396,7 @@ function ClosedCaseButtons({
         variant="outline"
         size="sm"
         disabled={isViewLoading}
-        className="flex-1 border border-black/50 bg-transparent text-sm text-black/70 hover:bg-black/5 disabled:opacity-70"
+        className="flex-1 border border-black/50 bg-transparent text-sm text-black/70 hover:bg-black/5 disabled:text-muted-foreground"
         onClick={onViewClick}
         aria-label="View"
       >
@@ -407,7 +407,7 @@ function ClosedCaseButtons({
         variant="outline"
         size="sm"
         disabled={isReopening}
-        className="border border-border bg-transparent text-sm text-primary hover:bg-black/5 disabled:opacity-70"
+        className="border border-border bg-transparent text-sm text-primary hover:bg-black/5 disabled:text-muted-foreground"
         onClick={onReopenClick}
         aria-label="Reopen"
       >
@@ -455,7 +455,7 @@ function ActiveCaseButtons({
         variant="default"
         size="sm"
         disabled={isViewLoading}
-        className="flex-1 text-sm font-bold border-black disabled:opacity-70 disabled:shadow-none"
+        className="flex-1 text-sm font-bold border-black disabled:text-muted-foreground disabled:shadow-none"
         onClick={onViewClick}
         aria-label="View"
       >
@@ -472,7 +472,7 @@ function ActiveCaseButtons({
         variant="outline"
         size="sm"
         disabled={isEditLoading}
-        className="text-sm bg-transparent border border-black text-black hover:bg-black/10 disabled:opacity-70"
+        className="text-sm bg-transparent border border-black text-black hover:bg-black/10 disabled:text-muted-foreground"
         onClick={onEditClick}
         aria-label="Edit"
       >

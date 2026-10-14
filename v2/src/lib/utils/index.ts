@@ -1,5 +1,19 @@
 import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { extendTailwindMerge } from "tailwind-merge"
+
+/**
+ * The class merger, taught the site's own shadow names. Without this it reads
+ * `shadow-press` and `shadow-overlay` as shadow COLOURS, so a later
+ * `shadow-none` wouldn't replace them. Colour names (text-soft, bg-tint) are
+ * already read as colours.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      shadow: ["press", "overlay", "hard", "hard-sm", "hard-lg"],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))

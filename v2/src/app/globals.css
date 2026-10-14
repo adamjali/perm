@@ -473,7 +473,9 @@
     );
     background-size: 300% 100%;
     background-repeat: no-repeat;
-    animation: skeleton-sweep 1.9s ease-in-out infinite;
+    /* Quieter since Oct 14 2026: a slower pass, and a 0.4s wait first so a
+       load that finishes quickly never shows a sweep at all. */
+    animation: skeleton-sweep 2.8s ease-in-out 0.4s infinite;
   }
 
   /* A skeleton drawn inside an inverted (ink) panel, such as the case page's
@@ -522,25 +524,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  /* Scroll progress bar.
-     Driven by transform rather than width. This one updates on every scroll
-     frame, which makes it the worst place on the site to run layout; scaleX
-     stays on the compositor.
-     The rendering is unchanged: scaleX squashes the painted gradient exactly
-     the way a narrower width did, so the bar still shows the whole green-to-
-     purple ramp compressed into however much has been scrolled. Verified in
-     the browser, because the intuition that scaling would instead *reveal*
-     more of a full-width gradient is wrong and easy to talk yourself into. */
-
-  /* Scroll hint animation */
-  .scroll-hint-icon {
-    animation: scroll-hint 1.5s ease-in-out infinite;
-  }
-
-  @keyframes scroll-hint {
-    0%, 100% { transform: translateX(0); opacity: 0.5; }
-    50% { transform: translateX(8px); opacity: 1; }
-  }
+  
 
   /* Hide scrollbar for horizontal scroll containers */
   .scrollbar-hide {
@@ -2099,29 +2083,6 @@ input[type="week"] {
   background-color: var(--tint);
 }
 
-/* Offset block — the strongest layering device from the client-site system,
-   translated to this design language: the block behind a card is PRIMARY, the
-   offset matches --shadow-hard's 8px, and it must be a WRAPPER. A ::before with
-   z-index:-1 on the element that carries the background paints over that
-   element's own background inside its stacking context, and every card renders
-   as a solid slab of accent. */
-.pop {
-  position: relative;
-}
-.pop::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  transform: translate(8px, 8px);
-  background: var(--primary);
-  border: 1px solid var(--border);
-}
-.pop > * {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-}
 
 /* Children of a selected (manila) row that normally use theme tokens. */
 .doc-row.selected .doc-name { color: var(--manila-ink); }

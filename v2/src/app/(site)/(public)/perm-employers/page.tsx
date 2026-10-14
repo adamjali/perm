@@ -144,7 +144,7 @@ export default async function PermEmployersPage() {
           >
           <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 xl:grid-cols-2">
           {/* The drawing first: the top ten as a volume ladder. */}
-          <section className="pop h-full">
+          <section className="h-full">
             <div className="flex h-full flex-col border border-border bg-card p-6 sm:p-8">
               <h3 className="font-heading text-xl font-bold">The top ten, by filings</h3>
               <ChartTips label="The top ten sponsors, by filings" className="mt-6">

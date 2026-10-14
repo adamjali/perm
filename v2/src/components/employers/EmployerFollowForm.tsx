@@ -92,7 +92,7 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
           type="submit"
           data-ph-capture-attribute-cta="employer-follow"
           disabled={status === "sending"}
-          className="inline-flex min-h-[48px] shrink-0 items-center justify-center border border-border bg-foreground px-6 text-base font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
+          className="inline-flex min-h-[48px] shrink-0 items-center justify-center border border-border bg-foreground px-6 text-base font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none"
         >
           {status === "sending" ? "Sending" : "Follow"}
         </button>

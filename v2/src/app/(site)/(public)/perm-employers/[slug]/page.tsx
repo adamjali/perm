@@ -800,7 +800,7 @@ export default async function EmployerPage({
               unit="filings"
               className="mb-6"
             />{" "}
-            <section className="pop" aria-label="Its record in five figures">
+            <section aria-label="Its record in five figures">
             <EntityStatCards
               cards={[
                 volumeCard("Filings", row, kindTotal),

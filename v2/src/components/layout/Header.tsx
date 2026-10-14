@@ -301,7 +301,7 @@ export default function Header(): React.ReactElement {
                 <button
                   onClick={handleMobileSignOut}
                   disabled={isSigningOut}
-                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold text-white transition-colors hover:text-primary-text text-left disabled:opacity-50"
+                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold text-white transition-colors hover:text-primary-text text-left disabled:text-muted-foreground"
                 >
                   {isSigningOut ? (
                     <CircleNotchIcon className="size-4 animate-spin" />

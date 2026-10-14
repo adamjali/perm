@@ -181,7 +181,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
           <button
             type="submit"
             disabled={busy}
-            className="flex min-h-11 items-center border border-border bg-primary px-5 font-heading text-sm font-bold text-black transition-transform disabled:opacity-60 motion-reduce:transition-none"
+            className="flex min-h-11 items-center border border-border bg-primary px-5 font-heading text-sm font-bold text-black transition-transform disabled:text-muted-foreground motion-reduce:transition-none"
           >
             {busy ? "Placing it…" : "Place my offer"}
           </button>{" "}

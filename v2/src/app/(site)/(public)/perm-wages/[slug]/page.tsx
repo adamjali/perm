@@ -341,7 +341,7 @@ export default async function OccupationPage({
               unit="filings"
               className="mb-6"
             />{" "}
-            <section className="pop" aria-label="Its record in four figures">
+            <section aria-label="Its record in four figures">
         <EntityStatCards
           cards={[
             {

@@ -151,9 +151,9 @@ const CONTROL =
   // gate scans file TEXT and cannot tell a comment from a className.)
   "disabled:border-border/50 disabled:bg-tint-primary/40 disabled:text-muted-foreground";
 const BUTTON =
-  "min-h-[44px] border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
 const CHIP =
-  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-card ";
+  "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-card ";
 
 /**
  * Rows drawn at once. An answer holds up to 1,000 (UNIFIED_MAX); drawing them
@@ -757,7 +757,7 @@ export function UnifiedCaseSearch({
                     type="button"
                     onClick={() => runExample(name)}
                     disabled={pending}
-                    className="min-h-[44px] border border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"
+                    className="min-h-[44px] border border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary disabled:text-muted-foreground"
                   >
                     {name}
                   </button>{" "}

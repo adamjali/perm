@@ -138,7 +138,7 @@ export function CasePushAlert({ caseNumber, className }: { caseNumber: string; c
             type="button"
             onClick={turnOn}
             disabled={state.kind === "working"}
-            className="min-h-11 border border-border bg-background px-5 font-bold transition-transform disabled:opacity-60"
+            className="min-h-11 border border-border bg-background px-5 font-bold transition-transform disabled:text-muted-foreground"
           >
             {state.kind === "working" ? "Asking the browser" : "Notify this browser"}
           </button>{" "}
@@ -147,7 +147,7 @@ export function CasePushAlert({ caseNumber, className }: { caseNumber: string; c
               type="button"
               onClick={turnOff}
               disabled={state.kind === "working"}
-              className="min-h-11 px-3 text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary disabled:opacity-60"
+              className="min-h-11 px-3 text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary disabled:text-muted-foreground"
             >
               Stop notifying this browser
             </button>

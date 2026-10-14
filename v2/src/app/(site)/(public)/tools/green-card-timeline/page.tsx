@@ -166,7 +166,7 @@ export default async function GreenCardTimelinePage() {
         </p>
       </header>
 
-      <div className="pop mt-10">
+      <div className="mt-10">
       <section data-embed="green-card-timeline" className="border border-border bg-card p-6 sm:p-8">
         <GreenCardTimelineView
           timeline={timeline}

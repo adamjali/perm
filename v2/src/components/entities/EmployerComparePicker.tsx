@@ -142,7 +142,7 @@ export function EmployerComparePicker({ a, b }: { a: Chosen | null; b: Chosen | 
         <button
           type="submit"
           disabled={!ready}
-          className="flex min-h-11 items-center border border-border bg-primary px-5 font-heading text-sm font-bold text-black transition-transform disabled:opacity-60 motion-reduce:transition-none"
+          className="flex min-h-11 items-center border border-border bg-primary px-5 font-heading text-sm font-bold text-black transition-transform disabled:text-muted-foreground motion-reduce:transition-none"
         >
           Compare
         </button>

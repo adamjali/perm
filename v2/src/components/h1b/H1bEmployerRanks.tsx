@@ -310,7 +310,7 @@ export function H1bEmployerRanks({
                     onClick={() => go(year.fy, b)}
                     className={`min-h-[44px] border border-border px-2 text-sm font-bold sm:px-3 sm:text-base ${i > 0 ? "-ml-0.5" : ""} ${
                       on ? "bg-foreground text-background" : "bg-background hover:bg-muted"
-                    } disabled:cursor-not-allowed disabled:opacity-50`}
+                    } disabled:cursor-not-allowed disabled:text-muted-foreground`}
                   >
                     {b === "lca" ? "DOL's LCAs" : "USCIS approvals"}{" "}
                   </button>

@@ -354,7 +354,7 @@ export default async function AttorneyPage({
               unit="cases"
               className="mb-6"
             />{" "}
-            <section className="pop" aria-label="Its record in five figures">
+            <section aria-label="Its record in five figures">
               <EntityStatCards
                 cards={[
                   volumeCard("Cases", row, kindTotal),

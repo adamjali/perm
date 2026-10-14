@@ -155,7 +155,7 @@ function unreadMonthLabels(from: string, to: string): string[] {
 const CONTROL =
   "min-h-[44px] w-full min-w-0 border border-border bg-card px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
-  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold transition-colors hover:bg-tint-primary disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "text-sm font-bold text-muted-foreground";
 
 function fmtWage(n: number | null): string {

@@ -251,7 +251,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
           <button
             type="submit"
             disabled={!ready}
-            className="min-h-11 border border-border bg-primary px-6 font-bold text-primary-foreground transition-transform disabled:opacity-60"
+            className="min-h-11 border border-border bg-primary px-6 font-bold text-primary-foreground transition-transform disabled:text-muted-foreground"
           >
             {result.kind === "loading" ? "Asking DOL" : "Look up the four levels"}
           </button>

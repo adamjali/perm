@@ -133,7 +133,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={phase === "sending"}
-        className="mt-5 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-5 inline-flex min-h-[44px] items-center gap-2 border border-border bg-primary px-6 py-3 font-bold text-primary-foreground transition-colors duration-150 disabled:cursor-not-allowed disabled:text-muted-foreground"
       >
         {phase === "sending" ? "Sending…" : "Send message"}
         <Send className="h-4 w-4" aria-hidden="true" />

@@ -199,7 +199,7 @@ export default function PrintableChecklist({
   const allChecked = totalCount > 0 && checkedCount === totalCount;
   const noneChecked = checkedCount === 0;
 
-  const btnBase = "inline-flex items-center gap-1.5 border-[3px] border-black dark:border-white px-3 py-1.5 text-sm font-bold transition-colors duration-150 disabled:opacity-40 disabled:pointer-events-none";
+  const btnBase = "inline-flex items-center gap-1.5 border-[3px] border-black dark:border-white px-3 py-1.5 text-sm font-bold transition-colors duration-150 disabled:text-muted-foreground disabled:pointer-events-none";
 
   return (
     <section className="relative my-8">

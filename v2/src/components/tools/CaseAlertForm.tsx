@@ -192,7 +192,7 @@ export function CaseAlertForm({
           type="submit"
           data-ph-capture-attribute-cta="case-alert"
           disabled={state.kind === "sending"}
-          className="min-h-[48px] shrink-0 border border-border bg-foreground px-5 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
+          className="min-h-[48px] shrink-0 border border-border bg-foreground px-5 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none"
         >
           {state.kind === "sending" ? "Sending" : "Email me changes"}
         </button>

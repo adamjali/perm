@@ -87,13 +87,6 @@ export function AppWindow({
     <figure className={className}>
       <div className="relative">
         <div
-          aria-hidden="true"
-          className={cn(
-            "absolute inset-0 translate-x-3 translate-y-3 border bg-primary sm:translate-x-4 sm:translate-y-4",
-            edge,
-          )}
-        />
-        <div
           className={cn(
             "relative border bg-background text-foreground",
             edge,

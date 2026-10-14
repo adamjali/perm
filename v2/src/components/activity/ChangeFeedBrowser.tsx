@@ -61,9 +61,9 @@ import { RequestFailed } from "@/components/tools/RequestFailed";
 const PAGE_SIZES = [25, 50, 100, 250] as const;
 
 const CONTROL =
-  "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground";
 const NAV =
-  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL =
   "block text-sm font-bold text-muted-foreground";
 
@@ -808,7 +808,7 @@ export function ChangeFeedBrowser({
                         reset();
                       }}
                       className={
-                        "min-h-[44px] border border-border px-3 py-2 text-sm hover:bg-tint-primary disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary " +
+                        "min-h-[44px] border border-border px-3 py-2 text-sm hover:bg-tint-primary disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary " +
                         (on ? "bg-foreground text-background" : "bg-card")
                       }
                     >

@@ -27,22 +27,12 @@ function Switch({
     <SwitchPrimitive.Root
       data-slot="switch"
       className={cn(
-        // Base styles
-        "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full",
-        // Border and shadow
-        "border border-border",
-        // Transition - snappy 150ms
+        "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-input bg-muted",
         "transition-colors duration-150 ease-out",
-        // OFF state
-        "bg-muted",
-        // ON state - Forest Green
-        "data-[state=checked]:bg-primary data-[state=checked]:border-border",
-        // Focus states
-        "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring",
-        // Disabled state
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        // Active state - push effect like buttons
-        "",
+        "data-[state=checked]:border-foreground data-[state=checked]:bg-primary",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        // Disabled reads at full contrast, never faded.
+        "disabled:cursor-not-allowed disabled:border-border disabled:bg-muted",
         className
       )}
       {...props}
@@ -50,20 +40,10 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          // Base thumb styles
-          "pointer-events-none block h-5 w-5 rounded-full bg-white",
-          // Border for neobrutalist look
-          "border border-border",
-          // Shadow
-          "shadow-hard-xs",
-          // Transition - snappy 150ms
+          "pointer-events-none block h-5 w-5 rounded-full border border-input bg-card",
+          // The thumb slides because the visitor flipped it.
           "transition-transform duration-150 ease-out",
-          // Position - OFF state
-          "data-[state=unchecked]:translate-x-0",
-          // Position - ON state
-          "data-[state=checked]:translate-x-[1.125rem]",
-          // ON state thumb border matches green
-          "data-[state=checked]:border-border"
+          "data-[state=unchecked]:translate-x-0 data-[state=checked]:translate-x-[1.125rem] data-[state=checked]:border-foreground",
         )}
       />
     </SwitchPrimitive.Root>

@@ -355,7 +355,7 @@ export function LiveCaseBrowser({
             previousLabel="Newer"
             nextLabel="Older"
             labelClassName="text-sm font-bold"
-            buttonClassName="min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+            buttonClassName="min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint-primary disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             scrollTo={liveTop}
             onPrevious={() => setCursors((c) => c.slice(0, -1))}
             onNext={() => page && setCursors((c) => [...c, page.continueCursor])}

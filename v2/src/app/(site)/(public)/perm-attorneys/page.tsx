@@ -126,7 +126,7 @@ export default async function PermAttorneysPage() {
             title="The ten busiest firms"
             dek="Approval rates cluster above 99% across every firm on this list, so the ranking is by volume alone."
           >
-          <section className="pop mt-6">
+          <section className="mt-6">
             <div className="border border-border bg-card p-6 sm:p-8">
               <ChartTips label="The ten busiest firms, by filings">
               <div className="space-y-3">

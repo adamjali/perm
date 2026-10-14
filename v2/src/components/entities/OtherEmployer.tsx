@@ -177,7 +177,7 @@ export function OtherEmployer({
       {notices}{" "}
       {nextStep ? <div className="mt-8">{nextStep}</div> : null}{" "}
 
-      <section className="pop mt-8">
+      <section className="mt-8">
         <div className="grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           {stats.map((d) => (
             <Fragment key={d.k}>

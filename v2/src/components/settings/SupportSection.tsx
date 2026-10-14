@@ -300,7 +300,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               }
             }}
             disabled={isRestarting}
-            className="group flex flex-col items-center gap-3 border border-border bg-card p-4 transition-[transform,box-shadow] duration-150 disabled:cursor-not-allowed disabled:opacity-50"
+            className="group flex flex-col items-center gap-3 border border-border bg-card p-4 transition-[transform,box-shadow] duration-150 disabled:cursor-not-allowed disabled:text-muted-foreground"
           >
             <div className="p-3 bg-primary/10 border border-primary/20 group-hover:bg-accent transition-colors">
               {isRestarting ? (

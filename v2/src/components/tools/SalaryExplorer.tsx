@@ -90,7 +90,7 @@ const usd = (n: number | null) =>
   n === null ? "n/a" : formatDollars(n);
 
 const FIELD =
-  "mt-2 block w-full min-w-0 min-h-[44px] border border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50";
+  "mt-2 block w-full min-w-0 min-h-[44px] border border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground";
 
 /**
  * A city as typed, committed on Enter or on leaving the field, so a reader

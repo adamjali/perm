@@ -513,7 +513,7 @@ export function OverviewTab({
                             type="button"
                             onClick={clearJobDesc}
                             disabled={isClearingJobDesc}
-                            className="font-heading flex items-center gap-1 px-3 py-1.5 border border-border text-sm font-bold text-destructive hover:bg-destructive hover:text-white hover:border-destructive transition-colors disabled:opacity-50"
+                            className="font-heading flex items-center gap-1 px-3 py-1.5 border border-border text-sm font-bold text-destructive hover:bg-destructive hover:text-white hover:border-destructive transition-colors disabled:text-muted-foreground"
                           >
                             <Trash2 className="h-3 w-3" />
                             {isClearingJobDesc ? "Clearing..." : "Clear"}
@@ -524,7 +524,7 @@ export function OverviewTab({
                           onClick={handleSaveAsTemplate}
                           disabled={isSavingTemplate || !editPositionTitle.trim() || !editDescription.trim()}
                           className={cn(
-                            "font-heading flex items-center gap-1 px-3 py-1.5 border text-sm font-bold transition-colors disabled:opacity-50",
+                            "font-heading flex items-center gap-1 px-3 py-1.5 border text-sm font-bold transition-colors disabled:text-muted-foreground",
                             isExistingTemplateName
                               ? "border-data-warn hover:bg-data-warn hover:text-primary-foreground"
                               : "border-border hover:border-border hover:bg-accent"
@@ -555,7 +555,7 @@ export function OverviewTab({
                           type="button"
                           onClick={saveJobDesc}
                           disabled={isSavingJobDesc || !editDescription.trim()}
-                          className="font-heading px-3 py-1.5 border border-black bg-primary text-primary-foreground text-sm font-bold transition-colors disabled:opacity-50"
+                          className="font-heading px-3 py-1.5 border border-black bg-primary text-primary-foreground text-sm font-bold transition-colors disabled:text-muted-foreground"
                         >
                           {isSavingJobDesc ? (
                             <span className="flex items-center gap-1">

@@ -23,7 +23,7 @@ function Skeleton({ className, variant = "block", ...props }: SkeletonProps) {
     <div
       data-slot="skeleton"
       className={cn(
-        "skeleton-pulse border border-border",
+        "skeleton-pulse",
         variant === "line" && "h-4 w-full",
         variant === "block" && "h-12 w-full",
         variant === "circle" && "h-10 w-10 rounded-full",

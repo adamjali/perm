@@ -126,7 +126,7 @@ export function UnpublishedEmployer({
 
       {/* Only the counts we can stand behind, and each one labelled with the
           corpus it came from rather than presented as a lifetime figure. */}
-      <section className="pop mt-8">
+      <section className="mt-8">
         <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border border-border bg-border max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-3">
           {[
             {

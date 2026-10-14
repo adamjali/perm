@@ -255,7 +255,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
             // Focus state
             "focus:ring-2 focus:ring-ring focus-visible:border-ring",
             // Disabled state
-            "disabled:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/50",
+            "disabled:shadow-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:text-muted-foreground disabled:bg-muted/50",
             // Error state (highest priority)
             (error || validationState === 'error') && "border-destructive ring-2 ring-destructive/20 dark:ring-destructive/40",
             // Warning state
@@ -282,7 +282,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
           className={cn(
             "absolute top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors",
             "hover:text-foreground",
-            "disabled:opacity-50 disabled:pointer-events-none",
+            "disabled:text-muted-foreground disabled:pointer-events-none",
             hasValue && onClear ? "right-8" : "right-2"
           )}
           aria-label="Open date picker"

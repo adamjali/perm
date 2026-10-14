@@ -933,7 +933,7 @@ export function ImportModal({
                               "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                              "disabled:cursor-not-allowed disabled:opacity-50",
+                              "disabled:cursor-not-allowed disabled:text-muted-foreground",
                               "transition-colors duration-150",
                               "hover:border-primary/50"
                             )}
@@ -960,7 +960,7 @@ export function ImportModal({
                               "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                              "disabled:cursor-not-allowed disabled:opacity-50",
+                              "disabled:cursor-not-allowed disabled:text-muted-foreground",
                               "transition-colors duration-150",
                               "hover:border-primary/50"
                             )}

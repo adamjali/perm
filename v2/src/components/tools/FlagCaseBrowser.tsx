@@ -112,7 +112,7 @@ const PAGE_SIZE = 50;
 const CONTROL =
   "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
-  "min-h-[44px] border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border border-border bg-foreground px-5 text-sm font-bold text-background hover:bg-accent disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
 const CHIP =
   "min-h-[44px] border border-border px-4 text-sm font-bold transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary ";
 
@@ -849,7 +849,7 @@ export function FlagCaseBrowser({
             previousLabel={order === "oldest" ? "Older" : "Newer"}
             nextLabel={order === "oldest" ? "Newer" : "Older"}
             labelClassName="text-sm font-bold"
-            buttonClassName={CHIP + "bg-card disabled:opacity-40 disabled:hover:bg-card"}
+            buttonClassName={CHIP + "bg-card disabled:text-muted-foreground disabled:hover:bg-card"}
             scrollTo={browseTop}
             onPrevious={() => setCursors((c) => c.slice(0, -1))}
             onNext={() => page && setCursors((c) => [...c, page.continueCursor])}

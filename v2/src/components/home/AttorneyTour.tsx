@@ -202,7 +202,6 @@ function AssistantSection() {
         <div className="lg:col-span-7">
           <figure className="mx-auto max-w-sm">
             <div className="relative">
-              <div aria-hidden="true" className="absolute inset-0 translate-x-3 translate-y-3 border border-border bg-primary sm:translate-x-4 sm:translate-y-4" />
               <picture className="relative block dark:hidden">
                 <img src={shots.light.src} width={shots.light.width} height={shots.light.height} alt={ASSISTANT_ALT} loading="lazy" decoding="async" className="block h-auto w-full" />
               </picture>

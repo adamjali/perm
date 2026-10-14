@@ -196,7 +196,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
         type="submit"
           data-ph-capture-attribute-cta="bulletin-alert"
         disabled={status === "sending"}
-        className="mt-6 inline-flex min-h-[48px] items-center justify-center border border-border bg-foreground px-6 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
+        className="mt-6 inline-flex min-h-[48px] items-center justify-center border border-border bg-foreground px-6 text-sm font-bold text-background transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none"
       >
         {status === "sending" ? "Sending" : "Email me when it moves"}
       </button>{" "}

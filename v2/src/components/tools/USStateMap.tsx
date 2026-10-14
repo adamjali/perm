@@ -695,7 +695,7 @@ export function StateExplorer({ states }: { states: StateStat[] }) {
 
   return (
     <Fragment>
-      <section className="pop mt-10">
+      <section className="mt-10">
         <div className="border border-border bg-card p-4 sm:p-6">
           <USStateMap
             states={states}

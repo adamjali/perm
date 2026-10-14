@@ -56,12 +56,6 @@ const TAPE: React.CSSProperties = {
 export function SignupAudienceFork() {
   return (
     <section className="relative mb-6">
-      {/* Plane one: the offset slab. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[6px] border border-border bg-primary"
-      />
-
       <div className="relative border border-border bg-card">
         {/* Plane two: the tape. */}
         <div className="h-2.5 border-b border-border" style={TAPE} aria-hidden="true" />

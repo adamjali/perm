@@ -232,7 +232,6 @@ export default async function AboutPage() {
           </div>
         </div>{" "}
         <figure className="relative mx-auto w-full max-w-sm lg:mr-0">
-          <div aria-hidden="true" className="absolute inset-0 translate-x-4 translate-y-4 border border-border bg-primary" />
           <div className="relative border border-border bg-card p-3">
             <Image
               src={SABRINA.image}

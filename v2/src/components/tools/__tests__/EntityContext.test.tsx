@@ -549,7 +549,7 @@ describe("the warning sits above the figures on every entity page", () => {
   it.each(PAGES)("%s puts ReliabilityBand before the stat grid", (rel) => {
     const src = readFileSync(join(process.cwd(), rel), "utf8");
     const band = src.indexOf("<ReliabilityBand");
-    const grid = src.indexOf('<section className="pop');
+    const grid = src.search(/<section[^>]*aria-label="Its record in (?:four|five) figures"/);
     // Both must be found, or the test passes by failing to see its subject.
     expect(band).toBeGreaterThan(-1);
     expect(grid).toBeGreaterThan(-1);

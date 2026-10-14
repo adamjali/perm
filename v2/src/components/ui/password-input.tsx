@@ -42,7 +42,7 @@ function PasswordInput({
           "text-muted-foreground transition-colors duration-150",
           "hover:text-foreground",
           "focus-visible:outline-none focus-visible:text-foreground",
-          "disabled:pointer-events-none disabled:opacity-50"
+          "disabled:pointer-events-none disabled:text-muted-foreground"
         )}
       >
         {visible ? (
