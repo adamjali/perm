@@ -88,7 +88,7 @@ function DateSection({ title, dates }: { title: string; dates: Array<{ label: st
   if (shown.length === 0) return null;
   return (
     <div>
-      <p className="text-sm font-semibold">{title}</p>
+      <p className="text-sm font-semibold">{title}</p>{" "}
       <dl className="mt-1 space-y-0.5 text-sm">
         {shown.map((d) => (
           <div key={d.label} className="flex justify-between gap-3">
@@ -139,7 +139,7 @@ export function CaseDates({ dates, notes }: { dates: CaseCardData["dates"]; note
       />
       {notes ? (
         <div>
-          <p className="text-sm font-semibold">Notes</p>
+          <p className="text-sm font-semibold">Notes</p>{" "}
           <p className="mt-1 line-clamp-3 break-words text-sm text-soft" title={notes}>
             {notes}
           </p>

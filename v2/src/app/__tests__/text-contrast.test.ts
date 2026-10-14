@@ -49,13 +49,8 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-/**
- * Files that render onto the MANILA surface. Manila stays tan in both themes,
- * so theme-flipped text tokens are wrong there by construction:
- * text-muted-foreground measured 1.16:1 on dark manila. Ink (text-black,
- * text-black/70) is the only sanctioned text on it.
- */
-const MANILA_FILES = ["CaseCard.tsx", "CaseCardParts.tsx"];
+/** The case card and its parts: once a manila folder, now the plain card surface. */
+const CASE_CARD_FILES = ["/cases/CaseCard.tsx", "/cases/CaseCardParts.tsx"];
 
 describe("text contrast", () => {
   const files = walk(SRC);
@@ -66,18 +61,15 @@ describe("text contrast", () => {
     expect(files.length).toBeGreaterThan(300);
   });
 
-  it("manila-surfaced components never use theme-flipped text tokens", () => {
-    const offenders: string[] = [];
-    for (const f of files) {
-      if (!MANILA_FILES.some((m) => f.endsWith(m))) continue;
-      const src = readFileSync(f, "utf8");
-      if (/\btext-muted-foreground\b(?!\/)/.test(src.replace(/bg-muted text-muted-foreground/g, ""))) {
-        // The one exemption: the SAMPLE badge carries its OWN bg-muted, so
-        // muted-foreground sits on muted there (5.27:1+), not on manila.
-        offenders.push(f.replace(SRC, "src"));
-      }
-    }
-    expect(offenders, "1.16:1 on dark manila — use text-black/70").toEqual([]);
+  it("the case card sits on the theme's own surface, never the old manila", () => {
+    // Manila stayed tan in both themes, so theme text on it fell to 1.16:1 in
+    // dark mode. The card is plain now; this keeps the tan from coming back.
+    const offenders = files
+      .filter((f) => CASE_CARD_FILES.some((m) => f.endsWith(m)))
+      .filter((f) => /manila/.test(readFileSync(f, "utf8")))
+      .map((f) => f.replace(SRC, "src"));
+    expect(offenders).toEqual([]);
+    expect(files.filter((f) => CASE_CARD_FILES.some((m) => f.endsWith(m)))).toHaveLength(CASE_CARD_FILES.length);
   });
 
   it.each(Object.entries(BANNED))(

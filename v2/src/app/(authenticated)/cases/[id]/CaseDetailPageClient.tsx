@@ -496,7 +496,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
     }
   };
 
-  // Active tab state for manila folder tabs
+  // Which detail tab is open
   const [activeTab, setActiveTab] = useState<TabId>("overview");
 
   const isClosed = caseData.caseStatus === "closed";

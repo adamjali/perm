@@ -269,7 +269,7 @@ export function CaseFilterBar({
 
   return (
     <div data-testid="case-filter-bar" className="space-y-3">
-      <div className="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap" role="group" aria-label="Which cases">
+      <div className="grid grid-cols-4 gap-2 [&>*]:min-w-0 sm:flex sm:flex-wrap" role="group" aria-label="Which cases">
         {TABS.map((t) => (
           <button
             key={t.id}

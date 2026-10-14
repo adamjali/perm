@@ -227,12 +227,12 @@ export function OverviewTab({
           <>
             <span className="next-up-icon" aria-hidden="true">
               <ArrowCircleRightIcon className="size-6" />
-            </span>
+            </span>{" "}
             <span className="min-w-0 flex-1">
-              <span className="next-up-label block">Next up</span>
+              <span className="next-up-label block">Next up</span>{" "}
               <h3>{nextAction.action}</h3>{" "}
               <p>{nextAction.description}</p>
-            </span>
+            </span>{" "}
             {canExpand ? (
               <CaretDownIcon
                 className={cn("size-5 shrink-0 text-muted-foreground transition-transform", isNextUpExpanded && "rotate-180")}
