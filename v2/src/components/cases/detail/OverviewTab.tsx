@@ -53,13 +53,6 @@ interface OverviewTabProps {
   onToggleTimeline: () => void;
   onSaveRecruitmentText?: (text: string | null) => Promise<void>;
   jobDescProps?: JobDescEditProps;
-  /**
-   * Stagger the cards in. False when the tab mounts with the page (it is the
-   * default tab): there the cards replacing the loading skeleton faded in a
-   * second time. True once the reader has switched tabs, where the motion
-   * answers their click.
-   */
-  animateIn?: boolean;
 }
 
 export function OverviewTab({
@@ -71,7 +64,6 @@ export function OverviewTab({
   onToggleTimeline,
   onSaveRecruitmentText,
   jobDescProps,
-  animateIn = true,
 }: OverviewTabProps) {
   const router = useRouter();
   const [isNextUpExpanded, setIsNextUpExpanded] = useState(false);

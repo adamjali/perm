@@ -212,10 +212,6 @@ export function ChatPanel({
     if (!focusInput) panelRef.current?.focus();
   }, [focusInput]);
 
-  // Messages present when the panel opened render still; only messages that
-  // arrive while it is open fade in.
-  const [initialIds] = useState(() => new Set(messages.map((m) => m.id)));
-
   // Open at the end, before the first paint.
   useLayoutEffect(() => {
     toBottom();
@@ -393,7 +389,6 @@ export function ChatPanel({
                   summaryMetadata.messageCountAtSummary > 0 &&
                   summaryMetadata.messageCountAtSummary < messages.length &&
                   index === summaryMetadata.messageCountAtSummary;
-                const isNew = !initialIds.has(message.id) && !reduceMotion;
 
                 return (
                   <Fragment key={message.id}>

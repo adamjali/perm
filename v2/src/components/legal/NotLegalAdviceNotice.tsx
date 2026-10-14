@@ -12,14 +12,14 @@
  * Neobrutalist tokens: muted-foreground text, hard top border separator,
  * font-mono on the deadline variant to match adjacent metadata rows.
  * Animation (when enabled) uses the project's snappy springConfig and is
- * gated on useReducedMotion(), no pulse/glow.
+ * no pulse or glow; MotionConfig honours reduced motion.
  */
 
 "use client";
 
 import { motion } from "motion/react";
 import { InfoIcon } from "@phosphor-icons/react/ssr";
-import { springConfig, useReducedMotion } from "@/lib/animations";
+import { springConfig } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
 export interface NotLegalAdviceNoticeProps {
@@ -39,8 +39,6 @@ export function NotLegalAdviceNotice({
   variant,
   className,
 }: NotLegalAdviceNoticeProps) {
-  const reducedMotion = useReducedMotion();
-
   const isChat = variant === "chat";
 
   return (

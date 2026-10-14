@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
-import Link from "next/link";
 
 import { PageBasics } from "@/components/data/PageBasics";
 import { IndexHeader, IndexLookup } from "@/components/data/IndexHeader";
