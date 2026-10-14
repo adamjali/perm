@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { XIcon } from "@phosphor-icons/react";
 import {
   Dialog,
@@ -25,20 +24,6 @@ const WIZARD_STEPS: OnboardingWizardStep[] = [
   "value_preview",
   "completion",
 ];
-
-const stepVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.35, ease: [0.4, 0, 0.2, 1] as const },
-  },
-  exit: {
-    opacity: 0,
-    y: -20,
-    transition: { duration: 0.2, ease: [0.4, 0, 1, 1] as const },
-  },
-};
 
 export function OnboardingWizard() {
   const { step, showWizard, advanceWizardStep, skipWizard, startTour, skipTour } =
@@ -126,13 +111,9 @@ export function OnboardingWizard() {
 
         {/* Step content — scrollable with generous max height */}
         <div className="px-4 sm:px-6 pb-6 sm:pb-8 pt-2 sm:pt-4 overflow-y-auto flex-1 min-h-0">
-          <AnimatePresence initial={false} mode="wait">
-            <motion.div
+          <>
+            <div
               key={currentStep}
-              variants={stepVariants}
-              initial="hidden"
-              animate="show"
-              exit="exit"
             >
               {currentStep === "welcome" && (
                 <WelcomeStep onNext={() => advanceWizardStep("role")} />
@@ -152,8 +133,8 @@ export function OnboardingWizard() {
                   onSkip={skipTour}
                 />
               )}
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          </>
         </div>
       </DialogContent>
     </Dialog>

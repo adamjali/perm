@@ -1,8 +1,10 @@
 /**
  * Calendar styles: the event pill CalendarEvent.tsx renders, and the theming
- * for the .rbc-* classes react-big-calendar emits (dark-mode event shadows,
- * keyboard focus rings, high-contrast support and reduced motion). Imported
- * once, by (authenticated)/calendar/CalendarPageClient.tsx.
+ * for the .rbc-* classes react-big-calendar emits. Imported once, by
+ * (authenticated)/calendar/CalendarPageClient.tsx.
+ *
+ * Plain: one-pixel lines, sentence-case day names, a deadline as a quiet
+ * pill with its stage's colour on its left edge. Nothing lifts on hover.
  */
 
 /* ============================================================================
@@ -12,28 +14,26 @@
 .calendar-event {
   /* The 14px label floor holds here too; the full name is in the hover summary. */
   font-size: 0.875rem;
-  padding: 0.25rem 0.5rem;
-  margin: 0; /* No margin - spacing via row-segment padding */
-  border: 2px solid black;
-  cursor: pointer;
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  padding: 0.25rem 0.5rem;
+  margin: 0;
   width: 100%;
   box-sizing: border-box;
-  position: relative;
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  /* Ink comes from the pill's inline style: white or black by stage, measured
-     against the fill (see STAGE_ON_FILL). No text-shadow. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 0;
+  border-left: 4px solid var(--event-color, var(--muted-foreground));
+  background: color-mix(in srgb, var(--event-color, var(--muted-foreground)) 12%, var(--card));
+  color: var(--foreground);
+  transition: background-color 150ms;
 }
-
 .calendar-event:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-hard-sm);
+  background: color-mix(in srgb, var(--event-color, var(--muted-foreground)) 22%, var(--card));
 }
 
 .event-title {
@@ -44,66 +44,143 @@
 }
 
 /* ============================================================================
-   DARK MODE ADJUSTMENTS
+   MONTH GRID
    ============================================================================ */
 
-/* Adjust event shadows for dark mode */
-.dark .calendar-container .rbc-event {
-  box-shadow: 2px 2px 0 rgba(250, 250, 250, 0.15);
+.calendar-container { margin-bottom: 48px; }
+.calendar-container * { border-radius: 0 !important; }
+.calendar-container .rbc-toolbar { display: none; }
+
+.calendar-container .rbc-calendar {
+  font-family: var(--font-body);
+  background: var(--card);
+  border: 1px solid var(--border);
 }
 
-.dark .calendar-container .rbc-event:hover {
-  box-shadow: 4px 4px 0 rgba(250, 250, 250, 0.25);
+.calendar-container .rbc-header {
+  padding: 10px 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
 }
+.calendar-container .rbc-header + .rbc-header { border-left: 1px solid var(--border); }
 
-.dark .calendar-container .rbc-event.rbc-selected {
-  /* Was `4px 4px 0 var(--primary)`, a lime glow, and !important so nothing
-     could override it. Selection is carried by the outline below. */
-  box-shadow: var(--shadow-hard) !important;
-}
+.calendar-container .rbc-month-view { border: none; }
+.calendar-container .rbc-month-row { position: relative; min-height: 120px; border-bottom: 1px solid var(--border); }
+.calendar-container .rbc-month-row + .rbc-month-row { border-top: none; }
 
-/* Today cell pulse for dark mode */
-.dark .calendar-container .rbc-day-bg.rbc-today {
-  background-color: rgba(46, 204, 64, 0.15);
+.calendar-container .rbc-row-bg { position: absolute; inset: 0; display: flex; z-index: 0; }
+.calendar-container .rbc-day-bg { flex: 1; height: 100%; background: var(--card); border-right: 1px solid var(--border); transition: background-color 150ms; }
+.calendar-container .rbc-day-bg:last-child { border-right: none; }
+.calendar-container .rbc-day-bg.rbc-off-range-bg { background: var(--muted); }
+.calendar-container .rbc-day-bg.rbc-today { background: var(--tint) !important; }
+.calendar-container .rbc-day-bg:hover { background: var(--accent); }
+
+.calendar-container .rbc-date-cell { position: relative; z-index: 1; padding: 6px 8px; font-size: 0.875rem; font-weight: 500; text-align: right; }
+.calendar-container .rbc-date-cell.rbc-now { font-weight: 700; color: var(--primary-text); }
+.calendar-container .rbc-date-cell.rbc-off-range { color: var(--muted-foreground); }
+.calendar-container .rbc-date-cell button,
+.calendar-container .rbc-date-cell a { pointer-events: auto; cursor: pointer; padding: 2px 6px; transition: background-color 150ms; }
+.calendar-container .rbc-date-cell button:hover,
+.calendar-container .rbc-date-cell a:hover { background: var(--accent); }
+
+/* Events: the wrapper is transparent; .calendar-event draws the pill. */
+.calendar-container .rbc-event { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+.calendar-container .rbc-event:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; z-index: 10; }
+.calendar-container .rbc-event .calendar-event { height: 100%; }
+.calendar-container .rbc-event.rbc-selected .calendar-event { outline: 2px solid var(--ring); outline-offset: -2px; }
+.calendar-container .rbc-event-label,
+.calendar-container .rbc-event-content { overflow: hidden; text-overflow: ellipsis; width: 100%; }
+
+.calendar-container .rbc-row-segment { padding: 3px 6px; }
+/* Hover passes through to the day underneath; events stay clickable. */
+.calendar-container .rbc-row-content { position: relative; z-index: 1; padding-bottom: 8px; pointer-events: none; }
+.calendar-container .rbc-row-content .rbc-event,
+.calendar-container .rbc-row-content .rbc-show-more { pointer-events: auto; }
+
+.calendar-container .rbc-show-more {
+  margin: 4px 6px;
+  padding: 2px 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary-text);
+  background: transparent;
+  cursor: pointer;
 }
+.calendar-container .rbc-show-more:hover { text-decoration: underline; }
+
+/* "+N more" pop-up (may render in a portal, hence the global selectors). */
+.rbc-overlay {
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--shadow-overlay) !important;
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  padding: 0 !important;
+  max-width: 320px;
+  max-height: 400px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+.rbc-overlay-header {
+  font-weight: 600 !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 12px 16px !important;
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  flex-shrink: 0;
+}
+.rbc-overlay > * { padding: 8px; }
+.rbc-overlay > .rbc-overlay-header { padding: 12px 16px !important; }
+.rbc-overlay > *:not(.rbc-overlay-header) { overflow-y: auto; flex: 1; min-height: 0; }
+.rbc-overlay .rbc-event { margin-bottom: 6px; }
+.rbc-overlay .rbc-event:last-child { margin-bottom: 0; }
 
 /* ============================================================================
-   ACCESSIBILITY FOCUS STATES
+   WEEK AND DAY VIEWS
    ============================================================================ */
 
-/* Enhanced focus visible for keyboard navigation */
-.calendar-container .rbc-event:focus-visible {
-  outline: 3px solid var(--primary);
-  outline-offset: 2px;
-  z-index: 10;
-}
+.calendar-container .rbc-time-view { border: none; background: var(--card); }
+.calendar-container .rbc-time-header { border-bottom: 1px solid var(--border); }
+.calendar-container .rbc-time-header-content { border-left: 1px solid var(--border); }
+.calendar-container .rbc-time-content { border-top: none; }
+.calendar-container .rbc-timeslot-group { border-bottom: 1px solid var(--border); }
+.calendar-container .rbc-time-gutter { font-size: 0.875rem; color: var(--muted-foreground); }
+.calendar-container .rbc-day-slot .rbc-time-slot { border-top: 1px solid var(--border); }
+.calendar-container .rbc-time-column { border-left: 1px solid var(--border); }
+.calendar-container .rbc-time-column:first-child { border-left: none; }
+.calendar-container .rbc-current-time-indicator { background-color: var(--destructive); height: 2px; }
+.calendar-container .rbc-allday-cell { border-bottom: 1px solid var(--border); }
 
-.calendar-container button:focus-visible {
-  outline: 3px solid var(--primary);
-  outline-offset: 2px;
-}
+/* ============================================================================
+   AGENDA VIEW
+   ============================================================================ */
 
-/* High contrast mode support */
+.calendar-container .rbc-agenda-view { border: none; }
+.calendar-container .rbc-agenda-table { border-collapse: separate; border-spacing: 0; }
+.calendar-container .rbc-agenda-table thead th { font-weight: 600; padding: 10px 8px; border-bottom: 1px solid var(--border); background: var(--muted); }
+.calendar-container .rbc-agenda-table tbody tr { border-bottom: 1px solid var(--border); }
+.calendar-container .rbc-agenda-table td { padding: 8px; border-left: 1px solid var(--border); }
+.calendar-container .rbc-agenda-table td:first-child { border-left: none; }
+.calendar-container .rbc-agenda-event-cell { font-weight: 600; }
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+.calendar-container button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
 @media (prefers-contrast: high) {
-  .calendar-container .rbc-event {
-    border-width: 3px;
-  }
-
-  .calendar-container .rbc-day-bg.rbc-today {
-    box-shadow: inset 0 0 0 3px var(--primary);
-  }
+  .calendar-event { border-left-width: 6px; }
+  .calendar-container .rbc-day-bg.rbc-today { box-shadow: inset 0 0 0 3px var(--primary-text); }
 }
 
-/* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-  .calendar-container .rbc-event,
-  .calendar-container .rbc-day-bg {
-    transition: none !important;
-    animation: none !important;
-  }
-
-  /* Preserve today indicator but without animation */
-  .calendar-container .rbc-day-bg.rbc-today {
-    box-shadow: inset 0 0 0 2px rgba(46, 204, 64, 0.4);
-  }
+  .calendar-event,
+  .calendar-container .rbc-day-bg { transition: none !important; }
 }

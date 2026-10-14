@@ -16,7 +16,6 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useMutation } from "convex/react";
-import { motion } from "motion/react";
 import { ArrowSquareOutIcon, CheckIcon, CircleNotchIcon, ClockIcon, InfoIcon, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
@@ -56,26 +55,6 @@ interface QuickEditFieldsProps {
 }
 
 type SubmitStatus = "idle" | "saving" | "saved" | "error";
-
-// ============================================================================
-// ANIMATION VARIANTS
-// ============================================================================
-
-const fieldVariants = {
-  hidden: { opacity: 0, y: 8, height: 0 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    height: "auto",
-    transition: { duration: 0.15, ease: [0.25, 0.1, 0.25, 1] as const },
-  },
-  exit: {
-    opacity: 0,
-    y: -8,
-    height: 0,
-    transition: { duration: 0.1 },
-  },
-};
 
 // ============================================================================
 // HELPERS
@@ -169,10 +148,7 @@ interface WaitingInfoDisplayProps {
 
 function WaitingInfoDisplay({ waitingInfo }: WaitingInfoDisplayProps) {
   return (
-    <motion.div
-      variants={fieldVariants}
-      initial={false}
-      animate="visible"
+    <div
       className="space-y-3"
     >
       <div className="flex items-center gap-2 text-sm">
@@ -190,7 +166,7 @@ function WaitingInfoDisplay({ waitingInfo }: WaitingInfoDisplayProps) {
           </div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -201,10 +177,7 @@ interface ComplexActionDisplayProps {
 
 function ComplexActionDisplay({ message, onNavigateToForm }: ComplexActionDisplayProps) {
   return (
-    <motion.div
-      variants={fieldVariants}
-      initial={false}
-      animate="visible"
+    <div
       className="space-y-3"
     >
       <p className="text-sm text-muted-foreground">{message}</p>
@@ -217,7 +190,7 @@ function ComplexActionDisplay({ message, onNavigateToForm }: ComplexActionDispla
           <ArrowSquareOutIcon className="h-3.5 w-3.5" />
         </button>
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -440,10 +413,7 @@ export function QuickEditFields({
   }
 
   return (
-    <motion.div
-      variants={fieldVariants}
-      initial={false}
-      animate="visible"
+    <div
       className={cn("space-y-4", className)}
     >
       {/* Fields */}
@@ -518,6 +488,6 @@ export function QuickEditFields({
           <span>Save & Complete</span>
         )}
       </button>
-    </motion.div>
+    </div>
   );
 }

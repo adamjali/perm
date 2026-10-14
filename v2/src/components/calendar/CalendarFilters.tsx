@@ -26,7 +26,6 @@
 
 import * as React from "react";
 import { useMutation } from "convex/react";
-import { motion, AnimatePresence } from "motion/react";
 import { CaretDownIcon, CaretUpIcon, FunnelIcon as Filter, FunnelSimpleIcon } from "@phosphor-icons/react/ssr";
 
 import { api } from "@convex/_generated/api";
@@ -41,54 +40,6 @@ import {
 import { TimelineLegendCompact } from "@/components/timeline";
 import { cn } from "@/lib/utils";
 import type { DeadlineType } from "@/lib/calendar/types";
-
-// ============================================================================
-// Animation Constants
-// ============================================================================
-
-/**
- * Slide animation for filter panel
- */
-const filterPanelVariants = {
-  hidden: {
-    opacity: 0,
-    height: 0,
-    marginTop: 0,
-  },
-  visible: {
-    opacity: 1,
-    height: "auto",
-    marginTop: 16,
-    transition: {
-      duration: 0.2,
-      ease: [0.165, 0.84, 0.44, 1] as const, // easeOutQuart for snappy feel
-    },
-  },
-  exit: {
-    opacity: 0,
-    height: 0,
-    marginTop: 0,
-    transition: {
-      duration: 0.15,
-      ease: "easeInOut" as const,
-    },
-  },
-};
-
-/**
- * Stagger animation for filter groups
- */
-const filterGroupVariants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.03,
-      duration: 0.15,
-    },
-  }),
-};
 
 // ============================================================================
 // Types
@@ -390,14 +341,10 @@ export function CalendarFilters({
       </div>
 
       {/* Expandable Deadline Type Filters with animation */}
-      <AnimatePresence initial={false} mode="wait">
+      <>
         {isFiltersExpanded && (
-          <motion.div
+          <div
             key="filter-panel"
-            variants={filterPanelVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
             className="overflow-hidden"
           >
             <div
@@ -405,13 +352,9 @@ export function CalendarFilters({
               data-testid="deadline-filters-panel"
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                {DEADLINE_TYPE_GROUPS.map((group, groupIndex) => (
-                  <motion.div
+                {DEADLINE_TYPE_GROUPS.map((group) => (
+                  <div
                     key={group.stage}
-                    custom={groupIndex}
-                    variants={filterGroupVariants}
-                    initial="hidden"
-                    animate="visible"
                     className="space-y-2"
                     data-testid={`filter-group-${group.stage.toLowerCase().replace(" ", "-")}`}
                   >
@@ -460,13 +403,13 @@ export function CalendarFilters({
                         </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Case Selection Modal */}
       <CaseSelectionModal

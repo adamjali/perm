@@ -17,7 +17,6 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
 import {
   format,
   startOfWeek,
@@ -32,35 +31,6 @@ import { cn } from "@/lib/utils";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { STAGE_COLORS, URGENCY_COLORS } from "@/lib/calendar/types";
 import type { CaseDataMap } from "./CalendarView";
-
-// ============================================================================
-// Animation Constants
-// ============================================================================
-
-/**
- * Spring config for snappy list item animations
- */
-const springTransition = {
-  type: "spring" as const,
-  stiffness: 500,
-  damping: 30,
-};
-
-/**
- * Stagger animation for list items
- */
-const listItemVariants = {
-  hidden: { opacity: 0, x: -12 },
-  visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: {
-      delay: i * 0.03,
-      duration: 0.2,
-      ease: [0.165, 0.84, 0.44, 1] as const,
-    },
-  }),
-};
 
 // ============================================================================
 // Types
@@ -223,7 +193,7 @@ export function CalendarMobileList({
 
           {/* Events in week with stagger animation */}
           <div className="space-y-2">
-            {group.events.map((event, eventIndex) => {
+            {group.events.map((event) => {
               const caseData = caseDataMap?.get(event.caseId as string);
               // Extracted to local variable (React Compiler disabled; kept for SWC safety)
               const employerName = caseData?.employerName;
@@ -233,13 +203,8 @@ export function CalendarMobileList({
                 event.urgency === "overdue" || event.urgency === "urgent";
 
               return (
-                <motion.button
+                <button
                   key={event.id}
-                  custom={eventIndex}
-                  variants={listItemVariants}
-                  initial={false}
-                  animate="visible"
-                  transition={springTransition}
                   type="button"
                   onClick={() => handleEventTap(event.caseId as string)}
                   className={cn(
@@ -310,7 +275,7 @@ export function CalendarMobileList({
                     className="size-5 text-muted-foreground shrink-0"
                     aria-hidden="true"
                   />
-                </motion.button>
+                </button>
               );
             })}
           </div>

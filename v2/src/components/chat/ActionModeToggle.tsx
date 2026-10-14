@@ -20,7 +20,6 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "motion/react";
 import { EyeSlashIcon as EyeOff, LightningIcon as Zap, ShieldCheckIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import type { ActionMode } from "@/lib/ai/tool-permissions";
@@ -110,9 +109,9 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
   if (!mounted || !visible) return null;
 
   return createPortal(
-    <AnimatePresence initial={false}>
+    <>
       {visible && (
-        <motion.div
+        <div
           className={cn(
             "fixed z-[9999] -translate-x-1/2 -translate-y-full",
             "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
@@ -121,19 +120,15 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
             "border border-foreground"
           )}
           style={{ top: position.top, left: position.left }}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 4 }}
-          transition={{ duration: 0.15 }}
         >
           {children}
           {/* Arrow pointer */}
           <div
             className="absolute top-full left-1/2 -translate-x-1/2 border border-transparent border-t-foreground"
           />
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>,
+    </>,
     document.body
   );
 }
@@ -223,18 +218,10 @@ export function ActionModeToggle({
               )}
             >
               {/* Scale pulse on active change */}
-              <motion.span
-                initial={false}
-                animate={{
-                  scale: isActive ? [1, 1.15, 1] : 1,
-                }}
-                transition={{
-                  duration: 0.2,
-                  ease: "easeOut",
-                }}
+              <span
               >
                 <Icon className="h-4 w-4" />
-              </motion.span>
+              </span>
             </button>
 
             {/* Portal-based Tooltip */}

@@ -3,7 +3,6 @@
 import { useMemo, useCallback } from "react";
 import { useWatch } from "react-hook-form";
 import { PlusIcon, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
-import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { RequestEntry, REQUEST_KINDS } from "./RequestEntry";
 import { useRequestEntryArray, type RequestKind } from "@/components/forms/CaseFormContext";
@@ -197,18 +196,14 @@ export function RequestEntryList({
       </div>
 
       {/* Entry List - initial={false} prevents re-animation on every keystroke */}
-      <AnimatePresence initial={false}>
+      <>
         {sortedIndices.map((originalIndex) => {
           const entry = entries[originalIndex];
           if (!entry) return null;
 
           return (
-            <motion.div
+            <div
               key={entry.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
             >
               <RequestEntry
                 kind={kind}
@@ -218,10 +213,10 @@ export function RequestEntryList({
                 receivedDisabled={receivedDisabled}
                 onRemove={handleRemove}
               />
-            </motion.div>
+            </div>
           );
         })}
-      </AnimatePresence>
+      </>
 
       {/* Empty State */}
       {entries.length === 0 && (

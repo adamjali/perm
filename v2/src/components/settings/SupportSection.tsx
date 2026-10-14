@@ -25,7 +25,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { useMutation, useConvex } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@convex/_generated/api";
@@ -369,13 +368,9 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         </p>
 
         {/* Scheduled Deletion Warning */}
-        <AnimatePresence initial={false}>
+        <>
           {isDeletionScheduled && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.15 }}
+            <div
               className="flex flex-col gap-3 px-4 py-3 mb-4 bg-data-warn/15 border border-data-warn text-data-warn-ink"
             >
               <div className="flex items-center gap-2">
@@ -404,9 +399,9 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                   Delete now
                 </Button>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </>
 
         {/* Delete Button */}
         <Button

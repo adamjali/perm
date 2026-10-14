@@ -25,7 +25,7 @@
 import { motion } from 'motion/react';
 import { CheckCircleIcon, CircleNotchIcon, MagnifyingGlassIcon as Search, XCircleIcon } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
-import { springConfig } from '@/lib/animations';
+import { springConfig } from '@/lib/motion';
 import {
   getToolColor,
   getToolDisplayName,

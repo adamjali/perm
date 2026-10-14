@@ -38,7 +38,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
 import { analytics } from "@/lib/analytics";
 import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
@@ -654,13 +653,9 @@ export default function CalendarSyncSection({
             </div>
 
             {/* Progress indicator during sync */}
-            <AnimatePresence initial={false}>
+            <>
               {isSyncingAll && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.15 }}
+                <div
                   className="space-y-2"
                 >
                   {/* Estimated progress calculation: ~150ms per case */}
@@ -680,16 +675,13 @@ export default function CalendarSyncSection({
                         {/* Progress bar - neobrutalist with hard edges */}
                         <div className="relative h-3 bg-muted border border-border overflow-hidden">
                           {/* Background pulse */}
-                          <motion.div
+                          <div
                             className="absolute inset-0 bg-primary/20 dark:bg-primary/30"
-                            animate={{ opacity: [0.2, 0.4, 0.2] }}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                           />
                           {/* Progress fill */}
-                          <motion.div
+                          <div
                             className="absolute left-0 top-0 h-full bg-primary dark:bg-primary"
                             style={{ width: `${estimatedProgress}%` }}
-                            transition={{ duration: 0.3, ease: "linear" }}
                           />
                           {/* Striped pattern overlay for visual interest */}
                           <div
@@ -712,9 +704,9 @@ export default function CalendarSyncSection({
                       </>
                     );
                   })()}
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
+            </>
           </div>
         )}
 
@@ -762,13 +754,9 @@ export default function CalendarSyncSection({
             </div>
 
             {/* Progress indicator during clear */}
-            <AnimatePresence initial={false}>
+            <>
               {isClearingEvents && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.15 }}
+                <div
                   className="space-y-2"
                 >
                   {/* Estimated progress calculation: ~200ms per event (100ms rate limit + API) */}
@@ -790,16 +778,13 @@ export default function CalendarSyncSection({
                         {/* Progress bar - neobrutalist with hard edges */}
                         <div className="relative h-3 bg-muted border border-border overflow-hidden">
                           {/* Background pulse */}
-                          <motion.div
+                          <div
                             className="absolute inset-0 bg-data-warn/20"
-                            animate={{ opacity: [0.2, 0.4, 0.2] }}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                           />
                           {/* Progress fill */}
-                          <motion.div
+                          <div
                             className="absolute left-0 top-0 h-full bg-data-warn"
                             style={{ width: `${estimatedProgress}%` }}
-                            transition={{ duration: 0.3, ease: "linear" }}
                           />
                           {/* Striped pattern overlay */}
                           <div
@@ -824,9 +809,9 @@ export default function CalendarSyncSection({
                       </>
                     );
                   })()}
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
+            </>
           </div>
         )}
 
@@ -844,38 +829,30 @@ export default function CalendarSyncSection({
           />
 
           {/* Warning when disabled */}
-          <AnimatePresence initial={false}>
+          <>
             {!masterEnabled && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.15 }}
+              <div
                 className="flex items-center gap-2 px-3 py-2 bg-data-warn/15 border border-data-warn text-data-warn-ink text-sm"
               >
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 <span>Calendar sync is turned off for all deadline types</span>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          </>
 
           {/* Not connected warning */}
-          <AnimatePresence initial={false}>
+          <>
             {masterEnabled && !isConnected && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.15 }}
+              <div
                 className="flex items-center gap-2 px-3 py-2 bg-muted border border-border text-muted-foreground text-sm"
               >
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 <span>
                   Connect your Google Calendar to start syncing deadlines
                 </span>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          </>
 
           {/* Deadline Type Toggles - 2 column grid */}
           <div className="pt-4 border-t border-border">

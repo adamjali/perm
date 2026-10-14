@@ -13,7 +13,6 @@
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { formatISODate } from "@/lib/utils/date";
 import { clampPosition } from "@/lib/timeline/positioning";
@@ -57,33 +56,6 @@ export interface TimelineMilestoneMarkerProps {
    */
   className?: string;
 }
-
-// ============================================================================
-// Component
-// ============================================================================
-
-/**
- * TimelineMilestoneMarker Component
- *
- * Renders a single milestone as a colored dot on the timeline grid.
- * Supports navigation to case detail on click.
- *
- * @example
- * ```tsx
- * <TimelineMilestoneMarker
- *   milestone={{ label: "PWD Filed", date: "2024-01-15", color: "#0066FF", ... }}
- *   position={25}
- *   caseId="abc123"
- *   onNavigate={(id) => router.push(`/cases/${id}`)}
- * />
- * ```
- */
-// Spring configuration for snappy animations
-const springConfig = {
-  type: "spring" as const,
-  stiffness: 500,
-  damping: 30,
-};
 
 export function TimelineMilestoneMarker({
   milestone,
@@ -146,7 +118,7 @@ export function TimelineMilestoneMarker({
       {/* Milestone marker: a square, like every other mark in the app. A
           square holding several dates is larger and says how many; it takes
           the stage colour when they share one, and is plain when they don't. */}
-      <motion.div
+      <div
         className={cn(
           all.length > 1 ? "flex size-[22px] items-center justify-center" : "size-4",
           "border border-foreground",
@@ -160,21 +132,18 @@ export function TimelineMilestoneMarker({
             ? { backgroundColor: milestone.color, color: STAGE_ON_FILL[milestone.stage] }
             : undefined
         }
-        initial={false}
-        animate={{ scale: isHovered ? 1.3 : 1 }}
-        transition={springConfig}
       >
         {all.length > 1 && (
           <span aria-hidden="true" data-group-count className="text-sm font-bold leading-none">
             {all.length}
           </span>
         )}
-      </motion.div>
+      </div>
 
       {/* Tooltip - animated fade-in with spring */}
-      <AnimatePresence initial={false}>
+      <>
         {isHovered && (
-          <motion.div
+          <div
             className={cn(
               "absolute bottom-full left-1/2 mb-3",
               "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
@@ -182,10 +151,6 @@ export function TimelineMilestoneMarker({
               "pointer-events-none z-50",
               "border border-foreground"
             )}
-            initial={{ opacity: 0, y: 4, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: 4, x: "-50%" }}
-            transition={{ duration: 0.15 }}
           >
             <div className="space-y-1">
               {all.map((m) => (
@@ -200,9 +165,9 @@ export function TimelineMilestoneMarker({
             <div
               className="absolute top-full left-1/2 -translate-x-1/2 border border-transparent border-t-foreground"
             />
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

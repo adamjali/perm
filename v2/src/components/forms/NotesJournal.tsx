@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useState, useCallback, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { FlagIcon, PlusIcon, SortAscendingIcon, TagIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -441,12 +440,9 @@ export function NotesJournal({
         )}
 
         {/* New note options (priority, category) */}
-        <AnimatePresence initial={false}>
+        <>
           {showNewNoteOptions && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+            <div
               className="flex flex-wrap items-center gap-3 overflow-hidden"
             >
               {/* Priority selector */}
@@ -480,9 +476,9 @@ export function NotesJournal({
                   ))}
                 </select>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </>
       </div>
 
       {/* ========== FILTER & SORT CONTROLS ========== */}
@@ -561,7 +557,7 @@ export function NotesJournal({
       {/* ========== NOTES LIST ========== */}
       {processedNotes.length > 0 && (
         <div className="space-y-3">
-          <AnimatePresence initial={false}>
+          <>
             {processedNotes.slice(0, shownCount).map((note) => {
               const timestamp = formatTimestamp(note.createdAt);
               const priorityConfig = PRIORITY_CONFIG[note.priority || "medium"];
@@ -569,12 +565,8 @@ export function NotesJournal({
               const isEditing = editingNoteId === note.id;
 
               return (
-                <motion.div
+                <div
                   key={note.id}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
                   className={cn(
                     "group rounded-lg border p-3 transition-colors duration-150",
                     "",
@@ -700,10 +692,10 @@ export function NotesJournal({
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
-          </AnimatePresence>
+          </>
           {processedNotes.length > shownCount && (
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-sm text-muted-foreground">

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { CalendarDotIcon as CalendarClock, CheckCircleIcon, ClockIcon, WarningIcon as AlertTriangle, XCircleIcon } from "@phosphor-icons/react";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -175,9 +174,6 @@ export function FilingWindowIndicator({
   const progress = getProgressPercentage(window);
   const Icon = config.icon;
 
-  // Check if we should pulse (closing soon, <= 7 days)
-  const shouldPulse = status === "closing_soon" && (window.daysRemaining ?? 0) <= 7;
-
   // If recruitment is incomplete, show special message
   if (status === "recruitment_incomplete") {
     return (
@@ -248,15 +244,13 @@ export function FilingWindowIndicator({
   }
 
   return (
-    <motion.div
+    <div
       className={cn(
         "rounded-lg border p-4",
         config.bgColor,
         config.borderColor,
         className
       )}
-      animate={shouldPulse ? { scale: [1, 1.01, 1] } : undefined}
-      transition={shouldPulse ? { repeat: Infinity, duration: 2 } : undefined}
     >
       {/* Header with status badge */}
       <div className="flex items-center justify-between mb-3">
@@ -281,11 +275,8 @@ export function FilingWindowIndicator({
       {(status === "open" || status === "closing_soon") && (
         <div className="mb-3">
           <div className="h-2 bg-accent rounded-full overflow-hidden">
-            <motion.div
+            <div
               className={cn("h-full rounded-full", config.progressColor)}
-              initial={false}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </div>
           <div className="flex justify-between mt-1 text-sm text-muted-foreground">
@@ -329,16 +320,14 @@ export function FilingWindowIndicator({
         window.daysRemaining !== undefined &&
         window.daysRemaining > 0 && (
           <div className="mt-3 text-center">
-            <motion.span
+            <span
               className={cn(
                 "text-3xl font-bold",
                 status === "closing_soon" ? "text-data-warn-ink" : "text-primary"
               )}
-              animate={shouldPulse ? { scale: [1, 1.1, 1] } : undefined}
-              transition={shouldPulse ? { repeat: Infinity, duration: 1.5 } : undefined}
             >
               {window.daysRemaining}
-            </motion.span>{" "}
+            </span>{" "}
             <span className="text-sm text-muted-foreground ml-1">days remaining</span>
           </div>
         )}
@@ -361,7 +350,7 @@ export function FilingWindowIndicator({
           </p>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 

@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { CaretDownIcon, CheckIcon, CopyIcon, FileTextIcon, FloppyDiskIcon as Save, PencilIcon, SlidersIcon, SparkleIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
-import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -321,17 +320,9 @@ export function JobDescriptionDetailView({
       </button>
 
       {/* Content - animated collapse */}
-      <AnimatePresence initial={false}>
+      <>
         {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{
-              type: "spring",
-              visualDuration: 0.15,
-              bounce: 0.1,
-            }}
+          <div
             className="overflow-hidden"
           >
             <div className="p-4 pt-0 space-y-4">
@@ -650,9 +641,9 @@ export function JobDescriptionDetailView({
                 </>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Template Management Modal */}
       <TemplateManagementModal

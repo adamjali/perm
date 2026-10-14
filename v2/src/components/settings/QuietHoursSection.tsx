@@ -27,7 +27,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
@@ -273,13 +272,9 @@ export default function QuietHoursSection({
         </div>
 
         {/* Time Range Section - Only show when enabled */}
-        <AnimatePresence initial={false}>
+        <>
           {quietHoursEnabled && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
+            <div
               className="space-y-4 overflow-hidden"
             >
               {/* Time Pickers */}
@@ -355,72 +350,53 @@ export default function QuietHoursSection({
                   <strong>Note:</strong> Urgent notifications (overdue deadlines, critical alerts) will always be delivered, even during quiet hours.
                 </span>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </>
 
         {/* Warning when disabled */}
-        <AnimatePresence initial={false}>
+        <>
           {!quietHoursEnabled && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.15 }}
+            <div
               className="flex items-center gap-2 px-3 py-2 bg-muted border border-border text-muted-foreground text-sm"
             >
               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
               <span>
                 Quiet hours are disabled. You may receive notifications at any time.
               </span>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </>
       </div>
 
       {/* Save Button - Only show when there are time changes (toggle saves immediately) */}
-      <AnimatePresence initial={false}>
+      <>
         {quietHoursEnabled && isDirty && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.15 }}
+          <div
             className="mt-6 pt-6 border-t border-border flex items-center justify-between"
           >
             <div className="text-sm text-muted-foreground">
-              <AnimatePresence initial={false} mode="wait">
+              <>
                 {justSaved ? (
-                  <motion.span
+                  <span
                     key="saved"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
                     className="text-primary flex items-center gap-1"
                   >
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                    <span
                     >
                       <CheckIcon className="w-4 h-4" />
-                    </motion.span>
+                    </span>
                     Saved
-                  </motion.span>
+                  </span>
                 ) : (
-                  <motion.span
+                  <span
                     key="dirty"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
                     className="text-data-warn-ink"
                   >
                     You have unsaved changes
-                  </motion.span>
+                  </span>
                 )}
-              </AnimatePresence>
+              </>
             </div>
             <Button
               onClick={handleSave}
@@ -431,9 +407,9 @@ export default function QuietHoursSection({
               <CheckIcon className="w-4 h-4" />
               Save changes
             </Button>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

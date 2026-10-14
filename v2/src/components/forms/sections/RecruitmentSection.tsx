@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { GraduationCapIcon, PlusIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "motion/react";
 import { useRecruitmentSection } from "@/components/forms/useCaseFormSection";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
@@ -649,13 +648,9 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
           </p>
 
           {/* Collapsible Content */}
-          <AnimatePresence initial={false}>
+          <>
             {values.isProfessionalOccupation && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
+              <div
                 className="overflow-hidden"
               >
                 <div className="space-y-4 pt-2">
@@ -906,9 +901,9 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                       Dates now entered at the method level (startDate/endDate or subEntries).
                       Legacy fields kept in schema for backward compatibility but UI removed. */}
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          </>
         </div>
       </div>
     </FormSection>

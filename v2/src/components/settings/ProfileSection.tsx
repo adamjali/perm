@@ -27,7 +27,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "motion/react";
 import { analytics } from "@/lib/analytics";
 import { useMutation } from "convex/react";
 import { EASTERN_TIMEZONE } from "@/lib/time";
@@ -282,48 +281,33 @@ export default function ProfileSection({
       {/* Save Button */}
       <div className="mt-6 pt-6 border-t border-border flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          <AnimatePresence initial={false} mode="wait">
+          <>
             {justSaved ? (
-              <motion.span
+              <span
                 key="saved"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
                 className="text-primary flex items-center gap-1"
               >
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                <span
                 >
                   <CheckIcon className="w-4 h-4" />
-                </motion.span>
+                </span>
                 Saved
-              </motion.span>
+              </span>
             ) : isDirty ? (
-              <motion.span
+              <span
                 key="dirty"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
                 className="text-data-warn-ink"
               >
                 You have unsaved changes
-              </motion.span>
+              </span>
             ) : (
-              <motion.span
+              <span
                 key="clean"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
               >
                 All changes saved
-              </motion.span>
+              </span>
             )}
-          </AnimatePresence>
+          </>
         </div>
         <Button
           onClick={handleSave}

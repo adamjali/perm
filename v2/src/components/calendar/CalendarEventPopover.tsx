@@ -29,7 +29,6 @@ import * as React from "react";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
-import { motion } from "motion/react";
 import { ArrowSquareOutIcon, CalendarIcon, EyeIcon, EyeSlashIcon as EyeOff } from "@phosphor-icons/react/ssr";
 
 import { api } from "@convex/_generated/api";
@@ -53,25 +52,6 @@ import {
 } from "@/lib/calendar/types";
 import type { CaseStatus } from "@/lib/perm";
 import { handleOperationError } from "@/lib/errors";
-
-// ============================================================================
-// Animation Constants
-// ============================================================================
-
-/**
- * Stagger animation for content items
- */
-const contentItemVariants = {
-  hidden: { opacity: 0, x: -8 },
-  visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: {
-      delay: i * 0.05,
-      duration: 0.15,
-    },
-  }),
-};
 
 // ============================================================================
 // Constants
@@ -254,38 +234,26 @@ export function CalendarEventPopover({
         {/* Content with staggered animations */}
         <div className="p-4 space-y-4">
           {/* Urgency indicator */}
-          <motion.div
-            custom={0}
-            variants={contentItemVariants}
-            initial={false}
-            animate="visible"
+          <div
           >
             <UrgencyBadge urgency={event.urgency} daysUntil={event.daysUntil} />
-          </motion.div>
+          </div>
 
           {/* Case details */}
           <div className="space-y-3">
             {/* Case status badge */}
             {caseData && (
-              <motion.div
-                custom={1}
-                variants={contentItemVariants}
-                initial={false}
-                animate="visible"
+              <div
                 className="flex items-center gap-2"
               >
                 <span className="text-sm text-muted-foreground w-20">Status:</span>
                 <CaseStatusBadge status={caseData.caseStatus} />
-              </motion.div>
+              </div>
             )}
 
             {/* Employer */}
             {caseData && (
-              <motion.div
-                custom={2}
-                variants={contentItemVariants}
-                initial={false}
-                animate="visible"
+              <div
                 className="flex items-start gap-2"
               >
                 <span className="text-sm text-muted-foreground w-20 shrink-0">
@@ -294,16 +262,12 @@ export function CalendarEventPopover({
                 <span className="text-sm font-semibold text-foreground truncate" title={caseData.employerName}>
                   {caseData.employerName}
                 </span>
-              </motion.div>
+              </div>
             )}
 
             {/* Foreign Worker */}
             {caseData && (
-              <motion.div
-                custom={3}
-                variants={contentItemVariants}
-                initial={false}
-                animate="visible"
+              <div
                 className="flex items-start gap-2"
               >
                 <span className="text-sm text-muted-foreground w-20 shrink-0">
@@ -312,16 +276,12 @@ export function CalendarEventPopover({
                 <span className="text-sm font-semibold text-foreground truncate" title={caseData.beneficiaryIdentifier}>
                   {caseData.beneficiaryIdentifier}
                 </span>
-              </motion.div>
+              </div>
             )}
 
             {/* Position */}
             {caseData && (
-              <motion.div
-                custom={4}
-                variants={contentItemVariants}
-                initial={false}
-                animate="visible"
+              <div
                 className="flex items-start gap-2"
               >
                 <span className="text-sm text-muted-foreground w-20 shrink-0">
@@ -330,23 +290,19 @@ export function CalendarEventPopover({
                 <span className="text-sm font-semibold text-foreground truncate" title={caseData.positionTitle}>
                   {caseData.positionTitle}
                 </span>
-              </motion.div>
+              </div>
             )}
 
             {/* Filing window indicator */}
             {event.isFilingWindow && (
-              <motion.div
-                custom={5}
-                variants={contentItemVariants}
-                initial={false}
-                animate="visible"
+              <div
                 className="flex items-center gap-2 p-2 bg-muted border border-border"
               >
                 <EyeIcon className="size-4 text-primary" aria-hidden="true" />
                 <span className="text-sm font-medium text-foreground">
                   Filing window deadline
                 </span>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>

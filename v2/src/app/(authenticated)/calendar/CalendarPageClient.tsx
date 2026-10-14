@@ -5,7 +5,6 @@ import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion } from "motion/react";
 import { ArrowSquareOutIcon, CalendarIcon as CalendarIcon, InfoIcon, PlusIcon } from "@phosphor-icons/react";
 
 import { api } from "@convex/_generated/api";
@@ -20,25 +19,6 @@ import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 
 // The event pill and the react-big-calendar theming
 import "@/app/calendar.css";
-
-// ============================================================================
-// Animation Constants
-// ============================================================================
-
-/**
- * Fade-in animation for page content
- */
-const pageVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.3,
-      ease: [0.165, 0.84, 0.44, 1] as const,
-    },
-  },
-};
 
 // ============================================================================
 // Loading Skeleton
@@ -346,14 +326,9 @@ export function CalendarPageClient() {
   }
 
   return (
-    <motion.div
+    <div
       data-tour="calendar-view"
       className="flex flex-col h-full"
-      variants={pageVariants}
-      // At rest on mount: the page used to go blank after its skeleton and
-      // fade in over 0.3s, a second arrival.
-      initial={false}
-      animate="visible"
     >
       <CaseCapNotice className="mb-4" />
 
@@ -417,6 +392,6 @@ export function CalendarPageClient() {
           hiddenCases={preferences.hiddenCases}
         />
       </div>
-    </motion.div>
+    </div>
   );
 }

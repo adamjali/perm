@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import { ClockIcon, InfoIcon, LightningIcon as Zap } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import {
@@ -91,10 +90,7 @@ export function ProcessingTimeEstimate({
   }
 
   return (
-    <motion.div
-      initial={false}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
+    <div
       className={cn("rounded-lg border p-4", tone, className)}
     >
       <div className="mb-3 flex items-center gap-2">
@@ -172,6 +168,6 @@ export function ProcessingTimeEstimate({
           .
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 }

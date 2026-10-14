@@ -18,6 +18,7 @@
 
 "use client";
 
+import { countdownWords } from "@/components/cases/case-card.utils";
 import { useCallback, useMemo, useState } from "react";
 import {
   Calendar,
@@ -26,11 +27,8 @@ import {
   type Components,
 } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { motion, AnimatePresence } from "motion/react";
 
 import { localizer } from "@/lib/calendar/localizer";
-import { springTransition, fadeVariants, fadeTransition } from "@/lib/calendar/animations";
-import { createEventPropGetter } from "@/lib/calendar/eventStyles";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import type { CaseStatus } from "@/lib/perm";
 import type { Id } from "@convex/_generated/dataModel";
@@ -129,14 +127,13 @@ export function CalendarView({
   }, []);
 
   // Calendar configuration - memoized for performance
-  const { views, customComponents, eventPropGetter } = useMemo(
+  const { views, customComponents } = useMemo(
     () => ({
       views: ["month", "week", "day"] as View[],
       customComponents: {
         toolbar: CalendarToolbar,
         event: CalendarEventComponent,
       } as Components<CalendarEvent, object>,
-      eventPropGetter: createEventPropGetter(),
     }),
     []
   );
@@ -213,15 +210,33 @@ export function CalendarView({
   const showCalendarView = effectiveViewMode === "calendar";
   const useResponsiveLayout = effectiveViewMode === null;
 
+  const list = <CalendarMobileList events={events} caseDataMap={caseDataMap} daysToShow={30} />;
+  const grid = (
+    <Calendar<CalendarEvent>
+      localizer={localizer}
+      events={events}
+      views={views}
+      view={currentView}
+      date={currentDate}
+      onNavigate={handleNavigate}
+      onView={handleViewChange}
+      components={customComponents}
+      onSelectEvent={handleSelectEvent}
+      onRangeChange={handleRangeChange}
+      formats={formats}
+      popup
+      selectable={false}
+      tooltipAccessor={(event) => `${event.title}\n${countdownWords(event.daysUntil)}`}
+      style={{ minHeight: 700 }}
+    />
+  );
+
   return (
     <CalendarListToggleContext.Provider value={handleViewModeToggle}>
     <div className="w-full calendar-container">
       {/* View mode toggle. On desktop the calendar's toolbar carries "List"
           itself, so this row only shows on phones and in list view. */}
       <div className={cn("flex justify-end mb-4", userViewMode !== "list" && "md:hidden")}>
-        <motion.div
-          transition={springTransition}
-        >
           <Button
             variant="outline"
             size="sm"
@@ -245,102 +260,20 @@ export function CalendarView({
               </>
             )}
           </Button>
-        </motion.div>
       </div>
 
-      {/* Mobile List View - Shown on mobile by default, or when user explicitly selects list */}
-      {/* initial={false}: the view is at rest when the page mounts; only a
-          switch between list and calendar animates. */}
-      <AnimatePresence mode="wait" initial={false}>
-        {useResponsiveLayout ? (
-          // CSS-based responsive: show list on mobile (<768px), calendar on desktop
-          <motion.div
-            key="responsive"
-            variants={fadeVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={fadeTransition}
-          >
-            <div className="md:hidden">
-              <CalendarMobileList
-                events={events}
-                caseDataMap={caseDataMap}
-                daysToShow={30}
-              />
-            </div>
-            <div className="hidden md:block">
-              <Calendar<CalendarEvent>
-                localizer={localizer}
-                events={events}
-                views={views}
-                view={currentView}
-                date={currentDate}
-                onNavigate={handleNavigate}
-                onView={handleViewChange}
-                components={customComponents}
-                eventPropGetter={eventPropGetter}
-                onSelectEvent={handleSelectEvent}
-                onRangeChange={handleRangeChange}
-                formats={formats}
-                popup
-                selectable={false}
-                tooltipAccessor={(event) =>
-                  `${event.title}\n${event.daysUntil >= 0 ? `${event.daysUntil} days` : `${Math.abs(event.daysUntil)} days ago`}`
-                }
-                style={{ minHeight: 700 }}
-              />
-            </div>
-          </motion.div>
-        ) : showListView ? (
-          // User explicitly chose list view
-          <motion.div
-            key="list"
-            variants={fadeVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={fadeTransition}
-          >
-            <CalendarMobileList
-              events={events}
-              caseDataMap={caseDataMap}
-              daysToShow={30}
-            />
-          </motion.div>
-        ) : showCalendarView ? (
-          // User explicitly chose calendar view
-          <motion.div
-            key="calendar"
-            variants={fadeVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={fadeTransition}
-          >
-            <Calendar<CalendarEvent>
-              localizer={localizer}
-              events={events}
-              views={views}
-              view={currentView}
-              date={currentDate}
-              onNavigate={handleNavigate}
-              onView={handleViewChange}
-              components={customComponents}
-              eventPropGetter={eventPropGetter}
-              onSelectEvent={handleSelectEvent}
-              onRangeChange={handleRangeChange}
-              formats={formats}
-              popup
-              selectable={false}
-              tooltipAccessor={(event) =>
-                `${event.title}\n${event.daysUntil >= 0 ? `${event.daysUntil} days` : `${Math.abs(event.daysUntil)} days ago`}`
-              }
-              style={{ minHeight: 700 }}
-            />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {/* Phones get the list by default and wider screens the grid, unless
+          the reader has chosen one. */}
+      {useResponsiveLayout ? (
+        <>
+          <div className="md:hidden">{list}</div>
+          <div className="hidden md:block">{grid}</div>
+        </>
+      ) : showListView ? (
+        list
+      ) : showCalendarView ? (
+        grid
+      ) : null}
 
       {/* Event details popover - Only shown for calendar view */}
       <CalendarEventPopover
@@ -351,411 +284,6 @@ export function CalendarView({
         caseData={selectedCaseData}
       />
 
-      {/* Custom styles to override react-big-calendar defaults - V1 style with white background */}
-      <style jsx global>{`
-        /* ================================================================
-           V1-STYLE CALENDAR (Clean white background, colorful pills)
-           ================================================================ */
-
-        /* Calendar container - border, shadow, and spacing */
-        .calendar-container {
-          margin-bottom: 60px;
-        }
-
-        /* The actual calendar wrapper with border */
-        .calendar-container .rbc-calendar {
-          font-family: "Inter", sans-serif;
-          background: var(--card);
-          border: 2px solid var(--border);
-          box-shadow: var(--shadow-hard);
-          border-radius: 0 !important;
-          margin-right: 8px;
-          margin-bottom: 8px;
-        }
-
-        /* Remove all rounded corners globally */
-        .calendar-container * {
-          border-radius: 0 !important;
-        }
-
-        /* Header row (day names) - V1 style centered */
-        .calendar-container .rbc-header {
-          font-family: "Space Grotesk", sans-serif;
-          font-weight: 700;
-          font-size: 0.875rem;
-          text-transform: uppercase;
-          letter-spacing: 0.025em;
-          padding: 12px 8px;
-          text-align: center;
-          border-bottom: 2px solid var(--border);
-          background: color-mix(in srgb, var(--foreground) 6%, var(--card));
-          color: var(--foreground);
-        }
-
-        .calendar-container .rbc-header + .rbc-header {
-          border-left: 2px solid var(--border);
-        }
-
-        /* Month view */
-        .calendar-container .rbc-month-view {
-          border: none;
-        }
-
-        .calendar-container .rbc-month-row {
-          border-bottom: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-          min-height: 135px;
-        }
-
-        .calendar-container .rbc-month-row + .rbc-month-row {
-          border-top: none;
-        }
-
-        /* Day cells in month view - V1 style with white background */
-        .calendar-container .rbc-day-bg {
-          border-right: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-          background: var(--card);
-          transition: background-color 0.15s ease-out;
-        }
-
-        .calendar-container .rbc-day-bg:last-child {
-          border-right: none;
-        }
-
-        /* Today: a lime tint, the app's accent (was a stray light blue) */
-        .calendar-container .rbc-day-bg.rbc-today {
-          background-color: color-mix(in srgb, var(--primary) 14%, var(--card)) !important;
-        }
-
-        /* Weekend cells - slightly gray like v1 */
-        .calendar-container .rbc-day-bg:nth-child(1),
-        .calendar-container .rbc-day-bg:nth-child(7) {
-          background-color: color-mix(in srgb, var(--foreground) 3%, var(--card));
-        }
-
-        /* Off-range (previous/next month) cells - V1 style muted */
-        .calendar-container .rbc-day-bg.rbc-off-range-bg {
-          background-color: color-mix(in srgb, var(--foreground) 6%, var(--card));
-        }
-
-        /* Month row - ensure background layer fills full height */
-        .calendar-container .rbc-month-row {
-          position: relative;
-        }
-
-        .calendar-container .rbc-row-bg {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          display: flex;
-          z-index: 0;
-        }
-
-        .calendar-container .rbc-day-bg {
-          flex: 1;
-          height: 100%;
-        }
-
-        /* Make each day column hoverable via the background layer */
-        .calendar-container .rbc-day-bg:hover {
-          background-color: color-mix(in srgb, var(--primary) 6%, var(--card)) !important;
-        }
-
-        /* Preserve today styling on hover */
-        .calendar-container .rbc-day-bg.rbc-today:hover {
-          background-color: color-mix(in srgb, var(--primary) 24%, var(--card)) !important;
-        }
-
-        /* Preserve off-range styling - muted hover */
-        .calendar-container .rbc-day-bg.rbc-off-range-bg:hover {
-          background-color: var(--accent) !important;
-        }
-
-        /* Date numbers in cells - V1 style positioned top-right */
-        .calendar-container .rbc-date-cell {
-          padding: 8px;
-          font-weight: 600;
-          font-size: 0.875rem;
-          text-align: right;
-          position: relative;
-          z-index: 1;
-        }
-
-        .calendar-container .rbc-date-cell.rbc-now {
-          font-weight: 800;
-          color: var(--foreground);
-        }
-
-        .calendar-container .rbc-date-cell.rbc-off-range {
-          color: var(--muted-foreground);
-        }
-
-        /* ================================================================
-           EVENT STYLING - Transparent wrapper, inner .calendar-event handles all
-           ================================================================ */
-        .calendar-container .rbc-event {
-          background: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          border-radius: 0 !important;
-        }
-
-        .calendar-container .rbc-event:focus {
-          outline: 2px solid var(--ring);
-          outline-offset: 2px;
-        }
-
-        /* Make inner calendar-event fill the full wrapper */
-        .calendar-container .rbc-event .calendar-event {
-          width: 100%;
-          height: 100%;
-          margin: 0;
-          display: flex;
-          align-items: center;
-        }
-
-        /* Event hover - full coverage with smooth transition */
-        .calendar-container .rbc-event:hover .calendar-event {
-          opacity: 0.95;
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-hard-sm);
-        }
-
-        /* Selected event - style the inner element */
-        .calendar-container .rbc-event.rbc-selected .calendar-event {
-          box-shadow: var(--shadow-hard) !important;
-          border-color: var(--ring) !important;
-          transform: translateY(-2px);
-        }
-
-        /* Event content wrapper */
-        .calendar-container .rbc-event-label,
-        .calendar-container .rbc-event-content {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          width: 100%;
-        }
-
-        /* Show more link - V1 style */
-        .calendar-container .rbc-show-more {
-          font-weight: 700;
-          font-size: 0.7rem;
-          color: var(--foreground);
-          background: color-mix(in srgb, var(--foreground) 6%, var(--card));
-          padding: 5px 10px;
-          margin: 6px 8px;
-          border: 2px solid var(--border);
-          text-align: center;
-          transition: all 0.15s ease;
-          cursor: pointer;
-        }
-
-        .calendar-container .rbc-show-more:hover {
-          background: var(--foreground);
-          color: var(--background);
-          transform: translateY(-1px);
-        }
-
-        /* Row segments - provides spacing between events */
-        .calendar-container .rbc-row-segment {
-          padding: 5px 8px;
-        }
-
-        /* Row content - allow hover to pass through to background layer */
-        .calendar-container .rbc-row-content {
-          padding: 0 0 10px 0;
-          pointer-events: none;
-          position: relative;
-          z-index: 1;
-        }
-
-        /* But keep events and show-more clickable */
-        .calendar-container .rbc-row-content .rbc-event,
-        .calendar-container .rbc-row-content .rbc-show-more {
-          pointer-events: auto;
-        }
-
-        /* Only the date number link itself is clickable, not the whole cell */
-        .calendar-container .rbc-date-cell button,
-        .calendar-container .rbc-date-cell a {
-          pointer-events: auto;
-          cursor: pointer;
-          padding: 2px 6px;
-          transition: background-color 0.15s ease;
-        }
-
-        .calendar-container .rbc-date-cell button:hover,
-        .calendar-container .rbc-date-cell a:hover {
-          background-color: var(--accent);
-        }
-
-        /* Hide default toolbar - we use CalendarToolbar */
-        .calendar-container .rbc-toolbar {
-          display: none;
-        }
-
-        /* Overlay (popup) for multiple events - V1 modal style */
-        /* Note: rbc-overlay may render in a portal, so we use global selectors */
-        .rbc-overlay {
-          border: 2px solid var(--border) !important;
-          border-radius: 0 !important;
-          box-shadow: var(--shadow-hard) !important;
-          background: var(--card) !important;
-          color: var(--foreground) !important;
-          padding: 0 !important;
-          max-width: 320px;
-          max-height: 400px;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          z-index: 100;
-        }
-
-        .rbc-overlay-header {
-          font-family: "Space Grotesk", sans-serif !important;
-          font-weight: 700 !important;
-          border-bottom: 2px solid var(--border) !important;
-          padding: 12px 16px !important;
-          background: color-mix(in srgb, var(--foreground) 6%, var(--card)) !important;
-          color: var(--foreground) !important;
-          flex-shrink: 0;
-        }
-
-        /* Overlay event list area - scrollable */
-        .rbc-overlay > * {
-          padding: 8px;
-        }
-
-        .rbc-overlay > .rbc-overlay-header {
-          padding: 12px 16px !important;
-        }
-
-        /* Scrollable event container */
-        .rbc-overlay > *:not(.rbc-overlay-header) {
-          overflow-y: auto;
-          flex: 1;
-          min-height: 0;
-        }
-
-        /* Custom scrollbar styling */
-        .rbc-overlay ::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .rbc-overlay ::-webkit-scrollbar-track {
-          background: color-mix(in srgb, var(--foreground) 6%, var(--card));
-        }
-
-        .rbc-overlay ::-webkit-scrollbar-thumb {
-          background: var(--muted-foreground);
-          border: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-        }
-
-        .rbc-overlay ::-webkit-scrollbar-thumb:hover {
-          background: var(--foreground);
-        }
-
-        /* Events inside overlay need spacing */
-        .rbc-overlay .rbc-event {
-          margin-bottom: 6px;
-        }
-
-        .rbc-overlay .rbc-event:last-child {
-          margin-bottom: 0;
-        }
-
-        /* ================================================================
-           WEEK AND DAY VIEW STYLES
-           ================================================================ */
-        .calendar-container .rbc-time-view {
-          border: none;
-          background: var(--card);
-        }
-
-        .calendar-container .rbc-time-header {
-          border-bottom: 2px solid var(--border);
-        }
-
-        .calendar-container .rbc-time-header-content {
-          border-left: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-        }
-
-        .calendar-container .rbc-time-content {
-          border-top: none;
-        }
-
-        .calendar-container .rbc-timeslot-group {
-          border-bottom: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-        }
-
-        .calendar-container .rbc-time-gutter {
-          font-weight: 500;
-          background: color-mix(in srgb, var(--foreground) 3%, var(--card));
-        }
-
-        .calendar-container .rbc-day-slot .rbc-time-slot {
-          border-top: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-        }
-
-        .calendar-container .rbc-time-column {
-          border-left: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-        }
-
-        .calendar-container .rbc-time-column:first-child {
-          border-left: none;
-        }
-
-        /* Current time indicator */
-        .calendar-container .rbc-current-time-indicator {
-          background-color: var(--urgency-urgent);
-          height: 2px;
-        }
-
-        /* All day section */
-        .calendar-container .rbc-allday-cell {
-          border-bottom: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-        }
-
-        /* ================================================================
-           AGENDA VIEW STYLES
-           ================================================================ */
-        .calendar-container .rbc-agenda-view {
-          border: none;
-        }
-
-        .calendar-container .rbc-agenda-table {
-          border-collapse: separate;
-          border-spacing: 0;
-        }
-
-        .calendar-container .rbc-agenda-table thead th {
-          font-family: "Space Grotesk", sans-serif;
-          font-weight: 700;
-          border-bottom: 2px solid var(--border);
-          padding: 12px 8px;
-          background: color-mix(in srgb, var(--foreground) 6%, var(--card));
-        }
-
-        .calendar-container .rbc-agenda-table tbody tr {
-          border-bottom: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-        }
-
-        .calendar-container .rbc-agenda-table td {
-          padding: 8px;
-          border-left: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-        }
-
-        .calendar-container .rbc-agenda-table td:first-child {
-          border-left: none;
-        }
-
-        .calendar-container .rbc-agenda-event-cell {
-          font-weight: 600;
-        }
-      `}</style>
     </div>
     </CalendarListToggleContext.Provider>
   );

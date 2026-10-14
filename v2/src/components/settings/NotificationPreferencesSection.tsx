@@ -2,7 +2,6 @@
 
 import { DEFAULT_REMINDER_DAYS, DEFAULT_URGENT_DAYS } from "@convex/lib/userDefaults";
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { analytics } from "@/lib/analytics";
 import { useMutation, useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
@@ -114,20 +113,16 @@ function WarningBanner({ visible, children, variant = "warning" }: WarningBanner
     : "bg-muted border-border text-muted-foreground";
 
   return (
-    <AnimatePresence initial={false}>
+    <>
       {visible && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.15 }}
+        <div
           className={`flex items-center gap-2 px-3 py-2 border text-sm ${styles}`}
         >
           <AlertTriangle className="w-4 h-4 flex-shrink-0" />
           <span>{children}</span>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 
@@ -143,17 +138,17 @@ interface TestButtonProps {
 function TestButton({ onClick, disabled, loading, justSent, label, sentLabel = "Sent" }: TestButtonProps): React.ReactElement {
   return (
     <Button variant="outline" size="sm" onClick={onClick} disabled={disabled} loading={loading} loadingText="Sending...">
-      <AnimatePresence initial={false} mode="wait">
+      <>
         {justSent ? (
-          <motion.span key="sent" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: "spring", stiffness: 500, damping: 15 }}>
+          <span key="sent">
             <CheckIcon className="w-4 h-4 text-primary" />
-          </motion.span>
+          </span>
         ) : (
-          <motion.span key="send" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <span key="send">
             <Send className="w-4 h-4" />
-          </motion.span>
+          </span>
         )}
-      </AnimatePresence>
+      </>
       {justSent ? sentLabel : label}
     </Button>
   );
@@ -514,13 +509,9 @@ export default function NotificationPreferencesSection({
                 </div>
               </div>
 
-              <AnimatePresence initial={false}>
+              <>
                 {deadlineRemindersExpanded && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
+                  <div
                   >
                     <div className="mt-4 ml-6 pl-4 border-l border-border/50 space-y-3 pb-1">
                       <p className="text-sm text-muted-foreground mb-2">
@@ -551,9 +542,9 @@ export default function NotificationPreferencesSection({
                         );
                       })}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
+              </>
             </div>
 
             <ToggleRow

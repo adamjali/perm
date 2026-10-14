@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { CaretDownIcon, CheckCircleIcon as CheckCircle2, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
-import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import type { SectionState, SectionName } from "@/hooks/useSectionState";
 
@@ -150,19 +149,10 @@ export function CollapsibleSection({
       </div>
 
       {/* Content */}
-      <AnimatePresence initial={false}>
+      <>
         {isOpen && (
-          <motion.div
+          <div
             id={`section-${name}-content`}
-            initial={{ height: 0, opacity: 0, overflow: "hidden" }}
-            animate={{ height: "auto", opacity: 1, overflow: "visible" }}
-            exit={{ height: 0, opacity: 0, overflow: "hidden" }}
-            transition={{
-              type: "spring",
-              visualDuration: 0.15,
-              bounce: 0.1,
-              overflow: { delay: 0.15 },
-            }}
           >
             {/* Prerequisite warning when opened without prerequisites */}
             {!isEnabled && (
@@ -174,9 +164,9 @@ export function CollapsibleSection({
             <div className="px-4 pb-4 pt-1">
               {children}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

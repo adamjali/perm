@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { CaretLeftIcon, CaretRightIcon, CheckIcon, CopyIcon, FileTextIcon, MagnifyingGlassIcon as Search, PencilIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react";
-import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -324,14 +323,10 @@ export function TemplateManagementModal({
                 isMobile && mobileView === "list" && "hidden"
               )}
             >
-              <AnimatePresence initial={false} mode="wait">
+              <>
                 {selectedTemplate ? (
-                  <motion.div
+                  <div
                     key={selectedTemplate._id}
-                    initial={{ opacity: 0, x: isMobile ? 0 : 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: isMobile ? 0 : -20 }}
-                    transition={{ duration: 0.15 }}
                     className="flex-1 flex flex-col"
                   >
                     {/* Detail header - hidden on mobile since title is in DialogHeader */}
@@ -541,11 +536,9 @@ export function TemplateManagementModal({
                         </Button>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                  <div
                     className={cn(
                       "flex-1 flex flex-col items-center justify-center text-center p-6 sm:p-8",
                       isMobile && "hidden" // On mobile, we show list by default
@@ -558,9 +551,9 @@ export function TemplateManagementModal({
                     <p className="text-sm text-muted-foreground mt-1">
                       Choose a template from the list to view or edit
                     </p>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
+              </>
             </div>
           </div>
         </DialogContent>

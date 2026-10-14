@@ -48,7 +48,7 @@ import { handleOperationError } from "@/lib/errors";
 import { validateDocumentFile } from "@/lib/documents/validation";
 import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
-import { useIsMobile } from "@/lib/animations";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { isRecruitmentComplete } from "@/lib/perm";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import type { CaseDetailData } from "@/components/cases/detail/case-detail-types";

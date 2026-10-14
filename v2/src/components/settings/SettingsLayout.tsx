@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useRef, KeyboardEvent } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { BellIcon, CalendarIcon, KeyIcon, MoonIcon, QuestionIcon as HelpCircle, ShieldIcon, UserIcon, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { useSettingsUnsavedChanges } from "./SettingsUnsavedChangesContext";
@@ -262,17 +261,13 @@ export default function SettingsLayout({
       >
         {/* initial={false}: the first section is at rest when settings opens;
             switching sections still cross-fades. */}
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
+        <>
+          <div
             key={activeSection}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             {children}
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        </>
       </main>
     </div>
   );

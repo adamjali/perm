@@ -26,7 +26,7 @@ import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckIcon, CheckCircleIcon, CircleNotchIcon, MagnifyingGlassIcon as Search, WarningIcon as AlertTriangle, XIcon, XCircleIcon } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
-import { springConfig } from '@/lib/animations';
+import { springConfig } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import {
   getToolColor,

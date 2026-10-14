@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useState, useCallback, useEffect } from "react";
 import { ArrowsClockwiseIcon as RefreshCw, CaretDownIcon, CheckIcon, CopyIcon, FileTextIcon, FloppyDiskIcon as Save, SparkleIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
-import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -373,18 +372,9 @@ export function JobDescriptionField({
       </button>
 
       {/* Content - Animated expand/collapse */}
-      <AnimatePresence initial={false}>
+      <>
         {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0, overflow: "hidden" }}
-            animate={{ height: "auto", opacity: 1, overflow: "visible" }}
-            exit={{ height: 0, opacity: 0, overflow: "hidden" }}
-            transition={{
-              type: "spring",
-              visualDuration: 0.15,
-              bounce: 0.1,
-              overflow: { delay: 0.15 },
-            }}
+          <div
           >
             <div className="px-4 pb-4 pt-1 space-y-4">
               {/* Template selector row */}
@@ -570,9 +560,9 @@ export function JobDescriptionField({
                 </span>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Confirmation dialog when server finds existing template */}
       <Dialog open={!!pendingUpdate} onOpenChange={(open) => { if (!open) setPendingUpdate(null); }}>

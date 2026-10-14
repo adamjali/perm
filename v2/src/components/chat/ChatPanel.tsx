@@ -10,7 +10,7 @@ import { TypingIndicator } from './TypingIndicator';
 import { ActionModeToggle, ACTION_MODE_NOTICE, type ActionMode } from './ActionModeToggle';
 import { ChatCompactionDivider } from './ChatCompactionDivider';
 import { NotLegalAdviceNotice } from '@/components/legal/NotLegalAdviceNotice';
-import { springConfig } from '@/lib/animations';
+import { springConfig } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import type { ToolConfirmationState } from '@/lib/ai/tool-confirmation-types';
 import type { DisplayMessage } from '@/hooks/useChatWithPersistence';

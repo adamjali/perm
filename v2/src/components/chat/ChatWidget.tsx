@@ -6,7 +6,7 @@ import { ChatTextIcon } from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import { ChatPanel } from './ChatPanel';
 import { type ActionMode } from './ActionModeToggle';
-import { springConfig } from '@/lib/animations';
+import { springConfig } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import type { ToolConfirmationState } from '@/lib/ai/tool-confirmation-types';
 import type { DisplayMessage } from '@/hooks/useChatWithPersistence';
