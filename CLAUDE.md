@@ -715,7 +715,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   panels are real dialogs, and a deleted conversation leaves no words in the audit log.
 
 
-## Oct 13 2026, in three lines
+## Oct 13 2026, in four lines
 
 - **The homepage board and the daily pulse lead with DOL's last working day** (`isDolWorkday` in `src/lib/pulseStats.ts`):
   on Columbus Day the board read "Decided Oct 12: 11", and a weekend did the same every Monday morning. A holiday after
@@ -727,3 +727,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   transition synchronously, its 50-commit counter overflows, and whichever update lands next throws (the header's scroll
   listener 7 of 9 times, Next's router once, the scroll bar once). The header now touches React only when the bar
   changes and `ScrollProgress` draws without state; Next's router can still be the one that throws.
+- **Next 16.4.0** (owner's call, to test the router side of #185): its Back button now goes through React's popstate
+  path (vercel/next.js #99612, read in the installed code), page caches still go to `.next/server/route-cache`, and the
+  whole suite passed (9,686 tests). `eslint-config-next` stays at 16.2.6: pnpm's trust check refuses its new resolver
+  (`.planning/VERSION-DECISIONS.md`). Whether #185 stops is a count to read in PostHog over the next week.
