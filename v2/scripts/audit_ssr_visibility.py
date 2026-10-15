@@ -45,9 +45,20 @@ TRANSFORM_RE = re.compile(r"translateY\(8px\)")
 STYLE_ATTR_RE = re.compile(r'\sstyle="([^"]*)"')
 
 
+def _hidden_form_mirror(body: str, at: int) -> bool:
+    """A form control kept invisible on purpose: a switch or checkbox
+    component's native input (aria-hidden, out of the tab order) that mirrors
+    the visible control. It hides nothing a reader should see; on a streamed
+    page the footer's switch reaches the HTML before the <h1>."""
+    start = body.rfind("<", 0, at)
+    tag = body[start:body.find(">", at) + 1]
+    return tag.startswith("<input") and 'aria-hidden="true"' in tag
+
+
 def hidden_styles(body: str, pattern: re.Pattern = HIDDEN_RE) -> list[int]:
     """Positions of elements whose inline style attribute matches `pattern`."""
-    return [m.start() for m in STYLE_ATTR_RE.finditer(body) if pattern.search(m.group(1))]
+    return [m.start() for m in STYLE_ATTR_RE.finditer(body)
+            if pattern.search(m.group(1)) and not _hidden_form_mirror(body, m.start())]
 
 # A string every page on this site serves. If it is absent the fetch did not
 # reach a real page (a bot challenge, a 404 body, an error shell), and every

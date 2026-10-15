@@ -59,6 +59,10 @@ ALLOW_DUPLICATES = {
     # it for a reader. Qualifying them ("What We Collect (PostHog)") would be
     # noise, not a fix.
     "/privacy",
+    # DOL uses the same status words (BALCA affirmed, Center Director review
+    # affirmed) for wage requests and for H-2A and H-2B, and each program's
+    # <h2> section explains them for that program.
+    "/perm-case-statuses",
 }
 
 

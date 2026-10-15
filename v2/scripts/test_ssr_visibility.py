@@ -42,6 +42,11 @@ def main() -> int:
     check(before_h1(BELOW_FOLD) == 0 and len(av.hidden_styles(BELOW_FOLD)) == 1,
           "a below-the-fold reveal is counted, but not before the h1")
     check(before_h1(HALF) == 0, "opacity:0.5 is not hidden")
+    switch = ('<body><div id="main-content"></div><input type="checkbox" aria-hidden="true" tabindex="-1" '
+              'style="position:absolute;pointer-events:none;opacity:0" checked=""/><h1>Case</h1></body>')
+    check(before_h1(switch) == 0, "a switch's hidden native input is not hidden content")
+    visible_input = '<body><input type="text" style="opacity:0"/><h1>Case</h1></body>'
+    check(before_h1(visible_input) == 1, "an input hidden without aria-hidden still counts")
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0
 
