@@ -20,7 +20,7 @@ export default function ArticleBody({ title, url, children }: ArticleBodyProps) 
       <div className="flex gap-10">
         {/* Main content */}
         <div className="min-w-0 flex-1">
-          <div className="article-content prose-neobrutalist max-w-none">{children}</div>
+          <div className="article-content prose-article max-w-none">{children}</div>
 
           {/* Share buttons */}
           <div className="mt-10 border-t border-border pt-6">

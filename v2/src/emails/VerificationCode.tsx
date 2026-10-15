@@ -4,7 +4,6 @@
  *
  * Features:
  * - Large, prominent verification code display
- * - Neobrutalist code box with green accent
  * - Expiry notice (10 minutes)
  * - Security disclaimer
  * - App link

@@ -19,7 +19,6 @@
  * - "Show Closed/Archived" toggle
  * - "Case Selection" button with badge showing selection status
  * - Collapsible filter sections on mobile
- * - Neobrutalist styling with stage colors
  */
 
 "use client";

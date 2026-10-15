@@ -8,10 +8,9 @@
  * - Glass panel with backdrop blur
  * - Countdown timer with pulsing animation
  * - "Stay Logged In" and "Log Out Now" buttons
- * - Neobrutalist design with Forest Green accent
  * - Accessible (ARIA roles, keyboard support)
  *
- * Design System: Neobrutalist + Glass Panel
+ * Design: the site's calm look, over a dimmed page
  * Inspired by: v1/frontend/src/js/components/TimeoutWarningModal.js
  */
 

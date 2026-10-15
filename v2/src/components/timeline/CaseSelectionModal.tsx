@@ -69,7 +69,7 @@ const STATUS_ORDER: Record<CaseStatus, number> = {
  * - Sort by name, status, or date
  * - Filter by status (all, active, or specific stage)
  * - Bulk actions: Select All, Deselect All, Active Only
- * - Scrollable case list with neobrutalist styling
+ * - Scrollable case list
  */
 export function CaseSelectionModal({
   isOpen,

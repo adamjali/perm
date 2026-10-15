@@ -28,7 +28,6 @@ export interface CaseSelectionItemProps {
  * - Checkbox on left for selection
  * - Employer name + position title (truncated if long)
  * - Status badge on right
- * - Neobrutalist hover effect with background lightening
  */
 export function CaseSelectionItem({
   case: caseData,

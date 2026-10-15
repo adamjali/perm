@@ -7,7 +7,6 @@ import ThemeToggle from "./ThemeToggle";
  * Features:
  * - Sun icon in dark mode (to switch to light)
  * - Moon icon in light mode (to switch to dark)
- * - Neobrutalist styling with hard shadows
  * - Accessible with aria-label
  */
 const meta = {

@@ -4,7 +4,6 @@
  *
  * Design:
  * - Fixed at bottom of screen (z-[60], above the page and the footer)
- * - Neobrutalist: 4px black top border, hard shadow
  * - Left: Selected count
  * - Middle: Select All | Deselect All
  * - Right: Export CSV | Export JSON | Archive | Delete

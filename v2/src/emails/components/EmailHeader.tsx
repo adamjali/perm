@@ -3,7 +3,6 @@
  * Section header component for email templates.
  *
  * Features:
- * - Bold styling matching neobrutalist design
  * - Urgency color bars
  * - Dark mode via CSS classes
  */

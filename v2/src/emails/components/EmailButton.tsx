@@ -29,7 +29,7 @@ export interface EmailButtonProps {
 }
 
 /**
- * CTA button with neobrutalist styling.
+ * The email's call-to-action button.
  * Use for primary actions in email templates.
  */
 export function EmailButton({

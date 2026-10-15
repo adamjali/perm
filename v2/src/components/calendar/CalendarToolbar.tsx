@@ -2,7 +2,7 @@
  * Custom Calendar Toolbar Component
  *
  * Simple V1-style toolbar for react-big-calendar.
- * Clean neobrutalist design with consistent styling.
+ * One row: month picker, previous/today/next, and the view toggle.
  */
 
 "use client";

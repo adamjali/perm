@@ -5,7 +5,7 @@
  * blast: a user whose cases have N deadlines hitting a reminder window today now
  * gets ONE email listing all of them, grouped by urgency.
  *
- * Matches the WeeklyDigest neobrutalist aesthetic (shared EmailLayout, urgency-
+ * Matches the WeeklyDigest (shared EmailLayout, urgency-
  * colored section banners, deadline rows). Unlike the weekly digest, this keeps a
  * "Coming up" (15+ days) section so the 14- and 30-day reminder intervals are
  * never dropped.

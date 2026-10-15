@@ -15,7 +15,6 @@
  *
  * Features:
  * - Warning/amber color scheme for urgency
- * - Neobrutalist design with hard shadow and 2px black border
  * - Expandable list for multiple alerts
  * - Individual dismiss and "Dismiss All" buttons
  * - Link to view each closed case

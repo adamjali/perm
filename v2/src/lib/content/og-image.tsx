@@ -2,7 +2,7 @@
  * Shared OG Image Generator
  *
  * Creates dynamic 1200x630 PNG OpenGraph images for content articles.
- * Neobrutalist design matching the PERM Tracker brand.
+ * Matches the PERM Tracker brand.
  */
 
 import { ImageResponse } from "next/og";

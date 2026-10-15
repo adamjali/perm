@@ -14,7 +14,7 @@
  * - Empty state with bell icon and friendly message
  * - Loading skeleton while fetching
  *
- * Neobrutalist styling:
+ * Styling:
  * - Width: 360px (wider than default dropdown)
  * - Max-height: 400px with scroll
  * - 2px black border, 4px 4px shadow

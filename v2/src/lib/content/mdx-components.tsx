@@ -2,7 +2,7 @@
  * MDX Component Mapping
  *
  * Custom components injected into MDX content.
- * Styled to match the neobrutalist design system.
+ * Styled to match the site.
  */
 
 import type { MDXComponents } from "mdx/types";
@@ -35,7 +35,7 @@ function Callout({
   stat?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  // Stat variant: neobrutalist card with large stat badge
+  // Stat variant: a card with a large stat
   if (type === "stat") {
     return (
       <div className="not-prose my-6 flex flex-col gap-4 border border-border p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">

@@ -14,7 +14,6 @@
  * - Sticky footer
  *
  * Design System:
- * - Neobrutalist aesthetic (hard shadows, 2px borders)
  * - Staggered animations (50ms increments)
  * - Dark mode support via CSS variables
  */

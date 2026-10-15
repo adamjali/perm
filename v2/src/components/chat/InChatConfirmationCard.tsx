@@ -6,7 +6,7 @@
  * Permission confirmation card that appears inline in chat flow for action tools.
  * Users must approve/deny tool executions before they run.
  *
- * Design: Neobrutalist (PERM Tracker v2)
+ * Design: the site's calm look
  * - 2px black borders
  * - Hard shadows (4px 4px 0px)
  * - JetBrains Mono for technical text
@@ -206,7 +206,7 @@ export function InChatConfirmationCard({
       exit={{ opacity: 0 }}
       transition={springConfig}
       className={cn(
-        // Base styles - neobrutalist
+        // Base styles
         'relative overflow-hidden',
         'border border-border rounded-none',
         'bg-card',

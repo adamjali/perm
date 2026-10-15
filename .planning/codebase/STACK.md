@@ -225,7 +225,7 @@
 - PostCSS plugin: `@tailwindcss/postcss` 4.x
 - CSS entry: `v2/src/app/globals.css`
 - Animation utilities: `tw-animate-css` 1.4.0
-- Custom prose styles: `.prose-neobrutalist` (no @tailwindcss/typography)
+- Custom prose styles: `.prose-article` (no @tailwindcss/typography)
 
 ## Platform Requirements
 

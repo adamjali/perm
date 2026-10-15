@@ -6,7 +6,7 @@
  * - CONFIRM: Chatbot proposes actions and waits for confirmation (default, safest)
  * - AUTO: Chatbot executes actions automatically
  *
- * Neobrutalist design:
+ * Design:
  * - 2px black border container
  * - Hard shadow (2px 2px 0px)
  * - Active segment: Forest Green bg, white text

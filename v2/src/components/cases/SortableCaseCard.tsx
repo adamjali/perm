@@ -7,7 +7,6 @@
  * - Click-after-drag prevention (swallows click events that follow a drag)
  * - Smooth transform animations during reorder
  * - Visual placeholder (opacity reduced) while dragged item is in DragOverlay
- * - Neobrutalist styling preserved
  * - Supports selection mode (passes through selection props)
  */
 

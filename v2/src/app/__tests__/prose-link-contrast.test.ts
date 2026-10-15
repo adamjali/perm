@@ -6,7 +6,7 @@ import { join } from "node:path";
  * In-article links must be readable on the light page.
  *
  * globals.css remaps `.text-primary` to the text-safe --primary-text, but that
- * remap lives in `@layer utilities`, and `.prose-neobrutalist a` is UNLAYERED,
+ * remap lives in `@layer utilities`, and `.prose-article a` is UNLAYERED,
  * so it wins regardless of specificity. With `color: var(--primary)` it painted
  * every link in every guide and blog post #2ECC40 on #FAFAFA: 2.05:1 against
  * the 4.5:1 floor, measured in the browser on 2026-09-23 after an outside audit
@@ -34,7 +34,7 @@ function contrast(a: string, b: string): number {
 
 describe("in-article link contrast", () => {
   it("the unlayered prose link rule paints with the text-safe token, never the brand lime", () => {
-    const rule = block(".prose-neobrutalist a");
+    const rule = block(".prose-article a");
     expect(rule).toMatch(/\bcolor:\s*var\(--primary-text\)/);
     expect(rule).not.toMatch(/\bcolor:\s*var\(--primary\)/);
   });

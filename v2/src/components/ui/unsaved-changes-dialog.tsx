@@ -1,11 +1,10 @@
 /**
  * UnsavedChangesDialog Component
  *
- * A neobrutalist-styled confirmation dialog that warns users about unsaved changes
+ * A confirmation dialog that warns users about unsaved changes
  * before navigating away from a form.
  *
  * Design:
- * - Neobrutalist styling with hard shadow and 2px black border
  * - Warning icon for visual emphasis
  * - "Stay" button (secondary) and "Leave" button (destructive)
  * - Accessible with proper ARIA attributes

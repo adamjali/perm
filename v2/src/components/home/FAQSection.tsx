@@ -34,7 +34,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
       className={cn(
         "relative border border-border bg-background",
         "transition-colors duration-150",
-        // Cubic bezier for snappy neobrutalist feel
+        // A short ease-out
         "[transition-timing-function:cubic-bezier(0.165,0.84,0.44,1)]",
         isOpen
           ? ""

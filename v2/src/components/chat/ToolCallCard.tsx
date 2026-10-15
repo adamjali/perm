@@ -3,10 +3,10 @@
 /**
  * ToolCallCard Component
  *
- * Displays tool invocations in chat with beautiful neobrutalist styling.
+ * Displays tool invocations in chat.
  * Shows tool name, icon, input summary, and result summary.
  *
- * Design: Neobrutalist (PERM Tracker v2)
+ * Design: the site's calm look
  * - 2px black borders
  * - Hard shadows (2px 2px 0px)
  * - JetBrains Mono for technical text
@@ -100,7 +100,7 @@ export function ToolCallCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={springConfig}
       className={cn(
-        // Base styles - neobrutalist
+        // Base styles
         'relative overflow-hidden',
         'border border-border rounded-none',
         'bg-card',

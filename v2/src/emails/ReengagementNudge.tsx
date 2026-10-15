@@ -6,7 +6,7 @@
  * the weekly digest auto-suppresses server-side (the in-app banner explains how
  * to turn it back on). Weekly-only unsubscribe link is included.
  *
- * Matches the shared EmailLayout neobrutalist system and greets like every
+ * Matches the shared EmailLayout and greets like every
  * other account email ("Hi Name,").
  */
 

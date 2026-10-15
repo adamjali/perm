@@ -3,7 +3,6 @@
  * Shared layout wrapper for all PERM Tracker email templates.
  *
  * Features:
- * - PERM Tracker branding (neobrutalist-inspired)
  * - Max-width 600px container
  * - Footer with settings + Privacy/Terms links
  * - Responsive design

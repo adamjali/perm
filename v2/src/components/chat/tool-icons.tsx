@@ -4,7 +4,7 @@
  * Centralized mapping of tool names to their icons and colors.
  * Used by ToolCallCard for consistent visual representation.
  *
- * Design System: Neobrutalist (PERM Tracker v2)
+ * Design: the site's calm look
  * - Icons from @phosphor-icons/react
  * - Colors follow semantic meaning
  */

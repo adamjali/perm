@@ -6,14 +6,9 @@
  * - new-user: No cases at all (shows "Add your first case" CTA)
  * - no-results: Filtered results empty (shows "No cases match your filters")
  *
- * Design:
- * - Empty filing cabinet illustration (SVG)
- * - Message text
- * - CTA button (primary action)
- * - Neobrutalist card styling
+ * Design: a title, one sentence, one action. No illustration.
  */
 
-import { DocketFolderArt } from "@/components/illustrations/DocketFolderArt";
 import { Button } from "@/components/ui/button";
 
 // ============================================================================
@@ -39,17 +34,14 @@ export function CaseListEmptyState({
     return (
       <div
         data-testid="empty-state-new-user"
-        className="flex flex-col items-center justify-center py-20 px-6 border border-border bg-background"
+        className="flex flex-col items-center justify-center border border-border px-6 py-16"
       >
-        <DocketFolderArt variant="empty" className="mb-6 w-52" />
-
         <h2 className="font-heading text-2xl font-bold mb-2">No cases yet</h2>{" "}
         <p className="text-muted-foreground text-center max-w-md mb-6">
           Add a case and its deadlines appear here, on your calendar and in your reminders.
         </p>{" "}
 
-        {/* CTA Button */}
-        <Button onClick={onAddCase} size="lg">
+        <Button onClick={onAddCase}>
           Add your first case
         </Button>
       </div>
@@ -60,10 +52,8 @@ export function CaseListEmptyState({
   return (
     <div
       data-testid="empty-state-no-results"
-      className="flex flex-col items-center justify-center py-20 px-6 border border-border bg-background"
+      className="flex flex-col items-center justify-center border border-border px-6 py-16"
     >
-      <DocketFolderArt variant="no-match" className="mb-6 w-52" />
-
       <h2 className="font-heading text-2xl font-bold mb-2">
         No cases match these filters
       </h2>{" "}
@@ -71,8 +61,7 @@ export function CaseListEmptyState({
         Clear them to see every case again.
       </p>
 
-      {/* CTA Button */}
-      <Button onClick={onClearFilters} size="lg" variant="outline">
+      <Button onClick={onClearFilters} variant="outline">
         Clear filters
       </Button>
     </div>

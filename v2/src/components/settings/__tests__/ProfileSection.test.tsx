@@ -11,7 +11,6 @@
  * - Save functionality and error handling
  * - Google sign-in badge display
  * - Accessibility
- * - Neobrutalist styling
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";

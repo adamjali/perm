@@ -19,7 +19,6 @@
  * - Request a Feature - GitHub Issues link with enhancement label
  * - App Version - Display version from env or fallback
  * - Delete Account - Soft delete with 30-day grace period
- * - Neobrutalist styling matching other settings sections
  */
 
 "use client";

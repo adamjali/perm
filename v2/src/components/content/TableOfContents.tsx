@@ -22,7 +22,7 @@ export default function TableOfContents() {
 
   // Extract headings from DOM
   React.useEffect(() => {
-    const article = document.querySelector(".prose-neobrutalist");
+    const article = document.querySelector(".prose-article");
     if (!article) return;
 
     const elements = article.querySelectorAll("h2[id], h3[id]");

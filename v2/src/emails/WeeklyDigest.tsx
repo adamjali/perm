@@ -7,7 +7,6 @@
  * - Grouped deadline sections (overdue, next 7 days, days 8-14)
  * - Recent case activity feed
  * - Empty state with encouraging message
- * - Neobrutalist design matching v2 aesthetic
  *
  * Urgency colors:
  * - overdue: #991B1B (dark red)
@@ -38,7 +37,7 @@ export interface WeeklyDigestProps {
 
 /**
  * Weekly digest email template.
- * Displays case deadlines, activity, and stats in a neobrutalist design.
+ * Displays case deadlines, activity, and stats.
  */
 export function WeeklyDigest({
   digestContent,

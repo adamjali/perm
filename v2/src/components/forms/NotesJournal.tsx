@@ -173,7 +173,6 @@ function filterNotes(notes: NoteEntry[], filterBy: FilterOption): NoteEntry[] {
  * - Delete button per entry
  * - Filter by: All, Overdue, High Priority, Pending, Done
  * - Sort by: Newest, Oldest, Priority, Due Date
- * - Neobrutalist design with hard shadows and animations
  *
  * @example
  * ```tsx

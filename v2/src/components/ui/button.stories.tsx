@@ -136,13 +136,13 @@ export const LoadingSizes: Story = {
   ),
 }
 
-export const NeobrutalistShowcase: Story = {
+export const Showcase: Story = {
   args: {
     children: "Button",
   },
   render: () => (
     <div className="p-8 space-y-4">
-      <div className="text-sm font-semibold mb-4 text-foreground">Press buttons to see the neobrutalist active state (shadow removal + translation)</div>
+      <div className="text-sm font-semibold mb-4 text-foreground">Every button variant, active state (shadow removal + translation)</div>
       <div className="flex flex-wrap gap-4">
         <Button>Press Me</Button>
         <Button variant="secondary">Secondary</Button>

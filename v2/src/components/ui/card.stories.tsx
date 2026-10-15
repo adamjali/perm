@@ -22,7 +22,7 @@ export const Default: Story = {
         <CardDescription>Card description goes here</CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Card content with neobrutalist hard shadow styling.</p>
+        <p>Card content.</p>
       </CardContent>
       <CardFooter>
         <Button>Action</Button>
@@ -121,11 +121,11 @@ export const WithMultipleCards: Story = {
   ),
 }
 
-export const NeobrutalistShowcase: Story = {
+export const Showcase: Story = {
   args: {},
   render: () => (
     <div className="p-8 space-y-4">
-      <div className="text-sm font-semibold mb-4 text-foreground">Hover over cards to see the neobrutalist lift effect</div>
+      <div className="text-sm font-semibold mb-4 text-foreground">A row of cards effect</div>
       <div className="grid grid-cols-2 gap-6">
         <Card className="w-[280px]">
           <CardHeader>

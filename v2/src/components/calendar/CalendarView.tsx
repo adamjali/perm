@@ -5,7 +5,7 @@
  * Displays case deadlines as calendar events with stage-based styling.
  *
  * Features:
- * - Month/Week/Day views with custom neobrutalist toolbar
+ * - Month/Week/Day views with a custom toolbar
  * - Stage-based event coloring (PWD blue, Recruitment purple, etc.)
  * - Custom event rendering with urgency indicators
  * - Click to show event popover with case details

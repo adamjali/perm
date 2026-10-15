@@ -2,7 +2,7 @@
  * Skeleton Components
  *
  * Composable loading state skeletons built on base Skeleton primitive.
- * All components support consistent neobrutalist styling and dark mode.
+ * All components share one look and support dark mode.
  */
 
 import * as React from "react";

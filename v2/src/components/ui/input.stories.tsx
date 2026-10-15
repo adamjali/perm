@@ -114,7 +114,7 @@ export const CaseForm: Story = {
   ),
 }
 
-export const NeobrutalistShowcase: Story = {
+export const Showcase: Story = {
   args: {},
   render: () => (
     <div className="p-8 space-y-4">

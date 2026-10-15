@@ -21,7 +21,6 @@
  * - Info box explaining urgent notifications bypass quiet hours
  * - Dirty state tracking for save button
  * - Toast notifications for success/error
- * - Neobrutalist styling matching ProfileSection
  */
 
 "use client";

@@ -6,7 +6,7 @@ import { motion, useReducedMotion } from 'motion/react';
  * TypingIndicator Component
  *
  * Displays animated bouncing dots to indicate the AI is processing/typing.
- * Uses neobrutalist styling with hard shadows and borders.
+ * Three dots while the assistant writes.
  */
 export function TypingIndicator() {
   const reduceMotion = useReducedMotion();

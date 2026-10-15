@@ -4,7 +4,6 @@
  *
  * Features:
  * - Large, prominent reset code display
- * - Neobrutalist code box with orange accent (distinguishes from verification)
  * - Expiry notice (10 minutes)
  * - Security disclaimer with stronger language
  * - App link

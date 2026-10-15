@@ -1,6 +1,6 @@
 /**
  * CasePagination Component
- * Pagination controls for case list with neobrutalist styling.
+ * Pagination controls for the case list.
  *
  * Layout:
  * - Left: "Showing X-Y of Z cases"
@@ -10,7 +10,6 @@
  * Features:
  * - Disabled state for first/last page navigation
  * - Page size options: 6, 12 (default), 24, 50
- * - Neobrutalist: black borders, shadow-hard, hover lift
  * - Monospace font for numbers
  */
 

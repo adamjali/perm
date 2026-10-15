@@ -73,7 +73,7 @@ const { children, initial: _initial, animate: _animate, ...domProps } = props;
 **CSS Classes:**
 - Tailwind utility classes exclusively
 - CSS variables for theme colors: `--tile-color`, `--font-heading`, `--stage-pwd`
-- Custom utility classes in `globals.css`: `.grain-overlay`, `.prose-neobrutalist`
+- Custom utility classes in `globals.css`: `.grain-overlay`, `.prose-article`
 - Component-scoped styles via inline `style` prop with CSS variables
 
 ## Import Organization

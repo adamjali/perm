@@ -114,12 +114,11 @@ export interface DateInputProps
  * DateInput component - styled date picker with clear functionality.
  *
  * Features:
- * - Native date input with neobrutalist styling
+ * - Native date input
  * - Internal state management to prevent clearing during typing
  * - Clear button when value present
  * - Error state with red border
  * - Auto-calculated state indicator
- * - Hard shadows on focus (neobrutalist)
  * - Min/max date support for date range restrictions
  * - Calendar icon indicator
  *
@@ -248,7 +247,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
           {...(sundayOnly ? { step: "7" } : {})}
           aria-invalid={error ? "true" : undefined}
           className={cn(
-            // Base styles - neobrutalist
+            // Base styles
             "h-11 w-full min-w-0 border bg-background px-3 py-1 text-base transition-colors duration-150 outline-none",
             // Hover state
             "",

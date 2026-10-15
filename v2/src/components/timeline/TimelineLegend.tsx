@@ -1,6 +1,6 @@
 /**
  * TimelineLegend Component
- * Color-coded legend for timeline stages with neobrutalist styling.
+ * Color-coded legend for timeline stages.
  *
  * Stage colors (from FRONTEND_DESIGN_SKILL.md and globals.css):
  * - PWD: #0066FF (Blue)
@@ -12,7 +12,6 @@
  * - Horizontal flex layout (wraps to 2x2 grid on mobile)
  * - Flat stage swatches, framed like the timeline markers
  * - Fixed/sticky footer positioning
- * - Neobrutalist styling
  */
 
 "use client";

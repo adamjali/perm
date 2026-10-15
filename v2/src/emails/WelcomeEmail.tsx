@@ -10,7 +10,6 @@
  * - Senja review ask
  * - A team sign-off
  * - Dark mode support via CSS classes
- * - Neobrutalist design matching v2 aesthetic
  */
 
 import { Text, Section, Link, Hr } from "@react-email/components";

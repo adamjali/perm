@@ -10,7 +10,7 @@
  * - Snappy Forest Green spinner
  * - Smooth, fast animations (150ms)
  *
- * Design System: Neobrutalist + Glass Panel
+ * Design: the site's calm look, over a dimmed page
  */
 
 import { useAuthContext } from "@/lib/contexts/AuthContext";

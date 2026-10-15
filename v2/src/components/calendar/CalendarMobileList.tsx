@@ -10,7 +10,6 @@
  * - Each item shows: deadline type, case name, date, urgency color
  * - Tap to navigate to case detail
  * - Touch-friendly 44px minimum touch targets
- * - Neobrutalist styling
  */
 
 "use client";

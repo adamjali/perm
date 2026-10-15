@@ -68,7 +68,6 @@ export interface FormFieldProps {
  * - Error message with shake animation
  * - Warning message (non-blocking)
  * - Auto-calculated state indicator
- * - Neobrutalist styling
  * - Snappy animations (0.2-0.4s)
  */
 export function FormField({

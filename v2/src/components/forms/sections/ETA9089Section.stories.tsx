@@ -24,7 +24,6 @@ ETA 9089 form section with filing window indicator.
 - Filing window indicator with color-coded status
 - Window countdown when closing soon
 - Validation errors and warnings display
-- Neobrutalist design with hard shadows
 
 **Filing Window Rules:**
 - Not yet open: < 30 days after recruitment

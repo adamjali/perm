@@ -42,9 +42,7 @@
   --skeleton-sheen: color-mix(in oklab, var(--foreground) 5%, transparent);
 
   /* Accent */
-  /* A hover WASH, not the brand. This was the lime, so every ghost/outline
-     hover and dropdown highlight painted solid #2ECC40; blended into the
-     manila action bar it produced the olive hover. Brand stays on --primary. */
+  /* A hover WASH, not the brand: the lime is for the one main action. */
   --accent: #F0F0F0;
   --accent-foreground: #141414;
 
@@ -62,7 +60,7 @@
   /* The focus ring is the green ink: 5.22:1 on the page. */
   --ring: #1A7A25;
 
-  /* Radius - neobrutalist */
+  /* Radius: square corners everywhere */
   --radius: 0px;
 
   /* Two shadows, and only two. The lime main button keeps a small hard edge
@@ -73,9 +71,6 @@
      shadow, so a class the codemod missed paints nothing. */
   --elev-press: 3px 3px 0 0 #141414;
   --elev-overlay: 0 12px 32px -8px rgba(20, 20, 20, 0.18), 0 2px 6px rgba(20, 20, 20, 0.06);
-  --shadow-hard-sm: 0 0 #0000;
-  --shadow-hard: 0 0 #0000;
-  --shadow-hard-lg: 0 0 #0000;
 
   /* Case Stage Colors */
   --stage-pwd: #0066FF;
@@ -114,16 +109,6 @@
   --data-none-ink: #4B5563;    /* the same meaning, as text */
   --data-info: #2563EB;        /* neutral notice: scheduled, informational */
   --data-info-ink: #1D4ED8;    /* the same meaning, as text (6.4:1 on paper) */
-
-  /* Manila Folder Colors */
-  --manila: #F5E6C8;
-  --manila-dark: #E8D4A8;
-  --manila-shadow: #D4C090;
-  /* Ink for anything sitting ON manila. The folder stays tan in BOTH
-     themes, so its text must stay dark in both: foreground/muted-foreground
-     flip light in dark mode and measured 2.16:1 and 1.16:1 on the tan. */
-  --manila-ink: #000000;
-  --manila-ink-soft: rgba(0, 0, 0, 0.7);
 
   /* Transitions - matching mockup */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -212,18 +197,10 @@
   --input: #737373;
   --ring: #2ECC40;
 
-  /* Manila Folder Colors - Dark Mode (darker tones) */
-  --manila: #C4A97A;
-  --manila-dark: #A8916A;
-  --manila-shadow: #8A7552;
-
   /* In dark mode the lime stands out on its own; a floating layer still
      needs a shadow to separate it from the page. */
   --elev-press: 0 0 #0000;
   --elev-overlay: 0 12px 32px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  --shadow-hard-sm: 0 0 #0000;
-  --shadow-hard: 0 0 #0000;
-  --shadow-hard-lg: 0 0 #0000;
   /* On dark the brand lime already measures 9.26:1, so text keeps it. */
   --primary-text: #2ECC40;
   /* 5.89:1 on the dark page; no darkening needed. */
@@ -355,10 +332,6 @@ html {
   --color-data-none: var(--data-none);
   --color-data-none-ink: var(--data-none-ink);
 
-  /* The docket bed. `--manila` has existed since the case-file components
-     were built but was never exposed to Tailwind, so `bg-manila` silently
-     generated nothing. Additive only: the raw custom properties above are
-     untouched. */
   --color-stage-pwd-ink: var(--stage-pwd-ink);
   --color-stage-recruitment-ink: var(--stage-recruitment-ink);
   --color-stage-eta9089-ink: var(--stage-eta9089-ink);
@@ -375,9 +348,6 @@ html {
      the remap below cannot reach (hover:, group-hover:, decoration-). */
   --color-primary-text: var(--primary-text);
   --color-destructive-text: var(--destructive-text);
-  --color-manila: var(--manila);
-  --color-manila-dark: var(--manila-dark);
-  --color-manila-shadow: var(--manila-shadow);
   /* Square corners are the system, so the whole scale is zero: a stray
      rounded-lg or rounded-xl cannot reintroduce a curve (rounded-lg was 2px and
      rounded-xl the framework's 12px). rounded-full stays round for dots,
@@ -435,17 +405,7 @@ html {
   --font-mono: 'JetBrains Mono', monospace;
 }
 
-/* Utility classes for hard shadows */
 @layer utilities {
-  .shadow-hard-sm {
-    box-shadow: var(--shadow-hard-sm);
-  }
-  .shadow-hard {
-    box-shadow: var(--shadow-hard);
-  }
-  .shadow-hard-lg {
-    box-shadow: var(--shadow-hard-lg);
-  }
 
   /* Monospace font utility */
   .mono {
@@ -878,86 +838,13 @@ html {
   font-family: var(--font-mono); font-size: 0.875rem; font-weight: 700;
 }
 
-/* ================================================================
-   DARK MODE — Case Detail neobrutalist overrides
-   Borders stay black, headers keep explicit colors
-   ================================================================ */
-.dark .detail-card,
-.dark .folder-body,
-.dark .folder-tab,
-.dark .win-card,
-.dark .gantt-wrap,
-.dark .next-up,
-.dark .next-up-caution,
-.dark .vtl-icon,
-.dark .doc-icon,
-.dark .recruit-ad-num,
-.dark .recruit-icon,
-.dark .win-chip,
-.dark .note-input {
-  border-color: #000000;
-}
-.dark .detail-card-head { border-color: #000000; }
-.dark .folder-tab[aria-selected="true"] { border-bottom-color: var(--manila); color: #000000; }
-.dark .folder-tab[aria-selected="true"]:first-child::after { background: #000000; }
-.dark .field-cell { border-color: rgba(0,0,0,0.25); }
-.dark .doc-row { border-top-color: rgba(0,0,0,0.4); }
-.dark .note { border-top-color: rgba(0,0,0,0.4); }
-.dark .recruit-row { border-top-color: rgba(0,0,0,0.4); }
-.dark .note-input-area { border-top-color: #000000; }
-.dark .note-input-combo .note-send-btn { border-color: #000000; }
-.dark .note-input-combo:focus-within .note-send-btn { border-color: var(--primary); }
-.dark .note-input-combo:focus-within .note-input { border-color: var(--primary); }
-.dark .pagination-bar { border-top-color: rgba(0,0,0,0.4); }
-.dark .pagination-bar button { border-color: #000000; background: #FAFAFA; color: #000000; }
-.dark .doc-fullscreen-header { border-bottom-color: #000000; }
-.dark .pending-upload-bar { border-bottom-color: rgba(0,0,0,0.4); }
-.dark .split-wrap.preview-open .split-preview { border-left-color: #000000; }
-.dark .recruit-range-fill { border-color: #000000; }
-.dark .stat { border-color: #000000; }
-/* Keep folder tab text black in dark mode */
-.dark .folder-tab { color: #000000; }
-/* icon-btn stays same look in dark mode */
-.dark .icon-btn { background: #FAFAFA; color: #000000; border-color: #000000; }
-.dark .icon-btn:hover:not(:disabled) { background: #333333; color: #FFFFFF; border-color: #000000; }
-.dark .icon-btn:active:not(:disabled) { transform: none; box-shadow: none; }
-/* dark-background headers keep ghost icon-btn in dark mode too */
-.dark .detail-card-head.ch-rec .icon-btn,
-.dark .detail-card-head.ch-eta .icon-btn,
-.dark .detail-card-head.ch-i140 .icon-btn,
-.dark .detail-card-head.ch-pwd .icon-btn,
-.dark .detail-card-head.ch-dark .icon-btn { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.35); color: #FFFFFF; }
-.dark .detail-card-head.ch-rec .icon-btn:hover:not(:disabled),
-.dark .detail-card-head.ch-eta .icon-btn:hover:not(:disabled),
-.dark .detail-card-head.ch-i140 .icon-btn:hover:not(:disabled),
-.dark .detail-card-head.ch-pwd .icon-btn:hover:not(:disabled),
-.dark .detail-card-head.ch-dark .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.6); color: #FFFFFF; box-shadow: none; }
-/* doc-name uses foreground in dark mode */
-.dark .doc-name { color: var(--foreground); }
-/* selected row in dark mode: keep manila bg on hover, all text black/dark */
-.dark .doc-row.selected:hover, .dark .note.selected:hover { background: var(--manila-dark); }
-.dark .doc-row.selected .doc-name { color: #000000; }
-.dark .doc-row.selected .doc-meta { color: #444444; }
-.dark .doc-row.selected .icon-btn { color: #000000; }
-.dark .note.selected .note-when { color: #444444; }
-.dark .note.selected .note-body { color: #000000; }
-.dark .note.selected .note-due { color: #8B6914; }
-/* Delete button matches other icon-btns in dark mode (explicit all props) */
-.dark .icon-btn.icon-btn-danger { background: #FAFAFA; border-color: #000000; }
-/* Notes counter badge stays same */
-.dark .detail-card-head .head-badge { color: inherit; }
-/* Quick-edit dropdown black borders in dark mode */
-.dark .next-up-caution .overflow-hidden { border-color: #000000; }
-.dark .next-up-caution input,
-.dark .next-up-caution button { border-color: #000000; }
-
 /* NOF mini-calendar */
 .nof-months { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-start; width: 100%; }
 .nof-months > div { flex: 1 1 0; min-width: 200px; max-width: 320px; }
 .nof-month-label{ font-family: var(--font-mono); font-size: 0.875rem; font-weight: 700; text-align: center; padding: 6px 0 4px; color: var(--foreground); }
 .nof-calendar{ display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.875rem; text-align: center; }
 .nof-calendar .nof-hdr{ padding: 4px 0; font-weight: 700; background: var(--muted); border-bottom: 1px solid var(--border); color: var(--muted-foreground); font-size: 0.875rem; aspect-ratio: auto; }
-.nof-calendar .nof-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--manila-dark); border-bottom: 1px solid var(--manila-dark); }
+.nof-calendar .nof-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .nof-calendar .nof-day:nth-child(7n+8) { border-right: none; }
 .nof-calendar .nof-day.empty { color: transparent; }
 .nof-calendar .nof-day.outside { background: var(--muted); color: var(--muted-foreground); }
@@ -1138,29 +1025,6 @@ html.dark {
   scrollbar-color: hsl(0 0% 100% / 0.3) transparent;
 }
 
-/* Caution tape wrapper for Next Up section */
-.next-up-caution {
-  border: 1px solid #000000;
-  overflow: hidden;
-  box-shadow: var(--shadow-hard-sm);
-}
-.next-up-caution .next-up {
-  border: none;
-  box-shadow: none;
-}
-
-/* Hazard strip - yellow/black caution tape */
-.hazard-strip-yellow {
-  background: repeating-linear-gradient(
-    -45deg,
-    #fbbf24,
-    #fbbf24 8px,
-    #000 8px,
-    #000 16px
-  );
-  height: 8px;
-}
-
 /* Global cursor pointer styles */
 button,
 [role="button"],
@@ -1212,25 +1076,25 @@ body[data-scroll-locked] {
 /* ============================================================================
  * PROSE — NEOBRUTALIST ARTICLE TYPOGRAPHY
  * ============================================================================
- * Applied via .prose-neobrutalist on MDX article content.
- * Matches the neobrutalist design system: hard edges, bold headings,
+ * Applied via .prose-article on MDX article content.
+ * Matches the site's look: square corners, bold headings,
  * Space Grotesk + Inter, lime green accents.
  * ============================================================================ */
-.prose-neobrutalist {
+.prose-article {
   font-size: 1.0625rem;
   line-height: 1.8;
   color: var(--foreground);
 }
 
-.prose-neobrutalist > * + * {
+.prose-article > * + * {
   margin-top: 1.5em;
 }
 
 /* Headings */
-.prose-neobrutalist h1,
-.prose-neobrutalist h2,
-.prose-neobrutalist h3,
-.prose-neobrutalist h4 {
+.prose-article h1,
+.prose-article h2,
+.prose-article h3,
+.prose-article h4 {
   font-family: var(--font-heading);
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -1238,13 +1102,13 @@ body[data-scroll-locked] {
   scroll-margin-top: 6rem;
 }
 
-.prose-neobrutalist h1 { font-size: 2.25rem; margin-top: 0; margin-bottom: 1rem; }
-.prose-neobrutalist h2 { font-size: 1.75rem; margin-top: 2.5em; margin-bottom: 0.75em; padding-bottom: 0.5em; border-bottom: 1px solid var(--border); }
-.prose-neobrutalist h3 { font-size: 1.375rem; margin-top: 2em; margin-bottom: 0.5em; }
-.prose-neobrutalist h4 { font-size: 1.125rem; margin-top: 1.5em; margin-bottom: 0.5em; }
+.prose-article h1 { font-size: 2.25rem; margin-top: 0; margin-bottom: 1rem; }
+.prose-article h2 { font-size: 1.75rem; margin-top: 2.5em; margin-bottom: 0.75em; padding-bottom: 0.5em; border-bottom: 1px solid var(--border); }
+.prose-article h3 { font-size: 1.375rem; margin-top: 2em; margin-bottom: 0.5em; }
+.prose-article h4 { font-size: 1.125rem; margin-top: 1.5em; margin-bottom: 0.5em; }
 
 /* Paragraphs */
-.prose-neobrutalist p {
+.prose-article p {
   margin-top: 1.25em;
   margin-bottom: 1.25em;
 }
@@ -1255,7 +1119,7 @@ body[data-scroll-locked] {
    2.05:1 against the 4.5:1 floor (measured in the browser on a guide; the MDX
    renderer's own `text-primary` class never gets a say). --primary-text is
    #1D8229 in light (4.53:1) and the lime itself in dark (9.26:1). */
-.prose-neobrutalist a {
+.prose-article a {
   color: var(--primary-text);
   font-weight: 600;
   text-decoration: underline;
@@ -1264,40 +1128,40 @@ body[data-scroll-locked] {
   transition: color 0.15s, text-decoration-color 0.15s;
 }
 
-.prose-neobrutalist a:hover {
+.prose-article a:hover {
   color: var(--foreground);
   text-decoration-color: var(--primary);
 }
 
 /* Strong / Bold */
-.prose-neobrutalist strong {
+.prose-article strong {
   font-weight: 700;
   color: var(--foreground);
 }
 
 /* Lists */
-.prose-neobrutalist ul,
-.prose-neobrutalist ol {
+.prose-article ul,
+.prose-article ol {
   padding-left: 1.5em;
   margin-top: 1.25em;
   margin-bottom: 1.25em;
 }
 
-.prose-neobrutalist ul {
+.prose-article ul {
   list-style-type: square;
 }
 
-.prose-neobrutalist ol {
+.prose-article ol {
   list-style-type: decimal;
 }
 
-.prose-neobrutalist li {
+.prose-article li {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
 }
 
-.prose-neobrutalist li > ul,
-.prose-neobrutalist li > ol {
+.prose-article li > ul,
+.prose-article li > ol {
   margin-top: 0.25em;
   margin-bottom: 0.25em;
 }
@@ -1311,7 +1175,7 @@ body[data-scroll-locked] {
    (brand colour, one side, thicker than everything around it) is decoration
    wearing the costume of structure. Neutral at 3px keeps it the heaviest rule
    in the prose, which a pulled quote earns, without borrowing the accent. */
-.prose-neobrutalist blockquote {
+.prose-article blockquote {
   border-left: 1px solid var(--border);
   padding: 1em 1.5em;
   margin: 1.5em 0;
@@ -1320,12 +1184,12 @@ body[data-scroll-locked] {
   color: var(--muted-foreground);
 }
 
-.prose-neobrutalist blockquote p {
+.prose-article blockquote p {
   margin: 0;
 }
 
 /* Code — inline */
-.prose-neobrutalist :not(pre) > code {
+.prose-article :not(pre) > code {
   font-family: var(--font-mono);
   font-size: 0.875em;
   background: var(--muted);
@@ -1335,7 +1199,7 @@ body[data-scroll-locked] {
 }
 
 /* Code — block (pre) */
-.prose-neobrutalist pre {
+.prose-article pre {
   font-family: var(--font-mono);
   font-size: 0.875rem;
   line-height: 1.7;
@@ -1348,7 +1212,7 @@ body[data-scroll-locked] {
   margin: 1.5em 0;
 }
 
-.prose-neobrutalist pre code {
+.prose-article pre code {
   background: none;
   border: none;
   padding: 0;
@@ -1356,14 +1220,14 @@ body[data-scroll-locked] {
 }
 
 /* Tables */
-.prose-neobrutalist table {
+.prose-article table {
   width: 100%;
   border-collapse: collapse;
   margin: 1.5em 0;
   font-size: 0.9375rem;
 }
 
-.prose-neobrutalist thead th {
+.prose-article thead th {
   font-family: var(--font-heading);
   font-weight: 700;
   text-align: left;
@@ -1376,47 +1240,43 @@ body[data-scroll-locked] {
   letter-spacing: normal;
 }
 
-.prose-neobrutalist tbody td {
+.prose-article tbody td {
   padding: 0.75em 1em;
   border: 1px solid var(--border);
 }
 
-.prose-neobrutalist tbody tr:nth-child(even) {
-  background: var(--muted);
-}
 
 /* Images */
-.prose-neobrutalist img {
+.prose-article img {
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-hard);
   margin: 1.5em 0;
   max-width: 100%;
   height: auto;
 }
 
 /* Horizontal rule */
-.prose-neobrutalist hr {
+.prose-article hr {
   border: none;
   border-top: 1px solid var(--border);
   margin: 2em 0;
 }
 
 /* Autolink heading anchor */
-.prose-neobrutalist .anchor {
+.prose-article .anchor {
   text-decoration: none;
   opacity: 0;
   margin-left: 0.25em;
   transition: opacity 0.15s;
 }
 
-.prose-neobrutalist h2:hover .anchor,
-.prose-neobrutalist h3:hover .anchor,
-.prose-neobrutalist h4:hover .anchor {
+.prose-article h2:hover .anchor,
+.prose-article h3:hover .anchor,
+.prose-article h4:hover .anchor {
   opacity: 0.5;
 }
 
 /* Not-prose escape — prevents prose link styles from overriding embedded components */
-.prose-neobrutalist .not-prose a {
+.prose-article .not-prose a {
   color: inherit;
   text-decoration: none;
   font-weight: inherit;
@@ -1479,7 +1339,7 @@ body[data-scroll-locked] {
 }
 
 /* ============================================================================
- * Driver.js - Neobrutalist Theme
+ * Driver.js: the product tour, in the site's look
  * Bold borders, hard shadows, uppercase headings, press-effect buttons
  * ============================================================================ */
 
@@ -1541,7 +1401,7 @@ body[data-scroll-locked] {
   margin-top: 1rem;
 }
 
-/* All buttons — neobrutalist base */
+/* All buttons: the shared base */
 .driver-popover.neo-popover .driver-popover-navigation-btns button {
   background: var(--primary);
   color: var(--primary-foreground);
@@ -1779,9 +1639,6 @@ input[type="week"] {
 }
 
 
-/* Children of a selected (manila) row that normally use theme tokens. */
-.doc-row.selected .doc-name { color: var(--manila-ink); }
-.doc-row.selected .doc-meta, .note.selected .note-when { color: var(--manila-ink-soft); }
 
 /* PRINT. A case page or a calculator result is something people
    print for an attorney or an employer, and the screen chrome prints as noise:
@@ -1828,7 +1685,6 @@ input[type="week"] {
     background: var(--foreground);
     color: var(--background);
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-hard-sm);
     font-size: 0.875rem;
     line-height: 1.35;
     font-variant-numeric: tabular-nums;

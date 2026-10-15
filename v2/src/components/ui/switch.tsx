@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 /**
  * Switch Component
  *
- * Neobrutalist toggle switch, brand lime when ON.
+ * Toggle switch, green ink when on.
  * Features 2px border, snappy 150ms animation, and hard shadow.
  *
  * @example

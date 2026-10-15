@@ -20,7 +20,6 @@
  * - "View Case" navigation button
  * - "Hide from Calendar" option
  * - Keyboard accessible (Enter opens, Escape closes)
- * - Neobrutalist styling (shadow-hard-lg, border-2, no radius)
  */
 
 "use client";
