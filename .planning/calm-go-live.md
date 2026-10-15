@@ -17,6 +17,11 @@ changes production and waits for the owner's yes, one at a time.
 - The retired Turso pointers are gone from the Convex dev deployment and commented out
   in `v2/.env.local` (backup `.env.local.bak-20261015`).
 
+- nginx on the server already runs this branch's `scripts/oracle/nginx/permtracker.conf`
+  (search engines may hold 12 requests at once, installed Oct 15 2026, 3:06 PM EDT with the
+  owner's yes). `main` still says 6 until the merge: don't install the config from `main`
+  before then.
+
 ## At go-live, in order
 
 1. Merge `calm/middle` to `main`. The site deploys once CI passes on main.
