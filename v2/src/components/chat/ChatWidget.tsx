@@ -110,7 +110,7 @@ export function ChatWidget({
               onClick={() => setIsOpen(true)}
               size="lg"
               className={cn(
-                'h-14 w-14 rounded-none p-0',
+                'h-14 w-14 p-0',
                 'bg-primary/80 hover:bg-accent',
                 'border border-border',
                 'transition-transform duration-150',

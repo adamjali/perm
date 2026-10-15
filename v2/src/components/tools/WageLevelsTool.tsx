@@ -77,7 +77,7 @@ function WageLadder({ levels }: { levels: WageLevel[] | null }) {
           ) : (
             <span
               aria-hidden="true"
-              className="block h-9 border border-dashed border-foreground/30 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]"
+              className="block h-9 border border-dashed border-foreground/30 text-muted-foreground bg-hatch"
               style={{ width: `${GHOST_WIDTHS[i]}%` }}
             />
           )}

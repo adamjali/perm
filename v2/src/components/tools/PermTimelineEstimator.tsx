@@ -621,7 +621,7 @@ export function PermTimelineEstimator({
           <p className="text-sm font-bold text-muted-foreground">Most likely</p>{" "}
           <div aria-hidden="true" className="mt-2 h-11 w-80 max-w-full bg-foreground/10 sm:h-14" />{" "}
           <div aria-hidden="true" className="mt-3 h-6 w-[26rem] max-w-full bg-foreground/[0.07]" />{" "}
-          <div className="relative mt-6 flex h-12 items-center justify-center border border-dashed border-foreground/40 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]">
+          <div className="relative mt-6 flex h-12 items-center justify-center border border-dashed border-foreground/40 text-muted-foreground bg-hatch">
             <span className="bg-background px-2 text-center text-sm font-bold text-muted-foreground">
               Pick a date above and this fills in
             </span>

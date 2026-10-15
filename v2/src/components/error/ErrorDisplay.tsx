@@ -38,7 +38,7 @@ export function ErrorDisplay({
     <div
       className={`flex min-h-[50vh] flex-col items-center justify-center gap-6 p-8 ${className || ""}`}
     >
-      <div className="flex size-16 items-center justify-center rounded-lg border border-destructive bg-destructive/10">
+      <div className="flex size-16 items-center justify-center border border-destructive bg-destructive/10">
         <Icon className="size-8 text-destructive" />
       </div>
 

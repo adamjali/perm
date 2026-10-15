@@ -407,7 +407,7 @@ export function ImportModal({
     const formatLabel = format?.label ?? "Unknown";
     return (
       <span
-        className={cn("px-2 py-1 text-sm font-medium rounded", formatColor)}
+        className={cn("px-2 py-1 text-sm font-medium", formatColor)}
       >
         {formatLabel}
       </span>
@@ -459,7 +459,7 @@ export function ImportModal({
               {/* File Dropzone */}
               <div
                 className={cn(
-                  "relative border border-dashed rounded-none p-8 text-center transition-colors duration-150",
+                  "relative border border-dashed p-8 text-center transition-colors duration-150",
                   isDragging
                     ? "border-primary bg-primary/5 scale-[1.01]"
                     : "border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/30",
@@ -541,7 +541,7 @@ export function ImportModal({
                         <p className="text-sm text-data-warn-ink mt-1">
                           These cases were imported from a legacy format without foreign worker IDs. They
                           have been marked with{" "}
-                          <code className="bg-data-warn/8 px-1 rounded font-mono text-sm">
+                          <code className="bg-data-warn/8 px-1 font-mono text-sm">
                             {BENEFICIARY_PLACEHOLDER}
                           </code>{" "}
                           and will need manual updates after import.
@@ -637,7 +637,7 @@ export function ImportModal({
                             <div
                               key={idx}
                               className={cn(
-                                "flex items-start gap-2 p-2 rounded text-sm",
+                                "flex items-start gap-2 p-2 text-sm",
                                 "bg-muted/30"
                               )}
                             >
@@ -658,7 +658,7 @@ export function ImportModal({
                                 setShowAllWarnings(true);
                               }}
                               className={cn(
-                                "w-full py-2 text-sm font-medium rounded",
+                                "w-full py-2 text-sm font-medium",
                                 "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground",
                                 "transition-colors duration-150",
                                 "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -679,7 +679,7 @@ export function ImportModal({
                               <li
                                 key={idx}
                                 className={cn(
-                                  "flex items-start gap-2 p-2 rounded text-sm",
+                                  "flex items-start gap-2 p-2 text-sm",
                                   "bg-muted/30 hover:bg-muted/60 transition-colors duration-150"
                                 )}
                               >
@@ -788,7 +788,7 @@ export function ImportModal({
                                     {caseData?.beneficiaryIdentifier === BENEFICIARY_PLACEHOLDER ? (
                                       <span className="inline-flex items-center gap-1 text-data-warn-ink font-medium">
                                         <UserX className="h-3 w-3" />
-                                        <span className="font-mono text-sm bg-data-warn/8 px-1 rounded">
+                                        <span className="font-mono text-sm bg-data-warn/8 px-1">
                                           {BENEFICIARY_PLACEHOLDER}
                                         </span>
                                       </span>
@@ -930,7 +930,7 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("caseStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
+                              "h-9 w-full min-w-0 border border-input bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:text-muted-foreground",
@@ -957,7 +957,7 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("progressStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
+                              "h-9 w-full min-w-0 border border-input bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:text-muted-foreground",

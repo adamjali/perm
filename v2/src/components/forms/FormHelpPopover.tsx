@@ -24,7 +24,7 @@ export function FormHelpPanel() {
         className={cn(
           "hidden md:flex",
           "fixed z-40 items-center gap-1.5",
-          "rounded-l-lg border border-r-0 px-2.5 py-3",
+          "border border-r-0 px-2.5 py-3",
           "text-sm font-mono font-bold",
           "transition-colors duration-200",
           // Position: right edge when closed, left edge of panel when open
@@ -230,7 +230,7 @@ function FieldList({ items }: { items: { field: string; desc: string }[] }) {
 
 function Example({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-2 bg-muted/50 border border-border rounded px-3 py-2 text-sm text-muted-foreground">
+    <div className="mt-2 bg-muted/50 border border-border px-3 py-2 text-sm text-muted-foreground">
       <span className="font-bold text-foreground">Tip: </span>
       {children}
     </div>

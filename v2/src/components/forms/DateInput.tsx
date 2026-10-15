@@ -296,7 +296,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
             type="button"
             onClick={onClear}
             data-testid="clear-button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label="Clear date"
           >
             <XIcon className="h-4 w-4" />

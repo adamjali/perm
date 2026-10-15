@@ -281,7 +281,7 @@ export function JobDescriptionDetailView({
   return (
     <div
       className={cn(
-        "rounded-lg border border-border bg-card",
+        "border border-border bg-card",
         "transition-colors duration-150",
         className
       )}
@@ -292,8 +292,7 @@ export function JobDescriptionDetailView({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex w-full items-center justify-between p-3 sm:p-4 text-left",
-          "hover:bg-muted/50 transition-colors rounded-t-lg",
-          !isOpen && "rounded-b-lg",
+          "hover:bg-muted/50 transition-colors",
           "min-h-[48px]"
         )}
         aria-expanded={isOpen}
@@ -576,7 +575,7 @@ export function JobDescriptionDetailView({
                       </div>
                     </div>
                     {hasContent ? (
-                      <dd className="text-sm whitespace-pre-wrap rounded-lg border border-border bg-muted/30 p-3">
+                      <dd className="text-sm whitespace-pre-wrap border border-border bg-muted/30 p-3">
                         {description}
                       </dd>
                     ) : (

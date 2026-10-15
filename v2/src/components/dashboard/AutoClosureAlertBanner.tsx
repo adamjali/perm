@@ -179,7 +179,7 @@ export default function AutoClosureAlertBanner() {
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-sm text-data-warn-ink">
-                <span className="inline-flex items-center px-2 py-0.5 bg-data-warn/15 text-data-warn-ink text-sm font-medium rounded-sm">
+                <span className="inline-flex items-center px-2 py-0.5 bg-data-warn/15 text-data-warn-ink text-sm font-medium">
                   {formatClosureReason(alert.closureReason)}
                 </span>{" "}
                 <span className="text-sm text-data-warn-ink">

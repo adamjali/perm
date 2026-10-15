@@ -228,7 +228,7 @@ export function TimelineRow({
           className={cn(
             "truncate font-semibold text-sm text-foreground leading-tight text-left",
             "hover:text-primary-text hover:underline transition-colors",
-            "cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-sm"
+            "cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50"
           )}
           data-testid={`timeline-case-name-${caseData.id}`}
           title={caseData.employerName}

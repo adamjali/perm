@@ -208,7 +208,7 @@ export function InChatConfirmationCard({
       className={cn(
         // Base styles
         'relative overflow-hidden',
-        'border border-border rounded-none',
+        'border border-border',
         'bg-card',
         // Status-specific border
         borderStyles

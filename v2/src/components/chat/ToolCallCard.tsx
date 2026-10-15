@@ -102,7 +102,7 @@ export function ToolCallCard({
       className={cn(
         // Base styles
         'relative overflow-hidden',
-        'border border-border rounded-none',
+        'border border-border',
         'bg-card',
         // Status reads from the whole outline (the site's 2px border), not a
         // thick left bar; the spinner and status icon carry "in progress".
@@ -132,7 +132,7 @@ export function ToolCallCard({
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Duration badge */}
             {duration && status === 'success' && (
-              <span className="font-mono text-sm text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm">
+              <span className="font-mono text-sm text-muted-foreground bg-muted px-1.5 py-0.5">
                 {duration}
               </span>
             )}

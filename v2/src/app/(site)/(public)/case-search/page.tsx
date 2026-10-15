@@ -107,7 +107,7 @@ export default async function CaseSearchPage() {
       prefixes: ["I-200 to I-203"],
       n: lca && lcaFile ? lca.total + lcaFile.rows : (lca?.total ?? lcaFile?.rows ?? null),
       href: "/lca-cases",
-      swatch: "text-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_7px)]",
+      swatch: "text-foreground bg-hatch",
     },
     {
       key: "seasonal",

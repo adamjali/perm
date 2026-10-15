@@ -292,7 +292,7 @@ export function TemplateManagementModal({
                         key={template._id}
                         onClick={() => handleSelectTemplate(template)}
                         className={cn(
-                          "w-full text-left p-3 sm:p-3 rounded-lg transition-colors",
+                          "w-full text-left p-3 sm:p-3 transition-colors",
                           "hover:bg-muted/50 active:bg-muted/70",
                           "min-h-[64px]", // Touch-friendly minimum height
                           selectedTemplate?._id === template._id &&
@@ -517,7 +517,7 @@ export function TemplateManagementModal({
                             <p className="text-sm text-muted-foreground mb-2">
                               Description
                             </p>
-                            <div className="rounded-lg border border-border bg-muted/30 p-3 sm:p-4 overflow-auto">
+                            <div className="border border-border bg-muted/30 p-3 sm:p-4 overflow-auto">
                               <p className="text-sm whitespace-pre-wrap break-words">
                                 {selectedTemplate.description}
                               </p>

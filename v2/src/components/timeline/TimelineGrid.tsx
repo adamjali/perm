@@ -142,7 +142,7 @@ export function TimelineGrid({
         className={cn(
           "flex items-center justify-center",
           "min-h-[200px] p-8",
-          "bg-muted/30 border border-dashed border-border rounded-none"
+          "bg-muted/30 border border-dashed border-border"
         )}
       >
         <div className="text-center">

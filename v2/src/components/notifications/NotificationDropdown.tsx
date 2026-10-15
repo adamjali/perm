@@ -171,7 +171,7 @@ function NotificationItem({
       <div
         className={cn(
           "flex h-8 w-8 shrink-0 items-center justify-center",
-          "rounded-none border border-border",
+          "border border-border",
           "bg-card"
         )}
       >
@@ -220,7 +220,7 @@ function NotificationItem({
           onClick={handleDelete}
           className={cn(
             "flex h-5 w-5 items-center justify-center",
-            "rounded-sm border border-transparent",
+            "border border-transparent",
             "text-muted-foreground",
             "opacity-0 group-hover:opacity-100",
             "hover:bg-destructive/10 hover:text-destructive-text hover:border-destructive/20",
@@ -263,7 +263,7 @@ function EmptyState() {
       <div
         className={cn(
           "flex h-14 w-14 items-center justify-center mb-3",
-          "rounded-none border border-border",
+          "border border-border",
           "bg-muted"
         )}
       >

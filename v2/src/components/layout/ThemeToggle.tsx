@@ -5,7 +5,7 @@
  *
  * NO HYDRATION PLACEHOLDER, deliberately. The previous version rendered a
  * borderless `rounded-full` button holding an empty box until `mounted`
- * flipped, then swapped to a `rounded-none border-2` button holding an icon.
+ * flipped, then swapped to a `border-2` button holding an icon.
  * That is a circle becoming a square and an empty slot growing a glyph, in
  * the rightmost position of the header, on every page, every first load. It
  * was one of the causes of the reported "header flashes a different one

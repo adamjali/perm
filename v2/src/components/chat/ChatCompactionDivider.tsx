@@ -156,7 +156,7 @@ export function ChatCompactionDivider({
           >
             <div className="min-h-0 overflow-hidden">
               <div
-                className="rounded-md px-4 py-3.5 text-[color-mix(in_oklch,var(--foreground)_75%,transparent)]"
+                className="px-4 py-3.5 text-[color-mix(in_oklch,var(--foreground)_75%,transparent)]"
                 style={{
                   backgroundColor: 'color-mix(in oklch, var(--muted) 50%, transparent)',
                   border: '1px solid color-mix(in oklch, var(--border) 60%, transparent)',

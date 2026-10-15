@@ -62,7 +62,7 @@ export function FormSectionSkeleton({
   return (
     <div
       className={cn(
-        "rounded-lg border border-border bg-card p-6",
+        "border border-border bg-card p-6",
         className
       )}
     >
@@ -102,7 +102,7 @@ export function SectionSkeleton({
   return (
     <div
       className={cn(
-        "rounded-lg border border-border bg-card p-4",
+        "border border-border bg-card p-4",
         className
       )}
     >
@@ -140,7 +140,7 @@ export function ToggleSkeleton({
 }: ToggleSkeletonProps) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <Skeleton variant="block" className="h-5 w-5 rounded" />
+      <Skeleton variant="block" className="h-5 w-5" />
       <div className="flex-1 space-y-1">
         <Skeleton variant="line" className={cn("h-4", labelWidth)} />
         <Skeleton variant="line" className="h-3 w-48" />

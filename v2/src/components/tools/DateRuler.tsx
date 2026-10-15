@@ -108,7 +108,7 @@ export function DateRuler({
             ))}
           </>
         ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]">
+          <div className="flex h-full items-center justify-center text-muted-foreground bg-hatch">
             <span className="bg-background px-2 text-sm font-bold text-muted-foreground">{emptyHint}</span>
           </div>
         )}

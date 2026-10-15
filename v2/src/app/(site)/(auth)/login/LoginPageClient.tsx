@@ -346,7 +346,7 @@ export function LoginPageClient() {
       </CardHeader>
       <CardContent className="space-y-6">
         {showExpiredBanner && (
-          <div className="flex items-center gap-2 rounded-md border border-data-warn/50 bg-data-warn/15 px-3 py-2.5 text-sm text-data-warn-ink">
+          <div className="flex items-center gap-2 border border-data-warn/50 bg-data-warn/15 px-3 py-2.5 text-sm text-data-warn-ink">
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />

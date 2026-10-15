@@ -416,7 +416,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
             ].map((label) => (
               <li key={label} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
                 <span className="text-sm font-bold text-muted-foreground">{label}</span>{" "}
-                <span className="h-6 w-36 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+                <span className="h-6 w-36 text-muted-foreground bg-hatch" />
               </li>
             ))}
           </ol>

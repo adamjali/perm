@@ -64,7 +64,7 @@ export const ButtonStyle: Story = {
     href: "/login",
     children: "Sign In",
     className:
-      "rounded-none border border-black bg-transparent px-4 py-2 text-sm font-bold font-heading text-black transition-colors",
+      "border border-black bg-transparent px-4 py-2 text-sm font-bold font-heading text-black transition-colors",
   },
 };
 
@@ -76,7 +76,7 @@ export const PrimaryButton: Story = {
     href: "/signup",
     children: "Sign Up",
     className:
-      "rounded-none border border-primary bg-transparent px-4 py-2 text-sm font-bold font-heading text-primary transition-colors hover:bg-accent",
+      "border border-primary bg-transparent px-4 py-2 text-sm font-bold font-heading text-primary transition-colors hover:bg-accent",
   },
 };
 

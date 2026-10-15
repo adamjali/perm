@@ -193,9 +193,9 @@ export function GreenCardLine({
             aria-hidden="true"
             className="mt-5 flex h-8 border border-dashed border-foreground/40 text-muted-foreground [&>*]:min-w-0"
           >
-            <span className="w-1/4 border-r border-dashed border-foreground/30 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
-            <span className="w-2/5 border-r border-dashed border-foreground/30 bg-[repeating-linear-gradient(45deg,currentColor_0_2px,transparent_2px_8px)]" />
-            <span className="flex-1 bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+            <span className="w-1/4 border-r border-dashed border-foreground/30 bg-hatch" />
+            <span className="w-2/5 border-r border-dashed border-foreground/30 bg-hatch-reverse" />
+            <span className="flex-1 bg-hatch" />
           </div>{" "}
           <ul aria-hidden="true" className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
             <li>Current, not finished</li>{" "}

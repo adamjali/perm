@@ -59,7 +59,7 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="p-6 border border-destructive bg-destructive/10 rounded-lg">
+        <div className="p-6 border border-destructive bg-destructive/10">
           <h2 className="font-heading text-xl font-bold text-destructive mb-2">
             Something went wrong
           </h2>{" "}
@@ -93,7 +93,7 @@ export function DashboardErrorFallback({
   onRetry?: () => void;
 }): ReactNode {
   return (
-    <div className="p-6 border border-destructive bg-destructive/10 rounded-lg">
+    <div className="p-6 border border-destructive bg-destructive/10">
       <h2 className="font-heading text-xl font-bold text-destructive mb-2">
         Unable to load dashboard
       </h2>{" "}

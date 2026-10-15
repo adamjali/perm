@@ -113,7 +113,7 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
                 <p className="mt-3 text-sm text-muted-foreground">This month&apos;s cutoff</p>{" "}
                 <div className="mt-1 h-6 w-32 bg-foreground/10" />{" "}
                 <p className="mt-3 text-sm text-muted-foreground">People ahead of you</p>{" "}
-                <div className="mt-1 h-9 w-40 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_8px)]" />
+                <div className="mt-1 h-9 w-40 text-muted-foreground bg-hatch" />
               </div>
             ))}
           </div>

@@ -102,6 +102,20 @@ describe("the calm system", () => {
   it("draws no texture on the page", () => {
     expect(findAll(tok("(?:bg-dots|grain-overlay|hazard-bg|hazard-strip-red)"))).toEqual([]);
   });
+
+  it("keeps corners square: a radius class only on what is round by nature", () => {
+    // Every radius token is 0, so `rounded-md` and its kin do nothing and
+    // only mislead the next reader. `rounded-full` draws a real circle, kept
+    // for dots, spinners and the switch.
+    expect(findAll(tok("(?:[\\w-]+:)*rounded-(?:xs|sm|md|lg|xl|2xl|3xl|none|[trblse]{1,2}(?:-\\w+)?|\\[[^\\]]*\\])"))).toEqual([]);
+    // The bare word is also English and a variable name: as a class it sits
+    // against a string's quote.
+    expect(findAll(/(?<=["'`])rounded(?=\s)|(?<=\s)rounded(?=["'`])/g)).toEqual([]);
+  });
+
+  it("draws every hatch with the shared utility, at one pitch", () => {
+    expect(findAll(tok("bg-\\[repeating-linear-gradient[^\\s\"'`]*"))).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------

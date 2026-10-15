@@ -687,7 +687,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                             value={method.method}
                             onChange={(e) => handleMethodTypeChange(index, e.target.value)}
                             className={cn(
-                              "flex h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm",
+                              "flex h-10 w-full min-w-0 border border-input bg-background px-3 py-2 text-sm",
                               "ring-offset-background placeholder:text-muted-foreground",
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:text-muted-foreground",

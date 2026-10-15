@@ -50,7 +50,7 @@ function OfferStrip({ placed, offer }: { placed: Placed | null; offer: number | 
     return (
       <div aria-hidden="true" className="relative mt-3 h-12">
         <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground/20" />
-        <span className="absolute inset-y-1 left-[30%] w-[38%] border border-dashed border-foreground/30 text-muted-foreground bg-[repeating-linear-gradient(-45deg,currentColor_0_2px,transparent_2px_10px)]" />
+        <span className="absolute inset-y-1 left-[30%] w-[38%] border border-dashed border-foreground/30 text-muted-foreground bg-hatch" />
         <span className="absolute inset-y-0 left-[48%] w-0.5 bg-foreground/30" />
       </div>
     );

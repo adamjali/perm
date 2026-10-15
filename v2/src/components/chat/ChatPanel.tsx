@@ -456,7 +456,7 @@ export function ChatPanel({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     role="alert"
-                    className="flex items-start gap-3 p-3 bg-destructive/10 border border-destructive rounded-none"
+                    className="flex items-start gap-3 p-3 bg-destructive/10 border border-destructive"
                   >
                     <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">

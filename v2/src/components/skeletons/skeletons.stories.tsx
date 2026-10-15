@@ -104,7 +104,7 @@ export const FormSectionWithCustomContent: StoryObj<typeof FormSectionSkeleton> 
     <div className="max-w-2xl">
       <FormSectionSkeleton titleWidth="w-36">
         <div className="space-y-4">
-          <div className="rounded-md border border-border bg-muted/30 p-3">
+          <div className="border border-border bg-muted/30 p-3">
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 rounded-full skeleton-pulse" />
               <div className="h-4 w-48 rounded-full skeleton-pulse" />

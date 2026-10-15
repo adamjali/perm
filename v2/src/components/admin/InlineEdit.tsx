@@ -63,7 +63,7 @@ export function InlineEdit({
     return (
       <button
         onClick={() => setIsEditing(true)}
-        className="w-full text-left px-1 py-0.5 -mx-1 hover:bg-accent hover:outline hover:outline-2 hover:outline-primary/30 transition-colors cursor-text rounded-sm truncate block max-w-[180px]"
+        className="w-full text-left px-1 py-0.5 -mx-1 hover:bg-accent hover:outline hover:outline-2 hover:outline-primary/30 transition-colors cursor-text truncate block max-w-[180px]"
         title="Click to edit"
       >
         {field === "userType" ? value.replace(/_/g, " ") : value || "(empty)"}
