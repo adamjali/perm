@@ -68,13 +68,13 @@ export function RfiDeadlineCalculator() {
       {result ? (
         <div className="mt-4">
           {result.weekend ? (
-            <p className="mb-4 flex items-start gap-2 bg-tint p-3 text-sm">
+            <p className="mb-4 flex items-start gap-2 bg-tint p-3 text-sm border-2 border-border">
               <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> The 30th day is a {result.weekday}. The
               regulation does not move a deadline that lands on a weekend; send the response before it.
             </p>
           ) : null}{" "}
           {result.left < 0 ? (
-            <p className="mb-4 flex items-start gap-2 bg-tint p-3 text-sm">
+            <p className="mb-4 flex items-start gap-2 bg-tint p-3 text-sm border-2 border-border">
               <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> An application with no response is
               denied under 20 CFR 656.20, and the attorney of record should already be in contact with the Certifying Officer.
             </p>

@@ -48,7 +48,7 @@ export function DebarmentNotice({
         ? `A name matching ${pageName} is barred from filing from ${day(upcoming[0]!.startDate)}. The period has not started yet.`
         : `A name matching ${pageName} was barred from filing in the past; the period has ended.`;
   return (
-    <aside id="debarment" className={cn(className, " border border-foreground bg-card p-5 sm:p-6")} aria-label="Debarment notice">
+    <aside id="debarment" className={cn(className, "border-2 border-foreground bg-card p-5 sm:p-6 shadow-hard")} aria-label="Debarment notice">
       <p className="text-sm font-bold text-muted-foreground">
         On DOL&apos;s debarment list
       </p>{" "}
@@ -56,7 +56,7 @@ export function DebarmentNotice({
         {lede}{" "}
         DOL&apos;s row, as published:
       </p>{" "}
-      <ul className="mt-3 divide-y divide-border border-y border-border">
+      <ul className="mt-3 divide-y divide-border border-y-2 border-border">
         {rows.map((d) => (
           <li key={`${d.program}-${d.entity}-${d.startDate}`} className="py-2 text-sm">
             <span className="font-bold">{d.entity}</span>

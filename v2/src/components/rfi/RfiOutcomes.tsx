@@ -70,11 +70,11 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
 
   return (
     <div>
-      <div className="bg-tint p-4 sm:p-6">
+      <div className="bg-tint p-4 sm:p-6 border-2 border-border">
         <ChartTips label="What became of every RFI DOL issued">
         <Row label={`${everIssued.toLocaleString()} RFIs issued`}>
           <div
-            className="h-full border-r border-border bg-foreground/85"
+            className="h-full border-r-2 border-border bg-foreground/85"
             style={{ width: `${share(resolved)}%` }}
             data-tip={`Reached a decision\n${resolved.toLocaleString()} of ${everIssued.toLocaleString()} RFIs issued\n${share(resolved).toFixed(1)}%`}
           />
@@ -113,7 +113,7 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
               segment carries its own hover detail.
             */}
             <div
-              className="h-full border-r border-border last:border-r-0"
+              className="h-full border-r-2 border-border last:border-r-0"
               style={{ width: `${share(s.n)}%`, backgroundColor: s.fill }}
               data-tip={`${s.label}\n${s.n.toLocaleString()} of ${everIssued.toLocaleString()} RFIs issued\n${share(s.n).toFixed(1)}%${s.key === "certified" && certifiedOfResolved !== null ? `\n${certifiedOfResolved.toFixed(0)}% of those that reached a decision` : ""}`}
             />
@@ -176,7 +176,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <div className="text-sm font-bold leading-tight">
         {label}
       </div>{" "}
-      <div className="flex h-9 border border-input bg-secondary">
+      <div className="flex h-9 border-input bg-secondary border">
         {children}
       </div>
     </div>
@@ -210,7 +210,7 @@ function Provenance({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }) {
   const since = observed.from ? ` since ${observed.from}` : "";
   return (
     <MoreText gist={"Two sources pooled: a frozen third-party tally, plus RFIs we watched ourselves."} className="mt-4">
-      <p className="border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
+      <p className="border-t-2 border-border pt-3 text-sm leading-relaxed text-muted-foreground">
         <b className="font-bold text-foreground">Two windows, pooled.</b>{" "}
         {base.everIssued.toLocaleString()} RFIs, {base.resolved.toLocaleString()}{" "}
         of them resolved, come from a third-party aggregate frozen at{" "}

@@ -289,7 +289,7 @@ export default async function PermRfiAuditPage() {
           {funnel ? (
             <>
               <RfiOutcomes funnel={funnel} />
-              <div className="mt-5 grid gap-4 bg-tint p-4 sm:p-5">
+              <div className="mt-5 grid gap-4 bg-tint p-4 sm:p-5 border-2 border-border">
                 {funnel.medianDaysToDecision !== null ? (
                   <p className="text-sm leading-relaxed">
                     <b className="font-bold">
@@ -445,7 +445,7 @@ export default async function PermRfiAuditPage() {
           saying out loud rather than letting a reader discover the chain
           later, which would turn a genuine scoop into a credibility problem.
         */}
-        <section className="mt-14 max-w-3xl sm:mt-20">
+        <section className="mt-14 max-w-3xl sm:mt-20 border-2 p-5 bg-card border-border">
           <h2 className="font-heading text-lg font-bold">
             Where these numbers come from
           </h2>
@@ -475,7 +475,7 @@ export default async function PermRfiAuditPage() {
           <PageBasics page="perm-rfi-audit" />{" "}
           <DataProvenance
             datasets={["perm-case-status", "rfi-funnel", "processing-times"]}
-            className="mt-4 border-t border-border pt-3"
+            className="mt-4 border-t-2 border-border pt-3"
           />
         </section>
       </div>
@@ -563,7 +563,7 @@ function Concentration({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="bg-tint p-5">
+      <div className="bg-tint p-5 border-2 border-border">
         <p className="text-sm font-bold text-muted-foreground">
           Most concentrated
         </p>{" "}
@@ -579,7 +579,7 @@ function Concentration({
           company&rsquo;s filings.
         </p>
       </div>
-      <div className="bg-tint p-5">
+      <div className="bg-tint p-5 border-2 border-border">
         <p className="text-sm font-bold text-muted-foreground">
           Most spread out
         </p>{" "}
@@ -660,7 +660,7 @@ function Limits({
 function Limit({ head, children }: { head: string; children: React.ReactNode }) {
   // FOLDED: five headings to scan, each opening its answer.
   return (
-    <li className="border-l-2 border-border pl-4">
+    <li className="border-l-4 border-border pl-4">
       <details className="group">
         <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
           <CaretRightIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" />{" "}
@@ -676,7 +676,7 @@ function Limit({ head, children }: { head: string; children: React.ReactNode }) 
 
 function EmptyState({ what }: { what: string }) {
   return (
-    <p className="bg-tint p-5 text-sm leading-relaxed">
+    <p className="bg-tint p-5 text-sm leading-relaxed border-2 border-border">
       {what} is not loading right now. DOL publishes the underlying case
       statuses at{" "}
       <a
@@ -727,7 +727,7 @@ function RfiTiming({ rfiDay, decideDay }: { rfiDay: number; decideDay: number | 
           Open RFIs: day {rfiDay}
         </span>{" "}
         <span className="absolute inset-x-0 top-7 h-3 bg-card" />{" "}
-        <span className="absolute left-0 top-7 h-3 bg-data-good-ink" style={{ width: at(rfiDay) }} />{" "}
+        <span className="absolute left-0 top-7 h-3 bg-primary" style={{ width: at(rfiDay) }} />{" "}
         {decideDay !== null ? (
           <>
             <span className="absolute top-5 h-7 w-[3px] bg-foreground" style={{ left: at(decideDay) }} />{" "}

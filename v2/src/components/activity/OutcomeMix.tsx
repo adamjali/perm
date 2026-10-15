@@ -68,7 +68,7 @@ export function OutcomeMix({
                     {`${newest[s.key].toFixed(2)}% in ${newest.quarter}; lowest ${low[s.key].toFixed(2)}% (${low.quarter}), highest ${high[s.key].toFixed(2)}% (${high.quarter})`}
                   </p>
                 </div>{" "}
-                <div className="mt-2 flex h-24 items-end gap-[2px] border-b border-border sm:gap-1">
+                <div className="mt-2 flex h-24 items-end gap-[2px] border-b-2 border-border sm:gap-1">
                   {quarters.map((q) => (
                     <div
                       key={q.quarter}

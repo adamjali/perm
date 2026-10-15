@@ -35,11 +35,11 @@ export function RecordShares({ rows, className }: { rows: RecordShare[]; classNa
         {total > 0 ? `${formatInt(total)} filings, four programs` : "Four programs, one search"}
       </h2>{" "}
       {total > 0 ? (
-        <div aria-hidden="true" className="mt-4 flex h-9 border border-input">
+        <div aria-hidden="true" className="mt-4 flex h-9 border-input border">
           {counted.map((r) => (
             <span
               key={r.key}
-              className={cn("h-full border-r border-border last:border-r-0", r.swatch)}
+              className={cn("h-full border-r-2 border-border last:border-r-0", r.swatch)}
               // A floor of 2% keeps the smallest program a visible sliver.
               style={{ width: `${Math.max(2, (r.n / total) * 100)}%` }}
             />
@@ -51,7 +51,7 @@ export function RecordShares({ rows, className }: { rows: RecordShare[]; classNa
           <Fragment key={r.key}>
             {" "}
             <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 py-2.5">
-              <span aria-hidden="true" className={cn("mt-1 size-4 border border-input", r.swatch)} />{" "}
+              <span aria-hidden="true" className={cn("mt-1 size-4 border-input border", r.swatch)} />{" "}
               <span className="min-w-0">
                 <Link
                   href={r.href}

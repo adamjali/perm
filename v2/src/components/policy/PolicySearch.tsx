@@ -45,7 +45,7 @@ export function filterPolicy(items: readonly PolicyItem[], q: PolicyQuery): Poli
 // reads "AnyFinal rule" to anything that walks it. A browser strips an
 // option's surrounding whitespace, so nothing shows.
 const CONTROL =
-  "mt-1 block w-full min-w-0 min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "mt-1 block w-full min-w-0 min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";
 /** "2026-09-11" to "Sep 11, 2026"; anything else prints as given. */
 const day = (iso: string) => shortDate(iso) ?? iso;
@@ -135,7 +135,7 @@ export function PolicySearch({ items, children }: { items: PolicyItem[]; childre
                 : `None of the ${items.length.toLocaleString("en-US")} documents here match that.`}
           </p>{" "}
           {list.length > 0 ? (
-            <ul className="mt-4 divide-y divide-border border-y border-border">
+            <ul className="mt-4 divide-y divide-border border-y-2 border-border">
               {list.map((i) => (
                 <li key={i.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-4">
                   <span className="shrink-0 font-mono text-sm text-muted-foreground sm:w-32">{day(i.date)}{" "}</span>{" "}

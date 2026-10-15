@@ -28,7 +28,7 @@ export default function ContentSearch({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full min-w-0 border border-input bg-card py-2.5 pl-10 pr-12 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="w-full min-w-0 border-2 border-input bg-card py-2.5 pl-10 pr-12 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:border-primary focus:shadow-hard-sm"
       />
       {value && (
           <button

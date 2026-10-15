@@ -33,7 +33,7 @@ export function SponsorProfile({
         measure different things.
       </p>
       {parts.length ? (
-        <ul className="mt-4 grid max-w-4xl grid-cols-1 gap-x-8 gap-y-4 border-t border-border pt-4 sm:grid-cols-2 [&>*]:min-w-0">
+        <ul className="mt-4 grid max-w-4xl grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-border pt-4 sm:grid-cols-2 [&>*]:min-w-0">
           {parts.map((p) => {
             const at = Math.min(100, Math.max(0, p.pct * 100));
             return (
@@ -46,7 +46,7 @@ export function SponsorProfile({
                     <span className="text-sm text-muted-foreground">{partBasis(p)}</span>
                   </p>{" "}
                   <div
-                    className="relative mt-2 h-3 border border-input bg-background"
+                    className="relative mt-2 h-3 border-input bg-background border"
                     role="img"
                     aria-label={partRank(p)}
                   >
@@ -65,7 +65,7 @@ export function SponsorProfile({
         </ul>
       ) : null}{" "}
       {facts.length ? (
-        <div className="mt-6 max-w-3xl">
+        <div className="mt-6 max-w-3xl border-2 p-4 bg-card border-border">
           <h3 className="text-sm font-bold">Also on its record</h3>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-base">
             {facts.map((f, i) => (

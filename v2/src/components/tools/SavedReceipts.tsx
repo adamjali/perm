@@ -76,7 +76,7 @@ export function SavedReceipts({ current }: { current: string | null }) {
   };
 
   return (
-    <section className="mt-6 bg-tint p-5 sm:p-6" aria-labelledby="saved-receipts">
+    <section className="mt-6 bg-tint p-5 sm:p-6 border-2 border-border" aria-labelledby="saved-receipts">
       <h2 id="saved-receipts" className="font-heading text-lg font-bold">
         Your receipt numbers
       </h2>{" "}
@@ -125,7 +125,7 @@ export function SavedReceipts({ current }: { current: string | null }) {
             onChange={(e) => setLabel(e.target.value)}
             maxLength={40}
             placeholder="A name, optional"
-            className="min-h-[44px] min-w-0 flex-1 basis-48 border border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+            className="min-h-[44px] min-w-0 flex-1 basis-48 border-2 border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
           />{" "}
           <button type="submit" className={BUTTON}>
             Save {receipt}

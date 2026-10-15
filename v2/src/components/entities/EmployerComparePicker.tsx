@@ -87,11 +87,11 @@ function Picker({
           setChosen(null);
           onChoose(null);
         }}
-        className="mt-1.5 min-h-11 w-full min-w-0 border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="mt-1.5 min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       />{" "}
       {busy ? <p className="mt-2 text-sm text-muted-foreground">Searching…</p> : null}{" "}
       {!chosen && hits.length > 0 ? (
-        <ul className="mt-2 border border-border bg-card">
+        <ul className="mt-2 border-border bg-card border">
           {hits.map((h) => (
             <li key={h.slug}>
               <button

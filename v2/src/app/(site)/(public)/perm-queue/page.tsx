@@ -160,7 +160,7 @@ export default async function PermQueuePage() {
           same reason a withheld statistic states its reason first: a number
           the reader has already absorbed cannot be un-absorbed by a footnote. */}
       {!MIRROR_COMPLETE ? (
-        <p className="mt-8 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base text-soft">
+        <p className="mt-8 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base text-soft">
           <WarningIcon
             className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink"
             weight="fill"
@@ -170,7 +170,7 @@ export default async function PermQueuePage() {
         </p>
       ) : null}
 
-      <section className="mt-10 bg-tint p-6 sm:p-8">
+      <section className="mt-10 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 [&>*]:min-w-0">
           <Figure
             label="Last seen undecided"
@@ -197,7 +197,7 @@ export default async function PermQueuePage() {
           />
         </div>{" "}
 
-        <div className="mt-8 max-w-3xl space-y-3 border-t border-border pt-6 text-base leading-relaxed text-soft">
+        <div className="mt-8 max-w-3xl space-y-3 border-t-2 border-border pt-6 text-base leading-relaxed text-soft">
           {front ? (
             <p>
               The oldest filing month that isn&rsquo;t substantially decided is{" "}
@@ -280,7 +280,7 @@ export default async function PermQueuePage() {
         </div>
       </section>{" "}
 
-      <section className="mt-6">
+      <section className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold sm:text-3xl">
           What those {formatInt(census.pending)} cases were doing
         </h2>{" "}
@@ -292,7 +292,7 @@ export default async function PermQueuePage() {
 
         <StageLegend stages={stages} className="mt-6" />
 
-        <div className="mt-8 border-t border-border pt-6">
+        <div className="mt-8 border-t-2 border-border pt-6">
           <PendingCensus
             stages={stages}
             caption="Every DOL status a pending PERM case was last seen in, grouped by queue"
@@ -300,7 +300,7 @@ export default async function PermQueuePage() {
         </div>
       </section>{" "}
 
-      <section className="mt-6">
+      <section className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold sm:text-3xl">
           The wall, by filing month
         </h2>{" "}
@@ -323,7 +323,7 @@ export default async function PermQueuePage() {
       </section>{" "}
 
       {alphabet ? (
-        <section className="mt-6">
+        <section className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
           <h2 className="font-heading text-2xl font-bold sm:text-3xl">
             Your employer&rsquo;s first letter: small, and not in our estimates
           </h2>{" "}
@@ -341,7 +341,7 @@ export default async function PermQueuePage() {
             </p>
           </MoreText>{" "}
 
-          <div className="mt-8 border-t border-border pt-6">
+          <div className="mt-8 border-t-2 border-border pt-6">
             <AlphabetEffect data={alphabet} />
           </div>
         </section>
@@ -354,7 +354,7 @@ export default async function PermQueuePage() {
       <PageBasics page="perm-queue" />{" "}
       <DataProvenance
         datasets={["perm-case-status", "processing-times", "perm-cases"]}
-        className="mt-8 border-t border-border pt-4"
+        className="mt-8 border-t-2 border-border pt-4"
       />
     </div>
   );

@@ -167,7 +167,7 @@ export default async function PermTimelineCalculatorPage() {
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12 bg-tint p-6 sm:p-8">
+      <section className="mt-12 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
         <h2 className="font-heading text-2xl font-bold">
           The deadlines on your side of the process are fixed
         </h2>{" "}

@@ -105,7 +105,7 @@ export function CaseEstimatePanel({
           </p>
         ) : null}{" "}
         {est.nextStep ? (
-          <p className="mt-4 border-l-2 border-primary-text bg-muted px-4 py-3 text-base leading-relaxed text-soft">
+          <p className="mt-4 border-l-4 border-primary bg-muted px-4 py-3 text-base leading-relaxed text-soft">
             What usually happens next:{" "}
             <b className="font-semibold text-foreground">
               {Math.round(est.nextStep.share * 100)}%

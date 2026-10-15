@@ -87,7 +87,7 @@ export function CaseNumberPlate({
           ))}
         </div>
 
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground border-t-2 border-border">
           The middle five digits are a date:{" "}
           <b className="font-semibold text-foreground">
             day {Number(dayOfYear)} of 20{yy}

@@ -172,7 +172,7 @@ export default async function DecisionActivityPage() {
         // same four figures with no second heading, never a second slab
         // restating their pace.
         <section className="mt-6" aria-label={`The last ${currentPace.weekdays + currentPace.weekendDays} days`}>
-          <dl className="grid [&>*]:min-w-0 grid-cols-2 gap-x-6 gap-y-4 border-y border-border py-4 sm:grid-cols-4">
+          <dl className="grid [&>*]:min-w-0 grid-cols-2 gap-x-6 gap-y-4 border-y-2 border-border py-4 sm:grid-cols-4">
             {[
               {
                 k: "Per weekday",
@@ -274,7 +274,7 @@ export default async function DecisionActivityPage() {
               these answers it from the same corpus. */}
           <nav
             aria-label="Related records"
-            className="mt-6 max-w-3xl bg-tint p-4"
+            className="mt-6 max-w-3xl bg-tint p-4 border-2 border-border"
           >
             <p className="text-sm font-bold">
               The same cases, other ways in
@@ -453,7 +453,7 @@ export default async function DecisionActivityPage() {
                 <ol className="mt-3 m-0 list-none p-0">
                   {col.rows.map((d) => (
                     <Fragment key={d.date}>
-                    <li className="flex items-baseline justify-between gap-3 border-t border-border py-2 first:border-t-0 first:pt-0">
+                    <li className="flex items-baseline justify-between gap-3 border-t-2 border-border py-2 first:border-t-0 first:pt-0">
                       <span className="text-sm font-bold">{longDate(d.date)}</span>{" "}
                       <span className="font-mono text-sm font-bold tabular-nums">
                         {formatInt(d.total)}
@@ -486,7 +486,7 @@ export default async function DecisionActivityPage() {
       ) : null}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="bg-tint p-6">
+        <div className="bg-tint p-6 border-2 shadow-hard-sm border-border">
           <h2 className="font-heading text-lg font-bold">Waiting on a case?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Pace alone does not place a case in the queue. The{" "}

@@ -59,7 +59,7 @@ export function UscisReceiptForm({ defaultValue = "", className }: UscisReceiptF
           maxLength={20}
           aria-invalid={malformed || undefined}
           aria-describedby={helpId}
-          className="min-h-[52px] w-full min-w-0 flex-1 basis-72 border border-input bg-background px-4 py-3 font-mono text-lg tracking-tight focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="min-h-[52px] w-full min-w-0 flex-1 basis-72 border-2 border-input bg-background px-4 py-3 font-mono text-lg tracking-tight focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         />{" "}
         <button
           type="submit"

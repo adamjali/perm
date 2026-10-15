@@ -78,7 +78,7 @@ function Bars({
 
               {/* The track is always full width, so a small bar reads as small
                   rather than as a missing row. */}
-              <span className="h-6 w-full border border-input bg-muted">
+              <span className="h-6 w-full border-input bg-muted border">
                 <span
                   className={cn(
                     "block h-full",
@@ -133,7 +133,7 @@ function BacklogTable({
           Prevailing wage requests still pending by month of receipt, with each
           month&apos;s share of the pile and the running total from the oldest month
         </caption>
-        <thead className="border-b border-input bg-muted">
+        <thead className="dark border-b border-black bg-[#141414] text-foreground">
           <tr>
             <th scope="col" className="px-3 py-2 text-sm font-bold">
               Received
@@ -174,7 +174,7 @@ function BacklogTable({
           ))}
         </tbody>
         <tfoot className="bg-muted">
-          <tr className="border-t border-border">
+          <tr className="border-t-2 border-border">
             <td className="px-3 py-2.5 font-bold">Whole pile{" "}</td>
             <td className="px-3 py-2.5 text-right font-bold tabular-nums">
               {formatInt(total)}
@@ -253,7 +253,7 @@ export function PwdBacklogChart({
         controls={scopeControl}
         chart={
           rows.length === 0 ? (
-            <p className="bg-tint p-6 text-base text-muted-foreground">
+            <p className="bg-tint p-6 text-base text-muted-foreground border-2 shadow-hard-sm border-border">
               No months in the published backlog fall in that part of the pile.
             </p>
           ) : (
@@ -279,15 +279,15 @@ export function PwdBacklogChart({
         ) : (
           <>
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border border-input bg-foreground/70" aria-hidden="true" />
+              <span className="h-3 w-3 border-input bg-foreground/70 border" aria-hidden="true" />
               Ahead of yours
             </span>{" "}
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border border-input bg-primary" aria-hidden="true" />
+              <span className="h-3 w-3 border-input bg-primary border" aria-hidden="true" />
               Your month
             </span>{" "}
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border border-input bg-foreground/20" aria-hidden="true" />
+              <span className="h-3 w-3 border-input bg-foreground/20 border" aria-hidden="true" />
               Received after yours
             </span>
           </>

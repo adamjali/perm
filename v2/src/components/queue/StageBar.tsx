@@ -96,7 +96,7 @@ const MIN_SEGMENT_PX = 4;
  * 150px to 400px bar that is under 2%, every count is printed beside it, and
  * the alternative is a bar whose composition cannot be read at all.
  */
-const SEGMENT_EDGE = "border-r border-muted";
+const SEGMENT_EDGE = "border-r-2 border-muted";
 
 export function StageBar({ stages, scale, tipHeading, className }: StageBarProps) {
   const own = stages.reduce((n, s) => n + s.count, 0);
@@ -158,7 +158,7 @@ export function StageLegend({
           // one run of text.
           <Fragment key={stage}>
             {" "}
-            <li className="border-t border-border pt-3">
+            <li className="border-t-2 border-border pt-3">
               <span className="flex items-center gap-2">
                 <span
                   className={`inline-block h-3 w-3 shrink-0 border border-input ${meta.fill}`}

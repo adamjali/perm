@@ -101,7 +101,7 @@ export function DecidedTable({
           {rows.map((c) => (
             <tr
               key={`${c.program}:${c.caseNumber}`}
-              className="border-t border-border/30 align-top"
+              className="border-t-2 border-border/30 align-top"
             >
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                 <Link

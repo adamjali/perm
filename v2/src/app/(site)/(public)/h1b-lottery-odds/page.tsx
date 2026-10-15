@@ -100,7 +100,7 @@ export default function H1bLotteryOddsPage() {
         </p>
       </header>
 
-      <section className="mt-10 bg-tint p-6 sm:p-8" aria-labelledby="latest">
+      <section className="mt-10 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border" aria-labelledby="latest">
         <p className="text-sm font-semibold text-muted-foreground">FY{newest.fy} cap</p>{" "}
         <h2 id="latest" className="mt-2 font-heading text-4xl font-bold leading-tight tabular-nums sm:text-5xl">
           {formatPercent(newestRate, 1)}
@@ -169,7 +169,7 @@ export default function H1bLotteryOddsPage() {
           A registration now enters the draw once at OEWS wage level I and up to four times at level IV. DHS estimated
           what that does to one beneficiary&apos;s chance, in the final rule, before the first weighted lottery ran:
         </p>{" "}
-        <div className="mt-5 bg-tint p-6 sm:p-8">
+        <div className="mt-5 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
           <ChartTips label="DHS's estimated chance at each wage level">
           <ul className="space-y-4">
             {WEIGHTED_ESTIMATE.levels.map((l) => (
@@ -180,10 +180,10 @@ export default function H1bLotteryOddsPage() {
                   className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3 [&>*]:min-w-0"
                 >
                   <span className="font-heading text-lg font-bold">Level {l.level}</span>{" "}
-                  <span className="relative block h-8 border border-input bg-background" aria-hidden="true">
+                  <span className="relative block h-8 border-input bg-background border" aria-hidden="true">
                     <span className="absolute inset-y-0 left-0 bg-foreground" style={{ width: `${l.percent}%` }} />
                     <span
-                      className="absolute inset-y-0 border-l border-dashed border-primary"
+                      className="absolute inset-y-0 border-l-2 border-dashed border-primary"
                       style={{ left: `${WEIGHTED_ESTIMATE.randomPercent}%` }}
                     />
                   </span>{" "}
@@ -211,7 +211,7 @@ export default function H1bLotteryOddsPage() {
         </h2>{" "}
         <ScrollBox label="USCIS's lottery figures, by fiscal year" className="mt-4 border-t-2 border-[var(--object-border)]">
           <table className="w-full min-w-[720px] text-left text-base">
-            <thead className="border-b border-border bg-muted/40">
+            <thead className="border-b-2 border-border bg-muted/40">
               <tr>
                 <th scope="col" className="px-3 py-3 font-bold">Cap year{" "}</th>
                 <th scope="col" className="px-3 py-3 font-bold">Registrations{" "}</th>
@@ -248,7 +248,7 @@ export default function H1bLotteryOddsPage() {
         </p>
       </section>
 
-      <details className="group mt-12 bg-tint p-6 sm:p-8">
+      <details className="group mt-12 bg-tint p-6 sm:p-8 border-2 border-border">
         <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
           What this can&apos;t tell you
         </summary>

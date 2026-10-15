@@ -36,14 +36,14 @@ export function FirmSiteSection() {
 
         <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] [&>*]:min-w-0">
           <div>
-            <div className="border border-border bg-card">
-              <div className="flex items-center gap-3 border-b border-border bg-muted px-4 py-2.5">
+            <div className="border-border bg-card border">
+              <div className="flex items-center gap-3 border-b-3 border-border bg-muted px-4 py-2.5">
                 <span className="flex gap-1.5" aria-hidden="true">
-                  <span className="h-3 w-3 border border-border bg-background" />
-                  <span className="h-3 w-3 border border-border bg-background" />
-                  <span className="h-3 w-3 border border-border bg-background" />
+                  <span className="h-3 w-3 border-border bg-background border" />
+                  <span className="h-3 w-3 border-border bg-background border" />
+                  <span className="h-3 w-3 border-border bg-background border" />
                 </span>{" "}
-                <span className="min-w-0 flex-1 truncate border border-border bg-background px-3 py-1 font-mono text-sm text-muted-foreground">
+                <span className="min-w-0 flex-1 truncate border-2 border-border bg-background px-3 py-1 font-mono text-sm text-muted-foreground">
                   yourfirm.com/check-your-case
                 </span>
               </div>
@@ -64,7 +64,7 @@ export function FirmSiteSection() {
           </div>{" "}
 
           <div className="flex flex-col">
-            <div className="grid grid-cols-1 border border-border sm:grid-cols-2 lg:grid-cols-1">
+            <div className="grid grid-cols-1 border-border sm:grid-cols-2 lg:grid-cols-1 border">
               <div className="flex min-h-36 items-center justify-center bg-neutral-950 p-6 sm:p-8">
                 <span
                   aria-hidden="true"
@@ -72,7 +72,7 @@ export function FirmSiteSection() {
                   dangerouslySetInnerHTML={{ __html: badge("dark") }}
                 />
               </div>{" "}
-              <div className="flex min-h-36 items-center justify-center border-t border-border bg-neutral-50 p-6 sm:border-l sm:border-t-0 sm:p-8 lg:border-l-0 lg:border-t">
+              <div className="flex min-h-36 items-center justify-center border-t-3 border-border bg-neutral-50 p-6 sm:border-l-3 sm:border-t-0 sm:p-8 lg:border-l-0 lg:border-t-3">
                 <span
                   aria-hidden="true"
                   className="block w-full max-w-[22rem] [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
@@ -84,7 +84,7 @@ export function FirmSiteSection() {
             <ol className="mt-4 space-y-3">
               {STEPS.map((step, i) => (
                 <li key={step} className="flex items-center gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-input bg-card font-heading text-lg font-bold">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center border-input bg-primary font-heading text-lg font-bold text-primary-foreground border">
                     {i + 1}
                   </span>{" "}
                   <span className="text-lg font-semibold">{step}</span>{" "}

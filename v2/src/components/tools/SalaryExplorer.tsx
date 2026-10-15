@@ -91,7 +91,7 @@ const usd = (n: number | null) =>
   n === null ? "n/a" : formatDollars(n);
 
 const FIELD =
-  "mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground";
+  "mt-2 block w-full min-w-0 min-h-[44px] border-2 border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground";
 
 /**
  * A city as typed, committed on Enter or on leaving the field, so a reader
@@ -235,7 +235,7 @@ export function SalaryExplorer({
           required: without a mobile column track the items land in an implicit
           content-sized column, which on WebKit sizes a form control from its
           own UA stylesheet and runs it off the card. */}
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <h2 className="font-heading text-2xl font-bold leading-tight">
           {heading}
         </h2>{" "}
@@ -253,7 +253,7 @@ export function SalaryExplorer({
               id={ids.soc}
               value={soc}
               onChange={(e) => setParam("soc", e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               <option value="">All occupations</option>
               {occupations.map((o) => (
@@ -273,7 +273,7 @@ export function SalaryExplorer({
               id={ids.state}
               value={state}
               onChange={(e) => setParam("state", e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               <option value="">Every state</option>
               {states.map((s) => (
@@ -292,7 +292,7 @@ export function SalaryExplorer({
               id={ids.fy}
               value={fy}
               onChange={(e) => setParam("fy", e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               <option value="">All years</option>
               {fiscalYears.map((y) => (
@@ -311,7 +311,7 @@ export function SalaryExplorer({
               id={ids.status}
               value={status}
               onChange={(e) => setParam("status", e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               {STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -401,13 +401,13 @@ export function SalaryExplorer({
       {/* Warnings ABOVE the figures, always. A number computed from a suspect
           population must not read as more authoritative than the doubt. */}
       {error ? (
-        <p className="flex items-start gap-2 border-b border-border bg-data-warn/8 px-6 py-4 text-base text-soft sm:px-8">
+        <p className="flex items-start gap-2 border-b-2 border-border bg-data-warn/8 px-6 py-4 text-base text-soft sm:px-8">
           <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>{error}</span>
         </p>
       ) : null}
       {report.note ? (
-        <p className="flex items-start gap-2 border-b border-border bg-data-warn/8 px-6 py-4 text-base text-soft sm:px-8">
+        <p className="flex items-start gap-2 border-b-2 border-border bg-data-warn/8 px-6 py-4 text-base text-soft sm:px-8">
           <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>{report.note}</span>
         </p>
@@ -431,7 +431,7 @@ export function SalaryExplorer({
                 .map((c) => (
                   <div
                     key={c.label}
-                    className="min-w-0 flex-1 basis-52 bg-tint p-4"
+                    className="min-w-0 flex-1 basis-52 bg-tint p-4 border-2 border-border"
                   >
                     <p className="text-sm font-semibold text-muted-foreground">
                       {c.label}
@@ -475,7 +475,7 @@ export function SalaryExplorer({
                         data-tip={`${usd(b.from)} to ${usd(b.from + data.binWidth)}\n${formatInt(b.count)} ${nounPlural}`}
                       >
                         <span className="text-sm tabular-nums text-muted-foreground">{usd(b.from)}</span>{" "}
-                        <span className="block h-5 w-full border border-input bg-muted">
+                        <span className="block h-5 w-full border-input bg-muted border">
                           <span
                             className="block h-full bg-primary"
                             style={{ width: `${Math.max((b.count / maxBin) * 100, 1)}%` }}
@@ -533,7 +533,7 @@ export function SalaryExplorer({
                                 {r.ends ? (
                                   <span
                                     aria-hidden="true"
-                                    className="absolute inset-y-0.5 border border-border bg-tint"
+                                    className="absolute inset-y-0.5 border-border bg-tint border"
                                     style={{ left: at(r.ends.p5), width: `${((r.ends.p95 - r.ends.p5) / span) * 100}%` }}
                                   />
                                 ) : null}
@@ -570,7 +570,7 @@ export function SalaryExplorer({
                   </summary>
                 <ScrollBox label="Every state, as a table" className="border-t border-border">
                   <table className="w-full min-w-[36rem] text-left text-sm">
-                    <thead className="border-b border-input bg-muted">
+                    <thead className="dark border-b border-black bg-[#141414] text-foreground">
                       <tr>
                         {["State", "Cases", "5th", "Median", "Average", "95th"].map((h, i) => (
                           <th
@@ -590,7 +590,7 @@ export function SalaryExplorer({
                       {data.byState.map((r, i) => (
                         <tr
                           key={r.state}
-                          className={cn("border-t border-border", i % 2 === 1 && "bg-muted")}
+                          className={cn("border-t-2 border-border", i % 2 === 1 && "bg-muted")}
                         >
                           <th scope="row" className="px-3 py-2 font-bold">
                             {r.state}{" "}

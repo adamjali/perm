@@ -145,7 +145,7 @@ export default async function PermEmployersPage() {
           <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 xl:grid-cols-2">
           {/* The drawing first: the top ten as a volume ladder. */}
           <section className="h-full">
-            <div className="flex h-full flex-col">
+            <div className="flex h-full flex-col border-2 p-6 sm:p-8 bg-card border-border">
               <h3 className="font-heading text-xl font-bold">The top ten, by filings</h3>
               <ChartTips label="The top ten sponsors, by filings" className="mt-6">
               {/* Each name opens its employer page: visitors clicked the plain
@@ -174,7 +174,7 @@ export default async function PermEmployersPage() {
                     <div className="flex min-w-0 items-center gap-2">
                       <div
                         aria-hidden="true"
-                        className="h-6 shrink-0 border border-input bg-primary"
+                        className="h-6 shrink-0 border-input bg-primary border"
                         style={{
                           width: `${Math.max(4, (e.total / maxTotal) * 100)}%`,
                           maxWidth: "calc(100% - 64px)",
@@ -203,7 +203,7 @@ export default async function PermEmployersPage() {
             <WaitLeaders field={fieldWait} />
           </Chapter>
 
-          <section id="all" className="mt-16 border-t-2 border-border pt-8">
+          <section id="all" className="mt-16 border-t-4 border-border pt-8">
             {/* "All N sponsors" was true of the published files and reads as
                 a claim about every sponsor that exists. It is now actively
                 misleading on this page: searching here also surfaces employers
@@ -239,12 +239,12 @@ export default async function PermEmployersPage() {
               the crawlable path to all of them. */}
           {/* The teaser carries its own heading ("Browse A to Z"), so this is the
               part's rule and anchor only. */}
-          <div id="a-z" className="mt-16 border-t-2 border-border pt-8">
+          <div id="a-z" className="mt-16 border-t-4 border-border pt-8">
             <BrowseTeaser kind="employer" />
           </div>
         </>
       ) : (
-        <section className="mt-10 bg-tint p-8 text-center">
+        <section className="mt-10 bg-tint p-8 text-center border-2 shadow-hard border-border">
           <p className="text-lg text-muted-foreground">
             The employer aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}
@@ -257,7 +257,7 @@ export default async function PermEmployersPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="bg-tint p-6">
+        <div className="bg-tint p-6 border-2 shadow-hard-sm border-border">
           <h2 className="font-heading text-lg font-bold">Your employer is on the list?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Their volume doesn’t change your place in line. The{" "}

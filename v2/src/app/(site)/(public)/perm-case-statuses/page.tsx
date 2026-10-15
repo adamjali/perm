@@ -133,7 +133,7 @@ function FlagEntry({ e, anchor, n, max }: { e: FlagStatusEntry; anchor: string; 
         <ShareBar n={n} max={max} />
         <CaretDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
       </summary>{" "}
-      <div className="max-w-3xl border-t border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+      <div className="max-w-3xl border-t-2 border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
         {rest ? <p className="text-sm leading-relaxed text-soft">{rest}</p> : null}{" "}
         <Source cite={e.cite} unsourced={e.unsourced} />
       </div>
@@ -230,7 +230,7 @@ export default async function PermCaseStatusesPage() {
             <li key={pr.id}>
               <a
                 href={`#${pr.id}`}
-                className="flex min-h-[44px] items-baseline justify-between gap-3 bg-tint px-4 py-3 transition-transform motion-reduce:transition-none"
+                className="flex min-h-[44px] items-baseline justify-between gap-3 bg-tint px-4 py-3 transition-transform motion-reduce:transition-none border-2 shadow-hard motion-safe:hover:-translate-y-0.5 border-border"
               >
                 <span className="font-heading font-bold">{pr.label}</span>{" "}
                 <span className="font-mono text-sm text-muted-foreground">
@@ -245,7 +245,7 @@ export default async function PermCaseStatusesPage() {
             Find one status
             <CaretDownIcon className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
           </summary>{" "}
-          <div className="grid gap-6 border-t border-border/40 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 border-t-2 border-border/40 p-4 sm:grid-cols-2 lg:grid-cols-4">
             {PROGRAMS.map((pr) => (
               <div key={pr.id}>
                 <p className="text-sm font-bold">{pr.label}</p>{" "}
@@ -300,7 +300,7 @@ export default async function PermCaseStatusesPage() {
                       <ShareBar n={permCount(m.status)} max={groupMax} />
                       <CaretDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
                     </summary>{" "}
-                    <div className="max-w-3xl border-t border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+                    <div className="max-w-3xl border-t-2 border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
                       {rest ? <p className="text-sm leading-relaxed text-soft">{rest}</p> : null}{" "}
                       {stagePage && permCount(m.status) ? (
                         <p className="mt-2 text-sm">

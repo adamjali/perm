@@ -56,7 +56,7 @@ export function LineAhead({
               <span className={`font-mono text-sm ${r.own ? "font-semibold" : "text-soft"}`}>{r.label}</span>{" "}
               <span className="block h-4 bg-muted" aria-hidden="true">
                 <span
-                  className={`block h-full ${r.own ? "bg-primary-text" : "bg-foreground/50"}`}
+                  className={`block h-full ${r.own ? "bg-primary-text" : "bg-foreground"}`}
                   style={{ width: `${Math.max(1, Math.round((r.n / max) * 100))}%` }}
                 />
               </span>{" "}

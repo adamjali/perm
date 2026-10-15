@@ -29,7 +29,7 @@ export function EmbedGallery({ origin }: { origin: string }) {
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] [&>*]:min-w-0">
-        <div className="border border-border bg-card">
+        <div className="border-border bg-card border">
           <iframe
             src={`/embed/${lookup.slug}`}
             title={lookup.title}
@@ -55,7 +55,7 @@ export function EmbedGallery({ origin }: { origin: string }) {
             {EMBEDS.filter((e) => e.group === g).map((e) => (
               <Fragment key={e.slug}>
                 {" "}
-                <li className="flex flex-col bg-tint p-4">
+                <li className="flex flex-col bg-tint p-4 border-2 border-border">
                   <p className="font-heading text-base font-bold">{e.title}</p>{" "}
                   <p className="mt-1 flex-1 text-sm leading-relaxed text-soft">{e.blurb}</p>{" "}
                   <p className="mt-2 text-sm">
@@ -71,7 +71,7 @@ export function EmbedGallery({ origin }: { origin: string }) {
         </Fragment>
       ))}
 
-      <details className="mt-8 max-w-3xl border-t border-border pt-4">
+      <details className="mt-8 max-w-3xl border-t-2 border-border pt-4">
         <summary className="cursor-pointer list-none font-heading text-lg font-bold marker:content-none">
           <span className="inline-flex min-h-11 items-center">Sizing the frame, and what it sends</span>
         </summary>
@@ -97,7 +97,7 @@ export function EmbedGallery({ origin }: { origin: string }) {
 function Snippet({ html }: { html: string }) {
   return (
     <div className="mt-3 flex items-start gap-2">
-      <pre className="min-w-0 flex-1 overflow-x-auto bg-tint p-2 text-sm" translate="no">
+      <pre className="min-w-0 flex-1 overflow-x-auto bg-tint p-2 text-sm border-2 border-border" translate="no">
         <code>{html}</code>
       </pre>{" "}
       <CopyButton text={html} />

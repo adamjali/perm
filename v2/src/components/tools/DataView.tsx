@@ -93,7 +93,7 @@ export function ScopeSelect({
     // `max-w-full` because a flex item's automatic minimum size is its
     // content, so a long option label ("District of Columbia") pushes the
     // control past a 390px viewport and takes the page sideways with it.
-    <label className="flex min-h-[44px] max-w-full items-center gap-2 border border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary">
+    <label className="flex min-h-[44px] max-w-full items-center gap-2 border-2 border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary shadow-hard-sm">
       <span className="text-sm font-bold text-muted-foreground">
         {label}
       </span>{" "}

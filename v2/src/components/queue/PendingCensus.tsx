@@ -47,13 +47,13 @@ export function PendingCensus({
         <tr>
           <th
             scope="col"
-            className="border-b border-border pb-2 text-sm font-bold text-soft"
+            className="border-b-2 border-border pb-2 text-sm font-bold text-soft"
           >
             DOL status{" "}
           </th>
           <th
             scope="col"
-            className="border-b border-border pb-2 text-right text-sm font-bold text-soft"
+            className="border-b-2 border-border pb-2 text-right text-sm font-bold text-soft"
           >
             Cases{" "}
           </th>
@@ -85,7 +85,7 @@ export function PendingCensus({
                 </th>
               </tr>
               {group.statuses.map((s) => (
-                <tr key={s.status} className="border-b border-border">
+                <tr key={s.status} className="border-b-2 border-border">
                   <td className="py-2 pr-4 text-base text-soft">
                     {prettyStatus(s.status)}{" "}
                   </td>
@@ -120,7 +120,7 @@ export function DecidedList({
       {statuses.map((s) => (
         <Fragment key={s.status}>
           {" "}
-          <li className="flex items-baseline justify-between gap-4 border-b border-border pb-2 text-base">
+          <li className="flex items-baseline justify-between gap-4 border-b-2 border-border pb-2 text-base">
             <span className="text-soft">{prettyStatus(s.status)}</span>{" "}
             <span className="font-bold tabular-nums">{formatInt(s.count)}</span>
           </li>

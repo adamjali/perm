@@ -212,11 +212,11 @@ function TallyBar({ name, t }: { name: string; t: ReturnType<typeof tally> }) {
     <div className="mt-5">
       <p className="font-heading text-base font-bold">{name}</p>{" "}
       <p className="sr-only">{tallySentence(name, t)}</p>{" "}
-      <div aria-hidden="true" className="mt-2 flex h-7 border border-input">
+      <div aria-hidden="true" className="mt-2 flex h-7 border-input border">
         {parts.map((p, i) => (
           <span
             key={p.key}
-            className={`h-full ${p.fill} ${i > 0 ? "border-l border-border" : ""}`}
+            className={`h-full ${p.fill} ${i > 0 ? "border-l-2 border-border" : ""}`}
             style={{ width: `${(t[p.key] / total) * 100}%` }}
           />
         ))}
@@ -253,7 +253,7 @@ function ChartTable({
       </p>{" "}
       <ScrollBox label={title} className="mt-4 overscroll-x-none border-t-2 border-[var(--object-border)] bg-card">
         <table className="w-full min-w-[760px] border-collapse text-sm">
-          <thead className="border-b border-input bg-muted">
+          <thead className="dark border-b border-black bg-[#141414] text-foreground">
             <tr>
               <th scope="col" className="px-3 py-3 text-left text-sm font-bold">Category{" "} </th>
               {BOARD_COUNTRIES.map((c) => (
@@ -269,7 +269,7 @@ function ChartTable({
               if (!first) return null;
               return (
                 <Fragment key={first.category}>
-                  <tr className="border-t border-border align-top">
+                  <tr className="border-t-2 border-border align-top">
                     <th scope="row" className="px-3 py-3 text-left font-semibold">
                       {CATEGORY_LABEL[first.category] ?? first.category}{" "}
                     </th>
@@ -351,7 +351,7 @@ export default async function BulletinMonthPage({
       </p>{" "}
 
       {prev ? (
-        <section aria-labelledby="moved" className="mt-8">
+        <section aria-labelledby="moved" className="mt-8 border-2 shadow-hard-sm p-5 sm:p-6 bg-card border-border">
           <h2 id="moved" className="font-heading text-xl font-bold">
             {`What moved since ${sinceLabel ?? "the bulletin before"}`}
           </h2>{" "}
@@ -365,7 +365,7 @@ export default async function BulletinMonthPage({
 
       <ChartTable title="Final action dates" rows={fa} since={sinceLabel} />{" "}
       {noFilingChart ? (
-        <p className="mt-6 border border-dashed border-border p-4 text-base leading-relaxed text-soft">
+        <p className="mt-6 border-2 border-dashed border-border p-4 text-base leading-relaxed text-soft">
           The dates for filing chart began with the October 2015 bulletin. This one printed final
           action dates only.
         </p>

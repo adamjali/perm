@@ -256,7 +256,7 @@ export default async function I140AwaitingVisaPage() {
             <ScrollBox label="Approved petitions awaiting a visa, by country" className="mt-4 border-t-2 border-[var(--object-border)] bg-card">
               <table className="min-w-[880px] w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border text-left">
+                  <tr className="border-b-2 border-border text-left">
                     <th className="px-4 py-2 font-bold">Country of birth{" "}</th>
                     {table.categories.map((cat) => (
                       <th key={cat} className="px-2 py-2 text-right font-bold">{CATEGORY_LABEL[cat] ?? cat}{" "}</th>
@@ -265,7 +265,7 @@ export default async function I140AwaitingVisaPage() {
                 </thead>
                 <tbody>
                   {table.countries.map((c) => (
-                    <tr key={c} className={c === "TOTAL" ? "border-t border-border font-bold" : "border-b border-border/50"}>
+                    <tr key={c} className={c === "TOTAL" ? "border-t-2 border-border font-bold" : "border-b border-border/50"}>
                       <td className="px-4 py-1.5 font-semibold">{c === "TOTAL" ? "All countries" : c}{" "}</td>
                       {table.categories.map((cat) => (
                         <td key={cat} className="px-2 py-1.5 text-right font-mono tabular-nums">{n(table.cells[c]?.[cat])}{" "}</td>
@@ -359,7 +359,7 @@ export default async function I140AwaitingVisaPage() {
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12">
+      <section className="mt-12 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold">Read next</h2>{" "}
         <ul className="mt-4 space-y-2">
           <li>

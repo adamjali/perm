@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  */
 export function FromDolLive({ className }: { className?: string }) {
   return (
-    <p className={cn("mt-4 border-t border-border pt-3 text-sm text-muted-foreground", className)}>
+    <p className={cn("mt-4 border-t-2 border-border pt-3 text-sm text-muted-foreground", className)}>
       Source: DOL&apos;s own case-status service,{" "}
       <a
         href={DOL_CASE_STATUS_URL}

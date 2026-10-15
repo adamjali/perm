@@ -113,7 +113,7 @@ const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const PAGE_SIZE = 50;
 
 const CONTROL =
-  "w-full min-w-0 min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "w-full min-w-0 min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 
 
 
@@ -183,7 +183,7 @@ function Rows({
           {ordered.map((r) => (
             <tr
               key={r.caseNumber}
-              className="border-t border-border/30 align-top max-sm:grid max-sm:grid-cols-1 max-sm:gap-y-1 max-sm:py-3 max-sm:[&>td]:p-0 max-sm:[&>td]:whitespace-normal"
+              className="border-t-2 border-border/30 align-top max-sm:grid max-sm:grid-cols-1 max-sm:gap-y-1 max-sm:py-3 max-sm:[&>td]:p-0 max-sm:[&>td]:whitespace-normal"
             >
               {/* `whitespace-nowrap!`: the row's phone rule lets every other cell wrap, and a case number broken at a hyphen reads as two. */}
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base max-sm:whitespace-nowrap! max-sm:text-sm">
@@ -278,7 +278,7 @@ function DisclosedRows({
         />
         <tbody translate="no" className="bg-card">
           {ordered.map((r) => (
-            <tr key={r.caseNumber} className="border-t border-border/30 align-top">
+            <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                 {/* PendingLink, not Link: /perm-case-status is dynamic, and a
                     number this site does not hold is asked of DOL live at
@@ -346,7 +346,7 @@ function FlagSearchFilters({
   const hasWage = items.some((i) => i.file?.wage != null);
   if (fields.length === 0 && !hasWage) return null;
   return (
-    <div className="mt-4 bg-tint p-4">
+    <div className="mt-4 bg-tint p-4 border-2 border-border">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         {fields.map(({ f, opts }) => (
           <Fragment key={f.key}>
@@ -650,7 +650,7 @@ export function FlagCaseBrowser({
           </p>
         ) : null}
         {typedCaseNumber ? (
-          <p className="mt-4 border border-primary bg-tint p-4 text-base leading-relaxed">
+          <p className="mt-4 border-2 border-primary bg-tint p-4 text-base leading-relaxed">
             That is a case number.{" "}
             <PendingLink
               href={`/perm-case-status?case=${encodeURIComponent(typedCaseNumber)}`}
@@ -663,7 +663,7 @@ export function FlagCaseBrowser({
           </p>
         ) : null}
         {searching && searchFailed ? (
-          <RequestFailed what="The search" failure={searchFailure} onRetry={retrySearch} className="mt-4 bg-tint p-4" />
+          <RequestFailed what="The search" failure={searchFailure} onRetry={retrySearch} className="mt-4 bg-tint p-4 border-2 border-border" />
         ) : null}
         {searching && search && found === 0 ? (
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
@@ -790,7 +790,7 @@ export function FlagCaseBrowser({
                 setOrder(e.target.value === "oldest" ? "oldest" : "newest");
                 setCursors([]);
               }}
-              className="min-h-[44px] min-w-0 max-w-full flex-1 border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] min-w-0 max-w-full flex-1 border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="newest">{"Newest filing first "}</option>
               <option value="oldest">{"Oldest filing first "}</option>
@@ -804,7 +804,7 @@ export function FlagCaseBrowser({
                 setMonth(e.target.value);
                 setCursors([]);
               }}
-              className="min-h-[44px] min-w-0 max-w-full flex-1 border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] min-w-0 max-w-full flex-1 border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="">Any month</option>
               {months.map((m) => (
@@ -816,7 +816,7 @@ export function FlagCaseBrowser({
           </label>
         </div>{" "}
         {listFailed ? (
-          <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 bg-tint p-4" />
+          <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 bg-tint p-4 border-2 border-border" />
         ) : null}
         {!withheld && !listFailed && shownPage === undefined ? (
           <p className="mt-4 text-base text-muted-foreground">Loading…</p>

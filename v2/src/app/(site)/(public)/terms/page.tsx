@@ -67,7 +67,7 @@ export default function TermsPage() {
 
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="agreement-to-terms" className="font-heading text-2xl font-bold m-0">1. Agreement to Terms</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -84,7 +84,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="description-of-service" className="font-heading text-2xl font-bold m-0">2. Description of Service</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -115,7 +115,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="user-accounts" className="font-heading text-2xl font-bold m-0">3. User Accounts</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -174,7 +174,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="acceptable-use" className="font-heading text-2xl font-bold m-0">4. Acceptable Use</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -219,7 +219,7 @@ export default function TermsPage() {
             </ul>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="user-content" className="font-heading text-2xl font-bold m-0">5. User Content</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -266,7 +266,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="intellectual-property" className="font-heading text-2xl font-bold m-0">6. Intellectual Property</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -346,7 +346,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="disclaimers" className="font-heading text-2xl font-bold m-0">7. Disclaimers</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -373,7 +373,7 @@ export default function TermsPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Not Legal Advice
             </h3>{" "}
-            <div className="bg-tint p-4 mt-4">
+            <div className="bg-tint p-4 mt-4 border-2 border-black shadow-hard-sm">
               <p className="text-soft leading-relaxed font-medium">
                 <strong>IMPORTANT:</strong> PERM Tracker is a case management tool
                 only. The Service doesn’t provide legal advice, and nothing in
@@ -389,7 +389,7 @@ export default function TermsPage() {
             </div>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="limitation-of-liability" className="font-heading text-2xl font-bold m-0">8. Limitation of Liability</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -414,7 +414,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="aipowered-features" className="font-heading text-2xl font-bold m-0">9. AI-Powered Features</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -450,7 +450,7 @@ export default function TermsPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               No Legal Advice; Professional Responsibility
             </h3>{" "}
-            <div className="bg-tint p-4 mt-4">
+            <div className="bg-tint p-4 mt-4 border-2 border-black shadow-hard-sm">
               <p className="text-soft leading-relaxed font-medium">
                 <strong>IMPORTANT:</strong> The AI chat assistant doesn’t provide
                 legal advice and doesn’t create an attorney-client relationship.
@@ -596,7 +596,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="indemnification" className="font-heading text-2xl font-bold m-0">10. Indemnification</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -614,7 +614,7 @@ export default function TermsPage() {
             </ul>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="service-modifications-pricing" className="font-heading text-2xl font-bold m-0">11. Service Modifications & Pricing</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -636,7 +636,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="termination" className="font-heading text-2xl font-bold m-0">12. Termination</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -657,7 +657,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="governing-law-dispute-resolution" className="font-heading text-2xl font-bold m-0">13. Governing Law &amp; Dispute Resolution</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -696,7 +696,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="changes-to-terms" className="font-heading text-2xl font-bold m-0">14. Changes to Terms</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -716,7 +716,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="severability" className="font-heading text-2xl font-bold m-0">15. Severability</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -729,7 +729,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="entire-agreement-assignment" className="font-heading text-2xl font-bold m-0">16. Entire Agreement &amp; Assignment</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -749,7 +749,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border" id="attorney-privilege">
+          <details className="legal-section group border-b-2 border-border" id="attorney-privilege">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="attorneyclient-privilege-data-storage" className="font-heading text-2xl font-bold m-0">17. Attorney-Client Privilege & Data Storage</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -799,7 +799,7 @@ export default function TermsPage() {
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Your Professional Obligations
             </h3>{" "}
-            <div className="bg-tint p-4 mt-4">
+            <div className="bg-tint p-4 mt-4 border-2 border-black shadow-hard-sm">
               <p className="text-soft leading-relaxed font-medium">
                 <strong>FOR ATTORNEYS:</strong> You’re solely responsible for
                 determining whether use of cloud-based case management software
@@ -840,7 +840,7 @@ export default function TermsPage() {
             </p>
           </details>{" "}
 
-          <details className="legal-section group border-b border-border">
+          <details className="legal-section group border-b-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
               <h2 id="contact-us" className="font-heading text-2xl font-bold m-0">18. Contact Us</h2>{" "}
               <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />

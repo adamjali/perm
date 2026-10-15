@@ -83,7 +83,7 @@ export function StatusRibbon({
         <span
           key={s.key}
           data-tip={ribbonTip(parts, s.key, name)}
-          className={`${s.cls} h-full ${i > 0 ? "border-l border-border" : ""}`}
+          className={`${s.cls} h-full ${i > 0 ? "border-l-2 border-border" : ""}`}
           style={{ width: `${(100 * s.value) / total}%`, minWidth: "4px" }}
         />
       ))}

@@ -76,7 +76,7 @@ export function EmployerWait({
         Filing to decision, over decisions we watched DOL make; withdrawals left out.
       </p>{" "}
       {today ? (
-        <p className="mt-4 max-w-2xl border-t border-border pt-4 text-base leading-relaxed text-soft">
+        <p className="mt-4 max-w-2xl border-t-2 border-border pt-4 text-base leading-relaxed text-soft">
           <b className="font-bold text-foreground">Filed today:</b> a new case joins the same line as anyone&apos;s
           {today.casesAhead !== null ? <>, behind {formatInt(today.casesAhead)} cases</> : null}, and would be decided around{" "}
           <b className="font-bold text-foreground">{day(today.estimatedDate)}</b>

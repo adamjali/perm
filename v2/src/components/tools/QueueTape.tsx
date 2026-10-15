@@ -100,7 +100,7 @@ export function QueueTape({
     <figure className={cn("m-0", className)}>
       <ChartTips label="DOL's PERM queue by filing month" scroll={cn("-mx-1 px-1", flagsCollide ? "pt-14" : "pt-7")}>
         <div
-          className="relative grid min-w-[560px] border-2 border-[var(--object-border)] bg-card"
+          className="relative grid min-w-[560px] border-2 border-[var(--object-border)] bg-card shadow-hard-sm"
           style={{ gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))` }}
         >
           {aheadLabel && frontierAt >= 0 && youAt - frontierAt > 2 ? (
@@ -161,7 +161,7 @@ export function QueueTape({
                 {isFrontier ? (
                   <span
                     className={cn(
-                      "absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap bg-foreground px-1.5 py-0.5 text-sm font-bold text-background",
+                      "dark absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap px-1.5 py-0.5 text-sm font-bold border-2 border-black bg-[#141414] text-foreground",
                       reveal && "qt-flag",
                     )}
                     style={{ "--i": frontierAt } as CSSProperties}

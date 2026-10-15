@@ -92,7 +92,7 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
                     whole reason to draw a band rather than a dot.
                   */}
                   <div
-                    className="absolute top-1/2 h-4 -translate-y-1/2 border border-input"
+                    className="absolute top-1/2 h-4 -translate-y-1/2 border-input border"
                     style={{
                       left: pct(band.p10),
                       width: pct(Math.max(1, band.p90 - band.p10)),
@@ -239,7 +239,7 @@ export function StageLadderTable({ stages }: { stages: ReviewStage[] }) {
     <ScrollBox label="Cases at each review stage">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-sm">
+          <tr className="border-b-2 border-border text-left text-sm">
             {/*
               THE SPACE GOES INSIDE THE CELL, NOT BETWEEN CELLS. A
               whitespace-only text node is not legal as a child of <tbody> or

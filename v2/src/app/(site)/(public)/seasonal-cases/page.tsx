@@ -119,7 +119,7 @@ export default async function SeasonalCasesPage() {
                 const share = summary.total > 0 ? Math.round((n / summary.total) * 100) : 0;
                 if (!f) return null;
                 return (
-                  <li key={p} className="bg-tint p-4">
+                  <li key={p} className="bg-tint p-4 border-2 shadow-hard border-border">
                     <p className="font-mono text-sm font-bold">
                       {p}- <span className="text-muted-foreground">· {f.form}</span>
                     </p>{" "}
@@ -141,15 +141,15 @@ export default async function SeasonalCasesPage() {
             </ChartTips>
           ) : (
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
-              <div className="bg-tint p-4">
+              <div className="bg-tint p-4 border-2 shadow-hard border-border">
                 <dt className="text-sm font-bold text-muted-foreground">Confirmed in DOL&apos;s case status</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.total)}</dd>
               </div>{" "}
-              <div className="bg-tint p-4">
+              <div className="bg-tint p-4 border-2 shadow-hard border-border">
                 <dt className="text-sm font-bold text-muted-foreground">Still in process</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.pending)}</dd>
               </div>{" "}
-              <div className="bg-tint p-4">
+              <div className="bg-tint p-4 border-2 shadow-hard border-border">
                 <dt className="text-sm font-bold text-muted-foreground">Decided</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.decided)}</dd>
               </div>
@@ -188,7 +188,7 @@ export default async function SeasonalCasesPage() {
             Where these figures come from{" "}
             <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
           </summary>
-          <div className="border-t border-border p-4">
+          <div className="border-t-2 border-border p-4">
             <p className="text-base leading-relaxed text-soft">
               Every status comes from DOL&apos;s case system, pending ones included. The wage, the workers and the
               worksite come from DOL&apos;s quarterly H-2A, H-2B and CW-1 files once a case is decided, and, for an
@@ -239,7 +239,7 @@ export default async function SeasonalCasesPage() {
                   { key: "withdrawn", n: v.withdrawn, word: "withdrawn", cls: "bg-data-none" },
                 ];
                 return (
-                  <li key={v.visa} className="bg-tint p-4">
+                  <li key={v.visa} className="bg-tint p-4 border-2 border-border">
                     <p className="font-heading text-lg font-bold">{v.visa}</p>{" "}
                     <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{pct(v.certified, v.total)}%</p>{" "}
                     <p className="text-sm text-muted-foreground">certified, of {formatInt(v.total)} decided</p>{" "}

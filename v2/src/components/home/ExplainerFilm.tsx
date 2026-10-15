@@ -36,7 +36,7 @@ export function ExplainerFilm({ film, className = "" }: { film: Film; className?
   return (
     <figure className={`m-0 ${className}`}>
       <JsonLdScript schema={videoSchema(film)} />
-      <div className="border border-border bg-black">
+      <div className="border-border bg-black border">
         <FilmPlayer src={film.src} poster={film.poster} title={film.title} duration={film.duration} />
       </div>{" "}
       <figcaption className="mt-2 text-sm text-soft">
@@ -44,7 +44,7 @@ export function ExplainerFilm({ film, className = "" }: { film: Film; className?
           <summary className="inline-flex min-h-[44px] cursor-pointer items-center font-bold text-foreground underline decoration-2 underline-offset-4">
             Read the transcript
           </summary>{" "}
-          <div className="mt-2 space-y-2 border-l border-border pl-4 text-base leading-relaxed text-soft">
+          <div className="mt-2 space-y-2 border-l-3 border-border pl-4 text-base leading-relaxed text-soft">
             {film.transcript.map((line) => (
               <p key={line}>{line}</p>
             ))}

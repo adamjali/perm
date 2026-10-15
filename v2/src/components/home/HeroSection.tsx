@@ -79,7 +79,7 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
             {wait ? (
               <>
                 A PERM case takes{" "}
-                <span className="whitespace-nowrap bg-primary px-2 text-black [box-decoration-break:clone]">
+                <span className="whitespace-nowrap bg-primary px-2 text-primary-foreground [box-decoration-break:clone] shadow-hard">
                   {wait} months
                 </span>
               </>

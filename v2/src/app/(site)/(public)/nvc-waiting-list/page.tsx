@@ -73,7 +73,7 @@ function CategoryTable({ rows, caption }: { rows: CategorySeries[]; caption: str
     <ChartTips label={caption} className="mt-4" scroll="border-t-2 border-[var(--object-border)] bg-card">
       <table className="w-full min-w-[640px] text-left text-base">
         <caption className="sr-only">{caption}</caption>
-        <thead className="border-b border-border bg-muted/40">
+        <thead className="border-b-2 border-border bg-muted/40">
           <tr>
             <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>
             <th scope="col" className="px-4 py-3 font-bold">Each November, oldest to newest{" "}</th>
@@ -119,7 +119,7 @@ export default async function NvcWaitingListPage() {
         </p>
       </header>
 
-      <div className="mt-8 border-l-2 border-primary bg-card p-5">
+      <div className="mt-8 border-l-4 border-primary bg-card p-5 shadow-hard">
         <p className="text-base leading-relaxed">
           <b className="font-bold">Consular cases only, families included.</b> Everyone adjusting status inside the US
           is left out, so for employment categories it understates demand (&ldquo;significantly&rdquo;, in
@@ -155,7 +155,7 @@ export default async function NvcWaitingListPage() {
               ].map((t) => (
                 <Fragment key={t.label}>
                   {" "}
-                  <div className="bg-tint p-5">
+                  <div className="bg-tint p-5 border-2 shadow-hard border-border">
                     <dt className="text-base text-soft">{t.label}</dt>{" "}
                     <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{t.now.toLocaleString("en-US")}</dd>{" "}
                     <dd className="font-mono text-sm text-muted-foreground">
@@ -209,7 +209,7 @@ export default async function NvcWaitingListPage() {
             <CategoryTable rows={family} caption="Family-sponsored applicants at the National Visa Center, each November" />
           </section>
 
-          <details className="group mt-12 bg-tint p-6 sm:p-8">
+          <details className="group mt-12 bg-tint p-6 sm:p-8 border-2 border-border">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
               How it&apos;s read, and what it can&apos;t tell you
             </summary>

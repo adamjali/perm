@@ -34,7 +34,7 @@ export function LiveOnlyEmployerResults({
 }) {
   if (hits.length === 0) return null;
   return (
-    <section className="mt-6">
+    <section className="mt-6 border-2 shadow-hard-sm p-5 sm:p-6 bg-card border-border">
       <h3 className="font-heading text-lg font-bold sm:text-xl">
         {more ? "The first " : ""}
         {formatInt(hits.length)} more {hits.length === 1 ? "sponsor" : "sponsors"},
@@ -75,7 +75,7 @@ export function LiveOnlyEmployerResults({
           the last list item's case count welds to "Name search here" for
           anything walking the DOM, and the source-level gate cannot see it
           because `ul` is not in its tag list. */}
-      <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
+      <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-muted-foreground">
         Name search here matches from the START of the name, so a word from the
         middle finds nothing. If you have the case number,{" "}
         <Link

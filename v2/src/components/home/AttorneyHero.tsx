@@ -28,9 +28,9 @@ function Reminder({ className }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
-      className={`items-start gap-3 border border-border bg-card p-3 text-foreground ${className ?? ""}`}
+      className={`items-start gap-3 border-2 border-black bg-card p-3 text-foreground shadow-hard ${className ?? ""}`}
     >
-      <span className="grid size-10 shrink-0 place-items-center border border-border bg-primary text-primary-foreground">
+      <span className="grid size-10 shrink-0 place-items-center border-border bg-primary text-primary-foreground border">
         <BellSimpleRingingIcon weight="bold" className="size-5" />
       </span>{" "}
       <span className="min-w-0">
@@ -44,8 +44,10 @@ function Reminder({ className }: { className?: string }) {
 
 export function AttorneyHero() {
   return (
+    // An ink band (round 2, Oct 15 2026: "alternating sections of dark and
+    // light"), its light colour handed to the window frame through --band-ink.
     <section
-      className="relative overflow-hidden border-b border-border"
+      className="relative overflow-hidden border-b-2 border-black bg-[#141414] text-white [--band-ink:#ffffff] dark:bg-card dark:text-foreground dark:[--band-ink:var(--foreground)]"
     >
       <div className="mx-auto max-w-[1400px] px-4 pt-8 pb-14 sm:px-8 sm:pt-12 lg:pb-20">
         <div className="grid gap-6 [&>*]:min-w-0 lg:grid-cols-12 lg:items-end lg:gap-12">
@@ -53,7 +55,7 @@ export function AttorneyHero() {
             Every PERM deadline, worked out from the dates you enter
           </h1>{" "}
           <div className="lg:col-span-5 lg:pb-2">
-            <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            <p className="max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl dark:text-soft">
               Free case management for immigration attorneys and their teams. Enter a case&apos;s dates once; the
               deadlines, reminders and calendar follow.
             </p>{" "}
@@ -67,7 +69,7 @@ export function AttorneyHero() {
               </Link>{" "}
               <Link
                 href="/perm-case-status"
-                className={buttonVariants({ variant: "outline", size: "lg" })}
+                className={buttonVariants({ variant: "outline", size: "lg", className: "border-white bg-transparent text-white hover:bg-white/10 dark:border-foreground dark:text-foreground" })}
               >
                 <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
                 Check a case first

@@ -80,7 +80,7 @@ const fullDay = (iso: string) => shortDate(iso) ?? iso;
 const EMPTY: TimelineInput = { route: "adjustment", public: false };
 
 const selectCls =
-  "mt-1.5 block h-11 w-full min-w-0 border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "mt-1.5 block h-11 w-full min-w-0 border-2 border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function CaseMilestones({ caseNumber, className }: { caseNumber: string; className?: string }) {
   const uid = useId();
@@ -227,11 +227,11 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
       ) : null}
 
       <details
-        className="group mt-4"
+        className="group mt-4 border-t-2 border-border"
         open={open}
         onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
       >
-        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-lg font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
           <CaretRightIcon className="size-4 shrink-0 transition-transform group-open:rotate-90" weight="bold" aria-hidden="true" />{" "}
           {mine ? "Your timeline for this case" : "Add your dates"}
         </summary>
@@ -322,7 +322,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             ))}
           </fieldset>{" "}
 
-          <details className="border-t border-border pt-2" open={Boolean(form.rfeForm)}>
+          <details className="border-border p-2 border-2" open={Boolean(form.rfeForm)}>
             <summary className="inline-flex min-h-11 cursor-pointer list-none items-center text-base font-semibold [&::-webkit-details-marker]:hidden">
               Got a request for evidence (RFE)?
             </summary>
@@ -371,7 +371,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             </div>
           </details>{" "}
 
-          <div className="border-t border-border pt-4">
+          <div className="border-border p-4 border-2 bg-background">
             <label className="flex min-h-11 items-start gap-3 text-base">
               <input
                 type="checkbox"

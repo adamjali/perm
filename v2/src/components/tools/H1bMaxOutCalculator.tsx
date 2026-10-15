@@ -81,7 +81,7 @@ export function H1bMaxOutCalculator() {
             value={outside}
             onChange={(e) => setOutside(e.target.value)}
             placeholder="0"
-            className="mt-1.5 min-h-11 w-full min-w-0 border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="mt-1.5 min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           />{" "}
           <p className="mt-1 text-sm text-muted-foreground">Time abroad during H-1B status can be recaptured.</p>
         </div>{" "}
@@ -113,7 +113,7 @@ export function H1bMaxOutCalculator() {
       />{" "}
 
       {result?.kind === "error" ? (
-        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm border-2 border-border">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.error}
         </p>
       ) : null}{" "}
@@ -123,15 +123,15 @@ export function H1bMaxOutCalculator() {
           {result.warnings.length > 0 ? (
             <ul className="mb-4 space-y-2">
               {result.warnings.map((w) => (
-                <li key={w} className="flex items-start gap-2 bg-tint p-3 text-sm">
+                <li key={w} className="flex items-start gap-2 bg-tint p-3 text-sm border-2 border-border">
                   <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {w}
                 </li>
               ))}
             </ul>
           ) : null}{" "}
           {result.r.perm ? (
-            <dl className="mb-2 border-y border-border">
-              <div className="grid grid-cols-1 gap-y-1 border-b border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+            <dl className="mb-2 border-y-2 border-border">
+              <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">
                   A PERM filed {long(result.r.perm.filed)} is {formatInt(result.r.perm.daysBeforeMaxOut)} days before the limit
                 </dt>{" "}

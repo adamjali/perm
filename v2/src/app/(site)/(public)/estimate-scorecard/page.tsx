@@ -147,7 +147,7 @@ export default async function EstimateScorecardPage() {
       </header>
 
       {shortAnswer.length > 0 ? (
-        <section aria-labelledby="short-h" className="mt-8 max-w-3xl border-l-2 border-primary pl-5">
+        <section aria-labelledby="short-h" className="mt-8 max-w-3xl border-l-4 border-primary pl-5">
           <h2 id="short-h" className="font-heading text-2xl font-bold">The short answer</h2>{" "}
           <ul className="mt-3 list-disc space-y-2 pl-5 text-lg leading-relaxed">
             {shortAnswer.slice(0, LEAD_READINGS).map((line) => (
@@ -171,7 +171,7 @@ export default async function EstimateScorecardPage() {
       ) : null}
 
       {backtest && cur && cur.typicalMissDays !== null ? (
-        <section aria-labelledby="backtest-h" className="mt-8">
+        <section aria-labelledby="backtest-h" className="mt-8 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
           <h2 id="backtest-h" className="text-base font-bold text-muted-foreground">
             Typical miss on real decisions
           </h2>{" "}
@@ -209,7 +209,7 @@ export default async function EstimateScorecardPage() {
         </section>
       ) : null}
 
-      <section aria-labelledby="sample-h" className="mt-8">
+      <section aria-labelledby="sample-h" className="mt-8 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 id="sample-h" className="font-heading text-2xl font-bold sm:text-3xl">A fresh sample, every morning</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Each day a few random pending cases from every filing month get the estimate the case page would show them,
@@ -239,7 +239,7 @@ export default async function EstimateScorecardPage() {
                 <table className="w-full min-w-[40rem] border-collapse text-left text-base">
                   <caption className="mb-2 text-left text-sm font-bold text-muted-foreground">Newest graded</caption>
                   <thead>
-                    <tr className="border-b border-border">
+                    <tr className="border-b-2 border-border">
                       <th scope="col" className="py-2 pr-3 font-bold">{"Case "}</th>
                       <th scope="col" className="py-2 pr-3 font-bold">{"Recorded "}</th>
                       <th scope="col" className="py-2 pr-3 font-bold">{"Predicted "}</th>
@@ -288,7 +288,7 @@ export default async function EstimateScorecardPage() {
           <ScrollBox label="The other estimates" className="mt-4">
             <table className="w-full min-w-[44rem] border-collapse text-left text-base">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b-2 border-border">
                   <th scope="col" className="py-2 pr-3 font-bold">Estimate{" "}</th>
                   <th scope="col" className="py-2 pr-3 text-right font-bold">Written down{" "}</th>
                   <th scope="col" className="py-2 pr-3 text-right font-bold">Graded{" "}</th>
@@ -359,7 +359,7 @@ export default async function EstimateScorecardPage() {
         <div className="overflow-x-auto">
         <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b-2 border-border">
                 <th scope="col" className="py-2 pr-3 font-bold">Recorded{" "}</th>
                 <th scope="col" className="py-2 pr-3 font-bold">Case{" "}</th>
                 <th scope="col" className="py-2 pr-3 font-bold">Filed{" "}</th>

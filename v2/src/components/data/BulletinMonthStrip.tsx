@@ -53,10 +53,10 @@ function YearRow({ year, held, newest, earliest }: { year: string; held: Set<str
                     href={`/visa-bulletin/${ym}`}
                     aria-current={current ? "page" : undefined}
                     className={
-                      "flex min-h-11 items-center justify-center border border-input font-mono text-sm font-semibold transition-colors " +
+                      "flex min-h-11 items-center justify-center border-input font-mono text-sm font-semibold transition-colors border" +
                       (current
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary")
+                        ? "bg-primary text-primary-foreground shadow-hard-sm"
+                        : "bg-card hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-safe:active:translate-y-px transition-[color,background-color,border-color,box-shadow,transform]")
                     }
                   >
                     {m}
@@ -67,7 +67,7 @@ function YearRow({ year, held, newest, earliest }: { year: string; held: Set<str
                 ) : (
                   <span
                     title={`${label(ym)}: not held`}
-                    className="flex min-h-11 items-center justify-center border border-dashed border-foreground/20 font-mono text-sm text-muted-foreground"
+                    className="flex min-h-11 items-center justify-center border-dashed border-foreground/20 font-mono text-sm text-muted-foreground border"
                   >
                     <span aria-hidden="true">{m}</span>{" "}
                     <span className="sr-only">{`${label(ym)}, not held`}</span>
@@ -112,7 +112,7 @@ export function BulletinMonthStrip({ months, newest }: BulletinMonthStripProps) 
           <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
             {`Earlier years, ${folded.at(-1)} to ${folded[0]} (${foldedCount} bulletins)`}
           </summary>
-          <ol className="flex flex-col gap-3 border-t border-border p-4">{rows(folded)}</ol>
+          <ol className="flex flex-col gap-3 border-t-2 border-border p-4">{rows(folded)}</ol>
         </details>
       ) : null}
     </nav>

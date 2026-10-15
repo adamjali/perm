@@ -75,13 +75,13 @@ export function SeasonalTimingPanel({
         <div className="relative h-8">
           <div className="absolute inset-x-0 top-3 h-2 bg-muted" />{" "}
           <div
-            className="absolute top-2 h-4 bg-primary-text"
+            className="absolute top-2 h-4 bg-primary"
             style={{ left: at(view, view.from), width: `calc(${at(view, view.to)} - ${at(view, view.from)})` }}
           />{" "}
           <div className="absolute top-0 h-8 w-1 -translate-x-1/2 bg-foreground" style={{ left: at(view, view.typical) }} />{" "}
           {view.ruleDay ? (
             <div
-              className="absolute top-0 h-8 w-0 -translate-x-1/2 border-l border-dashed border-foreground"
+              className="absolute top-0 h-8 w-0 -translate-x-1/2 border-l-2 border-dashed border-foreground"
               style={{ left: at(view, view.ruleDay) }}
             />
           ) : null}
@@ -92,7 +92,7 @@ export function SeasonalTimingPanel({
         </div>{" "}
         <div className="relative h-6 text-sm">
           <span
-            className="absolute -translate-x-1/2 whitespace-nowrap border border-input bg-card px-1 font-semibold"
+            className="absolute -translate-x-1/2 whitespace-nowrap border-2 border-input bg-card px-1 font-semibold"
             style={{ left: `clamp(3.5rem, ${(view.todayAt * 100).toFixed(2)}%, calc(100% - 3.5rem))` }}
           >
             {/* Dated, because off either end of the bar the label is held at the edge. */}
@@ -102,14 +102,14 @@ export function SeasonalTimingPanel({
       </div>{" "}
       <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-soft">
         <li>
-          <span className="mr-1 inline-block h-3 w-5 bg-primary-text align-middle" /> Middle half
+          <span className="mr-1 inline-block h-3 w-5 bg-primary align-middle" /> Middle half
         </li>{" "}
         <li>
           <span className="mr-1 inline-block h-3 w-1 bg-foreground align-middle" /> Most often
         </li>{" "}
         {view.ruleDay ? (
           <li>
-            <span className="mr-1 inline-block h-3 w-0 border-l border-dashed border-foreground align-middle" /> 30 days
+            <span className="mr-1 inline-block h-3 w-0 border-l-2 border-dashed border-foreground align-middle" /> 30 days
             before the work, the rule&apos;s deadline
           </li>
         ) : null}{" "}

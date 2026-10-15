@@ -121,7 +121,7 @@ export default async function I140CalculatorPage() {
           one place, each with the rule it rests on. Checked against eCFR on
           2026-09-26: 8 CFR 214.2(h)(13)(iii)(E), 204.5(e), 205.1(a)(3)(iii)(C);
           the fee is 91 FR 1059 (in force March 1, 2026). */}
-      <section aria-labelledby="premium-h" className="mt-12 bg-tint p-6 sm:p-8">
+      <section aria-labelledby="premium-h" className="mt-12 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
         <h2 id="premium-h" className="font-heading text-2xl font-bold">
           When premium processing is worth $2,965
         </h2>{" "}
@@ -131,7 +131,7 @@ export default async function I140CalculatorPage() {
           pay for itself in three situations:
         </p>{" "}
         <ol className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3 [&>*]:min-w-0">
-          <li className="bg-tint p-5">
+          <li className="bg-tint p-5 border-2 border-border">
             <p className="font-heading text-lg font-bold">The H-1B six years are running out</p>{" "}
             <p className="mt-2 text-base leading-relaxed text-soft">
               An approved I-140 is what lets H-1B status continue past six years, in steps of up to three years, when no
@@ -141,7 +141,7 @@ export default async function I140CalculatorPage() {
               </Link>
             </p>
           </li>{" "}
-          <li className="bg-tint p-5">
+          <li className="bg-tint p-5 border-2 border-border">
             <p className="font-heading text-lg font-bold">The worker might change jobs</p>{" "}
             <p className="mt-2 text-base leading-relaxed text-soft">
               After 180 days of approval, the employer withdrawing the I-140 doesn&apos;t undo it (8 CFR
@@ -152,7 +152,7 @@ export default async function I140CalculatorPage() {
               </Link>
             </p>
           </li>{" "}
-          <li className="bg-tint p-5">
+          <li className="bg-tint p-5 border-2 border-border">
             <p className="font-heading text-lg font-bold">The priority date is about to be current</p>{" "}
             <p className="mt-2 text-base leading-relaxed text-soft">
               If the bulletin reaches the date before a regular I-140 would be decided, premium can be the difference
@@ -174,7 +174,7 @@ export default async function I140CalculatorPage() {
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12 bg-tint p-6 sm:p-8">
+      <section className="mt-12 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
         <h2 className="font-heading text-2xl font-bold">
           The I-140 comes after the part you control
         </h2>{" "}

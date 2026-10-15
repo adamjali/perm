@@ -91,7 +91,7 @@ export function PriorityDateRetentionCalculator() {
       />{" "}
 
       {result?.kind === "error" ? (
-        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm border-2 border-border">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.error}
         </p>
       ) : null}{" "}
@@ -99,19 +99,19 @@ export function PriorityDateRetentionCalculator() {
       {result?.kind === "ok" ? (
         <div className="mt-4">
           {result.warnings.map((w) => (
-            <p key={w} className="mb-3 flex items-start gap-2 bg-tint p-3 text-sm">
+            <p key={w} className="mb-3 flex items-start gap-2 bg-tint p-3 text-sm border-2 border-border">
               <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {w}
             </p>
           ))}{" "}
-          <dl className="border-t border-border">
+          <dl className="border-t-2 border-border">
             {result.r.portableFrom ? (
-              <div className="grid grid-cols-1 gap-y-1 border-b border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+              <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">The job can change to a same-or-similar one under 204(j) from ({RETENTION_DAYS} days after the I-485 was filed)</dt>{" "}
                 <dd className="font-heading text-xl font-bold tabular-nums">{long(result.r.portableFrom)}</dd>
               </div>
             ) : null}{" "}
             {result.r.withdrawal ? (
-              <div className="grid grid-cols-1 gap-y-1 border-b border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+              <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">
                   A withdrawal on {long(result.r.withdrawal.on)}, {formatInt(result.r.withdrawal.daysAfterApproval)} days after approval
                 </dt>{" "}
@@ -120,7 +120,7 @@ export function PriorityDateRetentionCalculator() {
                 </dd>
               </div>
             ) : null}{" "}
-            <div className="grid grid-cols-1 gap-y-1 border-b border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
               <dt className="text-base">The priority date, for a future EB-1, EB-2 or EB-3 petition</dt>{" "}
               <dd className="font-heading text-xl font-bold">Retained</dd>
             </div>

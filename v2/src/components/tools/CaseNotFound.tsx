@@ -327,7 +327,7 @@ export function CaseStatusEmpty({
           </li>
         </ul>
         {mirrorSize ? (
-          <p className="mt-5 text-sm text-muted-foreground">
+          <p className="mt-5 text-sm text-muted-foreground border-t-2 border-border">
             Searched against {formatInt(mirrorSize)} per-case statuses, read from DOL&apos;s own case-status search,
             plus DOL&apos;s published decisions for FY2024 to FY2026. Nothing is stored and nothing is sent anywhere
             else.

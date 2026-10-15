@@ -28,8 +28,8 @@ export function typeLabel(type: string): string {
 
 /** The dot beside a document's type: a final rule is the one that binds. */
 function badgeDot(type: string): string {
-  if (type === "Rule") return "bg-data-good-ink";
-  if (type === "Proposed Rule") return "bg-data-warn-ink";
+  if (type === "Rule") return "bg-primary text-black";
+  if (type === "Proposed Rule") return "dark border-black bg-[#141414] text-foreground";
   return "bg-muted-foreground";
 }
 
@@ -60,7 +60,7 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
   const isOflc = doc.type === OFLC_TYPE;
 
   return (
-    <details id={`doc-${doc.documentNumber}`} className="group border-b border-border last:border-b-0">
+    <details id={`doc-${doc.documentNumber}`} className="group border-b-2 border-border last:border-b-0">
       <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -84,7 +84,7 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
           aria-hidden="true"
         />
       </summary>{" "}
-      <div className="border-t border-border/40 px-5 pb-5 pt-4 text-base leading-relaxed text-soft sm:px-6">
+      <div className="border-t-2 border-border/40 px-5 pb-5 pt-4 text-base leading-relaxed text-soft sm:px-6">
         {abstract ? <p>{abstract}</p> : null}{" "}
         {doc.dates ? (
           <p className="mt-3">
@@ -131,7 +131,7 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
           ))}
         </p>{" "}
         {shot ? (
-          <figure className="mt-5 max-w-xl bg-tint p-2">
+          <figure className="mt-5 max-w-xl bg-tint p-2 border-2 shadow-hard-sm border-border">
             <Image
               src={`/images/policy/${doc.documentNumber}.webp`}
               width={shot.w}

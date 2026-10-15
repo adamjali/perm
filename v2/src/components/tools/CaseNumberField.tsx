@@ -71,7 +71,7 @@ export function CaseNumberField({ onDecode, warning, className }: CaseNumberFiel
         spellCheck={false}
         aria-invalid={showError || undefined}
         aria-describedby={helpId}
-        className="mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 font-mono text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-sm"
+        className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-input bg-background px-3 py-2 font-mono text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-sm"
       />
       <div id={helpId}>
         {showError ? (

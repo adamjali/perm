@@ -39,7 +39,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
   const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(fullUrl)}`;
 
   const buttonClass =
-    "flex size-11 items-center justify-center border border-input bg-card transition-colors hover:bg-accent";
+    "flex size-11 items-center justify-center border-input bg-card transition-[color,background-color,border-color,box-shadow,transform] hover:bg-accent motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 border";
 
   return (
     <div className="flex items-center gap-3">

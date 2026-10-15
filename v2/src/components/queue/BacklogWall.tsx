@@ -105,7 +105,7 @@ export function BacklogWall({
             {passedPending === 1 ? "is" : "are"} still open
           </summary>
           <ChartTips label="Earlier filing months, cases still pending by stage">
-          <ol className="space-y-1 border-t border-border px-4 py-3">
+          <ol className="space-y-1 border-t-2 border-border px-4 py-3">
             {passed.map((m) => (
               <Fragment key={m.month}>
                 {" "}
@@ -164,7 +164,7 @@ export function BacklogWall({
 function Header() {
   return (
     <div
-      className="grid grid-cols-[5rem_1fr_3.5rem_3rem] items-end gap-2 border-b border-border pb-2 [&>*]:min-w-0 sm:grid-cols-[7rem_1fr_5rem_4rem] sm:gap-3"
+      className="grid grid-cols-[5rem_1fr_3.5rem_3rem] items-end gap-2 border-b-2 border-border pb-2 [&>*]:min-w-0 sm:grid-cols-[7rem_1fr_5rem_4rem] sm:gap-3"
       aria-hidden="true"
     >
       <span className="text-sm font-bold text-soft">
@@ -266,10 +266,10 @@ function FrontierRule({ month, asOf }: { month: string; asOf: string | null }) {
   const label = formatMonth(month) ?? month;
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-1 pt-4">
-      <span className="min-w-0 max-w-full border border-primary bg-primary px-2 py-1 text-sm font-bold text-primary-foreground">
+      <span className="min-w-0 max-w-full border-2 border-primary bg-primary px-2 py-1 text-sm font-bold text-primary-foreground">
         DOL is working {label}
       </span>{" "}
-      <span className="h-0 min-w-8 flex-1 border-t-2 border-primary" aria-hidden="true" />{" "}
+      <span className="h-0 min-w-8 flex-1 border-t-4 border-primary" aria-hidden="true" />{" "}
       {asOf ? (
         <span className="ml-auto whitespace-nowrap font-mono text-sm text-muted-foreground">
           as of {asOf}

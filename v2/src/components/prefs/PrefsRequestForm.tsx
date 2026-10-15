@@ -65,7 +65,7 @@ export function PrefsRequestForm() {
   return (
     <form
       onSubmit={submit}
-      className="bg-tint p-5"
+      className="bg-tint p-5 border-3 shadow-hard border-border"
     >
       <label htmlFor="prefs-email" className="font-heading text-lg font-bold">
         Get your preferences link
@@ -80,7 +80,7 @@ export function PrefsRequestForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
           autoComplete="email"
-          className="min-h-[48px] w-full min-w-0 flex-1 border border-input bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-h-[48px] w-full min-w-0 flex-1 border-3 border-input bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />{" "}
         <button
           type="submit"

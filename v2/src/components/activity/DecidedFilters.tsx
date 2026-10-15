@@ -13,7 +13,7 @@ import type { DecidedCase } from "@/lib/db/decidedDays";
 import { buttonVariants } from "@/components/ui/button";
 
 const CONTROL =
-  "mt-1 w-full min-w-0 min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "mt-1 w-full min-w-0 min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL =
   "block text-sm font-bold text-muted-foreground";
 
@@ -54,7 +54,7 @@ export function DecidedFilters({
     .map((x) => x.f.label.toLowerCase());
 
   return (
-    <div className="mt-4 bg-tint p-4">
+    <div className="mt-4 bg-tint p-4 border-2 border-border">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         {shown.map(({ f, opts }) => (
           <Fragment key={f.key}>

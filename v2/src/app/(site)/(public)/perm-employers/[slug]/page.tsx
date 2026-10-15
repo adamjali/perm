@@ -844,7 +844,7 @@ export default async function EmployerPage({
             with publication; until then the case number carries the reader
             to its own live status. */}
         {recentLive.length > 0 ? (
-          <section className="mt-10" aria-labelledby="latest-live">
+          <section className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border" aria-labelledby="latest-live">
             <h3 id="latest-live" className="font-heading text-xl font-bold">
               Its newest filings
             </h3>{" "}

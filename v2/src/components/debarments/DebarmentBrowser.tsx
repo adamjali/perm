@@ -33,7 +33,7 @@ export interface DebarmentQuery {
 /** "2026-09-11" to "Sep 11, 2026"; anything else prints as given. */
 const day = (iso: string) => shortDate(iso) ?? iso;
 const CONTROL =
-  "mt-1 block w-full min-w-0 min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "mt-1 block w-full min-w-0 min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";
 
 /**
@@ -101,7 +101,7 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
 
   return (
     <>
-      <div className="mt-8 grid grid-cols-1 gap-3 bg-tint p-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+      <div className="mt-8 grid grid-cols-1 gap-3 bg-tint p-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0 border-2 border-border">
         <label className="block lg:col-span-2" htmlFor={`${id}-q`}>
           <span className={LABEL}>Search the lists</span>{" "}
           <input
@@ -194,7 +194,7 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
                 </a>
               </p>{" "}
               {list.length > 0 ? (
-                <ul className="mt-3 divide-y divide-border border-y border-border">
+                <ul className="mt-3 divide-y divide-border border-y-2 border-border">
                   {list.map((d) => (
                     <Fragment key={`${d.program}-${d.entity}-${d.startDate}`}>
                       {" "}

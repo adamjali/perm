@@ -113,7 +113,7 @@ export function EadExtensionCalculator() {
             id={categoryId}
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="mt-1.5 min-h-[44px] w-full min-w-0 border border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+            className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {EAD_CATEGORIES.map((c) => (
               <option key={c.code} value={c.code}>
@@ -134,7 +134,7 @@ export function EadExtensionCalculator() {
         <input type="checkbox" checked={same} onChange={(e) => setSame(e.target.checked)} className="size-5" />
         The renewal is in the same category as the card
       </label>{" "}
-      <div className="mt-5 border-t border-border pt-4" aria-live="polite">
+      <div className="mt-5 border-t-2 border-border pt-4" aria-live="polite">
         {result ? (
           <>
             <p className={`font-heading text-2xl font-bold ${result.ok ? "" : "text-data-warn-ink"}`}>{result.head}</p>{" "}

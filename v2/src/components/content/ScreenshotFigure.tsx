@@ -43,10 +43,10 @@ export default function ScreenshotFigure({
   return (
     <figure className="not-prose my-8" style={{ maxWidth }}>
       <Lightbox src={src} alt={alt} caption={caption}>
-        <div className="relative border border-border overflow-hidden">
+        <div className="relative border-border overflow-hidden border">
           {/* Step badge */}
           {step !== undefined && (
-            <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b border-r border-border bg-card font-mono text-sm font-bold">
+            <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b-2 border-r-2 border-border bg-primary font-mono text-sm font-bold text-black">
               {step}
             </div>
           )}

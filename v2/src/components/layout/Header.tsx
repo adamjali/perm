@@ -78,7 +78,7 @@ function UserMenu({ userName }: UserMenuProps) {
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger
-        className="group flex min-h-11 cursor-pointer items-center gap-2 px-3 text-base text-soft transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="group flex min-h-11 cursor-pointer items-center gap-2 px-3 text-base transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border-2 border-border"
       >
         <span className="max-w-[100px] truncate">{userName}</span>
         <CaretDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
@@ -86,14 +86,14 @@ function UserMenu({ userName }: UserMenuProps) {
 
       <DropdownMenuContent
         align="end"
-        className="min-w-[180px] border border-border bg-popover p-0 text-popover-foreground shadow-overlay"
+        className="min-w-[180px] border-3 border-border bg-popover p-0 text-popover-foreground shadow-hard"
       >
         <DropdownMenuItem
           onSelect={handleSettingsClick}
           disabled={isNavigatingToSettings || isOnSettingsPage}
           className={cn(
             "flex min-h-11 cursor-pointer items-center gap-3 px-4 text-sm",
-            "border-b border-border",
+            "border-b-2 border-border",
             isOnSettingsPage
               ? "cursor-default bg-muted text-muted-foreground"
               : "hover:bg-muted"
@@ -173,13 +173,13 @@ export default function Header(): React.ReactElement {
     : AUTHENTICATED_NAV_LINKS;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background">
+    <header className="sticky top-0 z-50 border-b-3 border-border bg-black">
       <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-2 px-4 sm:px-8">
         {/* The same mark as the public header. The {" "} keeps the two words
             apart for anything that reads the page's text. */}
         <Link
           href="/dashboard"
-          className="flex h-11 shrink-0 items-center gap-2 whitespace-nowrap font-heading text-xl font-bold text-foreground"
+          className="flex h-11 shrink-0 items-center gap-2 whitespace-nowrap font-heading text-xl font-bold text-foreground hover:bg-primary"
         >
           <FileTextIcon aria-hidden="true" className="size-6 text-primary-text" />
           <span>
@@ -225,7 +225,7 @@ export default function Header(): React.ReactElement {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="flex h-11 items-center gap-2 px-2 text-base font-semibold text-foreground hover:bg-accent lg:hidden"
+            className="flex h-11 items-center gap-2 px-2 text-base font-semibold hover:bg-accent lg:hidden border-2 border-border"
             aria-expanded={isMobileMenuOpen}
             aria-controls="app-mobile-menu"
           >
@@ -259,7 +259,7 @@ export default function Header(): React.ReactElement {
                 <p className="text-sm text-muted-foreground">{displayName}</p>
                 <NavLink
                   href="/settings"
-                  className="flex min-h-12 items-center gap-3 text-lg text-soft"
+                  className="flex min-h-12 items-center gap-3 text-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Settings className="size-5" aria-hidden="true" />
@@ -268,7 +268,7 @@ export default function Header(): React.ReactElement {
                 <button
                   onClick={handleMobileSignOut}
                   disabled={isSigningOut}
-                  className="flex min-h-12 w-full items-center gap-3 text-left text-lg text-soft disabled:text-muted-foreground"
+                  className="flex min-h-12 w-full items-center gap-3 text-left text-lg disabled:text-muted-foreground"
                 >
                   {isSigningOut ? (
                     <CircleNotchIcon className="size-5 animate-spin" aria-hidden="true" />

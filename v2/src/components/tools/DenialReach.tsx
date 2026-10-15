@@ -106,7 +106,7 @@ export function DenialReach({
               <div className="flex items-center gap-3">
                 <div className="h-4 min-w-0 flex-1">
                   <div
-                    className="h-full border border-input bg-background"
+                    className="h-full border-input bg-background border"
                     style={{ width: `${(c.reach / max) * 100}%` }}
                     role="img"
                     aria-label={`${pct(c.reach)} of all decided cases`}
@@ -119,7 +119,7 @@ export function DenialReach({
               <div className="flex items-center gap-3">
                 <div className="h-4 min-w-0 flex-1">
                   <div
-                    className="h-full border border-input bg-data-good-ink"
+                    className="h-full border-input bg-data-good-ink border"
                     style={{ width: `${(c.share / max) * 100}%` }}
                     role="img"
                     aria-label={`${pct(c.share)} of all denials`}
@@ -150,7 +150,7 @@ export function DenialReach({
     <ScrollBox label={caption}>
       <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">
         <caption className="sr-only">{caption}</caption>
-        <thead className="border-b border-input bg-muted">
+        <thead className="dark border-b border-black bg-[#141414] text-foreground">
           <tr>
             <th scope="col" className="p-3 text-sm font-bold">
               {unitLabel}

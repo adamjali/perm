@@ -97,7 +97,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
   if (status === "done") {
     return (
       <div className="object p-5 sm:p-6">
-        <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
+        <p className="font-heading text-xl font-bold">{replyHeading(queued)}</p>{" "}
         <AlertDone message={message} queued={queued} className="mt-2" />{" "}
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Once confirmed, you&apos;ll hear from us when a new bulletin moves your cutoff, and not otherwise.

@@ -56,9 +56,9 @@ export default function ContactPage() {
         {/* The figure before the routes, because its point is the thing the
             headings below cannot say at a glance: these are three doors into
             one inbox, not three different teams. */}
-        <figure className="bg-tint p-6">
+        <figure className="bg-tint p-6 border-2 shadow-hard-sm border-border">
           <RoutingFigure className="h-auto w-full text-foreground" />{" "}
-          <figcaption className="mt-4 border-t border-border pt-3 text-sm font-bold text-muted-foreground">
+          <figcaption className="mt-4 border-t-2 border-border pt-3 text-sm font-bold text-muted-foreground">
             Three ways in, one inbox
           </figcaption>
         </figure>
@@ -67,7 +67,7 @@ export default function ContactPage() {
         <div className="mt-6 space-y-8">
           {/* Email */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-primary-text">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-primary-text border-black bg-primary">
               <Mail className="h-6 w-6" />
             </div>{" "}
             <div>
@@ -86,7 +86,7 @@ export default function ContactPage() {
 
           {/* Feature Requests */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center border border-input bg-secondary">
+            <div className="flex h-12 w-12 items-center justify-center border-black bg-secondary border">
               <ChatTextIcon className="h-6 w-6 text-secondary-foreground" />
             </div>{" "}
             <div>
@@ -108,7 +108,7 @@ export default function ContactPage() {
 
           {/* Bug Reports */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-primary-text">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center text-primary-text border-black bg-primary">
               <BugIcon className="h-6 w-6 text-accent-foreground" />
             </div>{" "}
             <div>
@@ -129,7 +129,7 @@ export default function ContactPage() {
         </div>
 
         {/* Response time */}
-        <div className="mt-12 bg-tint p-6">
+        <div className="mt-12 bg-tint p-6 border-2 border-black shadow-hard-sm">
           <h3 className="font-heading text-lg font-bold mb-2">Response time</h3>{" "}
           <p className="text-muted-foreground">
             We typically respond to inquiries within 24-48 hours during business

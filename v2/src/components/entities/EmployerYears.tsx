@@ -67,7 +67,7 @@ export function EmployerYears({
       ) : null}
 
       {cases.length > 0 ? (
-        <div className="mt-6">
+        <div className="mt-6 border-2 p-5 sm:p-6 bg-card border-border">
           <h3 className="font-heading text-lg font-bold">
             Decided in FY2016 to FY2023
           </h3>{" "}
@@ -111,7 +111,7 @@ function CaseTable({ cases, head = true }: { cases: HistoryCase[]; head?: boolea
         </colgroup>
         {head ? (
           <thead>
-            <tr className="border-b border-border">
+            <tr className="border-b-2 border-border">
               <th className="py-1.5 pr-4 font-bold">Case </th>
               <th className="py-1.5 pr-4 font-bold">Decided </th>
               <th className="py-1.5 pr-4 font-bold">Outcome </th>

@@ -39,7 +39,7 @@ const fmt = (n: number) => n.toLocaleString("en-US");
 
 function Code({ children }: { children: string }) {
   return (
-    <pre className="mt-3 whitespace-pre-wrap [overflow-wrap:anywhere] bg-tint px-4 py-3 font-mono text-sm leading-relaxed">
+    <pre className="mt-3 whitespace-pre-wrap [overflow-wrap:anywhere] bg-tint px-4 py-3 font-mono text-sm leading-relaxed border-2 border-border">
       <code>{children}</code>
     </pre>
   );
@@ -135,9 +135,9 @@ export default function DevelopersPage() {
 
       <ol className="mt-10 grid grid-cols-1 gap-6 [&>*]:min-w-0 lg:grid-cols-3">
         {steps.map((s, i) => (
-          <li key={s.title} className="bg-tint p-5">
+          <li key={s.title} className="bg-tint p-5 border-3 shadow-hard border-border">
             <p className="flex items-center gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center border border-input bg-card font-mono text-base font-bold">
+              <span className="flex size-9 shrink-0 items-center justify-center border-input bg-primary font-mono text-base font-bold border">
                 {i + 1}
               </span>{" "}
               <span className="font-heading text-xl font-bold">{s.title}</span>
@@ -152,7 +152,7 @@ export default function DevelopersPage() {
         <h2 id="limits" className="font-heading text-2xl font-bold">
           Plans
         </h2>{" "}
-        <p className="mt-2 max-w-2xl bg-tint px-4 py-3 text-base">
+        <p className="mt-2 max-w-2xl bg-tint px-4 py-3 text-base border-2 border-border">
           Paid features are free for now: every account gets the Plus plan&rsquo;s limits, exports, live DOL lookups and
           webhooks until billing opens. We&rsquo;ll say so here, and email key holders, before that changes.
         </p>{" "}
@@ -234,7 +234,7 @@ export default function DevelopersPage() {
             </tbody>
           </table>
         </ScrollBox>{" "}
-        <details className="mt-4 bg-tint px-4 py-3">
+        <details className="mt-4 bg-tint px-4 py-3 border-2 border-border">
           <summary className="cursor-pointer font-bold">The shape of every answer</summary>
           <Code>{`{
   "data": { ... },
@@ -249,7 +249,7 @@ export default function DevelopersPage() {
             allowed.
           </p>
         </details>{" "}
-        <details className="mt-3 bg-tint px-4 py-3">
+        <details className="mt-3 bg-tint px-4 py-3 border-2 border-border">
           <summary className="cursor-pointer font-bold">Errors</summary>
           <p className="mt-3 text-sm leading-relaxed text-soft">
             Every error is JSON with a code and a sentence saying what happened and what to do.
@@ -282,7 +282,7 @@ export default function DevelopersPage() {
           {GRANTABLE_SCOPES.map((sc) => (
             <Fragment key={sc}>
               {" "}
-              <li className="bg-tint px-4 py-3">
+              <li className="bg-tint px-4 py-3 border-2 border-border">
                 <p className="font-mono text-sm font-bold">{sc}</p>{" "}
                 <p className="mt-1 text-sm text-soft">{SCOPE_LABELS[sc]}</p>
               </li>
@@ -349,14 +349,14 @@ export default function DevelopersPage() {
           {WEBHOOK_EVENTS.map((ev) => (
             <Fragment key={ev}>
               {" "}
-              <li className="bg-tint px-4 py-3">
+              <li className="bg-tint px-4 py-3 border-2 border-border">
                 <p className="font-mono text-sm font-bold">{ev}</p>{" "}
                 <p className="mt-1 text-sm text-soft">{WEBHOOK_EVENT_LABELS[ev]}</p>
               </li>
             </Fragment>
           ))}
         </ul>{" "}
-        <details className="mt-4 bg-tint px-4 py-3">
+        <details className="mt-4 bg-tint px-4 py-3 border-2 border-border">
           <summary className="cursor-pointer font-bold">A delivery, and how to check its signature</summary>
           <Code>{WEBHOOK_EXAMPLE}</Code>{" "}
           <p className="mt-3 text-sm leading-relaxed text-soft">
@@ -384,7 +384,7 @@ export default function DevelopersPage() {
         </p>{" "}
         <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
           {MCP_TOOLS.map((t) => (
-            <li key={t.name} className="bg-tint px-4 py-3">
+            <li key={t.name} className="bg-tint px-4 py-3 border-2 border-border">
               <p className="font-mono text-sm font-bold">{t.name}</p>{" "}
               <p className="mt-1 text-sm leading-relaxed text-soft">{t.summary}</p>
             </li>
@@ -420,7 +420,7 @@ export default function DevelopersPage() {
         </div>
       </section>
 
-      <section className="mt-12">
+      <section className="mt-12 border-3 shadow-hard p-5 sm:p-6 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold">The rules</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Use it under the{" "}

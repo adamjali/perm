@@ -36,7 +36,7 @@ type Status = "idle" | "sending" | "done" | "error";
 type FieldErrors = Partial<Record<ProfileField | "email" | "role", string>>;
 
 const INPUT =
-  "mt-1.5 block min-h-[48px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-1.5 block min-h-[48px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const LABEL = "block text-sm font-bold";
 const HINT = "block text-sm font-normal text-muted-foreground";
 const BUTTON = buttonVariants({ variant: "outline", size: "lg" });
@@ -102,7 +102,7 @@ function ClaimForm({ slug }: { slug: string }) {
 
   if (status === "done") {
     return (
-      <p role="status" aria-live="polite" className="mt-4 bg-primary px-4 py-3 text-base font-bold text-primary-foreground">
+      <p role="status" aria-live="polite" className="mt-4 bg-primary px-4 py-3 text-base font-bold text-primary-foreground border-2 border-border">
         {message} Nothing shows on the page until you confirm and we&apos;ve read it.
       </p>
     );
@@ -265,7 +265,7 @@ function EditLinkForm({ slug }: { slug: string }) {
 function FirmBadge({ slug, firmName }: { slug: string; firmName: string }) {
   const snippet = firmBadgeSnippet(SITE_URL, slug, firmName);
   return (
-    <div className="mb-8 border-b border-border pb-6">
+    <div className="mb-8 border-b-2 border-border pb-6">
       <h3 className="font-heading text-base font-bold">A badge for your firm&apos;s site</h3>{" "}
       <p className="mt-1 max-w-3xl text-base leading-relaxed text-soft">
         It says &ldquo;Verified firm&rdquo; and links to this page. Paste the code where your site lists the firm&apos;s
@@ -274,7 +274,7 @@ function FirmBadge({ slug, firmName }: { slug: string; firmName: string }) {
       {/* eslint-disable-next-line @next/next/no-img-element -- the badge is the SVG a firm's site will load, shown as it will look */}
       <img src={`/badge/firm/${slug}.svg`} alt={`${firmName} on PERM Tracker`} height={20} className="mt-3 h-5 w-auto" />{" "}
       <div className="mt-3 flex flex-wrap items-start gap-3">
-        <code className="block min-w-0 flex-1 break-all bg-tint px-3 py-2 font-mono text-sm">
+        <code className="block min-w-0 flex-1 break-all bg-tint px-3 py-2 font-mono text-sm border-2 border-border">
           {snippet}
         </code>{" "}
         <CopyButton text={snippet} />
@@ -296,7 +296,7 @@ export function FirmClaimPanel({ slug, firmName, claimed }: { slug: string; firm
             +
           </span>
         </summary>
-        <div className="border-t border-border px-6 pb-6 pt-4">
+        <div className="border-t-2 border-border px-6 pb-6 pt-4">
           <p className="max-w-3xl text-base leading-relaxed text-soft">
             Add the firm&apos;s website, a short description, languages, offices and what it handles. Once we&apos;ve read
             it, it shows on this page apart from DOL&apos;s figures, marked as the firm&apos;s own words.
@@ -304,7 +304,7 @@ export function FirmClaimPanel({ slug, firmName, claimed }: { slug: string; firm
           </p>{" "}
           {claimed ? <FirmBadge slug={slug} firmName={firmName} /> : null}
           <ClaimForm slug={slug} />
-          <div className="mt-8 border-t border-border pt-5">
+          <div className="mt-8 border-t-2 border-border pt-5">
             <h3 className="font-heading text-base font-bold">Already claimed it?</h3>{" "}
             <EditLinkForm slug={slug} />
           </div>

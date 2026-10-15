@@ -373,7 +373,7 @@ export function FilterableStatTable<T>({
       {/* Controls */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex min-h-[44px] flex-1 items-center gap-2 border border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary sm:max-w-sm">
+          <label className="flex min-h-[44px] flex-1 items-center gap-2 border-2 border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary sm:max-w-sm shadow-hard-sm">
             <span className="text-sm font-bold text-muted-foreground">
               Search
             </span>{" "}
@@ -393,7 +393,7 @@ export function FilterableStatTable<T>({
 
           {facets.map((f) => (
             <Fragment key={f.key}>{" "}
-            <label className="flex min-h-[44px] items-center gap-2 border border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary">
+            <label className="flex min-h-[44px] items-center gap-2 border-2 border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary shadow-hard-sm">
               <span className="text-sm font-bold text-muted-foreground">
                 {f.label}
               </span>{" "}
@@ -503,7 +503,7 @@ export function FilterableStatTable<T>({
                   setPageSize(Number(e.target.value));
                   setPage(0);
                 }}
-                className="min-h-11 border border-input bg-card px-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="min-h-11 border-2 border-input bg-card px-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {PAGE_SIZES.map((n) => (
                   <option key={n} value={n}>{`${n === 0 ? "All" : n} `}</option>
@@ -518,7 +518,7 @@ export function FilterableStatTable<T>({
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[560px] border-t-2 border-[var(--object-border)] text-left text-sm">
           <caption className="sr-only">{caption}</caption>
-          <thead className="border-b border-input bg-muted">
+          <thead className="dark border-b border-black bg-[#141414] text-foreground">
             <tr>
               {columns.map((c) => {
                 const isSorted = c.key === sortKey;
@@ -537,9 +537,9 @@ export function FilterableStatTable<T>({
                         type="button"
                         onClick={() => toggleSort(c.key, c.numeric)}
                         className={
-                          "min-h-[44px] w-full px-3 py-2 text-sm font-semibold text-soft transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring " +
+                          "min-h-[44px] w-full px-3 py-2 text-sm font-semibold text-soft transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" +
                           (c.numeric ? "text-right" : "text-left") +
-                          (isSorted ? " text-foreground" : "")
+                          (isSorted ? "text-foreground" : "")
                         }
                       >
                         {c.label}
@@ -648,7 +648,7 @@ export function FilterableStatTable<T>({
           what={`The search across all ${noun}`}
           failure={remoteFailure}
           onRetry={() => setRemoteAttempt((n) => n + 1)}
-          className="mt-4 bg-tint p-4"
+          className="mt-4 bg-tint p-4 border-2 border-border"
         />
       ) : null}
       {remoteExtra}

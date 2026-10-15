@@ -191,7 +191,7 @@ export default async function OpenDataPage() {
         />
       </div>{" "}
 
-      <section className="mt-12">
+      <section className="mt-12 border-3 shadow-hard p-5 sm:p-6 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold">Credit</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Free to copy, change and publish, commercially too, under{" "}
@@ -200,12 +200,12 @@ export default async function OpenDataPage() {
           </a>
           . Credit us like this:
         </p>{" "}
-        <p className="mt-4 bg-tint px-4 py-3 tabular-nums text-sm break-words">
+        <p className="mt-4 bg-tint px-4 py-3 tabular-nums text-sm break-words border-2 border-border">
           Source: {OPEN_DATA_CREDIT}, from U.S. Department of State and Department of Labor records. {OPEN_DATA_LICENSE.short}.
         </p>{" "}
         <p className="mt-4 text-base text-soft">On a web page, with the link:</p>{" "}
         <div className="mt-2 flex flex-wrap items-start gap-3">
-          <code className="block min-w-0 flex-1 break-all bg-tint px-4 py-3 font-mono text-sm">
+          <code className="block min-w-0 flex-1 break-all bg-tint px-4 py-3 font-mono text-sm border-2 border-border">
             {openDataCreditHtml(SITE_URL)}
           </code>{" "}
           <CopyButton text={openDataCreditHtml(SITE_URL)} />
@@ -257,12 +257,12 @@ function DatasetPanel<T extends object>({
 }) {
   return (
     <section className="flex flex-col bg-tint">
-      <div className="border-b border-border p-5 sm:p-6">
+      <div className="border-b-3 border-border p-5 sm:p-6">
         <h2 className="font-heading text-2xl font-bold">{title}</h2>{" "}
         <p className="mt-2 text-base leading-relaxed text-soft">{summary}</p>{" "}
         <dl className="mt-5 grid grid-cols-3 gap-3">
           {stats.map(([label, value]) => (
-            <div key={label} className="min-w-0 bg-tint px-3 py-2">
+            <div key={label} className="min-w-0 bg-tint px-3 py-2 border-2 border-border">
               <dt className="text-sm font-semibold text-muted-foreground">{label}</dt>{" "}
               <dd className="mt-0.5 font-heading text-base font-bold break-words">{value}</dd>
             </div>
@@ -275,7 +275,7 @@ function DatasetPanel<T extends object>({
           <table className="w-full min-w-[26rem] border-collapse font-mono text-sm">
             <caption className="sr-only">{caption}</caption>
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b-2 border-border">
                 {columns.map((c) => (
                   <th key={c} scope="col" className="px-3 py-2 text-left font-bold">
                     {c}{" "}

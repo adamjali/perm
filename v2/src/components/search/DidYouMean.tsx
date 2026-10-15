@@ -86,7 +86,7 @@ export function DidYouMean({
 }) {
   if (suggestions.length === 0) return null;
   const chip =
-    "inline-flex min-h-[44px] flex-wrap items-baseline gap-x-2 gap-y-0.5 border border-border bg-card px-3 py-2 text-left font-bold transition-colors hover:bg-tint";
+    "inline-flex min-h-[44px] flex-wrap items-baseline gap-x-2 gap-y-0.5 border-2 border-border bg-card px-3 py-2 text-left font-bold transition-colors hover:bg-tint";
   return (
     <div className={cn("text-base", className)} role="status">
       <p className="font-bold">{label}:</p>{" "}

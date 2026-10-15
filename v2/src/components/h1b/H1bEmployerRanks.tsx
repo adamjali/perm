@@ -45,7 +45,7 @@ import { choiceVariants } from "@/components/ui/choice";
  */
 
 const FIELD =
-  "min-h-[44px] w-full border border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
+  "min-h-[44px] w-full border-2 border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
 const money = (n: number) => `$${formatInt(Math.round(n))}`;
 const rankOf = (r: H1bRankRow, by: H1bBasis) => (by === "lca" ? r.rankLca : r.rankUscis);
 const pct = (part: number, whole: number) => (whole > 0 ? `${Math.round((part / whole) * 100)}%` : "");
@@ -140,7 +140,7 @@ function Row({ r, rank, max, cols, by }: { r: H1bRankRow; rank: number; max: num
         ) : (
           <span className="text-base font-bold [overflow-wrap:anywhere] lg:text-lg">{r.name}</span>
         )}{" "}
-        <span className="mt-2 block h-3.5 border border-input bg-background" aria-hidden="true">
+        <span className="mt-2 block h-3.5 border-input bg-background border" aria-hidden="true">
           <span className="block h-full bg-foreground" style={{ width: `${width}%` }} />
         </span>{" "}
         <Marks r={r} />
@@ -179,7 +179,7 @@ function Headline({ view, rows }: { view: H1bView; rows: H1bRankRow[] }) {
     { key: "rest", n: c.rest, count: c.restCount, label: `${formatInt(c.restCount)} other employers`, swatch: "bg-data-none" },
   ].filter((b) => b.n > 0);
   return (
-    <section aria-label="The year in three figures" className="mt-8 bg-tint p-5 sm:p-6">
+    <section aria-label="The year in three figures" className="mt-8 bg-tint p-5 sm:p-6 border-2 border-border">
       <dl className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 [&>*]:min-w-0">
         <div className="col-span-2 sm:col-span-1">
           <dt className="sr-only">{what}</dt>{" "}
@@ -199,11 +199,11 @@ function Headline({ view, rows }: { view: H1bView; rows: H1bRankRow[] }) {
           </div>
         ) : null}
       </dl>{" "}
-      <div className="mt-6 flex h-7 border border-input" aria-hidden="true">
+      <div className="mt-6 flex h-7 border-input border" aria-hidden="true">
         {bands.map((b, i) => (
           <span
             key={b.key}
-            className={`${b.swatch} ${i < bands.length - 1 ? "border-r border-border" : ""}`}
+            className={`${b.swatch} ${i < bands.length - 1 ? "border-r-2 border-border" : ""}`}
             style={{ width: `${seg(b.n)}%` }}
           />
         ))}
@@ -270,7 +270,7 @@ export function H1bEmployerRanks({
 
   return (
     <div>
-      <div className="bg-tint p-4 sm:p-5">
+      <div className="bg-tint p-4 sm:p-5 border-2 shadow-hard border-border">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end [&>*]:min-w-0">
           <label className="block text-sm font-bold">
             Fiscal year
@@ -331,13 +331,13 @@ export function H1bEmployerRanks({
       </div>
 
       {q.failed ? (
-        <RequestFailed what="This ranking" failure={q.failure} onRetry={q.retry} className="mt-6 bg-tint p-4" />
+        <RequestFailed what="This ranking" failure={q.failure} onRetry={q.retry} className="mt-6 bg-tint p-4 border-2 border-border" />
       ) : null}
 
       <div className={loading ? "opacity-60 transition-opacity motion-reduce:transition-none" : ""} aria-busy={loading}>
         {view ? <Headline view={view} rows={rows} /> : null}{" "}
         {view && rows.length === 0 ? (
-          <p className="mt-8 bg-tint p-5 text-base">
+          <p className="mt-8 bg-tint p-5 text-base border-2 border-border">
             {by === "lca"
               ? `DOL's files hold no certified H-1B LCAs for ${placeName(state)} in FY${year.fy}.`
               : `USCIS's counts hold no H-1B approvals for ${placeName(state)} in FY${year.fy}.`}
@@ -363,12 +363,12 @@ export function H1bEmployerRanks({
               ))}
             </ol>{" "}
             {folded.length > 0 ? (
-              <details className="group border-t border-border">
+              <details className="group border-t-2 border-border">
                 <summary className="flex min-h-[48px] cursor-pointer list-none items-center gap-2 py-3 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
-                  <span className="inline-flex min-h-[44px] items-center border border-input bg-card px-4 group-open:hidden">
+                  <span className="inline-flex min-h-[44px] items-center border-2 border-input bg-card px-4 group-open:hidden shadow-hard-sm">
                     Show ranks {LIST_SHOWN + 1} to {rows.length}
                   </span>{" "}
-                  <span className="hidden min-h-[44px] items-center border border-input bg-card px-4 group-open:inline-flex">
+                  <span className="hidden min-h-[44px] items-center border-2 border-input bg-card px-4 group-open:inline-flex">
                     Hide ranks {LIST_SHOWN + 1} to {rows.length}
                   </span>
                 </summary>{" "}

@@ -62,7 +62,7 @@ function Shell({
   className?: string;
 }) {
   return (
-    <section className={cn("bg-tint p-5 sm:p-6", className)}>
+    <section className={cn("bg-tint p-5 sm:p-6 border-2 border-border", className)}>
       {/* The spaces are load-bearing, not formatting. Without them the title
           welds to the first row and the last row welds to the note - "What the
           jobs are||Software Developers", "15-2051.01111||These are the 6
@@ -136,7 +136,7 @@ export function OccupationMix({
       </p>
 
       {rest.length > 0 ? (
-        <ul className="mt-5 space-y-2 border-t border-border pt-4">
+        <ul className="mt-5 space-y-2 border-t-2 border-border pt-4">
           {rest.map((r) => (
             <Fragment key={r.key ?? r.label}>{" "}
               <li
@@ -210,7 +210,7 @@ export function StateMix({
         {rows.map((r) => (
           <Fragment key={r.key ?? r.label}>{" "}
             <li
-              className="bg-tint px-3 py-1.5"
+              className="bg-tint px-3 py-1.5 border-2 border-border"
             >
               <span className="block text-sm font-bold">
                 {r.key ? stateName(r.key) : r.label}
@@ -407,7 +407,7 @@ export function IndustryMix({
         NAICS {lead.codes.join(", ")} &middot; {formatInt(lead.n)} filings
       </p>
       {rest.length > 0 ? (
-        <ul className="mt-4 space-y-2 border-t border-border pt-3">
+        <ul className="mt-4 space-y-2 border-t-2 border-border pt-3">
           {rest.map((r) => (
             <Fragment key={r.label}>
               {" "}

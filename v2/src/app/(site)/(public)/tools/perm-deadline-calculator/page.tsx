@@ -93,7 +93,7 @@ export default function PermDeadlineCalculatorPage() {
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12 bg-tint p-6 sm:p-8">
+      <section className="mt-12 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
         <h2 className="font-heading text-2xl font-bold">
           Working these out once is the easy part
         </h2>{" "}

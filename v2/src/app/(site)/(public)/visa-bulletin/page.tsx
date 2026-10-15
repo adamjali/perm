@@ -246,7 +246,7 @@ export default async function VisaBulletinPage() {
       </p>
 
       {isFiscalStart ? (
-        <div className="mt-8 bg-tint p-5">
+        <div className="mt-8 bg-tint p-5 border-2 shadow-hard border-border">
           <p className="font-heading text-base font-bold">October is the fiscal-year start</p>{" "}
           <p className="mt-2 text-base leading-relaxed text-soft">
             October 1 opens a new year of employment numbers, plus family numbers unused last year, so October
@@ -284,7 +284,7 @@ export default async function VisaBulletinPage() {
           <ScrollBox label="The spillover by category" className="mt-4 max-w-3xl">
             <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b-2 border-border">
                   <th scope="col" className="py-2 pr-3 font-bold">Category, fiscal year {spill.fiscalYear}{" "}</th>
                   <th scope="col" className="py-2 pr-3 text-right font-bold">Worldwide{" "}</th>
                   <th scope="col" className="py-2 text-right font-bold">Any one country{" "}</th>
@@ -292,7 +292,7 @@ export default async function VisaBulletinPage() {
               </thead>
               <tbody>
                 {spill.rows.map((r) => (
-                  <tr key={r.label} className={r.label.startsWith("All") ? "border-t border-border font-bold" : "border-b border-border/40"}>
+                  <tr key={r.label} className={r.label.startsWith("All") ? "border-t-2 border-border font-bold" : "border-b border-border/40"}>
                     <td className="py-2 pr-3">{r.label}{" "}</td>
                     <td className="py-2 pr-3 text-right tabular-nums">{formatInt(r.worldwide)}{" "}</td>
                     <td className="py-2 text-right tabular-nums">{r.foreignState === null ? "" : formatInt(r.foreignState)}{" "}</td>
@@ -334,18 +334,18 @@ export default async function VisaBulletinPage() {
           </p>{" "}
           <ul aria-hidden="true" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border border-input bg-primary" /> Moved forward
+              <span className="size-3 border-input bg-primary border" /> Moved forward
             </li>{" "}
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border border-input bg-data-bad" /> Moved back or shut
+              <span className="size-3 border-input bg-data-bad border" /> Moved back or shut
             </li>{" "}
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border border-input bg-card" /> Unchanged or current
+              <span className="size-3 border-input bg-card border" /> Unchanged or current
             </li>
           </ul>
           <ScrollBox label={`What the ${monthLabel(last.bulletinMonth)} bulletin did`} className="mt-3 overscroll-x-none">
             <table className="w-full min-w-[640px] border-t-2 border-[var(--object-border)] text-sm">
-              <thead className="border-b border-input bg-muted">
+              <thead className="dark border-b border-black bg-[#141414] text-foreground">
                 <tr>
                   <th className="p-3 text-left text-sm">Category{" "}</th>
                   {BOARD_COUNTRIES.map((c) => (
@@ -355,7 +355,7 @@ export default async function VisaBulletinPage() {
               </thead>
               <tbody>
                 {latestMoves.map((s) => (
-                  <tr key={s.key} className="border-t border-border">
+                  <tr key={s.key} className="border-t-2 border-border">
                     <td className="p-3 font-semibold">{s.label}{" "}</td>
                     {s.rows.map((r) => (
                       <td key={r.country} className={`p-3 ${moveTone(r.move)}`}>
@@ -382,9 +382,9 @@ export default async function VisaBulletinPage() {
 
       {/* One fold per category: ten tables open ran the page past 10,000px,
           and a reader comes for one category. The rows stay in the HTML. */}
-      <div className="mt-6 border border-border bg-card">
+      <div className="mt-6 border-border bg-card border">
       {sections.map((s) => (
-        <details key={s.key} className="group border-b border-border last:border-b-0">
+        <details key={s.key} className="group border-b-2 border-border last:border-b-0">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
             <h3 className="font-heading text-lg font-bold tracking-tight">{s.label}</h3>{" "}
             <span className="flex items-center gap-3">
@@ -394,7 +394,7 @@ export default async function VisaBulletinPage() {
           </summary>{" "}
           <ScrollBox label={`${s.label} in earlier bulletins`} className="overscroll-x-none border-t border-border/40 p-3 sm:p-4">
             <table className="w-full min-w-[720px] border-t-2 border-[var(--object-border)] text-sm">
-              <thead className="border-b border-input bg-muted">
+              <thead className="dark border-b border-black bg-[#141414] text-foreground">
                 <tr>
                   <th className="p-3 text-left text-sm">Country{" "}</th>
                   <th className="p-3 text-left text-sm">Cutoff, {monthLabel(last.bulletinMonth)}{" "}</th>
@@ -407,7 +407,7 @@ export default async function VisaBulletinPage() {
                 {s.rows.map((r) => {
                   const sum = summariseMoves(r.moves);
                   return (
-                    <tr key={r.country} className="border-t border-border align-top">
+                    <tr key={r.country} className="border-t-2 border-border align-top">
                       <td className="p-3 font-semibold">{COUNTRY_LABEL[r.country]}{" "}</td>
                       <td className="p-3 font-mono">{cutoffLabel(r.cell?.latest ?? null)}{" "}</td>
                       <td className="p-3">

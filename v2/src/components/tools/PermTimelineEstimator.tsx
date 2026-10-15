@@ -533,7 +533,7 @@ export function PermTimelineEstimator({
 
   return (
     <div className={cn("object", className)}>
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
@@ -617,11 +617,11 @@ export function PermTimelineEstimator({
           the empty band says what it will hold instead of reading as a page
           that failed to load. Nothing in it is a figure. */}
       {!hasDate ? (
-        <div className="border-b border-border p-6 sm:p-8">
+        <div className="border-b-2 border-border p-6 sm:p-8">
           <p className="text-sm font-bold text-muted-foreground">Most likely</p>{" "}
           <div aria-hidden="true" className="mt-2 h-11 w-80 max-w-full bg-foreground/10 sm:h-14" />{" "}
           <div aria-hidden="true" className="mt-3 h-6 w-[26rem] max-w-full bg-foreground/[0.07]" />{" "}
-          <div className="relative mt-6 flex h-12 items-center justify-center border border-dashed border-foreground/40 text-muted-foreground bg-hatch">
+          <div className="relative mt-6 flex h-12 items-center justify-center border-dashed border-foreground/40 text-muted-foreground bg-hatch border">
             <span className="bg-background px-2 text-center text-sm font-bold text-muted-foreground">
               Pick a date above and this fills in
             </span>
@@ -632,7 +632,7 @@ export function PermTimelineEstimator({
         </div>
       ) : null}
       {hasDate && (shown || estimate.position === "overdue") ? (
-        <div className="border-b border-border p-6 sm:p-8">
+        <div className="border-b-2 border-border p-6 sm:p-8">
           {shown ? (
             /* The anchor leads and the window follows. A range-only headline
                read as "we don't know" next to rivals printing one confident
@@ -748,7 +748,7 @@ export function PermTimelineEstimator({
           {progress ? (
             <div className="mt-6">
               <div
-                className="relative h-4 w-full border border-input bg-muted"
+                className="relative h-4 w-full border-input bg-muted border"
                 role="img"
                 aria-label={`${progress.elapsedMonths} of about ${progress.totalMonths} months elapsed since filing`}
               >
@@ -780,7 +780,7 @@ export function PermTimelineEstimator({
               empty cell that reads as a card that failed to load. */}
           <div className="mt-6 flex flex-wrap gap-3">
             {pace ? (
-              <div className="min-w-0 flex-1 basis-60 bg-tint p-4">
+              <div className="min-w-0 flex-1 basis-60 bg-tint p-4 border-2 border-border">
                 <p className="text-sm font-semibold text-muted-foreground">
                   DOL pace
                 </p>{" "}
@@ -793,7 +793,7 @@ export function PermTimelineEstimator({
               </div>
             ) : null}
             {frontier ? (
-              <div className="min-w-0 flex-1 basis-60 bg-tint p-4">
+              <div className="min-w-0 flex-1 basis-60 bg-tint p-4 border-2 border-border">
                 <p className="text-sm font-semibold text-muted-foreground">
                   Queue is at
                 </p>{" "}
@@ -806,7 +806,7 @@ export function PermTimelineEstimator({
               </div>
             ) : null}
             {estimate.monthsBehindFrontier !== null ? (
-              <div className="min-w-0 flex-1 basis-60 bg-tint p-4">
+              <div className="min-w-0 flex-1 basis-60 bg-tint p-4 border-2 border-border">
                 <p className="text-sm font-semibold text-muted-foreground">
                   Your month
                 </p>{" "}
@@ -832,7 +832,7 @@ export function PermTimelineEstimator({
       {/* Where this case sits relative to DOL's published frontier. Skipped
           when the overdue hero above has already said exactly this. */}
       {hasDate && frontier && position && !(estimate.position === "overdue" && !envelope) ? (
-        <div className={cn("border-b border-border p-6 sm:p-8", position.tone)}>
+        <div className={cn("border-b-2 border-border p-6 sm:p-8", position.tone)}>
           <p className="text-sm font-bold text-muted-foreground">
             Queue position
           </p>{" "}
@@ -853,7 +853,7 @@ export function PermTimelineEstimator({
       {/* The queue itself, drawn. This is the only band on the page built on
           pending counts, which is why it carries its own attribution. */}
       {hasDate && months.length > 0 ? (
-        <div className="border-b border-border p-6 sm:p-8">
+        <div className="border-b-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-xl font-bold leading-tight sm:text-2xl">
             How far DOL has got through each month
           </h3>{" "}
@@ -875,7 +875,7 @@ export function PermTimelineEstimator({
             )}
           </p>
 
-          <div className="mt-6 bg-tint p-4 sm:max-w-sm">
+          <div className="mt-6 bg-tint p-4 sm:max-w-sm border-2 border-border">
             <p className="text-sm font-semibold text-muted-foreground">
               Cases ahead of you
             </p>{" "}
@@ -916,7 +916,7 @@ export function PermTimelineEstimator({
           {/* Provenance where the data is, not in a footnote: these are the
               only figures here that DOL does not publish itself. */}
           {queueSource ? (
-            <p className="mt-6 border-t border-border pt-3 text-sm text-muted-foreground">
+            <p className="mt-6 border-t-2 border-border pt-3 text-sm text-muted-foreground">
               <span className="font-bold text-soft">Pending counts:</span>{" "}
               {queueSource}. DOL&apos;s own disclosure files carry a decision
               date on every record and no pending rows at all, so a count of
@@ -931,7 +931,7 @@ export function PermTimelineEstimator({
           the reader to pick. The headline above is
           the answer; this is how it was reached, for anyone who wants it. */}
       {hasDate && estimate.models.length > 0 && !passed ? (
-        <details className="group border-t border-border">
+        <details className="group border-t-2 border-border">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-6 sm:p-8">
             <span className="font-heading text-base font-bold">
               How this was worked out
@@ -944,7 +944,7 @@ export function PermTimelineEstimator({
               </span>
             </span>
           </summary>
-          <div className="divide-y divide-border border-t border-border">
+          <div className="divide-y divide-border border-t-2 border-border">
           {estimate.models.map((model, i) => (
             <div key={model.id} className="p-6 sm:p-8">
               <p className="text-sm font-bold text-muted-foreground">
@@ -990,7 +990,7 @@ export function PermTimelineEstimator({
       {/* The models above give dates. This gives the reasoning behind them, and
           it is the one series on the page that DOL does not publish. */}
       {hasDate && frontierHistory.length >= 2 ? (
-        <div className="border-t border-border p-6 sm:p-8">
+        <div className="border-t-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-lg font-bold">How fast the queue is moving</h3>
           <FrontierProgressChart
             history={frontierHistory}
@@ -1002,7 +1002,7 @@ export function PermTimelineEstimator({
 
       {/* Caveats. Not boilerplate: each one is generated for this case. */}
       {hasDate && notes.length > 0 ? (
-        <div className="border-t border-border bg-muted p-6 sm:p-8">
+        <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
           <div className="flex items-start gap-3">
             <WarningIcon
               className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
@@ -1023,7 +1023,7 @@ export function PermTimelineEstimator({
       ) : null}
 
       {!compact && disclosure ? (
-        <div className="border-t border-border p-6 text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere] sm:px-8">
+        <div className="border-t-2 border-border p-6 text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere] sm:px-8">
           <InfoIcon className="mr-2 inline h-4 w-4 align-text-bottom" aria-hidden="true" />
           Cohort figures are computed from{" "}
           {disclosure.uniqueCases.toLocaleString("en-US")} decided cases in DOL&apos;s

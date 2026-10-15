@@ -235,7 +235,7 @@ export function GroupView({
         ].map(([k, v]) => (
           <Fragment key={k}>
             {" "}
-            <div className="bg-tint p-4">
+            <div className="bg-tint p-4 border-2 border-border">
               <dt className="text-sm font-bold text-muted-foreground">{k}</dt>{" "}
               <dd className="mt-1 font-heading text-2xl font-bold tabular-nums">{v}</dd>
             </div>

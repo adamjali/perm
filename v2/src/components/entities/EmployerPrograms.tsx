@@ -54,11 +54,11 @@ export function EmployerPrograms({
         {perm ? "The wage request, the PERM and the H-1B labor condition application" : "Each program it files"}
         {perm && seasonal ? ", and its seasonal H-2A, H-2B and CW-1 work" : ""}, one line each.
       </p>{" "}
-      <dl className="mt-4 max-w-3xl border-t border-border">
+      <dl className="mt-4 max-w-3xl border-t-2 border-border">
         {lines.map((l) => (
           <div
             key={l.program}
-            className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[minmax(0,1fr)_7rem_7rem_8rem] sm:items-baseline sm:gap-x-4"
+            className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_7rem_7rem_8rem] sm:items-baseline sm:gap-x-4"
           >
             <dt className="text-base font-bold">{PROGRAM_LABEL[l.program]}</dt>{" "}
             <dd className="tabular-nums sm:text-right">

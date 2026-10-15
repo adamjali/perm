@@ -208,7 +208,7 @@ export default async function AboutPage() {
       {/* The definition beside the person who runs it. */}
       <section className="grid grid-cols-1 items-center gap-12 [&>*]:min-w-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
         <div>
-          <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">About PERM Tracker</h1>{" "}
+          <h1 className="font-heading text-5xl font-bold leading-tight sm:text-6xl">About PERM Tracker</h1>{" "}
           <p className="mt-6 max-w-xl text-xl leading-relaxed">{ABOUT_ONE_LINER}</p>{" "}
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
             It&apos;s free on both sides: for the person waiting on a case, and for the attorney who filed it.
@@ -223,14 +223,14 @@ export default async function AboutPage() {
           </div>
         </div>{" "}
         <figure className="relative mx-auto w-full max-w-sm lg:mr-0">
-          <div className="relative bg-tint p-3">
+          <div className="relative bg-tint p-3 border-2 border-border">
             <Image
               src={SABRINA.image}
               alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
               width={SABRINA.imageSize[0]}
               height={SABRINA.imageSize[1]}
               sizes="(min-width: 1024px) 24rem, 90vw"
-              className="aspect-[4/5] w-full border border-border object-cover object-top"
+              className="aspect-[4/5] w-full border-border object-cover object-top border"
               priority
             />{" "}
             <figcaption className="px-1 pb-1 pt-3">
@@ -312,7 +312,7 @@ export default async function AboutPage() {
           <ol className="grid grid-cols-1 gap-3">
             {SOURCES.map((s) => (
               <Fragment key={s.agency}>
-                <li className="bg-tint p-4">
+                <li className="bg-tint p-4 border-2 shadow-hard-sm border-border">
                   <span className="block font-heading text-lg font-bold">{s.agency}</span>{" "}
                   <span className="mt-1 block text-sm leading-snug text-muted-foreground">{s.what}</span>
                 </li>{" "}
@@ -323,7 +323,7 @@ export default async function AboutPage() {
             <ArrowRightIcon className="hidden size-8 lg:block" weight="bold" />
             <ArrowDownIcon className="size-8 lg:hidden" weight="bold" />
           </span>{" "}
-          <div className="grid content-center border border-input bg-card p-5">
+          <div className="dark grid content-center border-2 p-5 shadow-hard border-black bg-[#141414] text-foreground">
             <span className="block font-heading text-xl font-bold text-primary-text">PERM Tracker</span>{" "}
             <span className="mt-2 block text-sm leading-relaxed text-muted-foreground">
               Checks DOL several times a day, loads each new file the day it lands, and asks DOL again whenever a
@@ -402,7 +402,7 @@ export default async function AboutPage() {
         <ul className="mt-10 grid grid-cols-1 gap-5 [&>*]:min-w-0 md:grid-cols-3">
           {NOT_THIS.map((n) => (
             <Fragment key={n.title}>
-              <li className="border-t border-border pt-5">
+              <li className="lift border-2 border-border bg-card p-5 shadow-hard-sm">
                 <n.Icon aria-hidden="true" className="size-7 text-muted-foreground" />{" "}
                 <span className="mt-4 block font-heading text-xl font-bold">{n.title}</span>{" "}
                 <span className="mt-2 block text-base leading-relaxed text-soft">{n.line}</span>
@@ -413,7 +413,7 @@ export default async function AboutPage() {
       </section>
 
       {/* One band for every way to reach it. */}
-      <section aria-labelledby="contact" className="mt-24 bg-tint p-6 sm:p-12">
+      <section aria-labelledby="contact" className="dark mt-24 p-6 sm:p-12 border-2 shadow-hard border-black bg-[#141414] text-foreground">
         <h2 id="contact" className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
           Write to us
         </h2>{" "}

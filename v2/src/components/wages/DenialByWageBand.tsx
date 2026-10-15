@@ -62,7 +62,7 @@ function Panel({
 }) {
   const worst = worstBand(bands);
   return (
-    <div className="bg-tint p-4">
+    <div className="bg-tint p-4 border-2 border-border">
       <p className="text-sm font-bold text-muted-foreground">
         {title}
       </p>{" "}
@@ -95,7 +95,7 @@ function Panel({
                 </span>
               </div>
               <div className="mt-1 flex items-center gap-2">
-                <div className="h-3 min-w-0 flex-1 border border-input bg-background">
+                <div className="h-3 min-w-0 flex-1 border-input bg-background border">
                   {b.deniedPct === null ? null : (
                     <div
                       // The worst band in each panel is outlined rather than
@@ -213,7 +213,7 @@ export function DenialByWageBand({
       </div>
 
       {/* The summary comes SECOND and says what it costs. */}
-      <div className="mt-8 bg-tint p-4">
+      <div className="mt-8 bg-tint p-4 border-2 border-border">
         <p className="text-sm font-bold text-muted-foreground">
           The same cases in five wide bands
         </p>{" "}

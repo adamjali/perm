@@ -162,18 +162,18 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
         <h2 id="now" className="sr-only">
           This month
         </h2>
-        <dl className="border-t border-border">
-          <div className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
+        <dl className="border-t-2 border-border">
+          <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
             <dt className="text-base text-soft">Final action, {bulletinMonthLabel(fa.latestMonth)}</dt>{" "}
             <dd className="font-heading text-2xl font-bold tabular-nums">{cutoffLabel(fa.latest)}</dd>
           </div>{" "}
-          <div className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
+          <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
             <dt className="text-base text-soft">
               Dates for filing{dff ? `, ${bulletinMonthLabel(dff.latestMonth)}` : ""}
             </dt>{" "}
             <dd className="font-heading text-2xl font-bold tabular-nums">{cutoffLabel(dff?.latest ?? null)}</dd>
           </div>{" "}
-          <div className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
+          <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
             <dt className="text-base text-soft">Since October 2014</dt>{" "}
             <dd className="text-base leading-relaxed">
               {paceSentence(fa)}{" "}
@@ -215,7 +215,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
         </p>{" "}
         <ScrollBox label="Cutoffs a fiscal year at a time" className="mt-4 border-t-2 border-[var(--object-border)]">
           <table className="w-full min-w-[560px] text-left text-base">
-            <thead className="border-b border-border bg-muted/40">
+            <thead className="border-b-2 border-border bg-muted/40">
               <tr>
                 <th scope="col" className="px-4 py-3 font-bold">Fiscal year{" "}</th>
                 <th scope="col" className="px-4 py-3 font-bold">First bulletin{" "}</th>
@@ -264,7 +264,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
           </h2>{" "}
           <dl className="mt-4 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-3">
             {counts.awaiting ? (
-              <div className="bg-tint p-4">
+              <div className="bg-tint p-4 border-2 shadow-hard border-border">
                 <dt className="text-base text-soft">Approved petitions waiting for a visa number</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                   {counts.awaiting.count.toLocaleString("en-US")}
@@ -275,14 +275,14 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             {counts.inventory ? (
               <Fragment>
                 {" "}
-                <div className="bg-tint p-4">
+                <div className="bg-tint p-4 border-2 shadow-hard border-border">
                   <dt className="text-base text-soft">I-485s pending, visa number available</dt>{" "}
                   <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                     {rangeLabel(counts.inventory.available)}
                   </dd>{" "}
                   <dd className="font-mono text-sm text-muted-foreground">inventory of {counts.inventory.asOf}</dd>
                 </div>{" "}
-                <div className="bg-tint p-4">
+                <div className="bg-tint p-4 border-2 shadow-hard border-border">
                   <dt className="text-base text-soft">I-485s pending, waiting for a visa number</dt>{" "}
                   <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                     {rangeLabel(counts.inventory.awaiting)}
@@ -309,7 +309,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
       ) : null}
 
       {issued ? (
-        <section className="mt-12" aria-labelledby="issued">
+        <section className="mt-12 border-2 shadow-hard p-6 sm:p-8 bg-card border-border" aria-labelledby="issued">
           <h2 id="issued" className="font-heading text-xl font-bold">
             What State issued abroad in this line
           </h2>{" "}

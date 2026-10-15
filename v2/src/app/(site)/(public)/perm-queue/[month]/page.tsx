@@ -192,7 +192,7 @@ export default async function CohortPage({
       {detail && dolDecisions(detail.days) >= 50 ? <MonthActivity detail={detail} label={label} month={month} /> : null}{" "}
 
       {!MIRROR_COMPLETE ? (
-        <p className="mt-8 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base text-soft">
+        <p className="mt-8 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base text-soft">
           <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>{PROVISIONAL_NOTICE}</span>
         </p>
@@ -204,7 +204,7 @@ export default async function CohortPage({
         </div>
       ) : null}
 
-      <section className="mt-8">
+      <section className="mt-8 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 className="font-heading text-xl font-bold">
           Where this month sits
         </h2>{" "}
@@ -250,7 +250,7 @@ export default async function CohortPage({
         <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
           {`Every status, pending and decided, and the ${label} cases themselves`}
         </summary>
-        <div className="border-t border-border px-4 pb-6 sm:px-5">
+        <div className="border-t-2 border-border px-4 pb-6 sm:px-5">
       <section className="mt-6">
         <h2 className="font-heading text-xl font-bold">
           Still pending
@@ -287,7 +287,7 @@ export default async function CohortPage({
               <StageBar stages={split.stages} scale="composition" tipHeading={`Filed in ${label}`} />
             </ChartTips>
             <StageLegend stages={split.stages} className="mt-4" />
-            <div className="mt-8 border-t border-border pt-6">
+            <div className="mt-8 border-t-2 border-border pt-6">
               <PendingCensus
                 stages={split.stages}
                 caption={`Every DOL status a pending case filed in ${label} was last seen in, grouped by queue`}
@@ -295,7 +295,7 @@ export default async function CohortPage({
             </div>
           </>
         ) : (
-          <p className="mt-6 bg-tint p-4 text-base text-soft">
+          <p className="mt-6 bg-tint p-4 text-base text-soft border-2 border-border">
             Every application filed in {label} has a decision. There is nothing
             left in the queue for this month.
           </p>
@@ -409,7 +409,7 @@ export default async function CohortPage({
             ? ["perm-case-status", "processing-times", "perm-cases"]
             : ["perm-case-status", "processing-times"]
         }
-        className="mt-8 border-t border-border pt-4"
+        className="mt-8 border-t-2 border-border pt-4"
       />
     </div>
   );
@@ -579,7 +579,7 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
         {`${formatInt(m.decided)} of the ${formatInt(m.total)} applications filed in ${label} have a decision.`}
       </p>{" "}
       <ChartTips label={`Applications filed in ${label}, by where they stand`} className="mt-5">
-        <div className="flex h-6 w-full border border-input bg-muted" role="img" aria-label={parts.map((p) => `${formatInt(p.n)} ${p.text}`).join(", ")}>
+        <div className="flex h-6 w-full border-input bg-muted border" role="img" aria-label={parts.map((p) => `${formatInt(p.n)} ${p.text}`).join(", ")}>
           {parts.map((p) => (
             <span
               key={p.key}
@@ -601,17 +601,17 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
         ))}
       </ul>{" "}
       <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="bg-tint p-4">
+        <div className="bg-tint p-4 border-2 shadow-hard-sm border-border">
           <dt className="text-sm font-bold">In DOL&apos;s line</dt>{" "}
           <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.inLine)}</dd>{" "}
           <dd className="text-sm text-muted-foreground">analyst review, worked in filing order</dd>
         </div>{" "}
-        <div className="bg-tint p-4">
+        <div className="bg-tint p-4 border-2 shadow-hard-sm border-border">
           <dt className="text-sm font-bold">Outside the line</dt>{" "}
           <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.outside)}</dd>{" "}
           <dd className="text-sm text-muted-foreground">on hold, at an RFI or on appeal</dd>
         </div>{" "}
-        <div className="bg-tint p-4">
+        <div className="bg-tint p-4 border-2 shadow-hard-sm border-border">
           {end?.kind === "estimate" ? (
             <>
               <dt className="text-sm font-bold">The line reaches this month&apos;s end</dt>{" "}
@@ -654,7 +654,7 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
   const monthName = label.replace(/ \d{4}$/, "");
   const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map((l) => ({ l, v: detail.letters[l] ?? [0, 0] as [number, number] }));
   return (
-    <section className="mt-8" aria-labelledby="month-activity">
+    <section className="mt-8 border-2 shadow-hard p-6 sm:p-8 bg-card border-border" aria-labelledby="month-activity">
       <h2 id="month-activity" className="font-heading text-xl font-bold">
         {`What DOL decided from ${label} lately`}
       </h2>{" "}
@@ -682,7 +682,7 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
         ) : null}
       </dl>{" "}
       <ChartTips label={`Cases filed in ${label} decided each day`} className="mt-6">
-        <div className="flex h-32 items-end gap-[2px] border-b border-border" role="img" aria-label={`Decisions per day for cases filed in ${label}, ${shortDay(days[0]!.date)} to ${shortDay(newest!.date)}`}>
+        <div className="flex h-32 items-end gap-[2px] border-b-2 border-border" role="img" aria-label={`Decisions per day for cases filed in ${label}, ${shortDay(days[0]!.date)} to ${shortDay(newest!.date)}`}>
           {days.map((d) => {
             const total = d.certified + d.denied + d.withdrawn;
             return (
@@ -718,7 +718,7 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
           return (
             <Fragment key={l}>{" "}
             <li
-              className="bg-tint p-2"
+              className="bg-tint p-2 border-2 border-border"
               data-tip={`${l}: ${formatInt(v[1])} of ${formatInt(v[0])} decided`}
             >
               <span className="flex items-baseline justify-between gap-1">

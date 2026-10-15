@@ -81,7 +81,7 @@ export function PwdQueueEstimator({
 
   return (
     <div className={cn("object", className)}>
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
@@ -104,7 +104,7 @@ export function PwdQueueEstimator({
             id={selectId}
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
+            className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
           >
             {options.map((o) => (
               <option key={o.value} value={o.value}>
@@ -115,7 +115,7 @@ export function PwdQueueEstimator({
         </div>
       </div>
 
-      <div className="border-b border-border bg-tint p-6 sm:p-8">
+      <div className="border-b-2 border-border bg-tint p-6 sm:p-8">
         <p className="text-sm font-bold text-muted-foreground">
           Requests ahead of yours
         </p>{" "}
@@ -150,7 +150,7 @@ export function PwdQueueEstimator({
       {/* The count above says how many. This says where they sit, which is the
           part that changes what someone expects: DOL has nearly cleared
           everything before March and then it jumps by an order of magnitude. */}
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <h3 className="font-heading text-lg font-bold">Where the backlog sits</h3>{" "}
         <p className="mt-2 text-base leading-relaxed text-muted-foreground">
           Every month DOL still has prevailing wage requests pending for, and how
@@ -164,7 +164,7 @@ export function PwdQueueEstimator({
       </div>
 
       {estimate.estimatedMonth ? (
-        <div className="border-b border-border p-6 sm:p-8">
+        <div className="border-b-2 border-border p-6 sm:p-8">
           <p className="text-sm font-bold text-muted-foreground">
             Estimated determination
           </p>{" "}

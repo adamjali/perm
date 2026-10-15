@@ -52,8 +52,8 @@ async function examplePanel(): Promise<PanelModel | null> {
 function ExamplePanel({ model }: { model: PanelModel }) {
   return (
     <figure className="mx-auto w-full max-w-sm">
-      <div className="border border-border bg-card">
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <div className="border-border bg-card border">
+        <div className="flex items-center gap-3 border-b-2 border-border px-4 py-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- the site's own mark, a static SVG */}
           <img src="/icon.svg" alt="" width={28} height={28} className="size-7" />{" "}
           <span className="font-heading text-base font-bold">PERM Tracker</span>
@@ -126,7 +126,7 @@ export default async function ExtensionPage() {
                 Add to Chrome
               </a>
             ) : (
-              <p className="inline-flex items-center gap-2 bg-tint px-4 py-3 text-base font-bold">
+              <p className="inline-flex items-center gap-2 bg-tint px-4 py-3 text-base font-bold border-2 border-border">
                 <PuzzlePieceIcon weight="bold" className="size-5 shrink-0" aria-hidden="true" />{" "}
                 On the Chrome Web Store soon, free.
               </p>
@@ -141,7 +141,7 @@ export default async function ExtensionPage() {
           Where it works
         </h2>{" "}
         <ul className="mt-5 grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2">
-          <li className="flex gap-4 bg-tint p-5">
+          <li className="flex gap-4 bg-tint p-5 border-2 border-border">
             <BriefcaseIcon weight="bold" className="size-7 shrink-0 text-primary-text" aria-hidden="true" />{" "}
             <div>
               <p className="font-heading text-lg font-bold">On its own</p>{" "}
@@ -150,7 +150,7 @@ export default async function ExtensionPage() {
               </p>
             </div>
           </li>{" "}
-          <li className="flex gap-4 bg-tint p-5">
+          <li className="flex gap-4 bg-tint p-5 border-2 border-border">
             <CursorClickIcon weight="bold" className="size-7 shrink-0 text-primary-text" aria-hidden="true" />{" "}
             <div>
               <p className="font-heading text-lg font-bold">With a click</p>{" "}
@@ -221,7 +221,7 @@ export default async function ExtensionPage() {
         </p>
       </section>
 
-      <section className="mt-14">
+      <section className="mt-14 border-2 shadow-hard p-5 sm:p-6 bg-card border-border">
         <h2 className="font-heading text-xl font-bold">Building your own?</h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
           The extension asks one endpoint, <code className="font-mono">/v1/lookup/employer</code>, and it needs no key.

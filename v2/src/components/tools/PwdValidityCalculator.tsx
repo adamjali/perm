@@ -74,7 +74,7 @@ export function PwdValidityCalculator() {
       {result ? (
         <div className="mt-4">
           {result.left < 0 ? (
-            <p className="mb-4 flex items-start gap-2 bg-tint p-3 text-sm">
+            <p className="mb-4 flex items-start gap-2 bg-tint p-3 text-sm border-2 border-border">
               <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> A PERM that didn&apos;t start
               recruitment or file inside the window needs a new wage request.
             </p>

@@ -56,7 +56,7 @@ export function NameSpellings({
 
   return (
     <section
-      className={cn("bg-tint p-6 sm:p-8", className)}
+      className={cn("bg-tint p-6 sm:p-8 border-2 shadow-hard-sm border-border", className)}
     >
       <h2 className="font-heading text-xl font-bold">
         What this rank counts, and what it doesn&apos;t
@@ -86,7 +86,7 @@ export function NameSpellings({
 
       {variants.length > 0 ? (
         <>
-          <ul className="mt-5 divide-y divide-border border-t border-border">
+          <ul className="mt-5 divide-y divide-border border-t-2 border-border">
             {variants.map((v) => (
               <Fragment key={v.slug}>{" "}
                 <li >

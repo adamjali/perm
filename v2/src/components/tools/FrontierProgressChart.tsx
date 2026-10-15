@@ -270,7 +270,7 @@ function FrontierTable({
           The filing month DOL was deciding in each month of determinations,
           with the number of decisions behind each figure
         </caption>
-        <thead className="border-b border-input bg-muted">
+        <thead className="dark border-b border-black bg-[#141414] text-foreground">
           <tr>
             <th scope="col" className="px-3 py-2 text-sm font-bold">
               Decisions in

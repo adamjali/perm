@@ -152,7 +152,7 @@ export default async function ToolsPage() {
 
 
 
-      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 border-y border-border py-6">
+      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 border-border p-6 border-2 shadow-hard">
         <div>
           <h2 className="font-heading text-2xl font-bold">All {CALCULATOR_PAGES.length} calculators</h2>{" "}
           <p className="mt-1 max-w-xl text-base text-soft">
@@ -239,7 +239,7 @@ export default async function ToolsPage() {
             <a
               key={c.href}
               href={c.href}
-              className="group flex flex-col border-2 border-transparent bg-tint p-6 transition-colors duration-150 hover:border-[var(--object-border)]"
+              className="group flex flex-col border-2 p-6 lift border-border bg-card shadow-hard-sm hover:bg-accent"
             >
               <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
               {/* The card's own subject, drawn. */}
@@ -276,7 +276,7 @@ export default async function ToolsPage() {
             <Link
               key={c.href}
               href={c.href}
-              className="group flex flex-col border-2 border-transparent bg-tint p-5 transition-colors duration-150 hover:border-[var(--object-border)]"
+              className="group flex flex-col border-2 p-5 lift border-border bg-card shadow-hard-sm hover:bg-accent"
             >
               <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
               {/* The page's subject, drawn, as on the tiles above. */}
@@ -295,7 +295,7 @@ export default async function ToolsPage() {
       </section>
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="bg-tint p-6 sm:p-8">
+        <div className="bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
           <p className="text-sm text-muted-foreground">For your own case</p>{" "}
           <h2 className="mt-2 font-heading text-xl font-bold">
             Get notified when DOL reaches your month
@@ -318,7 +318,7 @@ export default async function ToolsPage() {
             .
           </p>
         </div>
-        <div className="bg-tint p-6 sm:p-8">
+        <div className="dark p-6 sm:p-8 border-2 shadow-hard border-black bg-[#141414] text-foreground">
           <p className="text-sm text-muted-foreground">For a caseload</p>{" "}
           <h2 className="mt-2 font-heading text-xl font-bold">Track every deadline in every case</h2>{" "}
           <p className="mt-3 text-base leading-relaxed text-soft">

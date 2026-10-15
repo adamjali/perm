@@ -93,7 +93,7 @@ export function PwdValidityWindow({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <div className="bg-tint p-6 sm:p-8">
+      <div className="dark p-6 sm:p-8 border-2 shadow-hard border-black bg-[#141414] text-foreground">
         <p className="text-sm text-muted-foreground">
           One day, {multiple} times the runway
         </p>{" "}
@@ -107,7 +107,7 @@ export function PwdValidityWindow({ className }: { className?: string }) {
         </p>
       </div>
 
-      <div className="mt-6 divide-y divide-border border border-border bg-card">
+      <div className="mt-6 divide-y divide-border border-border bg-card border">
         {rows.map((r) => (
           <Row key={r.from} regime={r} />
         ))}

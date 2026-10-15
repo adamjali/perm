@@ -60,9 +60,9 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
     <figure className="not-prose my-8" style={{ maxWidth }}>
       <div className="relative">
         <Lightbox videoSrc={src} alt={alt} caption={caption}>
-          <div className="relative overflow-hidden border border-border">
+          <div className="relative overflow-hidden border-border border">
             {step !== undefined && (
-              <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b border-r border-border bg-card font-mono text-sm font-bold">
+              <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center border-b-2 border-r-2 border-border bg-primary font-mono text-sm font-bold text-black">
                 {step}
               </div>
             )}
@@ -85,7 +85,7 @@ export default function VideoFigure({ src, alt, caption, step, maxWidth = 800, p
           type="button"
           onClick={toggle}
           aria-label={playing ? "Pause the recording" : "Play the recording"}
-          className="absolute bottom-2 right-2 z-10 flex size-11 items-center justify-center border border-input bg-card text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute bottom-2 right-2 z-10 flex size-11 items-center justify-center border-input bg-card text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border"
         >
           {playing ? <PauseIcon className="size-5" weight="bold" aria-hidden="true" /> : <PlayIcon className="size-5" weight="bold" aria-hidden="true" />}
         </button>

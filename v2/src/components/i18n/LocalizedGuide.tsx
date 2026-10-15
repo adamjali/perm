@@ -41,7 +41,7 @@ export function localizedGuideMetadata(code: LocaleCode): Metadata {
   };
 }
 
-const card = "bg-tint p-5";
+const card = "bg-tint p-5 border-2 shadow-hard border-border";
 const h2 = "scroll-mt-24 font-heading text-2xl font-bold sm:text-3xl";
 
 function month(ym: string | null, intl: string): string | null {
@@ -71,7 +71,7 @@ function CutoffTable({ country, data, locale }: { country: CountryKey; data: Non
   return (
     <ScrollBox label={copy.cutoffs.countryName[country] ?? country} className="border-t-2 border-[var(--object-border)] bg-card">
       <table className="w-full min-w-[34rem] border-collapse text-left text-base">
-        <caption className="border-b border-border bg-muted px-4 py-2 text-left font-heading text-lg font-bold">
+        <caption className="border-b-2 border-border bg-muted px-4 py-2 text-left font-heading text-lg font-bold">
           {copy.cutoffs.countryName[country] ?? country}
         </caption>
         <thead>
@@ -83,7 +83,7 @@ function CutoffTable({ country, data, locale }: { country: CountryKey; data: Non
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.category} className="border-t border-border/40">
+            <tr key={r.category} className="border-t-2 border-border/40">
               <th scope="row" className="px-4 py-3 font-bold">{copy.cutoffs.category[r.category]}{" "}</th>
               <td className="px-4 py-3 tabular-nums">
                 <CutoffCell cutoff={r.finalAction} locale={locale} copy={copy} />{" "}
@@ -125,7 +125,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
         <p className="text-sm font-bold text-muted-foreground">{copy.eyebrow}</p>{" "}
         <h1 className="mt-3 font-heading text-4xl font-bold leading-tight sm:text-5xl">{copy.h1}</h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-soft">{copy.lede}</p>{" "}
-        <p className="mt-4 border-l-2 border-primary bg-card px-4 py-3 text-base leading-relaxed text-soft">
+        <p className="mt-4 border-l-4 border-primary bg-card px-4 py-3 text-base leading-relaxed text-soft">
           {copy.translationNote}
         </p>
       </header>
@@ -199,10 +199,10 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
           {copy.steps.items.map((s, i) => (
             <Fragment key={s.form}>
               {" "}
-              <li className="grid grid-cols-[2.75rem_1fr] gap-4 bg-tint p-4 [&>*]:min-w-0">
+              <li className="grid grid-cols-[2.75rem_1fr] gap-4 bg-tint p-4 [&>*]:min-w-0 border-2 border-border">
                 <span
                   aria-hidden="true"
-                  className="flex size-11 items-center justify-center border border-input bg-primary font-heading text-lg font-bold text-primary-foreground"
+                  className="flex size-11 items-center justify-center border-input bg-primary font-heading text-lg font-bold text-primary-foreground border"
                 >
                   {i + 1}
                 </span>{" "}
@@ -266,7 +266,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
           {GLOSSED_STATUSES.map((s, i) => (
             <Fragment key={s}>
               {" "}
-              <div className={`grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[16rem_1fr] sm:gap-4 [&>*]:min-w-0 ${i > 0 ? "border-t border-border/40" : ""}`}>
+              <div className={`grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[16rem_1fr] sm:gap-4 [&>*]:min-w-0 ${i > 0 ? "border-t-2 border-border/40" : ""}`}>
                 <dt className="font-bold" translate="no">{s}</dt>{" "}
                 <dd className="text-base leading-relaxed text-soft">{copy.statuses.gloss[s]}</dd>
               </div>
@@ -281,7 +281,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
           {copy.limits.items.map((l, i) => (
             <Fragment key={i}>
               {" "}
-              <li className="border-l-2 border-border pl-3">{l}</li>
+              <li className="border-l-4 border-border pl-3">{l}</li>
             </Fragment>
           ))}
         </ul>

@@ -157,14 +157,14 @@ export default async function CompareEmployersPage({
                 <Link
                   href={`/perm-employers/compare?a=${e.a}&b=${e.b}`}
                   rel="nofollow"
-                  className="inline-flex min-h-11 items-center border border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint"
+                  className="inline-flex min-h-11 items-center border-2 border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint"
                 >
                   {e.label}
                 </Link>{" "}
               </Fragment>
             ))}
           </div>{" "}
-          <figure className="mt-6 border border-dashed border-foreground/40 p-4 sm:p-5">
+          <figure className="mt-6 border-2 border-dashed border-foreground/40 p-4 sm:p-5">
             <figcaption className="font-heading text-lg font-bold">What a comparison lines up</figcaption>{" "}
             <dl aria-hidden="true" className="mt-4 divide-y divide-border/30">
               {rows.slice(0, 8).map((r) => (
@@ -183,7 +183,7 @@ export default async function CompareEmployersPage({
       ) : null}{" "}
 
       {(slugA && !left) || (slugB && !right) ? (
-        <p role="alert" className="mt-6 bg-tint p-4 text-sm font-bold">
+        <p role="alert" className="mt-6 bg-tint p-4 text-sm font-bold border-2 border-border">
           One of those employers is not in the index. Pick it again from the search.
         </p>
       ) : null}{" "}
@@ -191,7 +191,7 @@ export default async function CompareEmployersPage({
       {both ? (
         <div className="mt-10 overflow-x-auto overscroll-x-none border-t-2 border-[var(--object-border)] bg-card">
           <table className="w-full min-w-[640px] border-collapse text-sm">
-            <thead className="border-b border-input bg-muted">
+            <thead className="dark border-b border-black bg-[#141414] text-foreground">
               <tr>
                 <th scope="col" className="px-4 py-3 text-left text-sm font-bold">Measure{" "} </th>
                 {[left, right].map((s) => (
@@ -208,7 +208,7 @@ export default async function CompareEmployersPage({
             <tbody translate="no">
               {rows.map((r) => (
                 <Fragment key={r.label}>
-                  <tr className="border-t border-border align-top">
+                  <tr className="border-t-2 border-border align-top">
                     <th scope="row" className="px-4 py-3 text-left font-semibold">
                       {r.label}{" "}
                       {r.note ? <span className="block text-sm font-normal text-muted-foreground">{r.note}</span> : null}{" "}
@@ -218,12 +218,12 @@ export default async function CompareEmployersPage({
                   </tr>
                 </Fragment>
               ))}
-              <tr className="border-t border-border align-top">
+              <tr className="border-t-2 border-border align-top">
                 <th scope="row" className="px-4 py-3 text-left font-semibold">Top occupations filed{" "} </th>
                 <td className="px-4 py-3">{facetList(left, "occupation")}{" "} </td>
                 <td className="px-4 py-3">{facetList(right, "occupation")}{" "} </td>
               </tr>
-              <tr className="border-t border-border align-top">
+              <tr className="border-t-2 border-border align-top">
                 <th scope="row" className="px-4 py-3 text-left font-semibold">Top worksite states{" "} </th>
                 <td className="px-4 py-3">{facetList(left, "state")}{" "} </td>
                 <td className="px-4 py-3">{facetList(right, "state")}{" "} </td>
@@ -234,7 +234,7 @@ export default async function CompareEmployersPage({
       ) : null}{" "}
 
       {both ? (
-        <section className="mt-8 max-w-3xl" aria-labelledby="switching">
+        <section className="mt-8 max-w-3xl border-2 p-5 sm:p-6 bg-card border-border" aria-labelledby="switching">
           <h2 id="switching" className="font-heading text-xl font-bold">
             If you&apos;re moving from one to the other
           </h2>{" "}

@@ -58,10 +58,10 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
   const max = Math.max(...totals, 1);
   const total = totals.reduce((a, b) => a + b, 0);
   return (
-    <div className="bg-tint p-5 sm:p-6">
+    <div className="bg-tint p-5 sm:p-6 border-2 border-border">
       <ChartTips label="PERM decisions by fiscal year" scroll="">
         <div
-          className="flex h-48 min-w-[640px] items-end gap-1.5 border-b border-border"
+          className="flex h-48 min-w-[640px] items-end gap-1.5 border-b-2 border-border"
           role="img"
           aria-label={`Decisions by fiscal year, FY${first} to FY${last}, ${formatInt(total)} in all. The table below has every figure.`}
         >
@@ -103,7 +103,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
           <Fragment key={k}>
             {" "}
             <li className="flex items-center gap-2">
-              <span className={cn("h-3 w-3 border border-input", TONE[k])} aria-hidden="true" />{" "}
+              <span className={cn("h-3 w-3 border-input border", TONE[k])} aria-hidden="true" />{" "}
               <span className="font-bold capitalize">{k}</span>
             </li>
           </Fragment>
@@ -123,7 +123,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
         <ScrollBox label="Every year as a table" className="mt-3">
           <table className="w-full min-w-[360px] border-collapse text-left tabular-nums">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b-2 border-border">
                 <th className="py-1.5 pr-4 font-bold">Fiscal year{" "}</th>
                 <th className="py-1.5 pr-4 text-right font-bold">Certified{" "}</th>
                 <th className="py-1.5 pr-4 text-right font-bold">Denied{" "}</th>

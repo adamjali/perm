@@ -122,7 +122,7 @@ export function I140QueueEstimator({
 
   return (
     <div className={cn("object", className)}>
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
@@ -145,7 +145,7 @@ export function I140QueueEstimator({
             id={selectId}
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-md"
+            className="mt-2 block min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-md"
           >
             {subtypes.map((s) => (
               <option key={s.code} value={s.code}>
@@ -156,7 +156,7 @@ export function I140QueueEstimator({
         </div>
       </div>
 
-      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
+      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
         <div className="bg-tint p-6 sm:p-8">
           <p className="text-sm font-bold text-muted-foreground">
             Petitions waiting
@@ -187,7 +187,7 @@ export function I140QueueEstimator({
           headlined the result as "N months" - an inventory-turnover figure
           that reads as a personal wait time. It answered a question nobody
           asks with a number experts read as wrong, so it is gone. */}
-      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
+      <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
         {published ? (
           <div className="bg-card p-6 sm:p-8">
             <p className="text-sm font-bold text-muted-foreground">
@@ -246,7 +246,7 @@ export function I140QueueEstimator({
       </div>
 
       {estimate.backlogGrowing ? (
-        <div className="flex items-start gap-3 border-b border-border bg-muted p-6 sm:p-8">
+        <div className="flex items-start gap-3 border-b-2 border-border bg-muted p-6 sm:p-8">
           <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <p className="text-base leading-relaxed">
             <strong>This queue is growing.</strong>{" "}
@@ -258,7 +258,7 @@ export function I140QueueEstimator({
         </div>
       ) : null}
 
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <h3 className="font-heading text-lg font-bold">Where the backlog sits</h3>{" "}
         <p className="mt-2 text-base leading-relaxed text-muted-foreground">
           Every I-140 petition type USCIS reports, and how many are waiting on
@@ -287,7 +287,7 @@ export function I140QueueEstimator({
                     <span className="sm:hidden">{s.code}</span>{" "}
                     <span className="hidden sm:inline">{s.label}</span>
                   </span>{" "}
-                  <span className="h-6 w-full border border-input bg-muted">
+                  <span className="h-6 w-full border-input bg-muted border">
                     <span
                       className={cn(
                         "block h-full",

@@ -445,7 +445,7 @@ export function USStateMap({
       {/* The reading panel: preview follows the pointer, a click pins. */}
       <div
         aria-live="polite"
-        className="mt-6 bg-tint p-5 sm:p-6"
+        className="mt-6 bg-tint p-5 sm:p-6 border-2 shadow-hard-sm border-border"
       >
         {active && activeName ? (
           <div>
@@ -696,7 +696,7 @@ export function StateExplorer({ states }: { states: StateStat[] }) {
   return (
     <Fragment>
       <section className="mt-10">
-        <div className="bg-tint p-4 sm:p-6">
+        <div className="bg-tint p-4 sm:p-6 border-2 border-border">
           <USStateMap
             states={states}
             metric={metric}

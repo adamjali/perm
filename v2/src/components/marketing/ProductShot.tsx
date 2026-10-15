@@ -59,8 +59,8 @@ export function ProductShot({
       <div
         className={
           dark
-            ? "overflow-hidden border border-current/40 bg-card"
-            : "overflow-hidden border border-border bg-card"
+            ? "overflow-hidden border-current/40 bg-card border"
+            : "overflow-hidden border-border bg-card border"
         }
       >
         <Image
@@ -77,7 +77,7 @@ export function ProductShot({
         className={
           dark
             ? "mt-3 text-sm font-bold opacity-60"
-            : "mt-3 border-t border-border pt-3 text-sm font-bold text-muted-foreground"
+            : "mt-3 border-t-2 border-border pt-3 text-sm font-bold text-muted-foreground"
         }
       >
         {caption}

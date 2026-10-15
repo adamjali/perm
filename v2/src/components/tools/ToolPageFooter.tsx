@@ -39,14 +39,14 @@ export function ToolPageFooter({ reading }: ToolPageFooterProps) {
               <li key={r.href} className="flex">
                 <Link
                   href={r.href}
-                  className="group flex w-full flex-col border-t-2 border-[var(--object-border)] pt-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="group flex w-full flex-col border-t-2 border-[var(--object-border)] p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border-2 shadow-hard motion-safe:hover:-translate-y-[1px] hover:shadow-hard-lg motion-safe:active:translate-y-0 active:shadow-hard-sm bg-card transition-[color,background-color,border-color,box-shadow,transform]"
                 >
                   <span className="flex items-start justify-between gap-3">
                     <span className="font-heading text-base font-bold leading-tight group-hover:underline">
                       {r.label}
                     </span>
                     <ArrowUpRightIcon
-                      className="mt-0.5 h-4 w-4 shrink-0 text-primary-text"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-primary-text motion-safe:group-hover:translate-x-0.5 motion-safe:group-hover:-translate-y-0.5 transition-[color,background-color,border-color,box-shadow,transform]"
                       aria-hidden="true"
                     />
                   </span>{" "}

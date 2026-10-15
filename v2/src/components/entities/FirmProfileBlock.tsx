@@ -67,7 +67,7 @@ export function FirmProfileBlock({ firmName, profile }: { firmName: string; prof
       v: (
         <ul className="flex flex-wrap gap-2">
           {profile.focus.map((f) => (
-            <li key={f} className="bg-tint px-2 py-0.5 text-sm font-bold">
+            <li key={f} className="bg-tint px-2 py-0.5 text-sm font-bold border-2 border-border">
               {focusLabel(f)}{" "}
             </li>
           ))}
@@ -86,7 +86,7 @@ export function FirmProfileBlock({ firmName, profile }: { firmName: string; prof
   return (
     <section
       aria-labelledby="from-the-firm"
-      className="mt-12 border border-dashed border-border bg-card p-6 sm:p-8"
+      className="mt-12 border-2 border-dashed border-border bg-card p-6 sm:p-8 shadow-hard-sm"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 id="from-the-firm" className="font-heading text-xl font-bold">
@@ -107,7 +107,7 @@ export function FirmProfileBlock({ firmName, profile }: { firmName: string; prof
           ))}
         </dl>
       ) : null}{" "}
-      <p className="mt-5 border-t border-border pt-3 text-sm text-muted-foreground">
+      <p className="mt-5 border-t-2 border-border pt-3 text-sm text-muted-foreground">
         {profile.verifiedBy === "domain"
           ? "Sent by the firm from an address at a domain DOL's own filings list for it."
           : "Sent by the firm and checked by hand."}{" "}

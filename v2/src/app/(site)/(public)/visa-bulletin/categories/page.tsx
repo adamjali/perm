@@ -78,7 +78,7 @@ export default async function BulletinCategoriesPage() {
               <caption className="sr-only">
                 Final action and dates for filing cutoffs, {bulletinMonthLabel(board.lastMonth)}, by category and country
               </caption>
-              <thead className="border-b border-border bg-muted/40">
+              <thead className="border-b-2 border-border bg-muted/40">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>
                   {LINE_PAGE_COUNTRIES.map((c) => (

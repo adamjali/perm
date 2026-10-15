@@ -180,14 +180,14 @@ export default async function UscisCaseStatusPage({
         </p>
       </header>
 
-      <div className="mt-8 bg-tint p-5 sm:p-6">
+      <div className="mt-8 bg-tint p-5 sm:p-6 border-2 shadow-hard border-border">
         <UscisReceiptForm defaultValue={typed} />
       </div>
 
       <SavedReceipts current={receipt} />
 
       {malformed ? (
-        <p className="mt-6 flex items-start gap-2 border border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
+        <p className="mt-6 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
           <WarningIcon className="mt-1 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>
             <b className="font-bold text-data-warn-ink">That is not the shape of a USCIS receipt number,</b>{" "}
@@ -197,7 +197,7 @@ export default async function UscisCaseStatusPage({
       ) : null}
 
       {dolNumber ? (
-        <div className="mt-6 bg-tint p-5">
+        <div className="mt-6 bg-tint p-5 border-2 border-border">
           <p className="text-base leading-relaxed">
             <b className="font-bold">That is a Department of Labor number.</b> USCIS has no record
             under it; DOL does, and the PERM case page reads it.
@@ -218,7 +218,7 @@ export default async function UscisCaseStatusPage({
           <h2 id="decoded-heading" className="font-heading text-2xl font-bold">
             What {decoded.receipt} encodes
           </h2>{" "}
-          <dl className="mt-4 grid gap-x-8 gap-y-4 bg-tint p-5 text-sm sm:grid-cols-3 sm:p-6">
+          <dl className="mt-4 grid gap-x-8 gap-y-4 bg-tint p-5 text-sm sm:grid-cols-3 sm:p-6 border-2 shadow-hard border-border">
             <div>
               <dt className="font-bold text-muted-foreground">Prefix {decoded.prefix}</dt>{" "}
               <dd className="mt-1 text-base">
@@ -286,7 +286,7 @@ export default async function UscisCaseStatusPage({
               &gt;
             </span>
           </summary>{" "}
-          <dl className="divide-y divide-border border-t border-border">
+          <dl className="divide-y divide-border border-t-2 border-border">
             {prefixes.map(([code, p]) => (
               <div key={code} className="grid gap-x-6 gap-y-1 px-5 py-3 sm:grid-cols-[6rem_1fr] sm:px-6">
                 <dt className="font-mono text-base font-bold">{code}</dt>{" "}
@@ -338,7 +338,7 @@ export default async function UscisCaseStatusPage({
  */
 function PendingPanel({ receipt }: { receipt?: string }) {
   return (
-    <section aria-labelledby="pending-heading" className="bg-tint p-5 sm:p-6">
+    <section aria-labelledby="pending-heading" className="bg-tint p-5 sm:p-6 border-2 shadow-hard border-border">
       <p className="text-sm font-bold text-muted-foreground">
         Live status
       </p>{" "}
@@ -356,7 +356,7 @@ function PendingPanel({ receipt }: { receipt?: string }) {
           <a
             href={USCIS_STATUS_URL}
             rel="noopener noreferrer"
-            className="flex min-h-[44px] w-full flex-col justify-center bg-tint px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex min-h-[44px] w-full flex-col justify-center bg-tint px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary border-2 border-border"
           >
             <span className="font-heading text-base font-bold">USCIS Case Status Online</span>{" "}
             <span className="text-sm text-muted-foreground">
@@ -368,7 +368,7 @@ function PendingPanel({ receipt }: { receipt?: string }) {
           <a
             href={USCIS_EMMA_URL}
             rel="noopener noreferrer"
-            className="flex min-h-[44px] w-full flex-col justify-center bg-tint px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex min-h-[44px] w-full flex-col justify-center bg-tint px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary border-2 border-border"
           >
             <span className="font-heading text-base font-bold">Emma, USCIS&apos;s virtual assistant</span>{" "}
             <span className="text-sm text-muted-foreground">

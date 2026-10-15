@@ -24,15 +24,15 @@ export function OflcArchive({ items, today, lead = 8 }: { items: readonly Policy
 
   return (
     <>
-      <div className="mt-6 border border-border bg-card">
+      <div className="mt-6 border-border bg-card border">
         {recent.map((n) => (
           <DocRow key={n.documentNumber} doc={n} today={today} />
         ))}
       </div>{" "}
       {grouped.length > 0 ? (
-        <div className="mt-6 border border-border bg-card">
+        <div className="mt-6 border-border bg-card border">
           {grouped.map(([year, list]) => (
-            <details key={year} className="group border-b border-border last:border-b-0">
+            <details key={year} className="group border-b-2 border-border last:border-b-0">
               <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 font-heading text-base font-bold transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
                 <span className="flex flex-wrap items-baseline gap-x-3">
                   <span>{year}</span>{" "}
@@ -45,7 +45,7 @@ export function OflcArchive({ items, today, lead = 8 }: { items: readonly Policy
                   aria-hidden="true"
                 />
               </summary>{" "}
-              <ul className="border-t border-border/40 px-5 pb-4 pt-3 text-base leading-relaxed sm:px-6">
+              <ul className="border-t-2 border-border/40 px-5 pb-4 pt-3 text-base leading-relaxed sm:px-6">
                 {list.map((n) => (
                   <li key={n.documentNumber} id={`doc-${n.documentNumber}`} className="flex flex-wrap gap-x-3 py-1.5">
                     <span className="shrink-0 font-mono text-sm text-muted-foreground">{dayLabel(n.publicationDate)}</span>{" "}

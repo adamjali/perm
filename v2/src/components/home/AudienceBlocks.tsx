@@ -71,7 +71,7 @@ function Bullets({ items }: { items: readonly string[] }) {
     <ul className="flex flex-col gap-2.5">
       {items.map((item) => (
         <li key={item} className="flex gap-3 text-base leading-relaxed text-soft">
-          <span aria-hidden="true" className="mt-[0.6em] block size-2 shrink-0 bg-primary-text" />
+          <span aria-hidden="true" className="mt-[0.6em] block size-2 shrink-0 bg-primary" />
           <span>{item}{" "}</span>
         </li>
       ))}
@@ -100,7 +100,7 @@ export function AudienceBlocks() {
                 {h.heading}
               </h3>{" "}
               <ExplainerFilm film={h.film} className="mt-4" />{" "}
-              <details className="group mt-4 border-b border-border">
+              <details className="group mt-4 border-b border-border border-y-2">
                 <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between font-semibold [&::-webkit-details-marker]:hidden">
                   What it does{" "}
                   <CaretDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />

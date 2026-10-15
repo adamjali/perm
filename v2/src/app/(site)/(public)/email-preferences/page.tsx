@@ -75,10 +75,10 @@ function KindTile({ id }: { id: MailKindId }) {
   const kind = MAIL_KINDS[id];
   const Glyph = KIND_ICONS[id];
   return (
-    <li className="flex flex-col bg-tint p-5">
+    <li className="flex flex-col bg-tint p-5 border-2 shadow-hard-sm border-border">
       <div className="flex items-start justify-between gap-3">
         <Glyph aria-hidden="true" className="size-6 shrink-0 text-primary-text" />{" "}
-        <span className="text-sm text-muted-foreground">{kind.when}</span>
+        <span className="text-sm text-muted-foreground border-2 px-2 py-0.5 border-border">{kind.when}</span>
       </div>{" "}
       <h4 className="mt-4 font-heading text-lg font-bold">{kind.name}</h4>{" "}
       <p className="mt-1 flex-1 text-base leading-relaxed text-soft">{kind.what}</p>{" "}
@@ -87,7 +87,7 @@ function KindTile({ id }: { id: MailKindId }) {
         className="link group mt-4 inline-flex min-h-[44px] items-center gap-2 self-start text-sm"
       >
         {kind.start.label}{" "}
-        <ArrowRightIcon aria-hidden="true" className="size-4 transition-transform" />
+        <ArrowRightIcon aria-hidden="true" className="size-4 transition-transform motion-safe:group-hover:translate-x-0.5" />
       </Link>
     </li>
   );
@@ -127,9 +127,9 @@ export default function EmailPreferencesPage() {
         </div>{" "}
         {/* Beside the form: a reader deciding whether to give an address
             wants to see what arrives. */}
-        <figure className="m-0 bg-tint p-5 lg:col-span-5">
+        <figure className="m-0 bg-tint p-5 lg:col-span-5 border-2 shadow-hard-sm border-border">
           <AlertLanesFigure className="text-foreground" />{" "}
-          <figcaption className="mt-3 border-t border-border pt-3 text-sm font-semibold text-muted-foreground">
+          <figcaption className="mt-3 border-t-2 border-border pt-3 text-sm font-semibold text-muted-foreground">
             One email per change. Nothing while nothing changes.
           </figcaption>
         </figure>
@@ -141,7 +141,7 @@ export default function EmailPreferencesPage() {
           return (
             <Fragment key={rule.title}>
               {" "}
-              <li className="flex gap-3 border-t border-border pt-4">
+              <li className="flex gap-3 border-t-3 border-border pt-4">
                 <Glyph aria-hidden="true" className="size-7 shrink-0 text-primary" weight="bold" />{" "}
                 <div>
                   <p className="font-heading font-bold">{rule.title}</p>{" "}

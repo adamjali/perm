@@ -94,7 +94,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
       <div
         role="status"
         aria-live="polite"
-        className="bg-tint p-5 sm:p-6"
+        className="bg-tint p-5 sm:p-6 border-2 shadow-hard border-border"
       >
         <p className="text-sm font-bold text-muted-foreground">
           Asking USCIS
@@ -145,7 +145,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
 
   return (
     <section aria-labelledby="uscis-result-heading" className="bg-tint">
-      <div className="border-b border-border p-5 sm:p-6">
+      <div className="border-b-2 border-border p-5 sm:p-6">
         <p className="text-sm font-bold text-muted-foreground">
           {status.formType ? `${status.formType} · ` : ""}
           {status.receipt}
@@ -159,7 +159,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
       </div>{" "}
 
       {stale ? (
-        <p className="flex items-start gap-2 border-b border-data-warn bg-data-warn/8 px-5 py-3 text-sm leading-relaxed text-soft sm:px-6">
+        <p className="flex items-start gap-2 border-b-2 border-data-warn bg-data-warn/8 px-5 py-3 text-sm leading-relaxed text-soft sm:px-6">
           <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>
             <b className="font-bold text-data-warn-ink">This is our stored copy.</b> USCIS could
@@ -196,7 +196,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
       </dl>{" "}
 
       {status.history.length > 0 ? (
-        <div className="border-t border-border p-5 sm:p-6">
+        <div className="border-t-2 border-border p-5 sm:p-6">
           <h3 className="font-heading text-lg font-bold">History, as USCIS lists it</h3>{" "}
           <ol className="mt-3 space-y-2 text-sm">
             {status.history.map((h) => (
@@ -209,7 +209,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
         </div>
       ) : null}{" "}
 
-      <p className="border-t border-border px-5 py-3 text-sm text-muted-foreground sm:px-6">
+      <p className="border-t-2 border-border px-5 py-3 text-sm text-muted-foreground sm:px-6">
         USCIS&apos;s own words, from its Case Status API. Nothing on this panel is
         estimated. This lookup is stored as{" "}
         <a href="/privacy#uscis-case-status" className="link">
@@ -227,7 +227,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
 
 function Refusal({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div role="status" className="bg-tint p-5 sm:p-6">
+    <div role="status" className="bg-tint p-5 sm:p-6 border-2 shadow-hard border-border">
       <p className="font-heading text-xl font-bold">{title}</p>{" "}
       <p className="mt-2 max-w-prose text-base leading-relaxed text-soft">{children}</p>
     </div>

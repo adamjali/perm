@@ -51,7 +51,7 @@ export function WeekdayShape({
               "py-2",
               // The rule sits between Friday and Saturday and says what it
               // separates. Structure carrying the meaning, not colour.
-              p.weekday === 5 && "mt-2 border-t border-border pt-4",
+              p.weekday === 5 && "mt-2 border-t-2 border-border pt-4",
             )}
           >
             <div className="flex items-baseline justify-between gap-3">
@@ -63,7 +63,7 @@ export function WeekdayShape({
                 {p.zeroDays === 0 ? "never zero" : `${p.zeroDays} at zero`}
               </span>
             </div>
-            <div className="mt-1 h-4 w-full border border-input bg-background">
+            <div className="mt-1 h-4 w-full border-input bg-background border">
               <div
                 // See WageLadderRow: --primary fails the 3:1 graphic floor
                 // in light mode, the -ink variant passes and is identical in dark.

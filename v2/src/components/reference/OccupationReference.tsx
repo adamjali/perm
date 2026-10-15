@@ -134,7 +134,7 @@ export async function OccupationReference({
             <table className="w-full min-w-[40rem] text-left text-base">
               <caption className="sr-only">Market pay and DOL wage levels, by area{" "}</caption>
               <thead>
-                <tr className="border-b border-border text-sm text-muted-foreground">
+                <tr className="border-b-2 border-border text-sm text-muted-foreground">
                   <th className="py-2 pr-4 font-bold">Area{" "}</th>
                   <th className="py-2 pr-4 text-right font-bold">BLS median{" "}</th>
                   {LEVELS.map((l) => (
@@ -172,7 +172,7 @@ export async function OccupationReference({
       ) : null}
 
       {busiest && history.length >= 2 ? (
-        <section className="mt-10 bg-tint p-6 sm:p-8" aria-labelledby="occ-dol-years">
+        <section className="mt-10 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border" aria-labelledby="occ-dol-years">
           <h2 id="occ-dol-years" className="font-heading text-xl font-bold sm:text-2xl">
             DOL&apos;s levels for this job in {busiest.name}, year by year
           </h2>{" "}
@@ -184,7 +184,7 @@ export async function OccupationReference({
             <table className="w-full min-w-[34rem] text-left text-base">
               <caption className="sr-only">DOL wage levels by wage year, {busiest.name}{" "}</caption>
               <thead>
-                <tr className="border-b border-border text-sm text-muted-foreground">
+                <tr className="border-b-2 border-border text-sm text-muted-foreground">
                   <th className="py-2 pr-4 font-bold">Wage year{" "}</th>
                   {LEVELS.map((l) => (
                     <th key={l} className="py-2 pr-4 text-right font-bold">
@@ -264,7 +264,7 @@ export async function OccupationReference({
           </dl>
           {main.bright.length ? (
             <p className="mt-4 text-base">
-              <span className="mr-2 inline-block bg-tint px-2 py-0.5 font-bold">Bright Outlook</span>{" "}
+              <span className="mr-2 inline-block bg-tint px-2 py-0.5 font-bold border-2 border-border">Bright Outlook</span>{" "}
               O*NET OnLine lists this job for {main.bright.map((b) => b.toLowerCase()).join(" and ")}.
             </p>
           ) : null}

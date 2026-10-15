@@ -64,7 +64,7 @@ export default function TableOfContents() {
       <p className="mb-3 font-heading text-sm font-bold text-muted-foreground">
         On this page
       </p>{" "}
-      <ul className="space-y-1 border-l border-border">
+      <ul className="space-y-1 border-l-2 border-border">
         {headings.map((heading) => (
           <li key={heading.id}>
             <a
@@ -78,7 +78,7 @@ export default function TableOfContents() {
                 }
               }}
               className={cn(
-                "block border-l -ml-[2px] py-1 text-sm transition-colors",
+                "block border-l-2 -ml-[2px] py-1 text-sm transition-colors border-border",
                 heading.level === 3 ? "pl-6" : "pl-4",
                 activeId === heading.id
                   ? "border-primary font-semibold text-foreground"

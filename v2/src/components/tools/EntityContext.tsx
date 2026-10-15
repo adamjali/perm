@@ -233,7 +233,7 @@ export function ReliabilityBand({
   return (
     <section
       className={cn(
-        "bg-tint p-5 sm:p-6",
+        "bg-tint p-5 sm:p-6 border-2 shadow-hard-sm border-border",
         withheld ? "border-l-8 border-l-data-warn" : "border-l-8 border-l-data-none",
         className,
       )}
@@ -336,7 +336,7 @@ export function PeerList({
             <li className="min-w-0">
               <Link
                 href={`${hrefBase}/${p.slug}`}
-                className="flex h-full min-h-[44px] flex-col border-2 border-transparent bg-tint p-4 no-underline transition-colors hover:border-[var(--object-border)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="flex h-full min-h-[44px] flex-col border-2 p-4 no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary shadow-hard-sm lift border-border bg-card hover:bg-accent"
               >
                 <span className="text-sm font-bold text-muted-foreground">
                   #{formatInt(p.rank)}
@@ -449,7 +449,7 @@ export function LimitsPanel({
     // click away, with the heading still in the outline; a reader meets the
     // heading and the count, not five paragraphs.
     <details
-      className={cn("group border border-border bg-tint", className)}
+      className={cn("group border-border bg-tint border", className)}
     >
       <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-4 px-6 py-4">
         <h2 className="font-heading text-xl font-bold">What these numbers don&apos;t say</h2>{" "}
@@ -457,7 +457,7 @@ export function LimitsPanel({
           {items.length} notes
         </span>
       </summary>{" "}
-      <dl className="grid grid-cols-1 gap-5 border-t border-border px-6 py-5 [&>*]:min-w-0 md:grid-cols-2">
+      <dl className="grid grid-cols-1 gap-5 border-t-2 border-border px-6 py-5 [&>*]:min-w-0 md:grid-cols-2">
         {items.map((i) => (
           <Fragment key={i.head}>
             {" "}

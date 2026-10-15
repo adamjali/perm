@@ -324,7 +324,7 @@ export default async function UscisProcessingTimesPage() {
                 }
               >
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] [&>*]:min-w-0">
-                  <div className="bg-tint p-5">
+                  <div className="bg-tint p-5 border-2 border-border">
                     <p className="text-sm font-bold text-muted-foreground">Quarterly median, all I-140s</p>{" "}
                     <p className="mt-2 font-heading text-5xl font-bold leading-none tabular-nums">{monthsLabel(i140.medianMonths)}</p>{" "}
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -381,7 +381,7 @@ export default async function UscisProcessingTimesPage() {
                     <ScrollBox label="Medians by quarter since the factsheet" className="mt-2">
                       <table className="min-w-[420px] text-sm">
                         <thead>
-                          <tr className="border-b border-border text-left">
+                          <tr className="border-b-2 border-border text-left">
                             <th className="py-1.5 pr-4 font-bold">Quarter{" "}</th>
                             <th className="py-1.5 pr-4 text-right font-bold">I-140{" "}</th>
                             <th className="py-1.5 text-right font-bold">I-485, employment{" "}</th>
@@ -478,7 +478,7 @@ export default async function UscisProcessingTimesPage() {
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12">
+      <section className="mt-12 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold">Read next</h2>{" "}
         <ul className="mt-4 space-y-2">
           <li>

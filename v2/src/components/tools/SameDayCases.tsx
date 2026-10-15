@@ -61,7 +61,7 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
       }
     >
       <ChartTips label={`Cases filed on ${longDay(data.day)}, by what has happened to them`}>
-      <div className="flex h-5 w-full overflow-hidden border border-input" aria-hidden="true">
+      <div className="flex h-5 w-full overflow-hidden border-input border" aria-hidden="true">
         {shown.map((g) => (
           <div
             key={g.key}
@@ -76,7 +76,7 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
         {shown.map((g) => (
           <Fragment key={g.key}>{" "}
           <li className="flex items-center gap-1.5">
-            <span className={cn("inline-block size-3.5 shrink-0 border border-input", g.tone)} aria-hidden="true" />{" "}
+            <span className={cn("inline-block size-3.5 shrink-0 border-input border", g.tone)} aria-hidden="true" />{" "}
             <span className="text-soft">{g.label}</span>{" "}
             <span className="font-mono font-semibold tabular-nums">{data.counts[g.key].toLocaleString("en-US")}</span>
           </li>
@@ -96,7 +96,7 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
                   rel="nofollow"
                   title={`${n.caseNumber}: ${n.status ? prettyStatus(n.status) : "no status"}`}
                   className={cn(
-                    "flex size-11 items-center justify-center border border-input font-mono text-sm font-semibold tabular-nums transition-colors hover:border-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "flex size-11 items-center justify-center border-input font-mono text-sm font-semibold tabular-nums transition-[color,background-color,border-color,box-shadow,transform] hover:border-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:hover:-translate-y-0.5 border",
                     TONE[n.group],
                     n.isThis && "outline outline-2 outline-offset-2 outline-primary-text",
                   )}

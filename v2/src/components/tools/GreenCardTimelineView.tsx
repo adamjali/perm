@@ -73,13 +73,13 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
           no width because it has no number, and giving it one would invent the
           figure the whole page says cannot be known. */}
       <ChartTips label="Each stage of the green card, to scale">
-      <div className="flex h-12 w-full overflow-hidden border border-input">
+      <div className="flex h-12 w-full overflow-hidden border-input border">
         {measured.map((stage, i) => (
           <div
             key={stage.id}
             className={cn(
               CERTAINTY[stage.certainty].bar,
-              i > 0 && "border-l border-border",
+              i > 0 && "border-l-2 border-border",
             )}
             style={{ width: `${(stage.months / total) * 100}%` }}
             data-tip={`${stage.label}\n${months(stage.months)} of ${total}\n${CERTAINTY[stage.certainty].label}`}
@@ -95,7 +95,7 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
           return (
             <li
               key={stage.id}
-              className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 border-b border-border/40 pb-4 last:border-b-0"
+              className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 border-b-2 border-border/40 pb-4 last:border-b-0"
             >
               <Icon className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
               {/* min-w-0 with the minmax(0,1fr) track: the stage's bulletin table
@@ -128,7 +128,7 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
         })}
       </ol>
 
-      <figcaption className="mt-6 bg-tint p-6">
+      <figcaption className="mt-6 bg-tint p-6 border-2 border-border">
         <p className="font-heading text-xl font-bold leading-tight">
           {months(timeline.employerControlledMonths)} of {total} are on your
           side of the process.

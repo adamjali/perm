@@ -479,7 +479,7 @@ export default async function AttorneyPage({
       <Chapter id="firm" title={firmProfile ? "From the firm" : "For the firm"}>
         <FirmProfileBlock firmName={row.name} profile={firmProfile} />{" "}
         <FirmClaimPanel slug={canonicalSlug} firmName={row.name} claimed={firmProfile != null} />{" "}
-        <div className="mt-8 max-w-2xl">
+        <div className="mt-8 max-w-2xl border-2 shadow-hard-sm p-6 bg-card border-border">
           <h3 className="font-heading text-lg font-bold">Running the practice?</h3>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             The{" "}

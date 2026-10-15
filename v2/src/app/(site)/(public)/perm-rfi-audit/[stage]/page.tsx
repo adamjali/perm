@@ -198,7 +198,7 @@ export default async function StagePage({
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           <span
-            className="mr-3 inline-block h-4 w-4 shrink-0 border border-input align-middle"
+            className="mr-3 inline-block h-4 w-4 shrink-0 border-input align-middle border"
             style={{ backgroundColor: GROUP_STYLE[meta.group].fill }}
             aria-hidden="true"
           />{" "}
@@ -212,7 +212,7 @@ export default async function StagePage({
           <div className="mt-6 max-w-3xl grid gap-3 text-lg leading-relaxed">
             <p>{entry.what}</p>{" "}
             {entry.deadline ? (
-              <p className="border-l-2 border-[var(--data-warn)] bg-[var(--data-warn)]/10 px-4 py-3 text-base">
+              <p className="border-l-4 border-[var(--data-warn)] bg-[var(--data-warn)]/10 px-4 py-3 text-base">
                 <b className="font-bold">Deadline.</b> {entry.deadline}
               </p>
             ) : null}{" "}
@@ -264,7 +264,7 @@ export default async function StagePage({
         </section>
 
         {months.length > 0 ? (
-          <section className="mt-10">
+          <section className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
             <h2 className="font-heading text-xl font-bold">
               Which filing months these come from
             </h2>{" "}
@@ -312,7 +312,7 @@ export default async function StagePage({
           </section>
         ) : null}
 
-        <section className="mt-10">
+        <section className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
           <h2 className="font-heading text-xl font-bold">
             {listing === "list" ? `All ${formatInt(cases)} of them` : "The cases themselves"}
           </h2>{" "}
@@ -388,7 +388,7 @@ export default async function StagePage({
                   lookup URLs themselves are kept out of crawlers on purpose
                   (each is a live render), so this list is the only place
                   a pending number is indexable. */}
-              <details className="mt-6 border-t border-border pt-4">
+              <details className="mt-6 border-t-2 border-border pt-4">
                 <summary className="cursor-pointer text-sm font-bold">
                   All {formatInt(allRecords.length)} case numbers at this stage, as text
                 </summary>{" "}
@@ -408,7 +408,7 @@ export default async function StagePage({
               </details>
             </>
           ) : null}
-          <p className="mt-5 border-t border-border pt-3 text-sm text-muted-foreground">
+          <p className="mt-5 border-t-2 border-border pt-3 text-sm text-muted-foreground">
             {asOf
               ? `DOL live case record, as of ${formatAsOf(asOf) ?? asOf}`
               : "DOL live case record"}

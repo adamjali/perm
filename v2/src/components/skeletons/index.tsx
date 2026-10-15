@@ -62,7 +62,7 @@ export function FormSectionSkeleton({
   return (
     <div
       className={cn(
-        "border border-border bg-card p-6",
+        "border-2 border-border bg-card p-6 shadow-hard-sm",
         className
       )}
     >
@@ -102,7 +102,7 @@ export function SectionSkeleton({
   return (
     <div
       className={cn(
-        "border border-border bg-card p-4",
+        "border-2 border-border bg-card p-4 shadow-hard-sm",
         className
       )}
     >
@@ -195,7 +195,7 @@ export function PageTitleSkeleton({
   return (
     <div className={cn("relative", className)}>
       {showAccent && (
-        <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border border-foreground skeleton-pulse" />
+        <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border-foreground skeleton-pulse border" />
       )}
       <div className={cn(showAccent && "pl-6", "space-y-2")}>
         <Skeleton variant="line" className="h-8 w-3/4" />
@@ -246,7 +246,7 @@ export function StickyFooterSkeleton({ className }: StickyFooterSkeletonProps) {
   return (
     <div
       className={cn(
-        "fixed bottom-0 left-0 right-0 bg-background/95 border-t border-border p-4 z-10",
+        "fixed bottom-0 left-0 right-0 bg-background/95 border-t-2 border-border p-4 z-10",
         className
       )}
     >

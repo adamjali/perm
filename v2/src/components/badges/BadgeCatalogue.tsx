@@ -171,8 +171,8 @@ function MatrixGroup({
   const code = v ? snippet(row, v, format, origin) : "";
   const ground = theme === "dark" ? "bg-black" : "bg-white";
   return (
-    <div className="mt-5 border border-border bg-card">
-      <p className="border-b border-border p-4 text-sm leading-relaxed text-soft">
+    <div className="mt-5 border-border bg-card border">
+      <p className="border-b-2 border-border p-4 text-sm leading-relaxed text-soft">
         {`The final action cutoff the State Department published for each category and country. A priority date earlier than its cutoff has a visa number available. Pick a badge for its line.`}
       </p>{" "}
       <div className="overflow-x-auto overscroll-x-none">
@@ -182,7 +182,7 @@ function MatrixGroup({
         <table className="w-full min-w-[44rem] table-fixed border-collapse text-sm">
           <caption className="sr-only">{`Visa bulletin badges by category and country. Pick one to copy its line.`}</caption>
           <thead>
-            <tr className="border-b border-border">
+            <tr className="border-b-2 border-border">
               <th scope="col" className="w-24 p-3 text-left font-heading font-bold">Category{" "}</th>
               {grid.places.map((place) => (
                 <th key={place} scope="col" className="p-3 text-left font-heading font-bold">
@@ -193,7 +193,7 @@ function MatrixGroup({
           </thead>
           <tbody>
             {grid.cats.map((cat) => (
-              <tr key={cat} className="border-b border-border last:border-b-0">
+              <tr key={cat} className="border-b-2 border-border last:border-b-0">
                 <th scope="row" className="p-3 text-left font-heading text-base font-bold">
                   {cat}{" "}
                 </th>
@@ -231,9 +231,9 @@ function MatrixGroup({
           </tbody>
         </table>
       </div>{" "}
-      <div className="flex flex-col gap-2 border-t border-border p-4 sm:flex-row sm:items-stretch [&>*]:min-w-0">
+      <div className="flex flex-col gap-2 border-t-2 border-border p-4 sm:flex-row sm:items-stretch [&>*]:min-w-0">
         <p className="shrink-0 self-center font-heading text-base font-bold sm:w-40">{row.label}</p>{" "}
-        <pre className="flex-1 overflow-x-auto whitespace-nowrap bg-tint px-3 py-2.5 font-mono text-sm leading-relaxed">
+        <pre className="flex-1 overflow-x-auto whitespace-nowrap bg-tint px-3 py-2.5 font-mono text-sm leading-relaxed border-2 border-border">
           <code>{code}</code>
         </pre>{" "}
         <CopyButton text={code} />
@@ -271,7 +271,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
 
   return (
     <>
-      <section className="mt-10 bg-tint p-5 sm:p-6">
+      <section className="mt-10 bg-tint p-5 sm:p-6 border-2 shadow-hard border-border">
         <h2 className="font-heading text-2xl font-bold">Set them up</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           These three choices apply to every badge below, so you only make them once.
@@ -347,7 +347,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
                   <li className="flex flex-col bg-tint">
                     <div
                       className={
-                        "flex min-h-[4.5rem] items-center justify-center overflow-x-auto border-b border-border px-4 py-4 " +
+                        "flex min-h-[4.5rem] items-center justify-center overflow-x-auto border-b-2 border-border px-4 py-4" +
                         (theme === "dark" ? "bg-black" : "bg-white")
                       }
                       /* Our own string from the renderer, which escapes its
@@ -372,7 +372,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
                         </p>
                       ) : null}{" "}
                       <div className="mt-auto flex items-stretch gap-2 pt-4 [&>*]:min-w-0">
-                        <pre className="flex-1 overflow-x-auto whitespace-nowrap bg-tint px-3 py-2.5 font-mono text-sm leading-relaxed">
+                        <pre className="flex-1 overflow-x-auto whitespace-nowrap bg-tint px-3 py-2.5 font-mono text-sm leading-relaxed border-2 border-border">
                           <code>{code}</code>
                         </pre>{" "}
                         <CopyButton text={code} />

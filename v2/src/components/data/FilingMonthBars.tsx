@@ -61,10 +61,10 @@ export function FilingMonthBars({
     <figure className={cn("m-0", className)}>
       <div aria-hidden="true" className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 border border-input bg-foreground" /> Decided
+          <span className="size-3 border-input bg-foreground border" /> Decided
         </span>{" "}
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 border border-input bg-primary" /> Still waiting at DOL
+          <span className="size-3 border-input bg-primary border" /> Still waiting at DOL
         </span>
       </div>{" "}
       <ChartTips label={label} className="mt-4">
@@ -81,7 +81,7 @@ export function FilingMonthBars({
                   {flagged ? (
                     <span
                       className={cn(
-                        "absolute -top-8 z-10 whitespace-nowrap bg-primary px-1.5 py-0.5 text-sm font-bold text-black",
+                        "absolute -top-8 z-10 whitespace-nowrap bg-primary px-1.5 py-0.5 text-sm font-bold text-black border-2 border-border",
                         anchor,
                       )}
                     >
@@ -90,7 +90,7 @@ export function FilingMonthBars({
                   ) : null}
                   <div
                     data-tip={`Filed in ${MONTH_LONG(m.month)}\n${formatInt(m.total)} ${nouns}\n${formatInt(m.total - m.pending)} decided\n${formatInt(m.pending)} still waiting`}
-                    className={cn("flex flex-col border border-border", flagged && "outline outline-2 outline-offset-2 outline-primary")}
+                    className={cn("flex flex-col border-border border", flagged && "outline outline-2 outline-offset-2 outline-primary")}
                     style={{ height: `${Math.max(2, h)}%` }}
                   >
                     {m.pending > 0 ? <div className="bg-primary" style={{ height: `${waitShare}%` }} /> : null}

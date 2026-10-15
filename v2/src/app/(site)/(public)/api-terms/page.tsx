@@ -55,7 +55,7 @@ const SECTIONS: readonly LegalSection[] = [
  */
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <details className="legal-section group border-b border-border">
+    <details className="legal-section group border-b-2 border-border">
       <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
         <h2 id={id} className="m-0 font-heading text-2xl font-bold">
           {title}

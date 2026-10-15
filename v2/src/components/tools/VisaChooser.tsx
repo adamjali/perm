@@ -17,9 +17,9 @@ import {
 } from "@/lib/visaChooser";
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const OPTION_CLASS =
-  "flex min-h-[44px] cursor-pointer items-center gap-3 border border-input bg-background px-3 py-2 text-base has-[:checked]:bg-tint has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary";
+  "flex min-h-[44px] cursor-pointer items-center gap-3 border-2 border-input bg-background px-3 py-2 text-base has-[:checked]:bg-tint has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary";
 
 const SPONSORS: Array<{ value: Sponsor; label: string }> = [
   { value: "employer", label: "A US employer offering me a job" },
@@ -107,7 +107,7 @@ export function VisaChooser({ className }: { className?: string }) {
 
   return (
     <div className={cn("object", className)}>
-      <div className="flex items-start gap-3 border-b border-border bg-muted/40 p-4 sm:px-8">
+      <div className="flex items-start gap-3 border-b-2 border-border bg-muted/40 p-4 sm:px-8">
         <InfoIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />{" "}
         <p className="text-base leading-relaxed">
           This matches your answers against the regulation&apos;s definitions. It isn&apos;t legal advice: whether a case
@@ -155,7 +155,7 @@ export function VisaChooser({ className }: { className?: string }) {
         </div>
       </div>
 
-      <section className="border-t border-border p-6 sm:p-8" aria-live="polite" aria-labelledby={`${uid}-result`}>
+      <section className="border-t-2 border-border p-6 sm:p-8" aria-live="polite" aria-labelledby={`${uid}-result`}>
         <div className="flex items-center gap-3">
           <CompassIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />{" "}
           <h2 id={`${uid}-result`} className="font-heading text-2xl font-bold leading-tight">
@@ -171,7 +171,7 @@ export function VisaChooser({ className }: { className?: string }) {
             {result.fits.map((f) => (
               <Fragment key={f.code}>
                 {" "}
-                <li className="bg-tint p-5">
+                <li className="bg-tint p-5 border-2 border-border">
                   <h3 className="font-heading text-xl font-bold" translate="no">
                     {f.name}
                   </h3>{" "}

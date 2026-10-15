@@ -20,7 +20,7 @@ function RowsTable({ list, rows, top }: { list: SevpList; rows: SevpList["rows"]
   return (
     <div className="overflow-x-auto border-t-2 border-[var(--object-border)]">
       <table className="w-full min-w-[560px] text-left text-base">
-        <thead className="border-b border-border bg-muted/40">
+        <thead className="border-b-2 border-border bg-muted/40">
           <tr>
             <th scope="col" className="w-12 px-3 py-2 font-bold">#{" "}</th>
             <th scope="col" className="px-3 py-2 font-bold">Employer, as ICE names it{" "}</th>

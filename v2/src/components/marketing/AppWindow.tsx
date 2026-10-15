@@ -86,17 +86,25 @@ export function AppWindow({
   return (
     <figure className={className}>
       <div className="relative">
+        {/* The lime block the window sits on, offset like a hard shadow. */}
+        <div
+          aria-hidden="true"
+          className={cn(
+            "absolute inset-0 translate-x-2.5 translate-y-2.5 border-2 bg-primary sm:translate-x-3.5 sm:translate-y-3.5",
+            edge,
+          )}
+        />
         <div
           className={cn(
-            "relative border bg-background text-foreground",
+            "relative border-2 bg-background text-foreground",
             edge,
           )}
         >
-          <div className="flex items-center gap-3 border-b border-border bg-muted px-3 py-2">
+          <div className="flex items-center gap-3 border-b-2 border-border bg-muted px-3 py-2">
             <span aria-hidden="true" className="flex gap-1.5">
-              <span className="size-3 border border-input bg-background" />{" "}
-              <span className="size-3 border border-input bg-background" />{" "}
-              <span className="size-3 border border-input bg-primary" />
+              <span className="size-3 border-2 border-border bg-background" />{" "}
+              <span className="size-3 border-2 border-border bg-background" />{" "}
+              <span className="size-3 border-2 border-border bg-primary" />
             </span>{" "}
             <span className="truncate font-mono text-sm text-muted-foreground">
               {url}

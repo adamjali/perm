@@ -63,7 +63,7 @@ export function BrowseStrip({
           const n = counts[b] ?? 0;
           const isActive = b === active;
           const chip =
-            "inline-flex min-h-[44px] min-w-[44px] items-center justify-center border px-2 font-heading text-sm font-bold no-underline";
+            "inline-flex min-h-[44px] min-w-[44px] items-center justify-center border-2 px-2 font-heading text-sm font-bold no-underline border-border";
           return (
             // Keyed Fragment with a real space: React renders array items with
             // NOTHING between them, so 27 chips reach every extractor as
@@ -138,7 +138,7 @@ export function BrowseIndexGrid({
       {BROWSE_BUCKETS.map((b) => {
         const n = counts[b] ?? 0;
         const card =
-          "flex min-h-[44px] flex-col justify-center border p-4 no-underline";
+          "flex min-h-[44px] flex-col justify-center border-2 p-4 no-underline border-border";
         return (
           <Fragment key={b}>{" "}
             <li className="min-w-0">
@@ -156,7 +156,7 @@ export function BrowseIndexGrid({
                   href={browseHref(base, b)}
                   className={cn(
                     card,
-                    "border-border bg-card transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                    "border-border bg-card transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary shadow-hard-sm",
                   )}
                 >
                   <span className="font-heading text-2xl font-bold">

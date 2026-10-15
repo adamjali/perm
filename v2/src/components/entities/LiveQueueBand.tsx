@@ -113,7 +113,7 @@ export function LiveQueueBand({
                 been decided.
               </p>
               {oldest ? (
-                <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-soft">
+                <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-soft">
                   The oldest one still waiting was filed{" "}
                   <span className="font-bold">{longDate(oldest)}</span>
                   {months != null && months >= 1 ? (
@@ -190,7 +190,7 @@ export function LiveQueueBand({
             </div>
           </div>
 
-          <p className="mt-6 border-t border-border pt-4 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-6 border-t-2 border-border pt-4 text-sm leading-relaxed text-muted-foreground">
             None of this changes one case&apos;s wait: DOL works one national
             line.{" "}
             <Link

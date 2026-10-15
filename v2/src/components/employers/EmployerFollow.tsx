@@ -67,7 +67,7 @@ export function EmployerFollow({
   const legend = parts ? ribbonLegend(parts) : [];
   const shown = moves.slice(0, RAIL_SHOWN);
   return (
-    <section id="follow" className="mt-10 scroll-mt-28">
+    <section id="follow" className="mt-10 scroll-mt-28 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
       <h2 className="font-heading text-xl font-bold">Follow {name}</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
         An email when DOL moves its cases as a group: five or more on or off hold in a day, or a batch decided well above its usual pace.
@@ -116,7 +116,7 @@ export function EmployerFollow({
             {logFrom ? `Nothing employer-wide since this site's record began on ${longDate(logFrom)}.` : "Nothing employer-wide in this site's record."}
           </p>
         ) : (
-          <ol className="mt-3 border-l border-border">
+          <ol className="mt-3 border-l-2 border-border">
             {shown.map((m) => (
               <Fragment key={m.key}>
                 <MoveItem m={m} />{" "}
@@ -129,7 +129,7 @@ export function EmployerFollow({
             <summary className="min-h-11 cursor-pointer py-2 text-sm font-bold link">
               {`Show the ${formatInt(moves.length - RAIL_SHOWN)} earlier ${moves.length - RAIL_SHOWN === 1 ? "move" : "moves"}`}
             </summary>
-            <ol className="mt-1 border-l border-border">
+            <ol className="mt-1 border-l-2 border-border">
               {moves.slice(RAIL_SHOWN).map((m) => (
                 <Fragment key={m.key}>
                   <MoveItem m={m} />{" "}
@@ -140,7 +140,7 @@ export function EmployerFollow({
         ) : null}
       </div>{" "}
 
-      <div className="mt-7 border-t border-border pt-6">
+      <div className="mt-7 border-t-2 border-border pt-6">
         <EmployerFollowForm slug={slug} source="employer-page" />
       </div>
     </section>

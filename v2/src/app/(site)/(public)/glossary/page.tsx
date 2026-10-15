@@ -114,7 +114,7 @@ export default function GlossaryPage() {
             {" "}
             <a
               href={`#letter-${l}`}
-              className="flex size-11 items-center justify-center border border-input bg-card font-heading text-base font-bold hover:bg-tint"
+              className="flex size-11 items-center justify-center border-input bg-card font-heading text-base font-bold hover:bg-tint motion-safe:hover:-translate-y-[1px] border transition-[color,background-color,border-color,box-shadow,transform]"
             >
               {l}
             </a>
@@ -127,7 +127,7 @@ export default function GlossaryPage() {
           <section key={g.letter} aria-labelledby={`letter-${g.letter}`}>
             <h3
               id={`letter-${g.letter}`}
-              className="mt-10 scroll-mt-28 border-b border-border pb-2 font-heading text-2xl font-bold first:mt-0"
+              className="mt-10 scroll-mt-28 border-b-2 border-border pb-2 font-heading text-2xl font-bold first:mt-0"
             >
               {g.letter}
             </h3>{" "}
@@ -259,7 +259,7 @@ function TermMap({ names }: { names: Map<string, string> }) {
             {i < road.length - 1 ? (
               <span aria-hidden="true" className="absolute bottom-0 left-[1.3rem] top-11 w-[3px] bg-border" />
             ) : null}
-            <span className="relative flex h-11 w-11 items-center justify-center border border-input bg-card font-heading text-lg font-bold">
+            <span className="relative flex h-11 w-11 items-center justify-center border-input bg-primary font-heading text-lg font-bold text-primary-foreground border">
               {i + 1}
             </span>{" "}
             <StageName stage={stage} />{" "}
@@ -271,7 +271,7 @@ function TermMap({ names }: { names: Map<string, string> }) {
       </ol>{" "}
       <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 [&>*]:min-w-0">
         {beside.map((stage) => (
-          <div key={stage.id} className="border border-dashed border-border p-4">
+          <div key={stage.id} className="border-2 border-dashed border-border p-4">
             <StageName stage={stage} />{" "}
             <div className="mt-3">
               <TermChips slugs={stage.slugs} names={names} />

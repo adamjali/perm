@@ -76,7 +76,7 @@ export function OctoberNote() {
   return (
     <section
       id={OCTOBER_2025.anchorId}
-      className="scroll-mt-32 border border-data-warn bg-data-warn/8 p-6 sm:p-8"
+      className="scroll-mt-32 border-2 border-data-warn bg-data-warn/8 p-6 sm:p-8"
       aria-labelledby="october-2025-heading"
     >
       <h2

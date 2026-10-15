@@ -87,7 +87,7 @@ export function LcaProfile({
   const filed = longDate(p.newest?.filed ?? null);
 
   return (
-    <section className={cn("mt-10", className)}>
+    <section className={cn("mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border", className)}>
       <h2 className="font-heading text-xl font-bold">What its H-1B LCAs were for</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         From DOL&apos;s quarterly LCA files: {formatInt(p.filings)} {p.filings === 1 ? "LCA" : "LCAs"} filed by {name}
@@ -175,15 +175,15 @@ export function LcaProfile({
       ) : null}{" "}
 
       {declared ? (
-        <div className="mt-8 border-t border-border/60 pt-6">
+        <div className="mt-8 border-t-2 border-border/60 pt-6">
           <h3 className="font-heading text-lg font-bold">What it declared on Section H</h3>{" "}
           {p.newest ? (
             <dl className="mt-3 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
-              <div className="bg-tint p-4">
+              <div className="bg-tint p-4 border-2 border-border">
                 <dt className="text-sm font-bold text-muted-foreground">H-1B-dependent</dt>{" "}
                 <dd className="mt-1 font-heading text-2xl font-bold">{yesNo(p.newest.dependent)}</dd>
               </div>{" "}
-              <div className="bg-tint p-4">
+              <div className="bg-tint p-4 border-2 border-border">
                 <dt className="text-sm font-bold text-muted-foreground">Found a willful violator</dt>{" "}
                 <dd className="mt-1 font-heading text-2xl font-bold">{yesNo(p.newest.violator)}</dd>
               </div>

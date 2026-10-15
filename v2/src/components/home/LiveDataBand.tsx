@@ -188,7 +188,7 @@ export function LiveDataBand({
  */
 export function DataShelf({ figures }: { figures?: DataPageFigures }) {
   return (
-    <section aria-labelledby="data-shelf-heading" className="bg-tint">
+    <section aria-labelledby="data-shelf-heading" className="bg-tint border-b-3 border-border">
       <div className="mx-auto max-w-[1200px] px-4 py-12 sm:px-8 sm:py-16">
         <h2 id="data-shelf-heading" className="font-heading text-2xl font-bold sm:text-3xl">
           Look through the record
@@ -330,7 +330,7 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
             <Link
               key={d.href}
               href={d.href}
-              className="group flex flex-col bg-card p-4 transition-colors duration-150 hover:bg-accent"
+              className="group flex flex-col bg-card p-4 transition-[color,background-color,border-color,box-shadow,transform] duration-150 hover:bg-accent border-2 shadow-hard-sm motion-safe:hover:-translate-y-[2px] hover:shadow-hard motion-safe:active:translate-y-0 active:shadow-hard-sm border-border"
             >
               {/* THE PICTURE AND THE NAME: no "View ..." line or OPEN row
                   restating the label; the whole card is the link, and `what`
@@ -339,7 +339,7 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
                 {d.label}{" "}
               </span>{" "}
               {d.figure ? (
-                <span className="mt-3 block">
+                <span className="mt-3 block border-t-2 border-border">
                   {d.figure}
                 </span>
               ) : null}{" "}

@@ -86,7 +86,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
       </p>{" "}
       <ScrollBox label={title} className="mt-4 overscroll-x-none">
         <table className="w-full min-w-[720px] border-t-2 border-[var(--object-border)] text-sm">
-          <thead className="border-b border-input bg-muted">
+          <thead className="dark border-b border-black bg-[#141414] text-foreground">
             <tr>
               <th className="p-3 text-left text-sm">Category{" "}</th>
               {BOARD_COUNTRIES.map((c) => (
@@ -98,7 +98,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
           </thead>
           <tbody>
             {ORDER.map((cat) => (
-              <tr key={cat} className="border-t border-border align-top">
+              <tr key={cat} className="border-t-2 border-border align-top">
                 <td className="p-3">
                   <span className="font-semibold">{CATEGORY[cat]?.label ?? cat}</span>{" "}
                   <span className="block text-sm text-muted-foreground">{CATEGORY[cat]?.who ?? ""}</span>{" "}

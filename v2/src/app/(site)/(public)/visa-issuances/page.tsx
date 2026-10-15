@@ -151,7 +151,7 @@ export default async function VisaIssuancesPage() {
           <table className="w-full text-left text-base">
             <caption className="sr-only">Employment immigrant visas issued abroad by month{" "}</caption>
             <thead>
-              <tr className="border-b border-border text-sm text-muted-foreground">
+              <tr className="border-b-2 border-border text-sm text-muted-foreground">
                 <th className="py-2 pr-4 font-bold">Category{" "}</th>
                 <th className="hidden py-2 pr-4 font-bold sm:table-cell">Each month{" "}</th>
                 <th className="py-2 pr-4 text-right font-bold">{`${monthName(newest).split(" ")[0]}`}{" "}</th>
@@ -221,7 +221,7 @@ export default async function VisaIssuancesPage() {
         <ScrollBox label="Immigrant visas issued abroad, by category" className="mt-4 border-t-2 border-[var(--object-border)] bg-card">
           <table className="w-full min-w-[32rem] text-left text-base">
             <caption className="sr-only">Immigrant visas issued abroad by category{" "}</caption>
-            <thead className="border-b border-border bg-muted/40">
+            <thead className="border-b-2 border-border bg-muted/40">
               <tr>
                 <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>
                 <th scope="col" className="px-4 py-3 text-right font-bold">{monthName(newest)}{" "}</th>

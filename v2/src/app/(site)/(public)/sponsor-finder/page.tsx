@@ -45,7 +45,7 @@ export const metadata: Metadata = withSocialCard({
 
 const STATES = new Set(Object.keys(US_STATE_NAMES));
 const FIELD =
-  "min-h-[44px] w-full border border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
+  "min-h-[44px] w-full border-2 border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
 const pct = (x: number | null, d = 0) => (x === null ? "" : `${(x * 100).toFixed(d)}%`);
 
 export default async function SponsorFinderPage({
@@ -158,13 +158,13 @@ export default async function SponsorFinderPage({
         </div>
       </form>
 
-      <p className="mt-6 max-w-3xl border-l-2 border-primary pl-4 text-base text-soft">
+      <p className="mt-6 max-w-3xl border-l-4 border-primary pl-4 text-base text-soft">
         These employers filed PERM cases. Whether one will sponsor you depends on the job and on them; DOL&apos;s
         records can&apos;t say. Debarred employers are left out unless you ask for them.
       </p>
 
       {found === null ? (
-        <p className="mt-8 bg-tint p-5 text-base">
+        <p className="mt-8 bg-tint p-5 text-base border-2 border-border">
           The sponsor index is being built. Try again in a few minutes.
         </p>
       ) : (
@@ -182,7 +182,7 @@ export default async function SponsorFinderPage({
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <caption className="sr-only">Sponsors matching the filters</caption>
                   <thead>
-                    <tr className="border-b border-border bg-muted text-left">
+                    <tr className="border-b-2 border-border bg-muted text-left">
                       <th scope="col" className="p-2 font-bold">Employer </th>
                       <th scope="col" className="p-2 font-bold">State </th>
                       <th scope="col" className="p-2 text-right font-bold">PERM, 12 months </th>

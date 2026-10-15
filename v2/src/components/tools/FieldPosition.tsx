@@ -147,7 +147,7 @@ export function FieldPosition({
 
       {/* The field, as its own distribution. */}
       <ChartTips label={`${measure}, across the field`} className="mt-2">
-      <div className="relative flex h-14 items-end gap-px border-b border-border">
+      <div className="relative flex h-14 items-end gap-px border-b-2 border-border">
         {counts.map((c, i) => {
           const binMid = min + ((i + 0.5) / BINS) * (max - min);
           return (

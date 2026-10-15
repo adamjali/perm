@@ -147,13 +147,13 @@ export default async function EmployersUnderReviewPage() {
             <span
               aria-hidden="true"
               className={
-                "inline-flex min-w-[4.5rem] shrink-0 justify-end font-mono text-sm font-bold tabular-nums " +
+                "inline-flex min-w-[4.5rem] shrink-0 justify-end font-mono text-sm font-bold tabular-nums border-2 px-1.5 border-border" +
                 (m.dir === "on"
                   ? "text-data-warn-ink"
                   : m.to === "DENIED"
                     ? "text-data-bad-ink"
                     : m.to === "ANALYST REVIEW" || m.to === "CERTIFIED"
-                      ? "text-data-good-ink"
+                      ? "text-black bg-primary"
                       : "text-muted-foreground")
               }
             >
@@ -190,7 +190,7 @@ export default async function EmployersUnderReviewPage() {
       </p>{" "}
 
       {!doc ? (
-        <p className="mt-10 bg-tint p-5 text-base">
+        <p className="mt-10 bg-tint p-5 text-base border-2 border-border">
           The employer census has not been written yet, or is more than eight
           days old. It is rebuilt by the daily sweep of DOL&apos;s case system;
           until then the{" "}
@@ -202,7 +202,7 @@ export default async function EmployersUnderReviewPage() {
       ) : (
         <>
           {newest ? (
-            <section className="mt-8" aria-labelledby="newest-move">
+            <section className="mt-8 border-2 shadow-hard p-6 sm:p-8 bg-card border-border" aria-labelledby="newest-move">
               <h2 id="newest-move" className="font-heading text-lg font-bold sm:text-xl">
                 {`DOL's newest move: ${weekdayDate(newest.date)}`}
               </h2>{" "}
@@ -235,7 +235,7 @@ export default async function EmployersUnderReviewPage() {
                 {`${formatInt(onHold)} PERM cases are on hold, ${formatShare(doc.pendingTotal ? onHold / doc.pendingTotal : 0)} of the ${formatInt(doc.pendingTotal)} DOL has pending, as of ${longDate(doc.asOf)}.`}
               </p>{" "}
               <ChartTips label="PERM cases on hold, by employer" className="mt-4">
-              <ol className="divide-y divide-border border-y border-border">
+              <ol className="divide-y divide-border border-y-2 border-border">
                 {held.map((r) => {
                   const n = r.byStatus[HOLD_STATUS] ?? 0;
                   const since = shortSince(r, doc.logFrom);
@@ -259,7 +259,7 @@ export default async function EmployersUnderReviewPage() {
                           {`${n === r.pending ? "Every pending case" : `${formatInt(n)} of ${formatInt(r.pending)} pending`}${since ? `, ${since}` : ""}`}
                         </span>
                       </span>{" "}
-                      <span className="col-span-2 row-start-2 block h-4 border border-input bg-background sm:col-span-1 sm:row-start-auto" aria-hidden="true">
+                      <span className="col-span-2 row-start-2 block h-4 border-input bg-background sm:col-span-1 sm:row-start-auto border" aria-hidden="true">
                         <span className="block h-full bg-data-warn-ink" style={{ width: `${Math.max(2, Math.round((n / heldMax) * 100))}%` }} />
                       </span>{" "}
                       <span className="col-start-2 row-start-1 text-right font-heading text-xl font-bold tabular-nums sm:col-start-auto sm:row-start-auto">
@@ -280,7 +280,7 @@ export default async function EmployersUnderReviewPage() {
               <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
                 {`Days DOL moved five or more of one employer's cases into or out of hold, from this site's daily record since ${longDate(doc.logFrom)}.`}
               </p>{" "}
-              <ol className="mt-4 divide-y divide-border border-y border-border">
+              <ol className="mt-4 divide-y divide-border border-y-2 border-border">
                 {shownDays.map(dayItem)}
               </ol>{" "}
               {earlierDays.length > 0 ? (
@@ -288,7 +288,7 @@ export default async function EmployersUnderReviewPage() {
                   <summary className="min-h-11 cursor-pointer py-2 text-base font-bold link">
                     {`Show the ${formatInt(earlierDays.length)} earlier days`}
                   </summary>
-                  <ol className="mt-2 divide-y divide-border border-y border-border">
+                  <ol className="mt-2 divide-y divide-border border-y-2 border-border">
                     {earlierDays.map(dayItem)}
                   </ol>
                 </details>
@@ -300,17 +300,17 @@ export default async function EmployersUnderReviewPage() {
             <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
               {`Every stage outside the line: holds, RFIs and appeals (${formatInt(outside)} cases)`}
             </summary>
-            <div className="border-t border-border px-5 pb-6">
-          <section className="mt-10">
+            <div className="border-t-2 border-border px-5 pb-6">
+          <section className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
             <h2 className="font-heading text-xl font-bold">Nationwide, as of {longDate(doc.asOf)}</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {formatInt(doc.pendingTotal)} PERM cases are pending. {formatInt(doc.nationwide[QUEUE_STATUS] ?? 0)} of them
               are in analyst review; the rest sit at one of these stages.
             </p>{" "}
-            <dl className="mt-5 border-t border-border">
+            <dl className="mt-5 border-t-2 border-border">
               {stages.map(([status, n]) => (
                 <Fragment key={status}>{" "}
-                <div className="grid grid-cols-1 gap-y-1 border-b border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+                <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                   <dt className="font-heading text-xl font-bold tabular-nums tracking-tight sm:text-2xl">{formatInt(n)}</dt>{" "}
                   <dd className="text-base leading-snug">
                     {hasStagePage(status) ? (
@@ -341,7 +341,7 @@ export default async function EmployersUnderReviewPage() {
               most; the share list below corrects for size.
             </p>{" "}
             <ChartTips label="Pending cases outside the normal queue, by employer" className="mt-4">
-            <ol className="divide-y divide-border border-y border-border">
+            <ol className="divide-y divide-border border-y-2 border-border">
               {byReview.map((r, i) => (
                 <Fragment key={r.slug ?? r.name}>{" "}
                 <li className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-baseline gap-x-3 py-3">
@@ -397,7 +397,7 @@ export default async function EmployersUnderReviewPage() {
               two of two is not a pattern.
             </p>{" "}
             <ChartTips label="Share of each employer's queue outside the normal queue" className="mt-4">
-            <ol className="divide-y divide-border border-y border-border">
+            <ol className="divide-y divide-border border-y-2 border-border">
               {byShare.map((r, i) => (
                 <Fragment key={r.slug ?? r.name}>{" "}
                 <li className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-baseline gap-x-3 py-3">
@@ -464,7 +464,7 @@ export default async function EmployersUnderReviewPage() {
             <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
               What a count here does and doesn&apos;t mean
             </summary>
-            <div className="border-t border-border px-5 pb-6">
+            <div className="border-t-2 border-border px-5 pb-6">
           <section className="mt-4 max-w-3xl">
             <p className="mt-3 text-base leading-relaxed text-soft">
               These are DOL&apos;s own status words, confirmed on the date above. They say where a case is,

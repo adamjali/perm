@@ -304,7 +304,7 @@ function QueueHistorySvg({
     <div className="-mx-1 overflow-x-auto px-1">
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="block h-auto w-full min-w-[560px] border border-border bg-card"
+        className="block h-auto w-full min-w-[560px] border-border bg-card border"
         role="group"
         aria-label={KIND_COPY[kind].svg}
       >
@@ -428,7 +428,7 @@ function QueueHistoryTable({
     <ScrollBox label={copy.caption}>
       <table className="w-full min-w-[560px] border-t-2 border-[var(--object-border)] text-left text-sm">
         <caption className="sr-only">{copy.caption}</caption>
-        <thead className="border-b border-input bg-muted">
+        <thead className="dark border-b border-black bg-[#141414] text-foreground">
           <tr>
             <th scope="col" className="px-3 py-2 text-sm font-bold">
               {copy.dateHead}
@@ -562,7 +562,7 @@ export function QueueHistoryChart({ points, className, kind = "readings" }: Queu
         controls={rangeControl}
         chart={
           chart ?? (
-            <p className="bg-tint p-6 text-base text-muted-foreground">
+            <p className="bg-tint p-6 text-base text-muted-foreground border-2 shadow-hard-sm border-border">
               The queue month didn’t change across these {shown.length} readings, so
               there’s no step to draw. The table has every reading and its date.
             </p>
@@ -711,7 +711,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
               {med > 0 && med <= max ? (
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 border-t border-dashed border-foreground/60"
+                  className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-foreground/60"
                   style={{ bottom: `${(med / max) * 100}%` }}
                 >
                   <span className="absolute -top-6 right-0 bg-background px-1 text-sm font-bold tabular-nums">
@@ -748,7 +748,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                 PERM determinations recorded in DOL&apos;s disclosure files, by month
                 of decision
               </caption>
-              <thead className="border-b border-input bg-muted">
+              <thead className="dark border-b border-black bg-[#141414] text-foreground">
                 <tr>
                   <th scope="col" className="px-3 py-2 text-sm font-bold">
                     Month

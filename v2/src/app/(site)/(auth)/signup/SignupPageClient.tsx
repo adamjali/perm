@@ -398,7 +398,7 @@ export function SignupPageClient() {
             </Button>
           </form>
 
-          <div className="pt-4 text-center border-t border-border">
+          <div className="pt-4 text-center border-t-2 border-border">
             <button
               onClick={() => setStep("credentials")}
               className="text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
@@ -547,7 +547,7 @@ export function SignupPageClient() {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border" />
+            <div className="w-full border-t-2 border-border" />
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="bg-card px-3 mono font-bold">
@@ -631,7 +631,7 @@ export function SignupPageClient() {
           </NavLink>
         </p>
 
-        <div className="pt-4 text-center border-t border-border">
+        <div className="pt-4 text-center border-t-2 border-border">
           <p className="text-base leading-relaxed text-muted-foreground">
             Already have an account?{" "}
             <NavLink

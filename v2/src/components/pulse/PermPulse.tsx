@@ -91,7 +91,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
       {variant === "charts" ? null : (
       <>
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
-        <h2 id="pulse-heading" className="font-heading text-2xl font-bold sm:text-3xl">
+        <h2 id="pulse-heading" className="font-heading text-3xl font-bold sm:text-4xl">
           PERM decisions, day by day
         </h2>{" "}
         {checkedAt ? (
@@ -103,12 +103,12 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
 
       {/* The day. One dominant figure, then its split. */}
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4 [&>*]:min-w-0">
-        <div className="col-span-2 bg-tint p-5 sm:p-6">
+        <div className="dark col-span-2 p-5 sm:p-6 border-2 shadow-hard border-black bg-[#141414] text-foreground">
           <p className="text-sm text-soft">
             Decided on {weekday}, {dayLabel(day.date, { month: "short", day: "numeric" })}
           </p>{" "}
           <div className="mt-2 flex flex-wrap items-end gap-x-4 gap-y-2">
-            <p className="font-heading text-5xl font-bold leading-none tabular-nums">
+            <p className="font-heading text-6xl font-bold leading-none tabular-nums">
               {formatInt(day.total)}
             </p>{" "}
             {changePct !== null && typical !== null ? (
@@ -128,14 +128,14 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
             <p className="mt-3 text-sm text-soft">{closedSentence(closedAfter)}</p>
           ) : null}
         </div>{" "}
-        <div className="p-5">
+        <div className="p-5 border-2 shadow-hard-sm bg-card border-border">
           <p className="text-sm text-muted-foreground">Certified</p>{" "}
-          <p className="mt-2 font-heading text-3xl font-bold leading-none tabular-nums">{formatInt(day.certified)}</p>{" "}
+          <p className="mt-2 font-heading text-4xl font-bold leading-none tabular-nums">{formatInt(day.certified)}</p>{" "}
           {share !== null ? <p className="mt-2 text-sm text-muted-foreground">{share}% of the day</p> : null}
         </div>{" "}
         {/* Two labelled numbers, never "62 · 21": a reader should not have to
             guess which figure is which. */}
-        <dl className="m-0 grid grid-cols-1 gap-3 p-5 sm:grid-cols-2 sm:gap-4 [&>*]:min-w-0">
+        <dl className="m-0 grid grid-cols-1 gap-3 p-5 sm:grid-cols-2 sm:gap-4 [&>*]:min-w-0 border-2 shadow-hard-sm bg-card border-border">
           <div>
             <dt className="text-sm text-muted-foreground">Denied</dt>{" "}
             <dd className="m-0 mt-1 font-heading text-3xl font-bold leading-none tabular-nums sm:mt-2">{formatInt(day.denied)}</dd>
@@ -163,7 +163,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
       </dl>{" "}
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         {/* Thirty days. Weekends sit low because DOL decides little then. */}
-        <figure className="m-0 bg-tint p-5 lg:col-span-2">
+        <figure className="m-0 bg-tint p-5 lg:col-span-2 border-2 shadow-hard-sm border-border">
           <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
             <span className="text-base font-semibold">The last {bars.length} days</span>{" "}
             <span className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-soft">
@@ -186,7 +186,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
           </div>
           <ChartTips label="Decisions per day, the last 30 days">
           <div
-            className="flex h-40 items-end gap-[2px] border-b border-l border-border pl-px sm:h-48"
+            className="flex h-40 items-end gap-[2px] border-b-2 border-l-2 border-border pl-px sm:h-48"
             role="img"
             aria-label={`Decisions per day, ${dayLabel(bars[0]!.date, { month: "long", day: "numeric" })} to ${dayLabel(lastBar.date, { month: "long", day: "numeric" })}, from ${formatInt(Math.min(...bars.map((b) => b.total)))} to ${formatInt(max)} a day.`}
           >
@@ -211,7 +211,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
         </figure>{" "}
 
         {/* The shape of a week, over the last four. */}
-        <figure className="m-0 bg-tint p-5">
+        <figure className="m-0 bg-tint p-5 border-2 shadow-hard-sm border-border">
           <figcaption className="text-base font-semibold">A typical week</figcaption>{" "}
           <ChartTips label="Average decisions by day of the week">
           <div className="mt-4 flex h-40 items-end gap-2 sm:h-48" role="img" aria-label="Average decisions by day of the week over the last four weeks.">
@@ -282,7 +282,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
 
   if (variant === "charts") return body;
   return variant === "band" ? (
-    <section aria-labelledby="pulse-heading" className="border-b border-border bg-background">
+    <section aria-labelledby="pulse-heading" className="border-b-2 border-border bg-background">
       {body}
     </section>
   ) : (

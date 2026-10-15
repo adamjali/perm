@@ -16,7 +16,7 @@ import type { CountryKey } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const EYEBROW_CLASS = "text-sm font-semibold text-muted-foreground";
 
 const LINE_NAME = { EB2: "EB-2", EB3: "EB-3" } as const;
@@ -66,7 +66,7 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
 
   return (
     <div className={cn("object", className)}>
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <ScalesIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-bold leading-tight">Compare the two lines</h2>
@@ -108,7 +108,7 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
           </p>{" "}
           <div aria-hidden="true" className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
             {["EB-2", "EB-3"].map((line) => (
-              <div key={line} className="border border-dashed border-foreground/40 p-4">
+              <div key={line} className="border-2 border-dashed border-foreground/40 p-4">
                 <p className="font-heading text-xl font-bold text-muted-foreground">{line}</p>{" "}
                 <p className="mt-3 text-sm text-muted-foreground">This month&apos;s cutoff</p>{" "}
                 <div className="mt-1 h-6 w-32 bg-foreground/10" />{" "}
@@ -135,7 +135,7 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
               />
             ))}
           </div>
-          <details className="group border-t border-border p-6 sm:p-8">
+          <details className="group border-t-2 border-border p-6 sm:p-8">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
               Before thinking about switching lines
             </summary>
@@ -154,7 +154,7 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
               </p>
             </div>
           </details>{" "}
-          <details className="group border-t border-border p-6 sm:p-8">
+          <details className="group border-t-2 border-border p-6 sm:p-8">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
               What this leaves out
             </summary>
@@ -220,7 +220,7 @@ function Verdict({
   }
   const good = fewer === "both-current" || ((fewer === "EB2" || fewer === "EB3") && cmp[fewer].kind === "current");
   return (
-    <div className={cn("border-b border-border p-6 sm:p-8", good && "bg-tint")}>
+    <div className={cn("border-b-2 border-border p-6 sm:p-8", good && "bg-tint")}>
       <p className={EYEBROW_CLASS}>{LINE_COUNTRY_LABEL[country]}</p>{" "}
       <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">{head}</p>{" "}
       {body ? <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">{body}</p> : null}
@@ -247,7 +247,7 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
   if (!rows.some(({ r }) => r.kind === "estimate")) return null;
   const pct = (n: number) => `${(n / max) * 100}%`;
   return (
-    <div className="border-b border-border p-6 sm:p-8">
+    <div className="border-b-2 border-border p-6 sm:p-8">
       <h3 className="font-heading text-lg font-bold">People ahead, on one scale</h3>{" "}
       <ChartTips label="People ahead in EB-2 and EB-3, on one scale" className="mt-4">
       <div className="space-y-4">
@@ -256,7 +256,7 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
             <span className="font-heading text-lg font-bold">{LINE_NAME[line]}</span>{" "}
             {r.kind === "estimate" ? (
               <div
-                className="relative h-8 border border-input bg-background"
+                className="relative h-8 border-input bg-background border"
                 role="img"
                 aria-label={`${LINE_NAME[line]}: ${rangeLabel(r)} people ahead`}
                 data-tip={
@@ -267,7 +267,7 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
               >
                 {r.check?.scaled ? (
                   <span
-                    className="absolute inset-y-0 border border-dashed border-foreground/60"
+                    className="absolute inset-y-0 border-dashed border-foreground/60 border"
                     style={{ left: pct(plausibleRange(r).low), width: pct(plausibleRange(r).high - plausibleRange(r).low) }}
                     aria-hidden="true"
                   />
@@ -315,7 +315,7 @@ function LineCard({
   return (
     <section
       className={cn(
-        "border-border p-6 sm:p-8 md:[&:first-child]:border-r max-md:[&:first-child]:border-b",
+        "border-border p-6 sm:p-8 md:[&:first-child]:border-r-2 max-md:[&:first-child]:border-b-2",
         fewer ? "bg-tint" : "",
       )}
       aria-labelledby={headingId}

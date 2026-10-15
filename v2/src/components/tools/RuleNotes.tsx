@@ -12,7 +12,7 @@ export function RuleNotes({ items, summary = "The rules behind it" }: { items: s
         <CaretRightIcon aria-hidden="true" className="size-4 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" />
         {summary}{" "}
       </summary>
-      <ul className="mt-1 space-y-1 border-l border-border pl-4 text-sm text-muted-foreground">
+      <ul className="mt-1 space-y-1 border-l-2 border-border pl-4 text-sm text-muted-foreground">
         {items.map((c) => (
           <li key={c}>{c}{" "}</li>
         ))}

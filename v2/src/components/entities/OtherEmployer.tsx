@@ -40,7 +40,7 @@ function SeasonalCaseList({
 }) {
   if (cases.length === 0) return null;
   return (
-    <section className="mt-10">
+    <section className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
       <h2 className="font-heading text-xl font-bold">
         {more
           ? `Its newest ${formatInt(cases.length)} H-2A, H-2B and CW-1 filings`
@@ -96,7 +96,7 @@ function SeasonalCaseList({
           is in the seasonal search.
         </p>
       ) : null}{" "}
-      <p className="mt-5 border-t border-border pt-3 text-sm font-bold text-muted-foreground">
+      <p className="mt-5 border-t-2 border-border pt-3 text-sm font-bold text-muted-foreground">
         {asOf ? `DOL live case record, as of ${longDate(asOf) ?? asOf}` : "DOL live case record"}
       </p>
     </section>

@@ -117,7 +117,7 @@ export function QueueMonthChart({
                 </span>{" "}
                 {/* The track is always full width, so a month DOL has not
                     started reads as untouched rather than as a missing row. */}
-                <span className="block h-6 w-full border border-input bg-muted">
+                <span className="block h-6 w-full border-input bg-muted border">
                   <span
                     className={cn(
                       "block h-full",
@@ -157,15 +157,15 @@ export function QueueMonthChart({
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border border-input bg-foreground/70" aria-hidden="true" />
+          <span className="h-3 w-3 border-input bg-foreground/70 border" aria-hidden="true" />
           Ahead of yours
         </span>{" "}
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border border-input bg-primary" aria-hidden="true" />
+          <span className="h-3 w-3 border-input bg-primary border" aria-hidden="true" />
           Your month
         </span>{" "}
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border border-input bg-foreground/20" aria-hidden="true" />
+          <span className="h-3 w-3 border-input bg-foreground/20 border" aria-hidden="true" />
           Filed after yours
         </span>{" "}
         <span>Columns: share of the month decided, then cases still pending.</span>

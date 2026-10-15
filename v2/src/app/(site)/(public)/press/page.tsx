@@ -103,7 +103,7 @@ export default async function PressPage() {
         </div>{" "}
 
         {doc && rows.length > 0 ? (
-          <figure className="bg-tint p-5 sm:p-6">
+          <figure className="bg-tint p-5 sm:p-6 border-3 shadow-hard border-border">
             <p className="text-sm font-bold text-muted-foreground">
               Today&apos;s record, {longDate(doc.asOf)}
             </p>{" "}
@@ -132,7 +132,7 @@ export default async function PressPage() {
             <li key={t.slug}>
               <Link
                 href={t.href}
-                className="group block h-full border border-input bg-card transition-transform motion-reduce:transition-none"
+                className="group block h-full border-input bg-card transition-transform motion-reduce:transition-none motion-safe:hover:-translate-y-0.5 border"
               >
                 <Image
                   src={pageCardUrl(t.slug)}
@@ -140,7 +140,7 @@ export default async function PressPage() {
                   width={1200}
                   height={630}
                   sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                  className="block h-auto w-full border-b border-border"
+                  className="block h-auto w-full border-b-2 border-border"
                 />{" "}
                 <span className="block p-4">
                   <span className="block font-heading text-lg font-bold group-hover:underline group-hover:decoration-primary group-hover:decoration-2 group-hover:underline-offset-4">
@@ -164,14 +164,14 @@ export default async function PressPage() {
             line under its sources.
           </p>{" "}
           <div className="mt-5 flex flex-wrap items-start gap-3">
-            <code className="block min-w-0 flex-1 whitespace-pre-wrap break-words bg-tint px-3 py-2 font-mono text-sm">
+            <code className="block min-w-0 flex-1 whitespace-pre-wrap break-words bg-tint px-3 py-2 font-mono text-sm border-2 border-border">
               {credit}
             </code>{" "}
             <CopyButton text={credit} />
           </div>
         </div>{" "}
         {/* A specimen of the credit in running text: what it looks like in a story. */}
-        <div aria-hidden="true" className="bg-tint p-6 sm:p-8">
+        <div aria-hidden="true" className="bg-tint p-6 sm:p-8 border-3 shadow-hard border-border">
           <div className="h-3 w-24 bg-foreground/80" />
           <div className="mt-4 h-5 w-11/12 bg-foreground" />
           <div className="mt-2 h-5 w-3/4 bg-foreground" />
@@ -205,7 +205,7 @@ export default async function PressPage() {
         </h2>{" "}
         <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
           {SOURCES.map((s) => (
-            <li key={s.name} className="flex items-start gap-4 border-t border-border pt-5">
+            <li key={s.name} className="flex items-start gap-4 border-border p-5 border-2 shadow-hard-sm bg-card">
               <s.icon size={26} className="shrink-0 text-primary-text" aria-hidden="true" />{" "}
               <span>
                 <span className="block font-heading text-lg font-bold">{s.name}</span>{" "}

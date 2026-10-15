@@ -159,7 +159,7 @@ export default async function PermWagesPage() {
         <>
           <ChapterNav items={chapters} className="mt-10" />
           {ladder ? (
-            <section id="ladder" className="mt-10">
+            <section id="ladder" className="dark mt-10 border-2 shadow-hard border-black bg-[#141414] text-foreground p-6 sm:p-8">
               <h2 className="font-heading text-2xl font-bold">
                 The whole wage ladder
               </h2>{" "}
@@ -174,7 +174,7 @@ export default async function PermWagesPage() {
                   // Array items render with NOTHING between them, so the
                   // last figure of one rung glued to the next rung's label.
                   <Fragment key={d.k}>
-                    <div className={d.k === "Median" ? "border border-primary-text bg-tint p-3" : "p-3"}>
+                    <div className={d.k === "Median" ? "border-2 border-primary bg-tint p-3" : "p-3"}>
                       <dt className="text-sm text-muted-foreground">
                         {d.k}
                       </dt>{" "}
@@ -234,7 +234,7 @@ export default async function PermWagesPage() {
             </FigurePlate>
           ) : null}
 
-          <section id="all" className="mt-16 border-t-2 border-foreground pt-4">
+          <section id="all" className="mt-16 border-t-4 border-foreground pt-4">
             <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
               All {occupationCount.toLocaleString("en-US")} occupations
             </h2>{" "}
@@ -255,7 +255,7 @@ export default async function PermWagesPage() {
           </div>
         </>
       ) : (
-        <section className="mt-10 bg-tint p-8 text-center">
+        <section className="mt-10 bg-tint p-8 text-center border-2 shadow-hard border-border">
           <p className="text-lg text-muted-foreground">
             The occupation aggregates land with the quarterly disclosure
             ingest. Until then, the{" "}

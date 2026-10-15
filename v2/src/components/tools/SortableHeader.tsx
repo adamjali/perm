@@ -37,7 +37,7 @@ export function SortableHeader<T>({
   disabled?: boolean;
 }) {
   return (
-    <thead className="border-b border-input bg-muted">
+    <thead className="dark border-b border-black bg-[#141414] text-foreground">
       <tr>
         {(leading ?? []).map((h) => (
           <Fragment key={h}>
@@ -63,7 +63,7 @@ export function SortableHeader<T>({
                   disabled={disabled}
                   onClick={() => onSort(c.key)}
                   className={
-                    "flex min-h-[44px] w-full items-center gap-1 px-3 py-3 text-left underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary " +
+                    "flex min-h-[44px] w-full items-center gap-1 px-3 py-3 text-left underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary" +
                     (active ? "underline" : "")
                   }
                 >

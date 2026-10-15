@@ -42,7 +42,7 @@ export function I140SubtypePanel({
   if (subtypes.length === 0) return null;
   const slowest = Math.max(...subtypes.map((s) => s.months80));
   return (
-    <div className={cn("bg-tint p-4", className)}>
+    <div className={cn("bg-tint p-4 border-2 border-border", className)}>
       <p className="text-sm font-semibold text-muted-foreground">
         USCIS published times, 80% within
       </p>{" "}
@@ -141,7 +141,7 @@ export function PriorityDatePanel({
   const rows = categories.filter((c) => bulletin.finalAction[c]);
   if (rows.length === 0) return null;
   return (
-    <div className={cn("bg-tint p-4", className)}>
+    <div className={cn("bg-tint p-4 border-2 border-border", className)}>
       <p className="text-sm font-semibold text-muted-foreground">
         Where the line stood in {formatMonth(bulletin.bulletinMonth) ?? bulletin.bulletinMonth}
       </p>{" "}
@@ -152,7 +152,7 @@ export function PriorityDatePanel({
         <table className="w-full min-w-[20rem] border-collapse text-sm">
           <thead>
             <tr>
-              <th className="border-b border-border pb-1 text-left text-sm font-semibold text-muted-foreground">
+              <th className="border-b-2 border-border pb-1 text-left text-sm font-semibold text-muted-foreground">
                 Category{" "}
               </th>
               {/* The separator lives INSIDE each cell, before the closing tag.
@@ -164,7 +164,7 @@ export function PriorityDatePanel({
               {COUNTRIES.map((c) => (
                 <th
                   key={c.key}
-                  className="border-b border-border pb-1 text-right text-sm font-semibold text-muted-foreground"
+                  className="border-b-2 border-border pb-1 text-right text-sm font-semibold text-muted-foreground"
                 >
                   {c.label}{" "}
                 </th>
@@ -174,14 +174,14 @@ export function PriorityDatePanel({
           <tbody>
             {rows.map((cat) => (
               <tr key={cat}>
-                <td className="border-b border-border/40 py-2 font-bold">{cat}{" "}</td>
+                <td className="border-b-2 border-border/40 py-2 font-bold">{cat}{" "}</td>
                 {COUNTRIES.map((c) => {
                   const cell = cutoff(bulletin.finalAction[cat]?.[c.key]);
                   return (
                     <td
                       key={c.key}
                       className={cn(
-                        "border-b border-border/40 py-2 text-right tabular-nums",
+                        "border-b-2 border-border/40 py-2 text-right tabular-nums",
                         cell.tone,
                       )}
                     >

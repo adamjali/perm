@@ -40,7 +40,7 @@ export function IndexHeader({
     <header className={cn("pt-8 sm:pt-10", className)}>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start [&>*]:min-w-0">
         <div>
-          <h1 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">{title}</h1>{" "}
+          <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">{title}</h1>{" "}
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">{lede}</p>{" "}
           {figures.length > 0 ? (
             <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-5">
@@ -94,7 +94,7 @@ export function IndexSearch({
 }) {
   return (
     <form method="get" action={action} role="search" className="object p-5 sm:p-6">
-      <label htmlFor="index-search" className="font-heading text-lg font-bold leading-tight">
+      <label htmlFor="index-search" className="font-heading text-xl font-bold leading-tight">
         {title}
       </label>{" "}
       {note ? <p className="mt-1 text-sm leading-relaxed text-soft">{note}</p> : null}{" "}
@@ -107,13 +107,13 @@ export function IndexSearch({
           minLength={2}
           autoComplete="off"
           placeholder={placeholder}
-          className="h-12 min-w-0 flex-1 border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-12 min-w-0 flex-1 border-2 border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />{" "}
         <button type="submit" className={buttonVariants({ size: "lg" })}>
           {button}
         </button>
       </div>{" "}
-      {footer ? <div className="mt-3 text-sm">{footer}</div> : null}
+      {footer ? <div className="mt-3 text-sm border-t-2 border-border">{footer}</div> : null}
     </form>
   );
 }

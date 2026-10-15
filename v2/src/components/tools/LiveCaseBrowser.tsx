@@ -199,7 +199,7 @@ export function LiveCaseBrowser({
               </Fragment>
             ))}
           </div>{" "}
-          <label className="flex min-h-[44px] flex-1 items-center gap-2 border border-input bg-card px-3 text-sm font-bold sm:max-w-md">
+          <label className="flex min-h-[44px] flex-1 items-center gap-2 border-2 border-input bg-card px-3 text-sm font-bold sm:max-w-md">
             <span className="text-sm text-muted-foreground">Search</span>{" "}
             <input
               type="search"
@@ -215,7 +215,7 @@ export function LiveCaseBrowser({
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as LiveSort)}
-              className="min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="filed">Filing date</option>
               <option value="employer">Employer</option>
@@ -227,7 +227,7 @@ export function LiveCaseBrowser({
             <select
               value={month}
               onChange={(e) => pickMonth(e.target.value)}
-              className="min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="">Any month</option>
               {months.map((m) => (
@@ -246,7 +246,7 @@ export function LiveCaseBrowser({
             failure={fetched.failure}
             onRetry={fetched.retry}
             after="The case search above still answers by number or employer."
-            className="mt-5 bg-tint p-4"
+            className="mt-5 bg-tint p-4 border-2 border-border"
           />
         ) : null}
 
@@ -260,7 +260,7 @@ export function LiveCaseBrowser({
               <caption className="sr-only">
                 Live cases from DOL&apos;s case-status service, newest filing first
               </caption>
-              <thead className="border-b border-input bg-muted">
+              <thead className="dark border-b border-black bg-[#141414] text-foreground">
                 <tr>
                   {["Case", "Status", "Employer", "Job title", "Filed", "Seen"].map((h) => (
                     <Fragment key={h}>
@@ -346,7 +346,7 @@ export function LiveCaseBrowser({
             previousLabel="Newer"
             nextLabel="Older"
             labelClassName="text-sm font-bold"
-            buttonClassName="min-h-[44px] border border-input bg-card px-4 text-sm font-bold hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+            buttonClassName="min-h-[44px] border-2 border-input bg-card px-4 text-sm font-bold hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             scrollTo={liveTop}
             onPrevious={() => setCursors((c) => c.slice(0, -1))}
             onNext={() => page && setCursors((c) => [...c, page.continueCursor])}

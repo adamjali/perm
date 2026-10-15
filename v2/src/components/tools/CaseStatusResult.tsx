@@ -706,7 +706,7 @@ function Position({
       </FigureRow>
 
       {wall.isPastFront ? (
-        <div className="mt-6">
+        <div className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
           <PastFrontNote wall={wall} />
         </div>
       ) : (
@@ -803,7 +803,7 @@ function TheDecision({
       </FigureRow>
 
       {quotable && duration && cohort && decided.days !== null ? (
-        <p className="mt-6 max-w-3xl text-base leading-relaxed text-soft">
+        <p className="mt-6 max-w-3xl text-base leading-relaxed text-soft border-2 shadow-hard p-5 bg-card border-border">
           Across {formatInt(duration.n)} decided cases filed in{" "}
           {formatMonth(cohort.month)}, the middle one took{" "}
           <b className="font-semibold text-foreground">
@@ -894,14 +894,14 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
             is delimited by a 2px near-black border, so the fill is not the
             only thing carrying it. */}
         <span
-          className="absolute top-0 -translate-x-1/2 whitespace-nowrap border border-foreground bg-primary px-2 py-0.5 font-mono text-sm font-bold tabular-nums text-primary-foreground"
+          className="absolute top-0 -translate-x-1/2 whitespace-nowrap border-2 border-foreground bg-primary px-2 py-0.5 font-mono text-sm font-bold tabular-nums text-primary-foreground"
           style={{ left: `${subject}%` }}
         >
           {money(wage.wage)}
         </span>
 
         <div
-          className="relative h-4 border border-input bg-background"
+          className="relative h-4 border-input bg-background border"
           data-tip={[
             scope,
             `This case: ${money(wage.wage)}`,
@@ -1124,7 +1124,7 @@ function EmployerRecord({
       <p className="max-w-2xl text-base leading-relaxed text-soft">
         Across FY2024 to FY2026. It describes the employer&apos;s filings, not this case.
       </p>{" "}
-      <div className="mt-5">
+      <div className="mt-5 border-2 shadow-hard p-5 sm:p-6 bg-card border-border">
         <dl className="flex flex-wrap items-baseline gap-x-8 gap-y-4">
           {figures.map((f) => (
             <Fragment key={f.label + f.value}>{" "}
@@ -1143,7 +1143,7 @@ function EmployerRecord({
           ))}
         </dl>
 
-        <p className="mt-5 max-w-3xl text-base leading-relaxed text-soft">
+        <p className="mt-5 max-w-3xl text-base leading-relaxed text-soft border-t-2 border-border">
           {thin ? (
             employer.total === employer.certified ? (
               <>

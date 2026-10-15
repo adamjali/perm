@@ -99,7 +99,7 @@ export default async function BadgesPage() {
           (measured rgb(250,250,250)) - the bright-panel-in-a-dark-page problem
           the sign-up split already ran into. The header and footer are black in
           both themes for the same reason. */}
-      <section className="mt-8 bg-black p-5 sm:p-8">
+      <section className="mt-8 bg-black p-5 sm:p-8 border-2 shadow-hard border-border">
         <ul className="flex flex-wrap items-center gap-x-3 gap-y-3">
           {wall.map((v) => (
             <li

@@ -100,7 +100,7 @@ export function UnpublishedEmployer({
           A caveat under a number reads as a footnote to a fact; over it, the
           number arrives already qualified. Here the caveat is the larger part
           of the page's honesty budget, so it is the first thing after the H1. */}
-      <section className="mt-8 border border-data-warn bg-data-warn/8 p-5 sm:p-6">
+      <section className="mt-8 border-2 border-data-warn bg-data-warn/8 p-5 sm:p-6">
         <h2 className="font-heading text-lg font-bold sm:text-xl">
           DOL hasn&apos;t published any of this sponsor&apos;s cases yet
         </h2>{" "}
@@ -147,7 +147,7 @@ export function UnpublishedEmployer({
       </section>
 
       {stages.length > 0 ? (
-        <section className="mt-10">
+        <section className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
           <h2 className="font-heading text-xl font-bold">
             Where those cases are standing
           </h2>{" "}
@@ -192,7 +192,7 @@ export function UnpublishedEmployer({
 
       {follow}{" "}
       {wait}{" "}
-      <section className="mt-10">
+      <section className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 className="font-heading text-xl font-bold">
           {listed === total
             ? `All ${formatInt(total)} ${total === 1 ? "case" : "cases"}`
@@ -229,7 +229,7 @@ export function UnpublishedEmployer({
             this pair reached the DOM as "...ANALYST REVIEWDOL live case
             record..." with the source check green. Caught by the RENDERED
             audit, which is why that one is the authoritative gate. */}
-        <p className="mt-5 border-t border-border pt-3 text-sm font-bold text-muted-foreground">
+        <p className="mt-5 border-t-2 border-border pt-3 text-sm font-bold text-muted-foreground">
           {asOf
             ? `DOL live case record, as of ${longDate(asOf) ?? asOf}`
             : "DOL live case record"}
@@ -237,7 +237,7 @@ export function UnpublishedEmployer({
       </section>
 
       {otherNames.length > 0 ? (
-        <section className="mt-10">
+        <section className="mt-10 border-2 shadow-hard-sm p-6 bg-card border-border">
           <h2 className="font-heading text-lg font-bold">
             Other spellings on the same applications
           </h2>{" "}

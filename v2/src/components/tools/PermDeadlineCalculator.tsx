@@ -226,7 +226,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
 
   return (
     <div className={cn("object", className)}>
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
             reads as the inputs sticking out to the left. */}
@@ -300,7 +300,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         // Warnings sit ABOVE the dates: a date computed from suspect input
         // must not read as more authoritative than the doubt about the input.
         <div
-          className="border-b border-border bg-tint p-6 sm:p-8"
+          className="border-b-2 border-border bg-tint p-6 sm:p-8"
           role="alert"
         >
           {result.warnings.map((w) => (
@@ -319,7 +319,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         // Under the warnings, above the dates. It qualifies a date this tool
         // prints, so a reader has to meet it before the date, but it is a
         // citation rather than an alarm and it is not styled as one.
-        <div className="border-b border-border bg-muted p-6 sm:p-8">
+        <div className="border-b-2 border-border bg-muted p-6 sm:p-8">
           <div className="flex items-start gap-3">
             <InfoIcon
               className="mt-0.5 h-5 w-5 shrink-0 text-foreground"
@@ -343,7 +343,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
                   This is a pasted fragment of someone else's document, so it
                   gets the system's own bordered surface and the quote marks
                   carry the rest. */}
-              <blockquote className="mt-3 bg-tint p-4 text-base leading-relaxed">
+              <blockquote className="mt-3 bg-tint p-4 text-base leading-relaxed border-2 border-border">
                 &ldquo;{SHUTDOWN_QUOTE}&rdquo;
                 <cite className="mt-2 block text-sm font-bold not-italic text-muted-foreground">
                   Office of Foreign Labor Certification, {formatAsOf(SHUTDOWN_ANNOUNCED)}
@@ -369,7 +369,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
       ) : null}{" "}
 
       {result && result.diagram && DATE_RE.test(pwdDate) ? (
-        <div className="border-b border-border p-6 sm:p-8">
+        <div className="border-b-2 border-border p-6 sm:p-8">
           <DeadlineWindowDiagram
             pwdDate={pwdDate}
             pwdExpiration={result.diagram.pwdExpiration}
@@ -405,7 +405,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
             Enter the prevailing wage determination date to see the dates it
             fixes. Add the first recruitment step for the full set.
           </p>{" "}
-          <ol aria-hidden="true" className="mt-5 divide-y divide-dashed divide-foreground/20 border border-dashed border-foreground/30">
+          <ol aria-hidden="true" className="mt-5 divide-y divide-dashed divide-foreground/20 border-dashed border-foreground/30 border">
             {[
               "Prevailing wage determination expires",
               "Notice of filing must be posted by",
@@ -423,7 +423,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         </div>
       )}
 
-      <div className="border-t border-border bg-muted p-6 sm:p-8">
+      <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
         <div className="flex items-start gap-3">
           <WarningIcon
             className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"

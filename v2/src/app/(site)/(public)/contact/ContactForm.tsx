@@ -56,7 +56,7 @@ export function ContactForm() {
 
   if (phase === "sent") {
     return (
-      <div className="bg-tint p-8 text-center">
+      <div className="bg-tint p-8 text-center border-2 shadow-hard border-border">
         <p className="font-heading text-xl font-bold">Message sent</p>{" "}
         <p className="mt-2 text-base text-muted-foreground">{note}</p>
       </div>
@@ -80,7 +80,7 @@ export function ContactForm() {
               placeholder="Jordan Rivera"
               required
               autoComplete="name"
-              className="mt-1.5 min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
+              className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
             />
           </CharLimit>
         </label>
@@ -95,7 +95,7 @@ export function ContactForm() {
               placeholder="you@example.com"
               required
               autoComplete="email"
-              className="mt-1.5 min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
+              className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
             />
           </CharLimit>
         </label>
@@ -111,7 +111,7 @@ export function ContactForm() {
             required
             minLength={10}
             rows={6}
-            className="mt-1.5 w-full min-w-0 border border-input bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
+            className="mt-1.5 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
           />
         </CharLimit>
       </label>
@@ -124,7 +124,7 @@ export function ContactForm() {
       </div>
 
       {phase === "error" ? (
-        <p role="alert" className="mt-4 bg-tint p-3 text-sm font-bold">
+        <p role="alert" className="mt-4 bg-tint p-3 text-sm font-bold border-2 border-border">
           {note}
         </p>
       ) : null}

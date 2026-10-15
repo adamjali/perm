@@ -150,8 +150,8 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
   const window = `${formatMonth(board.firstMonth)} to ${formatMonth(board.lastMonth)}`;
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
-      <div className="border-b border-border p-6 sm:p-8">
+    <div className={cn("border-border bg-card border", className)}>
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 className="font-heading text-2xl font-bold leading-tight">
@@ -173,7 +173,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
         </div>
       </div>
 
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <h3 className="font-heading text-lg font-bold">
           Where every category stood in {formatMonth(board.lastMonth)}
         </h3>{" "}
@@ -182,7 +182,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
             <caption className="sr-only">
               {`Employment-based ${chart === "finalAction" ? "final action" : "dates for filing"} cutoffs by category and country of birth, from the ${formatMonth(board.lastMonth)} visa bulletin.`}
             </caption>
-            <thead className="border-b border-input bg-muted">
+            <thead className="dark border-b border-black bg-[#141414] text-foreground">
               <tr>
                 <th
                   scope="col"
@@ -261,7 +261,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
       </div>
 
       {paced.length > 0 ? (
-        <div className="border-b border-border p-6 sm:p-8">
+        <div className="border-b-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-lg font-bold">
             Cutoff days gained per calendar month
           </h3>{" "}
@@ -298,7 +298,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                   <span className="text-sm font-bold">
                     {categoryLabel(c.category)} {COUNTRY_LABELS[c.country]}
                   </span>{" "}
-                  <span className="relative block h-6 border border-input bg-muted">
+                  <span className="relative block h-6 border-input bg-muted border">
                     <span
                       className="absolute inset-y-0 block"
                       style={{
@@ -358,7 +358,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
               <ul className="mt-3 flex flex-wrap gap-2">
                 {openLines.map((g) => (
                   <Fragment key={g.category}>
-                    <li className="bg-tint px-3 py-1.5 text-sm font-bold">
+                    <li className="bg-tint px-3 py-1.5 text-sm font-bold border-2 border-border">
                       {g.everyCountry
                         ? `${categoryLabel(g.category)}, every country`
                         : `${categoryLabel(g.category)}: ${g.countries.map((k) => COUNTRY_LABELS[k]).join(", ")}`}

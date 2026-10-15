@@ -97,7 +97,7 @@ export default function SecurityPage() {
           {POSTURE.map(({ Icon, title, body }) => (
             <Fragment key={title}>
               {" "}
-              <li className="flex gap-4 border-t border-border pt-5">
+              <li className="flex gap-4 border-border p-5 border-2 shadow-hard-sm bg-card">
                 <Icon size={24} className="shrink-0 text-primary-text" aria-hidden="true" />{" "}
                 <span className="min-w-0">
                   <span className="block font-heading text-lg font-bold">{title}</span>{" "}
@@ -109,7 +109,7 @@ export default function SecurityPage() {
         </ul>
       </section>{" "}
 
-      <section aria-labelledby="report" className="mt-12">
+      <section aria-labelledby="report" className="dark mt-12 border-2 shadow-hard border-black bg-[#141414] text-foreground p-6 sm:p-8">
         <h2 id="report" className="font-heading text-2xl font-bold">
           Report a vulnerability
         </h2>{" "}
@@ -135,8 +135,8 @@ export default function SecurityPage() {
           Every security-relevant incident, kept permanently. One so far.
         </p>{" "}
 
-        <article id="2026-04-19-signup-abuse" className="mt-6 border border-border bg-card">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border p-5 sm:p-6">
+        <article id="2026-04-19-signup-abuse" className="mt-6 border-border bg-card border">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-border p-5 sm:p-6">
             <div className="min-w-0">
               <h3 className="font-heading text-xl font-bold">
                 The sign-up form was used to send unsolicited email
@@ -145,11 +145,11 @@ export default function SecurityPage() {
             </div>{" "}
             <ToneBadge tone="good" className="shrink-0">Resolved</ToneBadge>
           </div>{" "}
-          <dl className="grid grid-cols-1 border-b border-border sm:grid-cols-3 [&>*]:min-w-0">
+          <dl className="grid grid-cols-1 border-b-2 border-border sm:grid-cols-3 [&>*]:min-w-0">
             {INCIDENT_FACTS.map(({ value, label }, i) => (
               <Fragment key={label}>
                 {" "}
-                <div className={`p-5 ${i > 0 ? "border-t border-border sm:border-l sm:border-t-0" : ""}`}>
+                <div className={`p-5 ${i > 0 ? "border-t-2 border-border sm:border-l-2 sm:border-t-0" : ""}`}>
                   <dt className="text-sm text-muted-foreground">{label}</dt>{" "}
                   <dd className="mt-1 font-heading text-2xl font-bold">{value}</dd>
                 </div>
@@ -166,7 +166,7 @@ export default function SecurityPage() {
                 The full account{" "}
                 <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
               </summary>
-              <div className="space-y-4 border-t border-border p-4 text-base leading-relaxed text-soft">
+              <div className="space-y-4 border-t-2 border-border p-4 text-base leading-relaxed text-soft">
                 <p>
                   <strong>What happened.</strong> Between approximately{" "}
                   <span className="font-mono text-sm">2026-04-19 22:38 UTC</span> and{" "}
@@ -224,7 +224,7 @@ export default function SecurityPage() {
         </article>
       </section>{" "}
 
-      <p className="mt-10 border-t border-border pt-6 text-sm leading-relaxed text-muted-foreground">
+      <p className="mt-10 border-t-2 border-border pt-6 text-sm leading-relaxed text-muted-foreground">
         The incident record was last amended on April 20, 2026, and is amended whenever a security-relevant event occurs.
         Questions about this page go to{" "}
         <a

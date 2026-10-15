@@ -334,7 +334,7 @@ export default async function PermProcessingTimesPage() {
               tape of filing months and where it is on it. */}
           <section className="object mt-8 p-5 sm:p-7">
             <p className="text-sm font-semibold">The analyst review queue</p>{" "}
-            <p className="mt-2 font-heading text-2xl font-bold leading-tight sm:text-3xl">
+            <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">
               {analystMonth
                 ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
                 : "DOL hasn’t published a filing month for the analyst review queue."}
@@ -439,7 +439,7 @@ export default async function PermProcessingTimesPage() {
                 </p>
               </FinePrint>
 
-              <div className="mt-6 bg-tint p-6 sm:p-8">
+              <div className="dark mt-6 p-6 sm:p-8 border-2 shadow-hard border-black bg-[#141414] text-foreground">
                 <p className="text-sm text-muted-foreground">Measured advance</p>{" "}
                 <p className="mt-3 font-heading text-4xl font-bold leading-none tabular-nums sm:text-5xl">
                   {advance.rate.toFixed(2)}
@@ -498,10 +498,10 @@ export default async function PermProcessingTimesPage() {
               <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">
                 <thead className="bg-muted">
                   <tr>
-                    <th scope="col" className="border-b border-border p-3 font-bold">
+                    <th scope="col" className="border-b-2 border-border p-3 font-bold">
                       Queue
                     {" "}</th>
-                    <th scope="col" className="border-b border-border p-3 font-bold">
+                    <th scope="col" className="border-b-2 border-border p-3 font-bold">
                       Currently working
                     {" "}</th>
                   </tr>
@@ -532,7 +532,7 @@ export default async function PermProcessingTimesPage() {
           </Chapter>
         </>
       ) : (
-        <section className="mt-10 bg-tint p-6">
+        <section className="mt-10 bg-tint p-6 border-2 shadow-hard border-border">
           <p className="text-base leading-relaxed">
             Live figures are being fetched from the Department of Labor. Until they land,{" "}
             <a
@@ -556,7 +556,7 @@ export default async function PermProcessingTimesPage() {
         title="Where your case sits"
         dek="Your own filing month against these figures, the steps after PERM as people report them, and an email when DOL reaches your month."
       >
-      <section className="mt-6">
+      <section className="mt-6 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h3 className="font-heading text-2xl font-bold">Your filing month, against the queue</h3>{" "}
         <p className="mt-3 leading-relaxed text-muted-foreground">
           The calculator reads your own filing month against these figures.
@@ -574,7 +574,7 @@ export default async function PermProcessingTimesPage() {
           per case once the PERM is certified, so this is the only way to show
           the I-140, I-485 and card steps; it says which half is checked. */}
       {board ? (
-        <section aria-labelledby="after-perm-h" className="mt-10">
+        <section aria-labelledby="after-perm-h" className="mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
           <h3 id="after-perm-h" className="font-heading text-2xl font-bold">After PERM, as people report it</h3>{" "}
           {afterPerm.length > 0 ? (
             <>
@@ -616,7 +616,7 @@ export default async function PermProcessingTimesPage() {
       <Chapter id="questions" title="Common questions">
         <FaqList items={FAQ.map((item) => ({ q: item.question, a: item.answer }))} openFirst={false} />
 
-      <section className="mt-12 bg-tint p-6">
+      <section className="mt-12 bg-tint p-6 border-2 border-border">
         <h3 className="font-heading text-xl font-bold">Where these numbers come from</h3>{" "}
         {/* The absence rule changes how a blank cell reads, so it stays in
             the open. The provenance behind it collapses. */}
@@ -637,7 +637,7 @@ export default async function PermProcessingTimesPage() {
         </FinePrint>
       </section>
 
-      <section className="mt-12">
+      <section className="mt-12 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h3 className="font-heading text-2xl font-bold">
           The deadlines you control
         </h3>{" "}

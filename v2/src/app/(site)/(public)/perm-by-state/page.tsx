@@ -117,7 +117,7 @@ export default async function PermByStatePage() {
 
           {/* The three facts the map cannot say at a glance. */}
           <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="bg-tint p-6">
+            <div className="dark p-6 border-2 shadow-hard-sm border-black bg-[#141414] text-foreground">
               <p className="text-sm text-muted-foreground">
                 Cases in this window
               </p>{" "}
@@ -128,7 +128,7 @@ export default async function PermByStatePage() {
                 De-duplicated by case number across the quarterly files.
               </p>
             </div>
-            <div className="bg-tint p-6">
+            <div className="bg-tint p-6 border-2 shadow-hard-sm border-border">
               <p className="text-sm text-muted-foreground">
                 Busiest state
               </p>{" "}
@@ -143,7 +143,7 @@ export default async function PermByStatePage() {
                     : `${formatInt(top.total)} filings, ${((top.total / (uniqueCases || 1)) * 100).toFixed(0)}% of the window.`}
               </p>
             </div>
-            <div className="bg-tint p-6">
+            <div className="bg-tint p-6 border-2 shadow-hard-sm border-border">
               <p className="text-sm text-muted-foreground">
                 Why states differ
               </p>{" "}
@@ -202,7 +202,7 @@ export default async function PermByStatePage() {
             </>
           ) : null}
 
-          <section className="mt-10">
+          <section className="mt-10 border-2 shadow-hard-sm p-6 border-border">
             <h2 className="font-heading text-lg font-bold">
               Reading a rate off a small state
             </h2>{" "}
@@ -227,7 +227,7 @@ export default async function PermByStatePage() {
           </section>
         </>
       ) : (
-        <section className="mt-10 bg-tint p-8 text-center">
+        <section className="mt-10 bg-tint p-8 text-center border-2 shadow-hard border-border">
           <p className="text-lg text-muted-foreground">
             The state aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}

@@ -20,7 +20,7 @@ export function H1bLotteryHistory({ years, className }: { years: LotteryYear[] |
   if (!years || years.length === 0) return null;
   const peak = Math.max(...years.map((y) => y.registrations), 1);
   return (
-    <section className={cn("mt-10", className)}>
+    <section className={cn("mt-10 border-2 shadow-hard p-6 sm:p-8 bg-card border-border", className)}>
       <h2 className="font-heading text-xl font-bold">In the H-1B lottery, FY{years[0]!.fy} to FY{years[years.length - 1]!.fy}</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
         Registrations entered and selected, and the petitions that followed. Until FY2025 one person could be registered

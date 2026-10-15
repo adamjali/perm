@@ -79,7 +79,7 @@ export function DateRuler({
   const placeholder = <span aria-hidden="true" className="inline-block h-6 w-28 bg-foreground/10 align-middle" />;
 
   return (
-    <figure className={cn("bg-tint p-4 sm:p-5", className)}>
+    <figure className={cn("bg-tint p-4 sm:p-5 border-2 border-border", className)}>
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">{fromLabel}{" "}</p>{" "}
@@ -91,7 +91,7 @@ export function DateRuler({
         </div>
       </div>{" "}
 
-      <div aria-hidden="true" className="relative mt-4 h-10 border border-input">
+      <div aria-hidden="true" className="relative mt-4 h-10 border-input border">
         {ready ? (
           <>
             <div className="absolute inset-y-0 left-0 bg-foreground" style={{ width: `${todayPct ?? 0}%` }} />
@@ -136,7 +136,7 @@ export function DateRuler({
       ) : null}{" "}
 
       {left !== null ? (
-        <p className="mt-4 border-t border-border pt-3 text-base">
+        <p className="mt-4 border-t-2 border-border pt-3 text-base">
           {left >= 0 ? (
             <>
               <span className="font-heading text-3xl font-bold tabular-nums">{left}</span>{" "}

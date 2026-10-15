@@ -626,7 +626,7 @@ export function PageBasics({
   const entries = BASICS[page];
   if (!entries || entries.length === 0) return null;
   return (
-    <section className="mt-14">
+    <section className="mt-14 border-t-3 border-border">
       <h2 className="font-heading text-2xl font-bold">The basics</h2>{" "}
       {/* QUESTIONS VISIBLE, ANSWERS ON DEMAND. This is the answer-engine
           layer: questions phrased the way people search, each an <h3> so the
@@ -646,7 +646,7 @@ export function PageBasics({
                 aria-hidden="true"
               />
             </summary>{" "}
-            <p className="max-w-prose px-5 pb-4 text-base leading-relaxed text-soft sm:px-6">
+            <p className="max-w-prose px-5 pb-4 text-base leading-relaxed text-soft sm:px-6 border-t-2 border-border">
               {typeof e.a === "function" ? e.a(figures) : e.a}
             </p>
           </details>

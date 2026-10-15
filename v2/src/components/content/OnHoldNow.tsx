@@ -46,7 +46,7 @@ export async function OnHoldNow() {
   const rest = held - namedHeld;
 
   return (
-    <div className="not-prose my-6 border border-border bg-card p-5 sm:p-6">
+    <div className="not-prose my-6 border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
       <p className="text-base leading-relaxed">
         {`As of ${longDate(doc.asOf)}, ${formatInt(held)} of the ${formatInt(doc.pendingTotal)} PERM cases waiting on DOL are on hold (${formatShare(
           doc.pendingTotal ? held / doc.pendingTotal : 0,
@@ -54,7 +54,7 @@ export async function OnHoldNow() {
       </p>{" "}
       <table className="mt-4 w-full border-collapse text-left text-base">
         <thead>
-          <tr className="border-b border-border">
+          <tr className="border-b-2 border-border">
             <th className="py-2 pr-4 font-bold">{"Where pending cases sit "}</th>
             <th className="py-2 text-right font-bold">{"Cases "}</th>
           </tr>

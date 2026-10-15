@@ -111,7 +111,7 @@ export function CaseWall({
                 />
                 <span
                   className={cn(
-                    "mt-1.5 w-full border-t pt-1.5 text-center text-sm",
+                    "mt-1.5 w-full border-t-2 pt-1.5 text-center text-sm border-border",
                     s.isSubject
                       ? "border-foreground font-bold text-foreground"
                       : "border-border text-muted-foreground",
@@ -129,7 +129,7 @@ export function CaseWall({
         </ul>
       </ChartTips>
 
-      <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
+      <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-muted-foreground">
         <b className="font-bold text-foreground">
           {formatInt(wall.drawnAhead)} undecided cases
         </b>{" "}
@@ -242,7 +242,7 @@ export function CohortNeighbours({
           <Fragment key={x.month}>{" "}
           <li
             className={cn(
-              "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-2",
+              "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b-2 pb-2 border-border",
               isSubject ? "border-foreground" : "border-border",
             )}
           >

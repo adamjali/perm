@@ -36,7 +36,7 @@ function ordinal(n: number): string {
 }
 
 const field =
-  "min-h-11 w-full border border-input bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "min-h-11 w-full border-2 border-input bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const label = "block text-sm font-bold text-muted-foreground";
 
 /**
@@ -50,7 +50,7 @@ function OfferStrip({ placed, offer }: { placed: Placed | null; offer: number | 
     return (
       <div aria-hidden="true" className="relative mt-3 h-12">
         <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground/20" />
-        <span className="absolute inset-y-1 left-[30%] w-[38%] border border-dashed border-foreground/30 text-muted-foreground bg-hatch" />
+        <span className="absolute inset-y-1 left-[30%] w-[38%] border-dashed border-foreground/30 text-muted-foreground bg-hatch border" />
         <span className="absolute inset-y-0 left-[48%] w-0.5 bg-foreground/30" />
       </div>
     );
@@ -65,14 +65,14 @@ function OfferStrip({ placed, offer }: { placed: Placed | null; offer: number | 
     <div className="mt-3">
       <div aria-hidden="true" className="relative h-12">
         <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground/30" />
-        <span className="absolute inset-y-1 border border-border bg-primary/70" style={{ left: `${at(p25)}%`, width: `${at(p75) - at(p25)}%` }} />
+        <span className="absolute inset-y-1 border-border bg-primary/70 border" style={{ left: `${at(p25)}%`, width: `${at(p75) - at(p25)}%` }} />
         <span className="absolute inset-y-0 w-1 -translate-x-1/2 bg-foreground" style={{ left: `${at(p50)}%` }} />
         <span className="absolute -top-1 bottom-[-4px] w-1.5 -translate-x-1/2 bg-data-warn-ink" style={{ left: `${mark}%` }} />
       </div>{" "}
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-data-warn-ink align-middle" />Your offer <b className="tabular-nums">{usd(offer)}</b>{" "}</li>{" "}
         <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-foreground align-middle" />Median <b className="tabular-nums">{usd(p50)}</b>{" "}</li>{" "}
-        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 border border-input bg-primary/70 align-middle" />Middle half <b className="tabular-nums">{usd(p25)} to {usd(p75)}</b>{" "}</li>
+        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 border-input bg-primary/70 align-middle border" />Middle half <b className="tabular-nums">{usd(p25)} to {usd(p75)}</b>{" "}</li>
       </ul>
     </div>
   );
@@ -193,13 +193,13 @@ export function CompareMyOffer({ occupations, states }: Props) {
       </form>{" "}
 
       {error ? (
-        <p role="alert" className="mt-5 bg-tint p-3 text-sm font-bold">{error}</p>
+        <p role="alert" className="mt-5 bg-tint p-3 text-sm font-bold border-2 border-border">{error}</p>
       ) : null}{" "}
 
       {!results ? (
         <div className="mt-8 grid grid-cols-1 gap-5 [&>*]:min-w-0 md:grid-cols-2" aria-hidden="true">
           {(Object.keys(PROGRAM) as Program[]).map((p) => (
-            <div key={p} className="border border-dashed border-foreground/30 bg-background p-5">
+            <div key={p} className="border-2 border-dashed border-foreground/30 bg-background p-5">
               <p className={label}>{PROGRAM[p].name} </p>{" "}
               <OfferStrip placed={null} offer={null} />{" "}
               <p className="mt-2 text-sm text-muted-foreground">Where the offer falls among {PROGRAM[p].noun} for the job.</p>
@@ -214,7 +214,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
             const r = results[p];
             const meta = PROGRAM[p];
             return (
-              <div key={p} className="bg-tint p-5">
+              <div key={p} className="bg-tint p-5 border-2 border-border">
                 <p className={label}>{meta.name} </p>{" "}
                 {r === "thin" || r === null ? (
                   <p className="mt-3 text-base leading-relaxed">

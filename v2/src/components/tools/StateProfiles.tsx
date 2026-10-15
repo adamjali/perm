@@ -106,7 +106,7 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
           </div>
           <div className="mt-1.5 flex items-center gap-3">
             <div
-              className="h-4 min-w-0 flex-1 border border-input bg-background"
+              className="h-4 min-w-0 flex-1 border-input bg-background border"
               role="img"
               aria-label={`${pct(b.share)} of ${stateName(b.state)} filings are ${b.label}`}
             >
@@ -146,7 +146,7 @@ function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
         <caption className="sr-only">
           Every state by the share of its filings in its single biggest {unit.toLowerCase()}
         </caption>
-        <thead className="border-b border-input bg-muted">
+        <thead className="dark border-b border-black bg-[#141414] text-foreground">
           <tr>
             <th scope="col" className="p-3 text-sm font-bold">
               State

@@ -56,7 +56,7 @@ export default function ContentCard({
             Stacked, each card ran about 430 px and the guides index 25,000. */}
         <div
           className={
-            "relative border border-border bg-card" +
+            "relative border-border bg-card border" +
             (meta.image ? " max-sm:grid max-sm:grid-cols-[7rem_minmax(0,1fr)]" : "")
           }
         >
@@ -74,7 +74,7 @@ export default function ContentCard({
           )}
           {/* Image */}
           {meta.image && (
-            <div className="relative aspect-[16/9] overflow-hidden border-b border-border max-sm:aspect-auto max-sm:min-h-28 max-sm:border-b-0 max-sm:border-r">
+            <div className="relative aspect-[16/9] overflow-hidden border-b-2 border-border max-sm:aspect-auto max-sm:min-h-28 max-sm:border-b-0 max-sm:border-r-2">
               <Image
                 src={meta.image}
                 alt={meta.imageAlt ?? meta.title}

@@ -100,7 +100,7 @@ function Track({ band, domain, ends }: { band: PayBand; domain: [number, number]
           />
           <span
             aria-hidden="true"
-            className="absolute top-5 h-4 -translate-y-1/2 border border-input bg-data-good-ink"
+            className="absolute top-5 h-4 -translate-y-1/2 border-input bg-data-good-ink border"
             style={{ left: `${pct(band.p25!, domain)}%`, width: `${pct(band.p75!, domain) - pct(band.p25!, domain)}%` }}
           />
           <span
@@ -191,7 +191,7 @@ export function PayBands({
       )}
       <ul className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-4 w-8 border border-input bg-data-good-ink" /> middle
+          <span aria-hidden="true" className="inline-block h-4 w-8 border-input bg-data-good-ink border" /> middle
           half of pay (BLS)
         </li>{" "}
         <li className="flex items-center gap-2">

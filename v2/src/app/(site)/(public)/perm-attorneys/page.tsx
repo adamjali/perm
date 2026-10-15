@@ -127,7 +127,7 @@ export default async function PermAttorneysPage() {
             dek="Approval rates cluster above 99% across every firm on this list, so the ranking is by volume alone."
           >
           <section className="mt-6">
-            <div className="bg-tint p-6 sm:p-8">
+            <div className="bg-tint p-6 sm:p-8 border-2 border-border">
               <ChartTips label="The ten busiest firms, by filings">
               <div className="space-y-3">
                 {topTen.map((a) => (
@@ -150,7 +150,7 @@ export default async function PermAttorneysPage() {
                     <div className="flex min-w-0 items-center gap-2">
                       <div
                         aria-hidden="true"
-                        className="h-6 shrink-0 border border-input bg-primary"
+                        className="h-6 shrink-0 border-input bg-primary border"
                         style={{
                           width: `${Math.max(4, (a.total / maxTotal) * 100)}%`,
                           maxWidth: "calc(100% - 64px)",
@@ -168,7 +168,7 @@ export default async function PermAttorneysPage() {
           </section>
           </Chapter>
 
-          <section id="all" className="mt-16 border-t-2 border-foreground pt-4">
+          <section id="all" className="mt-16 border-t-4 border-foreground pt-4">
             <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">
               All {firmCount.toLocaleString("en-US")} firms
             </h2>{" "}
@@ -199,7 +199,7 @@ export default async function PermAttorneysPage() {
           </div>
         </>
       ) : (
-        <section className="mt-10 bg-tint p-8 text-center">
+        <section className="mt-10 bg-tint p-8 text-center border-2 shadow-hard border-border">
           <p className="text-lg text-muted-foreground">
             The firm aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}

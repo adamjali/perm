@@ -98,7 +98,7 @@ export async function CityReference({
 
   return (
     <>
-      <section className="mt-10 bg-tint p-6 sm:p-8" aria-labelledby="city-where">
+      <section className="mt-10 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border" aria-labelledby="city-where">
         <h2 id="city-where" className="font-heading text-xl font-bold sm:text-2xl">
           Where {label} sits
         </h2>{" "}
@@ -173,7 +173,7 @@ export async function CityReference({
             <table className="w-full min-w-[40rem] text-left text-base">
               <caption className="sr-only">Market pay and DOL wage levels for the jobs filed most here{" "}</caption>
               <thead>
-                <tr className="border-b border-border text-sm text-muted-foreground">
+                <tr className="border-b-2 border-border text-sm text-muted-foreground">
                   <th className="py-2 pr-4 font-bold">Job{" "}</th>
                   <th className="py-2 pr-4 text-right font-bold">BLS median{" "}</th>
                   {["I", "II", "III", "IV"].map((l) => (

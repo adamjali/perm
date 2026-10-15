@@ -26,7 +26,7 @@ function Column({
   max: number;
 }) {
   return (
-    <div className="min-w-0 bg-tint p-5">
+    <div className="min-w-0 bg-tint p-5 border-2 border-border">
       <h3 className="font-heading text-lg font-bold">{title}</h3>{" "}
       <BarRows
         label={`${title}, median days to a decision`}
@@ -67,7 +67,7 @@ export function WaitLeaders({ field, className }: { field: FieldWait | null; cla
   const max = Math.max(field.p50, ...field.slowest.map((r) => r.p50));
   return (
     // The page's own part heading names this ("Whose cases DOL decides fastest, and slowest").
-    <section aria-label="Sponsors whose cases DOL decides fastest and slowest" className={cn("bg-tint p-6 sm:p-8", className)}>
+    <section aria-label="Sponsors whose cases DOL decides fastest and slowest" className={cn("bg-tint p-6 sm:p-8 border-2 shadow-hard border-border", className)}>
       <MoreText gist={"Median days from filing to decision, last 90 days, busier sponsors only."}>
         <p className="max-w-3xl text-base leading-relaxed text-soft">
           Filing to decision, median, over the last {field.windowDays} days, for the {formatInt(field.employersRanked ?? 0)}{" "}

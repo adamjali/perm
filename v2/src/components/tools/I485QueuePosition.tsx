@@ -127,7 +127,7 @@ const BULLETIN_COUNTRY: Record<string, string> = {
 const FIRST_YEAR = 2006;
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const EYEBROW_CLASS =
   "text-sm font-semibold text-muted-foreground";
 
@@ -297,7 +297,7 @@ export function I485QueuePosition({
 
   return (
     <div className={cn("object", className)}>
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <UsersIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-bold leading-tight">
@@ -395,7 +395,7 @@ export function I485QueuePosition({
          * reader. It was bg-muted under a warning triangle, which styled the
          * ordinary case as an error.
          */
-        <div className="border-b border-border p-6 sm:p-8">
+        <div className="border-b-2 border-border p-6 sm:p-8">
           <p className={EYEBROW_CLASS}>{restated}</p>{" "}
           <h3 className="mt-2 font-heading text-2xl font-bold leading-tight">
             USCIS doesn’t publish this queue past {latestPublishedLabel}
@@ -437,7 +437,7 @@ export function I485QueuePosition({
         </div>
       ) : (
         <>
-          <div className="border-b border-border p-6 sm:p-8">
+          <div className="border-b-2 border-border p-6 sm:p-8">
             <p className={EYEBROW_CLASS}>{restated}</p>{" "}
             {position.exact ? (
               /* USCIS suppressed nothing in this span, so the floor and the
@@ -509,7 +509,7 @@ export function I485QueuePosition({
                     empty track, and both ticks at their own coordinates. */}
                 <ChartTips label="Applications ahead, counted and withheld" className="mt-6">
                   <div
-                    className="flex h-10 w-full overflow-hidden border border-input"
+                    className="flex h-10 w-full overflow-hidden border-input border"
                     role="img"
                     aria-label={`Between ${position.low.toLocaleString("en-US")} and ${position.high.toLocaleString("en-US")} applications are ahead. ${position.counted.toLocaleString("en-US")} are counted individually and ${position.suppressedCells.toLocaleString("en-US")} cells were withheld by USCIS.`}
                   >
@@ -564,7 +564,7 @@ export function I485QueuePosition({
           </div>
 
 {" "}
-          <div className="grid grid-cols-1 gap-px [&>*]:min-w-0 border-b border-border bg-border sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-px [&>*]:min-w-0 border-b-2 border-border bg-border sm:grid-cols-2">
             <div className="bg-card p-6 sm:p-8">
               <p className={EYEBROW_CLASS}>Behind you</p>{" "}
               <p className="mt-2 font-heading text-3xl font-bold leading-none tabular-nums">
@@ -597,7 +597,7 @@ export function I485QueuePosition({
       )}{" "}
 
       {trend.length > 1 ? (
-        <div className="border-b border-border p-6 sm:p-8">
+        <div className="border-b-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-lg font-bold">
             The whole pending inventory, release by release
           </h3>{" "}
@@ -636,7 +636,7 @@ export function I485QueuePosition({
                       <span className="truncate text-sm text-muted-foreground">
                         {formatAsOfShort(t.asOf)}
                       </span>{" "}
-                      <span className="flex h-6 w-full border border-input bg-muted">
+                      <span className="flex h-6 w-full border-input bg-muted border">
                         <span
                           className="block h-full bg-primary"
                           style={{ width: `${Math.max(((t.available ?? t.total) / max) * 100, 1)}%` }}
@@ -736,7 +736,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
     return `${r} ${r === 1 ? "month" : "months"}`;
   };
   return (
-    <div className="mt-6 bg-tint p-4 sm:p-5">
+    <div className="mt-6 bg-tint p-4 sm:p-5 border-2 border-border">
       <p className="text-sm font-bold text-muted-foreground">
         If the supply were
       </p>{" "}
@@ -754,7 +754,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
             value={supply}
             onChange={(e) => setSupply(e.target.value)}
             placeholder="7,235"
-            className="mt-1 block min-h-11 w-40 border border-input bg-card px-3 text-base tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="mt-1 block min-h-11 w-40 border-2 border-input bg-card px-3 text-base tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           />
         </div>{" "}
         {SUPPLY_ANCHORS.map((a) => (

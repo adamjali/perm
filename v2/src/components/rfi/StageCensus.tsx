@@ -51,9 +51,9 @@ export function StageCensus({
         return (
           <Fragment key={group}>{" "}
           <section className="bg-tint">
-            <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-4 py-3">
+            <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b-2 border-border px-4 py-3">
               <span
-                className="inline-block h-3.5 w-3.5 shrink-0 border border-input"
+                className="inline-block h-3.5 w-3.5 shrink-0 border-input border"
                 style={{ backgroundColor: style.fill }}
                 aria-hidden="true"
               />{" "}
@@ -148,7 +148,7 @@ function StageRow({
         something false by a true number.
       */}
       {dominant ? (
-        <p className="mt-2 border-l border-border bg-secondary px-3 py-2 text-sm">
+        <p className="mt-2 border-l-2 border-border bg-secondary px-3 py-2 text-sm">
           <b className="font-bold">
             {dominant.topEmployerCases.toLocaleString()} of these (
             {pct(dominant.topEmployerCases, dominant.cases)})
@@ -158,7 +158,7 @@ function StageRow({
       ) : null}{" "}
 
       {records.length > 0 ? (
-        <div className="mt-2 border-l border-border bg-secondary px-3 py-2">
+        <div className="mt-2 border-l-2 border-border bg-secondary px-3 py-2">
           <p className="text-sm">
             At this size one record moves the number, so here is every case
             rather than a statistic about them.

@@ -45,7 +45,7 @@ export function CaseStatusHead({
   /** The lookup box under the title: on when nothing (or nothing usable) was typed. */
   withBox?: boolean;
 }) {
-  const titleClass = "font-heading text-3xl font-bold leading-tight sm:text-4xl";
+  const titleClass = "font-heading text-4xl font-bold leading-tight sm:text-5xl";
   const title = headingFor(typed);
   return (
     <>
@@ -100,7 +100,7 @@ function Bar({ className }: { className: string }) {
 export function LookupSkeleton() {
   return (
     <div aria-hidden="true">
-      <div className="bg-tint p-5 sm:p-8">
+      <div className="bg-foreground p-5 sm:p-8 border-2 shadow-hard border-border">
         <Bar className="h-7 w-48" />
         <div className="mt-4 max-w-3xl space-y-3">
           <Bar className="h-6 w-full" />

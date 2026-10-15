@@ -46,8 +46,8 @@ export function FigurePlate({ title, subject, caption, source, tone = "paper", i
     <figure
       id={id}
       className={cn(
-        "relative m-0 border-2 border-border shadow-hard-sm",
-        ink ? "bg-[#141414] text-white" : "bg-card text-foreground",
+        "relative m-0 border-2 border-border shadow-hard",
+        ink ? "dark border-black bg-[#141414] text-foreground" : "bg-card text-foreground",
         className,
       )}
     >
@@ -102,7 +102,7 @@ export function FigurePlate({ title, subject, caption, source, tone = "paper", i
  */
 export function PlateLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-3 border-b-2 border-border pb-1.5 text-sm font-bold text-foreground">
+    <p className="mb-3 border-b border-border pb-1.5 text-sm font-bold text-foreground">
       {children}
     </p>
   );

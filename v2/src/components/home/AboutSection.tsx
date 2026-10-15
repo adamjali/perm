@@ -18,7 +18,7 @@ import { ReviewsLine } from "./ReviewsLine";
  */
 export function AboutSection({ record = [] }: { record?: RecordFigure[] }) {
   return (
-    <section id="about" className="py-12 sm:py-16">
+    <section id="about" className="py-12 sm:py-16 border-b-3 border-border">
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-8 px-4 [&>*]:min-w-0 sm:px-8 lg:grid-cols-12 lg:gap-14">
         <div className="lg:col-span-5">
           <h2 className="font-heading text-2xl font-bold sm:text-3xl">About PERM Tracker</h2>{" "}

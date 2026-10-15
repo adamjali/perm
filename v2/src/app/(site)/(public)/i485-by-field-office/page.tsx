@@ -297,7 +297,7 @@ export default async function I485ByFieldOfficePage() {
         <FaqList items={FAQS} />
       </section>
 
-      <section className="mt-12">
+      <section className="mt-12 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h2 className="font-heading text-2xl font-bold">Read next</h2>{" "}
         <ul className="mt-4 space-y-2">
           <li>

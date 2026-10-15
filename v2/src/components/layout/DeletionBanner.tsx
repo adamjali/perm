@@ -72,7 +72,7 @@ export default function DeletionBanner() {
 
   return (
     <div
-      className="relative z-10 bg-data-warn/15 border-b border-data-warn px-4 py-3 sm:px-6"
+      className="relative z-10 bg-data-warn/15 border-b-2 border-data-warn px-4 py-3 sm:px-6"
       role="alert"
       aria-label="Account deletion warning"
     >

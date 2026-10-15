@@ -94,7 +94,7 @@ export default function PublicDataError({
           Home
         </Link>
       </div>{" "}
-      <section className="mt-12 border-t border-border pt-6">
+      <section className="mt-12 border-t-2 border-border pt-6">
         <h2 className="font-heading text-lg font-bold">Go straight to the source</h2>{" "}
         <ul className="mt-4 grid gap-3">
           {PRIMARY_SOURCES.map((s) => (

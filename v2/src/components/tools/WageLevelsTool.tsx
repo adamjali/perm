@@ -19,7 +19,7 @@ import { ScrollBox } from "@/components/ui/scroll-box";
  * Nothing is computed here.
  */
 
-const SELECT = "mt-1.5 min-h-11 w-full min-w-0 border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+const SELECT = "mt-1.5 min-h-11 w-full min-w-0 border-2 border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const usd = (n: number, digits = 0) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: digits, minimumFractionDigits: digits });
 
 type Result =
@@ -67,7 +67,7 @@ function WageLadder({ levels }: { levels: WageLevel[] | null }) {
             <span className="flex items-center gap-3">
               <span
                 aria-hidden="true"
-                className="h-9 shrink-0 border border-input bg-primary"
+                className="h-9 shrink-0 border-input bg-primary border"
                 style={{ width: `${Math.max(8, (l.yearly / top) * 70)}%` }}
               />{" "}
               <span className="whitespace-nowrap">
@@ -78,7 +78,7 @@ function WageLadder({ levels }: { levels: WageLevel[] | null }) {
           ) : (
             <span
               aria-hidden="true"
-              className="block h-9 border border-dashed border-foreground/30 text-muted-foreground bg-hatch"
+              className="block h-9 border-dashed border-foreground/30 text-muted-foreground bg-hatch border"
               style={{ width: `${GHOST_WIDTHS[i]}%` }}
             />
           )}
@@ -96,7 +96,7 @@ function YearTable({ years, caption }: { years: StoredYear[]; caption: string })
       <table className="w-full min-w-[32rem] text-left text-base">
         <caption className="sr-only">{caption}{" "}</caption>
         <thead>
-          <tr className="border-b border-border text-sm text-muted-foreground">
+          <tr className="border-b-2 border-border text-sm text-muted-foreground">
             <th className="py-2 pr-4 font-bold">Wage year{" "}</th>
             {["I", "II", "III", "IV"].map((l) => (
               <th key={l} className="py-2 pr-4 text-right font-bold">
@@ -261,13 +261,13 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
       </form>
 
       {result.kind === "error" || result.kind === "none" ? (
-        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm border-2 border-border">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.message}
         </p>
       ) : null}
 
       {result.kind === "idle" || result.kind === "loading" ? (
-        <div className="mt-6 border-t border-border pt-5">
+        <div className="mt-6 border-t-2 border-border pt-5">
           <WageLadder levels={null} />{" "}
           <p className="mt-3 text-sm text-muted-foreground">
             {result.kind === "loading" ? "Asking DOL for the four figures." : "Pick an occupation and an area: DOL's four levels for that job draw here, with the yearly and hourly figure for each."}
@@ -318,7 +318,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
             </div>
           ) : null}
           {history.edc.some((y) => y.levels.some((v) => v != null)) ? (
-            <details className="bg-tint p-4">
+            <details className="bg-tint p-4 border-2 border-border">
               <summary className="cursor-pointer font-bold">
                 Universities and research employers (DOL&apos;s ACWIA table)
               </summary>{" "}

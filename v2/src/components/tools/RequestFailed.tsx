@@ -17,7 +17,7 @@ export function RequestFailed({
   failure,
   onRetry,
   after,
-  className = "bg-tint p-4",
+  className = "bg-tint p-4 border-2 border-border",
 }: {
   what: string;
   failure: FetchFailure | null;

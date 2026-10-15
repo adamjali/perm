@@ -32,7 +32,7 @@ export interface ProfileTag {
 const TONE: Record<ProfileTag["tone"], string> = {
   warn: "bg-data-warn-ink",
   bad: "bg-data-bad-ink",
-  ink: "bg-muted-foreground",
+  ink: "bg-foreground",
 };
 
 export function ProfileHeader({
@@ -60,7 +60,7 @@ export function ProfileHeader({
           <p className="text-sm text-muted-foreground">{eyebrow}</p>{" "}
           <h1
             translate="no"
-            className="mt-2 font-heading text-3xl font-bold leading-tight [overflow-wrap:anywhere] sm:text-4xl"
+            className="mt-2 font-heading text-4xl font-bold leading-tight [overflow-wrap:anywhere] sm:text-5xl"
           >
             {name}
           </h1>{" "}
@@ -73,7 +73,7 @@ export function ProfileHeader({
                   <li>
                     <a
                       href={t.href}
-                      className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold underline-offset-2 hover:underline"
+                      className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold underline-offset-2 hover:underline border-2 shadow-hard-sm motion-safe:hover:-translate-y-0.5 px-3 bg-card border-border transition-[color,background-color,border-color,box-shadow,transform]"
                     >
                       <span aria-hidden="true" className={cn("size-2.5 shrink-0", TONE[t.tone])} />
                       {t.text}

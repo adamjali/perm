@@ -93,7 +93,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
   const max = Math.max(baseline, ...rows.map((r) => r.rate)) * 1.08;
 
   return (
-    <div className="bg-tint p-5 sm:p-6">
+    <div className="bg-tint p-5 sm:p-6 border-2 shadow-hard-sm border-border">
       <ChartTips label="Denial rate by group, against the field baseline">
       <div className="space-y-5">
         {rows.map((r) => {
@@ -122,7 +122,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
               </div>
               {/* The track carries the baseline marker, so every bar is read
                   against the field rather than against itself. */}
-              <div className="relative mt-2 h-6 border border-input bg-background">
+              <div className="relative mt-2 h-6 border-input bg-background border">
                 <div
                   className="h-full"
                   style={{
@@ -213,9 +213,9 @@ export function RateTable({
           }
         }}
         className={
-          "min-h-[44px] w-full px-3 py-2 text-sm font-semibold text-soft transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring " +
+          "min-h-[44px] w-full px-3 py-2 text-sm font-semibold text-soft transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" +
           (numeric ? "text-right" : "text-left") +
-          (sortKey === key ? " text-foreground" : "")
+          (sortKey === key ? "text-foreground" : "")
         }
       >
         {label}
@@ -228,7 +228,7 @@ export function RateTable({
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] border-t-2 border-[var(--object-border)] text-left text-sm">
         <caption className="sr-only">{caption}</caption>
-        <thead className="border-b border-input bg-muted">
+        <thead className="dark border-b border-black bg-[#141414] text-foreground">
           <tr>
             {/* No whitespace between these: a text node whose parent is
                 <tr> is invalid HTML and React warns it breaks hydration.
@@ -499,7 +499,7 @@ export function RankedRateViews({
   const shown = kept.slice(0, chartLimit);
   const showingAll = shown.length === kept.length;
   const empty = (
-    <p className="bg-tint p-6 text-base text-muted-foreground">
+    <p className="bg-tint p-6 text-base text-muted-foreground border-2 shadow-hard-sm border-border">
       No {noun} clear a floor of {floor.toLocaleString("en-US")} decided cases in this
       window. Lower the floor to see what the files hold.
     </p>

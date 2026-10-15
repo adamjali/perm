@@ -322,9 +322,9 @@ export function SearchPalette({
         role="dialog"
         aria-modal="true"
         aria-label="Search PERM Tracker"
-        className="w-full max-w-xl border border-border bg-background text-foreground"
+        className="w-full max-w-xl border-border bg-background text-foreground border"
       >
-        <div className="flex items-center gap-2 border-b border-border px-4">
+        <div className="flex items-center gap-2 border-b-2 border-border px-4">
           {navPending ? (
             <CircleNotchIcon
               aria-hidden="true"
@@ -352,14 +352,14 @@ export function SearchPalette({
         {/* The persistent hint. It does not truncate, it does not disappear
             the moment you type, and it is the only place that can hold the
             whole list of what this box accepts. */}
-        <p className="border-b border-border px-4 py-2 text-sm leading-snug text-muted-foreground">
+        <p className="border-b-2 border-border px-4 py-2 text-sm leading-snug text-muted-foreground">
           Employers, law firms, occupations, pages and articles. Paste a G-, A-,
           P-, I- or H- case number and it goes straight to the lookup.
         </p>
         {navTarget !== null ? (
           <p
             role="status"
-            className="flex items-center gap-2 border-b border-border bg-tint px-4 py-2 text-sm font-bold"
+            className="flex items-center gap-2 border-b-2 border-border bg-tint px-4 py-2 text-sm font-bold"
           >
             <CircleNotchIcon
               aria-hidden="true"
@@ -540,7 +540,7 @@ export function SearchPalette({
             </Command.Group>
           ) : null}
         </Command.List>
-        <div className="border-t border-border px-4 py-2 text-sm text-muted-foreground">
+        <div className="border-t-2 border-border px-4 py-2 text-sm text-muted-foreground">
           Esc closes · Enter opens · a case number goes straight to the lookup
         </div>
       </Command>

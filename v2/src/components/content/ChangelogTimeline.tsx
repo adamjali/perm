@@ -89,13 +89,13 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
         >
           {/* Dot on timeline. */}
           <div
-            className="absolute left-[11px] top-4 h-3 w-3 border border-border bg-primary sm:left-[27px]"
+            className="absolute left-[11px] top-4 h-3 w-3 border-border bg-primary sm:left-[27px] border"
             aria-hidden="true"
           />
 
-          <div className="border border-border bg-card transition-shadow duration-200">
+          <div className="border-border bg-card transition-shadow duration-200 border">
             {entry.post.meta.image ? (
-              <div className="relative aspect-[21/9] overflow-hidden border-b border-border">
+              <div className="relative aspect-[21/9] overflow-hidden border-b-2 border-border">
                 <Image
                   src={entry.post.meta.image}
                   alt={entry.post.meta.imageAlt ?? entry.post.meta.title}

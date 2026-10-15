@@ -196,7 +196,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
                         </Link>{" "}
                         <span aria-hidden="true" className="block h-5">
                           <span
-                            className="block h-full border border-input bg-primary"
+                            className="block h-full border-input bg-primary border"
                             style={{ width: `${Math.max(3, (r.total / topMax) * 100)}%` }}
                           />
                         </span>{" "}
@@ -209,7 +209,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
               </ChartTips>
             </div>
           </section>{" "}
-          <section id="all" className="mt-16 border-t-2 border-foreground pt-4">
+          <section id="all" className="mt-16 border-t-4 border-foreground pt-4">
             <h2 className="font-heading text-3xl font-bold leading-tight sm:text-4xl">{`All ${formatInt(rows.length)} ${c.noun}`}</h2>{" "}
             <div className="mt-6">
               <GroupIndexTable

@@ -51,7 +51,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
   const plotH = H - PAD.t - PAD.b;
 
   return (
-    <div className="mt-4 bg-tint p-6 sm:p-8">
+    <div className="mt-4 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
       <p className="text-lg leading-relaxed">
         Of the {summary.months} bulletins the archive caught before their month began ({monthName(summary.first)} to{" "}
         {monthName(summary.last)}), half were out by the{" "}
@@ -64,7 +64,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
         . The earliest came out by the {summary.earliestDay ? ordinal(summary.earliestDay) : "start"}.
       </p>{" "}
       {byToday ? (
-        <p className="mt-3 border-l-2 border-primary pl-3 text-base leading-relaxed">
+        <p className="mt-3 border-l-4 border-primary pl-3 text-base leading-relaxed">
           Today is {priorName} {todayDay}.{" "}
           {byToday.captured === 0 ? (
             <>

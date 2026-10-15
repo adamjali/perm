@@ -261,7 +261,7 @@ export default async function MethodologyPage() {
         </p>
         {/* Six readings of one figure on one scale, shortest first, DOL's own
             in ink: the spread is the point. */}
-        <div className="mt-6 max-w-3xl bg-tint p-5 sm:p-6">
+        <div className="mt-6 max-w-3xl bg-tint p-5 sm:p-6 border-2 shadow-hard-sm border-border">
           <BarRows
             rows={[...SPREAD]
               .sort((a, b) => a.days - b.days)
@@ -295,7 +295,7 @@ export default async function MethodologyPage() {
             <div
               key={s.name}
               className={
-                "bg-tint p-6 " +
+                "bg-tint p-6 border-2 shadow-hard-sm border-border" +
                 (i % 2 === 0 ? "bg-card" : "bg-tint")
               }
             >
@@ -387,7 +387,7 @@ export default async function MethodologyPage() {
           file, checked against that file&apos;s own totals or shape before it&apos;s used, and dated on the page.
         </p>{" "}
         <dl className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0">
-          <div className="bg-tint p-5" id="onet">
+          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border" id="onet">
             <dt className="font-heading text-lg font-bold">O*NET, what a job is</dt>{" "}
             <dd className="mt-2 text-base leading-relaxed text-soft">
               Descriptions, tasks, Job Zones and reported education from the O*NET Database, and the Bright Outlook list
@@ -398,7 +398,7 @@ export default async function MethodologyPage() {
               USDOL/ETA has not approved, endorsed, or tested these changes.
             </dd>
           </div>{" "}
-          <div className="bg-tint p-5">
+          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
             <dt className="font-heading text-lg font-bold">BLS, what a job pays and where it&apos;s heading</dt>{" "}
             <dd className="mt-2 text-base leading-relaxed text-soft">
               Market pay from the Bureau of Labor Statistics&apos; Occupational Employment and Wage Statistics: what
@@ -407,7 +407,7 @@ export default async function MethodologyPage() {
               percentile BLS publishes as top-coded is shown as &quot;at least&quot; its ceiling, never as a number.
             </dd>
           </div>{" "}
-          <div className="bg-tint p-5">
+          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
             <dt className="font-heading text-lg font-bold">DOL&apos;s wage tables, every year since 2021-22</dt>{" "}
             <dd className="mt-2 text-base leading-relaxed text-soft">
               The four prevailing wage levels for every job in every area, from the tables the Office of Foreign Labor
@@ -419,7 +419,7 @@ export default async function MethodologyPage() {
               is never shown as a level.
             </dd>
           </div>{" "}
-          <div className="bg-tint p-5">
+          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
             <dt className="font-heading text-lg font-bold">Census, where a city is</dt>{" "}
             <dd className="mt-2 text-base leading-relaxed text-soft">
               A worksite city is matched to Census&apos;s place and county-subdivision files (which is where New England
@@ -429,14 +429,14 @@ export default async function MethodologyPage() {
               than guessed.
             </dd>
           </div>{" "}
-          <div className="bg-tint p-5">
+          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
             <dt className="font-heading text-lg font-bold">BEA, what prices are where</dt>{" "}
             <dd className="mt-2 text-base leading-relaxed text-soft">
               Regional price parities from the Bureau of Economic Analysis: a metro&apos;s price level against 100 for
               the country, for all items and for housing rents, read through BEA&apos;s API.
             </dd>
           </div>{" "}
-          <div className="bg-tint p-5">
+          <div className="bg-tint p-5 border-2 shadow-hard-sm border-border">
             <dt className="font-heading text-lg font-bold">State, the visas issued</dt>{" "}
             <dd className="mt-2 text-base leading-relaxed text-soft">
               The State Department&apos;s monthly immigrant visa issuances since March 2017, by visa class and by
@@ -447,28 +447,28 @@ export default async function MethodologyPage() {
         </dl>
       </section>
 
-      <section className="mt-12">
+      <section className="dark mt-12 border-2 shadow-hard border-black bg-[#141414] text-foreground p-6 sm:p-8">
         <h2 className="font-heading text-2xl font-bold">What we refuse to publish</h2>{" "}
         <ul className="mt-4 grid gap-3 text-base leading-relaxed text-soft">
-          <li className="border-l-2 border-primary pl-4">
+          <li className="border-l-4 border-primary pl-4">
             A single blended estimate. Each calculator shows every model its
             data supports, labelled, and lets them disagree.
           </li>{" "}
-          <li className="border-l-2 border-primary pl-4">
+          <li className="border-l-4 border-primary pl-4">
             Medians over immature cohorts. A month whose only decided cases are
             instant withdrawals has a median of one day.
           </li>{" "}
-          <li className="border-l-2 border-primary pl-4">
+          <li className="border-l-4 border-primary pl-4">
             Stages nobody can measure. Where a wait depends on visa-number
             availability, the timeline says so instead of inventing a figure.
           </li>{" "}
-          <li className="border-l-2 border-primary pl-4">
+          <li className="border-l-4 border-primary pl-4">
             Undated numbers. Every figure carries the date of the data behind it.
           </li>
         </ul>
       </section>
 
-      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 bg-tint p-6 sm:p-8">
+      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
         <div>
           <h2 className="font-heading text-xl font-bold">See it applied</h2>{" "}
           <p className="mt-1 text-base text-muted-foreground">

@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import { DAYS_PER_MONTH_2DP } from "@/lib/time";
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const EYEBROW_CLASS = "text-sm font-semibold text-muted-foreground";
 
 /** Rounded the way a count this uncertain deserves: tens, hundreds, then thousands. */
@@ -126,7 +126,7 @@ export function GreenCardLine({
 
   return (
     <div className={cn("object", className)}>
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <UsersThreeIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <h2 className="font-heading text-2xl font-bold leading-tight">Who is ahead of you?</h2>
@@ -191,10 +191,10 @@ export function GreenCardLine({
           <div aria-hidden="true" className="mt-2 h-12 w-56 max-w-full bg-foreground/10" />{" "}
           <div
             aria-hidden="true"
-            className="mt-5 flex h-8 border border-dashed border-foreground/40 text-muted-foreground [&>*]:min-w-0"
+            className="mt-5 flex h-8 border-dashed border-foreground/40 text-muted-foreground [&>*]:min-w-0 border"
           >
-            <span className="w-1/4 border-r border-dashed border-foreground/30 bg-hatch" />
-            <span className="w-2/5 border-r border-dashed border-foreground/30 bg-hatch-reverse" />
+            <span className="w-1/4 border-r-2 border-dashed border-foreground/30 bg-hatch" />
+            <span className="w-2/5 border-r-2 border-dashed border-foreground/30 bg-hatch-reverse" />
             <span className="flex-1 bg-hatch" />
           </div>{" "}
           <ul aria-hidden="true" className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
@@ -271,7 +271,7 @@ function LineAnswer({
 
   return (
     <>
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <p className={EYEBROW_CLASS}>{lineLabel}</p>{" "}
         <p className="mt-2 font-heading text-4xl font-bold leading-[1.05] tabular-nums sm:text-5xl">
           {rangeText(result.peopleAhead.low, result.peopleAhead.high)}
@@ -303,7 +303,7 @@ function LineAnswer({
         ) : null}
 
         {result.check?.disagrees && result.check.scaled ? (
-          <div className="mt-5 flex items-start gap-3 border border-data-warn bg-data-warn/10 p-4">
+          <div className="mt-5 flex items-start gap-3 border-2 border-data-warn bg-data-warn/10 p-4">
             <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
             <p className="text-base leading-relaxed">
               <b className="font-bold">Treat this as rough for this line.</b>{" "}
@@ -321,10 +321,10 @@ function LineAnswer({
         ) : null}
       </div>
 
-      <div className="border-b border-border p-6 sm:p-8">
+      <div className="border-b-2 border-border p-6 sm:p-8">
         <h3 className="font-heading text-lg font-bold">Who they are</h3>{" "}
         <ChartTips label="The three groups ahead of you" className="mt-4">
-        <div className="flex h-8 w-full overflow-hidden border border-input" role="img" aria-label="The three groups ahead of you, to scale">
+        <div className="flex h-8 w-full overflow-hidden border-input border" role="img" aria-label="The three groups ahead of you, to scale">
           {total > 0
             ? segs.map((s) => (
                 <span
@@ -343,7 +343,7 @@ function LineAnswer({
             <Fragment key={s.key}>
               {" "}
               <li className="flex items-start gap-2">
-                <span className={cn("mt-1.5 h-3 w-3 shrink-0 border border-input", s.cls)} aria-hidden="true" />{" "}
+                <span className={cn("mt-1.5 h-3 w-3 shrink-0 border-input border", s.cls)} aria-hidden="true" />{" "}
                 <span>
                   <b className="block font-bold tabular-nums">{roundPeople(s.value)}</b>{" "}
                   <span className="block text-base font-semibold">{s.label}</span>{" "}
@@ -358,7 +358,7 @@ function LineAnswer({
       <LineStrip histogram={result.histogram} front={result.front.iso} you={priorityDate} />
 
       {reach ? (
-        <div className="border-b border-border p-6 sm:p-8">
+        <div className="border-b-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-lg font-bold">The bulletin&apos;s own pace, for comparison</h3>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
             Over the {reach.basis.spanMonths} months since October 2014, this line&apos;s final action date moved{" "}
@@ -372,7 +372,7 @@ function LineAnswer({
         </div>
       ) : null}
 
-      <details className="group border-b border-border p-6 sm:p-8">
+      <details className="group border-b-2 border-border p-6 sm:p-8">
         <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
           What this leaves out
         </summary>
@@ -461,7 +461,7 @@ function LineStrip({ histogram, front, you }: { histogram: Array<{ month: string
   const first = bars[0]!.label;
   const last = bars[bars.length - 1]!.label;
   return (
-    <div className="border-b border-border p-6 sm:p-8">
+    <div className="border-b-2 border-border p-6 sm:p-8">
       <h3 className="font-heading text-lg font-bold">Where they sit in the line</h3>{" "}
       <p className="mt-1 text-base text-muted-foreground">
         People ahead of you by priority date, from the bulletin&apos;s cutoff ({formatAsOf(front)}) to yours.

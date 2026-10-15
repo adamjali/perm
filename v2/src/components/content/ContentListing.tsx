@@ -76,14 +76,14 @@ export default function ContentListing({ posts, type }: ContentListingProps) {
       </div>
 
       {closest ? (
-        <p role="status" className="border-l-2 border-primary bg-tint px-4 py-3 text-base">
+        <p role="status" className="border-l-4 border-primary bg-tint px-4 py-3 text-base">
           No article holds &ldquo;{search}&rdquo; exactly. These are the closest.
         </p>
       ) : null}
 
       {sections.map(({ topic, posts: list }) => (
         <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-h`} >
-          <div className="mb-5 border-b border-border pb-3">
+          <div className="mb-5 border-b-2 border-border pb-3">
             <h2 id={`${topic.id}-h`} className="font-heading text-2xl font-bold sm:text-3xl">
               {topic.label}
             </h2>{" "}

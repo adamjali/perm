@@ -225,7 +225,7 @@ export default async function PermCaseStatusPage({
           from bad input. A figure the reader has already absorbed cannot be
           un-absorbed by a note underneath it. */}
       {malformed ? (
-        <p className="mt-6 flex items-start gap-2 border-l-2 border-data-warn-ink bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft">
+        <p className="mt-6 flex items-start gap-2 border-l-2 border-data-warn-ink bg-data-warn/8 px-4 py-3 text-base leading-relaxed text-soft border-2">
           <WarningIcon className="mt-1 size-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>
             <b className="font-semibold text-foreground">That isn&apos;t the shape of a case number,</b>{" "}
@@ -236,7 +236,7 @@ export default async function PermCaseStatusPage({
         </p>
       ) : null}
       {malformed && looksLikeReceipt(typed) ? (
-        <div className="mt-4 bg-tint p-5">
+        <div className="mt-4 bg-tint p-5 border-2 border-border">
           <p className="text-base leading-relaxed">
             <b className="font-semibold">Holding a USCIS receipt number?</b> Three
             letters and ten digits, like EAC2190123456, is USCIS&apos;s record

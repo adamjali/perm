@@ -135,7 +135,7 @@ export default async function SignupPage() {
         // The page's one tinted panel. Centred when it fits; above `lg` it
         // top-aligns and sticks, because the form beside it is taller than a
         // laptop screen and centring would push it below the fold.
-        className="flex flex-col items-center justify-center border-t border-border bg-tint px-6 py-12 sm:px-10 lg:justify-start lg:border-r lg:border-t-0 lg:py-16"
+        className="dark flex flex-col items-center justify-center border-t-2 border-black bg-[#141414] px-6 py-12 text-foreground sm:px-10 lg:justify-start lg:border-r-2 lg:border-t-0 lg:py-16"
       >
         <div className="w-full max-w-lg lg:sticky lg:top-24">
           <p className="text-base font-semibold text-muted-foreground">
@@ -156,7 +156,7 @@ export default async function SignupPage() {
               ))}
             </dl>
           ) : null}
-          <div className="mt-8 border-t border-border pt-6">
+          <div className="mt-8 border-t-2 border-border pt-6">
             <ProductShot
               src={TOUR_SHOTS.dashboard.light.src}
               width={TOUR_SHOTS.dashboard.light.width}

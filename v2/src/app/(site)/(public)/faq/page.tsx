@@ -181,7 +181,7 @@ export default async function FAQPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
 
-      <section className="border-b border-border bg-card">
+      <section className="border-b-2 border-border bg-card">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-10 sm:px-8 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:items-start [&>*]:min-w-0">
           <div>
             <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl mb-3">
@@ -202,7 +202,7 @@ export default async function FAQPage() {
                 {" "}
                 <Link
                   href={l.href}
-                  className="group flex flex-col border border-input bg-card p-4 transition-colors hover:bg-accent"
+                  className="group flex flex-col border-2 border-input bg-card p-4 transition-[color,background-color,border-color,box-shadow,transform] hover:bg-accent shadow-hard-sm motion-safe:hover:-translate-y-0.5"
                 >
                   <l.Icon aria-hidden="true" className="size-6 text-primary-text" />{" "}
                   <span className="mt-3 font-heading text-base font-bold leading-tight">{l.label}</span>{" "}
@@ -218,7 +218,7 @@ export default async function FAQPage() {
         {/* The groups, with how many questions each holds: a contents list
             that stays beside the questions on a wide screen. */}
         <nav aria-label="Question groups" className="max-lg:hidden">
-          <ol className="sticky top-[calc(var(--site-header-h)+1.5rem)] space-y-1 border-l border-border pl-4">
+          <ol className="sticky top-[calc(var(--site-header-h)+1.5rem)] space-y-1 border-l-4 border-border pl-4">
             {groups.map((g) => (
               <Fragment key={g.id}>
                 {" "}

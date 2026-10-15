@@ -79,7 +79,7 @@ export function LadderByYear({
           // array items, so each row's text glues to the next one's for every
           // extractor that walks the DOM.
           <Fragment key={l.key}>
-          <li className="border-t border-border py-3 first:border-t-0 first:pt-0">
+          <li className="border-t-2 border-border py-3 first:border-t-0 first:pt-0">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <p className="text-sm font-bold">
                 {l.label}
@@ -125,7 +125,7 @@ export function LadderByYear({
       <p
         className={cn(
           "mt-4 text-sm leading-relaxed",
-          composition ? "border border-data-warn bg-data-warn/8 p-3 text-soft" : "text-muted-foreground",
+          composition ? "border-2 border-data-warn bg-data-warn/8 p-3 text-soft" : "text-muted-foreground",
         )}
       >
         {composition ? (

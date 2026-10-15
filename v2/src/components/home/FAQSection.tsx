@@ -80,7 +80,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
         )}
       >
         <div ref={contentRef} className="overflow-hidden">
-          <div className="px-5 pb-5">
+          <div className="px-5 pb-5 border-t-2 border-border">
             <p className="text-base leading-7 text-soft">
               {item.rich}
             </p>
@@ -105,7 +105,7 @@ export function FAQSection() {
           question on the left, the answers on the right. */}
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-8 px-4 [&>*]:min-w-0 sm:px-8 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-14">
         <div>
-          <h2 id="faq-h" className="font-heading text-2xl font-bold sm:text-3xl">
+          <h2 id="faq-h" className="font-heading text-3xl font-bold sm:text-4xl">
             Questions about PERM Tracker
           </h2>{" "}
           <p className="mt-3 max-w-sm text-base leading-relaxed text-soft sm:text-lg">

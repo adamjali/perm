@@ -72,7 +72,7 @@ export function LadderComb({
             // be part of each iteration or every row's text glues to the next.
             <Fragment key={l.key}>
             <li
-              className="border-t border-border py-3 first:border-t-0 first:pt-0"
+              className="border-t-2 border-border py-3 first:border-t-0 first:pt-0"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <p className="min-w-0 text-sm font-bold leading-snug">

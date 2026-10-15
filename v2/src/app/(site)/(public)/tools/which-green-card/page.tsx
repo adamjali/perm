@@ -72,7 +72,7 @@ export default function WhichGreenCardPage() {
         <VisaChooser />
       </section>
 
-      <details className="group mt-12 bg-tint p-6 sm:p-8">
+      <details className="group mt-12 bg-tint p-6 sm:p-8 border-2 border-border">
         <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
           What this can&apos;t tell you
         </summary>

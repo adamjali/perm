@@ -189,13 +189,13 @@ export default async function PermCasesPage() {
 
             {/* The live browser carries its own heading and the #live anchor; this
                 is the part's rule. */}
-            <div className="mt-16 border-t-2 border-border pt-8">
+            <div className="mt-16 border-t-4 border-border pt-8">
               <LiveCaseBrowser summary={liveSummary} publishedThrough={meta.lastDecisionDate} />
             </div>
           </SearchParamsBoundary>
         </>
       ) : (
-        <section className="mt-10 bg-tint p-8 text-center">
+        <section className="mt-10 bg-tint p-8 text-center border-2 shadow-hard border-border">
           <p className="text-lg text-muted-foreground">
             The case-level table is written by the quarterly disclosure ingest. Until it has run, the{" "}
             <Link href="/perm-processing-times" className="link">
@@ -221,7 +221,7 @@ export default async function PermCasesPage() {
             reads it against where DOL is working now.
           </p>
         </div>
-        <div className="bg-tint p-6">
+        <div className="bg-tint p-6 border-2 shadow-hard-sm border-border">
           <h2 className="font-heading text-lg font-bold">Comparing a whole docket?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Per-firm and per-sponsor totals sit on the{" "}
