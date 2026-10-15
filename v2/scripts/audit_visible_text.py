@@ -69,6 +69,77 @@ def strip_noise(html: str) -> str:
     return re.sub(r"<!--[\s\S]*?-->", " ", html)
 
 
+SWAP = re.compile(r'\$R([CS])\("([^"]+)","([^"]+)"\)')
+SEGMENT = re.compile(r'<div hidden id="(S:[^"]+)">')
+
+
+def _close_of(html: str, start: int, tag: str) -> int:
+    """Index just past the element opened at `start`, nesting by tag name."""
+    depth = 0
+    for m in re.finditer(rf"<{tag}\b[^>]*>|</{tag}>", html[start:], flags=re.I):
+        depth += -1 if m.group(0).startswith("</") else 1
+        if depth == 0:
+            return start + m.end()
+    return len(html)
+
+
+def resolve_streaming(html: str) -> str:
+    """The page as the browser shows it once React has streamed it in.
+
+    A page that streams sends a fallback first (a loading skeleton, or a tool
+    drawn before it can read the address bar) and the finished part later, in
+    a hidden `<div id="S:n">`, with a script that swaps it in: `$RC("B:x",
+    "S:y")` replaces boundary B:x's fallback, `$RS("S:y","P:z")` fills a
+    placeholder. Read raw, a streamed case page has nothing visible but its
+    skeleton, and a dev server's tool page has every heading twice. This does
+    the swaps, in the order the page does them.
+    """
+    segments: dict[str, str] = {}
+    out, i = [], 0
+    for m in SEGMENT.finditer(html):
+        if m.start() < i:
+            continue
+        end = _close_of(html, m.start(), "div")
+        segments[m.group(1)] = html[m.end():end - len("</div>")]
+        out.append(html[i:m.start()])
+        i = end
+    out.append(html[i:])
+    page = "".join(out)
+    # A swap can target a placeholder inside a block not swapped in yet, so
+    # keep passing over the swaps until none applies.
+    pending = SWAP.findall(html)
+    while pending:
+        left = []
+        for kind, a, b in pending:
+            if kind == "C":                   # $RC(boundary, segment)
+                seg = segments.get(b)
+                tpl = page.find(f'<template id="{a}"></template>')
+                open_at = page.rfind("<!--$?-->", 0, tpl) if tpl >= 0 else -1
+                close_at = -1
+                if seg is not None and open_at >= 0:
+                    depth = 0
+                    for c in re.finditer(r"<!--\$[?!]?-->|<!--/\$-->", page[open_at:]):
+                        depth += -1 if c.group(0) == "<!--/$-->" else 1
+                        if depth == 0:
+                            close_at = open_at + c.end()
+                            break
+                if close_at < 0:
+                    left.append((kind, a, b))
+                    continue
+                page = page[:open_at] + "<!--$-->" + seg + "<!--/$-->" + page[close_at:]
+            else:                             # $RS(segment, placeholder)
+                seg = segments.get(a)
+                tpl = f'<template id="{b}"></template>'
+                if seg is None or tpl not in page:
+                    left.append((kind, a, b))
+                    continue
+                page = page.replace(tpl, seg, 1)
+        if len(left) == len(pending):
+            break                             # nothing more can apply
+        pending = left
+    return page
+
+
 START_TAG = re.compile(r"<([a-z][a-z0-9-]*)\b((?:[^>\"']|\"[^\"]*\"|'[^']*')*)>", re.I)
 ATTR = re.compile(r"""([^\s=/>"']+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?""")
 
@@ -243,7 +314,7 @@ def main() -> int:
         html = fetch(args.base.rstrip("/") + p)
         if html is None:
             continue
-        clean = strip_noise(html)
+        clean = strip_noise(resolve_streaming(html))
         visible_html = drop_closed_details(drop_hidden(clean))
         got[p] = (words(detext(clean)),
                   words(detext(visible_html)),

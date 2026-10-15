@@ -2,9 +2,9 @@
 /**
  * Capture live pages as article pictures: the page itself at 4:3, with the
  * site's top bar (the one fixed element; a page's own <header> stays, since
- * many pages keep their H1 in one), breadcrumb bar, data menu and floating
- * buttons hidden, so the
- * picture shows what the article is about rather than the frame around it.
+ * many pages keep their H1 in one), breadcrumb bar, a data page's section
+ * list and floating buttons hidden, so the picture shows what the article is
+ * about rather than the frame around it.
  *
  *   node scripts/capture_article_heroes.mjs <base-url> <out-dir> [slug ...]
  *
@@ -30,8 +30,10 @@ const jobs = Object.entries(spec).filter(([slug, s]) => s.capture && (only.lengt
 fs.mkdirSync(out, { recursive: true });
 
 const HIDE = `
-  div:has(> nav[aria-label="Breadcrumb"]), main div.contents.print\\:hidden,
+  div:has(> nav[aria-label="Breadcrumb"]), div:has(> nav.print\\:hidden) > nav.print\\:hidden,
   nextjs-portal, [data-nextjs-toast], button[aria-label="Back to top"], .fixed { display: none !important; }
+  /* A data page's "In this section" column goes, and its page takes the width. */
+  div:has(> nav.print\\:hidden) { display: block !important; }
   main { padding-top: 0 !important; }
   html { scroll-behavior: auto !important; }
 `;

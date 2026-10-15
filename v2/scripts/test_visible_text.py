@@ -40,8 +40,17 @@ def main() -> int:
     check(seen('<div class="hidden lg:block">shown</div>') == ["shown"], "a class named hidden is CSS's call, not ours")
     check(seen('<p>d <img alt="x" hidden> e</p>') == ["d", "e"], "a hidden void element hides only itself")
     check(seen('<details><summary>Fold</summary><p>body</p></details>') == ["Fold"], "a closed fold keeps its summary only")
-    streamed = '<body><h1>T</h1><h2>A</h2><div hidden id="S:0"><h1>T</h1><h2>A</h2></div></body>'
-    check(ah.headings(streamed) == [(1, "T"), (2, "A")], "a dev server's hidden streamed copy adds no headings")
+    # A streamed page: a skeleton first, the finished part in hidden blocks, swapped in by script,
+    # one block's placeholder sitting inside another block (the order the case page streams in).
+    streamed = ('<body><!--$?--><template id="B:1"></template><div aria-hidden="true">skeleton</div><!--/$-->'
+                '<div hidden id="S:2"><h2>Record</h2></div>'
+                '<div hidden id="S:1"><h1>Case</h1><!--$?--><template id="B:2"></template><p>wait</p><!--/$--></div>'
+                '<script>$RC("B:2","S:2")</script><script>$RC("B:1","S:1")</script></body>')
+    check(ah.headings(streamed) == [(1, "Case"), (2, "Record")], "a streamed page is read after its swaps, nested ones too")
+    check(seen(av.strip_noise(av.resolve_streaming(streamed))) == ["Case", "Record"], "and its words are the finished page's")
+    fallback = ('<body><!--$?--><template id="B:0"></template><h1>T</h1><h2>A</h2><!--/$-->'
+                '<div hidden id="S:0"><h1>T</h1><h2>A</h2></div><script>$RC("B:0","S:0")</script></body>')
+    check(ah.headings(fallback) == [(1, "T"), (2, "A")], "a fallback and its finished copy count once")
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0
 
