@@ -1,11 +1,13 @@
 /**
  * Social cards for the site's PAGES, built from real screenshots.
  *
- * Each card is the page's own ground with the wordmark, the page's name and
- * one sentence on the left, and a real screenshot of the page on the right in
- * a 1px frame (or a drawn motif for indexes and legal pages). Nothing on the
- * card is a live figure, because a static image of a number that moves weekly
- * is wrong by the second week; the sentence says what the page is.
+ * Picture first (owner, Oct 15 2026: "visual, less text"): the page's real
+ * screenshot large on the right as the site draws an object (2px ink edge,
+ * hard offset), running off the card's edges; on the left only the wordmark,
+ * the page's name and the address (or a drawn motif for indexes and legal
+ * pages). Nothing on the card is a live figure, because a static image of a
+ * number that moves weekly is wrong by the second week. Each card's `label`
+ * stays in the spec as the page's one-line summary; it isn't drawn.
  *
  *   node scripts/make-page-cards.mjs <spec.json> <shots-dir> [--only slug]
  *
@@ -33,8 +35,8 @@ const H = 630;
 // inter.woff2 and point CARD_FONTS at it.
 if (!process.env.CARD_FONTS) throw new Error("CARD_FONTS must name a folder holding space-grotesk.woff2 and inter.woff2");
 const FONTS = { grotesk: join(process.env.CARD_FONTS, "space-grotesk.woff2"), inter: join(process.env.CARD_FONTS, "inter.woff2") };
-/** One ground, the site's page: the calm look has no lime or ink cards. */
-const C = { bg: "#FAFAFA", ink: "#141414", soft: "#3D3D3D", muted: "#5E5E5E", line: "#E5E5E5", drawn: "#C8C8C8", control: "#858585", accent: "#1A7A25", fill: "#EDF4EE" };
+/** The site's page ground and its object: ink edge, hard offset, lime for "now". */
+const C = { bg: "#FAFAFA", tint: "#F0F0EE", ink: "#141414", soft: "#3D3D3D", muted: "#5E5E5E", line: "#E5E5E5", drawn: "#C8C8C8", control: "#858585", accent: "#1A7A25", fill: "#2ECC40" };
 const esc = (s) => String(s).replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m]);
 
 /** A drawn motif for pages where a screenshot says nothing (indexes, legal, contact). */
@@ -44,20 +46,20 @@ function motif(kind) {
   let s = "";
   if (kind === "grid") {
     const lit = new Set([7, 8, 19, 26, 33]);
-    for (let i = 0; i < 40; i++) s += R(12 + (i % 8) * 54, 60 + Math.floor(i / 8) * 54, 42, 42, lit.has(i) ? C.fill : "#FFFFFF", lit.has(i) ? C.accent : C.drawn);
+    for (let i = 0; i < 40; i++) s += R(12 + (i % 8) * 54, 60 + Math.floor(i / 8) * 54, 42, 42, lit.has(i) ? C.fill : "#FFFFFF", lit.has(i) ? C.ink : C.drawn);
   } else if (kind === "stack") {
     for (let d = 3; d >= 1; d--) s += R(10 + d * 26, 40 + d * 22, 330, 190, "#FFFFFF", C.drawn);
     s += R(10, 40, 330, 190, "#FFFFFF");
     [88, 124, 160].forEach((y, i) => (s += `<line x1="42" y1="${y}" x2="${i === 2 ? 220 : 306}" y2="${y}" stroke="${C.drawn}" stroke-width="6"/>`));
-    s += R(200, 186, 128, 30, C.fill, C.accent);
+    s += R(200, 186, 128, 30, C.fill, C.ink);
   } else if (kind === "steps") {
     s = `<line x1="10" y1="290" x2="430" y2="290" stroke="${C.control}" stroke-width="1.5"/>`;
     const pts = [[10, 250], [95, 250], [95, 196], [180, 196], [180, 158], [265, 158], [265, 104], [350, 104], [350, 58], [430, 58]];
     s += `<path d="${pts.map((p, i) => `${i ? "L" : "M"}${p[0]} ${p[1]}`).join(" ")}" fill="none" stroke="${C.accent}" stroke-width="4"/>`;
   } else if (kind === "record") {
-    for (let r = 0; r < 4; r++) for (let f = 0; f < 3; f++) s += R(10 + f * 108, 60 + r * 58, 96, 40, r === 2 ? C.fill : "#FFFFFF", r === 2 ? C.accent : C.drawn);
+    for (let r = 0; r < 4; r++) for (let f = 0; f < 3; f++) s += R(10 + f * 108, 60 + r * 58, 96, 40, r === 2 ? C.fill : "#FFFFFF", r === 2 ? C.ink : C.drawn);
   } else if (kind === "window") {
-    s = `<line x1="10" y1="170" x2="430" y2="170" stroke="${C.control}" stroke-width="1.5"/>` + R(96, 106, 250, 128, C.fill, C.accent);
+    s = `<line x1="10" y1="170" x2="430" y2="170" stroke="${C.control}" stroke-width="1.5"/>` + R(96, 106, 250, 128, C.fill, C.ink);
     [96, 346].forEach((x) => (s += `<line x1="${x}" y1="70" x2="${x}" y2="270" stroke="${C.ink}" stroke-width="2"/>`));
   }
   return box(s);
@@ -65,8 +67,8 @@ function motif(kind) {
 
 async function insetDataUrl(shotPath, crop) {
   const [x, y, w, h] = crop;
-  // The inset box is 560 wide; keep the crop's own ratio, cap the height.
-  const buf = await sharp(shotPath).extract({ left: x, top: y, width: w, height: h }).resize({ width: 1120 }).jpeg({ quality: 92 }).toBuffer();
+  // The picture is drawn 700 wide; keep the crop's own ratio (the card clips it).
+  const buf = await sharp(shotPath).extract({ left: x, top: y, width: w, height: h }).resize({ width: 1400 }).jpeg({ quality: 92 }).toBuffer();
   const meta = await sharp(buf).metadata();
   return { url: `data:image/jpeg;base64,${buf.toString("base64")}`, ratio: meta.height / meta.width };
 }
@@ -74,33 +76,31 @@ async function insetDataUrl(shotPath, crop) {
 function html(card, inset) {
   const f = (p) => `url(data:font/woff2;base64,${readFileSync(p).toString("base64")}) format('woff2')`;
   const n = card.title.length;
-  const titlePx = n <= 18 ? 64 : n <= 26 ? 56 : n <= 34 ? 48 : 42;
-  const insetW = 560;
-  const insetH = inset ? Math.min(400, Math.round(insetW * inset.ratio)) : 0;
+  const titlePx = n <= 14 ? 64 : n <= 22 ? 56 : n <= 32 ? 48 : 42;
+  const shotW = 700;
+  const shotH = inset ? Math.round(shotW * inset.ratio) : 0;
   return `<!doctype html><meta charset="utf-8"><style>
 @font-face{font-family:SG;src:${f(FONTS.grotesk)};font-weight:300 700;font-display:block}
 @font-face{font-family:IN;src:${f(FONTS.inter)};font-weight:100 900;font-display:block}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:${W}px;height:${H}px;overflow:hidden}
-.card{position:relative;width:${W}px;height:${H}px;background:${C.bg};color:${C.ink};
-  display:flex;align-items:center;gap:48px;padding:0 64px}
-.text{flex:1;min-width:0}
-.brand{position:absolute;left:64px;top:44px;font-family:SG;font-weight:700;font-size:26px}
+.card{position:relative;width:${W}px;height:${H}px;background:${C.bg};color:${C.ink};overflow:hidden}
+.band{position:absolute;left:0;right:0;bottom:0;height:150px;background:${C.tint}}
+.text{position:absolute;left:64px;top:150px;width:380px}
+.brand{position:absolute;left:64px;top:52px;font-family:SG;font-weight:700;font-size:28px}
 .brand b{color:${C.accent}}
-.title{font-family:SG;font-weight:700;font-size:${titlePx}px;line-height:1.05;letter-spacing:-.02em;text-wrap:balance}
-.label{font-family:IN;font-weight:400;font-size:23px;line-height:1.35;margin-top:20px;max-width:500px;color:${C.soft};text-wrap:pretty}
-.site{position:absolute;left:64px;bottom:40px;font-family:IN;font-weight:500;font-size:20px;color:${C.muted}}
-.shot{flex:0 0 ${insetW}px;width:${insetW}px;height:${insetH}px;border:1px solid ${C.line};background:#fff;overflow:hidden;
-  box-shadow:0 16px 40px -12px rgba(20,20,20,.22),0 2px 6px rgba(20,20,20,.06)}
-.shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:top left}
-.art{flex:0 0 440px;height:330px;display:flex;align-items:center;justify-content:center}
+.title{font-family:SG;font-weight:700;font-size:${titlePx}px;line-height:1.04;letter-spacing:-.02em;text-wrap:balance}
+.site{position:absolute;left:64px;bottom:52px;font-family:IN;font-weight:600;font-size:22px;color:${C.ink}}
+.shot{position:absolute;left:480px;top:74px;width:${shotW}px;height:${Math.max(shotH, 620)}px;border:3px solid ${C.ink};background:#fff;
+  box-shadow:10px 10px 0 0 ${C.ink};overflow:hidden}
+.shot img{display:block;width:100%;height:auto}
+.art{position:absolute;left:560px;top:120px;width:560px;height:420px;display:flex;align-items:center;justify-content:center;
+  background:#fff;border:3px solid ${C.ink};box-shadow:10px 10px 0 0 ${C.ink}}
 </style>
 <div class="card">
+  <div class="band"></div>
   <div class="brand"><b>PERM</b> Tracker</div>
-  <div class="text">
-    <div class="title">${esc(card.title)}</div>
-    <div class="label">${esc(card.label)}</div>
-  </div>
+  <div class="text"><div class="title">${esc(card.title)}</div></div>
   ${inset ? `<div class="shot"><img src="${inset.url}" alt=""></div>` : `<div class="art">${motif(card.motif)}</div>`}
   <div class="site">permtracker.app</div>
 </div>`;
@@ -120,13 +120,13 @@ try {
     await page.evaluate(() => document.fonts.ready);
     const overflow = await page.evaluate(() => {
       const t = document.querySelector(".text").getBoundingClientRect();
-      return { top: Math.round(t.top), bottom: Math.round(t.bottom), lines: Math.round(document.querySelector(".label").getBoundingClientRect().height / 32) };
+      return { top: Math.round(t.top), bottom: Math.round(t.bottom), lines: Math.round(t.height / 50) };
     });
-    if (overflow.bottom > H - 84 || overflow.top < 92) throw new Error(`${card.slug}: text column runs into the brand or the address (${overflow.top} to ${overflow.bottom}px)`);
+    if (overflow.bottom > H - 110 || overflow.top < 110) throw new Error(`${card.slug}: the title runs into the brand or the address (${overflow.top} to ${overflow.bottom}px)`);
     const png = await page.screenshot({ type: "png" });
     const out = join(OUT, `${card.slug}.jpg`);
     await sharp(png).jpeg({ quality: 88, mozjpeg: true }).toFile(out);
-    console.log(`  ${card.slug}.jpg  "${card.title}"  label ${overflow.lines} line(s)`);
+    console.log(`  ${card.slug}.jpg  "${card.title}"  title ${overflow.lines} line(s)`);
   }
 } finally {
   await browser.close();

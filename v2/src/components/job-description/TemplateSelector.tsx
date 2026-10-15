@@ -102,7 +102,7 @@ export function TemplateSelector({
             aria-label="Select template"
             disabled={disabled}
             className={cn(
-              "justify-between gap-2 border min-w-[140px] sm:min-w-[180px] min-h-[44px]",
+              "min-h-[44px] min-w-0 max-w-full justify-between gap-2 border sm:min-w-[180px]",
               !selectedTemplate && "text-muted-foreground",
               className
             )}
@@ -110,7 +110,7 @@ export function TemplateSelector({
             <div className="flex items-center gap-2 truncate">
               <FileTextIcon className="h-5 w-5 sm:h-4 sm:w-4 shrink-0" />
               <span className="truncate text-sm">
-                {selectedTemplate ? selectedTemplate.name : "Load Template..."}
+                {selectedTemplate ? selectedTemplate.name : "Load a template"}
               </span>
             </div>
             <CaretUpDownIcon className="h-5 w-5 sm:h-4 sm:w-4 shrink-0 opacity-50" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, KeyboardEvent } from "react";
+import { useEffect, useCallback, useRef, KeyboardEvent } from "react";
 import { choiceVariants } from "@/components/ui/choice";
 import { cn } from "@/lib/utils";
 import { useSettingsUnsavedChanges } from "./SettingsUnsavedChangesContext";
@@ -59,6 +59,11 @@ export default function SettingsLayout({
 }: SettingsLayoutProps): React.ReactElement {
   const { requestNavigation, hasUnsavedChanges } = useSettingsUnsavedChanges();
   const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+  // On a phone the tabs are one row that scrolls sideways; keep the open one in view.
+  useEffect(() => {
+    buttonRefs.current.get(activeSection)?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [activeSection]);
 
   const handleSectionChange = useCallback(
     (section: SettingsSectionType) => {
