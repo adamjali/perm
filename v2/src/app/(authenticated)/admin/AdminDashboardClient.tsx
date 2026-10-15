@@ -136,8 +136,8 @@ export default function AdminDashboardClient() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 border-b border-border pb-6">
         <div className="flex items-center gap-4">
-          <div className="flex size-12 items-center justify-center border border-border bg-primary">
-            <ShieldIcon className="size-6 text-black" />
+          <div className="flex size-12 items-center justify-center bg-tint">
+            <ShieldIcon className="size-6 text-primary-text" aria-hidden="true" />
           </div>
           <div>
             <h1 className="font-heading text-3xl font-bold">

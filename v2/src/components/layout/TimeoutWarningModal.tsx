@@ -126,7 +126,7 @@ export default function TimeoutWarningModal({
           }`}
         >
           <span
-            className={`font-heading text-5xl font-bold tracking-wider ${
+            className={`font-heading text-5xl font-bold tabular-nums ${
               isUrgent ? "text-destructive" : "text-foreground"
             }`}
           >

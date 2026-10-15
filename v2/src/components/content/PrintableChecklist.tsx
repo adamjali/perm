@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, useEffect, useState } from "react";
 import { ArrowCounterClockwiseIcon as RotateCcw, ChecksIcon as CheckCheck, PrinterIcon } from "@phosphor-icons/react";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * Generate a localStorage key from the checklist title.
@@ -199,7 +200,7 @@ export default function PrintableChecklist({
   const allChecked = totalCount > 0 && checkedCount === totalCount;
   const noneChecked = checkedCount === 0;
 
-  const btnBase = "inline-flex items-center gap-1.5 border-[3px] border-black dark:border-white px-3 py-1.5 text-sm font-bold transition-colors duration-150 disabled:text-muted-foreground disabled:pointer-events-none";
+  const btn = buttonVariants({ variant: "outline" });
 
   return (
     <section className="relative my-8">
@@ -207,7 +208,7 @@ export default function PrintableChecklist({
       <div className="mb-4 flex items-center gap-2 flex-wrap">
         {/* Progress counter */}
         {totalCount > 0 && (
-          <span className="font-mono text-sm font-bold tracking-wider text-muted-foreground mr-auto">
+          <span className="mr-auto font-mono text-sm text-muted-foreground">
             {checkedCount}/{totalCount} done
           </span>
         )}
@@ -216,28 +217,28 @@ export default function PrintableChecklist({
           type="button"
           onClick={handleCheckAll}
           disabled={allChecked}
-          className={`${btnBase} bg-[var(--primary)] text-black`}
+          className={btn}
         >
-          <CheckCheck className="h-3.5 w-3.5" />
-          Check All
+          <CheckCheck className="size-4" aria-hidden="true" />
+          Check all
         </button>{" "}
 
         <button
           type="button"
           onClick={handleClear}
           disabled={noneChecked}
-          className={`${btnBase} bg-card text-foreground`}
+          className={btn}
         >
-          <RotateCcw className="h-3.5 w-3.5" />
+          <RotateCcw className="size-4" aria-hidden="true" />
           Clear
         </button>{" "}
 
         <button
           type="button"
           onClick={handlePrint}
-          className={`${btnBase} bg-card text-foreground`}
+          className={btn}
         >
-          <PrinterIcon className="h-3.5 w-3.5" />
+          <PrinterIcon className="size-4" aria-hidden="true" />
           Print
         </button>
       </div>{" "}

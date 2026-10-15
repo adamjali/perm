@@ -518,17 +518,13 @@ export function I485QueuePosition({
                       style={{ width: `${split.solid}%` }}
                       data-tip={`At least ${position.low.toLocaleString("en-US")} ahead\n${position.counted.toLocaleString("en-US")} published individually`}
                     />
+                    {/* Texture, not a second colour, so the two segments stay
+                        distinguishable without relying on hue; the control grey
+                        keeps the hatch at 3:1 against the solid part. */}
                     <div
-                      className="h-full bg-muted"
+                      className="h-full bg-muted bg-hatch-reverse text-input"
                       data-tip={`Up to ${position.high.toLocaleString("en-US")} ahead\n${position.suppressedCells.toLocaleString("en-US")} ${position.suppressedCells === 1 ? "cell" : "cells"} withheld by USCIS, 1 to 10 applications each`}
-                      style={{
-                        width: `${split.hatched}%`,
-                        // Texture, not a second colour, so the two segments stay
-                        // distinguishable without relying on hue. Both stops are
-                        // theme tokens, so the hatch inverts with the page.
-                        backgroundImage:
-                          "repeating-linear-gradient(45deg, var(--border) 0 2px, transparent 2px 7px)",
-                      }}
+                      style={{ width: `${split.hatched}%` }}
                     />
                   </div>
                   {/* Ticks carry the two figures at the coordinates they
@@ -537,7 +533,7 @@ export function I485QueuePosition({
                       booked on the deadline diagram. */}
                   <div className="relative h-9" aria-hidden="true">
                     <span
-                      className="absolute top-0 h-2 w-0.5 bg-border"
+                      className="absolute top-0 h-2 w-0.5 bg-input"
                       style={{ left: `${split.solid}%` }}
                     />
                     {showLowLabel ? (
@@ -548,7 +544,7 @@ export function I485QueuePosition({
                         {position.low.toLocaleString("en-US")}
                       </span>
                     ) : null}{" "}
-                    <span className="absolute right-0 top-0 h-2 w-0.5 bg-border" />
+                    <span className="absolute right-0 top-0 h-2 w-0.5 bg-input" />
                     <span className="absolute right-0 top-3 whitespace-nowrap font-mono text-sm tabular-nums text-muted-foreground">
                       {position.high.toLocaleString("en-US")}
                     </span>{" "}

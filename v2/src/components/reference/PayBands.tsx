@@ -90,7 +90,7 @@ function Track({ band, domain, ends }: { band: PayBand; domain: [number, number]
       role="img"
       aria-label={tip(band).replace(/\n/g, "; ")}
     >
-      <span aria-hidden="true" className="absolute inset-x-0 top-5 h-px bg-border" />
+      <span aria-hidden="true" className="absolute inset-x-0 top-5 h-px bg-input" />
       {complete ? (
         <>
           <span

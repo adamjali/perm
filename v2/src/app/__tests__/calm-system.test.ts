@@ -113,6 +113,11 @@ describe("the calm system", () => {
     expect(findAll(/(?<=["'`])rounded(?=\s)|(?<=\s)rounded(?=["'`])/g)).toEqual([]);
   });
 
+  it("spaces letters normally and draws lines in the line colours, never in black", () => {
+    expect(findAll(tok("(?:[\\w-]+:)*tracking-(?:wide|wider|widest)"))).toEqual([]);
+    expect(findAll(tok("(?:[\\w-]+:)*border(?:-[trblxy])?-(?:black|white)"))).toEqual([]);
+  });
+
   it("draws every hatch with the shared utility, at one pitch", () => {
     expect(findAll(tok("bg-\\[repeating-linear-gradient[^\\s\"'`]*"))).toEqual([]);
   });

@@ -112,7 +112,7 @@ export function QueueTape({
                   aria-hidden="true"
                   className={cn(
                     "absolute left-1/2 top-0 h-2 w-px",
-                    cleared || isFrontier ? "bg-black/50" : "bg-border/60",
+                    cleared || isFrontier ? "bg-foreground" : "bg-input",
                   )}
                 />
                 <span
@@ -149,7 +149,7 @@ export function QueueTape({
                   // keeps them tied together.
                   <span
                     aria-hidden="true"
-                    className="absolute -top-7 left-1/2 h-7 w-px -translate-x-1/2 bg-border"
+                    className="absolute -top-7 left-1/2 h-7 w-px -translate-x-1/2 bg-input"
                   />
                 ) : null}
               </div>

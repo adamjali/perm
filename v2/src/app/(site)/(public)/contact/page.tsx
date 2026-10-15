@@ -86,7 +86,7 @@ export default function ContactPage() {
 
           {/* Feature Requests */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center border border-black bg-secondary dark:border-white">
+            <div className="flex h-12 w-12 items-center justify-center border border-border bg-secondary">
               <ChatTextIcon className="h-6 w-6 text-secondary-foreground" />
             </div>{" "}
             <div>
@@ -129,7 +129,7 @@ export default function ContactPage() {
         </div>
 
         {/* Response time */}
-        <div className="mt-12 border border-black bg-muted p-6 dark:border-white">
+        <div className="mt-12 border border-border bg-muted p-6">
           <h3 className="font-heading text-lg font-bold mb-2">Response time</h3>{" "}
           <p className="text-muted-foreground">
             We typically respond to inquiries within 24-48 hours during business

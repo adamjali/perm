@@ -81,7 +81,7 @@ export function WageAxis({
           <span key={v} className="contents">
             <span
               aria-hidden="true"
-              className="absolute top-0 h-2 w-px bg-border"
+              className="absolute top-0 h-2 w-px bg-input"
               style={{ left: `${at(v)}%` }}
             />
             <span

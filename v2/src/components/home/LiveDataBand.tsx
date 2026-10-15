@@ -313,7 +313,7 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
                       non-zero rate from rounding away to an empty track
                       entirely, and 0.6% of the width stays visually tiny. */}
                   <span
-                    className="mt-2 block h-1.5 w-full bg-border/40"
+                    className="mt-2 block h-1.5 w-full bg-border"
                     aria-hidden="true"
                   >
                     <span

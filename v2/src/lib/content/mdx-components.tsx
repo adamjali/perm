@@ -9,6 +9,7 @@ import type { MDXComponents } from "mdx/types";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import { NavLink } from "@/components/ui/nav-link";
 import VideoPlayer from "@/components/content/VideoPlayer";
 import ScreenshotFigure from "@/components/content/ScreenshotFigure";
@@ -40,7 +41,7 @@ function Callout({
     return (
       <div className="not-prose my-6 flex flex-col gap-4 border border-border p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
         {stat && (
-          <div className="flex min-h-16 min-w-16 max-w-[10rem] flex-shrink-0 items-center justify-center self-start border border-border bg-primary px-3 py-2 text-center font-heading text-xl font-bold leading-tight text-black sm:min-h-20 sm:min-w-20 sm:self-auto sm:text-2xl">
+          <div className="max-w-[10rem] flex-shrink-0 self-start font-heading text-2xl font-bold leading-tight text-foreground tabular-nums sm:self-auto sm:text-3xl">
             {stat}
           </div>
         )}
@@ -98,14 +99,13 @@ function ProductCTA({
   buttonText?: string;
 }) {
   return (
-    <div className="not-prose my-8 border border-border bg-primary/5 p-6">
+    <div className="not-prose my-8 bg-tint p-6">
       <p className="mb-2 font-heading text-lg font-bold text-foreground">{title}</p>{" "}
       <p className="mb-4 text-sm text-muted-foreground">{description}</p>
       <NavLink
         href={href}
-        className="inline-block border border-black bg-primary px-5 py-2.5 font-heading text-sm font-bold transition-colors duration-150 dark:border-white"
-        style={{ color: "black" }}
-        spinnerClassName="text-black"
+        className={buttonVariants()}
+        spinnerClassName="text-primary-foreground"
         spinnerSize={14}
       >
         {buttonText}
@@ -116,7 +116,7 @@ function ProductCTA({
 
 function StepByStep({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-6 space-y-4 border-l border-primary/30 pl-6">
+    <div className="my-6 space-y-4 border-l border-border pl-6">
       {children}
     </div>
   );
@@ -133,7 +133,7 @@ function Step({
 }) {
   return (
     <div className="relative">
-      <div className="absolute -left-[33px] flex h-6 w-6 items-center justify-center border border-border bg-primary font-mono text-sm font-bold text-black">
+      <div className="absolute -left-[38px] flex size-7 items-center justify-center border border-input bg-background font-mono text-sm font-bold text-foreground">
         {number}
       </div>
       <p className="mb-1 font-heading text-base font-bold">{title}</p>

@@ -209,7 +209,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
                 </td>
                 <td className="px-3 py-3">
                   <div className="relative h-5" role="img" aria-label={words || "No dated steps yet"}>
-                    <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-border/50" aria-hidden="true" />
+                    <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-border" aria-hidden="true" />
                     {shown.map((s) => (
                       <span
                         key={s.id}

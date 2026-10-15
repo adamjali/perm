@@ -92,7 +92,7 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
               the middle. Everything left of it has a final decision.
             */}
             <div
-              className="absolute inset-y-0 w-[2px] bg-border"
+              className="absolute inset-y-0 w-[2px] bg-foreground"
               style={{ left: `${share(resolved)}%` }}
               aria-hidden="true"
             />

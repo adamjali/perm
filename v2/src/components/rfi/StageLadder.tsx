@@ -100,7 +100,7 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
                     }}
                   />
                   <div
-                    className="absolute top-1/2 h-6 w-[3px] -translate-y-1/2 bg-border"
+                    className="absolute top-1/2 h-6 w-[3px] -translate-y-1/2 bg-foreground"
                     style={{ left: pct(band.median) }}
                     aria-hidden="true"
                   />
@@ -170,7 +170,7 @@ function Rails({
       {ticks.map((t) => (
         <div
           key={t}
-          className="absolute inset-y-0 w-px bg-border/15"
+          className="absolute inset-y-0 w-px bg-border"
           style={{ left: pct(t) }}
           aria-hidden="true"
         />

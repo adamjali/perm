@@ -87,7 +87,7 @@ export function WageLadderRow({
           reads as short rather than as a chart that failed to render. */}
       <span
         aria-hidden="true"
-        className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-border"
+        className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-input"
       />
       {/* p5 to p95. */}
       <span
