@@ -361,7 +361,7 @@ describe("StageGlossary counts", () => {
       />,
     );
     // Read aloud whole; shown as the number with its short date under it.
-    expect(screen.getByRole("link", { name: "965 cases, as of August 27, 2026" })).toBeInTheDocument();
+    expect(screen.getByText("965").parentElement?.textContent).toContain("965 cases, as of August 27, 2026");
     expect(screen.getByText("Aug 27")).toBeInTheDocument();
     expect(screen.queryByText(/August 30, 2026/)).toBeNull();
     expect(screen.queryByText("Aug 30")).toBeNull();
@@ -382,18 +382,23 @@ describe("StageGlossary counts", () => {
     expect(screen.getByText("Aug 30")).toBeInTheDocument();
   });
 
-  it("links a count only where that stage has a page", () => {
+  it("links a stage's cases from inside its entry, never from the row's toggle", () => {
     render(
       <StageGlossary
         auditQueue={null}
-        counts={{ "RFI ISSUED": 965 }}
+        counts={{ "RFI ISSUED": 965, "PENDING AUDIT RESPONSE": 0 }}
         asOf="2026-08-30"
       />,
     );
+    // A link inside a <summary> is a control inside a control (axe:
+    // nested-interactive), so the count is text and the list is linked below.
+    const links = screen.getAllByRole("link", { name: "List the cases at this stage" });
+    expect(links).toHaveLength(1);
     // The link target must be the route `generateStaticParams` produces.
-    expect(screen.getByRole("link", { name: /^965 cases/ })).toHaveAttribute(
-      "href",
-      "/perm-rfi-audit/rfi-issued",
-    );
+    expect(links[0]).toHaveAttribute("href", "/perm-rfi-audit/rfi-issued");
+    expect(links[0]!.closest("summary")).toBeNull();
+    for (const summary of document.querySelectorAll("summary")) {
+      expect(summary.querySelector("a, button, input")).toBeNull();
+    }
   });
 });

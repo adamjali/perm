@@ -5,9 +5,9 @@ import Link from "next/link";
 import { FilterableStatTable, type Facet, type StatColumn } from "@/components/tools/FilterableStatTable";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
 import type { WarnNotice } from "@/lib/db/warn";
+import { shortDate } from "@convex/lib/months";
 
-const long = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+const long = (iso: string) => shortDate(iso) ?? iso;
 
 
 export const WARN_COLUMNS: StatColumn<WarnNotice>[] = [

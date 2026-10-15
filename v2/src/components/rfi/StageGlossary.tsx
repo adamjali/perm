@@ -4,7 +4,7 @@ import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 import { formatAsOf } from "@/lib/dolFormat";
 
 import { GROUP_STYLE, stageFromSlug, stageMeta, stageSlug } from "./stageMeta";
-import { monthYear } from "@convex/lib/months";
+import { monthDay, monthYear } from "@convex/lib/months";
 
 /**
  * The count beside a definition, dated, and linked where there is a page.
@@ -13,24 +13,14 @@ import { monthYear } from "@convex/lib/months";
  * has a page exactly when the router has a param for it, so this cannot come
  * to disagree with `generateStaticParams` and render a link into a 404.
  */
-function CountBadge({
-  status,
-  n,
-  asOf,
-}: {
-  status: string;
-  n: number;
-  asOf: string | null;
-}) {
+function CountBadge({ n, asOf }: { n: number; asOf: string | null }) {
   const shown = asOf ? formatAsOf(asOf) : null;
-  const slug = stageSlug(status);
-  const hasPage = stageFromSlug(slug) !== null;
   // The count is the row's number; its date stays with it, short, under it.
-  const short = asOf
-    ? new Date(`${asOf.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })
-    : null;
-  const figure = (
-    <>
+  // It's plain text: the row is the fold's toggle, and a link inside a toggle
+  // is a control inside a control. The list of cases is linked in the entry.
+  const short = asOf ? monthDay(asOf) : null;
+  return (
+    <span className="shrink-0 text-right">
       <span className="block font-heading text-xl font-bold tabular-nums sm:text-2xl">
         {n.toLocaleString("en-US")}
         <span className="sr-only">{`${n === 1 ? " case" : " cases"}${shown ? `, as of ${shown}` : ""}`}</span>
@@ -40,20 +30,14 @@ function CountBadge({
           {short}
         </span>
       ) : null}
-    </>
+    </span>
   );
+}
 
-  if (!hasPage) {
-    return <span className="shrink-0 text-right">{figure}</span>;
-  }
-  return (
-    <Link
-      href={`/perm-rfi-audit/${slug}`}
-      className="-my-1 inline-flex min-h-11 shrink-0 flex-col items-end justify-center text-right decoration-primary decoration-2 underline-offset-4 hover:underline [&>span:first-child]:underline [&>span:first-child]:decoration-primary [&>span:first-child]:decoration-2 [&>span:first-child]:underline-offset-4"
-    >
-      {figure}
-    </Link>
-  );
+/** The page listing a stage's cases, for the stages that have one. */
+function stageListHref(status: string): string | null {
+  const slug = stageSlug(status);
+  return stageFromSlug(slug) !== null ? `/perm-rfi-audit/${slug}` : null;
 }
 
 /**
@@ -329,11 +313,7 @@ export function StageGlossary({
                     days. Only stages that HAVE a page link; the queue group
                     goes to /perm-queue instead. */}
                 {e.status && counts && counts[e.status] !== undefined ? (
-                  <CountBadge
-                    status={e.status}
-                    n={counts[e.status]!}
-                    asOf={asOfByStatus?.[e.status] ?? asOf ?? null}
-                  />
+                  <CountBadge n={counts[e.status]!} asOf={asOfByStatus?.[e.status] ?? asOf ?? null} />
                 ) : null}{" "}
                 <CaretDownIcon
                   className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
@@ -342,6 +322,13 @@ export function StageGlossary({
               </summary>{" "}
               <div className="grid gap-2 border-t border-border/40 px-4 pb-4 pt-3 text-sm leading-relaxed sm:px-5 sm:pb-5">
                 <p>{e.what}</p>{" "}
+                {e.status && counts?.[e.status] && stageListHref(e.status) ? (
+                  <p>
+                    <Link href={stageListHref(e.status)!} className="link">
+                      List the cases at this stage
+                    </Link>
+                  </p>
+                ) : null}{" "}
                 {e.deadline ? (
                   <p className="border-l border-[var(--data-warn)] bg-[var(--data-warn)]/10 px-3 py-2">
                     <b className="font-bold">Deadline.</b> {e.deadline}

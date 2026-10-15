@@ -55,23 +55,15 @@ export const revalidate = 21600;
  * A status's live count, as the row's number. The date sits once in the
  * section's opening line, not on every row.
  */
-function Count({ n, href }: { n: number | null; href?: string }) {
+function Count({ n }: { n: number | null }) {
   if (n === null) return null;
-  const cls = "font-heading text-xl font-bold tabular-nums sm:text-2xl";
-  const body = (
-    <>
+  // Plain text: the row is the fold's toggle, and a link inside a toggle is a
+  // control inside a control. The stage's list of cases is linked in the entry.
+  return (
+    <span className="font-heading text-xl font-bold tabular-nums sm:text-2xl">
       {formatInt(n)}
       <span className="sr-only">{n === 1 ? " case" : " cases"}</span>
-    </>
-  );
-  return href ? (
-    // A 44px target that doesn't grow the row: the negative margin takes back
-    // what the height adds.
-    <Link href={href} className={`${cls} -my-2 inline-flex min-h-11 items-center link`}>
-      {body}
-    </Link>
-  ) : (
-    <span className={cls}>{body}</span>
+    </span>
   );
 }
 
@@ -304,12 +296,19 @@ export default async function PermCaseStatusesPage() {
                         </span>{" "}
                         <span className="mt-1 block text-sm leading-relaxed text-soft">{lead}</span>
                       </span>{" "}
-                      <Count n={permCount(m.status)} href={stagePage} />{" "}
+                      <Count n={permCount(m.status)} />{" "}
                       <ShareBar n={permCount(m.status)} max={groupMax} />
                       <CaretDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
                     </summary>{" "}
                     <div className="max-w-3xl border-t border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
                       {rest ? <p className="text-sm leading-relaxed text-soft">{rest}</p> : null}{" "}
+                      {stagePage && permCount(m.status) ? (
+                        <p className="mt-2 text-sm">
+                          <Link href={stagePage} className="link">
+                            List the cases at this stage
+                          </Link>
+                        </p>
+                      ) : null}{" "}
                       {m.deadline ? (
                         <p className="mt-2 text-sm leading-relaxed">
                           <b className="font-bold">The clock:</b> {m.deadline}

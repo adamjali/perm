@@ -142,9 +142,7 @@ function MedianHistoryChart({ years, series }: { years: number[]; series: Array<
   const y = (m: number) => T + (1 - m / maxMonths) * (H - T - B);
   const ticks = Array.from({ length: maxMonths / 5 + 1 }, (_, i) => i * 5);
   return (
-    // The tooltip sits outside the scrolling strip, which would clip it.
-    <ChartTips label="Median months by fiscal year, one line per form">
-    <div className="overflow-x-auto">
+    <ChartTips label="Median months by fiscal year, one line per form" scroll="">
       <svg viewBox={`0 0 ${W} ${H}`} className="min-w-[720px] w-full" role="img" aria-label="Median months by fiscal year, one line per form">
         {ticks.map((t) => (
           <g key={t}>
@@ -181,7 +179,6 @@ function MedianHistoryChart({ years, series }: { years: number[]; series: Array<
           />
         ))}
       </svg>
-    </div>
     </ChartTips>
   );
 }

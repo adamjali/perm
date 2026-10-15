@@ -36,6 +36,7 @@ import { getMonthDetail } from "@/lib/db/monthDetail";
 import { formatShare } from "@/lib/format";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 import { buttonVariants } from "@/components/ui/button";
+import { monthDay } from "@convex/lib/months";
 
 /**
  * One filing month, split across the queues DOL actually runs.
@@ -636,8 +637,7 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
   );
 }
 
-const shortDay = (iso: string) =>
-  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+const shortDay = (iso: string) => monthDay(iso) ?? iso;
 
 /**
  * What DOL did with this month lately, from the nightly record

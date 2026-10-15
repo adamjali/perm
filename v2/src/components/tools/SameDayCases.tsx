@@ -5,6 +5,7 @@ import { PageSection } from "@/components/data/PageSection";
 import type { DayGroup, SameDay } from "@/lib/sameDay";
 import { prettyStatus } from "@/components/queue/stages";
 import { cn } from "@/lib/utils";
+import { longDate } from "@convex/lib/months";
 
 /**
  * "Are people who filed when I did hearing back?", answered from the record.
@@ -25,14 +26,23 @@ const GROUPS: { key: DayGroup; label: string; tone: string }[] = [
   { key: "inLine", label: "Still in line", tone: "bg-card bg-hatch text-input" },
 ];
 // The neighbour squares carry a number, so "still in line" is a plain card
-// there: a hatch behind small type would fight it.
+// there: a hatch behind small type would fight it. A number on a coloured fill
+// is set in black in both themes (the fills lighten in dark mode, where the
+// page's own text colour turns light); the slate of a withdrawn case darkens
+// in dark mode instead, so its number turns white there.
+const INK: Record<DayGroup, string> = {
+  certified: "text-black",
+  denied: "text-black",
+  withdrawn: "text-black dark:text-white",
+  aside: "text-black",
+  inLine: "text-foreground",
+};
 const TONE = Object.fromEntries(
-  GROUPS.map((g) => [g.key, g.key === "inLine" ? "bg-card" : g.tone]),
+  GROUPS.map((g) => [g.key, cn(g.key === "inLine" ? "bg-card" : g.tone, INK[g.key])]),
 ) as Record<DayGroup, string>;
 const LABEL = Object.fromEntries(GROUPS.map((g) => [g.key, g.label])) as Record<DayGroup, string>;
 
-const longDay = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+const longDay = (iso: string) => longDate(iso) ?? iso;
 
 export function SameDayCases({ data, className }: { data: SameDay; className?: string }) {
   const decided = data.counts.certified + data.counts.denied + data.counts.withdrawn;
@@ -86,7 +96,7 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
                   rel="nofollow"
                   title={`${n.caseNumber}: ${n.status ? prettyStatus(n.status) : "no status"}`}
                   className={cn(
-                    "flex size-11 items-center justify-center border border-input font-mono text-sm font-semibold tabular-nums text-foreground transition-colors hover:border-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "flex size-11 items-center justify-center border border-input font-mono text-sm font-semibold tabular-nums transition-colors hover:border-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     TONE[n.group],
                     n.isThis && "outline outline-2 outline-offset-2 outline-primary-text",
                   )}

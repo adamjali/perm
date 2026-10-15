@@ -129,7 +129,7 @@ function FrontierSvg({
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full min-w-[36rem]"
-        role="img"
+        role="group"
         aria-label={`DOL's analyst review queue advanced from ${formatMonth(points[0]!.medianFilingMonth)} to ${formatMonth(points[points.length - 1]!.medianFilingMonth)} between ${formatMonth(points[0]!.decisionMonth)} and ${formatMonth(points[points.length - 1]!.decisionMonth)}.`}
       >
       {/*

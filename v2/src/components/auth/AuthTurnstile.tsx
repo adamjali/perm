@@ -96,6 +96,8 @@ export function AuthTurnstile({
           : "flex justify-center"
       }
       data-testid="turnstile-widget"
+      // A name needs a role to carry it: a plain div can't take aria-label.
+      role="group"
       aria-label="Anti-spam verification"
     >
       <Turnstile

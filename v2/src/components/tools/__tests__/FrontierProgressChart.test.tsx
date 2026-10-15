@@ -29,7 +29,7 @@ const table = () => within(screen.getByRole("table"));
 describe("FrontierProgressChart", () => {
   it("draws the line and keeps the same series as rows in the document", () => {
     render(<FrontierProgressChart history={HISTORY} filingMonth="2025-08" />);
-    expect(screen.getByRole("img", { name: /advanced from/ })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: /advanced from/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Table" }));
     expect(table().getByText("19,787")).toBeInTheDocument();
   });

@@ -122,7 +122,7 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="block h-auto w-full min-w-[44rem]"
-          role="img"
+          role="group"
           aria-label={`Decisions per ${unit} from ${shortLabel(first)} to ${shortLabel(last)}, peaking at ${max.toLocaleString("en-US")}`}
         >
           {yTicks.map((v) => (

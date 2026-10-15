@@ -174,9 +174,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
   const span = Math.ceil(far / 90) * 90;
   const at = (d: number) => `${Math.max(0, Math.min(100, (d / span) * 100))}%`;
   return (
-    // The tooltip sits outside the scrolling table, which would clip it.
-    <ChartTips label="Shared timelines, each step by days from PERM filing">
-    <div className="overflow-x-auto border border-border">
+    <ChartTips label="Shared timelines, each step by days from PERM filing" scroll="border border-border">
       <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
         <thead className="bg-muted">
           <tr>
@@ -236,7 +234,6 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
           })}
         </tbody>
       </table>
-    </div>
     </ChartTips>
   );
 }

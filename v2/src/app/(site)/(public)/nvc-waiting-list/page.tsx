@@ -70,9 +70,7 @@ function Spark({ row, max }: { row: CategorySeries; max: number }) {
 function CategoryTable({ rows, caption }: { rows: CategorySeries[]; caption: string }) {
   const max = Math.max(...rows.flatMap((r) => r.points.map((p) => p.n)), 1);
   return (
-    // The tooltip sits outside the scrolling table, which would clip it.
-    <ChartTips label={caption} className="mt-4">
-    <div className="overflow-x-auto border border-border bg-card">
+    <ChartTips label={caption} className="mt-4" scroll="border border-border bg-card">
       <table className="w-full min-w-[640px] text-left text-base">
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-border bg-muted/40">
@@ -96,7 +94,6 @@ function CategoryTable({ rows, caption }: { rows: CategorySeries[]; caption: str
           ))}
         </tbody>
       </table>
-    </div>
     </ChartTips>
   );
 }

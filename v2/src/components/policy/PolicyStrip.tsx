@@ -62,9 +62,7 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
   const monthW = inner / Math.max(1, strip.months.length);
 
   return (
-    // The tooltip sits outside the scrolling strip, which would clip it.
-    <ChartTips label="Twelve months of policy documents" className="mt-6">
-    <div className="overflow-x-auto border border-border bg-card">
+    <ChartTips label="Twelve months of policy documents" className="mt-6" scroll="border border-border bg-card">
       <svg
         viewBox={`0 0 ${STRIP_W} ${H}`}
         className="block h-auto min-w-[880px] w-full"
@@ -150,7 +148,6 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
           today{" "}
         </text>
       </svg>
-    </div>
     </ChartTips>
   );
 }

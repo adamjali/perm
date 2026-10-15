@@ -1650,11 +1650,13 @@ input[type="week"] {
 /* ---------------------------------------------------------------------------
    Chart tooltips (components/data/ChartTips.tsx)
    ---------------------------------------------------------------------------
-   One look for every chart: the inverted ink chip of the site's dark bands,
-   a hard shadow, and the mark it describes outlined while it shows.
+   One look for every chart: an inverted ink chip, and the mark it describes
+   outlined while it shows.
    --------------------------------------------------------------------------- */
 @layer components {
-  .chart-tips:focus-visible {
+  .chart-tips:focus-visible,
+  .chart-tips-scroll:focus-visible,
+  .scroll-box:focus-visible {
     outline: 3px solid var(--ring);
     outline-offset: 4px;
   }

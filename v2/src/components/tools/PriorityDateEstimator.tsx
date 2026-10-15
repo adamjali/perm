@@ -916,8 +916,7 @@ export function PriorityDateEstimator({
                 keys read every bulletin month), and it sits outside the
                 scroller, which would clip the tooltip. A second tab stop on
                 the scroller would also have its arrow keys taken by ChartTips. */}
-            <ChartTips label={`Cutoff history for ${category} ${country}`} className="mt-6">
-            <div className="-mx-1 overflow-x-auto px-1">
+            <ChartTips label={`Cutoff history for ${category} ${country}`} className="mt-6" scroll="-mx-1 px-1">
               <svg
                 viewBox={`0 0 ${W} ${H}`}
                 className="block h-auto w-full min-w-[44rem]"
@@ -1190,7 +1189,6 @@ export function PriorityDateEstimator({
                   Bulletin month
                 </text>
               </svg>
-            </div>
             </ChartTips>
             <figcaption className="mt-5 text-sm leading-relaxed text-muted-foreground">
               {/* The legend sits with the marks, drawn in the same fills the

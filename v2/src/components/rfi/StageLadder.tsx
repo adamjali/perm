@@ -57,8 +57,7 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
         analyst-review and hold bands on top of each other, which is the one
         comparison the chart exists to make.
       */}
-      <ChartTips label="How old the cases at each review stage are, in days past filing">
-      <div className="overflow-x-auto">
+      <ChartTips label="How old the cases at each review stage are, in days past filing" scroll="">
         <div className="min-w-[34rem]">
           {ordered.map((s) => {
             const band = s.ageBand;
@@ -147,7 +146,6 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
             </div>
           </div>
         </div>
-      </div>
       </ChartTips>
       <figcaption className="mt-3 text-sm text-muted-foreground">
         Days between filing and the day we observed the case at that stage. The

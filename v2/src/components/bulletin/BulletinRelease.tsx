@@ -82,9 +82,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
           )}
         </p>
       ) : null}{" "}
-      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
-      <ChartTips label="Bulletins out by each day of the month before" className="mt-5">
-      <div className="overflow-x-auto">
+      <ChartTips label="Bulletins out by each day of the month before" className="mt-5" scroll="">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px] text-foreground" role="img" aria-labelledby={titleId}>
           <title id={titleId}>{`Share of bulletins out by each day of the month before, ${summary.months} bulletins`}</title>
           {rows.map((r, i) => {
@@ -121,7 +119,6 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
             >{`${ordinal(d)} `}</text>
           ))}
         </svg>
-      </div>
       </ChartTips>{" "}
       <MoreText gist={"When past bulletins were first seen online, by day of the month: a floor, from the Internet Archive."} className="mt-3">
         <p className="text-base text-soft">

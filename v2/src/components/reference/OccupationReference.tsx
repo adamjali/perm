@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BarRows } from "@/components/data/BarRows";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FigurePlate } from "@/components/tools/FigurePlate";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import { formatDollars, formatInt } from "@/lib/format";
 import type { FacetRow } from "@/lib/db/entityDetail";
 import {
@@ -129,7 +130,7 @@ export async function OccupationReference({
           className="mt-10"
         >
           <PayBands bands={bands} label={`${name}: market pay and DOL wage levels`} />
-          <div className="mt-6 overflow-x-auto">
+          <ScrollBox label="Market pay and DOL wage levels, by area" className="mt-6">
             <table className="w-full min-w-[40rem] text-left text-base">
               <caption className="sr-only">Market pay and DOL wage levels, by area{" "}</caption>
               <thead>
@@ -157,7 +158,7 @@ export async function OccupationReference({
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
           <FinePrint summary="How these figures fit together" className="mt-3">
             <p>
               BLS surveys employers on what they pay everyone in a job; DOL builds its four levels from the same survey a

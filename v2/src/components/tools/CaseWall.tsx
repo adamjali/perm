@@ -63,9 +63,7 @@ export function CaseWall({
 
   return (
     <div className={className}>
-      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
-      <ChartTips label="Undecided cases by filing month, up to this case's month">
-      <div className="-mx-1 overflow-x-auto px-1">
+      <ChartTips label="Undecided cases by filing month, up to this case's month" scroll="-mx-1 px-1">
         <ul className="flex min-w-[560px] items-end gap-1.5">
           {wall.segments.map((s) => {
             const label = formatMonthShort(s.month) ?? s.month;
@@ -129,7 +127,6 @@ export function CaseWall({
             );
           })}
         </ul>
-      </div>
       </ChartTips>
 
       <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">

@@ -23,6 +23,12 @@ import { cn } from "@/lib/utils";
  *
  * A chart still owns its accessible summary (an `aria-label` or a screen-reader
  * table); the tooltip adds detail, it isn't the only route to the numbers.
+ *
+ * A chart wider than a phone scrolls sideways: pass the scroll box's classes
+ * as `scroll` instead of wrapping the chart in an `overflow-x-auto` div. The
+ * tab stop then sits on the box that scrolls, so a keyboard reaches it and the
+ * arrow keys bring each mark into view (WCAG 2.1.1), while the tooltip stays
+ * outside the box, which would clip it.
  */
 
 interface Shown {
@@ -42,11 +48,14 @@ function marks(root: HTMLElement): Element[] {
 export function ChartTips({
   label,
   className,
+  scroll,
   children,
 }: {
   /** What the chart shows, for the keyboard focus announcement. */
   label: string;
   className?: string;
+  /** Classes for a box the chart scrolls sideways in; omit for a chart that fits. */
+  scroll?: string;
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -99,13 +108,18 @@ export function ChartTips({
     show(el);
   };
 
+  // One tab stop for the whole chart, on the scroll box when there is one;
+  // the arrow keys move inside it.
+  const stop = {
+    tabIndex: 0,
+    role: "group",
+    "aria-label": `${label}. Use the arrow keys to read each value.`,
+  } as const;
+
   return (
     <div
       ref={ref}
-      // One tab stop for the whole chart; the arrow keys move inside it.
-      tabIndex={0}
-      role="group"
-      aria-label={`${label}. Use the arrow keys to read each value.`}
+      {...(scroll === undefined ? stop : {})}
       className={cn("chart-tips relative", className)}
       onPointerMove={(e) => {
         if (e.pointerType !== "mouse") return;
@@ -146,7 +160,13 @@ export function ChartTips({
         if (!e.currentTarget.contains(e.relatedTarget)) hide();
       }}
     >
-      {children}
+      {scroll === undefined ? (
+        children
+      ) : (
+        <div {...stop} className={cn("chart-tips-scroll overflow-x-auto", scroll)}>
+          {children}
+        </div>
+      )}
       <div role="status" aria-live="polite" className="sr-only">
         {shown ? shown.lines.join(", ") : ""}
       </div>

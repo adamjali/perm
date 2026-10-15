@@ -22,6 +22,10 @@ import { useCallback, useId, useRef, useState } from "react";
  * tap and a drag both work because it listens to pointer events rather than
  * mouse events.
  *
+ * THE SVG IS A GROUP, NOT AN IMAGE. The layer is a control (a slider), and an
+ * element with role="img" hides everything inside it from assistive tech, so
+ * the chart's <svg> takes role="group" with its summary as the aria-label.
+ *
  * THE READOUT NEVER LEAVES THE FRAME. It flips to the other side of the cursor
  * past the midpoint, and clamps vertically, because a tooltip drawn outside the
  * viewBox is simply invisible: an SVG clips at its own edge and there is no

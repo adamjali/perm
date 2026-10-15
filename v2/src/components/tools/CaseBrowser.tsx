@@ -1183,7 +1183,9 @@ function CaseTable({
               {r.employerSlug ? (
                 <Link
                   href={`/perm-employers/${r.employerSlug}`}
-                  className="link"
+                  // On a phone card the employer and firm links sit one above
+                  // the other; each keeps a 24px target (WCAG 2.5.8).
+                  className="link max-sm:inline-flex max-sm:min-h-6 max-sm:items-center"
                 >
                   {r.employerName}
                 </Link>
@@ -1197,7 +1199,7 @@ function CaseTable({
                     {r.attorneySlug ? (
                       <Link
                         href={`/perm-attorneys/${r.attorneySlug}`}
-                        className="link"
+                        className="link max-sm:inline-flex max-sm:min-h-6 max-sm:items-center"
                       >
                         {r.attorneyName}
                       </Link>

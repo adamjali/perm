@@ -58,9 +58,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
   const total = totals.reduce((a, b) => a + b, 0);
   return (
     <div className="border border-border bg-card p-5 sm:p-6">
-      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
-      <ChartTips label="PERM decisions by fiscal year">
-      <div className="overflow-x-auto">
+      <ChartTips label="PERM decisions by fiscal year" scroll="">
         <div
           className="flex h-48 min-w-[640px] items-end gap-1.5 border-b border-border"
           role="img"
@@ -97,7 +95,6 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
             </span>
           ))}
         </div>
-      </div>
       </ChartTips>
 
       <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">

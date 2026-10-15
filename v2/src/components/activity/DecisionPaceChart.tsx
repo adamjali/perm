@@ -3,7 +3,7 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
 import { segments, toWeeks, weekStart, type ActivityDay } from "@/lib/activityStats";
 import { formatInt } from "@/lib/format";
-import { MONTH_ABBR } from "@convex/lib/months";
+import { MONTH_ABBR, shortDate } from "@convex/lib/months";
 
 /**
  * Decisions per week across the whole record, drawn with its holes intact.
@@ -64,8 +64,7 @@ export interface PaceAnnotation {
 }
 
 function weekLabel(iso: string): string {
-  const d = new Date(`${iso}T00:00:00Z`);
-  return `Week of ${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`;
+  return `Week of ${shortDate(iso) ?? iso}`;
 }
 
 function monthLabel(iso: string): string {
@@ -149,9 +148,7 @@ export function DecisionPaceChart({
           </li>
         ))}
       </ul>
-      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
-      <ChartTips label="Decisions per week">
-      <div className="-mx-1 overflow-x-auto px-1">
+      <ChartTips label="Decisions per week" scroll="-mx-1 px-1">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="block h-auto w-full min-w-[44rem]"
@@ -257,7 +254,6 @@ export function DecisionPaceChart({
             />
           ))}
         </svg>
-      </div>
       </ChartTips>
     </div>
   );

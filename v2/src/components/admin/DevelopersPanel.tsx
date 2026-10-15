@@ -7,11 +7,11 @@ import { useEffect, useState } from "react";
 import { api } from "@convex/_generated/api";
 import { formatInt } from "@/lib/format";
 import { EASTERN_TIMEZONE } from "@/lib/time";
+import { monthDay } from "@convex/lib/months";
 
 type Summary = FunctionReturnType<typeof api.adminDevelopers.summary>;
 
-const shortDay = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+const shortDay = (iso: string) => monthDay(iso) ?? iso;
 const signedUp = (ms: number) =>
   new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: EASTERN_TIMEZONE });
 

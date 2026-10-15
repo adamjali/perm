@@ -36,6 +36,13 @@ export function shortDate(iso: string | null | undefined): string | null {
   return m && name ? `${name} ${Number(m[3])}, ${m[1]}` : null;
 }
 
+/** "2026-09-11" to "Sep 11", for a chart tick or a date in this year's run; null for anything else. */
+export function monthDay(iso: string | null | undefined): string | null {
+  const m = iso ? DAY.exec(iso) : null;
+  const name = m ? MONTH_ABBR[Number(m[2]) - 1] : undefined;
+  return m && name ? `${name} ${Number(m[3])}` : null;
+}
+
 /** "2026-09" to "September 2026"; null for anything else. */
 export function monthYear(ym: string | null | undefined): string | null {
   const m = ym ? MONTH.exec(ym) : null;

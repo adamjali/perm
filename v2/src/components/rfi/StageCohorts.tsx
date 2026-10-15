@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 
+import { ScrollBox } from "@/components/ui/scroll-box";
 import type { StageCohort } from "@/lib/db/rfi";
 import { GROUP_STYLE, stageMeta } from "./stageMeta";
 
@@ -45,7 +46,7 @@ export function StageCohortsChart({
 
   return (
     <figure className="m-0">
-      <div className="overflow-x-auto">
+      <ScrollBox label="Cases filed and cases at each review stage, by filing month">
         <div style={{ minWidth: `${Math.max(34, months.length * 2.2)}rem` }}>
           <Strip
             label="Cases filed"
@@ -102,7 +103,7 @@ export function StageCohortsChart({
             </div>
           </div>
         </div>
-      </div>
+      </ScrollBox>
       <figcaption className="mt-3 text-sm text-muted-foreground">
         Cases at each stage as of their own last read, by the month they were
         filed. Every row is

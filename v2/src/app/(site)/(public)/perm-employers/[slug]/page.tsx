@@ -114,6 +114,7 @@ import { groupIndustries } from "@/components/entities/FilingMakeup";
 import { HOLD_STATUS } from "@/lib/employerStages";
 import { phase } from "@/lib/db/debarments";
 import { comparables, fieldDistribution } from "@/lib/db/entities";
+import { monthDay, shortDate } from "@convex/lib/months";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -131,10 +132,9 @@ import { comparables, fieldDistribution } from "@/lib/db/entities";
 const RECENT_LIVE_SHOWN = 8;
 
 /** "Oct 8", or "Nov 1, 2027" when the year isn't this one. */
-function shortDate(iso: string): string {
-  const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
-  const sameYear = d.getUTCFullYear() === new Date().getUTCFullYear();
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }), timeZone: "UTC" });
+function recentDay(iso: string): string {
+  const sameYear = iso.slice(0, 4) === String(new Date().getUTCFullYear());
+  return (sameYear ? monthDay(iso) : shortDate(iso)) ?? iso;
 }
 
 export const revalidate = 2592000;
@@ -719,7 +719,7 @@ export default async function EmployerPage({
     const held = at(HOLD_STATUS);
     if (held > 0) {
       tags.push({
-        text: `${formatInt(held)} on hold${stageRow.holdSince ? ` since ${shortDate(stageRow.holdSince)}` : ""}`,
+        text: `${formatInt(held)} on hold${stageRow.holdSince ? ` since ${recentDay(stageRow.holdSince)}` : ""}`,
         href: "#now",
         tone: "warn",
       });
@@ -732,7 +732,7 @@ export default async function EmployerPage({
     const barredNow = debarments.some((d) => phase(d, today) === "in-force");
     const barredSoon = debarments.find((d) => phase(d, today) === "upcoming");
     tags.push({
-      text: barredNow ? "On DOL's debarment list" : barredSoon ? `Debarred from ${shortDate(barredSoon.startDate)}` : "A past debarment",
+      text: barredNow ? "On DOL's debarment list" : barredSoon ? `Debarred from ${recentDay(barredSoon.startDate)}` : "A past debarment",
       href: "#debarment",
       tone: barredNow || barredSoon ? "bad" : "ink",
     });

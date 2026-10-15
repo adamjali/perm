@@ -304,7 +304,7 @@ function QueueHistorySvg({
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full min-w-[560px] border border-border bg-card"
-        role="img"
+        role="group"
         aria-label={KIND_COPY[kind].svg}
       >
         {/* Grid + y labels */}

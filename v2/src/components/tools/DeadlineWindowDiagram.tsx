@@ -101,9 +101,7 @@ export function DeadlineWindowDiagram({
 
   return (
     <figure className={cn("m-0", className)}>
-      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
-      <ChartTips label="The case's regulatory windows">
-      <div className="-mx-1 overflow-x-auto px-1">
+      <ChartTips label="The case's regulatory windows" scroll="-mx-1 px-1">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           role="img"
@@ -202,7 +200,6 @@ export function DeadlineWindowDiagram({
             );
           })}
         </svg>
-      </div>
       </ChartTips>
       <figcaption className="mt-3 text-sm text-muted-foreground">
         Every span from the dates entered, drawn to one scale.

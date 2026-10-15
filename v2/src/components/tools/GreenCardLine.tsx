@@ -466,9 +466,7 @@ function LineStrip({ histogram, front, you }: { histogram: Array<{ month: string
       <p className="mt-1 text-base text-muted-foreground">
         People ahead of you by priority date, from the bulletin&apos;s cutoff ({formatAsOf(front)}) to yours.
       </p>{" "}
-      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
-      <ChartTips label="People ahead by priority-date month" className="mt-4">
-      <div className="overflow-x-auto">
+      <ChartTips label="People ahead by priority-date month" className="mt-4" scroll="">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px] text-foreground" role="img" aria-labelledby={titleId}>
           <title id={titleId}>{`People ahead by priority-date month, ${formatMonth(first)} to ${formatMonth(last)}`}</title>
           {bars.map((b, i) => {
@@ -496,7 +494,6 @@ function LineStrip({ histogram, front, you }: { histogram: Array<{ month: string
           <text x={PAD.l} y={H - 8} fontSize={16} className="fill-foreground">{`${formatMonth(first)} `}</text>
           <text x={W - PAD.r} y={H - 8} fontSize={16} textAnchor="end" className="fill-foreground font-bold">{`You: ${formatMonth(you.slice(0, 7))} `}</text>
         </svg>
-      </div>
       </ChartTips>
     </div>
   );

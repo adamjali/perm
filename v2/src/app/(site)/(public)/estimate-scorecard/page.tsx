@@ -4,6 +4,7 @@ import { PlusIcon } from "@phosphor-icons/react/ssr";
 
 import { BarRows } from "@/components/data/BarRows";
 import { FinePrint } from "@/components/data/FinePrint";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { daysToAnchor } from "@/lib/predictionLedger";
@@ -253,7 +254,7 @@ export default async function EstimateScorecardPage() {
               />
             ) : null}
             {sample && sample.recent.length > 0 ? (
-              <div className="mt-6 overflow-x-auto">
+              <ScrollBox label="Newest graded estimates" className="mt-6">
                 <table className="w-full min-w-[40rem] border-collapse text-left text-base">
                   <caption className="mb-2 text-left text-sm font-bold text-muted-foreground">Newest graded</caption>
                   <thead>
@@ -279,7 +280,7 @@ export default async function EstimateScorecardPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollBox>
             ) : null}
             {perm.all.graded > 0 ? null : (
               <p className="mt-4 text-base text-soft">

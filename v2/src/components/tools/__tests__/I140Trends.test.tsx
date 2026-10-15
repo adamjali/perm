@@ -104,7 +104,7 @@ describe("I140Trends", () => {
   it("shows the denial rate as a line once there are two points", () => {
     render(<I140Trends rows={ROWS} />);
     fireEvent.change(screen.getByLabelText("Category"), { target: { value: "NIW" } });
-    expect(screen.getByRole("img", { name: /Denial rate by quarter/ })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: /Denial rate by quarter/ })).toBeInTheDocument();
   });
 
   it("says nothing rather than drawing an empty category", () => {

@@ -429,7 +429,7 @@ function DenialRateLine({
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="h-auto w-full min-w-[34rem]"
-          role="img"
+          role="group"
           aria-label={`Denial rate by quarter, from ${rates[0]!.toFixed(2)}% to ${rates[rates.length - 1]!.toFixed(2)}%`}
         >
           {[0, max / 2, max].map((v) => (

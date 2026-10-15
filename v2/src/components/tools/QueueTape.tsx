@@ -85,9 +85,7 @@ export function QueueTape({
 
   return (
     <figure className={cn("m-0", className)}>
-      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
-      <ChartTips label="DOL's PERM queue by filing month">
-      <div className={cn("-mx-1 overflow-x-auto px-1", flagsCollide ? "pt-14" : "pt-7")}>
+      <ChartTips label="DOL's PERM queue by filing month" scroll={cn("-mx-1 px-1", flagsCollide ? "pt-14" : "pt-7")}>
         <div
           className="relative grid min-w-[560px] border border-border"
           style={{ gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))` }}
@@ -157,7 +155,6 @@ export function QueueTape({
             );
           })}
         </div>
-      </div>
       </ChartTips>
       <figcaption className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">

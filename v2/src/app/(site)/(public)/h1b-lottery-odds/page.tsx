@@ -114,9 +114,7 @@ export default function H1bLotteryOddsPage() {
           {H1B_REGISTRATION_REVISED}).
         </p>
 
-        {/* The tooltip sits outside the scrolling strip, which would clip it. */}
-        <ChartTips label="Eligible and selected H-1B registrations by fiscal year" className="mt-6">
-        <div className="overflow-x-auto">
+        <ChartTips label="Eligible and selected H-1B registrations by fiscal year" className="mt-6" scroll="">
           <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px] text-foreground" role="img" aria-labelledby="years-title">
             <title id="years-title">{`Eligible and selected H-1B registrations, FY${years[0]!.fy} to FY${newest.fy}`}</title>
             {years.map((y, i) => {
@@ -154,7 +152,6 @@ export default function H1bLotteryOddsPage() {
             })}
             <line x1={PAD.l} x2={W - PAD.r} y1={H - PAD.b} y2={H - PAD.b} className="stroke-foreground" strokeWidth={2} />
           </svg>
-        </div>
         </ChartTips>{" "}
         <p className="mt-3 text-base text-soft">
           Outline: eligible registrations. Filled: selected. The share above each bar is selected over eligible. From FY

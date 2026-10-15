@@ -22,6 +22,7 @@ import {
   type TimelineInput,
 } from "@/lib/communityTimeline";
 import { convexSiteUrl } from "@/lib/convexSite";
+import { shortDate } from "@convex/lib/months";
 
 /**
  * The case's timeline after PERM: what people report, and a form to add
@@ -74,8 +75,7 @@ function newKey(): string {
   return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
 }
 
-const monthDay = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+const fullDay = (iso: string) => shortDate(iso) ?? iso;
 
 const EMPTY: TimelineInput = { route: "adjustment", public: false };
 
@@ -241,8 +241,8 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
             <CheckIcon size={18} weight="bold" className="mt-0.5 shrink-0 text-primary-text" aria-hidden="true" />
             <span>
               DOL&apos;s record for this case: filed{" "}
-              {mine.permFiledOn ? <b translate="no">{monthDay(mine.permFiledOn)}</b> : "on a date DOL doesn't show"},
-              certified <b translate="no">{monthDay(mine.permCertifiedOn)}</b>.
+              {mine.permFiledOn ? <b translate="no">{fullDay(mine.permFiledOn)}</b> : "on a date DOL doesn't show"},
+              certified <b translate="no">{fullDay(mine.permCertifiedOn)}</b>.
             </span>
           </p>
         ) : null}
