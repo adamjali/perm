@@ -7186,9 +7186,11 @@ same day (`10dc8232`, `59863b95`, `8435aca3`).
   swatch) sits above the grid in the page and in its skeleton. Measured in Storybook at 320, 390
   and 1440: 15 squares, 0 overlaps; in dark, the counts read 4.83:1 on PWD blue, 5.38:1 on
   recruitment purple and 18.97:1 on the plain squares.
-- **Storybook's dark theme is a class.** `withThemeByClassName` puts `dark` on `<html>`; neither
-  devtools' `colorScheme` emulation nor a `globals=theme:dark` iframe URL changed it. Add the class
-  by script and read a computed background before believing a dark check.
+- **Storybook's dark theme is a class its decorator owns.** `withThemeByClassName` puts `dark` on
+  `<html>`; devtools' `colorScheme` emulation doesn't change it, and a class added by script is
+  removed again. **`&globals=theme:dark` on the iframe URL works** (measured Oct 15 2026, against
+  this note's Sep 30 claim; the story needs a few seconds to finish preparing): wait for the class, then read a computed
+  background before believing a dark check. `scripts/capture-tour.mjs` does this.
 - **Wait on a commit's runs by `headSha`**: `gh run list --commit <sha>` returned nothing here;
   `gh run list --json headSha,name,status,conclusion` filtered on the SHA works.
 - **A screenshot shows where the reader scrolled.** I called scroll-to-today broken from Adam's

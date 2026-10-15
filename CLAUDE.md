@@ -754,3 +754,23 @@ Branch `calm/phase-1`. The rules, parts and gates are in [`v2/docs/DESIGN_SYSTEM
 - **Every link uses `.link`**, every choice row `choiceVariants`, every hatch `bg-hatch`; corners are square except
   what's round by nature (dots, spinners, the switch).
 - **The Storybook adapter is patched for Next 16.4** until a fixed release clears the release floor (`.planning/VERSION-DECISIONS.md`).
+
+## Oct 15 2026: the calm redesign, accessibility and pictures, in nine lines
+
+Branch `calm/phase-1`, not live. Detail in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md).
+
+- **`scripts/audit_axe.mjs`** runs axe-core to WCAG 2.2 AA over rendered pages, both themes, 1440 and 390, and exits 1
+  on anything serious (`@axe-core/playwright`, a dev dependency, owner's yes Oct 14). Run it against the dev server.
+- **A table that scrolls sideways is a `ScrollBox`** (a named region with a tab stop) unless it holds a link or button;
+  a wide chart passes its scroll box's classes to `ChartTips` as `scroll`. `scroll-boxes.test.ts` holds it.
+- **Nothing pressable sits inside a `<summary>`** (`no-controls-in-summary.test.ts`): a count that links goes inside the entry.
+- **A chart's `<svg>` with hover marks is `role="group"`**, never `role="img"`, which hides what's inside it.
+- **Text on a status or stage fill is black in both themes** (the fills lighten in dark mode), white on the slate fill.
+- **Social cards are drawn from `scripts/page-cards.json`**; `capture-card-shots.mjs` frames each from its H1, or from
+  the heading a card names in `from` when the H1 carries a live figure.
+- **The app's pictures are measured, not cut by pixel**: `scripts/capture-tour.mjs` writes each crop from the page's own
+  headings into `crops.json`, and `tour_shots.py` encodes from it. Storybook's dark theme is set by `&globals=theme:dark`.
+- **The text and heading audits skip hidden, inert and aria-hidden subtrees**: the header's closed Data menu had added
+  250 to 430 "visible" words a page, and a dev server's hidden streamed copy doubled every heading on 60 pages.
+- **The case page's card titles are `h2` headings**, and its name wraps the buttons below it on a phone (it had broken
+  one letter a line).
