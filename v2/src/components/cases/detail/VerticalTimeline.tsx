@@ -105,10 +105,10 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
   return (
     <div className="detail-card">
       <div className="detail-card-head ch-dark">
-        <span className="flex items-center gap-1.5">
+        <h2 className="flex items-center gap-1.5">
           <ClockIcon className="h-3.5 w-3.5" />
           Timeline
-        </span>
+        </h2>
       </div>
       <div className="detail-card-body">
         {steps.length === 0 ? (

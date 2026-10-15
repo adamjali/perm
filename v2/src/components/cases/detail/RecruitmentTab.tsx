@@ -174,10 +174,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
           <Link href={buildEditUrl(caseData._id, "jobOrderStartDate")} className="detail-card-link" title="Edit in case form">
             <div className="detail-card">
               <div className="detail-card-head ch-rec">
-                <span className="flex items-center gap-1.5">
+                <h2 className="flex items-center gap-1.5">
                   <FlagIcon className="h-3.5 w-3.5" />
                   Job Order (SWA)
-                </span>
+                </h2>
                 {hasJobOrder && (
                   <span className="head-badge">
                     <CheckIcon className="h-2.5 w-2.5" /> Done
@@ -227,10 +227,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
           <Link href={buildEditUrl(caseData._id, "sundayAdFirstDate")} className="detail-card-link" title="Edit in case form">
             <div className="detail-card">
               <div className="detail-card-head ch-rec">
-                <span className="flex items-center gap-1.5">
+                <h2 className="flex items-center gap-1.5">
                   <NewspaperIcon className="h-3.5 w-3.5" />
                   Sunday ads
-                </span>
+                </h2>
                 {hasSundayAds && caseData.sundayAdSecondDate && (
                   <span className="head-badge">
                     <CheckIcon className="h-2.5 w-2.5" /> Done
@@ -275,10 +275,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
           <Link href={buildEditUrl(caseData._id, "noticeOfFilingStartDate")} className="detail-card-link" title="Edit in case form">
             <div className="detail-card">
               <div className="detail-card-head ch-rec">
-                <span className="flex items-center gap-1.5">
+                <h2 className="flex items-center gap-1.5">
                   <FileTextIcon className="h-3.5 w-3.5" />
                   Notice of filing
-                </span>
+                </h2>
                 {hasNOF && caseData.noticeOfFilingEndDate && (
                   <span className="head-badge">
                     <CheckIcon className="h-2.5 w-2.5" /> Done
@@ -309,10 +309,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
           <Link href={buildEditSectionUrl(caseData._id, "recruitment")} className="detail-card-link" title="Edit in case form">
             <div className="detail-card">
               <div className="detail-card-head ch-rec">
-                <span className="flex items-center gap-1.5">
+                <h2 className="flex items-center gap-1.5">
                   <UsersIcon className="h-3.5 w-3.5" />
                   Additional methods
-                </span>{" "}
+                </h2>{" "}
                 <span className="head-badge">{methods.length} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
               </div>
               <div className="detail-card-body" >
@@ -373,10 +373,10 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
       <div>
         <div className="detail-card">
           <div className="detail-card-head ch-muted">
-            <span className="flex items-center gap-1.5">
+            <h2 className="flex items-center gap-1.5">
               <ChartBarIcon className="h-3.5 w-3.5" />
               Summary
-            </span>
+            </h2>
           </div>
           <div className="field-grid" style={{ padding: 0, borderBottom: "1px solid var(--border)" }}>
             <div className="field-cell">

@@ -52,10 +52,10 @@ export function ETA9089Tab({
         <Link href={buildEditUrl(caseData._id, "eta9089FilingDate")} className="detail-card-link" title="Edit in case form">
           <div className="detail-card">
             <div className="detail-card-head ch-eta">
-              <span className="flex items-center gap-1.5">
+              <h2 className="flex items-center gap-1.5">
                 <FileTextIcon className="h-3.5 w-3.5" />
                 ETA Form 9089
-              </span>{" "}
+              </h2>{" "}
               <span className="head-badge">
                 {isCertified ? "Certified" : isFiled ? "Filed" : "Pending"}
               </span>

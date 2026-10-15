@@ -46,10 +46,10 @@ export function I140Tab({ caseData }: I140TabProps) {
         <Link href={buildEditUrl(caseData._id, "i140FilingDate")} className="detail-card-link" title="Edit in case form">
           <div className="detail-card">
             <div className="detail-card-head ch-i140">
-              <span className="flex items-center gap-1.5">
+              <h2 className="flex items-center gap-1.5">
                 <ShieldIcon className="h-3.5 w-3.5" />
                 I-140 petition
-              </span>{" "}
+              </h2>{" "}
               <span className="head-badge">{statusLabel}</span>
             </div>
 

@@ -255,7 +255,7 @@ function EventsTab() {
                   className={cn(
                     "border-b border-border hover:bg-muted/30",
                     e.severity === "error" && "bg-destructive/5",
- e.severity === "warning" && "bg-data-warn",
+                    e.severity === "warning" && "bg-data-warn",
                   )}
                 >
                   <td className="whitespace-nowrap px-3 py-2 text-sm text-muted-foreground">
@@ -265,7 +265,7 @@ function EventsTab() {
                     <span
                       className={cn(
                         "inline-block border px-1.5 py-0.5 text-sm font-bold",
- e.kind === "strike" && "border-data-warn text-data-warn-ink",
+                        e.kind === "strike" && "border-data-warn text-data-warn-ink",
                         e.kind === "rate_limit" && "border-border",
                         e.kind === "error" && "border-destructive text-destructive",
                       )}

@@ -382,7 +382,7 @@ export function ImportModal({
     const formatLabels: Record<string, { label: string; color: string }> = {
       v2: {
         label: "v2",
- color: "text-foreground",
+        color: "text-foreground",
       },
       v1: {
         label: "v1 (Legacy)",
@@ -1205,7 +1205,7 @@ export function ImportModal({
                           {warning.errors.map((error, errIdx) => (
                             <li
                               key={errIdx}
- className="flex items-start gap-2 text-sm text-data-warn-ink"
+                              className="flex items-start gap-2 text-sm text-data-warn-ink"
                             >
                               <span className="font-mono text-data-warn-ink flex-shrink-0">
                                 [{error.ruleId}]

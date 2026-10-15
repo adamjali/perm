@@ -59,10 +59,10 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
   return (
     <div className="detail-card">
       <div className="detail-card-head ch-muted">
-        <span className="flex items-center gap-1.5">
+        <h2 className="flex items-center gap-1.5">
           <TrendingUp className="h-3.5 w-3.5" />
           Quick stats
-        </span>
+        </h2>
       </div>
       <div className="stats-grid">
         {!pwdMatters && etaFiledDays !== null ? (

@@ -222,10 +222,10 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
       <div>
         <div className="detail-card" style={{ overflow: "hidden" }}>
           <div className="detail-card-head ch-yellow" style={{ gap: 8 }}>
-            <span className="flex items-center gap-1.5">
+            <h2 className="flex items-center gap-1.5">
               <ChatCircleIcon className="h-3.5 w-3.5" />
               Case notes
-            </span>
+            </h2>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <select
                 value={filterCategory}

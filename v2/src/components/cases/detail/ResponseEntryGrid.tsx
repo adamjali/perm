@@ -41,10 +41,10 @@ export function ResponseEntryGrid({
     <div>
       <div className="detail-card">
         <div className="detail-card-head ch-muted">
-          <span className="flex items-center gap-1.5">
+          <h2 className="flex items-center gap-1.5">
             {alertTriangleIcon}
             {fullLabel}
-          </span>{" "}
+          </h2>{" "}
           <span className="head-badge">
             {subtitle}
           </span>

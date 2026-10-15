@@ -49,19 +49,19 @@ const STATUS_CONFIG: Record<
 > = {
   waiting: {
     icon: ClockIcon,
- bg: "bg-data-warn/8",
- border: "border-data-warn",
- text: "text-data-warn-ink",
- iconCls: "text-data-warn-ink",
-    label: "WAITING",
+    bg: "bg-data-warn/8",
+    border: "border-data-warn",
+    text: "text-data-warn-ink",
+    iconCls: "text-data-warn-ink",
+    label: "Waiting",
   },
   ready: {
     icon: CheckCircle2,
- bg: "",
- border: "border-data-good",
- text: "text-primary",
- iconCls: "text-primary",
-    label: "READY TO FILE",
+    bg: "",
+    border: "border-data-good",
+    text: "text-primary",
+    iconCls: "text-primary",
+    label: "Ready to file",
   },
   incomplete: {
     icon: ClockIcon,
@@ -69,7 +69,7 @@ const STATUS_CONFIG: Record<
     border: "border-muted-foreground/30",
     text: "text-muted-foreground",
     iconCls: "text-muted-foreground",
-    label: "INCOMPLETE",
+    label: "Incomplete",
   },
   filed: {
     icon: CheckCircle2,
@@ -77,15 +77,15 @@ const STATUS_CONFIG: Record<
     border: "border-data-good",
     text: "text-primary",
     iconCls: "text-primary",
-    label: "FILED",
+    label: "Filed",
   },
   expired: {
     icon: XCircleIcon,
- bg: "bg-data-bad/10",
- border: "border-data-bad",
- text: "text-data-bad-ink",
- iconCls: "text-data-bad-ink",
-    label: "EXPIRED",
+    bg: "bg-data-bad/10",
+    border: "border-data-bad",
+    text: "text-data-bad-ink",
+    iconCls: "text-data-bad-ink",
+    label: "Expired",
   },
 };
 
@@ -221,7 +221,7 @@ export function RecruitmentResultsCard({
       <div className="detail-card">
         {/* ── Header ── */}
         <div className="detail-card-head ch-rec">
-          <span className="flex items-center gap-1.5">
+          <h2 className="flex items-center gap-1.5">
             <ClipboardTextIcon className="h-3.5 w-3.5" />
             Recruitment results
             {isCustom && !isEditing && (
@@ -229,7 +229,7 @@ export function RecruitmentResultsCard({
                 Custom
               </span>
             )}
-          </span>
+          </h2>
           <div className="flex items-center gap-1">
             {isEditing ? (
               <>

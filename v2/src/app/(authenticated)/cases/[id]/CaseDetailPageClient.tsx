@@ -81,7 +81,7 @@ export function CaseDetailSkeleton() {
       <div className="space-y-4">
         <Skeleton variant="line" className="h-5 w-40" />
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-[1_1_16rem]">
             <Skeleton variant="line" className="h-9 w-72 max-w-full" />
             <Skeleton variant="line" className="mt-2 h-5 w-56" />
           </div>
@@ -519,8 +519,10 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       <header className="space-y-4">
         <AppBreadcrumb steps={[{ href: "/cases", label: "Cases" }]} current={caseData.employerName} />
 
+        {/* The name starts at 16rem, so on a phone the buttons wrap below it; at a
+            basis of 0 the name squeezed to a letter a line beside them. */}
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-[1_1_16rem]">
             <h1 className="font-heading text-3xl font-bold leading-[1.1] [overflow-wrap:anywhere] sm:text-4xl">
               {caseData.employerName}
             </h1>{" "}

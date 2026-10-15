@@ -112,12 +112,12 @@ export function QueueDepthMini({ deep = false }: { deep?: boolean }) {
         x={40}
         y={4 + rows.length * (rh + gap) + rh - 1}
         fontSize="8"
-        fontFamily="var(--font-mono)"
+        fontFamily="var(--font-body)"
         fontWeight="700"
         fill="currentColor"
         opacity="0.7"
       >
-        YOU
+        You
       </text>
     </svg>
   );
@@ -134,8 +134,8 @@ export function WindowSpansMini() {
       <rect x="4" y="6" width="38" height="9" fill="currentColor" opacity="0.35" />
       <rect x="42" y="19" width="30" height="9" fill="currentColor" opacity="0.18" />
       <rect x="72" y="32" width="44" height="9" fill="var(--primary)" stroke="currentColor" strokeWidth="1.5" />
-      <text x="74" y="30" fontSize="8" fontFamily="var(--font-mono)" fontWeight="700" fill="currentColor" opacity="0.7">
-        FILE HERE
+      <text x="74" y="30" fontSize="8" fontFamily="var(--font-body)" fontWeight="700" fill="currentColor" opacity="0.7">
+        File here
       </text>
     </svg>
   );
@@ -187,7 +187,7 @@ export function TapeMini() {
         x={4 + cleared * 14 + 4}
         y={13}
         fontSize="8"
-        fontFamily="var(--font-mono)"
+        fontFamily="var(--font-body)"
         fontWeight="700"
         fill="currentColor"
       >
@@ -248,12 +248,12 @@ export function TwoBarsMini() {
   return (
     <svg viewBox="0 0 120 44" className={FRAME} aria-hidden="true">
       <rect x="4" y="8" width="62" height="10" fill="currentColor" opacity="0.3" />
-      <text x="70" y="17" fontSize="8" fontFamily="var(--font-mono)" fontWeight="700" fill="currentColor" opacity="0.7">
-        PUBLISHED
+      <text x="70" y="17" fontSize="8" fontFamily="var(--font-body)" fontWeight="700" fill="currentColor" opacity="0.7">
+        Published
       </text>
       <rect x="4" y="26" width="96" height="10" fill="var(--primary)" stroke="currentColor" strokeWidth="1.5" />
-      <text x="7" y="34" fontSize="8" fontFamily="var(--font-mono)" fontWeight="700" fill="#000">
-        THE QUEUE
+      <text x="7" y="34" fontSize="8" fontFamily="var(--font-body)" fontWeight="700" fill="#000">
+        The queue
       </text>
     </svg>
   );
@@ -320,11 +320,11 @@ export function CertaintyRangeMini() {
         stroke="currentColor"
         strokeWidth="1.5"
       />
-      <text x={X0} y={10} fontSize="8" fontFamily="var(--font-mono)" fontWeight="700" fill="currentColor" opacity="0.7">
-        AT LEAST
+      <text x={X0} y={10} fontSize="8" fontFamily="var(--font-body)" fontWeight="700" fill="currentColor" opacity="0.7">
+        At least
       </text>
-      <text x={X1} y={44} fontSize="8" fontFamily="var(--font-mono)" fontWeight="700" fill="currentColor" opacity="0.7" textAnchor="end">
-        AT MOST
+      <text x={X1} y={44} fontSize="8" fontFamily="var(--font-body)" fontWeight="700" fill="currentColor" opacity="0.7" textAnchor="end">
+        At most
       </text>
     </svg>
   );
@@ -436,11 +436,11 @@ export function WageLevelsMini() {
         x={8 + set * 26 - 2}
         y={44 - heights[set]! - 5}
         fontSize="8"
-        fontFamily="var(--font-mono)"
+        fontFamily="var(--font-body)"
         fontWeight="700"
         fill="currentColor"
       >
-        SET
+        Set
       </text>
     </svg>
   );
@@ -495,8 +495,8 @@ export function AttestationStackMini() {
           carries a comment about. */}
       <rect x="34" y="30" width="44" height="9" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <rect x="34" y="30" width="4" height="9" fill="var(--primary)" />
-      <text x="41" y="37.2" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700" fill="currentColor">
-        CERTIFIED
+      <text x="41" y="37.2" fontSize="6" fontFamily="var(--font-body)" fontWeight="700" fill="currentColor">
+        Certified
       </text>
     </svg>
   );

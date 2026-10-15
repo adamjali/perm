@@ -153,7 +153,7 @@ export function DeadlineWindowDiagram({
                   y={y + 20}
                   textAnchor="end"
                   fontSize="13"
-                  fontFamily="var(--font-mono)"
+                  fontFamily="var(--font-body)"
                   fontWeight="700"
                   fill="var(--foreground)"
                 >
@@ -188,7 +188,7 @@ export function DeadlineWindowDiagram({
                     y={y - 2}
                     textAnchor="end"
                     fontSize="11"
-                    fontFamily="var(--font-mono)"
+                    fontFamily="var(--font-body)"
                     fontWeight="700"
                     fill="var(--foreground)"
                     fillOpacity="0.7"

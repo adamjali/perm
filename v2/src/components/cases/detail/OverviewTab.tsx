@@ -304,10 +304,10 @@ export function OverviewTab({
               <Link href={buildEditUrl(caseData._id, "pwdFilingDate")} className="detail-card-link" title="Edit in case form">
                 <div className="detail-card">
                   <div className="detail-card-head ch-pwd">
-                    <span className="flex items-center gap-1.5">
+                    <h2 className="flex items-center gap-1.5">
                       <FlagIcon className="h-3.5 w-3.5" />
                       Prevailing wage
-                    </span>
+                    </h2>
                     {caseData.pwdDeterminationDate && (
                       <span className="head-badge">Complete</span>
                     )}
@@ -372,10 +372,10 @@ export function OverviewTab({
             <div>
               <div className="detail-card">
                 <div className="detail-card-head ch-yellow">
-                  <span className="flex items-center gap-1.5">
+                  <h2 className="flex items-center gap-1.5">
                     <BriefcaseIcon className="h-3.5 w-3.5" />
                     Job description
-                  </span>
+                  </h2>
                   <div className="flex items-center gap-1">
                     {(caseData.jobDescription || isEditingJobDesc) && (
                       <button
@@ -570,7 +570,7 @@ export function OverviewTab({
       {/* Case Timeline (Gantt) */}
       <div>
         <div className="gantt-wrap">
-          <div className="detail-card-head">Case timeline</div>
+          <div className="detail-card-head"><h2>Case timeline</h2></div>
           {/* The timeline scrolls its own months under a sticky stage column. */}
           <InlineCaseTimeline caseData={caseData} />
         </div>
