@@ -1,0 +1,1007 @@
+[
+ {
+  "slug": "perm-cities",
+  "path": "/perm-cities",
+  "title": "PERM jobs by city",
+  "label": "Every worksite city with 20 or more PERM decisions since FY2016.",
+  "motif": "grid"
+ },
+ {
+  "slug": "perm-industries",
+  "path": "/perm-industries",
+  "title": "PERM by industry",
+  "label": "Every industry by the employer's NAICS code, with rates, wages and sponsors.",
+  "motif": "stack"
+ },
+ {
+  "slug": "perm-countries",
+  "path": "/perm-countries",
+  "title": "PERM by citizenship",
+  "label": "Each country's PERM decisions by year from FY2008, from DOL's old-form files.",
+  "motif": "grid"
+ },
+ {
+  "slug": "badges",
+  "path": "/badges",
+  "title": "PERM queue badges",
+  "label": "Embeddable badges of DOL's own figures, regenerated daily.",
+  "shot": "badges.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "open-data",
+  "path": "/open-data",
+  "title": "Open data",
+  "label": "The visa bulletin archive and DOL's processing-time readings, free to reuse.",
+  "motif": "record"
+ },
+ {
+  "slug": "developers",
+  "path": "/developers",
+  "title": "API and MCP server",
+  "label": "Federal PERM, wage, H-1B and visa bulletin records as JSON, and as tools for AI assistants.",
+  "motif": "record"
+ },
+ {
+  "slug": "api-terms",
+  "path": "/api-terms",
+  "title": "API terms",
+  "label": "Keys, limits, attribution and what you may build with the API.",
+  "motif": "stack"
+ },
+ {
+  "slug": "debarments",
+  "path": "/debarments",
+  "title": "Debarred employers and agents",
+  "label": "Everyone DOL has barred from PERM, H-1B, H-2A and H-2B, from its own lists.",
+  "shot": "debarments.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "email-preferences",
+  "path": "/email-preferences",
+  "title": "Email preferences",
+  "label": "Turn any alert off from one page, no account needed.",
+  "motif": "window"
+ },
+ {
+  "slug": "estimate-scorecard",
+  "path": "/estimate-scorecard",
+  "title": "Estimate scorecard",
+  "label": "Every decision-date estimate, recorded before the outcome and scored against DOL's decision.",
+  "shot": "estimate-scorecard.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "glossary",
+  "path": "/glossary",
+  "title": "PERM glossary",
+  "label": "Every term the site uses, where it comes from, and where it meets real data.",
+  "shot": "glossary.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "green-card-fees",
+  "path": "/tools/green-card-fees",
+  "title": "Green card fees",
+  "label": "What USCIS charges for an employment green card, line by line.",
+  "shot": "green-card-fees.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "green-card-timeline",
+  "path": "/tools/green-card-timeline",
+  "title": "Green card timeline",
+  "label": "Every stage from the wage request to the green card, with each agency's measured pace.",
+  "shot": "green-card-timeline.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "h1b-six-year-limit",
+  "path": "/tools/h1b-six-year-limit",
+  "title": "H-1B six-year limit",
+  "label": "The day H-1B status runs out, and the last day a PERM can be filed to keep extending it.",
+  "shot": "h1b-six-year-limit.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "i140-calculator",
+  "path": "/tools/i140-calculator",
+  "title": "I-140 processing time",
+  "label": "USCIS's published times and its receipts by category, for your filing.",
+  "shot": "i140-calculator.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "i140-trends",
+  "path": "/tools/i140-trends",
+  "title": "I-140 trends",
+  "label": "Receipts, approvals and denials by category and quarter, from USCIS's counts.",
+  "shot": "i140-trends.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "i485-queue-position",
+  "path": "/tools/i485-queue-position",
+  "title": "I-485 queue position",
+  "label": "How many applicants are ahead of your priority date, from USCIS's inventory.",
+  "shot": "i485-queue-position.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "green-card-line",
+  "path": "/tools/green-card-line",
+  "title": "Your place in the green card line",
+  "label": "Everyone ahead of a priority date in EB-2 and EB-3, by country, as a range.",
+  "shot": "green-card-line.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "eb2-vs-eb3",
+  "path": "/tools/eb2-vs-eb3",
+  "title": "EB-2 or EB-3",
+  "label": "Both lines side by side for one priority date: the cutoffs and the people ahead.",
+  "shot": "eb2-vs-eb3.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "which-green-card",
+  "path": "/tools/which-green-card",
+  "title": "Which green card fits",
+  "label": "A few questions about the job and you, matched against the regulation's definitions.",
+  "shot": "which-green-card.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "h1b-lottery-odds",
+  "path": "/h1b-lottery-odds",
+  "title": "H-1B lottery odds",
+  "label": "USCIS's registrations and selections since FY2021, and the odds by wage level.",
+  "shot": "h1b-lottery-odds.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "visa-bulletin-categories",
+  "path": "/visa-bulletin/categories",
+  "title": "Every visa bulletin line",
+  "label": "Each employment category by country, with its cutoffs and history.",
+  "shot": "visa-bulletin-categories.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "nvc-waiting-list",
+  "path": "/nvc-waiting-list",
+  "title": "The NVC waiting list",
+  "label": "State's count of applicants waiting at the National Visa Center, by category.",
+  "shot": "nvc-waiting-list.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "visa-issuances",
+  "path": "/visa-issuances",
+  "title": "Immigrant visas issued",
+  "label": "State's monthly count of visas its consulates issue, by category, since 2017.",
+  "shot": "visa-issuances.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "green-card-timelines",
+  "path": "/green-card-timelines",
+  "title": "Reported green card timelines",
+  "label": "PERM dates checked against DOL; the I-140 and I-485 as people report them.",
+  "motif": "steps"
+ },
+ {
+  "slug": "uscis-processing-times",
+  "path": "/uscis-processing-times",
+  "title": "USCIS processing times",
+  "label": "Every form's median months to a decision, from USCIS's quarterly workbook.",
+  "shot": "uscis-processing-times.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "i485-by-field-office",
+  "path": "/i485-by-field-office",
+  "title": "I-485s by field office",
+  "label": "What each USCIS office received, approved, denied and still holds.",
+  "shot": "i485-by-field-office.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "i140-awaiting-visa",
+  "path": "/i140-awaiting-visa",
+  "title": "Approved, waiting for a visa",
+  "label": "Approved I-140s waiting for a visa number, by category and country.",
+  "shot": "i140-awaiting-visa.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "layoffs",
+  "path": "/layoffs",
+  "title": "Layoff notices",
+  "label": "State WARN filings matched to the employers in DOL's PERM files.",
+  "shot": "layoffs.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-attorneys-browse",
+  "path": "/perm-attorneys/browse",
+  "title": "Law firms, A to Z",
+  "label": "Every firm named on a PERM filing, by name.",
+  "motif": "grid"
+ },
+ {
+  "slug": "perm-case-statuses",
+  "path": "/perm-case-statuses",
+  "title": "What each status means",
+  "label": "Every DOL case status, what it means and what comes next.",
+  "shot": "perm-case-statuses.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-cases",
+  "path": "/perm-cases",
+  "title": "PERM cases",
+  "label": "Every decided PERM case by employer, job, wage and outcome.",
+  "shot": "perm-cases.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-deadline-calculator",
+  "path": "/tools/perm-deadline-calculator",
+  "title": "PERM deadline calculator",
+  "label": "Every recruitment and filing deadline for a PERM, from the dates on your case.",
+  "shot": "perm-deadline-calculator.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-employers-browse",
+  "path": "/perm-employers/browse",
+  "title": "Employers, A to Z",
+  "label": "Every PERM sponsor in DOL's disclosure files, by name.",
+  "motif": "grid"
+ },
+ {
+  "slug": "perm-employers-under-review",
+  "path": "/perm-employers/under-review",
+  "title": "Employers under review",
+  "label": "Employers with PERM cases on hold, at RFI or under appeal, dated from the live record.",
+  "shot": "perm-employers-under-review.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-timeline-calculator",
+  "path": "/tools/perm-timeline-calculator",
+  "title": "Processing time calculator",
+  "label": "Where a filing month stands in DOL's queue, and an estimate that's checked as it goes.",
+  "shot": "perm-timeline-calculator.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-wages-browse",
+  "path": "/perm-wages/browse",
+  "title": "Occupations, A to Z",
+  "label": "Every occupation in DOL's PERM files, by title.",
+  "motif": "grid"
+ },
+ {
+  "slug": "priority-date-calculator",
+  "path": "/tools/priority-date-calculator",
+  "title": "Is your priority date current?",
+  "label": "Your date against this month's cutoffs, and how the line has moved.",
+  "shot": "priority-date-calculator.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "priority-date-retention",
+  "path": "/tools/priority-date-retention",
+  "title": "Priority date retention",
+  "label": "Which dates carry to a new petition, under USCIS's own rules.",
+  "shot": "priority-date-retention.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "pwd-calculator",
+  "path": "/tools/pwd-calculator",
+  "title": "Wage request processing time",
+  "label": "Where your wage request stands in DOL's queue, and when it's likely to be issued.",
+  "shot": "pwd-calculator.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "pwd-validity",
+  "path": "/tools/pwd-validity",
+  "title": "Prevailing wage validity",
+  "label": "How long a determination stays usable, and the last day to file the PERM on it.",
+  "shot": "pwd-validity.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "rfi-deadline",
+  "path": "/tools/rfi-deadline",
+  "title": "RFI and audit deadlines",
+  "label": "The day a response is due, counted from the date on DOL's letter.",
+  "shot": "rfi-deadline.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "salary-explorer",
+  "path": "/tools/salary-explorer",
+  "title": "PERM salary explorer",
+  "label": "Wages on certified PERM cases, by occupation, state and year.",
+  "shot": "salary-explorer.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "visa-bulletin-family",
+  "path": "/visa-bulletin/family",
+  "title": "Family-sponsored cutoffs",
+  "label": "Every F1 to F4 cutoff from the bulletin archive, by country.",
+  "shot": "visa-bulletin-family.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "sponsor-finder",
+  "path": "/sponsor-finder",
+  "title": "Find a green card sponsor",
+  "label": "Employers that file PERM cases, filtered by what DOL's records show.",
+  "shot": "sponsor-finder.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "lca-wage-sources",
+  "path": "/lca-wage-sources",
+  "title": "Where H-1B wages come from",
+  "label": "OES, private surveys and union contracts, as each LCA records them.",
+  "shot": "lca-wage-sources.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "ead-extension",
+  "path": "/tools/ead-extension",
+  "title": "Was my work permit extended?",
+  "label": "Whether a renewal extended an expiring EAD automatically, and for how long.",
+  "shot": "ead-extension.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "wage-levels",
+  "path": "/tools/wage-levels",
+  "title": "Prevailing wage levels",
+  "label": "DOL's four wage levels for any occupation in any area, live from DOL.",
+  "shot": "wage-levels.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "about",
+  "path": "/about",
+  "title": "About PERM Tracker",
+  "label": "An independent site on DOL's own data, run by an immigration attorney.",
+  "shot": "about.png",
+  "crop": [
+   0,
+   0,
+   2384,
+   1520
+  ]
+ },
+ {
+  "slug": "press",
+  "path": "/press",
+  "title": "For journalists",
+  "label": "What DOL's records can tell a reporter, and how to credit them.",
+  "motif": "record"
+ },
+ {
+  "slug": "blog",
+  "path": "/blog",
+  "title": "PERM Tracker blog",
+  "label": "Notes on DOL's own data: processing times, denials and the queue.",
+  "shot": "blog.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "calculators",
+  "path": "/calculators",
+  "title": "PERM calculators",
+  "label": "A calculator for each question in the process, from the rules the agencies publish.",
+  "shot": "calculators.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "case-search",
+  "path": "/case-search",
+  "title": "Find a case",
+  "label": "Every PERM, wage request, LCA and seasonal filing an employer has made, in one search.",
+  "shot": "case-search.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "changelog",
+  "path": "/changelog",
+  "title": "Changelog",
+  "label": "What changed on the site, and when.",
+  "shot": "changelog.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "contact",
+  "path": "/contact",
+  "title": "Contact",
+  "label": "Questions, bugs and ideas go to support@permtracker.app.",
+  "motif": "window"
+ },
+ {
+  "slug": "faq",
+  "path": "/faq",
+  "title": "Frequently asked questions",
+  "label": "What applicants and attorneys ask about PERM and this site.",
+  "shot": "faq.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "for-attorneys",
+  "path": "/for-attorneys",
+  "title": "For attorneys",
+  "label": "Every PERM deadline, worked out: deadlines, recruitment windows and reminders for your cases.",
+  "shot": "for-attorneys.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "guides",
+  "path": "/guides",
+  "title": "PERM guides",
+  "label": "How-tos, references and checklists for the PERM process.",
+  "shot": "guides.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "home",
+  "path": "/",
+  "title": "PERM Tracker",
+  "label": "Look up a PERM case, see where DOL's queue stands, and get an email when your case moves.",
+  "shot": "home.png",
+  "crop": [
+   0,
+   0,
+   2464,
+   1520
+  ],
+  "from": "The road to a green card"
+ },
+ {
+  "slug": "lca-cases",
+  "path": "/lca-cases",
+  "title": "Find an H-1B LCA",
+  "label": "Every LCA by number, title or employer, with DOL's daily status.",
+  "shot": "lca-cases.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "methodology",
+  "path": "/methodology",
+  "title": "How the numbers are computed",
+  "label": "Where every figure comes from, how it's computed, and what we won't publish.",
+  "shot": "methodology.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-attorneys",
+  "path": "/perm-attorneys",
+  "title": "Law firms",
+  "label": "Every firm named on a PERM filing, with its record from DOL's files.",
+  "shot": "perm-attorneys.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-by-state",
+  "path": "/perm-by-state",
+  "title": "PERM filings by state",
+  "label": "Every certified and withdrawn case at its worksite state.",
+  "shot": "perm-by-state.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-case-status",
+  "path": "/perm-case-status",
+  "title": "Check a PERM case",
+  "label": "DOL's status today, its place in the queue, and an email when it changes.",
+  "shot": "perm-case-status.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-decision-activity",
+  "path": "/perm-decision-activity",
+  "title": "Daily decisions",
+  "label": "How many cases DOL decides each day, and which ones.",
+  "shot": "perm-decision-activity.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-denial-risk",
+  "path": "/perm-denial-risk",
+  "title": "What gets denied",
+  "label": "Denial rates by job, worksite and wage, from DOL's own files.",
+  "shot": "perm-denial-risk.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-employers",
+  "path": "/perm-employers",
+  "title": "Employers",
+  "label": "Who sponsors the most PERM cases, ranked, with each one's record.",
+  "shot": "perm-employers.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-processing-times",
+  "path": "/perm-processing-times",
+  "title": "PERM processing times",
+  "label": "Where DOL's queue stands, and its published figures, checked daily.",
+  "shot": "perm-processing-times.png",
+  "crop": [
+   0,
+   0,
+   2320,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-queue",
+  "path": "/perm-queue",
+  "title": "Queue backlog",
+  "label": "Undecided cases by filing month, from DOL's case-status service.",
+  "shot": "perm-queue.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-rfi-audit",
+  "path": "/perm-rfi-audit",
+  "title": "RFIs, audits and appeals",
+  "label": "How many cases leave filing order, at each review stage, and how long they wait.",
+  "shot": "perm-rfi-audit.png",
+  "crop": [
+   0,
+   0,
+   1888,
+   1520
+  ]
+ },
+ {
+  "slug": "perm-wages",
+  "path": "/perm-wages",
+  "title": "PERM wages by job",
+  "label": "What PERM jobs pay by occupation, employer and state, from DOL's files.",
+  "shot": "perm-wages.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "privacy",
+  "path": "/privacy",
+  "title": "Privacy policy",
+  "label": "What the site collects, what it never collects, and who processes it.",
+  "motif": "stack"
+ },
+ {
+  "slug": "lca-wages",
+  "path": "/lca-wages",
+  "title": "H-1B salaries",
+  "label": "What H-1B jobs pay, by occupation and state, from certified LCAs.",
+  "shot": "lca-wages.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "h1b-employers",
+  "path": "/h1b-employers",
+  "title": "Top H-1B employers",
+  "label": "The 100 busiest H-1B employers each fiscal year, nationally and by state.",
+  "shot": "h1b-employers.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "compare-my-offer",
+  "path": "/tools/compare-my-offer",
+  "title": "Compare my offer",
+  "label": "Your H-1B offer placed among what employers filed for the same job.",
+  "shot": "compare-my-offer.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "policy-changes",
+  "path": "/policy-changes",
+  "title": "Policy changes, on the record",
+  "label": "Rules, proposals and notices on PERM, wages and H-1B, with the dates that matter.",
+  "shot": "policy-changes.png",
+  "crop": [
+   0,
+   0,
+   2128,
+   1520
+  ]
+ },
+ {
+  "slug": "employer-compare",
+  "path": "/perm-employers/compare",
+  "title": "Compare employers",
+  "label": "Two employers side by side: PERM rate, wages and the last twelve months.",
+  "shot": "employer-compare.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "seasonal-cases",
+  "path": "/seasonal-cases",
+  "title": "Find an H-2A, H-2B or CW-1 filing",
+  "label": "By employer, with DOL's status and when it usually decides.",
+  "shot": "seasonal-cases.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "pwd-cases",
+  "path": "/pwd-cases",
+  "title": "Find a wage request",
+  "label": "Pending wage requests from DOL's daily check, by employer.",
+  "shot": "pwd-cases.png",
+  "crop": [
+   0,
+   0,
+   2336,
+   1520
+  ]
+ },
+ {
+  "slug": "security",
+  "path": "/security",
+  "title": "Security",
+  "label": "How your data is protected, and how to report a problem.",
+  "motif": "stack"
+ },
+ {
+  "slug": "accessibility",
+  "path": "/accessibility",
+  "title": "Accessibility",
+  "label": "The standard the site builds to, what it means here, and where to report a barrier.",
+  "motif": "stack"
+ },
+ {
+  "slug": "uscis-case-status",
+  "path": "/uscis-case-status",
+  "title": "Check a USCIS case",
+  "label": "USCIS's own status for a receipt number.",
+  "shot": "uscis-case-status.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ]
+ },
+ {
+  "slug": "terms",
+  "path": "/terms",
+  "title": "Terms of service",
+  "label": "The terms for using PERM Tracker, its data and its case management.",
+  "motif": "stack"
+ },
+ {
+  "slug": "visa-bulletin",
+  "path": "/visa-bulletin",
+  "title": "The visa bulletin",
+  "label": "Every cutoff this month and since 2005, by category and country.",
+  "shot": "visa-bulletin.png",
+  "crop": [
+   0,
+   0,
+   2224,
+   1520
+  ],
+  "from": "When it comes out"
+ },
+ {
+  "slug": "tools",
+  "path": "/tools",
+  "title": "Data",
+  "label": "DOL's own figures, each with its date, and the calculators built on them.",
+  "shot": "tools.png",
+  "crop": [
+   0,
+   0,
+   2528,
+   1520
+  ]
+ }
+]
