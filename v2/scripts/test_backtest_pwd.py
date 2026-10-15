@@ -50,38 +50,64 @@ s = score_months({"a": "2026-09", "b": "2026-09"}, {"a": date(2026, 9, 20), "b":
 check(s["judged"] == 2 and s["insideMonthShare"] == 0.5, "judged a week after the month: a inside, b still waiting")
 check(s["missAtLeastDays"] == 8.5, "b is at least 12 days past September's end; a is 5: median 8.5")
 
-# ---- the day method (Oct 8 2026) --------------------------------------------
+# ---- the day method (Oct 8 2026; DOL's working days since Oct 15) ----------
 from datetime import timedelta
 import datetime as _dt
+from backtest_pwd import js_round, workday_pace
 from ingest_pwd_status_direct import day_queue_doc, DAY_QUEUE_PACE_DAYS
 from lib_db import ET as _ET
 
-t0 = date(2026, 9, 23)
+check(js_round(2.5) == 3 and js_round(3.5) == 4 and js_round(2.4) == 2, "Math.round, not Python's round to even")
+t0 = date(2026, 9, 23)  # a Wednesday; the count covers Tuesday the 22nd
 line = [("a", "2026-07-01"), ("b", "2026-07-01"), ("c", "2026-07-02"), ("d", "2026-07-03")]
 pr = day_predictions(line, t0, 1.0)
-check(pr["a"] == (t0 + timedelta(days=1), 1) and pr["b"] == pr["a"], "two filed the same day: each has half the day ahead (1 of 2)")
-check(pr["c"][1] == round(2.5) and pr["d"][1] == round(3.5), "a later day has every earlier day ahead, and half its own")
+check(pr["a"] == (date(2026, 9, 23), 1) and pr["b"] == pr["a"], "two filed the same day: each has half the day ahead, the first day DOL works")
+check(pr["c"] == (date(2026, 9, 25), 3), "2.5 ahead at one a day is the third working day, Friday")
+check(pr["d"] == (date(2026, 9, 28), 4), "3.5 is the fourth: Monday, past the weekend")
+hol = day_predictions([("x", "2026-07-01"), ("y", "2026-07-01")], date(2026, 10, 10), 1.0)
+check(hol["x"] == (date(2026, 10, 13), 1), "counted on Saturday the 10th: the next day DOL works is Tuesday, past Columbus Day")
 end = date(2026, 10, 7)
 pred = {"x": (date(2026, 9, 25), 2), "y": (date(2026, 9, 28), 5), "z": (date(2026, 10, 3), 10), "s": (date(2026, 9, 26), 3)}
 out = {"x": date(2026, 9, 24), "y": date(2026, 10, 2), "z": date(2026, 10, 3), "s": None}
 sc = day_score(pred, out, end, {0: (-3, 0)})
 check(sc["judged"] == 3 and sc["decided"] == 2 and sc["stuckShare"] == round(1 / 3, 3),
       "judged once a week old: x and y decided, s still waiting, z too recent")
-check(sc["typicalMissDays"] == 2.5 and sc["insideShare"] == round(1 / 3, 3), "x is inside -3..0, y is 4 days late")
-check(day_bucket(14) == 0 and day_bucket(15) == 1 and day_bucket(500) == 4, "distance buckets")
+check(sc["typicalMissDays"] == 2.5 and sc["insideShare"] == round(1 / 3, 3), "x is inside -3..0 working days, y is 4 late")
+check(sc["typicalMissWorkdays"] == 2.5 and sc["biasWorkdays"] == 1.5, "the same misses in working days")
+check(day_bucket(10) == 0 and day_bucket(11) == 1 and day_bucket(500) == 4, "distance buckets, in working days")
 thin = day_range_model([{0: [0] * (DAY_RANGE_MIN - 1)}])
 check(thin == {}, "under the minimum, no range")
-check(day_range_model([{0: list(range(-5, 6)) * 40}]) == {0: (-4, 4)}, "the middle 80% of decided errors")
+check(day_range_model([{0: list(range(-5, 6)) * 20}, {0: list(range(-5, 6)) * 20}]) == {0: (-4, 4)},
+      "the middle 80% of decided errors, over two start days")
+check(day_range_model([{0: list(range(-5, 6)) * 40}]) == {}, "one start day alone measures no range")
+
+# The pace a working day: the same days and figures as dol-workdays-parity.test.ts.
+counts = [800, 820, 780, 810, 400, 5, 0, 830, 860, 790, 840, 420, 3, 0, 90, 900, 880, 850, 450]
+wp = workday_pace([(date(2026, 9, 28) + timedelta(days=i), n) for i, n in enumerate(counts)])
+check(wp is not None and wp["workdaysUsed"] == 14 and wp["perWorkday"] == 10_528 / 14,
+      "every exit, the holiday's and the weekends' too, over the 14 working days")
+check(wp is not None and abs(wp["fast"] - 773.1973154362416) < 1e-9 and abs(wp["slow"] - 706.5771812080537) < 1e-9,
+      "the fastest and slowest five-working-day stretches, as the site measures them")
+check(workday_pace([(date(2026, 9, 28) + timedelta(days=i), 800) for i in range(9)]) is None,
+      "under ten working days, no pace")
+from lib_holidays import is_dol_workday as _work
+shut = [(d, 800 if _work(d) and not (date(2026, 10, 5) <= d <= date(2026, 10, 9)) else 0)
+        for d in (date(2026, 9, 28) + timedelta(days=i) for i in range(28))]
+sp = workday_pace(shut)
+check(sp is not None and sp["perWorkday"] == 800 and sp["workdaysUsed"] == 14,
+      "a week of dead working days (a shutdown) is left out, not averaged in")
 
 today = date(2026, 10, 8)
 ms = lambda d, h=6: int(_dt.datetime(d.year, d.month, d.day, h, tzinfo=_ET).timestamp() * 1000)
 exits = [("e1", ms(date(2026, 10, 7))), ("e1", ms(date(2026, 10, 7), 9)), ("e2", ms(date(2026, 10, 6))),
-         ("e3", ms(today)), ("e4", ms(date(2026, 9, 1)))]
+         ("e3", ms(today)), ("e4", ms(date(2026, 9, 1))), ("e5", ms(today, 14))]
 doc = day_queue_doc([("2026-07-01", 3), ("2026-07-02", "2"), (None, 9)], exits, today)
 check(doc["byDay"] == [["2026-07-01", 3], ["2026-07-02", 2]] and doc["inProcess"] == 5, "in process by filing day, a missing day dropped")
+check(doc["clock"] == "dol", "the doc says its days are DOL's")
 dd = {x["date"]: x["n"] for x in doc["days"]}
-check(dd.get("2026-10-07") == 1, "a case that left twice counts once")
-check("2026-10-08" not in dd, "today, still filling in, is left out")
+check(dd.get("2026-10-06") == 1, "a case that left twice counts once, on the day before the morning it was seen")
+check(dd.get("2026-10-05") == 1 and dd.get("2026-10-07") == 1, "each morning's reading is the day before's")
+check("2026-10-08" not in dd, "today, seen in the afternoon and still filling in, is left out")
 check(len(doc["days"]) <= DAY_QUEUE_PACE_DAYS and min(dd) >= "2026-09-10", "only the 28 complete days before today")
 check(dd.get("2026-09-15") == 0, "a day with no exits is a zero, not a gap")
 

@@ -79,10 +79,13 @@ export {
 export {
   estimatePwdQueue,
   estimatePwdDay,
+  measureWorkdayPace,
+  PWD_MIN_WORKDAYS,
   PWD_DAY_MAX_AGE_DAYS,
   measurePwdClearance,
   type PwdBacklogMonth,
   type PwdDayQueue,
+  type WorkdayPace,
   type PwdDayInput,
   type PwdDayEstimate,
   type PwdQueueInput,

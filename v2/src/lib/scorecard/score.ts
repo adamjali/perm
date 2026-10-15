@@ -24,7 +24,7 @@
  * Plain module, pure functions, so the unit project tests every rule.
  */
 
-import { daysBetween } from "@/lib/time";
+import { daysBetween, EASTERN_TIMEZONE, easternDay } from "@/lib/time";
 
 /**
  * `watched` is the date a subscriber's own case page showed, recorded once per
@@ -62,11 +62,36 @@ export const SETTLE_DAYS = 30;
 export const PWD_MODEL = "pwd-queue";
 export const PWD_BEFORE_FIX = "pwd-queue-request-month";
 /**
- * The wage-request DAY (Oct 8 2026): requests in process filed earlier, over
- * DOL's measured pace (estimatePwdDay). The page shows it wherever the sweep's
+ * The wage-request DAY: requests in process filed earlier, over DOL's
+ * measured pace (estimatePwdDay). The page shows it wherever the sweep's
  * count is fresh, so the sample records it there and the month elsewhere.
+ * Counted in the days DOL works since Oct 15 2026 ("pwd-workday"); the
+ * calendar-day version it replaced was "pwd-day" (RETIRED_METHODS).
  */
-export const PWD_DAY_MODEL = "pwd-day";
+export const PWD_DAY_MODEL = "pwd-workday";
+
+/**
+ * Methods whose dates are DOL's days: each is graded on the day DOL decided
+ * (decidedOnFromSeen), where every other method is graded on the day our
+ * sweep first saw the decision, the clock it was built on.
+ */
+export const DOL_DAY_MODELS: ReadonlySet<string> = new Set([PWD_DAY_MODEL]);
+
+/**
+ * A status first seen before this hour, Eastern, was decided the day before:
+ * FLAG shows a new status the day DOL decides it and our morning sweep reads
+ * it the next morning. Held equal to scripts/lib_holidays.py by its test.
+ */
+export const SEEN_NEXT_MORNING_BEFORE_HOUR = 12;
+
+const easternHour = new Intl.DateTimeFormat("en-US", { timeZone: EASTERN_TIMEZONE, hour: "numeric", hourCycle: "h23" });
+
+/** The day DOL decided a status our sweep first saw at `ms`. */
+export function decidedOnFromSeen(ms: number): string {
+  const day = easternDay(ms);
+  if (Number(easternHour.format(ms)) >= SEEN_NEXT_MORNING_BEFORE_HOUR) return day;
+  return new Date(Date.parse(`${day}T12:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+}
 
 export type Horizon = "0-30" | "31-90" | "91-180" | "181+";
 export const HORIZONS: readonly Horizon[] = ["0-30", "31-90", "91-180", "181+"];

@@ -5,9 +5,16 @@
  * the nightly backtest measured for each distance (perm_docs['pwd_backtest']
  * .day). Plain module so the unit project tests it; the reader is
  * src/lib/db/pwdDayQueue.ts.
+ *
+ * Both are on DOL's days since Oct 15 2026 (`clock: "dol"` on the count,
+ * `unit: "workday"` on the backtest's day section). A count written before
+ * then dates each exit by the morning our sweep saw it, which is the day
+ * after DOL made it, so its days are moved back one. A backtest written
+ * before then measured the retired calendar-day method: its range and its
+ * test line describe a different date, so neither is used.
  */
 
-import { measurePace, type DecisionDay, type MeasuredRangeRow, type PwdDayQueue } from "@/lib/perm";
+import { measureWorkdayPace, type MeasuredRangeRow, type PwdDayQueue } from "@/lib/perm";
 
 export interface PwdDayData {
   queue: PwdDayQueue;
@@ -24,7 +31,7 @@ const isNum = (x: Num): x is number => typeof x === "number" && Number.isFinite(
 
 export function parsePwdDayData(queueJson: string | null, backtestJson: string | null): PwdDayData | null {
   if (!queueJson) return null;
-  let q: { asOf?: string; byDay?: unknown; days?: { date?: string; n?: number }[] };
+  let q: { asOf?: string; clock?: string; byDay?: unknown; days?: { date?: string; n?: number }[] };
   try {
     q = JSON.parse(queueJson);
   } catch {
@@ -35,14 +42,15 @@ export function parsePwdDayData(queueJson: string | null, backtestJson: string |
   for (const r of q.byDay as unknown[]) {
     if (Array.isArray(r) && typeof r[0] === "string" && isNum(Number(r[1]))) byDay.push([r[0], Number(r[1])]);
   }
-  const days: DecisionDay[] = [];
+  const shift = q.clock === "dol" ? 0 : 1;
+  const days: { date: string; n: number }[] = [];
   for (const d of q.days) {
     const t = Date.parse(`${d.date}T00:00:00Z`);
     const n = Number(d.n);
     if (Number.isNaN(t) || !Number.isFinite(n)) continue;
-    days.push({ dayOfWeek: new Date(t).getUTCDay(), n });
+    days.push({ date: new Date(t - shift * 86_400_000).toISOString().slice(0, 10), n });
   }
-  const pace = measurePace(days);
+  const pace = measureWorkdayPace(days);
   if (!pace || byDay.length === 0) return null;
 
   const measuredRange: MeasuredRangeRow[] = [];
@@ -52,11 +60,13 @@ export function parsePwdDayData(queueJson: string | null, backtestJson: string |
       const b = JSON.parse(backtestJson) as {
         end?: string;
         day?: {
+          unit?: string;
           rangeModel?: Record<string, Num>[];
           origins?: { day?: { decided?: number; typicalMissDays?: Num; within7Share?: Num } }[];
         };
       };
-      for (const r of b.day?.rangeModel ?? []) {
+      const current = b.day?.unit === "workday";
+      for (const r of current ? b.day?.rangeModel ?? [] : []) {
         if ([r.fromDays, r.toDays, r.earlyDays, r.lateDays].every(isNum)) {
           measuredRange.push({
             fromDays: r.fromDays as number,
@@ -66,7 +76,7 @@ export function parsePwdDayData(queueJson: string | null, backtestJson: string |
           });
         }
       }
-      const origins = b.day?.origins ?? [];
+      const origins = current ? b.day?.origins ?? [] : [];
       for (let i = origins.length - 1; i >= 0; i--) {
         const s = origins[i]?.day;
         if (s && isNum(s.decided) && s.decided >= TESTED_MIN && isNum(s.typicalMissDays) && b.end) {

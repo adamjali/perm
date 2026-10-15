@@ -49,6 +49,7 @@ from ingest_case_status_direct import (  # noqa: E402
     BATCH, PACE_S, decode_filing_date, log, lookup_with_retry,
 )
 from lib_flag_serials import SERIAL_MOD, case_number, day_code, prefix_of, serial_of  # noqa: E402
+from lib_holidays import decided_on  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
 
 PERM_PREFIX = "G-100-"
@@ -674,8 +675,10 @@ PERM_WAGE = "(visa_type IS NULL OR upper(visa_type) = 'PERM')"
 
 def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date) -> dict:
     """Pure: requests in process by filing day, and the requests that left IN
-    PROCESS for a final status on each of the 28 complete days before today
-    (by the day our sweep saw them, Eastern), each case once."""
+    PROCESS for a final status on each of the 28 complete days before today,
+    each case once. Dated by the day DOL decided it (lib_holidays.decided_on):
+    our morning sweep reads the day before's decisions, so a status seen
+    before noon belongs to the day before (`clock: "dol"`, since Oct 15 2026)."""
     by_day = sorted([str(fd), int(n)] for fd, n in by_day_rows if fd)
     counts: dict[str, int] = {}
     seen: set[str] = set()
@@ -683,7 +686,7 @@ def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date) -> d
         if cn in seen:
             continue
         seen.add(cn)
-        d = datetime.datetime.fromtimestamp(int(at) / 1000, ET).date().isoformat()
+        d = decided_on(int(at)).isoformat()
         counts[d] = counts.get(d, 0) + 1
     first = min(counts) if counts else None
     days = []
@@ -691,7 +694,7 @@ def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date) -> d
         d = (today - datetime.timedelta(days=i)).isoformat()
         if first is not None and d >= first:
             days.append({"date": d, "n": counts.get(d, 0)})
-    return {"asOf": today.isoformat(), "byDay": by_day, "days": days,
+    return {"asOf": today.isoformat(), "clock": "dol", "byDay": by_day, "days": days,
             "inProcess": sum(n for _, n in by_day)}
 
 

@@ -3,10 +3,12 @@ import {
   estimatePwdDay,
   estimatePwdQueue,
   measurePwdClearance,
+  measureWorkdayPace,
   type PwdBacklogMonth,
   type PwdDayQueue,
+  type WorkdayPace,
 } from './pwdQueue';
-import type { MeasuredPace } from './decisionPace';
+import { isBusinessDay } from '../dates/holidays';
 
 /**
  * DOL's real published PERM prevailing-wage backlog as of 2026-06-30, taken
@@ -214,9 +216,8 @@ describe('measurePwdClearance', () => {
 
 
 describe('estimatePwdDay', () => {
-  const pace: MeasuredPace = {
-    pace: 500, fast: 800, slow: 300, weekdayMean: 700, weekendMean: 0, weekdaysUsed: 20, daysUsed: 28,
-  };
+  const pace: WorkdayPace = { perWorkday: 500, fast: 800, slow: 300, workdaysUsed: 20 };
+  // Counted the morning of Thu Oct 8 2026: the queue as DOL left it Wednesday.
   // 1,000 filed Jul 1, 2,000 on Jul 2, 500 on Jul 3.
   const queue: PwdDayQueue = {
     asOf: '2026-10-08',
@@ -226,38 +227,73 @@ describe('estimatePwdDay', () => {
   const ask = (filingDate: string, over: Partial<Parameters<typeof estimatePwdDay>[0]> = {}) =>
     estimatePwdDay({ filingDate, today: '2026-10-08', queue, ...over });
 
-  it('counts every earlier filing day and half its own', () => {
+  it('counts every earlier filing day and half its own, in the days DOL works', () => {
     const r = ask('2026-07-02');
     if (r.kind !== 'estimate') throw new Error('expected a date');
     expect(r.requestsAhead).toBe(2000); // 1,000 + 2,000 / 2
-    expect(r.days).toBe(4);
-    expect(r.date).toBe('2026-10-12');
+    expect(r.workdays).toBe(4);
+    // Thu 8, Fri 9, Columbus Day Monday skipped, Tue 13, Wed 14.
+    expect(r.date).toBe('2026-10-14');
+    expect(r.pace).toBe(500);
   });
 
-  it('uses the measured range at a measured distance', () => {
-    const r = ask('2026-07-02', { measuredRange: [{ fromDays: 0, toDays: 14, earlyDays: -3, lateDays: 1 }] });
+  it('uses the measured range, in working days, at a measured distance', () => {
+    const r = ask('2026-07-02', { measuredRange: [{ fromDays: 0, toDays: 10, earlyDays: -1, lateDays: 1 }] });
     if (r.kind !== 'estimate') throw new Error('expected a date');
-    expect([r.earliest, r.date, r.latest]).toEqual(['2026-10-09', '2026-10-12', '2026-10-13']);
+    expect([r.earliest, r.date, r.latest]).toEqual(['2026-10-13', '2026-10-14', '2026-10-15']);
     expect(r.rangeFrom).toBe('measured');
   });
 
-  it('falls back to the fastest and slowest recent pace elsewhere', () => {
+  it("falls back to DOL's fastest and slowest recent week elsewhere", () => {
     const r = ask('2026-07-03');
     if (r.kind !== 'estimate') throw new Error('expected a date');
-    // 3,250 ahead: 3,250 / 800 = 4, 3,250 / 300 = 11.
-    expect([r.earliest, r.date, r.latest]).toEqual(['2026-10-12', '2026-10-15', '2026-10-19']);
+    // 3,250 ahead: 6.5 rounds to 7 working days; 3,250 / 800 is 4, 3,250 / 300 is 11.
+    expect([r.earliest, r.date, r.latest]).toEqual(['2026-10-14', '2026-10-19', '2026-10-23']);
     expect(r.rangeFrom).toBe('pace');
   });
 
-  it('never dates a request before today, and never opens its range in the past', () => {
+  it('never dates a request on a day DOL does not work', () => {
+    for (const fd of ['2026-06-01', '2026-07-01', '2026-07-02', '2026-07-03', '2026-08-01']) {
+      const r = ask(fd);
+      if (r.kind !== 'estimate') throw new Error('expected a date');
+      expect(isBusinessDay(r.date), `${fd} -> ${r.date}`).toBe(true);
+    }
+  });
+
+  it('never dates a request before today: a passed date is the next day DOL works', () => {
+    // Counted Thursday; read on Saturday: Wednesday's queue's first case is due "any day now".
     const r = ask('2026-06-30', { today: '2026-10-10' });
     if (r.kind !== 'estimate') throw new Error('expected a date');
-    expect(r.date).toBe('2026-10-10');
-    expect(r.earliest >= '2026-10-10').toBe(true);
+    expect(r.date).toBe('2026-10-13');
+    expect(r.earliest >= '2026-10-13').toBe(true);
   });
 
   it('refuses a count more than three days old', () => {
     expect(ask('2026-07-02', { today: '2026-10-12' }).kind).toBe('refused');
     expect(ask('2026-07-02', { today: '2026-10-11' }).kind).toBe('estimate');
+  });
+});
+
+describe('measureWorkdayPace', () => {
+  const run = (from: string, counts: number[]) =>
+    counts.map((n, i) => ({ date: new Date(Date.parse(`${from}T00:00:00Z`) + i * 86_400_000).toISOString().slice(0, 10), n }));
+
+  it('needs ten working days', () => {
+    expect(measureWorkdayPace(run('2026-09-28', Array(9).fill(800)))).toBeNull();
+  });
+
+  it('leaves out a week of dead working days rather than averaging it in', () => {
+    // Four weeks from Mon Sep 28: 800 every working day but Oct 5 to 9; Columbus Day the 12th.
+    const days = run('2026-09-28', Array(28).fill(0)).map((d) => ({
+      ...d,
+      n: isBusinessDay(d.date) && !(d.date >= '2026-10-05' && d.date <= '2026-10-09') ? 800 : 0,
+    }));
+    const p = measureWorkdayPace(days);
+    expect(p?.perWorkday).toBe(800);
+    expect(p?.workdaysUsed).toBe(14);
+  });
+
+  it('refuses a window with no decisions', () => {
+    expect(measureWorkdayPace(run('2026-09-28', Array(28).fill(0)))).toBeNull();
   });
 });

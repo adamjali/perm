@@ -320,6 +320,7 @@ export const METHOD_NAME: Record<string, string> = {
 export const RETIRED_METHODS: Record<string, string> = {
   "dol-average": "October 7, 2026",
   "pwd-queue-request-month": "October 3, 2026",
+  "pwd-day": "October 15, 2026",
 };
 
 /** Whether the case page still dates cases with this method. */

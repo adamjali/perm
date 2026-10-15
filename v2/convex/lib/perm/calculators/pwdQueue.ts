@@ -1,6 +1,8 @@
 import { differenceInCalendarMonths, parseISO } from 'date-fns';
 import { addMonths, monthStart, monthsBetween } from '../dates/monthUtils';
-import { boundRange, type MeasuredPace, type MeasuredRangeRow } from './decisionPace';
+import { addBusinessDays, subtractBusinessDays } from '../dates/businessDays';
+import { isBusinessDay } from '../dates/holidays';
+import { boundRange, COLLAPSE_FRACTION, type MeasuredRangeRow } from './decisionPace';
 
 /**
  * Prevailing wage determination queue estimation.
@@ -188,7 +190,7 @@ export function measurePwdClearance(
 }
 
 // ============================================================================
-// THE DAY (Oct 8 2026)
+// THE DAY (Oct 8 2026; working days since Oct 15 2026)
 // ============================================================================
 
 /**
@@ -201,14 +203,90 @@ export function measurePwdClearance(
  * pace is measured from the requests our sweep watched it finish. The
  * standing backtest (scripts/backtest_pwd.py, its day section) tests it
  * against what DOL went on to do, and measures the range by distance.
+ *
+ * DOL'S DAYS, NOT OURS (Oct 15 2026). FLAG shows a new status the day DOL
+ * decides it and our sweep reads it the next morning, so the sweep dates
+ * every exit by the day DOL made it (scripts/lib_holidays.py, decided_on),
+ * and the walk counts the days DOL works: weekdays that aren't federal
+ * holidays. Counting calendar days on the sweep's own clock had dated
+ * requests about 2 days late, most of all across a weekend or a holiday.
  */
 export interface PwdDayQueue {
-  /** The day the sweep counted, `YYYY-MM-DD`. */
+  /** The day the sweep counted, `YYYY-MM-DD`: the queue as DOL left it the day before. */
   asOf: string;
   /** Requests in process by filing day: `[YYYY-MM-DD, count]`, any order. */
   byDay: readonly (readonly [string, number])[];
-  /** Requests DOL finished, by the day our sweep saw it (measurePace). */
-  pace: MeasuredPace;
+  /** Requests DOL finishes a working day (measureWorkdayPace). */
+  pace: WorkdayPace;
+}
+
+/** DOL's recent pace on wage requests, a working day. */
+export interface WorkdayPace {
+  /** Every request DOL finished in the window, over the working days in it. */
+  perWorkday: number;
+  /** The fastest recent week (90th percentile of 5-working-day stretches), a working day: the early edge. */
+  fast: number;
+  /** The slowest recent week (10th percentile), a working day: the late edge. */
+  slow: number;
+  workdaysUsed: number;
+}
+
+/** Fewer working days than this in the window and there's no pace to quote. */
+export const PWD_MIN_WORKDAYS = 10;
+/** The edges are DOL's fastest and slowest stretch of this many working days. */
+export const PWD_EDGE_WORKDAYS = 5;
+
+/**
+ * DOL's wage-request pace a working day, or null when the window can't carry
+ * one. `days` are DOL's days (the day each request was decided), every
+ * calendar day in the window with its count, zeros included. A weekend's
+ * few decisions count toward the total; a run of three or more working days
+ * under a sixth of the usual (a shutdown, a broken feed) is left out, since
+ * that isn't a pace.
+ *
+ * The edges are weeks, not days. A date weeks out depends on DOL's pace over
+ * those weeks, and DOL's Fridays run at about half its other days (measured
+ * Sep 16 to Oct 13 2026: 277 to 484 against 688 to 988), so the slowest
+ * single day would stretch every far range to months. Its slowest and
+ * fastest five-working-day stretches ran 669 and 775 a day over the same
+ * weeks, against 734 for the whole window.
+ */
+export function measureWorkdayPace(days: readonly { date: string; n: number }[]): WorkdayPace | null {
+  const ordered = [...days].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const work = ordered.filter((d) => isBusinessDay(d.date));
+  if (work.length < PWD_MIN_WORKDAYS) return null;
+  const sorted = work.map((d) => d.n).sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)] ?? 0;
+  if (!(median > 0)) return null;
+  const low = (d: { n: number }) => d.n < median * COLLAPSE_FRACTION;
+  // Mark each working day inside a run of three or more low ones.
+  const dropped = new Set<string>();
+  for (let i = 0; i < work.length; ) {
+    let j = i;
+    while (j < work.length && low(work[j]!)) j++;
+    if (j - i >= 3) for (let k = i; k < j; k++) dropped.add(work[k]!.date);
+    i = j > i ? j : i + 1;
+  }
+  const kept = ordered.filter((d) => !dropped.has(d.date));
+  const keptWork = kept.filter((d) => isBusinessDay(d.date)).map((d) => d.n);
+  if (keptWork.length < PWD_MIN_WORKDAYS) return null;
+  const total = kept.reduce((a, d) => a + d.n, 0);
+  const perWorkday = total / keptWork.length;
+  const mean = keptWork.reduce((a, b) => a + b, 0) / keptWork.length;
+  // A weekend's few count toward the pace, so each stretch carries them too.
+  const scale = mean > 0 ? perWorkday / mean : 1;
+  const weeks: number[] = [];
+  for (let i = 0; i + PWD_EDGE_WORKDAYS <= keptWork.length; i++) {
+    let sum = 0;
+    for (let k = i; k < i + PWD_EDGE_WORKDAYS; k++) sum += keptWork[k]!;
+    weeks.push((sum / PWD_EDGE_WORKDAYS) * scale);
+  }
+  weeks.sort((a, b) => a - b);
+  const q = (p: number) => weeks[Math.floor(p * (weeks.length - 1))] ?? 0;
+  const fast = q(0.9);
+  const slow = q(0.1);
+  if (!(perWorkday > 0 && slow > 0)) return null;
+  return { perWorkday, fast, slow, workdaysUsed: keptWork.length };
 }
 
 export interface PwdDayInput {
@@ -216,22 +294,26 @@ export interface PwdDayInput {
   filingDate: string;
   today: string;
   queue: PwdDayQueue;
-  /** Ranges the backtest measured, by days out; other distances use the pace spread. */
+  /**
+   * Ranges the backtest measured, by WORKING days out: `fromDays` to `toDays`
+   * working days from the count, `earlyDays` and `lateDays` in working days
+   * around the date. Other distances use the pace spread.
+   */
   measuredRange?: readonly MeasuredRangeRow[] | null;
 }
 
 export type PwdDayEstimate =
   | {
       kind: 'estimate';
-      /** `YYYY-MM-DD` */
+      /** `YYYY-MM-DD`, a day DOL works. */
       date: string;
       earliest: string;
       latest: string;
       /** Requests in process filed earlier, same-day filings counted half. */
       requestsAhead: number;
-      /** Days from the count to the date. */
-      days: number;
-      /** Requests DOL finishes a calendar day. */
+      /** DOL working days from the count to the date. */
+      workdays: number;
+      /** Requests DOL finishes a working day. */
       pace: number;
       rangeFrom: 'measured' | 'pace';
     }
@@ -242,11 +324,15 @@ export const PWD_DAY_MAX_AGE_DAYS = 3;
 
 const dayNum = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86_400_000);
 const isoOf = (n: number) => new Date(n * 86_400_000).toISOString().slice(0, 10);
+/** The first day DOL works on or after `iso`. */
+const workdayFrom = (iso: string) => addBusinessDays(isoOf(dayNum(iso) - 1), 1);
 
 /**
  * A wage request's likely determination day: the requests in process filed
- * before it, divided by DOL's measured pace, counted from the sweep's day.
- * DOL works wage requests in the order it received them.
+ * before it, divided by DOL's pace a working day, counted in DOL's working
+ * days from the last day the sweep's count covers. DOL works wage requests in
+ * the order it received them. A date that has already come (the count is a
+ * day or two old) becomes the next day DOL works: any day now.
  */
 export function estimatePwdDay(input: PwdDayInput): PwdDayEstimate {
   const { filingDate, queue } = input;
@@ -260,29 +346,36 @@ export function estimatePwdDay(input: PwdDayInput): PwdDayEstimate {
     if (fd < filingDate) ahead += n;
     else if (fd === filingDate) ahead += n / 2;
   }
-  const pace = queue.pace.pace;
-  const days = Math.round(ahead / pace);
-  const day = Math.max(today, asOf + days);
-  const row = input.measuredRange?.find((r) => r.fromDays <= days && days <= r.toDays);
-  let early: number;
-  let late: number;
+  const pace = queue.pace;
+  // The count is the queue as DOL left it the day before the sweep.
+  const counted = isoOf(asOf - 1);
+  const open = workdayFrom(input.today);
+  const walk = (rate: number) => addBusinessDays(counted, Math.max(1, Math.round(ahead / rate)));
+  const workdays = Math.max(1, Math.round(ahead / pace.perWorkday));
+  let date = addBusinessDays(counted, workdays);
+  if (date < open) date = open;
+  const row = input.measuredRange?.find((r) => r.fromDays <= workdays && workdays <= r.toDays);
+  let early: string;
+  let late: string;
   if (row) {
-    early = day + Math.min(0, row.earlyDays);
-    late = day + Math.max(0, row.lateDays);
+    const before = Math.max(0, -Math.min(0, row.earlyDays));
+    early = before > 0 ? subtractBusinessDays(date, before) : date;
+    late = addBusinessDays(date, Math.max(0, row.lateDays));
   } else {
-    // If DOL keeps to its fastest or slowest recent weekday pace.
-    early = asOf + Math.round(ahead / queue.pace.fast);
-    late = asOf + Math.round(ahead / queue.pace.slow);
+    // If DOL keeps to its fastest or slowest recent week.
+    early = walk(pace.fast);
+    late = walk(pace.slow);
   }
-  [early, late] = boundRange(day, early, late, today);
+  if (early < open) early = open;
+  const [e, l] = boundRange(dayNum(date), dayNum(early), dayNum(late), today);
   return {
     kind: 'estimate',
-    date: isoOf(day),
-    earliest: isoOf(early),
-    latest: isoOf(late),
+    date,
+    earliest: isoOf(e),
+    latest: isoOf(l),
     requestsAhead: Math.round(ahead),
-    days,
-    pace,
+    workdays,
+    pace: pace.perWorkday,
     rangeFrom: row ? 'measured' : 'pace',
   };
 }

@@ -32,6 +32,12 @@ changes production and waits for the owner's yes, one at a time.
 4. Drop Cloudflare's cached pages for the changed routes (the deploy's purge step does
    this when `CF_PURGE_TOKEN` is set).
 5. Ask Search Console to re-crawl the homepage and the busiest data pages.
+6. The wage-request day moves to DOL's working days with the merge (no step to run):
+   the next PWD pass writes `perm_docs['pwd_day_queue']` with `clock: "dol"`, and the
+   next nightly backtest writes `pwd_backtest.day` with `unit: "workday"`. Until that
+   backtest runs (the 4:10 AM full pass, or the server's 7:05 AM run), the page uses
+   DOL's fastest and slowest week for the range and prints no test line. Nothing to
+   undo: an older count is read a day back, an older backtest is ignored.
 
 ## After a week live
 

@@ -216,8 +216,9 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
       : null;
   const notPerm = row.visaType !== null && row.visaType.toUpperCase() !== "PERM";
   // THE DAY, for a PERM request still in line: the requests in process filed
-  // before it over DOL's measured pace (estimatePwdDay). The month above stays
-  // the fallback when the count is missing or stale.
+  // before it over DOL's pace a working day, counted in the days DOL works
+  // (estimatePwdDay). The month above stays the fallback when the count is
+  // missing or stale.
   const dayEst =
     !notPerm && dayData && row.filingDate && row.status.trim().toUpperCase() === "IN PROCESS"
       ? estimatePwdDay({
@@ -319,13 +320,18 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-soft">
               {dated.rangeFrom === "measured"
                 ? "Going by how far recent determinations landed from their dates, between "
-                : "If DOL keeps to its fastest or slowest recent pace, between "}
+                : "If DOL keeps to its fastest or slowest recent week, between "}
               <b className="font-semibold text-foreground">{formatDay(dated.earliest)}</b> and{" "}
               <b className="font-semibold text-foreground">{formatDay(dated.latest)}</b>.{" "}
               {formatInt(dated.requestsAhead)} PERM wage requests filed before this one are still in process, and DOL
-              has been finishing about {formatInt(Math.round(dated.pace))} a day.
+              has been finishing about {formatInt(Math.round(dated.pace))} on each day it works (weekdays that
+              aren&apos;t federal holidays).
               {dayData?.tested
-                ? ` Tested on ${formatInt(dayData.tested.decided)} requests DOL has since decided, the date was typically ${dayData.tested.typicalMissDays} ${dayData.tested.typicalMissDays === 1 ? "day" : "days"} off${dayData.tested.within7Share !== null ? `, and ${sharePct(dayData.tested.within7Share)} were within a week` : ""}.`
+                ? ` Tested on ${formatInt(dayData.tested.decided)} requests DOL has since decided, the date was ${
+                    dayData.tested.typicalMissDays === 0
+                      ? "typically the day DOL decided them"
+                      : `typically ${dayData.tested.typicalMissDays} ${dayData.tested.typicalMissDays === 1 ? "day" : "days"} off`
+                  }${dayData.tested.within7Share !== null ? `, and ${sharePct(dayData.tested.within7Share)} were within a week` : ""}.`
                 : ""}
             </p>
           ) : null}{" "}

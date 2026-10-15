@@ -34,6 +34,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib_db import ET, Database, query_rows, write_doc  # noqa: E402
+from lib_holidays import add_workdays, decided_on, is_dol_workday, workdays_between  # noqa: E402
 
 IN_LINE = "IN PROCESS"
 PREFIX = "P-100-"
@@ -131,31 +132,90 @@ def score_months(pred: dict[str, str], outcome: dict[str, date | None], end: dat
 # divided by DOL's measured rate of finishing them. DOL works wage requests by
 # receipt date, and the live table carries every request's filing day, so the
 # count ahead is exact rather than prorated. Tested here before the site uses it.
+#
+# ON DOL'S DAYS (Oct 15 2026): estimatePwdDay counts the days DOL works,
+# weekdays that aren't federal holidays, and dates every exit by the day DOL
+# decided it (lib_holidays.decided_on: our morning sweep reads the day before's
+# decisions). This rebuilds it exactly: the queue as the morning sweep left it
+# on the start day, DOL's pace a working day over the 28 days before, the date
+# that many working days on, each outcome on DOL's day. The calendar-day walk
+# on the sweep's own clock it replaced read about 2 days late (0 here).
 DAY_PACE_DAYS = 28
-DAY_MIN_PACE_DAYS = 14
+DAY_MIN_WORKDAYS = 10  # PWD_MIN_WORKDAYS
+DAY_COLLAPSE = 0.15  # COLLAPSE_FRACTION (decisionPace.ts)
+DAY_EDGE_WORKDAYS = 5  # PWD_EDGE_WORKDAYS
 DAY_JUDGE_DAYS = 7
-DAY_BUCKETS = ((0, 14), (15, 30), (31, 60), (61, 120), (121, 100_000))
+# By WORKING days out: about two, four, eight and sixteen weeks.
+DAY_BUCKETS = ((0, 10), (11, 20), (21, 40), (41, 80), (81, 100_000))
 DAY_RANGE_MIN = 300
+DAY_RANGE_STARTS = 2
+DAY_RANGE_PER_START = 50
 
 
-def exits_per_day(events: dict, t0: date, days: int) -> float | None:
-    """Requests leaving IN PROCESS for a final status, per calendar day, over the days before t0."""
+def js_round(x: float) -> int:
+    """Math.round: half rounds up (Python's round goes to the even number)."""
+    return math.floor(x + 0.5)
+
+
+def workday_pace(days: list[tuple[date, int]]) -> dict | None:
+    """measureWorkdayPace (pwdQueue.ts): every exit in the window over its
+    working days, a run of three or more low working days left out, and the
+    edges DOL's fastest and slowest stretch of DAY_EDGE_WORKDAYS working days
+    (90th and 10th percentile), on the same scale."""
+    days = sorted(days)
+    work = [(d, n) for d, n in days if is_dol_workday(d)]
+    if len(work) < DAY_MIN_WORKDAYS:
+        return None
+    srt = sorted(n for _, n in work)
+    median = srt[len(srt) // 2]
+    if not median > 0:
+        return None
+    dropped: set[date] = set()
+    i = 0
+    while i < len(work):
+        j = i
+        while j < len(work) and work[j][1] < median * DAY_COLLAPSE:
+            j += 1
+        if j - i >= 3:
+            dropped.update(d for d, _ in work[i:j])
+        i = j if j > i else i + 1
+    kept = [(d, n) for d, n in days if d not in dropped]
+    kept_work = [n for d, n in kept if is_dol_workday(d)]
+    if len(kept_work) < DAY_MIN_WORKDAYS:
+        return None
+    per = sum(n for _, n in kept) / len(kept_work)
+    mean = sum(kept_work) / len(kept_work)
+    scale = per / mean if mean > 0 else 1
+    weeks = sorted(sum(kept_work[k:k + DAY_EDGE_WORKDAYS]) / DAY_EDGE_WORKDAYS * scale
+                   for k in range(len(kept_work) - DAY_EDGE_WORKDAYS + 1))
+    q = lambda p: weeks[math.floor(p * (len(weeks) - 1))]
+    if not (per > 0 and q(0.1) > 0):
+        return None
+    return {"perWorkday": per, "fast": q(0.9), "slow": q(0.1), "workdaysUsed": len(kept_work)}
+
+
+def exit_days(events: dict, t0: date, days: int) -> list[tuple[date, int]]:
+    """Requests leaving IN PROCESS for a final status, by DOL's day, on each
+    of the `days` days before t0 (from the first day the log holds)."""
     lo = t0 - timedelta(days=days)
-    n, first = 0, None
+    counts: dict[date, int] = {}
+    first = None
     for evs in events.values():
         for at, fr, to, tf in evs:
-            d = datetime.fromtimestamp(at / 1000, ET).date()
+            d = decided_on(at)
             first = d if first is None or d < first else first
             if lo <= d < t0 and tf and fr == IN_LINE:
-                n += 1
+                counts[d] = counts.get(d, 0) + 1
                 break
-    if first is None or (t0 - max(first, lo)).days < DAY_MIN_PACE_DAYS:
-        return None
-    return n / (t0 - max(first, lo)).days
+    if first is None:
+        return []
+    return [(lo + timedelta(days=i), counts.get(lo + timedelta(days=i), 0))
+            for i in range(days) if lo + timedelta(days=i) >= first]
 
 
 def day_predictions(in_line: list[tuple[str, str]], t0: date, pace: float) -> dict[str, tuple[date, int]]:
-    """(case, filing day) in process on t0 -> (date, days out). Same-day filings count half."""
+    """(case, filing day) in process on t0 -> (date, working days out). Same-day
+    filings count half; the count covers DOL's day before t0."""
     by_day: dict[str, int] = {}
     for _, fd in in_line:
         by_day[fd] = by_day.get(fd, 0) + 1
@@ -163,10 +223,11 @@ def day_predictions(in_line: list[tuple[str, str]], t0: date, pace: float) -> di
     for fd in sorted(by_day):
         before[fd] = run + by_day[fd] / 2
         run += by_day[fd]
+    counted = t0 - timedelta(days=1)
     out = {}
     for cn, fd in in_line:
-        h = round(before[fd] / pace)
-        out[cn] = (t0 + timedelta(days=h), h)
+        h = max(1, js_round(before[fd] / pace))
+        out[cn] = (add_workdays(counted, h), h)
     return out
 
 
@@ -175,8 +236,10 @@ def day_bucket(h: int) -> int:
 
 
 def day_score(pred: dict[str, tuple[date, int]], outcome: dict[str, date | None], end: date,
-              ranges: dict[str, tuple[int, int]] | None = None) -> dict:
-    errs, judged, stuck, inside = [], 0, 0, 0
+              ranges: dict[int, tuple[int, int]] | None = None) -> dict:
+    """Errors in calendar days (what a reader feels) and in working days (what
+    the range is drawn in); the range is judged in working days."""
+    errs, werrs, judged, stuck, inside = [], [], 0, 0, 0
     for cn, (p, h) in pred.items():
         if (end - p).days < DAY_JUDGE_DAYS:
             continue
@@ -185,16 +248,19 @@ def day_score(pred: dict[str, tuple[date, int]], outcome: dict[str, date | None]
         if o is None or o > end:
             stuck += 1
             continue
-        e = (o - p).days
-        errs.append(e)
+        errs.append((o - p).days)
+        w = workdays_between(p, o)
+        werrs.append(w)
         if ranges and day_bucket(h) in ranges:
             lo, hi = ranges[day_bucket(h)]
-            inside += lo <= e <= hi
+            inside += lo <= w <= hi
     a = sorted(abs(e) for e in errs)
     out = {
         "judged": judged, "decided": len(errs),
         "typicalMissDays": round(statistics.median(a), 1) if a else None,
         "biasDays": round(statistics.median(errs), 1) if errs else None,
+        "typicalMissWorkdays": round(statistics.median(sorted(abs(w) for w in werrs)), 1) if werrs else None,
+        "biasWorkdays": round(statistics.median(werrs), 1) if werrs else None,
         "within7Share": round(sum(1 for x in a if x <= 7) / len(a), 3) if a else None,
         "stuckShare": round(stuck / judged, 3) if judged else None,
     }
@@ -204,11 +270,16 @@ def day_score(pred: dict[str, tuple[date, int]], outcome: dict[str, date | None]
 
 
 def day_range_model(samples: list[dict[int, list[int]]]) -> dict[int, tuple[int, int]]:
-    """Per distance bucket, the middle 80% of decided errors over the start days given."""
+    """Per distance bucket, the middle 80% of decided errors in working days,
+    over the start days given. A bucket needs DAY_RANGE_MIN errors from at
+    least DAY_RANGE_STARTS start days: one start day only reaches its bucket's
+    nearest edge (on Oct 15 2026 the 11-to-20 bucket rested on requests 11
+    working days out alone)."""
     out = {}
     for i in range(len(DAY_BUCKETS)):
         errs = sorted(e for s in samples for e in s.get(i, []))
-        if len(errs) >= DAY_RANGE_MIN:
+        starts = sum(1 for s in samples if len(s.get(i, [])) >= DAY_RANGE_PER_START)
+        if len(errs) >= DAY_RANGE_MIN and starts >= DAY_RANGE_STARTS:
             q = lambda p: errs[min(len(errs) - 1, max(0, int(round(p * (len(errs) - 1)))))]
             out[i] = (min(0, q(0.10)), max(0, q(0.90)))
     return out
@@ -217,13 +288,14 @@ def day_range_model(samples: list[dict[int, list[int]]]) -> dict[int, tuple[int,
 def day_section(rows: list, events: dict, end: date) -> dict | None:
     """Weekly start days, oldest first; each start day's range comes from the ones before it."""
     starts, t = [], end - timedelta(days=14)
-    while exits_per_day(events, t, DAY_PACE_DAYS) is not None:
+    while workday_pace(exit_days(events, t, DAY_PACE_DAYS)) is not None:
         starts.append(t)
         t -= timedelta(days=7)
     runs, samples = [], []
     for t0 in sorted(starts):
-        pace = exits_per_day(events, t0, DAY_PACE_DAYS)
-        t_ms = int(datetime(t0.year, t0.month, t0.day, tzinfo=ET).timestamp() * 1000)
+        pace = workday_pace(exit_days(events, t0, DAY_PACE_DAYS))
+        # The queue as the start day's morning sweep left it.
+        t_ms = int(datetime(t0.year, t0.month, t0.day, 12, tzinfo=ET).timestamp() * 1000)
         in_line, outcome = [], {}
         for cn, fd, cur in rows:
             if not fd or fd > t0.isoformat():
@@ -236,30 +308,32 @@ def day_section(rows: list, events: dict, end: date) -> dict | None:
             if mv is None:
                 outcome[cn] = None
             elif mv[3] and not mv[2].startswith("WITHDRAWN"):
-                outcome[cn] = datetime.fromtimestamp(mv[0] / 1000, ET).date()
+                outcome[cn] = decided_on(mv[0])
             elif mv[3]:
                 outcome[cn] = "withdrawn"
             else:
                 outcome[cn] = "left"
             in_line.append((cn, fd))
         # Every request in process is ahead of the later ones, whatever became of it.
-        pred_all = day_predictions(in_line, t0, pace)
+        pred_all = day_predictions(in_line, t0, pace["perWorkday"])
         pred = {cn: v for cn, v in pred_all.items() if outcome[cn] not in ("withdrawn", "left")}
         model = day_range_model(samples[-4:]) if samples else None
-        run = {"t0": t0.isoformat(), "pace": round(pace, 1), "inLine": len(in_line),
+        run = {"t0": t0.isoformat(), "pace": round(pace["perWorkday"], 1), "inLine": len(in_line),
                "day": day_score(pred, outcome, end, model if model else None)}
         runs.append(run)
         sample: dict[int, list[int]] = {}
         for cn, (p, h) in pred.items():
             o = outcome[cn]
             if (end - p).days >= DAY_JUDGE_DAYS and isinstance(o, date) and o <= end:
-                sample.setdefault(day_bucket(h), []).append((o - p).days)
+                sample.setdefault(day_bucket(h), []).append(workdays_between(p, o))
         samples.append(sample)
     if not runs:
         return None
     model = day_range_model(samples[-4:])
     return {
-        "method": "requests in process filed earlier (same day counted half), over DOL's measured exits a calendar day",
+        "method": ("requests in process filed earlier (same day counted half), over DOL's measured exits a "
+                   "working day, counted in the days DOL works"),
+        "unit": "workday",
         "origins": runs,
         "rangeModel": [{"fromDays": DAY_BUCKETS[i][0], "toDays": DAY_BUCKETS[i][1], "earlyDays": lo, "lateDays": hi}
                        for i, (lo, hi) in sorted(model.items())],

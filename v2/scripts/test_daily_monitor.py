@@ -308,7 +308,8 @@ def main() -> int:
     # Oct 11 2026: the wage-request line summed every method, the retired
     # one included, and read 83 days where the method in use missed by 8.
     priv = {"pwd": {"bySource": {"ours": {"all": {"recorded": 306, "graded": 52, "typicalMissDays": 83}, "byModel": {
-        "pwd-day": {"recorded": 54, "graded": 0, "typicalMissDays": None},
+        "pwd-workday": {"recorded": 54, "graded": 0, "typicalMissDays": None},
+        "pwd-day": {"recorded": 210, "graded": 120, "typicalMissDays": 2},
         "pwd-queue": {"recorded": 108, "graded": 15, "typicalMissDays": 8},
         "pwd-queue-request-month": {"recorded": 144, "graded": 37, "typicalMissDays": 84}}}}},
         "bulletin": {"bySource": {"ours": {"all": {"recorded": 4, "graded": 0}}}}}

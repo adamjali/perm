@@ -2,6 +2,8 @@ import "server-only";
 
 import { estimatePwdDay, estimatePwdQueue } from "@/lib/perm";
 import {
+  decidedOnFromSeen,
+  DOL_DAY_MODELS,
   headToHead,
   isGradedOutcome,
   PWD_DAY_MODEL,
@@ -561,7 +563,9 @@ export function storedMs(v: string | number | null | undefined): number | null {
  *
  * The decision day is the first final event the sweep logged for the case,
  * as an Eastern date, which is the same reading `/estimate-scorecard` has
- * always used. A final case with no event (it should not happen for a case
+ * always used; a method dated in DOL's days (DOL_DAY_MODELS) gets the day
+ * DOL made the decision, a day earlier when the sweep saw it in the morning.
+ * A final case with no event (it should not happen for a case
  * that was pending when sampled) falls back to the day its row last changed.
  */
 export async function gradeOpenPredictions(): Promise<{ graded: number; open: number }> {
@@ -628,10 +632,23 @@ export async function gradeOpenPredictions(): Promise<{ graded: number; open: nu
             : storedMs(f.fetched_at) !== null
               ? easternDate(storedMs(f.fetched_at)!)
               : null;
+        const outcome = settled ? filed!.status : f.current_status;
+        const scoredAt = new Date().toISOString();
+        // A method dated in DOL's days is graded on the day DOL decided;
+        // every other on the day the sweep saw it, the clock it was built on.
+        const dolDays = [...DOL_DAY_MODELS];
+        const marks = dolDays.map(() => "?").join(",");
+        if (Number.isFinite(ms) && dolDays.length) {
+          graded += await exec(
+            `UPDATE estimate_predictions SET decided_on = ?, outcome = ?, scored_at = ?
+              WHERE program = ? AND case_number = ? AND outcome IS NULL AND model IN (${marks})`,
+            [decidedOnFromSeen(ms!), outcome, scoredAt, program, f.case_number, ...dolDays],
+          );
+        }
         graded += await exec(
           `UPDATE estimate_predictions SET decided_on = ?, outcome = ?, scored_at = ?
             WHERE program = ? AND case_number = ? AND outcome IS NULL`,
-          [decidedOn, settled ? filed!.status : f.current_status, new Date().toISOString(), program, f.case_number],
+          [decidedOn, outcome, scoredAt, program, f.case_number],
         );
       }
     }

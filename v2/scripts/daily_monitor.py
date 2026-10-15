@@ -794,9 +794,9 @@ def db_folder_warnings(n: dict) -> list[str]:
 
 # Methods the case page no longer uses: the keys of RETIRED_METHODS in
 # src/lib/scorecard/verdict.ts (test_daily_monitor.py holds the two equal).
-RETIRED_METHODS = {"dol-average", "pwd-queue-request-month"}
+RETIRED_METHODS = {"dol-average", "pwd-queue-request-month", "pwd-day"}
 # The wage-request methods in use, in the words the report prints.
-WAGE_METHODS = (("pwd-day", "wage-request days"), ("pwd-queue", "wage-request months"))
+WAGE_METHODS = (("pwd-workday", "wage-request days"), ("pwd-queue", "wage-request months"))
 
 
 def estimate_lines(priv: dict) -> list[str]:

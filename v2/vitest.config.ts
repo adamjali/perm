@@ -52,6 +52,8 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/db/__tests__/tableColumns.test.ts",
   "src/lib/db/__tests__/processingTimesHydrate.test.ts",
   "src/lib/db/__tests__/storedMs.test.ts",
+  // Added 2026-10-15: mocks the database client to grade one case two ways.
+  "src/lib/db/__tests__/gradeClock.test.ts",
   "src/lib/db/__tests__/debarments.test.ts",
   "src/lib/db/__tests__/reference.test.ts",
   "src/lib/auth/__tests__/authGate.test.ts",
