@@ -94,7 +94,7 @@ function getPriorityColor(priority: NotificationPriority): string {
     case "high":
       return "bg-urgency-soon"; // High/soon orange
     case "normal":
-      return "bg-stage-i140"; // Normal green
+      return "bg-foreground"; // Normal: ink (stage colours mark stages only)
     case "low":
     default:
       return "bg-muted-foreground"; // Low gray

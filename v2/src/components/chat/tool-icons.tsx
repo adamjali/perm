@@ -66,8 +66,8 @@ export const TOOL_ICONS: Record<string, PhosphorIcon> = {
  * Tool name to color class mapping
  * Colors indicate tool type/category:
  * - Blue: Data queries (database operations)
- * - Purple: Knowledge/documentation
- * - Emerald: External/web
+ * - Ink: Knowledge, documentation and settings (stage colours mark stages only)
+ * - Lime: External/web
  * - Amber: Modification (future)
  * - Red: Destructive (future)
  * - Teal: Sync operations (future)
@@ -75,7 +75,7 @@ export const TOOL_ICONS: Record<string, PhosphorIcon> = {
 export const TOOL_COLORS: Record<string, string> = {
   // Read-only tools
   queryCases: 'text-data-info-ink ',
-  searchKnowledge: 'text-stage-recruitment-ink ',
+  searchKnowledge: 'text-foreground ',
   searchWeb: 'text-primary ',
 
   // Case CRUD tools
@@ -108,8 +108,8 @@ export const TOOL_COLORS: Record<string, string> = {
   clearAllNotifications: 'text-destructive ',
 
   // Settings tools
-  updateSettings: 'text-stage-recruitment-ink ',
-  getSettings: 'text-stage-recruitment-ink ',
+  updateSettings: 'text-foreground ',
+  getSettings: 'text-foreground ',
 
   // Bulk operation tools (amber/red for destructive)
   bulkUpdateStatus: 'text-data-warn-ink ',
@@ -124,7 +124,7 @@ export const TOOL_COLORS: Record<string, string> = {
 export const TOOL_BG_COLORS: Record<string, string> = {
   // Read-only tools
   queryCases: 'bg-data-info/10 ',
-  searchKnowledge: 'bg-stage-recruitment/10 ',
+  searchKnowledge: 'bg-tint ',
   searchWeb: 'bg-tint ',
 
   // Case CRUD tools
@@ -154,8 +154,8 @@ export const TOOL_BG_COLORS: Record<string, string> = {
   clearAllNotifications: 'bg-destructive/10 ',
 
   // Settings tools
-  updateSettings: 'bg-stage-recruitment/10 ',
-  getSettings: 'bg-stage-recruitment/10 ',
+  updateSettings: 'bg-tint ',
+  getSettings: 'bg-tint ',
 
   // Bulk operation tools
   bulkUpdateStatus: 'bg-data-warn/15 ',
@@ -169,48 +169,48 @@ export const TOOL_BG_COLORS: Record<string, string> = {
  */
 export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   // Read-only tools
-  queryCases: 'Query Cases',
-  searchKnowledge: 'Search Knowledge',
-  searchWeb: 'Web Search',
+  queryCases: 'Query cases',
+  searchKnowledge: 'Search knowledge',
+  searchWeb: 'Web search',
 
   // Case CRUD tools
-  createCase: 'Create Case',
-  updateCase: 'Update Case',
-  archiveCase: 'Archive Case',
-  reopenCase: 'Reopen Case',
-  deleteCase: 'Delete Case',
+  createCase: 'Create case',
+  updateCase: 'Update case',
+  archiveCase: 'Archive case',
+  reopenCase: 'Reopen case',
+  deleteCase: 'Delete case',
 
   // Other action tools
-  syncCalendar: 'Sync Calendar',
-  searchCases: 'Search Cases',
-  generateDocument: 'Generate Document',
-  refreshData: 'Refresh Data',
+  syncCalendar: 'Sync calendar',
+  searchCases: 'Search cases',
+  generateDocument: 'Generate document',
+  refreshData: 'Refresh data',
 
   // Navigation tools
   navigate: 'Navigate',
-  viewCase: 'View Case',
-  scrollTo: 'Scroll To',
-  refreshPage: 'Refresh Page',
+  viewCase: 'View case',
+  scrollTo: 'Scroll to',
+  refreshPage: 'Refresh page',
 
   // Calendar sync tools
-  syncToCalendar: 'Sync to Calendar',
-  unsyncFromCalendar: 'Remove from Calendar',
+  syncToCalendar: 'Sync to calendar',
+  unsyncFromCalendar: 'Remove from calendar',
 
   // Notification tools
-  markNotificationRead: 'Mark as Read',
-  markAllNotificationsRead: 'Mark All Read',
-  deleteNotification: 'Delete Notification',
-  clearAllNotifications: 'Clear Notifications',
+  markNotificationRead: 'Mark as read',
+  markAllNotificationsRead: 'Mark all read',
+  deleteNotification: 'Delete notification',
+  clearAllNotifications: 'Clear notifications',
 
   // Settings tools
-  updateSettings: 'Update Settings',
-  getSettings: 'Get Settings',
+  updateSettings: 'Update settings',
+  getSettings: 'Get settings',
 
   // Bulk operation tools
-  bulkUpdateStatus: 'Bulk Update Status',
-  bulkArchiveCases: 'Bulk Archive Cases',
-  bulkDeleteCases: 'Bulk Delete Cases',
-  bulkCalendarSync: 'Bulk Calendar Sync',
+  bulkUpdateStatus: 'Bulk update status',
+  bulkArchiveCases: 'Bulk archive cases',
+  bulkDeleteCases: 'Bulk delete cases',
+  bulkCalendarSync: 'Bulk calendar sync',
 } as const;
 
 /**

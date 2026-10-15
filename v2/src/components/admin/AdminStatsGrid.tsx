@@ -52,8 +52,8 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
       label: "Users with cases",
       value: data.usersWithCases,
       icon: FolderOpenIcon,
-      color: "text-stage-recruitment-ink",
-      bgColor: "bg-stage-recruitment/10",
+      color: "text-foreground",
+      bgColor: "bg-tint",
     },
     {
       label: "Total cases",

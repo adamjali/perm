@@ -161,6 +161,28 @@ describe("the calm system", () => {
     expect(tape).toEqual([".next-up::before"]);
   });
 
+  it("colours a stage only where it means that stage", () => {
+    // Colour by meaning: the stage colours mark PERM's stages (STAGE_VISUALS,
+    // the timelines, the homepage's road and docket, the wage-request row
+    // that is the PWD stage). They were also borrowed as a spare purple or
+    // teal for chat tools, admin tiles and a notification dot; a reader then
+    // sees a stage where there is none. The fee breakdown keeps them as a
+    // chart's six fills, named in one list.
+    const STAGE_FILES = [
+      "components/status/stage-visuals.ts",
+      "components/cases/detail/InlineCaseTimeline.tsx",
+      "components/home/DeadlineDocket.tsx",
+      "components/home/RoadSection.tsx",
+      "app/(site)/(public)/case-search/page.tsx",
+      "components/tools/GreenCardFeesCalculator.tsx",
+    ];
+    const hits = findAll(tok("(?:[\\w-]+:)*(?:bg|text|border|fill|stroke)-stage-[a-z0-9-]+(?:/\\d+)?"));
+    expect(hits.length).toBeGreaterThan(20);
+    expect(hits.filter((h) => !STAGE_FILES.some((f) => h.startsWith(`${f}:`)))).toEqual([]);
+    // Nor washed out: a stage is its solid fill, its ink, or its edge.
+    expect(hits.filter((h) => /\/\d+$/.test(h))).toEqual([]);
+  });
+
   it("draws every hatch with the shared utility, at one pitch", () => {
     expect(findAll(tok("bg-\\[repeating-linear-gradient[^\\s\"'`]*"))).toEqual([]);
   });

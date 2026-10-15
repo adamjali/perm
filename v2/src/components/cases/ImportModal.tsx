@@ -390,11 +390,11 @@ export function ImportModal({
       },
       "perm-tracker-new": {
         label: "Firebase",
-        color: "bg-stage-recruitment/10 text-stage-recruitment-ink",
+        color: "bg-tint text-foreground",
       },
       "firebase-object": {
         label: "Firebase (Object)",
-        color: "bg-stage-recruitment/10 text-stage-recruitment-ink",
+        color: "bg-tint text-foreground",
       },
       unknown: {
         label: "Unknown",
