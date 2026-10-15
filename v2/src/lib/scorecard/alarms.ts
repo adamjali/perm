@@ -26,6 +26,13 @@ import { daysBetween } from "@/lib/time";
 import { isGradedOutcome, type PredictionRow, type Program } from "./score";
 
 export const RECORD_GAP_DAYS = 2;
+/**
+ * The bulletin's release day is recorded only in the run-up to each bulletin
+ * (from when the last one is held until the earliest likely release day), so a
+ * gap of three weeks or more is every month's normal quiet, not a failing run.
+ * Past this many days, though, a whole bulletin's window went unrecorded.
+ */
+export const BULLETIN_RECORD_GAP_DAYS = 40;
 export const DUE_FLOOR = 10;
 export const GRADE_GAP_DAYS = 10;
 export const RECENT_DAYS = 14;
@@ -70,7 +77,8 @@ export function scorecardAlarms(
     const label = LABEL[program];
 
     const lastRecorded = latest(mine.map((r) => r.recordedOn));
-    if (lastRecorded && daysBetween(lastRecorded, today) > RECORD_GAP_DAYS) {
+    const gap = program === "bulletin" ? BULLETIN_RECORD_GAP_DAYS : RECORD_GAP_DAYS;
+    if (lastRecorded && daysBetween(lastRecorded, today) > gap) {
       out.push(`${label}: nothing recorded since ${lastRecorded}. The daily scorecard run may be failing.`);
     }
 
