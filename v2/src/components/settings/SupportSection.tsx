@@ -327,7 +327,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                 </ul>
                 <p className="font-medium">
                   To confirm, type{" "}
-                  <span className="bg-muted px-1.5 py-0.5 font-medium text-foreground">
+                  <span className="bg-muted px-1.5 py-0.5 font-medium text-foreground border-2 border-border">
                     {DELETE_CONFIRMATION_TEXT}
                   </span>{" "}
                   below:

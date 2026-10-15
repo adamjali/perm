@@ -81,7 +81,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
       <pre
         className={cn(
           'my-2 p-3 overflow-x-auto overscroll-x-none',
-          'border border-current/20',
+          'border-current/20 border',
           'font-mono text-sm leading-relaxed',
           isUser
             ? 'bg-black/10'
@@ -154,7 +154,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
         <table
           className={cn(
             'w-full text-sm',
-            'border border-collapse',
+            'border-collapse border',
             isUser ? 'border-current/30' : 'border-border'
           )}
         >
@@ -211,7 +211,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
       <blockquote
         className={cn(
           // A thin neutral rule: the conventional quote mark, not a colored bar.
-          'my-2 pl-3 border-l border-current/40',
+          'my-2 pl-3 border-l-2 border-current/40',
           'italic opacity-90'
         )}
       >
@@ -223,7 +223,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
     hr: () => (
       <hr
         className={cn(
-          'my-3 border-t',
+          'my-3 border-t-2 border-border',
           isUser ? 'border-current/30' : 'border-border'
         )}
       />

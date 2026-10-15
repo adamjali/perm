@@ -579,7 +579,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   <DotsThreeVerticalIcon className="size-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={(e) => e.preventDefault()}>
+              <DropdownMenuContent align="end" className="w-56 border-2 shadow-hard-sm p-1 border-border" onCloseAutoFocus={(e) => e.preventDefault()}>
                 <DropdownMenuItem onSelect={handleToggleTimeline} disabled={isUpdating}>
                   <ChartBarHorizontalIcon className="size-4" />
                   {isOnTimeline ? "Remove from timeline" : "Show on timeline"}
@@ -616,7 +616,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 target="_blank"
                 rel="noopener"
                 title={`${caseData.caseNumber}: check DOL's live status`}
-                className="link max-w-[220px] truncate font-mono text-sm"
+                className="link max-w-[220px] truncate font-mono text-sm border-2 hover:bg-primary px-3 py-1 border-border"
               >
                 {caseData.caseNumber}
               </a>

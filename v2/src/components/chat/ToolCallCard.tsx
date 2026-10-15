@@ -102,8 +102,8 @@ export function ToolCallCard({
       className={cn(
         // Base styles
         'relative overflow-hidden',
-        'border border-border',
-        'bg-card',
+        'border-border border',
+        'bg-card shadow-hard-sm',
         // Status reads from the whole outline (the site's 2px border), not a
         // thick left bar; the spinner and status icon carry "in progress".
         status === 'success' && 'border-primary ',

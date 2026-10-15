@@ -80,7 +80,7 @@ export function TimelineControls({
       <div className="grid w-full grid-cols-1 gap-2 [&>*]:min-w-0 min-[360px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
         {onZoomChange && (
           <div
-            className="flex min-h-11 items-center justify-between gap-2 min-[360px]:col-span-2 sm:justify-start"
+            className="flex min-h-11 items-center justify-between gap-2 min-[360px]:col-span-2 sm:justify-start border-2 shadow-hard px-3 py-2 bg-background border-border"
             data-testid="zoom-control"
           >
             <MagnifyingGlassMinusIcon className="size-4 text-muted-foreground" aria-hidden="true" />
@@ -125,7 +125,7 @@ export function TimelineControls({
         <Button
           variant="outline"
           onClick={onOpenCaseSelector}
-          className="justify-between sm:justify-center"
+          className="justify-between sm:justify-center motion-safe:hover:-translate-y-0.5 transition-[color,background-color,border-color,box-shadow,transform]"
           data-testid="case-selector-button"
         >
           <Filter className="size-4" aria-hidden="true" />

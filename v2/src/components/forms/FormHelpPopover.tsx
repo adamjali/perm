@@ -24,14 +24,14 @@ export function FormHelpPanel() {
         className={cn(
           "hidden md:flex",
           "fixed z-40 items-center gap-1.5",
-          "border border-r-0 px-2.5 py-3",
+          "border-2 border-r-0 px-2.5 py-3 border-border",
           "text-sm font-mono font-bold",
           "transition-colors duration-200",
           // Position: right edge when closed, left edge of panel when open
           "top-20",
           isOpen
             ? "right-80 sm:right-96 border-destructive bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive dark:hover:bg-destructive dark:hover:text-destructive-foreground"
-            : "right-0 border-border bg-background text-foreground hover:bg-accent hover:border-primary",
+            : "right-0 border-border bg-background text-foreground hover:bg-primary hover:border-primary shadow-hard",
         )}
         aria-label={isOpen ? "Close help panel" : "Open help panel"}
         aria-expanded={isOpen}
@@ -54,7 +54,7 @@ export function FormHelpPanel() {
         className={cn(
           "hidden md:block",
           "fixed right-0 top-16 z-30 h-[calc(100vh-4rem)] w-80 sm:w-96",
-          "border-l border-border bg-background",
+          "border-l-2 border-border bg-background shadow-hard-lg",
           "transition-transform duration-200 ease-out",
           "overflow-y-auto overscroll-contain",
           isOpen ? "translate-x-0" : "translate-x-full",
@@ -63,7 +63,7 @@ export function FormHelpPanel() {
         aria-label="Form help reference"
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-border bg-background px-5 py-4">
+        <div className="sticky top-0 z-10 border-b-2 border-border bg-background px-5 py-4">
           <h2 className="font-heading font-bold text-base">Form reference</h2>
         </div>
 
@@ -230,7 +230,7 @@ function FieldList({ items }: { items: { field: string; desc: string }[] }) {
 
 function Example({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-2 bg-tint px-3 py-2 text-sm text-muted-foreground">
+    <div className="mt-2 bg-tint px-3 py-2 text-sm text-muted-foreground border-2 border-border">
       <span className="font-bold text-foreground">Tip: </span>
       {children}
     </div>

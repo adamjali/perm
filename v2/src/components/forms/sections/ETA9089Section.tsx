@@ -369,7 +369,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
 
         {/* ========== WARNINGS ========== */}
         {warnings?.eta9089FilingDate && (
-          <div role="status" className="flex items-start gap-2 border border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
+          <div role="status" className="flex items-start gap-2 border-2 border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
             <WarningIcon aria-hidden className="mt-0.5 size-4 shrink-0" weight="bold" />
             <p>{warnings.eta9089FilingDate}</p>
           </div>

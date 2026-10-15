@@ -606,7 +606,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
         </div>
 
         {/* ========== PROFESSIONAL OCCUPATION ========== */}
-        <div className="border-t border-border pt-6">
+        <div className="border-t-2 border-border pt-6">
           <div className="flex items-center gap-3 mb-4">
             <Checkbox
               id="isProfessionalOccupation"
@@ -637,7 +637,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                 <div className="space-y-4 pt-2">
                   {/* Methods Warning */}
                   {filledMethodsCount < 3 && (
-                    <div className="border border-data-warn p-3 text-sm text-data-warn-ink">
+                    <div className="border-2 border-data-warn p-3 text-sm text-data-warn-ink">
                       <p className="font-semibold">
                         {filledMethodsCount}/3 required methods selected
                       </p>{" "}
@@ -656,7 +656,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                     {methods.map((method, index) => (
                       <div
                         key={index}
-                        className="grid grid-cols-1 gap-3 bg-tint p-3 [&>*]:min-w-0"
+                        className="grid grid-cols-1 gap-3 bg-tint p-3 [&>*]:min-w-0 border-2 border-border"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-muted-foreground">
@@ -687,11 +687,11 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                             value={method.method}
                             onChange={(e) => handleMethodTypeChange(index, e.target.value)}
                             className={cn(
-                              "flex h-10 w-full min-w-0 border border-input bg-background px-3 py-2 text-sm",
+                              "flex h-10 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-sm",
                               "ring-offset-background placeholder:text-muted-foreground",
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:text-muted-foreground",
-                              "transition-colors"
+                              "transition-colors shadow-hard-sm"
                             )}
                           >
                             <option value="">Select method</option>

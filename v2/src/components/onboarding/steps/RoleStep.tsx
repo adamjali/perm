@@ -83,7 +83,7 @@ export function RoleStep({ onNext }: RoleStepProps) {
               aria-pressed={isSelected}
               onClick={() => setSelectedRole(role)}
               className={cn(
-                "flex min-h-14 cursor-pointer items-start gap-3 border p-4 text-left transition-colors",
+                "flex min-h-14 cursor-pointer items-start gap-3 border-2 p-4 text-left transition-colors border-border",
                 isSelected ? "border-primary-text bg-tint" : "border-input bg-card hover:border-foreground"
               )}
             >

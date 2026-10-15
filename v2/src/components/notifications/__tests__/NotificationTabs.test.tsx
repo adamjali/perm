@@ -112,8 +112,8 @@ describe("NotificationTabs", () => {
       );
 
       const unreadTab = screen.getByRole("tab", { name: /unread/i });
-      // The chosen tab takes the shared tinted choice look, never inverted black
-      expect(unreadTab).toHaveClass("bg-tint");
+      // The chosen tab takes the shared choice look: solid lime, never inverted black
+      expect(unreadTab).toHaveClass("bg-primary");
       expect(unreadTab).not.toHaveClass("bg-foreground");
     });
 
@@ -124,9 +124,9 @@ describe("NotificationTabs", () => {
       );
 
       const allTab = screen.getByRole("tab", { name: /^all$/i });
-      // Unchosen tabs are plain outlined choices
-      expect(allTab).toHaveClass("border-input");
-      expect(allTab).not.toHaveClass("bg-tint");
+      // Unchosen tabs are plain outlined choices on the card
+      expect(allTab).toHaveClass("bg-card");
+      expect(allTab).not.toHaveClass("bg-primary");
     });
   });
 

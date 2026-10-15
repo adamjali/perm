@@ -50,7 +50,7 @@ export default function SecurityDashboardClient() {
   if (!isAdmin) {
     return (
       <div className="mx-auto max-w-3xl p-8">
-        <Card className="border border-destructive">
+        <Card className="border-destructive border">
           <CardContent className="py-12 text-center">
             <ShieldIcon className="mx-auto h-12 w-12 text-destructive" />
             <p className="mt-4 font-bold">
@@ -91,7 +91,7 @@ export default function SecurityDashboardClient() {
       <nav
         role="tablist"
         aria-label="Security sections"
-        className="flex flex-wrap gap-2 border-b border-border pb-0"
+        className="flex flex-wrap gap-2 border-b-2 border-border pb-0"
       >
         {TABS.map((t) => {
           const Icon = t.icon;
@@ -103,10 +103,10 @@ export default function SecurityDashboardClient() {
               aria-selected={active}
               onClick={() => setTab(t.id)}
               className={cn(
-                "flex min-h-[44px] items-center gap-2 border px-4 py-2 text-sm font-bold transition-colors",
+                "flex min-h-[44px] items-center gap-2 border-2 px-4 py-2 text-sm font-bold transition-colors border-border",
                 active
-                  ? "translate-y-[-1px] border-foreground bg-primary text-primary-foreground"
-                  : "border-border bg-background",
+                  ? "translate-y-[-1px] border-foreground bg-primary text-primary-foreground shadow-hard"
+                  : "border-border bg-background hover:shadow-hard-sm",
               )}
             >
               <Icon className="h-4 w-4" aria-hidden />
@@ -231,7 +231,7 @@ function EventsTab() {
   }
   return (
     <Card className="border">
-      <CardHeader className="border-b border-border">
+      <CardHeader className="border-b-2 border-border">
         <CardTitle className="font-heading text-base font-bold">
           Recent events
         </CardTitle>
@@ -239,7 +239,7 @@ function EventsTab() {
       <CardContent className="p-0">
         <div className="overflow-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/40 text-sm font-bold">
+            <thead className="border-b-2 border-border bg-muted/40 text-sm font-bold">
               <tr>
                 <th className="px-3 py-2 text-left">Time</th>
                 <th className="px-3 py-2 text-left">Kind</th>
@@ -264,7 +264,7 @@ function EventsTab() {
                   <td className="px-3 py-2">
                     <span
                       className={cn(
-                        "inline-block border px-1.5 py-0.5 text-sm font-bold",
+                        "inline-block border-2 px-1.5 py-0.5 text-sm font-bold border-border",
                         e.kind === "strike" && "border-data-warn text-data-warn-ink",
                         e.kind === "rate_limit" && "border-border",
                         e.kind === "error" && "border-destructive text-destructive",
@@ -335,7 +335,7 @@ function BlockedIpsTab() {
   return (
     <div className="space-y-4">
       <Card className="border">
-        <CardHeader className="border-b border-border">
+        <CardHeader className="border-b-2 border-border">
           <CardTitle className="font-heading text-base font-bold">
             Manual block
           </CardTitle>
@@ -375,7 +375,7 @@ function BlockedIpsTab() {
       </Card>
 
       <Card className="border">
-        <CardHeader className="border-b border-border">
+        <CardHeader className="border-b-2 border-border">
           <CardTitle className="font-heading text-base font-bold">
             Active Blocks ({blocks.length})
           </CardTitle>
@@ -390,7 +390,7 @@ function BlockedIpsTab() {
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/40 text-sm font-bold">
+              <thead className="border-b-2 border-border bg-muted/40 text-sm font-bold">
                 <tr>
                   <th className="px-3 py-2 text-left">IP</th>
                   <th className="px-3 py-2 text-left">Reason</th>
@@ -410,7 +410,7 @@ function BlockedIpsTab() {
                     <td className="px-3 py-2 text-sm">
                       <span
                         className={cn(
-                          "border px-1.5 py-0.5 text-sm font-bold",
+                          "border-2 px-1.5 py-0.5 text-sm font-bold border-border",
                           b.manualOverride
                             ? "border-primary text-primary"
                             : "border-data-warn text-data-warn-ink",
@@ -481,14 +481,14 @@ function FlaggedUsersTab() {
 
   return (
     <Card className="border">
-      <CardHeader className="border-b border-border">
+      <CardHeader className="border-b-2 border-border">
         <CardTitle className="font-heading text-base font-bold">
           Flagged / Suspended Users ({flagged.length})
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/40 text-sm font-bold">
+          <thead className="border-b-2 border-border bg-muted/40 text-sm font-bold">
             <tr>
               <th className="px-3 py-2 text-left">Email</th>
               <th className="px-3 py-2 text-left">Suspended at</th>
@@ -552,7 +552,7 @@ function SettingsTab() {
   ];
   return (
     <Card className="border">
-      <CardHeader className="border-b border-border">
+      <CardHeader className="border-b-2 border-border">
         <CardTitle className="font-heading text-base font-bold">
           Rate Limit Thresholds (code-defined)
         </CardTitle>
@@ -599,7 +599,7 @@ function DashboardSkeleton() {
 function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <Card className="border">
-      <CardHeader className="border-b border-border">
+      <CardHeader className="border-b-2 border-border">
         <Skeleton className="h-5 w-48" />
       </CardHeader>
       <CardContent className="space-y-3 p-4">

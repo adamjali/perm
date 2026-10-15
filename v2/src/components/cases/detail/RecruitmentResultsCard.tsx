@@ -225,7 +225,7 @@ export function RecruitmentResultsCard({
             <ClipboardTextIcon className="h-3.5 w-3.5" />
             Recruitment results
             {isCustom && !isEditing && (
-              <span className="ml-1 inline-flex items-center bg-tint px-1.5 py-0.5 text-sm font-medium text-muted-foreground">
+              <span className="ml-1 inline-flex items-center bg-tint px-1.5 py-0.5 text-sm font-medium text-muted-foreground border-2 border-border">
                 Custom
               </span>
             )}
@@ -290,7 +290,7 @@ export function RecruitmentResultsCard({
         {status.status !== "incomplete" && (
           <div
             className={cn(
-              "border-b border-border p-4",
+              "border-b-2 border-border p-4",
               config.bg
             )}
           >
@@ -344,8 +344,8 @@ export function RecruitmentResultsCard({
         {/* ── DOL Text ── */}
         <div
           className={cn(
-            "border-b border-border p-4",
-            isCustom && !isEditing && "border-l border-l-primary"
+            "border-b-2 border-border p-4",
+            isCustom && !isEditing && "border-l-2 border-l-primary"
           )}
         >
           {isEditing ? (

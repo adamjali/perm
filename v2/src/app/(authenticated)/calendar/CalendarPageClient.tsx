@@ -43,7 +43,7 @@ export function CalendarSkeleton() {
 
       {/* Filter row: the real one is a bordered box around a row of 44px
           controls, 80px in all (measured on production, Sep 30 2026). */}
-      <div className="mb-4 bg-tint p-4">
+      <div className="mb-4 bg-tint p-4 border-2 border-border">
         <Skeleton variant="block" className="h-11" />
       </div>
 
@@ -72,9 +72,9 @@ export function CalendarSkeleton() {
       </div>
 
       {/* Calendar grid skeleton, the real calendar's 700px minimum */}
-      <div className="min-h-[700px] flex-1 border border-border bg-card">
+      <div className="min-h-[700px] flex-1 border-border bg-card border">
         {/* Month header row */}
-        <div className="grid grid-cols-7 border-b border-border bg-muted">
+        <div className="grid grid-cols-7 border-b-2 border-border bg-muted">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <div
               key={day}
@@ -131,9 +131,9 @@ function CalendarEmptyState() {
       </div>
 
       {/* Empty state message */}
-      <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 border border-dashed border-border bg-muted/20">
+      <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 border-2 border-dashed border-border bg-muted/20">
         <div className="text-center max-w-md">
-          <div className="mb-4 p-4 inline-block bg-tint">
+          <div className="mb-4 p-4 inline-block bg-tint border-2 shadow-hard border-border">
             <CalendarIcon className="size-12 text-muted-foreground" />
           </div>
           <h2 className="font-heading text-xl font-semibold mb-2">
@@ -145,7 +145,7 @@ function CalendarEmptyState() {
           </p>
           <Button
             onClick={() => router.push("/cases/new")}
-            className="bg-primary text-primary-foreground font-semibold border border-border transition-colors"
+            className="bg-primary text-primary-foreground font-semibold border-border transition-colors border"
           >
             <PlusIcon className="size-4 mr-2" />
             Add your first case
@@ -306,9 +306,9 @@ export function CalendarPageClient() {
         </div>
 
         {/* Calendar view with empty state message */}
-        <div className="flex flex-1 flex-col items-center justify-center bg-tint px-4 py-16">
+        <div className="flex flex-1 flex-col items-center justify-center bg-tint px-4 py-16 border-2 shadow-hard border-border">
           <div className="text-center max-w-md">
-            <div className="mb-4 inline-block bg-background p-4">
+            <div className="mb-4 inline-block bg-background p-4 border-2 shadow-hard border-border">
               <CalendarIcon className="size-12 text-muted-foreground" />
             </div>
             <h2 className="font-heading text-xl font-semibold mb-2">
@@ -348,7 +348,7 @@ export function CalendarPageClient() {
           </div>
           <Link
             href="/settings?tab=calendar-sync"
-            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 bg-primary px-3 text-sm font-semibold text-black transition-colors hover:bg-primary/90"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 bg-primary px-3 text-sm font-semibold text-primary-foreground transition-[color,background-color,border-color,box-shadow,transform] hover:bg-primary/90 border-2 motion-safe:hover:-translate-x-0.5 motion-safe:hover:-translate-y-0.5 border-border"
           >
             Connect
             <ArrowSquareOutIcon className="w-3.5 h-3.5" />

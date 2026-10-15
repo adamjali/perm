@@ -42,7 +42,7 @@ export function MonitorPanel() {
   const report: DailyReport | null = readReport(data.report);
   if (!report) {
     return (
-      <section className="border border-border bg-card p-5 sm:p-6">
+      <section className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
         <h2 className="font-heading text-xl font-bold">Daily monitor</h2>{" "}
         <p className="mt-2 text-base text-muted-foreground">
           No report yet. The first one arrives the morning after the daily-monitor workflow is live, around 7:30 AM
@@ -55,7 +55,7 @@ export function MonitorPanel() {
 
   return (
     <div className="space-y-6">
-      <section aria-labelledby="monitor-h" className="border border-border bg-card p-5 sm:p-6">
+      <section aria-labelledby="monitor-h" className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
         <h2 id="monitor-h" className="font-heading text-xl font-bold">
           {`Daily report, ${dayLabel(report.day)}`}
         </h2>{" "}
@@ -72,7 +72,7 @@ export function MonitorPanel() {
       </section>{" "}
       <ul className="space-y-4">
         {sections.map((s) => (
-          <li key={s.key} className="border border-border bg-card p-4 sm:p-5">
+          <li key={s.key} className="border-2 border-border bg-card p-4 sm:p-5 shadow-hard-sm">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className={`border border-border px-2 py-0.5 text-sm font-bold ${CHIP[s.status]}`}>
                 {WORD[s.status]}
@@ -81,7 +81,7 @@ export function MonitorPanel() {
               <p className="text-base">{s.summary}</p>
             </div>{" "}
             {s.lines.length > 0 ? (
-              <ul className="mt-3 space-y-1 border-l border-border pl-3 text-sm">
+              <ul className="mt-3 space-y-1 border-l-2 border-border pl-3 text-sm">
                 {s.lines.map((l, i) => (
                   <li key={i} className="[overflow-wrap:anywhere]">{l} </li>
                 ))}

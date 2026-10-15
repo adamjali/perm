@@ -44,7 +44,7 @@ export function CasesLoadingSkeleton() {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 border-2 shadow-hard p-5 bg-background border-border">
         <div className="grid grid-cols-4 gap-2 sm:flex">
           <Skeleton variant="block" className="h-11 sm:w-20" />
           <Skeleton variant="block" className="h-11 sm:w-28" />

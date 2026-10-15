@@ -359,7 +359,7 @@ export function JobDescriptionField({
                         size="sm"
                         onClick={handleCopy}
                         disabled={!description || isLoading}
-                        className="gap-1.5 border min-h-[44px] min-w-[44px]"
+                        className="gap-1.5 min-h-[44px] min-w-[44px] border"
                       >
                         {isCopied ? (
                           <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-primary-text" />
@@ -383,7 +383,7 @@ export function JobDescriptionField({
                         size="sm"
                         onClick={handleClear}
                         disabled={!hasContent || isLoading}
-                        className="gap-1.5 border text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[44px] min-w-[44px]"
+                        className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[44px] min-w-[44px] border"
                       >
                         <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">Clear</span>
@@ -410,7 +410,7 @@ export function JobDescriptionField({
                     placeholder="e.g., Software Engineer"
                     disabled={isLoading}
                     maxLength={200}
-                    className="border min-h-[44px]"
+                    className="min-h-[44px] border"
                   />
                   {positionTitle !== inheritedPositionTitle && positionTitle && (
                     <TooltipProvider>
@@ -451,7 +451,7 @@ export function JobDescriptionField({
                   placeholder="Enter the job description for PERM postings..."
                   disabled={isLoading}
                   className={cn(
-                    "border resize-y min-h-[100px] sm:min-h-[120px]",
+                    "resize-y min-h-[100px] sm:min-h-[120px] border",
                     "rows-5 sm:rows-8", // Tailwind doesn’t support rows directly, handled via style
                     isOverLimit && "border-destructive focus-visible:ring-destructive"
                   )}

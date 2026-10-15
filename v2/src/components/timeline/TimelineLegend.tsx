@@ -54,7 +54,7 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
           >
             {/* A flat swatch in the stage colour, framed like the markers */}
             <div
-              className="size-4 shrink-0 border border-foreground"
+              className="size-4 shrink-0 border-foreground border"
               style={{ backgroundColor: stage.primary }}
               role="presentation"
               aria-hidden="true"
@@ -70,13 +70,13 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
             marker a date computed from the others (not entered). */}
         <div className="flex items-center gap-2 min-h-[36px]">
           <div
-            className="h-3 w-6 shrink-0 border border-muted-foreground bg-muted-foreground/25"
+            className="h-3 w-6 shrink-0 border-muted-foreground bg-muted-foreground/25 border"
             aria-hidden="true"
           />
           <span className="text-sm font-semibold text-foreground whitespace-nowrap">Date range</span>
         </div>
         <div className="flex items-center gap-2 min-h-[36px]">
-          <div className="size-4 shrink-0 border border-dashed border-foreground" aria-hidden="true" />
+          <div className="size-4 shrink-0 border-dashed border-foreground border" aria-hidden="true" />
           <span className="text-sm font-semibold text-foreground whitespace-nowrap">Calculated</span>
         </div>
         <div className="flex items-center gap-2 min-h-[36px]">
@@ -92,7 +92,7 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
 function GroupSwatch() {
   return (
     <span
-      className="flex size-[22px] shrink-0 items-center justify-center border border-foreground bg-background text-sm font-bold leading-none text-foreground"
+      className="flex size-[22px] shrink-0 items-center justify-center border-foreground bg-background text-sm font-bold leading-none text-foreground border"
       aria-hidden="true"
     >
       3
@@ -112,7 +112,7 @@ export function TimelineLegendCompact({ className = "" }: { className?: string }
           className="flex items-center gap-1.5"
         >
           <div
-            className="size-3 border border-foreground"
+            className="size-3 border-foreground border"
             style={{ backgroundColor: stage.primary }}
             aria-hidden="true"
           />

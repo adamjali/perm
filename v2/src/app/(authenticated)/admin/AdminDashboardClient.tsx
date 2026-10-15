@@ -89,7 +89,7 @@ export default function AdminDashboardClient() {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
         {/* Header skeleton */}
-        <div className="flex items-center gap-4 border-b border-border pb-6">
+        <div className="flex items-center gap-4 border-b-2 border-border pb-6">
           <Skeleton className="h-12 w-12" />
           <div className="space-y-2">
             <Skeleton className="h-8 w-64" />
@@ -134,9 +134,9 @@ export default function AdminDashboardClient() {
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 border-b border-border pb-6">
+      <div className="flex items-center justify-between gap-4 border-b-2 border-border pb-6">
         <div className="flex items-center gap-4">
-          <div className="flex size-12 items-center justify-center bg-tint">
+          <div className="flex size-12 items-center justify-center bg-primary">
             <ShieldIcon className="size-6 text-primary-text" aria-hidden="true" />
           </div>
           <div>
@@ -150,7 +150,7 @@ export default function AdminDashboardClient() {
         </div>
         <Link
           href="/admin/security"
-          className="flex min-h-[44px] items-center gap-2 border border-foreground bg-background px-4 py-2 text-sm font-bold transition-colors"
+          className="flex min-h-[44px] items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-sm font-bold transition-[color,background-color,border-color,box-shadow,transform] shadow-hard-sm motion-safe:hover:-translate-y-[1px] hover:shadow-hard motion-safe:active:translate-y-0 active:shadow-hard-sm"
         >
           <ShieldIcon className="h-4 w-4" aria-hidden />
           Security

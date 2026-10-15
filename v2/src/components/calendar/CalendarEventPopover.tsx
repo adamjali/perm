@@ -117,7 +117,7 @@ function UrgencyBadge({ urgency, daysUntil }: { urgency: Urgency; daysUntil: num
     <div className="flex items-center gap-2">
       <Badge
         variant="outline"
-        className="border font-semibold"
+        className="font-semibold border"
         style={{
           color: color,
           borderColor: color,
@@ -205,12 +205,12 @@ export function CalendarEventPopover({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="sm:max-w-md border-border p-0 gap-0"
+        className="sm:max-w-md border-border p-0 gap-0 shadow-hard-lg"
         showCloseButton={true}
       >
         {/* Header with stage color accent */}
         <div
-          className="border-b border-border p-4"
+          className="border-b-2 border-border p-4"
           style={{ backgroundColor: `${stageColor}15` }}
         >
           <DialogHeader className="gap-1">
@@ -295,7 +295,7 @@ export function CalendarEventPopover({
             {/* Filing window indicator */}
             {event.isFilingWindow && (
               <div
-                className="flex items-center gap-2 p-2 bg-tint"
+                className="flex items-center gap-2 p-2 bg-tint border-2 border-border"
               >
                 <EyeIcon className="size-4 text-primary" aria-hidden="true" />
                 <span className="text-sm font-medium text-foreground">
@@ -307,7 +307,7 @@ export function CalendarEventPopover({
         </div>
 
         {/* Footer with actions */}
-        <DialogFooter className="border-t border-border p-4 gap-2 sm:gap-2">
+        <DialogFooter className="border-t-2 border-border p-4 gap-2 sm:gap-2">
           <Button
             variant="ghost"
             size="sm"

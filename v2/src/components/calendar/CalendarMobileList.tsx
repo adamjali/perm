@@ -150,7 +150,7 @@ export function CalendarMobileList({
   if (groupedEvents.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className="mb-4 inline-block bg-tint p-4">
+        <div className="mb-4 inline-block bg-tint p-4 border-2 shadow-hard border-border">
           <CalendarIcon className="size-10 text-muted-foreground" />
         </div>
         <h3 className="font-heading text-lg font-semibold mb-2">

@@ -12,7 +12,7 @@ export function TypingIndicator() {
   const reduceMotion = useReducedMotion();
   return (
     <motion.div
-      className="flex items-center gap-1 px-4 py-3 bg-tint max-w-[100px]"
+      className="flex items-center gap-1 px-4 py-3 bg-tint max-w-[100px] border-2 shadow-hard-sm border-border"
       initial={false}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0 } }}

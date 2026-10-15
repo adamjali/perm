@@ -365,7 +365,7 @@ export function NotesJournal({
               onKeyDown={handleKeyDown}
               placeholder={`Add a note... (${shortcutKey}+Enter to save)`}
               rows={3}
-              className="border border-border"
+              className="border-border border"
             />
           </CharLimit>
         </div>

@@ -40,9 +40,12 @@ describe("nothing stands between the visitor and the page", () => {
     expect(layout).not.toContain("HomeCurtainNav");
   });
 
-  it("draws no texture, particles or progress bar behind or over the page", () => {
+  it("draws no texture or particles behind or over the page", () => {
+    // The back-to-top button came back on public pages (round 2, Oct 15 2026,
+    // "animations movement transisitons"); it only appears once the reader has
+    // scrolled. Texture, particles and a site-wide progress bar stay out.
     for (const src of [layout, siteLayout, publicLayout, appLayout]) {
-      expect(src).not.toMatch(/grain-overlay|bg-dots|AmbientMurmuration|ScrollProgress|ScrollToTop/);
+      expect(src).not.toMatch(/grain-overlay|bg-dots|AmbientMurmuration|ScrollProgress/);
     }
   });
 });

@@ -43,7 +43,7 @@ export function TimelineSkeleton() {
       </div>
       {/* The key is static, so the skeleton draws the real one where the page does. */}
       <TimelineLegendCompact className="mb-3" />
-      <div className="min-h-[160px] border border-border bg-card">
+      <div className="min-h-[160px] border-border bg-card border">
         <Skeleton variant="block" className="h-[320px] border-0" />
       </div>
     </div>

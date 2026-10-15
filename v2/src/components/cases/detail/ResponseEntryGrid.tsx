@@ -45,14 +45,14 @@ export function ResponseEntryGrid({
             {alertTriangleIcon}
             {fullLabel}
           </h2>{" "}
-          <span className="head-badge">
+          <span className="head-badge border-2 px-2 py-0.5 bg-muted border-border">
             {subtitle}
           </span>
         </div>
         {entries.length > 0 ? (
           <div className="detail-card-body space-y-4">
             {entries.map((entry, i) => (
-              <div key={i} className="bg-tint p-3">
+              <div key={i} className="bg-tint p-3 border-2 border-border">
                 <div className="mb-1 text-sm font-semibold">{type} {i + 1}</div>
                 <div className="field-grid">
                   <div className="field-cell">

@@ -280,9 +280,9 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
         </div>
 
         {/* ========== STATUS FIELDS (Grouped) ========== */}
-        <div className="bg-tint p-4">
+        <div className="bg-tint p-4 border-2 border-border">
           {/* Auto-Status Toggle Header */}
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-border">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">Status</span>
               {isAutoStatusEnabled && <span className="text-sm text-muted-foreground">Auto-updating</span>}

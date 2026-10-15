@@ -4,7 +4,7 @@
  * ContentCard
  *
  * Article card for content listings: the picture, the topic, the title and
- * the date. Hover colours the title; nothing moves.
+ * the date. On hover the card lifts and a lime rule draws under the title.
  */
 
 import Image from "next/image";
@@ -56,7 +56,7 @@ export default function ContentCard({
             Stacked, each card ran about 430 px and the guides index 25,000. */}
         <div
           className={
-            "relative border-border bg-card border" +
+            "lift relative border-2 border-border bg-card shadow-hard-sm" +
             (meta.image ? " max-sm:grid max-sm:grid-cols-[7rem_minmax(0,1fr)]" : "")
           }
         >
@@ -98,8 +98,8 @@ export default function ContentCard({
             ) : null}{" "}
 
             {/* Title */}
-            <Heading className="mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200 group-hover:text-primary-text sm:text-lg">
-              {meta.title}
+            <Heading className="mb-2 font-heading text-base font-bold leading-tight sm:text-lg">
+              <span className="u-title">{meta.title}</span>
             </Heading>{" "}
 
             {/* Description */}

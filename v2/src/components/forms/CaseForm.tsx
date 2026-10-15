@@ -734,7 +734,7 @@ function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors:
 
 function WarningSummary({ warnings, warningCount }: { warnings: Record<string, string>; warningCount: number }) {
   return (
-    <div className="border border-data-warn p-4">
+    <div className="border-2 border-data-warn p-4">
       <div className="flex items-start gap-3">
         <AlertTriangle className="size-5 text-data-warn-ink shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -752,7 +752,7 @@ function WarningSummary({ warnings, warningCount }: { warnings: Record<string, s
 
 function SettingsToggles({ formData, onChange }: { formData: CaseFormData; onChange: (field: string, value: boolean) => void }) {
   return (
-    <div className="pt-4 border-t border-border space-y-4">
+    <div className="pt-4 border-t-2 border-border space-y-4">
       <SettingsToggle id="calendarSync" label="Calendar sync" description="Sync deadlines to your Google Calendar" checked={formData.calendarSyncEnabled} onChange={(checked) => onChange("calendarSyncEnabled", checked)} />
       <SettingsToggle id="favorite" label="Favorite" description="Mark as favorite for quick access" checked={formData.isFavorite} onChange={(checked) => onChange("isFavorite", checked)} />
       <SettingsToggle id="showOnTimeline" label="Show on timeline" description="Display this case on the timeline view" checked={formData.showOnTimeline} onChange={(checked) => onChange("showOnTimeline", checked)} />
@@ -780,7 +780,7 @@ function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCance
     // late second arrival of the page's main controls.
     // One row at every width, about 72px tall: on a phone Delete is its icon
     // and "Unsaved changes" its mark, both still named for screen readers.
-    <div ref={barRef} className="sticky bottom-0 left-0 right-0 z-10 border-t-2 border-[var(--object-border)] bg-background px-4 py-3">
+    <div ref={barRef} className="sticky bottom-0 left-0 right-0 z-10 border-t-2 border-[var(--object-border)] bg-background px-4 py-3 border-2 shadow-hard-sm sm:shadow-hard">
       <div className="mx-auto flex max-w-5xl items-center gap-2 md:gap-4">
         {mode === "edit" && caseId && (
           <Button

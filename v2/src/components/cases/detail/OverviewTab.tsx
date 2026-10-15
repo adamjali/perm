@@ -428,7 +428,7 @@ export function OverviewTab({
                           value={editPositionTitle}
                           onChange={(e) => setEditPositionTitle(e.target.value)}
                           placeholder="e.g., Software Engineer"
-                          className="w-full min-w-0 border border-input bg-card px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="w-full min-w-0 border-2 border-input bg-card px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:border-primary"
                         />
                       </CharLimit>
                     </div>
@@ -448,13 +448,13 @@ export function OverviewTab({
                           onChange={(e) => setEditDescription(e.target.value)}
                           placeholder="Enter job requirements..."
                           rows={8}
-                          className="w-full min-w-0 resize-y border border-input bg-card px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="w-full min-w-0 resize-y border-2 border-input bg-card px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:border-primary"
                         />
                       </CharLimit>
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t-2 border-border pt-3">
                       <div className="flex items-center gap-2">
                         {hasJobDesc ? (
                           <Button variant="ghost" size="sm" className="text-destructive" onClick={clearJobDesc} loading={isClearingJobDesc} loadingText="Clearing...">

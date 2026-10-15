@@ -80,7 +80,7 @@ export function InlineEdit({
           onKeyDown={handleKeyDown}
           autoFocus
           disabled={isSaving}
-          className="h-8 border border-primary bg-background px-2 text-sm outline-none"
+          className="h-8 border-2 border-primary bg-background px-2 text-sm outline-none"
         >
           <option value="individual">individual</option>
         </select>
@@ -104,7 +104,7 @@ export function InlineEdit({
         onKeyDown={handleKeyDown}
         autoFocus
         disabled={isSaving}
-        className="h-8 w-full min-w-0 border border-primary bg-background px-2 text-sm outline-none"
+        className="h-8 w-full min-w-0 border-2 border-primary bg-background px-2 text-sm outline-none"
       />
       <button onClick={handleSave} disabled={isSaving} className="text-primary hover:text-primary-text p-0.5 flex-shrink-0">
         <CheckIcon className="size-3.5" />

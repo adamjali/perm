@@ -115,9 +115,9 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
           className={cn(
             "fixed z-[9999] -translate-x-1/2 -translate-y-full",
             "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
-            "whitespace-nowrap",
+            "whitespace-nowrap shadow-hard-sm",
             "pointer-events-none",
-            "border border-foreground"
+            "border-foreground border"
           )}
           style={{ top: position.top, left: position.left }}
         >
@@ -172,7 +172,7 @@ export function ActionModeToggle({
       className={cn(
         // Container styling
         "relative inline-flex",
-        "border border-border bg-background",
+        "border-border bg-background border",
         "",
         // Disabled state
         disabled && "opacity-50 pointer-events-none",
@@ -210,10 +210,10 @@ export function ActionModeToggle({
                 "transition-colors duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 // Border between segments (not on last)
-                "border-r border-border last:border-r-0",
+                "border-r-2 border-border last:border-r-0",
                 // The chosen mode: the shared tint, never a filled block
                 isActive
-                  ? "bg-tint text-primary-text"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-background text-soft hover:bg-muted hover:text-foreground"
               )}
             >

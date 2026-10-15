@@ -59,7 +59,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
       {/* ========== BASIC INFO SECTION ========== */}
       {/* Not in a CollapsibleSection - always visible */}
       <div>
-        <div className="bg-tint p-6">
+        <div className="bg-tint p-6 border-2 shadow-hard-sm border-border">
           {/* Section header */}
           <div className="flex items-center gap-3 mb-6">
             <Skeleton variant="circle" className="h-6 w-6" />
@@ -139,7 +139,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
         <FormSectionSkeleton titleWidth="w-48" columns={2}>
           <div className="space-y-6">
             {/* Filing window indicator placeholder */}
-            <div className="bg-tint/30 p-3">
+            <div className="bg-tint/30 p-3 border-2 border-border">
               <div className="flex items-center gap-2">
                 <Skeleton variant="circle" className="h-4 w-4" />
                 <Skeleton variant="line" className="h-4 w-48" />
@@ -176,7 +176,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
         <FormSectionSkeleton titleWidth="w-44" columns={2}>
           <div className="space-y-6">
             {/* Filing window indicator placeholder */}
-            <div className="bg-tint/30 p-3">
+            <div className="bg-tint/30 p-3 border-2 border-border">
               <div className="flex items-center gap-2">
                 <Skeleton variant="circle" className="h-4 w-4" />
                 <Skeleton variant="line" className="h-4 w-52" />
@@ -231,7 +231,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
             </div>
 
             {/* Settings toggles */}
-            <div className="pt-4 border-t border-border space-y-4">
+            <div className="pt-4 border-t-2 border-border space-y-4">
               <ToggleSkeleton labelWidth="w-28" />
               <ToggleSkeleton labelWidth="w-20" />
             </div>

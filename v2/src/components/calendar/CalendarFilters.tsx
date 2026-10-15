@@ -254,7 +254,7 @@ export function CalendarFilters({
   return (
     <div className="space-y-4">
       {/* Filter Controls Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center border-2 shadow-hard p-3 sm:p-4 bg-card border-border">
         {/* One row on a phone: which cases, and the filters fold */}
         <div className="flex w-full items-center gap-2 sm:w-auto">
           {/* Case Selection Button */}
@@ -300,7 +300,7 @@ export function CalendarFilters({
               onCheckedChange={(checked) =>
                 onShowCompletedChange(checked === true)
               }
-              className="border size-5"
+              className="size-5 border"
               data-testid="show-completed-checkbox"
             />
             <Label
@@ -318,7 +318,7 @@ export function CalendarFilters({
               onCheckedChange={(checked) =>
                 onShowClosedChange(checked === true)
               }
-              className="border size-5"
+              className="size-5 border"
               data-testid="show-closed-checkbox"
             />
             <Label

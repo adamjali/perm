@@ -52,12 +52,12 @@ export function BudgetPools({
   const refused = pools.reduce((a, p) => a + p.refusedLast7d, 0);
   const waited = pools.reduce((a, p) => a + p.queuedLast7d, 0);
   return (
-    <section aria-labelledby="pools-h" className="border border-border bg-card p-5 sm:p-6">
+    <section aria-labelledby="pools-h" className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
       <h2 id="pools-h" className="font-heading text-xl font-bold">
         Daily email budgets
       </h2>{" "}
       {refused > 0 ? (
-        <p className="mt-3 border border-border bg-data-warn-ink px-4 py-3 text-base font-bold text-background">
+        <p className="mt-3 border-2 border-border bg-data-warn-ink px-4 py-3 text-base font-bold text-background">
           {`${formatInt(refused)} ${refused === 1 ? "person was" : "people were"} turned away in the last 7 days: the queue was full or a request waited more than seven days.`}
         </p>
       ) : (
@@ -81,7 +81,7 @@ export function BudgetPools({
         </p>
       ) : null}{" "}
       {queue && queue.waiting > 0 ? (
-        <p className="mt-2 border border-border bg-background px-4 py-3 text-sm font-bold">
+        <p className="mt-2 border-2 border-border bg-background px-4 py-3 text-sm font-bold">
           {`${formatInt(queue.waiting)} waiting now${queue.oldestQueuedAt ? `, the oldest since ${new Date(queue.oldestQueuedAt).toLocaleString("en-US", { timeZone: EASTERN_TIMEZONE, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} Eastern` : ""}.`}
         </p>
       ) : null}
@@ -98,7 +98,7 @@ export function BudgetPools({
                   {` of ${formatInt(p.limit)}`}
                 </span>
               </div>{" "}
-              <div className="mt-1.5 h-3 w-full border border-border bg-background" role="img" aria-label={`${p.usedLast24h} of ${p.limit} used in the last 24 hours`}>
+              <div className="mt-1.5 h-3 w-full border-border bg-background border" role="img" aria-label={`${p.usedLast24h} of ${p.limit} used in the last 24 hours`}>
                 <div className={`h-full ${full ? "bg-destructive" : "bg-foreground"}`} style={{ width: `${share * 100}%` }} />
               </div>{" "}
               {p.refusedLast7d > 0 ? (
@@ -134,7 +134,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
   const stale = data.outbox.oldestQueuedAt !== null && now - data.outbox.oldestQueuedAt > 26 * MS_PER_HOUR;
   return (
     <div className="space-y-8">
-      <section aria-labelledby="outbox-h" className="border border-border bg-card p-5 sm:p-6">
+      <section aria-labelledby="outbox-h" className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
         <h2 id="outbox-h" className="font-heading text-xl font-bold">
           Alert delivery, last 7 days
         </h2>{" "}
@@ -186,7 +186,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
               </thead>
               <tbody>
                 {data.recent.map((r, i) => (
-                  <tr key={`${r.email}-${r.createdAt}-${i}`} className="border-t border-border align-top">
+                  <tr key={`${r.email}-${r.createdAt}-${i}`} className="border-t-2 border-border align-top">
                     <td className="whitespace-nowrap px-3 py-2 tabular-nums">{`${when(r.sentAt ?? r.createdAt)} `}</td>
                     <td className="whitespace-nowrap px-3 py-2 tabular-nums">
                       {r.signedUpAt ? (
@@ -221,7 +221,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
         )}
       </section>{" "}
 
-      <section aria-labelledby="follows-h" className="border border-border bg-card p-5 sm:p-6">
+      <section aria-labelledby="follows-h" className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
         <h2 id="follows-h" className="font-heading text-xl font-bold">
           Employer follows
         </h2>{" "}
@@ -236,7 +236,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           </p>
         ) : null}{" "}
         {data.follows.top.length > 0 ? (
-          <ol className="mt-4 divide-y divide-border border-y border-border">
+          <ol className="mt-4 divide-y divide-border border-y-2 border-border">
             {data.follows.top.map((f) => (
               <li key={f.slug} className="flex items-baseline justify-between gap-3 py-2 text-sm">
                 <Link href={`/perm-employers/${f.slug}`} className="link min-w-0 [overflow-wrap:anywhere]">

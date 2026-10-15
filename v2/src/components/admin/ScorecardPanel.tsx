@@ -64,7 +64,7 @@ function HeadToHeadRow({ label, h, sub = false }: { label: string; h: HeadToHead
     h.oursCloser, h.rivalCloser, h.ties, h.oursLateWaiting ?? "-", h.rivalLateWaiting ?? "-",
   ];
   return (
-    <tr className={cn("border-border", sub ? "border-t text-muted-foreground" : "border-t")}>
+    <tr className={cn("border-border", sub ? "border-t text-muted-foreground" : "border-t-2 border-border")}>
       <th scope="row" className={cn("px-3 py-2 text-left", sub ? "pl-8 font-normal" : "font-bold")}>{`${label} `}</th>
       {cells.map((c, i) => (
         <td key={i} className="px-3 py-2 text-right tabular-nums">{`${c} `}</td>
@@ -90,7 +90,7 @@ function CaseStrip({ name, won, lost, ties }: { name: string; won: number; lost:
   // Past 80 cases a square each stops being readable; draw shares instead.
   if (total > 80) {
     return (
-      <div role="img" aria-label={label} className="mt-3 flex h-6 w-full max-w-md border border-border">
+      <div role="img" aria-label={label} className="mt-3 flex h-6 w-full max-w-md border-border border">
         <span className="bg-primary" style={{ width: `${(won / total) * 100}%` }} />
         <span className="bg-muted" style={{ width: `${(ties / total) * 100}%` }} />
         <span className="bg-data-bad-ink" style={{ width: `${(lost / total) * 100}%` }} />
@@ -105,7 +105,7 @@ function CaseStrip({ name, won, lost, ties }: { name: string; won: number; lost:
   return (
     <div role="img" aria-label={label} className="mt-3 flex max-w-md flex-wrap gap-1">
       {squares.map((c, i) => (
-        <span key={i} className={cn("size-4 border border-border", c)} />
+        <span key={i} className={cn("size-4 border-border border", c)} />
       ))}
     </div>
   );
@@ -120,9 +120,9 @@ const MARK: Record<RivalReading["leader"], string> = {
 
 function RivalCard({ r, h }: { r: RivalReading; h: HeadToHead | undefined }) {
   return (
-    <article className="border border-border bg-background p-4 sm:p-5">
+    <article className="border-2 border-border bg-background p-4 sm:p-5">
       <h3 className="flex items-start gap-2 font-heading text-lg font-bold leading-snug">
-        <span aria-hidden="true" className={cn("mt-1.5 size-3 shrink-0 border border-border", MARK[r.leader])} />
+        <span aria-hidden="true" className={cn("mt-1.5 size-3 shrink-0 border-border border", MARK[r.leader])} />
         <span>{r.headline}</span>
       </h3>{" "}
       {h ? <CaseStrip name={r.name} won={h.oursCloser} lost={h.rivalCloser} ties={h.ties} /> : null}{" "}
@@ -143,11 +143,11 @@ function RivalCard({ r, h }: { r: RivalReading; h: HeadToHead | undefined }) {
 function GradeRow({ name, c }: { name: string; c: Cell }) {
   const grade = letterFor(gradedMiss(c));
   return (
-    <tr className="border-t border-border">
+    <tr className="border-t-2 border-border">
       <th scope="row" className="px-3 py-2 text-left font-bold">{`${sourceName(name)} `}</th>
       <td className="px-3 py-2 text-center">
         {grade ? (
-          <span className="inline-flex size-8 items-center justify-center border border-border bg-card font-heading text-lg font-bold">
+          <span className="inline-flex size-8 items-center justify-center border-border bg-card font-heading text-lg font-bold border">
             {grade}
           </span>
         ) : (
@@ -219,7 +219,7 @@ export function ScorecardPanel() {
       </p>{" "}
 
       {doc.alarms && doc.alarms.length > 0 ? (
-        <section aria-labelledby="sc-alarms" className="border border-l-8 border-data-bad-ink bg-card p-5 sm:p-6">
+        <section aria-labelledby="sc-alarms" className="border-2 border-l-8 border-data-bad-ink bg-card p-5 sm:p-6">
           <h2 id="sc-alarms" className="font-heading text-xl font-bold">Needs a look</h2>{" "}
           <ul className="mt-3 max-w-3xl list-disc space-y-2 pl-5 text-base leading-relaxed">
             {doc.alarms.map((a) => (
@@ -229,7 +229,7 @@ export function ScorecardPanel() {
         </section>
       ) : null}
 
-      <section aria-labelledby="sc-who" className="border border-border bg-card p-5 sm:p-6">
+      <section aria-labelledby="sc-who" className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
         <h2 id="sc-who" className="font-heading text-xl font-bold">Who&apos;s closer, on the same cases</h2>{" "}
         <p className="mt-1 text-sm text-muted-foreground">
           Each square is one case we both dated: green, we were closer; red, they were; grey, tied.
@@ -246,7 +246,7 @@ export function ScorecardPanel() {
       </section>{" "}
 
       {ours.length > 0 ? (
-        <section aria-labelledby="sc-ours" className="border border-border bg-card p-5 sm:p-6">
+        <section aria-labelledby="sc-ours" className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
           <h2 id="sc-ours" className="font-heading text-xl font-bold">What our own numbers say</h2>{" "}
           <ul className="mt-3 max-w-3xl list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">
             {ours.map((line) => (
@@ -257,7 +257,7 @@ export function ScorecardPanel() {
       ) : null}{" "}
 
       {doc.readings?.priorityDate && doc.readings.priorityDate.length > 0 ? (
-        <section aria-labelledby="sc-pd" className="border border-border bg-card p-5 sm:p-6">
+        <section aria-labelledby="sc-pd" className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
           <h2 id="sc-pd" className="font-heading text-xl font-bold">Priority dates: our pace or dividing by visas</h2>{" "}
           <ul className="mt-3 max-w-3xl list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">
             {doc.readings.priorityDate.map((line) => (
@@ -267,7 +267,7 @@ export function ScorecardPanel() {
         </section>
       ) : null}{" "}
 
-      <section aria-labelledby="sc-grades" className="border border-border bg-card p-5 sm:p-6">
+      <section aria-labelledby="sc-grades" className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
         <h2 id="sc-grades" className="font-heading text-xl font-bold">Grades so far</h2>{" "}
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
           Every source on its own sample. The grade is the typical miss, counting a case still waiting past its date at
@@ -296,7 +296,7 @@ export function ScorecardPanel() {
       </section>{" "}
 
       {others.length > 0 ? (
-        <section aria-labelledby="sc-others" className="border border-border bg-card p-5 sm:p-6">
+        <section aria-labelledby="sc-others" className="border-2 border-border bg-card p-5 sm:p-6 shadow-hard">
           <h2 id="sc-others" className="font-heading text-xl font-bold">The other estimates</h2>{" "}
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
             Ours only: no rival dates wage requests or H-2A, H-2B and CW-1 cases. Each seasonal application is
@@ -313,7 +313,7 @@ export function ScorecardPanel() {
               </thead>
               <tbody>
                 {others.map((r) => (
-                  <tr key={r.model} className="border-t border-border">
+                  <tr key={r.model} className="border-t-2 border-border">
                     <th scope="row" className="px-3 py-2 text-left font-bold">{`${r.label} `}</th>
                     <td className="px-3 py-2 text-right tabular-nums">{`${r.recorded} `}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{`${r.graded} `}</td>
@@ -330,9 +330,9 @@ export function ScorecardPanel() {
         </section>
       ) : null}{" "}
 
-      <details className="border border-border bg-card">
+      <details className="border-border bg-card border">
         <summary className="flex min-h-[44px] cursor-pointer items-center px-5 font-bold">Every figure</summary>
-        <div className="space-y-6 border-t border-border p-5">
+        <div className="space-y-6 border-t-2 border-border p-5">
           <ScrollBox label="Every figure, all sources" className="border border-border">
             <table className="w-full min-w-[760px] text-sm">
               <caption className="p-2 text-left text-sm text-muted-foreground">
@@ -350,7 +350,7 @@ export function ScorecardPanel() {
                 {sources.map((s) => {
                   const c = perm.bySource[s]!.all;
                   return (
-                    <tr key={s} className="border-t border-border">
+                    <tr key={s} className="border-t-2 border-border">
                       <th scope="row" className="px-3 py-2 text-left font-bold">{`${sourceName(s)} `}</th>
                       <td className="px-3 py-2 text-right tabular-nums">{`${c.recorded} `}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{`${c.graded} `}</td>
@@ -407,7 +407,7 @@ export function ScorecardPanel() {
               </thead>
               <tbody>
                 {sources.map((s) => (
-                  <tr key={s} className="border-t border-border">
+                  <tr key={s} className="border-t-2 border-border">
                     <th scope="row" className="px-3 py-2 text-left font-bold">{`${sourceName(s)} `}</th>
                     {HORIZONS.map((h) => {
                       const c = perm.bySource[s]!.byHorizon[h];

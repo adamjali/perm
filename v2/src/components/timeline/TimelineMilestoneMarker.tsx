@@ -121,7 +121,7 @@ export function TimelineMilestoneMarker({
       <div
         className={cn(
           all.length > 1 ? "flex size-[22px] items-center justify-center" : "size-4",
-          "border border-foreground",
+          "border-foreground border",
           "",
           // Dashed border for calculated milestones
           all.length === 1 && milestone.isCalculated && "border-dashed",

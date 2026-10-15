@@ -93,7 +93,7 @@ export function OnboardingChecklist() {
               {/* Checkbox */}
               <div
                 className={cn(
-                  "flex-shrink-0 w-5 h-5 border flex items-center justify-center",
+                  "flex-shrink-0 w-5 h-5 flex items-center justify-center border",
                   isComplete ? "border-primary-text bg-primary-text" : "border-input bg-card"
                 )}
               >

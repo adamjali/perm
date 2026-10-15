@@ -346,7 +346,7 @@ export default function CalculatorsPage() {
                   </span>
                 </div>
                 <h3 className="mt-4 font-heading text-xl font-bold leading-tight">
-                  {t.name}
+                  <span className="u-title">{t.name}</span>
                 </h3>{" "}
                 {/* The tool's idea, drawn in the shared mini-diagram system. */}
                 <div className="mt-4 max-w-[170px]">
@@ -396,7 +396,7 @@ export default function CalculatorsPage() {
                     {t.kind}
                   </span>{" "}
                   <h3 className="mt-1 font-heading text-xl font-bold leading-tight">
-                    {t.name}
+                    <span className="u-title">{t.name}</span>
                   </h3>{" "}
                   <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                     {t.blurb}

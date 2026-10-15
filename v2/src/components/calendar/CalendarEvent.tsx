@@ -99,7 +99,7 @@ export function CalendarEvent({ event }: CalendarEventProps) {
             onClick={handleClick}
           />
         </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={8} collisionPadding={10} className="overflow-hidden p-0">
+        <TooltipContent side="top" sideOffset={8} collisionPadding={10} className="overflow-hidden p-0 shadow-hard">
           <CaseSummary event={event} />
         </TooltipContent>
       </Tooltip>

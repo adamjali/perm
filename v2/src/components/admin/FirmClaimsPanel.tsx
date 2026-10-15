@@ -37,7 +37,7 @@ const REASON: Record<string, string> = {
 };
 
 const BTN =
-  "inline-flex min-h-[44px] items-center border border-border px-3 text-sm font-bold transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none";
+  "inline-flex min-h-[44px] items-center border-2 border-border px-3 text-sm font-bold transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground motion-reduce:transition-none shadow-hard-sm motion-safe:hover:-translate-y-0.5";
 
 function when(ms: number | undefined): string {
   if (!ms) return "";
@@ -71,7 +71,7 @@ function ClaimCard({ c }: { c: Claim }) {
   };
   const id = c._id as Id<"firmClaims">;
   return (
-    <li className="border border-border bg-card p-4">
+    <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <a href={`/perm-attorneys/${c.slug}`} className="link font-heading text-lg">
           {c.firmName}
@@ -108,7 +108,7 @@ function ClaimCard({ c }: { c: Claim }) {
           </>
         ) : null}
       </dl>{" "}
-      {c.draft.description ? <p className="mt-2 whitespace-pre-line border-l-2 border-border pl-3 text-sm">{c.draft.description}</p> : null}{" "}
+      {c.draft.description ? <p className="mt-2 whitespace-pre-line border-l-4 border-border pl-3 text-sm">{c.draft.description}</p> : null}{" "}
       <div className="mt-3 flex flex-wrap gap-2">
         {c.status === "pending_review" ? (
           <button type="button" disabled={busy} onClick={() => run(() => approve({ claimId: id }))} className={`${BTN} bg-primary text-primary-foreground`}>
@@ -188,7 +188,7 @@ function EditCard({ e }: { e: Edit }) {
   const after = fieldRows(e.after);
   const reasonId = `decline-${e.slug}`;
   return (
-    <li className="border border-border bg-card p-4">
+    <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <a href={`/perm-attorneys/${e.slug}`} className="link font-heading text-lg">
           {e.firmName}
@@ -205,7 +205,7 @@ function EditCard({ e }: { e: Edit }) {
           const changed = e.before !== null && was !== row.value;
           if (!row.value && !was) return null;
           return (
-            <div key={row.label} className={changed ? "border-l-2 border-primary pl-3" : "pl-4"}>
+            <div key={row.label} className={changed ? "border-l-4 border-primary pl-3" : "pl-4"}>
               <dt className="font-bold">
                 {row.label}
                 {changed ? " (changed)" : ""}
@@ -239,7 +239,7 @@ function EditCard({ e }: { e: Edit }) {
         placeholder="What should the firm change?"
         onChange={(ev) => setReason(ev.target.value)}
         rows={2}
-        className="mt-1 w-full min-w-0 border border-input bg-background p-2 text-sm"
+        className="mt-1 w-full min-w-0 border-2 border-input bg-background p-2 text-sm"
       />{" "}
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" disabled={busy} onClick={() => run(() => approve({ slug: e.slug }))} className={`${BTN} bg-primary text-primary-foreground`}>

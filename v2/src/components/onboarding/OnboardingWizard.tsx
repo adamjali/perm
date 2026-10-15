@@ -74,7 +74,7 @@ export function OnboardingWizard() {
               "absolute top-3 right-3 z-50",
               "inline-flex h-11 items-center gap-1.5 px-3 md:h-9",
               "font-heading text-sm font-bold text-muted-foreground",
-              "border border-transparent transition-colors duration-150",
+              "border-transparent transition-colors duration-150 border",
               "hover:border-border hover:bg-accent hover:text-foreground",
               "outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
               "disabled:cursor-wait disabled:text-muted-foreground"

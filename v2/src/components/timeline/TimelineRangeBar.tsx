@@ -118,9 +118,9 @@ export function TimelineRangeBar({
           className={cn(
             "absolute bottom-full left-1/2 -translate-x-1/2 mb-3",
             "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
-            "whitespace-nowrap",
+            "whitespace-nowrap shadow-hard-sm",
             "pointer-events-none z-[45]",
-            "border border-foreground"
+            "border-foreground border"
           )}
         >
           <div className="font-semibold">{rangeBar.label}</div>

@@ -50,7 +50,7 @@ export function ProcessingTimeEstimate({
     return (
       <div
         className={cn(
-          "bg-tint p-3 text-sm text-muted-foreground",
+          "bg-tint p-3 text-sm text-muted-foreground border-2 border-border",
           className,
         )}
       >
@@ -68,7 +68,7 @@ export function ProcessingTimeEstimate({
 
   if (compact) {
     return (
-      <div className={cn("border px-3 py-2", tone, className)}>
+      <div className={cn("border-2 px-3 py-2 border-border", tone, className)}>
         <div className="flex items-center gap-2">
           {isPremiumProcessing ? (
             <Zap className="h-4 w-4 text-data-warn-ink" aria-hidden="true" />
@@ -89,7 +89,7 @@ export function ProcessingTimeEstimate({
 
   return (
     <div
-      className={cn("border p-4", tone, className)}
+      className={cn("border-2 p-4 border-border", tone, className)}
     >
       <div className="mb-3 flex items-center gap-2">
         {isPremiumProcessing ? (

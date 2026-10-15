@@ -123,10 +123,10 @@ export function ChatMessage({
       {showBubble && (
         <div
           className={cn(
-            'max-w-[85%] border px-4 py-3',
+            'max-w-[85%] border-2 px-4 py-3 border-border',
             isUser
-              ? 'border-border bg-tint text-foreground'
-              : 'bg-card text-card-foreground border-border'
+              ? 'border-primary bg-primary text-primary-foreground shadow-hard-sm'
+              : 'bg-card text-card-foreground border-border shadow-hard-sm'
           )}
         >
           <div className="text-base md:text-sm break-words">

@@ -124,7 +124,7 @@ const URGENCY_CLASSES: Record<UrgencyLevelWithCompletion, string> = {
   urgent: "border-destructive",
   soon: "border-data-warn",
   normal: "border-border",
-  completed: "border-border",
+  completed: "border-primary",
 };
 
 // ============================================================================
@@ -310,7 +310,7 @@ function RequestEntryComponent({
   return (
     <div
       className={cn(
-        "relative border p-4",
+        "relative border-2 p-4 shadow-hard-sm border-border",
         URGENCY_CLASSES[urgency]
       )}
       data-testid={`${kind}-entry`}

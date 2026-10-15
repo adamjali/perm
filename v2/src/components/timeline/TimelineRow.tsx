@@ -277,7 +277,7 @@ export function TimelineRow({
           // shows beside the names; "No dates in this range yet" ran off the
           // edge there.
           <div className="absolute inset-0 z-[25] flex items-center">
-            <span className="sticky left-[calc(var(--tl-label,120px)+12px)] ml-3 whitespace-nowrap border border-dashed border-muted-foreground/50 bg-card px-2 py-0.5 text-sm text-muted-foreground">
+            <span className="sticky left-[calc(var(--tl-label,120px)+12px)] ml-3 whitespace-nowrap border-2 border-dashed border-muted-foreground/50 bg-card px-2 py-0.5 text-sm text-muted-foreground">
               {/* Below 360px wide the months beside the names are ~134px. */}
               No dates<span className="hidden min-[360px]:inline"> in range</span>
             </span>

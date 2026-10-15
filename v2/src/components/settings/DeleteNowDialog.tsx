@@ -89,7 +89,7 @@ export default function DeleteNowDialog({
             <div className="text-muted-foreground text-sm space-y-3 pt-2">
               {/* Danger callout */}
               <div
-                className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30"
+                className="flex items-start gap-2 p-3 bg-destructive/10 border-2 border-destructive/30"
               >
                 <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
                 <p className="text-destructive font-bold text-sm">
@@ -126,7 +126,7 @@ export default function DeleteNowDialog({
           <div>
             <p className="text-sm font-medium mb-2">
               Type{" "}
-              <span className="font-mono px-1.5 py-0.5 bg-tint">
+              <span className="font-mono px-1.5 py-0.5 bg-tint border-2 border-border">
                 {DELETE_CONFIRMATION_TEXT}
               </span>{" "}
               to confirm:

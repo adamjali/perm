@@ -55,7 +55,7 @@ export function DevelopersPanel() {
           ["Webhook endpoints", `${formatInt(webhooks.endpoints)}${webhooks.paused ? ` (${formatInt(webhooks.paused)} paused)` : ""}`],
           ["Live lookups today", live.readable ? `${formatInt(live.today)} of ${formatInt(live.ceiling)}` : "unreadable"],
         ].map(([label, value]) => (
-          <div key={label} className="border border-border bg-card p-4">
+          <div key={label} className="border-2 border-border bg-card p-4">
             <dt className="text-sm font-bold text-muted-foreground">{label}</dt>{" "}
             <dd className="mt-1 font-heading text-2xl font-bold">{value}</dd>
           </div>
@@ -75,7 +75,7 @@ export function DevelopersPanel() {
               return (
                 <li key={d.day} className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-3 text-sm">
                   <span className="font-bold">{shortDay(d.day)} </span>{" "}
-                  <span className="flex h-4 border border-border bg-muted" aria-hidden="true">
+                  <span className="flex h-4 border-border bg-muted border" aria-hidden="true">
                     <span className="bg-primary" style={{ width: `${(d.keyed / max) * 100}%` }} />{" "}
                     <span className="bg-foreground/60" style={{ width: `${((d.mcp + d.extension + d.other) / max) * 100}%` }} />
                   </span>{" "}
@@ -127,7 +127,7 @@ export function DevelopersPanel() {
           <ScrollBox label="API accounts" className="mt-3">
             <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b-2 border-border">
                   {["Email ", "Plan ", "Keys ", "Webhooks ", "Since ", "Yesterday ", "30 days "].map((h) => (
                     <th key={h} scope="col" className="py-2 pr-3 font-bold">{h}</th>
                   ))}

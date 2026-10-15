@@ -60,7 +60,7 @@ export function MailSubscriptionsCard({ email }: { email: string }) {
           </Link>
         </p>
       ) : (
-        <ul className="divide-y divide-border border-y border-border">
+        <ul className="divide-y divide-border border-y-2 border-border">
           {rows.map((row) => {
             const key = `${row.kind}:${row.id ?? ""}`;
             return (

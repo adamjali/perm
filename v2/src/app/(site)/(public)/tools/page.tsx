@@ -241,7 +241,7 @@ export default async function ToolsPage() {
               href={c.href}
               className="group flex flex-col border-2 p-6 lift border-border bg-card shadow-hard-sm hover:bg-accent"
             >
-              <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
+              <h3 className="font-heading text-lg font-bold"><span className="u-title">{c.label}</span></h3>{" "}
               {/* The card's own subject, drawn. */}
               <div className="mt-3 max-w-[150px] text-foreground">
                 {c.viz === "scale" ? <ScaleBarsMini /> : null}
@@ -278,7 +278,7 @@ export default async function ToolsPage() {
               href={c.href}
               className="group flex flex-col border-2 p-5 lift border-border bg-card shadow-hard-sm hover:bg-accent"
             >
-              <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
+              <h3 className="font-heading text-lg font-bold"><span className="u-title">{c.label}</span></h3>{" "}
               {/* The page's subject, drawn, as on the tiles above. */}
               <div className="mt-3 max-w-[150px] text-foreground">{c.viz}</div>{" "}
               <p className="mt-2 flex-1 text-sm leading-relaxed text-soft">{c.blurb}</p>{" "}

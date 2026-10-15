@@ -75,7 +75,7 @@ export const TOOL_ICONS: Record<string, PhosphorIcon> = {
 export const TOOL_COLORS: Record<string, string> = {
   // Read-only tools
   queryCases: 'text-data-info-ink ',
-  searchKnowledge: 'text-foreground ',
+  searchKnowledge: 'text-foreground',
   searchWeb: 'text-primary ',
 
   // Case CRUD tools
@@ -108,8 +108,8 @@ export const TOOL_COLORS: Record<string, string> = {
   clearAllNotifications: 'text-destructive ',
 
   // Settings tools
-  updateSettings: 'text-foreground ',
-  getSettings: 'text-foreground ',
+  updateSettings: 'text-foreground',
+  getSettings: 'text-foreground',
 
   // Bulk operation tools (amber/red for destructive)
   bulkUpdateStatus: 'text-data-warn-ink ',
@@ -124,18 +124,18 @@ export const TOOL_COLORS: Record<string, string> = {
 export const TOOL_BG_COLORS: Record<string, string> = {
   // Read-only tools
   queryCases: 'bg-data-info/10 ',
-  searchKnowledge: 'bg-tint ',
-  searchWeb: 'bg-tint ',
+  searchKnowledge: 'bg-tint',
+  searchWeb: 'bg-tint',
 
   // Case CRUD tools
-  createCase: 'bg-tint ',
+  createCase: 'bg-tint',
   updateCase: 'bg-data-warn/15 ',
   archiveCase: 'bg-muted ',
   reopenCase: 'bg-data-info/10 ',
   deleteCase: 'bg-destructive/10 ',
 
   // Other action tools
-  syncCalendar: 'bg-tint ',
+  syncCalendar: 'bg-tint',
 
   // Navigation tools
   navigate: 'bg-muted ',
@@ -144,24 +144,24 @@ export const TOOL_BG_COLORS: Record<string, string> = {
   refreshPage: 'bg-muted ',
 
   // Calendar sync tools
-  syncToCalendar: 'bg-tint ',
+  syncToCalendar: 'bg-tint',
   unsyncFromCalendar: 'bg-data-warn/15 ',
 
   // Notification tools
-  markNotificationRead: 'bg-tint ',
-  markAllNotificationsRead: 'bg-tint ',
+  markNotificationRead: 'bg-tint',
+  markAllNotificationsRead: 'bg-tint',
   deleteNotification: 'bg-destructive/10 ',
   clearAllNotifications: 'bg-destructive/10 ',
 
   // Settings tools
-  updateSettings: 'bg-tint ',
-  getSettings: 'bg-tint ',
+  updateSettings: 'bg-tint',
+  getSettings: 'bg-tint',
 
   // Bulk operation tools
   bulkUpdateStatus: 'bg-data-warn/15 ',
   bulkArchiveCases: 'bg-muted ',
   bulkDeleteCases: 'bg-destructive/10 ',
-  bulkCalendarSync: 'bg-tint ',
+  bulkCalendarSync: 'bg-tint',
 } as const;
 
 /**

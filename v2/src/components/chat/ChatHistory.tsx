@@ -103,13 +103,13 @@ export function ChatHistory({
             'ph-no-capture',
             'fixed right-0 top-0 bottom-0 z-[61]',
             'w-80 max-w-[85vw]',
-            'bg-background border-l border-border',
+            'bg-background border-l-2 border-border shadow-hard-lg',
             'flex flex-col focus:outline-none',
             'data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right motion-reduce:animate-none'
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center justify-between p-4 border-b-2 border-border">
             <div className="min-w-0">
               <DialogPrimitive.Title className="font-heading font-semibold">Chat history</DialogPrimitive.Title>{" "}
               {conversations && conversations.length > 0 && (
@@ -128,13 +128,13 @@ export function ChatHistory({
           </div>
 
           {/* New Conversation Button */}
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b-2 border-border">
             <Button
               onClick={() => {
                 startNew();
                 onClose();
               }}
-              className="w-full"
+              className="w-full shadow-hard-sm"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               New conversation
@@ -157,7 +157,7 @@ export function ChatHistory({
                       type="button"
                       aria-current={isCurrent ? 'true' : undefined}
                       className={cn(
-                        'block w-full text-left p-3 pr-16 border',
+                        'block w-full text-left p-3 pr-16 border-2 border-border',
                         'transition-colors duration-150',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         isCurrent
@@ -205,7 +205,7 @@ export function ChatHistory({
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-11 md:h-9"
+                  className="w-full h-11 md:h-9 shadow-hard-sm"
                   onClick={() => setShown((n) => n + HISTORY_PAGE)}
                 >
                   {next === left ? `Show ${next} more` : `Show ${next} more (${left} left)`}
@@ -221,7 +221,7 @@ export function ChatHistory({
 
           {/* Delete All Footer */}
           {conversations && conversations.length > 0 && (
-            <div className="p-4 border-t border-border">
+            <div className="p-4 border-t-2 border-border">
               <Button
                 variant="destructive"
                 className="w-full"

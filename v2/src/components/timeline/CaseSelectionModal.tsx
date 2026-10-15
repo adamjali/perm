@@ -286,7 +286,7 @@ export function CaseSelectionModal({
         <div
           className={cn(
             "flex-1 min-h-[200px] max-h-[320px] overflow-y-auto",
-            "border border-border"
+            "border-border border"
           )}
           data-testid="case-list-container"
         >

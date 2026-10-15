@@ -340,11 +340,11 @@ export function I140Section(props: I140SectionProps) {
               value={values.i140Category || ""}
               onChange={handleInputChange}
               className={cn(
-                "flex h-10 w-full min-w-0 border border-input bg-background px-3 py-2 text-sm",
+                "flex h-10 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-sm",
                 "ring-offset-background placeholder:text-muted-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:text-muted-foreground",
-                "transition-colors",
+                "transition-colors shadow-hard-sm",
                 errors?.i140Category && "border-destructive"
               )}
               aria-invalid={!!errors?.i140Category}
@@ -414,11 +414,11 @@ export function I140Section(props: I140SectionProps) {
               value={values.i140ServiceCenter || ""}
               onChange={handleInputChange}
               className={cn(
-                "flex h-10 w-full min-w-0 border border-input bg-background px-3 py-2 text-sm",
+                "flex h-10 w-full min-w-0 border-2 border-input bg-background px-3 py-2 text-sm",
                 "ring-offset-background placeholder:text-muted-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:text-muted-foreground",
-                "transition-colors",
+                "transition-colors shadow-hard-sm",
                 errors?.i140ServiceCenter && "border-destructive"
               )}
               aria-invalid={!!errors?.i140ServiceCenter}
@@ -438,7 +438,7 @@ export function I140Section(props: I140SectionProps) {
             error={errors?.i140PremiumProcessing}
             className="md:col-span-2"
           >
-            <div className="flex items-start gap-3 bg-tint p-3">
+            <div className="flex items-start gap-3 bg-tint p-3 border-2 border-border">
               <Checkbox
                 id="i140PremiumProcessing"
                 name="i140PremiumProcessing"
@@ -474,7 +474,7 @@ export function I140Section(props: I140SectionProps) {
 
         {/* ========== WARNINGS ========== */}
         {warnings?.i140FilingDate && (
-          <div role="status" className="flex items-start gap-2 border border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
+          <div role="status" className="flex items-start gap-2 border-2 border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
             <WarningIcon aria-hidden className="mt-0.5 size-4 shrink-0" weight="bold" />
             <p>{warnings.i140FilingDate}</p>
           </div>

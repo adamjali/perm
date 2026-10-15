@@ -451,7 +451,7 @@ export default function NotificationPreferencesSection({
 
           <div className="space-y-4 pt-2">
             {/* Deadline reminders, with the types they cover folded under them */}
-            <div className="ml-2 border-l border-border pl-4">
+            <div className="ml-2 border-l-2 border-border pl-4">
               <div className="flex items-center justify-between gap-4">
                 <button
                   type="button"

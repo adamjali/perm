@@ -25,7 +25,7 @@ export function TimelineHeader({ months, today }: TimelineHeaderProps) {
   return (
     <div
       className={cn(
-        "flex border-b border-border",
+        "flex border-b-2 border-border",
         // Match sidebar header height with minimum 44px touch target
         "h-11 min-h-[44px]"
       )}

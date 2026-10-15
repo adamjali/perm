@@ -138,7 +138,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
         {isPickerOpen && (
           <div
             ref={dropdownRef}
-            className="absolute left-0 top-full mt-2 border border-border bg-card p-4 shadow-overlay"
+            className="absolute left-0 top-full mt-2 border-2 border-border bg-card p-4 shadow-hard-lg"
             style={{ minWidth: 260, zIndex: 100 }}
           >
             {/* Year nav */}
@@ -225,7 +225,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
           </button>
         </div>
 
-        <div className="flex border border-input">
+        <div className="flex border-input border">
           {viewArray.map((v, index) => (
             <button
               key={v}
@@ -245,7 +245,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
             <button
               type="button"
               onClick={toggleList}
-              className="flex min-h-11 items-center gap-1.5 border-l border-input px-4 text-sm text-soft transition-colors hover:bg-accent hover:text-foreground"
+              className="flex min-h-11 items-center gap-1.5 border-l-2 border-input px-4 text-sm text-soft transition-colors hover:bg-accent hover:text-foreground"
               aria-label="Switch to list view"
             >
               <ListIcon className="size-4" aria-hidden="true" />
