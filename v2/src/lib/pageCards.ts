@@ -1,10 +1,10 @@
 /**
  * The page social cards: one 1200x630 JPEG per public page, in public/og/.
  *
- * Rendered by scripts/make-page-cards.mjs from a real screenshot of the page
- * inset in the house frame (or a drawn motif for indexes and legal pages).
- * Nothing on a card is a live figure, because a static image of a number that
- * moves weekly is wrong by the second week; the label says what the page IS.
+ * Rendered by scripts/make-page-cards.mjs from a real screenshot of the page,
+ * framed as the site draws an object, beside the page's name and over the
+ * site's black footer. No live figure is set in type on a card, because a
+ * static image of a number that moves weekly is wrong by the second week.
  *
  * Every slug here must have a file, and every page that names a slug here must
  * exist; social-cards.test.ts holds both. `home` is also what the root
@@ -70,7 +70,7 @@ export const PAGE_CARD_ALT = {
   "faq": "Frequently asked questions. What applicants and attorneys ask about PERM Tracker and the PERM process.",
   "for-attorneys": "Every PERM deadline, worked out. The app's deadline hub for sample cases: an RFI response this week, an I-140 filing and a filing window this month, and more later. Free.",
   "guides": "PERM guides. How-tos, references and checklists for the PERM process and for PERM Tracker itself.",
-  "home": "PERM Tracker. Look up a PERM case, see where DOL's queue stands, and track every deadline. Free, from DOL's own data.",
+  "home": "PERM case status and processing times. PERM Tracker's case lookup: when a case will likely be decided, and an email when DOL moves it.",
   "lca-cases": "Find an H-1B LCA. The number, title, filing date and status, from DOL's case status and its files.",
   "methodology": "How these numbers are computed. Where every figure comes from, how it is computed, and what we refuse to publish.",
   "perm-attorneys": "Who files the most PERM cases. Every firm named on a PERM filing, ranked, with its approval rate from DOL's files.",

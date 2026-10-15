@@ -4,21 +4,42 @@
   "path": "/perm-cities",
   "title": "PERM jobs by city",
   "label": "Every worksite city with 20 or more PERM decisions since FY2016.",
-  "motif": "grid"
+  "shot": "perm-cities.png",
+  "crop": [
+   0,
+   0,
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "perm-industries",
   "path": "/perm-industries",
   "title": "PERM by industry",
   "label": "Every industry by the employer's NAICS code, with rates, wages and sponsors.",
-  "motif": "stack"
+  "shot": "perm-industries.png",
+  "crop": [
+   0,
+   0,
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "perm-countries",
   "path": "/perm-countries",
   "title": "PERM by citizenship",
   "label": "Each country's PERM decisions by year from FY2008, from DOL's old-form files.",
-  "motif": "grid"
+  "shot": "perm-countries.png",
+  "crop": [
+   0,
+   0,
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "badges",
@@ -29,8 +50,8 @@
   "crop": [
    0,
    0,
-   2528,
-   2000
+   1456,
+   996
   ]
  },
  {
@@ -38,21 +59,39 @@
   "path": "/open-data",
   "title": "Open data",
   "label": "The visa bulletin archive and DOL's processing-time readings, free to reuse.",
-  "motif": "record"
+  "shot": "open-data.png",
+  "crop": [
+   0,
+   0,
+   2048,
+   1400
+  ]
  },
  {
   "slug": "developers",
   "path": "/developers",
   "title": "API and MCP server",
   "label": "Federal PERM, wage, H-1B and visa bulletin records as JSON, and as tools for AI assistants.",
-  "motif": "record"
+  "shot": "developers.png",
+  "crop": [
+   0,
+   0,
+   2048,
+   1400
+  ]
  },
  {
   "slug": "api-terms",
   "path": "/api-terms",
   "title": "API terms",
   "label": "Keys, limits, attribution and what you may build with the API.",
-  "motif": "stack"
+  "shot": "api-terms.png",
+  "crop": [
+   0,
+   0,
+   1568,
+   1072
+  ]
  },
  {
   "slug": "debarments",
@@ -63,8 +102,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -72,7 +111,13 @@
   "path": "/email-preferences",
   "title": "Email preferences",
   "label": "Turn any alert off from one page, no account needed.",
-  "motif": "window"
+  "shot": "email-preferences.png",
+  "crop": [
+   0,
+   0,
+   2048,
+   1400
+  ]
  },
  {
   "slug": "estimate-scorecard",
@@ -83,8 +128,8 @@
   "crop": [
    0,
    0,
-   2528,
-   2000
+   2048,
+   1400
   ]
  },
  {
@@ -96,8 +141,8 @@
   "crop": [
    0,
    0,
-   2528,
-   2000
+   2048,
+   1400
   ]
  },
  {
@@ -109,8 +154,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -122,8 +167,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -135,8 +180,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -148,8 +193,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -161,8 +206,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -174,8 +219,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -187,8 +232,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -200,8 +245,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -213,8 +258,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -226,8 +271,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -239,8 +284,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -252,8 +297,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -265,8 +310,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -274,7 +319,13 @@
   "path": "/green-card-timelines",
   "title": "Reported green card timelines",
   "label": "PERM dates checked against DOL; the I-140 and I-485 as people report them.",
-  "motif": "steps"
+  "shot": "green-card-timelines.png",
+  "crop": [
+   0,
+   0,
+   1520,
+   1040
+  ]
  },
  {
   "slug": "uscis-processing-times",
@@ -285,8 +336,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -298,8 +349,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -311,8 +362,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -324,8 +375,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -333,7 +384,13 @@
   "path": "/perm-attorneys/browse",
   "title": "Law firms, A to Z",
   "label": "Every firm named on a PERM filing, by name.",
-  "motif": "grid"
+  "shot": "perm-attorneys-browse.png",
+  "crop": [
+   0,
+   0,
+   1520,
+   1040
+  ]
  },
  {
   "slug": "perm-case-statuses",
@@ -344,8 +401,8 @@
   "crop": [
    0,
    0,
-   2528,
-   2000
+   2048,
+   1400
   ]
  },
  {
@@ -357,9 +414,10 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
-  ]
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "perm-deadline-calculator",
@@ -370,8 +428,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -379,7 +437,13 @@
   "path": "/perm-employers/browse",
   "title": "Employers, A to Z",
   "label": "Every PERM sponsor in DOL's disclosure files, by name.",
-  "motif": "grid"
+  "shot": "perm-employers-browse.png",
+  "crop": [
+   0,
+   0,
+   1520,
+   1040
+  ]
  },
  {
   "slug": "perm-employers-under-review",
@@ -390,8 +454,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -403,8 +467,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -412,7 +476,13 @@
   "path": "/perm-wages/browse",
   "title": "Occupations, A to Z",
   "label": "Every occupation in DOL's PERM files, by title.",
-  "motif": "grid"
+  "shot": "perm-wages-browse.png",
+  "crop": [
+   0,
+   0,
+   1520,
+   1040
+  ]
  },
  {
   "slug": "priority-date-calculator",
@@ -423,8 +493,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -436,8 +506,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -449,8 +519,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -462,8 +532,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -475,8 +545,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -488,8 +558,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -501,8 +571,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -514,8 +584,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -527,8 +597,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -540,8 +610,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -553,8 +623,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -566,8 +636,8 @@
   "crop": [
    0,
    0,
-   2384,
-   2000
+   2048,
+   1400
   ]
  },
  {
@@ -575,7 +645,13 @@
   "path": "/press",
   "title": "For journalists",
   "label": "What DOL's records can tell a reporter, and how to credit them.",
-  "motif": "record"
+  "shot": "press.png",
+  "crop": [
+   0,
+   0,
+   2048,
+   1400
+  ]
  },
  {
   "slug": "blog",
@@ -586,8 +662,8 @@
   "crop": [
    0,
    0,
-   2528,
-   2000
+   2048,
+   1400
   ]
  },
  {
@@ -599,8 +675,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -612,9 +688,10 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
-  ]
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "changelog",
@@ -625,8 +702,8 @@
   "crop": [
    0,
    0,
-   2528,
-   2000
+   2048,
+   1400
   ]
  },
  {
@@ -634,7 +711,13 @@
   "path": "/contact",
   "title": "Contact",
   "label": "Questions, bugs and ideas go to support@permtracker.app.",
-  "motif": "window"
+  "shot": "contact.png",
+  "crop": [
+   0,
+   0,
+   2048,
+   1400
+  ]
  },
  {
   "slug": "faq",
@@ -645,8 +728,8 @@
   "crop": [
    0,
    0,
-   2528,
-   2000
+   1072,
+   734
   ]
  },
  {
@@ -658,8 +741,8 @@
   "crop": [
    0,
    0,
-   2800,
-   2000
+   2048,
+   1400
   ],
   "above": 96,
   "maxWidth": 1408
@@ -673,25 +756,32 @@
   "crop": [
    0,
    0,
-   2528,
-   2000
+   2048,
+   1400
   ]
  },
  {
   "slug": "home",
   "path": "/",
-  "title": "PERM Tracker",
+  "title": "Track one PERM case, or every case you file",
   "label": "Look up a PERM case, see where DOL's queue stands, and get an email when your case moves.",
   "shot": "home.png",
   "crop": [
    0,
    0,
    1400,
-   2000
+   958
   ],
-  "fromEl": "main .object",
+  "fromEl": "main ul[aria-label=\"Free on both sides\"]",
   "maxWidth": 700,
-  "above": 20
+  "above": 12,
+  "viewport": 1440,
+  "second": {
+   "file": "public/images/for-attorneys/case-card-light.webp",
+   "width": 306,
+   "left": 52,
+   "top": 258
+  }
  },
  {
   "slug": "lca-cases",
@@ -702,9 +792,10 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
-  ]
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "methodology",
@@ -715,8 +806,8 @@
   "crop": [
    0,
    0,
-   2528,
-   2000
+   2048,
+   1400
   ]
  },
  {
@@ -728,9 +819,10 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
-  ]
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "perm-by-state",
@@ -741,8 +833,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -754,8 +846,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -767,8 +859,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -780,8 +872,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -793,9 +885,10 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
-  ]
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "perm-processing-times",
@@ -806,8 +899,8 @@
   "crop": [
    0,
    0,
-   2288,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -819,8 +912,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -832,8 +925,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -845,16 +938,23 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
-  ]
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "privacy",
   "path": "/privacy",
   "title": "Privacy policy",
   "label": "What the site collects, what it never collects, and who processes it.",
-  "motif": "stack"
+  "shot": "privacy.png",
+  "crop": [
+   0,
+   0,
+   1568,
+   1072
+  ]
  },
  {
   "slug": "lca-wages",
@@ -865,8 +965,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -878,8 +978,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -891,8 +991,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -904,8 +1004,8 @@
   "crop": [
    0,
    0,
-   2128,
-   2000
+   2048,
+   1400
   ]
  },
  {
@@ -917,8 +1017,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -930,8 +1030,8 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -943,23 +1043,36 @@
   "crop": [
    0,
    0,
-   2304,
-   2000
-  ]
+   2032,
+   1390
+  ],
+  "viewport": 1280
  },
  {
   "slug": "security",
   "path": "/security",
   "title": "Security",
   "label": "How your data is protected, and how to report a problem.",
-  "motif": "stack"
+  "shot": "security.png",
+  "crop": [
+   0,
+   0,
+   1824,
+   1248
+  ]
  },
  {
   "slug": "accessibility",
   "path": "/accessibility",
   "title": "Accessibility",
   "label": "The standard the site builds to, what it means here, and where to report a barrier.",
-  "motif": "stack"
+  "shot": "accessibility.png",
+  "crop": [
+   0,
+   0,
+   1568,
+   1072
+  ]
  },
  {
   "slug": "uscis-case-status",
@@ -970,8 +1083,8 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ]
  },
  {
@@ -979,7 +1092,13 @@
   "path": "/terms",
   "title": "Terms of service",
   "label": "The terms for using PERM Tracker, its data and its case management.",
-  "motif": "stack"
+  "shot": "terms.png",
+  "crop": [
+   0,
+   0,
+   1568,
+   1072
+  ]
  },
  {
   "slug": "visa-bulletin",
@@ -990,22 +1109,22 @@
   "crop": [
    0,
    0,
-   2208,
-   2000
+   1520,
+   1040
   ],
   "from": "When it comes out"
  },
  {
   "slug": "tools",
   "path": "/tools",
-  "title": "Data",
+  "title": "PERM data and calculators",
   "label": "DOL's own figures, each with its date, and the calculators built on them.",
   "shot": "tools.png",
   "crop": [
    0,
    0,
-   2528,
-   2000
+   2048,
+   1400
   ]
  }
 ]
