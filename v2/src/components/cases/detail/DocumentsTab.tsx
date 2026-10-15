@@ -541,6 +541,7 @@ export function DocumentsTab({
                             <button
                               className="icon-btn icon-btn-danger"
                               title="Delete"
+                              aria-label={`Delete ${doc.name}`}
                               style={{ color: "var(--destructive)" }}
                               onClick={() => setConfirmDeleteId(doc.id)}
                             >
