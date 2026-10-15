@@ -7,7 +7,8 @@
  * machine). Each page is loaded at 1440 wide, device scale 2, light theme;
  * the shot is framed from the page's own H1, or from the heading a card names
  * in `from` when the H1 carries a live figure (a card is never redrawn when
- * the figure moves), and it ends at the right edge of the page's own column,
+ * the figure moves), or from the first element a selector in `fromEl` matches
+ * (a box with no heading of its own), and it ends at the right edge of the page's own column,
  * so no line is cut off. Floating controls and the dev overlay are hidden.
  * Writes <out-dir>/<slug>.png and fills each card's `shot` and `crop`.
  * Capture a dev server on production data, never production itself: bulk
@@ -41,10 +42,12 @@ try {
       await page.goto(base + card.path, { waitUntil: "load", timeout: 300_000 });
       await page.addStyleTag({ content: "nextjs-portal,[data-floating],.fixed{display:none!important}" });
       await page.waitForTimeout(2500);
-      const box = await page.evaluate(([from, viewW]) => {
-        const start = from
-          ? [...document.querySelectorAll("main h1, main h2, main h3")].find((h) => (h.textContent ?? "").trim().startsWith(from))
-          : document.querySelector("main h1") ?? document.querySelector("h1");
+      const box = await page.evaluate(([from, fromEl, viewW]) => {
+        const start = fromEl
+          ? document.querySelector(fromEl)
+          : from
+            ? [...document.querySelectorAll("main h1, main h2, main h3")].find((h) => (h.textContent ?? "").trim().startsWith(from))
+            : document.querySelector("main h1") ?? document.querySelector("h1");
         if (!start) return null;
         // The page's own column: the widest ancestor still narrower than the screen.
         let col = start;
@@ -53,8 +56,8 @@ try {
         }
         const r = start.getBoundingClientRect();
         return { x: r.left + window.scrollX, y: r.top + window.scrollY, right: col.getBoundingClientRect().right + window.scrollX };
-      }, [card.from ?? null, VIEW_W]);
-      if (!box) throw new Error(card.from ? `no heading starting "${card.from}"` : "no H1");
+      }, [card.from ?? null, card.fromEl ?? null, VIEW_W]);
+      if (!box) throw new Error(card.fromEl ? `nothing matches ${card.fromEl}` : card.from ? `no heading starting "${card.from}"` : "no H1");
       // `above`: more room over the heading, for a hero whose side column starts higher;
       // `maxWidth`: a wider frame, for a hero that runs past the usual column.
       const x = Math.max(0, Math.round(box.x - 32));
