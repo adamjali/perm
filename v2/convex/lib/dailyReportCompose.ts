@@ -14,6 +14,7 @@ import { audienceLine, type AudienceCounts } from "./audience";
 import { SITE_URL } from "./links";
 import { emailDailyLimit } from "./emailAllowance";
 import { MS_PER_DAY } from "./time";
+import { MONTH_ABBR } from "./months";
 
 export type SectionStatus = "fail" | "warn" | "unknown" | "off" | "ok";
 
@@ -97,7 +98,7 @@ export function dayLabel(day: string): string {
   const [y, m, d] = day.split("-").map(Number) as [number, number, number];
   const date = new Date(Date.UTC(y, m - 1, d));
   const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getUTCDay()];
-  const mo = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1];
+  const mo = MONTH_ABBR[m - 1];
   return `${wd} ${mo} ${d}`;
 }
 

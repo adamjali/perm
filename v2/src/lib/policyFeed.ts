@@ -11,6 +11,7 @@
 
 import type { PolicyNotice } from "@/lib/db/policyNotices";
 import { MS_PER_DAY } from "@/lib/time";
+import { MONTH_ABBR } from "@convex/lib/months";
 
 export const OFLC_TYPE = "OFLC announcement";
 
@@ -169,8 +170,6 @@ export interface Strip {
   earlierOflc: number;
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-
 function iso(y: number, m0: number, d: number): string {
   return new Date(Date.UTC(y, m0, d)).toISOString().slice(0, 10);
 }
@@ -197,7 +196,7 @@ export function buildStrip(feed: PolicyFeed, today: string, monthsBack = 12): St
     const d = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth() + i, 1));
     const m = d.getUTCMonth();
     const y = d.getUTCFullYear();
-    months.push({ x: xOf(d.toISOString().slice(0, 10)), label: i === 0 || m === 0 ? `${MONTHS[m]} ${y}` : MONTHS[m]! });
+    months.push({ x: xOf(d.toISOString().slice(0, 10)), label: i === 0 || m === 0 ? `${MONTH_ABBR[m]} ${y}` : MONTH_ABBR[m]! });
   }
 
   const inStrip = (n: PolicyNotice) => n.publicationDate >= start && n.publicationDate <= end;

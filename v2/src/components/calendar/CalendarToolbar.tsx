@@ -14,7 +14,7 @@ import { CaretDownIcon, CaretLeftIcon, CaretRightIcon, CaretUpIcon, ListIcon } f
 
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { CalendarListToggleContext } from "./calendar-view-context";
-import { MONTH_NAMES } from "@/lib/dolFormat";
+import { MONTH_NAMES } from "@convex/lib/months";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

@@ -12,6 +12,7 @@ import { FlagCaseBrowser, PWD_PROGRAM } from "@/components/tools/FlagCaseBrowser
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getPwdSummary, getPwdDisclosureSummary } from "@/lib/db/pwdCases";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
+import { longDate } from "@convex/lib/months";
 
 /**
  * Prevailing wage requests, findable by employer before the PERM exists.
@@ -48,13 +49,6 @@ export const metadata: Metadata = withSocialCard({
 // The table grows nightly; a day bounds the header counts' staleness under
 // the data's own cadence. The lists themselves are fetched by the browser.
 export const revalidate = 86400;
-
-function longDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = iso.slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
-  return new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-}
 
 export default async function PwdCasesPage() {
   const [summary, disclosure, times] = await Promise.all([

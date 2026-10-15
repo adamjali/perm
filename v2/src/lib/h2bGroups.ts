@@ -1,3 +1,4 @@
+import { MONTH_NAMES } from "@convex/lib/months";
 /**
  * DOL's H-2B assignment groups (scripts/ingest_h2b_groups.py): reading
  * perm_docs['h2b_group_timing'] and picking a case's estimate. Plain module so
@@ -36,8 +37,7 @@ export interface GroupPick {
   days: GroupDays;
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const seasonWords = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+const seasonWords = (ym: string) => `${MONTH_NAMES[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
 
 export function parseGroupTiming(json: string | null): H2bGroupTiming | null {
   if (!json) return null;

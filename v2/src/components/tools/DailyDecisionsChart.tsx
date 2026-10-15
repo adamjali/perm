@@ -1,6 +1,7 @@
 import { businessDayPace, type DailyTotal } from "@/lib/dolPace";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
 import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverLayer";
+import { MONTH_ABBR, monthYear } from "@convex/lib/months";
 
 /**
  * How much work DOL has actually been clearing, week by week.
@@ -55,21 +56,17 @@ function weekStart(iso: string): string {
 /** "14 Jul 2025", for the readout, where a month alone would be ambiguous. */
 function longDay(iso: string): string {
   const [y, m, d] = iso.split("-");
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${Number(d)} ${months[Number(m) - 1]} ${y}`;
+  return `${Number(d)} ${MONTH_ABBR[Number(m) - 1]} ${y}`;
 }
 
 /** "July 2025", for a month's readout. */
 function monthLong(iso: string): string {
-  const [y, m] = iso.split("-");
-  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  return `${months[Number(m) - 1]} ${y}`;
+  return monthYear(iso.slice(0, 7)) ?? iso;
 }
 
 function shortLabel(iso: string): string {
   const [y, m] = iso.split("-");
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${months[Number(m) - 1]} ${y!.slice(2)}`;
+  return `${MONTH_ABBR[Number(m) - 1]} ${y!.slice(2)}`;
 }
 
 export function DailyDecisionsChart({ points, className }: DailyDecisionsChartProps) {

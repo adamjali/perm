@@ -13,6 +13,7 @@ import {
 } from "@/lib/uscisH1b";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
+import { longDate } from "@convex/lib/months";
 
 /**
  * What USCIS decided on one employer's H-1B petitions, year by year, from its
@@ -24,12 +25,6 @@ import { formatInt } from "@/lib/format";
 
 function pct(r: number): string {
   return `${(r * 100).toFixed(r >= 0.995 || r < 0.005 ? 1 : 0)}%`;
-}
-
-function longDate(iso: string | null): string | null {
-  const d = iso?.slice(0, 10) ?? "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
-  return new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 }
 
 export function UscisH1bRecord({

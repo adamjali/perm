@@ -60,6 +60,7 @@ import {
 } from "@/lib/constants/externalLinks";
 import { SITE_URL } from "@/lib/constants/site";
 import { buttonVariants } from "@/components/ui/button";
+import { monthYear } from "@convex/lib/months";
 
 const TITLE = "About PERM Tracker";
 const DESCRIPTION =
@@ -82,15 +83,9 @@ export const metadata: Metadata = withSocialCard({
 // page when they move (api/revalidate-sweep/paths.ts).
 export const revalidate = 86400;
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-] as const;
-
 /** "2025-11" -> "November 2025", so the page and the schema share one value. */
 function monthLabel(ym: string): string {
-  const [y, m] = ym.split("-");
-  return `${MONTHS[Number(m) - 1]} ${y}`;
+  return monthYear(ym) ?? ym;
 }
 
 const LINK = "link";

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 import { EASTERN_TIMEZONE } from "@/lib/time";
+import { longDate } from "@convex/lib/months";
 
 /**
  * The live half of `/uscis-case-status`: asks our own route for the receipt
@@ -62,18 +63,6 @@ const ET = new Intl.DateTimeFormat("en-US", {
 /** "Sep 22, 2026, 2:00 PM EDT" from an epoch. */
 function whenEt(ms: number): string {
   return ET.format(new Date(ms));
-}
-
-/** "September 5, 2023" from USCIS's naive `YYYY-MM-DDTHH:mm:ss` or a bare date. */
-function longDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = iso.slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
-  return new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 }
 
 const USCIS_STATUS_URL = "https://egov.uscis.gov/casestatus/landing.do";

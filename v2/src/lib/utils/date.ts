@@ -4,11 +4,7 @@
  */
 
 import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "@/lib/time";
-
-const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-] as const;
+import { MONTH_ABBR } from "@convex/lib/months";
 
 const WEEK = 7 * MS_PER_DAY;
 
@@ -50,7 +46,7 @@ export function formatDistanceToNow(date: Date | number): string {
 
   // Older than 7 days: formatted date
   const dateObj = new Date(timestamp);
-  const month = MONTH_NAMES[dateObj.getUTCMonth()];
+  const month = MONTH_ABBR[dateObj.getUTCMonth()];
   const day = dateObj.getUTCDate();
   return `${month} ${day}`;
 }
@@ -76,7 +72,7 @@ function parseISODateParts(isoDate: string): { year: number; month: number; day:
  */
 export function formatDate(date: Date | string): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  const month = MONTH_NAMES[dateObj.getUTCMonth()];
+  const month = MONTH_ABBR[dateObj.getUTCMonth()];
   const day = dateObj.getUTCDate();
   const year = dateObj.getUTCFullYear();
   return `${month} ${day}, ${year}`;
@@ -90,7 +86,7 @@ export function formatDate(date: Date | string): string {
  */
 export function formatISODate(isoDate: string): string {
   const { year, month, day } = parseISODateParts(isoDate);
-  const monthName = MONTH_NAMES[month - 1]; // month is 1-indexed in ISO
+  const monthName = MONTH_ABBR[month - 1]; // month is 1-indexed in ISO
   return `${monthName} ${day}, ${year}`;
 }
 
@@ -166,7 +162,7 @@ export const safeFormatDistanceToNow = createSafeFormatter(
  */
 export function formatShortDate(isoDate: string): string {
   const { month, day } = parseISODateParts(isoDate);
-  const monthName = MONTH_NAMES[month - 1];
+  const monthName = MONTH_ABBR[month - 1];
   return `${monthName} ${day}`;
 }
 

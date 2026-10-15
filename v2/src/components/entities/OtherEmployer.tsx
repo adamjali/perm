@@ -7,6 +7,7 @@ import { hasSeasonal, otherEmployerDatasets, programsMix } from "@/lib/otherEmpl
 import { publishedStatusLabel, wagePhrase, worksitePhrase } from "@/lib/seasonalDetails";
 import type { OtherEmployerRecord } from "@/lib/db/otherEmployers";
 import type { SeasonalEmployerCase } from "@/lib/db/seasonalEmployers";
+import { longDate } from "@convex/lib/months";
 
 /**
  * An employer's page when it has no PERM record: its filings are H-1B LCAs,
@@ -20,17 +21,6 @@ import type { SeasonalEmployerCase } from "@/lib/db/seasonalEmployers";
  * slots, so each is the same component the PERM page renders.
  */
 
-
-function longDate(iso: string | null): string | null {
-  const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null;
-  if (!m) return null;
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 function statusText(c: SeasonalEmployerCase): string {
   return c.source === "file" ? publishedStatusLabel(c.status) : c.status.charAt(0) + c.status.slice(1).toLowerCase();

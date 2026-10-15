@@ -11,6 +11,7 @@
  */
 import { parseCutoff, type BulletinMonth, type ChartKind, type CountryKey, type Cutoff } from "@/lib/perm";
 import { MS_PER_DAY } from "@/lib/time";
+import { MONTH_NAMES, shortDate } from "@convex/lib/months";
 
 export function nextBulletinMonth(lastMonth: string): string {
   const [y, m] = lastMonth.split("-").map(Number) as [number, number];
@@ -71,11 +72,6 @@ export const COUNTRY_LABEL: Record<CountryKey, string> = {
   philippines: "Philippines",
 };
 
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-] as const;
-
 /** "2026-09" -> "September 2026". A value outside 1..12 prints as a defect. */
 export function bulletinMonthLabel(ym: string): string {
   const n = Number(ym.slice(5, 7));
@@ -87,8 +83,7 @@ export function cutoffLabel(c: Cutoff | null): string {
   if (!c) return "not listed";
   if (c.kind === "current") return "Current";
   if (c.kind === "unavailable") return "Unavailable";
-  const [y, m, d] = c.iso.split("-");
-  return `${(MONTH_NAMES[Number(m) - 1] ?? "").slice(0, 3)} ${Number(d)}, ${y}`;
+  return shortDate(c.iso) ?? c.iso;
 }
 
 /** What a move means in words, with the signed day count where there is one. */

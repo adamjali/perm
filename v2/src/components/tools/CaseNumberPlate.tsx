@@ -1,5 +1,6 @@
 import type { ParsedCaseNumber } from "@/lib/permCaseNumber";
 import { MS_PER_DAY } from "@/lib/time";
+import { longDate } from "@convex/lib/months";
 
 /**
  * The case number, read back as the artifact it is.
@@ -19,18 +20,8 @@ import { MS_PER_DAY } from "@/lib/time";
  * number after it, so the plate doesn't invent one.
  */
 
-const DAY_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-/** "2026-05-05" to "May 5, 2026". Local to the plate; nothing else needs it. */
-function longDate(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (!m) return iso;
-  const name = DAY_NAMES[Number(m[2]) - 1];
-  return name ? `${name} ${Number(m[3])}, ${m[1]}` : iso;
-}
+/** "2026-05-05" to "May 5, 2026"; a value that isn't a date prints as given. */
+const dayWords = (iso: string) => longDate(iso) ?? iso;
 
 export interface CaseNumberPlateProps {
   parsed: ParsedCaseNumber;
@@ -64,7 +55,7 @@ export function CaseNumberPlate({
     { text: parsed.serial, label: "Serial" },
   ];
 
-  const decoded = longDate(parsed.filingDate);
+  const decoded = dayWords(parsed.filingDate);
   const disagrees =
     !!recordedFilingDate && recordedFilingDate !== parsed.filingDate;
 
@@ -108,7 +99,7 @@ export function CaseNumberPlate({
               DOL&apos;s own record puts the receipt date one or two days off
               that, at{" "}
               <b className="font-semibold text-foreground">
-                {longDate(recordedFilingDate)}
+                {dayWords(recordedFilingDate)}
               </b>
               , and the record is what every figure on this page uses.
             </>

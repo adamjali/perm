@@ -10,6 +10,7 @@ import { FlagCaseBrowser, LCA_PROGRAM } from "@/components/tools/FlagCaseBrowser
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/db/lcaCases";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
+import { longDate } from "@convex/lib/months";
 
 /**
  * Labor condition applications, findable by employer as DOL confirms them.
@@ -38,13 +39,6 @@ export const metadata: Metadata = withSocialCard({
 }, "lca-cases");
 
 export const revalidate = 86400;
-
-function longDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = iso.slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
-  return new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-}
 
 export default async function LcaCasesPage() {
   const [summary, disclosure] = await Promise.all([getLcaSummary(), getLcaDisclosureSummary()]);

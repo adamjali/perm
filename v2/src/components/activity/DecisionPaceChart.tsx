@@ -3,6 +3,7 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
 import { segments, toWeeks, weekStart, type ActivityDay } from "@/lib/activityStats";
 import { formatInt } from "@/lib/format";
+import { MONTH_ABBR } from "@convex/lib/months";
 
 /**
  * Decisions per week across the whole record, drawn with its holes intact.
@@ -68,9 +69,8 @@ function weekLabel(iso: string): string {
 }
 
 function monthLabel(iso: string): string {
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const [y, m] = iso.split("-");
-  return `${months[Number(m) - 1]} ${y!.slice(2)}`;
+  return `${MONTH_ABBR[Number(m) - 1]} ${y!.slice(2)}`;
 }
 
 export function DecisionPaceChart({

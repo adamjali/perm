@@ -15,6 +15,7 @@
 import { detailName } from "@/lib/breadcrumbNames";
 import { SITE_URL } from "@/lib/constants/site";
 import { OVERVIEW, PAGE_NAMES, isDataPath, sectionForPath } from "@/lib/siteMap";
+import { MONTH_NAMES } from "@convex/lib/months";
 
 export interface Crumb {
   name: string;
@@ -24,13 +25,11 @@ export interface Crumb {
 const HOME: Crumb = { name: "Home", href: "/" };
 const DATA: Crumb = { name: OVERVIEW.name, href: OVERVIEW.href };
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
 /** A last segment the URL itself names: a month ("2025-11") or a letter ("a"). */
 function segmentName(segment: string): string | null {
   const month = /^(\d{4})-(\d{2})$/.exec(segment);
   if (month) {
-    const name = MONTHS[Number(month[2]) - 1];
+    const name = MONTH_NAMES[Number(month[2]) - 1];
     return name ? `${name} ${month[1]}` : null;
   }
   if (/^[a-z0-9]$/i.test(segment)) return segment.toUpperCase();

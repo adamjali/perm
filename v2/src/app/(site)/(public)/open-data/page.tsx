@@ -29,6 +29,7 @@ import {
 } from "@/lib/openData";
 import { getProcessingTimesArchive, getVisaBulletinsArchive } from "@/lib/db/openData";
 import { buttonVariants } from "@/components/ui/button";
+import { MONTH_ABBR, shortDate } from "@convex/lib/months";
 
 const TITLE = "Open Data: Visa Bulletin and DOL History";
 const DESCRIPTION =
@@ -48,16 +49,13 @@ export const metadata: Metadata = withSocialCard(
 // the day either source moves.
 export const revalidate = 86400;
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 function monthLabel(ym: string | undefined): string {
   if (!ym) return "";
   const [y, m] = ym.split("-");
-  return `${MONTHS[Number(m) - 1] ?? ""} ${y}`;
+  return `${MONTH_ABBR[Number(m) - 1] ?? ""} ${y}`;
 }
 function dayLabel(iso: string | undefined): string {
-  if (!iso) return "";
-  const [y, m, d] = iso.split("-");
-  return `${MONTHS[Number(m) - 1] ?? ""} ${Number(d)}, ${y}`;
+  return shortDate(iso) ?? "";
 }
 const fmt = (n: number) => n.toLocaleString("en-US");
 

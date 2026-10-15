@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, type ReactNode } from "react";
 
 import { rankFuzzy } from "@/lib/fuzzy";
+import { shortDate } from "@convex/lib/months";
 
 /**
  * One document for the search: prepared on the server, so the browser gets
@@ -46,8 +47,8 @@ export function filterPolicy(items: readonly PolicyItem[], q: PolicyQuery): Poli
 const CONTROL =
   "mt-1 block w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
+/** "2026-09-11" to "Sep 11, 2026"; anything else prints as given. */
+const day = (iso: string) => shortDate(iso) ?? iso;
 
 /**
  * Search every document on the page, the Register's and OFLC's, including

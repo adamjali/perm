@@ -23,6 +23,7 @@ import {
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { getNvcWaitingList } from "@/lib/db/nvcWaitingList";
+import { MONTH_ABBR } from "@convex/lib/months";
 
 export const revalidate = 86400;
 
@@ -43,8 +44,7 @@ function yearOf(iso: string): string {
 }
 
 function dateLabel(iso: string): string {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${months[Number(iso.slice(5, 7)) - 1]} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
+  return `${MONTH_ABBR[Number(iso.slice(5, 7)) - 1]} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
 }
 
 /** One category's years as small bars, the newest filled in the brand's ink. */

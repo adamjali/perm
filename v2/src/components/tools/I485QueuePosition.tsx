@@ -46,6 +46,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { buttonVariants } from "@/components/ui/button";
+import { MONTH_NAMES } from "@convex/lib/months";
 
 export interface I485QueuePositionProps {
   /** How the past-pace arithmetic held on past bulletins (scripts/backtest_bulletin.py). */
@@ -114,11 +115,6 @@ const BULLETIN_COUNTRY: Record<string, string> = {
   "Rest of the World": "worldwide",
 };
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
 /**
  * The years the form offers, deliberately WIDER than any one category's
  * published span.
@@ -151,7 +147,7 @@ function sortCategories(codes: readonly string[]): string[] {
 function parseFilingDate(cell: string | undefined): string | null {
   const m = /^(\d{2})([A-Z]{3})(\d{2})$/.exec((cell ?? "").trim().toUpperCase());
   if (!m) return null;
-  const idx = MONTHS.findIndex((x) => x.slice(0, 3).toUpperCase() === m[2]);
+  const idx = MONTH_NAMES.findIndex((x) => x.slice(0, 3).toUpperCase() === m[2]);
   if (idx < 0) return null;
   // The bulletin has published two-digit years since long before any priority
   // date this tool can offer, so the 2000s window needs no era heuristic.
@@ -257,7 +253,7 @@ export function I485QueuePosition({
     filing?.kind === "date" &&
     `${year}-${String(clampedMonth).padStart(2, "0")}-01` > filing.iso;
 
-  const restated = `${country} · ${label(activeCategory)} · ${MONTHS[clampedMonth - 1]} ${year}`;
+  const restated = `${country} · ${label(activeCategory)} · ${MONTH_NAMES[clampedMonth - 1]} ${year}`;
 
   const setQuery = useCallback((next: Partial<{ country: string; category: string; year: number; month: number }>) => {
     if (next.country !== undefined) setCountry(next.country);
@@ -294,7 +290,7 @@ export function I485QueuePosition({
     position.coverage.earliest === 0
       ? `before ${FIRST_YEAR} through ${position.coverage.latest}`
       : `${position.coverage.earliest} through ${position.coverage.latest}`;
-  const latestPublishedLabel = `${MONTHS[position.latestPublished[1] - 1]} ${position.latestPublished[0]}`;
+  const latestPublishedLabel = `${MONTH_NAMES[position.latestPublished[1] - 1]} ${position.latestPublished[0]}`;
   // The low tick's label is dropped, never its tick, when it would run into
   // the high one. The coordinate stays visible either way.
   const showLowLabel = split.solid < 72;
@@ -376,7 +372,7 @@ export function I485QueuePosition({
               onChange={(e) => setQuery({ month: Number(e.target.value) })}
               className={SELECT_CLASS}
             >
-              {MONTHS.filter((_, i) => year < lastYear || i + 1 <= lastMonth).map((m, i) => (
+              {MONTH_NAMES.filter((_, i) => year < lastYear || i + 1 <= lastMonth).map((m, i) => (
                 <option key={m} value={i + 1}>
                   {m}
                 </option>

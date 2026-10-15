@@ -57,6 +57,7 @@ import {
 } from "@/lib/db/rfi";
 import { MoreText } from "@/components/data/MoreText";
 import { SITE_URL } from "@/lib/constants/site";
+import { monthYear } from "@convex/lib/months";
 
 const TITLE = "PERM RFI, Audits and Appeals";
 // 148 characters unescaped. Measure the UNESCAPED text: house style is
@@ -703,11 +704,7 @@ function pctInt(n: number, total: number): string {
 
 /** `2025-09` to `September 2025`. */
 function monthName(ym: string): string {
-  const m = /^(\d{4})-(\d{2})$/.exec(ym);
-  if (!m) return ym;
-  const names = ["January","February","March","April","May","June","July",
-    "August","September","October","November","December"];
-  return `${names[Number(m[2]) - 1] ?? ym} ${m[1]}`;
+  return monthYear(ym) ?? ym;
 }
 
 /**

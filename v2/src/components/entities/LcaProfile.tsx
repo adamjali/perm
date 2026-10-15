@@ -5,6 +5,7 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { hasLcaDetail, newVersusTransfer, percent, type LcaProfile as Profile } from "@/lib/lcaProfile";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
+import { longDate } from "@convex/lib/months";
 
 /**
  * What one employer's H-1B LCAs were for: new hires against transfers, the
@@ -18,17 +19,6 @@ import { formatInt } from "@/lib/format";
  */
 
 const ECFR = "https://www.ecfr.gov/current/title-20/chapter-V/part-655/subpart-H";
-
-function longDate(iso: string | null): string | null {
-  const d = iso?.slice(0, 10) ?? "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
-  return new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 function yesNo(v: boolean | null): string {
   return v === null ? "not answered" : v ? "Yes" : "No";

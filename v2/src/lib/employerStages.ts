@@ -17,6 +17,7 @@
  */
 
 import { formatInt } from "../../convex/lib/format";
+import { longDate as formatLongDate } from "../../convex/lib/months";
 import { MS_PER_DAY } from "../../convex/lib/time";
 
 export const QUEUE_STATUS = "ANALYST REVIEW";
@@ -184,11 +185,9 @@ export function parseEmployerStagesDoc(json: string, computedAt: number, now: nu
   };
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] as const;
-
 /** "September 24, 2026" from an ISO date, with no time zone arithmetic. */
 export function longDate(iso: string): string {
-  return `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
+  return formatLongDate(iso) ?? iso;
 }
 
 /**

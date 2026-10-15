@@ -19,6 +19,7 @@
  */
 
 import { DAYS_PER_MONTH_2DP, MS_PER_DAY } from "@/lib/time";
+import { MONTH_ABBR } from "@convex/lib/months";
 
 export interface MonthQueue {
   /** "YYYY-MM". */
@@ -341,7 +342,6 @@ export interface LineAheadRow {
   own: boolean;
 }
 
-const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 const monthLabel = (ym: string) => `${MONTH_ABBR[Number(ym.slice(5, 7)) - 1] ?? ""} ${ym.slice(0, 4)}`;
 
 /**

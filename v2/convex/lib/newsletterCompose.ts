@@ -13,6 +13,7 @@
  */
 import { SITE_URL } from "./links";
 import { formatInt } from "./format";
+import { MONTH_NAMES, shortDate } from "./months";
 
 export interface DigestNotice {
   title: string;
@@ -201,25 +202,19 @@ export function caseLookupUrl(caseNumber: string): string {
   return `${SITE_URL}/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
 }
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-] as const;
-
 export function monthLabel(ym: string): string {
   const n = Number(ym.slice(5, 7));
-  return `${MONTHS[n - 1] ?? ym} ${ym.slice(0, 4)}`;
+  return `${MONTH_NAMES[n - 1] ?? ym} ${ym.slice(0, 4)}`;
 }
 
 export function dateLabel(iso: string): string {
-  const m = Number(iso.slice(5, 7));
-  return `${(MONTHS[m - 1] ?? "").slice(0, 3)} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
+  return shortDate(iso) ?? iso;
 }
 
 /** "2025-11" -> "Nov 2025", for the subject line, where every character is rationed. */
 export function shortMonthLabel(ym: string): string {
   const n = Number(ym.slice(5, 7));
-  return `${(MONTHS[n - 1] ?? ym).slice(0, 3)} ${ym.slice(0, 4)}`;
+  return `${(MONTH_NAMES[n - 1] ?? ym).slice(0, 3)} ${ym.slice(0, 4)}`;
 }
 
 /**

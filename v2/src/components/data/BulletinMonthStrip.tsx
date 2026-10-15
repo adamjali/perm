@@ -1,5 +1,6 @@
 import Link from "next/link";
 import * as React from "react";
+import { MONTH_ABBR } from "@convex/lib/months";
 
 /**
  * Every bulletin the archive holds, one link each, grouped by year.
@@ -16,8 +17,6 @@ import * as React from "react";
  * the State Department numbers its folders).
  */
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-
 export interface BulletinMonthStripProps {
   /** Every archived bulletin month as `YYYY-MM`, any order. */
   months: readonly string[];
@@ -26,7 +25,7 @@ export interface BulletinMonthStripProps {
 }
 
 function label(ym: string): string {
-  return `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+  return `${MONTH_ABBR[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
 }
 
 /** Years drawn open; the rest fold, their links still in the HTML. */
@@ -39,7 +38,7 @@ function YearRow({ year, held, newest, earliest }: { year: string; held: Set<str
       {/* A calendar row: every month has its cell, so a month the archive
           doesn't hold reads as the gap it is rather than closing up. */}
       <ul className="grid grid-cols-6 gap-1.5 sm:grid-cols-12 [&>*]:min-w-0">
-        {MONTHS.map((m, i) => {
+        {MONTH_ABBR.map((m, i) => {
           const ym = `${year}-${String(i + 1).padStart(2, "0")}`;
           const current = ym === newest;
           return (

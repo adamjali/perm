@@ -12,6 +12,7 @@ import { getBulletinBoard, categoriesIn } from "@/lib/db/bulletin";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";
+import { MONTH_NAMES } from "@convex/lib/months";
 /**
  * Priority dates against the visa bulletin.
  *
@@ -68,11 +69,6 @@ export const revalidate = 86400;
 const USCIS_CHARTS_URL =
   "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin";
 
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
 export interface UscisGuidance {
   /** The newest bulletin month USCIS names, `YYYY-MM`. */
   month: string;
@@ -111,7 +107,7 @@ async function fetchUscisGuidance(): Promise<UscisGuidance | null> {
     );
     const months: string[] = [];
     for (const m of text.matchAll(re)) {
-      const idx = MONTH_NAMES.indexOf(m[1]!);
+      const idx = (MONTH_NAMES as readonly string[]).indexOf(m[1]!);
       if (idx < 0) continue;
       months.push(`${m[2]}-${String(idx + 1).padStart(2, "0")}`);
     }
@@ -138,7 +134,7 @@ async function fetchUscisGuidance(): Promise<UscisGuidance | null> {
     let employmentChart: UscisGuidance["employmentChart"] = null;
     let best = "";
     for (const m of text.matchAll(chartRe)) {
-      const idx = MONTH_NAMES.indexOf(m[2]!);
+      const idx = (MONTH_NAMES as readonly string[]).indexOf(m[2]!);
       if (idx < 0) continue;
       const key = `${m[3]}-${String(idx + 1).padStart(2, "0")}`;
       // Pair the chart with ITS OWN month and keep the newest, rather than
@@ -271,7 +267,6 @@ export default async function PriorityDateCalculatorPage() {
       </section>
 
       <DataProvenance datasets={["visa-bulletin"]} />
-
 
       <ToolPageFooter
         currentHref={"/tools/priority-date-calculator"}

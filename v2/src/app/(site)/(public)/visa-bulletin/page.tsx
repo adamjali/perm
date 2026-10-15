@@ -50,6 +50,7 @@ import {
 } from "@/lib/bulletinNext";
 import type { CountryKey, Cutoff } from "@/lib/perm";
 import { MoreText } from "@/components/data/MoreText";
+import { MONTH_NAMES } from "@convex/lib/months";
 
 const TITLE = "The Next Visa Bulletin, From Every Past One";
 const DESCRIPTION =
@@ -98,14 +99,9 @@ const I485_COUNTRY: Record<CountryKey, string> = {
   philippines: "Philippines",
 };
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-] as const;
-
 /** 1..12 -> name; a value outside the range is a data defect and prints as such. */
 function monthName(n: number): string {
-  return MONTHS[n - 1] ?? `month ${n}`;
+  return MONTH_NAMES[n - 1] ?? `month ${n}`;
 }
 
 function monthLabel(ym: string): string {

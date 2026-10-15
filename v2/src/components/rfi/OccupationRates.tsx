@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import { ChartTips } from "@/components/data/ChartTips";
 import type { RfiOccupationCut } from "@/lib/db/rfi";
 import { FinePrint } from "@/components/data/FinePrint";
+import { monthYear } from "@convex/lib/months";
 
 /**
  * Open-RFI rate by job title, inside the filing window the RFIs live in.
@@ -148,11 +149,7 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
 
 /** `2025-05` to `May 2025`. */
 function monthName(ym: string): string {
-  const m = /^(\d{4})-(\d{2})$/.exec(ym);
-  if (!m) return ym;
-  const names = ["January","February","March","April","May","June","July",
-    "August","September","October","November","December"];
-  return `${names[Number(m[2]) - 1] ?? ym} ${m[1]}`;
+  return monthYear(ym) ?? ym;
 }
 
 /**

@@ -27,6 +27,7 @@ import { getDisclosureStats } from "@/lib/db/publicData";
 import { DISAMBIGUATION } from "@/lib/constants/about";
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";
+import { MONTH_NAMES } from "@convex/lib/months";
 
 const BASE_URL = SITE_URL;
 
@@ -437,11 +438,6 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   },
 ];
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
 /**
  * "2025-09" -> "September 2025".
  *
@@ -456,7 +452,7 @@ function fmtMonth(iso: string | null): string {
   if (!iso) return "an unstated month";
   const m = /^(\d{4})-(\d{2})$/.exec(iso);
   if (!m) return iso;
-  const name = MONTHS[Number(m[2]) - 1];
+  const name = MONTH_NAMES[Number(m[2]) - 1];
   return name ? `${name} ${m[1]}` : iso;
 }
 

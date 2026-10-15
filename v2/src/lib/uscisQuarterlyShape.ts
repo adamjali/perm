@@ -1,3 +1,4 @@
+import { monthYear } from "@convex/lib/months";
 /**
  * The pure half of the USCIS quarterly data: labels, pivots and rankings
  * over the rows `src/lib/db/uscisQuarterly.ts` reads.
@@ -25,11 +26,7 @@ export function quarterLabel(fy: number, quarter: number): string {
 
 /** "2026-06" -> "June 2026"; anything else verbatim. */
 export function monthLabel(asOf: string): string {
-  const m = /^(\d{4})-(\d{2})$/.exec(asOf);
-  if (!m) return asOf;
-  const names = ["January", "February", "March", "April", "May", "June", "July",
-    "August", "September", "October", "November", "December"];
-  return `${names[Number(m[2]) - 1] ?? m[2]} ${m[1]}`;
+  return monthYear(asOf) ?? asOf;
 }
 
 /** "2026-Q3" -> "FY2026 Q3". */

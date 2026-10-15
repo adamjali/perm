@@ -6,6 +6,7 @@ import { statusMeaning } from "@/lib/caseStatusVocabulary";
 import type { LiveCaseRow } from "@/lib/db/cases";
 import type { LiveEmployerRecord } from "@/lib/db/liveEmployers";
 import { formatInt } from "@/lib/format";
+import { longDate } from "@convex/lib/months";
 
 /**
  * An employer's page when DOL has never published a thing about them.
@@ -44,20 +45,6 @@ import { formatInt } from "@/lib/format";
  * and the sitemap - which is built from `perm_entities` and never reads this
  * table - does not list them.
  */
-
-function longDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (!m) return null;
-  return new Date(
-    Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])),
-  ).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 export function UnpublishedEmployer({
   record,

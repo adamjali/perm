@@ -4,6 +4,7 @@ import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 import { formatAsOf } from "@/lib/dolFormat";
 
 import { GROUP_STYLE, stageFromSlug, stageMeta, stageSlug } from "./stageMeta";
+import { monthYear } from "@convex/lib/months";
 
 /**
  * The count beside a definition, dated, and linked where there is a page.
@@ -403,9 +404,5 @@ export function StageGlossary({
 }
 
 function monthName(ym: string): string {
-  const m = /^(\d{4})-(\d{2})$/.exec(ym);
-  if (!m) return ym;
-  const names = ["January","February","March","April","May","June","July",
-    "August","September","October","November","December"];
-  return `${names[Number(m[2]) - 1] ?? ym} ${m[1]}`;
+  return monthYear(ym) ?? ym;
 }

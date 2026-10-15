@@ -7,6 +7,7 @@ import type { Debarment, DebarmentPhase, DebarmentProgram } from "@/lib/db/debar
 import { DidYouMean } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
 import { rankFuzzy } from "@/lib/fuzzy";
+import { shortDate } from "@convex/lib/months";
 
 export type DebarmentView = Debarment & { phase: DebarmentPhase };
 
@@ -29,8 +30,8 @@ export interface DebarmentQuery {
   sort: DebarmentSort;
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
+/** "2026-09-11" to "Sep 11, 2026"; anything else prints as given. */
+const day = (iso: string) => shortDate(iso) ?? iso;
 const CONTROL =
   "mt-1 block w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";

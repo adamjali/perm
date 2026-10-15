@@ -6,6 +6,7 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { getFreshness, type DatasetFreshness } from "@/lib/db/publicData";
 import { coverageFor, datasetLabel } from "@/lib/datasetCoverage";
 import { cn } from "@/lib/utils";
+import { MONTH_ABBR } from "@convex/lib/months";
 
 /**
  * Where a page's figures came from, rendered beside them: one line per
@@ -108,7 +109,6 @@ function fmt(iso: string): string {
   // "2026-06-30" -> "Jun 30, 2026"; "2026-09" -> "Sep 2026"; else verbatim.
   const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(iso);
   if (!m) return iso;
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const name = months[Number(m[2]) - 1];
+  const name = MONTH_ABBR[Number(m[2]) - 1];
   return m[3] ? `${name} ${Number(m[3])}, ${m[1]}` : `${name} ${m[1]}`;
 }

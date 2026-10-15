@@ -16,6 +16,7 @@ import {
 } from "@/lib/db/debarments";
 import { withSocialCard } from "@/lib/socialCard";
 import { formatInt } from "@/lib/format";
+import { shortDate } from "@convex/lib/months";
 
 /**
  * DOL's debarment lists, as published.
@@ -45,8 +46,8 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 21600;
 
 const ORDER: DebarmentProgram[] = ["perm", "h1b", "h2a", "h2b"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
+/** "2026-09-11" to "Sep 11, 2026"; anything else prints as given. */
+const day = (iso: string) => shortDate(iso) ?? iso;
 
 export default async function DebarmentsPage() {
   const [all, summary] = await Promise.all([listDebarments(), getDebarmentsSummary()]);

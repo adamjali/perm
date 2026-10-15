@@ -9,6 +9,7 @@ import { formatAsOf, formatMonthShort, formatMonth } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
 import { MS_PER_DAY } from "@/lib/time";
 import { DataView, ScopeSelect } from "./DataView";
+import { MONTH_ABBR } from "@convex/lib/months";
 
 /**
  * DOL's published queue position, drawn over our record of its snapshots.
@@ -127,11 +128,6 @@ function formatAsOfShort(iso: string): string {
   const name = MONTH_ABBR[Number(m[2]) - 1];
   return name ? `${Number(m[3])} ${name} ${m[1]}` : iso;
 }
-
-const MONTH_ABBR = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
 
 export const Y_LABEL_GAP = 8;
 export const PAD = { top: 18, right: 16, bottom: 40, left: 76 };

@@ -10,16 +10,7 @@
 
 import { formatInt } from "../../convex/lib/format";
 import { DAYS_PER_MONTH_2DP, MS_PER_DAY } from "../../convex/lib/time";
-
-/**
- * Exported because QueueAlertForm needs the same twelve strings to label its
- * month picker, and had its own byte-identical copy four lines long in a
- * sibling file. One list, one place.
- */
-export const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-] as const;
+import { MONTH_NAMES } from "../../convex/lib/months";
 
 /**
  * "2025-09" to "September 2025".

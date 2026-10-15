@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { RecordFigure } from "@/lib/recordCounts";
+import { MONTH_ABBR } from "@convex/lib/months";
 
 /**
  * The record behind the site, set as a ledger inside the About column.
@@ -13,11 +14,9 @@ import type { RecordFigure } from "@/lib/recordCounts";
  * is not rendered at all. Plain server markup, so it reads before hydration.
  */
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-
 function dateLabel(iso: string): string {
   const y = iso.slice(0, 4);
-  const m = MONTHS[Number(iso.slice(5, 7)) - 1] ?? "";
+  const m = MONTH_ABBR[Number(iso.slice(5, 7)) - 1] ?? "";
   const d = iso.length >= 10 ? ` ${Number(iso.slice(8, 10))}` : "";
   return `${m}${d} ${y}`;
 }

@@ -15,6 +15,7 @@ import { DailyDecisionsChart } from "@/components/tools/DailyDecisionsChart";
 import { SEASONAL_FORMS } from "@/lib/seasonalForms";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { formatInt } from "@/lib/format";
+import { longDate } from "@convex/lib/months";
 
 /**
  * H-2A, H-2B and CW-1 filings, findable by employer as DOL confirms them.
@@ -45,13 +46,6 @@ export const metadata: Metadata = withSocialCard({
 }, "seasonal-cases");
 
 export const revalidate = 86400;
-
-function longDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = iso.slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
-  return new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-}
 
 /** The forms in the order a reader meets them: farm work and its job order, other seasonal work and its wage, then CW-1. */
 const FORM_ORDER = ["H-300", "JO-A-300", "H-400", "P-400", "C-500", "P-500"] as const;

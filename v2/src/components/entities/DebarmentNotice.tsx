@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { PROGRAM_LABEL, isActive, phase, type Debarment } from "@/lib/db/debarments";
 import { cn } from "@/lib/utils";
+import { shortDate } from "@convex/lib/months";
 
 /**
  * A dated notice on an employer or law-firm page when a name on DOL's
@@ -20,8 +21,8 @@ import { cn } from "@/lib/utils";
  * about to sign with. See `phase()`.
  */
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
+/** "2026-09-11" to "Sep 11, 2026"; anything else prints as given. */
+const day = (iso: string) => shortDate(iso) ?? iso;
 
 export function DebarmentNotice({
   rows,

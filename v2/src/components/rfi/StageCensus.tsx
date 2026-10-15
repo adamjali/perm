@@ -9,6 +9,7 @@ import {
   stageSlug,
   type StageGroup,
 } from "./stageMeta";
+import { MONTH_ABBR } from "@convex/lib/months";
 
 /**
  * How many cases sit at each stage right now.
@@ -205,8 +206,7 @@ function fmtDate(from: string | null, to: string | null): string {
 function short(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
   if (!m) return iso;
-  const names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${names[Number(m[2]) - 1]} ${Number(m[3])}`;
+  return `${MONTH_ABBR[Number(m[2]) - 1]} ${Number(m[3])}`;
 }
 
 /**

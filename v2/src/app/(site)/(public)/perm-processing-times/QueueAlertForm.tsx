@@ -17,7 +17,7 @@
 import { useId, useState } from "react";
 import { CaretRightIcon } from "@phosphor-icons/react";
 
-import { MONTH_NAMES } from "@/lib/dolFormat";
+import { MONTH_NAMES } from "@convex/lib/months";
 import { Button } from "@/components/ui/button";
 import { SelectInput } from "@/components/forms/SelectInput";
 import { Label } from "@/components/ui/label";

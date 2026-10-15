@@ -2,6 +2,7 @@ import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
+import { MONTH_ABBR, MONTH_NAMES } from "@convex/lib/months";
 
 /**
  * The queue, drawn as a measuring tape.
@@ -28,21 +29,15 @@ export interface QueueTapeProps {
   className?: string;
 }
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 function addMonths(month: string, n: number): string {
   const [y, m] = month.split("-").map(Number);
   const total = (y ?? 0) * 12 + ((m ?? 1) - 1) + n;
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
 }
 
-const MONTHS_LONG = ["January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"];
-
 function longLabel(month: string): string {
   const [y, m] = month.split("-").map(Number);
-  return `${MONTHS_LONG[(m ?? 1) - 1]} ${y ?? 0}`;
+  return `${MONTH_NAMES[(m ?? 1) - 1]} ${y ?? 0}`;
 }
 
 /** What a month on the tape means, for its hover detail. */
@@ -58,7 +53,7 @@ function tipFor(month: string, offset: number, isYou: boolean): string {
 
 function label(month: string): string {
   const [y, m] = month.split("-").map(Number);
-  return `${MONTH_NAMES[(m ?? 1) - 1]} ${String(y ?? 0).slice(2)}`;
+  return `${MONTH_ABBR[(m ?? 1) - 1]} ${String(y ?? 0).slice(2)}`;
 }
 
 export function QueueTape({

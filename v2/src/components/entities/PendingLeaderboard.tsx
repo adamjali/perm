@@ -5,6 +5,7 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import type { PendingLeader } from "@/lib/db/entityDetail";
 import { formatInt } from "@/lib/format";
+import { longDate } from "@convex/lib/months";
 
 /**
  * Who has the most cases waiting on DOL right now.
@@ -27,16 +28,6 @@ import { formatInt } from "@/lib/format";
  * been filing steadily for years. The count alone cannot tell those apart, so
  * the denominator is never dropped.
  */
-
-function longDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (!m) return null;
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).toLocaleDateString(
-    "en-US",
-    { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" },
-  );
-}
 
 export function PendingLeaderboard({
   leaders,

@@ -1,5 +1,6 @@
 import { slugify } from "@/lib/entitySlug";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
+import { MONTH_NAMES } from "@convex/lib/months";
 
 /**
  * The busiest H-1B employers by fiscal year and state: the pure half of
@@ -149,9 +150,7 @@ export function defaultYear(s: H1bSummary, state: string = NATION): H1bYear {
   );
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
-  "November", "December"];
-const monthOf = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+const monthOf = (iso: string) => `${MONTH_NAMES[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 
 /** "FY2025 (October 2024 to September 2025)", or "FY2026 so far (October 2025 to June 2026)". */
 export function fyLabel(y: H1bYear, by: H1bBasis): string {
