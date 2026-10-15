@@ -109,7 +109,9 @@ export default function DeadlineHeroWidget(): ReactNode {
       <div className="p-5">
         <p className="text-base font-semibold sm:text-lg">{deadlineAnswer(data, openCaseCount(summary))}</p>
         {total > 0 ? (
-          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          // Each group as tall as its own deadlines: stretched to its neighbour's
+          // height, a short group read as a tall empty wash.
+          <div className="mt-5 grid grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-4">
             {GROUPS.map((g) => (
               <UrgencyGroup key={g.key} title={g.title} urgency={g.key} items={data[g.key]} />
             ))}

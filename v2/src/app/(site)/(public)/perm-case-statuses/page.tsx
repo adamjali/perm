@@ -120,7 +120,7 @@ const PROGRAMS = [
 function FlagEntry({ e, anchor, n, max }: { e: FlagStatusEntry; anchor: string; n: number | null; max: number }) {
   const [lead, rest] = splitLead(e.summary);
   return (
-    <details id={anchor} className="group scroll-mt-28 bg-card">
+    <details id={anchor} className="group scroll-mt-28">
       <summary className="relative flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
           <h3 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
@@ -280,14 +280,14 @@ export default async function PermCaseStatusesPage() {
           <div key={g.kind} className="mt-8">
             <h3 className="font-heading text-xl font-bold">{KIND_HEADING[g.kind].title}</h3>{" "}
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{KIND_HEADING[g.kind].lede}</p>{" "}
-            <div className="mt-4 grid gap-px border border-border bg-border">
+            <div className="mt-4 border-t-2 border-[var(--object-border)] divide-y divide-border">
               {g.entries.map((m, _i, all) => {
                 const groupMax = Math.max(0, ...all.map((x) => permCount(x.status) ?? 0));
                 const anchor = statusAnchor(m.status);
                 const stagePage = stageFromSlug(anchor) ? `/perm-rfi-audit/${anchor}` : undefined;
                 const [lead, rest] = splitLead(m.summary);
                 return (
-                  <details key={m.status} id={anchor} className="group scroll-mt-28 bg-card">
+                  <details key={m.status} id={anchor} className="group scroll-mt-28">
                     <summary className="relative flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
                       <span className="min-w-0 flex-1">
                         <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
@@ -337,7 +337,7 @@ export default async function PermCaseStatusesPage() {
             ? ` Counts are from DOL's live index as of ${formatAsOf(pwd.asOf)}.`
             : " The counts are missing today: their summary couldn't be read."}
         </p>{" "}
-        <div className="mt-4 grid gap-px border border-border bg-border">
+        <div className="mt-4 border-t-2 border-[var(--object-border)] divide-y divide-border">
           {PWD_STATUSES.map((e) => (
             <FlagEntry key={e.status} e={e} anchor={`pwd-${statusAnchor(e.status)}`} n={flagCount(pwd, e.status)} max={programMax(pwd, PWD_STATUSES)} />
           ))}
@@ -352,7 +352,7 @@ export default async function PermCaseStatusesPage() {
             ? ` Counts are from DOL's live index as of ${formatAsOf(lca.asOf)}.`
             : " The counts are missing today: their summary couldn't be read."}
         </p>{" "}
-        <div className="mt-4 grid gap-px border border-border bg-border">
+        <div className="mt-4 border-t-2 border-[var(--object-border)] divide-y divide-border">
           {LCA_STATUSES.map((e) => (
             <FlagEntry key={e.status} e={e} anchor={`lca-${statusAnchor(e.status)}`} n={flagCount(lca, e.status)} max={programMax(lca, LCA_STATUSES)} />
           ))}
@@ -368,7 +368,7 @@ export default async function PermCaseStatusesPage() {
             ? ` Counts are from DOL's live index as of ${formatAsOf(seasonal.asOf)}.`
             : " The counts are missing today: their summary couldn't be read."}
         </p>{" "}
-        <div className="mt-4 grid gap-px border border-border bg-border">
+        <div className="mt-4 border-t-2 border-[var(--object-border)] divide-y divide-border">
           {SEASONAL_STATUSES.map((e) => (
             <FlagEntry
               key={e.status}

@@ -167,7 +167,7 @@ export default async function ExtensionPage() {
         <h2 id="reading" className="font-heading text-2xl font-bold">
           Reading the panel
         </h2>{" "}
-        <dl className="mt-5 grid grid-cols-1 gap-px border border-border bg-border [&>*]:min-w-0 md:grid-cols-2">
+        <dl className="mt-5 grid grid-cols-1 gap-2 [&>*]:min-w-0 md:grid-cols-2">
           {(
             [
               ["PERM cases published", "Green card labor certifications in DOL's quarterly files: decided cases only."],
@@ -178,7 +178,7 @@ export default async function ExtensionPage() {
               ["No record", "Nothing under that name. Companies often file under their legal name, so it may still sponsor under another."],
             ] as const
           ).map(([term, meaning]) => (
-            <div key={term} className="bg-card px-5 py-4">
+            <div key={term} className="bg-tint px-5 py-4">
               <dt className="font-heading text-base font-bold">{term}</dt>{" "}
               <dd className="mt-1 text-base leading-relaxed text-soft">{meaning}</dd>
             </div>

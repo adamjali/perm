@@ -167,11 +167,11 @@ export function OtherEmployer({
       {nextStep ? <div className="mt-8">{nextStep}</div> : null}{" "}
 
       <section className="mt-8">
-        <div className="grid grid-cols-1 gap-px border border-input bg-border sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           {stats.map((d) => (
             <Fragment key={d.k}>
               {" "}
-              <div className="bg-card p-5">
+              <div className="bg-tint p-5">
                 <p className="text-sm font-bold text-muted-foreground">{d.k}</p>{" "}
                 <p className="mt-1.5 font-heading text-2xl font-bold tabular-nums">{d.v}</p>{" "}
                 {d.sub ? <p className="mt-1 text-sm text-muted-foreground">{d.sub}</p> : null}

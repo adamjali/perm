@@ -102,9 +102,9 @@ export async function CityReference({
         <h2 id="city-where" className="font-heading text-xl font-bold sm:text-2xl">
           Where {label} sits
         </h2>{" "}
-        <dl className="mt-4 grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-3 [&>*]:min-w-0">
+        <dl className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 [&>*]:min-w-0">
           {geo.counties ? (
-            <div className="bg-card p-4">
+            <div className="bg-tint p-4">
               <dt className="text-sm font-bold text-muted-foreground">Counties</dt>{" "}
               <dd className="mt-1 text-base font-bold">
                 {geo.counties.length <= 6 ? countyPhrase(geo.counties) : `${geo.counties.length} counties`}
@@ -114,7 +114,7 @@ export async function CityReference({
               </dd>
             </div>
           ) : geo.countyName ? (
-            <div className="bg-card p-4">
+            <div className="bg-tint p-4">
               <dt className="text-sm font-bold text-muted-foreground">County</dt>{" "}
               <dd className="mt-1 text-base font-bold">{geo.countyName}</dd>{" "}
               <dd className="mt-1 text-sm text-muted-foreground">
@@ -126,7 +126,7 @@ export async function CityReference({
               </dd>
             </div>
           ) : null}{" "}
-          <div className="bg-card p-4">
+          <div className="bg-tint p-4">
             <dt className="text-sm font-bold text-muted-foreground">Metro area</dt>{" "}
             <dd className="mt-1 text-base font-bold">{geo.cbsaTitle ?? "Outside any metro area"}</dd>{" "}
             {geo.cbsaType ? (
@@ -136,7 +136,7 @@ export async function CityReference({
             ) : null}
           </div>{" "}
           {geo.wageAreaName ? (
-            <div className="bg-card p-4">
+            <div className="bg-tint p-4">
               <dt className="text-sm font-bold text-muted-foreground">DOL wage area</dt>{" "}
               <dd className="mt-1 text-base font-bold">{geo.wageAreaName}</dd>{" "}
               <dd className="mt-1 text-sm text-muted-foreground">

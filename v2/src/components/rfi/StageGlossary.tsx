@@ -281,12 +281,12 @@ export function StageGlossary({
         invalid markup; the `<h3>` in each summary keeps the heading outline,
         which is the part an extractor actually reads.
       */}
-      <div className="grid gap-px border border-border bg-border">
+      <div className="border-t-2 border-[var(--object-border)] divide-y divide-border">
         {ENTRIES.map((e) => {
           const meta = e.status ? stageMeta(e.status) : null;
           const label = e.term ?? meta?.label ?? e.status ?? "";
           return (
-            <details key={label} className="group bg-card">
+            <details key={label} className="group">
               <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">

@@ -114,7 +114,7 @@ export function UnpublishedEmployer({
       {/* Only the counts we can stand behind, and each one labelled with the
           corpus it came from rather than presented as a lifetime figure. */}
       <section className="mt-8">
-        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border border-input bg-border max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-3">
+        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-3">
           {[
             {
               k: "Cases we hold",
@@ -132,7 +132,7 @@ export function UnpublishedEmployer({
               sub: first && first !== last ? `oldest ${first}` : "",
             },
           ].map((d) => (
-            <div key={d.k} className="bg-card p-5">
+            <div key={d.k} className="bg-tint p-5">
               <p className="text-sm font-bold text-muted-foreground">
                 {d.k}
               </p>{" "}

@@ -222,7 +222,7 @@ export default async function StagePage({
           </div>
         ) : null}
 
-        <section className="mt-10 grid gap-px border border-border bg-border sm:grid-cols-3">
+        <section className="mt-10 grid gap-2 sm:grid-cols-3">
           {[
             {
               k: "Cases at this stage",
@@ -248,7 +248,7 @@ export default async function StagePage({
             },
           ].map((d) => (
             <Fragment key={d.k}>{" "}
-            <div className="bg-card p-5">
+            <div className="bg-tint p-5">
               <p className="text-sm font-bold text-muted-foreground">
                 {d.k}
               </p>{" "}

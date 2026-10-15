@@ -252,8 +252,8 @@ export default async function AboutPage() {
             answers first.
           </p>
         </div>{" "}
-        <dl className="grid grid-cols-1 gap-px self-start border border-border bg-border">
-          <div className="bg-card px-5 py-4">
+        <dl className="grid grid-cols-1 gap-2 self-start">
+          <div className="bg-tint px-5 py-4">
             <dt className="text-sm text-muted-foreground">Admitted</dt>{" "}
             <dd className="mt-0.5 font-heading text-lg font-bold">
               D.C. Bar, 2025.{" "}
@@ -262,7 +262,7 @@ export default async function AboutPage() {
               </a>
             </dd>
           </div>{" "}
-          <div className="bg-card px-5 py-4">
+          <div className="bg-tint px-5 py-4">
             <dt className="text-sm text-muted-foreground">Also on</dt>{" "}
             <dd className="mt-0.5 font-heading text-lg font-bold">
               <a href={LINKEDIN_SABRINA_URL} className={LINK} rel="me noopener" target="_blank">

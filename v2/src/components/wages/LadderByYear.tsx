@@ -99,11 +99,11 @@ export function LadderByYear({
 
       {/* Rung by rung, so a reader can see which part of the distribution
           actually moved rather than inferring it from two medians. */}
-      <dl className="mt-6 grid [&>*]:min-w-0 grid-cols-2 gap-px border border-border bg-border sm:grid-cols-4">
+      <dl className="mt-6 grid [&>*]:min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
         {(["p10", "p50", "p90", "p95"] as const).map((r) => {
           const pct = move(r);
           return (
-            <div key={r} className="bg-card p-3">
+            <div key={r} className="bg-tint p-3">
               <dt className="text-sm font-bold text-muted-foreground">
                 {RUNG_LABEL[r]}
               </dt>{" "}

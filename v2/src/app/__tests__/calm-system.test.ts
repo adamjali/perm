@@ -72,6 +72,12 @@ describe("the calm system", () => {
     const hits = findAll(/border border-border(?:\/\d+)? bg-(?:card|background|muted|tint)\S*(?: [^"'`\n]*?)? p[xy]?-\d/g)
       .filter((h) => !SKIP.test(h) && !FLOATING.some((f) => h.startsWith(`${f}:`)));
     expect(hits).toEqual([]);
+    // The same box drawn another way: cells on a grey ground with a 1px gap. A
+    // calculator's result cells keep theirs: they sit inside its object.
+    const INSIDE_OBJECT = ["components/tools/I140QueueEstimator.tsx", "components/tools/I485QueuePosition.tsx"];
+    const grids = findAll(/\bgap-px\b[^"'`\n]*\bbg-border\b|\bbg-border\b[^"'`\n]*\bgap-px\b/g)
+      .filter((h) => !SKIP.test(h) && !INSIDE_OBJECT.some((f) => h.startsWith(`${f}:`)));
+    expect(grids).toEqual([]);
   });
 
   it("draws no hard offset shadow", () => {

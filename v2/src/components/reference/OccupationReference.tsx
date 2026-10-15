@@ -222,16 +222,16 @@ export async function OccupationReference({
             What the job is
           </h2>{" "}
           <p className="mt-3 max-w-3xl text-lg leading-relaxed">{main.description}</p>{" "}
-          <dl className="mt-6 grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+          <dl className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
             {zone ? (
-              <div className="bg-card p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">Preparation</dt>{" "}
                 <dd className="mt-1 text-base font-bold">{zone.name.replace(/^Job Zone [\w-]+: /, "")}</dd>{" "}
                 <dd className="mt-1 text-sm text-muted-foreground">{`O*NET Job Zone ${main.jobZone === 2 ? "1-2" : main.jobZone}`}</dd>
               </div>
             ) : null}{" "}
             {basis?.education ? (
-              <div className="bg-card p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">DOL&apos;s education basis</dt>{" "}
                 <dd className="mt-1 text-base font-bold">{basis.education}</dd>{" "}
                 <dd className="mt-1 text-sm text-muted-foreground">
@@ -240,7 +240,7 @@ export async function OccupationReference({
               </div>
             ) : null}{" "}
             {projection?.changePct != null ? (
-              <div className="bg-card p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">
                   {`Jobs, ${projection.baseYear} to ${projection.projYear}`}
                 </dt>{" "}
@@ -253,7 +253,7 @@ export async function OccupationReference({
               </div>
             ) : null}{" "}
             {projection?.education ? (
-              <div className="bg-card p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">Typical entry</dt>{" "}
                 <dd className="mt-1 text-base font-bold">{projection.education}</dd>{" "}
                 <dd className="mt-1 text-sm text-muted-foreground">
