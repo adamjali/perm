@@ -403,7 +403,7 @@ export function IndustryMix({
       className={className}
     >
       <p className="font-heading text-xl font-bold leading-tight">{lead.label}</p>{" "}
-      <p className="mt-1.5 font-mono text-sm tabular-nums text-muted-foreground">
+      <p className="mt-1.5 text-sm tabular-nums text-muted-foreground">
         NAICS {lead.codes.join(", ")} &middot; {formatInt(lead.n)} filings
       </p>
       {rest.length > 0 ? (

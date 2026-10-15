@@ -36,7 +36,7 @@ function Reminder({ className }: { className?: string }) {
       <span className="min-w-0">
         <span className="block font-heading text-base font-bold leading-tight">{deadlineTitle("rfi_due", 7)}</span>{" "}
         <span className="mt-0.5 block text-sm text-muted-foreground">Juniper Biologics, Senior Statistician</span>{" "}
-        <span className="mt-1 block font-mono text-sm text-muted-foreground">Reminder email</span>
+        <span className="mt-1 block text-sm text-muted-foreground">Reminder email</span>
       </span>
     </div>
   );

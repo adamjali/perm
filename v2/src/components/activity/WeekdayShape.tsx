@@ -58,7 +58,7 @@ export function WeekdayShape({
               <span className="text-sm font-bold">
                 {p.label}
               </span>{" "}
-              <span className="font-mono text-sm font-bold tabular-nums text-muted-foreground">
+              <span className="text-sm font-bold tabular-nums text-muted-foreground">
                 {p.mean.toLocaleString("en-US")} a day · {p.days} days ·{" "}
                 {p.zeroDays === 0 ? "never zero" : `${p.zeroDays} at zero`}
               </span>

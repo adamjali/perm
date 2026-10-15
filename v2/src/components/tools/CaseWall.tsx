@@ -262,7 +262,7 @@ export function CohortNeighbours({
                 </span>
               ) : null}
             </span>{" "}
-            <span className="font-mono text-sm tabular-nums text-muted-foreground">
+            <span className="text-sm tabular-nums text-muted-foreground">
               <b className="font-bold text-foreground">{formatInt(x.pending)}</b> of{" "}
               {formatInt(x.total)} still open
               {x.decidedPct !== null ? (

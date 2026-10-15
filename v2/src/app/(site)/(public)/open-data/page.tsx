@@ -199,7 +199,7 @@ export default async function OpenDataPage() {
           </a>
           . Credit us like this:
         </p>{" "}
-        <p className="mt-4 border border-border bg-muted px-4 py-3 font-mono text-sm break-words">
+        <p className="mt-4 border border-border bg-muted px-4 py-3 tabular-nums text-sm break-words">
           Source: {OPEN_DATA_CREDIT}, from U.S. Department of State and Department of Labor records. {OPEN_DATA_LICENSE.short}.
         </p>{" "}
         <p className="mt-4 text-base text-soft">On a web page, with the link:</p>{" "}

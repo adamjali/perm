@@ -107,7 +107,7 @@ export function UscisH1bRecord({
                   <span className="h-full bg-data-good-ink" style={{ width: `${(a / peak) * 100}%` }} />
                   <span className="h-full bg-data-bad-ink" style={{ width: `${(d / peak) * 100}%` }} />
                 </span>{" "}
-                <span className="font-mono text-sm tabular-nums text-soft">
+                <span className="text-sm tabular-nums text-soft">
                   {formatInt(a)} approved, {formatInt(d)} denied
                 </span>
               </li>

@@ -153,7 +153,7 @@ export function CasePagination({
               variant="outline"
               size="sm"
               aria-label={`${pageSize} per page`}
-              className="gap-1 font-mono"
+              className="gap-1 tabular-nums"
             >
               {pageSize} per page
             </Button>
@@ -163,7 +163,7 @@ export function CasePagination({
               <DropdownMenuItem
                 key={size}
                 onClick={() => onPageSizeChange(size)}
-                className="font-mono"
+                className="tabular-nums"
                 aria-label={`${size} per page`}
               >
                 {size} per page

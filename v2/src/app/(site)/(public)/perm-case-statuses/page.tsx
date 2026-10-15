@@ -97,7 +97,7 @@ function Source({ cite, unsourced }: { cite?: { label: string; href: string } | 
     </p>
   ) : (
     <p className="mt-3 text-sm text-muted-foreground">
-      <span className="font-mono font-bold">No published definition.</span> {unsourced}
+      <span className="font-bold">No published definition.</span> {unsourced}
     </p>
   );
 }

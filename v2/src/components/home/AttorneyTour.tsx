@@ -146,7 +146,7 @@ function EmailOverlay() {
   const shot = TOUR_SHOTS.email.light;
   return (
     <figure className="relative mx-auto mt-10 w-[86%] max-w-md border border-border bg-card lg:absolute lg:-bottom-16 lg:left-[-1%] lg:mt-0 lg:w-[44%]">
-      <div className="border-b border-border bg-muted px-3 py-2 font-mono text-sm text-muted-foreground">
+      <div className="border-b border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
         The reminder email
       </div>
       <picture>

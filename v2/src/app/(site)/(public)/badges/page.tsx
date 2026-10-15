@@ -119,7 +119,7 @@ export default async function BadgesPage() {
             />
           ))}
         </ul>{" "}
-        <p className="mt-6 font-mono text-sm leading-relaxed text-white/70">
+        <p className="mt-6 tabular-nums text-sm leading-relaxed text-white/70">
           {live} of {rows.length} carrying a figure right now. The rest say so rather than showing an old number.
         </p>
       </section>

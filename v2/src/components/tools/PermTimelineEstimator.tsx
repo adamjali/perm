@@ -766,7 +766,7 @@ export function PermTimelineEstimator({
                   style={{ width: `${progress.elapsedPct}%` }}
                 />
               </div>{" "}
-              <p className="mt-2 font-mono text-sm text-muted-foreground">
+              <p className="mt-2 tabular-nums text-sm text-muted-foreground">
                 {progress.elapsedMonths} of about {progress.totalMonths} months
                 elapsed
               </p>

@@ -141,7 +141,7 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
               loading="lazy"
               className="h-auto w-full"
             />{" "}
-            <figcaption className="mt-2 font-mono text-sm text-muted-foreground">
+            <figcaption className="mt-2 tabular-nums text-sm text-muted-foreground">
               First page as printed{doc.citation ? `, ${doc.citation}` : ""}.
             </figcaption>
           </figure>

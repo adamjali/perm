@@ -123,7 +123,7 @@ export default async function PolicyChangesPage() {
             <PolicyStrip strip={strip} />{" "}
             <StripLegend />{" "}
             {earlier > 0 ? (
-              <p className="mt-3 font-mono text-sm text-muted-foreground">
+              <p className="mt-3 tabular-nums text-sm text-muted-foreground">
                 {earlier} earlier {earlier === 1 ? "document is" : "documents are"} in the lists below.
               </p>
             ) : null}

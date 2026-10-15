@@ -95,7 +95,7 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
                 employer count is what separates an occupation from one firm's
                 batch of filings.
               */}
-              <span className="order-4 col-span-2 font-mono text-sm tabular-nums text-muted-foreground sm:col-span-3">
+              <span className="order-4 col-span-2 text-sm tabular-nums text-muted-foreground sm:col-span-3">
                 {r.rfi.toLocaleString()} of {r.filed.toLocaleString()} filed
                 {", "}
                 {r.rfiEmployers.toLocaleString()} employers
@@ -134,7 +134,7 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
             Job titles are free text the employer types, so this groups{" "}
             <span className="font-mono">COOK</span> with{" "}
             <span className="font-mono">Cook</span> and leaves{" "}
-            <span className="font-mono">Line Cook</span> separate.
+            <span className="font-semibold">Line Cook</span> separate.
           </p>{" "}
           <p>
             These are RFIs open today. A title whose RFIs get answered and closed

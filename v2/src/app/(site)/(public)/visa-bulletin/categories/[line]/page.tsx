@@ -268,7 +268,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
                 <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                   {counts.awaiting.count.toLocaleString("en-US")}
                 </dd>{" "}
-                <dd className="font-mono text-sm text-muted-foreground">as of {bulletinMonthLabel(counts.awaiting.asOf)}, primary applicants</dd>
+                <dd className="tabular-nums text-sm text-muted-foreground">as of {bulletinMonthLabel(counts.awaiting.asOf)}, primary applicants</dd>
               </div>
             ) : null}
             {counts.inventory ? (
