@@ -159,9 +159,9 @@ describe("TimeoutWarningModal", () => {
         <TimeoutWarningModal {...defaultProps} remainingSeconds={25} />
       );
 
-      // Check for red/urgent styling
+      // The countdown sits on the red fill once it's urgent
       const countdown = screen.getByText("0:25");
-      expect(countdown).toHaveClass("text-destructive");
+      expect(countdown.parentElement).toHaveClass("bg-destructive");
     });
 
     it("does not show urgent styling when remainingSeconds > 30", () => {
@@ -170,7 +170,7 @@ describe("TimeoutWarningModal", () => {
       );
 
       const countdown = screen.getByText("1:00");
-      expect(countdown).not.toHaveClass("text-destructive");
+      expect(countdown.parentElement).not.toHaveClass("bg-destructive");
     });
   });
 

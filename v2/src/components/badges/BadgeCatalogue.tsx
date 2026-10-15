@@ -216,7 +216,7 @@ function MatrixGroup({
                         aria-label={`${cell.label}${on ? ", picked" : ""}`}
                         onClick={() => setPicked(cell.kind)}
                         className={
-                          `flex min-h-11 w-full items-center justify-center border px-1.5 py-2 [&_svg]:h-auto [&_svg]:max-w-full ${ground} ` +
+                          `flex min-h-11 w-full items-center justify-center border-2 px-1.5 py-2 [&_svg]:h-auto [&_svg]:max-w-full border-border ${ground} ` +
                           (on ? "border-primary outline outline-2 outline-offset-2 outline-primary" : "border-border")
                         }
                         /* Our own string from the renderer; the trailing space

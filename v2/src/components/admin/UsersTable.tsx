@@ -244,7 +244,7 @@ function StatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <span className={`border text-sm font-bold px-2 py-0.5 whitespace-nowrap ${styles[status] || "bg-muted text-foreground border-border"}`}>
+    <span className={`border-2 text-sm font-bold px-2 py-0.5 whitespace-nowrap border-border ${styles[status] || "bg-muted text-foreground border-border"}`}>
       {labels[status] || status}
     </span>
   );

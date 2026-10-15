@@ -114,7 +114,7 @@ function Marks({ r }: { r: H1bRankRow }) {
   return (
     <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="On the record">
       {marks.map((m) => (
-        <li key={m.key} className={`inline-flex min-h-7 items-center border bg-card px-2 text-sm font-semibold ${m.tone}`}>
+        <li key={m.key} className={`inline-flex min-h-7 items-center border-2 bg-card px-2 text-sm font-semibold border-border ${m.tone}`}>
           {m.text}{" "}
         </li>
       ))}
@@ -128,7 +128,7 @@ function Row({ r, rank, max, cols, by }: { r: H1bRankRow; rank: number; max: num
   const value = by === "lca" ? r.lcas : r.uscisAppr;
   const width = max > 0 ? Math.max(1, Math.round((value / max) * 100)) : 0;
   return (
-    <li className={`${ROW_GRID} border-t border-border py-4`}>
+    <li className={`${ROW_GRID} border-t-2 border-border py-4`}>
       <span className="font-heading text-2xl font-bold leading-none tabular-nums lg:text-3xl" aria-label={`Rank ${rank}`}>
         {rank}
       </span>{" "}

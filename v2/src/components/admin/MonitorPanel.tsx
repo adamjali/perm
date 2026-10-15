@@ -63,7 +63,7 @@ export function MonitorPanel() {
           {data.history.map((h) => (
             <li
               key={h.day}
-              className={`border border-border px-2 py-1 text-sm font-bold ${CHIP[asStatus(h.overall)]}`}
+              className={`border-2 border-border px-2 py-1 text-sm font-bold ${CHIP[asStatus(h.overall)]}`}
             >
               {`${dayLabel(h.day)}: ${WORD[asStatus(h.overall)]}`}{" "}
             </li>
@@ -74,7 +74,7 @@ export function MonitorPanel() {
         {sections.map((s) => (
           <li key={s.key} className="border-2 border-border bg-card p-4 sm:p-5 shadow-hard-sm">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className={`border border-border px-2 py-0.5 text-sm font-bold ${CHIP[s.status]}`}>
+              <span className={`border-2 border-border px-2 py-0.5 text-sm font-bold ${CHIP[s.status]}`}>
                 {WORD[s.status]}
               </span>{" "}
               <h3 className="font-heading text-lg font-bold">{s.title}</h3>{" "}

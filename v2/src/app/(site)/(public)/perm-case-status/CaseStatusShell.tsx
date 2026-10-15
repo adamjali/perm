@@ -100,7 +100,10 @@ function Bar({ className }: { className: string }) {
 export function LookupSkeleton() {
   return (
     <div aria-hidden="true">
-      <div className="bg-foreground p-5 sm:p-8 border-2 shadow-hard border-border">
+      {/* The answer panel's own shape: an object with its ink band on top. */}
+      <div className="object">
+        <div className="h-12 border-b-2 border-black bg-[#141414]" />
+        <div className="p-5 sm:p-8">
         <Bar className="h-7 w-48" />
         <div className="mt-4 max-w-3xl space-y-3">
           <Bar className="h-6 w-full" />
@@ -119,17 +122,18 @@ export function LookupSkeleton() {
           <div className="space-y-2">
             <Bar className="h-5 w-72 max-w-full" />
             <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="h-12 min-w-0 flex-1 border border-input bg-card" />
+              <div className="h-12 min-w-0 flex-1 border-2 border-input bg-card" />
               <Bar className="h-12 w-full sm:w-44" />
             </div>
             <Bar className="h-4 w-64 max-w-full" />
           </div>
         </div>
         <Bar className="mt-5 h-4 w-3/4" />
+        </div>
       </div>
 
       {[0, 1].map((n) => (
-        <div key={n} className="mt-12 border-t border-border pt-8 sm:mt-16">
+        <div key={n} className="mt-12 border-t-4 border-border pt-8 sm:mt-16">
           <Bar className="h-7 w-72 max-w-full" />
           <div className="mt-4 max-w-2xl space-y-2.5">
             <Bar className="h-4 w-full" />

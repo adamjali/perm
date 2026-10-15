@@ -120,7 +120,7 @@ export function BudgetPools({
 
 function Figure({ value, label, tone }: { value: string; label: string; tone?: "warn" }) {
   return (
-    <div className={`border border-border p-3 ${tone === "warn" ? "bg-data-warn-ink text-background" : "bg-background"}`}>
+    <div className={`border-2 border-border p-3 ${tone === "warn" ? "bg-data-warn-ink text-background" : "bg-background"}`}>
       <p className="font-heading text-2xl font-bold tabular-nums">{value}</p>{" "}
       <p className={`text-sm font-semibold ${tone === "warn" ? "" : "text-muted-foreground"}`}>{label}</p>
     </div>

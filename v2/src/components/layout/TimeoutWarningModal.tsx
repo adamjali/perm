@@ -87,18 +87,16 @@ export default function TimeoutWarningModal({
 
       {/* Modal */}
       <div
-        className="relative z-10 bg-background border border-border w-full max-w-md mx-4 p-8 duration-300"
+        className="relative z-10 bg-background border-2 border-black w-full max-w-md mx-4 p-8 shadow-hard-lg duration-300"
       >
         {/* Header with icon */}
         <div className="flex flex-col items-center gap-4 mb-6">
           <div
-            className={`p-3 border border-border ${
-              isUrgent ? "bg-destructive/10" : "bg-data-warn/15"
+            className={`p-3 border-2 border-black text-black ${
+              isUrgent ? "bg-destructive" : "bg-data-warn"
             }`}
           >
-            <ClockIcon
-              className={`size-8 ${isUrgent ? "text-destructive" : "text-data-warn-ink"}`}
-            />
+            <ClockIcon weight="bold" className="size-8" />
           </div>
 
           <h2
@@ -119,15 +117,15 @@ export default function TimeoutWarningModal({
 
         {/* Countdown */}
         <div
-          className={`text-center py-4 px-6 mb-6 border border-border ${
+          className={`text-center py-4 px-6 mb-6 border-2 border-black ${
             isUrgent
-              ? "bg-destructive/10"
-              : "bg-muted"
+              ? "bg-destructive text-black"
+              : "bg-[#141414] text-white"
           }`}
         >
           <span
             className={`font-heading text-5xl font-bold tabular-nums ${
-              isUrgent ? "text-destructive" : "text-foreground"
+              isUrgent ? "text-black" : "text-white"
             }`}
           >
             {formattedTime}
