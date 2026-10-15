@@ -1,5 +1,6 @@
 import { RUNGS, RUNG_LABEL, isComplete, type Ladder } from "@/lib/wageLadder";
 import { formatDollars } from "@/lib/format";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * The same ladders as exact figures.
@@ -35,7 +36,7 @@ export function LadderTable({
   const rows = ladders.filter(isComplete);
   if (rows.length === 0) return null;
   return (
-    <div className="-mx-1 overflow-x-auto px-1">
+    <ScrollBox label={`Offered wage percentiles by ${subjectLabel.toLowerCase()}`} className="-mx-1 px-1">
       <table className="w-full min-w-[640px] border border-border text-left text-sm">
         <caption className="sr-only">
           {`Offered wage percentiles by ${subjectLabel.toLowerCase()}, with the number of ${unit} behind each row.`}
@@ -77,6 +78,6 @@ export function LadderTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollBox>
   );
 }

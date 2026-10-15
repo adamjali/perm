@@ -50,6 +50,7 @@ import {
 } from "@/lib/processing-times/i140ProcessingTimes";
 import { formatAsOf } from "@/lib/dolFormat";
 import { SITE_URL } from "@/lib/constants/site";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 const TITLE = "USCIS Processing Times by Form (Median)";
 const DESCRIPTION =
@@ -377,7 +378,7 @@ export default async function UscisProcessingTimesPage() {
                 {i140History.length > 0 || i485ebHistory.length > 0 ? (
                   <div className="mt-6 border-t border-border/60 pt-4">
                     <p className="text-sm font-bold text-muted-foreground">Since the factsheet, by quarter</p>{" "}
-                    <div className="mt-2 overflow-x-auto">
+                    <ScrollBox label="Medians by quarter since the factsheet" className="mt-2">
                       <table className="min-w-[420px] text-sm">
                         <thead>
                           <tr className="border-b border-border text-left">
@@ -401,7 +402,7 @@ export default async function UscisProcessingTimesPage() {
                           })}
                         </tbody>
                       </table>
-                    </div>
+                    </ScrollBox>
                   </div>
                 ) : null}
               </FigurePlate>
@@ -425,7 +426,7 @@ export default async function UscisProcessingTimesPage() {
                       <span>{cat}</span>{" "}
                       <span className="font-mono text-sm font-bold text-muted-foreground">{rowsIn.length} lines</span>
                     </summary>{" "}
-                    <div className="overflow-x-auto border-t border-border">
+                    <ScrollBox label="Every form USCIS reports" className="border-t border-border">
                       <table className="min-w-[760px] w-full text-sm">
                         <thead>
                           <tr className="border-b border-border text-left">
@@ -450,7 +451,7 @@ export default async function UscisProcessingTimesPage() {
                           ))}
                         </tbody>
                       </table>
-                    </div>
+                    </ScrollBox>
                   </details>
                   </Fragment>
                 );

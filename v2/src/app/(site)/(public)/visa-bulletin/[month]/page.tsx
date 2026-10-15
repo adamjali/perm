@@ -39,6 +39,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import { BOARD_COUNTRIES, categoriesIn } from "@/lib/db/bulletin";
 import { getVisaBulletins } from "@/lib/db/publicData";
 import { buttonVariants } from "@/components/ui/button";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 // A bulletin changes once a month; a day bounds any re-parse far below that.
 export const revalidate = 86400;
@@ -250,7 +251,7 @@ function ChartTable({
       <p className="mt-1 text-sm text-muted-foreground">
         {since ? `Each cell shows the cutoff and its move since the ${since} bulletin.` : first}
       </p>{" "}
-      <div className="mt-4 overflow-x-auto overscroll-x-none border border-border bg-card">
+      <ScrollBox label={title} className="mt-4 overscroll-x-none border border-border bg-card">
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead className="border-b border-input bg-muted">
             <tr>
@@ -288,7 +289,7 @@ function ChartTable({
             })}
           </tbody>
         </table>
-      </div>
+      </ScrollBox>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import type { ReviewStage } from "@/lib/db/rfi";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import { GROUP_STYLE, stageMeta } from "./stageMeta";
 
 /**
@@ -235,7 +236,7 @@ function Marker({
  */
 export function StageLadderTable({ stages }: { stages: ReviewStage[] }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollBox label="Cases at each review stage">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-border text-left text-sm">
@@ -287,7 +288,7 @@ export function StageLadderTable({ stages }: { stages: ReviewStage[] }) {
           })}
         </tbody>
       </table>
-    </div>
+    </ScrollBox>
   );
 }
 

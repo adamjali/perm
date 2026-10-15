@@ -22,6 +22,7 @@ import {
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { seriesYearFor, SOC_RE, WAGE_SEARCH_PAGE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
 import { buttonVariants } from "@/components/ui/button";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * The weighted H-1B lottery for one job: the OEWS level an offer meets in
@@ -334,7 +335,7 @@ export function H1bLotteryCalculator() {
             </div>
           </div>{" "}
           <LevelOdds assigned={assigned.level} />{" "}
-          <div className="overflow-x-auto border border-border">
+          <ScrollBox label="The level met at each worksite" className="border border-border">
             <table className="w-full min-w-[560px] text-left text-base">
               <thead className="border-b border-border bg-muted/40">
                 <tr>
@@ -360,7 +361,7 @@ export function H1bLotteryCalculator() {
                 ))}
               </tbody>
             </table>
-          </div>{" "}
+          </ScrollBox>{" "}
           <p className="text-sm leading-relaxed text-soft">
             {usd(done.offer, done.unit)} for SOC {done.soc}, against DOL&apos;s figures for the July {done.seriesYear} to June{" "}
             {done.seriesYear + 1} series, read just now from the{" "}

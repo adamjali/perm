@@ -304,7 +304,7 @@ export default async function EstimateScorecardPage() {
           H-2B and CW-1 application is recorded once, in its first week, as its case page dated it.
         </p>{" "}
         {others.length > 0 ? (
-          <div className="mt-4 overflow-x-auto">
+          <ScrollBox label="The other estimates" className="mt-4">
             <table className="w-full min-w-[44rem] border-collapse text-left text-base">
               <thead>
                 <tr className="border-b border-border">
@@ -335,7 +335,7 @@ export default async function EstimateScorecardPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
         ) : (
           <p className="mt-4 text-base text-soft">The first of these are recorded the morning after this section went live.</p>
         )}{" "}

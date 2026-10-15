@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { MAX_CITY, WAGE_SECTORS } from "@/lib/wagePlaceFilters";
 import { formatDollars, formatInt } from "@/lib/format";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * Offered wages in DOL's disclosure files, filtered.
@@ -567,7 +568,7 @@ export function SalaryExplorer({
                   <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
                     {`All ${formatInt(data.byState.length)} states, as a table`}
                   </summary>
-                <div className="overflow-x-auto border-t border-border">
+                <ScrollBox label="Every state, as a table" className="border-t border-border">
                   <table className="w-full min-w-[36rem] text-left text-sm">
                     <thead className="border-b border-input bg-muted">
                       <tr>
@@ -607,7 +608,7 @@ export function SalaryExplorer({
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </ScrollBox>
                 </details>
               </div>
             ) : null}

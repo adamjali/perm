@@ -62,6 +62,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { SITE_URL } from "@/lib/constants/site";
 import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 import { buttonVariants } from "@/components/ui/button";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
@@ -514,7 +515,7 @@ export default async function PermProcessingTimesPage() {
             title="Every queue DOL publishes"
             dek={`DOL's figures as of ${permAsOf}: the filing month each PERM queue is working, and the wage requests still waiting.`}
           >
-            <div className="mt-6 overflow-x-auto">
+            <ScrollBox label="Where each DOL queue stands" className="mt-6">
               <table className="w-full border border-border text-left text-sm">
                 <thead className="bg-muted">
                   <tr>
@@ -535,7 +536,7 @@ export default async function PermProcessingTimesPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollBox>
           {snapshot.pwdPermBacklog.length > 0 ? (
             <div className="mt-10">
               <h3 className="font-heading text-xl font-bold">

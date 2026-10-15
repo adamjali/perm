@@ -14,6 +14,7 @@ import { useState } from "react";
 import type { FunctionReturnType } from "convex/server";
 import { formatInt } from "@/lib/format";
 import { EASTERN_TIMEZONE, MS_PER_HOUR } from "@/lib/time";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import type { api } from "@convex/_generated/api";
 import { between } from "./elapsed";
 
@@ -172,7 +173,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
               {`The newest ${formatInt(data.recent.length)} of ${formatInt(data.recentTotal ?? 0)} in the last 7 days.`}
             </p>
           ) : null}
-          <div className="mt-3 overflow-x-auto border border-border">
+          <ScrollBox label="Latest alerts" className="mt-3 border border-border">
             <table className="w-full min-w-[880px] text-left text-sm">
               <thead className="bg-muted">
                 <tr>
@@ -215,7 +216,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
           </>
         )}
       </section>{" "}

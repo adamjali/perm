@@ -11,6 +11,7 @@ import { api } from "@convex/_generated/api";
 import { otherEstimateRows } from "@/lib/scorecard/otherEstimates";
 import { CASE_KINDS, HORIZONS, type CaseKind, type Cell, type HeadToHead, type Summary } from "@/lib/scorecard/score";
 import type { SeasonalCheck } from "@/lib/seasonalTiming";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import {
   GRADE_SCALE,
   gradedMiss,
@@ -272,7 +273,7 @@ export function ScorecardPanel() {
           Every source on its own sample. The grade is the typical miss, counting a case still waiting past its date at
           the days it&apos;s already late: {GRADE_SCALE}. &ldquo;Late&rdquo; means DOL decided before the date given.
         </p>{" "}
-        <div className="mt-4 overflow-x-auto border border-border">
+        <ScrollBox label="Grades so far" className="mt-4 border border-border">
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted">
               <tr>
@@ -291,7 +292,7 @@ export function ScorecardPanel() {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollBox>
       </section>{" "}
 
       {others.length > 0 ? (
@@ -301,7 +302,7 @@ export function ScorecardPanel() {
             Ours only: no rival dates wage requests or H-2A, H-2B and CW-1 cases. Each seasonal application is
             recorded once, in its first week.
           </p>{" "}
-          <div className="mt-4 overflow-x-auto border border-border">
+          <ScrollBox label="The other estimates" className="mt-4 border border-border">
             <table className="w-full min-w-[640px] text-sm">
               <thead className="bg-muted">
                 <tr>
@@ -325,14 +326,14 @@ export function ScorecardPanel() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
         </section>
       ) : null}{" "}
 
       <details className="border border-border bg-card">
         <summary className="flex min-h-[44px] cursor-pointer items-center px-5 font-bold">Every figure</summary>
         <div className="space-y-6 border-t border-border p-5">
-          <div className="overflow-x-auto border border-border">
+          <ScrollBox label="Every figure, all sources" className="border border-border">
             <table className="w-full min-w-[760px] text-sm">
               <caption className="p-2 text-left text-sm text-muted-foreground">
                 All sources. Bias is decided minus predicted (negative: DOL was earlier). Settled: dates more than 30
@@ -365,9 +366,9 @@ export function ScorecardPanel() {
                 })}
               </tbody>
             </table>
-          </div>{" "}
+          </ScrollBox>{" "}
           {Object.keys(h2h).length > 0 ? (
-            <div className="overflow-x-auto border border-border">
+            <ScrollBox label="Head to head" className="border border-border">
               <table className="w-full min-w-[960px] text-sm">
                 <caption className="p-2 text-left text-sm text-muted-foreground">
                   Head to head: only cases both sides dated the same day, then split by the kind of case. A waiting case counts once DOL can no longer decide nearer the earlier date; &ldquo;waiting counted&rdquo; puts each waiting case at the days it is late so far.
@@ -389,9 +390,9 @@ export function ScorecardPanel() {
                   ])}
                 </tbody>
               </table>
-            </div>
+            </ScrollBox>
           ) : null}{" "}
-          <div className="overflow-x-auto border border-border">
+          <ScrollBox label="Typical miss by how far ahead the date was" className="border border-border">
             <table className="w-full min-w-[560px] text-sm">
               <caption className="p-2 text-left text-sm text-muted-foreground">
                 Typical miss by how far ahead the date was, with how many were graded.
@@ -418,7 +419,7 @@ export function ScorecardPanel() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
         </div>
       </details>
     </div>

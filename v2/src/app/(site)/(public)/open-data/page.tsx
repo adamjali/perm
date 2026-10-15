@@ -29,6 +29,7 @@ import {
 } from "@/lib/openData";
 import { getProcessingTimesArchive, getVisaBulletinsArchive } from "@/lib/db/openData";
 import { buttonVariants } from "@/components/ui/button";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import { MONTH_ABBR, shortDate } from "@convex/lib/months";
 
 const TITLE = "Open Data: Visa Bulletin and DOL History";
@@ -270,7 +271,7 @@ function DatasetPanel<T extends object>({
       </div>{" "}
 
       {preview.length > 0 && (
-        <div className="overflow-x-auto border-b border-border bg-muted/60">
+        <ScrollBox label="The first rows of the file" className="border-b border-border bg-muted/60">
           <table className="w-full min-w-[26rem] border-collapse font-mono text-sm">
             <caption className="sr-only">{caption}</caption>
             <thead>
@@ -294,7 +295,7 @@ function DatasetPanel<T extends object>({
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollBox>
       )}{" "}
 
       <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">

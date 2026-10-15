@@ -30,6 +30,7 @@ import type { BulletinBoard as Board, BoardCell } from "@/lib/db/bulletin";
 import type { ChartKind, CountryKey } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 import { DAYS_PER_MONTH } from "@/lib/time";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 export interface BulletinBoardProps {
   board: Board;
@@ -176,7 +177,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
         <h3 className="font-heading text-lg font-bold">
           Where every category stood in {formatMonth(board.lastMonth)}
         </h3>{" "}
-        <div className="mt-4 overflow-x-auto">
+        <ScrollBox label={`Where every category stood in ${formatMonth(board.lastMonth)}`} className="mt-4">
           <table className="w-full min-w-[640px] border border-border text-left text-sm">
             <caption className="sr-only">
               {`Employment-based ${chart === "finalAction" ? "final action" : "dates for filing"} cutoffs by category and country of birth, from the ${formatMonth(board.lastMonth)} visa bulletin.`}
@@ -249,7 +250,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
               ))}
             </tbody>
           </table>
-        </div>{" "}
+        </ScrollBox>{" "}
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Cutoffs as published in the {formatMonth(board.lastMonth)} bulletin.{" "}
           <strong className="font-bold text-primary-text">Current</strong> means

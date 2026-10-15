@@ -9,6 +9,7 @@ import { BOARD_COUNTRIES, summariseBulletins, type BoardCell } from "@/lib/db/bu
 import { getFamilyBulletinSeries } from "@/lib/db/publicData";
 import { withSocialCard } from "@/lib/socialCard";
 import { SITE_URL } from "@/lib/constants/site";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * Family-sponsored cutoff history from the bulletin archive.
@@ -83,7 +84,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
         Each bar is the cutoff&apos;s pace: full means it kept up with the calendar, half means it moved six months
         a year, red means it ended further back than it started.
       </p>{" "}
-      <div className="mt-4 overflow-x-auto overscroll-x-none">
+      <ScrollBox label={title} className="mt-4 overscroll-x-none">
         <table className="w-full min-w-[720px] border border-border text-sm">
           <thead className="border-b border-input bg-muted">
             <tr>
@@ -111,7 +112,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
             ))}
           </tbody>
         </table>
-      </div>
+      </ScrollBox>
     </section>
   );
 }

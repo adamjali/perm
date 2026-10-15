@@ -56,7 +56,9 @@ Light values; dark values are in the `.dark` block beside them.
   token lightened; that's why the distinction is written down.
 - **Status and data colours** (`--data-good`, `--data-warn`, `--data-bad`,
   `--data-none`, `--data-info`, each with an `-ink` twin for text) appear in charts,
-  status dots and badges, never on chrome.
+  status dots and badges, never on chrome. Text set ON one of these fills is black in
+  both themes (the fills lighten in dark mode); the slate `--data-none` darkens there,
+  so text on it turns white.
 - **Stage colours** (`--stage-pwd`, `--stage-recruitment`, `--stage-eta9089`,
   `--stage-i140`, `--stage-closed`, each with an `-ink` twin) mark a case's stage in
   timelines and the case card, and nowhere else.
@@ -115,7 +117,8 @@ never black-weight. Prose runs at 68 characters at most (`max-w-prose` or
 | `IndexHeader`, `ProfileHeader`, `Chapter`, `ChapterNav` | `components/data/`, `components/entities/` | the top of list pages and of employer, firm and occupation pages. |
 | `CaseLookupForm`, `CaseNextStep` | `components/tools/` | the case-number box (a plain GET form, works without scripts) and the one next step for someone waiting on a case. |
 | `DidYouMean`, `NameGroups` | `components/search/` | "did you mean" for any empty search; the pages a name can mean, beside its filings. |
-| `ChartTips`, `DateRuler` | `components/data/`, `components/tools/` | every chart's hover and tap readout; a deadline drawn as a ruler. |
+| `ChartTips`, `DateRuler` | `components/data/`, `components/tools/` | every chart's hover and tap readout; a deadline drawn as a ruler. A chart wider than a phone passes its scroll box's classes as `scroll`, so the one tab stop is the box that scrolls. |
+| `ScrollBox` | `ui/scroll-box.tsx` | a table or strip that scrolls sideways on a phone: a named region with a tab stop, so a keyboard can reach it. A box holding links already has one and needs nothing. |
 | `PageHeading`, `AppBreadcrumb`, `SettingsCard` | `app/(authenticated)/components/`, `components/settings/` | the signed-in app's title block, trail and settings sections. |
 
 Month names and date labels come from one module, `convex/lib/months.ts`
@@ -170,6 +173,8 @@ sits under its field, with a summary at the top of the form.
 | `responsive-grid-tracks.test.ts`, `form-controls-min-width.test.ts` | form grids that overflow on iOS |
 | `one-month-list.test.ts` | one list of month names |
 | `scroll-targets.test.ts` | every place the assistant can scroll to exists |
+| `no-controls-in-summary.test.ts` | nothing pressable inside a `<summary>` (a fold's toggle): a count that links goes inside the entry |
+| `scripts/audit_axe.mjs` | axe-core to WCAG 2.2 AA over rendered pages, both themes, 1440 and 390; exits 1 on anything serious. Run it against the dev server on production data |
 
 ## Storybook
 

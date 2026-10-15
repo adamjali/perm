@@ -758,7 +758,7 @@ export function ImportModal({
                                   key={index}
                                   className={cn(
                                     "group border-b border-border transition-colors duration-150",
- isError && "bg-data-bad/10 border-data-bad",
+                                    isError && "bg-data-bad/10 border-data-bad",
                                     isEditing && "bg-primary/5 dark:bg-primary/10 ring-1 ring-primary/50",
                                     !isError &&
                                       !isEditing &&

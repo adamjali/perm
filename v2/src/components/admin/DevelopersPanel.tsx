@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { api } from "@convex/_generated/api";
 import { formatInt } from "@/lib/format";
 import { EASTERN_TIMEZONE } from "@/lib/time";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import { monthDay } from "@convex/lib/months";
 
 type Summary = FunctionReturnType<typeof api.adminDevelopers.summary>;
@@ -123,7 +124,7 @@ export function DevelopersPanel() {
         {accounts.length === 0 ? (
           <p className="mt-2 text-base text-muted-foreground">Nobody has made a key yet.</p>
         ) : (
-          <div className="mt-3 overflow-x-auto">
+          <ScrollBox label="API accounts" className="mt-3">
             <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-border">
@@ -152,7 +153,7 @@ export function DevelopersPanel() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
         )}
         <p className="mt-2 text-sm text-muted-foreground">
           Put an account on Plus by hand: <code>npx convex run apiKeys:setPlan</code> with its email, against prod.

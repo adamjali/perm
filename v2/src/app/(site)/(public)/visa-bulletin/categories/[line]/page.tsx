@@ -42,6 +42,7 @@ import { categoriesIn, summariseBulletins, type BoardCell } from "@/lib/db/bulle
 import { getVisaBulletins } from "@/lib/db/publicData";
 import { DAYS_PER_MONTH, easternDay } from "@/lib/time";
 import { buttonVariants } from "@/components/ui/button";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 // A bulletin changes once a month and USCIS's counts monthly or quarterly.
 export const revalidate = 86400;
@@ -212,7 +213,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
           The final action cutoff in each year&apos;s first bulletin (October) against its last (September), the year the
           State Department plans visa numbers for. Newest first.
         </p>{" "}
-        <div className="mt-4 overflow-x-auto border border-border">
+        <ScrollBox label="Cutoffs a fiscal year at a time" className="mt-4 border border-border">
           <table className="w-full min-w-[560px] text-left text-base">
             <thead className="border-b border-border bg-muted/40">
               <tr>
@@ -253,7 +254,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollBox>
       </section>
 
       {counts.awaiting || counts.inventory ? (

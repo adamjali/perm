@@ -180,7 +180,7 @@ export async function OccupationReference({
             Each July DOL resets the four levels from BLS&apos;s newest survey. A determination keeps the figures of
             the year it was issued in.
           </p>
-          <div className="mt-4 overflow-x-auto">
+          <ScrollBox label="DOL wage levels by wage year" className="mt-4">
             <table className="w-full min-w-[34rem] text-left text-base">
               <caption className="sr-only">DOL wage levels by wage year, {busiest.name}{" "}</caption>
               <thead>
@@ -206,7 +206,7 @@ export async function OccupationReference({
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
           <p className="mt-3 text-sm text-muted-foreground">
             <Link href={`/tools/wage-levels?soc=${soc}`} className="link">
               Every area and both wage tables in the wage-level tool

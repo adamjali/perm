@@ -8,6 +8,7 @@ import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverL
 import { formatAsOf, formatMonthShort, formatMonth } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
 import { MS_PER_DAY } from "@/lib/time";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import { DataView, ScopeSelect } from "./DataView";
 import { MONTH_ABBR } from "@convex/lib/months";
 
@@ -424,7 +425,7 @@ function QueueHistoryTable({
   // months it is always 28 to 31 and says nothing.
   const showGap = kind === "readings";
   return (
-    <div className="overflow-x-auto">
+    <ScrollBox label={copy.caption}>
       <table className="w-full min-w-[560px] border border-border text-left text-sm">
         <caption className="sr-only">{copy.caption}</caption>
         <thead className="border-b border-input bg-muted">
@@ -476,7 +477,7 @@ function QueueHistoryTable({
           })}
         </tbody>
       </table>
-    </div>
+    </ScrollBox>
   );
 }
 
@@ -741,7 +742,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
           </ChartTips>
         }
         table={
-          <div className="overflow-x-auto">
+          <ScrollBox label="PERM determinations by month of decision">
             <table className="w-full min-w-[560px] border border-border text-left text-sm">
               <caption className="sr-only">
                 PERM determinations recorded in DOL&apos;s disclosure files, by month
@@ -787,7 +788,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                 })}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
         }
       />
       <figcaption className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">

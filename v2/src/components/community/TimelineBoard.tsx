@@ -14,6 +14,7 @@ import {
 } from "@/lib/communityTimeline";
 import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * The visual half of the green card timelines page, server-rendered, no
@@ -317,7 +318,7 @@ export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: 
         </ul>
       </ChartTips>{" "}
       {waiting.lines.length ? (
-        <div className="overflow-x-auto border border-border">
+        <ScrollBox label="Timelines by category, country and step" className="border border-border">
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <caption className="sr-only">Timelines by category, country and step</caption>
             <thead>
@@ -347,7 +348,7 @@ export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: 
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollBox>
       ) : null}{" "}
       {waiting.unlisted ? (
         <p className="text-sm text-muted-foreground">

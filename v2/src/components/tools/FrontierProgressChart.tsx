@@ -34,6 +34,7 @@ import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
 import { DataView, ScopeSelect } from "@/components/tools/DataView";
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 export interface FrontierPoint {
   decisionMonth: string;
@@ -263,7 +264,7 @@ function FrontierTable({
   filingMonth: string;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollBox label="The filing month DOL was deciding, by month">
       <table className="w-full min-w-[560px] border border-border text-left text-sm">
         <caption className="sr-only">
           The filing month DOL was deciding in each month of determinations,
@@ -320,7 +321,7 @@ function FrontierTable({
           })}
         </tbody>
       </table>
-    </div>
+    </ScrollBox>
   );
 }
 

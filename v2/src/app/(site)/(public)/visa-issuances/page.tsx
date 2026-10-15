@@ -20,6 +20,7 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { formatInt } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import {
   ALL_CATEGORIES,
   EMPLOYMENT_CATEGORIES,
@@ -217,7 +218,7 @@ export default async function VisaIssuancesPage() {
         <h2 id="iv-all" className="font-heading text-2xl font-bold">
           Every category
         </h2>{" "}
-        <div className="mt-4 overflow-x-auto border border-border bg-card">
+        <ScrollBox label="Immigrant visas issued abroad, by category" className="mt-4 border border-border bg-card">
           <table className="w-full min-w-[32rem] text-left text-base">
             <caption className="sr-only">Immigrant visas issued abroad by category{" "}</caption>
             <thead className="border-b border-border bg-muted/40">
@@ -237,7 +238,7 @@ export default async function VisaIssuancesPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollBox>
         <FinePrint summary="How State's symbols map to these categories" className="mt-3">
           <p>
             Each row of State&apos;s tables carries a visa symbol. The categories follow State&apos;s own legend,{" "}

@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
 import type { Components } from 'react-markdown';
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 interface ChatMarkdownProps {
   content: string;
@@ -149,7 +150,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
 
     // Tables
     table: ({ children }) => (
-      <div className="my-2 overflow-x-auto overscroll-x-none">
+      <ScrollBox label="A table in the reply" className="my-2 overscroll-x-none">
         <table
           className={cn(
             'w-full text-sm',
@@ -159,7 +160,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
         >
           {children}
         </table>
-      </div>
+      </ScrollBox>
     ),
 
     thead: ({ children }) => (

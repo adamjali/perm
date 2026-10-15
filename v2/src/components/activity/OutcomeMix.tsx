@@ -2,6 +2,7 @@ import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import type { OutcomeQuarter } from "@/lib/activityStats";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * What happened to the cases DOL decided, quarter by quarter.
@@ -99,7 +100,7 @@ export function OutcomeMix({
         <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
           Every quarter&apos;s figures
         </summary>
-        <div className="overflow-x-auto border-t border-border">
+        <ScrollBox label="Every quarter's figures" className="border-t border-border">
           <table className="w-full min-w-[30rem] text-left text-sm tabular-nums">
             <caption className="sr-only">Decided PERM cases by quarter: certified, denied and withdrawn shares</caption>
             <thead className="bg-muted">
@@ -123,7 +124,7 @@ export function OutcomeMix({
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollBox>
       </details>{" "}
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         Both strips share one scale. Each quarter is when DOL decided, not when the cases were filed, and the

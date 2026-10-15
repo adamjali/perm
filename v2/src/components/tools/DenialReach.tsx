@@ -4,6 +4,7 @@ import { Fragment, useMemo } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { formatInt } from "@/lib/format";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 import { DataView } from "./DataView";
 
@@ -146,7 +147,7 @@ export function DenialReach({
   );
 
   const table = (
-    <div className="overflow-x-auto">
+    <ScrollBox label={caption}>
       <table className="w-full border border-border text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-input bg-muted">
@@ -180,7 +181,7 @@ export function DenialReach({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollBox>
   );
 
   return (

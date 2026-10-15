@@ -17,6 +17,7 @@ import { API_BASE, ENDPOINTS, MCP_TOOLS, MCP_URL } from "@/lib/api/openapi";
 import { SANDBOX_CASE_NUMBERS } from "@/lib/api/sandbox";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 const TITLE = "PERM Tracker API and MCP Server";
 const DESCRIPTION =
@@ -155,7 +156,7 @@ export default function DevelopersPage() {
           Paid features are free for now: every account gets the Plus plan&rsquo;s limits, exports, live DOL lookups and
           webhooks until billing opens. We&rsquo;ll say so here, and email key holders, before that changes.
         </p>{" "}
-        <div className="mt-4 overflow-x-auto border border-border">
+        <ScrollBox label="Plans and their limits" className="mt-4 border border-border">
           <table className="w-full min-w-[480px] text-left text-sm">
             <thead className="bg-muted">
               <tr>
@@ -187,7 +188,7 @@ export default function DevelopersPage() {
               ))}
             </tbody>
           </table>
-        </div>{" "}
+        </ScrollBox>{" "}
         <p className="mt-3 text-base text-soft">
           Calls are counted per account and reset at midnight UTC. Need more?{" "}
           <a href="mailto:support@permtracker.app?subject=API%20limits" className="font-bold link">
@@ -208,7 +209,7 @@ export default function DevelopersPage() {
           </a>{" "}
           has the same list for tools that read it.
         </p>{" "}
-        <div className="mt-4 overflow-x-auto border border-border">
+        <ScrollBox label="API endpoints" className="mt-4 border border-border">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-muted">
               <tr>
@@ -232,7 +233,7 @@ export default function DevelopersPage() {
               ))}
             </tbody>
           </table>
-        </div>{" "}
+        </ScrollBox>{" "}
         <details className="mt-4 border border-border bg-card px-4 py-3">
           <summary className="cursor-pointer font-bold">The shape of every answer</summary>
           <Code>{`{
@@ -253,7 +254,7 @@ export default function DevelopersPage() {
           <p className="mt-3 text-sm leading-relaxed text-soft">
             Every error is JSON with a code and a sentence saying what happened and what to do.
           </p>{" "}
-          <div className="mt-3 overflow-x-auto">
+          <ScrollBox label="Error codes" className="mt-3">
             <table className="w-full min-w-[520px] text-left text-sm">
               <tbody className="divide-y divide-border">
                 {ERRORS.map(([status, codes, meaning]) => (
@@ -265,7 +266,7 @@ export default function DevelopersPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
         </details>
       </section>
 

@@ -10,6 +10,7 @@ import { CENSUS_REGION } from "./USStateMap";
 import { DataView } from "./DataView";
 import { FilterableStatTable, type CsvSpec, type StatColumn } from "./FilterableStatTable";
 import { choiceVariants } from "@/components/ui/choice";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * Concentration: the fact a choropleth structurally cannot show.
@@ -140,7 +141,7 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
 
 function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollBox label={`Every state by its biggest ${unit.toLowerCase()}`}>
       <table className="w-full border border-border text-left text-sm">
         <caption className="sr-only">
           Every state by the share of its filings in its single biggest {unit.toLowerCase()}
@@ -172,7 +173,7 @@ function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollBox>
   );
 }
 

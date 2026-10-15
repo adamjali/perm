@@ -46,6 +46,7 @@ import {
 } from "@/lib/uscisQuarterlyShape";
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 const TITLE = "Approved I-140s Waiting for a Visa Number";
 const DESCRIPTION =
@@ -252,7 +253,7 @@ export default async function I140AwaitingVisaPage() {
               USCIS&apos;s nine columns and six rows, as printed. The TOTAL row is USCIS&apos;s,
               and this site refuses the file if the countries don&apos;t sum to it.
             </p>{" "}
-            <div className="mt-4 overflow-x-auto border border-border bg-card">
+            <ScrollBox label="Approved petitions awaiting a visa, by country" className="mt-4 border border-border bg-card">
               <table className="min-w-[880px] w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left">
@@ -273,7 +274,7 @@ export default async function I140AwaitingVisaPage() {
                   ))}
                 </tbody>
               </table>
-            </div>{" "}
+            </ScrollBox>{" "}
             <FinePrint summary="What USCIS says about this count" className="mt-4">
               <p>
                 Priority dates are judged against the final action dates chart of the
@@ -322,7 +323,7 @@ export default async function I140AwaitingVisaPage() {
                 <p className="text-sm font-bold text-muted-foreground">
                   Approvals by class, FY{latestFullFy}, petitions received that year
                 </p>{" "}
-                <div className="mt-2 overflow-x-auto">
+                <ScrollBox label="Approvals by class" className="mt-2">
                   <table className="min-w-[560px] w-full text-sm">
                     <thead>
                       <tr className="border-b border-border text-left">
@@ -346,7 +347,7 @@ export default async function I140AwaitingVisaPage() {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </ScrollBox>
               </div>
             ) : null}
           </FigurePlate>

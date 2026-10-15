@@ -11,6 +11,7 @@ import { languageAlternates, localeByCode, type LocaleCode, type LocaleDef } fro
 import { openGraphBase } from "@/lib/openGraphBase";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { buttonVariants } from "@/components/ui/button";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * One localized guide: the page body every `/zh`, `/es`, `/pt-br`, `/ko` and
@@ -68,7 +69,7 @@ function CutoffTable({ country, data, locale }: { country: CountryKey; data: Non
   const copy = GUIDE_COPY[locale.code];
   const rows = data.rows[country] ?? [];
   return (
-    <div className="overflow-x-auto border border-border bg-card">
+    <ScrollBox label={copy.cutoffs.countryName[country] ?? country} className="border border-border bg-card">
       <table className="w-full min-w-[34rem] border-collapse text-left text-base">
         <caption className="border-b border-border bg-muted px-4 py-2 text-left font-heading text-lg font-bold">
           {copy.cutoffs.countryName[country] ?? country}
@@ -94,7 +95,7 @@ function CutoffTable({ country, data, locale }: { country: CountryKey; data: Non
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollBox>
   );
 }
 

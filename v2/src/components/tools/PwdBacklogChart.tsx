@@ -26,6 +26,7 @@ import { formatMonth } from "@/lib/dolFormat";
 import type { PwdBacklogMonth } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import { DataView, ScopeSelect } from "./DataView";
 
 export interface PwdBacklogChartProps {
@@ -126,7 +127,7 @@ function BacklogTable({
   selectedMonth?: string;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollBox label="Wage requests still pending, by month received">
       <table className="w-full min-w-[560px] border border-border text-left text-sm">
         <caption className="sr-only">
           Prevailing wage requests still pending by month of receipt, with each
@@ -183,7 +184,7 @@ function BacklogTable({
           </tr>
         </tfoot>
       </table>
-    </div>
+    </ScrollBox>
   );
 }
 

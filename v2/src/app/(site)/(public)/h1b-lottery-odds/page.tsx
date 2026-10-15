@@ -29,6 +29,7 @@ import {
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { formatPercent } from "@/lib/format";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 const TITLE = "H-1B Lottery Odds by Year";
 const DESCRIPTION =
@@ -208,7 +209,7 @@ export default function H1bLotteryOddsPage() {
         <h2 id="table" className="font-heading text-2xl font-bold">
           USCIS&apos;s table
         </h2>{" "}
-        <div className="mt-4 overflow-x-auto border border-border">
+        <ScrollBox label="USCIS's lottery figures, by fiscal year" className="mt-4 border border-border">
           <table className="w-full min-w-[720px] text-left text-base">
             <thead className="border-b border-border bg-muted/40">
               <tr>
@@ -235,7 +236,7 @@ export default function H1bLotteryOddsPage() {
               ))}
             </tbody>
           </table>
-        </div>{" "}
+        </ScrollBox>{" "}
         <p className="mt-3 text-base text-soft">
           From USCIS&apos;s{" "}
           <a href={H1B_REGISTRATION_SOURCE} className="link" rel="noopener" target="_blank">

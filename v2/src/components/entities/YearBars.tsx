@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ChartTips } from "@/components/data/ChartTips";
 import { MoreText, firstSentence, plainText, wordCount } from "@/components/data/MoreText";
 import { formatInt } from "@/lib/format";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * PERM decisions by fiscal year as stacked bars, with a legend, a note and
@@ -119,7 +120,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
       ) : null}{" "}
       <details className="mt-3 text-sm">
         <summary className="inline-flex min-h-[44px] cursor-pointer items-center font-bold">Every year as a table</summary>
-        <div className="mt-3 overflow-x-auto">
+        <ScrollBox label="Every year as a table" className="mt-3">
           <table className="w-full min-w-[360px] border-collapse text-left tabular-nums">
             <thead>
               <tr className="border-b border-border">
@@ -140,7 +141,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollBox>
       </details>
     </div>
   );

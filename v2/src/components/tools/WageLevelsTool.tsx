@@ -9,6 +9,7 @@ import { useFormDomSync } from "@/hooks/useFormDomSync";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { seriesYearFor, SOC_RE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
 import { buttonVariants } from "@/components/ui/button";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * The four prevailing wage levels for one occupation in one area, read live
@@ -91,7 +92,7 @@ const yearLabel = (y: number) => `${y}-${String((y + 1) % 100).padStart(2, "0")}
 
 function YearTable({ years, caption }: { years: StoredYear[]; caption: string }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollBox label={caption}>
       <table className="w-full min-w-[32rem] text-left text-base">
         <caption className="sr-only">{caption}{" "}</caption>
         <thead>
@@ -117,7 +118,7 @@ function YearTable({ years, caption }: { years: StoredYear[]; caption: string })
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollBox>
   );
 }
 

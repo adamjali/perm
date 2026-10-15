@@ -18,6 +18,7 @@ import PrintableChecklist from "@/components/content/PrintableChecklist";
 import { OnHoldNow } from "@/components/content/OnHoldNow";
 import { DolNow } from "@/components/content/DolNow";
 import { Lightbox } from "@/components/ui/lightbox";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import { InfoIcon, LightbulbIcon, WarningIcon, WarningOctagonIcon } from "@phosphor-icons/react/ssr";
 
 /* ------------------------------------------------------------------ */
@@ -161,7 +162,7 @@ function ComparisonTable({
   }
 
   return (
-    <div className="my-6 overflow-x-auto overscroll-x-none">
+    <ScrollBox label={`Table: ${headers.join(", ")}`} className="my-6 overscroll-x-none">
       <table className="w-full border border-border text-sm">
         <thead>
           <tr className="bg-muted">
@@ -190,7 +191,7 @@ function ComparisonTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollBox>
   );
 }
 
@@ -378,11 +379,11 @@ export const mdxComponents: MDXComponents = {
 
   // Table
   table: ({ children, ...props }) => (
-    <div className="my-6 overflow-x-auto overscroll-x-none">
+    <ScrollBox label="Table" className="my-6 overscroll-x-none">
       <table className="w-full border border-border text-sm" {...props}>
         {children}
       </table>
-    </div>
+    </ScrollBox>
   ),
   thead: ({ children, ...props }) => (
     <thead className="bg-muted" {...props}>

@@ -4,6 +4,7 @@ import type { BulletinMonth, CountryKey } from "@/lib/perm";
 import { formatMonth } from "@/lib/dolFormat";
 import type { I140Subtype } from "@/lib/processing-times/i140ProcessingTimes";
 import { cn } from "@/lib/utils";
+import { ScrollBox } from "@/components/ui/scroll-box";
 
 /**
  * The two panels that sit inside green-card timeline stages.
@@ -147,7 +148,7 @@ export function PriorityDatePanel({
       {/* Legal here, unlike between two cells: this space's parent is the
           wrapper <div>, not a <tr>. Without it the heading welds to the
           table's first cell - "...stood in September 2026Category". */}
-      <div className="mt-3 overflow-x-auto">
+      <ScrollBox label={`Where the line stood in ${formatMonth(bulletin.bulletinMonth) ?? bulletin.bulletinMonth}`} className="mt-3">
         <table className="w-full min-w-[20rem] border-collapse text-sm">
           <thead>
             <tr>
@@ -192,7 +193,7 @@ export function PriorityDatePanel({
             ))}
           </tbody>
         </table>
-      </div>
+      </ScrollBox>
       <p className="mt-3 text-sm text-muted-foreground">
         Final action dates from the{" "}
         {formatMonth(bulletin.bulletinMonth) ?? bulletin.bulletinMonth} bulletin,

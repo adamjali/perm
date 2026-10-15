@@ -50,6 +50,7 @@ import {
 } from "@/lib/bulletinNext";
 import type { CountryKey, Cutoff } from "@/lib/perm";
 import { MoreText } from "@/components/data/MoreText";
+import { ScrollBox } from "@/components/ui/scroll-box";
 import { MONTH_NAMES } from "@convex/lib/months";
 
 const TITLE = "The Next Visa Bulletin, From Every Past One";
@@ -280,7 +281,7 @@ export default async function VisaBulletinPage() {
             {spill.estimated ? " The Department marks that sheet estimated, pending its official determination." : ""}
             {spill.perCountry !== null ? ` No single country can take more than ${formatInt(spill.perCountry)} of the employment total.` : ""}
           </p>{" "}
-          <div className="mt-4 max-w-3xl overflow-x-auto">
+          <ScrollBox label="The spillover by category" className="mt-4 max-w-3xl">
             <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-border">
@@ -299,7 +300,7 @@ export default async function VisaBulletinPage() {
                 ))}
               </tbody>
             </table>
-          </div>{" "}
+          </ScrollBox>{" "}
           {usage ? (
             <MoreText gist={"Last year's use, counted from Table V of the Visa Office report."} className="mt-4">
               <p className="max-w-3xl text-base leading-relaxed text-soft">
@@ -342,7 +343,7 @@ export default async function VisaBulletinPage() {
               <span className="size-3 border border-border bg-card" /> Unchanged or current
             </li>
           </ul>
-          <div className="mt-3 overflow-x-auto overscroll-x-none">
+          <ScrollBox label={`What the ${monthLabel(last.bulletinMonth)} bulletin did`} className="mt-3 overscroll-x-none">
             <table className="w-full min-w-[640px] border border-border text-sm">
               <thead className="border-b border-input bg-muted">
                 <tr>
@@ -366,7 +367,7 @@ export default async function VisaBulletinPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
         </>
       ) : null}
 
@@ -391,7 +392,7 @@ export default async function VisaBulletinPage() {
               <CaretDownIcon className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
             </span>
           </summary>{" "}
-          <div className="overflow-x-auto overscroll-x-none border-t border-border/40 p-3 sm:p-4">
+          <ScrollBox label={`${s.label} in earlier bulletins`} className="overscroll-x-none border-t border-border/40 p-3 sm:p-4">
             <table className="w-full min-w-[720px] border border-border text-sm">
               <thead className="border-b border-input bg-muted">
                 <tr>
@@ -447,7 +448,7 @@ export default async function VisaBulletinPage() {
                 })}
               </tbody>
             </table>
-          </div>
+          </ScrollBox>
         </details>
       ))}
       </div>
