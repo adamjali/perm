@@ -71,8 +71,10 @@ Light values; dark values are in the `.dark` block beside them.
   both themes (the fills lighten in dark mode); the slate `--data-none` darkens there,
   so text on it turns white.
 - **Stage colours** (`--stage-pwd`, `--stage-recruitment`, `--stage-eta9089`,
-  `--stage-i140`, `--stage-closed`, each with an `-ink` twin) mark a case's stage in
-  timelines and the case card, and nowhere else.
+  `--stage-i140`, `--stage-closed`, each with an `-ink` twin) mark a case's stage:
+  timelines, the case card and folder tab, the homepage's road and docket, the wage
+  request row that is the PWD stage. Never a spare colour, never a pale wash (the
+  fee breakdown's six fills are the one named exception).
 - **Hatching** (`bg-hatch`, `bg-hatch-reverse`) means "not decided yet", "not known"
   or "withheld". It takes the text colour: `text-muted-foreground` for a placeholder,
   `text-input` where it has to be seen against a neighbour.
@@ -179,7 +181,7 @@ sits under its field, with a summary at the top of the form.
 
 | Test | Holds |
 |---|---|
-| `src/app/__tests__/calm-system.test.ts` | no hard shadows, no hover movement, no `transition-all`, no black-weight headings, no all-caps, no self-running Motion props, reduced motion on, no loops but two, no textures, square corners, no wide tracking or black borders, one hatch, token contrast in both themes |
+| `src/app/__tests__/calm-system.test.ts` | no hard shadows, no hover movement, no `transition-all`, no black-weight headings, no all-caps, no self-running Motion props, reduced motion on, no loops but two, no textures, square corners, no wide tracking or black borders, one hatch, no pale lime wash, no hairline grouping box, the object shadow and caution tape only on their named rules, stage colours only on stages, token contrast in both themes |
 | `no-glued-jsx-text.test.ts`, `scripts/audit_glued_text.py` | words that render without a space between them (the rendered audit is the authority) |
 | `responsive-grid-tracks.test.ts`, `form-controls-min-width.test.ts` | form grids that overflow on iOS |
 | `one-month-list.test.ts` | one list of month names |
