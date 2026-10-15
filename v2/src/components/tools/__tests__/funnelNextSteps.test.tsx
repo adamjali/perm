@@ -54,7 +54,7 @@ describe("CaseNextStep", () => {
   it("names what the number gets: the likely decision date and an email when it moves", () => {
     render(<CaseNextStep question="Waiting on a case with Acme?" source="employer" />);
     expect(screen.getByText(/when it.ll likely be decided/i)).toBeInTheDocument();
-    expect(screen.getByText(/an email the day DOL moves it/i)).toBeInTheDocument();
+    expect(screen.getByText(/an email when DOL moves it/i)).toBeInTheDocument();
   });
 
   it("records which page sent the lookup, and nothing else about it", () => {
