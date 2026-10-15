@@ -30,7 +30,7 @@ const jobs = Object.entries(spec).filter(([slug, s]) => s.capture && (only.lengt
 fs.mkdirSync(out, { recursive: true });
 
 const HIDE = `
-  div:has(> nav[aria-label="Breadcrumb"]), div:has(> nav.print\\:hidden) > nav.print\\:hidden,
+  nav[aria-label="Breadcrumb"], div:has(> nav.print\\:hidden) > nav.print\\:hidden,
   nextjs-portal, [data-nextjs-toast], button[aria-label="Back to top"], .fixed { display: none !important; }
   /* A data page's "In this section" column goes, and its page takes the width. */
   div:has(> nav.print\\:hidden) { display: block !important; }
@@ -49,9 +49,9 @@ try {
   });
   const page = await ctx.newPage();
   for (const [slug, s] of jobs) {
-    const { url, scroll, wait, clip, width, maxHeight, fill, css, clock, ready, settle } = s.capture;
+    const { url, scroll, wait, clip, width, height, maxHeight, fill, css, clock, ready, settle } = s.capture;
     try {
-      await page.setViewportSize({ width: width ?? 1200, height: 900 });
+      await page.setViewportSize({ width: width ?? 1200, height: height ?? 900 });
       // A Storybook capture of the app runs on the day its sample firm was
       // recorded, so "due in 12 days" says what it said then.
       if (clock) await page.clock.setFixedTime(new Date(clock));
@@ -84,6 +84,7 @@ try {
       if (clip) {
         // "h:Heading" clips to the section that heading opens (its nearest
         // <section>, else its parent); "hp:Heading" to the heading's parent;
+        // "fold:Title" opens a folded section and clips to it;
         // "from:Heading" from the heading down; "cap:Caption" to a table by its
         // caption and the table after it; "sel:css" to that element. A tall
         // section is cut at maxHeight so a figure stays one screen of reading.
@@ -115,7 +116,16 @@ try {
             const p = (c.startsWith("fromm:") ? h.closest("main") ?? h.parentElement : h.parentElement).getBoundingClientRect();
             return { x: p.left + window.scrollX, y: r.top + window.scrollY - 28, width: p.width, height: 4000 };
           }
-          if (c.startsWith("h:") || c.startsWith("hp:")) {
+          if (c.startsWith("fold:")) {
+            // A folded section (a <details> whose summary carries the title),
+            // opened, so the picture shows what the fold holds.
+            const want = c.slice(5);
+            const h =
+              [...document.querySelectorAll("main summary h2, main summary h3")].find((e) => e.textContent?.trim().startsWith(want)) ??
+              [...document.querySelectorAll("main summary")].find((e) => e.textContent?.trim().startsWith(want));
+            el = h?.closest("details") ?? null;
+            if (el) el.open = true;
+          } else if (c.startsWith("h:") || c.startsWith("hp:")) {
             // "hp:" takes the heading's own block (its parent) where a section
             // holds two side by side.
             const want = c.slice(c.indexOf(":") + 1);

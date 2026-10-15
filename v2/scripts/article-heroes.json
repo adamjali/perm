@@ -48,64 +48,64 @@
   "capture": {
    "url": "/tools"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The data overview on permtracker.app: DOL's oldest month in review, its average days to decide and the wage requests waiting, each dated"
  },
  "guides/check-perm-case-status": {
   "capture": {
    "url": "/perm-case-status?case=G-100-26251-220642"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "A PERM case looked up on permtracker.app: DOL's status in plain English and the estimated decision date"
  },
  "guides/what-perm-case-statuses-mean": {
   "capture": {
    "url": "/perm-case-statuses"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Every status DOL prints on a PERM case, with how many cases sit at each one today"
  },
  "guides/perm-application-on-hold-meaning": {
   "capture": {
    "url": "/perm-employers/under-review"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The employers with PERM cases on hold, at an RFI or under appeal, led by DOL's newest employer-wide move"
  },
  "guides/perm-rfi-issued-what-to-do": {
   "capture": {
    "url": "/perm-rfi-audit/rfi-issued"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The open PERM RFIs, counted and listed oldest filing first"
  },
  "guides/perm-nord-issued-meaning": {
   "capture": {
    "url": "/perm-rfi-audit/nord-issued"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The PERM cases DOL shows as NORD issued, counted and dated"
  },
  "guides/perm-denied-what-happens-next": {
   "capture": {
    "url": "/perm-rfi-audit/reconsideration-appeals"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The PERM cases waiting on a request for reconsideration"
  },
  "guides/perm-appeal-reconsideration-balca": {
   "capture": {
    "url": "/perm-rfi-audit/balca-appeals"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The PERM cases appealed to the Board of Alien Labor Certification Appeals"
  },
  "guides/perm-case-number-format": {
   "capture": {
    "url": "/perm-case-status?case=G-100-26251-220680",
-   "scroll": "text:Case number"
+   "clip": "fold:What the case number says"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "A PERM case number on permtracker.app with its parts read out: the program, the filing day and the serial"
  },
  "guides/find-your-dol-case-number": {
@@ -123,21 +123,21 @@
   "capture": {
    "url": "/case-search"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The all-programs search on permtracker.app: PERM, wage requests, H-1B LCAs and seasonal filings counted, with a search by employer"
  },
  "guides/check-perm-received-without-receipt": {
   "capture": {
    "url": "/perm-cases"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Every decided PERM case on permtracker.app, with decisions per working day drawn as a line"
  },
  "guides/look-up-a-perm-case-by-number": {
   "capture": {
    "url": "/perm-employers/microsoft-corporation"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Microsoft's PERM record on permtracker.app, with a case-number box to look up one of its cases"
  },
  "guides/tracking-a-case-without-an-account": {
@@ -155,35 +155,35 @@
   "capture": {
    "url": "/perm-queue"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Where the PERM queue stands: the oldest filing month DOL still has open, the month it is reviewing and how fast it moves"
  },
  "guides/where-your-filing-month-sits": {
   "capture": {
    "url": "/perm-queue/2026-01"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "One filing month on permtracker.app: the share decided, by outcome, and where DOL has reached"
  },
  "guides/how-accurate-are-perm-estimates": {
   "capture": {
    "url": "/estimate-scorecard"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The estimate scorecard: how close PERM Tracker's dates came to DOL's actual decisions"
  },
  "guides/reading-the-perm-data": {
   "capture": {
    "url": "/open-data"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The open data page: the visa bulletin archive and DOL's processing-times readings, as CSV and JSON"
  },
  "guides/compute-every-perm-deadline": {
   "capture": {
    "url": "/tools/perm-deadline-calculator"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The PERM deadline calculator: every date in a case computed from the wage determination and recruitment dates"
  },
  "guides/the-perm-deadlines-that-matter": {
@@ -201,7 +201,7 @@
   "capture": {
    "url": "/tools/green-card-timeline"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The green card timeline: every stage of an employment-based case drawn to scale, from DOL's and USCIS's figures"
  },
  "guides/perm-recruitment-checklist": {
@@ -271,14 +271,14 @@
   "capture": {
    "url": "/pwd-cases"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Prevailing wage requests on permtracker.app: the requests waiting at DOL, the decided ones, and a search by employer"
  },
  "guides/explore-perm-wages": {
   "capture": {
    "url": "/perm-wages"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "What PERM jobs pay: the whole wage ladder from DOL's certified filings"
  },
  "guides/what-an-lca-is": {
@@ -295,42 +295,42 @@
   "capture": {
    "url": "/lca-cases"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "H-1B LCAs on permtracker.app: the ones DOL confirms each day, the decided ones with their wages, and a search by employer"
  },
  "guides/look-up-a-sponsor": {
   "capture": {
    "url": "/perm-employers/apple-inc"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Apple's PERM record on permtracker.app: filings, approvals, wages and days to a decision"
  },
  "guides/look-up-a-law-firm": {
   "capture": {
    "url": "/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Fragomen's PERM record on permtracker.app: cases filed, approval rate and median days"
  },
  "guides/employer-layoffs-and-your-perm": {
   "capture": {
    "url": "/layoffs"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Layoff notices against PERM sponsors, from four states' WARN filings"
  },
  "guides/employer-stopped-filing-perms": {
   "capture": {
    "url": "/perm-employers/intel-corporation"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Intel's PERM record on permtracker.app, with its filings year by year"
  },
  "guides/read-the-denial-and-audit-rates": {
   "capture": {
    "url": "/perm-denial-risk"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "What gets denied: DOL's denial rates by form question, job and worksite"
  },
  "guides/approved-i140-no-visa-number-eb2-india": {
@@ -436,14 +436,14 @@
   "capture": {
    "url": "/uscis-processing-times"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "USCIS processing times by form, the median from USCIS's own quarterly files"
  },
  "guides/eb2-vs-eb3-perm": {
   "capture": {
    "url": "/tools/eb2-vs-eb3"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "EB-2 or EB-3 for one priority date: the two lines side by side"
  },
  "guides/eb3-other-workers": {
@@ -460,7 +460,7 @@
   "capture": {
    "url": "/tools/which-green-card"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Which green card fits: the employment-based routes compared"
  },
  "guides/h2a-case-status-and-timing": {
@@ -499,35 +499,35 @@
   "capture": {
    "url": "/perm-employers"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Who sponsors the most: the ten busiest PERM employers as bars"
  },
  "blog/perm-salary-data-by-occupation": {
   "capture": {
    "url": "/tools/salary-explorer"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The salary explorer: certified PERM wages filtered by job, state and year"
  },
  "blog/perm-processing-times-2026": {
   "capture": {
    "url": "/perm-processing-times"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "PERM processing times: the month DOL is reviewing and its average days to a decision, from DOL's own page"
  },
  "blog/what-law-firm-volume-tells-you": {
   "capture": {
    "url": "/perm-attorneys"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Who files the most PERM cases: the ten busiest law firms as bars"
  },
  "blog/why-perm-cases-are-denied": {
   "capture": {
    "url": "/perm-rfi-audit"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "RFIs, audits and appeals: how many PERM cases sit at each review stage"
  },
  "blog/what-is-perm-labor-certification": {
@@ -568,21 +568,21 @@
   "capture": {
    "url": "/perm-wages/software-developers"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Software developers on permtracker.app: median certified wage, filings and the wage ladder year by year"
  },
  "blog/what-an-employers-perm-record-shows": {
   "capture": {
    "url": "/perm-employers/oracle-america-inc"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Oracle's PERM record on permtracker.app, from DOL's disclosure files and its live case statuses"
  },
  "blog/is-my-company-still-filing-perm": {
   "capture": {
    "url": "/perm-decision-activity"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "DOL's PERM decisions day by day, with the newest day against the same weekday before it"
  },
  "blog/what-to-do-while-you-wait": {
@@ -635,21 +635,21 @@
   "capture": {
    "url": "/perm-case-status"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The PERM case lookup on permtracker.app"
  },
  "changelog/corrections": {
   "capture": {
    "url": "/methodology"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "How the numbers are computed: six readings of one PERM average side by side"
  },
  "changelog/every-case-every-sponsor": {
   "capture": {
    "url": "/perm-employers/browse"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Every PERM employer with a page, A to Z"
  },
  "changelog/january-2026-visual-refresh": {
@@ -678,14 +678,14 @@
   "capture": {
    "url": "/perm-attorneys/berry-appleman-leiden-llp"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Berry Appleman & Leiden's PERM record on permtracker.app"
  },
  "changelog/live-data-and-two-doors": {
   "capture": {
    "url": "/"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The permtracker.app homepage: a case lookup and DOL's live queue"
  },
  "changelog/march-2026-timeline-and-ux": {
@@ -703,35 +703,35 @@
   "capture": {
    "url": "/perm-employers/amazon-com-services-llc"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Amazon's employer page, which now gathers every program it files under any spelling"
  },
  "changelog/open-data-api-and-seasonal-visas": {
   "capture": {
    "url": "/seasonal-cases"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "H-2A, H-2B and CW-1 filings on permtracker.app, counted by form"
  },
  "changelog/september-bulletin-layoffs-and-rules": {
   "capture": {
    "url": "/policy-changes"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "Policy changes on the record: every rule and notice on these programs from the Federal Register"
  },
  "changelog/the-whole-field-three-ways": {
   "capture": {
    "url": "/perm-by-state"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "PERM filings state by state, as a map"
  },
  "changelog/uscis-data-and-following-employers": {
   "capture": {
    "url": "/i485-by-field-office"
   },
-  "credit": "Screenshot of permtracker.app, October 11, 2026",
+  "credit": "Screenshot of permtracker.app, October 15, 2026",
   "alt": "The I-485 by field office: what each USCIS office received, decided and holds"
  }
 }

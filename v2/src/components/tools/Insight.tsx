@@ -75,7 +75,8 @@ export function AnswerPanel({
   className?: string;
 }) {
   return (
-    <section className={cn("bg-tint p-5 sm:p-8", className)}>
+    // `data-answer` marks a page's answer for the article picture captures.
+    <section data-answer className={cn("bg-tint p-5 sm:p-8", className)}>
       {verdict || label ? (
         <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
           {verdict ? <Verdict direction={direction}>{verdict}</Verdict> : null}{" "}
