@@ -16,7 +16,7 @@ function Checkbox({
       className={cn(
         // Mobile-first: 20px visual size with 44px touch target via padding
         // The touch target is achieved by the parent label/wrapper, but we ensure minimum visibility
-        "peer border-input bg-card data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:border-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-5 shrink-0 border transition-shadow outline-none focus-visible:ring-[3px] cursor-pointer disabled:cursor-not-allowed disabled:bg-muted disabled:shadow-none",
+        "peer border-input bg-card data-[state=checked]:bg-primary-text data-[state=checked]:text-background data-[state=checked]:border-primary-text focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-5 shrink-0 border transition-shadow outline-none focus-visible:ring-[3px] cursor-pointer disabled:cursor-not-allowed disabled:bg-muted disabled:shadow-none",
         className
       )}
       {...props}

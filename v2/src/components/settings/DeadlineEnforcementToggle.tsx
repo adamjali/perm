@@ -22,8 +22,8 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
+import { SettingsCard, SettingsCardSkeleton } from "./SettingsCard";
 import { Label } from "@/components/ui/label";
-import { ShieldIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 import { analytics } from "@/lib/analytics";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
@@ -64,38 +64,27 @@ export default function DeadlineEnforcementToggle() {
   // Show loading state while profile loads
   if (profile === undefined) {
     return (
-      <div className="border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
-        <Skeleton variant="line" className="mb-4 h-6 w-1/3" />
+      <SettingsCardSkeleton>
+        <Skeleton variant="line" className="h-6 w-1/3" />
         <Skeleton variant="line" className="h-4 w-2/3" />
-      </div>
+      </SettingsCardSkeleton>
     );
   }
 
   return (
-    <div
-      className="border border-border bg-card p-6"
-      style={{ boxShadow: "var(--shadow-hard)" }}
+    <SettingsCard
+      title="Deadline enforcement"
+      description="Close cases on their own when a deadline that ends them has passed."
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <ShieldIcon className="w-5 h-5 text-foreground" />
-        <h3 className="font-heading font-bold text-lg text-foreground">
-          Deadline enforcement
-        </h3>
-      </div>
-
-      {/* Toggle row */}
-      <div className="flex items-center justify-between gap-4 mb-4">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex-1">
-          <Label
-            htmlFor="deadline-enforcement-toggle"
-            className="text-base font-medium text-foreground cursor-pointer"
-          >
+          <Label htmlFor="deadline-enforcement-toggle" className="text-sm font-medium text-foreground">
             Auto-close cases with expired deadlines
           </Label>
-          <p className="text-sm text-muted-foreground mt-1">
-            When enabled, cases will be automatically closed on login if critical
-            deadlines have passed.
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isEnabled
+              ? "On. Cases are checked each time you sign in."
+              : "Off. Cases stay open whatever their deadlines."}
           </p>
         </div>
         <Switch
@@ -107,38 +96,15 @@ export default function DeadlineEnforcementToggle() {
         />
       </div>
 
-      {/* Warning message */}
-      <div
-        className="flex items-start gap-3 p-3 bg-data-warn/15 border border-data-warn rounded-sm"
-        id="enforcement-description"
-      >
-        <AlertTriangle className="w-5 h-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-data-warn-ink">
-          <p className="font-medium mb-1">Important</p>
-          <ul className="list-disc list-inside space-y-1 text-data-warn-ink">
-            <li>Cases are closed when PWD expires before ETA 9089 filing</li>{" "}
-            <li>Cases are closed when filing windows pass without action</li>{" "}
-            <li>You&apos;ll see a notification when cases are auto-closed</li>{" "}
-            <li>Closed cases can still be viewed but not edited</li>
-          </ul>
-        </div>
+      <div id="enforcement-description" className="text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">What it does</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>Cases are closed when PWD expires before ETA 9089 filing</li>{" "}
+          <li>Cases are closed when filing windows pass without action</li>{" "}
+          <li>You&apos;ll see a notification when cases are auto-closed</li>{" "}
+          <li>Closed cases can still be viewed but not edited</li>
+        </ul>
       </div>
-
-      {/* Status indicator */}
-      <div className="mt-4 pt-4 border-t border-border">
-        <div className="flex items-center gap-2 text-sm">
-          <div
-            className={`h-2 w-2 shrink-0 ${
-              isEnabled ? "bg-primary" : "bg-muted-foreground"
-            }`}
-          />
-          <span className="text-muted-foreground">
-            {isEnabled
-              ? "Enforcement active - cases will be checked on login"
-              : "Enforcement disabled - cases remain open regardless of deadlines"}
-          </span>
-        </div>
-      </div>
-    </div>
+    </SettingsCard>
   );
 }

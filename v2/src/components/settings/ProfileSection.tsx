@@ -34,8 +34,9 @@ import { api } from "@convex/_generated/api";
 import { FormField } from "@/components/forms/FormField";
 import { Input } from "@/components/ui/input";
 import { SelectInput, type SelectOption } from "@/components/forms/SelectInput";
+import { SettingsCard } from "./SettingsCard";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, EnvelopeIcon as Mail, GlobeIcon, UserIcon } from "@phosphor-icons/react/ssr";
+import { UserIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { useSettingsSectionDirtyState } from "./SettingsUnsavedChangesContext";
@@ -180,56 +181,38 @@ export default function ProfileSection({
     }
   })();
 
-  return (
-    <div
-      className="bg-card border border-border p-6"
-      style={{ boxShadow: "var(--shadow-hard)" }}
-    >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-6">
-        <UserIcon className="w-5 h-5 text-foreground" />
-        <h3 className="font-heading font-bold text-lg text-foreground">
-          Profile information
-        </h3>
-      </div>
+  const initials = getInitials(fullName || profile.fullName);
 
-      {/* Profile Photo / Initials / Default Icon */}
-      <div className="flex items-center gap-4 mb-6">
-        <div
-          className="w-20 h-20 flex items-center justify-center border border-border bg-primary/10 text-primary overflow-hidden"
-          style={{ boxShadow: "var(--shadow-hard)" }}
-        >
+  return (
+    <SettingsCard title="Profile information">
+      {/* Photo, initials or a plain mark */}
+      <div className="flex items-center gap-4">
+        <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden border border-border bg-tint text-foreground">
           {profile.profilePhotoUrl ? (
             <Image
               src={profile.profilePhotoUrl}
               alt={profile.fullName ?? "Profile"}
-              width={80}
-              height={80}
-              className="w-full h-full object-cover"
+              width={64}
+              height={64}
+              className="size-full object-cover"
               unoptimized
             />
-          ) : getInitials(fullName || profile.fullName) ? (
-            <span className="font-heading font-bold text-2xl">
-              {getInitials(fullName || profile.fullName)}
-            </span>
+          ) : initials ? (
+            <span className="font-heading text-xl font-bold">{initials}</span>
           ) : (
-            <UserIcon className="w-10 h-10 text-primary" />
+            <UserIcon className="size-8 text-muted-foreground" aria-hidden="true" />
           )}
         </div>
-        <div>
-          <p className="text-sm text-muted-foreground">
-            {profile.profilePhotoUrl
-              ? "Profile photo from Google"
-              : getInitials(fullName || profile.fullName)
-                ? "Your initials are displayed"
-                : "Add your name to show initials"}
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {profile.profilePhotoUrl
+            ? "Profile photo from Google"
+            : initials
+              ? "Your initials are displayed"
+              : "Add your name to show initials"}
+        </p>
       </div>
 
-      {/* Form Fields */}
       <div className="space-y-6">
-        {/* Full Name */}
         <FormField label="Full name" name="fullName">
           <Input
             id="fullName"
@@ -240,85 +223,45 @@ export default function ProfileSection({
           />
         </FormField>
 
-        {/* Email (Read-only) */}
         <FormField label="Email" name="email" hint="Email can’t be changed">
-          <div className="relative">
-            <Input
-              id="email"
-              type="email"
-              value={userEmail}
-              disabled
-              className="sm:pr-44"
-            />
-            {isGoogleSignIn && (
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-sm font-medium border border-primary/20 sm:absolute sm:right-2 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2">
-                <Mail className="w-3 h-3" />
-                <span>Signed in with Google</span>
-              </div>
-            )}
-          </div>
+          <Input id="email" type="email" value={userEmail} disabled />
+          {isGoogleSignIn && <p className="mt-2 text-sm text-muted-foreground">Signed in with Google</p>}
         </FormField>
 
-        {/* Timezone */}
         <FormField
           label="Timezone"
           name="timezone"
           hint="Used for deadline reminders and notifications"
         >
-          <div className="relative">
-            <GlobeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
-            <SelectInput
-              id="timezone"
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-              options={US_TIMEZONES}
-              className="pl-10"
-            />
-          </div>
+          <SelectInput
+            id="timezone"
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            options={US_TIMEZONES}
+          />
         </FormField>
       </div>
 
-      {/* Save Button */}
-      <div className="mt-6 pt-6 border-t border-border flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          <>
-            {justSaved ? (
-              <span
-                key="saved"
-                className="text-primary flex items-center gap-1"
-              >
-                <span
-                >
-                  <CheckIcon className="w-4 h-4" />
-                </span>
-                Saved
-              </span>
-            ) : isDirty ? (
-              <span
-                key="dirty"
-                className="text-data-warn-ink"
-              >
-                You have unsaved changes
-              </span>
-            ) : (
-              <span
-                key="clean"
-              >
-                All changes saved
-              </span>
-            )}
-          </>
-        </div>
+      {/* One save for the section, with its state beside it */}
+      <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
+        <p className="text-sm text-muted-foreground" role="status">
+          {justSaved ? (
+            <span className="text-primary-text">Saved</span>
+          ) : isDirty ? (
+            <span className="text-data-warn-ink">You have unsaved changes</span>
+          ) : (
+            "All changes saved"
+          )}
+        </p>
         <Button
           onClick={handleSave}
           disabled={!isDirty || isSaving}
           loading={isSaving}
           loadingText="Saving..."
         >
-          <CheckIcon className="w-4 h-4" />
           Save changes
         </Button>
       </div>
-    </div>
+    </SettingsCard>
   );
 }

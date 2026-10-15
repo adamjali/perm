@@ -336,7 +336,6 @@ export function CalendarPageClient() {
       {!isGoogleConnected && (
         <div
           className="mb-4 flex items-center justify-between gap-4 border border-border bg-muted px-4 py-3"
-          style={{ boxShadow: "var(--shadow-hard-sm)" }}
         >
           <div className="flex items-center gap-3">
             <div className="border border-border bg-card p-1.5">
@@ -354,7 +353,6 @@ export function CalendarPageClient() {
           <Link
             href="/settings?tab=calendar-sync"
             className="inline-flex items-center gap-1.5 border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-transform duration-150"
-            style={{ boxShadow: "var(--shadow-hard-sm)" }}
           >
             Connect
             <ArrowSquareOutIcon className="w-3.5 h-3.5" />

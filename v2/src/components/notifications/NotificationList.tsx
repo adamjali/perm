@@ -14,7 +14,7 @@
  * Features:
  * - Grouped by date: Today, Yesterday, This Week, This Month, Older
  * - 20 notifications per page with "Load More" pagination
- * - Each item shows: urgency color bar, icon, title, message, time
+ * - Each item shows: an icon coloured by priority, title, message, time
  * - Click to mark as read + navigate to case
  * - Dismiss (mark as read) vs Delete (remove) actions
  * - Empty state when no notifications match filters
@@ -33,7 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { handleOperationError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import { safeFormatDistanceToNow } from "@/lib/utils/date";
-import { ArrowsClockwiseIcon as RefreshCw, BellIcon, CalendarIcon, CheckIcon, CircleNotchIcon, ClockIcon, InfoIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { ArrowsClockwiseIcon as RefreshCw, CalendarIcon, CheckIcon, CircleNotchIcon, ClockIcon, InfoIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import type { Id } from "@convex/_generated/dataModel";
 import type { NotificationTabType } from "./NotificationTabs";
@@ -92,20 +92,13 @@ const NOTIFICATION_ICONS: Record<NotificationType, PhosphorIcon> = {
   system: InfoIcon,
 };
 
-// Priority colors
-function getPriorityColor(priority: NotificationPriority): string {
-  switch (priority) {
-    case "urgent":
-      return "bg-urgency-urgent";
-    case "high":
-      return "bg-urgency-soon";
-    case "normal":
-      return "bg-stage-i140";
-    case "low":
-    default:
-      return "bg-muted-foreground";
-  }
-}
+// How loud each priority's icon is: the two that need action get a colour.
+const PRIORITY_INK: Record<NotificationPriority, string> = {
+  urgent: "text-destructive",
+  high: "text-data-warn-ink",
+  normal: "text-muted-foreground",
+  low: "text-muted-foreground",
+};
 
 // Date grouping helper
 function getDateGroup(timestamp: number): string {
@@ -176,7 +169,11 @@ function NotificationListItem({
   onNavigate: (caseId?: Id<"cases">) => void;
 }) {
   const IconComponent = NOTIFICATION_ICONS[notification.type];
-  const priorityColor = getPriorityColor(notification.priority);
+  const caseLine = notification.caseInfo?.employerName
+    ? [notification.caseInfo.employerName, notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier]
+        .filter(Boolean)
+        .join(" - ")
+    : null;
 
   const handleClick = () => {
     if (!notification.isRead) {
@@ -185,149 +182,84 @@ function NotificationListItem({
     onNavigate(notification.caseId);
   };
 
-  const handleMarkRead = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onMarkRead(notification._id);
-  };
+  const iconButton =
+    "relative z-10 flex size-11 items-center justify-center text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onDelete(notification._id);
-  };
-
+  // The title is the row's one button, stretched over the whole row, so the
+  // row opens the case and the two small actions stay separate buttons.
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) {
-          e.preventDefault();
-          handleClick();
-        }
-      }}
-      className={cn(
-        "group w-full text-left relative cursor-pointer",
-        "flex items-start gap-4 p-4",
-        "border-b border-border last:border-b-0",
-        "transition-colors duration-150",
-        "hover:bg-muted",
-        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset",
-        !notification.isRead && "bg-primary/5 dark:bg-primary/10"
-      )}
-    >
-      {/* Urgency color bar */}
-      <div
-        className={cn("w-1.5 self-stretch rounded-full shrink-0", priorityColor)}
+    <li className="group relative flex items-start gap-3 border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/60 has-[:focus-visible]:bg-muted/60">
+      <IconComponent
+        className={cn("mt-0.5 size-5 shrink-0", PRIORITY_INK[notification.priority])}
         aria-hidden="true"
       />
 
-      {/* Icon */}
-      <div
-        className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center",
-          "rounded-none border border-border",
-          "bg-card"
-        )}
-      >
-        <IconComponent className="h-5 w-5 text-foreground" />
-      </div>
+      <div className="min-w-0 flex-1 space-y-1">
+        <button
+          type="button"
+          onClick={handleClick}
+          className={cn(
+            "line-clamp-2 text-left text-base after:absolute after:inset-0 focus-visible:outline-none",
+            notification.isRead ? "text-soft" : "font-semibold text-foreground",
+          )}
+          title={notification.title}
+        >
+          {!notification.isRead && (
+            <span className="mr-2 inline-block size-2 bg-primary-text align-middle" aria-label="Unread" role="img" />
+          )}
+          {notification.title}
+        </button>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-start justify-between gap-2">
-          <p
-            className={cn(
-              "text-base leading-tight truncate",
-              notification.isRead
-                ? "font-medium text-soft"
-                : "font-bold text-foreground font-heading"
-            )}
-            title={notification.title}
-          >
-            {notification.title}
-          </p>{" "}
-          <span className="text-sm text-muted-foreground font-mono whitespace-nowrap shrink-0">
-            {safeFormatDistanceToNow(notification.createdAt)}
-          </span>
-        </div>
-
-        <p className="text-sm text-muted-foreground line-clamp-2" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notification.message}>
+        <p className="line-clamp-2 break-words text-sm text-muted-foreground" title={notification.message}>
           {notification.message}
-        </p>
+        </p>{" "}
 
-        {notification.caseInfo?.employerName && (
-          <p className="text-sm text-muted-foreground truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
-            {notification.caseInfo.employerName}
-            {(notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier) &&
-              ` - ${notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier}`}
-          </p>
-        )}
+        <p className="flex justify-between gap-3 text-sm text-muted-foreground">
+          <span className="min-w-0 truncate" title={caseLine ?? undefined}>{caseLine}</span>{" "}
+          <span className="shrink-0 whitespace-nowrap tabular-nums">{safeFormatDistanceToNow(notification.createdAt)}</span>
+        </p>
       </div>
 
-      {/* Actions (visible on hover) */}
-      <div
-        className={cn(
-          "flex items-center gap-1 shrink-0",
-          "opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-        )}
-      >
+      {/* Always there on a phone; on a desk, shown on hover or keyboard focus */}
+      <div className="-my-2 flex shrink-0 flex-col md:flex-row md:items-center md:opacity-0 md:group-hover:opacity-100 md:group-has-[:focus-visible]:opacity-100">
         {!notification.isRead && (
           <button
             type="button"
-            onClick={handleMarkRead}
-            className={cn(
-              "flex h-8 w-8 items-center justify-center",
-              "border border-transparent rounded-none",
-              "text-muted-foreground",
-              "hover:bg-accent hover:text-primary-text hover:border-primary/20",
-              "transition-colors duration-150",
-              "focus:outline-none focus:ring-1 focus:ring-primary"
-            )}
+            onClick={() => onMarkRead(notification._id)}
+            className={cn(iconButton, "hover:text-primary-text")}
             aria-label="Mark as read"
             title="Mark as read"
           >
-            <CheckIcon className="h-4 w-4" />
+            <CheckIcon className="size-4" />
           </button>
         )}
         <button
           type="button"
-          onClick={handleDelete}
-          className={cn(
-            "flex h-8 w-8 items-center justify-center",
-            "border border-transparent rounded-none",
-            "text-muted-foreground",
-            "hover:bg-destructive/10 hover:text-destructive-text hover:border-destructive/20",
-            "transition-colors duration-150",
-            "focus:outline-none focus:ring-1 focus:ring-destructive"
-          )}
+          onClick={() => onDelete(notification._id)}
+          className={cn(iconButton, "hover:text-destructive-text")}
           aria-label="Delete notification"
           title="Delete"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="size-4" />
         </button>
       </div>
-    </div>
+    </li>
   );
 }
 
-// Loading skeleton
+// Loading skeleton: the list's own shape
 function NotificationListSkeleton() {
   return (
-    <div className="space-y-4">
-      <Skeleton variant="line" className="h-6 w-24" />
+    <div className="space-y-3">
+      <Skeleton variant="line" className="h-5 w-24" />
       <div className="border border-border">
         {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-4 p-4 border-b border-border last:border-b-0"
-          >
-            <Skeleton className="w-1.5 h-16" />
-            <Skeleton className="h-10 w-10 shrink-0" />
+          <div key={i} className="flex items-start gap-3 border-b border-border px-4 py-3 last:border-b-0">
+            <Skeleton className="size-5 shrink-0" />
             <div className="flex-1 space-y-2">
               <Skeleton variant="line" className="h-5 w-3/4" />
               <Skeleton variant="line" className="h-4 w-full" />
-              <Skeleton variant="line" className="h-3 w-1/2" />
+              <Skeleton variant="line" className="h-4 w-1/2" />
             </div>
           </div>
         ))}
@@ -364,18 +296,9 @@ function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
   const { title, description } = messages[activeTab];
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div
-        className={cn(
-          "flex h-16 w-16 items-center justify-center mb-4",
-          "rounded-none border border-border",
-          "bg-muted"
-        )}
-      >
-        <BellIcon className="h-8 w-8 text-muted-foreground" />
-      </div>
-      <p className="text-lg font-heading font-bold text-foreground">{title}</p>{" "}
-      <p className="text-sm text-muted-foreground mt-2 max-w-xs">{description}</p>
+    <div className="border border-border px-4 py-12 text-center">
+      <p className="font-heading text-lg font-bold text-foreground">{title}</p>{" "}
+      <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }
@@ -525,12 +448,10 @@ export default function NotificationList({
       {Array.from(groupedNotifications.entries()).map(([group, notifications]) => (
         <div key={group}>
           {/* Group header */}
-          <h3 className="text-sm font-heading font-bold text-muted-foreground mb-3">
-            {group}
-          </h3>
+          <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{group}</h2>
 
           {/* Notifications in group */}
-          <div className="border border-border">
+          <ul className="border border-border">
             {notifications.map((notification) => (
               <NotificationListItem
                 key={notification._id}
@@ -540,7 +461,7 @@ export default function NotificationList({
                 onNavigate={handleNavigate}
               />
             ))}
-          </div>
+          </ul>
         </div>
       ))}
 
@@ -552,7 +473,6 @@ export default function NotificationList({
             size="lg"
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-           
           >
             {isLoadingMore ? (
               <>

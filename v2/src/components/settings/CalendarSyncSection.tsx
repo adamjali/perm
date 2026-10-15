@@ -30,7 +30,6 @@
  *   - Filing Window
  * - Disabled state when master toggle is OFF or not connected
  * - Toast notifications for success/error
- * - Neobrutalist styling matching ProfileSection
  * - 2-column responsive grid for deadline type toggles
  */
 
@@ -44,7 +43,10 @@ import { api } from "@convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowsClockwiseIcon as RefreshCw, CalendarIcon, CheckIcon, CircleNotchIcon, CloudIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react/ssr";
+import { ToneBadge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { SettingsCard } from "./SettingsCard";
+import { ArrowsClockwiseIcon as RefreshCw, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 
@@ -78,44 +80,56 @@ interface ToggleRowProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
-  icon?: React.ReactNode;
-  indented?: boolean;
 }
 
-function ToggleRow({
-  id,
-  label,
-  description,
-  checked,
-  onCheckedChange,
-  disabled = false,
-  icon,
-  indented = false,
-}: ToggleRowProps) {
+/** A setting and its switch. Off-limits rows stay readable, in muted ink. */
+function ToggleRow({ id, label, description, checked, onCheckedChange, disabled = false }: ToggleRowProps) {
   return (
-    <div
-      className={`flex items-center justify-between ${indented ? "ml-6 pl-4 border-l border-border" : ""}`}
-    >
-      <div className="space-y-0.5 flex-1">
-        <Label
-          htmlFor={id}
-          className={`text-sm font-medium flex items-center gap-2 ${disabled ? "opacity-50" : ""}`}
-        >
-          {icon}
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex-1 space-y-0.5">
+        <Label htmlFor={id} className={cn("text-sm font-medium", disabled && "text-muted-foreground")}>
           {label}
         </Label>
-        <p
-          className={`text-sm text-muted-foreground ${disabled ? "opacity-50" : ""}`}
-        >
-          {description}
-        </p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
-      <Switch
-        id={id}
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-        disabled={disabled}
-      />
+      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+    </div>
+  );
+}
+
+/**
+ * How far a long calendar job has got. Google gives no progress, so this is
+ * an estimate from a measured pace per item, held under 95% until it ends.
+ */
+function SyncProgress({
+  elapsedSeconds,
+  msPerItem,
+  total,
+  minMs = 0,
+  describe,
+}: {
+  elapsedSeconds: number;
+  msPerItem: number;
+  total: number;
+  minMs?: number;
+  describe: (doneEstimate: number) => string;
+}) {
+  const totalMs = Math.max(minMs, total * msPerItem);
+  const elapsedMs = elapsedSeconds * 1000;
+  const percent = totalMs > 0 ? Math.min(95, (elapsedMs / totalMs) * 100) : 0;
+  const done = Math.min(total, Math.floor(elapsedMs / msPerItem));
+  const remaining = Math.max(0, Math.ceil((totalMs - elapsedMs) / 1000));
+  return (
+    <div className="space-y-2">
+      <div className="h-1.5 bg-muted" role="progressbar" aria-valuenow={Math.round(percent)} aria-valuemin={0} aria-valuemax={100}>
+        <div className="h-full bg-primary-text" style={{ width: `${percent}%` }} />
+      </div>
+      <p className="flex justify-between gap-3 text-sm">
+        <span className="font-medium text-foreground">{describe(done)}</span>{" "}
+        <span className="text-muted-foreground tabular-nums">
+          {elapsedSeconds}s elapsed{remaining > 0 && `, about ${remaining}s left`}
+        </span>
+      </p>
     </div>
   );
 }
@@ -129,26 +143,18 @@ interface ConnectionStatusBadgeProps {
 }
 
 function ConnectionStatusBadge({ connected }: ConnectionStatusBadgeProps) {
-  if (connected) {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-primary/10 text-primary border border-primary">
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-        Connected
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border border-border">
-      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
-      Not connected
-    </span>
-  );
+  return connected ? <ToneBadge tone="good">Connected</ToneBadge> : <ToneBadge tone="flat">Not connected</ToneBadge>;
 }
 
 // ============================================================================
 // DEADLINE TYPE CONFIG
 // ============================================================================
+
+/** Measured pace of a sync (one case) and a clear (one event, Google's 100ms
+ * rate limit plus the call), and the shortest a clear is ever shown to take. */
+const SYNC_MS_PER_CASE = 150;
+const CLEAR_MS_PER_EVENT = 200;
+const CLEAR_MIN_MS = 3000;
 
 const DEADLINE_TYPES = [
   {
@@ -510,388 +516,157 @@ export default function CalendarSyncSection({
   // Determine if sub-toggles should be disabled
   const subTogglesDisabled = !masterEnabled || !isConnected;
 
-  return (
-    <div className="space-y-6">
-      {/* Calendar Sync Section */}
-      <div
-        className="bg-card border border-border p-6"
-        style={{ boxShadow: "var(--shadow-hard)" }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-foreground" />
-            <h3 className="font-heading font-bold text-lg text-foreground">
-              Google Calendar sync
-            </h3>
-          </div>
-          <ConnectionStatusBadge connected={isConnected} />
-        </div>
-        <p className="text-sm text-muted-foreground mb-6">
-          Automatically sync case deadlines to your Google Calendar
-        </p>
+  const plural = (n: number, word: string) => `${n} ${word}${n !== 1 ? "s" : ""}`;
 
-        {/* Google Calendar Connection Status with Connect/Disconnect buttons */}
-        <div
-          className="flex items-center justify-between p-4 bg-muted/50 border border-border mb-5"
-          style={{ boxShadow: "var(--shadow-hard-sm)" }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`p-2 border ${
-                isConnected
-                  ? "bg-primary/10 border-primary"
-                  : "bg-background border-border"
-              }`}
-            >
-              <CloudIcon
-                className={`w-5 h-5 ${
-                  isConnected
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                }`}
-              />
-            </div>
+  return (
+    <SettingsCard
+      title="Google Calendar sync"
+      description="Automatically sync case deadlines to your Google Calendar"
+      headerRight={<ConnectionStatusBadge connected={isConnected} />}
+    >
+      {/* The connection, and the one action it needs */}
+      <div className="flex flex-col gap-3 border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground">Google Calendar</p>{" "}
+          <p className="truncate text-sm text-muted-foreground">
+            {isConnected
+              ? connectedEmail || "Your calendar is connected and ready to sync"
+              : "Connect your Google Calendar to enable syncing"}
+          </p>
+        </div>
+        {isConnected ? (
+          <Button
+            variant="outline"
+            onClick={handleDisconnect}
+            disabled={isDisconnecting}
+            loading={isDisconnecting}
+            loadingText="Disconnecting..."
+            className="text-destructive-text"
+          >
+            <XIcon className="size-4" aria-hidden="true" />
+            Disconnect
+          </Button>
+        ) : (
+          <Button onClick={handleConnect} disabled={isConnecting} loading={isConnecting} loadingText="Connecting...">
+            Connect calendar
+          </Button>
+        )}
+      </div>
+
+      {isConnected && masterEnabled && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-foreground">
-                Google Calendar
-              </p>{" "}
+              <p className="text-sm font-medium text-foreground">Sync all cases</p>{" "}
               <p className="text-sm text-muted-foreground">
-                {isConnected
-                  ? connectedEmail || "Your calendar is connected and ready to sync"
-                  : "Connect your Google Calendar to enable syncing"}
+                {isSyncingAll
+                  ? `Syncing ${plural(syncEligibleCount, "case")} to calendar...`
+                  : syncProgress
+                    ? `Last sync: ${syncProgress.synced}/${syncProgress.total} cases synced`
+                    : syncEligibleCount > 0
+                      ? `${plural(syncEligibleCount, "case")} ready to sync`
+                      : "Sync all case deadlines to your Google Calendar"}
               </p>
             </div>
-          </div>
-
-          {/* Connect/Disconnect Button */}
-          {isConnected ? (
             <Button
               variant="outline"
-              size="sm"
-              onClick={handleDisconnect}
-              disabled={isDisconnecting}
-              className="border border-destructive text-destructive bg-destructive/10 hover:bg-destructive/10 hover:border-destructive transition-colors"
-              style={{ boxShadow: "var(--shadow-hard-sm)" }}
+              onClick={handleSyncAll}
+              disabled={isSyncingAll || syncEligibleCount === 0}
+              loading={isSyncingAll}
+              loadingText="Syncing..."
             >
-              {isDisconnecting ? (
-                <>
-                  <CircleNotchIcon className="w-4 h-4 mr-2 animate-spin" />
-                  Disconnecting...
-                </>
-              ) : (
-                <>
-                  <XIcon className="w-4 h-4 mr-2" />
-                  Disconnect
-                </>
-              )}
+              <RefreshCw className="size-4" aria-hidden="true" />
+              Sync all
             </Button>
-          ) : (
-            <Button
-              size="sm"
-              onClick={handleConnect}
-              disabled={isConnecting}
-              className="border border-black dark:border-white bg-primary hover:bg-primary/90 text-black font-semibold"
-              style={{ boxShadow: "var(--shadow-hard-sm)" }}
-            >
-              {isConnecting ? (
-                <>
-                  <CircleNotchIcon className="w-4 h-4 mr-2 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <CheckIcon className="w-4 h-4 mr-2" />
-                  Connect calendar
-                </>
-              )}
-            </Button>
+          </div>
+          {isSyncingAll && (
+            <SyncProgress
+              elapsedSeconds={syncElapsedSeconds}
+              msPerItem={SYNC_MS_PER_CASE}
+              total={syncEligibleCount}
+              describe={(done) => `${done} of ${syncEligibleCount} cases`}
+            />
           )}
         </div>
+      )}
 
-        {/* Sync All Button - Only show when connected */}
-        {isConnected && masterEnabled && (
-          <div
-            className="p-4 bg-muted/30 border border-border mb-5 space-y-3"
-            style={{ boxShadow: "var(--shadow-hard-sm)" }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  Sync all cases
-                </p>{" "}
-                <p className="text-sm text-muted-foreground">
-                  {isSyncingAll
-                    ? `Syncing ${syncEligibleCount} case${syncEligibleCount !== 1 ? "s" : ""} to calendar...`
-                    : syncProgress
-                      ? `Last sync: ${syncProgress.synced}/${syncProgress.total} cases synced`
-                      : syncEligibleCount > 0
-                        ? `${syncEligibleCount} case${syncEligibleCount !== 1 ? "s" : ""} ready to sync`
-                        : "Sync all case deadlines to your Google Calendar"}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSyncAll}
-                disabled={isSyncingAll || syncEligibleCount === 0}
-                className="border border-primary text-primary bg-primary/10 hover:bg-accent hover:border-primary transition-colors"
-                style={{ boxShadow: "var(--shadow-hard-sm)" }}
-              >
-                {isSyncingAll ? (
-                  <>
-                    <CircleNotchIcon className="w-4 h-4 mr-2 animate-spin" />
-                    Syncing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Sync all
-                  </>
-                )}
-              </Button>
+      {isConnected && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">Clear all calendar events</p>{" "}
+              <p className="text-sm text-muted-foreground">
+                {isClearingEvents
+                  ? `Removing ${plural(casesWithEvents.estimatedEventCount, "event")} from ${plural(casesWithEvents.caseCount, "case")}...`
+                  : clearProgress
+                    ? `Last cleared: ${plural(clearProgress.eventsDeleted, "event")} from ${plural(clearProgress.casesCleaned, "case")}`
+                    : casesWithEvents.estimatedEventCount > 0
+                      ? `${plural(casesWithEvents.estimatedEventCount, "event")} in ${plural(casesWithEvents.caseCount, "case")} synced`
+                      : "Remove all PERM Tracker events from your Google Calendar"}
+              </p>
             </div>
-
-            {/* Progress indicator during sync */}
-            <>
-              {isSyncingAll && (
-                <div
-                  className="space-y-2"
-                >
-                  {/* Estimated progress calculation: ~150ms per case */}
-                  {(() => {
-                    const msPerCase = 150;
-                    const totalEstimatedMs = syncEligibleCount * msPerCase;
-                    const elapsedMs = syncElapsedSeconds * 1000;
-                    const estimatedProgress = Math.min(95, (elapsedMs / totalEstimatedMs) * 100);
-                    const estimatedCasesProcessed = Math.min(
-                      syncEligibleCount,
-                      Math.floor((syncElapsedSeconds * 1000) / msPerCase)
-                    );
-                    const remainingSeconds = Math.max(0, Math.ceil((totalEstimatedMs - elapsedMs) / 1000));
-
-                    return (
-                      <>
-                        {/* Progress bar - neobrutalist with hard edges */}
-                        <div className="relative h-3 bg-muted border border-border overflow-hidden">
-                          {/* Background pulse */}
-                          <div
-                            className="absolute inset-0 bg-primary/20 dark:bg-primary/30"
-                          />
-                          {/* Progress fill */}
-                          <div
-                            className="absolute left-0 top-0 h-full bg-primary dark:bg-primary"
-                            style={{ width: `${estimatedProgress}%` }}
-                          />
-                          {/* Striped pattern overlay for visual interest */}
-                          <div
-                            className="absolute inset-0 opacity-20"
-                            style={{
-                              backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.1) 4px, rgba(0,0,0,0.1) 8px)",
-                            }}
-                          />
-                        </div>
-                        {/* Progress text */}
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-foreground font-medium">
-                            {estimatedCasesProcessed} of {syncEligibleCount} cases
-                          </span>{" "}
-                          <span className="text-muted-foreground">
-                            {syncElapsedSeconds}s elapsed
-                            {remainingSeconds > 0 && ` • ~${remainingSeconds}s remaining`}
-                          </span>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </>
+            <Button
+              variant="outline"
+              onClick={handleClearAllEvents}
+              disabled={isClearingEvents || isSyncingAll}
+              loading={isClearingEvents}
+              loadingText="Clearing..."
+              className="text-destructive-text"
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              Clear all
+            </Button>
           </div>
+          {isClearingEvents && (
+            <SyncProgress
+              elapsedSeconds={clearElapsedSeconds}
+              msPerItem={CLEAR_MS_PER_EVENT}
+              minMs={CLEAR_MIN_MS}
+              total={casesWithEvents.estimatedEventCount}
+              describe={(done) =>
+                casesWithEvents.estimatedEventCount > 0
+                  ? `About ${done} of ${casesWithEvents.estimatedEventCount} events from ${plural(casesWithEvents.caseCount, "case")}`
+                  : "Processing..."
+              }
+            />
+          )}
+        </div>
+      )}
+
+      <div className="space-y-5 border-t border-border pt-5">
+        <ToggleRow
+          id="calendar-sync-enabled"
+          label="Calendar sync"
+          description="Enable syncing deadlines to Google Calendar"
+          checked={masterEnabled}
+          onCheckedChange={handleMasterToggle}
+          disabled={isUpdatingMaster}
+        />
+
+        {!masterEnabled && (
+          <p className="text-sm text-data-warn-ink">Calendar sync is turned off for all deadline types</p>
+        )}
+        {masterEnabled && !isConnected && (
+          <p className="text-sm text-muted-foreground">Connect your Google Calendar to start syncing deadlines</p>
         )}
 
-        {/* Clear All Calendar Events - Only show when connected */}
-        {isConnected && (
-          <div
-            className="p-4 bg-muted/30 border border-border mb-5 space-y-3"
-            style={{ boxShadow: "var(--shadow-hard-sm)" }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  Clear all calendar events
-                </p>{" "}
-                <p className="text-sm text-muted-foreground">
-                  {isClearingEvents
-                    ? `Removing ${casesWithEvents.estimatedEventCount} event${casesWithEvents.estimatedEventCount !== 1 ? "s" : ""} from ${casesWithEvents.caseCount} case${casesWithEvents.caseCount !== 1 ? "s" : ""}...`
-                    : clearProgress
-                      ? `Last cleared: ${clearProgress.eventsDeleted} event${clearProgress.eventsDeleted !== 1 ? "s" : ""} from ${clearProgress.casesCleaned} case${clearProgress.casesCleaned !== 1 ? "s" : ""}`
-                      : casesWithEvents.estimatedEventCount > 0
-                        ? `${casesWithEvents.estimatedEventCount} event${casesWithEvents.estimatedEventCount !== 1 ? "s" : ""} in ${casesWithEvents.caseCount} case${casesWithEvents.caseCount !== 1 ? "s" : ""} synced`
-                        : "Remove all PERM Tracker events from your Google Calendar"}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearAllEvents}
-                disabled={isClearingEvents || isSyncingAll}
-                className="border border-data-warn text-data-warn-ink bg-data-warn/15 hover:bg-data-warn/15 hover:border-data-warn transition-colors"
-                style={{ boxShadow: "var(--shadow-hard-sm)" }}
-              >
-                {isClearingEvents ? (
-                  <>
-                    <CircleNotchIcon className="w-4 h-4 mr-2 animate-spin" />
-                    Clearing...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Clear all
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Progress indicator during clear */}
-            <>
-              {isClearingEvents && (
-                <div
-                  className="space-y-2"
-                >
-                  {/* Estimated progress calculation: ~200ms per event (100ms rate limit + API) */}
-                  {(() => {
-                    const msPerEvent = 200;
-                    const totalEvents = casesWithEvents.estimatedEventCount;
-                    const totalCases = casesWithEvents.caseCount;
-                    const totalEstimatedMs = Math.max(3000, totalEvents * msPerEvent);
-                    const elapsedMs = clearElapsedSeconds * 1000;
-                    const estimatedProgress = Math.min(95, (elapsedMs / totalEstimatedMs) * 100);
-                    const estimatedEventsProcessed = Math.min(
-                      totalEvents,
-                      Math.floor((clearElapsedSeconds * 1000) / msPerEvent)
-                    );
-                    const remainingSeconds = Math.max(0, Math.ceil((totalEstimatedMs - elapsedMs) / 1000));
-
-                    return (
-                      <>
-                        {/* Progress bar - neobrutalist with hard edges */}
-                        <div className="relative h-3 bg-muted border border-border overflow-hidden">
-                          {/* Background pulse */}
-                          <div
-                            className="absolute inset-0 bg-data-warn/20"
-                          />
-                          {/* Progress fill */}
-                          <div
-                            className="absolute left-0 top-0 h-full bg-data-warn"
-                            style={{ width: `${estimatedProgress}%` }}
-                          />
-                          {/* Striped pattern overlay */}
-                          <div
-                            className="absolute inset-0 opacity-20"
-                            style={{
-                              backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.1) 4px, rgba(0,0,0,0.1) 8px)",
-                            }}
-                          />
-                        </div>
-                        {/* Progress text */}
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-foreground font-medium">
-                            {totalEvents > 0
-                              ? `~${estimatedEventsProcessed} of ${totalEvents} events from ${totalCases} case${totalCases !== 1 ? "s" : ""}`
-                              : "Processing..."}
-                          </span>{" "}
-                          <span className="text-muted-foreground">
-                            {clearElapsedSeconds}s elapsed
-                            {remainingSeconds > 0 && ` • ~${remainingSeconds}s remaining`}
-                          </span>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </>
-          </div>
-        )}
-
-        {/* Toggle List */}
-        <div className="space-y-5">
-          {/* Master Toggle */}
-          <ToggleRow
-            id="calendar-sync-enabled"
-            label="Calendar sync"
-            description="Enable syncing deadlines to Google Calendar"
-            checked={masterEnabled}
-            onCheckedChange={handleMasterToggle}
-            disabled={isUpdatingMaster}
-            icon={<CalendarIcon className="w-4 h-4 text-primary" />}
-          />
-
-          {/* Warning when disabled */}
-          <>
-            {!masterEnabled && (
-              <div
-                className="flex items-center gap-2 px-3 py-2 bg-data-warn/15 border border-data-warn text-data-warn-ink text-sm"
-              >
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                <span>Calendar sync is turned off for all deadline types</span>
-              </div>
-            )}
-          </>
-
-          {/* Not connected warning */}
-          <>
-            {masterEnabled && !isConnected && (
-              <div
-                className="flex items-center gap-2 px-3 py-2 bg-muted border border-border text-muted-foreground text-sm"
-              >
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                <span>
-                  Connect your Google Calendar to start syncing deadlines
-                </span>
-              </div>
-            )}
-          </>
-
-          {/* Deadline Type Toggles - 2 column grid */}
-          <div className="pt-4 border-t border-border">
-            <p className="text-sm font-medium text-foreground mb-4">
-              Deadline types to sync
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {DEADLINE_TYPES.map((type) => (
-                <div
-                  key={type.id}
-                  className={`p-3 border border-border bg-background ${subTogglesDisabled ? "opacity-60" : ""}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5 flex-1 pr-3">
-                      <Label
-                        htmlFor={type.id}
-                        className={`text-sm font-medium ${subTogglesDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-                      >
-                        {type.label}
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        {type.description}
-                      </p>
-                    </div>
-                    <Switch
-                      id={type.id}
-                      checked={deadlineToggles[type.id]}
-                      onCheckedChange={(checked) =>
-                        handleDeadlineToggle(type.id, checked)
-                      }
-                      disabled={subTogglesDisabled || updatingDeadlineId === type.id}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="space-y-4">
+          <p className="text-sm font-medium text-foreground">Deadline types to sync</p>
+          <div className="grid grid-cols-1 gap-x-8 gap-y-4 [&>*]:min-w-0 md:grid-cols-2">
+            {DEADLINE_TYPES.map((type) => (
+              <ToggleRow
+                key={type.id}
+                id={type.id}
+                label={type.label}
+                description={type.description}
+                checked={deadlineToggles[type.id]}
+                onCheckedChange={(checked) => handleDeadlineToggle(type.id, checked)}
+                disabled={subTogglesDisabled || updatingDeadlineId === type.id}
+              />
+            ))}
           </div>
         </div>
       </div>
-    </div>
+    </SettingsCard>
   );
 }

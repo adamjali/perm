@@ -155,7 +155,7 @@ describe("NotificationPreferencesSection", () => {
       const elements = screen.getAllByText("Email notifications");
       expect(elements.length).toBeGreaterThanOrEqual(1);
       // The first one should be the h3 header
-      expect(elements[0].tagName).toBe("H3");
+      expect(elements[0].tagName).toBe("H2");
     });
 
     it("renders Push Notifications section header", () => {
@@ -167,7 +167,7 @@ describe("NotificationPreferencesSection", () => {
       const elements = screen.getAllByText("Push notifications");
       expect(elements.length).toBeGreaterThanOrEqual(1);
       // The first one should be the h3 header
-      expect(elements[0].tagName).toBe("H3");
+      expect(elements[0].tagName).toBe("H2");
     });
 
     it("renders Reminder Settings section header", () => {

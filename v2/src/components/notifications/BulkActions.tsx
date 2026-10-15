@@ -116,14 +116,11 @@ export default function BulkActions({ className }: BulkActionsProps) {
           disabled={isMarkingAllRead || unreadCount === 0}
           loading={isMarkingAllRead}
           loadingText="Marking..."
-         
         >
-          <CheckCheck className="size-4 mr-2" />
+          <CheckCheck className="size-4" aria-hidden="true" />
           Mark all read
           {unreadCount > 0 && (
-            <span className="ml-2 text-sm bg-muted px-1.5 py-0.5 rounded">
-              {unreadCount}
-            </span>
+            <span className="text-muted-foreground tabular-nums"> {unreadCount}</span>
           )}
         </Button>
 
@@ -137,12 +134,10 @@ export default function BulkActions({ className }: BulkActionsProps) {
           loadingText="Deleting..."
           className="text-destructive hover:text-destructive-text hover:bg-destructive/10"
         >
-          <Trash2 className="size-4 mr-2" />
+          <Trash2 className="size-4" aria-hidden="true" />
           Delete read
           {readCount > 0 && (
-            <span className="ml-2 text-sm bg-muted px-1.5 py-0.5 rounded">
-              {readCount}
-            </span>
+            <span className="text-muted-foreground tabular-nums"> {readCount}</span>
           )}
         </Button>
       </div>

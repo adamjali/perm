@@ -39,6 +39,7 @@ import { CalendarEventPopover } from "./CalendarEventPopover";
 import { CalendarMobileList } from "./CalendarMobileList";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { MOBILE_BREAKPOINT } from "@/hooks/useIsMobile";
 import { GridNineIcon, ListIcon } from "@phosphor-icons/react/ssr";
 
 // ============================================================================
@@ -122,8 +123,15 @@ export function CalendarView({
   }, []);
 
   // Toggle between list and calendar view
+  // Until the reader picks, a phone shows the list and a wider screen the
+  // grid, so the toggle asks the screen which one is showing right now.
   const handleViewModeToggle = useCallback(() => {
-    setUserViewMode((prev) => (prev === "list" ? "calendar" : "list"));
+    setUserViewMode((prev) => {
+      const listShown =
+        prev === "list" ||
+        (prev === null && window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches);
+      return listShown ? "calendar" : "list";
+    });
   }, []);
 
   // Calendar configuration - memoized for performance
@@ -235,31 +243,26 @@ export function CalendarView({
     <CalendarListToggleContext.Provider value={handleViewModeToggle}>
     <div className="w-full calendar-container">
       {/* View mode toggle. On desktop the calendar's toolbar carries "List"
-          itself, so this row only shows on phones and in list view. */}
-      <div className={cn("flex justify-end mb-4", userViewMode !== "list" && "md:hidden")}>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleViewModeToggle}
-            className="gap-2 min-h-[44px]"
-            aria-label={
-              userViewMode === "list" ? "Switch to calendar view" : "Switch to list view"
-            }
-          >
-            {userViewMode === "list" ? (
-              <>
-                <GridNineIcon className="size-4" />
-                <span className="hidden sm:inline">Calendar view</span>{" "}
-                <span className="sm:hidden">Calendar</span>
-              </>
-            ) : (
-              <>
-                <ListIcon className="size-4" />
-                <span className="hidden sm:inline">List view</span>{" "}
-                <span className="sm:hidden">List</span>
-              </>
-            )}
-          </Button>
+          itself, so this row shows on phones and in list view. Until the
+          reader picks, a phone is already showing the list. */}
+      <div className={cn("mb-4 flex justify-end", userViewMode !== "list" && "md:hidden")}>
+        <Button
+          variant="outline"
+          onClick={handleViewModeToggle}
+          aria-label={userViewMode === "calendar" ? "Switch to list view" : "Switch to calendar view"}
+        >
+          {userViewMode === "calendar" ? (
+            <>
+              <ListIcon className="size-4" aria-hidden="true" />
+              List
+            </>
+          ) : (
+            <>
+              <GridNineIcon className="size-4" aria-hidden="true" />
+              Calendar
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Phones get the list by default and wider screens the grid, unless

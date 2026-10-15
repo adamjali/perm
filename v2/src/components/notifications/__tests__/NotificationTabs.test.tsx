@@ -16,7 +16,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
-import NotificationTabs, { type NotificationTabType } from "../NotificationTabs";
+import NotificationTabs, { NOTIFICATION_PANEL_ID, type NotificationTabType } from "../NotificationTabs";
 
 describe("NotificationTabs", () => {
   // ============================================================================
@@ -112,9 +112,9 @@ describe("NotificationTabs", () => {
       );
 
       const unreadTab = screen.getByRole("tab", { name: /unread/i });
-      // Active tab should have dark background
-      expect(unreadTab).toHaveClass("bg-foreground");
-      expect(unreadTab).toHaveClass("text-background");
+      // The chosen tab takes the shared tinted choice look, never inverted black
+      expect(unreadTab).toHaveClass("bg-tint");
+      expect(unreadTab).not.toHaveClass("bg-foreground");
     });
 
     it("applies inactive styling to non-selected tabs", () => {
@@ -124,9 +124,9 @@ describe("NotificationTabs", () => {
       );
 
       const allTab = screen.getByRole("tab", { name: /^all$/i });
-      // Inactive tabs should have transparent border
-      expect(allTab).toHaveClass("border-transparent");
-      expect(allTab).toHaveClass("text-muted-foreground");
+      // Unchosen tabs are plain outlined choices
+      expect(allTab).toHaveClass("border-input");
+      expect(allTab).not.toHaveClass("bg-tint");
     });
   });
 
@@ -327,14 +327,16 @@ describe("NotificationTabs", () => {
   // ============================================================================
 
   describe("Accessibility", () => {
-    it("has aria-controls pointing to panel ID", () => {
+    it("points only the chosen tab at the one list it filters", () => {
       const onTabChange = vi.fn();
       renderWithProviders(
         <NotificationTabs activeTab="all" onTabChange={onTabChange} />
       );
 
       const allTab = screen.getByRole("tab", { name: /^all$/i });
-      expect(allTab).toHaveAttribute("aria-controls", "notification-panel-all");
+      expect(allTab).toHaveAttribute("aria-controls", NOTIFICATION_PANEL_ID);
+      expect(allTab).toHaveAttribute("id", "notification-tab-all");
+      expect(screen.getByRole("tab", { name: /unread/i })).not.toHaveAttribute("aria-controls");
     });
 
     it("all tabs are focusable", () => {

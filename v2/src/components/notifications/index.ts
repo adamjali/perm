@@ -11,6 +11,6 @@
 
 export { default as NotificationBell } from "./NotificationBell";
 export { default as NotificationDropdown } from "./NotificationDropdown";
-export { default as NotificationTabs, type NotificationTabType } from "./NotificationTabs";
+export { default as NotificationTabs, NOTIFICATION_PANEL_ID, type NotificationTabType } from "./NotificationTabs";
 export { default as NotificationList } from "./NotificationList";
 export { default as BulkActions } from "./BulkActions";

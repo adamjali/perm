@@ -31,9 +31,9 @@ import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { SettingsCard } from "./SettingsCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckIcon, ClockIcon, GlobeIcon, InfoIcon, MoonIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { useSettingsSectionDirtyState } from "./SettingsUnsavedChangesContext";
@@ -233,183 +233,95 @@ export default function QuietHoursSection({
   const timezoneDisplay = getTimezoneFriendlyName(profile.timezone);
 
   return (
-    <div
-      className="bg-card border border-border p-6"
-      style={{ boxShadow: "var(--shadow-hard)" }}
-    >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-2">
-        <MoonIcon className="w-5 h-5 text-foreground" />
-        <h3 className="font-heading font-bold text-lg text-foreground">
-          Quiet hours
-        </h3>
-      </div>
-      <p className="text-sm text-muted-foreground mb-6">
-        Pause non-urgent notifications during specific hours
-      </p>
-
-      {/* Master Toggle */}
-      <div className="space-y-5">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5 flex-1">
-            <Label
-              htmlFor="quiet-hours-enabled"
-              className="text-sm font-medium flex items-center gap-2"
-            >
-              <MoonIcon className="w-4 h-4 text-primary" />
-              Enable quiet hours
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Suppress notifications during the specified time range
-            </p>
-          </div>
-          <Switch
-            id="quiet-hours-enabled"
-            checked={quietHoursEnabled}
-            onCheckedChange={handleToggle}
-            disabled={isToggling}
-          />
+    <SettingsCard title="Quiet hours" description="Pause non-urgent notifications during specific hours">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1 space-y-0.5">
+          <Label htmlFor="quiet-hours-enabled" className="text-sm font-medium">
+            Enable quiet hours
+          </Label>
+          <p className="text-sm text-muted-foreground">
+            Suppress notifications during the specified time range
+          </p>
         </div>
-
-        {/* Time Range Section - Only show when enabled */}
-        <>
-          {quietHoursEnabled && (
-            <div
-              className="space-y-4 overflow-hidden"
-            >
-              {/* Time Pickers */}
-              <div className="grid [&>*]:min-w-0 grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                {/* Start Time */}
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="quiet-hours-start"
-                    className="text-sm font-medium flex items-center gap-2"
-                  >
-                    <ClockIcon className="w-4 h-4" />
-                    Start time
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="quiet-hours-start"
-                      type="time"
-                      value={quietHoursStart}
-                      onChange={(e) => setQuietHoursStart(e.target.value)}
-                      className="w-full"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                      {formatTime12h(quietHoursStart)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* End Time */}
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="quiet-hours-end"
-                    className="text-sm font-medium flex items-center gap-2"
-                  >
-                    <ClockIcon className="w-4 h-4" />
-                    End time
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="quiet-hours-end"
-                      type="time"
-                      value={quietHoursEnd}
-                      onChange={(e) => setQuietHoursEnd(e.target.value)}
-                      className="w-full"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                      {formatTime12h(quietHoursEnd)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Timezone Display (Read-only) */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border text-sm">
-                <GlobeIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-muted-foreground">
-                  Timezone: <strong className="text-foreground">{timezoneDisplay}</strong>
-                </span>
-                {onNavigateToProfile && (
-                  <button
-                    type="button"
-                    className="text-data-info-ink hover:underline text-sm font-medium ml-auto"
-                    onClick={onNavigateToProfile}
-                  >
-                    Change in profile
-                  </button>
-                )}
-              </div>
-
-              {/* Info Box - Urgent notifications bypass */}
-              <div className="flex items-start gap-2 px-3 py-2 bg-data-info/10 border border-data-info text-sm">
-                <InfoIcon className="w-4 h-4 text-data-info-ink flex-shrink-0 mt-0.5" />
-                <span className="text-data-info-ink">
-                  <strong>Note:</strong> Urgent notifications (overdue deadlines, critical alerts) will always be delivered, even during quiet hours.
-                </span>
-              </div>
-            </div>
-          )}
-        </>
-
-        {/* Warning when disabled */}
-        <>
-          {!quietHoursEnabled && (
-            <div
-              className="flex items-center gap-2 px-3 py-2 bg-muted border border-border text-muted-foreground text-sm"
-            >
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              <span>
-                Quiet hours are disabled. You may receive notifications at any time.
-              </span>
-            </div>
-          )}
-        </>
+        <Switch
+          id="quiet-hours-enabled"
+          checked={quietHoursEnabled}
+          onCheckedChange={handleToggle}
+          disabled={isToggling}
+        />
       </div>
 
-      {/* Save Button - Only show when there are time changes (toggle saves immediately) */}
-      <>
-        {quietHoursEnabled && isDirty && (
-          <div
-            className="mt-6 pt-6 border-t border-border flex items-center justify-between"
-          >
-            <div className="text-sm text-muted-foreground">
-              <>
-                {justSaved ? (
-                  <span
-                    key="saved"
-                    className="text-primary flex items-center gap-1"
-                  >
-                    <span
-                    >
-                      <CheckIcon className="w-4 h-4" />
-                    </span>
-                    Saved
-                  </span>
-                ) : (
-                  <span
-                    key="dirty"
-                    className="text-data-warn-ink"
-                  >
-                    You have unsaved changes
-                  </span>
-                )}
-              </>
+      {quietHoursEnabled ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="quiet-hours-start" className="text-sm font-medium">Start time</Label>
+              <Input
+                id="quiet-hours-start"
+                type="time"
+                value={quietHoursStart}
+                onChange={(e) => setQuietHoursStart(e.target.value)}
+                className="w-full"
+                aria-describedby="quiet-hours-start-12h"
+              />
+              <p id="quiet-hours-start-12h" className="text-sm text-muted-foreground">{formatTime12h(quietHoursStart)}</p>
             </div>
-            <Button
-              onClick={handleSave}
-              disabled={!isDirty || isSaving}
-              loading={isSaving}
-              loadingText="Saving..."
-            >
-              <CheckIcon className="w-4 h-4" />
-              Save changes
-            </Button>
+            <div className="space-y-1.5">
+              <Label htmlFor="quiet-hours-end" className="text-sm font-medium">End time</Label>
+              <Input
+                id="quiet-hours-end"
+                type="time"
+                value={quietHoursEnd}
+                onChange={(e) => setQuietHoursEnd(e.target.value)}
+                className="w-full"
+                aria-describedby="quiet-hours-end-12h"
+              />
+              <p id="quiet-hours-end-12h" className="text-sm text-muted-foreground">{formatTime12h(quietHoursEnd)}</p>
+            </div>
           </div>
-        )}
-      </>
-    </div>
+
+          <p className="text-sm text-muted-foreground">
+            Timezone: <span className="font-medium text-foreground">{timezoneDisplay}</span>
+            {onNavigateToProfile && (
+              <>
+                {". "}
+                <button type="button" className="link font-medium" onClick={onNavigateToProfile}>
+                  Change in profile
+                </button>
+              </>
+            )}
+          </p>{" "}
+
+          <p className="text-sm text-muted-foreground">
+            Urgent notifications (overdue deadlines, critical alerts) still arrive during quiet hours.
+          </p>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Quiet hours are disabled. You may receive notifications at any time.
+        </p>
+      )}
+
+      {/* The times save here; the switch saves on its own */}
+      {quietHoursEnabled && (isDirty || justSaved) && (
+        <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
+          <p className="text-sm" role="status">
+            {justSaved ? (
+              <span className="text-primary-text">Saved</span>
+            ) : (
+              <span className="text-data-warn-ink">You have unsaved changes</span>
+            )}
+          </p>
+          <Button
+            onClick={handleSave}
+            disabled={!isDirty || isSaving}
+            loading={isSaving}
+            loadingText="Saving..."
+          >
+            Save changes
+          </Button>
+        </div>
+      )}
+    </SettingsCard>
   );
 }

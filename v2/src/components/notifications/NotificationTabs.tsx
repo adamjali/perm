@@ -15,6 +15,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { choiceVariants } from "@/components/ui/choice";
+
+/** The one list the tabs filter; the page gives it this id. */
+export const NOTIFICATION_PANEL_ID = "notification-panel";
 
 // Tab configuration
 export type NotificationTabType = "all" | "unread" | "deadlines" | "status" | "rfe_rfi";
@@ -46,10 +50,7 @@ export default function NotificationTabs({
 }: NotificationTabsProps) {
   return (
     <div
-      className={cn(
-        "flex flex-wrap gap-2 border-b border-border pb-4",
-        className
-      )}
+      className={cn("flex flex-wrap gap-2", className)}
       role="tablist"
       aria-label="Notification filters"
     >
@@ -62,34 +63,16 @@ export default function NotificationTabs({
             key={tab.id}
             type="button"
             role="tab"
+            id={`notification-tab-${tab.id}`}
             aria-selected={isActive}
-            aria-controls={`notification-panel-${tab.id}`}
+            aria-controls={isActive ? NOTIFICATION_PANEL_ID : undefined}
             onClick={() => onTabChange(tab.id)}
-            className={cn(
-              // Base styles - Mobile-first: 44px touch target (py-3), smaller on desktop
-              "flex items-center gap-2 px-4 py-3 md:py-2",
-              "text-sm font-heading font-bold",
-              "border transition-colors duration-150",
-              // Active state
-              isActive
-                ? "border-foreground bg-foreground text-background"
-                : "border-transparent text-muted-foreground hover:border-foreground/50 hover:text-foreground",
-              // Focus state
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            )}
+            className={choiceVariants({ on: isActive })}
           >
-            <span>{tab.label}</span>
+            {tab.label}
             {count !== undefined && count > 0 && (
-              <span
-                className={cn(
-                  "flex items-center justify-center",
-                  "min-w-[20px] h-5 px-1.5",
-                  "text-sm font-bold rounded-full",
-                  isActive
-                    ? "bg-background text-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
+              <span className="text-muted-foreground tabular-nums">
+                {" "}
                 {count > 99 ? "99+" : count}
               </span>
             )}

@@ -10,10 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BellIcon, BellRingingIcon, BriefcaseIcon, CalendarIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, ClockIcon, DeviceMobileIcon as Smartphone, EnvelopeIcon as Mail, FileArrowUpIcon as FileCheck, FileTextIcon, MegaphoneIcon, MinusIcon, NewspaperIcon, PaperPlaneTiltIcon as Send, PlusIcon, QuestionIcon as HelpCircle, WarningIcon as AlertTriangle, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
+import { CaretDownIcon, CheckIcon, CircleNotchIcon, MinusIcon, PaperPlaneTiltIcon as Send, PlusIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import { toast } from "@/lib/toast";
 import { MAIL_KINDS } from "@/lib/mailKinds";
 import { SettingsCard } from "./SettingsCard";
+import { ToneBadge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { MailSubscriptionsCard } from "./MailSubscriptionsCard";
 import { captureError } from "@/lib/sentry";
 import {
@@ -33,12 +35,12 @@ const MIN_URGENT_DAYS = 1;
 const MAX_URGENT_DAYS = 30;
 
 const DEADLINE_TYPES = [
-  { key: "emailDeadlineReminderPwd", label: "PWD expiration", description: "Prevailing wage determination deadlines", icon: FileTextIcon },
-  { key: "emailDeadlineReminderRecruitment", label: "Recruitment", description: "Job posting and recruitment deadlines", icon: BriefcaseIcon },
-  { key: "emailDeadlineReminderEta9089", label: "ETA 9089", description: "Labor certification filing deadlines", icon: CalendarIcon },
-  { key: "emailDeadlineReminderI140", label: "I-140", description: "Immigration petition filing deadlines", icon: FileCheck },
-  { key: "emailDeadlineReminderRfi", label: "RFI response", description: "Request for information due dates", icon: HelpCircle },
-  { key: "emailDeadlineReminderRfe", label: "RFE response", description: "Request for evidence due dates", icon: AlertCircle },
+  { key: "emailDeadlineReminderPwd", label: "PWD expiration", description: "Prevailing wage determination deadlines" },
+  { key: "emailDeadlineReminderRecruitment", label: "Recruitment", description: "Job posting and recruitment deadlines" },
+  { key: "emailDeadlineReminderEta9089", label: "ETA 9089", description: "Labor certification filing deadlines" },
+  { key: "emailDeadlineReminderI140", label: "I-140", description: "Immigration petition filing deadlines" },
+  { key: "emailDeadlineReminderRfi", label: "RFI response", description: "Request for information due dates" },
+  { key: "emailDeadlineReminderRfe", label: "RFE response", description: "Request for evidence due dates" },
 ] as const;
 
 type DeadlineTypeKey = typeof DEADLINE_TYPES[number]["key"];
@@ -77,24 +79,21 @@ interface ToggleRowProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
-  icon?: React.ReactNode;
   indented?: boolean;
 }
 
+/** A setting and its switch. Off-limits rows stay readable, in muted ink. */
 function ToggleRow({
   id, label, description, checked, onCheckedChange,
-  disabled = false, icon, indented = false,
+  disabled = false, indented = false,
 }: ToggleRowProps): React.ReactElement {
   return (
-    <div className={`flex items-center justify-between ${indented ? "ml-6 pl-4 border-l border-border" : ""}`}>
-      <div className="space-y-0.5 flex-1">
-        <Label htmlFor={id} className={`text-sm font-medium flex items-center gap-2 ${disabled ? "opacity-50" : ""}`}>
-          {icon}
+    <div className={cn("flex items-center justify-between gap-4", indented && "ml-2 border-l border-border pl-4")}>
+      <div className="flex-1 space-y-0.5">
+        <Label htmlFor={id} className={cn("text-sm font-medium", disabled && "text-muted-foreground")}>
           {label}
         </Label>
-        <p className={`text-sm text-muted-foreground ${disabled ? "opacity-50" : ""}`}>
-          {description}
-        </p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
     </div>
@@ -112,17 +111,12 @@ function WarningBanner({ visible, children, variant = "warning" }: WarningBanner
     ? "bg-data-warn/15 border-data-warn text-data-warn-ink"
     : "bg-muted border-border text-muted-foreground";
 
+  if (!visible) return null;
   return (
-    <>
-      {visible && (
-        <div
-          className={`flex items-center gap-2 px-3 py-2 border text-sm ${styles}`}
-        >
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          <span>{children}</span>
-        </div>
-      )}
-    </>
+    <div className={cn("flex items-center gap-2 border px-3 py-2 text-sm", styles)}>
+      <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
+      <span>{children}</span>
+    </div>
   );
 }
 
@@ -137,18 +131,12 @@ interface TestButtonProps {
 
 function TestButton({ onClick, disabled, loading, justSent, label, sentLabel = "Sent" }: TestButtonProps): React.ReactElement {
   return (
-    <Button variant="outline" size="sm" onClick={onClick} disabled={disabled} loading={loading} loadingText="Sending...">
-      <>
-        {justSent ? (
-          <span key="sent">
-            <CheckIcon className="w-4 h-4 text-primary" />
-          </span>
-        ) : (
-          <span key="send">
-            <Send className="w-4 h-4" />
-          </span>
-        )}
-      </>
+    <Button variant="outline" onClick={onClick} disabled={disabled} loading={loading} loadingText="Sending...">
+      {justSent ? (
+        <CheckIcon className="size-4 text-primary-text" aria-hidden="true" />
+      ) : (
+        <Send className="size-4" aria-hidden="true" />
+      )}
       {justSent ? sentLabel : label}
     </Button>
   );
@@ -164,26 +152,10 @@ interface PushStatusBadgeProps {
 }
 
 function PushStatusBadge({ status, enabled }: PushStatusBadgeProps): React.ReactElement {
-  if (!status?.supported) {
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border border-border">Not supported</span>;
-  }
-  if (status.permission === "denied") {
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-destructive/10 text-destructive border border-destructive">Blocked</span>;
-  }
-  if (enabled && status.subscribed) {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-primary/10 text-primary border border-primary">
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-        Enabled
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border border-border">
-      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
-      Disabled
-    </span>
-  );
+  if (!status?.supported) return <ToneBadge tone="flat">Not supported</ToneBadge>;
+  if (status.permission === "denied") return <ToneBadge tone="bad">Blocked</ToneBadge>;
+  if (enabled && status.subscribed) return <ToneBadge tone="good">Enabled</ToneBadge>;
+  return <ToneBadge tone="flat">Disabled</ToneBadge>;
 }
 
 // ============================================================================
@@ -461,9 +433,9 @@ export default function NotificationPreferencesSection({
   }, [handleToggle]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Email Notifications Section */}
-      <SettingsCard icon={Mail} title="Email notifications" description="Control which email notifications you receive">
+      <SettingsCard title="Email notifications" description="Control which email notifications you receive">
         <div className="space-y-5">
           <ToggleRow
             id="email-notifications-enabled"
@@ -471,7 +443,6 @@ export default function NotificationPreferencesSection({
             description="Receive notifications via email"
             checked={emailEnabled}
             onCheckedChange={handleMasterToggle}
-            icon={<BellIcon className="w-4 h-4 text-primary" />}
           />
 
           <WarningBanner visible={!emailEnabled}>
@@ -479,72 +450,55 @@ export default function NotificationPreferencesSection({
           </WarningBanner>
 
           <div className="space-y-4 pt-2">
-            {/* Expandable Deadline Reminders Section */}
-            <div className="ml-6 pl-4 border-l border-border">
-              <div className="flex items-center justify-between">
+            {/* Deadline reminders, with the types they cover folded under them */}
+            <div className="ml-2 border-l border-border pl-4">
+              <div className="flex items-center justify-between gap-4">
                 <button
                   type="button"
                   onClick={() => setDeadlineRemindersExpanded(!deadlineRemindersExpanded)}
                   disabled={!emailEnabled}
-                  className={`flex-1 flex items-center gap-2 text-left ${!emailEnabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  aria-expanded={deadlineRemindersExpanded}
+                  className="flex min-h-11 flex-1 items-start gap-2 text-left disabled:cursor-not-allowed"
                 >
-                  <CaretDownIcon className={`w-4 h-4 transition-transform duration-200 ${deadlineRemindersExpanded ? "rotate-0" : "-rotate-90"} ${!emailEnabled ? "opacity-50" : ""}`} />
-                  <div className="space-y-0.5 flex-1">
-                    <span className={`text-sm font-medium flex items-center gap-2 ${!emailEnabled ? "opacity-50" : ""}`}>
-                      <BellRingingIcon className="w-4 h-4" />
+                  <CaretDownIcon
+                    className={cn("mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform", !deadlineRemindersExpanded && "-rotate-90")}
+                    aria-hidden="true"
+                  />
+                  <span className="flex-1 space-y-0.5">
+                    <span className={cn("block text-sm font-medium", !emailEnabled && "text-muted-foreground")}>
                       {MAIL_KINDS.reminders.name}
                     </span>{" "}
-                    <p className={`text-sm text-muted-foreground ${!emailEnabled ? "opacity-50" : ""}`}>
-                      {MAIL_KINDS.reminders.what}
-                    </p>
-                  </div>
+                    <span className="block text-sm text-muted-foreground">{MAIL_KINDS.reminders.what}</span>
+                  </span>
                 </button>
-                <div onClick={(e) => e.stopPropagation()}>
-                  <Switch
-                    id="email-deadline-reminders"
-                    checked={deadlineReminders}
-                    onCheckedChange={(value) => handleToggle("emailDeadlineReminders", value, setDeadlineReminders)}
-                    disabled={!emailEnabled}
-                  />
-                </div>
+                <Switch
+                  id="email-deadline-reminders"
+                  aria-label={MAIL_KINDS.reminders.name}
+                  checked={deadlineReminders}
+                  onCheckedChange={(value) => handleToggle("emailDeadlineReminders", value, setDeadlineReminders)}
+                  disabled={!emailEnabled}
+                />
               </div>
 
-              <>
-                {deadlineRemindersExpanded && (
-                  <div
-                  >
-                    <div className="mt-4 ml-6 pl-4 border-l border-border/50 space-y-3 pb-1">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Choose which deadline types to receive reminders for:
-                      </p>
-                      {DEADLINE_TYPES.map((type) => {
-                        const Icon = type.icon;
-                        const isChecked = deadlineTypes[type.key];
-                        const isDisabled = !emailEnabled || !deadlineReminders;
-                        return (
-                          <div key={type.key} className="flex items-center justify-between">
-                            <div className="space-y-0.5 flex-1">
-                              <Label htmlFor={type.key} className={`text-sm font-medium flex items-center gap-2 ${isDisabled ? "opacity-50" : ""}`}>
-                                <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                                {type.label}
-                              </Label>
-                              <p className={`text-sm text-muted-foreground ${isDisabled ? "opacity-50" : ""}`}>
-                                {type.description}
-                              </p>
-                            </div>
-                            <Switch
-                              id={type.key}
-                              checked={isChecked}
-                              onCheckedChange={(value) => handleDeadlineTypeToggle(type.key, value)}
-                              disabled={isDisabled}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </>
+              {deadlineRemindersExpanded && (
+                <div className="mt-3 ml-6 space-y-3 border-l border-border pl-4">
+                  <p className="text-sm text-muted-foreground">Which deadlines to remind you about:</p>
+                  {DEADLINE_TYPES.map((type) => {
+                    const isDisabled = !emailEnabled || !deadlineReminders;
+                    return (
+                      <ToggleRow
+                        key={type.key}
+                        id={type.key}
+                        label={type.label}
+                        description={type.description}
+                        checked={deadlineTypes[type.key]}
+                        onCheckedChange={(value) => handleDeadlineTypeToggle(type.key, value)}
+                        disabled={isDisabled}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <ToggleRow
@@ -564,18 +518,16 @@ export default function NotificationPreferencesSection({
               checked={weeklyDigest}
               onCheckedChange={handleWeeklyDigestToggle}
               disabled={!emailEnabled}
-              icon={<NewspaperIcon className="w-4 h-4" />}
               indented
             />
           </div>
         </div>
 
         {/* Marketing / Product Updates */}
-        <div className="mt-6 pt-6 border-t border-border">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5 flex-1">
-              <Label htmlFor="marketing-updates" className="text-sm font-medium flex items-center gap-2">
-                <MegaphoneIcon className="w-4 h-4 text-primary" />
+        <div className="border-t border-border pt-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 space-y-0.5">
+              <Label htmlFor="marketing-updates" className="text-sm font-medium">
                 Product updates and announcements
               </Label>
               <p className="text-sm text-muted-foreground">
@@ -583,7 +535,7 @@ export default function NotificationPreferencesSection({
               </p>
             </div>
             {marketingLoading ? (
-              <CircleNotchIcon className="w-4 h-4 animate-spin text-muted-foreground" />
+              <CircleNotchIcon className="size-4 animate-spin text-muted-foreground" aria-label="Loading" />
             ) : marketingSubscribed === null ? (
               <span className="text-sm text-muted-foreground">Not available</span>
             ) : (
@@ -596,8 +548,8 @@ export default function NotificationPreferencesSection({
           </div>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-border">
-          <div className="flex items-center justify-between">
+        <div className="border-t border-border pt-5">
+          <div className="flex items-center justify-between gap-4">
             <div className="space-y-0.5">
               <p className="text-sm font-medium text-foreground">Test email</p>{" "}
               <p className="text-sm text-muted-foreground">Send a test email to {userEmail}</p>
@@ -617,19 +569,20 @@ export default function NotificationPreferencesSection({
 
       {/* Push Notifications Section */}
       <SettingsCard
-        icon={Smartphone}
         title="Push notifications"
         description="Receive notifications directly in your browser"
         headerRight={<PushStatusBadge status={pushStatus} enabled={pushEnabled} />}
       >
         <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5 flex-1">
-              <Label htmlFor="push-notifications-enabled" className={`text-sm font-medium flex items-center gap-2 ${!pushStatus?.supported || isUpdatingPush ? "opacity-50" : ""}`}>
-                <BellIcon className="w-4 h-4 text-primary" />
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 space-y-0.5">
+              <Label
+                htmlFor="push-notifications-enabled"
+                className={cn("text-sm font-medium", (!pushStatus?.supported || isUpdatingPush) && "text-muted-foreground")}
+              >
                 Push notifications
               </Label>
-              <p className={`text-sm text-muted-foreground ${!pushStatus?.supported || isUpdatingPush ? "opacity-50" : ""}`}>
+              <p className="text-sm text-muted-foreground">
                 {!pushStatus?.supported
                   ? "Push notifications aren’t supported in this browser"
                   : "Receive instant notifications in your browser"}
@@ -652,8 +605,8 @@ export default function NotificationPreferencesSection({
           </WarningBanner>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-border">
-          <div className="flex items-center justify-between">
+        <div className="border-t border-border pt-5">
+          <div className="flex items-center justify-between gap-4">
             <div className="space-y-0.5">
               <p className="text-sm font-medium text-foreground">Test push notification</p>{" "}
               <p className="text-sm text-muted-foreground">Send a test notification to this browser</p>
@@ -670,7 +623,7 @@ export default function NotificationPreferencesSection({
       </SettingsCard>
 
       {/* Reminder Settings Section */}
-      <SettingsCard icon={ClockIcon} title="Reminder settings" description="Configure when you receive deadline reminders">
+      <SettingsCard title="Reminder settings" description="Configure when you receive deadline reminders">
         <div className="space-y-4">
           <div>
             <Label className="text-sm font-medium text-foreground">Remind me before deadlines</Label>
@@ -704,9 +657,9 @@ export default function NotificationPreferencesSection({
                 onClick={() => handleUrgentDaysChange(urgentDays - 1)}
                 disabled={urgentDays <= MIN_URGENT_DAYS || isUpdatingUrgentDays}
                 loading={isUpdatingUrgentDays}
-                className="h-9 w-9"
+                aria-label="One day fewer"
               >
-                <MinusIcon className="w-4 h-4" />
+                <MinusIcon className="size-4" aria-hidden="true" />
               </Button>
               <Input
                 id="urgent-deadline-days"
@@ -715,7 +668,7 @@ export default function NotificationPreferencesSection({
                 max={MAX_URGENT_DAYS}
                 value={urgentDays}
                 onChange={(e) => handleUrgentDaysChange(parseInt(e.target.value, 10))}
-                className="w-16 text-center"
+                className="h-11 w-16 text-center"
                 disabled={isUpdatingUrgentDays}
               />
               <Button
@@ -724,16 +677,13 @@ export default function NotificationPreferencesSection({
                 onClick={() => handleUrgentDaysChange(urgentDays + 1)}
                 disabled={urgentDays >= MAX_URGENT_DAYS || isUpdatingUrgentDays}
                 loading={isUpdatingUrgentDays}
-                className="h-9 w-9"
+                aria-label="One day more"
               >
-                <PlusIcon className="w-4 h-4" />
+                <PlusIcon className="size-4" aria-hidden="true" />
               </Button>
               <span className="text-sm text-muted-foreground">days</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
-              Urgent deadlines bypass quiet hours
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Urgent deadlines bypass quiet hours.</p>
           </div>
         </div>
       </SettingsCard>

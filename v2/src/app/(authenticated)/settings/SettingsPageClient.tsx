@@ -7,7 +7,8 @@ import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import SettingsLayout, {
-  SettingsSectionType,
+  NAV_ITEMS,
+  type SettingsSectionType,
 } from "@/components/settings/SettingsLayout";
 import { SettingsUnsavedChangesProvider } from "@/components/settings/SettingsUnsavedChangesContext";
 import DeadlineEnforcementToggle from "@/components/settings/DeadlineEnforcementToggle";
@@ -25,16 +26,8 @@ import { PageHeading } from "../components/PageHeading";
 // CONSTANTS
 // ============================================================================
 
-/** Valid tab values for URL param validation */
-const VALID_TABS: SettingsSectionType[] = [
-  "profile",
-  "notifications",
-  "quiet-hours",
-  "calendar-sync",
-  "auto-close",
-  "api-keys",
-  "support",
-];
+/** Valid tab values for URL param validation: the menu's own list */
+const VALID_TABS: SettingsSectionType[] = NAV_ITEMS.map((item) => item.id);
 
 // ============================================================================
 // SKELETON COMPONENT
@@ -43,57 +36,19 @@ const VALID_TABS: SettingsSectionType[] = [
 function SettingsPageSkeleton() {
   return (
     <div className="space-y-8">
-      {/* Page Header Skeleton */}
-      <div>
-        <Skeleton className="h-9 w-40 mb-2" />
-        <Skeleton className="h-5 w-64" variant="line" />
-      </div>
-
-      {/* Layout Skeleton */}
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Mobile tabs skeleton */}
-        <div className="md:hidden flex gap-2 overflow-hidden pb-4 border-b border-border">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-10 w-24 flex-shrink-0" />
-          ))}
-        </div>
-
-        {/* Desktop sidebar skeleton */}
-        <div className="hidden md:flex flex-col gap-2 w-56">
-          {/* One row per real tab, so the menu doesn't shift when it arrives. */}
+      <PageHeading title="Settings" />
+      <div className="flex flex-col gap-6 md:flex-row md:gap-10">
+        {/* The menu: one row on a phone, a column from md up, one block per tab */}
+        <div className="flex gap-2 overflow-hidden md:w-52 md:flex-col md:gap-1">
           {VALID_TABS.map((tab) => (
-            <Skeleton key={tab} className="h-12 w-full" />
+            <Skeleton key={tab} className="h-11 w-24 shrink-0 md:w-full" />
           ))}
         </div>
-
-        {/* Content skeleton */}
         <div className="flex-1 space-y-4">
-          <Skeleton className="h-8 w-48 mb-4" />
+          <Skeleton variant="line" className="h-7 w-48" />
           <Skeleton className="h-40 w-full" />
         </div>
       </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// SECTION COMPONENTS
-// ============================================================================
-
-// All section components are now imported from @/components/settings/
-
-function AutoCloseSection() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-heading text-xl font-bold mb-2">
-          Deadline enforcement
-        </h2>{" "}
-        <p className="text-muted-foreground text-sm">
-          Configure automatic case closure based on expired deadlines.
-        </p>
-      </div>
-      <DeadlineEnforcementToggle />
     </div>
   );
 }
@@ -154,6 +109,7 @@ export function SettingsPageClient() {
   const renderSectionContent = () => {
     switch (activeSection) {
       case "profile":
+      default:
         return (
           <ProfileSection
             profile={{
@@ -216,7 +172,7 @@ export function SettingsPageClient() {
           />
         );
       case "auto-close":
-        return <AutoCloseSection />;
+        return <DeadlineEnforcementToggle />;
       case "api-keys":
         return (
           <>
@@ -232,31 +188,13 @@ export function SettingsPageClient() {
             }}
           />
         );
-      default:
-        return (
-          <ProfileSection
-            profile={{
-              // Fall back to user.name from auth if profile.fullName not set
-              fullName: profileFullName ?? userName,
-              // Fall back to user.image from auth (Google profile photo)
-              profilePhotoUrl: profilePhotoUrl ?? userImage,
-              timezone: profile?.timezone,
-            }}
-            userEmail={userEmail}
-          />
-        );
     }
   };
 
   return (
     <SettingsUnsavedChangesProvider>
       <div data-tour="settings-page" className="space-y-8">
-        {/* Page Header */}
-        <div>
-          <PageHeading
-            title="Settings"
-          />
-        </div>
+        <PageHeading title="Settings" />
 
         {/* Settings Layout with Navigation */}
         <SettingsLayout

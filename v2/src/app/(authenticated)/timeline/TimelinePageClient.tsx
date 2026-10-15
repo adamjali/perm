@@ -8,10 +8,11 @@ import { ArrowLeftIcon } from "@phosphor-icons/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { TimelineGrid } from "@/components/timeline/TimelineGrid";
 import { TimelineControls } from "@/components/timeline/TimelineControls";
-import { TimelineLegend, TimelineLegendCompact } from "@/components/timeline/TimelineLegend";
+import { TimelineLegendCompact } from "@/components/timeline/TimelineLegend";
 import { CaseSelectionModal, type CaseForSelection } from "@/components/timeline/CaseSelectionModal";
 import { PageHeading } from "../components/PageHeading";
 import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
@@ -42,7 +43,7 @@ export function TimelineSkeleton() {
       </div>
       {/* The key is static, so the skeleton draws the real one where the page does. */}
       <TimelineLegendCompact className="mb-3" />
-      <div className="min-h-[160px] border border-foreground bg-card">
+      <div className="min-h-[160px] border border-border bg-card">
         <Skeleton variant="block" className="h-[320px] border-0" />
       </div>
     </div>
@@ -235,14 +236,7 @@ export function TimelinePageClient() {
   if (cases.length === 0) {
     return (
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <PageHeading
-              title="Timeline"
-            />
-          </div>
-          <TimelineControls
+        <TimelineControls
             timeRange={timeRange}
             onTimeRangeChange={handleTimeRangeChange}
             onOpenCaseSelector={openCaseSelector}
@@ -250,29 +244,17 @@ export function TimelinePageClient() {
             totalCaseCount={totalCaseCount}
             hasActiveSelection={hasActiveSelection}
           />
-        </div>
 
-        {/* Empty state message */}
-        <div className="flex flex-col items-center justify-center py-16 px-4 border border-dashed border-border rounded-lg bg-muted/20">
-          <div className="text-center max-w-md">
-            <h2 className="font-heading text-xl font-semibold mb-2">
-              No cases to display
-            </h2>{" "}
-            <p className="text-muted-foreground mb-4">
-              Add cases to see them visualized on the timeline. Each case will
-              show its stages and milestones across time.
-            </p>
-            <button
-              onClick={() => router.push("/cases/new")}
-              className="inline-flex min-h-[44px] items-center justify-center border border-border bg-primary px-6 py-3 font-heading font-bold text-primary-foreground transition-transform duration-150"
-            >
-              Add your first case
-            </button>
-          </div>
+        {/* Empty: a title, one sentence, one action */}
+        <div className="border border-border px-4 py-12 text-center">
+          <h2 className="font-heading text-xl font-bold">No cases to display</h2>{" "}
+          <p className="mx-auto mt-2 max-w-md text-muted-foreground">
+            Add a case and its stages and dates appear here across time.
+          </p>
+          <Link href="/cases/new" className={buttonVariants({ className: "mt-5" })}>
+            Add your first case
+          </Link>
         </div>
-
-        {/* Legend */}
-        <TimelineLegend />
 
         {/* Case Selection Modal */}
         <CaseSelectionModal
@@ -309,14 +291,8 @@ export function TimelinePageClient() {
         {/* Back to All Cases button (shown when filtered to single case) */}
         {filteredCaseId && (
           <div className="mt-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClearFilter}
-              className="border border-border transition-colors"
-              data-testid="back-to-all-cases"
-            >
-              <ArrowLeftIcon className="size-4 mr-2" />
+            <Button variant="outline" onClick={handleClearFilter} data-testid="back-to-all-cases">
+              <ArrowLeftIcon className="size-4" aria-hidden="true" />
               Back to all cases
             </Button>
           </div>

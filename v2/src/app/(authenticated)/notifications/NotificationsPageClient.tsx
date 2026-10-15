@@ -9,6 +9,7 @@ import {
   NotificationTabs,
   NotificationList,
   BulkActions,
+  NOTIFICATION_PANEL_ID,
   type NotificationTabType,
 } from "@/components/notifications";
 import { PageHeading } from "../components/PageHeading";
@@ -38,10 +39,8 @@ export function NotificationsPageClient() {
   return (
     <div className="mx-auto w-full max-w-4xl">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <PageHeading title="Notifications" />
-        </div>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <PageHeading title="Notifications" />
         <BulkActions />
       </div>
 
@@ -60,8 +59,9 @@ export function NotificationsPageClient() {
         </p>
       )}
 
-      {/* Notification List */}
-      <NotificationList activeTab={activeTab} />
+      <div role="tabpanel" id={NOTIFICATION_PANEL_ID} aria-labelledby={`notification-tab-${activeTab}`}>
+        <NotificationList activeTab={activeTab} />
+      </div>
     </div>
   );
 }

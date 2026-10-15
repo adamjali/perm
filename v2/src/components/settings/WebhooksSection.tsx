@@ -13,7 +13,7 @@
 
 import { useState } from "react";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { BinocularsIcon, CopyIcon, WebhooksLogoIcon } from "@phosphor-icons/react/ssr";
+import { CopyIcon } from "@phosphor-icons/react/ssr";
 
 import { api } from "@convex/_generated/api";
 import { NO_WEBHOOKS_MESSAGE } from "@convex/lib/apiPlans";
@@ -119,7 +119,6 @@ export default function WebhooksSection() {
   return (
     <div className="mt-6 space-y-6">
       <SettingsCard
-        icon={WebhooksLogoIcon}
         title="Webhooks"
         description={
           noWebhooks
@@ -244,7 +243,6 @@ export default function WebhooksSection() {
       </SettingsCard>
 
       <SettingsCard
-        icon={BinocularsIcon}
         title="What your webhooks watch"
         description={
           noWebhooks
@@ -317,7 +315,7 @@ export default function WebhooksSection() {
       </SettingsCard>
 
       {mine.deliveries.length > 0 && (
-        <SettingsCard icon={WebhooksLogoIcon} title="Recent deliveries" description="The last 30, newest first. Kept for 30 days.">
+        <SettingsCard title="Recent deliveries" description="The last 30, newest first. Kept for 30 days.">
           <ul className="divide-y divide-border border-y border-border">
             {mine.deliveries.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 py-3">

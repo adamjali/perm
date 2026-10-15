@@ -415,6 +415,7 @@ describe.skipIf(!process.env.UPDATE_TOUR_FIXTURES)("tour fixtures", () => {
       await record(api.userCaseOrder.getCaseOrder);
       await record(api.googleAuth.isGoogleCalendarConnected);
       await record(api.deadlineEnforcement.isEnforcementEnabled);
+      await record(api.emailPrefs.mine);
       await record(api.deadlineEnforcement.getAutoClosureAlerts);
       await record(api.dolProcessingTimes.getLatest);
       await record(api.conversations.list);

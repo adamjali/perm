@@ -17,8 +17,8 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { ChartBarIcon } from "@phosphor-icons/react/ssr";
 import { Switch } from "@/components/ui/switch";
+import { SettingsCard, SettingsCardSkeleton } from "./SettingsCard";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { analytics, isGpcEnabled } from "@/lib/analytics";
@@ -56,25 +56,18 @@ export default function AnalyticsToggle() {
 
   if (profile === undefined) {
     return (
-      <div className="border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
-        <Skeleton variant="line" className="mb-4 h-6 w-1/3" />
+      <SettingsCardSkeleton>
+        <Skeleton variant="line" className="h-6 w-1/3" />
         <Skeleton variant="line" className="h-4 w-2/3" />
-      </div>
+      </SettingsCardSkeleton>
     );
   }
 
   return (
-    <div className="border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
-      <div className="mb-2 flex items-center gap-2">
-        <ChartBarIcon className="h-5 w-5 text-foreground" />
-        <h3 className="font-heading text-lg font-bold text-foreground">Usage analytics</h3>
-      </div>
+    <SettingsCard title="Usage analytics">
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1">
-          <Label
-            htmlFor="analytics-toggle"
-            className="cursor-pointer text-base font-medium text-foreground"
-          >
+          <Label htmlFor="analytics-toggle" className="text-sm font-medium text-foreground">
             Share how I use the app
           </Label>
           <p id="analytics-description" className="mt-1 text-sm text-muted-foreground">
@@ -93,11 +86,11 @@ export default function AnalyticsToggle() {
         />
       </div>
       {gpc ? (
-        <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Your browser sends the Global Privacy Control signal, so it already
           sends no analytics, whatever this switch says.
         </p>
       ) : null}
-    </div>
+    </SettingsCard>
   );
 }

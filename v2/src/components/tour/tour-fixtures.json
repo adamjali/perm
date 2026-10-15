@@ -1259,6 +1259,16 @@
   "userCaseOrder:getCaseOrder {}": null,
   "googleAuth:isGoogleCalendarConnected {}": true,
   "deadlineEnforcement:isEnforcementEnabled {}": false,
+  "emailPrefs:mine {}": {
+    "bulletinAlerts": [],
+    "caseAlerts": [],
+    "email": "dana@whitfield-immigration.example",
+    "employerAlerts": [],
+    "news": false,
+    "newsletter": false,
+    "queueAlerts": [],
+    "weeklyDigest": true
+  },
   "deadlineEnforcement:getAutoClosureAlerts {}": [],
   "dolProcessingTimes:getLatest {}": null,
   "conversations:list {}": [

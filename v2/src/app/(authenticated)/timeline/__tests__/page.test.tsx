@@ -191,27 +191,8 @@ describe("TimelinePage - Empty State", () => {
     renderWithProviders(<TimelinePage />);
 
     expect(
-      screen.getByText(/add cases to see them visualized/i)
+      screen.getByText(/add a case and its stages and dates appear here/i)
     ).toBeInTheDocument();
-  });
-
-  it("shows 'Add your first case' button in empty state", () => {
-    renderWithProviders(<TimelinePage />);
-
-    expect(
-      screen.getByRole("button", { name: /add your first case/i })
-    ).toBeInTheDocument();
-  });
-
-  it("navigates to /cases/new when 'Add your first case' is clicked", async () => {
-    const { user } = renderWithProviders(<TimelinePage />);
-
-    const addButton = screen.getByRole("button", {
-      name: /add your first case/i,
-    });
-    await user.click(addButton);
-
-    expect(mockRouterPush).toHaveBeenCalledWith("/cases/new");
   });
 
   it("still shows Timeline header in empty state", () => {
@@ -229,11 +210,10 @@ describe("TimelinePage - Empty State", () => {
     expect(screen.getByText(/6 months/i)).toBeInTheDocument();
   });
 
-  it("still shows TimelineLegend in empty state", () => {
-    const { container } = renderWithProviders(<TimelinePage />);
+  it("offers one way forward when there are no cases", () => {
+    renderWithProviders(<TimelinePage />);
 
-    // Legend should be present - check for stage color indicators
-    expect(container.querySelector("[class*='flex']")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /add your first case/i })).toHaveAttribute("href", "/cases/new");
   });
 });
 
@@ -385,7 +365,7 @@ describe("TimelinePage - Select Cases Button", () => {
     renderWithProviders(<TimelinePage />);
 
     expect(
-      screen.getByRole("button", { name: /select cases/i })
+      screen.getByTestId("case-selector-button")
     ).toBeInTheDocument();
   });
 
@@ -413,7 +393,7 @@ describe("TimelinePage - Select Cases Button", () => {
 
     const { user } = renderWithProviders(<TimelinePage />);
 
-    const selectButton = screen.getByRole("button", { name: /select cases/i });
+    const selectButton = screen.getByTestId("case-selector-button");
     await user.click(selectButton);
 
     // This is a placeholder test - the modal implementation is not yet complete

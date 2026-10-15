@@ -119,7 +119,6 @@ export default function AutoClosureAlertBanner() {
   return (
     <div
       className="mb-6 bg-data-warn/15 border border-data-warn p-4 relative"
-      style={{ boxShadow: "var(--shadow-hard)" }}
       role="alert"
       aria-live="polite"
     >

@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
+import { SettingsCard } from "./SettingsCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,7 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowSquareOutIcon, BugIcon, DownloadIcon, EnvelopeIcon as Mail, InfoIcon, LightbulbIcon, LightningIcon as Zap, PlayCircleIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { DownloadIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
@@ -206,135 +207,57 @@ export default function SupportSection({ profile }: SupportSectionProps) {
     }
   };
 
+  const helpRow =
+    "flex min-h-11 items-center justify-between gap-4 border-b border-border py-3 text-sm last:border-b-0 hover:text-primary-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
   return (
-    <div className="space-y-6">
-      {/* Help & Support Card */}
-      <div
-        className="bg-card border border-border p-6"
-        style={{ boxShadow: "var(--shadow-hard)" }}
+    <div className="space-y-8">
+      <SettingsCard title="Help and support" description="Get help, report issues, or suggest new features">
+        <ul className="border-y border-border">
+          <li>
+            <a href={`mailto:${SUPPORT_EMAIL}`} target="_blank" rel="noopener noreferrer" className={helpRow}>
+              <span className="font-medium">Contact support</span>{" "}
+              <span className="text-muted-foreground">{SUPPORT_EMAIL}</span>
+            </a>
+          </li>{" "}
+          <li>
+            <a href={BUG_REPORT_URL} target="_blank" rel="noopener noreferrer" className={helpRow}>
+              <span className="font-medium">Report a bug</span>{" "}
+              <span className="text-muted-foreground">By email</span>
+            </a>
+          </li>{" "}
+          <li>
+            <a href={FEATURE_REQUEST_URL} target="_blank" rel="noopener noreferrer" className={helpRow}>
+              <span className="font-medium">Request feature</span>{" "}
+              <span className="text-muted-foreground">By email</span>
+            </a>
+          </li>{" "}
+          <li>
+            <button
+              type="button"
+              onClick={async () => {
+                setIsRestarting(true);
+                try {
+                  await restartTour();
+                  router.push("/dashboard");
+                } finally {
+                  setIsRestarting(false);
+                }
+              }}
+              disabled={isRestarting}
+              className={`${helpRow} w-full text-left disabled:cursor-not-allowed disabled:text-muted-foreground`}
+            >
+              <span className="font-medium">{isRestarting ? "Starting..." : "Replay tour"}</span>{" "}
+              <span className="text-muted-foreground">Product walkthrough</span>
+            </button>
+          </li>
+        </ul>
+      </SettingsCard>
+
+      <SettingsCard
+        title="Your data"
+        description="Download all your account data as a JSON file, including your profile, cases, conversations, notifications, and audit logs."
       >
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-2">
-          <InfoIcon className="w-5 h-5 text-foreground" />
-          <h3 className="font-heading font-bold text-lg text-foreground">
-            Help & Support
-          </h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-6">
-          Get help, report issues, or suggest new features
-        </p>{" "}
-
-        {/* Support Links Grid */}
-        <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Contact Support */}
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex flex-col items-center gap-3 border border-border bg-card p-4 transition-[transform,box-shadow] duration-150"
-          >
-            <div className="p-3 bg-primary/10 border border-primary/20 group-hover:bg-accent transition-colors">
-              <Mail className="h-6 w-6 text-primary" />
-            </div>
-            <div className="text-center">
-              <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
-                Contact support
-                <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">{SUPPORT_EMAIL}</span>
-            </div>
-          </a>{" "}
-
-          {/* Report Bug */}
-          <a
-            href={BUG_REPORT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex flex-col items-center gap-3 border border-border bg-card p-4 transition-[transform,box-shadow] duration-150"
-          >
-            <div className="p-3 bg-destructive/10 border border-destructive/20 group-hover:bg-destructive/20 transition-colors">
-              <BugIcon className="h-6 w-6 text-destructive" />
-            </div>
-            <div className="text-center">
-              <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
-                Report a bug
-                <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">
-                By email
-              </span>
-            </div>
-          </a>{" "}
-
-          {/* Request Feature */}
-          <a
-            href={FEATURE_REQUEST_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex flex-col items-center gap-3 border border-border bg-card p-4 transition-[transform,box-shadow] duration-150"
-          >
-            <div className="p-3 bg-data-warn/10 border border-data-warn/20 group-hover:bg-data-warn/20 transition-colors">
-              <LightbulbIcon className="h-6 w-6 text-data-warn-ink" />
-            </div>
-            <div className="text-center">
-              <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
-                Request feature
-                <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">
-                By email
-              </span>
-            </div>
-          </a>
-
-          {/* Replay Tour */}
-          <button
-            onClick={async () => {
-              setIsRestarting(true);
-              try {
-                await restartTour();
-                router.push("/dashboard");
-              } finally {
-                setIsRestarting(false);
-              }
-            }}
-            disabled={isRestarting}
-            className="group flex flex-col items-center gap-3 border border-border bg-card p-4 transition-[transform,box-shadow] duration-150 disabled:cursor-not-allowed disabled:text-muted-foreground"
-          >
-            <div className="p-3 bg-primary/10 border border-primary/20 group-hover:bg-accent transition-colors">
-              {isRestarting ? (
-                <div className="h-6 w-6 border border-primary border-t-transparent animate-spin rounded-full" />
-              ) : (
-                <PlayCircleIcon className="h-6 w-6 text-primary" />
-              )}
-            </div>
-            <div className="text-center">
-              <span className="font-heading font-bold text-sm block">
-                {isRestarting ? "Starting..." : "Replay tour"}
-              </span>{" "}
-              <span className="text-sm text-muted-foreground">
-                Product walkthrough
-              </span>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* Data Export Card */}
-      <div
-        className="bg-card border border-border p-6"
-        style={{ boxShadow: "var(--shadow-hard)" }}
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <DownloadIcon className="w-5 h-5 text-foreground" />
-          <h3 className="font-heading font-bold text-lg text-foreground">
-            Your data
-          </h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Download all your account data as a JSON file, including your profile,
-          cases, conversations, notifications, and audit logs.
-        </p>
         <Button
           variant="outline"
           onClick={handleExportData}
@@ -342,96 +265,53 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           loading={isExporting}
           loadingText="Exporting..."
         >
-          <DownloadIcon className="w-4 h-4 mr-2" />
+          <DownloadIcon className="size-4" aria-hidden="true" />
           Download everything (.json)
         </Button>
-      </div>
+      </SettingsCard>
 
-      <AnalyticsToggle />{" "}
+      <AnalyticsToggle />
 
-      {/* Account Deletion Section */}
-      <div
-        className="bg-card border border-destructive dark:border-destructive/50 p-6"
-        style={{ boxShadow: "var(--shadow-hard)" }}
+      <SettingsCard
+        title="Delete account"
+        tone="danger"
+        description={`Permanently delete your account and all associated data. This action has a ${GRACE_PERIOD_DAYS}-day grace period before becoming irreversible.`}
       >
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-2">
-          <Trash2 className="w-5 h-5 text-destructive" />
-          <h3 className="font-heading font-bold text-lg text-destructive">
-            Delete account
-          </h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-6">
-          Permanently delete your account and all associated data. This action
-          has a {GRACE_PERIOD_DAYS}-day grace period before becoming
-          irreversible.
-        </p>
-
-        {/* Scheduled Deletion Warning */}
-        <>
-          {isDeletionScheduled && (
-            <div
-              className="flex flex-col gap-3 px-4 py-3 mb-4 bg-data-warn/15 border border-data-warn text-data-warn-ink"
-            >
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium">Deletion scheduled</p>{" "}
-                  <p className="text-sm">
-                    Your account will be permanently deleted on {deletionDate}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCancelDeletion}
-                >
-                  Cancel deletion
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setDeleteNowOpen(true)}
-                >
-                  <Zap className="w-3 h-3 mr-1" />
-                  Delete now
-                </Button>
-              </div>
+        {isDeletionScheduled && (
+          <div className="space-y-3 border border-data-warn p-4 text-data-warn-ink">
+            <div>
+              <p className="text-sm font-medium">Deletion scheduled</p>{" "}
+              <p className="text-sm">Your account will be permanently deleted on {deletionDate}</p>
             </div>
-          )}
-        </>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" onClick={handleCancelDeletion}>
+                Cancel deletion
+              </Button>
+              <Button variant="destructive" onClick={() => setDeleteNowOpen(true)}>
+                Delete now
+              </Button>
+            </div>
+          </div>
+        )}
 
-        {/* Delete Button */}
         <Button
           variant="destructive"
           onClick={() => setConfirmDeleteOpen(true)}
           disabled={isDeletionScheduled}
         >
-          <Trash2 className="w-4 h-4 mr-2" />
           {isDeletionScheduled ? "Deletion pending" : "Delete account"}
         </Button>
-      </div>
+      </SettingsCard>
 
-      {/* App Info Card */}
-      <div className="bg-muted/30 border border-border p-4">
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <InfoIcon className="h-4 w-4" />
-          <span className="font-mono text-sm">PERM Tracker v{appVersion}</span>{" "}
-          <span className="text-muted-foreground">|</span>{" "}
-          <span className="text-sm">&copy; {`${currentYear} ${LEGAL_NAME}`}</span>
-        </div>
-      </div>
+      <p className="border-t border-border pt-6 text-sm text-muted-foreground">
+        PERM Tracker v{appVersion}. &copy; {`${currentYear} ${LEGAL_NAME}`}
+      </p>
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmDeleteOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
-              Delete your account
-            </DialogTitle>
+            <DialogTitle className="text-destructive-text">Delete your account</DialogTitle>
             <DialogDescription asChild>
               <div className="text-muted-foreground text-sm space-y-3 pt-2">
                 <p>
@@ -448,7 +328,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                 </ul>
                 <p className="font-medium">
                   To confirm, type{" "}
-                  <span className="font-mono bg-muted px-1.5 py-0.5 border border-border">
+                  <span className="bg-muted px-1.5 py-0.5 font-medium text-foreground">
                     {DELETE_CONFIRMATION_TEXT}
                   </span>{" "}
                   below:
@@ -490,7 +370,6 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               loading={isDeleting}
               loadingText="Deleting..."
             >
-              <Trash2 className="w-4 h-4 mr-2" />
               Delete account
             </Button>
           </DialogFooter>

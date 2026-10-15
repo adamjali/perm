@@ -63,7 +63,7 @@ describe("SupportSection", () => {
 
   it("renders header, description, and all three support links", () => {
     renderWithProviders(<SupportSection profile={defaultProfile} />);
-    expect(screen.getByText("Help & Support")).toBeInTheDocument();
+    expect(screen.getByText("Help and support")).toBeInTheDocument();
     expect(screen.getByText("Get help, report issues, or suggest new features")).toBeInTheDocument();
     expect(screen.getAllByRole("link").length).toBe(3);
   });
@@ -109,12 +109,9 @@ describe("SupportSection", () => {
 
   describe("app info", () => {
     it("displays version and copyright with current year", () => {
-      const { container } = renderWithProviders(<SupportSection profile={defaultProfile} />);
-      const versionSpan = container.querySelector(".font-mono");
-      expect(versionSpan?.textContent).toContain("PERM Tracker v");
-      const infoBar = container.querySelector(".bg-muted\\/30");
-      expect(infoBar?.textContent).toContain(`${new Date().getFullYear()}`);
-      expect(infoBar?.textContent).toContain("PERM Tracker");
+      renderWithProviders(<SupportSection profile={defaultProfile} />);
+      const line = screen.getByText(/PERM Tracker v/);
+      expect(line.textContent).toContain(`${new Date().getFullYear()}`);
     });
   });
 

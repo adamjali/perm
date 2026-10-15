@@ -15,7 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAction, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { CopyIcon, KeyIcon, PlugsConnectedIcon } from "@phosphor-icons/react/ssr";
+import { CopyIcon } from "@phosphor-icons/react/ssr";
 
 import { api } from "@convex/_generated/api";
 import { displayKeyId } from "@convex/lib/apiKeyFormat";
@@ -205,7 +205,6 @@ export default function ApiKeysSection() {
   return (
     <div className="space-y-6">
       <SettingsCard
-        icon={KeyIcon}
         title="API keys"
         description={`For the PERM Tracker API and AI assistants. ${plan.label} plan: ${plan.perMinute} calls a minute, ${plan.perDay.toLocaleString("en-US")} a day.`}
       >
@@ -370,7 +369,6 @@ export default function ApiKeysSection() {
       </SettingsCard>
 
       <SettingsCard
-        icon={PlugsConnectedIcon}
         title="Connect it"
         description="Send the key in a header, never in the address."
       >

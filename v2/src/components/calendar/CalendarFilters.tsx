@@ -38,7 +38,6 @@ import {
   type CaseForSelection,
 } from "@/components/timeline";
 import { TimelineLegendCompact } from "@/components/timeline";
-import { cn } from "@/lib/utils";
 import type { DeadlineType } from "@/lib/calendar/types";
 
 // ============================================================================
@@ -255,7 +254,7 @@ export function CalendarFilters({
   return (
     <div className="space-y-4">
       {/* Filter Controls Bar */}
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 p-3 sm:p-4 bg-card border border-border">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {/* Top row on mobile: Cases button + Filters toggle */}
         <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
           {/* Case Selection Button */}
@@ -268,16 +267,7 @@ export function CalendarFilters({
           >
             <FunnelSimpleIcon className="size-4" />
             <span>Cases</span>{" "}
-            <span
-              className={cn(
-                "ml-1 px-2 py-0.5 text-sm font-bold border border-border",
-                selectedCaseIds.size === allCases.length
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              {selectionBadgeText}
-            </span>
+            <span className="text-muted-foreground">{selectionBadgeText}</span>
           </Button>
 
           {/* Expand/Collapse Filters Button - Right side on mobile */}
@@ -286,6 +276,8 @@ export function CalendarFilters({
             size="sm"
             onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
             className="gap-2 min-h-[44px] sm:ml-auto sm:order-last"
+            aria-expanded={isFiltersExpanded}
+            aria-label="Deadline filters"
             data-testid="toggle-filters-btn"
           >
             <Filter className="size-4" />
@@ -298,118 +290,105 @@ export function CalendarFilters({
           </Button>
         </div>
 
-        {/* Show Completed Toggle (I-140 Approved) */}
-        <div className="flex items-center gap-2 min-h-[44px]">
-          <Checkbox
-            id="show-completed"
-            checked={showCompleted}
-            onCheckedChange={(checked) =>
-              onShowCompletedChange(checked === true)
-            }
-            className="border size-5"
-            data-testid="show-completed-checkbox"
-          />
-          <Label
-            htmlFor="show-completed"
-            className="text-sm cursor-pointer whitespace-nowrap"
-          >
-            Show completed (I-140 approved)
-          </Label>
-        </div>
+        {/* Two switches for what the calendar includes */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex items-center gap-2 min-h-[44px]">
+            <Checkbox
+              id="show-completed"
+              checked={showCompleted}
+              onCheckedChange={(checked) =>
+                onShowCompletedChange(checked === true)
+              }
+              className="border size-5"
+              data-testid="show-completed-checkbox"
+            />
+            <Label
+              htmlFor="show-completed"
+              className="text-sm cursor-pointer whitespace-nowrap"
+            >
+              Show completed (I-140 approved)
+            </Label>
+          </div>
 
-        {/* Show Closed/Archived Toggle */}
-        <div className="flex items-center gap-2 min-h-[44px]">
-          <Checkbox
-            id="show-closed"
-            checked={showClosed}
-            onCheckedChange={(checked) =>
-              onShowClosedChange(checked === true)
-            }
-            className="border size-5"
-            data-testid="show-closed-checkbox"
-          />
-          <Label
-            htmlFor="show-closed"
-            className="text-sm cursor-pointer whitespace-nowrap"
-          >
-            Show closed or archived
-          </Label>
+          <div className="flex items-center gap-2 min-h-[44px]">
+            <Checkbox
+              id="show-closed"
+              checked={showClosed}
+              onCheckedChange={(checked) =>
+                onShowClosedChange(checked === true)
+              }
+              className="border size-5"
+              data-testid="show-closed-checkbox"
+            />
+            <Label
+              htmlFor="show-closed"
+              className="text-sm cursor-pointer whitespace-nowrap"
+            >
+              Show closed or archived
+            </Label>
+          </div>
         </div>
 
         {/* What the colours mean, in the same bar instead of a box of its own */}
         <TimelineLegendCompact className="sm:ml-auto" />
       </div>
 
-      {/* Expandable Deadline Type Filters with animation */}
-      <>
-        {isFiltersExpanded && (
-          <div
-            key="filter-panel"
-            className="overflow-hidden"
-          >
-            <div
-              className="p-4 bg-card border border-border"
-              data-testid="deadline-filters-panel"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                {DEADLINE_TYPE_GROUPS.map((group) => (
-                  <div
-                    key={group.stage}
-                    className="space-y-2"
-                    data-testid={`filter-group-${group.stage.toLowerCase().replace(" ", "-")}`}
+      {/* Deadline types, shown when the reader opens them */}
+      {isFiltersExpanded && (
+        <div className="border border-border bg-card p-4" data-testid="deadline-filters-panel">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {DEADLINE_TYPE_GROUPS.map((group) => (
+              <div
+                key={group.stage}
+                className="space-y-2"
+                data-testid={`filter-group-${group.stage.toLowerCase().replace(" ", "-")}`}
+              >
+                {/* Group Header with Stage Color */}
+                <div className="flex items-center gap-2">
+                  <div className="size-2.5 shrink-0" style={{ backgroundColor: group.color }} aria-hidden="true" />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleGroupToggle(
+                        group.types,
+                        !isGroupAllVisible(group.types)
+                      )
+                    }
+                    className="min-h-11 text-sm font-semibold transition-colors hover:text-primary-text"
+                    aria-label={`Toggle all ${group.stage} deadline types`}
                   >
-                    {/* Group Header with Stage Color */}
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 border border-border shrink-0"
-                        style={{ backgroundColor: group.color }}
-                        aria-hidden="true"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleGroupToggle(
-                            group.types,
-                            !isGroupAllVisible(group.types)
-                          )
-                        }
-                        className="font-heading text-sm font-bold hover:text-primary-text transition-colors"
-                        aria-label={`Toggle all ${group.stage} deadline types`}
-                      >
-                        {group.stage}
-                      </button>
-                    </div>
+                    {group.stage}
+                  </button>
+                </div>
 
-                    {/* Deadline Type Checkboxes */}
-                    <div className="space-y-1.5 pl-5">
-                      {group.types.map((type) => (
-                        <div key={type.value} className="flex items-center gap-2">
-                          <Checkbox
-                            id={`filter-${type.value}`}
-                            checked={isTypeVisible(type.value)}
-                            onCheckedChange={(checked) =>
-                              handleDeadlineTypeToggle(type.value, checked === true)
-                            }
-                            className="border"
-                            data-testid={`filter-checkbox-${type.value}`}
-                            aria-label={`Show ${type.label} deadlines`}
-                          />
-                          <Label
-                            htmlFor={`filter-${type.value}`}
-                            className="text-sm cursor-pointer font-normal"
-                          >
-                            {type.label}
-                          </Label>
-                        </div>
-                      ))}
+                {/* Deadline Type Checkboxes */}
+                <div className="space-y-1.5 pl-5">
+                  {group.types.map((type) => (
+                    <div key={type.value} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`filter-${type.value}`}
+                        checked={isTypeVisible(type.value)}
+                        onCheckedChange={(checked) =>
+                          handleDeadlineTypeToggle(type.value, checked === true)
+                        }
+                        className="border"
+                        data-testid={`filter-checkbox-${type.value}`}
+                        aria-label={`Show ${type.label} deadlines`}
+                      />
+                      <Label
+                        htmlFor={`filter-${type.value}`}
+                        className="text-sm cursor-pointer font-normal"
+                      >
+                        {type.label}
+                      </Label>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        )}
-      </>
+        </div>
+      )}
 
       {/* Case Selection Modal */}
       <CaseSelectionModal

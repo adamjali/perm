@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
-import { BellSimpleIcon } from "@phosphor-icons/react";
 
 import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -48,7 +47,6 @@ export function MailSubscriptionsCard({ email }: { email: string }) {
 
   return (
     <SettingsCard
-      icon={BellSimpleIcon}
       title="Alerts and digests"
       description={`Set up from the site's pages and sent to ${email}.`}
     >

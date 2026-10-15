@@ -14,6 +14,9 @@ import { CaretDownIcon, CaretLeftIcon, CaretRightIcon, CaretUpIcon, ListIcon } f
 
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { CalendarListToggleContext } from "./calendar-view-context";
+import { MONTH_NAMES } from "@/lib/dolFormat";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Constants
@@ -27,11 +30,6 @@ const VIEW_LABELS: Record<View, string> = {
   work_week: "Work week",
 };
 
-const MONTHS = [
-  "January", "February", "March", "April",
-  "May", "June", "July", "August",
-  "September", "October", "November", "December",
-];
 
 // ============================================================================
 // Component
@@ -113,23 +111,20 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
     return [];
   }, [views]);
 
-  // Neobrutalist button base styles
-  const btnBase = ` border border-border bg-card text-foreground transition-colors duration-150 font-semibold `;
-
-  const btnIcon = `${btnBase} p-3`;
-  const btnText = `${btnBase} px-4 py-3`;
+  const btnIcon = buttonVariants({ variant: "outline", size: "icon" });
+  const btnText = buttonVariants({ variant: "outline" });
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
+    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       {/* Month Label with Dropdown */}
-      <div className="flex items-center justify-center relative">
+      <div className="relative flex items-center">
         <button
           ref={buttonRef}
           onClick={togglePicker}
-          className="flex items-center gap-2 px-4 py-2 hover:bg-muted/50 transition-colors rounded-none"
+          className="flex min-h-11 items-center gap-2 px-2 transition-colors hover:bg-accent"
           aria-expanded={isPickerOpen}
         >
-          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
+          <h2 className="font-heading text-2xl font-bold">
             {label}
           </h2>
           {isPickerOpen ? (
@@ -143,7 +138,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
         {isPickerOpen && (
           <div
             ref={dropdownRef}
-            className="absolute top-full mt-2 bg-card border border-border p-4"
+            className="absolute left-0 top-full mt-2 border border-border bg-card p-4 shadow-overlay"
             style={{ minWidth: 260, zIndex: 100 }}
           >
             {/* Year nav */}
@@ -151,7 +146,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
               <button
                 type="button"
                 onClick={() => setPickerYear((y) => y - 1)}
-                className="p-2 hover:bg-muted border border-border bg-card text-foreground transition-colors"
+                className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
               >
                 <CaretLeftIcon className="size-4" />
               </button>
@@ -159,7 +154,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
               <button
                 type="button"
                 onClick={() => setPickerYear((y) => y + 1)}
-                className="p-2 hover:bg-muted border border-border bg-card text-foreground transition-colors"
+                className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
               >
                 <CaretRightIcon className="size-4" />
               </button>
@@ -167,18 +162,17 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
 
             {/* Months grid */}
             <div className="grid grid-cols-3 gap-1">
-              {MONTHS.map((name, i) => {
+              {MONTH_NAMES.map((name, i) => {
                 const isCurrent = pickerYear === currentYear && i === currentMonth;
                 return (
                   <button
                     key={name}
                     type="button"
                     onClick={() => selectMonth(i)}
-                    className={` px-2 py-2 text-sm font-medium border transition-colors ${isCurrent
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border bg-card text-foreground hover:bg-muted"
-                      }
-                    `}
+                    className={cn(
+                      "min-h-11 border px-2 text-sm transition-colors",
+                      isCurrent ? "border-primary-text bg-tint font-semibold" : "border-transparent hover:bg-accent",
+                    )}
                   >
                     {name.slice(0, 3)}
                   </button>
@@ -193,7 +187,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
                 onNavigate(Navigate.TODAY);
                 setIsPickerOpen(false);
               }}
-              className="w-full mt-3 py-2 text-sm font-semibold border border-border bg-card text-foreground hover:bg-muted transition-colors"
+              className={buttonVariants({ variant: "outline", className: "mt-3 w-full" })}
             >
               Today
             </button>
@@ -202,9 +196,8 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
       </div>
 
       {/* Navigation Row */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
-        {/* Nav buttons - neobrutalist style */}
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={goToPrev}
@@ -232,21 +225,17 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
           </button>
         </div>
 
-        {/* View toggle - same neobrutalist style */}
-        <div className="flex border border-border">
+        <div className="flex border border-input">
           {viewArray.map((v, index) => (
             <button
               key={v}
               type="button"
               onClick={() => onView(v)}
-              className={`
-                px-4 py-3 font-semibold text-sm transition-colors
-                ${index > 0 ? "border-l border-border" : ""}
-                ${view === v
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card text-foreground hover:bg-muted"
-                }
-              `}
+              className={cn(
+                "min-h-11 px-4 text-sm transition-colors",
+                index > 0 && "border-l border-input",
+                view === v ? "bg-tint font-semibold" : "text-soft hover:bg-accent hover:text-foreground",
+              )}
               aria-pressed={view === v}
             >
               {VIEW_LABELS[v]}
@@ -256,7 +245,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
             <button
               type="button"
               onClick={toggleList}
-              className="flex items-center gap-1.5 border-l border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+              className="flex min-h-11 items-center gap-1.5 border-l border-input px-4 text-sm text-soft transition-colors hover:bg-accent hover:text-foreground"
               aria-label="Switch to list view"
             >
               <ListIcon className="size-4" aria-hidden="true" />

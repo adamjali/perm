@@ -1,13 +1,12 @@
 /**
  * TimelineControls Component
- * Header controls for timeline visualization with neobrutalist styling.
+ * Header controls for the timeline: one row of plain controls.
  *
  * Features:
  * - Title "Timeline" on left
  * - Time range selector (3/6/12/24 months) using DropdownMenu
  * - Zoom control slider (50-200%)
- * - Case selector trigger button with count badge
- * - Neobrutalist styling with hard shadows
+ * - Case selector trigger button with the count it shows
  */
 
 "use client";
@@ -42,10 +41,10 @@ interface TimelineControlsProps {
 }
 
 const TIME_RANGE_OPTIONS: { value: 3 | 6 | 12 | 24; label: string }[] = [
-  { value: 3, label: "3 Months" },
-  { value: 6, label: "6 Months" },
-  { value: 12, label: "12 Months" },
-  { value: 24, label: "24 Months" },
+  { value: 3, label: "3 months" },
+  { value: 6, label: "6 months" },
+  { value: 12, label: "12 months" },
+  { value: 24, label: "24 months" },
 ];
 
 export function TimelineControls({
@@ -61,9 +60,9 @@ export function TimelineControls({
 }: TimelineControlsProps) {
   const currentRangeLabel =
     TIME_RANGE_OPTIONS.find((opt) => opt.value === timeRange)?.label ??
-    "12 Months";
+    "12 months";
 
-  // Build badge text: "3/5" if specific selection, "All" if showing all
+  // What the cases button says it shows: "3/5" for a choice, "All" for all
   const badgeText =
     totalCaseCount !== undefined && hasActiveSelection
       ? `${caseCount}/${totalCaseCount}`
@@ -79,13 +78,12 @@ export function TimelineControls({
       {/* Controls: on a phone, zoom across the top and the range and cases side
           by side under it (two rows, not three full-width stacked boxes). */}
       <div className="grid w-full grid-cols-1 gap-2 [&>*]:min-w-0 min-[360px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
-        {/* Zoom Control */}
         {onZoomChange && (
           <div
-            className="flex items-center justify-between gap-2 min-[360px]:col-span-2 px-3 py-2 border border-border bg-background min-h-[44px] sm:justify-start"
+            className="flex min-h-11 items-center justify-between gap-2 min-[360px]:col-span-2 sm:justify-start"
             data-testid="zoom-control"
           >
-            <MagnifyingGlassMinusIcon className="size-4 text-muted-foreground" />
+            <MagnifyingGlassMinusIcon className="size-4 text-muted-foreground" aria-hidden="true" />
             <input
               type="range"
               min={50}
@@ -93,50 +91,30 @@ export function TimelineControls({
               step={10}
               value={zoomLevel}
               onChange={(e) => onZoomChange(Number(e.target.value))}
-              className="min-w-0 flex-1 accent-primary cursor-pointer sm:w-24 sm:flex-none"
+              className="min-w-0 flex-1 cursor-pointer accent-primary-text sm:w-24 sm:flex-none"
               aria-label="Zoom level"
               data-testid="zoom-slider"
             />
-            <MagnifyingGlassPlusIcon className="size-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground min-w-[3ch] text-right">
-              {zoomLevel}%
-            </span>
+            <MagnifyingGlassPlusIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+            <span className="min-w-[4ch] text-right text-sm text-muted-foreground tabular-nums">{zoomLevel}%</span>
           </div>
         )}
-        {/* Time Range Dropdown with neobrutalist styling */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="default"
-              className="border border-border bg-background transition-colors min-h-[44px] justify-between sm:justify-center"
-            >
-              <div className="flex items-center">
-                <CalendarIcon className="size-4 mr-2" />
-                <span className="hidden sm:inline">{currentRangeLabel}</span>{" "}
-                <span className="sm:hidden">
-                  {timeRange}M
-                </span>
-              </div>
-              <CaretDownIcon className="size-4 ml-2 opacity-70" />
+            <Button variant="outline" className="justify-between sm:justify-center">
+              <CalendarIcon className="size-4" aria-hidden="true" />
+              {currentRangeLabel}
+              <CaretDownIcon className="size-4 text-muted-foreground" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-40 border border-border bg-popover"
-          >
+          <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuRadioGroup
               value={String(timeRange)}
-              onValueChange={(value) =>
-                onTimeRangeChange(Number(value) as 3 | 6 | 12 | 24)
-              }
+              onValueChange={(value) => onTimeRangeChange(Number(value) as 3 | 6 | 12 | 24)}
             >
               {TIME_RANGE_OPTIONS.map((option) => (
-                <DropdownMenuRadioItem
-                  key={option.value}
-                  value={String(option.value)}
-                  className="cursor-pointer min-h-[44px]"
-                >
+                <DropdownMenuRadioItem key={option.value} value={String(option.value)} className="min-h-11 cursor-pointer">
                   {option.label}
                 </DropdownMenuRadioItem>
               ))}
@@ -144,23 +122,15 @@ export function TimelineControls({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Case Selector Button with count badge */}
         <Button
           variant="outline"
-          size="default"
           onClick={onOpenCaseSelector}
-          className="border border-border bg-background transition-colors min-h-[44px] justify-between xs:justify-center"
+          className="justify-between sm:justify-center"
           data-testid="case-selector-button"
         >
-          <div className="flex items-center">
-            <Filter className="size-4 mr-2" />
-            <span className="hidden sm:inline">Select cases</span>{" "}
-            <span className="sm:hidden">Cases</span>
-          </div>
-          <span
-            className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground border border-border text-sm font-bold min-w-[1.5rem] text-center"
-            data-testid="case-count-badge"
-          >
+          <Filter className="size-4" aria-hidden="true" />
+          Cases
+          <span className="text-muted-foreground" data-testid="case-count-badge">
             {badgeText}
           </span>
         </Button>
