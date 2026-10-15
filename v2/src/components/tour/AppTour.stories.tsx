@@ -20,7 +20,7 @@ import fixtures from "./tour-fixtures.json";
 /**
  * The signed-in app's real pages, drawn from a sample firm's recorded data
  * (see fakeConvex.tsx). The attorney page's product pictures are captured from
- * these stories; scripts/tour_shots.py says how, and encodes them.
+ * these stories by scripts/capture-tour.mjs and encoded by scripts/tour_shots.py.
  */
 
 const [, TIDEWATER, JUNIPER] = TOUR_CASE_IDS;

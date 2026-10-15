@@ -75,7 +75,7 @@ const SECTIONS: TourSection[] = [
     ],
     surface: "edit-case",
     url: "permtracker.app/cases/tidewater/edit",
-    alt: "The case form for a sample case, with the wage expiration, job order end and notice end worked out from the dates entered, and the days left to finish recruitment.",
+    alt: "The case form for a sample case: the wage expiration worked out from the determination date, and the recruitment deadline with 84 days left.",
   },
   {
     id: "reminders",

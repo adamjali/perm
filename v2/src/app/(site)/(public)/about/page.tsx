@@ -118,7 +118,7 @@ const HALVES = [
     line: "A free deadline app for attorneys, paralegals and HR teams: every date under 20 CFR 656 worked out per case, with reminders and calendar sync.",
     url: "permtracker.app/dashboard",
     shots: TOUR_SHOTS.hub,
-    alt: "The deadline hub in the PERM Tracker app: each case's next date, sorted into overdue, this week, this month and later",
+    alt: "The Deadlines panel in the PERM Tracker app: each case's next date, sorted into overdue, this week, this month and later",
     caption: "Sample cases. The employers are invented.",
     links: [
       { href: "/for-attorneys", label: "See the app" },

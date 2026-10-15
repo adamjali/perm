@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The attorney page's hero: the headline over the page an attorney opens every
- * morning, the dashboard's deadline hub, drawn from the sample firm
+ * morning, the dashboard's Deadlines panel, drawn from the sample firm
  * (src/components/tour/). One of its cases is laid over the corner as the case
  * card the cases page shows, and a reminder over the top. The reminder reads
  * from the same phrase table the real notifications use, and is the same RFI
@@ -20,7 +20,7 @@ import { buttonVariants } from "@/components/ui/button";
  */
 
 const HUB_ALT =
-  "The dashboard's deadline hub for eight sample cases: none overdue, an RFI response due this week, an I-140 filing and a filing window this month, and nine deadlines later.";
+  "The dashboard's Deadlines panel for eight sample cases: none overdue, an RFI response due this week, an I-140 filing and a filing window this month, and nine deadlines later.";
 const CARD_ALT =
   "A sample case's card on the cases page: Juniper Biologics, ETA 9089 stage, RFI response due in 7 days.";
 
@@ -76,7 +76,7 @@ export function AttorneyHero() {
           </div>
         </div>
 
-        {/* The picture: the deadline hub in an app window on a lime block, a
+        {/* The picture: the Deadlines panel in an app window on a lime block, a
             case card over its lower-left corner and a reminder over its top.
             On wide screens the card stands half off the window; narrower, the
             phone capture of the hub stands in and the card follows it. */}

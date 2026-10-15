@@ -3,77 +3,77 @@ import type { WindowShots } from "./AppWindow";
 
 export type TourSurface =
   | "hub"
-  | "timeline"
   | "dashboard"
   | "cases"
+  | "case-card"
   | "case-detail"
   | "edit-case"
   | "calendar"
   | "notifications"
   | "assistant"
   | "email"
-  | "case-card"
+  | "timeline"
 ;
 
 export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
   "hub": {
-    light: { src: "/images/for-attorneys/hub-light.webp", width: 1800, height: 1027 },
-    dark: { src: "/images/for-attorneys/hub-dark.webp", width: 1800, height: 1027 },
-    narrowLight: { src: "/images/for-attorneys/hub-light-phone.webp", width: 796, height: 1330 },
-    narrowDark: { src: "/images/for-attorneys/hub-dark-phone.webp", width: 796, height: 1330 },
-  },
-  "timeline": {
-    light: { src: "/images/for-attorneys/timeline-light.webp", width: 1800, height: 869 },
-    dark: { src: "/images/for-attorneys/timeline-dark.webp", width: 1800, height: 869 },
-    narrowLight: { src: "/images/for-attorneys/timeline-light-phone.webp", width: 1200, height: 1124 },
-    narrowDark: { src: "/images/for-attorneys/timeline-dark-phone.webp", width: 1200, height: 1124 },
+    light: { src: "/images/for-attorneys/hub-light.webp", width: 1800, height: 1146 },
+    dark: { src: "/images/for-attorneys/hub-dark.webp", width: 1800, height: 1146 },
+    narrowLight: { src: "/images/for-attorneys/hub-light-phone.webp", width: 732, height: 1206 },
+    narrowDark: { src: "/images/for-attorneys/hub-dark-phone.webp", width: 732, height: 1206 },
   },
   "dashboard": {
-    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1481 },
-    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1481 },
-    narrowLight: { src: "/images/for-attorneys/dashboard-light-phone.webp", width: 796, height: 1974 },
-    narrowDark: { src: "/images/for-attorneys/dashboard-dark-phone.webp", width: 796, height: 1974 },
+    light: { src: "/images/for-attorneys/dashboard-light.webp", width: 1800, height: 1692 },
+    dark: { src: "/images/for-attorneys/dashboard-dark.webp", width: 1800, height: 1692 },
+    narrowLight: { src: "/images/for-attorneys/dashboard-light-phone.webp", width: 732, height: 1638 },
+    narrowDark: { src: "/images/for-attorneys/dashboard-dark-phone.webp", width: 732, height: 1638 },
   },
   "cases": {
-    light: { src: "/images/for-attorneys/cases-light.webp", width: 1800, height: 1255 },
-    dark: { src: "/images/for-attorneys/cases-dark.webp", width: 1800, height: 1255 },
-    narrowLight: { src: "/images/for-attorneys/cases-light-phone.webp", width: 796, height: 2120 },
-    narrowDark: { src: "/images/for-attorneys/cases-dark-phone.webp", width: 796, height: 2120 },
+    light: { src: "/images/for-attorneys/cases-light.webp", width: 1800, height: 1203 },
+    dark: { src: "/images/for-attorneys/cases-dark.webp", width: 1800, height: 1203 },
+    narrowLight: { src: "/images/for-attorneys/cases-light-phone.webp", width: 732, height: 1934 },
+    narrowDark: { src: "/images/for-attorneys/cases-dark-phone.webp", width: 732, height: 1934 },
+  },
+  "case-card": {
+    light: { src: "/images/for-attorneys/case-card-light.webp", width: 716, height: 560 },
+    dark: { src: "/images/for-attorneys/case-card-dark.webp", width: 716, height: 560 },
   },
   "case-detail": {
-    light: { src: "/images/for-attorneys/case-detail-light.webp", width: 1800, height: 1615 },
-    dark: { src: "/images/for-attorneys/case-detail-dark.webp", width: 1800, height: 1615 },
-    narrowLight: { src: "/images/for-attorneys/case-detail-light-phone.webp", width: 796, height: 2360 },
-    narrowDark: { src: "/images/for-attorneys/case-detail-dark-phone.webp", width: 796, height: 2360 },
+    light: { src: "/images/for-attorneys/case-detail-light.webp", width: 1800, height: 1896 },
+    dark: { src: "/images/for-attorneys/case-detail-dark.webp", width: 1800, height: 1896 },
+    narrowLight: { src: "/images/for-attorneys/case-detail-light-phone.webp", width: 732, height: 2400 },
+    narrowDark: { src: "/images/for-attorneys/case-detail-dark-phone.webp", width: 732, height: 2400 },
   },
   "edit-case": {
-    light: { src: "/images/for-attorneys/edit-case-light.webp", width: 1800, height: 1168 },
-    dark: { src: "/images/for-attorneys/edit-case-dark.webp", width: 1800, height: 1168 },
-    narrowLight: { src: "/images/for-attorneys/edit-case-light-phone.webp", width: 796, height: 1600 },
-    narrowDark: { src: "/images/for-attorneys/edit-case-dark-phone.webp", width: 796, height: 1600 },
+    light: { src: "/images/for-attorneys/edit-case-light.webp", width: 1800, height: 1067 },
+    dark: { src: "/images/for-attorneys/edit-case-dark.webp", width: 1800, height: 1067 },
+    narrowLight: { src: "/images/for-attorneys/edit-case-light-phone.webp", width: 732, height: 2546 },
+    narrowDark: { src: "/images/for-attorneys/edit-case-dark-phone.webp", width: 732, height: 2546 },
   },
   "calendar": {
-    light: { src: "/images/for-attorneys/calendar-light.webp", width: 1800, height: 1543 },
-    dark: { src: "/images/for-attorneys/calendar-dark.webp", width: 1800, height: 1543 },
-    narrowLight: { src: "/images/for-attorneys/calendar-light-phone.webp", width: 796, height: 1542 },
-    narrowDark: { src: "/images/for-attorneys/calendar-dark-phone.webp", width: 796, height: 1542 },
+    light: { src: "/images/for-attorneys/calendar-light.webp", width: 1800, height: 1471 },
+    dark: { src: "/images/for-attorneys/calendar-dark.webp", width: 1800, height: 1471 },
+    narrowLight: { src: "/images/for-attorneys/calendar-light-phone.webp", width: 732, height: 1436 },
+    narrowDark: { src: "/images/for-attorneys/calendar-dark-phone.webp", width: 732, height: 1436 },
   },
   "notifications": {
-    light: { src: "/images/for-attorneys/notifications-light.webp", width: 1800, height: 1346 },
-    dark: { src: "/images/for-attorneys/notifications-dark.webp", width: 1800, height: 1346 },
-    narrowLight: { src: "/images/for-attorneys/notifications-light-phone.webp", width: 796, height: 1880 },
-    narrowDark: { src: "/images/for-attorneys/notifications-dark-phone.webp", width: 796, height: 1880 },
+    light: { src: "/images/for-attorneys/notifications-light.webp", width: 1800, height: 1162 },
+    dark: { src: "/images/for-attorneys/notifications-dark.webp", width: 1800, height: 1162 },
+    narrowLight: { src: "/images/for-attorneys/notifications-light-phone.webp", width: 732, height: 1920 },
+    narrowDark: { src: "/images/for-attorneys/notifications-dark-phone.webp", width: 732, height: 1920 },
   },
   "assistant": {
     light: { src: "/images/for-attorneys/assistant-light.webp", width: 760, height: 1120 },
     dark: { src: "/images/for-attorneys/assistant-dark.webp", width: 760, height: 1120 },
   },
   "email": {
-    light: { src: "/images/for-attorneys/email-light.webp", width: 1280, height: 1200 },
-    dark: { src: "/images/for-attorneys/email-light.webp", width: 1280, height: 1200 },
+    light: { src: "/images/for-attorneys/email-light.webp", width: 1280, height: 1220 },
+    dark: { src: "/images/for-attorneys/email-light.webp", width: 1280, height: 1220 },
   },
-  "case-card": {
-    light: { src: "/images/for-attorneys/case-card-light.webp", width: 836, height: 688 },
-    dark: { src: "/images/for-attorneys/case-card-dark.webp", width: 836, height: 688 },
+  "timeline": {
+    light: { src: "/images/for-attorneys/timeline-light.webp", width: 1800, height: 866 },
+    dark: { src: "/images/for-attorneys/timeline-dark.webp", width: 1800, height: 866 },
+    narrowLight: { src: "/images/for-attorneys/timeline-light-phone.webp", width: 1200, height: 1120 },
+    narrowDark: { src: "/images/for-attorneys/timeline-dark-phone.webp", width: 1200, height: 1120 },
   },
 };

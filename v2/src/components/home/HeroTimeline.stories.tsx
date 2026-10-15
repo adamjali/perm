@@ -8,7 +8,7 @@ import fixtures from "@/components/tour/tour-fixtures.json";
 /**
  * The app's real case timeline over the sample firm the other tour pictures
  * show (src/components/tour/). It is the source of the attorney page's hero
- * image; scripts/tour_shots.py says how the captures are taken and encoded.
+ * image; scripts/capture-tour.mjs captures it and scripts/tour_shots.py encodes it.
  */
 
 const CASES = Object.entries(fixtures)

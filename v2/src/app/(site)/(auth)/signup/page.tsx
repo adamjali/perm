@@ -161,7 +161,7 @@ export default async function SignupPage() {
               src={TOUR_SHOTS.dashboard.light.src}
               width={TOUR_SHOTS.dashboard.light.width}
               height={TOUR_SHOTS.dashboard.light.height}
-              alt="The deadline hub, grouping sample cases into overdue, this week, this month and later, each entry naming the case, the deadline and the date"
+              alt="The dashboard's Deadlines panel, grouping sample cases into overdue, this week, this month and later, each entry naming the case, the deadline and the date"
               caption="Your dates, sorted into deadlines. Sample cases"
             />
           </div>
