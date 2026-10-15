@@ -1,7 +1,8 @@
 # The middle-ground redesign: going live
 
-Branch `calm/middle` (built on `calm/phase-1`). Nothing here is live. Every step below
-changes production and waits for the owner's yes, one at a time.
+Branch `calm/middle` (built on `calm/phase-1`). **Live since Thu Oct 15 2026, 6:04 PM EDT**
+(owner's yes, 4:37 PM: "yes to all going live stuff immediately"). The record of each step
+is below; what's left is under "After a week live" and "Still to do, last".
 
 ## Done ahead of time (changes nothing live)
 
@@ -22,22 +23,26 @@ changes production and waits for the owner's yes, one at a time.
   owner's yes). `main` still says 6 until the merge: don't install the config from `main`
   before then.
 
-## At go-live, in order
+## At go-live, in order (done Oct 15 2026)
 
-1. Merge `calm/middle` to `main`. The site deploys once CI passes on main.
-2. Deploy Convex (`npx convex deploy -y` from `v2/`) once that suite is green: emails,
-   notification copy and chat changes live under `convex/`.
-3. Reinstall `/usr/local/sbin/permtracker-uscis` from `v2/scripts/oracle/bin/` the same
-   day: the installed copy imports `lib_turso`, which the branch renamed to `lib_db`.
-4. Drop Cloudflare's cached pages for the changed routes (the deploy's purge step does
-   this when `CF_PURGE_TOKEN` is set).
-5. Ask Search Console to re-crawl the homepage and the busiest data pages.
-6. The wage-request day moves to DOL's working days with the merge (no step to run):
-   the next PWD pass writes `perm_docs['pwd_day_queue']` with `clock: "dol"`, and the
-   next nightly backtest writes `pwd_backtest.day` with `unit: "workday"`. Until that
-   backtest runs (the 4:10 AM full pass, or the server's 7:05 AM run), the page uses
-   DOL's fastest and slowest week for the range and prints no test line. Nothing to
-   undo: an older count is read a day back, an older backtest is ignored.
+1. Done, 5:54 PM EDT: `calm/middle` fast-forwarded to `main` (fe78aab2). Tests passed on
+   main, the Oracle deploy switched at 6:04 PM, and its purge step dropped Cloudflare's
+   copies of the changed pages.
+2. Done, about 6:00 PM: `npx convex deploy -y` once main's suite was green (schema change
+   was comments only; no index deleted).
+3. Done, 5:58 PM: the USCIS runner reinstalled. It lives at `/usr/local/bin/permtracker-uscis`
+   (not `/usr/local/sbin`, as these notes first said); the old copy is beside it as
+   `.bak-20261015`. A run of the backtests job at 6:05 PM recorded its ok rows through
+   `lib_db` and wrote `pwd_backtest` with `unit: "workday"`.
+4. Done: `check_settings.py` on the server, every line PASS.
+5. Waiting: Search Console re-crawl of the homepage and the busiest data pages, when the
+   owner's Chrome is free (driving it needs the browser to itself).
+6. Live checks after the switch: the new footer and the case promises on every page checked,
+   phone widths 390 and 320 with no sideways scroll or small text. The employer pages'
+   case-number links were 20px tall on a phone; fixed and pushed at 6:13 PM (7c0a2c4d).
+7. The wage-request day moved to DOL's working days with the merge: the next PWD pass
+   (5:40 AM) writes `pwd_day_queue` with `clock: "dol"`; until then the page reads the older
+   count a day back.
 
 ## After a week live
 

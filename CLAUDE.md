@@ -747,8 +747,8 @@ Branch `calm/phase-1`. The rules, parts and gates are in [`v2/docs/DESIGN_SYSTEM
   had shown a phone the case number and nothing else.
 - **The database code is no longer named after Turso**: `src/lib/db/`, `scripts/lib_db.py`, and `DATABASE_URL` /
   `DATABASE_AUTH_TOKEN` / `DATABASE_RW_AUTH_TOKEN`, each falling back to the `TURSO_*` name production still carries.
-  **When this ships, reinstall `/usr/local/sbin/permtracker-uscis` from `scripts/oracle/bin/`**: the installed copy
-  imports `lib_turso`, which is gone, and its "record ok" step would fail.
+  **When this ships, reinstall `/usr/local/bin/permtracker-uscis` from `scripts/oracle/bin/`**: the installed copy
+  imports `lib_turso`, which is gone, and its "record ok" step would fail. (Done at go-live, Oct 15 2026.)
 - **One list of month names and one way to write a date** (`convex/lib/months.ts`): fifteen copies wrote "September 11,
   2026" their own way, some through `toLocaleDateString` without a time zone (the next day east of UTC+12).
 - **Every link uses `.link`**, every choice row `choiceVariants`, every hatch `bg-hatch`; corners are square except
@@ -788,4 +788,15 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
   and a passed typical day reads "any day now" (and is recorded as today).
 - **Tested and not changed:** recent windows for H-2A, H-2B and CW-1 (no gain; H-2B much worse), and the
   passed-queue rate's window (14 days stays; its small lean changes sign week to week).
+
+## Oct 15 2026 (evening): the middle-ground redesign is live
+
+- **Live at 6:04 PM EDT** (fe78aab2, owner's yes): main fast-forwarded from `calm/middle`, Convex deployed once
+  main's suite was green, the USCIS runner reinstalled at `/usr/local/bin/permtracker-uscis`. The record and what's
+  left: `.planning/calm-go-live.md`.
+- **Checked before the switch, on the dev server against production data:** headings over 169 pages, run-together
+  words over 119 (0), visibility one page per template (82); every finding traced to the audits, which were fixed.
+  A full-sitemap visibility walk on the dev server takes hours (30 s a page); one page per template is the unit.
+- **The case-number links in employer filings lists are 44px on a phone** (`CASE_ROW`, `CASE_ROW_LINK` in
+  `src/components/entities/caseRows.ts`); they measured 20px live.
 
