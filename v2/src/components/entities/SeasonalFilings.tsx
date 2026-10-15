@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import type { FlagCaseRow } from "@/lib/db/flagCases";
 import { seasonalForm } from "@/lib/seasonalForms";
+import { CASE_ROW, CASE_ROW_LINK } from "@/components/entities/caseRows";
 
 /**
  * One employer's H-2A and H-2B filings, newest first, from DOL's live record.
@@ -35,10 +36,10 @@ export function SeasonalFilings({
         {rows.map((r) => (
           <Fragment key={r.caseNumber}>
             {" "}
-            <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
+            <li className={CASE_ROW}>
               <Link
                 href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                className="link font-mono text-sm"
+                className={CASE_ROW_LINK}
               >
                 {r.caseNumber}
               </Link>{" "}

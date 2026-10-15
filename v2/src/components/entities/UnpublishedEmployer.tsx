@@ -7,6 +7,7 @@ import type { LiveCaseRow } from "@/lib/db/cases";
 import type { LiveEmployerRecord } from "@/lib/db/liveEmployers";
 import { formatInt } from "@/lib/format";
 import { longDate } from "@convex/lib/months";
+import { CASE_ROW, CASE_ROW_LINK } from "@/components/entities/caseRows";
 
 /**
  * An employer's page when DOL has never published a thing about them.
@@ -206,10 +207,10 @@ export function UnpublishedEmployer({
         <ul className="mt-4 divide-y divide-border/60">
           {cases.map((c) => (
             <Fragment key={c.caseNumber}>{" "}
-            <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
+            <li className={CASE_ROW}>
               <Link
                 href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                className="link font-mono text-sm"
+                className={CASE_ROW_LINK}
               >
                 {c.caseNumber}
               </Link>{" "}

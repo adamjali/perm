@@ -115,6 +115,7 @@ import { HOLD_STATUS } from "@/lib/employerStages";
 import { phase } from "@/lib/db/debarments";
 import { comparables, fieldDistribution } from "@/lib/db/entities";
 import { monthDay, shortDate } from "@convex/lib/months";
+import { CASE_ROW, CASE_ROW_LINK } from "@/components/entities/caseRows";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -855,10 +856,10 @@ export default async function EmployerPage({
               {recentLive.slice(0, RECENT_LIVE_SHOWN).map((c) => (
                 <Fragment key={c.caseNumber}>
                   {" "}
-                  <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
+                  <li className={CASE_ROW}>
                     <Link
                       href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                      className="link font-mono text-sm"
+                      className={CASE_ROW_LINK}
                     >
                       {c.caseNumber}
                     </Link>{" "}
