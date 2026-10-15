@@ -34,7 +34,8 @@ const PHONE = 398;
  * from it. A picture's crop names the heading its first section starts at
  * (`from`) and the heading of the section after its last (`to`, left out for
  * the page's end); `through: [selector, n]` ends it below the nth element a
- * selector matches; `pad` is the margin kept around it; `el` crops to the
+ * selector matches; `pad` is the margin kept around it (`padTop` overrides it
+ * above, for an element with something drawn over its top edge); `el` crops to the
  * first element a selector matches instead. No crop keeps the whole capture.
  * `phone: false` takes the wide capture only.
  */
@@ -55,8 +56,9 @@ const CAPTURES = [
     story: "tour-app-pages--cases",
     pictures: {
       cases: { wide: { through: ['[data-testid="case-card"]', 6] }, phone: { through: ['[data-testid="case-card"]', 2] } },
-      // The first case card on the phone capture, where a card is drawn at a card's own width.
-      "case-card": { phone: { el: '[data-testid="case-card"]', pad: 12 } },
+      // The first case card on the phone capture, where a card is drawn at a card's own width. The pad
+      // keeps the folder's tab, which sits above the card's own box.
+      "case-card": { phone: { el: '[data-testid="case-card"]', pad: 12, padTop: 40 } },
     },
   },
   { name: "case-detail", story: "tour-app-pages--case-detail", pictures: { "case-detail": { wide: { through: [".detail-card", 1], pad: 6 }, phone: { maxHeight: 1200 } } } },
@@ -110,7 +112,8 @@ function measure([spec, rootSelector]) {
     const el = root.querySelector(spec.el);
     if (!el) throw new Error(`nothing matches ${spec.el}`);
     const b = el.getBoundingClientRect();
-    return [b.left - r.left - pad, b.top - r.top - pad, b.right - r.left + pad, b.bottom - r.top + pad].map((v) => Math.max(0, Math.round(v)));
+    const padTop = spec.padTop ?? pad;
+    return [b.left - r.left - pad, b.top - r.top - padTop, b.right - r.left + pad, b.bottom - r.top + pad].map((v) => Math.max(0, Math.round(v)));
   }
   const top = spec.from ? Math.max(0, headingTop(spec.from) - pad) : 0;
   let bottom = spec.to ? headingTop(spec.to) - pad / 2 : r.height;
