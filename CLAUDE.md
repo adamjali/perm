@@ -774,3 +774,18 @@ Branch `calm/phase-1`, not live. Detail in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/
   250 to 430 "visible" words a page, and a dev server's hidden streamed copy doubled every heading on 60 pages.
 - **The case page's card titles are `h2` headings**, and its name wraps the buttons below it on a phone (it had broken
   one letter a line).
+
+## Oct 15 2026: the estimates on DOL's days, and two changes the data turned down
+
+Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 15 2026: the estimates".
+
+- **Our morning sweep reads DOL's decisions the day after DOL makes them** (20,803 of 22,425 wage-request
+  decisions in a month were first seen 5 to 6 AM): `decided_on` in `scripts/lib_holidays.py` (seen before noon
+  Eastern is the day before) and `decidedOnFromSeen` in `src/lib/scorecard/score.ts`, held equal.
+- **The wage-request day counts the days DOL works** (`estimatePwdDay`, model `pwd-workday`; `pwd-day` retired):
+  typically right on the day with no lean on both start days tested, where the calendar walk ran about 2 days late.
+- **H-2A is counted from filing when the first day is more than 75 days out or too close for the usual lead**,
+  and a passed typical day reads "any day now" (and is recorded as today).
+- **Tested and not changed:** recent windows for H-2A, H-2B and CW-1 (no gain; H-2B much worse), and the
+  passed-queue rate's window (14 days stays; its small lean changes sign week to week).
+

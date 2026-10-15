@@ -9863,3 +9863,63 @@ three places, in `workers/mail/README.md`, "Changing the owner's address". **Sig
 
 **Chrome's own "network error" is a dropped request** and the error screen reloads for it like "Failed to fetch"
 (`RELOAD_CURABLE` in `src/components/error/recovery.ts`; Sentry 56).
+
+## Oct 15 2026: the estimates, measured again
+
+Branch `calm/middle`, not live. Every change below was tested on data before it was made; two
+proposals the data turned down are recorded so nobody builds them on the same hunch.
+
+**Our sweep dates DOL's decisions a day late, and the wage-request day now says so.** FLAG shows a new
+status the day DOL decides it; the PWD sweep reads it the next morning (Sep 10 to Oct 15: 20,803 of
+22,425 wage-request decisions first seen between 5 and 6 AM Eastern, nearly all the rest by 10 AM; the
+5-minute check of watched cases saw a handful in the afternoon). So:
+
+- `scripts/lib_holidays.py`: `decided_on(seen_ms)` is the day before when seen before noon Eastern, that
+  day otherwise; the site's federal holidays ported (`federal_holidays`, `is_dol_workday`, `add_workdays`,
+  `workdays_between`). `decidedOnFromSeen` in `src/lib/scorecard/score.ts` is the TypeScript twin.
+  `scripts/fixtures/federal_holidays.json` holds both holiday lists; `scripts/test_holidays.py` and
+  `src/lib/__tests__/dol-workdays-parity.test.ts` hold each side to it, and the parity test also holds
+  the backtest's constants to the site's.
+- `perm_docs['pwd_day_queue']` dates each exit by DOL's day (`clock: "dol"`). The parser moves an older
+  count's days back one, so a doc written by the old sweep still reads right.
+- `estimatePwdDay` walks DOL's working days (the central `addBusinessDays`: weekends and federal holidays)
+  from the day the count covers, at DOL's pace a working day (`measureWorkdayPace`: every exit, weekend and
+  holiday ones included, over the working days in 28 days; a run of three dead working days is a shutdown and
+  left out). A date that has come is the next day DOL works: any day now.
+- **DOL's Fridays run at about half its other days** (277 to 484 against 688 to 988, Sep 16 to Oct 13), and it
+  decided 89 on Columbus Day. So the range past the measured distances is DOL's fastest and slowest stretch of
+  five working days (669 and 775 a day against 734), never its slowest single day, which would stretch a far
+  range to months.
+- Backtest (`scripts/backtest_pwd.py`, day section, `unit: "workday"`): the queue as the start day's morning
+  sweep left it, outcomes on DOL's day. Sep 23 and Sep 30: typically 0 days off, bias 0; the calendar walk on
+  the sweep's clock read about 2 days late on the same days. The range one working day either side, measured
+  on Sep 23, held 91% on Sep 30. Only distances up to 20 working days can be judged yet.
+- Scorecard: model `pwd-workday`; `pwd-day` is in `RETIRED_METHODS` (and `daily_monitor.py`'s copy) from
+  Oct 15. `DOL_DAY_MODELS` are graded on DOL's day; every other method stays on the sweep's day it was built
+  on (`gradeClock.test.ts`).
+- **The PERM estimates still run on the sweep's clock**, where the sweep runs three times a day. Its main
+  method shows no lean there, so it wasn't moved; the date a reader sees is the sweep's day.
+
+**H-2A, H-2B and CW-1: recent windows lose, two H-2A cases change.** Each application dated on its own filing
+day from DOL's certifications decided before it, January 2025 to March 2026 filings:
+
+| | full history | last 365 days | last 56 days | last 28 days |
+|---|---|---|---|---|
+| H-2A, first-day clock | 8 days off | 8 | 9 | 9 |
+| H-2B, from filing (the page uses the season a year back, 12) | 29 | 28 | 40 | 35 |
+| CW-1, from filing | 11 | 10 | 11 | 10 (middle half held 39%) |
+
+So no visa moved to a recent window. H-2A's first-day clock stays, except (`timingView`, `filedBecause`):
+a first day more than 75 days after filing (2.3%, mostly range livestock herders, SOC 45-2093) was 25 to 75
+days off by the first day and 16 to 17 from filing; a first day so close that the usual lead lands before
+filing was 31 days off and 9 from filing. Both are counted from filing now, and the panel says why.
+`backtest_seasonal.py` tests the page's mixed clock (`pooled/page`): middle half 52.8% against 51.0%.
+A typical day that has passed reads "any day now" and is recorded as today (`viewEstimate`).
+
+**The passed-queue rate keeps its 14-day window.** Four start days (Sep 9 to 30): the 14-day rate was
+typically 2 to 7 days off with a lean of 0 to 3 days late; 28 days read 4 to 15 days late; a shift learned from
+the week before overshot on the last start day.
+
+**A `.pyc` kept a probe's mutation again**: a one-digit swap restored in the same second left the mutated
+bytecode, and two later probes went red for the wrong reason. Clear `scripts/__pycache__` before and after
+every Python probe.
