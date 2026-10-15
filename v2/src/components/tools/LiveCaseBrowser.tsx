@@ -252,10 +252,11 @@ export function LiveCaseBrowser({
 
         {!withheld && !failed ? (
           <div
-            className={cn("mt-5 overflow-x-auto transition-opacity", busy && "opacity-60")}
+            className={cn("mt-5 transition-opacity sm:overflow-x-auto", busy && "opacity-60")}
             aria-busy={loading}
           >
-            <table className="w-full min-w-[820px] border-collapse text-left text-base">
+            {/* On a phone each row is a card, as in the other case browsers. */}
+            <table className="w-full border-collapse text-left text-base max-sm:block max-sm:[&_thead]:hidden sm:min-w-[820px]">
               <caption className="sr-only">
                 Live cases from DOL&apos;s case-status service, newest filing first
               </caption>
@@ -273,7 +274,7 @@ export function LiveCaseBrowser({
                   ))}
                 </tr>
               </thead>
-              <tbody translate="no" className="bg-card">
+              <tbody translate="no" className="bg-card max-sm:block">
                 {loading && !shownPage ? (
                   <tr>
                     <td colSpan={6} className="px-3 py-6 text-muted-foreground">
@@ -289,8 +290,11 @@ export function LiveCaseBrowser({
                   </tr>
                 ) : null}
                 {shownPage?.rows.map((r) => (
-                  <tr key={r.caseNumber} className="border-t border-border/30 align-top">
-                    <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
+                  <tr
+                    key={r.caseNumber}
+                    className="border-t border-border/30 align-top max-sm:grid max-sm:grid-cols-1 max-sm:gap-y-1 max-sm:px-3 max-sm:py-3 max-sm:[&>td]:p-0 max-sm:[&>td]:whitespace-normal"
+                  >
+                    <td className="whitespace-nowrap px-3 py-3 font-mono text-base max-sm:whitespace-nowrap!">
                       {/* PendingLink: /perm-case-status is dynamic and can
                           ask DOL live, so a bare link is seconds of silence. */}
                       <PendingLink
@@ -315,11 +319,13 @@ export function LiveCaseBrowser({
                         <span className="font-bold">{r.employerName}</span>
                       )}
                     {" "}</td>
-                    <td className="px-3 py-3 text-soft">{r.jobTitle ?? ""}{" "}</td>
-                    <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
+                    <td className="px-3 py-3 text-soft max-sm:text-sm">{r.jobTitle ?? ""}{" "}</td>
+                    <td className="whitespace-nowrap px-3 py-3 font-mono text-sm max-sm:font-sans max-sm:text-muted-foreground">
+                      {r.filingDate ? <span className="sm:hidden">Filed </span> : null}
                       {r.filingDate ?? ""}
                     {" "}</td>
-                    <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-soft">
+                    <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-soft max-sm:font-sans max-sm:text-muted-foreground">
+                      {r.decidedSeen ? <span className="sm:hidden">Seen decided </span> : null}
                       {r.decidedSeen ?? ""}
                     {" "}</td>
                   </tr>

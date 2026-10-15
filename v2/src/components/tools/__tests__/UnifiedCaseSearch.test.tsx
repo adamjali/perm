@@ -264,3 +264,19 @@ describe("a law firm's page handing over its name", () => {
     }
   });
 });
+
+describe("the results on a phone", () => {
+  it("lists each filing as its number, status, employer and dates", () => {
+    const { container } = renderIt();
+    fireEvent.change(screen.getByLabelText("Employer or case number"), { target: { value: "acme" } });
+    fireEvent.submit(screen.getByLabelText("Employer or case number").closest("form")!);
+    const list = container.querySelector("ul.sm\\:hidden");
+    expect(list).not.toBeNull();
+    const items = list!.querySelectorAll(":scope > li");
+    expect(items).toHaveLength(2);
+    const text = [...items].map((li) => li.textContent).join("|");
+    expect(text).toContain("A-19001-00001");
+    expect(text).toContain("filed 2019-01-02, decided 2019-06-01");
+    expect(text).toContain("ACME CORP, Engineer");
+  });
+});

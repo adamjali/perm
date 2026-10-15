@@ -322,6 +322,45 @@ function RowDetails({ r }: { r: UnifiedCase }) {
   );
 }
 
+/** One filing as a phone reads it: number and status, then who, then when. */
+function PhoneRow({ r }: { r: UnifiedCase }) {
+  const when = [
+    r.filedOn ? `filed ${r.filedOn}` : null,
+    r.decidedOn ? `decided ${r.decidedOn}` : r.seenDecidedOn ? `seen final ${r.seenDecidedOn}*` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return (
+    <li className="py-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <PendingLink
+          href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
+          className="inline-flex min-h-11 items-center font-mono text-base underline decoration-primary-text decoration-2 underline-offset-2"
+        >
+          {r.caseNumber}
+        </PendingLink>{" "}
+        {r.status ? <StatusBadge status={r.status} /> : null}
+      </div>{" "}
+      <p className="text-base">
+        {r.employerSlug && r.program === "perm" ? (
+          <Link href={`/perm-employers/${r.employerSlug}`} className="link">
+            {r.employerName ?? "Employer not given"}
+          </Link>
+        ) : (
+          (r.employerName ?? "Employer not given")
+        )}
+        {r.jobTitle ? <span className="text-soft">{`, ${r.jobTitle}`}</span> : null}
+      </p>{" "}
+      <p className="mt-1 text-sm text-muted-foreground">
+        {rowProgramLabel(r)}
+        {when ? `, ${when}` : ""}
+        {r.wage !== null ? `, ${formatWage(r.wage, r.wageUnit)}` : ""}{" "}
+        <YearlyPayNote wage={r.wage} unit={r.wageUnit} short />
+      </p>
+    </li>
+  );
+}
+
 const NO_FIELD_OPTIONS: CaseFieldOptions = {
   citizenship: [], birthCountry: [], visaClass: [], education: [], jobEducation: [],
 };
@@ -1615,7 +1654,15 @@ export function UnifiedCaseSearch({
             ) : null}
           </div>{" "}
 
-          <div className="mt-4 overflow-x-auto">
+          {/* A PHONE GETS A LIST, NOT A TABLE. Twelve columns at 1,200px left a
+              phone the case number and the program, and a tall row of blanks;
+              each filing here reads as its number, status, employer and dates. */}
+          <ul translate="no" className="mt-4 divide-y divide-border border-y border-border sm:hidden">
+            {shown.slice(0, visible).map((r) => (
+              <PhoneRow key={r.caseNumber} r={r} />
+            ))}
+          </ul>{" "}
+          <div className="mt-4 hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[1200px] border-collapse text-left text-base">
               <caption className="sr-only">
                 Every filing found across PERM, wage requests, LCAs and H-2A, H-2B and CW-1

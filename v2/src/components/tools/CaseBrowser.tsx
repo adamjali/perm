@@ -462,15 +462,15 @@ export function CaseBrowser({
     [sortable, sortKey],
   );
 
-  const columns: { key: SortKey | null; label: string; numeric?: boolean; hideOnPhone?: boolean }[] = [
+  const columns: { key: SortKey | null; label: string; numeric?: boolean }[] = [
     { key: "caseNumber", label: "Case" },
     { key: null, label: "Status" },
     { key: "employerName", label: "Employer" },
-    { key: null, label: "Job title", hideOnPhone: true },
+    { key: null, label: "Job title" },
     { key: null, label: "State" },
-    { key: null, label: "Occupation", hideOnPhone: true },
+    { key: null, label: "Occupation" },
     { key: "wage", label: "Wage", numeric: true },
-    { key: "receivedDate", label: "Filed", numeric: true, hideOnPhone: true },
+    { key: "receivedDate", label: "Filed", numeric: true },
     { key: "decisionDate", label: "Decided", numeric: true },
     { key: "days", label: "Days", numeric: true },
   ];
@@ -612,7 +612,7 @@ export function CaseBrowser({
           </div>
         ) : null}
         {caseHit ? (
-          <div className="mt-4 overflow-x-auto border border-border">
+          <div className="mt-4 border border-border sm:overflow-x-auto">
             <CaseTable
               rows={[caseHit]}
               columns={columns}
@@ -1071,7 +1071,7 @@ export function CaseBrowser({
 
         {displayRows.length > 0 ? (
           <div
-            className={`mt-4 overflow-x-auto border border-border transition-opacity ${
+            className={`mt-4 border border-border transition-opacity sm:overflow-x-auto ${
               tableBusy ? "opacity-60" : ""
             }`}
             aria-busy={tableBusy}
@@ -1124,7 +1124,7 @@ function CaseTable({
   caption,
 }: {
   rows: CaseRow[];
-  columns: { key: SortKey | null; label: string; numeric?: boolean; hideOnPhone?: boolean }[];
+  columns: { key: SortKey | null; label: string; numeric?: boolean }[];
   sortable: boolean;
   sortKey: SortKey;
   sortAsc: boolean;
@@ -1132,7 +1132,10 @@ function CaseTable({
   caption: string;
 }) {
   return (
-    <table className="w-full min-w-[880px] border-collapse text-left text-base">
+    // ON A PHONE EACH ROW IS A CARD, as in the wage-request and LCA browsers:
+    // number, status, employer, title, wage and the dates, one to a line. CSS
+    // only, so the rows exist once and the table is unchanged from `sm` up.
+    <table className="w-full border-collapse text-left text-base max-sm:block max-sm:[&_thead]:hidden sm:min-w-[880px]">
       <caption className="sr-only">{caption}</caption>
       <thead className="border-b border-input bg-muted">
         <tr>
@@ -1146,8 +1149,7 @@ function CaseTable({
                 aria-sort={active ? (sortAsc ? "ascending" : "descending") : undefined}
                 className={
                   "whitespace-nowrap px-3 py-3 text-sm font-bold " +
-                  (c.numeric ? "text-right " : "") +
-                  (c.hideOnPhone ? "hidden sm:table-cell " : "")
+                  (c.numeric ? "text-right " : "")
                 }
               >
                 {canSort ? (
@@ -1167,10 +1169,13 @@ function CaseTable({
           })}
         </tr>
       </thead>
-      <tbody translate="no" className="bg-card">
+      <tbody translate="no" className="bg-card max-sm:block">
         {rows.map((r) => (
-          <tr key={r.caseNumber} className="border-t border-border/30 align-top">
-            <td className="whitespace-nowrap px-3 py-3 font-mono text-base">{r.caseNumber}{" "}</td>
+          <tr
+            key={r.caseNumber}
+            className="border-t border-border/30 align-top max-sm:grid max-sm:grid-cols-1 max-sm:gap-y-1 max-sm:px-3 max-sm:py-3 max-sm:[&>td]:p-0 max-sm:[&>td]:whitespace-normal"
+          >
+            <td className="whitespace-nowrap px-3 py-3 font-mono text-base max-sm:whitespace-nowrap!">{r.caseNumber}{" "}</td>
             <td className="whitespace-nowrap px-3 py-3">
               <StatusBadge status={STATUS_LABEL[r.status]} />
             {" "}</td>
@@ -1203,9 +1208,11 @@ function CaseTable({
                 </>
               ) : null}{" "}
             </td>
-            <td className="hidden px-3 py-3 sm:table-cell">{r.jobTitle || "—"}{" "}</td>
-            <td className="whitespace-nowrap px-3 py-3">{r.state || "—"}{" "}</td>
-            <td className="hidden px-3 py-3 sm:table-cell">
+            <td className="px-3 py-3 max-sm:text-sm max-sm:text-soft">
+              {r.jobTitle || <span className="max-sm:hidden">—</span>}
+            {" "}</td>
+            <td className="whitespace-nowrap px-3 py-3 max-sm:hidden">{r.state || "—"}{" "}</td>
+            <td className="px-3 py-3 max-sm:hidden">
               {r.socTitle || r.socCode || "—"}
               {r.socCode ? (
                 <>
@@ -1214,16 +1221,20 @@ function CaseTable({
                 </>
               ) : null}{" "}
             </td>
-            <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">
+            <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums max-sm:text-left max-sm:text-sm">
+              <span className="sm:hidden">Wage </span>
               {fmtWage(r.wage)}
             {" "}</td>
-            <td className="hidden whitespace-nowrap px-3 py-3 text-right font-mono text-base tabular-nums sm:table-cell">
+            <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-base tabular-nums max-sm:text-left max-sm:font-sans max-sm:text-sm max-sm:text-muted-foreground">
+              <span className="sm:hidden">Filed </span>
               {r.receivedDate}
             {" "}</td>
-            <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-base tabular-nums">
+            <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-base tabular-nums max-sm:text-left max-sm:font-sans max-sm:text-sm max-sm:text-muted-foreground">
+              <span className="sm:hidden">Decided </span>
               {r.decisionDate}
+              <span className="sm:hidden">{`, ${formatInt(r.days)} days`}</span>
             {" "}</td>
-            <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">
+            <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums max-sm:hidden">
               {formatInt(r.days)}
             {" "}</td>
           </tr>
