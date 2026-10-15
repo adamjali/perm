@@ -72,7 +72,8 @@ export function AlertDone({ message, queued, className }: { message: string; que
       <span>
         <b className="font-semibold text-foreground">{message}</b>{" "}
         {queued ? "Confirm it when it arrives; nothing is sent until you do." : "Nothing is sent until you confirm."} No
-        email within 10 minutes? Try again then.
+        email within 10 minutes? Try again then. A change to a case is emailed at once; other alerts from one day come
+        together in one email.
       </span>
     </p>
   );

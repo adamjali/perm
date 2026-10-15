@@ -69,6 +69,55 @@ def strip_noise(html: str) -> str:
     return re.sub(r"<!--[\s\S]*?-->", " ", html)
 
 
+START_TAG = re.compile(r"<([a-z][a-z0-9-]*)\b((?:[^>\"']|\"[^\"]*\"|'[^']*')*)>", re.I)
+ATTR = re.compile(r"""([^\s=/>"']+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?""")
+
+
+def is_hidden(attrs: str) -> bool:
+    """`inert`, `hidden`, or `aria-hidden="true"`, read as attributes, so a
+    class named "hidden" (CSS decides that one) and aria-hidden="false" don't count."""
+    for name, value in ATTR.findall(attrs):
+        name = name.lower()
+        if name in ("inert", "hidden"):
+            return True
+        if name == "aria-hidden" and value.strip("\"'").lower() == "true":
+            return True
+    return False
+
+
+def drop_hidden(html: str) -> str:
+    """Remove every element a reader can't see: `inert`, `aria-hidden="true"`
+    or the `hidden` attribute.
+
+    A closed menu panel keeps its links in the HTML for search engines and
+    hides them until it opens. Counted as visible, the header's Data menu
+    alone added 250 to 430 words to every page (measured Oct 15 2026). Nesting
+    is walked by tag name, like the fold filter below, so an inner element of
+    the same name can't end the hidden region early.
+    """
+    out, i = [], 0
+    for m in START_TAG.finditer(html):
+        if m.start() < i or not is_hidden(m.group(2)):
+            continue                      # already inside a dropped region
+        tag = m.group(1).lower()
+        out.append(html[i:m.start()])
+        if m.group(2).rstrip().endswith("/") or tag in ("img", "input", "br", "hr", "meta", "link", "source"):
+            i = m.end()
+            continue
+        depth, j = 1, m.end()
+        while depth and j < len(html):
+            nxt = re.search(rf"</?{tag}\b[^>]*>", html[j:], flags=re.I)
+            if not nxt:
+                j = len(html)
+                break
+            if not nxt.group(0).endswith("/>"):
+                depth += -1 if nxt.group(0).startswith("</") else 1
+            j += nxt.end()
+        i = j
+    out.append(html[i:])
+    return "".join(out)
+
+
 def detext(html: str) -> str:
     t = re.sub(r"<[^>]+>", " ", html)
     for a, b in (("&nbsp;", " "), ("&amp;", "&"), ("&#x27;", "'"),
@@ -195,7 +244,7 @@ def main() -> int:
         if html is None:
             continue
         clean = strip_noise(html)
-        visible_html = drop_closed_details(clean)
+        visible_html = drop_closed_details(drop_hidden(clean))
         got[p] = (words(detext(clean)),
                   words(detext(visible_html)),
                   by_role(visible_html))

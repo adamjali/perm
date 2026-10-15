@@ -28,6 +28,7 @@ import re
 import sys
 import urllib.request
 from lib_audit import audit_headers  # noqa: E402
+from audit_visible_text import drop_hidden  # noqa: E402
 
 HEADERS = {
     "User-Agent": "permtracker-audit/1.0",
@@ -109,9 +110,15 @@ def page_paths(base: str) -> list[str]:
 
 
 def headings(html: str) -> list[tuple[int, str]]:
+    """The outline a reader gets: headings inside a hidden, inert or
+    aria-hidden subtree are left out, as assistive technology leaves them out.
+    That also covers a dev server's streamed copy of a page (React sends the
+    finished version in a hidden div beside the fallback), which made 60 dev
+    pages read as having every heading twice on Oct 15 2026."""
     body = html[html.index("<body"):] if "<body" in html else html
     for tag in ("script", "style", "svg", "noscript", "template"):
         body = re.sub(rf"<{tag}\b[^>]*>[\s\S]*?</{tag}>", " ", body, flags=re.I)
+    body = drop_hidden(body)
     out = []
     for m in re.finditer(r"<h([1-6])\b[^>]*>([\s\S]*?)</h\1>", body):
         t = detext(m.group(2))
