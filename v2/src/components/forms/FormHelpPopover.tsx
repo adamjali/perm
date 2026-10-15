@@ -230,7 +230,7 @@ function FieldList({ items }: { items: { field: string; desc: string }[] }) {
 
 function Example({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-2 bg-muted/50 border border-border px-3 py-2 text-sm text-muted-foreground">
+    <div className="mt-2 bg-tint px-3 py-2 text-sm text-muted-foreground">
       <span className="font-bold text-foreground">Tip: </span>
       {children}
     </div>

@@ -29,14 +29,14 @@ export interface FormSectionProps {
 }
 
 /**
- * A form section that is always open: the same plain box and heading as the
- * collapsible ones, so the first section and the rest look alike.
+ * A form section that is always open: the same tinted panel and heading as
+ * the collapsible ones, so the first section and the rest look alike.
  */
 export function FormSection({ title, status, className, children }: FormSectionProps) {
   return (
     <section
       className={cn(
-        "border border-border bg-card",
+        "border-2 border-transparent bg-tint",
         status === "has-errors" && "border-destructive",
         className
       )}

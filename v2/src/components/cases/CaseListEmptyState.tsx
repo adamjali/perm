@@ -34,7 +34,7 @@ export function CaseListEmptyState({
     return (
       <div
         data-testid="empty-state-new-user"
-        className="flex flex-col items-center justify-center border border-border px-6 py-16"
+        className="flex flex-col items-center justify-center bg-tint px-6 py-16"
       >
         <h2 className="font-heading text-2xl font-bold mb-2">No cases yet</h2>{" "}
         <p className="text-muted-foreground text-center max-w-md mb-6">
@@ -52,7 +52,7 @@ export function CaseListEmptyState({
   return (
     <div
       data-testid="empty-state-no-results"
-      className="flex flex-col items-center justify-center border border-border px-6 py-16"
+      className="flex flex-col items-center justify-center bg-tint px-6 py-16"
     >
       <h2 className="font-heading text-2xl font-bold mb-2">
         No cases match these filters

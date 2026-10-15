@@ -55,7 +55,7 @@ export function RecruitmentDeadlineIndicator({
   noticeOfFilingStartDate,
   isProfessionalOccupation,
 }: RecruitmentDeadlineIndicatorProps) {
-  const note = (text: string) => <p className="border border-border p-3 text-sm text-muted-foreground">{text}</p>;
+  const note = (text: string) => <p className="bg-tint p-3 text-sm text-muted-foreground">{text}</p>;
 
   if (!pwdDeterminationDate) return note("Enter PWD determination date to see recruitment deadline");
   if (!pwdExpirationDate) return note("PWD expiration date will be calculated...");
@@ -86,7 +86,7 @@ export function RecruitmentDeadlineIndicator({
     : "";
 
   return (
-    <div className="space-y-3 border border-border p-4">
+    <div className="space-y-3 bg-tint p-4">
       <p className="text-sm font-semibold">Recruitment deadline</p>
 
       <dl className="grid grid-cols-2 gap-4 text-sm">

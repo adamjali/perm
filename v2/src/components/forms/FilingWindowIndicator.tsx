@@ -132,7 +132,7 @@ export function FilingWindowIndicator({ window, label, className }: FilingWindow
   // Before the window can be drawn, one line says what it waits on.
   if (status === "recruitment_incomplete" || (!window.opensOn && !window.closesOn)) {
     return (
-      <p className={cn("border border-border p-3 text-sm text-muted-foreground", className)}>
+      <p className={cn("bg-tint p-3 text-sm text-muted-foreground", className)}>
         {label}:{" "}
         {status === "recruitment_incomplete"
           ? "Complete all recruitment activities to see filing window"
@@ -144,7 +144,7 @@ export function FilingWindowIndicator({ window, label, className }: FilingWindow
   const showCount = (status === "open" || status === "closing_soon") && window.daysRemaining !== undefined && window.daysRemaining > 0;
 
   return (
-    <div className={cn("space-y-3 border border-border p-4", className)}>
+    <div className={cn("space-y-3 bg-tint p-4", className)}>
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-semibold">{label}</span>
         <ToneBadge tone={config.tone}>{config.label}</ToneBadge>

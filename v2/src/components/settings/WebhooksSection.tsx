@@ -132,7 +132,7 @@ export default function WebhooksSection() {
               The signing secret for {secret.url}. Copy it now: it isn&apos;t shown again.
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <code className="min-w-0 flex-1 break-all border border-border bg-background px-3 py-2 font-mono text-sm">
+              <code className="min-w-0 flex-1 break-all bg-tint px-3 py-2 font-mono text-sm">
                 {secret.secret}
               </code>{" "}
               <Button variant="outline" className="min-h-[44px]" onClick={() => copy(secret.secret)}>
@@ -156,7 +156,7 @@ export default function WebhooksSection() {
                   {e.lastDeliveryAt ? ` Last delivered ${checkedLabel(e.lastDeliveryAt)}.` : ""}
                 </p>{" "}
                 {e.pausedAt !== null && (
-                  <p className="border border-border bg-muted px-3 py-2 text-sm">
+                  <p className="bg-tint px-3 py-2 text-sm">
                     Paused {checkedLabel(e.pausedAt)}. {e.pauseReason ?? ""} Events from the last 30 days wait for it and go out when you resume it.
                   </p>
                 )}

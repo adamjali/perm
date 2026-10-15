@@ -503,7 +503,7 @@ export function ImportModal({
               {parseResult && (
                 <div className="space-y-3">
                   {/* Format Detection Badge */}
-                  <div className="flex items-center gap-3 p-3 border border-border bg-muted/30">
+                  <div className="flex items-center gap-3 p-3 bg-tint/30">
                     <span className="text-sm font-medium text-muted-foreground">Detected Format:</span>
                     {getFormatBadge()}
                     {parseResult.isLegacyFormat && (
@@ -709,7 +709,7 @@ export function ImportModal({
               {parseResult && (
                 <>
                   {/* Summary */}
-                  <div className="flex items-center justify-between p-4 border border-border bg-muted/50">
+                  <div className="flex items-center justify-between p-4 bg-tint/50">
                     <div className="flex items-center gap-4">
                       <span className="font-medium">
                         {parseResult.valid.length} case{parseResult.valid.length !== 1 ? "s" : ""} ready to
@@ -1040,7 +1040,7 @@ export function ImportModal({
               </div>
 
               {/* Apply to All Buttons */}
-              <div className="flex items-center gap-4 p-4 border border-border bg-muted/50">
+              <div className="flex items-center gap-4 p-4 bg-tint/50">
                 <span className="text-sm font-medium">Apply to all:</span>
                 <Button
                   variant="outline"
@@ -1061,7 +1061,7 @@ export function ImportModal({
               </div>
 
               {/* Duplicate List */}
-              <div className="border border-border overflow-x-auto overscroll-x-none">
+              <div className="border-t-2 border-[var(--object-border)] overflow-x-auto overscroll-x-none">
                 <table className="w-full min-w-[600px]">
                   <thead>
                     <tr className="border-b border-border bg-muted">
@@ -1120,7 +1120,7 @@ export function ImportModal({
                 const { skipCount, replaceCount } = getResolutionSummary();
                 const nonDuplicateCount = (parseResult?.valid.length ?? 0) - duplicates.length;
                 return (
-                  <div className="p-4 border border-border bg-muted/50 text-sm">
+                  <div className="p-4 bg-tint/50 text-sm">
                     <p>
                       <strong>{nonDuplicateCount}</strong> new case{nonDuplicateCount !== 1 ? "s" : ""} will be
                       imported.

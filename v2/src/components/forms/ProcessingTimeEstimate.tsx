@@ -50,7 +50,7 @@ export function ProcessingTimeEstimate({
     return (
       <div
         className={cn(
-          "border border-border p-3 text-sm text-muted-foreground",
+          "bg-tint p-3 text-sm text-muted-foreground",
           className,
         )}
       >

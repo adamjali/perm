@@ -187,7 +187,7 @@ export default function ProfileSection({
     <SettingsCard title="Profile information">
       {/* Photo, initials or a plain mark */}
       <div className="flex items-center gap-4">
-        <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden border border-border bg-tint text-foreground">
+        <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden border border-input bg-tint text-foreground">
           {profile.profilePhotoUrl ? (
             <Image
               src={profile.profilePhotoUrl}

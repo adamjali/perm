@@ -420,7 +420,7 @@ export function ChatPanel({
                       {/* A cap ended this reply: say which, and offer to go on
                           while it is still the latest turn. */}
                       {message.cutShort && !message.isStreaming && (
-                        <div className="mt-2 flex items-start gap-2 border border-border bg-muted p-2.5 text-sm">
+                        <div className="mt-2 flex items-start gap-2 bg-tint p-2.5 text-sm">
                           <InfoIcon className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
                           <div className="min-w-0 flex-1">
                             <p>{cutShortNotice(message.cutShort)}</p>{" "}

@@ -438,7 +438,7 @@ export function I140Section(props: I140SectionProps) {
             error={errors?.i140PremiumProcessing}
             className="md:col-span-2"
           >
-            <div className="flex items-start gap-3 border border-border p-3">
+            <div className="flex items-start gap-3 bg-tint p-3">
               <Checkbox
                 id="i140PremiumProcessing"
                 name="i140PremiumProcessing"

@@ -225,7 +225,7 @@ export function RecruitmentResultsCard({
             <ClipboardTextIcon className="h-3.5 w-3.5" />
             Recruitment results
             {isCustom && !isEditing && (
-              <span className="ml-1 inline-flex items-center border border-border bg-muted px-1.5 py-0.5 text-sm font-medium text-muted-foreground">
+              <span className="ml-1 inline-flex items-center bg-tint px-1.5 py-0.5 text-sm font-medium text-muted-foreground">
                 Custom
               </span>
             )}

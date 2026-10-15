@@ -525,7 +525,7 @@ export default function CalendarSyncSection({
       headerRight={<ConnectionStatusBadge connected={isConnected} />}
     >
       {/* The connection, and the one action it needs */}
-      <div className="flex flex-col gap-3 border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 bg-tint p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground">Google Calendar</p>{" "}
           <p className="truncate text-sm text-muted-foreground">

@@ -295,7 +295,7 @@ export function CalendarEventPopover({
             {/* Filing window indicator */}
             {event.isFilingWindow && (
               <div
-                className="flex items-center gap-2 p-2 bg-muted border border-border"
+                className="flex items-center gap-2 p-2 bg-tint"
               >
                 <EyeIcon className="size-4 text-primary" aria-hidden="true" />
                 <span className="text-sm font-medium text-foreground">

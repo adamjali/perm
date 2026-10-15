@@ -51,8 +51,8 @@ export function CollapsibleSection({
   const statusId = `section-${name}-status`;
 
   return (
-    <section data-section={name} className={cn("border border-border bg-card", className)}>
-      <div className="relative flex items-center justify-between gap-4 p-4 hover:bg-muted/50 has-[:focus-visible]:bg-muted/50">
+    <section data-section={name} className={cn("bg-tint", className)}>
+      <div className="relative flex items-center justify-between gap-4 p-4 hover:bg-card has-[:focus-visible]:bg-card">
         <div className="min-w-0">
           <h2 className={cn("font-heading text-lg font-bold break-words", !isEnabled && "text-muted-foreground")}>
             <button

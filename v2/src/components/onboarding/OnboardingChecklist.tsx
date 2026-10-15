@@ -31,7 +31,7 @@ export function OnboardingChecklist() {
   };
 
   return (
-    <section data-tour="onboarding-checklist" className="border border-border bg-card">
+    <section data-tour="onboarding-checklist" className="bg-tint">
       <div className="flex items-start justify-between p-4 pb-3">
         <div>
           <h2 className="font-heading text-xl font-bold">Getting started</h2>{" "}

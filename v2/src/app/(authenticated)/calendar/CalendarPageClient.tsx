@@ -43,7 +43,7 @@ export function CalendarSkeleton() {
 
       {/* Filter row: the real one is a bordered box around a row of 44px
           controls, 80px in all (measured on production, Sep 30 2026). */}
-      <div className="mb-4 border border-border p-4">
+      <div className="mb-4 bg-tint p-4">
         <Skeleton variant="block" className="h-11" />
       </div>
 
@@ -133,7 +133,7 @@ function CalendarEmptyState() {
       {/* Empty state message */}
       <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 border border-dashed border-border bg-muted/20">
         <div className="text-center max-w-md">
-          <div className="mb-4 p-4 bg-muted inline-block border border-border">
+          <div className="mb-4 p-4 inline-block bg-tint">
             <CalendarIcon className="size-12 text-muted-foreground" />
           </div>
           <h2 className="font-heading text-xl font-semibold mb-2">

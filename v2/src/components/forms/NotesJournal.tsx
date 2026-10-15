@@ -475,7 +475,7 @@ export function NotesJournal({
                 <div
                   key={note.id}
                   className={cn(
-                    "group border border-border p-3",
+                    "group bg-tint p-3",
                     note.priority === "high" && note.status !== "done" && "border-l-2 border-l-destructive",
                   )}
                 >

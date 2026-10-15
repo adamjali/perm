@@ -246,7 +246,7 @@ export function TimelinePageClient() {
           />
 
         {/* Empty: a title, one sentence, one action */}
-        <div className="border border-border px-4 py-12 text-center">
+        <div className="bg-tint px-4 py-12 text-center">
           <h2 className="font-heading text-xl font-bold">No cases to display</h2>{" "}
           <p className="mx-auto mt-2 max-w-md text-muted-foreground">
             Add a case and its stages and dates appear here across time.

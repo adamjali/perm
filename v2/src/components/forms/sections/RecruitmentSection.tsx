@@ -656,7 +656,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                     {methods.map((method, index) => (
                       <div
                         key={index}
-                        className="grid grid-cols-1 gap-3 border border-border p-3 [&>*]:min-w-0"
+                        className="grid grid-cols-1 gap-3 bg-tint p-3 [&>*]:min-w-0"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-muted-foreground">

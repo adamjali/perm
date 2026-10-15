@@ -517,7 +517,7 @@ export function TemplateManagementModal({
                             <p className="text-sm text-muted-foreground mb-2">
                               Description
                             </p>
-                            <div className="border border-border bg-muted/30 p-3 sm:p-4 overflow-auto">
+                            <div className="bg-tint/30 p-3 sm:p-4 overflow-auto">
                               <p className="text-sm whitespace-pre-wrap break-words">
                                 {selectedTemplate.description}
                               </p>

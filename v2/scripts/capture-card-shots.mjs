@@ -21,9 +21,10 @@ const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const VIEW_W = 1440;
 const SCALE = 2;
 /** The region shot, in CSS pixels: as wide as the page's column (at most a
- *  wide page's 1200 plus a margin), 760 high; the card draws it 560 wide. */
+ *  wide page's 1200 plus a margin), 1000 high; the card draws it 700 wide
+ *  and lets it run off the card's bottom edge. */
 const SHOT_W_MAX = 1264;
-const SHOT_H = 760;
+const SHOT_H = 1000;
 
 const [specPath, outDir, base = "http://localhost:3000"] = process.argv.slice(2).filter((a, i, all) => !a.startsWith("--") && all[i - 1] !== "--only");
 const only = process.argv.includes("--only") ? process.argv[process.argv.indexOf("--only") + 1] : null;

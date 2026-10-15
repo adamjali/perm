@@ -306,7 +306,7 @@ export function JobDescriptionField({
   // ============================================================================
 
   return (
-    <section className={cn("border border-border bg-card", className)}>
+    <section className={cn("bg-tint", className)}>
       {/* The heading's button covers the header row, as on every form section */}
       <div className="relative flex min-h-12 items-center justify-between gap-4 p-4 hover:bg-muted/50 has-[:focus-visible]:bg-muted/50">
         <div className="flex min-w-0 flex-wrap items-center gap-2">

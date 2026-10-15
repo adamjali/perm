@@ -245,7 +245,7 @@ export function InChatConfirmationCard({
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Duration badge */}
             {duration !== undefined && status === 'done' && (
-              <span className="font-mono text-sm text-muted-foreground bg-muted px-1.5 py-0.5 border border-border">
+              <span className="font-mono text-sm text-muted-foreground px-1.5 py-0.5 bg-tint">
                 {duration}ms
               </span>
             )}
@@ -257,7 +257,7 @@ export function InChatConfirmationCard({
 
         {/* Arguments (mono font) */}
         {argEntries.length > 0 && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5 bg-muted/50 border border-border">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5 bg-tint">
             {argEntries.map(([key, value]) => (
               // An ID or URL has no spaces to wrap at: let it break anywhere
               // rather than run under the card's overflow-hidden edge.
@@ -281,7 +281,7 @@ export function InChatConfirmationCard({
 
         {/* What changes, a line each */}
         {changes && changes.length > 0 && (
-          <ul className="space-y-1 border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
+          <ul className="space-y-1 bg-tint/50 px-3 py-2 text-sm text-foreground">
             {changes.map((line, i) => (
               <li key={i} className="[overflow-wrap:anywhere]">
                 {line}{" "}

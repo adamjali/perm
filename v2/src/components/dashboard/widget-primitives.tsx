@@ -11,7 +11,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /** A dashboard section: a plain box with a heading row. */
-export const WIDGET_CONTAINER_CLASSES = "border border-border bg-card";
+// A widget sits under one ink rule, like the charts; its tiles carry the tint.
+export const WIDGET_CONTAINER_CLASSES = "border-t-2 border-[var(--object-border)]";
 
 export function WidgetHeader({
   id,

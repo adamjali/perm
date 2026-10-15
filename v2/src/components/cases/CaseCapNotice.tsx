@@ -35,7 +35,7 @@ export function CaseCapNotice({
     <p
       role="status"
       className={cn(
-        "flex items-start gap-2 border border-border bg-card px-4 py-3 text-sm text-foreground",
+        "flex items-start gap-2 bg-tint px-4 py-3 text-sm text-foreground",
         className
       )}
     >

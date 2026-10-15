@@ -52,7 +52,7 @@ export function ResponseEntryGrid({
         {entries.length > 0 ? (
           <div className="detail-card-body space-y-4">
             {entries.map((entry, i) => (
-              <div key={i} className="border border-border p-3">
+              <div key={i} className="bg-tint p-3">
                 <div className="mb-1 text-sm font-semibold">{type} {i + 1}</div>
                 <div className="field-grid">
                   <div className="field-cell">

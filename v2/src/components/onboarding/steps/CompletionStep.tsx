@@ -26,7 +26,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
       </h2>
 
       {onboardingCaseInfo && (
-        <div className="mb-4 inline-flex items-center gap-2 border border-border px-4 py-2">
+        <div className="mb-4 inline-flex items-center gap-2 bg-tint px-4 py-2">
           <span className="text-sm">
             <span className="font-heading font-semibold">
               {onboardingCaseInfo.employerName}

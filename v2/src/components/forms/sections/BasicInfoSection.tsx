@@ -280,7 +280,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
         </div>
 
         {/* ========== STATUS FIELDS (Grouped) ========== */}
-        <div className="border border-border p-4">
+        <div className="bg-tint p-4">
           {/* Auto-Status Toggle Header */}
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
             <div className="flex items-center gap-2">
