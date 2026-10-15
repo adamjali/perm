@@ -8,9 +8,8 @@ import { PermTimelineEstimator } from "../PermTimelineEstimator";
  *
  * The page used to render every model side by side, each date at `text-4xl`,
  * so a reader met up to four equally loud and different answers and was left
- * to pick. Adam, 2026-09-10: "everything should be focused on one main answer,
- * and the rest is secondary and you can see it if you'd like but not the main
- * thing."
+ * to pick. The rule since 2026-09-10: one main answer, and the rest secondary,
+ * there for a reader who opens it.
  *
  * And the day: only the counting model (decision pace) places a case inside
  * its filing month. The employer initial used to as well; it was removed on

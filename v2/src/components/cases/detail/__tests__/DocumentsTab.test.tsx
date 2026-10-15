@@ -6,8 +6,8 @@ import userEvent from "@testing-library/user-event";
 import { DocumentsTab } from "../DocumentsTab";
 
 /**
- * The documents tab, as a reader uses it (Sabrina's ask, Oct 15 2026: make the
- * upload hold up in every case). Files wait in a list with their own category
+ * The documents tab, as a reader uses it: the upload has to hold up in every
+ * case (Oct 15 2026). Files wait in a list with their own category
  * until Upload sends them one at a time; a file that fails stays, with the
  * reason, so it can be sent again without choosing it again; delete asks first.
  */

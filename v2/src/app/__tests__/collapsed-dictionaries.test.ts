@@ -6,7 +6,6 @@ import { join } from "node:path";
  * The three reference pages that collapsed on 2026-09-13, and the invariants
  * that make collapsing safe.
  *
- * Adam: "no you shouldn't leave anything alone check and fix everything plz".
  * Measured before the change, visible prose words: /glossary 2,386 (95% of
  * the page), /perm-case-statuses 2,005 (91%), /methodology 1,337 (87%),
  * against 670 for a comparable gov.uk service page.
