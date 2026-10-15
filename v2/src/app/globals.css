@@ -1936,3 +1936,11 @@ input[type="week"] {
   font-weight: 600;
 }
 .manila-closed { filter: grayscale(1); }
+
+/* Date fields: Chrome and Safari hide their own picker icon (DateInput's
+   ::-webkit-calendar-picker-indicator rules) and show ours; Firefox's picker
+   button can't be hidden, so there ours goes instead. :-moz-focusring
+   is known only to Firefox (measured in Firefox 158), so this test is Firefox-only. */
+@supports selector(:-moz-focusring) {
+  .date-picker-btn { display: none; }
+}

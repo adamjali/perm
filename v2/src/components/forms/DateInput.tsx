@@ -279,7 +279,9 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
           onClick={handleCalendarClick}
           disabled={disabled}
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors",
+            // date-picker-btn: Firefox draws its own picker button, which no
+            // CSS hides, so globals.css hides this one there (one icon each).
+            "date-picker-btn absolute top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors",
             "hover:text-foreground",
             "disabled:text-muted-foreground disabled:pointer-events-none",
             hasValue && onClear ? "right-8" : "right-2"

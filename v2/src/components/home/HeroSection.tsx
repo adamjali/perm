@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CalendarCheckIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { CasePromises } from "@/components/tools/CasePromises";
 import { FlapBoard } from "@/components/home/FlapBoard";
 import { currentWait, type WaitMonthRow } from "@/lib/waitTrend";
 import { checkedLabel } from "@/lib/time";
@@ -105,9 +106,14 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
             </li>
           </ul>{" "}
           <div className="object mt-8 p-5 sm:p-6">
+            <p className="font-heading text-lg font-bold">Check a case</p>{" "}
+            {/* What the number gets: the two reasons people come (owner, Oct 15). */}
+            <CasePromises compact className="mt-3" />{" "}
             {/* Kept short: the field is 212px wide at 320 (hero-placeholder.test.ts). */}
             <CaseLookupForm
-              label="Check a case"
+              className="mt-4"
+              compact
+              label="Case number or employer"
               placeholder="Case number or employer"
               names
               help={null}
