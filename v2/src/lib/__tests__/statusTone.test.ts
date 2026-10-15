@@ -16,6 +16,10 @@ describe("statusTone", () => {
     ["APPLICATION ON HOLD", "warn"],
     ["RECONSIDERATION APPEALS", "warn"],
     ["WITHDRAWN", "flat"],
+    // A certification the employer withdrew is its choice; one DOL revoked is DOL's verdict.
+    ["FULL CERTIFICATION - WITHDRAWN", "flat"],
+    ["FULL CERTIFICATION - REVOKED", "bad"],
+    ["CERTIFIED - REVOKED", "bad"],
     ["ANALYST REVIEW", "flat"],
     ["IN PROCESS", "flat"],
     ["", "flat"],

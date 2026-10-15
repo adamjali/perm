@@ -9,14 +9,17 @@
 export type StatusTone = "good" | "bad" | "warn" | "flat";
 
 const GOOD = /^(CERTIFIED|DETERMINATION ISSUED|REDETERMINATION|FULL CERTIFICATION|PARTIAL CERTIFICATION|APPROVED)\b/;
-const BAD = /^(DENIED|NOR ISSUED)\b|REJECTED/;
+const BAD = /^(DENIED|NOR ISSUED)\b|REJECTED|REVOKED/;
 const WARN = /RFI|ON HOLD|\bNOD\b|\bNORD\b|AUDIT|APPEAL|REVIEW REQUESTED|REQUEST FOR REVIEW/;
 
 export function statusTone(status: string | null | undefined): StatusTone {
   const u = (status ?? "").trim().toUpperCase();
   if (!u) return "flat";
   if (u.includes("EXPIRED")) return "flat";
+  // DOL taking a certification back is its verdict against the employer;
+  // the employer withdrawing one it was granted is the employer's choice.
   if (BAD.test(u)) return "bad";
+  if (u.includes("WITHDRAWN")) return "flat";
   if (GOOD.test(u)) return "good";
   if (WARN.test(u)) return "warn";
   return "flat";

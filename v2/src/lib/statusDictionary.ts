@@ -368,6 +368,15 @@ export const SEASONAL_STATUSES: (FlagStatusEntry & { forms: string })[] = [
     cite: { label: "20 CFR 655.172", href: CFR("655", "655.172") },
   },
   {
+    status: "FULL CERTIFICATION - REVOKED",
+    label: "Full certification, revoked",
+    pending: false,
+    forms: "H-2A applications",
+    summary:
+      "DOL took back a certification it had granted. It can do that for fraud or misrepresentation in the application, a substantial violation of the certification's terms, refusing to cooperate with a DOL investigation, or ignoring a sanction.",
+    cite: { label: "20 CFR 655.181", href: CFR("655", "655.181") },
+  },
+  {
     status: "DETERMINATION ISSUED",
     label: "Determination issued",
     pending: false,

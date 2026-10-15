@@ -132,6 +132,9 @@ PROGRAMS: dict[str, dict] = {
         # "decided". Mirror seasonalCases.ts, pinned by its test.
         "final": {"FULL CERTIFICATION", "FULL CERTIFICATION - EXPIRED",
                   "FULL CERTIFICATION - WITHDRAWN",
+                  # DOL revoked it after granting it (20 CFR 655.181); first
+                  # seen on an H-2A application Oct 15 2026.
+                  "FULL CERTIFICATION - REVOKED",
                   "PARTIAL CERTIFICATION", "PARTIAL CERTIFICATION - EXPIRED",
                   "PARTIAL CERTIFICATION - WITHDRAWN",
                   "DENIED", "WITHDRAWN", "DETERMINATION ISSUED",
