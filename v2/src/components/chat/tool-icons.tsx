@@ -125,17 +125,17 @@ export const TOOL_BG_COLORS: Record<string, string> = {
   // Read-only tools
   queryCases: 'bg-data-info/10 ',
   searchKnowledge: 'bg-stage-recruitment/10 ',
-  searchWeb: 'bg-primary/10 ',
+  searchWeb: 'bg-tint ',
 
   // Case CRUD tools
-  createCase: 'bg-primary/10 ',
+  createCase: 'bg-tint ',
   updateCase: 'bg-data-warn/15 ',
   archiveCase: 'bg-muted ',
   reopenCase: 'bg-data-info/10 ',
   deleteCase: 'bg-destructive/10 ',
 
   // Other action tools
-  syncCalendar: 'bg-primary/10 ',
+  syncCalendar: 'bg-tint ',
 
   // Navigation tools
   navigate: 'bg-muted ',
@@ -144,12 +144,12 @@ export const TOOL_BG_COLORS: Record<string, string> = {
   refreshPage: 'bg-muted ',
 
   // Calendar sync tools
-  syncToCalendar: 'bg-primary/10 ',
+  syncToCalendar: 'bg-tint ',
   unsyncFromCalendar: 'bg-data-warn/15 ',
 
   // Notification tools
-  markNotificationRead: 'bg-primary/10 ',
-  markAllNotificationsRead: 'bg-primary/10 ',
+  markNotificationRead: 'bg-tint ',
+  markAllNotificationsRead: 'bg-tint ',
   deleteNotification: 'bg-destructive/10 ',
   clearAllNotifications: 'bg-destructive/10 ',
 
@@ -161,7 +161,7 @@ export const TOOL_BG_COLORS: Record<string, string> = {
   bulkUpdateStatus: 'bg-data-warn/15 ',
   bulkArchiveCases: 'bg-muted ',
   bulkDeleteCases: 'bg-destructive/10 ',
-  bulkCalendarSync: 'bg-primary/10 ',
+  bulkCalendarSync: 'bg-tint ',
 } as const;
 
 /**

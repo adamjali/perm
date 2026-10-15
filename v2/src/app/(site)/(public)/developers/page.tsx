@@ -152,7 +152,7 @@ export default function DevelopersPage() {
         <h2 id="limits" className="font-heading text-2xl font-bold">
           Plans
         </h2>{" "}
-        <p className="mt-2 max-w-2xl border-t-2 border-[var(--object-border)] bg-primary/15 px-4 py-3 text-base">
+        <p className="mt-2 max-w-2xl bg-tint px-4 py-3 text-base">
           Paid features are free for now: every account gets the Plus plan&rsquo;s limits, exports, live DOL lookups and
           webhooks until billing opens. We&rsquo;ll say so here, and email key holders, before that changes.
         </p>{" "}

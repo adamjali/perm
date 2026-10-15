@@ -161,7 +161,7 @@ export function ChatHistory({
                         'transition-colors duration-150',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         isCurrent
-                          ? 'border-primary bg-primary/5'
+                          ? 'border-primary bg-tint'
                           : 'border-border hover:border-primary/50 hover:bg-muted/50'
                       )}
                       onClick={() => {

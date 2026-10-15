@@ -104,7 +104,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
                   data-tip={`${m.label}\nMedian ${days(m.median)}\nMiddle half ${m.p25.toLocaleString("en-US")} to ${days(m.p75)}\n${m.n.toLocaleString("en-US")} ${m.n === 1 ? "timeline" : "timelines"}, ${m.verified ? "DOL's record" : "self-reported"}`}
                 >
                   <span
-                    className={cn("absolute inset-y-0 border-x border-border", m.verified ? "bg-primary/60" : "bg-primary/30")}
+                    className={cn("absolute inset-y-0 border-x border-input", m.verified ? "bg-primary" : "bg-card bg-hatch text-primary-text")}
                     style={{ left: pct(m.p25), width: `calc(${pct(m.p75)} - ${pct(m.p25)})` }}
                   />{" "}
                   <span className="absolute inset-y-[-4px] w-1 bg-foreground" style={{ left: pct(m.median) }} />
@@ -257,7 +257,7 @@ export function RfeBars({ rfe }: { rfe: RfeSummary }) {
             >
               <span className="font-bold">{r.label}</span>{" "}
               <span className="h-4 border border-input bg-background" aria-hidden="true">
-                <span className="block h-full bg-primary/50" style={{ width: `${(r.count / most) * 100}%` }} />
+                <span className="block h-full bg-primary" style={{ width: `${(r.count / most) * 100}%` }} />
               </span>{" "}
               <span className="tabular-nums">{r.count}</span>
             </li>
@@ -309,7 +309,7 @@ export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: 
               >
                 <span className="font-bold">{s.label}</span>{" "}
                 <span className="h-4 border border-input bg-background" aria-hidden="true">
-                  <span className="block h-full bg-primary/50" style={{ width: `${(s.count / most) * 100}%` }} />
+                  <span className="block h-full bg-primary" style={{ width: `${(s.count / most) * 100}%` }} />
                 </span>{" "}
                 <span className="tabular-nums">{s.count.toLocaleString("en-US")}</span>
               </li>

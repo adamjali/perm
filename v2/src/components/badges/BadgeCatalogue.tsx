@@ -233,7 +233,7 @@ function MatrixGroup({
       </div>{" "}
       <div className="flex flex-col gap-2 border-t border-border p-4 sm:flex-row sm:items-stretch [&>*]:min-w-0">
         <p className="shrink-0 self-center font-heading text-base font-bold sm:w-40">{row.label}</p>{" "}
-        <pre className="flex-1 overflow-x-auto whitespace-nowrap border-t-2 border-[var(--object-border)] bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
+        <pre className="flex-1 overflow-x-auto whitespace-nowrap bg-tint px-3 py-2.5 font-mono text-sm leading-relaxed">
           <code>{code}</code>
         </pre>{" "}
         <CopyButton text={code} />
@@ -372,7 +372,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
                         </p>
                       ) : null}{" "}
                       <div className="mt-auto flex items-stretch gap-2 pt-4 [&>*]:min-w-0">
-                        <pre className="flex-1 overflow-x-auto whitespace-nowrap border-t-2 border-[var(--object-border)] bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
+                        <pre className="flex-1 overflow-x-auto whitespace-nowrap bg-tint px-3 py-2.5 font-mono text-sm leading-relaxed">
                           <code>{code}</code>
                         </pre>{" "}
                         <CopyButton text={code} />

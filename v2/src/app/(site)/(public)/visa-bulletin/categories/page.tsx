@@ -34,12 +34,12 @@ export const metadata: Metadata = withSocialCard({
 
 /** A final action cell's fill says its state before its words do. */
 const STATE_FILL: Record<string, string> = {
-  current: "bg-primary/20 hover:bg-accent",
+  current: "bg-primary text-black [&_*]:text-black hover:bg-primary/85",
   unavailable: "bg-foreground/10 hover:bg-foreground/20",
 };
 
 const MATRIX_KEY = [
-  { label: "Current", means: "every priority date qualifies", fill: "bg-primary/20" },
+  { label: "Current", means: "every priority date qualifies", fill: "bg-primary" },
   { label: "A date", means: "priority dates before it qualify", fill: "bg-card" },
   { label: "Unavailable", means: "no numbers this month", fill: "bg-foreground/10" },
 ];

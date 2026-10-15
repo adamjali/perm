@@ -31,7 +31,7 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
       value: data.activeUsers,
       icon: UserCheckIcon,
       color: "text-primary",
-      bgColor: "bg-primary/10",
+      bgColor: "bg-tint",
     },
     {
       // Attorneys, paralegals, HR and employers: the people the app is for.
@@ -39,7 +39,7 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
       value: data.practiceUsers ?? 0,
       icon: BriefcaseIcon,
       color: "text-primary",
-      bgColor: "bg-primary/10",
+      bgColor: "bg-tint",
     },
     {
       label: "Tracking own case",
@@ -60,7 +60,7 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
       value: data.totalCasesInSystem,
       icon: TrendingUp,
       color: "text-primary",
-      bgColor: "bg-primary/10",
+      bgColor: "bg-tint",
     },
     {
       label: "Pending deletion",

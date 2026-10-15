@@ -206,7 +206,7 @@ const POSITION_COPY: Record<string, { tone: string; heading: string }> = {
     heading: "DOL hasn’t reached your filing month yet",
   },
   "queue-reached": {
-    tone: "bg-primary/20",
+    tone: "bg-tint border-l-8 border-primary",
     heading: "DOL is working on your filing month now",
   },
   overdue: {
@@ -754,7 +754,7 @@ export function PermTimelineEstimator({
               >
                 {/* The window every model lands inside. */}
                 <div
-                  className="absolute inset-y-0 bg-primary/25"
+                  className="absolute inset-y-0 bg-hatch text-primary-text"
                   style={{
                     left: `${progress.windowStartPct}%`,
                     right: 0,

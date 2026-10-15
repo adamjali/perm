@@ -461,7 +461,7 @@ export function ImportModal({
                 className={cn(
                   "relative border border-dashed p-8 text-center transition-colors duration-150",
                   isDragging
-                    ? "border-primary bg-primary/5 scale-[1.01]"
+                    ? "border-primary bg-tint"
                     : "border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/30",
                   isParsing && "opacity-70 pointer-events-none"
                 )}
@@ -759,7 +759,7 @@ export function ImportModal({
                                   className={cn(
                                     "group border-b border-border transition-colors duration-150",
                                     isError && "bg-data-bad/10 border-data-bad",
-                                    isEditing && "bg-primary/5 dark:bg-primary/10 ring-1 ring-primary/50",
+                                    isEditing && "bg-tint ring-1 ring-primary",
                                     !isError &&
                                       !isEditing &&
                                       "hover:bg-accent dark:hover:bg-accent cursor-pointer"
@@ -867,7 +867,7 @@ export function ImportModal({
 
                   {/* Inline Edit Panel */}
                   {editingIndex !== null && editingCase && (
-                    <div className="border border-primary bg-primary/5 dark:bg-primary/10 p-4 space-y-4">
+                    <div className="border-l-8 border-primary bg-tint p-4 space-y-4">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-sm">
                           Editing Row {editingIndex + 1}:{" "}

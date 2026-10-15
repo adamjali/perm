@@ -586,7 +586,7 @@ export function DocumentsTab({
                   <button
                     type="button"
                     className={`flex min-h-12 w-full items-center justify-center gap-2 border-2 border-dashed px-4 py-3 font-heading text-sm font-bold transition-colors ${
-                      isDragOver ? "border-primary-text bg-primary/10 text-foreground" : "border-input text-soft hover:border-foreground hover:text-foreground"
+                      isDragOver ? "border-primary-text bg-tint text-foreground" : "border-input text-soft hover:border-foreground hover:text-foreground"
                     }`}
                     onClick={() => fileInputRef.current?.click()}
                     onDrop={handleDrop}

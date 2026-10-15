@@ -232,7 +232,7 @@ const COLUMNS: {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    active: "bg-primary/10 text-primary border-primary",
+    active: "bg-primary text-black border-primary",
     pending_deletion: "bg-data-warn/15 text-data-warn-ink border-data-warn",
     deleted: "bg-destructive/10 text-destructive border-destructive",
   };

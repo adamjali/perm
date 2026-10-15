@@ -776,7 +776,7 @@ export function PriorityDateEstimator({
             estimate.latest?.kind === "unavailable"
               ? "bg-[color-mix(in_srgb,var(--data-bad)_14%,var(--card))]"
               : estimate.isCurrent
-                ? "bg-primary/15"
+                ? "bg-tint border-l-8 border-primary"
                 : "bg-muted",
           )}
         >

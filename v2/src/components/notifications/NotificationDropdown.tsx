@@ -155,7 +155,7 @@ function NotificationItem({
         "hover:bg-muted",
         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset",
         // Unread styling
-        !notification.isRead && "bg-primary/5 dark:bg-primary/10"
+        !notification.isRead && "bg-tint"
       )}
     >
       {/* Urgency color bar */}

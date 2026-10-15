@@ -123,11 +123,11 @@ function moveTone(m: SameMonthMove | null | undefined): string {
     case "advanced":
     case "went-current":
     case "opened":
-      return "bg-primary/20";
+      return "bg-primary text-black [&_*]:text-black";
     case "retrogressed":
     case "retrogressed-from-current":
     case "shut":
-      return "bg-data-bad/15";
+      return "bg-data-bad text-black [&_*]:text-black";
     default:
       return "";
   }
@@ -334,13 +334,13 @@ export default async function VisaBulletinPage() {
           </p>{" "}
           <ul aria-hidden="true" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border border-input bg-primary/20" /> Moved forward
+              <span className="size-3 border border-input bg-primary" /> Moved forward
             </li>{" "}
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border border-input bg-data-bad/15" /> Moved back or shut
+              <span className="size-3 border border-input bg-data-bad" /> Moved back or shut
             </li>{" "}
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border-t-2 border-[var(--object-border)] bg-card" /> Unchanged or current
+              <span className="size-3 border border-input bg-card" /> Unchanged or current
             </li>
           </ul>
           <ScrollBox label={`What the ${monthLabel(last.bulletinMonth)} bulletin did`} className="mt-3 overscroll-x-none">

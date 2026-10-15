@@ -127,7 +127,7 @@ export default function WebhooksSection() {
         }
       >
         {secret && (
-          <div className="mb-6 border border-border bg-primary/15 p-4" role="status">
+          <div className="object mb-6 p-4" role="status">
             <p className="mb-2 text-sm font-bold">
               The signing secret for {secret.url}. Copy it now: it isn&apos;t shown again.
             </p>

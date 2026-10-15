@@ -176,8 +176,8 @@ describe("TimelineGrid - Month Headers", () => {
       <TimelineGrid cases={cases} timeRange={6} />
     );
 
-    // Current month should have bg-primary/10 class
-    const highlightedMonth = container.querySelector(".bg-primary\\/10");
+    // The current month is marked in solid lime with ink, the site's "now" (no pale wash).
+    const highlightedMonth = container.querySelector(".bg-primary.text-black");
     expect(highlightedMonth).toBeInTheDocument();
   });
 

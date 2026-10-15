@@ -46,7 +46,7 @@ export function TimelineHeader({ months, today }: TimelineHeaderProps) {
               "text-sm font-medium",
               "border-r border-border last:border-r-0",
               // Current month highlight
-              isCurrentMonth && "bg-primary/10",
+              isCurrentMonth && "bg-primary text-black",
               // First cell or January gets left border
               index === 0 && "border-l border-border"
             )}

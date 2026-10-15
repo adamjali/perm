@@ -25,7 +25,7 @@ const URGENCY_STYLE: Record<UrgencyType, { band: string; wash: string; count: st
   overdue: { band: "bg-destructive", wash: "bg-destructive/10", count: "text-destructive" },
   thisWeek: { band: "bg-data-warn", wash: "bg-data-warn/15", count: "text-data-warn-ink" },
   thisMonth: { band: "bg-data-warn/50", wash: "bg-data-warn/[0.07]", count: "text-data-warn-ink" },
-  later: { band: "bg-primary", wash: "bg-primary/10", count: "text-primary-text" },
+  later: { band: "bg-primary", wash: "bg-tint", count: "text-primary-text" },
 };
 
 /** A group of deadlines (overdue, this week, this month, later) as one list. */

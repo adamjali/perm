@@ -59,7 +59,7 @@ function Callout({
   }
 
   const styles = {
-    info: "border-l-2 border-primary bg-primary/5",
+    info: "border-l-4 border-primary bg-tint",
     warning: "border-l-2 border-data-warn bg-data-warn/5",
     tip: "border-l-2 border-data-info bg-data-info/5",
     important: "border-l-2 border-destructive bg-destructive/5",

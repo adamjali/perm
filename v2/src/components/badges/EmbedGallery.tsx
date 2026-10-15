@@ -97,7 +97,7 @@ export function EmbedGallery({ origin }: { origin: string }) {
 function Snippet({ html }: { html: string }) {
   return (
     <div className="mt-3 flex items-start gap-2">
-      <pre className="min-w-0 flex-1 overflow-x-auto border-t-2 border-[var(--object-border)] bg-background p-2 text-sm" translate="no">
+      <pre className="min-w-0 flex-1 overflow-x-auto bg-tint p-2 text-sm" translate="no">
         <code>{html}</code>
       </pre>{" "}
       <CopyButton text={html} />

@@ -111,7 +111,7 @@ export function ChatWidget({
               size="lg"
               className={cn(
                 'h-14 w-14 p-0',
-                'bg-primary/80 hover:bg-accent',
+                'bg-primary hover:bg-primary/85',
                 'border border-border',
                 'transition-transform duration-150',
                 ''

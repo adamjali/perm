@@ -225,7 +225,7 @@ export default function ApiKeysSection() {
         )}
 
         {newKey && (
-          <div className="mb-6 border border-border bg-primary/15 p-4" role="status">
+          <div className="object mb-6 p-4" role="status">
             <p className="mb-2 text-sm font-bold">
               Your new {newKey.sandbox ? "sandbox " : ""}key, {newKey.name}. Copy it now: it isn&apos;t shown again.
               {newKey.rotated ? " The old key keeps working for 24 hours, then stops." : ""}
