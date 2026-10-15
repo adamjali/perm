@@ -1,9 +1,10 @@
 # PERM Tracker design system
 
-**The calm system, Oct 14 2026.** One flat page, plain type, light lines, one lime
-for the main action, nothing moving unless the visitor did something. The owner's
-brief: "super simple, not crowded, readable, breathable ... minimal, clear,
-frictionless ... no particles or dots."
+**The middle ground, Oct 15 2026.** The calm system of Oct 14 with its character
+back: the few things that matter on a screen are solid objects, everything else
+sits quietly on the page. The owner's brief for the calm pass was "super simple,
+not crowded, readable, breathable"; on Oct 15 he found it "too plain" and asked
+for the live site's character without its clutter.
 
 The tokens live in `src/app/globals.css`, the rules are held by
 `src/app/__tests__/calm-system.test.ts`, and the parts are in `src/components/ui/`.
@@ -13,19 +14,26 @@ When this file and the code disagree, the code is right and this file is stale.
 
 1. **One answer first.** Every page opens with its title, one short lede and the one
    fact it exists to give, then the one action that follows from it.
-2. **One tinted panel per page** (`bg-tint`), for that answer. Everything else sits
-   on the page or on a white card.
-3. **Lime is for the main action only**, one per screen. It's never text (2.05:1);
-   text and links in green use the green ink (`text-primary-text`, `.link`).
-4. **Square corners.** Every radius token is 0. `rounded-full` is kept only for
+2. **Objects and ground.** The few things that matter are objects (`.object`: a 2px
+   ink edge and a 4px hard offset, `--object-border`, `--object-shadow`): the case
+   lookup, a calculator's inputs and its answer, Next up, the deadline hub, a case
+   folder, the departures board. Nothing else has a box: notes, tiles, folds and
+   chart frames sit on the tint (`bg-tint`, no edge); tables and charts sit under
+   one ink rule. The hard shadow comes only from those named rules in
+   `globals.css`, never a class.
+3. **Lime is solid or an edge, never a wash.** Lime fills the main action and marks
+   "now" or "you" (with ink on it, 9.8:1); a lime edge (4px or more) can mark a
+   panel. No pale lime or green wash anywhere (owner, Oct 15: "I don't like that
+   highlighter green"): a wash behind text or a row is the tint. Lime is never text
+   (2.05:1); green text uses the ink (`text-primary-text`, `.link`).
+4. **Every case box says what a number gets**: when it'll likely be decided, and an
+   email when DOL moves it (`CasePromises`, the bell on the lime).
+5. **Square corners.** Every radius token is 0. `rounded-full` is kept only for
    things that are round by nature: dots, spinners, the switch.
-5. **Two shadows, no more**: the lime button's small hard edge in light mode
-   (`shadow-press`), and a soft neutral shadow under things that float over the
-   page (`shadow-overlay`: menus, the search, dialogs, toasts).
 6. **Sentence case everywhere.** No `uppercase`, no wide letter spacing.
-7. **Mono only for case numbers, dates and figures** in tables and chart ticks.
-8. **Nothing moves by itself.** Hover changes a colour or an underline; press
-   darkens a fill; nothing lifts, scales or slides on load or scroll.
+7. **Mono only for case numbers, dates, the board and figures** in tables and ticks.
+8. **One moment of motion at most.** Hover changes a colour or an underline; press
+   darkens a fill; nothing lifts or scales. The queue tape fills once on scroll.
 9. **The floor:** 16px body, 14px smallest text, 4.5:1 text contrast (3:1 large),
    3:1 for anything a reader must see to understand (control outlines, chart
    marks), 44px tap targets, full keyboard use, reduced motion honoured.
@@ -39,7 +47,10 @@ Light values; dark values are in the `.dark` block beside them.
 | `--background` | #FAFAFA | #111111 | the page |
 | `--card` | #FFFFFF | #1A1A1A | a raised surface |
 | `--muted` | #F5F5F5 | #222222 | a sunken ground, a hover wash |
-| `--tint` | #EDF4EE | #1C2C1E | the one answer panel, a chosen option |
+| `--tint` | #F0F0EE | #1E1E1E | a tone step: notes, tiles, folds, a chosen option |
+| `--object-border` | #141414 | #8A8A8A | an object's 2px edge |
+| `--object-shadow` | 4px ink | 4px black | an object's hard offset |
+| `--folder` | #F7EBD3 | #2B2519 | the case page's manila folder |
 | `--foreground` | #141414 | #EDEDED | text level 1 (17.65:1) |
 | `--soft-foreground` | #3D3D3D | #C4C4C4 | text level 2 (10.41:1) |
 | `--muted-foreground` | #5E5E5E | #A3A3A3 | text level 3 (6.21:1) |
