@@ -57,5 +57,12 @@ def xlsx_bytes(sheets: dict[str, list[list]]) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         for name, xml in files.items():
-            z.writestr(name, xml)
+            # A fixed time, so the same sheets are the same bytes whenever they're built.
+            z.writestr(zipfile.ZipInfo(name, date_time=FIXED_TIME), xml, compress_type=zipfile.ZIP_DEFLATED)
     return buf.getvalue()
+
+
+# A zip entry carries the time it was written, to two seconds; the loaders skip
+# a file whose bytes they've already read, so a test building the "same" file
+# twice must build the same bytes.
+FIXED_TIME = (2026, 1, 1, 0, 0, 0)

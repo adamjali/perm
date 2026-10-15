@@ -13,7 +13,7 @@ import zipfile
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import ingest_oflc_wages as ow  # noqa: E402
 from lib_sqlite_shim import SqliteTurso  # noqa: E402
-from lib_test_xlsx import xlsx_bytes  # noqa: E402
+from lib_test_xlsx import FIXED_TIME, xlsx_bytes  # noqa: E402
 
 FAILS: list[str] = []
 N = 0
@@ -49,11 +49,15 @@ def year_zip(with_appendix: bool, geo_bytes: bytes | None = None) -> bytes:
         sheets = {"Appendix A SOC Codes": [["O*NET Code", "Occupation", "Education", "Source"],
                                            ["15-1252.00", "Software Developers", "Bachelor's degree", "BLS"]], **sheets}
     buf = io.BytesIO()
+    # Fixed entry times: the second build of the same year must be the same bytes,
+    # or "the same bytes again are skipped" fails whenever the two builds straddle
+    # the zip format's two-second clock (it did, under load, Oct 15 2026).
+    entry = lambda name: zipfile.ZipInfo(name, date_time=FIXED_TIME)
     with zipfile.ZipFile(buf, "w") as z:
-        z.writestr("OFLC_Wages_2024-25/ALC_Export.csv", ALC)
-        z.writestr("OFLC_Wages_2024-25/EDC_Export.csv", EDC_OLD)
-        z.writestr("OFLC_Wages_2024-25/Geography.csv", geo_bytes if geo_bytes is not None else GEO.encode("latin-1"))
-        z.writestr("OFLC_Wages_2024-25/Wage Year 2024-25 Appendix A, Job Zone, and Education.xlsx", xlsx_bytes(sheets))
+        z.writestr(entry("OFLC_Wages_2024-25/ALC_Export.csv"), ALC)
+        z.writestr(entry("OFLC_Wages_2024-25/EDC_Export.csv"), EDC_OLD)
+        z.writestr(entry("OFLC_Wages_2024-25/Geography.csv"), geo_bytes if geo_bytes is not None else GEO.encode("latin-1"))
+        z.writestr(entry("OFLC_Wages_2024-25/Wage Year 2024-25 Appendix A, Job Zone, and Education.xlsx"), xlsx_bytes(sheets))
     return buf.getvalue()
 
 
