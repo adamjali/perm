@@ -10,7 +10,7 @@ import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { daysToAnchor } from "@/lib/predictionLedger";
 import { HORIZONS, PWD_BEFORE_FIX, type Cell } from "@/lib/scorecard/score";
-import { readMethods, readOurs } from "@/lib/scorecard/verdict";
+import { RETIRED_METHODS, readMethods, readOurs } from "@/lib/scorecard/verdict";
 import { printedRangeCheck } from "@/lib/rangeCoverage";
 import { otherEstimateRows } from "@/lib/scorecard/otherEstimates";
 import { getEstimatorBacktest, getScorecardSummary } from "@/lib/db/predictions";
@@ -31,7 +31,13 @@ import { MS_PER_DAY } from "@/lib/time";
  * 2. The daily sample (`/api/cron/scorecard`): a few random pending cases
  *    from every filing month, recorded each morning BEFORE the outcome and
  *    graded when DOL decides. Forward, uncherry-pickable, and slow to fill.
- * 3. The hand-recorded ledger, kept as worked examples.
+ * 3. The hand-recorded ledger, from before the sample existed, folded at
+ *    the foot with the methods the case page no longer uses.
+ *
+ * Every headline figure counts the methods the case page uses TODAY. On Oct 15
+ * 2026 a third of the graded sample still came from DOL's published average,
+ * retired Oct 7, and the page printed their misses as the site's: a scorecard
+ * of dates nobody is given any more. Those grades stay on the record, below.
  *
  * A forecast that keeps no score is an opinion; this is the page that makes
  * the estimator answerable for its numbers.
@@ -102,7 +108,6 @@ export default async function EstimateScorecardPage() {
   const pwdBeforeFix = pwd?.byModel[PWD_BEFORE_FIX] ?? null;
   const others = otherEstimateRows(sample?.pwd, sample?.seasonal, checks, sample?.bulletin);
   const cur = backtest?.current ?? null;
-  const old = backtest?.allPending ?? null;
   const rangeCheck = printedRangeCheck(backtest);
   // The dates people watching their own case were given, kept apart from the
   // random sample. Counts only: no subscriber's case number is published.
@@ -118,11 +123,18 @@ export default async function EstimateScorecardPage() {
             ? ` ${formatInt(wGraded)} have been decided.`
             : " None decided yet.")
       : null;
-  // The same sentences the admin scorecard and the morning report print.
+  // The sample as the case page dates cases now; older docs lack `current`.
+  const permNow = perm ? (perm.current ?? perm.all) : null;
+  const permNowByHorizon = perm ? (perm.currentByHorizon ?? perm.byHorizon) : null;
+  // The same sentences the admin scorecard and the morning report print, less
+  // the retired methods, which have their own place at the foot.
   const shortAnswer = [
-    ...(perm ? readOurs(perm.all, perm.byHorizon, sample?.perm.since ?? null, backtest) : []),
-    ...(perm ? readMethods(perm.byModel) : []),
+    ...(perm && permNow ? readOurs(permNow, permNowByHorizon, sample?.perm.since ?? null, backtest) : []),
+    ...(perm ? readMethods(perm.byModel, 3, { retired: false }) : []),
   ];
+  const retiredReadings = perm
+    ? Object.keys(RETIRED_METHODS).flatMap((m) => (perm.byModel[m] ? readMethods({ [m]: perm.byModel[m] }, 1) : []))
+    : [];
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
@@ -171,30 +183,6 @@ export default async function EstimateScorecardPage() {
             each dated from the queue as it stood on the first of those days, at DOL&apos;s measured pace. This scores
             decided cases only; the daily sample below also counts the ones still waiting past their date.
           </p>{" "}
-          {old && old.typicalMissDays !== null ? (
-            <BarRows
-              label="Typical miss in days, by how the queue is counted"
-              className="mt-6 max-w-3xl"
-              max={Math.max(cur.typicalMissDays, old.typicalMissDays)}
-              rows={[
-                {
-                  key: "cur",
-                  label: "Counting only the normal queue",
-                  sub: "what every estimate here does now",
-                  value: cur.typicalMissDays,
-                  text: days(cur.typicalMissDays),
-                },
-                {
-                  key: "old",
-                  label: "Counting every pending case",
-                  sub: "the rule until September 26, 2026, which also counted cases on hold, at an RFI or on appeal",
-                  value: old.typicalMissDays,
-                  text: days(old.typicalMissDays),
-                  tone: "ink",
-                },
-              ]}
-            />
-          ) : null}
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
             <Figure label="Within a week" value={pct(cur.within7Share)} note="of those decisions" />
             {rangeCheck ? (
@@ -225,23 +213,24 @@ export default async function EstimateScorecardPage() {
         <h2 id="sample-h" className="font-heading text-2xl font-bold sm:text-3xl">A fresh sample, every morning</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Each day a few random pending cases from every filing month get the estimate the case page would show them,
-          written down before DOL decides and graded once it has. Nobody picks the cases.
+          written down before DOL decides and graded once it has. Nobody picks the cases. The figures count the
+          methods the case page uses today.
         </p>{" "}
-        {perm ? (
+        {perm && permNow && permNowByHorizon ? (
           <>
             <div className="mt-6">
-              <SampleCells cell={perm.all} since={sample?.perm.since ?? null} />
+              <SampleCells cell={permNow} since={sample?.perm.since ?? null} />
             </div>{" "}
-            {perm.all.graded > 0 ? (
+            {permNow.graded > 0 ? (
               <BarRows
                 label="Typical miss in days, by how far ahead the estimate was"
                 className="mt-6 max-w-3xl"
-                rows={HORIZONS.filter((h) => perm.byHorizon[h].graded > 0).map((h) => ({
+                rows={HORIZONS.filter((h) => permNowByHorizon[h].graded > 0).map((h) => ({
                   key: h,
                   label: HORIZON_LABEL[h],
-                  sub: `${formatInt(perm.byHorizon[h].graded)} graded of ${formatInt(perm.byHorizon[h].recorded)} recorded`,
-                  value: perm.byHorizon[h].typicalMissDays,
-                  text: days(perm.byHorizon[h].typicalMissDays),
+                  sub: `${formatInt(permNowByHorizon[h].graded)} graded of ${formatInt(permNowByHorizon[h].recorded)} recorded`,
+                  value: permNowByHorizon[h].typicalMissDays,
+                  text: days(permNowByHorizon[h].typicalMissDays),
                 }))}
               />
             ) : null}
@@ -274,7 +263,7 @@ export default async function EstimateScorecardPage() {
                 </table>
               </ScrollBox>
             ) : null}
-            {perm.all.graded > 0 ? null : (
+            {permNow.graded > 0 ? null : (
               <p className="mt-4 text-base text-soft">
                 None graded yet. The nearest sampled cases are due within weeks, and the grades appear here the morning
                 after DOL decides each one.
@@ -347,59 +336,73 @@ export default async function EstimateScorecardPage() {
         </FinePrint>
       </section>
 
-      <h2 className="mt-12 font-heading text-2xl font-bold sm:text-3xl">Worked examples</h2>{" "}
-      <p className="mt-2 max-w-2xl text-base text-soft">
-        Cases we wrote down by hand, before the outcome, exactly as the case page printed them.
-      </p>
-
-      <section className="mt-10 overflow-x-auto">
+      {/* What the case page no longer does, kept on the record and out of the
+          figures above: each retired method's grades, and the hand-recorded
+          ledger from before the daily sample, under the methods of its day. */}
+      <FinePrint className="mt-12" summary="Methods the case page no longer uses">
+        {retiredReadings.length > 0 ? (
+          <ul className="list-disc space-y-2 pl-5">
+            {retiredReadings.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>
+            {Object.keys(RETIRED_METHODS).length} earlier methods are retired; none has enough grades in the daily sample to
+            read yet.
+          </p>
+        )}{" "}
+        <p>
+          Before the daily sample began, a few cases were written down by hand, exactly as the case page printed them
+          then. Their windows are those earlier methods&apos; months-wide ranges, not today&apos;s.
+        </p>{" "}
+        <div className="overflow-x-auto">
         <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              <th scope="col" className="py-2 pr-3 font-bold">Recorded{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Case{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Filed{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Anchor{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Window{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Status now{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Decided{" "}</th>
-              <th scope="col" className="py-2 text-right font-bold">Error{" "}</th>
-            </tr>
-          </thead>
-          <tbody translate="no">
-            {rows.map((r) => {
-              const p = r.prediction;
-              const toAnchor = daysToAnchor(p, today);
-              return (
-                <tr key={p.caseNumber} className="border-b border-border/40 align-top">
-                  <td className="py-3 pr-3 tabular-nums">{p.recorded}{" "}</td>
-                  <td className="py-3 pr-3 font-mono text-sm">
-                    <Link href={`/perm-case-status?case=${p.caseNumber}`} className="link">
-                      {p.caseNumber}
-                    </Link>
-                  {" "}</td>
-                  <td className="py-3 pr-3 tabular-nums">{p.filed}{" "}</td>
-                  <td className="py-3 pr-3">{p.anchor}{" "}</td>
-                  <td className="py-3 pr-3 tabular-nums">
-                    {p.windowFrom} to {p.windowTo}
-                  {" "}</td>
-                  <td className="py-3 pr-3">{r.status ?? "not in the index"}{" "}</td>
-                  <td className="py-3 pr-3 tabular-nums">
-                    {r.decidedOn ? long(r.decidedOn) : toAnchor >= 0 ? `pending, ${toAnchor} days to the anchor` : `pending, ${-toAnchor} days past the anchor`}
-                  {" "}</td>
-                  <td className="py-3 text-right tabular-nums">
-                    {r.score ? `${signed(r.score.errorDays)} days, ${r.score.inWindow ? "inside" : "outside"} the window` : "not yet"}
-                  {" "}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </section>
-
-      {rows.some((r) => r.prediction.note) ? (
-        <section className="mt-8 max-w-3xl">
-          <h2 className="font-heading text-xl font-bold">Notes on the record</h2>{" "}
+            <thead>
+              <tr className="border-b border-border">
+                <th scope="col" className="py-2 pr-3 font-bold">Recorded{" "}</th>
+                <th scope="col" className="py-2 pr-3 font-bold">Case{" "}</th>
+                <th scope="col" className="py-2 pr-3 font-bold">Filed{" "}</th>
+                <th scope="col" className="py-2 pr-3 font-bold">Anchor{" "}</th>
+                <th scope="col" className="py-2 pr-3 font-bold">Window{" "}</th>
+                <th scope="col" className="py-2 pr-3 font-bold">Status now{" "}</th>
+                <th scope="col" className="py-2 pr-3 font-bold">Decided{" "}</th>
+                <th scope="col" className="py-2 text-right font-bold">Error{" "}</th>
+              </tr>
+            </thead>
+            <tbody translate="no">
+              {rows.map((r) => {
+                const p = r.prediction;
+                const toAnchor = daysToAnchor(p, today);
+                return (
+                  <tr key={p.caseNumber} className="border-b border-border/40 align-top">
+                    <td className="py-3 pr-3 tabular-nums">{p.recorded}{" "}</td>
+                    <td className="py-3 pr-3 font-mono text-sm">
+                      <Link href={`/perm-case-status?case=${p.caseNumber}`} className="link">
+                        {p.caseNumber}
+                      </Link>
+                    {" "}</td>
+                    <td className="py-3 pr-3 tabular-nums">{p.filed}{" "}</td>
+                    <td className="py-3 pr-3">{p.anchor}{" "}</td>
+                    <td className="py-3 pr-3 tabular-nums">
+                      {p.windowFrom} to {p.windowTo}
+                    {" "}</td>
+                    <td className="py-3 pr-3">{r.status ?? "not in the index"}{" "}</td>
+                    <td className="py-3 pr-3 tabular-nums">
+                      {r.decidedOn ? long(r.decidedOn) : toAnchor >= 0 ? `pending, ${toAnchor} days to the anchor` : `pending, ${-toAnchor} days past the anchor`}
+                    {" "}</td>
+                    <td className="py-3 text-right tabular-nums">
+                      {r.score ? `${signed(r.score.errorDays)} days, ${r.score.inWindow ? "inside" : "outside"} the window` : "not yet"}
+                    {" "}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>{" "}
+        {rows.some((r) => r.prediction.note) ? (
+        <section className="mt-6 max-w-3xl">
+          <p className="font-heading text-base font-bold text-foreground">Notes on the record</p>{" "}
           {/* One note per distinct text, with every case it covers: several
               predictions recorded together share one explanation. */}
           <ul className="mt-3 space-y-3 text-sm leading-relaxed text-soft">
@@ -412,6 +415,8 @@ export default async function EstimateScorecardPage() {
           </ul>
         </section>
       ) : null}
+
+      </FinePrint>
 
       <FinePrint className="mt-10" summary="How this is scored">
         <p>

@@ -172,6 +172,20 @@ describe("readMethods", () => {
     );
     expect(out[1]).toBe("Our main method (cases ahead of yours, at DOL's measured pace): 11 graded, typically 4 days off, and its dates run late.");
   });
+
+  it("leaves the retired methods out when asked, for the public page", () => {
+    const out = readMethods(
+      {
+        "decision-pace": cell({ graded: 11, typicalMissDays: 4 }),
+        "dol-average": cell({ graded: 19, typicalMissDays: 6 }),
+      },
+      3,
+      { retired: false },
+    );
+    expect(out).toHaveLength(1);
+    expect(out[0]).toContain("Our main method");
+    expect(out.join(" ")).not.toContain("Retired");
+  });
 });
 
 describe("readOurs on the cases the queue had passed", () => {

@@ -11,7 +11,7 @@ records; never a subscriber's email).
 | 2026-08-28 | G-100-25324-425560 | 2025-11-20 (decoded) | pending | Around November 2026 | September 2026 to November 2026 | — | — |
 
 Notes:
-- G-100-25324-425560: the product's first real alert subscriber's case. The
+- G-100-25324-425560: the first case recorded by hand. The
   estimate above is what /perm-case-status showed on 2026-08-28 (anchor =
   lead model's date, window = the model envelope). The case-status alert on
   this case will tell us the decision the day it lands; score this row then.

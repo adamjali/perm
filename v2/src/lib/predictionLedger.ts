@@ -73,7 +73,7 @@ export const PREDICTIONS: Prediction[] = [
     windowFrom: "2026-09-01",
     windowTo: "2026-11-30",
     note:
-      "The product's first real alert subscriber's case, recorded as /perm-case-status showed it on August 28, 2026. The next day the estimator gained a measured employer-initial shift, worth +2 days for this employer; the prediction of record is the earlier one and the shift does not move it outside its window.",
+      "The first case recorded by hand, as /perm-case-status showed it on August 28, 2026. The next day the estimator gained a measured employer-initial shift, worth +2 days for this employer; the prediction of record is the earlier one and the shift does not move it outside its window.",
   },
   {
     recorded: "2026-09-13",

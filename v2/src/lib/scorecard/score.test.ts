@@ -134,6 +134,24 @@ describe("summarise", () => {
     expect(s.since).toBe("2026-09-01");
     expect(summarise(rows, "2026-10-01", "pwd").bySource.ours!.all.recorded).toBe(1);
   });
+
+  it("reads the current methods apart from the retired ones, without dropping a retired grade", () => {
+    // A retired method's big miss beside the current method's small one: the
+    // figure about today's dates must not carry the retired miss (Oct 15 2026).
+    const rows = [
+      row({ model: "decision-pace", predicted: "2026-09-20", decidedOn: "2026-09-18", outcome: "CERTIFIED" }),
+      row({ model: "dol-average", predicted: "2026-09-30", decidedOn: "2026-09-10", outcome: "CERTIFIED" }),
+    ];
+    const s = summarise(rows, "2026-10-01", "perm", (m) => m !== "dol-average");
+    const ours = s.bySource.ours!;
+    expect(ours.all.graded).toBe(2);
+    expect(ours.current!.graded).toBe(1);
+    expect(ours.current!.typicalMissDays).toBe(2);
+    expect(ours.currentByHorizon!["0-30"]!.graded).toBe(1);
+    expect(ours.byModel["dol-average"]!.typicalMissDays).toBe(20);
+    // Without the test, the summary says nothing about "current".
+    expect(summarise(rows, "2026-10-01").bySource.ours!.current).toBeUndefined();
+  });
 });
 
 describe("the sample", () => {

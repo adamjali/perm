@@ -322,11 +322,22 @@ export const RETIRED_METHODS: Record<string, string> = {
   "pwd-queue-request-month": "October 3, 2026",
 };
 
-/** One sentence per method with at least `min` grades, busiest first. */
-export function readMethods(byModel: Record<string, Cell> | null | undefined, min = 3): string[] {
+/** Whether the case page still dates cases with this method. */
+export const isCurrentMethod = (model: string) => !(model in RETIRED_METHODS);
+
+/**
+ * One sentence per method with at least `min` grades, busiest first. The
+ * public page leaves the retired ones out (`retired: false`); the admin page
+ * and the morning report keep them, each saying it's retired.
+ */
+export function readMethods(
+  byModel: Record<string, Cell> | null | undefined,
+  min = 3,
+  { retired = true }: { retired?: boolean } = {},
+): string[] {
   if (!byModel) return [];
   return Object.entries(byModel)
-    .filter(([, c]) => c.graded >= min && c.typicalMissDays !== null)
+    .filter(([m, c]) => c.graded >= min && c.typicalMissDays !== null && (retired || isCurrentMethod(m)))
     .sort((a, b) => b[1].graded - a[1].graded)
     .map(([m, c]) => {
       const far = c.within14Share === null ? 0 : c.graded - Math.round(c.within14Share * c.graded);

@@ -203,7 +203,7 @@ export function ScorecardPanel() {
   const rivals = doc.readings?.rivals ?? Object.entries(h2h).map(([s, h]) => readRival(s, h));
   const ours =
     doc.readings?.ours ??
-    (mine ? [...readOurs(mine.all, mine.byHorizon, perm.since, null), ...readMethods(mine.byModel)] : []);
+    (mine ? [...readOurs(mine.current ?? mine.all, mine.currentByHorizon ?? mine.byHorizon, perm.since, null), ...readMethods(mine.byModel)] : []);
   const sources = Object.keys(perm.bySource).sort((a, b) => (a === "ours" ? -1 : b === "ours" ? 1 : a < b ? -1 : 1));
   const others = otherEstimateRows(doc.pwd, doc.seasonal, doc.seasonalChecks ?? null, doc.bulletin);
   const when = new Date(computedAt).toLocaleString("en-US", {

@@ -183,10 +183,24 @@ export interface Summary {
     all: Cell;
     byModel: Record<string, Cell>;
     byHorizon: Record<Horizon, Cell>;
+    /**
+     * The same, over the methods the case page uses today (Oct 15 2026; older
+     * docs lack them). A retired method's misses stay in `all` and `byModel`,
+     * but a figure read as "how good are the dates" must describe the dates
+     * the site gives now.
+     */
+    current?: Cell;
+    currentByHorizon?: Record<Horizon, Cell>;
   }>;
 }
 
-export function summarise(rows: readonly PredictionRow[], today: string, program: Program = "perm"): Summary {
+export function summarise(
+  rows: readonly PredictionRow[],
+  today: string,
+  program: Program = "perm",
+  /** Whether a method is one the case page still uses; given, each source also gets `current`. */
+  isCurrent?: (model: string) => boolean,
+): Summary {
   const mine = rows.filter((r) => r.program === program);
   const since = mine.reduce<string | null>((a, r) => (a === null || r.recordedOn < a ? r.recordedOn : a), null);
   const bySource: Summary["bySource"] = {};
@@ -200,7 +214,17 @@ export function summarise(rows: readonly PredictionRow[], today: string, program
     const byHorizon = Object.fromEntries(
       HORIZONS.map((h) => [h, summariseCell(s.filter((r) => horizonOf(r.recordedOn, r.predicted) === h), today)]),
     ) as Record<Horizon, Cell>;
-    bySource[src] = { all: summariseCell(s, today), byModel, byHorizon };
+    const horizonCells = (list: readonly PredictionRow[]) =>
+      Object.fromEntries(
+        HORIZONS.map((h) => [h, summariseCell(list.filter((r) => horizonOf(r.recordedOn, r.predicted) === h), today)]),
+      ) as Record<Horizon, Cell>;
+    const now = isCurrent ? s.filter((r) => isCurrent(r.model)) : null;
+    bySource[src] = {
+      all: summariseCell(s, today),
+      byModel,
+      byHorizon,
+      ...(now ? { current: summariseCell(now, today), currentByHorizon: horizonCells(now) } : {}),
+    };
   }
   return { computedOn: today, since, bySource };
 }
