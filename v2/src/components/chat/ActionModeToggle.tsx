@@ -211,10 +211,10 @@ export function ActionModeToggle({
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 // Border between segments (not on last)
                 "border-r border-border last:border-r-0",
-                // Active state - Forest Green
+                // The chosen mode: the shared tint, never a filled block
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background text-foreground hover:bg-muted"
+                  ? "bg-tint text-primary-text"
+                  : "bg-background text-soft hover:bg-muted hover:text-foreground"
               )}
             >
               {/* Scale pulse on active change */}

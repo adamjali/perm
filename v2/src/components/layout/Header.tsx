@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import { AUTHENTICATED_NAV_LINKS, ADMIN_NAV_LINK } from "@/lib/constants/navigation";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
-import ThemeToggle from "./ThemeToggle";
 import { NavLink } from "@/components/ui/nav-link";
 import { NotificationBell, NotificationDropdown } from "@/components/notifications";
 import { useNotificationToasts } from "@/hooks";
@@ -78,21 +77,21 @@ function UserMenu({ userName }: UserMenuProps) {
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger
-        className="group flex min-h-[44px] cursor-pointer items-center gap-2 rounded-none border border-transparent bg-transparent px-3 py-2 text-sm font-medium text-white transition-colors hover:border-white/50 hover:bg-white/10 focus:outline-none focus-visible:border-white/50"
+        className="group flex min-h-11 cursor-pointer items-center gap-2 px-3 text-base text-soft transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="max-w-[100px] truncate">{userName}</span>
-        <CaretDownIcon className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />
+        <CaretDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="end"
-        className="min-w-[180px] rounded-none border border-border bg-popover p-0 text-popover-foreground"
+        className="min-w-[180px] border border-border bg-popover p-0 text-popover-foreground shadow-overlay"
       >
         <DropdownMenuItem
           onSelect={handleSettingsClick}
           disabled={isNavigatingToSettings || isOnSettingsPage}
           className={cn(
-            "flex cursor-pointer items-center gap-3 rounded-none px-4 py-3 text-sm font-semibold",
+            "flex min-h-11 cursor-pointer items-center gap-3 px-4 text-sm",
             "border-b border-border",
             isOnSettingsPage
               ? "cursor-default bg-muted text-muted-foreground"
@@ -110,7 +109,7 @@ function UserMenu({ userName }: UserMenuProps) {
         <DropdownMenuItem
           onSelect={handleSignOut}
           disabled={isSigningOut}
-          className="flex cursor-pointer items-center gap-3 rounded-none px-4 py-3 text-sm font-semibold hover:bg-muted"
+          className="flex min-h-11 cursor-pointer items-center gap-3 px-4 text-sm hover:bg-muted"
         >
           {isSigningOut ? (
             <CircleNotchIcon className="size-4 animate-spin" />
@@ -173,39 +172,22 @@ export default function Header(): React.ReactElement {
     : AUTHENTICATED_NAV_LINKS;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/20 bg-black">
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-3 sm:px-8">
-        {/* Logo */}
+    <header className="sticky top-0 z-50 border-b border-border bg-background">
+      <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-2 px-4 sm:px-8">
+        {/* The same mark as the public header. The {" "} keeps the two words
+            apart for anything that reads the page's text. */}
         <Link
           href="/dashboard"
-          className="group flex min-h-[44px] shrink-0 items-center gap-2 px-2 py-1 font-heading text-xl font-bold transition-colors hover:bg-accent sm:text-2xl"
+          className="flex h-11 shrink-0 items-center gap-2 whitespace-nowrap font-heading text-xl font-bold text-foreground"
         >
-          <FileTextIcon
-            className="size-6 text-(--primary) transition-colors group-hover:text-black"
-          />
-          {/* NEVER WRAPS, and that is a layout fix rather than a typographic
-              preference. The public layout pads `main` by a flat 4.5rem for a
-              header it assumes is one line. At 390px this lockup wrapped to
-              two, the bar measured 99px against that 72px of padding, and the
-              first 27px of EVERY public page sat underneath the header on a
-              phone - the dateline on the homepage was being sliced through its
-              cap height. Measured, not inferred.
-
-              The `{" "}` between the two words stays: JSX drops the whitespace
-              between adjacent elements, and without it every text extractor,
-              Google's snippet generator included, reads "PERMTracker". The
-              leading space that used to sit inside " Tracker" is gone, since
-              the two together rendered a double space. */}
-          <span className="whitespace-nowrap">
-            <span className="text-(--primary) transition-colors group-hover:text-black">PERM</span>{" "}
-            <span className="text-white transition-colors group-hover:text-black">Tracker</span>
+          <FileTextIcon aria-hidden="true" className="size-6 text-primary-text" />
+          <span>
+            <span className="text-primary-text">PERM</span>{" "}Tracker
           </span>
         </Link>
 
-        {/* Navigation */}
-        <nav className="flex items-center gap-2 sm:gap-4 lg:gap-8">
-          {/* Desktop Navigation - hidden below lg (1024px) */}
-          <div className="hidden lg:flex items-center gap-1">
+        <nav aria-label="App" className="flex items-center gap-1 lg:gap-4">
+          <div className="hidden items-center lg:flex">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               const tourId = link.href === "/cases" ? "nav-cases" : link.href === "/calendar" ? "nav-calendar" : undefined;
@@ -213,13 +195,11 @@ export default function Header(): React.ReactElement {
                 <Fragment key={link.href}>
                   <NavLink
                     href={link.href}
-                    spinnerClassName="text-(--primary)"
                     data-tour={tourId}
+                    aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "underline-offset-4 hover:underline px-3 py-2 font-heading text-sm font-semibold transition-colors lg:px-4",
-                      isActive
-                        ? "text-(--primary)"
-                        : "text-white hover:text-(--primary)"
+                      "flex h-11 items-center border-b-2 px-3 text-base transition-colors",
+                      isActive ? "border-primary-text font-semibold text-foreground" : "border-transparent text-soft hover:text-foreground",
                     )}
                   >
                     {link.label}
@@ -229,54 +209,41 @@ export default function Header(): React.ReactElement {
             })}
           </div>
 
-          {/* Notification bell - always visible */}
           <NotificationBell>
             <NotificationDropdown />
           </NotificationBell>
 
-          {/* User dropdown - hidden below lg, shown in mobile menu.
-              The slot is a FIXED width because `user` arrives from a Convex
-              query, not from the server render: without it the four nav links
-              jump left the moment the name resolves, on every load. 148px is
-              the trigger at its widest (px-3 x2 + the 100px name cap + gap-2 +
-              a 16px chevron), so a short name simply sits right-aligned in a
-              box that never changes size. */}
+          {/* A fixed-width slot: the name arrives from a query after the first
+              paint, and a growing trigger would shove the links left. */}
           <div className="hidden w-[148px] shrink-0 justify-end lg:flex">
             {user && <UserMenu userName={displayName} />}
           </div>
 
-          {/* Theme toggle - always visible */}
-          <ThemeToggle />
-
-          {/* Mobile Menu Button - visible below lg */}
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="flex lg:hidden h-11 w-11 items-center justify-center border border-white/20 text-white transition-colors hover:bg-white/10"
-            aria-label="Toggle menu"
+            className="flex h-11 items-center gap-2 px-2 text-base font-semibold text-foreground hover:bg-accent lg:hidden"
             aria-expanded={isMobileMenuOpen}
+            aria-controls="app-mobile-menu"
           >
-            {isMobileMenuOpen ? <XIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isMobileMenuOpen ? <XIcon className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
+            Menu
           </button>
         </nav>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* The phone's menu: one sheet */}
       {isMobileMenuOpen && (
-        <div className="absolute inset-x-0 top-full z-50 border-b border-white/20 bg-black px-4 py-4 lg:hidden">
-          <nav className="flex flex-col gap-1">
-            {/* Navigation Links */}
+        <div id="app-mobile-menu" className="absolute inset-x-0 top-full z-50 border-b border-border bg-background px-4 pb-6 lg:hidden">
+          <nav aria-label="Menu" className="divide-y divide-border">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <NavLink
                   key={link.href}
                   href={link.href}
-                  spinnerClassName="text-(--primary)"
-                  className={cn(
-                    "block py-3 px-2 font-heading text-base font-semibold transition-colors",
-                    isActive ? "text-(--primary)" : "text-white hover:text-(--primary)"
-                  )}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn("flex min-h-12 items-center text-lg", isActive ? "font-semibold text-foreground" : "text-soft")}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.label}
@@ -284,29 +251,26 @@ export default function Header(): React.ReactElement {
               );
             })}
 
-            {/* User Section in Mobile Menu */}
             {user && (
-              <div className="flex flex-col gap-1 border-t border-white/20 pt-3 mt-2">
-                <span className="text-sm text-white/60 font-semibold px-2 mb-1">
-                  {displayName}
-                </span>
+              <div className="pt-3">
+                <p className="text-sm text-muted-foreground">{displayName}</p>
                 <NavLink
                   href="/settings"
-                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold text-white transition-colors hover:text-primary-text"
+                  className="flex min-h-12 items-center gap-3 text-lg text-soft"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <Settings className="size-4" />
+                  <Settings className="size-5" aria-hidden="true" />
                   Settings
                 </NavLink>
                 <button
                   onClick={handleMobileSignOut}
                   disabled={isSigningOut}
-                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold text-white transition-colors hover:text-primary-text text-left disabled:text-muted-foreground"
+                  className="flex min-h-12 w-full items-center gap-3 text-left text-lg text-soft disabled:text-muted-foreground"
                 >
                   {isSigningOut ? (
-                    <CircleNotchIcon className="size-4 animate-spin" />
+                    <CircleNotchIcon className="size-5 animate-spin" aria-hidden="true" />
                   ) : (
-                    <SignOutIcon className="size-4" />
+                    <SignOutIcon className="size-5" aria-hidden="true" />
                   )}
                   {isSigningOut ? "Signing out..." : "Sign out"}
                 </button>

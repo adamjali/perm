@@ -55,11 +55,11 @@ describe("Header", () => {
     });
   });
 
-  it("renders theme toggle and user name when authenticated", () => {
+  it("renders the user name when authenticated (the theme switch lives in the footer)", () => {
     mockUseQuery.mockReturnValue(createMockUser({ name: "Jane Attorney" }));
     renderWithProviders(<Header />);
-    expect(screen.getByRole("button", { name: /switch to .* mode/i })).toBeInTheDocument();
     expect(screen.getByText("Jane Attorney")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /switch to .* mode/i })).not.toBeInTheDocument();
   });
 
   it("does not display user name when not authenticated", () => {
@@ -77,14 +77,14 @@ describe("Header", () => {
     ])("highlights %s link on %s route", (path, label) => {
       mockPathname.mockReturnValue(path);
       renderWithProviders(<Header />);
-      expect(screen.getByRole("link", { name: label })).toHaveClass("text-(--primary)");
+      expect(screen.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
     });
 
     it("does not highlight non-active links", () => {
       mockPathname.mockReturnValue("/dashboard");
       renderWithProviders(<Header />);
-      expect(screen.getByRole("link", { name: "Cases" })).not.toHaveClass("text-(--primary)");
-      expect(screen.getByRole("link", { name: "Calendar" })).not.toHaveClass("text-(--primary)");
+      expect(screen.getByRole("link", { name: "Cases" })).not.toHaveAttribute("aria-current");
+      expect(screen.getByRole("link", { name: "Calendar" })).not.toHaveAttribute("aria-current");
     });
   });
 

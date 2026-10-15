@@ -122,7 +122,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
               placeholder="Enter email message..."
               required
               rows={8}
-              className="font-mono text-sm"
+              className="text-sm"
             />
             <p className="text-sm text-muted-foreground">
               This will be sent as a branded HTML email from notifications@permtracker.app

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CaretRightIcon, CheckIcon, SparkleIcon, XIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, CheckIcon, XIcon } from "@phosphor-icons/react";
 import { useOnboarding } from "./OnboardingProvider";
 import { CHECKLIST_ITEMS } from "@/lib/onboarding/constants";
 import { cn } from "@/lib/utils";
@@ -31,25 +31,13 @@ export function OnboardingChecklist() {
   };
 
   return (
-    <div
-      data-tour="onboarding-checklist"
-      className="relative overflow-hidden border border-border bg-card"
-    >
-      {/* Top accent stripe */}
-      <div className="h-1.5 bg-primary" />
-
-      {/* Header */}
+    <section data-tour="onboarding-checklist" className="border border-border bg-card">
       <div className="flex items-start justify-between p-4 pb-3">
-        <div className="flex items-center gap-2">
-          <SparkleIcon className="w-5 h-5 text-primary" />
-          <div>
-            <h3 className="font-heading font-bold text-2xl">
-              Getting started
-            </h3>{" "}
-            <p className="text-sm text-muted-foreground">
-              Complete these steps to get the most out of PERM Tracker
-            </p>
-          </div>
+        <div>
+          <h2 className="font-heading text-xl font-bold">Getting started</h2>{" "}
+          <p className="text-sm text-muted-foreground">
+            Complete these steps to get the most out of PERM Tracker
+          </p>
         </div>
         <button
           type="button"
@@ -58,7 +46,7 @@ export function OnboardingChecklist() {
               await dismissChecklist();
             } catch (error) {
               handleOperationError(error, {
-                userMessage: "Couldn’t dismiss checklist. Please try again.",
+                userMessage: "Couldn’t dismiss the checklist. Try again.",
                 context: { operation: "dismissChecklist" },
               });
             }
@@ -73,18 +61,15 @@ export function OnboardingChecklist() {
       {/* Progress bar */}
       <div className="mx-4 mb-3">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-sm font-heading font-semibold">
+          <span className="text-sm font-semibold">
             {completedCount}/{totalCount} complete
           </span>{" "}
           <span className="text-sm text-muted-foreground">
             {progressPercent}%
           </span>
         </div>
-        <div className="h-2 border border-border bg-muted overflow-hidden">
-          <div
-            className="h-full bg-primary transition-colors duration-500 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
+        <div className="h-1.5 bg-muted">
+          <div className="h-full bg-primary-text" style={{ width: `${progressPercent}%` }} />
         </div>
       </div>
 
@@ -102,26 +87,17 @@ export function OnboardingChecklist() {
               disabled={!isClickable}
               className={cn(
                 "w-full flex items-center gap-3 p-2.5 min-h-[44px] text-left transition-colors duration-150",
-                isClickable
-                  ? "hover:bg-muted cursor-pointer"
-                  : "cursor-default",
-                isComplete && "opacity-60"
+                isClickable ? "cursor-pointer hover:bg-muted" : "cursor-default"
               )}
             >
               {/* Checkbox */}
               <div
                 className={cn(
                   "flex-shrink-0 w-5 h-5 border flex items-center justify-center",
-                  isComplete
-                    ? "bg-primary border-primary"
-                    : "border-border bg-background"
+                  isComplete ? "border-primary-text bg-primary-text" : "border-input bg-card"
                 )}
               >
-                {isComplete && (
-                  <CheckIcon
-                    className="w-3 h-3 text-primary-foreground"
-                  />
-                )}
+                {isComplete && <CheckIcon className="size-3 text-background" aria-hidden="true" />}
               </div>
 
               {/* Label */}
@@ -149,6 +125,6 @@ export function OnboardingChecklist() {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

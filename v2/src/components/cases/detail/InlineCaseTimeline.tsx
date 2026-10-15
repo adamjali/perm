@@ -267,7 +267,7 @@ export function InlineCaseTimeline({
   });
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full", className)} data-scroll-target="timeline">
       {/* The timeline page's grid, one case at a time: the same frame, month
           header, square markers, stage bands, Today line and legend, so the
           two match. The lanes are the case's four

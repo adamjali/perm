@@ -97,14 +97,7 @@ export function OnboardingWizard() {
           {WIZARD_STEPS.map((s, i) => (
             <div
               key={s}
-              className={cn(
-                "w-2.5 h-2.5 border border-border transition-colors duration-200",
-                i < currentIndex
-                  ? "bg-primary"
-                  : i === currentIndex
-                    ? "bg-primary"
-                    : "bg-muted"
-              )}
+              className={cn("size-2.5", i <= currentIndex ? "bg-primary-text" : "bg-muted")}
             />
           ))}
         </div>

@@ -591,7 +591,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
         suggestedCaseStatus={suggestedCaseStatus}
         suggestedProgressStatus={suggestedProgressStatus}
       >
-      <form onSubmit={handleSubmit} className="space-y-8 pb-24">
+      <form onSubmit={handleSubmit} className="space-y-8 pb-24" data-scroll-target="form-section">
         {/* Error Summary */}
         {showErrorSummary && mergedErrorCount > 0 && (
           <ErrorSummary errors={mergedErrors} errorCount={mergedErrorCount} onDismiss={() => setShowErrorSummary(false)} onFieldClick={scrollToField} />

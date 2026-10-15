@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Light/dark toggle for the black header.
+ * Light/dark toggle, at the end of both footers.
  *
  * NO HYDRATION PLACEHOLDER, deliberately. The previous version rendered a
  * borderless `rounded-full` button holding an empty box until `mounted`

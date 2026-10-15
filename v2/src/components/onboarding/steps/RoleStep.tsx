@@ -80,26 +80,16 @@ export function RoleStep({ onNext }: RoleStepProps) {
             <button
               key={role}
               type="button"
+              aria-pressed={isSelected}
               onClick={() => setSelectedRole(role)}
               className={cn(
-                "flex items-start gap-3 p-4 min-h-[56px] border text-left transition-colors duration-150 cursor-pointer",
-                isSelected
-                  ? "border-primary bg-primary/10"
-                  : "border-border bg-card"
+                "flex min-h-14 cursor-pointer items-start gap-3 border p-4 text-left transition-colors",
+                isSelected ? "border-primary-text bg-tint" : "border-input bg-card hover:border-foreground"
               )}
             >
-              <div
-                className={cn(
-                  "flex-shrink-0 w-10 h-10 flex items-center justify-center border",
-                  isSelected
-                    ? "bg-primary text-primary-foreground border-border"
-                    : "bg-muted border-border"
-                )}
-              >
-                <Icon className="w-5 h-5" />
-              </div>
+              <Icon className={cn("mt-0.5 size-5 shrink-0", isSelected ? "text-primary-text" : "text-muted-foreground")} aria-hidden="true" />
               <div className="min-w-0">
-                <p className="font-heading font-semibold text-sm">{role}</p>{" "}
+                <p className="text-sm font-semibold">{role}</p>{" "}
                 <p className="text-sm text-muted-foreground">{description}</p>
               </div>
             </button>

@@ -305,7 +305,7 @@ export function TimelinePageClient() {
       {/* The key sits above the grid: below it, a phone reached it only after
           scrolling past every case. */}
       <TimelineLegendCompact className="mb-3" />
-      <div className="flex-1 min-h-[160px]">
+      <div className="flex-1 min-h-[160px]" data-scroll-target="timeline">
         <TimelineGrid
           cases={displayedCases}
           timeRange={effectiveTimeRange}

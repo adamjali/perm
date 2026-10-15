@@ -21,7 +21,7 @@ const PATH_NOTES = [
 export function WelcomeStep({ onNext }: WelcomeStepProps) {
   return (
     <div className="flex flex-col items-center px-2 text-center">
-      <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+      <h2 className="mb-2 font-heading text-2xl font-bold sm:text-3xl">
         Welcome to PERM Tracker
       </h2>{" "}
       <p className="mb-8 max-w-md text-sm text-muted-foreground sm:text-base">

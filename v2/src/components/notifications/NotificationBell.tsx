@@ -7,7 +7,7 @@
  * Features:
  * - Real-time badge via Convex subscription (getUnreadCount)
  * - Radix UI Dropdown for accessible, positioned dropdown
- * - Neobrutalist styling matching header icons (ThemeToggle pattern)
+ * - A quiet icon button in the header's own colours
  * - Badge hidden when count === 0
  * - Badge shows "99+" when count > 99
  * - Scale transition on badge appearance
@@ -59,27 +59,13 @@ export default function NotificationBell({ className, children }: NotificationBe
           type="button"
           aria-label={`Notifications${showBadge ? ` (${unreadCount} unread)` : ""}`}
           className={cn(
-            // Base styles matching ThemeToggle
-            "group relative flex h-11 w-11 cursor-pointer items-center justify-center",
-            "rounded-none border border-transparent bg-transparent",
-            "text-white transition-colors duration-200",
-            // Hover/active states
-            "hover:border-white/20 hover:bg-white/10",
-            "active:bg-white/15",
-            // Focus states for accessibility
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+            "relative flex size-11 cursor-pointer items-center justify-center text-soft transition-colors",
+            "hover:bg-accent hover:text-foreground",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             className
           )}
         >
-          {/* Bell Icon */}
-          <BellIcon
-            className={cn(
-              "size-5 transition-transform duration-300 ease-out",
-              // Hover animation matching ThemeToggle
-              "",
-              "group-active:rotate-0 group-active:scale-95"
-            )}
-          />
+          <BellIcon className="size-5" aria-hidden="true" />
 
           {/* Unread Count Badge */}
           {showBadge && (
@@ -95,11 +81,8 @@ export default function NotificationBell({ className, children }: NotificationBe
                 "bg-urgency-urgent text-white",
                 // Typography
                 "text-sm font-bold font-heading leading-none",
-                // Border carves the badge off the icon. The header bar is
-                // bg-black in both themes, so this ring does not follow --border.
-                "border border-black",
-                // Animation: scale in
-                "duration-200"
+                // A ring in the bar's own colour carves the badge off the icon
+                "border border-background"
               )}
               aria-hidden="true"
             >
@@ -109,23 +92,11 @@ export default function NotificationBell({ className, children }: NotificationBe
         </button>
       </DropdownMenuTrigger>
 
-      {/* Dropdown Content - styled for neobrutalism */}
       <DropdownMenuContent
         align="end"
         sideOffset={8}
         onCloseAutoFocus={(e) => e.preventDefault()}
-        className={cn(
-          // Remove default shadcn rounded corners
-          "rounded-none",
-          // Neobrutalist styling - use design token for proper dark mode
-          "border border-border bg-popover",
-          "",
-          // Size - let inner content handle overflow (no max-h here to avoid double scroll)
-          // Override default padding
-          "p-0",
-          // GPU acceleration for snappy animations
-          "will-change-transform"
-        )}
+        className="border border-border bg-popover p-0 shadow-overlay"
       >
         {children || (
           <div className="p-4 text-center text-sm text-muted-foreground">

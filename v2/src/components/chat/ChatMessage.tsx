@@ -123,9 +123,9 @@ export function ChatMessage({
       {showBubble && (
         <div
           className={cn(
-            'max-w-[85%] rounded-none border px-4 py-3',
+            'max-w-[85%] border px-4 py-3',
             isUser
-              ? 'bg-primary text-primary-foreground border-primary'
+              ? 'border-border bg-tint text-foreground'
               : 'bg-card text-card-foreground border-border'
           )}
         >
