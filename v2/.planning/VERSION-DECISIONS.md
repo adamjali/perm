@@ -162,3 +162,17 @@ are the two places a silent regression costs most; both were tested directly thi
 **Status:** RESOLVED
 
 `next` went to 16.4.0 the same evening. `eslint-config-next` 16.4.0 was first refused by pnpm's `trustPolicy: no-downgrade` over `eslint-import-resolver-typescript@3.10.1`: a 3.x patch (Apr 21 2025, published by a listed maintainer) released after 4.0.0 (Mar 16 2025) began carrying provenance, while no 3.x version ever did. Its registry integrity matches the lockfile's, which already held it. Exempted by name in `pnpm-workspace.yaml` (owner's call), the `semver@6.3.1` pattern. Lint over `src` and `convex`: 0 errors before and after; the new `@next/next/no-location-assign-relative-destination` rule flagged six deliberate full-page navigations (crash screens, sign-out, Google's sign-in), each now marked with its reason.
+
+## `@storybook/nextjs-vite` 10.6.0, patched for Next 16.4 (Oct 14 2026)
+
+Next 16.4's `useRouter` reads `parentRenderTree.data.bfcacheId`, and the Storybook
+adapter's router context built no `parentRenderTree`, so every story rendering a
+`next/link` threw. `patches/@storybook__nextjs-vite@10.6.0.patch` adds the field
+(`{ data: { bfcacheId: 0 }, slots: new Map() }`) to the context the adapter
+builds; `package.json` `pnpm.patchedDependencies` applies it. Dev only, never
+ships.
+
+**Remove it when a fixed release can be installed.** 10.6.2 was published Oct 12
+2026 and clears the 7-day `minimumReleaseAge` on Oct 19. Whether it carries the
+fix isn't confirmed: install it without the patch, open a story with a link (the
+"Tour/App pages" stories have many), and drop the patch only if they render.

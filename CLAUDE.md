@@ -18,8 +18,7 @@
 |-------|------|
 | **Developer Guide (PRIMARY)** | [v2/CLAUDE.md](v2/CLAUDE.md) |
 | **API Reference** | [v2/docs/API.md](v2/docs/API.md) |
-| Design System | [v2/docs/DESIGN_SYSTEM.md](v2/docs/DESIGN_SYSTEM.md) |
-| Animation Catalog | [v2/docs/ANIMATION_STORYBOARD.md](v2/docs/ANIMATION_STORYBOARD.md) |
+| Design System (look, motion, gates) | [v2/docs/DESIGN_SYSTEM.md](v2/docs/DESIGN_SYSTEM.md) |
 | PERM Workflow (canonical) | [perm_flow.md](perm_flow.md) |
 | Testing Guide | [v2/TEST_README.md](v2/TEST_README.md) |
 | **Codebase Map (7 docs)** | [.planning/codebase/](.planning/codebase/) |
@@ -731,3 +730,27 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 12 2026".
   path (vercel/next.js #99612, read in the installed code), page caches still go to `.next/server/route-cache`, and the
   whole suite passed (9,686 tests). `eslint-config-next` moved to 16.4.0 with one resolver exempted from pnpm's trust
   check by name (`.planning/VERSION-DECISIONS.md`). Whether #185 stops is a count to read in PostHog over the next week.
+
+## Oct 14 2026: the calm redesign, in eight lines
+
+Branch `calm/phase-1`. The rules, parts and gates are in [`v2/docs/DESIGN_SYSTEM.md`](v2/docs/DESIGN_SYSTEM.md).
+
+- **One flat page, plain type, one lime for the main action**: no particles, dots, grain, progress bars, curtain, hard
+  shadows, hover lifts, all-caps labels or self-running motion. `calm-system.test.ts` fails the moment one comes back,
+  and checks every text token against every surface in both themes.
+- **`--border` only groups; `--input` outlines controls and draws value marks** (3:1). The old border was ink, so marks
+  drawn in it vanished when it lightened; medians, ticks and split points use `bg-input` or ink.
+- **One header search and one palette** for the public site; **⌘K in the app** searches the account's own cases through
+  `cases.listFiltered`, the cases page's own matcher. `/case-search` shows the employer, firm and job pages a name can
+  mean beside its filings (`NameGroups`), and a firm's page opens it with `?firm=`.
+- **Case results are short cards on a phone** (Find a case, the PERM, wage-request and live browsers): a 1,200px table
+  had shown a phone the case number and nothing else.
+- **The database code is no longer named after Turso**: `src/lib/db/`, `scripts/lib_db.py`, and `DATABASE_URL` /
+  `DATABASE_AUTH_TOKEN` / `DATABASE_RW_AUTH_TOKEN`, each falling back to the `TURSO_*` name production still carries.
+  **When this ships, reinstall `/usr/local/sbin/permtracker-uscis` from `scripts/oracle/bin/`**: the installed copy
+  imports `lib_turso`, which is gone, and its "record ok" step would fail.
+- **One list of month names and one way to write a date** (`convex/lib/months.ts`): fifteen copies wrote "September 11,
+  2026" their own way, some through `toLocaleDateString` without a time zone (the next day east of UTC+12).
+- **Every link uses `.link`**, every choice row `choiceVariants`, every hatch `bg-hatch`; corners are square except
+  what's round by nature (dots, spinners, the switch).
+- **The Storybook adapter is patched for Next 16.4** until a fixed release clears the release floor (`.planning/VERSION-DECISIONS.md`).

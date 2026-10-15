@@ -1,520 +1,179 @@
-# PERM Tracker v2 Design System
-
-**Framework:** Next.js 16 + React 19 + Tailwind CSS v4
-**Style:** Neobrutalism
-**Version:** 2.1
-**Last Updated:** 2026-03-05
-
-**Source Files:**
-- Design tokens: `v2/src/app/globals.css` (canonical, 1400+ lines)
-- Tailwind config: `@theme inline` block in globals.css (Tailwind v4 — no tailwind.config file)
-- Component library: `v2/src/components/ui/` (48 files) and `v2/src/components/status/` (5 files)
-- Animation utilities: `v2/src/lib/animations.ts`
-- Storybook: Run `pnpm storybook` (http://localhost:6006, 32 story files)
-
----
-
-## Philosophy
-
-The v2 design system follows **Neobrutalism** principles:
-
-1. **Bold & Direct** - Hard shadows, thick borders, zero border radius
-2. **Functional First** - Every element serves a purpose
-3. **High Contrast** - Black borders on white backgrounds
-4. **Lime Green Accent** - Vibrant, accessible single accent color (`#2ECC40`)
-5. **Tactile Interactions** - Components feel pressable and reactive
-
-**Migration from v1:** v2 uses React components (shadcn/ui) instead of v1's CSS classes.
-
----
-
-## Color Palette
-
-### Base Colors (CSS Variables)
-
-```css
-/* Light mode (default) — from globals.css :root */
---background: #FAFAFA;
---foreground: #000000;
---card: #FAFAFA;
---card-foreground: #000000;
---popover: #FAFAFA;
---popover-foreground: #000000;
---primary: #2ECC40;          /* Lime Green — same in both modes */
---primary-foreground: #000000;
---secondary: #F5F5F5;
---secondary-foreground: #000000;
---muted: #F5F5F5;
---muted-foreground: #666666;
---accent: #2ECC40;
---accent-foreground: #000000;
---destructive: #FF4747;
---destructive-foreground: #FAFAFA;
---border: #000000;           /* Black borders everywhere */
---input: #000000;
---ring: #2ECC40;             /* Lime Green focus ring */
-```
-
-### Dark Mode
-
-Dark mode inverts backgrounds/borders while keeping the same Lime Green (`#2ECC40`) accent.
-
-```css
-/* Dark mode — from globals.css .dark */
---background: #0A0A0A;
---foreground: #FAFAFA;
---card: #1A1A1A;
---border: #FAFAFA;           /* White borders in dark mode */
---muted-foreground: #A0A0A0;
---shadow-hard-*: rgba(255,255,255,0.3);  /* Translucent white shadows */
-```
-
-**Manila Folder Colors:**
-
-| Token | Light | Dark |
-|-------|-------|------|
-| `--manila` | `#F5E6C8` | `#C4A97A` |
-| `--manila-dark` | `#E8D4A8` | `#A8916A` |
-| `--manila-shadow` | `#D4C090` | `#8A7552` |
-
-*Dark mode manila colors are intentionally darker for better contrast on dark backgrounds.*
-
-### Stage Status Colors
-
-From v1, preserved in v2:
-
-| Stage | Variable | Hex | Usage |
-|-------|----------|-----|-------|
-| PWD | `--stage-pwd` | `#0066FF` | Blue - PWD phase |
-| Recruitment | `--stage-recruitment` | `#9333ea` | Purple - Recruitment |
-| ETA 9089 | `--stage-eta9089` | `#D97706` | Orange - ETA 9089 |
-| ETA 9089 Working | `--stage-eta9089-working` | `#EAB308` | Yellow - Working |
-| I-140 | `--stage-i140` | `#059669` | Teal - I-140 |
-| Closed | `--stage-closed` | `#6B7280` | Gray - Closed/Archived |
-
-### Urgency Colors
-
-| Level | Variable | Hex | Condition |
-|-------|----------|-----|-----------|
-| Completed | `--urgency-completed` | `#059669` | Done |
-| Overdue | `--urgency-overdue` | `#991B1B` | ≤ 0 days |
-| Urgent | `--urgency-urgent` | `#DC2626` | ≤ 7 days |
-| Soon | `--urgency-soon` | `#EA580C` | 8-30 days |
-| Normal | `--urgency-normal` | `#2563EB` | 30+ days |
-
----
-
-## Typography
-
-### Font Families
-
-```css
---font-heading: 'Space Grotesk', system-ui, sans-serif;
---font-body: 'Inter', system-ui, sans-serif;
---font-mono: 'JetBrains Mono', monospace;
-```
-
-Loaded via `next/font/google` in `layout.tsx` with CSS variable binding.
-
-**Usage:**
-- `Space Grotesk` - Headings, buttons, bold UI elements, tab labels
-- `Inter` - Body text, labels, descriptions
-- `JetBrains Mono` - Case numbers, dates, technical codes (use `.mono` class)
-
-**Weights:**
-- Space Grotesk: 500 (medium), 700 (bold)
-- Inter: 400 (regular), 500 (medium), 600 (semibold)
-- JetBrains Mono: 400 (regular), 500 (medium)
-
-### Type Scale
-
-Follows Tailwind defaults:
-- `text-4xl` (2.25rem) - Page headers
-- `text-2xl` (1.5rem) - Section headers
-- `text-lg` (1.125rem) - Card headers
-- `text-base` (1rem) - Body text
-- `text-sm` (0.875rem) - Labels, secondary text
-- `text-xs` (0.75rem) - Captions, metadata
-
----
-
-## Shadows
-
-Neobrutalist hard shadows (no blur):
-
-```css
---shadow-hard-sm: 2px 2px 0px #000;
---shadow-hard: 4px 4px 0px #000;
---shadow-hard-lg: 8px 8px 0px #000;
-```
-
-**Utility classes:**
-- `.shadow-hard-sm`
-- `.shadow-hard`
-- `.shadow-hard-lg`
-
-**Usage:**
-- All badges: `shadow-hard-sm`
-- Buttons: `shadow-hard` (default), lifts to `shadow-hard-sm` on hover
-- Cards: `shadow-hard`, expands to `shadow-hard-lg` on hover
-
----
-
-## Border Radius
-
-**v2 Design Decision (Phase 17.1):** Changed to `--radius: 0px` for pure neobrutalist aesthetic (sharp corners).
-
-Components use `rounded-none` (0px) for maximum brutalism.
-
----
-
-## Spacing
-
-Follows Tailwind spacing scale:
-- `space-y-2` (0.5rem / 8px) - Tight grouping
-- `space-y-4` (1rem / 16px) - Related elements
-- `space-y-6` (1.5rem / 24px) - Section spacing
-- `space-y-8` (2rem / 32px) - Major sections
-
-**Container padding:** `p-6` or `p-8` (1.5rem or 2rem)
-
----
-
-## Components
-
-### Core UI Components (shadcn/ui)
-
-Located in `v2/src/components/ui/`:
-
-1. **Button** - Primary, secondary, destructive, outline, ghost, link variants. Hard shadows with hover lift.
-2. **Badge** - Status indicators with 3D shadow. Variants: default, secondary, destructive, outline.
-3. **Card** - Container with header/content/footer. Variants: default, dark. Hover lift effect.
-4. **Input** - Text fields with hover lift. File input styled to match.
-5. **Label** - Form labels with required indicator support.
-6. **Dialog** - Modals with overlay and animations.
-7. **Sonner** - Toast notifications (light/dark theme support).
-8. **Skeleton** - Loading states with shimmer animation. Variants: line, block, circle.
-9. **Divider** - Horizontal rule. Variants: default, thick.
-10. **ProgressRing** - Circular progress indicator with percentage display.
-11. **NavLink** - Navigation links with active state support.
-
-### Status Components (PERM-specific)
-
-Located in `v2/src/components/status/`:
-
-1. **CaseStageBadge** - Case lifecycle stages (PWD, Recruitment, ETA9089, I-140, Closed)
-2. **ProgressStatusBadge** - Progress statuses (Working, Waiting Intake, Filed, Approved, etc.)
-3. **UrgencyIndicator** - Static colored dots (urgent/soon/normal)
-4. **DeadlineIndicator** - Days until deadline with urgency color
-5. **StageProgression** - Numbered stage labels with expanding underline hover (signature interaction)
-
-### Dashboard Components
-
-Located in `v2/src/components/dashboard/`:
-
-1. **SummaryTile** - Individual summary tile for case counts by stage
-   - Props: `status`, `label`, `count`, `subtext`, `href`, `cornerVariant`
-   - Corner variants: `none` (default), `solid` (6x6 color square), `bar` (full-width label bar), `tag` (pill badge)
-   - Hover effects: Expanding underline, text color changes to stage color, shadow lift
-   - Responsive text sizing (sm breakpoint)
-   - Theme-aware colors
-
-2. **SummaryTilesGrid** - Grid container for summary tiles
-   - Responsive grid: 2 columns mobile, 3 columns tablet+
-   - Fetches data from Convex `dashboard.getSummary`
-   - Loading state: `SummaryTilesSkeleton`, the real heading over blocks sized to
-     the real tiles (155px, measured on production), also used by
-     `DashboardSkeleton` in dashboard/loading.tsx
-   - Supports `cornerVariant` prop to apply decoration to all tiles
-
-### Content Hub Components
-
-Located in `v2/src/components/content/` (16 components, barrel-exported from `index.ts`):
-
-**Article Layout:**
-1. **ArticleLayout** - Full article page with hero, table of contents, and related posts
-2. **ContentHero** - Article hero section with title, metadata, and featured image
-3. **TableOfContents** - Sticky sidebar TOC with scroll-aware active heading highlighting
-4. **ReadingProgress** - FM `useScroll` + `useSpring` progress bar at top of article
-
-**Content Display:**
-5. **ContentCard** - Card for article previews in listings
-6. **ContentGrid** - Responsive grid for content cards
-7. **ContentListing** - Full listing page with filters and search
-8. **ContentCTA** - Call-to-action block for articles
-9. **ChangelogTimeline** - Single-page timeline for changelog entries
-
-**Media:**
-10. **ScreenshotFigure** - App screenshot with neobrutalist styling
-    - Props: `src`, `alt` (required), `caption?`, `step?` (numbered badge), `maxWidth?`
-    - Features: `border-2 border-border shadow-hard`, FM `whileInView` fade-up, green step badge, `font-mono text-xs` caption
-    - Uses `not-prose` to escape MDX prose styling
-11. **VideoPlayer** - Remotion video player (dynamic import, `ssr: false`)
-12. **VideoPlayerInner** - Client-side Remotion `<Player>` wrapper
-
-**Utilities:**
-13. **ShareButtons** - Social sharing (Twitter, LinkedIn, copy link)
-14. **RelatedPosts** - Related articles by tag similarity
-15. **CategoryFilter** - Content type filter tabs
-16. **ContentSearch** - Fuzzy search across articles
-17. **StructuredData** - JSON-LD structured data via `next/script`
-
-**MDX Components** (defined in `src/lib/content/mdx-components.tsx`):
-- `Callout` (info/warning/tip/important), `ProductCTA`, `StepByStep`/`Step`, `ComparisonTable`
-- Plus `ScreenshotFigure` and `VideoPlayer` registered for use in MDX articles
-
-### Layout Components
-
-Located in `v2/src/components/layout/`:
-
-1. **Header** - Main navigation header for authenticated pages
-2. **AuthHeader** - Simplified header for auth pages (login/signup)
-3. **AuthFooter** - Footer for auth pages
-4. **ThemeToggle** - Dark/light mode toggle button with animated icon transition
-
-### Component Patterns
-
-**Hover effects:**
-- Buttons: Translate down (2px, 2px), reduce shadow (pressed effect)
-- Cards: Translate up-left (-2px, -2px), increase shadow (lifted effect)
-- Inputs: Translate up (-1px), increase shadow
-
-**Active states:**
-- Buttons: Translate down (4px, 4px), remove shadow (fully pressed)
-- Cards: Translate down (2px, 2px), remove shadow
-
-**Transitions:**
-- Cards: `transition-transform duration-150` (0.15s) for snappiest hover feel
-- Buttons: `transition-all duration-200` (0.2s) for balanced interaction
-- Theme: `transition-colors duration-300` (0.3s) for smooth mode switching
-
----
-
-## Utility Classes
-
-### Visual Effects (globals.css)
-
-| Class | Purpose | From |
-|-------|---------|------|
-| `.grain-overlay` | Subtle SVG noise texture overlay (4% opacity) | design2, design4 |
-| `.bg-dots` | Radial dot pattern (24px grid) | design1, design3 |
-| `.mono` | JetBrains Mono font | All designs |
-| `.skeleton-pulse` | Shimmer animation for loading states | design4 |
-| `.hazard-bg` | Yellow/black diagonal stripes | design5 |
-
-### Animations
-
-| Class | Duration | Effect |
-|-------|----------|--------|
-| `.bounce-spin` | 2s | Loading-skeleton accent. Bounce with 360° spin |
-
-Removed 2026-08-01: `.bounce`, `.bounce-fast`, `.bounce-slow`, `.bounce-subtle`.
-Nothing in the product used them; they appeared only in Storybook. Perpetual
-motion on an element at rest is not a default this product wants, so the set was
-cut back to the one variant that communicates something. `.bounce-spin` marks
-the edit-case loading skeleton while data is in flight and stops when content
-arrives. If a resting element seems to need motion, give it hierarchy instead.
-
-### Hover Effects
-
-| Class | Effect |
-|-------|--------|
-| `.card-snappy` | Snappy lift on hover, press on active |
-
-### Decorations
-
-| Class | Effect |
-|-------|--------|
-| `.corner-accent` | Green triangle in top-right corner |
-| `.corner-accent-hazard` | Hazard-striped triangle |
-| `.corner-accent-sm` | Smaller corner accent |
-| `.corner-accent-lg` | Larger corner accent |
-| `.corner-accent-bl` | Bottom-left placement |
-
-### Glass Effect
-
-| Class | Effect |
-|-------|--------|
-| `.glass-panel` | Frosted glass with backdrop blur (80% opacity white/dark, 10px blur, subtle border) |
-
-**Usage:** Modals, overlays, floating panels. Light mode uses `rgba(255,255,255,0.8)`, dark mode uses `rgba(42,42,42,0.8)`.
-
-**Implementation:**
-```css
-.glass-panel {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);  /* Safari support */
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-```
-
-**Example usage:**
-```tsx
-<div className="glass-panel p-6 shadow-hard">
-  {/* Modal content */}
-</div>
-```
-
-### Custom Scrollbar
-
-Neobrutalist scrollbar styling (webkit browsers):
-- Track: `var(--muted)` background
-- Thumb: `var(--foreground)` with 3px border
-- Hover: Changes to `var(--primary)` (Forest Green)
-
----
+# PERM Tracker design system
+
+**The calm system, Oct 14 2026.** One flat page, plain type, light lines, one lime
+for the main action, nothing moving unless the visitor did something. The owner's
+brief: "super simple, not crowded, readable, breathable ... minimal, clear,
+frictionless ... no particles or dots."
+
+The tokens live in `src/app/globals.css`, the rules are held by
+`src/app/__tests__/calm-system.test.ts`, and the parts are in `src/components/ui/`.
+When this file and the code disagree, the code is right and this file is stale.
+
+## The rules
+
+1. **One answer first.** Every page opens with its title, one short lede and the one
+   fact it exists to give, then the one action that follows from it.
+2. **One tinted panel per page** (`bg-tint`), for that answer. Everything else sits
+   on the page or on a white card.
+3. **Lime is for the main action only**, one per screen. It's never text (2.05:1);
+   text and links in green use the green ink (`text-primary-text`, `.link`).
+4. **Square corners.** Every radius token is 0. `rounded-full` is kept only for
+   things that are round by nature: dots, spinners, the switch.
+5. **Two shadows, no more**: the lime button's small hard edge in light mode
+   (`shadow-press`), and a soft neutral shadow under things that float over the
+   page (`shadow-overlay`: menus, the search, dialogs, toasts).
+6. **Sentence case everywhere.** No `uppercase`, no wide letter spacing.
+7. **Mono only for case numbers, dates and figures** in tables and chart ticks.
+8. **Nothing moves by itself.** Hover changes a colour or an underline; press
+   darkens a fill; nothing lifts, scales or slides on load or scroll.
+9. **The floor:** 16px body, 14px smallest text, 4.5:1 text contrast (3:1 large),
+   3:1 for anything a reader must see to understand (control outlines, chart
+   marks), 44px tap targets, full keyboard use, reduced motion honoured.
+
+## Colour
+
+Light values; dark values are in the `.dark` block beside them.
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--background` | #FAFAFA | #111111 | the page |
+| `--card` | #FFFFFF | #1A1A1A | a raised surface |
+| `--muted` | #F5F5F5 | #222222 | a sunken ground, a hover wash |
+| `--tint` | #EDF4EE | #1C2C1E | the one answer panel, a chosen option |
+| `--foreground` | #141414 | #EDEDED | text level 1 (17.65:1) |
+| `--soft-foreground` | #3D3D3D | #C4C4C4 | text level 2 (10.41:1) |
+| `--muted-foreground` | #5E5E5E | #A3A3A3 | text level 3 (6.21:1) |
+| `--border` | #E5E5E5 | #2E2E2E | a line that only groups content |
+| `--input` | #858585 | #737373 | a line around a control, a chart mark (3:1 or better) |
+| `--primary` | #2ECC40 | #2ECC40 | the main action's fill |
+| `--primary-text` | #1A7A25 | #2ECC40 | green as text: links, focus, a chosen tab |
+| `--ring` | #1A7A25 | #2ECC40 | the keyboard focus ring |
+
+- **Which line colour.** `border-border` for a line that groups (a card edge, a table
+  rule, a divider). `border-input` around anything a person types into or presses,
+  and `bg-input` for a chart mark that carries a value (a median, a split point, an
+  axis tick). The old `--border` was ink, so a mark drawn in it vanished when the
+  token lightened; that's why the distinction is written down.
+- **Status and data colours** (`--data-good`, `--data-warn`, `--data-bad`,
+  `--data-none`, `--data-info`, each with an `-ink` twin for text) appear in charts,
+  status dots and badges, never on chrome.
+- **Stage colours** (`--stage-pwd`, `--stage-recruitment`, `--stage-eta9089`,
+  `--stage-i140`, `--stage-closed`, each with an `-ink` twin) mark a case's stage in
+  timelines and the case card, and nowhere else.
+- **Hatching** (`bg-hatch`, `bg-hatch-reverse`) means "not decided yet", "not known"
+  or "withheld". It takes the text colour: `text-muted-foreground` for a placeholder,
+  `text-input` where it has to be seen against a neighbour.
+
+Contrast is tested: `calm-system.test.ts` checks every text token against every
+surface in both themes.
+
+## Type
+
+| Role | Class | Size |
+|---|---|---|
+| Display (homepage, hub H1) | `text-4xl` | 34 to 44px, fluid |
+| Title (page H1) | `text-3xl` | 28 to 32px, fluid |
+| Heading (H2) | `text-2xl` | 24px |
+| Subheading (H3) | `text-lg` / `text-xl` | 18px |
+| Body | `text-base` | 16px |
+| Small (the floor) | `text-sm` | 14px |
+
+`text-xs` is mapped to 14px and `text-5xl` to `text-7xl` to the display size, so an
+old class can't break the scale. Space Grotesk 700 for headings (`font-heading`),
+Inter for text, JetBrains Mono (`font-mono`) for numbers only. Headings are bold,
+never black-weight. Prose runs at 68 characters at most (`max-w-prose` or
+`max-w-3xl`); paragraphs are 1em apart with no indent.
+
+## Space and layout
+
+- Steps of 4, 8, 12, 16, 24, 32, 48, 64 and 96px. Blocks on a page sit 48px apart on
+  a phone and 64px on a desktop; cards have 16 or 24px inside.
+- Widths: text 68ch; single-job pages (the case lookup, calculators, articles,
+  settings) 960px; wide pages (data, entity pages, the dashboard, cases, calendar)
+  1200px.
+- **One page shape:** header, breadcrumb, title block (H1, a lede of 25 words or
+  fewer), the answer panel, main sections (H2, then content; a box only around a
+  figure, a form or a table), folded detail, one next step, at most three related
+  links, footer. At most five boxes and one lime element in the first two screens,
+  and never a card inside a card.
+- A grid holding form controls needs `grid-cols-1` and `[&>*]:min-w-0` below its
+  breakpoint (`responsive-grid-tracks.test.ts`), or iOS sizes the track from the
+  control and it overflows.
+
+## Parts
+
+| Part | Where | Notes |
+|---|---|---|
+| `Button`, `buttonVariants` | `ui/button.tsx` | default (lime, the main action), outline, secondary, ghost, destructive, link. 44px on touch. A working button keeps its label and width and shows a spinner. |
+| `choiceVariants({ on })` | `ui/choice.ts` | every row of choices (filters, views, tabs on a page): the chosen one has a green-ink edge on the tint and `aria-pressed`. |
+| `.link` | `globals.css` | every text link: green ink, 1px underline, 2px on hover. Use `[&_a]:link` for links inside prose you don't render. |
+| `StatusBadge`, `ToneBadge` | `ui/badge.tsx` | a muted chip with a coloured square; DOL's status words as DOL prints them. |
+| `Input`, `Textarea`, `Switch`, `Checkbox` | `ui/` | 1px `--input` outline, 16px text at every width (iOS zooms below that). |
+| `Dialog`, `Popover`, `DropdownMenu`, `Tooltip` | `ui/` | the only things with a shadow; they fade in 120 to 150ms. |
+| `Skeleton`, `.skeleton-pulse` | `ui/skeleton.tsx`, `globals.css` | each page's own loading shape at measured heights, with a quiet sweep. |
+| `FinePrint`, `MoreText`, `PageBasics` | `components/data/` | folded detail: a native `<details>`, so the words stay in the page for search and the palette. |
+| `IndexHeader`, `ProfileHeader`, `Chapter`, `ChapterNav` | `components/data/`, `components/entities/` | the top of list pages and of employer, firm and occupation pages. |
+| `CaseLookupForm`, `CaseNextStep` | `components/tools/` | the case-number box (a plain GET form, works without scripts) and the one next step for someone waiting on a case. |
+| `DidYouMean`, `NameGroups` | `components/search/` | "did you mean" for any empty search; the pages a name can mean, beside its filings. |
+| `ChartTips`, `DateRuler` | `components/data/`, `components/tools/` | every chart's hover and tap readout; a deadline drawn as a ruler. |
+| `PageHeading`, `AppBreadcrumb`, `SettingsCard` | `app/(authenticated)/components/`, `components/settings/` | the signed-in app's title block, trail and settings sections. |
+
+Month names and date labels come from one module, `convex/lib/months.ts`
+(`MONTH_NAMES`, `MONTH_ABBR`, `longDate`, `shortDate`, `monthYear`), plain string
+work so the server and every browser print the same day
+(`one-month-list.test.ts`).
+
+## Tables and charts
+
+- **Tables:** sentence-case heads, 44 to 48px rows with 1px rules and no zebra,
+  numbers right-aligned in tabular mono. On a phone a table becomes a list of short
+  cards (the case browsers: number and status, then who, then when), CSS only where
+  the rows can be restacked, so they exist once.
+- **Charts:** a sentence-case title, at most four horizontal gridlines, one highlight
+  colour for the reader's own thing (their case, DOL's current month), status and
+  stage colours only where they mean something, a readout on hover, focus and tap
+  (`ChartTips`). SVG `<text>` carries a trailing space so labels don't glue.
+- **Every figure carries its date** and names its source (`DataProvenance`).
+
+## Motion
+
+Nothing animates on load or on scroll. What moves, and why:
+
+| What | How | Why |
+|---|---|---|
+| Hover, press | colour or underline, 150ms | says the thing can be pressed |
+| Menus, dialogs, popovers | fade, 120 to 150ms | shows where a new layer came from |
+| Folds | the browser's own `<details>` | shows what opened |
+| Loading skeleton | a faint band, 2.8s cycle, starting after 0.4s | a fast load never sweeps; a slow one doesn't look frozen |
+| Spinner | inside a working button | the button keeps its label and width |
+
+`MotionConfig reducedMotion="user"` wraps the site (`shared-providers.tsx`); under
+reduced motion the sweep stops and the skeleton keeps its still ground. The gate
+fails on `whileInView`, `whileHover`, `whileTap`, hover lifts, `transition-all`,
+`animate-bounce/ping/pulse` and any looping animation but the sweep and the spinner.
+
+## Words
+
+Sentence case; sentences of 20 words or fewer; buttons start with a verb and run to
+four words at most ("Check", "Email me changes", "Add case"). One term per thing:
+case number, case alert, follow, queue alert, estimated decision; "wage request" in
+public, "PWD" in the app. Numbers with separators; "October 27, 2026" in sentences and
+"Oct 27" in tables. An empty state is a title, one sentence and one action. An error
+sits under its field, with a summary at the top of the form.
+
+## The gates
+
+| Test | Holds |
+|---|---|
+| `src/app/__tests__/calm-system.test.ts` | no hard shadows, no hover movement, no `transition-all`, no black-weight headings, no all-caps, no self-running Motion props, reduced motion on, no loops but two, no textures, square corners, no wide tracking or black borders, one hatch, token contrast in both themes |
+| `no-glued-jsx-text.test.ts`, `scripts/audit_glued_text.py` | words that render without a space between them (the rendered audit is the authority) |
+| `responsive-grid-tracks.test.ts`, `form-controls-min-width.test.ts` | form grids that overflow on iOS |
+| `one-month-list.test.ts` | one list of month names |
+| `scroll-targets.test.ts` | every place the assistant can scroll to exists |
 
 ## Storybook
 
-**Run:** `cd v2 && npm run storybook` (http://localhost:6006)
-
-**Stories available:**
-- UI components (Button, Badge, Card, Input, Dialog, Label, Sonner, Skeleton, Divider, Utilities)
-- Status components (CaseStageBadge, ProgressStatusBadge, UrgencyIndicator, DeadlineIndicator, StageProgression)
-
-**Theme switching:** Use toolbar to toggle light/dark modes.
-
----
-
-## Accessibility
-
-### Contrast Ratios
-- Text on background: 21:1 (WCAG AAA)
-- Forest Green on white: 4.5:1+ (WCAG AA Large)
-- Status colors: All meet WCAG AA minimum
-
-### Focus States
-All interactive elements use Forest Green focus ring:
-```css
-focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-```
-
-### Keyboard Navigation
-- All components support keyboard navigation
-- Dialog: Escape to close, focus trap
-- Buttons: Enter/Space activation
-
-### Screen Readers
-- Semantic HTML throughout
-- ARIA labels on icon-only buttons
-- Status badges include accessible text
-
----
-
-## Design Decisions Log
-
-### Phase 17 (2025-12-22)
-- Established neobrutalist base with Forest Green accent
-- Hard shadows (no blur), black borders, zero border radius
-- Space Grotesk + Inter + JetBrains Mono typography
-- shadcn/ui component library
-
-### Phase 17.1 (2025-12-22)
-- Added visual polish: grain overlay, dot backgrounds, mono utility
-- Created Skeleton, Divider, CardDark, StageProgression components
-- Added bounce animations, corner accents, custom scrollbar
-- Deferred: hazard stripes, corner labels, knobs, glass panels, typing cursor
-
-### ISS-001 Resolution (2025-12-22)
-- Added stage/urgency colors to `@theme inline` for Tailwind utilities
-- Enables `bg-stage-pwd`, `text-urgency-urgent`, etc.
-
-### Glass Panel Implementation (2025-12-22)
-- Added `.glass-panel` utility class for modal/overlay backgrounds
-- Includes backdrop blur (10px) with light/dark mode variants
-- Uses webkit prefix for Safari compatibility
-
-### Phase 20 - Dark Mode & Dashboard (2025-12-23)
-- Implemented dark mode with `next-themes` provider
-- Added ThemeToggle component with animated Sun/Moon icons
-- Created SummaryTile component with 4 corner decoration variants
-- Created SummaryTilesGrid with responsive 2/3 column layout
-- Added dashboard page with summary tiles integration
-- Fixed dark mode on auth pages (login/signup)
-- Updated AuthHeader with dark mode support
-- Added ProgressRing and NavLink UI components
-- Enhanced theme transitions (0.3s ease-out) across all elements
-
-### Phase 21 - CaseCard UI Polish (2025-12-25)
-- **Thinner borders:** Changed from 4px → 2px for card body, 4px → 1px for folder tab and bookmark
-- **Faster transitions:** Migrated from Framer Motion to pure CSS transitions (150ms duration)
-- **Stage-colored tabs:** Folder tab now uses stage color background with white text (previously light color with colored text)
-- **Darker manila in dark mode:** Updated manila colors (#C4A97A) for better dark mode contrast
-- **Menu state tracking:** Dropdown menu no longer collapses card on open (tracks `isMenuOpen` state)
-- **Universal drag-drop:** All cases now use SortableCaseCard wrapper regardless of sort mode (simpler architecture)
-- **Z-index layering fix:** Left color bar z-20 (above content, below tab) to prevent overlap issues
-
-**Design Rationale:**
-- Thinner borders reduce visual weight while maintaining brutalist aesthetic
-- 150ms transitions feel snappier than 300ms (matches user expectation for hover feedback)
-- Stage-colored tabs improve information hierarchy (stage is primary indicator)
-- Universal SortableCaseCard simplifies code and ensures consistent behavior
-
-### Phase 25 - Settings & Motion Library (2025-12-31)
-- **Motion library integration:** Added `motion/react` for snappy page transitions
-  (the route-change fade was removed Sep 30 2026; see ANIMATION_STORYBOARD "Loading states")
-- **Tab switch animation:** Settings layout content fades + slides (150ms, ease-out) on section change
-- **Success feedback:** Animated checkmark with spring physics after successful save
-- **Status text transitions:** AnimatePresence for clean state changes (dirty/saved/clean)
-
-**Animation Guidelines:**
-- All transitions: 150ms maximum for snappy feel
-- Use `motion/react` import for client components
-- Prefer CSS transitions for simple hover/active states
-- Use Motion for complex state-based animations (enter/exit, springs)
-
-### ISS-020 Resolution - Settings Keyboard Navigation (2026-01-03)
-- **Full WAI-ARIA keyboard navigation** for Settings tabs
-- Desktop (vertical): ArrowUp/ArrowDown to move between tabs
-- Mobile (horizontal): ArrowLeft/ArrowRight to move between tabs
-- Home/End keys to jump to first/last tab
-- Roving tabindex pattern (active tab = tabIndex 0, others = -1)
-
-### ISS-021 Resolution - Tab Styling Decision (2026-01-03)
-
-**Two Tab Styling Patterns:**
-
-| Pattern | Component | Typography | Use Case |
-|---------|-----------|------------|----------|
-| **Text-only tabs** | `NotificationTabs` | `uppercase tracking-wide` | Short text labels without icons |
-| **Icon + text tabs** | `SettingsLayout` | Normal case | Longer labels with icons |
-
-**Rationale:**
-- **NotificationTabs** uses uppercase because tabs are short, text-only labels (All, Unread, Deadlines). Uppercase with wide tracking improves scanability and creates visual weight without icons.
-- **SettingsLayout** uses normal case because tabs include icons that provide visual weight. Uppercase + icons would be visually heavy and harder to read.
-
-**Guidelines:**
-- Use `uppercase tracking-wide` for text-only tab bars with short labels
-- Use normal case for tabs with icons or longer descriptive labels
-- Both patterns share the same base styling: font-heading, font-bold, 2px borders, active state with bg-black/text-white
-
----
-
-## Migration from v1
-
-| v1 Pattern | v2 Equivalent |
-|------------|---------------|
-| `.btn-brutalist` class | `<Button>` component |
-| `.card-brutalist` class | `<Card>` component |
-| CSS variables in `main.css` | CSS variables in `globals.css` |
-| Alpine.js state | React hooks |
-| Manual dark mode class | `next-themes` provider |
-
----
-
-## Resources
-
-- **shadcn/ui docs:** https://ui.shadcn.com/
-- **Tailwind CSS:** https://tailwindcss.com/docs
-- **next-themes:** https://github.com/pacocoursey/next-themes
-- **Motion:** https://motion.dev/docs/react-quick-start (import as `motion/react`)
-- **Design skill:** `.planning/FRONTEND_DESIGN_SKILL.md` (frontend-design plugin reference for subagents)
-
-**Related Docs:**
-- [ANIMATION_STORYBOARD.md](ANIMATION_STORYBOARD.md) - Animation catalog and timing tokens
-
----
-
-**Maintained by:** Claude Code
-**Last Review:** 2026-03-05
+`pnpm storybook` (:6006). Every UI part has stories in light and dark; the app's real
+pages are drawn from a recorded sample firm under "Tour/App pages"
+(`src/components/tour/`). Theme is a class on `<html>`; a capture of the dark theme
+has to set it.
