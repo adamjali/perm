@@ -54,9 +54,11 @@ try {
         return { x: r.left + window.scrollX, y: r.top + window.scrollY, right: col.getBoundingClientRect().right + window.scrollX };
       }, [card.from ?? null, VIEW_W]);
       if (!box) throw new Error(card.from ? `no heading starting "${card.from}"` : "no H1");
+      // `above`: more room over the heading, for a hero whose side column starts higher;
+      // `maxWidth`: a wider frame, for a hero that runs past the usual column.
       const x = Math.max(0, Math.round(box.x - 32));
-      const y = Math.max(0, Math.round(box.y - 40));
-      const w = Math.min(SHOT_W_MAX, Math.round(box.right + 32) - x, VIEW_W - x);
+      const y = Math.max(0, Math.round(box.y - (card.above ?? 40)));
+      const w = Math.min(card.maxWidth ?? SHOT_W_MAX, Math.round(box.right + 32) - x, VIEW_W - x);
       const file = join(outDir, `${card.slug}.png`);
       await page.screenshot({ path: file, clip: { x, y, width: w, height: SHOT_H }, fullPage: true });
       card.shot = `${card.slug}.png`;
