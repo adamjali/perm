@@ -56,7 +56,7 @@ export default function ContactPage() {
         {/* The figure before the routes, because its point is the thing the
             headings below cannot say at a glance: these are three doors into
             one inbox, not three different teams. */}
-        <figure className="border border-border bg-card p-6">
+        <figure className="bg-tint p-6">
           <RoutingFigure className="h-auto w-full text-foreground" />{" "}
           <figcaption className="mt-4 border-t border-border pt-3 text-sm font-bold text-muted-foreground">
             Three ways in, one inbox
@@ -86,7 +86,7 @@ export default function ContactPage() {
 
           {/* Feature Requests */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center border border-border bg-secondary">
+            <div className="flex h-12 w-12 items-center justify-center border border-input bg-secondary">
               <ChatTextIcon className="h-6 w-6 text-secondary-foreground" />
             </div>{" "}
             <div>
@@ -129,7 +129,7 @@ export default function ContactPage() {
         </div>
 
         {/* Response time */}
-        <div className="mt-12 border border-border bg-muted p-6">
+        <div className="mt-12 bg-tint p-6">
           <h3 className="font-heading text-lg font-bold mb-2">Response time</h3>{" "}
           <p className="text-muted-foreground">
             We typically respond to inquiries within 24-48 hours during business
@@ -145,7 +145,7 @@ export default function ContactPage() {
           have a better route. Sticky on desktop so it is in reach from any of
           the routes; a normal block below `lg`. */}
       <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <div className="border border-border bg-card p-6 sm:p-8">
+        <div className="bg-tint p-6 sm:p-8">
           <h2 className="font-heading text-2xl font-bold">
             Or write to us here
           </h2>{" "}

@@ -152,7 +152,7 @@ export function LiveCaseBrowser({
 
   return (
     <section id="live" ref={liveTop} >
-      <div className="border border-border bg-card p-5 sm:p-6">
+      <div className="object p-5 sm:p-6">
         <p className="text-sm font-bold text-muted-foreground">
           Newer than DOL&apos;s published files
         </p>{" "}
@@ -199,7 +199,7 @@ export function LiveCaseBrowser({
               </Fragment>
             ))}
           </div>{" "}
-          <label className="flex min-h-[44px] flex-1 items-center gap-2 border border-border bg-card px-3 text-sm font-bold sm:max-w-md">
+          <label className="flex min-h-[44px] flex-1 items-center gap-2 border border-input bg-card px-3 text-sm font-bold sm:max-w-md">
             <span className="text-sm text-muted-foreground">Search</span>{" "}
             <input
               type="search"
@@ -246,7 +246,7 @@ export function LiveCaseBrowser({
             failure={fetched.failure}
             onRetry={fetched.retry}
             after="The case search above still answers by number or employer."
-            className="mt-5 border border-border bg-tint p-4"
+            className="mt-5 bg-tint p-4"
           />
         ) : null}
 
@@ -346,7 +346,7 @@ export function LiveCaseBrowser({
             previousLabel="Newer"
             nextLabel="Older"
             labelClassName="text-sm font-bold"
-            buttonClassName="min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+            buttonClassName="min-h-[44px] border border-input bg-card px-4 text-sm font-bold hover:bg-tint disabled:text-muted-foreground disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             scrollTo={liveTop}
             onPrevious={() => setCursors((c) => c.slice(0, -1))}
             onNext={() => page && setCursors((c) => [...c, page.continueCursor])}

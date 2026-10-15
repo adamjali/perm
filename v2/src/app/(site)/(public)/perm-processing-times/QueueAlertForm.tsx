@@ -166,7 +166,7 @@ export function QueueAlertForm({
     }
   }
 
-  const frame = bare ? "" : "border border-border bg-card p-5 sm:p-6";
+  const frame = bare ? "" : "object p-5 sm:p-6";
   const what =
     selectedQueue === "perm"
       ? "One email when DOL's analyst-review queue reaches the month your case was filed, and nothing after it."

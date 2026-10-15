@@ -160,7 +160,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
           ].map((c) => (
             <div
               key={c.k}
-              className="min-w-0 flex-1 basis-52 border border-border bg-background p-4"
+              className="min-w-0 flex-1 basis-52 bg-tint p-4"
             >
               <p className="text-sm font-semibold text-muted-foreground">
                 {c.k}
@@ -198,7 +198,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
                       data-tip={`${p.label}\n${formatInt(p.received)} received\n${formatInt(p.approved)} approved, ${formatInt(p.denied)} denied\n${formatInt(p.pending)} pending at quarter end`}
                     >
                       <span className="text-sm tabular-nums text-muted-foreground">{p.label}</span>{" "}
-                      <span className="block h-6 w-full border border-border bg-muted">
+                      <span className="block h-6 w-full border border-input bg-muted">
                         <span
                           className="block h-full bg-primary"
                           style={{ width: `${Math.max((p.received / maxReceived) * 100, 1)}%` }}
@@ -237,7 +237,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
                         data-tip={`${p.label}\n${formatInt(p.approved)} approved\n${formatInt(p.denied)} denied\n${formatInt(decided)} decided${p.denialRate !== null ? `\n${pct(p.denialRate)} denied` : ""}`}
                       >
                         <span className="text-sm tabular-nums text-muted-foreground">{p.label}</span>{" "}
-                        <span className="block h-6 w-full border border-border bg-muted">
+                        <span className="block h-6 w-full border border-input bg-muted">
                           <span className="flex h-full" style={{ width: `${Math.max(width, 1)}%` }}>
                             <span
                               className="block h-full bg-primary"
@@ -260,11 +260,11 @@ export function I140Trends({ rows }: I140TrendsProps) {
               </ChartTips>
               <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2">
-                  <span className="h-3 w-3 border border-border bg-primary" aria-hidden="true" />
+                  <span className="h-3 w-3 border border-input bg-primary" aria-hidden="true" />
                   Approved
                 </span>{" "}
                 <span className="flex items-center gap-2">
-                  <span className="h-3 w-3 border border-border bg-data-bad" aria-hidden="true" />
+                  <span className="h-3 w-3 border border-input bg-data-bad" aria-hidden="true" />
                   Denied
                 </span>{" "}
                 <span>The number on the right is denials.</span>
@@ -274,7 +274,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
             <DenialRateLine points={points} />
 
             {split ? (
-              <section className="mt-12 border border-border bg-tint p-6 sm:p-8">
+              <section className="mt-12 bg-tint p-6 sm:p-8">
                 <h3 className="font-heading text-xl font-bold">
                   What the {category} rate is an average of
                 </h3>{" "}
@@ -295,7 +295,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
                         <span className="text-sm font-bold">
                           {c.code} · {c.label}
                         </span>{" "}
-                        <span className="relative block h-6 border border-border bg-background">
+                        <span className="relative block h-6 border border-input bg-background">
                           <span
                             className="absolute inset-y-0 left-0 block bg-data-bad"
                             style={{

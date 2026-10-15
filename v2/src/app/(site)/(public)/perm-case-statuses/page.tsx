@@ -230,7 +230,7 @@ export default async function PermCaseStatusesPage() {
             <li key={pr.id}>
               <a
                 href={`#${pr.id}`}
-                className="flex min-h-[44px] items-baseline justify-between gap-3 border border-border bg-card px-4 py-3 transition-transform motion-reduce:transition-none"
+                className="flex min-h-[44px] items-baseline justify-between gap-3 bg-tint px-4 py-3 transition-transform motion-reduce:transition-none"
               >
                 <span className="font-heading font-bold">{pr.label}</span>{" "}
                 <span className="font-mono text-sm text-muted-foreground">
@@ -240,7 +240,7 @@ export default async function PermCaseStatusesPage() {
             </li>
           ))}
         </ul>{" "}
-        <details className="group mt-3 border border-border bg-card">
+        <details className="group mt-3 bg-tint">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 font-bold hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
             Find one status
             <CaretDownIcon className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />

@@ -52,7 +52,7 @@ export function PwdValidityCalculator() {
   }, [det, today]);
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-8">
+    <div className="object p-5 sm:p-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
         <div>
           <Label htmlFor={detId}>Determination date</Label>{" "}
@@ -74,7 +74,7 @@ export function PwdValidityCalculator() {
       {result ? (
         <div className="mt-4">
           {result.left < 0 ? (
-            <p className="mb-4 flex items-start gap-2 border border-border bg-background p-3 text-sm">
+            <p className="mb-4 flex items-start gap-2 bg-tint p-3 text-sm">
               <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> A PERM that didn&apos;t start
               recruitment or file inside the window needs a new wage request.
             </p>

@@ -126,7 +126,7 @@ export default async function ExtensionPage() {
                 Add to Chrome
               </a>
             ) : (
-              <p className="inline-flex items-center gap-2 border border-border bg-card px-4 py-3 text-base font-bold">
+              <p className="inline-flex items-center gap-2 bg-tint px-4 py-3 text-base font-bold">
                 <PuzzlePieceIcon weight="bold" className="size-5 shrink-0" aria-hidden="true" />{" "}
                 On the Chrome Web Store soon, free.
               </p>
@@ -141,7 +141,7 @@ export default async function ExtensionPage() {
           Where it works
         </h2>{" "}
         <ul className="mt-5 grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2">
-          <li className="flex gap-4 border border-border bg-card p-5">
+          <li className="flex gap-4 bg-tint p-5">
             <BriefcaseIcon weight="bold" className="size-7 shrink-0 text-primary-text" aria-hidden="true" />{" "}
             <div>
               <p className="font-heading text-lg font-bold">On its own</p>{" "}
@@ -150,7 +150,7 @@ export default async function ExtensionPage() {
               </p>
             </div>
           </li>{" "}
-          <li className="flex gap-4 border border-border bg-card p-5">
+          <li className="flex gap-4 bg-tint p-5">
             <CursorClickIcon weight="bold" className="size-7 shrink-0 text-primary-text" aria-hidden="true" />{" "}
             <div>
               <p className="font-heading text-lg font-bold">With a click</p>{" "}
@@ -191,7 +191,7 @@ export default async function ExtensionPage() {
           <ShieldCheckIcon weight="bold" className="size-7 shrink-0 text-primary-text" aria-hidden="true" />{" "}
           Privacy
         </h2>{" "}
-        <dl className="mt-5 divide-y divide-border border border-border bg-card">
+        <dl className="mt-5 divide-y divide-border bg-tint">
           {SENT.map(([term, meaning]) => (
             <div key={term} className="grid grid-cols-1 gap-1 px-5 py-4 sm:grid-cols-[12rem_1fr] sm:gap-6">
               <dt className="font-heading text-base font-bold">{term}</dt>{" "}
@@ -200,7 +200,7 @@ export default async function ExtensionPage() {
           ))}
         </dl>{" "}
         <h3 className="mt-8 font-heading text-lg font-bold">What it asks Chrome for, and why</h3>{" "}
-        <dl className="mt-3 divide-y divide-border border border-border bg-card">
+        <dl className="mt-3 divide-y divide-border bg-tint">
           {PERMISSIONS.map(([term, meaning]) => (
             <div key={term} className="grid grid-cols-1 gap-1 px-5 py-4 sm:grid-cols-[12rem_1fr] sm:gap-6">
               <dt className="font-heading text-base font-bold">{term}</dt>{" "}

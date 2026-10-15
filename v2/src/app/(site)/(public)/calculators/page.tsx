@@ -287,7 +287,7 @@ export default function CalculatorsPage() {
       <section className="mt-10">
         <h2 className="font-heading text-2xl font-bold">Which one answers your question?</h2>
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full border border-border text-left text-sm">
+          <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">
             <thead className="border-b border-input bg-muted">
               <tr>
                 <th scope="col" className="p-3 text-sm font-bold">Your situation{" "}</th>
@@ -337,7 +337,7 @@ export default function CalculatorsPage() {
               <Link
                 key={t.href}
                 href={t.href}
-                className="group flex h-full flex-col border border-border bg-card p-6 transition-colors duration-150 hover:border-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="group flex h-full flex-col border-2 border-transparent bg-tint p-6 transition-colors duration-150 hover:border-[var(--object-border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <div className="flex items-center gap-3">
                   <Icon className="size-6 shrink-0 text-primary-text" aria-hidden="true" />
@@ -412,7 +412,7 @@ export default function CalculatorsPage() {
         </div>
       </section>
 
-      <section className="mt-12 border border-border bg-muted p-6 sm:p-8">
+      <section className="mt-12 bg-tint p-6 sm:p-8">
         <h2 className="font-heading text-xl font-bold">
           Why some of these refuse to give you a number
         </h2>{" "}

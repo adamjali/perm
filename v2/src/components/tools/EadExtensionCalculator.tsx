@@ -97,7 +97,7 @@ export function EadExtensionCalculator() {
   }, [expires, received, category, same, i94]);
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-8">
+    <div className="object p-5 sm:p-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
         <div>
           <Label htmlFor={expiresId}>&quot;Card Expires&quot; date on the EAD</Label>{" "}

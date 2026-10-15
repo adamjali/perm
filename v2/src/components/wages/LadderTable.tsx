@@ -37,7 +37,7 @@ export function LadderTable({
   if (rows.length === 0) return null;
   return (
     <ScrollBox label={`Offered wage percentiles by ${subjectLabel.toLowerCase()}`} className="-mx-1 px-1">
-      <table className="w-full min-w-[640px] border border-border text-left text-sm">
+      <table className="w-full min-w-[640px] border-t-2 border-[var(--object-border)] text-left text-sm">
         <caption className="sr-only">
           {`Offered wage percentiles by ${subjectLabel.toLowerCase()}, with the number of ${unit} behind each row.`}
         </caption>

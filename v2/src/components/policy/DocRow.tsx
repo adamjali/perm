@@ -131,7 +131,7 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
           ))}
         </p>{" "}
         {shot ? (
-          <figure className="mt-5 max-w-xl border border-border bg-background p-2">
+          <figure className="mt-5 max-w-xl bg-tint p-2">
             <Image
               src={`/images/policy/${doc.documentNumber}.webp`}
               width={shot.w}

@@ -50,10 +50,10 @@ export function StageCensus({
         const n = inGroup.reduce((a, s) => a + s.cases, 0);
         return (
           <Fragment key={group}>{" "}
-          <section className="border border-border bg-card">
+          <section className="bg-tint">
             <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-4 py-3">
               <span
-                className="inline-block h-3.5 w-3.5 shrink-0 border border-border"
+                className="inline-block h-3.5 w-3.5 shrink-0 border border-input"
                 style={{ backgroundColor: style.fill }}
                 aria-hidden="true"
               />{" "}

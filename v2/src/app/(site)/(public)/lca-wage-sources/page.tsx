@@ -70,7 +70,7 @@ export default async function LcaWageSourcesPage() {
       </header>
 
       {!doc ? (
-        <p className="mt-8 border border-border bg-card p-5 text-base">These figures are being built. Try again tomorrow.</p>
+        <p className="mt-8 bg-tint p-5 text-base">These figures are being built. Try again tomorrow.</p>
       ) : (
         <>
           <section className="mt-10" aria-labelledby="by-year">
@@ -82,7 +82,7 @@ export default async function LcaWageSourcesPage() {
                     {" "}
                     <li className="grid grid-cols-[4.5rem_1fr_7.5rem] items-center gap-3 text-sm">
                       <span className="font-bold tabular-nums">FY{y.fy}</span>{" "}
-                      <span className="flex h-5 overflow-hidden border border-border" aria-hidden="true">
+                      <span className="flex h-5 overflow-hidden border border-input" aria-hidden="true">
                         {KINDS.map((k) =>
                           y[k] > 0 ? (
                             <span
@@ -105,7 +105,7 @@ export default async function LcaWageSourcesPage() {
                 <Fragment key={k}>
                   {" "}
                   <li className="flex items-center gap-2">
-                    <span className={`inline-block size-3 border border-border ${COLOR[k]}`} aria-hidden="true" />
+                    <span className={`inline-block size-3 border border-input ${COLOR[k]}`} aria-hidden="true" />
                     {KIND_LABEL[k]}
                   </li>
                 </Fragment>

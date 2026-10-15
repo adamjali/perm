@@ -55,7 +55,7 @@ export function EmbedGallery({ origin }: { origin: string }) {
             {EMBEDS.filter((e) => e.group === g).map((e) => (
               <Fragment key={e.slug}>
                 {" "}
-                <li className="flex flex-col border border-border bg-card p-4">
+                <li className="flex flex-col bg-tint p-4">
                   <p className="font-heading text-base font-bold">{e.title}</p>{" "}
                   <p className="mt-1 flex-1 text-sm leading-relaxed text-soft">{e.blurb}</p>{" "}
                   <p className="mt-2 text-sm">
@@ -97,7 +97,7 @@ export function EmbedGallery({ origin }: { origin: string }) {
 function Snippet({ html }: { html: string }) {
   return (
     <div className="mt-3 flex items-start gap-2">
-      <pre className="min-w-0 flex-1 overflow-x-auto border border-border bg-background p-2 text-sm" translate="no">
+      <pre className="min-w-0 flex-1 overflow-x-auto border-t-2 border-[var(--object-border)] bg-background p-2 text-sm" translate="no">
         <code>{html}</code>
       </pre>{" "}
       <CopyButton text={html} />

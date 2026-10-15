@@ -96,7 +96,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
 
   if (status === "done") {
     return (
-      <div className="border border-border bg-card p-5 sm:p-6">
+      <div className="object p-5 sm:p-6">
         <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
         <AlertDone message={message} queued={queued} className="mt-2" />{" "}
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
@@ -111,7 +111,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
       ref={observe}
       onFocusCapture={onFocusCapture}
       onSubmit={handleSubmit}
-      className="border border-border bg-card p-5 sm:p-6 print:hidden"
+      className="object p-5 sm:p-6 print:hidden"
     >
       <h2 className="font-heading text-xl font-bold">Email me when my cutoff moves</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">

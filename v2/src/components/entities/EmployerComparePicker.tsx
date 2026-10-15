@@ -135,7 +135,7 @@ export function EmployerComparePicker({ a, b }: { a: Chosen | null; b: Chosen | 
         if (!ready || !left || !right) return;
         router.push(`/perm-employers/compare?a=${encodeURIComponent(left.slug)}&b=${encodeURIComponent(right.slug)}`);
       }}
-      className="grid grid-cols-1 gap-5 border border-border bg-card p-5 [&>*]:min-w-0 sm:grid-cols-2 sm:p-6"
+      className="grid grid-cols-1 gap-5 object p-5 [&>*]:min-w-0 sm:grid-cols-2 sm:p-6"
     >
       <Picker label="First employer" initial={a} onChoose={setLeft} />{" "}
       <Picker label="Second employer" initial={b} onChoose={setRight} />{" "}

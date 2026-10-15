@@ -422,7 +422,7 @@ export function PriorityDateEstimator({
 
   if (bulletins.length === 0) {
     return (
-      <div className={cn("border border-border bg-card p-6", className)}>
+      <div className={cn("object p-6", className)}>
         <p className="text-base leading-relaxed">
           The visa bulletin series is being fetched. Until it lands,{" "}
           <a
@@ -556,7 +556,7 @@ export function PriorityDateEstimator({
   const isoOf = (t: number) => new Date(t).toISOString().slice(0, 7);
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
+    <div className={cn("object", className)}>
       <div className="border-b border-border p-6 sm:p-8">
         {/* data-embed-hide: the embed's own title bar already says this. */}
         <div data-embed-hide className="flex items-center gap-3">
@@ -734,7 +734,7 @@ export function PriorityDateEstimator({
                 // all, it changes month to month, and it is published on a
                 // host that serves scripts. Dated, sourced, and never used to
                 // infer a cutoff.
-                <div className="mt-4 border border-border bg-card p-4">
+                <div className="mt-4 bg-tint p-4">
                   <p className="text-sm font-bold text-muted-foreground">
                     What USCIS is accepting now
                   </p>{" "}
@@ -813,7 +813,7 @@ export function PriorityDateEstimator({
             // nothing about the reader's own case. The last bulletin that did
             // publish a cutoff is where they can still see where they stand,
             // and that gap is the thing worth watching when it reopens.
-            <div className="mt-4 border border-border bg-card p-4">
+            <div className="mt-4 bg-tint p-4">
               <p className="text-sm font-bold text-muted-foreground">
                 Where your date stood before it closed
               </p>{" "}
@@ -857,7 +857,7 @@ export function PriorityDateEstimator({
             </div>
           ) : null}{" "}
           {estimate.latest?.kind === "unavailable" ? (
-            <div className="mt-4 border border-border bg-card p-4">
+            <div className="mt-4 bg-tint p-4">
               <p className="text-sm font-bold text-muted-foreground">
                 Why a category closes
               </p>{" "}
@@ -898,7 +898,7 @@ export function PriorityDateEstimator({
             // Said ABOVE the drawing, because it explains an absence in the
             // drawing. A reader who typed a date and sees no dashed line has
             // to be told why before they read the picture, not after.
-            <p className="mt-3 max-w-2xl border border-border bg-muted p-4 text-base font-bold leading-relaxed">
+            <p className="mt-3 max-w-2xl bg-tint p-4 text-base font-bold leading-relaxed">
               {formatAsOf(priorityDate)} is{" "}
               {pdEdgeDays !== null
                 ? `${pdEdgeDays.toLocaleString("en-US")} days `

@@ -42,7 +42,7 @@ export function I140SubtypePanel({
   if (subtypes.length === 0) return null;
   const slowest = Math.max(...subtypes.map((s) => s.months80));
   return (
-    <div className={cn("border border-border bg-background p-4", className)}>
+    <div className={cn("bg-tint p-4", className)}>
       <p className="text-sm font-semibold text-muted-foreground">
         USCIS published times, 80% within
       </p>{" "}
@@ -141,7 +141,7 @@ export function PriorityDatePanel({
   const rows = categories.filter((c) => bulletin.finalAction[c]);
   if (rows.length === 0) return null;
   return (
-    <div className={cn("border border-border bg-background p-4", className)}>
+    <div className={cn("bg-tint p-4", className)}>
       <p className="text-sm font-semibold text-muted-foreground">
         Where the line stood in {formatMonth(bulletin.bulletinMonth) ?? bulletin.bulletinMonth}
       </p>{" "}

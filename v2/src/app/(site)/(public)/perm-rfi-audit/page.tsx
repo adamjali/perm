@@ -289,7 +289,7 @@ export default async function PermRfiAuditPage() {
           {funnel ? (
             <>
               <RfiOutcomes funnel={funnel} />
-              <div className="mt-5 grid gap-4 border border-border bg-secondary p-4 sm:p-5">
+              <div className="mt-5 grid gap-4 bg-tint p-4 sm:p-5">
                 {funnel.medianDaysToDecision !== null ? (
                   <p className="text-sm leading-relaxed">
                     <b className="font-bold">
@@ -563,7 +563,7 @@ function Concentration({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="border border-border bg-card p-5">
+      <div className="bg-tint p-5">
         <p className="text-sm font-bold text-muted-foreground">
           Most concentrated
         </p>{" "}
@@ -579,7 +579,7 @@ function Concentration({
           company&rsquo;s filings.
         </p>
       </div>
-      <div className="border border-border bg-card p-5">
+      <div className="bg-tint p-5">
         <p className="text-sm font-bold text-muted-foreground">
           Most spread out
         </p>{" "}
@@ -676,7 +676,7 @@ function Limit({ head, children }: { head: string; children: React.ReactNode }) 
 
 function EmptyState({ what }: { what: string }) {
   return (
-    <p className="border border-border bg-secondary p-5 text-sm leading-relaxed">
+    <p className="bg-tint p-5 text-sm leading-relaxed">
       {what} is not loading right now. DOL publishes the underlying case
       statuses at{" "}
       <a

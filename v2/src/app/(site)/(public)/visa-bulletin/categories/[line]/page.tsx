@@ -213,7 +213,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
           The final action cutoff in each year&apos;s first bulletin (October) against its last (September), the year the
           State Department plans visa numbers for. Newest first.
         </p>{" "}
-        <ScrollBox label="Cutoffs a fiscal year at a time" className="mt-4 border border-border">
+        <ScrollBox label="Cutoffs a fiscal year at a time" className="mt-4 border-t-2 border-[var(--object-border)]">
           <table className="w-full min-w-[560px] text-left text-base">
             <thead className="border-b border-border bg-muted/40">
               <tr>
@@ -264,7 +264,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
           </h2>{" "}
           <dl className="mt-4 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-3">
             {counts.awaiting ? (
-              <div className="border border-border bg-card p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-base text-soft">Approved petitions waiting for a visa number</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                   {counts.awaiting.count.toLocaleString("en-US")}
@@ -275,14 +275,14 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             {counts.inventory ? (
               <Fragment>
                 {" "}
-                <div className="border border-border bg-card p-4">
+                <div className="bg-tint p-4">
                   <dt className="text-base text-soft">I-485s pending, visa number available</dt>{" "}
                   <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                     {rangeLabel(counts.inventory.available)}
                   </dd>{" "}
                   <dd className="font-mono text-sm text-muted-foreground">inventory of {counts.inventory.asOf}</dd>
                 </div>{" "}
-                <div className="border border-border bg-card p-4">
+                <div className="bg-tint p-4">
                   <dt className="text-base text-soft">I-485s pending, waiting for a visa number</dt>{" "}
                   <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                     {rangeLabel(counts.inventory.awaiting)}

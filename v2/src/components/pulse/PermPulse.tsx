@@ -163,7 +163,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
       </dl>{" "}
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         {/* Thirty days. Weekends sit low because DOL decides little then. */}
-        <figure className="m-0 border border-border bg-card p-5 lg:col-span-2">
+        <figure className="m-0 bg-tint p-5 lg:col-span-2">
           <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
             <span className="text-base font-semibold">The last {bars.length} days</span>{" "}
             <span className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-soft">
@@ -211,7 +211,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
         </figure>{" "}
 
         {/* The shape of a week, over the last four. */}
-        <figure className="m-0 border border-border bg-card p-5">
+        <figure className="m-0 bg-tint p-5">
           <figcaption className="text-base font-semibold">A typical week</figcaption>{" "}
           <ChartTips label="Average decisions by day of the week">
           <div className="mt-4 flex h-40 items-end gap-2 sm:h-48" role="img" aria-label="Average decisions by day of the week over the last four weeks.">

@@ -58,7 +58,7 @@ function Movement({ cell }: { cell: BoardCell | null }) {
     <>
       <span className="font-mono">{cutoffLabel(cell.latest)}</span>{" "}
       {pace !== null ? (
-        <span aria-hidden="true" className="mt-1.5 block h-2 w-full max-w-[9rem] border border-border bg-background">
+        <span aria-hidden="true" className="mt-1.5 block h-2 w-full max-w-[9rem] border border-input bg-background">
           <span
             className={`block h-full ${pace < 0 ? "bg-data-bad-ink" : "bg-primary"}`}
             style={{ width: `${Math.max(3, Math.min(100, Math.abs(pace) * 100))}%` }}
@@ -85,7 +85,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
         a year, red means it ended further back than it started.
       </p>{" "}
       <ScrollBox label={title} className="mt-4 overscroll-x-none">
-        <table className="w-full min-w-[720px] border border-border text-sm">
+        <table className="w-full min-w-[720px] border-t-2 border-[var(--object-border)] text-sm">
           <thead className="border-b border-input bg-muted">
             <tr>
               <th className="p-3 text-left text-sm">Category{" "}</th>

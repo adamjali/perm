@@ -180,7 +180,7 @@ export default async function UscisCaseStatusPage({
         </p>
       </header>
 
-      <div className="mt-8 border border-border bg-card p-5 sm:p-6">
+      <div className="mt-8 bg-tint p-5 sm:p-6">
         <UscisReceiptForm defaultValue={typed} />
       </div>
 
@@ -197,7 +197,7 @@ export default async function UscisCaseStatusPage({
       ) : null}
 
       {dolNumber ? (
-        <div className="mt-6 border border-border bg-tint p-5">
+        <div className="mt-6 bg-tint p-5">
           <p className="text-base leading-relaxed">
             <b className="font-bold">That is a Department of Labor number.</b> USCIS has no record
             under it; DOL does, and the PERM case page reads it.
@@ -218,7 +218,7 @@ export default async function UscisCaseStatusPage({
           <h2 id="decoded-heading" className="font-heading text-2xl font-bold">
             What {decoded.receipt} encodes
           </h2>{" "}
-          <dl className="mt-4 grid gap-x-8 gap-y-4 border border-border bg-card p-5 text-sm sm:grid-cols-3 sm:p-6">
+          <dl className="mt-4 grid gap-x-8 gap-y-4 bg-tint p-5 text-sm sm:grid-cols-3 sm:p-6">
             <div>
               <dt className="font-bold text-muted-foreground">Prefix {decoded.prefix}</dt>{" "}
               <dd className="mt-1 text-base">
@@ -279,7 +279,7 @@ export default async function UscisCaseStatusPage({
             look up.
           </p>
         </MoreText>{" "}
-        <details className="group mt-4 border border-border bg-card">
+        <details className="group mt-4 bg-tint">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 font-heading text-base font-bold transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
             <span>Every prefix, and the office it names</span>{" "}
             <span aria-hidden="true" className="font-mono text-sm text-primary transition-transform duration-200 group-open:rotate-90 motion-reduce:transition-none">
@@ -338,7 +338,7 @@ export default async function UscisCaseStatusPage({
  */
 function PendingPanel({ receipt }: { receipt?: string }) {
   return (
-    <section aria-labelledby="pending-heading" className="border border-border bg-card p-5 sm:p-6">
+    <section aria-labelledby="pending-heading" className="bg-tint p-5 sm:p-6">
       <p className="text-sm font-bold text-muted-foreground">
         Live status
       </p>{" "}
@@ -356,7 +356,7 @@ function PendingPanel({ receipt }: { receipt?: string }) {
           <a
             href={USCIS_STATUS_URL}
             rel="noopener noreferrer"
-            className="flex min-h-[44px] w-full flex-col justify-center border border-border bg-background px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex min-h-[44px] w-full flex-col justify-center bg-tint px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <span className="font-heading text-base font-bold">USCIS Case Status Online</span>{" "}
             <span className="text-sm text-muted-foreground">
@@ -368,7 +368,7 @@ function PendingPanel({ receipt }: { receipt?: string }) {
           <a
             href={USCIS_EMMA_URL}
             rel="noopener noreferrer"
-            className="flex min-h-[44px] w-full flex-col justify-center border border-border bg-background px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex min-h-[44px] w-full flex-col justify-center bg-tint px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <span className="font-heading text-base font-bold">Emma, USCIS&apos;s virtual assistant</span>{" "}
             <span className="text-sm text-muted-foreground">

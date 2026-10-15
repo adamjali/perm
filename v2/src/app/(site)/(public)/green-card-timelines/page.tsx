@@ -61,15 +61,15 @@ export default async function GreenCardTimelinesPage() {
       {board ? (
         <>
           <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0" aria-label="The record so far">
-            <div className="border border-border bg-card p-5">
+            <div className="bg-tint p-5">
               <p className="text-sm text-muted-foreground">Timelines added</p>{" "}
               <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{board.total.toLocaleString("en-US")}</p>
             </div>{" "}
-            <div className="border border-border bg-card p-5">
+            <div className="bg-tint p-5">
               <p className="text-sm text-muted-foreground">Shared on the public board</p>{" "}
               <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{board.shared.toLocaleString("en-US")}</p>
             </div>{" "}
-            <div className="border border-border bg-card p-5">
+            <div className="bg-tint p-5">
               <p className="text-sm text-muted-foreground">RFEs reported</p>{" "}
               <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{board.rfe.total.toLocaleString("en-US")}</p>
             </div>
@@ -110,7 +110,7 @@ export default async function GreenCardTimelinesPage() {
                 </div>
               </>
             ) : (
-              <div className="mt-4 max-w-2xl border border-border bg-card p-5">
+              <div className="mt-4 max-w-2xl bg-tint p-5">
                 <p className="font-heading text-xl font-bold">
                   Opens at {board.opensAt} shared timelines. {board.shared.toLocaleString("en-US")} so far.
                 </p>{" "}
@@ -156,7 +156,7 @@ export default async function GreenCardTimelinesPage() {
           </section>
         </>
       ) : (
-        <p className="mt-8 max-w-2xl border border-border bg-card p-5 text-base">
+        <p className="mt-8 max-w-2xl bg-tint p-5 text-base">
           The timelines can&apos;t be read right now. Try again in a few minutes.
         </p>
       )}

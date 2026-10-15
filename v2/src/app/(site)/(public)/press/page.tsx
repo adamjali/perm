@@ -103,7 +103,7 @@ export default async function PressPage() {
         </div>{" "}
 
         {doc && rows.length > 0 ? (
-          <figure className="border border-border bg-card p-5 sm:p-6">
+          <figure className="bg-tint p-5 sm:p-6">
             <p className="text-sm font-bold text-muted-foreground">
               Today&apos;s record, {longDate(doc.asOf)}
             </p>{" "}
@@ -132,7 +132,7 @@ export default async function PressPage() {
             <li key={t.slug}>
               <Link
                 href={t.href}
-                className="group block h-full border border-border bg-card transition-transform motion-reduce:transition-none"
+                className="group block h-full border border-input bg-card transition-transform motion-reduce:transition-none"
               >
                 <Image
                   src={pageCardUrl(t.slug)}
@@ -164,14 +164,14 @@ export default async function PressPage() {
             line under its sources.
           </p>{" "}
           <div className="mt-5 flex flex-wrap items-start gap-3">
-            <code className="block min-w-0 flex-1 whitespace-pre-wrap break-words border border-border bg-muted px-3 py-2 font-mono text-sm">
+            <code className="block min-w-0 flex-1 whitespace-pre-wrap break-words bg-tint px-3 py-2 font-mono text-sm">
               {credit}
             </code>{" "}
             <CopyButton text={credit} />
           </div>
         </div>{" "}
         {/* A specimen of the credit in running text: what it looks like in a story. */}
-        <div aria-hidden="true" className="border border-border bg-background p-6 sm:p-8">
+        <div aria-hidden="true" className="bg-tint p-6 sm:p-8">
           <div className="h-3 w-24 bg-foreground/80" />
           <div className="mt-4 h-5 w-11/12 bg-foreground" />
           <div className="mt-2 h-5 w-3/4 bg-foreground" />

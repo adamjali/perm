@@ -195,7 +195,7 @@ export default async function PermCasesPage() {
           </SearchParamsBoundary>
         </>
       ) : (
-        <section className="mt-10 border border-border bg-card p-8 text-center">
+        <section className="mt-10 bg-tint p-8 text-center">
           <p className="text-lg text-muted-foreground">
             The case-level table is written by the quarterly disclosure ingest. Until it has run, the{" "}
             <Link href="/perm-processing-times" className="link">
@@ -221,7 +221,7 @@ export default async function PermCasesPage() {
             reads it against where DOL is working now.
           </p>
         </div>
-        <div className="border border-border bg-tint p-6">
+        <div className="bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">Comparing a whole docket?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             Per-firm and per-sponsor totals sit on the{" "}

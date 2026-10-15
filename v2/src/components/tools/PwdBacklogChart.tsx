@@ -78,7 +78,7 @@ function Bars({
 
               {/* The track is always full width, so a small bar reads as small
                   rather than as a missing row. */}
-              <span className="h-6 w-full border border-border bg-muted">
+              <span className="h-6 w-full border border-input bg-muted">
                 <span
                   className={cn(
                     "block h-full",
@@ -128,7 +128,7 @@ function BacklogTable({
 }) {
   return (
     <ScrollBox label="Wage requests still pending, by month received">
-      <table className="w-full min-w-[560px] border border-border text-left text-sm">
+      <table className="w-full min-w-[560px] border-t-2 border-[var(--object-border)] text-left text-sm">
         <caption className="sr-only">
           Prevailing wage requests still pending by month of receipt, with each
           month&apos;s share of the pile and the running total from the oldest month
@@ -253,7 +253,7 @@ export function PwdBacklogChart({
         controls={scopeControl}
         chart={
           rows.length === 0 ? (
-            <p className="border border-border bg-card p-6 text-base text-muted-foreground">
+            <p className="bg-tint p-6 text-base text-muted-foreground">
               No months in the published backlog fall in that part of the pile.
             </p>
           ) : (
@@ -279,15 +279,15 @@ export function PwdBacklogChart({
         ) : (
           <>
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border border-border bg-foreground/70" aria-hidden="true" />
+              <span className="h-3 w-3 border border-input bg-foreground/70" aria-hidden="true" />
               Ahead of yours
             </span>{" "}
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border border-border bg-primary" aria-hidden="true" />
+              <span className="h-3 w-3 border border-input bg-primary" aria-hidden="true" />
               Your month
             </span>{" "}
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border border-border bg-foreground/20" aria-hidden="true" />
+              <span className="h-3 w-3 border border-input bg-foreground/20" aria-hidden="true" />
               Received after yours
             </span>
           </>

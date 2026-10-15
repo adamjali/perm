@@ -416,7 +416,7 @@ export function USStateMap({
           <span
             key={mix}
             aria-hidden="true"
-            className="inline-block h-3.5 w-6 border border-border"
+            className="inline-block h-3.5 w-6 border border-input"
             style={{ background: `color-mix(in srgb, var(--primary) ${mix}%, var(--card))` }}
           />
         ))}{" "}
@@ -427,7 +427,7 @@ export function USStateMap({
           <span className="inline-flex items-center gap-1.5">
             <span
               aria-hidden="true"
-              className="inline-block h-3.5 w-6 border border-border"
+              className="inline-block h-3.5 w-6 border border-input"
               style={{ background: "color-mix(in srgb, var(--data-none) 22%, var(--card))" }}
             />
             <span className="text-sm text-muted-foreground">
@@ -445,7 +445,7 @@ export function USStateMap({
       {/* The reading panel: preview follows the pointer, a click pins. */}
       <div
         aria-live="polite"
-        className="mt-6 border border-border bg-card p-5 sm:p-6"
+        className="mt-6 bg-tint p-5 sm:p-6"
       >
         {active && activeName ? (
           <div>
@@ -696,7 +696,7 @@ export function StateExplorer({ states }: { states: StateStat[] }) {
   return (
     <Fragment>
       <section className="mt-10">
-        <div className="border border-border bg-card p-4 sm:p-6">
+        <div className="bg-tint p-4 sm:p-6">
           <USStateMap
             states={states}
             metric={metric}

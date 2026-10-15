@@ -56,8 +56,8 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
           {metrics.map((m, i) => (
             <Fragment key={m.id}>
               {" "}
-              <li className="flex items-start gap-3 border border-border bg-card p-3">
-                <span className="flex size-7 shrink-0 items-center justify-center border border-border font-mono text-sm font-bold">
+              <li className="flex items-start gap-3 bg-tint p-3">
+                <span className="flex size-7 shrink-0 items-center justify-center border border-input font-mono text-sm font-bold">
                   {i + 1}
                 </span>{" "}
                 <span className="min-w-0 flex-1">
@@ -66,7 +66,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
                     {Array.from({ length: METRIC_MIN_N }, (_, k) => (
                       <span
                         key={k}
-                        className={cn("h-2 flex-1 border border-border", k < m.n ? "bg-primary" : "bg-foreground/10")}
+                        className={cn("h-2 flex-1 border border-input", k < m.n ? "bg-primary" : "bg-foreground/10")}
                       />
                     ))}
                   </span>{" "}
@@ -88,7 +88,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
       {metrics.map((m) => (
         <Fragment key={m.id}>
           {" "}
-          <li className="border border-border bg-card p-4">
+          <li className="bg-tint p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <p className="font-heading text-base font-bold">{m.label}</p>{" "}
               <p className="text-sm text-muted-foreground">
@@ -99,7 +99,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
             {m.median !== null && m.p25 !== null && m.p75 !== null ? (
               <>
                 <div
-                  className="relative mt-3 h-6 border border-border bg-background"
+                  className="relative mt-3 h-6 border border-input bg-background"
                   aria-hidden="true"
                   data-tip={`${m.label}\nMedian ${days(m.median)}\nMiddle half ${m.p25.toLocaleString("en-US")} to ${days(m.p75)}\n${m.n.toLocaleString("en-US")} ${m.n === 1 ? "timeline" : "timelines"}, ${m.verified ? "DOL's record" : "self-reported"}`}
                 >
@@ -156,7 +156,7 @@ export function BoardKey() {
           <li className="inline-flex items-center gap-2">
             <span
               className={cn(
-                "inline-block size-3 border border-border",
+                "inline-block size-3 border border-input",
                 DOT[s.id],
                 s.id === "greenCardOn" ? "rotate-45" : "rounded-full",
               )}
@@ -175,7 +175,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
   const span = Math.ceil(far / 90) * 90;
   const at = (d: number) => `${Math.max(0, Math.min(100, (d / span) * 100))}%`;
   return (
-    <ChartTips label="Shared timelines, each step by days from PERM filing" scroll="border border-border">
+    <ChartTips label="Shared timelines, each step by days from PERM filing" scroll="border-t-2 border-[var(--object-border)]">
       <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
         <thead className="bg-muted">
           <tr>
@@ -214,7 +214,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
                         key={s.id}
                         data-tip={`${STOPS.find((x) => x.id === s.id)?.short ?? s.id}\nDay ${(s.day as number).toLocaleString("en-US")} from PERM filing${s.month ? `\n${monthName(s.month)}` : ""}${r.filedMonth ? `\nPERM filed ${monthName(r.filedMonth)}` : ""}`}
                         className={cn(
-                          "absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 border border-border",
+                          "absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 border border-input",
                           DOT[s.id],
                           s.id === "greenCardOn" ? "rotate-45" : "rounded-full",
                         )}
@@ -256,7 +256,7 @@ export function RfeBars({ rfe }: { rfe: RfeSummary }) {
               className="grid grid-cols-[minmax(0,14rem)_1fr_auto] items-center gap-3 text-sm"
             >
               <span className="font-bold">{r.label}</span>{" "}
-              <span className="h-4 border border-border bg-background" aria-hidden="true">
+              <span className="h-4 border border-input bg-background" aria-hidden="true">
                 <span className="block h-full bg-primary/50" style={{ width: `${(r.count / most) * 100}%` }} />
               </span>{" "}
               <span className="tabular-nums">{r.count}</span>
@@ -265,7 +265,7 @@ export function RfeBars({ rfe }: { rfe: RfeSummary }) {
         ))}
       </ul>
       </ChartTips>{" "}
-      <dl className="grid grid-cols-1 gap-2 self-start border border-border bg-card p-4 text-sm">
+      <dl className="grid grid-cols-1 gap-2 self-start bg-tint p-4 text-sm">
         {rfe.byForm.map((f) => (
           <Fragment key={f.id}>
             {" "}
@@ -308,7 +308,7 @@ export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: 
                 className="grid grid-cols-[minmax(0,15rem)_1fr_auto] items-center gap-3 text-sm"
               >
                 <span className="font-bold">{s.label}</span>{" "}
-                <span className="h-4 border border-border bg-background" aria-hidden="true">
+                <span className="h-4 border border-input bg-background" aria-hidden="true">
                   <span className="block h-full bg-primary/50" style={{ width: `${(s.count / most) * 100}%` }} />
                 </span>{" "}
                 <span className="tabular-nums">{s.count.toLocaleString("en-US")}</span>
@@ -318,7 +318,7 @@ export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: 
         </ul>
       </ChartTips>{" "}
       {waiting.lines.length ? (
-        <ScrollBox label="Timelines by category, country and step" className="border border-border">
+        <ScrollBox label="Timelines by category, country and step" className="border-t-2 border-[var(--object-border)]">
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <caption className="sr-only">Timelines by category, country and step</caption>
             <thead>

@@ -33,7 +33,7 @@ export interface DebarmentQuery {
 /** "2026-09-11" to "Sep 11, 2026"; anything else prints as given. */
 const day = (iso: string) => shortDate(iso) ?? iso;
 const CONTROL =
-  "mt-1 block w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "mt-1 block w-full min-w-0 min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL = "block text-sm font-bold";
 
 /**
@@ -101,7 +101,7 @@ export function DebarmentBrowser({ rows, sections }: { rows: DebarmentView[]; se
 
   return (
     <>
-      <div className="mt-8 grid grid-cols-1 gap-3 border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+      <div className="mt-8 grid grid-cols-1 gap-3 bg-tint p-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         <label className="block lg:col-span-2" htmlFor={`${id}-q`}>
           <span className={LABEL}>Search the lists</span>{" "}
           <input

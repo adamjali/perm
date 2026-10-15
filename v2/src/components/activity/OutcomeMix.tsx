@@ -61,7 +61,7 @@ export function OutcomeMix({
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                   {/* The strip's own label is its legend: the swatch beside the name. */}
                   <p className="flex items-center gap-2 text-sm font-bold">
-                    <span aria-hidden="true" className={`h-3 w-8 border border-border ${s.bg}`} />{" "}
+                    <span aria-hidden="true" className={`h-3 w-8 border border-input ${s.bg}`} />{" "}
                     <span>{s.label}</span>
                   </p>{" "}
                   <p className="font-mono text-sm tabular-nums text-muted-foreground">
@@ -96,7 +96,7 @@ export function OutcomeMix({
           ))}
         </div>
       </ChartTips>{" "}
-      <details className="mt-4 border border-border">
+      <details className="mt-4 border-t-2 border-[var(--object-border)]">
         <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
           Every quarter&apos;s figures
         </summary>

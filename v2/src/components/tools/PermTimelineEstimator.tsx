@@ -532,7 +532,7 @@ export function PermTimelineEstimator({
   }
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
+    <div className={cn("object", className)}>
       <div className="border-b border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
@@ -748,7 +748,7 @@ export function PermTimelineEstimator({
           {progress ? (
             <div className="mt-6">
               <div
-                className="relative h-4 w-full border border-border bg-muted"
+                className="relative h-4 w-full border border-input bg-muted"
                 role="img"
                 aria-label={`${progress.elapsedMonths} of about ${progress.totalMonths} months elapsed since filing`}
               >
@@ -780,7 +780,7 @@ export function PermTimelineEstimator({
               empty cell that reads as a card that failed to load. */}
           <div className="mt-6 flex flex-wrap gap-3">
             {pace ? (
-              <div className="min-w-0 flex-1 basis-60 border border-border bg-background p-4">
+              <div className="min-w-0 flex-1 basis-60 bg-tint p-4">
                 <p className="text-sm font-semibold text-muted-foreground">
                   DOL pace
                 </p>{" "}
@@ -793,7 +793,7 @@ export function PermTimelineEstimator({
               </div>
             ) : null}
             {frontier ? (
-              <div className="min-w-0 flex-1 basis-60 border border-border bg-background p-4">
+              <div className="min-w-0 flex-1 basis-60 bg-tint p-4">
                 <p className="text-sm font-semibold text-muted-foreground">
                   Queue is at
                 </p>{" "}
@@ -806,7 +806,7 @@ export function PermTimelineEstimator({
               </div>
             ) : null}
             {estimate.monthsBehindFrontier !== null ? (
-              <div className="min-w-0 flex-1 basis-60 border border-border bg-background p-4">
+              <div className="min-w-0 flex-1 basis-60 bg-tint p-4">
                 <p className="text-sm font-semibold text-muted-foreground">
                   Your month
                 </p>{" "}
@@ -875,7 +875,7 @@ export function PermTimelineEstimator({
             )}
           </p>
 
-          <div className="mt-6 border border-border bg-background p-4 sm:max-w-sm">
+          <div className="mt-6 bg-tint p-4 sm:max-w-sm">
             <p className="text-sm font-semibold text-muted-foreground">
               Cases ahead of you
             </p>{" "}

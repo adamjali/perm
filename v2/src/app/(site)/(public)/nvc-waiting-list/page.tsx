@@ -70,7 +70,7 @@ function Spark({ row, max }: { row: CategorySeries; max: number }) {
 function CategoryTable({ rows, caption }: { rows: CategorySeries[]; caption: string }) {
   const max = Math.max(...rows.flatMap((r) => r.points.map((p) => p.n)), 1);
   return (
-    <ChartTips label={caption} className="mt-4" scroll="border border-border bg-card">
+    <ChartTips label={caption} className="mt-4" scroll="border-t-2 border-[var(--object-border)] bg-card">
       <table className="w-full min-w-[640px] text-left text-base">
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-border bg-muted/40">
@@ -155,7 +155,7 @@ export default async function NvcWaitingListPage() {
               ].map((t) => (
                 <Fragment key={t.label}>
                   {" "}
-                  <div className="border border-border bg-card p-5">
+                  <div className="bg-tint p-5">
                     <dt className="text-base text-soft">{t.label}</dt>{" "}
                     <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{t.now.toLocaleString("en-US")}</dd>{" "}
                     <dd className="font-mono text-sm text-muted-foreground">
@@ -209,7 +209,7 @@ export default async function NvcWaitingListPage() {
             <CategoryTable rows={family} caption="Family-sponsored applicants at the National Visa Center, each November" />
           </section>
 
-          <details className="group mt-12 border border-border p-6 sm:p-8">
+          <details className="group mt-12 bg-tint p-6 sm:p-8">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
               How it&apos;s read, and what it can&apos;t tell you
             </summary>

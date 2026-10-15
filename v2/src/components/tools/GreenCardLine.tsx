@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import { DAYS_PER_MONTH_2DP } from "@/lib/time";
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const EYEBROW_CLASS = "text-sm font-semibold text-muted-foreground";
 
 /** Rounded the way a count this uncertain deserves: tens, hundreds, then thousands. */
@@ -125,7 +125,7 @@ export function GreenCardLine({
   const lineLabel = `${LINE_CATEGORY_LABEL[category]}, ${LINE_COUNTRY_LABEL[country]}`;
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
+    <div className={cn("object", className)}>
       <div className="border-b border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <UsersThreeIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
@@ -324,7 +324,7 @@ function LineAnswer({
       <div className="border-b border-border p-6 sm:p-8">
         <h3 className="font-heading text-lg font-bold">Who they are</h3>{" "}
         <ChartTips label="The three groups ahead of you" className="mt-4">
-        <div className="flex h-8 w-full overflow-hidden border border-border" role="img" aria-label="The three groups ahead of you, to scale">
+        <div className="flex h-8 w-full overflow-hidden border border-input" role="img" aria-label="The three groups ahead of you, to scale">
           {total > 0
             ? segs.map((s) => (
                 <span
@@ -343,7 +343,7 @@ function LineAnswer({
             <Fragment key={s.key}>
               {" "}
               <li className="flex items-start gap-2">
-                <span className={cn("mt-1.5 h-3 w-3 shrink-0 border border-border", s.cls)} aria-hidden="true" />{" "}
+                <span className={cn("mt-1.5 h-3 w-3 shrink-0 border border-input", s.cls)} aria-hidden="true" />{" "}
                 <span>
                   <b className="block font-bold tabular-nums">{roundPeople(s.value)}</b>{" "}
                   <span className="block text-base font-semibold">{s.label}</span>{" "}

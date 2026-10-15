@@ -373,7 +373,7 @@ export function FilterableStatTable<T>({
       {/* Controls */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex min-h-[44px] flex-1 items-center gap-2 border border-border bg-card px-3 focus-within:ring-2 focus-within:ring-primary sm:max-w-sm">
+          <label className="flex min-h-[44px] flex-1 items-center gap-2 border border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary sm:max-w-sm">
             <span className="text-sm font-bold text-muted-foreground">
               Search
             </span>{" "}
@@ -393,7 +393,7 @@ export function FilterableStatTable<T>({
 
           {facets.map((f) => (
             <Fragment key={f.key}>{" "}
-            <label className="flex min-h-[44px] items-center gap-2 border border-border bg-card px-3 focus-within:ring-2 focus-within:ring-primary">
+            <label className="flex min-h-[44px] items-center gap-2 border border-input bg-card px-3 focus-within:ring-2 focus-within:ring-primary">
               <span className="text-sm font-bold text-muted-foreground">
                 {f.label}
               </span>{" "}
@@ -516,7 +516,7 @@ export function FilterableStatTable<T>({
 
       {/* The table scrolls inside its own box; the page never scrolls sideways. */}
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[560px] border border-border text-left text-sm">
+        <table className="w-full min-w-[560px] border-t-2 border-[var(--object-border)] text-left text-sm">
           <caption className="sr-only">{caption}</caption>
           <thead className="border-b border-input bg-muted">
             <tr>
@@ -648,7 +648,7 @@ export function FilterableStatTable<T>({
           what={`The search across all ${noun}`}
           failure={remoteFailure}
           onRetry={() => setRemoteAttempt((n) => n + 1)}
-          className="mt-4 border border-border bg-tint p-4"
+          className="mt-4 bg-tint p-4"
         />
       ) : null}
       {remoteExtra}

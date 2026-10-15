@@ -246,7 +246,7 @@ export default async function VisaBulletinPage() {
       </p>
 
       {isFiscalStart ? (
-        <div className="mt-8 border border-border bg-primary/10 p-5">
+        <div className="mt-8 bg-tint p-5">
           <p className="font-heading text-base font-bold">October is the fiscal-year start</p>{" "}
           <p className="mt-2 text-base leading-relaxed text-soft">
             October 1 opens a new year of employment numbers, plus family numbers unused last year, so October
@@ -334,17 +334,17 @@ export default async function VisaBulletinPage() {
           </p>{" "}
           <ul aria-hidden="true" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border border-border bg-primary/20" /> Moved forward
+              <span className="size-3 border border-input bg-primary/20" /> Moved forward
             </li>{" "}
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border border-border bg-data-bad/15" /> Moved back or shut
+              <span className="size-3 border border-input bg-data-bad/15" /> Moved back or shut
             </li>{" "}
             <li className="inline-flex items-center gap-1.5">
-              <span className="size-3 border border-border bg-card" /> Unchanged or current
+              <span className="size-3 border-t-2 border-[var(--object-border)] bg-card" /> Unchanged or current
             </li>
           </ul>
           <ScrollBox label={`What the ${monthLabel(last.bulletinMonth)} bulletin did`} className="mt-3 overscroll-x-none">
-            <table className="w-full min-w-[640px] border border-border text-sm">
+            <table className="w-full min-w-[640px] border-t-2 border-[var(--object-border)] text-sm">
               <thead className="border-b border-input bg-muted">
                 <tr>
                   <th className="p-3 text-left text-sm">Category{" "}</th>
@@ -393,7 +393,7 @@ export default async function VisaBulletinPage() {
             </span>
           </summary>{" "}
           <ScrollBox label={`${s.label} in earlier bulletins`} className="overscroll-x-none border-t border-border/40 p-3 sm:p-4">
-            <table className="w-full min-w-[720px] border border-border text-sm">
+            <table className="w-full min-w-[720px] border-t-2 border-[var(--object-border)] text-sm">
               <thead className="border-b border-input bg-muted">
                 <tr>
                   <th className="p-3 text-left text-sm">Country{" "}</th>

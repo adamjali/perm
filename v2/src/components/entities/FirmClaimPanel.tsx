@@ -36,7 +36,7 @@ type Status = "idle" | "sending" | "done" | "error";
 type FieldErrors = Partial<Record<ProfileField | "email" | "role", string>>;
 
 const INPUT =
-  "mt-1.5 block min-h-[48px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-1.5 block min-h-[48px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const LABEL = "block text-sm font-bold";
 const HINT = "block text-sm font-normal text-muted-foreground";
 const BUTTON = buttonVariants({ variant: "outline", size: "lg" });
@@ -102,7 +102,7 @@ function ClaimForm({ slug }: { slug: string }) {
 
   if (status === "done") {
     return (
-      <p role="status" aria-live="polite" className="mt-4 border border-border bg-primary px-4 py-3 text-base font-bold text-primary-foreground">
+      <p role="status" aria-live="polite" className="mt-4 bg-primary px-4 py-3 text-base font-bold text-primary-foreground">
         {message} Nothing shows on the page until you confirm and we&apos;ve read it.
       </p>
     );
@@ -273,7 +273,7 @@ function FirmBadge({ slug, firmName }: { slug: string; firmName: string }) {
       {/* eslint-disable-next-line @next/next/no-img-element -- the badge is the SVG a firm's site will load, shown as it will look */}
       <img src={`/badge/firm/${slug}.svg`} alt={`${firmName} on PERM Tracker`} height={20} className="mt-3 h-5 w-auto" />{" "}
       <div className="mt-3 flex flex-wrap items-start gap-3">
-        <code className="block min-w-0 flex-1 break-all border border-border bg-background px-3 py-2 font-mono text-sm">
+        <code className="block min-w-0 flex-1 break-all bg-tint px-3 py-2 font-mono text-sm">
           {snippet}
         </code>{" "}
         <CopyButton text={snippet} />
@@ -285,7 +285,7 @@ function FirmBadge({ slug, firmName }: { slug: string; firmName: string }) {
 /** The fold at the foot of a firm's page. */
 export function FirmClaimPanel({ slug, firmName, claimed }: { slug: string; firmName: string; claimed: boolean }) {
   return (
-    <section aria-labelledby="claim-this-page" className="mt-10 border border-border bg-card">
+    <section aria-labelledby="claim-this-page" className="mt-10 bg-tint">
       <details className="group">
         <summary className="flex min-h-[56px] cursor-pointer list-none items-center justify-between gap-4 px-6 py-4 [&::-webkit-details-marker]:hidden">
           <h2 id="claim-this-page" className="font-heading text-lg font-bold">

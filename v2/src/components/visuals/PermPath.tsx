@@ -45,7 +45,7 @@ export function PermPath({
           {i < steps.length - 1 && (
             <span
               aria-hidden="true"
-              className="absolute top-1/2 -right-[26px] z-10 hidden size-7 -translate-y-1/2 place-items-center border border-border bg-background text-foreground sm:grid"
+              className="absolute top-1/2 -right-[26px] z-10 hidden size-7 -translate-y-1/2 place-items-center border border-input bg-background text-foreground sm:grid"
             >
               <ArrowRightIcon className="size-3.5" weight="bold" />
             </span>
@@ -110,7 +110,7 @@ export function StatBlock({ fill, onFill, icon: IconCmp, label, marker, count, n
   );
 
   const frame = cn(
-    "flex w-full min-w-0 flex-col border border-border bg-card text-left",
+    "flex w-full min-w-0 flex-col border border-input bg-card text-left",
     active ? "" : "",
   );
 

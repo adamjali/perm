@@ -75,7 +75,7 @@ function KindTile({ id }: { id: MailKindId }) {
   const kind = MAIL_KINDS[id];
   const Glyph = KIND_ICONS[id];
   return (
-    <li className="flex flex-col border border-border bg-card p-5">
+    <li className="flex flex-col bg-tint p-5">
       <div className="flex items-start justify-between gap-3">
         <Glyph aria-hidden="true" className="size-6 shrink-0 text-primary-text" />{" "}
         <span className="text-sm text-muted-foreground">{kind.when}</span>
@@ -127,7 +127,7 @@ export default function EmailPreferencesPage() {
         </div>{" "}
         {/* Beside the form: a reader deciding whether to give an address
             wants to see what arrives. */}
-        <figure className="m-0 border border-border bg-card p-5 lg:col-span-5">
+        <figure className="m-0 bg-tint p-5 lg:col-span-5">
           <AlertLanesFigure className="text-foreground" />{" "}
           <figcaption className="mt-3 border-t border-border pt-3 text-sm font-semibold text-muted-foreground">
             One email per change. Nothing while nothing changes.

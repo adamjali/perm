@@ -33,7 +33,7 @@ import { ScrollBox } from "@/components/ui/scroll-box";
  */
 
 const FIELD =
-  "mt-1.5 min-h-11 w-full min-w-0 border border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "mt-1.5 min-h-11 w-full min-w-0 border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const MAX_SITES = 3;
 
 const STATES = Object.entries(US_STATE_NAMES)
@@ -111,7 +111,7 @@ function Worksite({
   }, [stateName, seriesYear]);
 
   return (
-    <div className="grid grid-cols-1 gap-3 border border-border bg-background p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] sm:items-end [&>*]:min-w-0">
+    <div className="grid grid-cols-1 gap-3 bg-tint p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] sm:items-end [&>*]:min-w-0">
       <div>
         <Label htmlFor={stateId}>{index === 0 ? "Work state" : `Work state ${index + 1}`}</Label>{" "}
         <select
@@ -214,7 +214,7 @@ export function H1bLotteryCalculator() {
   const limitingSite = done && assigned ? done.sites[assigned.limiting]! : null;
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-8">
+    <div className="object p-5 sm:p-8">
       <form onSubmit={calculate} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           <div>
@@ -296,13 +296,13 @@ export function H1bLotteryCalculator() {
       </form>
 
       {result.kind === "error" ? (
-        <p className="mt-5 flex items-start gap-2 border border-border bg-background p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.message}
         </p>
       ) : null}
 
       {done && missing.length > 0 ? (
-        <p className="mt-5 flex items-start gap-2 border border-border bg-background p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> DOL publishes no OEWS wage
           for SOC {done.soc} in {missing.map((m) => m.label).join(" or ")} for this series. The rule then has the registrant
           pick the level from the job&apos;s requirements under DOL&apos;s prevailing wage guidance, which this page can&apos;t
@@ -323,19 +323,19 @@ export function H1bLotteryCalculator() {
       {done && assigned && odds && limitingSite ? (
         <div className="mt-6 space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-            <div className="border border-border bg-background p-5">
+            <div className="bg-tint p-5">
               <p className="text-sm font-bold text-muted-foreground">The level the rule assigns</p>{" "}
               <p className="mt-1 font-heading text-4xl font-bold">Level {assigned.level}</p>{" "}
               <p className="mt-1 text-base">Entered in the draw {timesWord(odds.entries)}.</p>
             </div>{" "}
-            <div className="border border-border bg-tint p-5">
+            <div className="bg-tint p-5">
               <p className="text-sm font-bold text-muted-foreground">DHS&apos;s estimated chance at that level</p>{" "}
               <p className="mt-1 font-heading text-4xl font-bold tabular-nums">{odds.percent.toFixed(1)}%</p>{" "}
               <p className="mt-1 text-base">Against {WEIGHTED_ESTIMATE.randomPercent}% for everyone under the old random draw (the dashed line).</p>
             </div>
           </div>{" "}
           <LevelOdds assigned={assigned.level} />{" "}
-          <ScrollBox label="The level met at each worksite" className="border border-border">
+          <ScrollBox label="The level met at each worksite" className="border-t-2 border-[var(--object-border)]">
             <table className="w-full min-w-[560px] text-left text-base">
               <thead className="border-b border-border bg-muted/40">
                 <tr>
@@ -414,7 +414,7 @@ function LevelOdds({ assigned }: { assigned?: string }) {
             <span className={l.level === assigned ? "font-heading text-lg font-bold" : "text-base font-bold text-muted-foreground"}>
               Level {l.level}
             </span>{" "}
-            <span className="relative block h-7 border border-border bg-background" aria-hidden="true">
+            <span className="relative block h-7 border border-input bg-background" aria-hidden="true">
               <span
                 className={`absolute inset-y-0 left-0 ${l.level === assigned ? "bg-foreground" : "bg-foreground/30"}`}
                 style={{ width: `${l.percent}%` }}

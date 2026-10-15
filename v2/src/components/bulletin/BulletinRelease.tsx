@@ -51,7 +51,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
   const plotH = H - PAD.t - PAD.b;
 
   return (
-    <div className="mt-4 border border-border bg-card p-6 sm:p-8">
+    <div className="mt-4 bg-tint p-6 sm:p-8">
       <p className="text-lg leading-relaxed">
         Of the {summary.months} bulletins the archive caught before their month began ({monthName(summary.first)} to{" "}
         {monthName(summary.last)}), half were out by the{" "}

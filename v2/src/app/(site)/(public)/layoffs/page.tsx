@@ -52,15 +52,15 @@ export default async function LayoffsPage() {
       </header>
 
       <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
-        <div className="border border-border bg-card p-5">
+        <div className="bg-tint p-5">
           <p className="text-sm text-muted-foreground">Notices held{asOf ? `, to ${formatAsOf(asOf)}` : ""}</p>{" "}
           <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{totals.notices.toLocaleString("en-US")}</p>
         </div>{" "}
-        <div className="border border-border bg-card p-5">
+        <div className="bg-tint p-5">
           <p className="text-sm text-muted-foreground">Filed by a PERM sponsor</p>{" "}
           <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{totals.matched.toLocaleString("en-US")}</p>
         </div>{" "}
-        <div className="border border-border bg-card p-5">
+        <div className="bg-tint p-5">
           <p className="text-sm text-muted-foreground">Employees in those notices</p>{" "}
           <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{totals.employees.toLocaleString("en-US")}</p>
         </div>

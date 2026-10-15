@@ -409,7 +409,7 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
 
-            <div className="border border-border bg-muted p-4 mt-4">
+            <div className="bg-tint p-4 mt-4">
               <p className="text-soft leading-relaxed font-medium">
                 <strong>IMPORTANT:</strong> Don’t share Social Security numbers,
                 passport numbers, financial account information, or other highly
@@ -943,7 +943,7 @@ export default function PrivacyPage() {
               .
             </p>{" "}
 
-            <div className="border border-border bg-muted p-4 mt-4">
+            <div className="bg-tint p-4 mt-4">
               <p className="text-soft leading-relaxed font-medium">
                 <strong>
                   We don’t sell or share your personal information.

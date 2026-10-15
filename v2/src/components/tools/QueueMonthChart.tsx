@@ -109,7 +109,7 @@ export function QueueMonthChart({
                       // Real semantic state, not decoration: this month's
                       // filing volume collapsed and the note below says so.
                       // Its meaning is in the row's hover detail and aria-label.
-                      className="border border-border bg-muted px-1 font-mono text-sm font-bold text-soft"
+                      className="bg-tint px-1 font-mono text-sm font-bold text-soft"
                     >
                       !
                     </span>
@@ -117,7 +117,7 @@ export function QueueMonthChart({
                 </span>{" "}
                 {/* The track is always full width, so a month DOL has not
                     started reads as untouched rather than as a missing row. */}
-                <span className="block h-6 w-full border border-border bg-muted">
+                <span className="block h-6 w-full border border-input bg-muted">
                   <span
                     className={cn(
                       "block h-full",
@@ -157,15 +157,15 @@ export function QueueMonthChart({
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border border-border bg-foreground/70" aria-hidden="true" />
+          <span className="h-3 w-3 border border-input bg-foreground/70" aria-hidden="true" />
           Ahead of yours
         </span>{" "}
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border border-border bg-primary" aria-hidden="true" />
+          <span className="h-3 w-3 border border-input bg-primary" aria-hidden="true" />
           Your month
         </span>{" "}
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border border-border bg-foreground/20" aria-hidden="true" />
+          <span className="h-3 w-3 border border-input bg-foreground/20" aria-hidden="true" />
           Filed after yours
         </span>{" "}
         <span>Columns: share of the month decided, then cases still pending.</span>

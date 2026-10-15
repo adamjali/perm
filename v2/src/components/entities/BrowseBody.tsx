@@ -371,7 +371,7 @@ export async function BrowseLetterBody({
       ) : null}
 
       <section className="mt-12 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2">
-        <div className="border border-border bg-tint p-6">
+        <div className="bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">
             Looking for one in particular?
           </h2>{" "}

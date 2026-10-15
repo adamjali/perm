@@ -246,7 +246,7 @@ export default async function CohortPage({
         className="mt-6"
       />{" "}
 
-      <details className="mt-6 border border-border bg-card">
+      <details className="mt-6 bg-tint">
         <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
           {`Every status, pending and decided, and the ${label} cases themselves`}
         </summary>
@@ -295,7 +295,7 @@ export default async function CohortPage({
             </div>
           </>
         ) : (
-          <p className="mt-6 border border-border bg-background p-4 text-base text-soft">
+          <p className="mt-6 bg-tint p-4 text-base text-soft">
             Every application filed in {label} has a decision. There is nothing
             left in the queue for this month.
           </p>
@@ -579,7 +579,7 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
         {`${formatInt(m.decided)} of the ${formatInt(m.total)} applications filed in ${label} have a decision.`}
       </p>{" "}
       <ChartTips label={`Applications filed in ${label}, by where they stand`} className="mt-5">
-        <div className="flex h-6 w-full border border-border bg-muted" role="img" aria-label={parts.map((p) => `${formatInt(p.n)} ${p.text}`).join(", ")}>
+        <div className="flex h-6 w-full border border-input bg-muted" role="img" aria-label={parts.map((p) => `${formatInt(p.n)} ${p.text}`).join(", ")}>
           {parts.map((p) => (
             <span
               key={p.key}
@@ -594,24 +594,24 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
         {parts.map((p) => (
           <Fragment key={p.key}>{" "}
           <li className="flex items-center gap-2">
-            <span className={`inline-block size-3 border border-border ${p.cls}`} aria-hidden="true" />{" "}
+            <span className={`inline-block size-3 border border-input ${p.cls}`} aria-hidden="true" />{" "}
             {`${formatInt(p.n)} ${p.text}`}
           </li>
           </Fragment>
         ))}
       </ul>{" "}
       <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="border border-border bg-card p-4">
+        <div className="bg-tint p-4">
           <dt className="text-sm font-bold">In DOL&apos;s line</dt>{" "}
           <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.inLine)}</dd>{" "}
           <dd className="text-sm text-muted-foreground">analyst review, worked in filing order</dd>
         </div>{" "}
-        <div className="border border-border bg-card p-4">
+        <div className="bg-tint p-4">
           <dt className="text-sm font-bold">Outside the line</dt>{" "}
           <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.outside)}</dd>{" "}
           <dd className="text-sm text-muted-foreground">on hold, at an RFI or on appeal</dd>
         </div>{" "}
-        <div className="border border-border bg-card p-4">
+        <div className="bg-tint p-4">
           {end?.kind === "estimate" ? (
             <>
               <dt className="text-sm font-bold">The line reaches this month&apos;s end</dt>{" "}
@@ -718,14 +718,14 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
           return (
             <Fragment key={l}>{" "}
             <li
-              className="border border-border bg-background p-2"
+              className="bg-tint p-2"
               data-tip={`${l}: ${formatInt(v[1])} of ${formatInt(v[0])} decided`}
             >
               <span className="flex items-baseline justify-between gap-1">
                 <span className="font-heading text-lg font-bold">{l}</span>{" "}
                 <span className="font-mono text-sm tabular-nums">{v[0] ? formatShare(share) : "none"}</span>
               </span>{" "}
-              <span className="mt-1 block h-2 border border-border bg-muted" aria-hidden="true">
+              <span className="mt-1 block h-2 border border-input bg-muted" aria-hidden="true">
                 <span className="block h-full bg-data-good-ink" style={{ width: `${Math.round(share * 100)}%` }} />
               </span>
             </li>

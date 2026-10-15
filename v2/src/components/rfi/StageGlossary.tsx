@@ -292,7 +292,7 @@ export function StageGlossary({
                   <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                     {meta ? (
                       <span
-                        className="inline-block h-3 w-3 shrink-0 self-center border border-border"
+                        className="inline-block h-3 w-3 shrink-0 self-center border border-input"
                         style={{ backgroundColor: GROUP_STYLE[meta.group].fill }}
                         aria-hidden="true"
                       />

@@ -36,7 +36,7 @@ function ordinal(n: number): string {
 }
 
 const field =
-  "min-h-11 w-full border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "min-h-11 w-full border border-input bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const label = "block text-sm font-bold text-muted-foreground";
 
 /**
@@ -72,7 +72,7 @@ function OfferStrip({ placed, offer }: { placed: Placed | null; offer: number | 
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-data-warn-ink align-middle" />Your offer <b className="tabular-nums">{usd(offer)}</b>{" "}</li>{" "}
         <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-foreground align-middle" />Median <b className="tabular-nums">{usd(p50)}</b>{" "}</li>{" "}
-        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 border border-border bg-primary/70 align-middle" />Middle half <b className="tabular-nums">{usd(p25)} to {usd(p75)}</b>{" "}</li>
+        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 border border-input bg-primary/70 align-middle" />Middle half <b className="tabular-nums">{usd(p25)} to {usd(p75)}</b>{" "}</li>
       </ul>
     </div>
   );
@@ -138,7 +138,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
   }
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-8">
+    <div className="object p-5 sm:p-8">
       <form onSubmit={run} className="grid grid-cols-1 gap-5 [&>*]:min-w-0 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor={ids.soc} className={label}>Occupation </label>{" "}
@@ -193,7 +193,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
       </form>{" "}
 
       {error ? (
-        <p role="alert" className="mt-5 border border-border bg-background p-3 text-sm font-bold">{error}</p>
+        <p role="alert" className="mt-5 bg-tint p-3 text-sm font-bold">{error}</p>
       ) : null}{" "}
 
       {!results ? (
@@ -214,7 +214,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
             const r = results[p];
             const meta = PROGRAM[p];
             return (
-              <div key={p} className="border border-border bg-background p-5">
+              <div key={p} className="bg-tint p-5">
                 <p className={label}>{meta.name} </p>{" "}
                 {r === "thin" || r === null ? (
                   <p className="mt-3 text-base leading-relaxed">

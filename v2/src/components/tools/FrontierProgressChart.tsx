@@ -265,7 +265,7 @@ function FrontierTable({
 }) {
   return (
     <ScrollBox label="The filing month DOL was deciding, by month">
-      <table className="w-full min-w-[560px] border border-border text-left text-sm">
+      <table className="w-full min-w-[560px] border-t-2 border-[var(--object-border)] text-left text-sm">
         <caption className="sr-only">
           The filing month DOL was deciding in each month of determinations,
           with the number of decisions behind each figure

@@ -63,7 +63,7 @@ export function H1bMaxOutCalculator() {
   }, [start, outside, perm, today]);
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-8">
+    <div className="object p-5 sm:p-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
         <div>
           <Label htmlFor={startId}>First day of H-1B status</Label>{" "}
@@ -113,7 +113,7 @@ export function H1bMaxOutCalculator() {
       />{" "}
 
       {result?.kind === "error" ? (
-        <p className="mt-5 flex items-start gap-2 border border-border bg-background p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.error}
         </p>
       ) : null}{" "}
@@ -123,7 +123,7 @@ export function H1bMaxOutCalculator() {
           {result.warnings.length > 0 ? (
             <ul className="mb-4 space-y-2">
               {result.warnings.map((w) => (
-                <li key={w} className="flex items-start gap-2 border border-border bg-background p-3 text-sm">
+                <li key={w} className="flex items-start gap-2 bg-tint p-3 text-sm">
                   <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {w}
                 </li>
               ))}

@@ -183,13 +183,13 @@ export default async function CompareEmployersPage({
       ) : null}{" "}
 
       {(slugA && !left) || (slugB && !right) ? (
-        <p role="alert" className="mt-6 border border-border bg-card p-4 text-sm font-bold">
+        <p role="alert" className="mt-6 bg-tint p-4 text-sm font-bold">
           One of those employers is not in the index. Pick it again from the search.
         </p>
       ) : null}{" "}
 
       {both ? (
-        <div className="mt-10 overflow-x-auto overscroll-x-none border border-border bg-card">
+        <div className="mt-10 overflow-x-auto overscroll-x-none border-t-2 border-[var(--object-border)] bg-card">
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead className="border-b border-input bg-muted">
               <tr>

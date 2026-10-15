@@ -46,7 +46,7 @@ export function RfiDeadlineCalculator() {
   }, [letter, today]);
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-8">
+    <div className="object p-5 sm:p-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
         <div>
           <Label htmlFor={letterId}>Date on DOL&apos;s letter</Label>{" "}
@@ -68,13 +68,13 @@ export function RfiDeadlineCalculator() {
       {result ? (
         <div className="mt-4">
           {result.weekend ? (
-            <p className="mb-4 flex items-start gap-2 border border-border bg-background p-3 text-sm">
+            <p className="mb-4 flex items-start gap-2 bg-tint p-3 text-sm">
               <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> The 30th day is a {result.weekday}. The
               regulation does not move a deadline that lands on a weekend; send the response before it.
             </p>
           ) : null}{" "}
           {result.left < 0 ? (
-            <p className="mb-4 flex items-start gap-2 border border-border bg-background p-3 text-sm">
+            <p className="mb-4 flex items-start gap-2 bg-tint p-3 text-sm">
               <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> An application with no response is
               denied under 20 CFR 656.20, and the attorney of record should already be in contact with the Certifying Officer.
             </p>

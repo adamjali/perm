@@ -29,7 +29,7 @@ function markerClass(m: EmployerMove): string {
 function MoveItem({ m }: { m: EmployerMove }) {
   return (
     <li className="relative grid grid-cols-1 gap-y-0.5 py-2 pl-6 sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:gap-x-4">
-      <span aria-hidden="true" className={`absolute -left-[9px] top-3.5 h-4 w-4 border border-border ${markerClass(m)}`} />{" "}
+      <span aria-hidden="true" className={`absolute -left-[9px] top-3.5 h-4 w-4 border border-input ${markerClass(m)}`} />{" "}
       <span className="text-sm font-semibold tabular-nums text-muted-foreground">{longDate(m.date).replace(/, \d{4}$/, "")}</span>{" "}
       <span className="text-base font-bold [overflow-wrap:anywhere]">{m.sentence}</span>
     </li>
@@ -85,7 +85,7 @@ export function EmployerFollow({
             {legend.map((l) => (
               <Fragment key={l.key}>
                 <li className="flex items-center gap-2">
-                  <span aria-hidden="true" className={`inline-block h-3.5 w-3.5 shrink-0 border border-border ${l.cls}`} />{" "}
+                  <span aria-hidden="true" className={`inline-block h-3.5 w-3.5 shrink-0 border border-input ${l.cls}`} />{" "}
                   <span>{l.text}</span>
                 </li>{" "}
               </Fragment>

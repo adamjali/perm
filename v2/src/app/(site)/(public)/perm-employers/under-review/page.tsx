@@ -190,7 +190,7 @@ export default async function EmployersUnderReviewPage() {
       </p>{" "}
 
       {!doc ? (
-        <p className="mt-10 border border-border bg-card p-5 text-base">
+        <p className="mt-10 bg-tint p-5 text-base">
           The employer census has not been written yet, or is more than eight
           days old. It is rebuilt by the daily sweep of DOL&apos;s case system;
           until then the{" "}
@@ -259,7 +259,7 @@ export default async function EmployersUnderReviewPage() {
                           {`${n === r.pending ? "Every pending case" : `${formatInt(n)} of ${formatInt(r.pending)} pending`}${since ? `, ${since}` : ""}`}
                         </span>
                       </span>{" "}
-                      <span className="col-span-2 row-start-2 block h-4 border border-border bg-background sm:col-span-1 sm:row-start-auto" aria-hidden="true">
+                      <span className="col-span-2 row-start-2 block h-4 border border-input bg-background sm:col-span-1 sm:row-start-auto" aria-hidden="true">
                         <span className="block h-full bg-data-warn-ink" style={{ width: `${Math.max(2, Math.round((n / heldMax) * 100))}%` }} />
                       </span>{" "}
                       <span className="col-start-2 row-start-1 text-right font-heading text-xl font-bold tabular-nums sm:col-start-auto sm:row-start-auto">
@@ -296,7 +296,7 @@ export default async function EmployersUnderReviewPage() {
             </section>
           ) : null}{" "}
 
-          <details className="mt-10 border border-border bg-card">
+          <details className="mt-10 bg-tint">
             <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
               {`Every stage outside the line: holds, RFIs and appeals (${formatInt(outside)} cases)`}
             </summary>
@@ -460,7 +460,7 @@ export default async function EmployersUnderReviewPage() {
             </div>
           </details>{" "}
 
-          <details className="mt-4 border border-border bg-card">
+          <details className="mt-4 bg-tint">
             <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
               What a count here does and doesn&apos;t mean
             </summary>

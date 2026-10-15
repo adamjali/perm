@@ -62,9 +62,9 @@ import { choiceVariants } from "@/components/ui/choice";
 const PAGE_SIZES = [25, 50, 100, 250] as const;
 
 const CONTROL =
-  "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground";
+  "w-full min-w-0 min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:text-muted-foreground";
 const NAV =
-  "min-h-[44px] border border-border bg-card px-4 text-sm font-bold hover:bg-tint disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border border-input bg-card px-4 text-sm font-bold hover:bg-tint disabled:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL =
   "block text-sm font-bold text-muted-foreground";
 
@@ -576,7 +576,7 @@ export function ChangeFeedBrowser({
       {/* ONE LINE FIRST, THE REST FOLDED. The answer to "what
           do these dates hold" is one of four short facts; the detail behind it
           stays a click away, in the DOM for search either way. */}
-      <details className="mt-6 border border-border bg-tint">
+      <details className="mt-6 bg-tint">
         <summary className="flex min-h-[44px] cursor-pointer items-center px-4 py-2 text-base font-bold">
           {hasDecided && hasObserved
             ? "These dates cross DOL's published files and our own daily check"
@@ -690,7 +690,7 @@ export function ChangeFeedBrowser({
             <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
               {UNAVAILABLE.map((u) => (
                 <Fragment key={u.slug}>
-                  <li className="border border-border/40 p-3">
+                  <li className="bg-tint p-3">
                     <span className={LABEL}>{u.label}</span>{" "}
                     <span className="mt-1 block text-sm leading-relaxed text-soft">
                       {u.why}
@@ -747,7 +747,7 @@ export function ChangeFeedBrowser({
                 />
               ) : null}
               {decidedRows.length === 0 && decided.cases.length > 0 ? (
-                <div className="mt-4 border border-border bg-card p-4 text-base">
+                <div className="mt-4 bg-tint p-4 text-base">
                   <p>
                     None of the {formatInt(decided.cases.length)} decisions loaded for
                     these dates match
@@ -757,7 +757,7 @@ export function ChangeFeedBrowser({
                   <DidYouMean className="mt-3" suggestions={nameSuggestions} />
                 </div>
               ) : decidedRows.length === 0 ? (
-                <p className="mt-4 border border-border bg-card p-4 text-base">
+                <p className="mt-4 bg-tint p-4 text-base">
                   DOL published no decisions for these dates. That is a real
                   answer, not a missing one.
                 </p>
@@ -777,7 +777,7 @@ export function ChangeFeedBrowser({
               what="Those decisions"
               failure={decidedFailure}
               onRetry={retryDecided}
-              className="mt-4 border border-border bg-tint p-4"
+              className="mt-4 bg-tint p-4"
             />
           ) : (
             <p className="mt-4 text-base text-soft" role="status">
@@ -823,7 +823,7 @@ export function ChangeFeedBrowser({
               type="button"
               onClick={() => setAllChips((v) => !v)}
               aria-expanded={allChips}
-              className="mb-4 inline-flex min-h-[44px] items-center border border-border bg-background px-3 text-sm font-bold hover:bg-tint"
+              className="mb-4 inline-flex min-h-[44px] items-center border border-input bg-background px-3 text-sm font-bold hover:bg-tint"
             >
               {allChips ? "Show the busiest only" : `Show all ${feed.transitions.length} kinds of change`}
             </button>
@@ -894,7 +894,7 @@ export function ChangeFeedBrowser({
             </p>
           ) : null}
           {ordered.length === 0 && ready ? (
-            <div className="mt-4 border border-border bg-card p-4 text-base">
+            <div className="mt-4 bg-tint p-4 text-base">
               <p>
                 Nothing on {longDate(feed.date)} matches that. The day itself
                 holds {formatInt(feed.total)} changes, so clearing the filters will
@@ -944,7 +944,7 @@ export function ChangeFeedBrowser({
           failure={failure}
           onRetry={retry}
           after="The other days still work."
-          className="mt-6 border border-border bg-tint p-4"
+          className="mt-6 bg-tint p-4"
         />
       ) : (
         <p className="mt-6 text-base text-soft" role="status">

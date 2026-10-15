@@ -17,9 +17,9 @@ import {
 } from "@/lib/visaChooser";
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const OPTION_CLASS =
-  "flex min-h-[44px] cursor-pointer items-center gap-3 border border-border bg-background px-3 py-2 text-base has-[:checked]:bg-tint has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary";
+  "flex min-h-[44px] cursor-pointer items-center gap-3 border border-input bg-background px-3 py-2 text-base has-[:checked]:bg-tint has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary";
 
 const SPONSORS: Array<{ value: Sponsor; label: string }> = [
   { value: "employer", label: "A US employer offering me a job" },
@@ -106,7 +106,7 @@ export function VisaChooser({ className }: { className?: string }) {
   const result = useMemo(() => chooseCategories(a), [a]);
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
+    <div className={cn("object", className)}>
       <div className="flex items-start gap-3 border-b border-border bg-muted/40 p-4 sm:px-8">
         <InfoIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />{" "}
         <p className="text-base leading-relaxed">
@@ -171,7 +171,7 @@ export function VisaChooser({ className }: { className?: string }) {
             {result.fits.map((f) => (
               <Fragment key={f.code}>
                 {" "}
-                <li className="border border-border bg-background p-5">
+                <li className="bg-tint p-5">
                   <h3 className="font-heading text-xl font-bold" translate="no">
                     {f.name}
                   </h3>{" "}

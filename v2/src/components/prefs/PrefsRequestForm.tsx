@@ -53,7 +53,7 @@ export function PrefsRequestForm() {
 
   if (state === "done") {
     return (
-      <div className="border border-border bg-card p-5">
+      <div className="object p-5">
         <p className="font-heading text-lg font-bold">{replyHeading(queued)}</p>{" "}
         <p className="mt-2 text-base leading-relaxed text-muted-foreground">
           {message}
@@ -65,7 +65,7 @@ export function PrefsRequestForm() {
   return (
     <form
       onSubmit={submit}
-      className="border border-border bg-card p-5"
+      className="bg-tint p-5"
     >
       <label htmlFor="prefs-email" className="font-heading text-lg font-bold">
         Get your preferences link

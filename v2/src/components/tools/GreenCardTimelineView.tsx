@@ -73,7 +73,7 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
           no width because it has no number, and giving it one would invent the
           figure the whole page says cannot be known. */}
       <ChartTips label="Each stage of the green card, to scale">
-      <div className="flex h-12 w-full overflow-hidden border border-border">
+      <div className="flex h-12 w-full overflow-hidden border border-input">
         {measured.map((stage, i) => (
           <div
             key={stage.id}
@@ -128,7 +128,7 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
         })}
       </ol>
 
-      <figcaption className="mt-6 border border-border bg-tint p-6">
+      <figcaption className="mt-6 bg-tint p-6">
         <p className="font-heading text-xl font-bold leading-tight">
           {months(timeline.employerControlledMonths)} of {total} are on your
           side of the process.

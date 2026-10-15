@@ -113,7 +113,7 @@ const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const PAGE_SIZE = 50;
 
 const CONTROL =
-  "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+  "w-full min-w-0 min-h-[44px] border border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 
 
 
@@ -346,7 +346,7 @@ function FlagSearchFilters({
   const hasWage = items.some((i) => i.file?.wage != null);
   if (fields.length === 0 && !hasWage) return null;
   return (
-    <div className="mt-4 border border-border bg-background p-4">
+    <div className="mt-4 bg-tint p-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         {fields.map(({ f, opts }) => (
           <Fragment key={f.key}>
@@ -542,7 +542,7 @@ export function FlagCaseBrowser({
 
   return (
     <div className="space-y-10">
-      <section className="border border-border bg-card p-5 sm:p-6">
+      <section className="object p-5 sm:p-6">
         <h2 className="font-heading text-xl font-bold">Find {program.article ?? "a"} {program.noun} by employer</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           The start of the employer&apos;s name is enough. Add a word from the job
@@ -661,7 +661,7 @@ export function FlagCaseBrowser({
           </p>
         ) : null}
         {searching && searchFailed ? (
-          <RequestFailed what="The search" failure={searchFailure} onRetry={retrySearch} className="mt-4 border border-border bg-tint p-4" />
+          <RequestFailed what="The search" failure={searchFailure} onRetry={retrySearch} className="mt-4 bg-tint p-4" />
         ) : null}
         {searching && search && found === 0 ? (
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
@@ -753,7 +753,7 @@ export function FlagCaseBrowser({
       </p>
 
       {between}{" "}
-      <section id="browse" ref={browseTop} className="scroll-mt-28 border border-border bg-card p-5 sm:p-6">
+      <section id="browse" ref={browseTop} className="scroll-mt-28 object p-5 sm:p-6">
         <h2 className="font-heading text-xl font-bold">Browse every {program.noun} DOL has confirmed</h2>{" "}
         {summary ? (
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
@@ -814,7 +814,7 @@ export function FlagCaseBrowser({
           </label>
         </div>{" "}
         {listFailed ? (
-          <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 border border-border bg-tint p-4" />
+          <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 bg-tint p-4" />
         ) : null}
         {!withheld && !listFailed && shownPage === undefined ? (
           <p className="mt-4 text-base text-muted-foreground">Loading…</p>

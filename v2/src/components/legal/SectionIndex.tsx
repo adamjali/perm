@@ -36,7 +36,7 @@ export function SectionIndex({
 }) {
   if (sections.length === 0) return null;
   return (
-    <nav aria-label={label} className="mt-8 border border-border bg-card p-5">
+    <nav aria-label={label} className="mt-8 bg-tint p-5">
       <OpenOnHash />
       <p className="text-sm font-bold text-muted-foreground">
         {label}

@@ -56,7 +56,7 @@ export function NameSpellings({
 
   return (
     <section
-      className={cn("border border-border bg-tint p-6 sm:p-8", className)}
+      className={cn("bg-tint p-6 sm:p-8", className)}
     >
       <h2 className="font-heading text-xl font-bold">
         What this rank counts, and what it doesn&apos;t

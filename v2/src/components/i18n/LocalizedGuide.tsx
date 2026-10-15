@@ -41,7 +41,7 @@ export function localizedGuideMetadata(code: LocaleCode): Metadata {
   };
 }
 
-const card = "border border-border bg-card p-5";
+const card = "bg-tint p-5";
 const h2 = "scroll-mt-24 font-heading text-2xl font-bold sm:text-3xl";
 
 function month(ym: string | null, intl: string): string | null {
@@ -69,7 +69,7 @@ function CutoffTable({ country, data, locale }: { country: CountryKey; data: Non
   const copy = GUIDE_COPY[locale.code];
   const rows = data.rows[country] ?? [];
   return (
-    <ScrollBox label={copy.cutoffs.countryName[country] ?? country} className="border border-border bg-card">
+    <ScrollBox label={copy.cutoffs.countryName[country] ?? country} className="border-t-2 border-[var(--object-border)] bg-card">
       <table className="w-full min-w-[34rem] border-collapse text-left text-base">
         <caption className="border-b border-border bg-muted px-4 py-2 text-left font-heading text-lg font-bold">
           {copy.cutoffs.countryName[country] ?? country}
@@ -199,10 +199,10 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
           {copy.steps.items.map((s, i) => (
             <Fragment key={s.form}>
               {" "}
-              <li className="grid grid-cols-[2.75rem_1fr] gap-4 border border-border bg-card p-4 [&>*]:min-w-0">
+              <li className="grid grid-cols-[2.75rem_1fr] gap-4 bg-tint p-4 [&>*]:min-w-0">
                 <span
                   aria-hidden="true"
-                  className="flex size-11 items-center justify-center border border-border bg-primary font-heading text-lg font-bold text-primary-foreground"
+                  className="flex size-11 items-center justify-center border border-input bg-primary font-heading text-lg font-bold text-primary-foreground"
                 >
                   {i + 1}
                 </span>{" "}
@@ -262,7 +262,7 @@ export async function LocalizedGuide({ code }: { code: LocaleCode }) {
       <section className="mt-12" aria-labelledby="statuses">
         <h2 id="statuses" className={h2}>{copy.statuses.h2}</h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-soft">{copy.statuses.intro}</p>
-        <dl className="mt-5 grid grid-cols-1 border border-border bg-card [&>*]:min-w-0">
+        <dl className="mt-5 grid grid-cols-1 bg-tint [&>*]:min-w-0">
           {GLOSSED_STATUSES.map((s, i) => (
             <Fragment key={s}>
               {" "}

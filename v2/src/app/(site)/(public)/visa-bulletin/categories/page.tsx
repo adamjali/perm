@@ -73,7 +73,7 @@ export default async function BulletinCategoriesPage() {
 
       {board && categories.length ? (
         <section className="mt-10">
-          <div className="overflow-x-auto border border-border bg-card">
+          <div className="overflow-x-auto border-t-2 border-[var(--object-border)] bg-card">
             <table className="w-full min-w-[760px] text-left text-base">
               <caption className="sr-only">
                 Final action and dates for filing cutoffs, {bulletinMonthLabel(board.lastMonth)}, by category and country
@@ -124,7 +124,7 @@ export default async function BulletinCategoriesPage() {
           <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {MATRIX_KEY.map((k) => (
               <li key={k.label} className="flex items-center gap-2">
-                <span aria-hidden="true" className={`size-4 shrink-0 border border-border ${k.fill}`} />{" "}
+                <span aria-hidden="true" className={`size-4 shrink-0 border border-input ${k.fill}`} />{" "}
                 <span>
                   <span className="font-bold">{k.label}</span>: {k.means}
                 </span>{" "}

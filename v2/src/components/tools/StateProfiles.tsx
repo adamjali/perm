@@ -106,7 +106,7 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
           </div>
           <div className="mt-1.5 flex items-center gap-3">
             <div
-              className="h-4 min-w-0 flex-1 border border-border bg-background"
+              className="h-4 min-w-0 flex-1 border border-input bg-background"
               role="img"
               aria-label={`${pct(b.share)} of ${stateName(b.state)} filings are ${b.label}`}
             >
@@ -142,7 +142,7 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
 function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
   return (
     <ScrollBox label={`Every state by its biggest ${unit.toLowerCase()}`}>
-      <table className="w-full border border-border text-left text-sm">
+      <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">
         <caption className="sr-only">
           Every state by the share of its filings in its single biggest {unit.toLowerCase()}
         </caption>

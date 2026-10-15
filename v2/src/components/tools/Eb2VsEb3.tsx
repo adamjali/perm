@@ -16,7 +16,7 @@ import type { CountryKey } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const EYEBROW_CLASS = "text-sm font-semibold text-muted-foreground";
 
 const LINE_NAME = { EB2: "EB-2", EB3: "EB-3" } as const;
@@ -65,7 +65,7 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
   );
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
+    <div className={cn("object", className)}>
       <div className="border-b border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <ScalesIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
@@ -256,7 +256,7 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
             <span className="font-heading text-lg font-bold">{LINE_NAME[line]}</span>{" "}
             {r.kind === "estimate" ? (
               <div
-                className="relative h-8 border border-border bg-background"
+                className="relative h-8 border border-input bg-background"
                 role="img"
                 aria-label={`${LINE_NAME[line]}: ${rangeLabel(r)} people ahead`}
                 data-tip={

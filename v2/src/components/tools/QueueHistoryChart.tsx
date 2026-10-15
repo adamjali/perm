@@ -426,7 +426,7 @@ function QueueHistoryTable({
   const showGap = kind === "readings";
   return (
     <ScrollBox label={copy.caption}>
-      <table className="w-full min-w-[560px] border border-border text-left text-sm">
+      <table className="w-full min-w-[560px] border-t-2 border-[var(--object-border)] text-left text-sm">
         <caption className="sr-only">{copy.caption}</caption>
         <thead className="border-b border-input bg-muted">
           <tr>
@@ -562,7 +562,7 @@ export function QueueHistoryChart({ points, className, kind = "readings" }: Queu
         controls={rangeControl}
         chart={
           chart ?? (
-            <p className="border border-border bg-card p-6 text-base text-muted-foreground">
+            <p className="bg-tint p-6 text-base text-muted-foreground">
               The queue month didn’t change across these {shown.length} readings, so
               there’s no step to draw. The table has every reading and its date.
             </p>
@@ -702,7 +702,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                       ]
                         .filter(Boolean)
                         .join("\n")}
-                      className="min-w-0 flex-1 border border-border bg-primary"
+                      className="min-w-0 flex-1 border border-input bg-primary"
                       style={{ height: `${Math.max((p.decisions / max) * 100, 1)}%` }}
                     />
                   );
@@ -743,7 +743,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
         }
         table={
           <ScrollBox label="PERM determinations by month of decision">
-            <table className="w-full min-w-[560px] border border-border text-left text-sm">
+            <table className="w-full min-w-[560px] border-t-2 border-[var(--object-border)] text-left text-sm">
               <caption className="sr-only">
                 PERM determinations recorded in DOL&apos;s disclosure files, by month
                 of decision

@@ -22,7 +22,7 @@ export function LanguageLinks({ current }: { current: LocaleCode | "en" }) {
             <span
               lang={l.tag}
               aria-current="page"
-              className="inline-flex min-h-11 items-center border border-border bg-primary px-3 text-sm font-bold text-primary-foreground"
+              className="inline-flex min-h-11 items-center border border-input bg-primary px-3 text-sm font-bold text-primary-foreground"
             >
               {l.endonym}
             </span>

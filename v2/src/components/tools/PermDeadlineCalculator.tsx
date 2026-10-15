@@ -225,7 +225,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
   }, [pwdDate, firstRecruitment, lastRecruitment]);
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
+    <div className={cn("object", className)}>
       <div className="border-b border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
@@ -343,7 +343,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
                   This is a pasted fragment of someone else's document, so it
                   gets the system's own bordered surface and the quote marks
                   carry the rest. */}
-              <blockquote className="mt-3 border border-border bg-background p-4 text-base leading-relaxed">
+              <blockquote className="mt-3 bg-tint p-4 text-base leading-relaxed">
                 &ldquo;{SHUTDOWN_QUOTE}&rdquo;
                 <cite className="mt-2 block text-sm font-bold not-italic text-muted-foreground">
                   Office of Foreign Labor Certification, {formatAsOf(SHUTDOWN_ANNOUNCED)}

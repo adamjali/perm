@@ -94,9 +94,9 @@ export function AppWindow({
         >
           <div className="flex items-center gap-3 border-b border-border bg-muted px-3 py-2">
             <span aria-hidden="true" className="flex gap-1.5">
-              <span className="size-3 border border-border bg-background" />{" "}
-              <span className="size-3 border border-border bg-background" />{" "}
-              <span className="size-3 border border-border bg-primary" />
+              <span className="size-3 border border-input bg-background" />{" "}
+              <span className="size-3 border border-input bg-background" />{" "}
+              <span className="size-3 border border-input bg-primary" />
             </span>{" "}
             <span className="truncate font-mono text-sm text-muted-foreground">
               {url}

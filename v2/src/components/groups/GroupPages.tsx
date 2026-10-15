@@ -196,7 +196,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
                         </Link>{" "}
                         <span aria-hidden="true" className="block h-5">
                           <span
-                            className="block h-full border border-border bg-primary"
+                            className="block h-full border border-input bg-primary"
                             style={{ width: `${Math.max(3, (r.total / topMax) * 100)}%` }}
                           />
                         </span>{" "}

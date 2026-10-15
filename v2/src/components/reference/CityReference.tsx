@@ -98,7 +98,7 @@ export async function CityReference({
 
   return (
     <>
-      <section className="mt-10 border border-border bg-card p-6 sm:p-8" aria-labelledby="city-where">
+      <section className="mt-10 bg-tint p-6 sm:p-8" aria-labelledby="city-where">
         <h2 id="city-where" className="font-heading text-xl font-bold sm:text-2xl">
           Where {label} sits
         </h2>{" "}

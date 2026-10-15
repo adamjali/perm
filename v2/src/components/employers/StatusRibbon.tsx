@@ -77,7 +77,7 @@ export function StatusRibbon({
     <div
       role="img"
       aria-label={label}
-      className={`flex w-full overflow-hidden border border-border bg-background ${size === "lg" ? "h-8" : "h-3"}`}
+      className={`flex w-full overflow-hidden border border-input bg-background ${size === "lg" ? "h-8" : "h-3"}`}
     >
       {segs.map((s, i) => (
         <span

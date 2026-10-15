@@ -167,7 +167,7 @@ export default async function GreenCardTimelinePage() {
       </header>
 
       <div className="mt-10">
-      <section data-embed="green-card-timeline" className="border border-border bg-card p-6 sm:p-8">
+      <section data-embed="green-card-timeline" className="object p-6 sm:p-8">
         <GreenCardTimelineView
           timeline={timeline}
           slots={{
@@ -202,7 +202,7 @@ export default async function GreenCardTimelinePage() {
       {/* Who controls what: the single most useful fact about the timeline,
           drawn as structure rather than said in a paragraph. */}
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="border border-border bg-card p-6">
+        <div className="bg-tint p-6">
           <p className="text-sm text-muted-foreground">
             You control
           </p>{" "}
@@ -212,7 +212,7 @@ export default async function GreenCardTimelinePage() {
             employer paces. Missing one restarts the case.
           </p>
         </div>
-        <div className="border border-border bg-card p-6">
+        <div className="bg-tint p-6">
           <p className="text-sm text-muted-foreground">
             DOL controls
           </p>{" "}
@@ -222,7 +222,7 @@ export default async function GreenCardTimelinePage() {
             DOL&apos;s published pace, oldest first.
           </p>
         </div>
-        <div className="border border-border bg-card p-6">
+        <div className="bg-tint p-6">
           <p className="text-sm text-muted-foreground">
             USCIS and State control
           </p>{" "}
@@ -244,7 +244,7 @@ export default async function GreenCardTimelinePage() {
           <Link
             key={t.href}
             href={t.href}
-            className="group flex flex-col border border-border bg-card p-6 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="group flex flex-col bg-tint p-6 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             <span className="font-heading text-lg font-bold">{t.name}</span>{" "}
             <p className="mt-2 flex-1 text-base leading-relaxed text-muted-foreground">{t.blurb}</p>{" "}

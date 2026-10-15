@@ -25,7 +25,7 @@ export function WatchThisNumber({
   className?: string;
 }) {
   return (
-    <div className={cn(variant === "card" && "border border-border bg-card p-5 sm:p-6", className)}>
+    <div className={cn(variant === "card" && "object p-5 sm:p-6", className)}>
       <CaseAlertForm caseNumber={caseNumber} program={program} />{" "}
       <CasePushAlert caseNumber={caseNumber} />
     </div>

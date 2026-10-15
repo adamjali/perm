@@ -94,7 +94,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
       <div
         role="status"
         aria-live="polite"
-        className="border border-border bg-card p-5 sm:p-6"
+        className="bg-tint p-5 sm:p-6"
       >
         <p className="text-sm font-bold text-muted-foreground">
           Asking USCIS
@@ -144,7 +144,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
   const modified = longDate(status.modifiedAt);
 
   return (
-    <section aria-labelledby="uscis-result-heading" className="border border-border bg-card">
+    <section aria-labelledby="uscis-result-heading" className="bg-tint">
       <div className="border-b border-border p-5 sm:p-6">
         <p className="text-sm font-bold text-muted-foreground">
           {status.formType ? `${status.formType} · ` : ""}
@@ -227,7 +227,7 @@ export function UscisStatusResult({ receipt }: { receipt: string }) {
 
 function Refusal({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div role="status" className="border border-border bg-card p-5 sm:p-6">
+    <div role="status" className="bg-tint p-5 sm:p-6">
       <p className="font-heading text-xl font-bold">{title}</p>{" "}
       <p className="mt-2 max-w-prose text-base leading-relaxed text-soft">{children}</p>
     </div>

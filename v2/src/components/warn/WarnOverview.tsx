@@ -61,7 +61,7 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
       <h2 id="warn-overview" className="sr-only">
         The notices, by month and by sponsor
       </h2>{" "}
-      <figure className="m-0 border border-border bg-card p-5 sm:p-6">
+      <figure className="m-0 bg-tint p-5 sm:p-6">
         <figcaption>
           <span className="block font-heading text-xl font-bold">By the state that published them</span>{" "}
           <span className="mt-1 block text-sm text-muted-foreground">
@@ -84,7 +84,7 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
                   </span>{" "}
                   <span aria-hidden="true" className="block h-5">
                     <span
-                      className="block h-full border border-border bg-data-warn-ink"
+                      className="block h-full border border-input bg-data-warn-ink"
                       style={{ width: `${Math.max(3, (b.employees / maxState) * 100)}%` }}
                     />
                   </span>{" "}
@@ -95,7 +95,7 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
           </ol>
         </ChartTips>
       </figure>{" "}
-      <figure className="m-0 border border-border bg-card p-5 sm:p-6">
+      <figure className="m-0 bg-tint p-5 sm:p-6">
         <figcaption>
           <span className="block font-heading text-xl font-bold">The sponsors whose notices named the most</span>{" "}
           <span className="mt-1 block text-sm text-muted-foreground">Every notice held, each sponsor by its own page.</span>
@@ -116,7 +116,7 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
                   </Link>{" "}
                   <span aria-hidden="true" className="block h-5">
                     <span
-                      className="block h-full border border-border bg-data-warn-ink"
+                      className="block h-full border border-input bg-data-warn-ink"
                       style={{ width: `${Math.max(3, (s.employees / maxTop) * 100)}%` }}
                     />
                   </span>{" "}

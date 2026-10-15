@@ -63,7 +63,7 @@ export function WeekdayShape({
                 {p.zeroDays === 0 ? "never zero" : `${p.zeroDays} at zero`}
               </span>
             </div>
-            <div className="mt-1 h-4 w-full border border-border bg-background">
+            <div className="mt-1 h-4 w-full border border-input bg-background">
               <div
                 // See WageLadderRow: --primary fails the 3:1 graphic floor
                 // in light mode, the -ink variant passes and is identical in dark.

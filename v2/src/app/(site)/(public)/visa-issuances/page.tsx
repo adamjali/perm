@@ -218,7 +218,7 @@ export default async function VisaIssuancesPage() {
         <h2 id="iv-all" className="font-heading text-2xl font-bold">
           Every category
         </h2>{" "}
-        <ScrollBox label="Immigrant visas issued abroad, by category" className="mt-4 border border-border bg-card">
+        <ScrollBox label="Immigrant visas issued abroad, by category" className="mt-4 border-t-2 border-[var(--object-border)] bg-card">
           <table className="w-full min-w-[32rem] text-left text-base">
             <caption className="sr-only">Immigrant visas issued abroad by category{" "}</caption>
             <thead className="border-b border-border bg-muted/40">

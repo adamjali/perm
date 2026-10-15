@@ -48,7 +48,7 @@ export function SizeBandNote({
 
   return (
     <section
-      className={cn("border border-border bg-card p-5 sm:p-6", className)}
+      className={cn("bg-tint p-5 sm:p-6", className)}
     >
       <p className="text-sm font-bold text-muted-foreground">
         Against the {subject} ranked nearest
@@ -87,7 +87,7 @@ export function SizeBandNote({
           return (
             <div key={row.k} data-tip={row.tip} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-3">
               <dt className="text-sm font-bold text-soft">{row.k}</dt>{" "}
-              <dd className="m-0 h-4 border border-border bg-background">
+              <dd className="m-0 h-4 border border-input bg-background">
                 <span
                   className={cn("block h-full", row.strong ? "bg-primary" : "bg-foreground/50")}
                   style={{ width: `${Math.max(2, ((row.v ?? 0) / max) * 100)}%` }}

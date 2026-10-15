@@ -117,7 +117,7 @@ export default async function ToolsPage() {
         </section>
       ) : null}
 
-      <section aria-labelledby="your-case" className="mt-10 bg-tint p-5 sm:p-8">
+      <section aria-labelledby="your-case" className="object mt-10 p-5 sm:p-8">
         <h2 id="your-case" className="font-heading text-xl font-bold">
           Where&apos;s your case? When could it be decided?
         </h2>{" "}
@@ -239,7 +239,7 @@ export default async function ToolsPage() {
             <a
               key={c.href}
               href={c.href}
-              className="group flex flex-col border border-border bg-card p-6 transition-colors duration-150 hover:border-foreground"
+              className="group flex flex-col border-2 border-transparent bg-tint p-6 transition-colors duration-150 hover:border-[var(--object-border)]"
             >
               <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
               {/* The card's own subject, drawn. */}
@@ -276,7 +276,7 @@ export default async function ToolsPage() {
             <Link
               key={c.href}
               href={c.href}
-              className="group flex flex-col border border-border bg-card p-5 transition-colors duration-150 hover:border-foreground"
+              className="group flex flex-col border-2 border-transparent bg-tint p-5 transition-colors duration-150 hover:border-[var(--object-border)]"
             >
               <h3 className="font-heading text-lg font-bold">{c.label}</h3>{" "}
               {/* The page's subject, drawn, as on the tiles above. */}
@@ -295,7 +295,7 @@ export default async function ToolsPage() {
       </section>
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="border border-border bg-card p-6 sm:p-8">
+        <div className="bg-tint p-6 sm:p-8">
           <p className="text-sm text-muted-foreground">For your own case</p>{" "}
           <h2 className="mt-2 font-heading text-xl font-bold">
             Get notified when DOL reaches your month
@@ -318,7 +318,7 @@ export default async function ToolsPage() {
             .
           </p>
         </div>
-        <div className="border border-border bg-card p-6 sm:p-8">
+        <div className="bg-tint p-6 sm:p-8">
           <p className="text-sm text-muted-foreground">For a caseload</p>{" "}
           <h2 className="mt-2 font-heading text-xl font-bold">Track every deadline in every case</h2>{" "}
           <p className="mt-3 text-base leading-relaxed text-soft">

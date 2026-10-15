@@ -324,7 +324,7 @@ export default async function UscisProcessingTimesPage() {
                 }
               >
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] [&>*]:min-w-0">
-                  <div className="border border-border bg-tint p-5">
+                  <div className="bg-tint p-5">
                     <p className="text-sm font-bold text-muted-foreground">Quarterly median, all I-140s</p>{" "}
                     <p className="mt-2 font-heading text-5xl font-bold leading-none tabular-nums">{monthsLabel(i140.medianMonths)}</p>{" "}
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -421,7 +421,7 @@ export default async function UscisProcessingTimesPage() {
                 const rowsIn = forms.filter((r) => r.category === cat);
                 return (
                   <Fragment key={cat}>{" "}
-                  <details className="group border border-border bg-card">
+                  <details className="group bg-tint">
                     <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-lg font-bold [&::-webkit-details-marker]:hidden">
                       <span>{cat}</span>{" "}
                       <span className="font-mono text-sm font-bold text-muted-foreground">{rowsIn.length} lines</span>

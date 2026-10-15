@@ -200,12 +200,12 @@ export default async function OpenDataPage() {
           </a>
           . Credit us like this:
         </p>{" "}
-        <p className="mt-4 border border-border bg-muted px-4 py-3 tabular-nums text-sm break-words">
+        <p className="mt-4 bg-tint px-4 py-3 tabular-nums text-sm break-words">
           Source: {OPEN_DATA_CREDIT}, from U.S. Department of State and Department of Labor records. {OPEN_DATA_LICENSE.short}.
         </p>{" "}
         <p className="mt-4 text-base text-soft">On a web page, with the link:</p>{" "}
         <div className="mt-2 flex flex-wrap items-start gap-3">
-          <code className="block min-w-0 flex-1 break-all border border-border bg-muted px-4 py-3 font-mono text-sm">
+          <code className="block min-w-0 flex-1 break-all bg-tint px-4 py-3 font-mono text-sm">
             {openDataCreditHtml(SITE_URL)}
           </code>{" "}
           <CopyButton text={openDataCreditHtml(SITE_URL)} />
@@ -256,13 +256,13 @@ function DatasetPanel<T extends object>({
   fields: Array<[keyof T & string, string]>;
 }) {
   return (
-    <section className="flex flex-col border border-border bg-card">
+    <section className="flex flex-col bg-tint">
       <div className="border-b border-border p-5 sm:p-6">
         <h2 className="font-heading text-2xl font-bold">{title}</h2>{" "}
         <p className="mt-2 text-base leading-relaxed text-soft">{summary}</p>{" "}
         <dl className="mt-5 grid grid-cols-3 gap-3">
           {stats.map(([label, value]) => (
-            <div key={label} className="min-w-0 border border-border bg-background px-3 py-2">
+            <div key={label} className="min-w-0 bg-tint px-3 py-2">
               <dt className="text-sm font-semibold text-muted-foreground">{label}</dt>{" "}
               <dd className="mt-0.5 font-heading text-base font-bold break-words">{value}</dd>
             </div>

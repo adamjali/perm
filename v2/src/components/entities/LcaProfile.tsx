@@ -179,11 +179,11 @@ export function LcaProfile({
           <h3 className="font-heading text-lg font-bold">What it declared on Section H</h3>{" "}
           {p.newest ? (
             <dl className="mt-3 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
-              <div className="border border-border p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">H-1B-dependent</dt>{" "}
                 <dd className="mt-1 font-heading text-2xl font-bold">{yesNo(p.newest.dependent)}</dd>
               </div>{" "}
-              <div className="border border-border p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">Found a willful violator</dt>{" "}
                 <dd className="mt-1 font-heading text-2xl font-bold">{yesNo(p.newest.violator)}</dd>
               </div>

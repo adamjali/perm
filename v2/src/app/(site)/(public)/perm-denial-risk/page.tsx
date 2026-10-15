@@ -335,7 +335,7 @@ export default async function PermDenialRiskPage() {
           </section>
 
           {/* The baseline every other number on the page is read against. */}
-          <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+          <section className="mt-6 bg-tint p-6 sm:p-8">
             <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
               <p className="font-heading text-5xl font-bold tabular-nums">
                 {baseline.denialRate}%
@@ -348,7 +348,7 @@ export default async function PermDenialRiskPage() {
           </section>
 
           {/* Read this before the bars, not after. */}
-          <section className="mt-6 border border-border bg-tint p-6">
+          <section className="mt-6 bg-tint p-6">
             <h2 className="font-heading text-lg font-bold">
               What these rates can and can’t tell you
             </h2>{" "}
@@ -627,7 +627,7 @@ export default async function PermDenialRiskPage() {
           ) : null}
         </>
       ) : (
-        <section className="mt-10 border border-border bg-card p-8 text-center">
+        <section className="mt-10 bg-tint p-8 text-center">
           <p className="text-lg text-muted-foreground">
             The denial-rate tables land with the quarterly disclosure ingest.
             Until then, the{" "}
@@ -651,7 +651,7 @@ export default async function PermDenialRiskPage() {
             covers the dates side.
           </p>
         </div>
-        <div className="border border-border bg-tint p-6">
+        <div className="bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">Waiting on one?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Denials are rare; most of the wait is queue time. The{" "}

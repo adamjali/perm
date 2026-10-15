@@ -70,7 +70,7 @@ export default async function DebarmentsPage() {
       </p>{" "}
 
       {all.length === 0 ? (
-        <p className="mt-10 border border-border bg-card p-5 text-base">
+        <p className="mt-10 bg-tint p-5 text-base">
           The lists have not been read yet. The daily ingest reads DOL&apos;s
           program-debarments document and the H-1B page; until it has run, the
           originals are at{" "}

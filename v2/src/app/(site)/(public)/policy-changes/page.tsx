@@ -105,7 +105,7 @@ export default async function PolicyChangesPage() {
       </p>{" "}
 
       {empty ? (
-        <p className="mt-10 border border-border bg-card p-5 text-base">
+        <p className="mt-10 bg-tint p-5 text-base">
           No documents are held yet. The feed reads the Federal Register every
           morning; until it has run, the Register&apos;s own search is at{" "}
           <a href="https://www.federalregister.gov/documents/search?conditions%5Bterm%5D=%22labor+certification%22" className={LINK} rel="noopener" target="_blank">federalregister.gov</a>.

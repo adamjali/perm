@@ -150,7 +150,7 @@ export function StackedBar({
 /** The empty state every USCIS quarterly page shares: the file has not arrived. */
 export function QuarterlyEmpty({ file, children }: { file: string; children?: ReactNode }) {
   return (
-    <section className="mt-8 border border-border bg-muted p-6 sm:p-8">
+    <section className="mt-8 bg-tint p-6 sm:p-8">
       <h2 className="font-heading text-xl font-bold">Nothing loaded yet</h2>{" "}
       <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
         USCIS&apos;s quarterly file ({file}) has not been read into this site&apos;s

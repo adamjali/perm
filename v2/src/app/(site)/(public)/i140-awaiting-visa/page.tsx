@@ -253,7 +253,7 @@ export default async function I140AwaitingVisaPage() {
               USCIS&apos;s nine columns and six rows, as printed. The TOTAL row is USCIS&apos;s,
               and this site refuses the file if the countries don&apos;t sum to it.
             </p>{" "}
-            <ScrollBox label="Approved petitions awaiting a visa, by country" className="mt-4 border border-border bg-card">
+            <ScrollBox label="Approved petitions awaiting a visa, by country" className="mt-4 border-t-2 border-[var(--object-border)] bg-card">
               <table className="min-w-[880px] w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left">

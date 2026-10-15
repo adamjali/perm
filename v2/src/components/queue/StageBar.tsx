@@ -104,7 +104,7 @@ export function StageBar({ stages, scale, tipHeading, className }: StageBarProps
   if (denominator <= 0 || own === 0) {
     return (
       <span
-        className={`block h-5 w-full border border-border bg-muted ${className ?? ""}`}
+        className={`block h-5 w-full border border-input bg-muted ${className ?? ""}`}
         aria-hidden="true"
       />
     );
@@ -112,7 +112,7 @@ export function StageBar({ stages, scale, tipHeading, className }: StageBarProps
 
   return (
     <span
-      className={`flex h-5 w-full overflow-hidden border border-border bg-muted ${className ?? ""}`}
+      className={`flex h-5 w-full overflow-hidden border border-input bg-muted ${className ?? ""}`}
       aria-hidden="true"
     >
       {STAGE_ORDER.map((stage) => {
@@ -161,7 +161,7 @@ export function StageLegend({
             <li className="border-t border-border pt-3">
               <span className="flex items-center gap-2">
                 <span
-                  className={`inline-block h-3 w-3 shrink-0 border border-border ${meta.fill}`}
+                  className={`inline-block h-3 w-3 shrink-0 border border-input ${meta.fill}`}
                   aria-hidden="true"
                 />{" "}
                 <span className="text-sm font-bold text-soft">

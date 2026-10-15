@@ -233,7 +233,7 @@ function MatrixGroup({
       </div>{" "}
       <div className="flex flex-col gap-2 border-t border-border p-4 sm:flex-row sm:items-stretch [&>*]:min-w-0">
         <p className="shrink-0 self-center font-heading text-base font-bold sm:w-40">{row.label}</p>{" "}
-        <pre className="flex-1 overflow-x-auto whitespace-nowrap border border-border bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
+        <pre className="flex-1 overflow-x-auto whitespace-nowrap border-t-2 border-[var(--object-border)] bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
           <code>{code}</code>
         </pre>{" "}
         <CopyButton text={code} />
@@ -271,7 +271,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
 
   return (
     <>
-      <section className="mt-10 border border-border bg-card p-5 sm:p-6">
+      <section className="mt-10 bg-tint p-5 sm:p-6">
         <h2 className="font-heading text-2xl font-bold">Set them up</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
           These three choices apply to every badge below, so you only make them once.
@@ -344,7 +344,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
               return (
                 <Fragment key={row.kind}>
                   {" "}
-                  <li className="flex flex-col border border-border bg-card">
+                  <li className="flex flex-col bg-tint">
                     <div
                       className={
                         "flex min-h-[4.5rem] items-center justify-center overflow-x-auto border-b border-border px-4 py-4 " +
@@ -372,7 +372,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
                         </p>
                       ) : null}{" "}
                       <div className="mt-auto flex items-stretch gap-2 pt-4 [&>*]:min-w-0">
-                        <pre className="flex-1 overflow-x-auto whitespace-nowrap border border-border bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
+                        <pre className="flex-1 overflow-x-auto whitespace-nowrap border-t-2 border-[var(--object-border)] bg-background px-3 py-2.5 font-mono text-sm leading-relaxed">
                           <code>{code}</code>
                         </pre>{" "}
                         <CopyButton text={code} />

@@ -56,7 +56,7 @@ export function ContactForm() {
 
   if (phase === "sent") {
     return (
-      <div className="border border-border bg-tint p-8 text-center">
+      <div className="bg-tint p-8 text-center">
         <p className="font-heading text-xl font-bold">Message sent</p>{" "}
         <p className="mt-2 text-base text-muted-foreground">{note}</p>
       </div>
@@ -64,7 +64,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative border border-border bg-card p-6 sm:p-8">
+    <form onSubmit={onSubmit} className="relative object p-6 sm:p-8">
       {/* Placeholders show the shape of a good answer; the visible label above
           each field stays, because a placeholder used as the label vanishes
           as soon as someone types. */}
@@ -124,7 +124,7 @@ export function ContactForm() {
       </div>
 
       {phase === "error" ? (
-        <p role="alert" className="mt-4 border border-border bg-background p-3 text-sm font-bold">
+        <p role="alert" className="mt-4 bg-tint p-3 text-sm font-bold">
           {note}
         </p>
       ) : null}

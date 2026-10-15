@@ -439,7 +439,7 @@ export default async function PermProcessingTimesPage() {
                 </p>
               </FinePrint>
 
-              <div className="mt-6 border border-border bg-card p-6 sm:p-8">
+              <div className="mt-6 bg-tint p-6 sm:p-8">
                 <p className="text-sm text-muted-foreground">Measured advance</p>{" "}
                 <p className="mt-3 font-heading text-4xl font-bold leading-none tabular-nums sm:text-5xl">
                   {advance.rate.toFixed(2)}
@@ -495,7 +495,7 @@ export default async function PermProcessingTimesPage() {
             dek={`DOL's figures as of ${permAsOf}: the filing month each PERM queue is working, and the wage requests still waiting.`}
           >
             <ScrollBox label="Where each DOL queue stands" className="mt-6">
-              <table className="w-full border border-border text-left text-sm">
+              <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">
                 <thead className="bg-muted">
                   <tr>
                     <th scope="col" className="border-b border-border p-3 font-bold">
@@ -532,7 +532,7 @@ export default async function PermProcessingTimesPage() {
           </Chapter>
         </>
       ) : (
-        <section className="mt-10 border border-border bg-card p-6">
+        <section className="mt-10 bg-tint p-6">
           <p className="text-base leading-relaxed">
             Live figures are being fetched from the Department of Labor. Until they land,{" "}
             <a
@@ -616,7 +616,7 @@ export default async function PermProcessingTimesPage() {
       <Chapter id="questions" title="Common questions">
         <FaqList items={FAQ.map((item) => ({ q: item.question, a: item.answer }))} openFirst={false} />
 
-      <section className="mt-12 border border-border bg-muted p-6">
+      <section className="mt-12 bg-tint p-6">
         <h3 className="font-heading text-xl font-bold">Where these numbers come from</h3>{" "}
         {/* The absence rule changes how a blank cell reads, so it stays in
             the open. The provenance behind it collapses. */}

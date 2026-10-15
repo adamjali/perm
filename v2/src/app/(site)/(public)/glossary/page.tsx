@@ -114,7 +114,7 @@ export default function GlossaryPage() {
             {" "}
             <a
               href={`#letter-${l}`}
-              className="flex size-11 items-center justify-center border border-border bg-card font-heading text-base font-bold hover:bg-tint"
+              className="flex size-11 items-center justify-center border border-input bg-card font-heading text-base font-bold hover:bg-tint"
             >
               {l}
             </a>

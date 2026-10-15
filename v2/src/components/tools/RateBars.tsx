@@ -93,7 +93,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
   const max = Math.max(baseline, ...rows.map((r) => r.rate)) * 1.08;
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-6">
+    <div className="bg-tint p-5 sm:p-6">
       <ChartTips label="Denial rate by group, against the field baseline">
       <div className="space-y-5">
         {rows.map((r) => {
@@ -122,7 +122,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
               </div>
               {/* The track carries the baseline marker, so every bar is read
                   against the field rather than against itself. */}
-              <div className="relative mt-2 h-6 border border-border bg-background">
+              <div className="relative mt-2 h-6 border border-input bg-background">
                 <div
                   className="h-full"
                   style={{
@@ -150,11 +150,11 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
           Field baseline, {baseline.toFixed(2)}%
         </span>{" "}
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden="true" className="inline-block h-3 w-3 border border-border" style={{ background: "var(--data-warn)" }} />
+          <span aria-hidden="true" className="inline-block h-3 w-3 border border-input" style={{ background: "var(--data-warn)" }} />
           Above the field
         </span>{" "}
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden="true" className="inline-block h-3 w-3 border border-border" style={{ background: "var(--data-bad)" }} />
+          <span aria-hidden="true" className="inline-block h-3 w-3 border border-input" style={{ background: "var(--data-bad)" }} />
           Twice the field or more
         </span>
       </p>
@@ -226,7 +226,7 @@ export function RateTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] border border-border text-left text-sm">
+      <table className="w-full min-w-[560px] border-t-2 border-[var(--object-border)] text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-input bg-muted">
           <tr>
@@ -499,7 +499,7 @@ export function RankedRateViews({
   const shown = kept.slice(0, chartLimit);
   const showingAll = shown.length === kept.length;
   const empty = (
-    <p className="border border-border bg-card p-6 text-base text-muted-foreground">
+    <p className="bg-tint p-6 text-base text-muted-foreground">
       No {noun} clear a floor of {floor.toLocaleString("en-US")} decided cases in this
       window. Lower the floor to see what the files hold.
     </p>

@@ -143,7 +143,7 @@ export default async function EstimateScorecardPage() {
             ))}
           </ul>{" "}
           {shortAnswer.length > LEAD_READINGS ? (
-            <details className="group mt-4 border border-border bg-card">
+            <details className="group mt-4 bg-tint">
               <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
                 {shortAnswer.length - LEAD_READINGS} more {shortAnswer.length - LEAD_READINGS === 1 ? "reading" : "readings"}{" "}
                 <PlusIcon aria-hidden="true" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />

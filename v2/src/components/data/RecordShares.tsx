@@ -35,7 +35,7 @@ export function RecordShares({ rows, className }: { rows: RecordShare[]; classNa
         {total > 0 ? `${formatInt(total)} filings, four programs` : "Four programs, one search"}
       </h2>{" "}
       {total > 0 ? (
-        <div aria-hidden="true" className="mt-4 flex h-9 border border-border">
+        <div aria-hidden="true" className="mt-4 flex h-9 border border-input">
           {counted.map((r) => (
             <span
               key={r.key}
@@ -51,7 +51,7 @@ export function RecordShares({ rows, className }: { rows: RecordShare[]; classNa
           <Fragment key={r.key}>
             {" "}
             <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 py-2.5">
-              <span aria-hidden="true" className={cn("mt-1 size-4 border border-border", r.swatch)} />{" "}
+              <span aria-hidden="true" className={cn("mt-1 size-4 border border-input", r.swatch)} />{" "}
               <span className="min-w-0">
                 <Link
                   href={r.href}

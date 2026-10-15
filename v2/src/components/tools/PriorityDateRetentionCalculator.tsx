@@ -58,7 +58,7 @@ export function PriorityDateRetentionCalculator() {
   }, [approved, i485, withdrew]);
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-8">
+    <div className="object p-5 sm:p-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
         <div>
           <Label htmlFor={approvedId}>I-140 approval date</Label>{" "}
@@ -91,7 +91,7 @@ export function PriorityDateRetentionCalculator() {
       />{" "}
 
       {result?.kind === "error" ? (
-        <p className="mt-5 flex items-start gap-2 border border-border bg-background p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.error}
         </p>
       ) : null}{" "}
@@ -99,7 +99,7 @@ export function PriorityDateRetentionCalculator() {
       {result?.kind === "ok" ? (
         <div className="mt-4">
           {result.warnings.map((w) => (
-            <p key={w} className="mb-3 flex items-start gap-2 border border-border bg-background p-3 text-sm">
+            <p key={w} className="mb-3 flex items-start gap-2 bg-tint p-3 text-sm">
               <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {w}
             </p>
           ))}{" "}

@@ -91,7 +91,7 @@ const usd = (n: number | null) =>
   n === null ? "n/a" : formatDollars(n);
 
 const FIELD =
-  "mt-2 block w-full min-w-0 min-h-[44px] border border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground";
+  "mt-2 block w-full min-w-0 min-h-[44px] border border-input bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:text-muted-foreground";
 
 /**
  * A city as typed, committed on Enter or on leaving the field, so a reader
@@ -230,7 +230,7 @@ export function SalaryExplorer({
   const maxBin = Math.max(1, ...data.bins.map((b) => b.count));
 
   return (
-    <div className="border border-border bg-card">
+    <div className="object">
       {/* Filters. grid-cols-1 unprefixed and min-w-0 on the items are both
           required: without a mobile column track the items land in an implicit
           content-sized column, which on WebKit sizes a form control from its
@@ -431,7 +431,7 @@ export function SalaryExplorer({
                 .map((c) => (
                   <div
                     key={c.label}
-                    className="min-w-0 flex-1 basis-52 border border-border bg-background p-4"
+                    className="min-w-0 flex-1 basis-52 bg-tint p-4"
                   >
                     <p className="text-sm font-semibold text-muted-foreground">
                       {c.label}
@@ -475,7 +475,7 @@ export function SalaryExplorer({
                         data-tip={`${usd(b.from)} to ${usd(b.from + data.binWidth)}\n${formatInt(b.count)} ${nounPlural}`}
                       >
                         <span className="text-sm tabular-nums text-muted-foreground">{usd(b.from)}</span>{" "}
-                        <span className="block h-5 w-full border border-border bg-muted">
+                        <span className="block h-5 w-full border border-input bg-muted">
                           <span
                             className="block h-full bg-primary"
                             style={{ width: `${Math.max((b.count / maxBin) * 100, 1)}%` }}
@@ -564,7 +564,7 @@ export function SalaryExplorer({
                     </ChartTips>
                   );
                 })()}
-                <details className="mt-5 border border-border">
+                <details className="mt-5 border-t-2 border-[var(--object-border)]">
                   <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
                     {`All ${formatInt(data.byState.length)} states, as a table`}
                   </summary>

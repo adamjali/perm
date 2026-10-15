@@ -92,7 +92,7 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
                     whole reason to draw a band rather than a dot.
                   */}
                   <div
-                    className="absolute top-1/2 h-4 -translate-y-1/2 border border-border"
+                    className="absolute top-1/2 h-4 -translate-y-1/2 border border-input"
                     style={{
                       left: pct(band.p10),
                       width: pct(Math.max(1, band.p90 - band.p10)),
@@ -263,7 +263,7 @@ export function StageLadderTable({ stages }: { stages: ReviewStage[] }) {
               <tr key={s.status} className="border-b border-border/25">
                 <td className="py-2 pr-3">
                   <span
-                    className="mr-2 inline-block h-2.5 w-2.5 border border-border align-middle"
+                    className="mr-2 inline-block h-2.5 w-2.5 border border-input align-middle"
                     style={{ backgroundColor: GROUP_STYLE[meta.group].fill }}
                     aria-hidden="true"
                   />{" "}

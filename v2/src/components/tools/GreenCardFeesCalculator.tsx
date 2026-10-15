@@ -19,7 +19,7 @@ import { calculateGreenCardFees, FEE_SCHEDULE, type FeeInput } from "@/lib/perm"
 const FEE_FILLS = ["bg-primary", "bg-foreground", "bg-stage-pwd", "bg-data-warn-ink", "bg-stage-recruitment", "bg-data-info"] as const;
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-const NUMBER = "mt-1.5 min-h-11 w-full min-w-0 border border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+const NUMBER = "mt-1.5 min-h-11 w-full min-w-0 border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 function Count({ id, label, value, onChange, note }: { id: string; label: string; value: number; onChange: (n: number) => void; note?: string }) {
   return (
@@ -53,7 +53,7 @@ export function GreenCardFeesCalculator() {
   );
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-8">
+    <div className="object p-5 sm:p-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
         <div>
           <Label htmlFor={petitionerId}>Petitioner</Label>{" "}
@@ -78,7 +78,7 @@ export function GreenCardFeesCalculator() {
         <Count id={travelId} label="Advance parole (I-131)" value={travel} onChange={setTravel} note="One per adult who wants one; capped at the adult count." />
       </div>{" "}
 
-      <div className="mt-6 border border-border bg-background p-4" aria-live="polite">
+      <div className="mt-6 bg-tint p-4" aria-live="polite">
         <p className="text-sm font-bold">USCIS fees, total{" "}</p>{" "}
         <p className="mt-1 font-heading text-4xl font-bold tabular-nums">{usd(result.total)}</p>{" "}
         {/* THE TOTAL, SPLIT BY FORM, at the share each fee takes. The table
@@ -86,7 +86,7 @@ export function GreenCardFeesCalculator() {
             adjustment stage is the larger half and which form drives it. */}
         {result.total > 0 ? (
           <>
-            <div aria-hidden="true" className="mt-4 flex h-6 border border-border">
+            <div aria-hidden="true" className="mt-4 flex h-6 border border-input">
               {result.lines.map((l, i) => (
                 <span
                   key={`${l.form}-${l.label}`}
@@ -99,7 +99,7 @@ export function GreenCardFeesCalculator() {
             <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
               {result.lines.map((l, i) => (
                 <li key={`${l.form}-${l.label}`} className="flex items-center gap-1.5">
-                  <span aria-hidden="true" className={`size-3 border border-border ${FEE_FILLS[i % FEE_FILLS.length]}`} />{" "}
+                  <span aria-hidden="true" className={`size-3 border border-input ${FEE_FILLS[i % FEE_FILLS.length]}`} />{" "}
                   <span className="font-mono font-bold">{l.form}</span>{" "}
                   <span className="tabular-nums text-soft">{`${usd(l.total)} `}</span>
                 </li>

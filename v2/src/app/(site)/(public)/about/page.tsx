@@ -223,7 +223,7 @@ export default async function AboutPage() {
           </div>
         </div>{" "}
         <figure className="relative mx-auto w-full max-w-sm lg:mr-0">
-          <div className="relative border border-border bg-card p-3">
+          <div className="relative bg-tint p-3">
             <Image
               src={SABRINA.image}
               alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
@@ -312,7 +312,7 @@ export default async function AboutPage() {
           <ol className="grid grid-cols-1 gap-3">
             {SOURCES.map((s) => (
               <Fragment key={s.agency}>
-                <li className="border border-border bg-card p-4">
+                <li className="bg-tint p-4">
                   <span className="block font-heading text-lg font-bold">{s.agency}</span>{" "}
                   <span className="mt-1 block text-sm leading-snug text-muted-foreground">{s.what}</span>
                 </li>{" "}
@@ -375,7 +375,7 @@ export default async function AboutPage() {
                 ) : null}
                 <span
                   aria-hidden="true"
-                  className={`absolute left-0 top-0.5 size-5 border border-border lg:top-0 ${i === MILESTONES.length - 1 ? "bg-primary" : "bg-card"}`}
+                  className={`absolute left-0 top-0.5 size-5 border border-input lg:top-0 ${i === MILESTONES.length - 1 ? "bg-primary" : "bg-card"}`}
                 />{" "}
                 <span className="block font-mono text-sm text-muted-foreground">{monthLabel(m.when)}</span>{" "}
                 <span className="mt-1 block text-base leading-snug">

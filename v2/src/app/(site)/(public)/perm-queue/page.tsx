@@ -170,7 +170,7 @@ export default async function PermQueuePage() {
         </p>
       ) : null}
 
-      <section className="mt-10 border border-border bg-card p-6 sm:p-8">
+      <section className="mt-10 bg-tint p-6 sm:p-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 [&>*]:min-w-0">
           <Figure
             label="Last seen undecided"

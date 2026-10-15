@@ -161,7 +161,7 @@ export default function SecurityPage() {
               An automated script sent sign-up requests with marketing text in the name field, so that text reached the
               addresses it supplied inside our welcome email. Three safeguards went in the same day.
             </p>{" "}
-            <details className="group mt-4 border border-border">
+            <details className="group mt-4 bg-tint">
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
                 The full account{" "}
                 <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />

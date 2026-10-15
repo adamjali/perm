@@ -39,7 +39,7 @@ const fmt = (n: number) => n.toLocaleString("en-US");
 
 function Code({ children }: { children: string }) {
   return (
-    <pre className="mt-3 whitespace-pre-wrap [overflow-wrap:anywhere] border border-border bg-muted px-4 py-3 font-mono text-sm leading-relaxed">
+    <pre className="mt-3 whitespace-pre-wrap [overflow-wrap:anywhere] bg-tint px-4 py-3 font-mono text-sm leading-relaxed">
       <code>{children}</code>
     </pre>
   );
@@ -135,7 +135,7 @@ export default function DevelopersPage() {
 
       <ol className="mt-10 grid grid-cols-1 gap-6 [&>*]:min-w-0 lg:grid-cols-3">
         {steps.map((s, i) => (
-          <li key={s.title} className="border border-border bg-card p-5">
+          <li key={s.title} className="bg-tint p-5">
             <p className="flex items-center gap-3">
               <span className="flex size-9 shrink-0 items-center justify-center border border-input bg-card font-mono text-base font-bold">
                 {i + 1}
@@ -152,11 +152,11 @@ export default function DevelopersPage() {
         <h2 id="limits" className="font-heading text-2xl font-bold">
           Plans
         </h2>{" "}
-        <p className="mt-2 max-w-2xl border border-border bg-primary/15 px-4 py-3 text-base">
+        <p className="mt-2 max-w-2xl border-t-2 border-[var(--object-border)] bg-primary/15 px-4 py-3 text-base">
           Paid features are free for now: every account gets the Plus plan&rsquo;s limits, exports, live DOL lookups and
           webhooks until billing opens. We&rsquo;ll say so here, and email key holders, before that changes.
         </p>{" "}
-        <ScrollBox label="Plans and their limits" className="mt-4 border border-border">
+        <ScrollBox label="Plans and their limits" className="mt-4 border-t-2 border-[var(--object-border)]">
           <table className="w-full min-w-[480px] text-left text-sm">
             <thead className="bg-muted">
               <tr>
@@ -209,7 +209,7 @@ export default function DevelopersPage() {
           </a>{" "}
           has the same list for tools that read it.
         </p>{" "}
-        <ScrollBox label="API endpoints" className="mt-4 border border-border">
+        <ScrollBox label="API endpoints" className="mt-4 border-t-2 border-[var(--object-border)]">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-muted">
               <tr>
@@ -234,7 +234,7 @@ export default function DevelopersPage() {
             </tbody>
           </table>
         </ScrollBox>{" "}
-        <details className="mt-4 border border-border bg-card px-4 py-3">
+        <details className="mt-4 bg-tint px-4 py-3">
           <summary className="cursor-pointer font-bold">The shape of every answer</summary>
           <Code>{`{
   "data": { ... },
@@ -249,7 +249,7 @@ export default function DevelopersPage() {
             allowed.
           </p>
         </details>{" "}
-        <details className="mt-3 border border-border bg-card px-4 py-3">
+        <details className="mt-3 bg-tint px-4 py-3">
           <summary className="cursor-pointer font-bold">Errors</summary>
           <p className="mt-3 text-sm leading-relaxed text-soft">
             Every error is JSON with a code and a sentence saying what happened and what to do.
@@ -282,7 +282,7 @@ export default function DevelopersPage() {
           {GRANTABLE_SCOPES.map((sc) => (
             <Fragment key={sc}>
               {" "}
-              <li className="border border-border bg-card px-4 py-3">
+              <li className="bg-tint px-4 py-3">
                 <p className="font-mono text-sm font-bold">{sc}</p>{" "}
                 <p className="mt-1 text-sm text-soft">{SCOPE_LABELS[sc]}</p>
               </li>
@@ -349,14 +349,14 @@ export default function DevelopersPage() {
           {WEBHOOK_EVENTS.map((ev) => (
             <Fragment key={ev}>
               {" "}
-              <li className="border border-border bg-card px-4 py-3">
+              <li className="bg-tint px-4 py-3">
                 <p className="font-mono text-sm font-bold">{ev}</p>{" "}
                 <p className="mt-1 text-sm text-soft">{WEBHOOK_EVENT_LABELS[ev]}</p>
               </li>
             </Fragment>
           ))}
         </ul>{" "}
-        <details className="mt-4 border border-border bg-card px-4 py-3">
+        <details className="mt-4 bg-tint px-4 py-3">
           <summary className="cursor-pointer font-bold">A delivery, and how to check its signature</summary>
           <Code>{WEBHOOK_EXAMPLE}</Code>{" "}
           <p className="mt-3 text-sm leading-relaxed text-soft">
@@ -384,7 +384,7 @@ export default function DevelopersPage() {
         </p>{" "}
         <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
           {MCP_TOOLS.map((t) => (
-            <li key={t.name} className="border border-border bg-card px-4 py-3">
+            <li key={t.name} className="bg-tint px-4 py-3">
               <p className="font-mono text-sm font-bold">{t.name}</p>{" "}
               <p className="mt-1 text-sm leading-relaxed text-soft">{t.summary}</p>
             </li>

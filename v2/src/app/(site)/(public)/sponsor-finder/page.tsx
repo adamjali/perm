@@ -45,7 +45,7 @@ export const metadata: Metadata = withSocialCard({
 
 const STATES = new Set(Object.keys(US_STATE_NAMES));
 const FIELD =
-  "min-h-[44px] w-full border border-border bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
+  "min-h-[44px] w-full border border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-primary";
 const pct = (x: number | null, d = 0) => (x === null ? "" : `${(x * 100).toFixed(d)}%`);
 
 export default async function SponsorFinderPage({
@@ -68,7 +68,7 @@ export default async function SponsorFinderPage({
         </p>
       </header>
 
-      <form method="get" action={PATH} className="mt-8 border border-border bg-card p-5 sm:p-6">
+      <form method="get" action={PATH} className="mt-8 object p-5 sm:p-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           <label className="block text-sm font-bold">
             State
@@ -164,7 +164,7 @@ export default async function SponsorFinderPage({
       </p>
 
       {found === null ? (
-        <p className="mt-8 border border-border bg-card p-5 text-base">
+        <p className="mt-8 bg-tint p-5 text-base">
           The sponsor index is being built. Try again in a few minutes.
         </p>
       ) : (
@@ -178,7 +178,7 @@ export default async function SponsorFinderPage({
             <p className="mt-2 text-base text-muted-foreground">Drop a filter or two and search again.</p>
           ) : (
             <>
-              <div className="mt-4 overflow-x-auto border border-border">
+              <div className="mt-4 overflow-x-auto border-t-2 border-[var(--object-border)]">
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <caption className="sr-only">Sponsors matching the filters</caption>
                   <thead>

@@ -101,7 +101,7 @@ export function I140QueueEstimator({
 
   if (subtypes.length === 0 || !estimate) {
     return (
-      <div className={cn("border border-border bg-card p-6", className)}>
+      <div className={cn("object p-6", className)}>
         <p className="text-base leading-relaxed">
           USCIS&apos;s quarterly I-140 figures are being fetched. Until they land,{" "}
           <a
@@ -121,7 +121,7 @@ export function I140QueueEstimator({
   const maxPending = Math.max(...subtypes.map((s) => s.pending));
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
+    <div className={cn("object", className)}>
       <div className="border-b border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which
@@ -287,7 +287,7 @@ export function I140QueueEstimator({
                     <span className="sm:hidden">{s.code}</span>{" "}
                     <span className="hidden sm:inline">{s.label}</span>
                   </span>{" "}
-                  <span className="h-6 w-full border border-border bg-muted">
+                  <span className="h-6 w-full border border-input bg-muted">
                     <span
                       className={cn(
                         "block h-full",

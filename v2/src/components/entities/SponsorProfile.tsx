@@ -46,7 +46,7 @@ export function SponsorProfile({
                     <span className="text-sm text-muted-foreground">{partBasis(p)}</span>
                   </p>{" "}
                   <div
-                    className="relative mt-2 h-3 border border-border bg-background"
+                    className="relative mt-2 h-3 border border-input bg-background"
                     role="img"
                     aria-label={partRank(p)}
                   >

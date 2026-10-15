@@ -255,7 +255,7 @@ export default async function PermWagesPage() {
           </div>
         </>
       ) : (
-        <section className="mt-10 border border-border bg-card p-8 text-center">
+        <section className="mt-10 bg-tint p-8 text-center">
           <p className="text-lg text-muted-foreground">
             The occupation aggregates land with the quarterly disclosure
             ingest. Until then, the{" "}

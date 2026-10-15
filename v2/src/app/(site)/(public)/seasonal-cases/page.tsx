@@ -119,7 +119,7 @@ export default async function SeasonalCasesPage() {
                 const share = summary.total > 0 ? Math.round((n / summary.total) * 100) : 0;
                 if (!f) return null;
                 return (
-                  <li key={p} className="border border-border bg-card p-4">
+                  <li key={p} className="bg-tint p-4">
                     <p className="font-mono text-sm font-bold">
                       {p}- <span className="text-muted-foreground">· {f.form}</span>
                     </p>{" "}
@@ -141,15 +141,15 @@ export default async function SeasonalCasesPage() {
             </ChartTips>
           ) : (
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
-              <div className="border border-border bg-card p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">Confirmed in DOL&apos;s case status</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.total)}</dd>
               </div>{" "}
-              <div className="border border-border bg-card p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">Still in process</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.pending)}</dd>
               </div>{" "}
-              <div className="border border-border bg-tint p-4">
+              <div className="bg-tint p-4">
                 <dt className="text-sm font-bold text-muted-foreground">Decided</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.decided)}</dd>
               </div>
@@ -183,7 +183,7 @@ export default async function SeasonalCasesPage() {
           </Link>
           .
         </p>{" "}
-        <details className="group mt-4 border border-border bg-card">
+        <details className="group mt-4 bg-tint">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
             Where these figures come from{" "}
             <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -239,12 +239,12 @@ export default async function SeasonalCasesPage() {
                   { key: "withdrawn", n: v.withdrawn, word: "withdrawn", cls: "bg-data-none" },
                 ];
                 return (
-                  <li key={v.visa} className="border border-border bg-card p-4">
+                  <li key={v.visa} className="bg-tint p-4">
                     <p className="font-heading text-lg font-bold">{v.visa}</p>{" "}
                     <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{pct(v.certified, v.total)}%</p>{" "}
                     <p className="text-sm text-muted-foreground">certified, of {formatInt(v.total)} decided</p>{" "}
                     {/* Drawn to measure: each segment is that outcome's share of the visa's decisions. */}
-                    <div className="mt-3 flex h-3 w-full overflow-hidden border border-border" aria-hidden="true">
+                    <div className="mt-3 flex h-3 w-full overflow-hidden border border-input" aria-hidden="true">
                       {parts.map((part) =>
                         part.n > 0 ? (
                           <div

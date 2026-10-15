@@ -178,7 +178,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
           Where every category stood in {formatMonth(board.lastMonth)}
         </h3>{" "}
         <ScrollBox label={`Where every category stood in ${formatMonth(board.lastMonth)}`} className="mt-4">
-          <table className="w-full min-w-[640px] border border-border text-left text-sm">
+          <table className="w-full min-w-[640px] border-t-2 border-[var(--object-border)] text-left text-sm">
             <caption className="sr-only">
               {`Employment-based ${chart === "finalAction" ? "final action" : "dates for filing"} cutoffs by category and country of birth, from the ${formatMonth(board.lastMonth)} visa bulletin.`}
             </caption>
@@ -298,7 +298,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                   <span className="text-sm font-bold">
                     {categoryLabel(c.category)} {COUNTRY_LABELS[c.country]}
                   </span>{" "}
-                  <span className="relative block h-6 border border-border bg-muted">
+                  <span className="relative block h-6 border border-input bg-muted">
                     <span
                       className="absolute inset-y-0 block"
                       style={{
@@ -358,7 +358,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
               <ul className="mt-3 flex flex-wrap gap-2">
                 {openLines.map((g) => (
                   <Fragment key={g.category}>
-                    <li className="border border-border bg-tint px-3 py-1.5 text-sm font-bold">
+                    <li className="bg-tint px-3 py-1.5 text-sm font-bold">
                       {g.everyCountry
                         ? `${categoryLabel(g.category)}, every country`
                         : `${categoryLabel(g.category)}: ${g.countries.map((k) => COUNTRY_LABELS[k]).join(", ")}`}

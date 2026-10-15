@@ -233,7 +233,7 @@ export function ReliabilityBand({
   return (
     <section
       className={cn(
-        "border border-border bg-card p-5 sm:p-6",
+        "bg-tint p-5 sm:p-6",
         withheld ? "border-l-8 border-l-data-warn" : "border-l-8 border-l-data-none",
         className,
       )}
@@ -336,7 +336,7 @@ export function PeerList({
             <li className="min-w-0">
               <Link
                 href={`${hrefBase}/${p.slug}`}
-                className="flex h-full min-h-[44px] flex-col border border-border bg-card p-4 no-underline transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="flex h-full min-h-[44px] flex-col border-2 border-transparent bg-tint p-4 no-underline transition-colors hover:border-[var(--object-border)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 <span className="text-sm font-bold text-muted-foreground">
                   #{formatInt(p.rank)}

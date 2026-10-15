@@ -519,7 +519,7 @@ export default async function OccupationPage({
 
       {h1b && h1b.n > 0 && row.code ? (
         <Chapter id="h1b" title="The same job on H-1B">
-        <section className="mt-6 border border-border bg-card p-6 sm:p-8">
+        <section className="mt-6 bg-tint p-6 sm:p-8">
           <p className="max-w-3xl text-base leading-relaxed text-soft">
             <span className="font-heading text-2xl font-bold tabular-nums">{formatInt(h1b.n)}</span> certified H-1B
             labor condition applications for this occupation since FY2020
@@ -542,7 +542,7 @@ export default async function OccupationPage({
 
       <Chapter id="notes" title="Notes on these numbers">
       {/* ONE LINE AND A LINK, THE READING FOLDED. */}
-      <section className="mt-6 border border-border bg-tint p-6 sm:p-8">
+      <section className="mt-6 bg-tint p-6 sm:p-8">
         <h3 className="font-heading text-xl font-bold">Reading the wage</h3>{" "}
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">
           A floor, not a salary survey: every level and metro mixed.

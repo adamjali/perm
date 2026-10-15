@@ -53,7 +53,7 @@ function YearRow({ year, held, newest, earliest }: { year: string; held: Set<str
                     href={`/visa-bulletin/${ym}`}
                     aria-current={current ? "page" : undefined}
                     className={
-                      "flex min-h-11 items-center justify-center border border-border font-mono text-sm font-semibold transition-colors " +
+                      "flex min-h-11 items-center justify-center border border-input font-mono text-sm font-semibold transition-colors " +
                       (current
                         ? "bg-primary text-primary-foreground"
                         : "bg-card hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary")
@@ -108,7 +108,7 @@ export function BulletinMonthStrip({ months, newest }: BulletinMonthStripProps) 
       </p>{" "}
       <ol className="mt-5 flex flex-col gap-3">{rows(open)}</ol>{" "}
       {folded.length > 0 ? (
-        <details className="mt-4 border border-border">
+        <details className="mt-4 bg-tint">
           <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
             {`Earlier years, ${folded.at(-1)} to ${folded[0]} (${foldedCount} bulletins)`}
           </summary>

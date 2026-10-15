@@ -172,7 +172,7 @@ export async function OccupationReference({
       ) : null}
 
       {busiest && history.length >= 2 ? (
-        <section className="mt-10 border border-border bg-card p-6 sm:p-8" aria-labelledby="occ-dol-years">
+        <section className="mt-10 bg-tint p-6 sm:p-8" aria-labelledby="occ-dol-years">
           <h2 id="occ-dol-years" className="font-heading text-xl font-bold sm:text-2xl">
             DOL&apos;s levels for this job in {busiest.name}, year by year
           </h2>{" "}
@@ -264,7 +264,7 @@ export async function OccupationReference({
           </dl>
           {main.bright.length ? (
             <p className="mt-4 text-base">
-              <span className="mr-2 inline-block border border-border bg-tint px-2 py-0.5 font-bold">Bright Outlook</span>{" "}
+              <span className="mr-2 inline-block bg-tint px-2 py-0.5 font-bold">Bright Outlook</span>{" "}
               O*NET OnLine lists this job for {main.bright.map((b) => b.toLowerCase()).join(" and ")}.
             </p>
           ) : null}

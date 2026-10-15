@@ -62,7 +62,7 @@ export function PwdQueueEstimator({
 
   if (backlog.length === 0) {
     return (
-      <div className={cn("border border-border bg-card p-6", className)}>
+      <div className={cn("object p-6", className)}>
         <p className="text-base leading-relaxed">
           DOL&apos;s prevailing wage figures are being fetched. Until they land,{" "}
           <a
@@ -80,7 +80,7 @@ export function PwdQueueEstimator({
   }
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
+    <div className={cn("object", className)}>
       <div className="border-b border-border p-6 sm:p-8">
         {/* The icon sits beside the heading only. Wrapping the copy in
             the icon flex indented it 36px against the form below, which

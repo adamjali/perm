@@ -76,7 +76,7 @@ export function SavedReceipts({ current }: { current: string | null }) {
   };
 
   return (
-    <section className="mt-6 border border-border bg-card p-5 sm:p-6" aria-labelledby="saved-receipts">
+    <section className="mt-6 bg-tint p-5 sm:p-6" aria-labelledby="saved-receipts">
       <h2 id="saved-receipts" className="font-heading text-lg font-bold">
         Your receipt numbers
       </h2>{" "}

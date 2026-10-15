@@ -144,7 +144,7 @@ const WORKER_DISPLAY: Partial<Record<CaseFieldKey, (v: string) => string>> = {
 };
 
 const CONTROL =
-  "w-full min-w-0 min-h-[44px] border border-border bg-card px-3 text-base font-medium " +
+  "w-full min-w-0 min-h-[44px] border border-input bg-card px-3 text-base font-medium " +
   "focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed " +
   // `text-muted-foreground` (5.50:1) for the disabled state, not a half-opacity
   // foreground, which measures 3.94:1 in light and is on the contrast gate's
@@ -415,7 +415,7 @@ function FilterGroup({
   children: React.ReactNode;
 }) {
   return (
-    <details open={initiallyOpen || undefined} className="group border border-border bg-card">
+    <details open={initiallyOpen || undefined} className="group bg-tint">
       <summary className="flex min-h-[52px] cursor-pointer list-none items-center gap-3 px-4 py-2 hover:bg-tint focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
         <CaretRightIcon
           className="size-4 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none"
@@ -740,7 +740,7 @@ export function UnifiedCaseSearch({
 
   return (
     <div className="space-y-8">
-      <section className="border border-border bg-card p-5 sm:p-6">
+      <section className="object p-5 sm:p-6">
         <form onSubmit={submit} className="space-y-6">
           <fieldset className="min-w-0">
             <legend className="sr-only">What to search by</legend>{" "}
@@ -1379,7 +1379,7 @@ export function UnifiedCaseSearch({
           result computed from input that was partly thrown away must not read
           as more authoritative than the doubt about the input. */}
       {unreadMonths.length > 0 ? (
-        <p className="flex items-start gap-2 border border-border bg-data-warn/8 p-4 text-base leading-relaxed">
+        <p className="flex items-start gap-2 bg-data-warn/10 p-4 text-base leading-relaxed">
           <WarningIcon className="mt-1 size-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>
             <b className="font-bold">
@@ -1394,7 +1394,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {unreadFields.length > 0 ? (
-        <p className="flex items-start gap-2 border border-border bg-data-warn/8 p-4 text-base leading-relaxed">
+        <p className="flex items-start gap-2 bg-data-warn/10 p-4 text-base leading-relaxed">
           <WarningIcon className="mt-1 size-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
           <span>
             <b className="font-bold">
@@ -1414,7 +1414,7 @@ export function UnifiedCaseSearch({
           button reading "Searching…" - which on a phone is already scrolled
           off the top by the time the results would appear. */}
       {pending ? (
-        <div className="border border-border bg-card p-5" role="status">
+        <div className="bg-tint p-5" role="status">
           <p className="flex items-center gap-2 text-base font-bold">
             <CircleNotchIcon
               className="size-5 shrink-0 animate-spin motion-reduce:animate-none"
@@ -1436,7 +1436,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {data?.needsLead ? (
-        <div className="border border-border bg-tint p-5">
+        <div className="bg-tint p-5">
           <p className="text-base leading-relaxed">
             Nothing was filled in that a search can start from. Type an employer
             or a case number, or pick a worksite state, a law firm or an
@@ -1447,7 +1447,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {data && !data.needsLead && data.resolved.firm ? (
-        <div className="border border-border bg-card p-4">
+        <div className="bg-tint p-4">
           <p className="text-base leading-relaxed">
             <b className="font-bold">Law firm:</b> {data.resolved.firm.name}{" "}
             <span className="text-muted-foreground">
@@ -1479,7 +1479,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {data && !data.needsLead && data.resolved.occupation ? (
-        <div className="border border-border bg-card p-4">
+        <div className="bg-tint p-4">
           <p className="text-base leading-relaxed">
             <b className="font-bold">Occupation:</b>{" "}
             {data.resolved.occupation.name}{" "}
@@ -1506,7 +1506,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {droppedList.length > 0 ? (
-        <div className="border border-border bg-tint p-4">
+        <div className="bg-tint p-4">
           <p className="text-base font-bold">
             {droppedList.length === 1
               ? "One filter was not applied."
@@ -1526,7 +1526,7 @@ export function UnifiedCaseSearch({
       {nameSearch ? <NameGroups query={query.search} enabled={!(data && data.rows.length === 0)} /> : null}{" "}
 
       {data && !data.needsLead && (data.skipped.live || data.skipped.published) ? (
-        <div className="border border-border bg-card p-4">
+        <div className="bg-tint p-4">
           <p className="text-base leading-relaxed">
             {/* ONE BRANCH, because `because` is never empty when the live half
                 is out: a lead that forces the published record now names itself
@@ -1554,7 +1554,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {data && !data.needsLead && (data.unread?.length ?? 0) > 0 ? (
-        <div role="status" className="border border-border bg-tint p-4">
+        <div role="status" className="bg-tint p-4">
           <p className="text-base leading-relaxed">
             <b className="font-bold">Part of the record couldn&apos;t be read just now:</b>{" "}
             {data.unread?.join(", ")}. This answer may be missing cases from it.
@@ -1564,7 +1564,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {data && !data.needsLead && (data.permOnly?.length ?? 0) > 0 ? (
-        <div className="border border-border bg-card p-4">
+        <div className="bg-tint p-4">
           <p className="text-base leading-relaxed">
             <b className="font-bold">Only published PERM cases are in this answer.</b>{" "}
             The {data.permOnly?.join(", ")}{" "}
@@ -1576,7 +1576,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {data && !data.needsLead && (data.lcaOnly?.length ?? 0) > 0 ? (
-        <div className="border border-border bg-card p-4">
+        <div className="bg-tint p-4">
           <p className="text-base leading-relaxed">
             <b className="font-bold">Only published H-1B LCAs are in this answer.</b>{" "}
             The prevailing wage source is a field of DOL&apos;s LCA file alone; PERM,
@@ -1586,7 +1586,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {searching && data && !data.needsLead && data.rows.length === 0 ? (
-        <div className="border border-border bg-tint p-5">
+        <div className="bg-tint p-5">
           <p className="text-base leading-relaxed">
             Nothing matched. Try a shorter form of the employer name: DOL spells
             one company several ways, and the search matches the start of the
@@ -1796,7 +1796,7 @@ export function UnifiedCaseSearch({
           ) : null}{" "}
 
           {data.windowed ? (
-            <p className="mt-4 max-w-3xl border border-border bg-tint p-4 text-base leading-relaxed">
+            <p className="mt-4 max-w-3xl bg-tint p-4 text-base leading-relaxed">
               <b className="font-bold">These filters covered this employer&apos;s newest filings, not its whole
               record.</b>{" "}
               Give the full employer name, or add a filing month, to reach older ones.
@@ -1840,7 +1840,7 @@ export function UnifiedCaseSearch({
                 <span className="hidden text-sm text-muted-foreground sm:block">{PROGRAM_LABEL[g.program]}</span>{" "}
                 <span
                   className={
-                    "inline-block w-fit border border-border px-2 py-0.5 text-sm font-bold " +
+                    "inline-block w-fit bg-tint px-2 py-0.5 text-sm font-bold " +
                     (g.open ? "bg-card" : "bg-tint")
                   }
                 >

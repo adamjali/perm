@@ -70,7 +70,7 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
 
   return (
     <div>
-      <div className="border border-border bg-card p-4 sm:p-6">
+      <div className="bg-tint p-4 sm:p-6">
         <ChartTips label="What became of every RFI DOL issued">
         <Row label={`${everIssued.toLocaleString()} RFIs issued`}>
           <div
@@ -127,7 +127,7 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
             <Fragment key={s.key}>{" "}
             <li className="flex items-baseline gap-2.5">
               <span
-                className="mt-1 inline-block h-3 w-3 shrink-0 border border-border"
+                className="mt-1 inline-block h-3 w-3 shrink-0 border border-input"
                 style={{ backgroundColor: s.fill }}
                 aria-hidden="true"
               />{" "}
@@ -176,7 +176,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <div className="text-sm font-bold leading-tight">
         {label}
       </div>{" "}
-      <div className="flex h-9 border border-border bg-secondary">
+      <div className="flex h-9 border border-input bg-secondary">
         {children}
       </div>
     </div>

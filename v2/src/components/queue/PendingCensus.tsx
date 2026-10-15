@@ -72,7 +72,7 @@ export function PendingCensus({
                 >
                   <span className="flex items-center gap-2">
                     <span
-                      className={`inline-block h-3 w-3 shrink-0 border border-border ${meta.fill}`}
+                      className={`inline-block h-3 w-3 shrink-0 border border-input ${meta.fill}`}
                       aria-hidden="true"
                     />{" "}
                     <span className="font-heading text-base font-bold">

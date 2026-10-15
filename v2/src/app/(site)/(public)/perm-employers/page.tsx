@@ -174,7 +174,7 @@ export default async function PermEmployersPage() {
                     <div className="flex min-w-0 items-center gap-2">
                       <div
                         aria-hidden="true"
-                        className="h-6 shrink-0 border border-border bg-primary"
+                        className="h-6 shrink-0 border border-input bg-primary"
                         style={{
                           width: `${Math.max(4, (e.total / maxTotal) * 100)}%`,
                           maxWidth: "calc(100% - 64px)",
@@ -244,7 +244,7 @@ export default async function PermEmployersPage() {
           </div>
         </>
       ) : (
-        <section className="mt-10 border border-border bg-card p-8 text-center">
+        <section className="mt-10 bg-tint p-8 text-center">
           <p className="text-lg text-muted-foreground">
             The employer aggregates land with the quarterly disclosure ingest.
             Until then, the{" "}
@@ -257,7 +257,7 @@ export default async function PermEmployersPage() {
       )}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border border-border bg-tint p-6">
+        <div className="bg-tint p-6">
           <h2 className="font-heading text-lg font-bold">Your employer is on the list?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Their volume doesn’t change your place in line. The{" "}

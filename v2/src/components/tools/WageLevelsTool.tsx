@@ -19,7 +19,7 @@ import { ScrollBox } from "@/components/ui/scroll-box";
  * Nothing is computed here.
  */
 
-const SELECT = "mt-1.5 min-h-11 w-full min-w-0 border border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+const SELECT = "mt-1.5 min-h-11 w-full min-w-0 border border-input bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const usd = (n: number, digits = 0) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: digits, minimumFractionDigits: digits });
 
 type Result =
@@ -67,7 +67,7 @@ function WageLadder({ levels }: { levels: WageLevel[] | null }) {
             <span className="flex items-center gap-3">
               <span
                 aria-hidden="true"
-                className="h-9 shrink-0 border border-border bg-primary"
+                className="h-9 shrink-0 border border-input bg-primary"
                 style={{ width: `${Math.max(8, (l.yearly / top) * 70)}%` }}
               />{" "}
               <span className="whitespace-nowrap">
@@ -198,7 +198,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
   }
 
   return (
-    <div className="border border-border bg-card p-5 sm:p-8">
+    <div className="object p-5 sm:p-8">
       <form ref={formRef} onSubmit={lookUp} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         <div>
           <Label htmlFor={socId}>SOC code</Label>{" "}
@@ -261,7 +261,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
       </form>
 
       {result.kind === "error" || result.kind === "none" ? (
-        <p className="mt-5 flex items-start gap-2 border border-border bg-background p-3 text-sm">
+        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.message}
         </p>
       ) : null}
@@ -318,7 +318,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
             </div>
           ) : null}
           {history.edc.some((y) => y.levels.some((v) => v != null)) ? (
-            <details className="border border-border bg-background p-4">
+            <details className="bg-tint p-4">
               <summary className="cursor-pointer font-bold">
                 Universities and research employers (DOL&apos;s ACWIA table)
               </summary>{" "}

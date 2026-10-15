@@ -127,7 +127,7 @@ const BULLETIN_COUNTRY: Record<string, string> = {
 const FIRST_YEAR = 2006;
 
 const SELECT_CLASS =
-  "mt-2 block min-h-[44px] w-full min-w-0 border border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
+  "mt-2 block min-h-[44px] w-full min-w-0 border border-input bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
 const EYEBROW_CLASS =
   "text-sm font-semibold text-muted-foreground";
 
@@ -267,7 +267,7 @@ export function I485QueuePosition({
     // that dropped a pair. Never a bad selection, since the options come from
     // the same release as the cells.
     return (
-      <div className={cn("border border-border bg-card p-6 sm:p-8", className)}>
+      <div className={cn("object p-6 sm:p-8", className)}>
         <p className="text-base leading-relaxed">
           USCIS’s pending inventory for this category is being fetched. Until
           it lands,{" "}
@@ -296,7 +296,7 @@ export function I485QueuePosition({
   const showLowLabel = split.solid < 72;
 
   return (
-    <div className={cn("border border-border bg-card", className)}>
+    <div className={cn("object", className)}>
       <div className="border-b border-border p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <UsersIcon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
@@ -509,7 +509,7 @@ export function I485QueuePosition({
                     empty track, and both ticks at their own coordinates. */}
                 <ChartTips label="Applications ahead, counted and withheld" className="mt-6">
                   <div
-                    className="flex h-10 w-full overflow-hidden border border-border"
+                    className="flex h-10 w-full overflow-hidden border border-input"
                     role="img"
                     aria-label={`Between ${position.low.toLocaleString("en-US")} and ${position.high.toLocaleString("en-US")} applications are ahead. ${position.counted.toLocaleString("en-US")} are counted individually and ${position.suppressedCells.toLocaleString("en-US")} cells were withheld by USCIS.`}
                   >
@@ -636,7 +636,7 @@ export function I485QueuePosition({
                       <span className="truncate text-sm text-muted-foreground">
                         {formatAsOfShort(t.asOf)}
                       </span>{" "}
-                      <span className="flex h-6 w-full border border-border bg-muted">
+                      <span className="flex h-6 w-full border border-input bg-muted">
                         <span
                           className="block h-full bg-primary"
                           style={{ width: `${Math.max(((t.available ?? t.total) / max) * 100, 1)}%` }}
@@ -736,7 +736,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
     return `${r} ${r === 1 ? "month" : "months"}`;
   };
   return (
-    <div className="mt-6 border border-border bg-background p-4 sm:p-5">
+    <div className="mt-6 bg-tint p-4 sm:p-5">
       <p className="text-sm font-bold text-muted-foreground">
         If the supply were
       </p>{" "}

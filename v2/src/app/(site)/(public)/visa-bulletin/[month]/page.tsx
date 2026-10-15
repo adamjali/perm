@@ -212,7 +212,7 @@ function TallyBar({ name, t }: { name: string; t: ReturnType<typeof tally> }) {
     <div className="mt-5">
       <p className="font-heading text-base font-bold">{name}</p>{" "}
       <p className="sr-only">{tallySentence(name, t)}</p>{" "}
-      <div aria-hidden="true" className="mt-2 flex h-7 border border-border">
+      <div aria-hidden="true" className="mt-2 flex h-7 border border-input">
         {parts.map((p, i) => (
           <span
             key={p.key}
@@ -224,7 +224,7 @@ function TallyBar({ name, t }: { name: string; t: ReturnType<typeof tally> }) {
       <ul aria-hidden="true" className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         {parts.map((p) => (
           <li key={p.key} className="flex items-center gap-1.5">
-            <span className={`size-3 border border-border ${p.fill}`} />{" "}
+            <span className={`size-3 border border-input ${p.fill}`} />{" "}
             <span className="font-bold tabular-nums">{t[p.key]}</span>{" "}
             <span className="text-soft">{`${p.word} `}</span>
           </li>
@@ -251,7 +251,7 @@ function ChartTable({
       <p className="mt-1 text-sm text-muted-foreground">
         {since ? `Each cell shows the cutoff and its move since the ${since} bulletin.` : first}
       </p>{" "}
-      <ScrollBox label={title} className="mt-4 overscroll-x-none border border-border bg-card">
+      <ScrollBox label={title} className="mt-4 overscroll-x-none border-t-2 border-[var(--object-border)] bg-card">
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead className="border-b border-input bg-muted">
             <tr>

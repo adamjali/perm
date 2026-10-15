@@ -901,7 +901,7 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
         </span>
 
         <div
-          className="relative h-4 border border-border bg-background"
+          className="relative h-4 border border-input bg-background"
           data-tip={[
             scope,
             `This case: ${money(wage.wage)}`,
