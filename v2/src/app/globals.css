@@ -41,7 +41,7 @@
      foreground, so a darker band on the light ground and a lighter one in
      dark mode. Declared on the root, it resolves against each theme's
      --foreground. */
-  --skeleton-sheen: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --skeleton-sheen: color-mix(in oklab, var(--foreground) 8%, transparent);
 
   /* Accent */
   /* A hover WASH, not the brand: the lime is for the one main action. */
@@ -57,8 +57,17 @@
   /* Lines. --border only groups content, so it is light (WCAG 1.4.11 does not
      apply to a line that carries no meaning). --input outlines a control and
      clears 3:1 on every surface (3.30 on the tint, 3.69 on white). */
-  --border: #E5E5E5;
-  --input: #858585;
+  /* ROUND 2 (Oct 15 2026, evening): lines are ink again. The calm pass made
+     --border a pale grey and every divider, frame and table rule on the site
+     faded with it; the owner: "no structure or lines or dividers or
+     compartments or containers". */
+  --border: #141414;
+  --input: #141414;
+  /* Hard offset shadows, the original's, back for the framework's shadow-*
+     sizes and the shadow-hard utilities. */
+  --shadow-hard-sm: 2px 2px 0 0 #141414;
+  --shadow-hard: 4px 4px 0 0 #141414;
+  --shadow-hard-lg: 8px 8px 0 0 #141414;
   /* The focus ring is the green ink: 5.22:1 on the page. */
   --ring: #1A7A25;
 
@@ -197,7 +206,10 @@
   /* Black on the red in BOTH themes: white measures 3.22:1 and fails,
      black is 6.24:1. The fill colour is unchanged. */
   --destructive-foreground: #000000;
-  --border: #2E2E2E;
+  --border: #6B6B6B;
+  --shadow-hard-sm: 2px 2px 0 0 rgba(255, 255, 255, 0.14);
+  --shadow-hard: 4px 4px 0 0 rgba(255, 255, 255, 0.14);
+  --shadow-hard-lg: 8px 8px 0 0 rgba(255, 255, 255, 0.14);
   /* 3.10:1 on the dark tint, 3.98:1 on the page. */
   --input: #737373;
   --ring: #2ECC40;
@@ -367,12 +379,18 @@ html {
   --radius-4xl: 0px;
   /* Small framework shadows draw nothing; the larger ones are the floating
      layer's soft shadow, so a primitive that asks for shadow-lg gets that. */
-  --shadow-2xs: 0 0 #0000;
-  --shadow-xs: 0 0 #0000;
-  --shadow-sm: 0 0 #0000;
-  --shadow-md: var(--elev-overlay);
-  --shadow-lg: var(--elev-overlay);
-  --shadow-xl: var(--elev-overlay);
+  /* Hard offset shadows are the system again (round 2): a shadow-sm or
+     shadow-lg draws the house shadow, never a blur. Floating layers keep
+     --elev-overlay through shadow-overlay. */
+  --shadow-2xs: var(--shadow-hard-sm);
+  --shadow-xs: var(--shadow-hard-sm);
+  --shadow-sm: var(--shadow-hard-sm);
+  --shadow-md: var(--shadow-hard);
+  --shadow-lg: var(--shadow-hard);
+  --shadow-xl: var(--shadow-hard-lg);
+  --shadow-hard-sm: var(--shadow-hard-sm);
+  --shadow-hard: var(--shadow-hard);
+  --shadow-hard-lg: var(--shadow-hard-lg);
   --shadow-2xl: var(--elev-overlay);
   --shadow-overlay: var(--elev-overlay);
   --shadow-press: var(--elev-press);
@@ -444,9 +462,10 @@ html {
     );
     background-size: 300% 100%;
     background-repeat: no-repeat;
-    /* Quieter since Oct 14 2026: a slower pass, and a 0.4s wait first so a
-       load that finishes quickly never shows a sweep at all. */
-    animation: skeleton-sweep 2.8s ease-in-out 0.4s infinite;
+    /* Round 2 (Oct 15 2026): back toward the live site's pace, so a loading
+       page reads as working (owner: "loading states skeletons everywhere").
+       The short wait stays, so a fast load never shows a sweep. */
+    animation: skeleton-sweep 2s ease-in-out 0.2s infinite;
   }
 
   @keyframes skeleton-sweep {
@@ -472,7 +491,7 @@ html {
 /* ---------------------------------------------------------------------------
    The departures board (home): DOL's queue told the way a station tells a
    timetable. A physical board, so it is dark in both themes (#F2F2F2 on
-   #1C1C1C measures 15.4:1). Still: nothing flaps on load. Each value is in
+   #1C1C1C measures 15.4:1). Its numbers count up on load. Each value is in
    the page text once (the row's sr-only copy); the cells are its picture,
    drawn from data-c with CSS so a snippet never reads it twice.
    --------------------------------------------------------------------------- */
@@ -535,6 +554,14 @@ html {
     background: linear-gradient(#262626 0 49%, #111 49% 51%, #212121 51% 100%);
   }
   .flap-cell::before { content: attr(data-c); }
+  /* The count-up (FlapBoardMotion): the glyphs wait blank for the count, and
+     show anyway after 2.5 s, so a board whose script never runs still reads. */
+  @media (prefers-reduced-motion: no-preference) {
+    .flap-board[data-count="pending"] .flap-cell {
+      color: transparent;
+      animation: flap-show 0s linear 2.5s forwards;
+    }
+  }
   .flap-gap { width: 0.45em; background: none; }
   .flap-board > dl { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; margin: 0; }
   .flap-board-foot {
@@ -564,6 +591,10 @@ html {
   }
   /* The closing band's word: smaller cells, centred, no wrap. */
   .flap-word { display: flex; width: max-content; max-width: 100%; font-size: clamp(0.85rem, 3.4vw, 1.25rem); }
+}
+
+@keyframes flap-show {
+  to { color: #f4f4f4; }
 }
 
 /* The queue tape's one fill (TapeReveal): DOL's processed months fill in
@@ -1943,4 +1974,221 @@ input[type="week"] {
    is known only to Firefox (measured in Firefox 158), so this test is Firefox-only. */
 @supports selector(:-moz-focusring) {
   .date-picker-btn { display: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   The data rail (DataRail.tsx), the original's, back in round 2 (Oct 15 2026).
+   The rows and group headings, the guide line down the indented rows, the
+   marker box and the collapsed strip's squares. `rail-fits.test.ts` measures
+   the desktop sizes below against the groups in src/lib/siteMap.ts.
+   --------------------------------------------------------------------------- */
+.rail-row {
+  position: relative;
+  display: flex;
+  min-height: 2.75rem;              /* min-h-11, the 44px tap target */
+  align-items: center;
+  gap: 0.625rem;                    /* gap-2.5 */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 0.75rem;
+  transition-property: transform, background-color, box-shadow, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.rail-row:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-row { transition: none; }
+  .rail-row:hover { transform: none; }
+}
+
+/* The hairline that runs down the indented rows. */
+.rail-guide {
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  background-color: color-mix(in oklab, var(--border) 60%, transparent);
+  transition: color 150ms, background-color 150ms;
+}
+
+/* The square state marker box at the start of each row. */
+.rail-marker {
+  display: flex;
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The group header: its icon, its name, how many pages it holds, the caret.
+   Sentence case in the heading face (it was mono capitals until Oct 7 2026;
+   beside an icon the capitals read as a second label). */
+.rail-tab {
+  position: relative;
+  display: flex;
+  min-height: 2.75rem;
+  width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem 0.625rem 1rem;
+  text-align: left;
+  font-family: var(--font-heading);
+  /* 15px: between Overview (16px) and the pages under each group (14px). */
+  font-size: 0.9375rem;
+  font-weight: 700;
+  transition-property: transform, background-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.rail-tab:hover {
+  transform: translateX(3px);
+  background-color: var(--accent);
+  color: var(--foreground);
+}
+.rail-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-tab { transition: none; }
+  .rail-tab:hover { transform: none; }
+}
+
+/* One square in the collapsed rail: Overview or a group, its icon alone, 44px
+   tall across the strip. The name is its tooltip and its accessible name. */
+.rail-square {
+  display: flex;
+  height: 2.75rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  transition-property: background-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.rail-square:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-square { transition: none; }
+}
+
+/* The desktop rail has to fit under the header with its largest group open,
+   because a sidebar whose bottom sits below the fold reads as truncated even
+   though nothing is clipped. The 44px tap-target floor stays on the touch
+   drawer below `lg`; this density applies only where the pointer is a mouse.
+
+   SIZED FOR THE WORST CASE, NOT A TYPICAL WINDOW. At 36px leaves and 40px
+   headers, an eight-item group runs past the fold on a short window (755px
+   against 661px of space).
+
+   Leaves 32px, group headers 38px. The headers stay four pixels taller than
+   the leaves, which is what carries the hierarchy; nothing here changes a
+   font size. Worst case is now ~664px, which fits the 669px under the header
+   on a 1366x768 laptop. `rail-fits.test.ts` recomputes that from these very
+   declarations and from `dataSections.ts`, so the next page added to a group
+   fails a test instead of quietly pushing the rail off screen again. */
+@media (min-width: 64rem) {
+  .rail-row { min-height: 2rem; padding-top: 0.125rem; padding-bottom: 0.125rem; }
+  .rail-tab { min-height: 2.375rem; padding-top: 0.375rem; padding-bottom: 0.375rem; }
+}
+
+/* ---------------------------------------------------------------------------
+   The hover underline (round 2, Oct 15 2026; the original's .hover-underline).
+   A lime rule grows under a link's words from the left when it's pointed at
+   or focused. `.hover-underline` sits on the words of a nav or footer link;
+   `.u-title` on the title inside a linked card, where it follows every line of
+   a wrapped title. Off under reduced motion: the rule simply appears.
+   --------------------------------------------------------------------------- */
+.hover-underline {
+  position: relative;
+  display: inline-block;
+  width: fit-content;
+}
+.hover-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background-color: var(--primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease-out;
+  pointer-events: none;
+}
+.hover-underline:hover::after,
+a:hover > .hover-underline::after,
+button:hover > .hover-underline::after,
+a:focus-visible > .hover-underline::after {
+  transform: scaleX(1);
+}
+.u-title {
+  background-image: linear-gradient(var(--primary), var(--primary));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0 2px;
+  padding-bottom: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 0.3s ease-out;
+}
+a:hover .u-title,
+a:focus-visible .u-title,
+.group:hover .u-title {
+  background-size: 100% 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hover-underline::after { transition: none; }
+  .u-title { transition: none; }
+}
+
+
+/* ==========================================================================
+   Scroll reveal (round 2, Oct 15 2026). AutoReveal marks the sections that
+   start below the screen; each rises 16px and fades in once as it arrives.
+   Nothing above the fold is ever marked, the server renders everything
+   visible, and reduced motion never marks anything.
+   `transform: none` once shown, never translateY(0): a transform on an
+   ancestor would capture position:fixed children.
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal="hidden"] {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  [data-reveal="shown"] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.5s ease-out,
+      transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+}
+
+/* A card or tile that lifts one pixel toward the reader on hover and settles
+   on press (the original's .hover-lift, smaller). Paired with an ink edge and
+   a hard shadow that grows as it lifts. */
+.lift {
+  transition:
+    transform 150ms ease-out,
+    box-shadow 150ms ease-out,
+    background-color 150ms ease-out;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lift:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: var(--shadow-hard);
+  }
+  .lift:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
 }

@@ -98,6 +98,7 @@ export function InlineEdit({
     <div className="flex items-center gap-1">
       <input
         type="text"
+          placeholder="Type a value…"
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}

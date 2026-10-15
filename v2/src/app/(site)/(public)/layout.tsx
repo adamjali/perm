@@ -8,9 +8,9 @@
  * a sign-in form: hash-anchor handling, the stale-page refresh and the
  * on-device diagnostic.
  *
- * Nothing on the page moves by itself (Oct 14 2026). The ambient particles,
- * the scroll progress bar and the back-to-top button are gone: the ground is
- * one flat colour, and the header is the only thing that stays on screen.
+ * Round 2 (Oct 15 2026): sections rise into place as they're scrolled to
+ * (AutoReveal, below the fold only) and the back-to-top button is back, its
+ * frame filling with lime as the page scrolls. The ambient particles stay out.
  *
  * No page transition, deliberately. A fade keyed on the pathname remounts the
  * whole tree, data rail included, on every click; the pathname commits WITH
@@ -24,6 +24,8 @@ import { RefreshWhenStale } from "@/components/ui/refresh-when-stale";
 import { ViewportDiag } from "@/components/diag/ViewportDiag";
 import { DataShell } from "@/components/tools/DataShell";
 import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
+import { AutoReveal } from "@/components/ui/auto-reveal";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
 export default function PublicLayout({
   children,
@@ -50,6 +52,9 @@ export default function PublicLayout({
         <SiteBreadcrumbs />
         <DataShell>{children}</DataShell>
       </main>
+
+      <AutoReveal />
+      <ScrollToTop />
 
       {/* On-device layout diagnostic. Inert without ?diag=1 in the URL. */}
       <ViewportDiag />

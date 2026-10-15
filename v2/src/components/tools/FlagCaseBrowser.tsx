@@ -375,6 +375,7 @@ function FlagSearchFilters({
               <span className={FILTER_LABEL}>Wage at least</span>{" "}
               <input
                 id={`${id}-wmin`}
+            placeholder="Any"
                 type="number"
                 inputMode="numeric"
                 min={0}
@@ -388,6 +389,7 @@ function FlagSearchFilters({
               <span className={FILTER_LABEL}>Wage at most</span>{" "}
               <input
                 id={`${id}-wmax`}
+            placeholder="Any"
                 type="number"
                 inputMode="numeric"
                 min={0}

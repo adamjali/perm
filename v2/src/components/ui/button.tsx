@@ -6,24 +6,25 @@ import { cn } from "@/lib/utils"
 import { Spinner } from "@/components/ui/spinner"
 
 /**
- * The site's buttons. The lime one is the main action and there is one per
- * screen; it keeps a small hard edge in light mode, the only hard shadow left.
- * Hover and press darken the fill; nothing lifts or moves. The focus ring is
- * the green ink, shown for the keyboard only.
+ * The site's buttons. The middle ground (Oct 15 2026, round 2): a 2px ink
+ * edge and a small hard shadow, a lift of one pixel on hover and a press on
+ * click (both only when the visitor allows motion), the fill darkening as it
+ * does. The lime one is the main action. The focus ring is the green ink,
+ * shown for the keyboard only.
  */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-heading text-sm font-bold border transition-colors duration-150 cursor-pointer disabled:pointer-events-none disabled:cursor-not-allowed disabled:shadow-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-heading text-sm font-bold border-2 transition-[color,background-color,border-color,box-shadow,transform] duration-150 cursor-pointer disabled:pointer-events-none disabled:cursor-not-allowed disabled:shadow-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-invalid:border-destructive",
   {
     variants: {
       variant: {
         default:
-          "border-foreground bg-primary text-primary-foreground shadow-press hover:bg-primary-hover active:bg-primary-press",
+          "border-foreground bg-primary text-primary-foreground shadow-hard-sm hover:bg-primary-hover motion-safe:hover:-translate-y-px hover:shadow-hard active:bg-primary-press motion-safe:active:translate-x-px motion-safe:active:translate-y-px active:shadow-none",
         destructive:
-          "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80",
+          "border-foreground bg-destructive text-destructive-foreground shadow-hard-sm hover:bg-destructive/90 motion-safe:hover:-translate-y-px hover:shadow-hard active:bg-destructive/80 motion-safe:active:translate-x-px motion-safe:active:translate-y-px active:shadow-none",
         outline:
-          "border-input bg-card text-foreground hover:bg-accent active:bg-muted",
+          "border-foreground bg-card text-foreground shadow-hard-sm hover:bg-accent motion-safe:hover:-translate-y-px hover:shadow-hard active:bg-muted motion-safe:active:translate-x-px motion-safe:active:translate-y-px active:shadow-none",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-accent active:bg-muted",
+          "border-foreground bg-secondary text-secondary-foreground shadow-hard-sm hover:bg-accent motion-safe:hover:-translate-y-px hover:shadow-hard active:bg-muted motion-safe:active:translate-x-px motion-safe:active:translate-y-px active:shadow-none",
         ghost:
           "border-transparent text-foreground hover:bg-accent active:bg-muted",
         link: "border-transparent text-primary underline underline-offset-4 decoration-1 hover:decoration-2",

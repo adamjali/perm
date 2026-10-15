@@ -120,7 +120,7 @@ function ClaimForm({ slug }: { slug: string }) {
             At the firm&apos;s own domain if you can.
           </span>
         </label>{" "}
-        <input id={id("email")} name="email" type="email" autoComplete="email" required maxLength={254} className={INPUT} aria-describedby={described("email", true)} aria-invalid={errors.email ? true : undefined} />
+        <input id={id("email")} name="email" type="email" autoComplete="email" placeholder="you@yourfirm.com" required maxLength={254} className={INPUT} aria-describedby={described("email", true)} aria-invalid={errors.email ? true : undefined} />
         <FieldError id={id("email-err")} text={errors.email} />
       </div>
       <div>
@@ -152,6 +152,7 @@ function ClaimForm({ slug }: { slug: string }) {
         </label>{" "}
         <textarea
           id={id("description")}
+          placeholder="What your firm does, in a sentence or two…"
           name="description"
           rows={5}
           maxLength={DESCRIPTION_MAX}
@@ -242,7 +243,7 @@ function EditLinkForm({ slug }: { slug: string }) {
         <label htmlFor={emailId} className={LABEL}>
           The address you claimed with
         </label>{" "}
-        <input id={emailId} name="email" type="email" autoComplete="email" required maxLength={254} className={INPUT} />
+        <input id={emailId} name="email" type="email" autoComplete="email" placeholder="you@yourfirm.com" required maxLength={254} className={INPUT} />
       </div>{" "}
       <button type="submit" disabled={status === "sending"} className={BUTTON}>
         {status === "sending" ? "Sending" : "Email me an edit link"}

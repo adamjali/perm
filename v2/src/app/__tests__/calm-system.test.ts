@@ -3,17 +3,17 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 /**
- * The calm system (Oct 14 2026), with its character back (Oct 15), held in
- * place.
+ * The middle ground (Oct 15 2026, evening), held in place.
  *
- * The owner's brief: simple, plain, readable, nothing moving unless the
- * visitor did something; then, on Oct 15, "too plain": a few things on each
- * screen are solid objects again. So hard shadows come back only as the
- * object's shadow (`--object-shadow`) on the named objects in the stylesheet,
- * and the caution tape only on a case's Next up. Hover lifts, all-caps labels,
- * black-weight type, looping animation and the textures stay out; this fails
- * the moment one comes back, and checks every text colour token against every
- * surface it sits on, the case folder's tan included.
+ * The calm pass (Oct 14) went too far: the owner, after seeing it live, asked
+ * for the original's structure, colour and movement back ("no strucutre or
+ * lines or dividers or compartments or containers or anything? shadows?",
+ * "animations movement transisitons"). So ink edges, hard shadows, boxes and
+ * small hover lifts are allowed again; the rules below keep only what he still
+ * holds: no pale lime wash, sentence case (no all-caps labels), square
+ * corners, no texture, no looping animation but the skeleton sweep and a
+ * spinner, motion only when the visitor allows it, stage colours only where
+ * they mean a stage, and every text colour readable on every surface.
  *
  * Source checks over the class strings and the stylesheet, comments stripped.
  */
@@ -48,7 +48,7 @@ function findAll(re: RegExp): string[] {
 // A token inside a class string: bounded by a quote, backtick, space or start.
 const tok = (body: string) => new RegExp(`(?<=["'\`\\s])${body}(?=["'\`\\s])`, "g");
 
-describe("the calm system", () => {
+describe("the middle ground", () => {
   it("scanned the source tree", () => {
     // Without this a broken walk reports every rule clean.
     expect(FILES.length).toBeGreaterThan(800);
@@ -62,42 +62,15 @@ describe("the calm system", () => {
     expect(findAll(tok("(?:[\\w-]+:)*bg-(?:green|emerald|lime)-(?:50|100|200)"))).toEqual([]);
   });
 
-  it("groups nothing in a light hairline box: the tint or an object does that", () => {
-    // Oct 15 2026: about 600 such boxes were sorted by hand into the page's one
-    // object, the tint, or an ink rule over a table. Admin, the shared UI
-    // primitives, the site chrome, article figures and the homepage were left as
-    // they are; a floating panel keeps its edge so it reads over the page.
-    const SKIP = /^(components\/(admin|ui|layout|content|search|home|skeletons)\/|app\/\(authenticated\)\/admin\/)/;
-    const FLOATING = ["components/calendar/CalendarToolbar.tsx"];
-    const hits = findAll(/border border-border(?:\/\d+)? bg-(?:card|background|muted|tint)\S*(?: [^"'`\n]*?)? p[xy]?-\d/g)
-      .filter((h) => !SKIP.test(h) && !FLOATING.some((f) => h.startsWith(`${f}:`)));
-    expect(hits).toEqual([]);
-    // The same box drawn another way: cells on a grey ground with a 1px gap. A
-    // calculator's result cells keep theirs: they sit inside its object.
-    const INSIDE_OBJECT = ["components/tools/I140QueueEstimator.tsx", "components/tools/I485QueuePosition.tsx"];
-    const grids = findAll(/\bgap-px\b[^"'`\n]*\bbg-border\b|\bbg-border\b[^"'`\n]*\bgap-px\b/g)
-      .filter((h) => !SKIP.test(h) && !INSIDE_OBJECT.some((f) => h.startsWith(`${f}:`)));
-    expect(grids).toEqual([]);
+  it("moves on hover or press only when the visitor allows motion", () => {
+    // A lift or press is allowed again (round 2), behind motion-safe: so a
+    // visitor who asks for reduced motion never sees it.
+    const moves = findAll(
+      tok("(?:[\\w-]+:)*(?:hover|active|group-hover|focus|focus-visible|peer-hover):-?(?:translate-[xy]|scale|rotate)-[\\w./\\[\\]-]+"),
+    );
+    expect(moves.length).toBeGreaterThan(0);
+    expect(moves.filter((h) => !/:\s*(?:[\w-]+:)*motion-safe:/.test(h) && !h.split(": ")[1]!.includes("motion-safe:"))).toEqual([]);
   });
-
-  it("draws no hard offset shadow", () => {
-    expect(findAll(tok("(?:[\\w-]+:)*shadow-(?:hard(?:-sm|-lg)?|\\[[^\\]\\s]*px[^\\]\\s]*\\])"))).toEqual([]);
-  });
-
-  it("moves nothing on hover, press or focus", () => {
-    expect(
-      findAll(tok("(?:[\\w-]+:)*(?:hover|active|group-hover|focus|focus-visible|peer-hover):-?(?:translate-[xy]|scale|rotate)-[\\w./\\[\\]-]+")),
-    ).toEqual([]);
-  });
-
-  it("transitions colours, never everything", () => {
-    expect(findAll(tok("transition-all"))).toEqual([]);
-  });
-
-  it("sets headings bold, never black", () => {
-    expect(findAll(tok("(?:[\\w-]+:)*font-(?:black|extrabold)"))).toEqual([]);
-  });
-
   it("writes labels in sentence case: no all-caps class outside a typed field", () => {
     // An input may show what's typed in capitals (a case number); nothing
     // else on the page shouts. The element is the nearest JSX tag opened
@@ -143,20 +116,9 @@ describe("the calm system", () => {
     expect(findAll(/(?<=["'`])rounded(?=\s)|(?<=\s)rounded(?=["'`])/g)).toEqual([]);
   });
 
-  it("spaces letters normally and draws lines in the line colours, never in black", () => {
+  it("spaces letters normally", () => {
+    // Wide tracking belonged to the all-caps labels, which stay out.
     expect(findAll(tok("(?:[\\w-]+:)*tracking-(?:wide|wider|widest)"))).toEqual([]);
-    expect(findAll(tok("(?:[\\w-]+:)*border(?:-[trblxy])?-(?:black|white)"))).toEqual([]);
-  });
-
-  it("gives the hard shadow to the named objects only, from the stylesheet", () => {
-    // `--object-shadow` is used by these rules and nowhere else; no class string
-    // reaches for it, so an object is always one of these, never improvised.
-    const css = stripComments(CSS);
-    const users = [...css.matchAll(/([^{}]+)\{[^{}]*var\(--object-shadow\)[^{}]*\}/g)].map((m) => m[1]!.trim());
-    const OBJECTS = [".object", ".flap-board", ".next-up", ".manila"];
-    expect(users.filter((sel) => !OBJECTS.includes(sel))).toEqual([]);
-    expect(users.length).toBeGreaterThanOrEqual(3);
-    expect(findAll(/--object-shadow/g)).toEqual([]);
   });
 
   it("strings the caution tape across a case's Next up and nowhere else", () => {

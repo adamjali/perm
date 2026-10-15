@@ -360,6 +360,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                       <CharLimit max={5000}>
                         <textarea
                           ref={editTextareaRef}
+                      placeholder="Edit the note…"
                           value={editingContent}
                           onChange={(e) => setEditingContent(e.target.value)}
                           onKeyDown={(e) => {

@@ -17,20 +17,19 @@ import { cn } from "@/lib/utils";
 
 type Direction = "good" | "warn" | "bad" | "flat";
 
-/** The dot carries the direction; the label stays on the surface's own ink. */
-const DIRECTION_DOT: Record<Direction, string> = {
-  good: "bg-data-good-ink",
-  warn: "bg-data-warn-ink",
-  bad: "bg-data-bad-ink",
-  flat: "bg-muted-foreground",
+/** Each direction's fill; black words read on all three colours in both themes. */
+const DIRECTION_FILL: Record<Direction, string> = {
+  good: "bg-data-good text-black",
+  warn: "bg-data-warn text-black",
+  bad: "bg-data-bad text-black",
+  flat: "bg-white text-black",
 };
 
 /**
- * A verdict chip: a quiet label with a coloured dot, read before the figure it
- * describes ("Pending", then the sentence). The word carries the meaning; the
- * dot only repeats it, so nothing rests on colour. The chip is a card on
- * whatever it sits on, and the dot uses the `-ink` tokens, which clear 3:1 on
- * a card in both themes.
+ * A verdict chip, read before the figure it describes ("Pending", then the
+ * sentence): filled with its direction's colour, with an ink edge (round 2,
+ * Oct 15 2026: the grey chip with a dot read as nothing). The word carries
+ * the meaning; the colour repeats it, so nothing rests on colour alone.
  */
 export function Verdict({
   direction = "flat",
@@ -40,16 +39,22 @@ export function Verdict({
   children: ReactNode;
 }) {
   return (
-    <span className="inline-flex items-center gap-2 bg-tint px-2.5 py-1 text-sm font-semibold text-foreground">
-      <span aria-hidden="true" className={cn("size-2.5 shrink-0", DIRECTION_DOT[direction])} />{" "}
+    <span
+      className={cn(
+        "inline-flex items-center border-2 border-black px-2.5 py-1 text-sm font-bold",
+        DIRECTION_FILL[direction],
+      )}
+    >
       {children}
     </span>
   );
 }
 
 /**
- * The answer block: the one tinted panel on a page, holding the fact the page
- * exists to give and the one thing to do next.
+ * The answer block: the one object on a page, holding the fact the page
+ * exists to give and the one thing to do next. Its verdict and label sit in
+ * an ink band across the top (round 2: the black back, as a band, since the
+ * owner kept the answer itself on paper, Oct 15 morning).
  *
  * Everything above `actions` is a claim TRUE BY CONSTRUCTION, arithmetic on
  * figures already on the page. A verdict we cannot derive is a verdict we do
@@ -80,17 +85,19 @@ export function AnswerPanel({
   return (
     // `data-answer` marks a page's answer for the article picture captures.
     // An object: the one thing on the page meant to be read first.
-    <section data-answer className={cn("object p-5 text-foreground sm:p-8", className)}>
+    <section data-answer className={cn("object text-foreground", className)}>
       {verdict || label ? (
-        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b-2 border-black bg-[#141414] px-5 py-3 text-white sm:px-8">
           {verdict ? <Verdict direction={direction}>{verdict}</Verdict> : null}{" "}
-          {label ? <span className="font-mono text-sm text-soft">{label}</span> : null}
+          {label ? <span className="font-mono text-sm text-white/85">{label}</span> : null}
         </div>
       ) : null}
-      <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-xl">{children}</p>{" "}
-      {picture ? <div className="mt-6">{picture}</div> : null}{" "}
-      {actions ?? null}{" "}
-      {source ? <p className="mt-5 text-sm text-muted-foreground">{source}</p> : null}
+      <div className="p-5 sm:p-8">
+        <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-xl">{children}</p>{" "}
+        {picture ? <div className="mt-6">{picture}</div> : null}{" "}
+        {actions ?? null}{" "}
+        {source ? <p className="mt-5 text-sm text-muted-foreground">{source}</p> : null}
+      </div>
     </section>
   );
 }

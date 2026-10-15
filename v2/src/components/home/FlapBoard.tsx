@@ -5,11 +5,15 @@
  * few live figures a person waiting on a case reads first, each on its own
  * row, dated by the board's own "checked" line.
  *
- * A server component, complete without JavaScript, and still: nothing flaps
- * on load. Each value is in the page text exactly once, as the row's sr-only
- * copy; the cells draw their glyphs from `data-c` with CSS, so a search
- * snippet reads "Now deciding Dec 2025" and never the value twice.
+ * A server component, complete without JavaScript. On load its numbers count
+ * up and the month flips into place (FlapBoardMotion, the owner's call on
+ * Oct 15 2026); without script, or under reduced motion, the board simply
+ * shows its values. Each value is in the page text exactly once, as the row's
+ * sr-only copy; the cells draw their glyphs from `data-c` with CSS, so a
+ * search snippet reads "Now deciding Dec 2025" and never the value twice.
  */
+
+import { FlapBoardMotion } from "./FlapBoardMotion";
 
 export interface FlapRow {
   /** What the row is, in plain words. */
@@ -30,7 +34,8 @@ export function FlapBoard({
   className?: string;
 }) {
   return (
-    <figure className={`flap-board m-0 ${className}`}>
+    <figure className={`flap-board m-0 ${className}`} data-count="pending">
+      <FlapBoardMotion />
       <div className="flap-board-head">
         <span aria-hidden="true" className="flap-board-dot" />{" "}
         <span>{title}</span>

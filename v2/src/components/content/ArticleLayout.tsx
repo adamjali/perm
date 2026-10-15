@@ -12,6 +12,7 @@ import ArticleHeader from "./ArticleHeader";
 import ArticleBody from "./ArticleBody";
 import RelatedPosts from "./RelatedPosts";
 import ContentCTA from "./ContentCTA";
+import ReadingProgress from "./ReadingProgress";
 
 interface ArticleLayoutProps {
   meta: PostMeta;
@@ -32,6 +33,8 @@ export default function ArticleLayout({
 
   return (
     <article>
+      {/* A lime bar along the top of the screen that fills as the article is read. */}
+      <ReadingProgress />
       <ArticleHeader meta={meta} type={type} />
 
       <ArticleBody title={meta.title} url={url}>

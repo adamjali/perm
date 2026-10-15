@@ -29,7 +29,7 @@ import { APP_FOOTER, FOOTER_COLUMNS, FOOTER_LEGAL } from "@/lib/siteMap";
 
 const SOCIAL_ICONS = { twitter: XLogoIcon, linkedin: LinkedinLogoIcon } as const;
 
-const LINK = "text-soft underline-offset-4 transition-colors hover:text-foreground hover:underline";
+const LINK = "text-soft transition-colors hover:text-foreground";
 
 export default function Footer({ audience = "public" }: { audience?: "public" | "app" }) {
   const year = new Date().getFullYear();
@@ -41,7 +41,7 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
           {APP_FOOTER.map((p) => (
             <Fragment key={p.href}>
               <Link href={p.href} className={`flex min-h-11 items-center ${LINK}`}>
-                {p.name}
+                <span className="hover-underline">{p.name}</span>
               </Link>{" "}
             </Fragment>
           ))}
@@ -94,7 +94,7 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
                 {col.pages.map((p) => (
                   <li key={p.href}>
                     <Link href={p.href} className={`flex min-h-10 items-center text-base ${LINK}`}>
-                      {p.name}
+                      <span className="hover-underline">{p.name}</span>
                     </Link>{" "}
                   </li>
                 ))}
@@ -108,7 +108,7 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
             {FOOTER_LEGAL.map((p) => (
               <Fragment key={p.href}>
                 <Link href={p.href} className={`flex min-h-11 items-center ${LINK}`}>
-                  {p.name}
+                  <span className="hover-underline">{p.name}</span>
                 </Link>{" "}
               </Fragment>
             ))}

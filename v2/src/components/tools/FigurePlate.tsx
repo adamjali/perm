@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 import { MoreText, firstSentence, plainText, wordCount } from "@/components/data/MoreText";
 
 /**
- * The frame every chart on the site sits in: a 1px line, a title row naming
+ * The frame every chart on the site sits in: an ink frame, a title band naming
  * what the drawing shows (and its scale or window), the drawing, then a
- * caption saying what to take from it and where the numbers came from.
+ * caption band saying what to take from it and where the numbers came from.
  *
  * One frame for every chart makes ten drawings across ten pages read as one
  * system. Long captions fold: past 28 words the first sentence shows and the
@@ -22,26 +22,61 @@ export interface FigurePlateProps {
   caption?: ReactNode;
   /** Where the numbers came from. Always name it. */
   source?: ReactNode;
+  /** "ink" sets the drawing on the dark panel; the default is paper. */
+  tone?: "paper" | "ink";
   /** An anchor, for a page's list of parts to jump to. */
   id?: string;
   className?: string;
   children: ReactNode;
 }
 
-export function FigurePlate({ title, subject, caption, source, id, className, children }: FigurePlateProps) {
+const CORNERS = [
+  "left-0 top-0 border-l-4 border-t-4",
+  "right-0 top-0 border-r-4 border-t-4",
+  "left-0 bottom-0 border-l-4 border-b-4",
+  "right-0 bottom-0 border-r-4 border-b-4",
+] as const;
+
+export function FigurePlate({ title, subject, caption, source, tone = "paper", id, className, children }: FigurePlateProps) {
+  const ink = tone === "ink";
   return (
-    // One heavy ink rule over the figure, no box: the figure reads as a
-    // figure, and the page keeps no hairline frames around its charts.
-    <figure id={id} className={cn("m-0 border-t-2 border-[var(--object-border)] pt-3 text-foreground", className)}>
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    // A drawing sheet (round 2, Oct 15 2026, back toward the original): an ink
+    // frame with a small hard shadow, corner ticks, a title band ruled off the
+    // drawing and a caption band under it. One frame for every chart.
+    <figure
+      id={id}
+      className={cn(
+        "relative m-0 border-2 border-border shadow-hard-sm",
+        ink ? "bg-[#141414] text-white" : "bg-card text-foreground",
+        className,
+      )}
+    >
+      {CORNERS.map((pos) => (
+        <span
+          key={pos}
+          aria-hidden="true"
+          className={cn("pointer-events-none absolute h-3.5 w-3.5", ink ? "border-primary" : "border-foreground", pos)}
+        />
+      ))}
+      <div
+        className={cn(
+          "flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b-2 px-4 py-3 sm:px-5",
+          ink ? "border-white/25" : "border-border",
+        )}
+      >
         <span className="font-heading text-lg font-bold">{title}</span>{" "}
-        {subject ? <span className="text-sm text-soft">{subject}</span> : null}
+        {subject ? <span className={cn("text-sm", ink ? "text-white/75" : "text-soft")}>{subject}</span> : null}
       </div>
 
-      <div className="py-5">{children}</div>
+      <div className="px-4 py-5 sm:px-5 sm:py-6">{children}</div>
 
       {caption || source ? (
-        <figcaption className="text-sm leading-relaxed text-muted-foreground">
+        <figcaption
+          className={cn(
+            "border-t-2 px-4 py-3 text-sm leading-relaxed sm:px-5",
+            ink ? "border-white/25 text-white/80" : "border-border bg-tint text-muted-foreground",
+          )}
+        >
           {caption && wordCount(caption) > 28 ? (
             <MoreText gist={firstSentence(plainText(caption))} size="sm" className="max-w-none">
               <div>{caption}</div>
@@ -52,7 +87,7 @@ export function FigurePlate({ title, subject, caption, source, id, className, ch
           {source ? (
             <>
               {caption ? " " : null}
-              <span className="text-sm text-muted-foreground">{source}</span>
+              <span className="text-sm">{source}</span>
             </>
           ) : null}
         </figcaption>
@@ -67,7 +102,7 @@ export function FigurePlate({ title, subject, caption, source, id, className, ch
  */
 export function PlateLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-3 text-sm font-semibold text-foreground">
+    <p className="mb-3 border-b-2 border-border pb-1.5 text-sm font-bold text-foreground">
       {children}
     </p>
   );

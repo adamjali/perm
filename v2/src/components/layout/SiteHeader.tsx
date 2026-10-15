@@ -55,7 +55,7 @@ function BarLink({ page, current }: { page: SitePage; current: boolean }) {
         current ? "border-primary-text font-semibold text-foreground" : "border-transparent text-soft hover:text-foreground",
       )}
     >
-      {page.name}
+      <span className={current ? undefined : "hover-underline"}>{page.name}</span>
     </Link>
   );
 }
@@ -84,7 +84,7 @@ function MenuButton({
         current || open ? "border-primary-text font-semibold text-foreground" : "border-transparent text-soft hover:text-foreground",
       )}
     >
-      {label}
+      <span className={current || open ? undefined : "hover-underline"}>{label}</span>
       <CaretDownIcon aria-hidden="true" className={cn("size-4 transition-transform duration-150", open && "rotate-180")} />
     </button>
   );
@@ -163,9 +163,11 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       ref={barRef}
       data-site-header=""
       style={{ height: "var(--site-header-h)" }}
-      className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background print:hidden"
+      className="fixed inset-x-0 top-0 z-40 border-b-2 border-black bg-[#141414] print:hidden"
     >
-      <div className="mx-auto flex h-full max-w-[1440px] items-center gap-2 px-4 sm:px-6 lg:gap-6">
+      {/* Black in both themes, like the footer (owner, Oct 15 2026): the bar is
+          dark-scoped, its dropdown panels below keep the page's theme. */}
+      <div className="dark mx-auto flex h-full max-w-[1440px] items-center gap-2 px-4 text-foreground sm:px-6 lg:gap-6">
         <Link
           href="/"
           className="flex h-11 shrink-0 items-center gap-2 font-heading text-xl font-bold text-foreground"

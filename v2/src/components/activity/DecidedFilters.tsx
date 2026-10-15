@@ -89,6 +89,7 @@ export function DecidedFilters({
           </label>{" "}
           <input
             id={`${id}-wmin`}
+            placeholder="Any"
             type="number"
             inputMode="numeric"
             min={0}
@@ -106,6 +107,7 @@ export function DecidedFilters({
           </label>{" "}
           <input
             id={`${id}-wmax`}
+            placeholder="Any"
             type="number"
             inputMode="numeric"
             min={0}

@@ -663,6 +663,7 @@ export default function NotificationPreferencesSection({
               </Button>
               <Input
                 id="urgent-deadline-days"
+              placeholder="7"
                 type="number"
                 min={MIN_URGENT_DAYS}
                 max={MAX_URGENT_DAYS}

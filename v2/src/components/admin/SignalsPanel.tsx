@@ -122,6 +122,7 @@ export function SubscriptionsPanel({ signals }: { signals: Signals }) {
           Search by address, case, employer or series
           <input
             type="search"
+            placeholder="An address, case number, employer or series…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="min-h-[44px] border border-input bg-background px-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-primary"

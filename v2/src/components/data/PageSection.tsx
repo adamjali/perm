@@ -3,9 +3,10 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * A main section of a page: a heading, a short line under it, then the
- * content, set off from what came before by space and one thin line. No box:
- * a box goes only around a figure, a form or a table inside it.
+ * A main section of a page: a heavy ink rule (the original's border-t-4), a
+ * lime tab where the rule meets the heading, the heading, a short line under
+ * it, then the content. The rule is what separates one part of a page from
+ * the next (round 2, Oct 15 2026: "no lines or dividers or compartments").
  */
 export function PageSection({
   title,
@@ -26,9 +27,10 @@ export function PageSection({
 }) {
   const headingId = id ? `${id}-title` : undefined;
   return (
-    <section id={id} aria-labelledby={headingId} className={cn("mt-12 border-t border-border pt-8 sm:mt-16", className)}>
+    <section id={id} aria-labelledby={headingId} className={cn("relative mt-12 border-t-4 border-border pt-8 sm:mt-16", className)}>
+      <span aria-hidden="true" className="absolute -top-1 left-0 h-1 w-16 bg-primary" />
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <h2 id={headingId} className="font-heading text-2xl font-bold">
+        <h2 id={headingId} className="font-heading text-2xl font-bold sm:text-3xl">
           {title}
         </h2>{" "}
         {aside ?? null}

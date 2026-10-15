@@ -5,18 +5,20 @@ import { cn } from "@/lib/utils"
 import { prettyStatus, statusTone, type StatusTone } from "@/lib/statusTone"
 
 /**
- * A badge is a quiet chip: muted ground, plain text. Status colour, where it
- * means something, goes in a dot beside the word, never as the whole fill.
+ * A badge is a chip with an ink edge. A status badge is filled with its
+ * meaning's colour (round 2, Oct 15 2026: the dot alone left every table
+ * grey); the words always say the same thing, so colour is never the only
+ * signal.
  */
 const badgeVariants = cva(
-  "inline-flex items-center justify-center gap-1.5 border px-2 py-0.5 text-sm font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3.5 [&>svg]:pointer-events-none focus-visible:ring-2 focus-visible:ring-ring overflow-hidden transition-colors",
+  "inline-flex items-center justify-center gap-1.5 border-2 px-2 py-0.5 text-sm font-semibold w-fit whitespace-nowrap shrink-0 [&>svg]:size-3.5 [&>svg]:pointer-events-none focus-visible:ring-2 focus-visible:ring-ring overflow-hidden transition-colors",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-muted text-foreground [a&]:hover:bg-accent",
-        secondary: "border-transparent bg-muted text-muted-foreground [a&]:hover:bg-accent",
-        destructive: "border-transparent bg-destructive/10 text-destructive-text [a&]:hover:bg-destructive/15",
-        outline: "border-border bg-transparent text-foreground [a&]:hover:bg-accent",
+        default: "border-foreground bg-primary text-primary-foreground [a&]:hover:bg-primary-hover",
+        secondary: "border-foreground bg-muted text-foreground [a&]:hover:bg-accent",
+        destructive: "border-foreground bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90",
+        outline: "border-foreground bg-transparent text-foreground [a&]:hover:bg-accent",
       },
     },
     defaultVariants: {
@@ -39,14 +41,15 @@ function Badge({
   )
 }
 
-const TONE_DOT = {
-  good: "bg-data-good-ink",
-  bad: "bg-data-bad-ink",
-  warn: "bg-data-warn-ink",
-  flat: "bg-muted-foreground",
+/** Each meaning's fill; black words read on all three colours in both themes. */
+const TONE_FILL = {
+  good: "bg-data-good text-black",
+  bad: "bg-data-bad text-black",
+  warn: "bg-data-warn text-black",
+  flat: "bg-muted text-foreground",
 } as const
 
-/** A quiet chip whose dot says good, bad, warning or neither, beside its own words. */
+/** A chip filled with what it says: good, bad, warning or neither, beside its own words. */
 function ToneBadge({
   tone,
   className,
@@ -58,17 +61,16 @@ function ToneBadge({
   children: React.ReactNode
 } & Omit<React.ComponentProps<"span">, "children" | "className">) {
   return (
-    <Badge className={cn("font-normal", className)} {...props}>
-      <span aria-hidden="true" className={cn("size-2 shrink-0", TONE_DOT[tone])} />
+    <Badge variant="outline" className={cn(TONE_FILL[tone], className)} {...props}>
       {children}
     </Badge>
   )
 }
 
 /**
- * A DOL status as a quiet chip: its own words (capitalised as a name, acronyms kept)
- * and a dot whose colour repeats what the words say. One look for every
- * status in every table and list.
+ * A DOL status as a chip: its own words (capitalised as a name, acronyms kept)
+ * on the colour of what they mean. One look for every status in every table
+ * and list.
  */
 function StatusBadge({ status, className }: { status: string; className?: string }) {
   return (

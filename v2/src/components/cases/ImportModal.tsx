@@ -894,6 +894,7 @@ export function ImportModal({
                           </Label>
                           <Input
                             id="edit-employer"
+                    placeholder="The employer's name…"
                             value={editingCase.employerName || ""}
                             onChange={(e) => handleEditFieldChange("employerName", e.target.value)}
                             disabled={isSavingEdit}
@@ -908,6 +909,7 @@ export function ImportModal({
                           </Label>
                           <Input
                             id="edit-beneficiary"
+                    placeholder="A name or reference…"
                             value={editingCase.beneficiaryIdentifier || ""}
                             onChange={(e) => handleEditFieldChange("beneficiaryIdentifier", e.target.value)}
                             disabled={isSavingEdit}
