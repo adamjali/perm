@@ -145,7 +145,7 @@ export default function ContactPage() {
           have a better route. Sticky on desktop so it is in reach from any of
           the routes; a normal block below `lg`. */}
       <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <div className="card-brutalist p-6 sm:p-8">
+        <div className="border border-border bg-card p-6 sm:p-8">
           <h2 className="font-heading text-2xl font-bold">
             Or write to us here
           </h2>{" "}

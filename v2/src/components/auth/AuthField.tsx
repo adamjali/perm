@@ -3,14 +3,14 @@
 /**
  * AuthField, label + input + inline state feedback for auth forms.
  *
- * Wraps the existing neo-brutalist `Input` / `PasswordInput` with:
- *   - Mono uppercase label (matches signup/login/reset pattern)
+ * Wraps the shared `Input` / `PasswordInput` with:
+ *   - A sentence-case label above the field
  *   - Success indicator (green check icon, appears when state === "valid")
  *   - Error indicator (red alert icon + destructive-colored message)
  *   - Helper text (neutral, shown while pristine/valid and no error)
  *
- * Visual language stays consistent with the existing case form aesthetic:
- * 2px borders, hard shadows, mono labels, snappy transitions.
+ * It looks like every other form field: a 1px control line, a sentence-case
+ * label, colour-only transitions.
  *
  * Consumer owns validation, this component only renders the state.
  */

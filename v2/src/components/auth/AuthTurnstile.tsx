@@ -16,7 +16,6 @@
  *                      analysis flags the attempt)
  *
  * Design:
- *   - Matches neo-brutalist auth aesthetic (2px borders, hard shadows)
  *   - Auto theme follows document.documentElement.classList ("dark")
  *   - Compact flexible size
  *   - Graceful failure: exposes `onError` → parent can render retry state

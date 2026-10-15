@@ -5,8 +5,8 @@
  * from our domain, journalists, etc.) a single discoverable URL they can land on
  * to verify claims about our platform's security posture and past incidents.
  *
- * Design: matches existing neo-brutalist aesthetic of /privacy and /terms, 
- * card-brutalist container, space-grotesk headings, structured sections.
+ * Laid out like /privacy and /terms: a card surface, Space Grotesk
+ * headings, structured sections.
  *
  * This page is expected to grow over time as new security facts emerge.
  * Keep incident entries concise, factual, neutral, this is a legal record.

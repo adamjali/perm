@@ -12,7 +12,7 @@ interface ChatMarkdownProps {
 }
 
 /**
- * Neo-brutalist styled markdown renderer for chat messages.
+ * The markdown renderer for chat messages.
  * Supports full GitHub Flavored Markdown including:
  * - Bold, italic, strikethrough
  * - Inline code and code blocks

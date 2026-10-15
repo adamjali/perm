@@ -67,8 +67,7 @@
      in light mode (it is the one thing on a page meant to be pressed), and
      anything floating over the page (menus, the search, dialogs, toasts) gets
      a soft neutral shadow so it doesn't blend into what's under it.
-     Everything else is flat. The old hard-shadow tokens stay defined as no
-     shadow, so a class the codemod missed paints nothing. */
+     Everything else is flat. */
   --elev-press: 3px 3px 0 0 #141414;
   --elev-overlay: 0 12px 32px -8px rgba(20, 20, 20, 0.18), 0 2px 6px rgba(20, 20, 20, 0.06);
 
@@ -76,9 +75,6 @@
   --stage-pwd: #0066FF;
   --stage-recruitment: #9333ea;
   --stage-eta9089: #D97706;
-  /* Retired: yellow could not be drawn on white legibly. It reads as the
-     ETA 9089 stage's own amber. */
-  --stage-eta9089-working: #D97706;
   --stage-i140: #059669;
   --stage-closed: #6B7280;
   --stage-success: #2ECC40;
@@ -139,7 +135,6 @@
   --stage-pwd-ink: #0065FD;
   --stage-recruitment-ink: #9333EA;
   --stage-eta9089-ink: #AA5D05;
-  --stage-eta9089-working-ink: #AA5D05;
   --stage-i140-ink: #04805A;
   --stage-closed-ink: #6A717E;
   --stage-success-ink: #1A7A25;
@@ -208,7 +203,6 @@
   --stage-pwd-ink: #267DFF;
   --stage-recruitment-ink: #A95CEE;
   --stage-eta9089-ink: #D97706;
-  --stage-eta9089-working-ink: #D97706;
   --stage-i140-ink: #059669;
   --stage-closed-ink: #7B8290;
   --stage-success-ink: #2ECC40;
@@ -318,7 +312,6 @@ html {
   --color-stage-pwd: var(--stage-pwd);
   --color-stage-recruitment: var(--stage-recruitment);
   --color-stage-eta9089: var(--stage-eta9089);
-  --color-stage-eta9089-working: var(--stage-eta9089-working);
   --color-stage-i140: var(--stage-i140);
   --color-stage-closed: var(--stage-closed);
   --color-urgency-urgent: var(--urgency-urgent);
@@ -335,7 +328,6 @@ html {
   --color-stage-pwd-ink: var(--stage-pwd-ink);
   --color-stage-recruitment-ink: var(--stage-recruitment-ink);
   --color-stage-eta9089-ink: var(--stage-eta9089-ink);
-  --color-stage-eta9089-working-ink: var(--stage-eta9089-working-ink);
   --color-stage-i140-ink: var(--stage-i140-ink);
   --color-stage-closed-ink: var(--stage-closed-ink);
   --color-stage-success-ink: var(--stage-success-ink);
@@ -462,14 +454,14 @@ html {
  * colours only where a stage is named. Nothing lifts or casts a hard shadow.
  * ================================================================ */
 
-.folder-tab-bar {
+.section-tab-bar {
   display: flex;
   gap: 0;
   overflow-x: auto;
   border-bottom: 1px solid var(--border);
 }
 
-.folder-tab {
+.section-tab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -481,31 +473,22 @@ html {
   background: transparent;
   color: var(--muted-foreground);
   font-family: var(--font-body);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   transition: color 150ms, border-color 150ms;
 }
-.folder-tab:hover { color: var(--foreground); }
-.folder-tab:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-.folder-tab[aria-selected="true"] {
+.section-tab:hover { color: var(--foreground); }
+.section-tab:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.section-tab[aria-selected="true"] {
   color: var(--foreground);
   border-bottom-color: var(--primary-text);
 }
 
-.folder-body { position: relative; }
-.folder-content { padding-top: 24px; }
+.section-tab-body { position: relative; }
+.section-tab-content { padding-top: 24px; }
 
-/**
- * Page-level container for the long-form public pages (privacy, terms,
- * security, contact): the standard card surface, static.
- */
-.card-brutalist {
-  background: var(--card);
-  color: var(--card-foreground);
-  border: 1px solid var(--border);
-}
 
 .detail-card {
   border: 1px solid var(--border);

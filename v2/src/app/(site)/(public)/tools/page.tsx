@@ -257,7 +257,6 @@ export default async function ToolsPage() {
               <p className="mt-2 flex-1 text-sm leading-relaxed text-soft">
                 {c.blurb}
               </p>{" "}
-              <span className="link mt-4 text-sm">Open</span>
             </a>
           ))}
         </div>
@@ -283,7 +282,6 @@ export default async function ToolsPage() {
               {/* The page's subject, drawn, as on the tiles above. */}
               <div className="mt-3 max-w-[150px] text-foreground">{c.viz}</div>{" "}
               <p className="mt-2 flex-1 text-sm leading-relaxed text-soft">{c.blurb}</p>{" "}
-              <span className="link mt-3 text-sm">Open</span>
             </Link>
           ))}
         </div>{" "}

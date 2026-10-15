@@ -70,7 +70,7 @@ export function CaseDetailTabs({
     <div className={cn("w-full", className)}>
       {/* Tab Bar */}
       <div
-        className="folder-tab-bar"
+        className="section-tab-bar"
         role="tablist"
         aria-label="Case detail sections"
         onKeyDown={handleKeyDown}
@@ -90,7 +90,7 @@ export function CaseDetailTabs({
               aria-selected={isActive}
               aria-controls={`tabpanel-${tab.id}`}
               tabIndex={isActive ? 0 : -1}
-              className="folder-tab"
+              className="section-tab"
               onClick={() => onTabChange(tab.id)}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -101,8 +101,8 @@ export function CaseDetailTabs({
       </div>
 
       {/* Folder Body */}
-      <div className="folder-body">
-        <div className="folder-content">{children}</div>
+      <div className="section-tab-body">
+        <div className="section-tab-content">{children}</div>
       </div>
     </div>
   );

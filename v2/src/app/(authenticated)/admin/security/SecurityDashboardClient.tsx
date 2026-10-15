@@ -9,8 +9,8 @@
  *   Flagged Users, suspended user profiles + unsuspend action
  *   Settings, thresholds + admin notification prefs (read-only for now)
  *
- * Neo-brutalist + "ops console" aesthetic: dark mono tables, amber/red
- * alert accents, 2px borders, hard shadows matching the rest of admin.
+ * The app's calm look: plain tables with mono figures, amber and red only
+ * where something needs attention.
  */
 
 import { useState } from "react";
