@@ -207,3 +207,60 @@ describe("a long answer is shown a page at a time, and says so", () => {
     expect(screen.queryByRole("button", { name: /^Show \d+ more$/ })).toBeNull();
   });
 });
+
+describe("the pages a name can also mean", () => {
+  it("lists the employer, law firm and job pages beside the filings, and the site's own pages", async () => {
+    const suggestions = [
+      { kind: "employer", name: "Acme Corp", href: "/perm-employers/acme-corp", cases: 812, score: 1, published: true },
+      { kind: "attorney", name: "Acme Law LLP", href: "/perm-attorneys/acme-law", cases: 40, score: 0.9, published: true },
+    ];
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) =>
+      String(input).startsWith("/api/suggest")
+        ? new Response(JSON.stringify({ suggestions, warming: [] }))
+        : new Response("{}", { status: 404 }),
+    );
+    try {
+      renderIt();
+      fireEvent.change(screen.getByLabelText("Employer or case number"), { target: { value: "acme" } });
+      fireEvent.submit(screen.getByLabelText("Employer or case number").closest("form")!);
+      expect(await screen.findByRole("heading", { name: "Pages with this name" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Acme Corp/ })).toHaveAttribute("href", "/perm-employers/acme-corp");
+      expect(screen.getByRole("heading", { name: "Law firms" })).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Jobs" })).toBeNull();
+      expect(fetchSpy.mock.calls.some((c) => String(c[0]) === "/api/suggest?kind=all&q=acme")).toBe(true);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it("asks for no names when the box holds a case number", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}"));
+    try {
+      renderIt();
+      fireEvent.change(screen.getByLabelText("Employer or case number"), { target: { value: "G-100-24001-000002" } });
+      fireEvent.submit(screen.getByLabelText("Employer or case number").closest("form")!);
+      expect(screen.queryByRole("heading", { name: "Pages with this name" })).toBeNull();
+      expect(fetchSpy.mock.calls.some((c) => String(c[0]).startsWith("/api/suggest"))).toBe(false);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+});
+
+describe("a law firm's page handing over its name", () => {
+  it("fills the firm box from ?firm= and searches by it at once", async () => {
+    vi.resetModules();
+    vi.doMock("next/navigation", () => ({
+      useSearchParams: () => new URLSearchParams({ firm: "Fragomen" }),
+      useRouter: () => ({ push: vi.fn() }),
+    }));
+    try {
+      const { UnifiedCaseSearch: Fresh } = await import("../UnifiedCaseSearch");
+      render(<Fresh fieldOptions={OPTIONS} />);
+      expect(screen.getByDisplayValue("Fragomen")).toBeInTheDocument();
+      expect(lastAsked().get("firm")).toBe("Fragomen");
+    } finally {
+      vi.doUnmock("next/navigation");
+    }
+  });
+});

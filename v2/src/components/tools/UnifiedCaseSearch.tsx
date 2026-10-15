@@ -44,6 +44,7 @@ import type { Program, UnifiedCase } from "@/lib/db/unifiedSearch";
 import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/db/caseSearchReads";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
+import { NameGroups, PageMatches } from "@/components/search/NameGroups";
 import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
 import { seasonalForm } from "@/lib/seasonalForms";
@@ -441,6 +442,8 @@ export function UnifiedCaseSearch({
 }) {
   const params = useUrlSearchParams();
   const initial = params.get("q") ?? "";
+  // `?firm=` is how a law firm's page hands its own name to this search.
+  const initialFirm = (params.get("firm") ?? "").trim();
   // `?stage=<slug>` is how the stage pages hand a cohort to this search.
   const stageOptions = useMemo(() => searchStages(), []);
   const initialStage = stageOptions.some((o) => o.slug === params.get("stage")) ? (params.get("stage") ?? "") : "";
@@ -448,7 +451,7 @@ export function UnifiedCaseSearch({
 
   // The lead fields.
   const [textInput, setTextInput] = useState(initial);
-  const [firmInput, setFirmInput] = useState("");
+  const [firmInput, setFirmInput] = useState(initialFirm);
   const [stateInput, setStateInput] = useState("");
   const [occInput, setOccInput] = useState("");
 
@@ -483,9 +486,10 @@ export function UnifiedCaseSearch({
   // answers `needsLead`, so pressing Search with nothing filled in explains
   // itself instead of doing nothing at all.
   const [submitted, setSubmitted] = useState<string | null>(
-    initial.trim() || initialStage
+    initial.trim() || initialStage || initialFirm
       ? new URLSearchParams({
           ...(initial.trim() ? { q: initial.trim() } : {}),
+          ...(initialFirm ? { firm: initialFirm } : {}),
           ...(initialStage ? { stage: initialStage } : {}),
         }).toString()
       : null,
@@ -552,6 +556,9 @@ export function UnifiedCaseSearch({
   const { data, failed, failure, retry } = usePublicQuery<SearchResponse>(url);
 
   const searching = submitted !== null;
+  // A name in the main box, not a case number: the pages that name could mean
+  // are shown beside its filings.
+  const nameSearch = searching && query.search.length >= 2 && !normaliseCaseNumber(query.search);
   const pending = searching && data === undefined && !failed;
 
   const shown = useMemo(() => {
@@ -1477,6 +1484,8 @@ export function UnifiedCaseSearch({
         </div>
       ) : null}
 
+      {nameSearch ? <NameGroups query={query.search} enabled={!(data && data.rows.length === 0)} /> : null}{" "}
+
       {data && !data.needsLead && (data.skipped.live || data.skipped.published) ? (
         <div className="border border-border bg-card p-4">
           <p className="text-base leading-relaxed">
@@ -1763,6 +1772,8 @@ export function UnifiedCaseSearch({
           </p>
         </section>
       ) : null}
+
+      {nameSearch ? <PageMatches query={query.search} /> : null}{" "}
 
       {/* BEFORE A SEARCH, THE SHAPE OF ITS ANSWER. The box that stood here
           restated the four programs the page's header already counts; what a

@@ -341,7 +341,14 @@ export default async function AttorneyPage({
         name={row.name}
         facts={facts}
         tags={tags}
-        aside={<CaseNextStep question={`Is ${row.name} handling your case?`} source="firm-page" />}
+        aside={
+          <CaseNextStep
+            question={`Is ${row.name} handling your case?`}
+            searchHref={`/case-search?firm=${encodeURIComponent(row.name)}`}
+            searchLabel="Find it among this firm's filings"
+            source="firm-page"
+          />
+        }
         figures={
           <>
             {/* The doubt goes ABOVE the figures, so a number computed from thin
