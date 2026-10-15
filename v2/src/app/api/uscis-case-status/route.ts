@@ -1,6 +1,6 @@
 import { makeUscisCaseStatusHandler } from "@/lib/uscis/routeHandler";
 import { uscisEnabled } from "@/lib/uscis/torchClient";
-import { lookupUscisCase } from "@/lib/turso/uscisCaseStatus";
+import { lookupUscisCase } from "@/lib/db/uscisCaseStatus";
 
 /**
  * `GET /api/uscis-case-status?receipt=EAC2190123456`

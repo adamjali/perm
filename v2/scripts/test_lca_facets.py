@@ -93,7 +93,7 @@ for n, p50, label in ((0, None, "n=0"), (2, 5.0, "n=2"), (500, None, "p50 null")
 #    the function body, take its return expression, and substitute the same
 #    locals it declares. Change either side and this goes red.
 ts = (pathlib.Path(__file__).resolve().parents[1]
-      / "src" / "lib" / "turso" / "publicData.ts").read_text()
+      / "src" / "lib" / "db" / "publicData.ts").read_text()
 
 
 def ts_locals(body: str, seed: dict[str, str]) -> dict[str, str]:
@@ -217,7 +217,7 @@ check("MIN_FOR_MEDIAN read from wageStats.ts", blf.min_for_median() == 30,
 
 # 6. The wage expression and band match the reader's.
 lca = (pathlib.Path(__file__).resolve().parents[1]
-       / "src" / "lib" / "turso" / "lcaWages.ts").read_text()
+       / "src" / "lib" / "db" / "lcaWages.ts").read_text()
 ts_wage = "".join(
     lca[lca.index("export const ANNUAL_WAGE_SQL ="):lca.index("/** Rows outside")]
     .split("=", 1)[1].replace('" +', "").replace('"', "").split()

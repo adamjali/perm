@@ -6,7 +6,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { FacetRow } from "@/lib/turso/entityDetail";
+import type { FacetRow } from "@/lib/db/entityDetail";
 
 import { groupIndustries, IndustryMix, OccupationMix, PartyMix, StateMix } from "../FilingMakeup";
 

@@ -9,7 +9,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { NameVariant } from "@/lib/turso/entityDetail";
+import type { NameVariant } from "@/lib/db/entityDetail";
 
 import { NameSpellings } from "../NameSpellings";
 

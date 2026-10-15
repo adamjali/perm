@@ -26,7 +26,7 @@ import time
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-import lib_turso  # noqa: E402
+import lib_db  # noqa: E402
 from lib_sqlite_shim import SqliteTurso  # noqa: E402
 
 spec = importlib.util.spec_from_file_location("csd", HERE / "ingest_case_status_direct.py")
@@ -82,7 +82,7 @@ def doc_of(db: SqliteTurso) -> dict | None:
 
 
 # ---------------------------------------------------------------------------
-# The reader's rules, transcribed from src/lib/turso/rfi.ts.
+# The reader's rules, transcribed from src/lib/db/rfi.ts.
 #
 # Transcribed rather than imported because that file is TypeScript. It is
 # checked against the shipped doc below, so a drift shows up as this test
@@ -139,12 +139,12 @@ def main() -> int:
     # --- record_sweep / last_complete_sweep -------------------------------
     db = SqliteTurso()
     now = time.time()
-    row = lib_turso.record_sweep(
+    row = lib_db.record_sweep(
         db, script="s.py", program="perm", mode="pending", started_at=now - 900,
         asked=100, answered=98, missing=2, changed=4, requests=2,
         failed_batches=0, complete=True, status_counts={"ANALYST REVIEW": 98})
     check("record_sweep returns the row it wrote", isinstance(row, dict))
-    got = lib_turso.last_complete_sweep(db, "perm")
+    got = lib_db.last_complete_sweep(db, "perm")
     check("last_complete_sweep finds a complete run", got is not None)
     check("it decodes the counts as integers",
           got and got["asked"] == 100 and got["answered"] == 98
@@ -157,21 +157,21 @@ def main() -> int:
           json.loads(stored) == {"ANALYST REVIEW": 98}, str(stored))
 
     # A PARTIAL run must be RECORDED and must not be usable to date anything.
-    lib_turso.record_sweep(
+    lib_db.record_sweep(
         db, script="s.py", program="perm", mode="full", started_at=time.time(),
         asked=10, answered=10, missing=0, changed=0, requests=1,
         failed_batches=1, complete=False)
     check("a partial run is still recorded",
           int(db.scalar("SELECT COUNT(*) FROM sweep_runs")) == 2)
-    still = lib_turso.last_complete_sweep(db, "perm")
+    still = lib_db.last_complete_sweep(db, "perm")
     check("a NEWER partial run never becomes the answer",
           still and still["mode"] == "pending", str(still))
     check("mode filtering works",
-          lib_turso.last_complete_sweep(db, "perm", modes=("full",)) is None)
+          lib_db.last_complete_sweep(db, "perm", modes=("full",)) is None)
     check("another program's run is not this program's",
-          lib_turso.last_complete_sweep(db, "pwd") is None)
+          lib_db.last_complete_sweep(db, "pwd") is None)
     check("an empty table answers None, not a guess",
-          lib_turso.last_complete_sweep(SqliteTurso(), "perm") is None)
+          lib_db.last_complete_sweep(SqliteTurso(), "perm") is None)
 
     # Bookkeeping must never break the ingest it books.
     class Broken(SqliteTurso):
@@ -188,18 +188,18 @@ def main() -> int:
             check(label, False, f"raised instead of swallowing: {exc!r}")
 
     swallows("record_sweep swallows a write failure and reports None",
-             lambda: lib_turso.record_sweep(
+             lambda: lib_db.record_sweep(
                  Broken(), script="s.py", program="perm", mode="full",
                  started_at=time.time(), asked=1, answered=1, missing=0,
                  changed=0, complete=True))
     swallows("last_complete_sweep swallows a read failure and reports None",
-             lambda: lib_turso.last_complete_sweep(Broken(), "perm"))
+             lambda: lib_db.last_complete_sweep(Broken(), "perm"))
 
     # --- the published doc -------------------------------------------------
     # THE DEFECT ITSELF. Every row carries a July timestamp; the sweep ran
     # today. The doc must say today.
     db = seeded_db(stale_checked="2026-07-02")
-    lib_turso.record_sweep(
+    lib_db.record_sweep(
         db, script="ingest_case_status_direct.py", program="perm", mode="full",
         started_at=time.time(), asked=62, answered=62, missing=0, changed=1,
         requests=2, failed_batches=0, complete=True)
@@ -234,7 +234,7 @@ def main() -> int:
 
     # A PARTIAL sweep cannot date the census either.
     db = seeded_db(stale_checked="2026-07-02")
-    lib_turso.record_sweep(
+    lib_db.record_sweep(
         db, script="ingest_case_status_direct.py", program="perm", mode="full",
         started_at=time.time(), asked=10, answered=10, missing=0, changed=0,
         requests=1, failed_batches=2, complete=False)
@@ -245,7 +245,7 @@ def main() -> int:
 
     # --- sweep_coverage, the web-readable projection -----------------------
     db = seeded_db()
-    lib_turso.record_sweep(
+    lib_db.record_sweep(
         db, script="ingest_case_status_direct.py", program="perm", mode="full",
         started_at=time.time() - 3600, asked=62, answered=61, missing=1,
         changed=3, requests=2, failed_batches=0, complete=True)
@@ -302,7 +302,7 @@ def main() -> int:
           "AS seen" not in body and "MIN(seen)" not in body, "the mirror timestamp is back")
     check("write_review_stages still computes the age band from last_checked_at",
           "_AGE_DAYS" in body,
-          "AGE_DAYS is pinned to src/lib/turso/rfi.ts and must not drift here")
+          "AGE_DAYS is pinned to src/lib/db/rfi.ts and must not drift here")
 
     print(f"\n  {len(FAILURES)} failure(s)"
           + (f": {', '.join(FAILURES)}" if FAILURES else ""))

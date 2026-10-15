@@ -51,7 +51,7 @@ from lib_gov_data import (  # noqa: E402
     log,
     read_shared_strings,
 )
-from lib_turso import Turso, read_doc, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, read_doc, stamp_freshness, write_doc  # noqa: E402
 
 DATA_PAGE = "https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data"
 HOST = "https://www.uscis.gov"
@@ -231,7 +231,7 @@ def main() -> int:
     # quarter this payload parsed, normalised from "FY2026 Q2" to "2026Q2",
     # the shape the health check reads.
     quarter_key = str(payload.get("asOfQuarter", "")).replace("FY", "").replace(" ", "")
-    db = Turso()
+    db = Database()
     result = store_doc(db, payload, int(time.time() * 1000))
     log(f"perm_docs[{DOC_KEY}]  {result}")
     if result.startswith("refused"):

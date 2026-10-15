@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
-import type { WorkerFacet, WorkerFacetRow } from "@/lib/turso/employerHistory";
+import type { WorkerFacet, WorkerFacetRow } from "@/lib/db/employerHistory";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 

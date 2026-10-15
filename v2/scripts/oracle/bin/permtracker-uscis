@@ -11,7 +11,7 @@ fail(){ python3 scripts/record_ingest_failure.py --script "$1" --note "oracle ti
 # A clean run writes its own ok row: the failure recorder refuses "ok" on
 # purpose, and the I-140 script records nothing when it succeeds, so without
 # this one failed run kept the health check red for its whole window.
-ok(){ python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_turso import Turso, record_run; record_run(Turso(), sys.argv[1], status="ok", note=sys.argv[2])' "$1" "oracle timer ($job): $2" || echo "could not record the ok row"; }
+ok(){ python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_db import Database, record_run; record_run(Database(), sys.argv[1], status="ok", note=sys.argv[2])' "$1" "oracle timer ($job): $2" || echo "could not record the ok row"; }
 rc=0
 case "$job" in
   i485) python3 scripts/ingest_i485_inventory.py || { rc=1; fail ingest_i485_inventory.py "ingest exited non-zero"; } ;;

@@ -1,13 +1,13 @@
 /**
- * Read-only access to the public DOL mirror (Turso/libSQL) from Convex.
+ * Read-only access to the public DOL mirror (libSQL) from Convex.
  *
  * ## Why Convex needs this at all
  *
- * The per-case corpus lives in Turso and the subscriber list lives in Convex,
- * and that split is deliberate rather than accidental. `src/lib/turso/client.ts`
- * states the boundary: Turso holds public federal records only, and user data
+ * The per-case corpus lives in the public-data database and the subscriber list lives in Convex,
+ * and that split is deliberate rather than accidental. `src/lib/db/client.ts`
+ * states the boundary: the public-data database holds public federal records only, and user data
  * stays on Convex because Convex is the system with auth in front of it. An
- * email address is user data, so the subscriptions cannot move to Turso; the
+ * email address is user data, so the subscriptions cannot move to the public-data database; the
  * case corpus is 412,865 rows of public record, so it will not move to Convex.
  * Something has to cross, and a READ of public data is the cheaper direction.
  *
@@ -16,23 +16,23 @@
  * The alternative was having `scripts/mirror_case_status.py` POST changed cases
  * to a Convex HTTP route. Rejected: that is a new unauthenticated-shaped
  * endpoint to defend, and a push that fails while Convex is down loses the
- * event unless Turso separately tracks delivery, which is more moving parts for
+ * event unless the public-data database separately tracks delivery, which is more moving parts for
  * less. Pulling means Convex owns its own scheduling and retry, and a missed
  * run costs nothing because the next one sees the same state.
  *
  * ## What this deliberately cannot do
  *
- * `execute` refuses anything that is not a SELECT. The token in
- * `TURSO_AUTH_TOKEN` grants write access to the whole database, so the
+ * `execute` refuses anything that is not a SELECT. The database token can
+ * grant write access to the whole database, so the
  * restriction is a real one rather than documentation: nothing in Convex has
  * any business writing to the public corpus, which is owned end to end by the
  * ingest scripts. A guard that only says "please don't" is not a guard.
  *
  * ## Configuration
  *
- * `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are set on Convex production:
- * the Oracle server's database, reached through Cloudflare, with a read-only
- * token. A missing pair throws. That is on purpose: a missing credential that degraded to an empty result set
+ * `DATABASE_URL` and `DATABASE_AUTH_TOKEN` (or the older `TURSO_*` names,
+ * which production still carries) are set on Convex production: the Oracle
+ * server's database, reached through Cloudflare, with a read-only token. A missing pair throws. That is on purpose: a missing credential that degraded to an empty result set
  * would report "nothing changed" forever, which is indistinguishable from a
  * working sweep with a quiet week.
  *
@@ -47,7 +47,7 @@ type HranaValue =
   | { type: "text"; value: string }
   | { type: "blob"; base64: string };
 
-/** One value as an Hrana argument. Mirrors `lit()` in scripts/lib_turso.py. */
+/** One value as an Hrana argument. Mirrors `lit()` in scripts/lib_db.py. */
 function lit(v: string | number | null): HranaValue {
   if (v === null) return { type: "null" };
   if (typeof v === "number") {
@@ -103,11 +103,11 @@ function assertReadOnly(sql: string): void {
 }
 
 function config(): { url: string; token: string } {
-  const url = process.env.TURSO_DATABASE_URL;
-  const token = process.env.TURSO_AUTH_TOKEN;
+  const url = process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL;
+  const token = process.env.DATABASE_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN;
   if (!url || !token) {
     throw new Error(
-      "TURSO_DATABASE_URL / TURSO_AUTH_TOKEN are not set on this Convex " +
+      "DATABASE_URL / DATABASE_AUTH_TOKEN are not set on this Convex " +
         "deployment. The case-status alerts cannot read the mirror without " +
         "them. Set both with `npx convex env set`.",
     );

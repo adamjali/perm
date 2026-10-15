@@ -11,9 +11,9 @@ import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import { firstThatFits } from "@/lib/describe";
 import { naicsSectorTitle } from "@/lib/naicsSectors";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { countryYears, getGroup, GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
+import { countryYears, getGroup, GROUP_PATH, listGroups, type GroupKind } from "@/lib/db/groups";
 import { formatInt } from "@/lib/format";
-import { lcaCityByKey, lcaCityBySlug, type LcaCity } from "@/lib/turso/lcaCities";
+import { lcaCityByKey, lcaCityBySlug, type LcaCity } from "@/lib/db/lcaCities";
 
 import { CityReference } from "@/components/reference/CityReference";
 

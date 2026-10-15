@@ -8,7 +8,7 @@
  * server-only throws.
  *
  * The input is structural rather than the MonthQueueStat row type, so nothing
- * here depends on the Turso layer. `getQueueAhead` computes the same `ahead`
+ * here depends on the database layer. `getQueueAhead` computes the same `ahead`
  * server-side for its own default month; the fixture test below pins both to
  * one arithmetic so they cannot drift.
  *

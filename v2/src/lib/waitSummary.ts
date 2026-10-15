@@ -1,6 +1,6 @@
 /**
  * Filing-to-decision days, summarised. Plain module so the unit project can
- * test it; `src/lib/turso/employerWait.ts` feeds it rows.
+ * test it; `src/lib/db/employerWait.ts` feeds it rows.
  */
 
 import { MS_PER_DAY } from "@/lib/time";

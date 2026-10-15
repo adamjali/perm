@@ -41,8 +41,8 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import (  # noqa: E402
-    ET, Turso, add_missing_columns, query_rows, read_doc, record_run, record_sweep,
+from lib_db import (  # noqa: E402
+    ET, Database, add_missing_columns, query_rows, read_doc, record_run, record_sweep,
     run_independently, run_stmts, stamp_freshness, stmt, write_doc,
 )
 from ingest_case_status_direct import (  # noqa: E402
@@ -240,7 +240,7 @@ def table_ddl(cfg: dict) -> list[str]:
     ]
 
 
-def ensure_schema(db: Turso) -> None:
+def ensure_schema(db: Database) -> None:
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER NOT NULL)""")
     for cfg in PROGRAMS.values():
@@ -257,7 +257,7 @@ def ensure_schema(db: Turso) -> None:
 # day_code and serial_of come from lib_flag_serials (shared with the PERM prober).
 
 
-def _serial_stats(db: Turso, table: str, prefixes: list[str], codes: list[str]):
+def _serial_stats(db: Database, table: str, prefixes: list[str], codes: list[str]):
     """Per day code, min and max serial, read by PRIMARY KEY RANGE.
 
     `LIKE 'G-100-26238-%'` can't use the primary key index (LIKE is
@@ -298,13 +298,13 @@ def cluster_serials(serials: list[int], gap: int = CLUSTER_GAP) -> list[tuple[in
     return out
 
 
-def cached_known(db: Turso, code: str) -> set[int]:
+def cached_known(db: Database, code: str) -> set[int]:
     if code not in _KNOWN_CACHE:
         _KNOWN_CACHE[code] = known_serials(db, code)
     return _KNOWN_CACHE[code]
 
 
-def day_windows(db: Turso, codes: list[str]) -> dict[str, list[tuple[int, int]]]:
+def day_windows(db: Database, codes: list[str]) -> dict[str, list[tuple[int, int]]]:
     """Per day code, the serial ranges to probe: what the PERM corpus and our
     own tables already know for that day, padded at both edges.
 
@@ -354,7 +354,7 @@ def day_windows(db: Turso, codes: list[str]) -> dict[str, list[tuple[int, int]]]
     return windows
 
 
-def known_serials(db: Turso, code: str) -> set[int]:
+def known_serials(db: Database, code: str) -> set[int]:
     """Every serial already claimed for a day, across ALL programs."""
     known: set[int] = set()
     pairs: list[tuple[str, str]] = [("perm_case_status", PERM_PREFIX)]
@@ -444,7 +444,7 @@ def _insert_sql(table: str) -> str:
             " last_checked_at, source, fetched_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
 
 
-def insert_hits(db: Turso, hits: list[dict], source: str) -> int:
+def insert_hits(db: Database, hits: list[dict], source: str) -> int:
     """INSERT OR IGNORE each confirmed case into its program's table, in one
     pipeline. Returns rows actually added."""
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -466,7 +466,7 @@ def insert_hits(db: Turso, hits: list[dict], source: str) -> int:
     return sum(1 for n in run_stmts(db, stmts) if n) if stmts else 0
 
 
-def probe_days(db: Turso, windows: dict[str, list[tuple[int, int]]], cap: int,
+def probe_days(db: Database, windows: dict[str, list[tuple[int, int]]], cap: int,
                source: str) -> tuple[int, dict[str, int], list[str]]:
     """Every unknown serial in each window, each prefix in turn, claimed
     serials dropped as they hit. Returns (requests, added per program, days done)."""
@@ -514,7 +514,7 @@ def probe_days(db: Turso, windows: dict[str, list[tuple[int, int]]], cap: int,
 # Sweeps
 # ---------------------------------------------------------------------------
 
-def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
+def sweep(db: Database, program: str, pending_only: bool, limit: int | None,
           window_days: int | None = None) -> dict:
     """Re-ask DOL about a set of cases and record what moved.
 
@@ -692,7 +692,7 @@ def day_queue_doc(by_day_rows: list, exit_rows: list, today: datetime.date) -> d
             "inProcess": sum(n for _, n in by_day)}
 
 
-def write_pwd_day_queue(db: Turso) -> bool:
+def write_pwd_day_queue(db: Database) -> bool:
     lo, hi = DAY_QUEUE_RANGE
     today = datetime.datetime.now(ET).date()
     start = today - datetime.timedelta(days=DAY_QUEUE_PACE_DAYS)
@@ -718,7 +718,7 @@ def write_pwd_day_queue(db: Turso) -> bool:
     return True
 
 
-def write_summary_doc(db: Turso, program: str = "pwd") -> bool:
+def write_summary_doc(db: Database, program: str = "pwd") -> bool:
     """perm_docs[<program>_live_summary]: counts by status, program tag and
     filing month, so the pages never count the table per request. Reconciled
     against COUNT(*) before writing; a mismatch leaves the previous doc."""
@@ -770,17 +770,17 @@ def write_summary_doc(db: Turso, program: str = "pwd") -> bool:
     return ok
 
 
-def read_progress_doc(db: Turso) -> dict:
+def read_progress_doc(db: Database) -> dict:
     """The whole backfill record: lastDayDone, when it last moved, the range
     it was dispatched for, and whether it finished. Empty when none exists."""
     return read_doc(db, PROGRESS_KEY) or {}
 
 
-def read_progress(db: Turso) -> str | None:
+def read_progress(db: Database) -> str | None:
     return read_progress_doc(db).get("lastDayDone")
 
 
-def write_progress(db: Turso, last_day: str | None = None, **fields) -> None:
+def write_progress(db: Database, last_day: str | None = None, **fields) -> None:
     """Merge into the record. `lastDayDoneAt` moves ONLY when lastDayDone
     does: it is what the health check judges a stalled backfill by, and a
     leg that restarts every day without advancing must not refresh it."""
@@ -817,7 +817,7 @@ def resume_decision(doc: dict, last_run_ms: int | None, now_ms: int) -> tuple[st
                         f"target {doc['to']}")
 
 
-def last_backfill_run_ms(db: Turso) -> int | None:
+def last_backfill_run_ms(db: Database) -> int | None:
     try:
         got = query_rows(db, "SELECT started_at FROM ingest_runs WHERE script = ? "
                         "ORDER BY started_at DESC LIMIT 1", [BACKFILL_SCRIPT])
@@ -899,13 +899,13 @@ def main() -> int:
         print(day_code(datetime.date.fromisoformat(args.day_code)))
         return 0
     if args.progress:
-        print(read_progress(Turso()) or "")
+        print(read_progress(Database()) or "")
         return 0
     if args.progress_json:
-        print(json.dumps(read_progress_doc(Turso()), sort_keys=True))
+        print(json.dumps(read_progress_doc(Database()), sort_keys=True))
         return 0
     if args.resume_check:
-        db = Turso()
+        db = Database()
         doc = read_progress_doc(db)
         verdict, reason = resume_decision(doc, last_backfill_run_ms(db), int(time.time() * 1000))
         if verdict == "dispatch":
@@ -914,7 +914,7 @@ def main() -> int:
             print(f"noop: {reason}")
         return 0
 
-    db = Turso()
+    db = Database()
     ensure_schema(db)
     today = datetime.date.today()
     started = time.time()

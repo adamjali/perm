@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const prune = vi.fn<(now: Date) => Promise<number>>();
-vi.mock("@/lib/turso/uscisCaseStatus", () => ({ pruneUscisCaseStatus: (now: Date) => prune(now) }));
+vi.mock("@/lib/db/uscisCaseStatus", () => ({ pruneUscisCaseStatus: (now: Date) => prune(now) }));
 
 const { GET } = await import("../route");
 

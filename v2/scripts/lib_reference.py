@@ -23,7 +23,7 @@ from xml.etree.ElementTree import iterparse
 
 from lib_gov_data import SPREADSHEET_NS, iter_rows, read_shared_strings
 
-from lib_turso import (Turso, canon_hash, insert_stmts, query_rows, read_doc, run_stmts, stmt,
+from lib_db import (Database, canon_hash, insert_stmts, query_rows, read_doc, run_stmts, stmt,
                        write_doc)
 
 
@@ -31,19 +31,19 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def seen_before(db: Turso, record_key: str, digest: str) -> bool:
+def seen_before(db: Database, record_key: str, digest: str) -> bool:
     """Whether the last successful load of `record_key` read these exact bytes."""
     doc = read_doc(db, record_key) or {}
     return doc.get("sha256") == digest
 
 
-def keep_record(db: Turso, record_key: str, digest: str, **facts) -> None:
+def keep_record(db: Database, record_key: str, digest: str, **facts) -> None:
     """Remember what a successful load read, for `seen_before` next time."""
     write_doc(db, record_key, {"sha256": digest, "loadedAt": int(time.time() * 1000), **facts})
 
 
 def sync_rows(
-    db: Turso,
+    db: Database,
     table: str,
     key_cols: Sequence[str],
     cols: Sequence[str],

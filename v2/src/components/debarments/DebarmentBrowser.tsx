@@ -3,7 +3,7 @@
 import { Fragment, useId, useMemo, useState } from "react";
 
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
-import type { Debarment, DebarmentPhase, DebarmentProgram } from "@/lib/turso/debarments";
+import type { Debarment, DebarmentPhase, DebarmentProgram } from "@/lib/db/debarments";
 import { DidYouMean } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
 import { rankFuzzy } from "@/lib/fuzzy";

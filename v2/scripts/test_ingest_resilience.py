@@ -3,7 +3,7 @@
 
     python3 scripts/test_ingest_resilience.py
 
-No network, no Turso. `urllib.request.urlopen` is replaced with a fake Hrana
+No network, no Database. `urllib.request.urlopen` is replaced with a fake Hrana
 server backed by in-memory SQLite, so every statement really executes and the
 assertions COUNT ROWS rather than counting calls. That distinction is the whole
 point here: "the client retried" and "the database now holds two rows" are
@@ -12,7 +12,7 @@ different claims, and only the second one is the defect.
 WHAT THIS IS FOR. On 2026-09-03 both scheduled DOL sweeps died on
 `{"message": "SQLite error: out of memory", "code": "SQLITE_NOMEM"}` two
 minutes apart (Actions runs 33757242079 and 33763357105). That error arrives
-INSIDE a 200 OK body, and `Turso.pipeline` only ever retried errors that raised
+INSIDE a 200 OK body, and `Database.pipeline` only ever retried errors that raised
 out of `urlopen`, so a moment of far-end memory pressure was treated as a
 settled, final answer. The same query re-ran by hand in 22.2s.
 
@@ -32,7 +32,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-import lib_turso  # noqa: E402
+import lib_db  # noqa: E402
 
 failures: list[str] = []
 
@@ -163,30 +163,30 @@ def attempt(fn):
     return None
 
 
-def with_server(server) -> "lib_turso.Turso":
-    lib_turso.urllib.request.urlopen = server           # type: ignore[assignment]
-    return lib_turso.Turso(url="https://fake", token="x")
+def with_server(server) -> "lib_db.Database":
+    lib_db.urllib.request.urlopen = server           # type: ignore[assignment]
+    return lib_db.Database(url="https://fake", token="x")
 
 
 def main() -> int:
-    lib_turso.time.sleep = lambda *_: None   # do not really wait 43 seconds
+    lib_db.time.sleep = lambda *_: None   # do not really wait 43 seconds
 
     # --- the allow-list ---------------------------------------------------
     # An ALLOW-list, so an unknown code fails fast. A deny-list would re-send
     # every new deterministic error four times, forever.
     print("classifier")
-    check("SQLITE_NOMEM is transient", lib_turso.transient_code(NOMEM) == "SQLITE_NOMEM")
+    check("SQLITE_NOMEM is transient", lib_db.transient_code(NOMEM) == "SQLITE_NOMEM")
     check("SQLITE_BUSY is transient",
-          lib_turso.transient_code({"code": "SQLITE_BUSY"}) == "SQLITE_BUSY")
+          lib_db.transient_code({"code": "SQLITE_BUSY"}) == "SQLITE_BUSY")
     check("a constraint violation is NOT transient",
-          lib_turso.transient_code(CONSTRAINT) is None)
+          lib_db.transient_code(CONSTRAINT) is None)
     check("the read-only token's BLOCKED is NOT transient",
-          lib_turso.transient_code(BLOCKED) is None,
+          lib_db.transient_code(BLOCKED) is None,
           "retrying BLOCKED would hide a credential problem behind a delay")
     check("an unknown code is NOT transient",
-          lib_turso.transient_code({"code": "SQLITE_NEWTHING"}) is None)
+          lib_db.transient_code({"code": "SQLITE_NEWTHING"}) is None)
     check("a malformed error object is NOT transient",
-          lib_turso.transient_code("boom") is None)
+          lib_db.transient_code("boom") is None)
 
     # --- the retry actually fires ----------------------------------------
     print("\nretry")
@@ -253,7 +253,7 @@ def main() -> int:
     s = FakeHrana(fail_posts=1, apply_then_fail=True,
                   fail_on="INSERT INTO ingest_runs")
     db = with_server(s)
-    lib_turso.record_run(db, "probe.py", status="ok", note="first")
+    lib_db.record_run(db, "probe.py", status="ok", note="first")
     before, after = 0, s.count("ingest_runs")
     check("record_run writes EXACTLY ONE row through an applied-then-failed NOMEM",
           after - before == 1,
@@ -265,10 +265,10 @@ def main() -> int:
     # disk refused it and the sweep stayed green).
     s = FakeHrana()
     check("record_run reports True when the row is written",
-          lib_turso.record_run(with_server(s), "probe.py", status="ok") is True)
+          lib_db.record_run(with_server(s), "probe.py", status="ok") is True)
     s = FakeHrana(fail_posts=99, error=FULL, apply_then_fail=False,
                   fail_on="INSERT INTO ingest_runs")
-    landed = lib_turso.record_run(with_server(s), "probe.py", status="ok")
+    landed = lib_db.record_run(with_server(s), "probe.py", status="ok")
     check("record_run reports False when a full disk refuses the row, without raising",
           landed is False and s.count("ingest_runs") == 0, f"returned {landed!r}")
 
@@ -303,7 +303,7 @@ def main() -> int:
     db = with_server(s)
     kw = dict(script="probe.py", program="perm", mode="full", started_at=1.0,
               asked=1, answered=1, missing=0, changed=0, complete=True)
-    lib_turso.record_sweep(db, **kw)                      # type: ignore[arg-type]
+    lib_db.record_sweep(db, **kw)                      # type: ignore[arg-type]
     before, after = 0, s.count("sweep_runs")
     check("record_sweep writes EXACTLY ONE row through the same failure",
           after - before == 1,
@@ -341,7 +341,7 @@ def main() -> int:
             raise RuntimeError("nope")
         return f
 
-    failed = lib_turso.run_independently(
+    failed = lib_db.run_independently(
         [("a", ok("a")), ("b", boom("b")), ("c", ok("c")), ("d", boom("d"))])
     check("a failing step does not stop the ones after it",
           order == ["a", "b", "c", "d"], str(order))
@@ -350,13 +350,13 @@ def main() -> int:
     check("the reason travels with the name",
           "RuntimeError" in failed[0][1], str(failed[0]))
     check("a clean pass reports nothing",
-          lib_turso.run_independently([("a", ok("a2"))]) == [])
+          lib_db.run_independently([("a", ok("a2"))]) == [])
 
     # A DECLINED WRITE IS NOT A FAILURE. The reconciliation guards return
     # early instead of raising, precisely so a deliberate no-op can never be
     # mistaken for something to retry or to alarm on.
     check("a step that returns falsy without raising is not a failure",
-          lib_turso.run_independently([("guard", lambda: False)]) == [])
+          lib_db.run_independently([("guard", lambda: False)]) == [])
 
     # --- two jobs adding the same column at once ----------------------------
     # Oct 10 2026: the H-2A, H-2B and CW-1 disclosure loads share
@@ -369,17 +369,17 @@ def main() -> int:
     db = with_server(s)
     s.db.execute("CREATE TABLE t (a TEXT)")
     s.db.execute("ALTER TABLE t ADD COLUMN b TEXT")        # the other job's ALTER
-    real_rows = lib_turso.query_rows
-    lib_turso.query_rows = lambda _db, _sql, *a, **k: [(0, "a"), ]  # read before it landed
+    real_rows = lib_db.query_rows
+    lib_db.query_rows = lambda _db, _sql, *a, **k: [(0, "a"), ]  # read before it landed
     added: list = []
-    err = attempt(lambda: added.extend(lib_turso.add_missing_columns(db, "t", {"b": "TEXT", "c": "TEXT"})))
+    err = attempt(lambda: added.extend(lib_db.add_missing_columns(db, "t", {"b": "TEXT", "c": "TEXT"})))
     check("a column another job just added is not an error", err is None, repr(err))
     check("...and only the column this call added is reported", added == ["c"], repr(added))
     cols = {r[1] for r in s.db.execute("PRAGMA table_info(t)")}
     check("...and the missing one really was added", cols == {"a", "b", "c"}, repr(cols))
-    err = attempt(lambda: lib_turso.add_missing_columns(db, "t", {"d": "TEXT UNIQUE"}))
+    err = attempt(lambda: lib_db.add_missing_columns(db, "t", {"d": "TEXT UNIQUE"}))
     check("any other refusal still raises", isinstance(err, RuntimeError), repr(err))
-    lib_turso.query_rows = real_rows
+    lib_db.query_rows = real_rows
 
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0

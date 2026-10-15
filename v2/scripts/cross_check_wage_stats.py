@@ -30,7 +30,7 @@ import sys
 import pathlib
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from lib_turso import Turso, query_dicts  # noqa: E402
+from lib_db import Database, query_dicts  # noqa: E402
 
 # How many of the largest materialised rows to check. The point is a canary on
 # the ingest, not a full reconciliation: if the newest and biggest rows agree,
@@ -61,7 +61,7 @@ P50 = (
 
 
 def main() -> int:
-    t = Turso()
+    t = Database()
     pre = query_dicts(
         t,
         """SELECT soc_code, fiscal_year, count, p50 FROM perm_wage_stats

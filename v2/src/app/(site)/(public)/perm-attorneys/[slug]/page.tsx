@@ -52,10 +52,10 @@ import {
   entityMetadata,
   entityStaticParams,
 } from "@/lib/entityPage";
-import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
+import { getDisclosureStats, getFreshness } from "@/lib/db/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FirmPrograms } from "@/components/entities/FirmPrograms";
-import { getFirmPrograms } from "@/lib/turso/firmPrograms";
+import { getFirmPrograms } from "@/lib/db/firmPrograms";
 import { api } from "@convex/_generated/api";
 import { queryStatic } from "@/lib/convexStatic";
 import { FirmProfileBlock } from "@/components/entities/FirmProfileBlock";
@@ -64,7 +64,7 @@ import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
 import { ProfileHeader, type ProfileFact, type ProfileTag } from "@/components/entities/ProfileHeader";
 import { Chapter } from "@/components/entities/Chapter";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
-import { debarmentsForSlug, phase } from "@/lib/turso/debarments";
+import { debarmentsForSlug, phase } from "@/lib/db/debarments";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
@@ -74,8 +74,8 @@ import {
   nameVariants,
   resolveEntity,
   sizeBand,
-} from "@/lib/turso/entityDetail";
-import { comparables, fieldDistribution } from "@/lib/turso/entities";
+} from "@/lib/db/entityDetail";
+import { comparables, fieldDistribution } from "@/lib/db/entities";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.

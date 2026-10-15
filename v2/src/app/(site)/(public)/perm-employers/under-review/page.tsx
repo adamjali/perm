@@ -27,7 +27,7 @@ import {
 } from "@/lib/employerStages";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { searchStageSlug } from "@/lib/searchStages";
-import { getEmployerStages } from "@/lib/turso/employerStages";
+import { getEmployerStages } from "@/lib/db/employerStages";
 import { withSocialCard } from "@/lib/socialCard";
 import { formatInt, formatShare } from "@/lib/format";
 import { daysBetween } from "@/lib/time";

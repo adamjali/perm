@@ -1,7 +1,7 @@
 /**
  * Date-range coverage: which of our two records can answer a given day.
  *
- * A PLAIN MODULE, DELIBERATELY. `turso/decidedDays.ts` is `server-only`, and
+ * A PLAIN MODULE, DELIBERATELY. `db/decidedDays.ts` is `server-only`, and
  * the browser needs the same arithmetic to decide which controls to enable.
  * One definition reachable from both sides; a second copy is a page that
  * enables a filter the route cannot serve, which is the exact invariant the

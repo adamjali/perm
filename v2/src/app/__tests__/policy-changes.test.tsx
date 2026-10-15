@@ -3,15 +3,15 @@ import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { PolicyNotice } from "@/lib/turso/policyNotices";
+import type { PolicyNotice } from "@/lib/db/policyNotices";
 
-vi.mock("@/lib/turso/policyNotices", () => ({ listPolicyNotices: vi.fn() }));
+vi.mock("@/lib/db/policyNotices", () => ({ listPolicyNotices: vi.fn() }));
 // Reads Turso for the freshness line; not what this file is about.
 vi.mock("@/components/data/DataProvenance", () => ({
   DataProvenance: () => <div data-testid="provenance" />,
 }));
 
-import { listPolicyNotices } from "@/lib/turso/policyNotices";
+import { listPolicyNotices } from "@/lib/db/policyNotices";
 import { POLICY_SHOTS } from "@/lib/policyShots";
 import { webpSize } from "../../../test-utils/image-size";
 import PolicyChangesPage from "../(site)/(public)/policy-changes/page";

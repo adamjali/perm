@@ -1,5 +1,5 @@
 import type { EntityKind, EntityRow } from "./entityPayload";
-import { getAllEntities, getEntitySeed } from "./turso/publicData";
+import { getAllEntities, getEntitySeed } from "./db/publicData";
 
 /**
  * The server-rendered head of one entity kind, plus how many exist.

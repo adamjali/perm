@@ -30,7 +30,7 @@ import pathlib
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from lib_flag_serials import code_to_date  # noqa: E402
-from lib_turso import Turso, query_rows, rows_of  # noqa: E402
+from lib_db import Database, query_rows, rows_of  # noqa: E402
 
 
 def parse_as_of(raw: str) -> datetime.date | None:
@@ -746,7 +746,7 @@ def check_hand_read_figures(today: datetime.date | None = None) -> int:
 
 
 def main() -> int:
-    db = Turso()
+    db = Database()
     res = db.execute(
         "SELECT dataset, as_of, max_age_days, source, cadence, fetched_at "
         "FROM data_freshness "

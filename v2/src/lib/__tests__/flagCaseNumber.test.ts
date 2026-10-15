@@ -205,9 +205,9 @@ describe("the prefix rules", () => {
   });
 
   it("match the Turso read layer's own copies", async () => {
-    const pwd = await source("../turso/pwdCases.ts");
-    const lca = await source("../turso/lcaCases.ts");
-    const seasonal = await source("../turso/seasonalCases.ts");
+    const pwd = await source("../db/pwdCases.ts");
+    const lca = await source("../db/lcaCases.ts");
+    const seasonal = await source("../db/seasonalCases.ts");
     expect(
       seasonal.includes("/^(?:H-300|H-400|P-400|P-500|JO-A-300|C-500)-\\d{5}-\\d+$/"),
       "seasonalCases.ts no longer uses the same prefix pattern as flagCaseNumber.ts",
@@ -293,8 +293,8 @@ describe("isProgramApproval", () => {
    * one list and not the other.
    */
   it("only names statuses the ingest already treats as final", async () => {
-    const pwd = await source("../turso/pwdCases.ts");
-    const lca = await source("../turso/lcaCases.ts");
+    const pwd = await source("../db/pwdCases.ts");
+    const lca = await source("../db/lcaCases.ts");
     for (const status of [
       "DETERMINATION ISSUED",
       "REDETERMINATION AFFIRMED",

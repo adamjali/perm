@@ -7,8 +7,8 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
-import { getVisaBulletinSeries } from "@/lib/turso/publicData";
-import { getBulletinBoard, categoriesIn } from "@/lib/turso/bulletin";
+import { getVisaBulletinSeries } from "@/lib/db/publicData";
+import { getBulletinBoard, categoriesIn } from "@/lib/db/bulletin";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";

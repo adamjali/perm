@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const countCall = vi.fn();
 const lookupEmployer = vi.fn();
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/turso/client", () => ({ exec: vi.fn(), rows: vi.fn() }));
+vi.mock("@/lib/db/client", () => ({ exec: vi.fn(), rows: vi.fn() }));
 vi.mock("@/lib/api/employerLookup", () => ({ lookupEmployer: (...a: unknown[]) => lookupEmployer(...a) }));
 vi.mock("../usage", async (importOriginal) => {
   const real = await importOriginal<typeof import("../usage")>();

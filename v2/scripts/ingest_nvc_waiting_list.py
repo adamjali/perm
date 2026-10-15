@@ -240,8 +240,8 @@ def main() -> int:
         print(json.dumps(doc, indent=1)[:1500])
         return 0
 
-    from lib_turso import Turso, stamp_freshness, write_doc
-    db = Turso()
+    from lib_db import Database, stamp_freshness, write_doc
+    db = Database()
     write_doc(db, DOC_KEY, json.dumps(doc))
     # The budget isn't a year. State has published nothing after the November
     # 2023 report (its statistics page no longer links one, and the 2024 and

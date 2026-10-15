@@ -15,8 +15,8 @@ import { LINE_CATEGORY_SHORT, LINE_COUNTRY_SHORT, LINE_PAGE_COUNTRIES, lineSlug 
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import type { BulletinMonth } from "@/lib/perm";
-import { summariseBulletins } from "@/lib/turso/bulletin";
-import { getVisaBulletins } from "@/lib/turso/publicData";
+import { summariseBulletins } from "@/lib/db/bulletin";
+import { getVisaBulletins } from "@/lib/db/publicData";
 
 export const revalidate = 86400;
 

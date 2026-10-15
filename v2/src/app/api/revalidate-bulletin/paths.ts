@@ -4,8 +4,8 @@
  * IN ITS OWN MODULE BECAUSE A `route.ts` MAY NOT EXPORT ANYTHING ELSE (see
  * `revalidate-dol/paths.ts` for the build error that rule prevents).
  *
- * Derived by following every reader of the bulletin tables (`lib/turso/bulletin`,
- * `lib/turso/bulletinLine`, `getVisaBulletins`, `BulletinBoard`, `badgeData`)
+ * Derived by following every reader of the bulletin tables (`lib/db/bulletin`,
+ * `lib/db/bulletinLine`, `getVisaBulletins`, `BulletinBoard`, `badgeData`)
  * to its page. `route.test.ts` re-derives the list from the app tree, so a page
  * added later cannot quietly keep showing last month's cutoffs.
  */

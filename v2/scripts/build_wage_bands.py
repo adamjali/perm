@@ -38,7 +38,7 @@ import json
 import sys
 
 from build_lca_facets import min_for_median
-from lib_turso import Turso, query_dicts, write_doc
+from lib_db import Database, query_dicts, write_doc
 
 DOC_KEY = "wage_denial_bands"
 FACET_KEY = "wage_filter_options"
@@ -97,7 +97,7 @@ def case_sql(bands) -> str:
     return "CASE " + " ".join(arms) + " END"
 
 
-def measure(db: Turso, bands) -> list[dict]:
+def measure(db: Database, bands) -> list[dict]:
     expr = case_sql(bands)
     r = query_dicts(
         db,
@@ -126,7 +126,7 @@ def measure(db: Turso, bands) -> list[dict]:
     return out
 
 
-def build_facets(db: Turso, min_cases: int) -> dict:
+def build_facets(db: Database, min_cases: int) -> dict:
     """The three filter lists, computed once instead of per render."""
     occ = query_dicts(db,
         "SELECT code AS soc_code, name AS soc_title, total AS n FROM perm_entities "
@@ -160,7 +160,7 @@ def build_facets(db: Turso, min_cases: int) -> dict:
 
 def main() -> int:
     dry = "--dry-run" in sys.argv
-    db = Turso()
+    db = Database()
     log(f"  target: {db.url}")
 
     base = query_dicts(db, "SELECT json FROM perm_docs WHERE key = 'disclosure_stats'", typed=True)

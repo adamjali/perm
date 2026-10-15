@@ -50,7 +50,7 @@ from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_slugs import slugify  # noqa: E402
-from lib_turso import Turso, add_missing_columns, record_run, run_stmts, stamp_freshness, stmt  # noqa: E402
+from lib_db import Database, add_missing_columns, record_run, run_stmts, stamp_freshness, stmt  # noqa: E402
 
 SCRIPT = "ingest_seasonal_jobs.py"
 DATASET = "seasonal-postings"
@@ -295,7 +295,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         # Today's files appear after midnight Eastern; before they do, yesterday's are current.
         days = [today.isoformat(), (today - datetime.timedelta(days=1)).isoformat()]
-    db = None if a.dry_run else Turso()
+    db = None if a.dry_run else Database()
     if db is not None:
         ensure_schema(db)
     totals = {f: 0 for f in FEEDS}

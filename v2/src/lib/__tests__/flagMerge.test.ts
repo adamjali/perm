@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mergeHalves, unifiedRows } from "../flagMerge";
-import type { FlagCaseRow, FlagDisclosedRow } from "@/lib/turso/flagCases";
+import type { FlagCaseRow, FlagDisclosedRow } from "@/lib/db/flagCases";
 
 const live = (caseNumber: string, filingDate: string, status = "IN PROCESS"): FlagCaseRow => ({
   caseNumber,

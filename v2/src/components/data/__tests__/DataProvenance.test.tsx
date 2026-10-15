@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 const getFreshness = vi.fn();
-vi.mock("@/lib/turso/publicData", () => ({ getFreshness: () => getFreshness() }));
+vi.mock("@/lib/db/publicData", () => ({ getFreshness: () => getFreshness() }));
 
 const { DataProvenance } = await import("../DataProvenance");
 

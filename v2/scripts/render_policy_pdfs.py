@@ -32,7 +32,7 @@ import fitz  # PyMuPDF
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_turso import Turso, rows_of  # noqa: E402
+from lib_db import Database, rows_of  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "public" / "images" / "policy"
@@ -47,7 +47,7 @@ def log(msg: str) -> None:
     print(msg, flush=True)
 
 
-def documents(db: Turso) -> list[tuple[str, str]]:
+def documents(db: Database) -> list[tuple[str, str]]:
     res = db.execute(
         "SELECT document_number, pdf_url FROM policy_notices "
         "WHERE type != 'OFLC announcement' AND pdf_url IS NOT NULL AND correction_of IS NULL "
@@ -104,7 +104,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
-    docs = documents(Turso())
+    docs = documents(Database())
     todo = [(n, u) for n, u in docs if args.all or not (OUT / f"{n}.webp").exists()]
     log(f"{len(docs)} documents with a PDF; {len(todo)} to render")
     if args.dry_run:

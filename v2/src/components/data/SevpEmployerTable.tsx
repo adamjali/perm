@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PlusIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
-import type { SevpList } from "@/lib/turso/sevpEmployers";
+import type { SevpList } from "@/lib/db/sevpEmployers";
 import { formatInt } from "@/lib/format";
 
 /**

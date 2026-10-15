@@ -22,11 +22,11 @@ import { Fragment, useMemo, useState } from "react";
 import { ChartTips } from "@/components/data/ChartTips";
 import { ViewToggle } from "@/components/tools/ViewToggle";
 import { formatMonth, formatAsOf } from "@/lib/dolFormat";
-// TYPE-ONLY. `@/lib/turso/bulletin` carries `import "server-only"`, and a
+// TYPE-ONLY. `@/lib/db/bulletin` carries `import "server-only"`, and a
 // value import from here would drag it into the client bundle. The type
 // import is erased at compile time; the labels below are presentation and
 // live with the presentation.
-import type { BulletinBoard as Board, BoardCell } from "@/lib/turso/bulletin";
+import type { BulletinBoard as Board, BoardCell } from "@/lib/db/bulletin";
 import type { ChartKind, CountryKey } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 import { DAYS_PER_MONTH } from "@/lib/time";

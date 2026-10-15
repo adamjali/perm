@@ -39,8 +39,8 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import (  # noqa: E402
-    ET, Turso, et_date, last_complete_sweep, query_rows, read_doc, record_run, record_sweep,
+from lib_db import (  # noqa: E402
+    ET, Database, et_date, last_complete_sweep, query_rows, read_doc, record_run, record_sweep,
     run_independently, run_stmts, stamp_freshness, stmt, write_doc,
 )
 from lib_housekeeping import prune as prune_old_rows  # noqa: E402
@@ -86,7 +86,7 @@ FINAL_STATUSES = {
 # Every reader is pinned to one source, and test_observed_decisions.py scans
 # for a query that forgets.
 #
-# The filters below are copied from src/lib/turso/changes.ts, which renders the
+# The filters below are copied from src/lib/db/changes.ts, which renders the
 # same events as a per-case feed, and asserted equal to it, so the chart and
 # the feed always count the same rows.
 # ---------------------------------------------------------------------------
@@ -94,7 +94,7 @@ FINAL_STATUSES = {
 OBSERVED_SOURCE = "sweep-observed"
 
 # Byte-identical to EXPIRY_FROM / EXPIRY_TO / BULK_WRITE_ROWS in
-# src/lib/turso/changes.ts. Asserted by test_observed_decisions.py.
+# src/lib/db/changes.ts. Asserted by test_observed_decisions.py.
 EXPIRY_FROM = "CERTIFIED"
 EXPIRY_TO = "CERTIFIED - EXPIRED"
 BULK_WRITE_ROWS = 5000
@@ -489,12 +489,12 @@ def flush(db, updates: list, events: list) -> None:
 
 
 # The fixture row DOL leaves in its own data. Byte-identical to
-# TEST_FIXTURE_EMPLOYER in src/lib/turso/rfi.ts (review-stages-doc.test.ts
+# TEST_FIXTURE_EMPLOYER in src/lib/db/rfi.ts (review-stages-doc.test.ts
 # asserts it), so the doc and the page's fallback query count the same rows.
 TEST_FIXTURE_EMPLOYER = "bah-test-company-name"
 
 # Age today, from the filing date. Byte-identical to AGE_DAYS in
-# src/lib/turso/rfi.ts.
+# src/lib/db/rfi.ts.
 _AGE_DAYS = """CASE
   WHEN filing_date IS NOT NULL AND filing_date <> ''
   THEN CAST(julianday('now') - julianday(filing_date) AS INTEGER)
@@ -990,7 +990,7 @@ def write_sweep_coverage(db) -> None:
     """Project the newest complete sweep into perm_docs['sweep_coverage'].
 
     `sweep_runs` is the append-only record; this is its current value, which
-    the case page reads (src/lib/turso/sweepCoverage.ts) to say when a pending
+    the case page reads (src/lib/db/sweepCoverage.ts) to say when a pending
     case was last checked against DOL. Derived from `last_complete_sweep`, never
     from this run's own variables, so a partial run leaves the previous
     complete run's dates standing: the last date every pending case was seen.
@@ -1275,7 +1275,7 @@ def observed_day(changed_at: int) -> str:
     """The UTC calendar day a `perm_case_events.changed_at` falls in.
 
     UTC because the reader buckets the same rows by UTC midnight
-    (src/lib/turso/changes.ts `dayBounds`); a local-time fold here would move
+    (src/lib/db/changes.ts `dayBounds`); a local-time fold here would move
     evening rows onto the previous day and the two surfaces would disagree.
     Integer division matches SQLite's `changed_at / 1000` on an INTEGER column.
     """
@@ -1687,7 +1687,7 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    db = Turso()
+    db = Database()
 
     if args.discover and not (args.full or args.pending):
         res = run_discovery(db, cap=args.discover_cap, frontier_override=args.frontier,

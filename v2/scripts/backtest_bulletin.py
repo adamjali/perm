@@ -3,7 +3,7 @@
 The green card line and the I-485 tool say how long a priority date has to
 wait (src/lib/bulletinNext.ts `monthsToReach`): the gap between the
 final-action cutoff and the date, divided by the pace the cutoff has moved
-since October 2014 (src/lib/turso/bulletin.ts, BOARD_MEASURED_FROM). The
+since October 2014 (src/lib/db/bulletin.ts, BOARD_MEASURED_FROM). The
 archive reaches back to 2005, so the arithmetic can be replayed on every past
 bulletin and checked against what the State Department actually did.
 
@@ -43,9 +43,9 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows, write_doc  # noqa: E402
+from lib_db import Database, query_rows, write_doc  # noqa: E402
 
-MEASURED_FROM = "2014-10"   # BOARD_MEASURED_FROM in src/lib/turso/bulletin.ts
+MEASURED_FROM = "2014-10"   # BOARD_MEASURED_FROM in src/lib/db/bulletin.ts
 FIRST_ORIGIN = "2016-10"    # two years of pace behind the first estimate
 CATEGORIES = ("EB1", "EB2", "EB3", "EW3", "EB4", "EB5")
 COUNTRIES = ("worldwide", "china", "india", "mexico", "philippines")
@@ -336,7 +336,7 @@ def supply_division(bulletins: list[tuple[str, dict]], inventory: dict[str, dict
     }
 
 
-def read_inventory(db: Turso) -> dict[str, dict]:
+def read_inventory(db: Database) -> dict[str, dict]:
     """{as_of: {(category, country): [(month index, count)]}} from USCIS's
     reports, both statuses (the line counts everyone ahead, current or not)."""
     out: dict[str, dict] = {}
@@ -354,7 +354,7 @@ def read_inventory(db: Turso) -> dict[str, dict]:
     return out
 
 
-def newest_table_v(db: Turso) -> dict | None:
+def newest_table_v(db: Database) -> dict | None:
     rows = query_rows(db, "SELECT json FROM perm_docs WHERE key = 'visa_annual_limits'", [])
     if not rows or not rows[0][0]:
         return None
@@ -366,7 +366,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
-    db = Turso()
+    db = Database()
     rows = query_rows(db, "SELECT bulletin_month, final_action, dates_for_filing FROM visa_bulletins ORDER BY bulletin_month", [])
     bulletins = [(str(m), json.loads(j) if j else {}) for m, j, _ in rows]
     filing = {str(m): json.loads(f) for m, _, f in rows if f}

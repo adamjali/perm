@@ -9,7 +9,7 @@
  * person's immigration record; the legal pages promise we do not build
  * profiles of visitors), so there is no per-visitor search log to show.
  * The closest honest proxy - cases the public lookup DISCOVERED and
- * recorded - lives in Turso and can join this panel later via a server
+ * recorded - lives in the public-data database and can join this panel later via a server
  * route if wanted.
  *
  * SECURITY: requireAdmin() on the query; every row here contains user

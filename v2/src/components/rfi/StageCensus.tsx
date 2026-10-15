@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 
-import type { ReviewStage, StageRecord } from "@/lib/turso/rfi";
+import type { ReviewStage, StageRecord } from "@/lib/db/rfi";
 import {
   GROUP_STYLE,
   stageFromSlug,

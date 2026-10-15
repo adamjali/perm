@@ -8,7 +8,7 @@ import {
   priceParity,
   wageLevelsForArea,
   wageYearLabel,
-} from "@/lib/turso/reference";
+} from "@/lib/db/reference";
 
 import { PayBands, type PayBand } from "./PayBands";
 

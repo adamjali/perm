@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 
-import type { StageCohort } from "@/lib/turso/rfi";
+import type { StageCohort } from "@/lib/db/rfi";
 import { GROUP_STYLE, stageMeta } from "./stageMeta";
 
 /**

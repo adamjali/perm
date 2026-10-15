@@ -76,8 +76,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import (  # noqa: E402
     POLITE_PAUSE_S, fetch, iter_rows, log, quarter_end, read_shared_strings,
 )
-from lib_turso import (  # noqa: E402
-    Turso, insert_rows, query_rows, read_doc, record_run, rows_of, stamp_freshness, write_doc,
+from lib_db import (  # noqa: E402
+    Database, insert_rows, query_rows, read_doc, record_run, rows_of, stamp_freshness, write_doc,
 )
 
 # THE FULL LISTING, NOT THE LANDING PAGE. The bare page shows ten items and
@@ -756,16 +756,16 @@ DDL = [
 ]
 
 
-def ensure_tables(db: Turso) -> None:
+def ensure_tables(db: Database) -> None:
     for ddl in DDL:
         db.execute(ddl)
 
 
-def count_where(db: Turso, table: str, where: str, args: list) -> int:
+def count_where(db: Database, table: str, where: str, args: list) -> int:
     return int(db.scalar(f"SELECT count(*) FROM {table} WHERE {where}", args) or 0)
 
 
-def store(db: Turso, p: Parsed) -> int:
+def store(db: Database, p: Parsed) -> int:
     """Replace one file's rows wholesale, then count back. Refuses on loss."""
     if p.kind == "all_forms":
         cols = ["fy", "quarter", "form", "title", "category", "quarter_start", "quarter_end",
@@ -808,11 +808,11 @@ def store(db: Turso, p: Parsed) -> int:
     return n
 
 
-def read_loads(db: Turso) -> dict:
+def read_loads(db: Database) -> dict:
     return read_doc(db, LOADS_DOC) or {}
 
 
-def previous_keys(db: Turso, p: Parsed) -> set[str] | None:
+def previous_keys(db: Database, p: Parsed) -> set[str] | None:
     """The identifying keys of the newest quarter held BEFORE this one, for drift."""
     if p.kind == "all_forms":
         table, expr = "uscis_form_quarters", "form || '|' || title"
@@ -925,7 +925,7 @@ def main(argv: list[str] | None = None) -> int:
         if kind not in by_kind:
             log(f"  WARNING: no {kind} file listed")
 
-    db = None if args.dry_run else Turso()
+    db = None if args.dry_run else Database()
     loads = {} if db is None else read_loads(db)
     if db is not None:
         ensure_tables(db)

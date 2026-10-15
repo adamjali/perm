@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import Link from "next/link";
 
 import { formatInt, formatShare } from "@/lib/format";
-import type { LcaCity } from "@/lib/turso/lcaCities";
+import type { LcaCity } from "@/lib/db/lcaCities";
 
 /**
  * A city's H-1B record beside its PERM one: how many LCAs name a worksite

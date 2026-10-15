@@ -136,7 +136,7 @@ def seeded_db() -> SqliteTurso:
 
 
 def run(db, argv: list[str]) -> int:
-    h.Turso = lambda: db
+    h.Database = lambda: db
     old = sys.argv
     sys.argv = ["ingest_perm_history.py"] + argv
     try:

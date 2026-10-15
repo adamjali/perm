@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { BarRows } from "@/components/data/BarRows";
-import type { FieldWait, FiledToday } from "@/lib/turso/employerWait";
+import type { FieldWait, FiledToday } from "@/lib/db/employerWait";
 import type { WaitSummary } from "@/lib/waitSummary";
 import { formatInt } from "@/lib/format";
 

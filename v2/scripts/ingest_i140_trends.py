@@ -28,7 +28,7 @@ import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_gov_data import POLITE_PAUSE_S, fetch, iter_rows, log, read_shared_strings  # noqa: E402
-from lib_turso import Turso, query_rows, stamp_freshness  # noqa: E402
+from lib_db import Database, query_rows, stamp_freshness  # noqa: E402
 
 DATA_PAGE = ("https://www.uscis.gov/tools/reports-and-studies/"
              "immigration-and-citizenship-data")
@@ -110,7 +110,7 @@ def parse(blob: bytes) -> tuple[int | None, list[dict]]:
 
 
 def main() -> int:
-    db = Turso()
+    db = Database()
     db.execute("""CREATE TABLE IF NOT EXISTS i140_trends (
         fiscal_year INTEGER NOT NULL, quarter INTEGER NOT NULL,
         category TEXT NOT NULL, category_label TEXT,

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The industry and worksite-city columns reach perm_cases without a rewrite.
 
-`turso_migrate.py --incremental` writes only rows that changed. Two columns
+`db_migrate.py --incremental` writes only rows that changed. Two columns
 added to that table (Sep 26 2026: the employer's NAICS code and the worksite
 city) would make EVERY stored row look changed, and an INSERT OR REPLACE of
 373,939 rows also rewrites eighteen indexes each: millions of row writes to
@@ -29,7 +29,7 @@ import tempfile
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-import turso_migrate  # noqa: E402
+import db_migrate  # noqa: E402
 from lib_naics import naics_title, normalize_naics  # noqa: E402
 from lib_sqlite_shim import SqliteTurso  # noqa: E402
 
@@ -88,11 +88,11 @@ def load(db, cases: list[dict]) -> None:
         for c in cases:
             f.write(json.dumps(c) + "\n")
     (art / "perm-payload.json").write_text(json.dumps({"topEmployers": [], "topAttorneys": []}))
-    turso_migrate.Turso = lambda: db
+    db_migrate.Database = lambda: db
     argv = sys.argv
-    sys.argv = ["turso_migrate.py", str(art), "--incremental"]
+    sys.argv = ["db_migrate.py", str(art), "--incremental"]
     try:
-        rc = turso_migrate.main()
+        rc = db_migrate.main()
     finally:
         sys.argv = argv
     check(f"loader exit 0 (got {rc})", rc == 0)
@@ -152,7 +152,7 @@ def main() -> int:
 
     cols = [r[1] for r in db.conn.execute("PRAGMA table_info(perm_cases)")]
     check(f"every added column reaches the live table (got {cols[15:]})",
-          cols[15:] == list(turso_migrate.EXTRA)
+          cols[15:] == list(db_migrate.EXTRA)
           and cols[15:17] == ["naics", "worksite_city"] and "citizenship" in cols)
     got = {r[0]: r[1:] for r in db.conn.execute(
         "SELECT case_number, status, naics, worksite_city FROM perm_cases")}

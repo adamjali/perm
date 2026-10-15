@@ -45,8 +45,8 @@ import { StageGlossary } from "@/components/rfi/StageGlossary";
 import { StageLadder, StageLadderTable } from "@/components/rfi/StageLadder";
 import { isReviewStage, reviewStages, stageMeta } from "@/components/rfi/stageMeta";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import type { ReviewStage } from "@/lib/turso/rfi";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
+import type { ReviewStage } from "@/lib/db/rfi";
 import {
   SMALL_STAGE_MAX,
   getReviewStages,
@@ -54,7 +54,7 @@ import {
   getRfiOccupations,
   getSmallStageRecords,
   getStageCohorts,
-} from "@/lib/turso/rfi";
+} from "@/lib/db/rfi";
 import { MoreText } from "@/components/data/MoreText";
 import { SITE_URL } from "@/lib/constants/site";
 

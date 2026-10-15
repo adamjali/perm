@@ -41,7 +41,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_turso import Turso, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
 
 DOC_KEY = "visa_annual_limits"
 DATASET = "visa-annual-limits"
@@ -302,7 +302,7 @@ def main() -> int:
     limits_bytes = open(a.limits, "rb").read() if a.limits else None
     table_v_bytes = open(a.table_v, "rb").read() if a.table_v else None
     if a.discover:
-        db0 = Turso()
+        db0 = Database()
         held = read_doc(db0, DOC_KEY) or {}
         try:
             limits_bytes, table_v_bytes, note = discover(held)
@@ -323,7 +323,7 @@ def main() -> int:
     if a.dry_run:
         print(json.dumps({"limits": limits, "table_v": table_v}, indent=1)[:3000])
         return 0
-    db = Turso()
+    db = Database()
     doc = read_doc(db, DOC_KEY) or {"limits": {}, "table_v": {}}
     if limits:
         doc.setdefault("limits", {})[str(limits["fiscal_year"])] = limits

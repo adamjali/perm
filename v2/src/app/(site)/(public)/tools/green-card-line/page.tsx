@@ -7,9 +7,9 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
-import { getBulletinBoard } from "@/lib/turso/bulletin";
-import { getBulletinCheck } from "@/lib/turso/bulletinCheck";
-import { getLineSnapshot } from "@/lib/turso/greenCardLine";
+import { getBulletinBoard } from "@/lib/db/bulletin";
+import { getBulletinCheck } from "@/lib/db/bulletinCheck";
+import { getLineSnapshot } from "@/lib/db/greenCardLine";
 import type { PaceBasis } from "@/lib/bulletinNext";
 
 /**

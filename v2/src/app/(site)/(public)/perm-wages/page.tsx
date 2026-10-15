@@ -26,12 +26,12 @@ import { EntityExplorer } from "@/components/tools/EntityExplorer";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { BrowseTeaser } from "@/components/entities/BrowseBody";
 import { fetchEntitySeed } from "@/lib/entitySeed";
-import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getDisclosureStats } from "@/lib/db/publicData";
 import {
   getVolumeLadders,
   getWageBandRates,
   getWageBandRatesByYear,
-} from "@/lib/turso/wages";
+} from "@/lib/db/wages";
 import { TwoMarketsNote } from "@/components/wages/LadderComb";
 import { LadderCombViews } from "@/components/wages/LadderViews";
 import { DenialByWageBand } from "@/components/wages/DenialByWageBand";

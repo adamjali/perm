@@ -8,7 +8,7 @@ import { PROGRAM_LABEL } from "@/lib/changeProgram";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
 // runtime import of a "server-only" module.
-import type { DecidedCase } from "@/lib/turso/decidedDays";
+import type { DecidedCase } from "@/lib/db/decidedDays";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { toneOf } from "./ChangeTable";
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import { PermTimelineEstimator } from "@/components/tools/PermTimelineEstimator";
-import { getDailyDecisions, getQueueAhead } from "@/lib/turso/publicData";
+import { getDailyDecisions, getQueueAhead } from "@/lib/db/publicData";
 import { businessDayPace } from "@/lib/dolPace";
 import { MS_PER_DAY } from "@/lib/time";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
@@ -12,11 +12,11 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { currentMonthUtc } from "@/lib/dolFormat";
-import { getDecisionPace } from "@/lib/turso/decisionPace";
-import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
-import { getEstimatorData } from "@/lib/turso/estimate";
-import { getStragglerRates } from "@/lib/turso/stragglers";
-import { getRangeCoverage } from "@/lib/turso/rangeCoverage";
+import { getDecisionPace } from "@/lib/db/decisionPace";
+import { getSweepCoverage } from "@/lib/db/sweepCoverage";
+import { getEstimatorData } from "@/lib/db/estimate";
+import { getStragglerRates } from "@/lib/db/stragglers";
+import { getRangeCoverage } from "@/lib/db/rangeCoverage";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";

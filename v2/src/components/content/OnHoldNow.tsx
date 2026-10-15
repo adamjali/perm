@@ -3,7 +3,7 @@ import { Fragment } from "react";
 
 import { stageMeta } from "@/components/rfi/stageMeta";
 import { HOLD_STATUS, holdSincePhrase, longDate } from "@/lib/employerStages";
-import { getEmployerStages } from "@/lib/turso/employerStages";
+import { getEmployerStages } from "@/lib/db/employerStages";
 import { formatInt, formatShare } from "@/lib/format";
 
 /**

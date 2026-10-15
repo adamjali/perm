@@ -24,7 +24,7 @@ import {
 } from "@/lib/h1bRanks";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getDatasetSchema } from "@/lib/structuredData";
-import { getH1bSummary, getH1bView } from "@/lib/turso/h1bRanks";
+import { getH1bSummary, getH1bView } from "@/lib/db/h1bRanks";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { choiceVariants } from "@/components/ui/choice";
 import { buttonVariants } from "@/components/ui/button";

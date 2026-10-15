@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { BulletinBoard } from "../BulletinBoard";
-import type { BulletinBoard as Board, BoardCell } from "@/lib/turso/bulletin";
+import type { BulletinBoard as Board, BoardCell } from "@/lib/db/bulletin";
 
 /**
  * The board's job is a comparison, so what it must never do is show a pace

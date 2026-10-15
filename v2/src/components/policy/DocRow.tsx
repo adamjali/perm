@@ -3,7 +3,7 @@ import Image from "next/image";
 
 import { commentWindow, effectiveState, OFLC_TYPE, type FeedDoc } from "@/lib/policyFeed";
 import { POLICY_SHOTS } from "@/lib/policyShots";
-import type { PolicyNotice } from "@/lib/turso/policyNotices";
+import type { PolicyNotice } from "@/lib/db/policyNotices";
 
 import { dayLabel } from "./format";
 import { Badge } from "@/components/ui/badge";

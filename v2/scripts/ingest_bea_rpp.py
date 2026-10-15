@@ -36,7 +36,7 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import fetch, log  # noqa: E402
 from lib_reference import sync_rows  # noqa: E402
-from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_bea_rpp.py"
 # What the site prints as the source line: a readable name, never a bare URL (a URL has no
@@ -139,7 +139,7 @@ def main() -> int:
     log(f"  {len(rows)} values; {counts}; newest year {newest}")
     if args.dry_run:
         return 0
-    db = Turso()
+    db = Database()
     db.script(DDL)
     got = sync_rows(db, TABLE, ("geo_fips", "year", "line"), COLS, rows)
     write_doc(db, "bea_rpp_meta", {"newestYear": newest, "areas": counts})

@@ -47,7 +47,7 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows, record_run, write_doc  # noqa: E402
+from lib_db import Database, query_rows, record_run, write_doc  # noqa: E402
 
 DOC_KEY = "seasonal_timing"
 MIN_N = 50
@@ -87,7 +87,7 @@ QUARTER = ("substr(received_date, 1, 4) || '-Q' || "
            "((CAST(substr(received_date, 6, 2) AS INTEGER) + 2) / 3)")
 
 
-def histogram(db: Turso, expr: str, visa: str) -> dict[int, int]:
+def histogram(db: Database, expr: str, visa: str) -> dict[int, int]:
     rows = query_rows(
         db,
         f"SELECT CAST({expr} AS INTEGER) AS d, COUNT(*) FROM seasonal_cases "
@@ -97,7 +97,7 @@ def histogram(db: Turso, expr: str, visa: str) -> dict[int, int]:
     return {int(d): int(n) for d, n in rows if d is not None}
 
 
-def season_blocks(db: Turso, visa: str) -> dict[str, dict]:
+def season_blocks(db: Database, visa: str) -> dict[str, dict]:
     """Both clocks per calendar quarter of receipt, for quarters at the floor."""
     out: dict[str, dict] = {}
     for clock, expr in (("daysToDecision", WAITED), ("leadDays", LEAD)):
@@ -118,7 +118,7 @@ def season_blocks(db: Turso, visa: str) -> dict[str, dict]:
     return dict(sorted(out.items()))
 
 
-def build(db: Turso) -> dict:
+def build(db: Database) -> dict:
     doc: dict = {"asOf": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "minN": MIN_N}
     for visa in VISAS:
         waited = histogram(db, WAITED, visa)
@@ -155,7 +155,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("--dry-run", action="store_true", help="read and print, write nothing")
     args = ap.parse_args()
-    db = Turso()
+    db = Database()
     doc = build(db)
     print(json.dumps(doc, indent=2))
     if args.dry_run:

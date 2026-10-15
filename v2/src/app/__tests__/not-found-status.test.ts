@@ -71,29 +71,29 @@ describe("entity detail routes: the miss is decided in metadata", () => {
    * genuine miss has to miss four times, and all four reads are mocked.
    */
   const missBoth = () => {
-    vi.doMock("@/lib/turso/entityDetail", async (importOriginal) => ({
+    vi.doMock("@/lib/db/entityDetail", async (importOriginal) => ({
       ...(await importOriginal<object>()),
       resolveEntity: vi.fn().mockResolvedValue(null),
     }));
-    vi.doMock("@/lib/turso/liveEmployers", async (importOriginal) => ({
+    vi.doMock("@/lib/db/liveEmployers", async (importOriginal) => ({
       ...(await importOriginal<object>()),
       liveEmployerRecord: vi.fn().mockResolvedValue(null),
     }));
-    vi.doMock("@/lib/turso/otherEmployers", async (importOriginal) => ({
+    vi.doMock("@/lib/db/otherEmployers", async (importOriginal) => ({
       ...(await importOriginal<object>()),
       otherEmployerRecord: vi.fn().mockResolvedValue(null),
     }));
     // The fourth and last read: a spelling the nightly map sends to another page.
-    vi.doMock("@/lib/turso/employerSlugs", async (importOriginal) => ({
+    vi.doMock("@/lib/db/employerSlugs", async (importOriginal) => ({
       ...(await importOriginal<object>()),
       pageForSpelling: vi.fn().mockResolvedValue(null),
     }));
   };
   const unmockBoth = () => {
-    vi.doUnmock("@/lib/turso/entityDetail");
-    vi.doUnmock("@/lib/turso/liveEmployers");
-    vi.doUnmock("@/lib/turso/otherEmployers");
-    vi.doUnmock("@/lib/turso/employerSlugs");
+    vi.doUnmock("@/lib/db/entityDetail");
+    vi.doUnmock("@/lib/db/liveEmployers");
+    vi.doUnmock("@/lib/db/otherEmployers");
+    vi.doUnmock("@/lib/db/employerSlugs");
   };
 
   // The first import of the employer page loads its whole module graph: 4.6 s
@@ -136,11 +136,11 @@ describe("entity detail routes: the miss is decided in metadata", () => {
   });
 
   const mockLive = (record: unknown) => {
-    vi.doMock("@/lib/turso/entityDetail", async (importOriginal) => ({
+    vi.doMock("@/lib/db/entityDetail", async (importOriginal) => ({
       ...(await importOriginal<object>()),
       resolveEntity: vi.fn().mockResolvedValue(null),
     }));
-    vi.doMock("@/lib/turso/liveEmployers", async (importOriginal) => ({
+    vi.doMock("@/lib/db/liveEmployers", async (importOriginal) => ({
       ...(await importOriginal<object>()),
       liveEmployerRecord: vi.fn().mockResolvedValue(record),
     }));
@@ -175,7 +175,7 @@ describe("entity detail routes: the miss is decided in metadata", () => {
     ["perm-attorneys", "attorney"],
   ])("a retired %s slug redirects permanently to the page it merged into", { timeout: 45_000 }, async (route) => {
     vi.resetModules();
-    vi.doMock("@/lib/turso/entityDetail", async (importOriginal) => ({
+    vi.doMock("@/lib/db/entityDetail", async (importOriginal) => ({
       ...(await importOriginal<object>()),
       resolveEntity: vi.fn().mockResolvedValue({ row: aliasRow, canonicalSlug: "m-t-bank", viaAlias: true }),
     }));
@@ -184,7 +184,7 @@ describe("entity detail routes: the miss is decided in metadata", () => {
     expect(meta).toMatch(new RegExp(`^NEXT_REDIRECT;[a-z]+;/${route}/m-t-bank;308;`));
     const body = await digestOf(page.default(params("mt-bank")));
     expect(body).toMatch(new RegExp(`^NEXT_REDIRECT;[a-z]+;/${route}/m-t-bank;308;`));
-    vi.doUnmock("@/lib/turso/entityDetail");
+    vi.doUnmock("@/lib/db/entityDetail");
   });
 
   it("keeps the description under the SERP cut for the longest names DOL prints", async () => {
@@ -208,7 +208,7 @@ describe("entity detail routes: the miss is decided in metadata", () => {
 describe("queue month route: both miss shapes are decided in metadata", () => {
   it("throws notFound for a malformed month and for a real-shaped empty one", async () => {
     vi.resetModules();
-    vi.doMock("@/lib/turso/backlog", () => ({
+    vi.doMock("@/lib/db/backlog", () => ({
       getMonthBacklog: vi.fn().mockResolvedValue(null),
       getPendingBefore: vi.fn().mockResolvedValue(0),
       getAdjacentMonths: vi.fn().mockResolvedValue({ prev: null, next: null }),
@@ -218,14 +218,14 @@ describe("queue month route: both miss shapes are decided in metadata", () => {
     // left real: under full-suite load one of them made an actual network call
     // and the test died on its 10s timeout while passing in isolation. A test
     // that reaches the network is a CI flake waiting for a slow day.
-    vi.doMock("@/lib/turso/estimate", () => ({
+    vi.doMock("@/lib/db/estimate", () => ({
       getEstimatorData: vi.fn().mockResolvedValue(null),
     }));
-    vi.doMock("@/lib/turso/liveCases", () => ({
+    vi.doMock("@/lib/db/liveCases", () => ({
       getLiveRemainderSummary: vi.fn().mockResolvedValue(null),
       listLiveCases: vi.fn().mockResolvedValue([]),
     }));
-    vi.doMock("@/lib/turso/rfi", () => ({ SMALL_STAGE_MAX: 10 }));
+    vi.doMock("@/lib/db/rfi", () => ({ SMALL_STAGE_MAX: 10 }));
     const { generateMetadata } = await import(
       "../(site)/(public)/perm-queue/[month]/page"
     );
@@ -238,9 +238,9 @@ describe("queue month route: both miss shapes are decided in metadata", () => {
     expect(await digestOf(generateMetadata(month("1997-01")))).toMatch(
       NOT_FOUND_DIGEST,
     );
-    vi.doUnmock("@/lib/turso/backlog");
-    vi.doUnmock("@/lib/turso/estimate");
-    vi.doUnmock("@/lib/turso/liveCases");
-    vi.doUnmock("@/lib/turso/rfi");
+    vi.doUnmock("@/lib/db/backlog");
+    vi.doUnmock("@/lib/db/estimate");
+    vi.doUnmock("@/lib/db/liveCases");
+    vi.doUnmock("@/lib/db/rfi");
   });
 });

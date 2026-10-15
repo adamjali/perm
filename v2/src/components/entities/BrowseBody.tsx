@@ -15,7 +15,7 @@ import {
 } from "@/lib/entityBrowse";
 import type { EntityKind } from "@/lib/entityPayload";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { browseBucket, browseCounts } from "@/lib/turso/entityBrowse";
+import { browseBucket, browseCounts } from "@/lib/db/entityBrowse";
 import { formatInt } from "@/lib/format";
 
 import { BrowseIndexGrid, BrowseList, BrowseStrip } from "./EntityBrowse";

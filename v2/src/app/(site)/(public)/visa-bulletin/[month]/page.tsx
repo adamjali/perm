@@ -36,8 +36,8 @@ import {
 import { openGraphBase } from "@/lib/openGraphBase";
 import { parseCutoff, type BulletinMonth, type ChartKind, type CountryKey } from "@/lib/perm";
 import { withSocialCard } from "@/lib/socialCard";
-import { BOARD_COUNTRIES, categoriesIn } from "@/lib/turso/bulletin";
-import { getVisaBulletins } from "@/lib/turso/publicData";
+import { BOARD_COUNTRIES, categoriesIn } from "@/lib/db/bulletin";
+import { getVisaBulletins } from "@/lib/db/publicData";
 import { buttonVariants } from "@/components/ui/button";
 
 // A bulletin changes once a month; a day bounds any re-parse far below that.

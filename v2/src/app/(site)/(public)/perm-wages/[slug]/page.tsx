@@ -20,7 +20,7 @@ import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
 import { firstThatFits } from "@/lib/describe";
 import { formatDollars, formatInt } from "@/lib/format";
-import { getLcaWageStats } from "@/lib/turso/lcaWages";
+import { getLcaWageStats } from "@/lib/db/lcaWages";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
@@ -49,15 +49,15 @@ import {
   entityMetadata,
   entityStaticParams,
 } from "@/lib/entityPage";
-import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
-import { getLadderByYear, getOccupationStateLadders } from "@/lib/turso/wages";
+import { getDisclosureStats, getFreshness } from "@/lib/db/publicData";
+import { getLadderByYear, getOccupationStateLadders } from "@/lib/db/wages";
 import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { CityMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
 import { WorkerMix } from "@/components/entities/WorkerMix";
-import { workerFacets } from "@/lib/turso/employerHistory";
-import { aliasTarget, entityFacets } from "@/lib/turso/entityDetail";
-import { comparables, fieldDistribution, getBySlug } from "@/lib/turso/entities";
+import { workerFacets } from "@/lib/db/employerHistory";
+import { aliasTarget, entityFacets } from "@/lib/db/entityDetail";
+import { comparables, fieldDistribution, getBySlug } from "@/lib/db/entities";
 import { OccupationReference } from "@/components/reference/OccupationReference";
 import { ProfileHeader, type ProfileFact, type ProfileTag } from "@/components/entities/ProfileHeader";
 import { Chapter } from "@/components/entities/Chapter";

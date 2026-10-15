@@ -8,7 +8,7 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { getPwdEstimatorData } from "@/lib/turso/estimate";
+import { getPwdEstimatorData } from "@/lib/db/estimate";
 import { currentMonthUtc } from "@/lib/dolFormat";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 

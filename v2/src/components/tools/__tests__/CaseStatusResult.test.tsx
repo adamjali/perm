@@ -6,7 +6,7 @@ import { CaseNotFound } from "../CaseNotFound";
 import { buildWall, neighbourMonths } from "@/lib/casePosition";
 import type { CohortMonth, StatusCount } from "@/lib/liveQueue";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
-import type { CaseLookupResult } from "@/lib/turso/caseLookup";
+import type { CaseLookupResult } from "@/lib/db/caseLookup";
 
 /**
  * A page that answers a real case number is the one place on this site where

@@ -4,8 +4,8 @@ import { cache } from "react";
 
 import { analystReviewAverage, analystReviewQueue } from "@convex/lib/dolProcessingTimes";
 import type { BulletinMonth, CountryKey } from "@/lib/perm";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import { getVisaBulletins } from "@/lib/turso/publicData";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { getVisaBulletins } from "@/lib/db/publicData";
 import { countryCutoffRows, newestBulletin, type CutoffRow } from "./cutoffs";
 
 /**

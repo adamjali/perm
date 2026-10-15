@@ -1,6 +1,6 @@
 import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
-import type { PolicyNotice } from "@/lib/turso/policyNotices";
+import type { PolicyNotice } from "@/lib/db/policyNotices";
 
 import { DocRow } from "./DocRow";
 import { dayLabel } from "./format";

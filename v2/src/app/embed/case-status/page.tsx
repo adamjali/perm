@@ -4,10 +4,10 @@ import { EmbedFrame, embedMetadata } from "@/components/embed/EmbedFrame";
 import { prettyStatus } from "@/components/queue/stages";
 import { CaseNumberAnatomy } from "@/components/tools/CaseNumberAnatomy";
 import { dolNow, type DolNow } from "@/lib/dolNow";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { embedSiteFor } from "@/lib/embeds";
 import { getStatusMeaning } from "@/lib/permStatus";
-import { lookupForEmbed, type EmbedCaseAnswer } from "@/lib/turso/embedLookup";
+import { lookupForEmbed, type EmbedCaseAnswer } from "@/lib/db/embedLookup";
 import { EASTERN_TIMEZONE } from "@/lib/time";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 
@@ -18,7 +18,7 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
  * carries a full federal record, a cohort and an estimate, far more than a
  * frame on somebody else's page should hold. The card is the status, the
  * dates, the employer, and where the answer came from, with a link to the
- * whole record here. `lib/turso/embedLookup.ts` owns the live-then-stored rule
+ * whole record here. `lib/db/embedLookup.ts` owns the live-then-stored rule
  * and its caps.
  *
  * Dynamic by necessity: every render reads the query and the Referer.

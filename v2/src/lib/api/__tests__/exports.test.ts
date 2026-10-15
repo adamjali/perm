@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 const unifiedSearch = vi.fn();
-vi.mock("@/lib/turso/unifiedSearch", async () => {
-  const real = await vi.importActual<typeof import("@/lib/turso/unifiedSearch")>("@/lib/turso/unifiedSearch");
+vi.mock("@/lib/db/unifiedSearch", async () => {
+  const real = await vi.importActual<typeof import("@/lib/db/unifiedSearch")>("@/lib/db/unifiedSearch");
   return { ...real, unifiedSearch: (...a: unknown[]) => unifiedSearch(...a) };
 });
-vi.mock("@/lib/turso/entities", () => ({ searchByName: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/lib/db/entities", () => ({ searchByName: vi.fn().mockResolvedValue([]) }));
 const searchEntities = vi.fn();
 vi.mock("../reads", () => ({ searchEntities: (...a: unknown[]) => searchEntities(...a) }));
 

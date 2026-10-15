@@ -18,8 +18,8 @@ beforeEach(() => {
   vi.stubEnv("CONVEX_SITE_URL", "https://example.convex.site");
   vi.stubEnv("AUTH_RESEND_KEY", "re_test_key");
   vi.stubEnv("BLOCKED_EMAILS", "");
-  vi.stubEnv("TURSO_DATABASE_URL", "https://example.turso.io");
-  vi.stubEnv("TURSO_AUTH_TOKEN", "stub-token");
+  vi.stubEnv("DATABASE_URL", "https://example.turso.io");
+  vi.stubEnv("DATABASE_AUTH_TOKEN", "stub-token");
   // The seeding read and any confirmation send land here: an empty table and
   // an accepted email, so a background function never reaches the network.
   global.fetch = (async (url: unknown) => {

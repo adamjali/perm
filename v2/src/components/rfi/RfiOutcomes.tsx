@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
-import type { BlendedRfiFunnel, RfiFunnel } from "@/lib/turso/rfi";
+import type { BlendedRfiFunnel, RfiFunnel } from "@/lib/db/rfi";
 import { MoreText } from "@/components/data/MoreText";
 
 /**

@@ -1090,7 +1090,7 @@ written, against a 10M/month plan.
 ## The RFI funnel is BLENDED, and the blend must stay decomposable
 
 Adam's call over my recommendation. `blendRfiFunnel(base, observed)` in
-`src/lib/turso/rfi.ts` pools **counts**, never percentages:
+`src/lib/db/rfi.ts` pools **counts**, never percentages:
 
 ```
 resolved     = base.resolved  + observed.resolved
@@ -1284,7 +1284,7 @@ The fix is a precomputed census: `ingest_case_status_direct.py` writes
 `perm_docs['live_census']` (the month x status x is_final matrix, reconciled
 against COUNT(*) before writing - a mismatched census is skipped, not
 served) and `perm_docs['decided_month_percentiles']` after every run. The
-read layer (`src/lib/turso/liveCensus.ts`) folds everything out of one
+read layer (`src/lib/db/liveCensus.ts`) folds everything out of one
 React-cached doc read; legacy SQL survives only as the doc-missing fallback,
 except the 414k status scan, which is withheld because the fallback IS the
 cost bug. A doc older than 8 days is treated as absent: stale queue
@@ -1376,7 +1376,7 @@ forbidden` - and behind the case page's `.catch(() => null)` that rendered
 as an ordinary "no record". Cost an afternoon. The posture is worth keeping
 (the read layer runs on a credential that cannot corrupt the corpus):
 
-- Web-side writes go through `exec()` in `src/lib/turso/client.ts` ONLY,
+- Web-side writes go through `exec()` in `src/lib/db/client.ts` ONLY,
   which rides `TURSO_RW_AUTH_TOKEN` (Vercel prod env) and falls back to the
   default token in dev. Never call `turso().execute()` for a write.
 - Before believing a prod write worked, check for the ROW, not the exit
@@ -1400,7 +1400,7 @@ as an ordinary "no record". Cost an afternoon. The posture is worth keeping
 `perm_case_status` was a CLOSED set (the mirror seed; nothing added new
 filings, pending could only drain). Two additions opened it:
 
-1. **Lookup-side** (`src/lib/turso/caseDiscovery.ts`): a case-number lookup
+1. **Lookup-side** (`src/lib/db/caseDiscovery.ts`): a case-number lookup
    that misses the table asks DOL's batch endpoint live (one case, one
    request), renders the answer verbatim, and records it. Exact-match only
    (the endpoint is a SEARCH with scored neighbours - a near-miss shown as
@@ -1469,7 +1469,7 @@ and is wired into CI.
 ## A sweep's event log is not a diary of that day (2026-08-29)
 
 `/perm-decision-activity` now renders WHICH cases DOL moved and what each moved
-from and to, out of `perm_case_events` (`src/lib/turso/changes.ts`). A count
+from and to, out of `perm_case_events` (`src/lib/db/changes.ts`). A count
 cannot show a transition, because a count has no `from`: `ANALYST REVIEW -> RFI
 ISSUED` and `RFI ISSUED -> ANALYST REVIEW` are opposite events and read
 identically as "an RFI row" without both ends.
@@ -1677,7 +1677,7 @@ such column, so PERM rows print the wage alone.
 Modules: `src/lib/dateCoverage.ts` is the PURE half (a plain module, because the
 browser needs the same arithmetic the queries are bounded by - a page that
 enables a control the route cannot serve is the invariant the case search
-already protects); `src/lib/turso/decidedDays.ts` is `server-only` and holds the
+already protects); `src/lib/db/decidedDays.ts` is `server-only` and holds the
 reads; `/api/decided-cases` is a sibling of `/api/case-changes`, not a mode on
 it. A refusal there is a 400, never a 200 with no rows, or "too expensive" and
 "DOL decided nothing" become the same response.
@@ -1869,7 +1869,7 @@ Two design points worth keeping:
 - **A fixed list, not caller-supplied paths.** The employer endpoint must accept
   slugs because which employers moved is only known at runtime. Here the set is
   static (the ten ISR pages that read `getProcessingTimes()` or
-  `lib/turso/estimate`), so taking no input removes path validation, traversal,
+  `lib/db/estimate`), so taking no input removes path validation, traversal,
   and any way to aim the endpoint at something else. `/perm-queue/[month]` and
   `/perm-case-status` are deliberately excluded, each with its reason in the
   route, and `route.test.ts` re-derives the list from the app tree so a new page
@@ -2031,7 +2031,7 @@ the OLD plan):
 - `perm_cases` had **no index on `received_date`**; `idx_pc_received
   (received_date, days)` covers the cohort-duration fallback.
 
-**How to audit this again:** pull every SQL literal out of `src/lib/turso`,
+**How to audit this again:** pull every SQL literal out of `src/lib/db`,
 bind `?` to placeholders, `EXPLAIN QUERY PLAN` each against production with
 the local token, and read for `SCAN`. Crude extraction mis-parses concatenated
 strings (they show as `WHERE x`); those need a manual EXPLAIN. Also: LIKE with
@@ -2075,7 +2075,7 @@ written against a PERM vocabulary. **Ten P-/I- rows had already leaked into
 `perm_case_status` through the web lookup's discovery path** before
 `discoverCase` refused non-PERM prefixes; they were deleted 2026-09-02.
 
-Read side: `src/lib/turso/flagCases.ts` is one factory (lookup with
+Read side: `src/lib/db/flagCases.ts` is one factory (lookup with
 discovery, employer search with title/month filters, browse, summary doc);
 `pwdCases.ts` and `lcaCases.ts` are its instances, `flagCasesApi.ts` the
 shared route handler. Final-status sets are pinned against the Python
@@ -2188,7 +2188,7 @@ cannot lower one.
 
 ## The Turso retry excluded the failure it was written for (2026-08-31)
 
-`withDeadline` in `src/lib/turso/client.ts` guarded itself with
+`withDeadline` in `src/lib/db/client.ts` guarded itself with
 `!String(e).includes("turso query deadline")`, so it retried **only the deadline
 it raises itself**. Production threw `SocketError: other side closed` inside
 `TypeError: fetch failed` on a `perm-employers/[slug]` server component - a
@@ -2575,7 +2575,7 @@ reproduced with the site idle. Only the Sentry trace plus a direct timing
 settled it. **Time the query in the stack trace, not the one you assume.**
 
 Now precomputed into `perm_docs['review_stages']` by
-`ingest_case_status_direct.py`, read by `src/lib/turso/rfi.ts`, same shape as
+`ingest_case_status_direct.py`, read by `src/lib/db/rfi.ts`, same shape as
 `live_census`:
 
 - **Raw numbers in the doc.** The editorial guards (`MIN_BAND_N`, `n >=
@@ -2828,7 +2828,7 @@ crawler and the proxy are fixed. Vercel Support confirmed non-commercial use.
   mirror's July stamp, or NULL for 12,187 rows).
 - The case page's "Status seen" date now comes from
   `perm_docs['sweep_coverage']` (the sweep's own finish date) via
-  `src/lib/turso/sweepCoverage.ts`; it used to quote the mirror's stamp and
+  `src/lib/db/sweepCoverage.ts`; it used to quote the mirror's stamp and
   told pending beneficiaries their case "has not been looked at since" July.
 - The test fixture in `test_flag_disclosure.py` lacked the two attorney
   columns the parser has emitted since Sep 4, so CI was red from **Thu Sep 3,
@@ -2855,7 +2855,7 @@ are stable to under a point between quarters. `ingest_flag_disclosure.py`
 does one extra parse pass (about a minute) and stores the fingerprint in
 the load record; the PERM parser puts its fingerprint (resolved columns
 keyed per FISCAL YEAR, because a quarter's filename changes every quarter)
-into `perm-cases.ndjson.gz.meta.json` and `turso_migrate.py` judges it
+into `perm-cases.ndjson.gz.meta.json` and `db_migrate.py` judges it
 against `perm_docs['perm_cases_fingerprint']`, recorded only after VERIFY.
 `--accept-drift` overrides the drift half for a human who read the log;
 nothing overrides impossible values. The first guarded load of each program
@@ -2869,7 +2869,7 @@ PWD run asks `--resume-check` and dispatches ONE leg when an incomplete
 backfill has been quiet 20 hours. One a day, so an outage cannot loop it.
 `check_backfill` in the health check fails at 7 days without movement.
 
-**Slug suffixes that shifted each quarter.** `turso_migrate_public.py`
+**Slug suffixes that shifted each quarter.** `db_migrate_public.py`
 dropped the entity table and reassigned `-2`/`-3` by volume order, so two
 spellings of one firm swapped URLs when the busier one changed.
 `plan_sticky_slugs` reads the live slugs first: an entity keeps its slug,
@@ -3220,7 +3220,7 @@ It prints NO spillover figure: the number is not published on the day and
 every number on the internet for it is a guess.
 
 Two things this page must never do: forecast (the pace doc in
-`src/lib/turso/bulletin.ts` explains why), and pair a move across a gap (a year
+`src/lib/db/bulletin.ts` explains why), and pair a move across a gap (a year
 whose prior month is missing is skipped, or two moves read as one).
 
 **The I-485 tool prints one "when" line now**, `monthsToReach`: the gap
@@ -3985,7 +3985,7 @@ one surviving destination, because the writer drops destinations below n=3 and
 a lone survivor's "100%" is that cutoff talking.
 
 **A type-only import 404'd a whole route.** `import type { Alphabet }` from
-`@/lib/turso/alphabet` into a `"use client"` component: the type is erased at
+`@/lib/db/alphabet` into a `"use client"` component: the type is erased at
 compile, but Next resolves the module graph first and that module carries
 `import "server-only"`. Clean 404, nothing in the dev log, reads exactly like a
 missing page. Found by stashing - clean HEAD 200, mine 404. Declare the shape
@@ -5662,7 +5662,7 @@ fields stay declared because three rows carry them and a strict table rejects a
 document it cannot describe.
 
 **THE PAYLOAD FILE WAS NOT CONVEX-ONLY, AND ONE MORE GREP IS WHAT CAUGHT
-THAT.** `turso_migrate_public.py` reads the same `visa-bulletin.json` from the
+THAT.** `db_migrate_public.py` reads the same `visa-bulletin.json` from the
 artifact, so deleting the fetch step or `--out` alongside the dead write would
 have broken a live Turso load whose own test pins "a MISSING visa-bulletin.json
 must not fail the load". **Before deleting a producer, grep for every consumer
@@ -5910,7 +5910,7 @@ never the FTA/H008 codes Reddit trades in.
 ## The USCIS Torch client, and what its lane taught (2026-09-22)
 
 `src/lib/uscis/` (receipt parser, OAuth client-credentials client, route
-handler), `src/lib/turso/uscisCaseStatus.ts` (the stored lookups),
+handler), `src/lib/db/uscisCaseStatus.ts` (the stored lookups),
 `/api/uscis-case-status` and `/uscis-case-status` are built and dark: with no
 `USCIS_CLIENT_ID` / `USCIS_CLIENT_SECRET` / `USCIS_ENV` on Vercel the page
 renders its waiting state and links USCIS's own status page. The plug-and-play
@@ -6658,7 +6658,7 @@ comment saying a new [slug] family goes on it the day it ships.
 ## Sep 28 2026: precomputed salary views, sign-in behind the firewall, the morning report
 
 **Heavy salary selections are precomputed** (`scripts/build_wage_views.py` -> Turso `wage_views`,
-read by `src/lib/turso/wageViews.ts`). Every status x occupation group x state x fiscal year holding
+read by `src/lib/db/wageViews.ts`). Every status x occupation group x state x fiscal year holding
 5,000+ filings, PERM and LCA, in the SQL's own arithmetic (linear interpolation at (n-1)p, SQLite's
 half-away-from-zero ROUND, `binWidth` ported). `test_wage_views.py` compares every view with the live
 SQL on a fixture; the readers take a view first and run the live query on a miss, and never serve bins
@@ -6669,7 +6669,7 @@ put the PERM percentiles at 2.76B reads and the LCA explorer at 843 deadline err
 **The blended RFI funnel drives from our 900 watched RFIs, not the 400k status table** (a LEFT JOIN;
 without ANALYZE the planner had chosen the big side). Same answer, measured on production.
 
-**The entity load swaps tables atomically.** `turso_migrate_public.py` fills `perm_entities_next` and
+**The entity load swaps tables atomically.** `db_migrate_public.py` fills `perm_entities_next` and
 `perm_wage_stats_next`, verifies them, then one transaction drops, renames and indexes. The old
 drop-then-fill left pages reading a table without `recent_12m` for minutes (Sentry 4E, 4F: 497 events).
 
@@ -7248,7 +7248,7 @@ before and after Sep 27, reading every browser exception since, and walking the 
   Our own audit of 855 sampled pages stood in for it; every page answered 200.
 - **Entity links go only to pages that exist.** The decision feed and the case search linked
   employers and law firms with no page (132 404s in three days). `keepLinkableSlugs` in
-  `src/lib/turso/entityLinks.ts` checks each slug against `perm_entities`, `perm_entity_alias` and,
+  `src/lib/db/entityLinks.ts` checks each slug against `perm_entities`, `perm_entity_alias` and,
   for employers, `perm_live_recent`, in batches of 300, and returns the rows untouched if the
   check itself fails.
 - **A public `[param]` route needs `generateStaticParams` for its `revalidate` to apply.** Without
@@ -7345,7 +7345,7 @@ before and after Sep 27, reading every browser exception since, and walking the 
 - **Cleanup**: about 90 dead source files, 18 public Convex functions with no caller, the retired Convex
   mirror modules (their tables stay in the schema), completed migrations (checked in production first),
   12 unused packages, the UI barrel, and in `scripts/` the shared database helpers moved into
-  `lib_turso.py` and `lib_slugs.py`, with 15 scripts and the two USCIS workflows deleted.
+  `lib_db.py` and `lib_slugs.py`, with 15 scripts and the two USCIS workflows deleted.
 - **Convex queries and mutations deny cryptographic randomness**, so `crypto.randomUUID()` there fails in
   production while edge-runtime tests pass. Entry ids come from `convex/lib/ids.ts` `newEntryId(prefix)`.
 - **No comment names the owner or quotes chat.** A comment states the rule. Comment-only rewrites were proved
@@ -7507,7 +7507,7 @@ down, 60% visible, to about 80% visible.
 
 ## Oct 2 2026 (morning): open data, a longer record, and a defense that acts by itself
 
-**Open data** (`/open-data`, `src/lib/openData.ts`, readers in `src/lib/turso/openData.ts`). Two files in two
+**Open data** (`/open-data`, `src/lib/openData.ts`, readers in `src/lib/db/openData.ts`). Two files in two
 formats, under CC BY 4.0: the visa bulletin archive (one CSV row per printed cell, `as_printed` beside the parsed
 `cutoff_date` and its `status`) and every DOL processing-times reading kept (one row per published value; a blank
 month is DOL's "--", never written as `--`, which a spreadsheet would try as a formula). The JSON keeps cells as
@@ -7525,7 +7525,7 @@ an older layout the parser doesn't read) and 2009-03, 2009-09 to 2009-11 and 201
 index; the Internet Archive route could fill them). Before 2011 there are no family charts, and before 2014 EB-5
 is often absent. June 2009 printed "PHILIPP-INES"; the header match now drops hyphens.
 **Paces, moves and backward steps are still measured from October 2014** (`BOARD_MEASURED_FROM` in
-`src/lib/turso/bulletin.ts`): the older months are history (each cell's `states`, the month pages, the open data),
+`src/lib/db/bulletin.ts`): the older months are history (each cell's `states`, the month pages, the open data),
 and adding them moved no published estimate. Copy that quotes the window says "since October 2014".
 
 **DOL's decisions per day reach October 2015** (`scripts/build_daily_decisions.py`, after both case loads): 3,484
@@ -7823,7 +7823,7 @@ in the sitemap.
   them with the rest. `scripts/test_seasonal_employers.py` runs it on SQLite.
 - **The employer route resolves in three steps**, the page and its social card alike: the published
   record, the live-only record, then `seasonalEmployerRecord`; a slug in none is a 404. The page
-  (`components/entities/SeasonalEmployer.tsx`, reads in `lib/turso/seasonalEmployers.ts`) shows
+  (`components/entities/SeasonalEmployer.tsx`, reads in `lib/db/seasonalEmployers.ts`) shows
   what we hold and nothing from the PERM model: filings by visa, the open ones, workers certified,
   the median hourly wage ($5 to $200, published rows paid by the hour), then the newest 25 cases
   with DOL's live status and, once decided, what the quarterly file printed. Every read keys on
@@ -7910,7 +7910,7 @@ H-1B, wage-request and seasonal rows reached a page through `slugRange` on the n
 counted 8,219 LCAs filed by Intellectt, Inteli Platforms and Inteliroute, while Salesforce's missed the
 5,645 filed as "Salesforce.com, Inc.". `scripts/build_employer_map.py` (nightly, after the live-only
 rebuild in `case-status-direct.yml`) writes three tables, and every employer read keys on them by
-equality (`employerMatch` in `src/lib/turso/employerSlugs.ts`):
+equality (`employerMatch` in `src/lib/db/employerSlugs.ts`):
 
 | table | holds |
 |---|---|
@@ -8148,7 +8148,7 @@ changed (`scripts/lib_reference.py`: `sync_rows`, `seen_before`, `sheet_rows`). 
   `src/lib/wageLevels.ts` adds one. The live search answers series from July 2022 on.
 - **Some DOL levels are already yearly.** Rows labelled "Annual Wage" (teachers, professors, pilots, athletes;
   60,919 in 2026-27) hold yearly amounts, and the 2021-22 and 2022-23 files carry no label at all. `toYearly` in
-  `src/lib/turso/reference.ts` is the one conversion: as published when DOL labels the row yearly or an unlabelled
+  `src/lib/db/reference.ts` is the one conversion: as published when DOL labels the row yearly or an unlabelled
   level is $5,000 or more (no hourly level in any year passes $807, no yearly one falls under $15,080), else hourly
   x 2,080. Multiplying a pilot's $139,960 gave $291 million on Appleton, WI's city page.
 - **A city in several counties lists them all** (`city_geo.counties`, JSON) and says how many DOL wage areas they
@@ -8244,9 +8244,9 @@ their own, and Wal-Mart's 1,595 PERM cases and Walmart's 417 were two companies.
   24/44). Keys keep their spaces, because `nameVariants`, the law-firm typo rules and the lookup's
   whole-word match read the words.
 - **The build publishes its aliases.** `merge_entities` fills `keyAliases` (Rule D then the typo rules,
-  `identity_aliases`); `turso_migrate.slug_maps` links a case filed under a folded spelling to the page
+  `identity_aliases`); `db_migrate.slug_maps` links a case filed under a folded spelling to the page
   (`with_aliases`; 20 Fragomen cases under "Bersen Loewy" had no firm link), and
-  `turso_migrate_public` stores them as `perm_docs['key_aliases']`.
+  `db_migrate_public` stores them as `perm_docs['key_aliases']`.
 - **Old pages are keyed by today's rule.** `prior_maps` recomputes an employer's or firm's key from its
   stored name; keyed by the stored key, any rule change would have left an absorbed page with nowhere to
   redirect and the next load refusing.
@@ -9523,7 +9523,7 @@ filings (`0.85 + 0.15 * min(1, log10(1 + n) / 3.5)`), so "amazn" means Amazon. T
 `src/lib/__tests__/fuzzy.test.ts`, each probed red. On 298,000 real employer names it answered
 in 1 to 200 ms.
 
-**`GET /api/suggest?kind=employer|attorney|occupation|all&q=`** (`src/lib/turso/nameSuggest.ts`):
+**`GET /api/suggest?kind=employer|attorney|occupation|all&q=`** (`src/lib/db/nameSuggest.ts`):
 every employer with a page (published, live-only, no-PERM), law firm and occupation, held in each
 web process for six hours. 400 for a bad kind or a query outside 2 to 80 characters, 503 when the
 names can't be read, `s-maxage=3600` when complete. Types live in `src/lib/search/suggestTypes.ts`

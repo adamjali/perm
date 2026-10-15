@@ -54,7 +54,7 @@ check(s["missAtLeastDays"] == 8.5, "b is at least 12 days past September's end; 
 from datetime import timedelta
 import datetime as _dt
 from ingest_pwd_status_direct import day_queue_doc, DAY_QUEUE_PACE_DAYS
-from lib_turso import ET as _ET
+from lib_db import ET as _ET
 
 t0 = date(2026, 9, 23)
 line = [("a", "2026-07-01"), ("b", "2026-07-01"), ("c", "2026-07-02"), ("d", "2026-07-03")]

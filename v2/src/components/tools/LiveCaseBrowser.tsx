@@ -8,9 +8,9 @@ import { usePublicQuery } from "@/hooks/usePublicQuery";
 import { Pager } from "@/components/ui/pager";
 import { PendingLink } from "@/components/ui/pending-link";
 import { formatMonth } from "@/lib/dolFormat";
-// Type-only: `@/lib/turso/liveCases` imports `server-only`, and a value import
+// Type-only: `@/lib/db/liveCases` imports `server-only`, and a value import
 // here would be a build error. A type import compiles to nothing.
-import type { LiveKind, LiveListPage, LiveRemainderSummary, LiveSort } from "@/lib/turso/liveCases";
+import type { LiveKind, LiveListPage, LiveRemainderSummary, LiveSort } from "@/lib/db/liveCases";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";

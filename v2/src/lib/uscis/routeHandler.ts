@@ -4,7 +4,7 @@ import { getClientIp } from "@/lib/net/getClientIp";
 import { MS_PER_MINUTE } from "@/lib/time";
 
 import { RECEIPT_SHAPE_MESSAGE, normaliseReceipt } from "./receipt";
-import type { UscisLookupResult } from "@/lib/turso/uscisCaseStatus";
+import type { UscisLookupResult } from "@/lib/db/uscisCaseStatus";
 
 /**
  * The handler behind `GET /api/uscis-case-status?receipt=`, built as a factory

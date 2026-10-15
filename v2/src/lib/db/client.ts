@@ -1,0 +1,248 @@
+/**
+ * The public-data database connection (libSQL, self-hosted sqld on the
+ * server since Sep 28 2026), for PUBLIC DOL data only.
+ *
+ * WHAT LIVES BEHIND THIS CLIENT
+ * -----------------------------
+ * Public federal records and aggregates computed from them: the case corpus,
+ * entity rankings, wage cells, and the visa bulletin history. DOL's
+ * disclosure files carry no beneficiary name, so this identifies employers
+ * and law firms and never an individual.
+ *
+ * User data is NOT here and must never be added. Accounts, a user's own
+ * tracked cases, chat history and audit logs stay on Convex, which is the
+ * system with auth in front of it. The database is literally named
+ * `permtracker-public-data` so the boundary is visible from the dashboard.
+ *
+ * `server-only` is load-bearing rather than decorative: the auth token
+ * grants access to the whole database, and importing this module from a
+ * client component would put it in the browser bundle. The import makes that
+ * a build error instead of a leak.
+ */
+import "server-only";
+
+// The HTTP-only entry: the database is always remote (libsql:, https: or, on
+// the self-hosted server, http://127.0.0.1). The default entry also loads a
+// native SQLite add-on for file: URLs at import time, and the standalone build
+// tracer does not copy the linux-arm64 add-on, so every read failed there.
+import { createClient, type Client } from "@libsql/client/http";
+
+let client: Client | null = null;
+
+/**
+ * The connection settings. `DATABASE_*` are the names; the `TURSO_*` names
+ * date from the hosted database this replaced and still work, so a server
+ * whose environment has not been renamed keeps serving.
+ */
+export function databaseEnv(): { url?: string; authToken?: string; writeToken?: string } {
+  return {
+    url: process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL,
+    authToken: process.env.DATABASE_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN,
+    writeToken: process.env.DATABASE_RW_AUTH_TOKEN || process.env.TURSO_RW_AUTH_TOKEN,
+  };
+}
+
+export function database(): Client {
+  if (client) return client;
+  const { url, authToken } = databaseEnv();
+  if (!url || !authToken) {
+    // Loud, not silent. A missing credential that degrades to an empty
+    // result set renders as "no data" - indistinguishable from a genuinely
+    // empty table, which is how a whole page ships blank and passes review.
+    throw new Error(
+      "DATABASE_URL / DATABASE_AUTH_TOKEN are not set. The public data " +
+        "pages cannot render without them.",
+    );
+  }
+  client = createClient({ url, authToken });
+  return client;
+}
+
+/**
+ * A per-query deadline with one retry on a fresh request.
+ *
+ * A degraded database can answer most requests normally while a fraction
+ * HANG - undici's HeadersTimeoutError after minutes with no response headers
+ * - and one hung request is enough to blow a page's whole prerender budget
+ * and fail a deploy. The client cannot abort libSQL's underlying
+ * fetch, so the race abandons the stuck request (it times out harmlessly on
+ * its own) and the retry rides a NEW connection, which is exactly what a
+ * flaky-connection failure mode wants. A genuinely slow query still throws
+ * after two deadlines rather than hanging a build for minutes.
+ */
+// LONGER DURING A BUILD, because a prerender is not a request.
+//
+// The deadline exists to stop ONE hung request blowing a page's whole render
+// budget. 20s is right for a visitor waiting on a page and wrong for a
+// build-time prerender, which can afford to wait and has nobody watching.
+//
+// Measured against production: `SELECT 1` answers in well under a second
+// while /perm-wages' wage-band aggregation over the case corpus takes about
+// 40 s, so a 20 s deadline at build time kills a legitimately slow scan with
+// a guard written for hung connections.
+//
+// THE REAL FIX IS AN INDEX on `perm_cases(fiscal_year, wage)`, which would
+// cover that GROUP BY instead of scanning the table. That is a schema change to
+// a large production table and belongs in its own deliberate pass; with no
+// planner statistics on this database, an index there has to win on shape
+// rather than statistics.
+const QUERY_DEADLINE_MS =
+  process.env.NEXT_PHASE === "phase-production-build" ? 90_000 : 20_000;
+
+/**
+ * THE RETRY FIRES ON A DROPPED CONNECTION, NOT ONLY ON ITS OWN DEADLINE.
+ * `SocketError: other side closed` wrapped in `TypeError: fetch failed` is a
+ * pooled keep-alive connection the far end has already dropped - the single
+ * most retryable error there is, because a fresh request almost always
+ * succeeds, and riding a NEW connection is what the retry is for.
+ *
+ * THE REASON IS IN `e.cause`, NOT THE MESSAGE. `String(err)` on undici's
+ * wrapper is exactly `"TypeError: fetch failed"` and nothing else, so a
+ * predicate reading only the message can never see `other side closed`,
+ * `ECONNRESET` or a DNS failure. Walk the cause chain.
+ *
+ * READS ONLY. `exec()` shares this helper and it writes: "other side closed"
+ * does not say whether the far end processed the statement first, so retrying
+ * an INSERT could apply it twice. A deadline is still retried for both, because
+ * that error is raised here and means our own race gave up, not that the
+ * server acted.
+ */
+const TRANSIENT_NETWORK =
+  /other side closed|socket hang up|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|EAI_AGAIN|ENOTFOUND|UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|fetch failed/i;
+
+/**
+ * PRESSURE AT THE FAR END IS NOT A SETTLED ANSWER, and it does not look like a
+ * network error.
+ *
+ * A `SQLITE_NOMEM` comes back as a real, successful HTTP response carrying a
+ * LibsqlError, so TRANSIENT_NETWORK above cannot see it and the request would
+ * throw on the first attempt. Under memory pressure the database answers
+ * `SQLITE_NOMEM: SQLite error: out of memory` for page renders and ingest
+ * jobs alike, and the same statement succeeds when re-run minutes later.
+ *
+ * So it is transient by definition: the statement was never rejected on its
+ * merits, the server ran out of room to answer it.
+ *
+ * ALLOW-LIST, NOT DENY-LIST. An unknown code fails fast, because the errors
+ * this must NOT swallow are the deterministic ones: a constraint violation, a
+ * missing table, and the read-only production token's BLOCKED, which is a
+ * configuration fact that only gets slower to diagnose if it is retried.
+ */
+const TRANSIENT_SQLITE =
+  /SQLITE_NOMEM|SQLITE_BUSY|SQLITE_LOCKED|SQLITE_IOERR|SQLITE_PROTOCOL|SQLITE_INTERRUPT|STREAM_EXPIRED|STREAM_NOT_FOUND/i;
+
+function causeChain(e: unknown): string {
+  const seen = new Set<unknown>();
+  const parts: string[] = [];
+  let cur: unknown = e;
+  while (cur && !seen.has(cur) && parts.length < 8) {
+    seen.add(cur);
+    parts.push(String(cur));
+    cur = (cur as { cause?: unknown }).cause;
+  }
+  return parts.join(" <- ");
+}
+
+async function withDeadline<T>(
+  run: () => Promise<T>,
+  what: string,
+  { retryTransient = false }: { retryTransient?: boolean } = {},
+): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    const timer = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`database query deadline (${QUERY_DEADLINE_MS}ms, attempt ${attempt}): ${what}`)),
+        QUERY_DEADLINE_MS,
+      ).unref?.(),
+    );
+    try {
+      return await Promise.race([run(), timer]);
+    } catch (e) {
+      const chain = causeChain(e);
+      // PRESSURE NEEDS A PAUSE; A DROPPED SOCKET DOES NOT. An immediate retry
+      // is exactly right for `other side closed`, because the point is to ride
+      // a new connection. It is close to useless for SQLITE_NOMEM: the server
+      // ran out of room to answer, and a few milliseconds later it still has
+      // none: two attempts inside the same instant both fail, while the same
+      // queries succeed in seconds minutes later. So pressure gets a third
+      // attempt and a real wait between tries.
+      const pressure = retryTransient && TRANSIENT_SQLITE.test(chain);
+      const retryable =
+        chain.includes("database query deadline") ||
+        (retryTransient && TRANSIENT_NETWORK.test(chain)) ||
+        pressure;
+      const maxAttempts = pressure ? 3 : 2;
+      if (attempt >= maxAttempts || !retryable) throw e;
+      if (pressure) {
+        await new Promise((r) => setTimeout(r, attempt * 1500).unref?.());
+      }
+    }
+  }
+}
+
+/** Rows as plain objects, with libSQL's bigints narrowed to numbers. */
+export async function rows<T = Record<string, unknown>>(
+  sql: string,
+  args: unknown[] = [],
+): Promise<T[]> {
+  const rs = await withDeadline(
+    () => database().execute({ sql, args: args as never[] }),
+    sql.slice(0, 80),
+    { retryTransient: true },
+  );
+  return rs.rows.map((r) => {
+    const o: Record<string, unknown> = {};
+    for (const c of rs.columns) {
+      const v = (r as unknown as Record<string, unknown>)[c];
+      // libSQL returns INTEGER as bigint when it exceeds 2^53. Every count
+      // and wage here is far below that, and a bigint leaking into JSON.
+      // stringify throws "Do not know how to serialize a BigInt".
+      o[c] = typeof v === "bigint" ? Number(v) : v;
+    }
+    return o as T;
+  });
+}
+
+export async function one<T = Record<string, unknown>>(
+  sql: string,
+  args: unknown[] = [],
+): Promise<T | null> {
+  const r = await rows<T>(sql, args);
+  return r[0] ?? null;
+}
+
+let rwClient: Client | null = null;
+
+/**
+ * The write-capable connection, used by exec() alone.
+ *
+ * PRODUCTION'S DEFAULT TOKEN IS READ-ONLY ON PURPOSE, and that is worth
+ * keeping: the entire read layer runs on a credential that cannot corrupt
+ * the corpus even if the web tier is compromised. A write on it fails in
+ * production with "BLOCKED: SQL write operations are forbidden" while the
+ * same code works locally, because the local env carries a full-access token
+ * under the same variable name. DATABASE_RW_AUTH_TOKEN is the explicit write
+ * credential; absent (local dev), the default token serves both roles.
+ */
+function writeDatabase(): Client {
+  const { url, writeToken } = databaseEnv();
+  if (!writeToken) return database();
+  if (rwClient) return rwClient;
+  if (!url) throw new Error("DATABASE_URL is not set.");
+  rwClient = createClient({ url, authToken: writeToken });
+  return rwClient;
+}
+
+/**
+ * A parameterized write. The web layer was read-only until case discovery
+ * (caseDiscovery.ts) needed to record lookups that miss the corpus; keep it
+ * that way for everything else - aggregates are the ingest's job, and this
+ * database holds public federal records only.
+ */
+export async function exec(sql: string, args: unknown[] = []): Promise<number> {
+  const rs = await withDeadline(
+    () => writeDatabase().execute({ sql, args: args as never[] }),
+    sql.slice(0, 80),
+  );
+  return rs.rowsAffected;
+}

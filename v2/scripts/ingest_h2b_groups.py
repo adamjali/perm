@@ -56,7 +56,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib_gov_data import discover_links, fetch, iter_rows, read_shared_strings  # noqa: E402
-from lib_turso import ET, Turso, query_rows, read_doc, record_run, run_stmts, stmt, write_doc  # noqa: E402
+from lib_db import ET, Database, query_rows, read_doc, record_run, run_stmts, stmt, write_doc  # noqa: E402
 
 NEWS_URL = "https://www.dol.gov/agencies/eta/foreign-labor/news"
 HOST = "https://www.dol.gov"
@@ -232,7 +232,7 @@ def previous_peak(peaks: dict[str, dict], peak: str) -> str | None:
 
 # ---- reading the record ------------------------------------------------------
 
-def decisions(db: Turso, peak_cases: dict[str, dict]) -> dict[str, tuple[int | None, bool]]:
+def decisions(db: Database, peak_cases: dict[str, dict]) -> dict[str, tuple[int | None, bool]]:
     """case -> (days from submitted to DOL's decision, or None; withdrawn).
     DOL's file gives the decision date; for a case only the live record has
     decided, the day our sweep first saw it final."""
@@ -267,7 +267,7 @@ def decisions(db: Turso, peak_cases: dict[str, dict]) -> dict[str, tuple[int | N
     return out
 
 
-def build(db: Turso) -> dict:
+def build(db: Database) -> dict:
     rows = query_rows(db, "SELECT case_number, peak, grp, submitted FROM h2b_groups", [])
     by_peak: dict[str, dict[str, dict]] = {}
     for cn, peak, grp, sub in rows:
@@ -301,7 +301,7 @@ def build(db: Turso) -> dict:
 
 # ---- loading the lists ---------------------------------------------------------
 
-def load_lists(db: Turso, dry: bool) -> list[str]:
+def load_lists(db: Database, dry: bool) -> list[str]:
     links = discover_links(fetch(NEWS_URL).decode("utf-8", "replace"), FILE_PATTERN, HOST)
     if not links:
         raise SystemExit("no H-2B group list linked from OFLC's news page; the page may have moved")
@@ -342,7 +342,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--timing-only", action="store_true", help="rebuild the timing doc from what is held")
     a = ap.parse_args()
-    db = Turso()
+    db = Database()
     if not a.dry_run:
         for sql in DDL:
             db.execute(sql)

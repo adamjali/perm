@@ -39,7 +39,7 @@ import zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import POLITE_PAUSE_S, discover_links, fetch, log  # noqa: E402
 from lib_reference import sheet_rows, sync_rows  # noqa: E402
-from lib_turso import Turso, add_missing_columns, query_rows, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, add_missing_columns, query_rows, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_census_geo.py"
 # What the site prints as the source line: a readable name, never a bare URL (a URL has no
@@ -335,7 +335,7 @@ def main() -> int:
     delineation = fetch(url, referer=DELINEATION_PAGE)
     log(f"gazetteer {gaz_year}, {by_county_name}, {list1}")
 
-    db = Turso()
+    db = Database()
     keys = [r[0] for r in query_rows(db, "SELECT key FROM perm_groups WHERE kind = 'city'")]
     keys += [r[0] for r in query_rows(db, "SELECT key FROM lca_cities")]
     wage_geo = []

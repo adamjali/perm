@@ -32,7 +32,7 @@ import { PageBasics } from "@/components/data/PageBasics";
 import { RecordStrip } from "@/components/home/RecordStrip";
 import { BarRows, QuarterlyEmpty, StackedBar, type BarRow } from "@/components/data/BarRows";
 import type { RecordFigure } from "@/lib/recordCounts";
-import { getEbAwaitingVisa, getI140ClassCountry } from "@/lib/turso/uscisQuarterly";
+import { getEbAwaitingVisa, getI140ClassCountry } from "@/lib/db/uscisQuarterly";
 import {
   AWAITING_CATEGORY_LABELS,
   asOfQuarterLabel,

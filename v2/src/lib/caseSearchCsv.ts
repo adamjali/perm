@@ -1,6 +1,6 @@
 import { seasonalForm } from "@/lib/seasonalForms";
 import { looksYearly } from "@/lib/wageFormat";
-import type { UnifiedCase } from "@/lib/turso/unifiedSearch";
+import type { UnifiedCase } from "@/lib/db/unifiedSearch";
 
 /**
  * The case search's answer as CSV, one row per case, every column named.

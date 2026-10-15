@@ -13,7 +13,7 @@ import { parseCaseNumber } from "../permCaseNumber";
  */
 
 const SERVER_SRC = readFileSync(
-  join(process.cwd(), "src/lib/turso/caseLookup.ts"),
+  join(process.cwd(), "src/lib/db/caseLookup.ts"),
   "utf8",
 );
 

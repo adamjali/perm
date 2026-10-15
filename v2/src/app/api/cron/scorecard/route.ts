@@ -27,7 +27,7 @@ import {
   recordPredictions,
   RIVAL_SAMPLE,
   writeScorecardDocs,
-} from "@/lib/turso/predictions";
+} from "@/lib/db/predictions";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;

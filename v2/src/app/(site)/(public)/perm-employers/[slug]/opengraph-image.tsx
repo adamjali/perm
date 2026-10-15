@@ -12,9 +12,9 @@
  */
 import { ENTITY_OG_SIZE, generateEntityOG, generateLiveEmployerOG, generateOtherEmployerOG } from "@/lib/entityOg";
 import { programsShort } from "@/lib/otherEmployers";
-import { resolveEntity } from "@/lib/turso/entityDetail";
-import { liveEmployerRecord } from "@/lib/turso/liveEmployers";
-import { otherEmployerRecord } from "@/lib/turso/otherEmployers";
+import { resolveEntity } from "@/lib/db/entityDetail";
+import { liveEmployerRecord } from "@/lib/db/liveEmployers";
+import { otherEmployerRecord } from "@/lib/db/otherEmployers";
 
 export const runtime = "nodejs";
 export const revalidate = 2592000;

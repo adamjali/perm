@@ -10,7 +10,7 @@
  * `next build`, after a full compile. Colocated here, next to `route.ts`, the
  * same way `api/chat/create-tools.ts` sits beside its route.
  *
- * Derived by following `getProcessingTimes()` and `lib/turso/estimate` to their
+ * Derived by following `getProcessingTimes()` and `lib/db/estimate` to their
  * consumers. Two deliberate omissions:
  *
  *   - `/perm-queue/[month]` is ~39 generated pages. They read the snapshot, but

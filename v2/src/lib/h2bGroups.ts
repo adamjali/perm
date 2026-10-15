@@ -1,7 +1,7 @@
 /**
  * DOL's H-2B assignment groups (scripts/ingest_h2b_groups.py): reading
  * perm_docs['h2b_group_timing'] and picking a case's estimate. Plain module so
- * the unit project tests it; the readers are in src/lib/turso/h2bGroups.ts.
+ * the unit project tests it; the readers are in src/lib/db/h2bGroups.ts.
  *
  * The estimate itself is computed once, in Python (`group_estimate`), and
  * stored per season and group, so the page, the scorecard and the backtest

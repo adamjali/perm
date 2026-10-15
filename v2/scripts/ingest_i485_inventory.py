@@ -32,7 +32,7 @@ import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_gov_data import POLITE_PAUSE_S, fetch, iter_rows, log, read_shared_strings  # noqa: E402
-from lib_turso import Turso, query_rows, record_run, stamp_freshness  # noqa: E402
+from lib_db import Database, query_rows, record_run, stamp_freshness  # noqa: E402
 
 # The full listing, not the landing page: the bare data page shows only the ten
 # newest items, and the quarterly performance files can push every monthly
@@ -169,7 +169,7 @@ def rows_from(z: zipfile.ZipFile, shared: list[str], sheet_path: str) -> tuple[s
     return as_of, out
 
 
-def store(db: Turso, as_of: str, records: list[dict]) -> int:
+def store(db: Database, as_of: str, records: list[dict]) -> int:
     """Replace one as-of wholesale. Idempotent, and it REFUSES on loss."""
     db.execute("DELETE FROM i485_inventory WHERE as_of = ?", [as_of])
     B = 300
@@ -217,7 +217,7 @@ def parse_workbook(blob: bytes) -> tuple[str | None, list[dict]]:
 
 
 def main() -> int:
-    db = Turso()
+    db = Database()
     db.execute("""CREATE TABLE IF NOT EXISTS i485_inventory (
         as_of TEXT NOT NULL, country TEXT NOT NULL, category TEXT NOT NULL,
         status TEXT NOT NULL, pd_year TEXT NOT NULL, pd_month INTEGER NOT NULL,

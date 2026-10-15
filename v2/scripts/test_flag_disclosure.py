@@ -373,7 +373,7 @@ def sheet_refs(path: str, row: int) -> set[str]:
 def run_cli(*argv: str, cwd: str) -> subprocess.CompletedProcess:
     # No Turso credentials anywhere the script could find them: `--dry-run`
     # must never need any, and a stray `Turso()` would exit non-zero here.
-    env = {k: v for k, v in os.environ.items() if not k.startswith("TURSO_")}
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("TURSO_", "DATABASE_"))}
     return subprocess.run([sys.executable, str(SCRIPT), *argv], cwd=cwd, env=env,
                           capture_output=True, text=True, timeout=120)
 

@@ -16,18 +16,18 @@ const employerMatch = vi.fn();
 const otherEmployerRecord = vi.fn();
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/turso/client", () => ({ one: (...a: unknown[]) => one(...a) }));
-vi.mock("@/lib/turso/publicData", () => ({
+vi.mock("@/lib/db/client", () => ({ one: (...a: unknown[]) => one(...a) }));
+vi.mock("@/lib/db/publicData", () => ({
   getEntityBySlug: (...a: unknown[]) => getEntityBySlug(...a),
   getFreshness: (...a: unknown[]) => getFreshness(...a),
 }));
-vi.mock("@/lib/turso/entityDetail", () => ({ entityPending: (...a: unknown[]) => entityPending(...a) }));
-vi.mock("@/lib/turso/entities", () => ({
+vi.mock("@/lib/db/entityDetail", () => ({ entityPending: (...a: unknown[]) => entityPending(...a) }));
+vi.mock("@/lib/db/entities", () => ({
   searchByName: (...a: unknown[]) => searchByName(...a),
   searchByLetters: (...a: unknown[]) => searchByLetters(...a),
 }));
-vi.mock("@/lib/turso/employerSlugs", () => ({ employerMatch: (...a: unknown[]) => employerMatch(...a) }));
-vi.mock("@/lib/turso/otherEmployers", () => ({ otherEmployerRecord: (...a: unknown[]) => otherEmployerRecord(...a) }));
+vi.mock("@/lib/db/employerSlugs", () => ({ employerMatch: (...a: unknown[]) => employerMatch(...a) }));
+vi.mock("@/lib/db/otherEmployers", () => ({ otherEmployerRecord: (...a: unknown[]) => otherEmployerRecord(...a) }));
 
 import { forgetLookupsForTests, lookupEmployer } from "../employerLookup";
 

@@ -56,7 +56,7 @@ import zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_slugs import slugify  # noqa: E402
 from lib_gov_data import iter_rows, log, read_shared_strings  # noqa: E402
-from lib_turso import Turso, read_doc, record_run, write_doc  # noqa: E402
+from lib_db import Database, read_doc, record_run, write_doc  # noqa: E402
 
 SCRIPT = "ingest_h1b_lottery_foia.py"
 REPO = "BloombergGraphics/2024-h1b-immigration-data"
@@ -230,7 +230,7 @@ def read_year(fy: int, zips: list[list[dict]]):
 # Storage
 # ---------------------------------------------------------------------------
 
-def store(db: Turso, fy: int, by: dict[str, dict[str, int]]) -> int:
+def store(db: Database, fy: int, by: dict[str, dict[str, int]]) -> int:
     for ddl in DDL:
         db.execute(ddl)
     db.execute(f"DROP TABLE IF EXISTS {STAGE}")
@@ -273,7 +273,7 @@ def main(argv: list[str] | None = None) -> int:
     uscis = uscis_table(LOTTERY_TS.read_text())
     log(f"years in the repository: {sorted(files)}; report totals for {sorted(report)}")
 
-    db = None if args.dry_run else Turso()
+    db = None if args.dry_run else Database()
     doc: dict = {"source": SOURCE, "license": "Apache-2.0", "credit": "USCIS, obtained by Bloomberg News under FOIA",
                  "queried": "2024-05", "read": time.strftime("%Y-%m-%d"), "years": {}}
     if db:

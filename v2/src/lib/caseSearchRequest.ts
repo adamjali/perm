@@ -24,8 +24,8 @@ import {
 } from "@/lib/caseSearchPlan";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { searchStageFromSlug } from "@/lib/searchStages";
-import { searchByName } from "@/lib/turso/entities";
-import type { UnifiedNarrow } from "@/lib/turso/caseSearchReads";
+import { searchByName } from "@/lib/db/entities";
+import type { UnifiedNarrow } from "@/lib/db/caseSearchReads";
 import {
   PROGRAMS,
   UNIFIED_MAX,
@@ -34,7 +34,7 @@ import {
   type Program,
   type SearchOrder,
   type UnifiedSearchArgs,
-} from "@/lib/turso/unifiedSearch";
+} from "@/lib/db/unifiedSearch";
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const STATE_RE = /^[A-Z]{2}$/;

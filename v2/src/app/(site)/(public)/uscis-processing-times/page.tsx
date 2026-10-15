@@ -40,7 +40,7 @@ import {
   getUscisFormHistory,
   getUscisFormQuarter,
   type UscisFormRow,
-} from "@/lib/turso/uscisQuarterly";
+} from "@/lib/db/uscisQuarterly";
 import { monthsLabel, quarterLabel } from "@/lib/uscisQuarterlyShape";
 import {
   PROCESSING_TIMES_AS_OF,

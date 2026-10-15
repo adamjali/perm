@@ -1,0 +1,132 @@
+import "server-only";
+
+import { cache } from "react";
+
+import { rows } from "@/lib/db/client";
+
+/**
+ * WARN notices, as the states publish them, matched to PERM sponsors by the
+ * entity merge key. California, Texas, New York and Washington, each from the
+ * record its state publishes (scripts/ingest_warn.py names the sources).
+ * A notice is one filing with the state's own numbers; nothing here is a
+ * layoff count for a company.
+ */
+
+export interface WarnNotice {
+  id: string;
+  state: string;
+  noticeDate: string;
+  effectiveDate: string | null;
+  company: string;
+  kind: string | null;
+  employees: number | null;
+  county: string | null;
+  industry: string | null;
+  employerSlug: string | null;
+  sourceUrl: string;
+  /**
+   * Where the notice applies, as the state printed it: the address in
+   * California and New York, the city in Texas, null in Washington (whose
+   * location is already `county`). Display only; it is what tells apart two
+   * notices one company filed the same day for different sites.
+   */
+  site: string | null;
+}
+
+interface DbRow {
+  id: string;
+  state: string;
+  notice_date: string;
+  effective_date: string | null;
+  company: string;
+  kind: string | null;
+  employees: number | string | null;
+  county: string | null;
+  industry: string | null;
+  employer_slug: string | null;
+  source_url: string;
+  site: string | null;
+}
+
+const COLS = "id, state, notice_date, effective_date, company, kind, employees, county, industry, employer_slug, source_url, site";
+
+function hydrate(r: DbRow): WarnNotice {
+  const n = r.employees === null || r.employees === undefined ? null : Number(r.employees);
+  return {
+    id: r.id,
+    state: r.state,
+    noticeDate: r.notice_date,
+    effectiveDate: r.effective_date ?? null,
+    company: r.company,
+    kind: r.kind ?? null,
+    employees: n !== null && Number.isFinite(n) ? n : null,
+    county: r.county ?? null,
+    industry: r.industry ?? null,
+    employerSlug: r.employer_slug ?? null,
+    sourceUrl: r.source_url,
+    site: r.site ?? null,
+  };
+}
+
+/**
+ * Notices matched to one sponsor, newest first. Indexed on (employer_slug,
+ * notice_date). A failed read throws rather than answering "no notices", for
+ * the same reason as `debarmentsForSlug`: the employer pages keep a render for
+ * up to 30 days.
+ */
+export const warnForSlug = cache(async (slug: string, limit = 10): Promise<WarnNotice[]> => {
+  const r = await rows<DbRow>(`SELECT ${COLS} FROM warn_notices WHERE employer_slug = ? ORDER BY notice_date DESC LIMIT ?`, [slug, limit]);
+  return r.map(hydrate);
+});
+
+export interface WarnTotals {
+  notices: number;
+  matched: number;
+  employees: number;
+}
+
+/**
+ * What the table HOLDS, which is not what the page lists.
+ *
+ * The page shows the newest few hundred notices, so headline figures computed
+ * from that slice would understate a multi-state record reaching back years:
+ * a card reading "notices read: 400" over a table of thousands.
+ * Three aggregates over a few thousand indexed rows cost nothing; a wrong
+ * figure on a page whose whole claim is checkable facts costs the page.
+ *
+ * `employees` counts only notices matched to a sponsor, because the card that
+ * carries it reads "employees in those notices" directly under the sponsor
+ * count. Summing every state's notices there would answer a question nobody
+ * asked with a number four times larger.
+ */
+export const warnTotals = cache(async (): Promise<WarnTotals> => {
+  const r = await rows<{ notices: number; matched: number; employees: number }>(
+    `SELECT COUNT(*) AS notices,
+            COUNT(employer_slug) AS matched,
+            COALESCE(SUM(CASE WHEN employer_slug IS NOT NULL THEN employees END), 0) AS employees
+       FROM warn_notices`,
+  ).catch(() => [] as { notices: number; matched: number; employees: number }[]);
+  const row = r[0];
+  return {
+    notices: Number(row?.notices ?? 0),
+    matched: Number(row?.matched ?? 0),
+    employees: Number(row?.employees ?? 0),
+  };
+});
+
+/**
+ * Every notice matched to a sponsor, newest first, for the layoffs table.
+ *
+ * Taking the newest 400 notices of all four states and keeping the matched
+ * ones would drop every matched notice older than the 400th filing anywhere.
+ * The whole table is a few thousand rows, so reading the matched set outright
+ * is a walk of the date index the page's six-hour window pays for four times
+ * a day.
+ */
+export const matchedWarn = cache(async (limit = 2000): Promise<WarnNotice[]> => {
+  const r = await rows<DbRow>(
+    `SELECT ${COLS} FROM warn_notices WHERE employer_slug IS NOT NULL ORDER BY notice_date DESC, company LIMIT ?`,
+    [Math.min(limit, 5000)],
+  ).catch(() => [] as DbRow[]);
+  return r.map(hydrate);
+});

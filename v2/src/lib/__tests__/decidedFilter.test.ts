@@ -6,7 +6,7 @@ import {
   applyDecidedFilters,
   facetOptions,
 } from "../decidedFilter";
-import type { DecidedCase } from "@/lib/turso/decidedDays";
+import type { DecidedCase } from "@/lib/db/decidedDays";
 
 function c(over: Partial<DecidedCase>): DecidedCase {
   return {

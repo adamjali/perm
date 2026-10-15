@@ -27,7 +27,7 @@ import { casesToCsv, csvCell } from "@/lib/caseSearchCsv";
 import { planCaseSearch } from "@/lib/caseSearchRequest";
 import { SITE_URL } from "@/lib/constants/site";
 import type { EntityKind } from "@/lib/entityPayload";
-import { UNIFIED_MAX, unifiedSearch, type UnifiedCase } from "@/lib/turso/unifiedSearch";
+import { UNIFIED_MAX, unifiedSearch, type UnifiedCase } from "@/lib/db/unifiedSearch";
 import type { ApiPlan } from "@convex/lib/apiPlans";
 
 import { searchEntities, type ApiMeta } from "./reads";

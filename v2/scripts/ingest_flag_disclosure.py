@@ -97,8 +97,8 @@ from lib_gov_data import (  # noqa: E402
     log,
     read_shared_strings,
 )
-from lib_turso import (  # noqa: E402
-    Turso, add_missing_columns, case_update, query_rows, read_doc, record_run, stamp_freshness,
+from lib_db import (  # noqa: E402
+    Database, add_missing_columns, case_update, query_rows, read_doc, record_run, stamp_freshness,
     stmt, write_doc,
 )
 
@@ -456,7 +456,7 @@ def index_ddl(table: str) -> list[str]:
         # 634,638 while `lca_cases` holds 434,314 of them. The 6-digit group is
         # the only key the files share, and SQLite serves a filter on an
         # expression only from an index on the same expression - so this text
-        # and `SOC_GROUP_EXPR` in `src/lib/turso/caseSearchReads.ts` are one
+        # and `SOC_GROUP_EXPR` in `src/lib/db/caseSearchReads.ts` are one
         # fact written twice.
         f"CREATE INDEX IF NOT EXISTS {table}_state_dec ON {table} (worksite_state, decision_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_state_st_dec ON {table} (worksite_state, case_status, decision_date)",
@@ -908,7 +908,7 @@ def load_record_key(program: str, name: str | None = None) -> str:
 
 
 
-def read_load_record(db: Turso, program: str, name: str) -> dict | None:
+def read_load_record(db: Database, program: str, name: str) -> dict | None:
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
     rec = read_doc(db, load_record_key(program, name))
@@ -918,7 +918,7 @@ def read_load_record(db: Turso, program: str, name: str) -> dict | None:
     return legacy if legacy and legacy.get("file") == name else None
 
 
-def write_load_record(db: Turso, program: str, record: dict, *, latest: bool) -> None:
+def write_load_record(db: Database, program: str, record: dict, *, latest: bool) -> None:
     keys = [load_record_key(program, record["file"])]
     if latest:
         keys.append(load_record_key(program))
@@ -930,7 +930,7 @@ def summary_key(program: str) -> str:
     return f"flag_disclosure_summary_{program}"
 
 
-def write_summary_doc(db: Turso, program: str, table: str) -> dict:
+def write_summary_doc(db: Database, program: str, table: str) -> dict:
     """What the web reads instead of counting the table on every render:
     rows, the span of dates, and the files behind them. Two scans, once per
     load, against a table nothing else counts. A program that shares its
@@ -953,7 +953,7 @@ def write_summary_doc(db: Turso, program: str, table: str) -> dict:
     return doc
 
 
-def ensure_columns(db: Turso, table: str) -> None:
+def ensure_columns(db: Database, table: str) -> None:
     """Add any column in `COLUMNS` the live table is missing.
 
     A full reload is the other way to gain a column, and it isn't affordable:
@@ -966,7 +966,7 @@ def ensure_columns(db: Turso, table: str) -> None:
         log(f"  added missing column {table}.{col} {types[col]}")
 
 
-def count_for_file(db: Turso, table: str, source_file: str) -> int:
+def count_for_file(db: Database, table: str, source_file: str) -> int:
     return int(db.scalar(f"SELECT count(*) FROM {table} WHERE source_file = ?", [source_file]) or 0)
 
 
@@ -987,12 +987,12 @@ BACKFILL_GROUPS: dict[str, tuple[str, ...]] = {
 }
 
 
-def backfill_attorney(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> int:
+def backfill_attorney(db: Database, table: str, rows, pause: float = WRITE_PAUSE_S) -> int:
     """The law-firm backfill (kept by name; the workflow and its log use it)."""
     return backfill_columns(db, table, rows, BACKFILL_GROUPS["attorney"], pause)
 
 
-def backfill_columns(db: Turso, table: str, rows, cols: tuple[str, ...],
+def backfill_columns(db: Database, table: str, rows, cols: tuple[str, ...],
                      pause: float = WRITE_PAUSE_S) -> int:
     """Write only `cols` onto rows that already exist.
 
@@ -1061,7 +1061,7 @@ def upsert_tail(table: str) -> str:
     )
 
 
-def write_cases(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> tuple[int, int]:
+def write_cases(db: Database, table: str, rows, pause: float = WRITE_PAUSE_S) -> tuple[int, int]:
     """Upsert ROWS_PER_STMT rows a statement and STMTS_PER_REQUEST statements a
     request, idling `pause` seconds between requests. Returns (sent, written):
     `written` is what the database says it inserted or updated, so the rows a
@@ -1122,7 +1122,7 @@ def main() -> int:
                          "h2b (ETA-9142B) or cw1 (ETA-9142C).")
     ap.add_argument("--file", help="Parse this local workbook instead of downloading.")
     ap.add_argument("--dry-run", action="store_true",
-                    help="Parse and print counts; never open Turso, never write.")
+                    help="Parse and print counts; never open Database, never write.")
     ap.add_argument("--dump-rows", type=int, default=0, metavar="N",
                     help="With --dry-run: print the first N parsed rows as `ROW <json>` lines.")
     ap.add_argument("--dump-header", action="store_true",
@@ -1290,7 +1290,7 @@ def main() -> int:
 
         # Everything below touches the database: after the two probe modes,
         # so those run with no credentials.
-        db = Turso()
+        db = Database()
         prior = read_load_record(db, args.program, name)
         # BEFORE THE HASH CHECK, because a backfill is not a load. The file
         # is unchanged by definition - that is the whole point, the rows are

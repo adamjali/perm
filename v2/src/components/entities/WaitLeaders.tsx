@@ -1,5 +1,5 @@
 import { BarRows } from "@/components/data/BarRows";
-import type { FieldWait, RankedEmployerWait } from "@/lib/turso/employerWait";
+import type { FieldWait, RankedEmployerWait } from "@/lib/db/employerWait";
 import { cn } from "@/lib/utils";
 import { MoreText } from "@/components/data/MoreText";
 import { formatInt } from "@/lib/format";

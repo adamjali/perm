@@ -7,7 +7,7 @@ import {
   analystReviewQueue,
   analystReviewAverage,
 } from "@convex/lib/dolProcessingTimes";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { ProductShot } from "@/components/marketing/ProductShot";
 import { TOUR_SHOTS } from "@/components/marketing/tourShots";
 import { SignupAudienceFork } from "@/components/auth/SignupAudienceFork";

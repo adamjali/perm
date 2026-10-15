@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { DolUnanswered } from "@/components/tools/DolUnanswered";
-import { lookupLcaCaseOutcome, lookupLcaDisclosed, type LcaDisclosedRow } from "@/lib/turso/lcaCasesTypes";
+import { lookupLcaCaseOutcome, lookupLcaDisclosed, type LcaDisclosedRow } from "@/lib/db/lcaCasesTypes";
 import { formatWage } from "@/lib/wageFormat";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
 import { WatchThisNumber } from "@/components/tools/WatchThisNumber";

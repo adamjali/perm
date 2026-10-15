@@ -23,7 +23,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, add_missing_columns, query_rows, record_run  # noqa: E402
+from lib_db import Database, add_missing_columns, query_rows, record_run  # noqa: E402
 from lib_flag_serials import (  # noqa: E402
     ALL_FLAG_PREFIXES, CURRENT_ERA, PERM_OFFICE_PREFIXES, SQL_DAY, SQL_PREFIX, SQL_SERIAL,
     case_number, day_code, owed_after, prefix_of, serial_of,
@@ -429,7 +429,7 @@ def main() -> int:
                     help="seconds between requests (a long one-off run should be polite)")
     a = ap.parse_args()
 
-    db = Turso()
+    db = Database()
     # The program tables must exist before held_serials can read them, and a
     # program added later has none until something creates it.
     programs.ensure_schema(db)

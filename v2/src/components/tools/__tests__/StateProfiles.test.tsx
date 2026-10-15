@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { StateConcentration, StateLeaders } from "../StateProfiles";
-import type { StateProfile } from "@/lib/turso/states";
+import type { StateProfile } from "@/lib/db/states";
 
 function profile(over: Partial<StateProfile> & { state: string }): StateProfile {
   return {

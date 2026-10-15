@@ -26,7 +26,7 @@ jobs:
         # Two rules are structurally wrong for this repository and are excluded
         # rather than dismissed one alert at a time:
         # sqlalchemy-execute-raw-query fires on every `db.execute(sql)` of the
-        # libSQL HTTP helper in scripts/lib_turso.py, and there is no SQLAlchemy
+        # libSQL HTTP helper in scripts/lib_db.py, and there is no SQLAlchemy
         # here; dynamic-urllib-use-detected fires on every ingest that fetches
         # a URL held in a constant or read from our own tables. Real SQL and
         # URL findings still come from CodeQL and the formatted-sql-query rule.

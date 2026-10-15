@@ -3,8 +3,8 @@ import Link from "next/link";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { statusMeaning } from "@/lib/caseStatusVocabulary";
-import type { LiveCaseRow } from "@/lib/turso/cases";
-import type { LiveEmployerRecord } from "@/lib/turso/liveEmployers";
+import type { LiveCaseRow } from "@/lib/db/cases";
+import type { LiveEmployerRecord } from "@/lib/db/liveEmployers";
 import { formatInt } from "@/lib/format";
 
 /**

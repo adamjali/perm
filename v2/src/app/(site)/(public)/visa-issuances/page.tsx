@@ -28,7 +28,7 @@ import {
   monthName,
   monthsBefore,
   type IssuanceGroup,
-} from "@/lib/turso/visaIssuances";
+} from "@/lib/db/visaIssuances";
 
 export const revalidate = 86400;
 

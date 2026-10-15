@@ -12,20 +12,20 @@ import "server-only";
 import { SITE_URL } from "@/lib/constants/site";
 import { normaliseFlagCaseNumber, type FlagProgram } from "@/lib/flagCaseNumber";
 import { isEntityKind, type EntityKind } from "@/lib/entityPayload";
-import { lookupCase } from "@/lib/turso/caseLookup";
-import { one } from "@/lib/turso/client";
-import { getEntityBySlug, getFreshness, getLiveBacklog } from "@/lib/turso/publicData";
-import { entityPending } from "@/lib/turso/entityDetail";
-import { searchByName } from "@/lib/turso/entities";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { lookupCase } from "@/lib/db/caseLookup";
+import { one } from "@/lib/db/client";
+import { getEntityBySlug, getFreshness, getLiveBacklog } from "@/lib/db/publicData";
+import { entityPending } from "@/lib/db/entityDetail";
+import { searchByName } from "@/lib/db/entities";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
 
 import { certifiedShare } from "./share";
 import { LOOKS_YEARLY_NOTE, looksYearly } from "@/lib/wageFormat";
-import { pwd } from "@/lib/turso/pwdCases";
-import { lca } from "@/lib/turso/lcaCases";
-import { lookupSeasonalPosting, lookupSeasonalRecord, seasonal } from "@/lib/turso/seasonalCases";
-import { estimatePermCase, loadPermEstimateContext } from "@/lib/turso/permEstimate";
-import { rfiEnteredOn } from "@/lib/turso/rfiClock";
+import { pwd } from "@/lib/db/pwdCases";
+import { lca } from "@/lib/db/lcaCases";
+import { lookupSeasonalPosting, lookupSeasonalRecord, seasonal } from "@/lib/db/seasonalCases";
+import { estimatePermCase, loadPermEstimateContext } from "@/lib/db/permEstimate";
+import { rfiEnteredOn } from "@/lib/db/rfiClock";
 
 export interface ApiMeta {
   /** Who published the underlying records. */

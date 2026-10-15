@@ -13,7 +13,7 @@
  * dominated by the biggest filers; share answers "whose queue is mostly
  * held", which is where a small employer with every case on hold shows.
  * Share is only ranked above a floor, because two of two is not a signal.
- * The Turso half is `src/lib/turso/employerStages.ts`.
+ * The database half is `src/lib/db/employerStages.ts`.
  */
 
 import { formatInt } from "../../convex/lib/format";

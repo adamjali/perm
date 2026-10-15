@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { FigurePlate } from "@/components/tools/FigurePlate";
-import type { PendingLeader } from "@/lib/turso/entityDetail";
+import type { PendingLeader } from "@/lib/db/entityDetail";
 import { formatInt } from "@/lib/format";
 
 /**

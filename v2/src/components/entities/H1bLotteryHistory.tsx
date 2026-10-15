@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
-import type { LotteryYear } from "@/lib/turso/h1bLotteryFoia";
+import type { LotteryYear } from "@/lib/db/h1bLotteryFoia";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 

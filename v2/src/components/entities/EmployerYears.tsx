@@ -1,6 +1,6 @@
 import { CaretRightIcon } from "@phosphor-icons/react/ssr";
 
-import type { EmployerYear, HistoryCase } from "@/lib/turso/employerHistory";
+import type { EmployerYear, HistoryCase } from "@/lib/db/employerHistory";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 

@@ -37,7 +37,7 @@ Each line names where it is true in the code, so a reviewer can check it.
   `src/app/api/uscis-case-status/__tests__/route.test.ts`.)
 - **Storage and retention.** Receipt number, form type, status text, dated
   history and lookup time; deleted twelve months after the last lookup; no
-  identifier of the visitor. (`src/lib/turso/uscisCaseStatus.ts`; the table's
+  identifier of the visitor. (`src/lib/db/uscisCaseStatus.ts`; the table's
   columns are held to the privacy policy's list by `uscis-wiring.test.ts`.)
 - **Privacy policy.** Public, and section 18 describes exactly this lookup:
   https://permtracker.app/privacy#uscis-case-status

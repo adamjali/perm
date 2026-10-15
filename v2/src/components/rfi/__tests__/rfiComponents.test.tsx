@@ -9,7 +9,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { ReviewStage, StageCohort, StageRecord } from "@/lib/turso/rfi";
+import type { ReviewStage, StageCohort, StageRecord } from "@/lib/db/rfi";
 import { OccupationRates } from "../OccupationRates";
 import { RfiOutcomes } from "../RfiOutcomes";
 import { StageCensus } from "../StageCensus";

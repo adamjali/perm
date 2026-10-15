@@ -5,8 +5,8 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { formatInt } from "@/lib/format";
 import { hasSeasonal, otherEmployerDatasets, programsMix } from "@/lib/otherEmployers";
 import { publishedStatusLabel, wagePhrase, worksitePhrase } from "@/lib/seasonalDetails";
-import type { OtherEmployerRecord } from "@/lib/turso/otherEmployers";
-import type { SeasonalEmployerCase } from "@/lib/turso/seasonalEmployers";
+import type { OtherEmployerRecord } from "@/lib/db/otherEmployers";
+import type { SeasonalEmployerCase } from "@/lib/db/seasonalEmployers";
 
 /**
  * An employer's page when it has no PERM record: its filings are H-1B LCAs,

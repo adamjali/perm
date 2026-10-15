@@ -47,7 +47,7 @@ from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib_flag_serials import PERM_OFFICE_PREFIXES  # noqa: E402
-from lib_turso import Turso, query_rows, read_doc, record_run, run_stmts, stmt, write_doc  # noqa: E402
+from lib_db import Database, query_rows, read_doc, record_run, run_stmts, stmt, write_doc  # noqa: E402
 import ingest_case_status_direct as perm  # noqa: E402
 import ingest_pwd_status_direct as flag  # noqa: E402
 
@@ -127,14 +127,14 @@ def plan_changes(program: str, stored: dict[str, list], answers: list[dict], sta
 STMTS_PER_REQUEST = 100
 
 
-def apply(db: Turso, stmts: list[dict]) -> int:
+def apply(db: Database, stmts: list[dict]) -> int:
     """Run the planned pairs in order on one connection (so `changes()` refers
     to the UPDATE just before each INSERT); returns updates that applied."""
     counts = run_stmts(db, [stmt(s["sql"], s["args"]) for s in stmts], STMTS_PER_REQUEST)
     return sum(1 for s, n in zip(stmts, counts) if s["sql"].startswith("UPDATE") and n)
 
 
-def check(db: Turso, program: str, numbers: list[str], dry: bool) -> dict:
+def check(db: Database, program: str, numbers: list[str], dry: bool) -> dict:
     table, _ = tables_for(program)
     stored: dict[str, list] = {}
     for i in range(0, len(numbers), 200):
@@ -209,7 +209,7 @@ def convex_call(path: str, method: str = "GET") -> dict:
 
 
 # The scorecard records the date each subscriber's case page showed, once per
-# case (src/lib/turso/predictions.ts, predictWatched). It reads the list from
+# case (src/lib/db/predictions.ts, predictWatched). It reads the list from
 # this doc: case numbers only, never an address. Written only when it changed.
 WATCHED_DOC = "watched_cases"
 
@@ -244,7 +244,7 @@ def main() -> int:
         ap.error("give a file or --from-convex")
     numbers = doc.get("caseNumbers", []) if isinstance(doc, dict) else doc
     groups = split_programs(numbers)
-    db = Turso()
+    db = Database()
     if not a.dry_run and a.from_convex:
         try:
             keep_watched_list(db, numbers)

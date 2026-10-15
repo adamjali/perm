@@ -40,7 +40,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows, write_doc  # noqa: E402
+from lib_db import Database, query_rows, write_doc  # noqa: E402
 
 VISAS = ("H-2A", "H-2B", "CW-1")
 PREFIX = {"H-2A": "H-300-", "H-2B": "H-400-", "CW-1": "C-500-"}
@@ -126,7 +126,7 @@ def score(test: list[dict], p: dict, clock: str) -> dict:
     }
 
 
-def load(db: Turso, visa: str) -> list[dict]:
+def load(db: Database, visa: str) -> list[dict]:
     rows = []
     for rec, dec, beg in query_rows(
         db,
@@ -146,7 +146,7 @@ def load(db: Turso, visa: str) -> list[dict]:
     return rows
 
 
-def still_pending(db: Turso, visa: str, lo: date, hi: date) -> int:
+def still_pending(db: Database, visa: str, lo: date, hi: date) -> int:
     """Applications filed in [lo, hi) with no decision anywhere: pending in the
     live table, and not in DOL's file (which would hold their decision)."""
     got = query_rows(
@@ -222,7 +222,7 @@ def backtest_visa(rows: list[dict], visa: str, pending_in) -> dict:
 GROUP_SEASON_DONE = 0.9   # a season is scored once this share of it is decided
 
 
-def h2b_group_test(db: Turso) -> list[dict]:
+def h2b_group_test(db: Database) -> list[dict]:
     import ingest_h2b_groups as g
     have = query_rows(db, "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'h2b_groups'", [])
     if not have:
@@ -278,7 +278,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
-    db = Turso()
+    db = Database()
     out: dict = {"method": "DOL's past certifications at each quarter's start, tested on the quarter's applications",
                  "visas": {}}
     for visa in VISAS:

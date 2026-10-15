@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { StateConcentration, StateLeaders } from "../StateProfiles";
 import { DenialReach } from "../DenialReach";
-import type { StateProfile } from "@/lib/turso/states";
+import type { StateProfile } from "@/lib/db/states";
 
 /**
  * Glued text, checked on the RENDERED markup rather than the source.

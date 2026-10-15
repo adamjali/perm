@@ -5,8 +5,8 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { COUNTRY_LABEL, cutoffLabel } from "@/lib/bulletinNext";
 import { formatMonth } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { BOARD_COUNTRIES, summariseBulletins, type BoardCell } from "@/lib/turso/bulletin";
-import { getFamilyBulletinSeries } from "@/lib/turso/publicData";
+import { BOARD_COUNTRIES, summariseBulletins, type BoardCell } from "@/lib/db/bulletin";
+import { getFamilyBulletinSeries } from "@/lib/db/publicData";
 import { withSocialCard } from "@/lib/socialCard";
 import { SITE_URL } from "@/lib/constants/site";
 

@@ -16,7 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const execMock = vi.fn();
 const oneMock = vi.fn();
-vi.mock("@/lib/turso/client", () => ({
+vi.mock("@/lib/db/client", () => ({
   exec: (...a: unknown[]) => execMock(...a),
   one: (...a: unknown[]) => oneMock(...a),
   rows: vi.fn(),

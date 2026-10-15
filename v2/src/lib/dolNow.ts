@@ -1,6 +1,6 @@
 import { analystReviewAverage, analystReviewQueue } from "@convex/lib/dolProcessingTimes";
 import { formatAsOf, formatMonth, formatMonthShort } from "@/lib/dolFormat";
-import type { ProcessingTimesSnapshot } from "@/lib/turso/processingTimes";
+import type { ProcessingTimesSnapshot } from "@/lib/db/processingTimes";
 
 /**
  * DOL's two headline figures, worded for prose: how long its published average

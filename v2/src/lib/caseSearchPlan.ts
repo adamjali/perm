@@ -2,7 +2,7 @@
  * What a unified case search is allowed to ask, and why it is not allowed to
  * ask the rest.
  *
- * PURE, AND OUTSIDE `turso/` ON PURPOSE. The server needs it to build SQL and
+ * PURE, AND OUTSIDE `db/` ON PURPOSE. The server needs it to build SQL and
  * the browser needs it to grey out a control before anyone clicks it, so it
  * can carry no `server-only` import. One copy, two readers: a rule the UI
  * enforces differently from the route is a control that looks live and returns
@@ -80,7 +80,7 @@ export const LEAD_KINDS: readonly LeadKind[] = [
 /**
  * The outcome buckets, across three programs that spell their statuses
  * differently. Measured vocabularies, not remembered ones - see
- * `OUTCOME_STATUSES` in `src/lib/turso/caseSearchReads.ts`, which was built by
+ * `OUTCOME_STATUSES` in `src/lib/db/caseSearchReads.ts`, which was built by
  * reading the live tables and the summary docs.
  */
 export type Outcome = "open" | "granted" | "denied" | "withdrawn";

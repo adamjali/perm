@@ -144,7 +144,7 @@ v2/
 ├── src/
 │   ├── app/               # Routes: (public), (auth), (authenticated), api
 │   ├── components/        # React components
-│   ├── lib/turso/         # Public-data read layer (server-only)
+│   ├── lib/db/         # Public-data read layer (server-only)
 │   └── lib/perm/          # Frontend re-exports of the Convex logic
 ├── content/               # MDX: blog (15), guides (52), changelog (9)
 ├── scripts/               # Python ingest and audit scripts

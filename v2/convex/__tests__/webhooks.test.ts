@@ -481,8 +481,8 @@ describe("the watch sweeps", () => {
   /** A public database that answers every read with no rows, or with the employer census. */
   function mirror(stagesJson?: string): () => number {
     let reads = 0;
-    vi.stubEnv("TURSO_DATABASE_URL", "libsql://db.example.com");
-    vi.stubEnv("TURSO_AUTH_TOKEN", "t");
+    vi.stubEnv("DATABASE_URL", "libsql://db.example.com");
+    vi.stubEnv("DATABASE_AUTH_TOKEN", "t");
     vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
       if (!String(url).endsWith("/v2/pipeline")) return new Response("ok");
       reads++;
@@ -619,8 +619,8 @@ describe("the API's door", () => {
 
   it("checks the key before reading anything to resolve a watch", async () => {
     const t = createTestContext();
-    vi.stubEnv("TURSO_DATABASE_URL", "libsql://db.example.com");
-    vi.stubEnv("TURSO_AUTH_TOKEN", "t");
+    vi.stubEnv("DATABASE_URL", "libsql://db.example.com");
+    vi.stubEnv("DATABASE_AUTH_TOKEN", "t");
     sent = [];
     const r = await t.action(api.webhooks.apiAddWatch, { keyHash: "f".repeat(64), serverSecret: SERVER, kind: "employer", target: "google-llc" });
     expect(r).toMatchObject({ ok: false });

@@ -29,7 +29,7 @@ def check(name: str, ok: bool, detail: str = "") -> None:
 
 
 class SqliteDb:
-    """The slice of lib_turso.Turso that store_doc uses, over an in-memory SQLite."""
+    """The slice of lib_db.Database that store_doc uses, over an in-memory SQLite."""
 
     def __init__(self):
         self.conn = sqlite3.connect(":memory:")

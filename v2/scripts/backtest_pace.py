@@ -42,7 +42,7 @@ import statistics
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows  # noqa: E402
+from lib_db import Database, query_rows  # noqa: E402
 
 MIN_COHORT = 500          # below this a cohort is a tail, not a population
 OBSERVE_AT = (0.25, 0.50)
@@ -56,7 +56,7 @@ def main() -> int:
     ap.add_argument("--to-month", default="2026-01")
     args = ap.parse_args()
 
-    db = Turso()
+    db = Database()
     by_month: dict[str, list] = collections.defaultdict(list)
     for m, d, n in query_rows(db, """
             SELECT substr(received_date,1,7), substr(decision_date,1,10), count(*)

@@ -49,8 +49,8 @@ jobs:
     # generous for a job that should either work or fail visibly.
     timeout-minutes: 45
     env:
-      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+      DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      DATABASE_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -123,17 +123,17 @@ jobs:
             echo "::error::payload missing at ${RUNNER_TEMP}/perm-cases.ndjson.gz; the DOL step should have written it."
             exit 1
           fi
-          if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
+          if [ -z "$DATABASE_URL" ] || [ -z "$DATABASE_AUTH_TOKEN" ]; then
             echo "::error::database secrets absent; the public site would freeze on the old quarter."
             exit 1
           fi
           # 1. The case rows. --incremental writes only the rows whose
           #    fingerprint changed; it falls back to a full load by itself when
           #    the table is empty.
-          python3 scripts/turso_migrate.py "${RUNNER_TEMP}" --incremental
+          python3 scripts/db_migrate.py "${RUNNER_TEMP}" --incremental
           # 2. Everything else the public pages read: entities, wage cells and
           #    stats, the disclosure-stats document.
-          python3 scripts/turso_migrate_public.py "${RUNNER_TEMP}"
+          python3 scripts/db_migrate_public.py "${RUNNER_TEMP}"
           # The loader slugs entities its own way; the alias table remembers
           # slugs from earlier runs. Reconcile so no alias points at a 404.
           python3 scripts/reconcile_entity_aliases.py
@@ -150,7 +150,7 @@ jobs:
           python3 scripts/build_state_profiles.py
           python3 scripts/build_wage_bands.py
           # Every PERM salary-explorer selection of 5,000+ filings, precomputed
-          # (src/lib/turso/wageViews.ts).
+          # (src/lib/db/wageViews.ts).
           python3 scripts/build_wage_views.py --program perm
 
       # The pages built from this corpus sit on a week-long window, which is

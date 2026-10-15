@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
-import { getI140Snapshot } from "@/lib/turso/uscisI140";
+import { getI140Snapshot } from "@/lib/db/uscisI140";
 import { I140QueueEstimator } from "@/components/tools/I140QueueEstimator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
@@ -9,7 +9,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { getUscisFormMedian } from "@/lib/turso/uscisQuarterly";
+import { getUscisFormMedian } from "@/lib/db/uscisQuarterly";
 import { quarterLabel } from "@/lib/uscisQuarterlyShape";
 import { withSocialCard } from "@/lib/socialCard";
 import { buttonVariants } from "@/components/ui/button";

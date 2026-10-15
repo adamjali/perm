@@ -14,7 +14,7 @@ series of decisions, folded out of `perm_case_events`, beside `dol-disclosure`
 (DOL's own dating, which stops at the last published quarter). Three things
 have to hold:
 
-  1. The filters match the feed. `src/lib/turso/changes.ts` renders the same
+  1. The filters match the feed. `src/lib/db/changes.ts` renders the same
      rows per case; if it and the chart disagreed about which rows count, a
      reader could click a day on one and find a different day on the other.
   2. A contaminated day is withheld, not trimmed. A day carrying a backfill
@@ -120,7 +120,7 @@ def main() -> int:
     # RFI funnel already had to learn this: a drifted source string silently
     # zeroed half a published figure forever.
     # -----------------------------------------------------------------------
-    changes_ts = (V2 / "src/lib/turso/changes.ts").read_text()
+    changes_ts = (V2 / "src/lib/db/changes.ts").read_text()
 
     def ts_const(name: str) -> str | None:
         m = re.search(rf'^const {name} = (.+);$', changes_ts, re.M)
@@ -338,7 +338,7 @@ def main() -> int:
     # carries one such string.
     # -----------------------------------------------------------------------
     scanned, offenders = 0, []
-    files = sorted(HERE.glob("*.py")) + sorted((V2 / "src/lib/turso").glob("*.ts"))
+    files = sorted(HERE.glob("*.py")) + sorted((V2 / "src/lib/db").glob("*.ts"))
     for f in files:
         # This file itself is skipped: it carries the pattern as its own
         # subject (the regex literal below, and the prose above), and its two

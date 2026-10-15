@@ -111,7 +111,7 @@ function builds both) plus `X-Robots-Tag: noindex, follow`. Tested by loading th
 applying its rules with Next's own path matcher.
 
 **The embedded lookup** (`/embed/case-status`, dynamic) is a form and an answer card, not a
-framed page section. `src/lib/turso/embedLookup.ts`: it asks DOL live under three caps (this
+framed page section. `src/lib/db/embedLookup.ts`: it asks DOL live under three caps (this
 site 50/UTC day, all sites 5,000/day, then the site-wide discovery budget), and falls back to the
 stored record, saying which one the reader is looking at ("Read from DOL just now." / "From PERM
 Tracker's record, last checked with DOL <date>." / "Live checks from this site are used up for
@@ -135,14 +135,14 @@ badges' own `CopyButton`, now exported) and a preview link, then a `<details>` o
 - NEW `src/components/embed/EmbedFrame.tsx` (`EmbedFrame`, `embedCss`, `embedMetadata`)
 - NEW `src/components/embed/EmbedRuntime.tsx` (new-tab links, height messages)
 - NEW `src/app/embed/<slug>/page.tsx` x19 (18 import the tool page; `case-status` is its own page)
-- NEW `src/lib/turso/embedLookup.ts` + `embedLookup.test.ts` (12 tests, counters run their real
+- NEW `src/lib/db/embedLookup.ts` + `embedLookup.test.ts` (12 tests, counters run their real
   SQL on in-memory libSQL; probed: a stored case sent through discovery, and the site entry
   charged before the all-sites count, each turned a test red)
 - NEW `src/components/badges/EmbedGallery.tsx`; `BadgeCatalogue.tsx` exports `CopyButton`
 - `src/app/(site)/(public)/badges/page.tsx`: renders `<EmbedGallery origin={ORIGIN} />`
 - `data-embed` markers on 17 tool pages + `/perm-queue` (the BacklogWall wrapper); the
   priority-date page carries two (`priority-date`, and `visa-bulletin` on the bulletin board)
-- `src/lib/turso/caseLookup.ts` / `flagCases.ts`: `lookup(..., { discover: false })` option
+- `src/lib/db/caseLookup.ts` / `flagCases.ts`: `lookup(..., { discover: false })` option
   (default unchanged; 122 existing lookup tests green)
 - `next.config.ts`: framing split as above
 - `src/app/robots.ts`: `Disallow: /embed/case-status?` beside `/perm-case-status?`

@@ -9,7 +9,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import type { FlagCaseRow, FlagDisclosedRow } from "@/lib/turso/flagCases";
+import type { FlagCaseRow, FlagDisclosedRow } from "@/lib/db/flagCases";
 
 const usePublicQuery = vi.fn();
 vi.mock("@/hooks/usePublicQuery", () => ({ usePublicQuery }));

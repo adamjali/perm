@@ -26,15 +26,21 @@ const RETRYABLE_STATUS = [403, 429, 503];
 // the runs check, not by this budget.
 const FRESHNESS_MAX_AGE_DAYS = 30;
 
-/** The environment first, then `.env.local`: the same rule as lib_turso.env(). */
-function env(name: string): string {
-  const value = process.env[name];
-  if (value) return value;
+/**
+ * The environment first, then `.env.local`: the same rule as lib_db.env().
+ * Each name is tried in turn, so DATABASE_* is read first and the older
+ * TURSO_* name (the hosted database this replaced) still works.
+ */
+function env(...names: string[]): string {
   const raw = existsSync(".env.local") ? readFileSync(".env.local", "utf8") : "";
-  for (const line of raw.split("\n")) {
-    if (line.startsWith(name + "=")) return line.slice(name.length + 1).trim();
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) return value;
+    for (const line of raw.split("\n")) {
+      if (line.startsWith(name + "=")) return line.slice(name.length + 1).trim();
+    }
   }
-  throw new Error(`${name} is not set in the environment or .env.local`);
+  throw new Error(`${names[0]} is not set in the environment or .env.local`);
 }
 
 async function main() {
@@ -78,8 +84,8 @@ async function main() {
     `pwdQueues ${snap.pwdQueues.length}  pwdPermBacklog ${snap.pwdPermBacklog.length}`);
 
   const db = createClient({
-    url: env("TURSO_DATABASE_URL"),
-    authToken: env("TURSO_AUTH_TOKEN"),
+    url: env("DATABASE_URL", "TURSO_DATABASE_URL"),
+    authToken: env("DATABASE_AUTH_TOKEN", "TURSO_AUTH_TOKEN"),
   });
 
   await db.execute(`CREATE TABLE IF NOT EXISTS processing_times (

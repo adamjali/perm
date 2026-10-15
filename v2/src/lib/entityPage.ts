@@ -12,8 +12,8 @@ import { SITE_URL } from "@/lib/constants/site";
 import type { EntityKind } from "@/lib/entityPayload";
 import { openGraphBaseNoImage } from "@/lib/openGraphBase";
 import { getDatasetSchema } from "@/lib/structuredData";
-import { listByKind, PRERENDERED_ENTITY_HEAD } from "@/lib/turso/entities";
-import type { DatasetFreshness } from "@/lib/turso/publicData";
+import { listByKind, PRERENDERED_ENTITY_HEAD } from "@/lib/db/entities";
+import type { DatasetFreshness } from "@/lib/db/publicData";
 
 /** DOL's own denial rate, used when the aggregate document cannot be read. */
 export const FALLBACK_BASELINE_DENIAL_PCT = 2.57;

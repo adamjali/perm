@@ -55,7 +55,7 @@ from collections import Counter, defaultdict
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_lca_facets import ANNUAL_WAGE_SQL  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
-from lib_turso import Turso, read_doc, record_run, rows_of, write_doc  # noqa: E402
+from lib_db import Database, read_doc, record_run, rows_of, write_doc  # noqa: E402
 
 TABLE = "h1b_employer_ranks"
 DOC_KEY = "h1b_ranks_summary"
@@ -150,7 +150,7 @@ def blank() -> dict:
             "uscis_new": 0, "uscis_appr": 0, "uscis_den": 0}
 
 
-def read_pages(db: Turso) -> tuple[dict[str, str], dict[str, str]]:
+def read_pages(db: Database) -> tuple[dict[str, str], dict[str, str]]:
     """source slug -> page slug, and page slug -> the name the page shows."""
     page_of: dict[str, str] = {}
     for src, page in rows_of(db.execute("SELECT source_slug, page_slug FROM employer_page_map")):
@@ -169,7 +169,7 @@ def read_pages(db: Turso) -> tuple[dict[str, str], dict[str, str]]:
     return page_of, names
 
 
-def read_lca(db: Turso, fy: int, page_of: dict[str, str]):
+def read_lca(db: Database, fy: int, page_of: dict[str, str]):
     """One fiscal year's certified H-1B LCAs, folded onto pages and places."""
     agg: dict[tuple[str, str], dict] = defaultdict(blank)
     spell: dict[str, Counter] = defaultdict(Counter)
@@ -213,7 +213,7 @@ def read_lca(db: Turso, fy: int, page_of: dict[str, str]):
     return agg, spell, dependent, willful, (str(through)[:10] if through else None)
 
 
-def read_uscis(db: Turso, fy: int, page_of: dict[str, str], agg: dict, spell: dict) -> None:
+def read_uscis(db: Database, fy: int, page_of: dict[str, str], agg: dict, spell: dict) -> None:
     appr = " + ".join(f"{k}_appr" for k in KINDS)
     den = " + ".join(f"{k}_den" for k in KINDS)
     for slug, name, st, new, a, d in rows_of(db.execute(
@@ -231,7 +231,7 @@ def read_uscis(db: Turso, fy: int, page_of: dict[str, str], agg: dict, spell: di
             g["uscis_den"] += num(d)
 
 
-def read_current(db: Turso, page_of: dict[str, str], today: dt.date) -> dict[str, dict[str, int]]:
+def read_current(db: Database, page_of: dict[str, str], today: dt.date) -> dict[str, dict[str, int]]:
     """Facts about each employer today: cases on hold, WARN notices, debarment."""
     out: dict[str, dict[str, int]] = defaultdict(lambda: {"on_hold": 0, "warn_2y": 0, "debarred": 0})
     try:
@@ -335,7 +335,7 @@ def norm(row: list) -> tuple:
     return tuple(out)
 
 
-def write_diff(db: Turso, want: list[list]) -> tuple[int, int]:
+def write_diff(db: Database, want: list[list]) -> tuple[int, int]:
     stored = {}
     for r in rows_of(db.execute(f"SELECT {','.join(COLS)} FROM {TABLE}")):
         n = norm(list(r))
@@ -366,7 +366,7 @@ def main() -> int:
     args = ap.parse_args()
     WRITE_PAUSE_S = max(0.0, args.pause)
     started = time.time()
-    db = Turso()
+    db = Database()
     today = dt.date.today()
     page_of, names = read_pages(db)
     pages = set(names)

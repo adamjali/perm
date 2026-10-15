@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { WarnNoticeBand } from "../WarnNotice";
-import type { WarnNotice } from "@/lib/turso/warn";
+import type { WarnNotice } from "@/lib/db/warn";
 
 /**
  * Two notices one company files the same day for different sites used to

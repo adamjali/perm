@@ -32,7 +32,7 @@ import {
   placeCaseInCohort,
 } from "@/lib/queueForecast";
 import type { StragglerRates } from "@/lib/stragglerRates";
-import type { EstimatorData } from "@/lib/turso/estimate";
+import type { EstimatorData } from "@/lib/db/estimate";
 
 export interface CaseEstimateInput {
   /**

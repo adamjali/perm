@@ -6,7 +6,7 @@ import {
   getLcaWageStats,
   type LcaWageFilters,
   type LcaWageStatusFilter,
-} from "@/lib/turso/lcaWages";
+} from "@/lib/db/lcaWages";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
 
 /**

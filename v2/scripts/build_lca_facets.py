@@ -32,7 +32,7 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows, record_run, write_doc  # noqa: E402
+from lib_db import Database, query_rows, record_run, write_doc  # noqa: E402
 
 DOC_KEY = "lca_filter_options"
 
@@ -55,7 +55,7 @@ def min_for_median() -> int:
     return int(m.group(1))
 
 
-# MUST STAY IN STEP WITH ANNUAL_WAGE_SQL AND THE BAND IN src/lib/turso/lcaWages.ts.
+# MUST STAY IN STEP WITH ANNUAL_WAGE_SQL AND THE BAND IN src/lib/db/lcaWages.ts.
 # Duplicated deliberately, the same way the entity slug rules are duplicated in
 # lib_slugs.py and entitySlug.ts: a doc built over a different population
 # than the fallback query reads is worse than no doc, because it is invisible.
@@ -98,7 +98,7 @@ QUANTILES = ((0.05, "p5"), (0.25, "p25"), (0.5, "p50"), (0.75, "p75"), (0.95, "p
 
 
 def percentile_select() -> str:
-    """A byte-faithful port of percentileExpr() in src/lib/turso/publicData.ts.
+    """A byte-faithful port of percentileExpr() in src/lib/db/publicData.ts.
 
     THESE INTERPOLATE. An obvious `rn = CAST(n * q AS INTEGER) + 1` picks the
     nearest rank and lands a few hundred dollars off, which is exactly the kind
@@ -131,7 +131,7 @@ def state_percentile_select() -> str:
     return ",\n            ".join(out)
 
 
-def build_default_view(db: Turso, min_cases: int) -> dict:
+def build_default_view(db: Database, min_cases: int) -> dict:
     """The unfiltered certified view: stats, histogram, per-state percentiles."""
     # `FROM o` over an EMPTY population returns ZERO rows, not a row of nulls,
     # so an empty or missing table would be an IndexError here rather than a
@@ -194,7 +194,7 @@ def build_default_view(db: Turso, min_cases: int) -> dict:
     }
 
 
-def verify_median(db: Turso, stats: dict) -> None:
+def verify_median(db: Database, stats: dict) -> None:
     """Prove the ported percentile SQL against an instrument that shares none of it.
 
     The CTE above interpolates between two row numbers. This asks the same
@@ -231,7 +231,7 @@ def verify_median(db: Turso, stats: dict) -> None:
         raise SystemExit(
             f"FATAL: p50 {got:,.0f} is not between the ranked neighbours "
             f"{lo:,.0f} and {hi:,.0f}. The ported percentile SQL has drifted "
-            "from src/lib/turso/publicData.ts; the doc was NOT written."
+            "from src/lib/db/publicData.ts; the doc was NOT written."
         )
     print(
         f"[lca-facets] p50 {got:,.0f} verified between ranked {lo:,.0f} and {hi:,.0f}",
@@ -243,7 +243,7 @@ def _f(v):
     return None if v is None else float(v)
 
 
-def build(db: Turso, min_cases: int) -> dict:
+def build(db: Database, min_cases: int) -> dict:
     """The three lists the page's selectors need, in the reader's own shape."""
     # The label is the title MOST rows carry for the code, not the first one
     # alphabetically: MIN(soc_title) names 15-1252 "Computer Programmers"
@@ -292,7 +292,7 @@ def build(db: Turso, min_cases: int) -> dict:
 
 def main() -> int:
     started = time.time()
-    db = Turso()
+    db = Database()
     floor = min_for_median()
     print(f"[lca-facets] building at minCases={floor}", flush=True)
     facets = build(db, floor)

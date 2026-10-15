@@ -102,8 +102,15 @@ def claims(tok):
     return json.loads(base64.urlsafe_b64decode(p + "=" * (-len(p) % 4)))
 
 
-for k in ("TURSO_AUTH_TOKEN", "TURSO_RW_AUTH_TOKEN"):
-    url = ENV["TURSO_DATABASE_URL"].replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
+def db_key(new: str) -> str:
+    """The database setting's name as this server holds it: DATABASE_* now,
+    TURSO_* (the hosted database it replaced) until the file is renamed."""
+    old = new.replace("DATABASE_", "TURSO_", 1)
+    return new if new in ENV else old
+
+
+for k in (db_key("DATABASE_AUTH_TOKEN"), db_key("DATABASE_RW_AUTH_TOKEN")):
+    url = ENV[db_key("DATABASE_URL")].replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
     c, t = curl("-X", "POST", *bearer(k), "-H", "Content-Type: application/json", url,
                 "-d", json.dumps({"requests": [{"type": "execute", "stmt": {"sql": "SELECT count(*) FROM perm_docs"}}, {"type": "close"}]}))
     ok = c == "200" and '"type":"ok"' in t.replace(" ", "")
@@ -147,7 +154,7 @@ def cap_bytes(flag, default):
 
 
 CAP = cap_bytes("--max-response-size", 10 << 20)
-DB_URL = ENV["TURSO_DATABASE_URL"].replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
+DB_URL = ENV[db_key("DATABASE_URL")].replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
 BIG_READS = {
     "case-status full sweep": "SELECT case_number, current_status, employer_name, job_title FROM perm_case_status ORDER BY case_number LIMIT 1000000000 OFFSET 0",
     "case-status pending sweep": "SELECT case_number, current_status, employer_name, job_title FROM perm_case_status WHERE is_final=0 OR is_final='0' ORDER BY case_number LIMIT 1000000000 OFFSET 0",
@@ -159,7 +166,7 @@ BIG_READS = {
 }
 for name, sql in BIG_READS.items():
     r = subprocess.run(["curl", "-s", "-m", "120", "-o", "/tmp/bigread.json", "-w", "%{http_code}", "-X", "POST",
-                        *bearer("TURSO_AUTH_TOKEN"), "-H", "Content-Type: application/json", DB_URL,
+                        *bearer(db_key("DATABASE_AUTH_TOKEN")), "-H", "Content-Type: application/json", DB_URL,
                         "-d", json.dumps({"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]})],
                        capture_output=True, text=True)
     size = len(open("/tmp/bigread.json", "rb").read())
@@ -169,7 +176,7 @@ for name, sql in BIG_READS.items():
 subprocess.run(["rm", "-f", "/tmp/bigread.json"])
 
 # One value is capped too (5,000,000 bytes: "string or blob too big"). The precomputed documents are single values; fail at a fifth of it.
-c, t = curl("-X", "POST", *bearer("TURSO_AUTH_TOKEN"), "-H", "Content-Type: application/json", DB_URL,
+c, t = curl("-X", "POST", *bearer(db_key("DATABASE_AUTH_TOKEN")), "-H", "Content-Type: application/json", DB_URL,
             "-d", json.dumps({"requests": [{"type": "execute", "stmt": {"sql": "SELECT max(length(json)) FROM perm_docs"}}, {"type": "close"}]}))
 biggest = int(json.loads(t)["results"][0]["response"]["result"]["rows"][0][0]["value"]) if c == "200" else -1
 show("largest stored document", f"{biggest:,} bytes of a 5,000,000-byte value limit", 0 <= biggest <= 1_000_000, c)

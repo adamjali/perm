@@ -8,7 +8,7 @@ import { formatInt } from "@/lib/format";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, LCA_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
+import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/db/lcaCases";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 
 /**

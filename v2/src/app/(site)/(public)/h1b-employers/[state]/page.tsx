@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { H1bEmployersPage, h1bMetadata } from "@/components/h1b/H1bEmployersPage";
 import { rankedStates, stateFromSlug, stateSlug } from "@/lib/h1bRanks";
 import { withSocialCard } from "@/lib/socialCard";
-import { getH1bSummary } from "@/lib/turso/h1bRanks";
+import { getH1bSummary } from "@/lib/db/h1bRanks";
 
 /**
  * One state's busiest H-1B employers: DOL's LCAs by worksite, USCIS's

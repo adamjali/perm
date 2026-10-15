@@ -4,7 +4,7 @@
  * (perm_docs['pwd_day_queue'], written after every PWD pass), and the range
  * the nightly backtest measured for each distance (perm_docs['pwd_backtest']
  * .day). Plain module so the unit project tests it; the reader is
- * src/lib/turso/pwdDayQueue.ts.
+ * src/lib/db/pwdDayQueue.ts.
  */
 
 import { measurePace, type DecisionDay, type MeasuredRangeRow, type PwdDayQueue } from "@/lib/perm";

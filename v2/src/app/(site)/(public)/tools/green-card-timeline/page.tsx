@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
-import { getI140Snapshot } from "@/lib/turso/uscisI140";
+import { getI140Snapshot } from "@/lib/db/uscisI140";
 import { buildGreenCardTimeline } from "@/lib/perm";
 import {
   getI140ProcessingTime,
@@ -10,14 +10,14 @@ import {
 } from "@/lib/processing-times/i140ProcessingTimes";
 import { GreenCardTimelineView } from "@/components/tools/GreenCardTimelineView";
 import { I140SubtypePanel, PriorityDatePanel } from "@/components/tools/GreenCardStagePanels";
-import { getVisaBulletinSeries } from "@/lib/turso/publicData";
+import { getVisaBulletinSeries } from "@/lib/db/publicData";
 import { PROCESSING_TIMES_AS_OF } from "@/lib/processing-times/i140ProcessingTimes";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { getEstimatorData } from "@/lib/turso/estimate";
-import { getUscisFormMedian } from "@/lib/turso/uscisQuarterly";
+import { getEstimatorData } from "@/lib/db/estimate";
+import { getUscisFormMedian } from "@/lib/db/uscisQuarterly";
 import { quarterLabel } from "@/lib/uscisQuarterlyShape";
 
 import { DataProvenance } from "@/components/data/DataProvenance";

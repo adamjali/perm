@@ -43,8 +43,8 @@ import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_turso import (  # noqa: E402
-    Turso, add_missing_columns, query_rows, record_run, stamp_freshness,
+from lib_db import (  # noqa: E402
+    Database, add_missing_columns, query_rows, record_run, stamp_freshness,
 )
 
 API = "https://www.federalregister.gov/api/v1/documents.json"
@@ -243,7 +243,7 @@ def signature(r: dict) -> tuple:
     return (r["title"], r["abstract"], json.dumps(r["topics"])) + tuple(r.get(n) for n in EXTRA_NAMES)
 
 
-def write(db: Turso, rows: list[dict]) -> int:
+def write(db: Database, rows: list[dict]) -> int:
     """Upsert, writing only rows that are new or changed."""
     db.script(DDL)
     added = add_missing_columns(db, "policy_notices", EXTRA_COLUMNS)
@@ -279,7 +279,7 @@ def main() -> int:
     if args.dry_run:
         log("DRY RUN, nothing written")
         return 0
-    db = Turso()
+    db = Database()
     written = write(db, rows)
     held = int(db.scalar("SELECT count(*) FROM policy_notices") or 0)
     log(f"  wrote {written} new or changed rows; {held} held")

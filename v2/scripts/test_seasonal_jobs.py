@@ -16,7 +16,7 @@ import zipfile
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import ingest_seasonal_jobs as sj  # noqa: E402
 from lib_sqlite_shim import SqliteTurso  # noqa: E402
-from lib_turso import query_rows  # noqa: E402
+from lib_db import query_rows  # noqa: E402
 
 fails: list[str] = []
 

@@ -2,7 +2,7 @@
  * The read-only Turso client Convex uses to reach the public DOL mirror.
  *
  * The read-only guard is the only part of this file that is a security control
- * rather than plumbing, so it gets probed hardest. `TURSO_AUTH_TOKEN` grants
+ * rather than plumbing, so it gets probed hardest. `DATABASE_AUTH_TOKEN` grants
  * WRITE access to the whole database, and nothing in Convex has any business
  * touching the public corpus, which is owned end to end by the ingest scripts.
  *
@@ -55,8 +55,8 @@ function stubPipeline(
 }
 
 beforeEach(() => {
-  vi.stubEnv("TURSO_DATABASE_URL", "libsql://example.turso.io");
-  vi.stubEnv("TURSO_AUTH_TOKEN", "stub-token");
+  vi.stubEnv("DATABASE_URL", "libsql://example.turso.io");
+  vi.stubEnv("DATABASE_AUTH_TOKEN", "stub-token");
 });
 
 afterEach(() => {
@@ -103,11 +103,11 @@ describe("the read-only guard", () => {
 
 describe("configuration", () => {
   it("throws loudly when the credentials are missing", async () => {
-    vi.stubEnv("TURSO_DATABASE_URL", "");
+    vi.stubEnv("DATABASE_URL", "");
     // A missing credential that degraded to an empty result set would report
     // "nothing changed" forever, which is indistinguishable from a working
     // sweep in a quiet week.
-    await expect(rows("SELECT 1")).rejects.toThrow(/TURSO_DATABASE_URL/);
+    await expect(rows("SELECT 1")).rejects.toThrow(/DATABASE_URL/);
   });
 });
 

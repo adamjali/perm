@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
-import type { RfiOccupationCut } from "@/lib/turso/rfi";
+import type { RfiOccupationCut } from "@/lib/db/rfi";
 import { FinePrint } from "@/components/data/FinePrint";
 
 /**

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChartTips } from "@/components/data/ChartTips";
 import { plainText } from "@/components/data/MoreText";
 import { YearBars, type YearCount } from "@/components/entities/YearBars";
-import { GROUP_PATH, type GroupDetail, type GroupKind, type GroupSummary } from "@/lib/turso/groups";
+import { GROUP_PATH, type GroupDetail, type GroupKind, type GroupSummary } from "@/lib/db/groups";
 import { stateName } from "@/lib/usStateNames";
 import { formatInt } from "@/lib/format";
 

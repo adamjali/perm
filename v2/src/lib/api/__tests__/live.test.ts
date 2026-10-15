@@ -6,12 +6,12 @@ const one = vi.fn();
 const discover = vi.fn();
 const flagDiscover = vi.fn();
 const readCase = vi.fn();
-vi.mock("@/lib/turso/embedLookup", () => ({ bumpDocCount: (...a: unknown[]) => bump(...a) }));
-vi.mock("@/lib/turso/client", () => ({ one: (...a: unknown[]) => one(...a) }));
-vi.mock("@/lib/turso/caseDiscovery", () => ({ discoverCaseOutcome: (...a: unknown[]) => discover(...a) }));
-vi.mock("@/lib/turso/pwdCases", () => ({ pwd: { discoverOutcome: (...a: unknown[]) => flagDiscover(...a) } }));
-vi.mock("@/lib/turso/lcaCases", () => ({ lca: { discoverOutcome: (...a: unknown[]) => flagDiscover(...a) } }));
-vi.mock("@/lib/turso/seasonalCases", () => ({ seasonal: { discoverOutcome: (...a: unknown[]) => flagDiscover(...a) } }));
+vi.mock("@/lib/db/embedLookup", () => ({ bumpDocCount: (...a: unknown[]) => bump(...a) }));
+vi.mock("@/lib/db/client", () => ({ one: (...a: unknown[]) => one(...a) }));
+vi.mock("@/lib/db/caseDiscovery", () => ({ discoverCaseOutcome: (...a: unknown[]) => discover(...a) }));
+vi.mock("@/lib/db/pwdCases", () => ({ pwd: { discoverOutcome: (...a: unknown[]) => flagDiscover(...a) } }));
+vi.mock("@/lib/db/lcaCases", () => ({ lca: { discoverOutcome: (...a: unknown[]) => flagDiscover(...a) } }));
+vi.mock("@/lib/db/seasonalCases", () => ({ seasonal: { discoverOutcome: (...a: unknown[]) => flagDiscover(...a) } }));
 vi.mock("../reads", () => ({ readCase: (...a: unknown[]) => readCase(...a) }));
 
 const { API_LIVE_DAILY_CAP, chargeLiveLookup, liveLookupsUsed, readCaseLive } = await import("../live");

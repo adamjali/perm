@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { getFreshness } from "@/lib/turso/publicData";
-import { matchedWarn, warnTotals } from "@/lib/turso/warn";
+import { getFreshness } from "@/lib/db/publicData";
+import { matchedWarn, warnTotals } from "@/lib/db/warn";
 import { WarnTable } from "@/components/warn/WarnTable";
 import { WarnOverview } from "@/components/warn/WarnOverview";
 import { formatAsOf } from "@/lib/dolFormat";

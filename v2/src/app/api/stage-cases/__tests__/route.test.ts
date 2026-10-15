@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const listStageCases = vi.fn();
 const getSweepCoverage = vi.fn();
 
-vi.mock("@/lib/turso/rfi", () => ({ listStageCases, LISTABLE_STAGE_MAX: 20_000 }));
-vi.mock("@/lib/turso/sweepCoverage", () => ({ getSweepCoverage }));
+vi.mock("@/lib/db/rfi", () => ({ listStageCases, LISTABLE_STAGE_MAX: 20_000 }));
+vi.mock("@/lib/db/sweepCoverage", () => ({ getSweepCoverage }));
 
 const { GET } = await import("../route");
 

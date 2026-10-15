@@ -29,7 +29,7 @@ import { RecordStrip } from "@/components/home/RecordStrip";
 import { BarRows, QuarterlyEmpty, type BarRow } from "@/components/data/BarRows";
 import { OfficeTable } from "@/components/uscis/OfficeTable";
 import type { RecordFigure } from "@/lib/recordCounts";
-import { getI485Offices } from "@/lib/turso/uscisQuarterly";
+import { getI485Offices } from "@/lib/db/uscisQuarterly";
 import {
   quarterLabel,
   quartersOfWork,

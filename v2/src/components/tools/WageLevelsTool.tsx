@@ -31,7 +31,7 @@ type Result =
 interface StoredYear {
   wageYear: number;
   levels: (number | null)[];
-  /** Yearly, whichever way DOL published the row (src/lib/turso/reference.ts). */
+  /** Yearly, whichever way DOL published the row (src/lib/db/reference.ts). */
   yearly: (number | null)[];
   label: string | null;
 }

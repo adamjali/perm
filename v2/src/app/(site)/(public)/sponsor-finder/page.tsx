@@ -17,7 +17,7 @@ import {
   finderHref,
   parseFinder,
 } from "@/lib/sponsorFinder";
-import { findSponsors } from "@/lib/turso/sponsorFinder";
+import { findSponsors } from "@/lib/db/sponsorFinder";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { buttonVariants } from "@/components/ui/button";
 

@@ -22,10 +22,10 @@ vi.mock("@/lib/sentry", () => ({
 // These seams moved from Convex to Turso on 2026-08-25. They are mocked at
 // the MODULE the sitemap imports rather than at the database client, because
 // that is the boundary the sitemap actually depends on.
-vi.mock("@/lib/turso/processingTimes", () => ({
+vi.mock("@/lib/db/processingTimes", () => ({
   getProcessingTimes: vi.fn(async () => ({ permAsOf: "2026-08-20" })),
 }));
-vi.mock("@/lib/turso/publicData", () => ({
+vi.mock("@/lib/db/publicData", () => ({
   getDisclosureStats: vi.fn(async () => null),
   // Drives how many child sitemaps the index lists.
   countEntityRanks: vi.fn(async (kind: string) =>
@@ -59,9 +59,9 @@ vi.mock("@/lib/turso/publicData", () => ({
 // Mocked at that module; `beforeEach` arranges a census with one EMPTY month,
 // because the route 404s an empty month and the sitemap must omit it.
 // Cities with H-1B filings and no PERM page: none by default.
-vi.mock("@/lib/turso/lcaCities", () => ({ lcaOnlyCities: vi.fn(async () => []) }));
+vi.mock("@/lib/db/lcaCities", () => ({ lcaOnlyCities: vi.fn(async () => []) }));
 // The top H-1B employer state pages: one ranked state, so the family is listed.
-vi.mock("@/lib/turso/h1bRanks", () => ({
+vi.mock("@/lib/db/h1bRanks", () => ({
   getH1bSummary: vi.fn(async () => ({
     top: 100,
     years: [
@@ -77,7 +77,7 @@ vi.mock("@/lib/turso/h1bRanks", () => ({
     ],
   })),
 }));
-vi.mock("@/lib/turso/groups", () => ({
+vi.mock("@/lib/db/groups", () => ({
   GROUP_PATH: { city: "/perm-cities", industry: "/perm-industries", country: "/perm-countries" },
   listGroups: vi.fn(async (kind: string) => [
     { kind, slug: kind === "city" ? "seattle-wa" : kind === "industry" ? "541511" : "india", key: "k",
@@ -86,21 +86,21 @@ vi.mock("@/lib/turso/groups", () => ({
 }));
 // The family of employers with no PERM record. Zero by default, like the
 // live-only one; the family test below arranges a corpus.
-vi.mock("@/lib/turso/otherEmployers", () => ({
+vi.mock("@/lib/db/otherEmployers", () => ({
   countOtherEmployerRanks: vi.fn(async () => 0),
   getOtherEmployerSlugWindow: vi.fn(async () => []),
 }));
-vi.mock("@/lib/turso/backlog", () => ({
+vi.mock("@/lib/db/backlog", () => ({
   getBacklogCensus: vi.fn(),
 }));
-vi.mock("@/lib/turso/sweepCoverage", () => ({
+vi.mock("@/lib/db/sweepCoverage", () => ({
   getSweepCoverage: vi.fn(async () => ({ finishedOn: "2026-09-15" })),
 }));
 // The A-Z letter pages are listed from the same per-bucket counts the pages
 // themselves render, so a letter with nothing in it is omitted here and
 // noindexed there. Mocked at that module rather than at the database client,
 // for the same reason as the seams above.
-vi.mock("@/lib/turso/entityBrowse", () => ({
+vi.mock("@/lib/db/entityBrowse", () => ({
   browseCounts: vi.fn(),
 }));
 
@@ -136,11 +136,11 @@ function arrangeEntities(sizes: Record<string, number>) {
 
 import { getAllPosts } from "@/lib/content";
 import { captureError } from "@/lib/sentry";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import { countEntityRanks, countLiveOnlyRanks, getEntitySlugWindow, getLiveOnlySlugWindow } from "@/lib/turso/publicData";
-import { browseCounts } from "@/lib/turso/entityBrowse";
-import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/turso/otherEmployers";
-import { getBacklogCensus } from "@/lib/turso/backlog";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { countEntityRanks, countLiveOnlyRanks, getEntitySlugWindow, getLiveOnlySlugWindow } from "@/lib/db/publicData";
+import { browseCounts } from "@/lib/db/entityBrowse";
+import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/db/otherEmployers";
+import { getBacklogCensus } from "@/lib/db/backlog";
 import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { BROWSE_BUCKETS, type BrowseBucket } from "@/lib/entityBrowse";
@@ -242,7 +242,7 @@ describe("sitemap.ts", () => {
   });
 
   it("lists the cities that have an H-1B page and no PERM page", async () => {
-    const { lcaOnlyCities } = await import("@/lib/turso/lcaCities");
+    const { lcaOnlyCities } = await import("@/lib/db/lcaCities");
     vi.mocked(lcaOnlyCities).mockResolvedValueOnce([{ slug: "boise-id" }]);
     const urls = (await groupEntries()).map((e) => e.url);
     expect(urls).toContain("https://permtracker.app/perm-cities/boise-id");

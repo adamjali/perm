@@ -46,7 +46,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import discover_links, fetch, log  # noqa: E402
-from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_sevp_top_employers.py"
 PAGE = "https://www.ice.gov/sevis/whats-new"
@@ -183,7 +183,7 @@ def pdf_words(blob: bytes) -> list[list[dict]]:
                 for p in pdf.pages]
 
 
-def store(db: Turso, year: int, kind: str, rows: list[dict], name: str) -> int:
+def store(db: Database, year: int, kind: str, rows: list[dict], name: str) -> int:
     db.execute(f"""CREATE TABLE IF NOT EXISTS {TABLE} (
         year INTEGER NOT NULL, list TEXT NOT NULL, rank INTEGER NOT NULL, employer TEXT NOT NULL,
         total INTEGER NOT NULL, opt INTEGER, stem_opt INTEGER, cpt INTEGER, source_file TEXT NOT NULL,
@@ -224,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
     if not lists:
         log("REFUSED: no single-year top-200 lists found")
         return 1
-    db = None if args.dry_run else Turso()
+    db = None if args.dry_run else Database()
     summary: dict[str, dict] = {}
     written = 0
     try:

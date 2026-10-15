@@ -23,7 +23,7 @@ import { api } from "@convex/_generated/api";
 import { getAllPosts } from "@/lib/content";
 import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
-import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getDisclosureStats } from "@/lib/db/publicData";
 import { DISAMBIGUATION } from "@/lib/constants/about";
 import { SITE_URL } from "@/lib/constants/site";
 import { formatInt } from "@/lib/format";

@@ -112,11 +112,11 @@ jobs:
         # the `(cond && a) || b` form because Actions has no ternary.
         program: ${{ fromJSON((github.event_name == 'workflow_dispatch' && inputs.program != 'all' && format('["{0}"]', inputs.program)) || '["pw","lca","h2a","h2b","cw1"]') }}
 
-    # lib_turso.env() reads the environment first, so no credentials file is
+    # lib_db.env() reads the environment first, so no credentials file is
     # written to the runner's disk.
     env:
-      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+      DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      DATABASE_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -146,7 +146,7 @@ jobs:
             pw|lca|h2a|h2b|cw1) ;;
             *) echo "::error::program must be pw, lca, h2a, h2b or cw1, got '$PROGRAM'"; exit 1 ;;
           esac
-          if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
+          if [ -z "$DATABASE_URL" ] || [ -z "$DATABASE_AUTH_TOKEN" ]; then
             echo "::error::database secrets absent; nothing to load into."
             exit 1
           fi
@@ -227,7 +227,7 @@ jobs:
         working-directory: v2
         run: |
           timeout 30m python3 scripts/build_lca_facets.py
-          # Every LCA selection of 5,000+ filings (src/lib/turso/wageViews.ts).
+          # Every LCA selection of 5,000+ filings (src/lib/db/wageViews.ts).
           timeout 30m python3 scripts/build_wage_views.py --program lca
           # The busiest H-1B employers by fiscal year and state (/h1b-employers).
           timeout 30m python3 scripts/build_h1b_ranks.py || {

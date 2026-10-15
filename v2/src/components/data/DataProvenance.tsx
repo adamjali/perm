@@ -3,7 +3,7 @@ import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { CiteThis } from "@/components/data/CiteThis";
 import { FinePrint } from "@/components/data/FinePrint";
-import { getFreshness, type DatasetFreshness } from "@/lib/turso/publicData";
+import { getFreshness, type DatasetFreshness } from "@/lib/db/publicData";
 import { coverageFor, datasetLabel } from "@/lib/datasetCoverage";
 import { cn } from "@/lib/utils";
 

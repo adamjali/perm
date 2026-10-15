@@ -2,7 +2,7 @@
  * The daily pulse: DOL's last working day of PERM decisions our sweep
  * observed, how it compares with the same weekday before it, the last 30 days
  * as bars, and the average by day of the week. Pure, so the `unit` project can
- * test it; the read is src/lib/turso/pulse.ts.
+ * test it; the read is src/lib/db/pulse.ts.
  *
  * WHY THE LAST WORKING DAY AND NOT THE NEWEST DAY. On Tuesday Oct 13 2026 the
  * homepage board read "Decided Oct 12: 11": Columbus Day, DOL closed, and a

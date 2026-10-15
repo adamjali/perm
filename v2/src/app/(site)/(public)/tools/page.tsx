@@ -36,7 +36,7 @@ import {
   WindowSpansMini,
 } from "@/components/tools/MiniDiagrams";
 import { QueueTape } from "@/components/tools/QueueTape";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 
 const TITLE = "Live PERM Data Overview";

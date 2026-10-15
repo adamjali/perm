@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useMemo } from "react";
 
 import { FilterableStatTable, type CsvSpec, type Facet, type StatColumn } from "@/components/tools/FilterableStatTable";
-import type { StageCase } from "@/lib/turso/rfi";
+import type { StageCase } from "@/lib/db/rfi";
 import { formatInt } from "@/lib/format";
 import { MS_PER_DAY } from "@/lib/time";
 import { SITE_URL } from "@/lib/constants/site";

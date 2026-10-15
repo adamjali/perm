@@ -1,4 +1,4 @@
-"""A `Turso` shim over real, in-memory SQLite, for the ingest contract tests.
+"""A `Database` shim over real, in-memory SQLite, for the ingest contract tests.
 
 WHY A SHIM AND NOT A FIXTURE. The defects these tests guard live INSIDE the
 SQL - a CTE with three window functions, a `NOT IN` over a grouped subquery,
@@ -23,7 +23,7 @@ import sqlite3
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import cell, lit  # noqa: E402
+from lib_db import cell, lit  # noqa: E402
 
 
 class SqliteTurso:

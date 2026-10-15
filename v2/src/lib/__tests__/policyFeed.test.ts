@@ -13,7 +13,7 @@ import {
   STRIP_PAD,
   STRIP_W,
 } from "@/lib/policyFeed";
-import type { PolicyNotice } from "@/lib/turso/policyNotices";
+import type { PolicyNotice } from "@/lib/db/policyNotices";
 
 function n(over: Partial<PolicyNotice> & { documentNumber: string; publicationDate: string }): PolicyNotice {
   return {

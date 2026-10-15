@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { DebarmentNotice } from "../DebarmentNotice";
-import type { Debarment } from "@/lib/turso/debarments";
+import type { Debarment } from "@/lib/db/debarments";
 
 /**
  * The notice tells a reader, in a sentence, whether a sponsor is barred.

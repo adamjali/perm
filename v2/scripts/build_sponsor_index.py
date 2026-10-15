@@ -52,7 +52,7 @@ from bisect import bisect_left, bisect_right
 from collections import defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, record_run, rows_of  # noqa: E402
+from lib_db import Database, record_run, rows_of  # noqa: E402
 
 TABLE = "sponsor_index"
 COLS = [
@@ -127,7 +127,7 @@ def num(v) -> float:
         return 0.0
 
 
-def read(db: Turso, today: dt.date) -> dict:
+def read(db: Database, today: dt.date) -> dict:
     """Every input, folded onto PERM sponsor pages."""
     d24 = (today - dt.timedelta(days=730)).isoformat()
     d2y = d24
@@ -348,7 +348,7 @@ def norm(row: list) -> tuple:
     return tuple(out)
 
 
-def write_diff(db: Turso, want: list[list]) -> tuple[int, int]:
+def write_diff(db: Database, want: list[list]) -> tuple[int, int]:
     stored = {}
     for r in rows_of(db.execute(f"SELECT {','.join(COLS)} FROM {TABLE}")):
         n = norm(list(r))
@@ -378,7 +378,7 @@ def main() -> int:
     args = ap.parse_args()
     WRITE_PAUSE_S = max(0.0, args.pause)
     started = time.time()
-    db = Turso()
+    db = Database()
     today = dt.date.today()
     data = read(db, today)
     rows = plan(data, today)

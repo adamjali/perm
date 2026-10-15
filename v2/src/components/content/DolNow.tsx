@@ -1,5 +1,5 @@
 import { averagePhrase, dolNow, dolPwdNow, pwdSentence, pwdWaitPhrase, queueSentence } from "@/lib/dolNow";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
 
 /**
  * DOL's current figures inside an article's sentence, read when the page is

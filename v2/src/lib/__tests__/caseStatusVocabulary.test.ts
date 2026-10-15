@@ -256,7 +256,7 @@ describe("normaliseCaseNumber", () => {
     const mine = read("src/lib/caseStatusVocabulary.ts").match(rule)?.[0];
     expect(mine, "caseStatusVocabulary.ts no longer carries the case-number rule this test reads").toBeDefined();
     expect(
-      read("src/lib/turso/caseLookup.ts").includes(mine!),
+      read("src/lib/db/caseLookup.ts").includes(mine!),
       "caseLookup.ts no longer uses the same case-number pattern as caseStatusVocabulary.ts",
     ).toBe(true);
   });

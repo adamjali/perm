@@ -254,9 +254,9 @@ def main() -> int:
             return 0
 
     rec = Recorder()
-    saved = (vb.Turso, vb.discover_snapshots, vb.fetch, vb.time.sleep)
+    saved = (vb.Database, vb.discover_snapshots, vb.fetch, vb.time.sleep)
     try:
-        vb.Turso = lambda: rec
+        vb.Database = lambda: rec
         vb.discover_snapshots = lambda limit, years: [("2015-01", "20260511180158", "https://example.invalid/jan-2015")]
         vb.fetch = lambda url, attempts=3: jan15
         vb.time.sleep = lambda s: None
@@ -268,7 +268,7 @@ def main() -> int:
         check("control: the real run does write the month",
               any("INSERT OR REPLACE INTO visa_bulletins" in q for q in rec.sql))
     finally:
-        vb.Turso, vb.discover_snapshots, vb.fetch, vb.time.sleep = saved
+        vb.Database, vb.discover_snapshots, vb.fetch, vb.time.sleep = saved
 
     # --- the direct route: State's own index on adoption.state.gov -------
     idx = (
@@ -299,9 +299,9 @@ def main() -> int:
 
     held = Held()
     asked: list[str] = []
-    saved = (vb.Turso, vb.fetch, vb.time.sleep)
+    saved = (vb.Database, vb.fetch, vb.time.sleep)
     try:
-        vb.Turso = lambda: held
+        vb.Database = lambda: held
         vb.time.sleep = lambda s: None
 
         def fake_fetch(url, attempts=3):
@@ -330,7 +330,7 @@ def main() -> int:
         # parser can't read) is the backfill's job, never the nightly run's.
         old_idx = idx + '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2007/visa-bulletin-for-may-2007.html">May 2007</a>'
         asked.clear()
-        vb.Turso = lambda: Held()
+        vb.Database = lambda: Held()
         vb.fetch = lambda url, attempts=3: (asked.append(url), old_idx if url == vb.DIRECT_INDEX else page)[1]
         vb.ingest_direct(5)
         check("the nightly run does not fetch an old month it has never held",
@@ -349,7 +349,7 @@ def main() -> int:
             pass
 
         fresh = Empty()
-        vb.Turso = lambda: fresh
+        vb.Database = lambda: fresh
         vb.fetch = lambda url, attempts=3: (
             '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-july-2026.html">Jul</a>'
             if url == vb.DIRECT_INDEX else page)
@@ -365,7 +365,7 @@ def main() -> int:
         check("a refused index warns and exits 0 (the freshness budget is the alarm)",
               vb.ingest_direct(2) == 0)
     finally:
-        vb.Turso, vb.fetch, vb.time.sleep = saved
+        vb.Database, vb.fetch, vb.time.sleep = saved
         os.environ.pop("GITHUB_OUTPUT", None)
 
     print(f"\n  {len(failures)} failure(s)")

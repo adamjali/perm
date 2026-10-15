@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 import { I485QueuePosition } from "@/components/tools/I485QueuePosition";
-import { getBulletinBoard } from "@/lib/turso/bulletin";
-import { getBulletinCheck } from "@/lib/turso/bulletinCheck";
+import { getBulletinBoard } from "@/lib/db/bulletin";
+import { getBulletinCheck } from "@/lib/db/bulletinCheck";
 import type { PaceBasis } from "@/lib/bulletinNext";
 import type { CountryKey } from "@/lib/perm";
 
@@ -26,7 +26,7 @@ import {
   getI485Trend,
   getVisaBulletinSeries,
   type DatasetFreshness,
-} from "@/lib/turso/publicData";
+} from "@/lib/db/publicData";
 import type { I485CellTable } from "@/lib/i485/position";
 import { withSocialCard } from "@/lib/socialCard";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";

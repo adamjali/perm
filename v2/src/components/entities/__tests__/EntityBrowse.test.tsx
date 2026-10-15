@@ -8,7 +8,7 @@ import {
   type BrowseBucket,
 } from "@/lib/entityBrowse";
 import { MIN_TOTAL_FOR_PAGE, hasOwnPage } from "@/lib/entityPayload";
-import type { BrowseEntry } from "@/lib/turso/entityBrowse";
+import type { BrowseEntry } from "@/lib/db/entityBrowse";
 
 import { BrowseIndexGrid, BrowseList, BrowseStrip } from "../EntityBrowse";
 

@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { planCaseSearch } from "@/lib/caseSearchRequest";
-import { unifiedSearch } from "@/lib/turso/unifiedSearch";
+import { unifiedSearch } from "@/lib/db/unifiedSearch";
 import { casesToCsv } from "@/lib/caseSearchCsv";
 
 /**
  * One search across PERM, prevailing wage requests, H-1B LCAs and H-2A and H-2B.
  *
  * A ROUTE, NOT A PAGE PARAM. Reading `searchParams` in the page would make it
- * dynamic, and every visit would then be a server render against Turso. That
+ * dynamic, and every visit would then be a server render against the database. That
  * is the cost that read 11.6 billion rows in two days in August. The page
  * stays static and the search is one JSON request.
  *

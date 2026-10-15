@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const suggestNames = vi.fn();
 const indexReady = vi.fn();
-vi.mock("@/lib/turso/nameSuggest", () => ({
+vi.mock("@/lib/db/nameSuggest", () => ({
   indexReady: (...a: unknown[]) => indexReady(...a),
   SUGGEST_KINDS: ["employer", "attorney", "occupation"],
   SUGGEST_MIN_LENGTH: 2,

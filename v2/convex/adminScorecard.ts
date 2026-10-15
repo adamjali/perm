@@ -14,7 +14,7 @@ import { one as mirrorOne } from "./lib/publicMirror";
  * `perm_docs['scorecard_rivals']`. The public scorecard reads a different doc
  * that holds ours alone; this one never renders outside `/admin`.
  *
- * An action because reading Turso is a network call; the admin check mirrors
+ * An action because reading the public-data database is a network call; the admin check mirrors
  * `sendAdminEmail`. Returns the doc's JSON as a string for the client to
  * parse, rather than a validator the size of the summary's shape.
  */

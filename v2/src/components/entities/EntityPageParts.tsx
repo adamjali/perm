@@ -10,8 +10,8 @@
 import { Fragment, type ReactNode } from "react";
 import Link from "next/link";
 import { formatDollars, formatInt } from "@/lib/format";
-import type { FieldDistribution } from "@/lib/turso/entities";
-import type { FacetRow } from "@/lib/turso/entityDetail";
+import type { FieldDistribution } from "@/lib/db/entities";
+import type { FacetRow } from "@/lib/db/entityDetail";
 import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { Figure, FigureRow } from "@/components/data/FigureRow";

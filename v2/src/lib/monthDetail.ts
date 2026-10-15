@@ -5,7 +5,7 @@
  * has got. Days are when our sweep first saw a decision, not DOL's own date.
  *
  * Plain module: the parser and the summaries are pure, so the unit project
- * holds them; the server read lives in turso/monthDetail.ts.
+ * holds them; the server read lives in db/monthDetail.ts.
  */
 
 export interface DayDecisions {

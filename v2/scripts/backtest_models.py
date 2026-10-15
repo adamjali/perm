@@ -33,7 +33,7 @@ import statistics
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows  # noqa: E402
+from lib_db import Database, query_rows  # noqa: E402
 
 MIN_COHORT = 500
 
@@ -52,7 +52,7 @@ OBSERVE_AT = (0.25, 0.35, 0.50, 0.65)
 day = dt.date.fromisoformat
 
 
-def load(db: Turso):
+def load(db: Database):
     bym = collections.defaultdict(list)
     for month, day, n in query_rows(db, """SELECT substr(received_date,1,7), substr(decision_date,1,10), count(*)
                         FROM perm_cases
@@ -104,7 +104,7 @@ def shape_from(cohorts, bym):
 
 
 def main() -> int:
-    db = Turso()
+    db = Database()
     bym, daily = load(db)
     pool = [m for m in sorted(bym)
             if "2023-11" <= m <= "2025-12" and sum(n for _, n in bym[m]) >= MIN_COHORT]

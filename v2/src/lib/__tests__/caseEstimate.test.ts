@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildCaseEstimate } from "../caseEstimate";
-import type { EstimatorData } from "../turso/estimate";
+import type { EstimatorData } from "../db/estimate";
 
 /**
  * The per-case estimate: the composite that finally answers "when could MY

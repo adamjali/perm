@@ -4,7 +4,7 @@
  * Same split as dolPace.ts and wageStats.ts: the arithmetic that decides what
  * may be drawn has to be importable from the `unit` vitest project, which runs
  * happy-dom, where importing `server-only` throws. The QUERIES live in
- * src/lib/turso/wages.ts.
+ * src/lib/db/wages.ts.
  *
  * A ladder here is one row of `perm_wage_stats`: seven percentiles over the
  * certified cases in one cell, materialised by scripts/ingest_perm_disclosure.py
@@ -153,7 +153,7 @@ export const WAGE_BAND_EDGES = [60_000, 80_000, 100_000, 130_000] as const;
  * DECLARED HERE RATHER THAN IMPORTED, AND THE REASON IS A SILENT FAILURE THAT
  * ACTUALLY SHIPPED FOR ONE ITERATION. `DEFAULT_RATE_FLOOR` and
  * `wilsonInterval` live in `components/tools/RateBars.tsx`, which begins with
- * `"use client"`. This module is reachable from `lib/turso/wages.ts`, which is
+ * `"use client"`. This module is reachable from `lib/db/wages.ts`, which is
  * `server-only`, so under React Server Components those imports resolve to
  * CLIENT REFERENCES rather than to the values. `32020 >= <client reference>`
  * is simply `false`, so every wage band rendered "withheld" over tens of

@@ -4,7 +4,7 @@
  * card. Cached for the page's own window; a missing entity is a 404 here too.
  */
 import { ENTITY_OG_SIZE, generateEntityOG } from "@/lib/entityOg";
-import { resolveEntity } from "@/lib/turso/entityDetail";
+import { resolveEntity } from "@/lib/db/entityDetail";
 
 export const runtime = "nodejs";
 export const revalidate = 2592000;

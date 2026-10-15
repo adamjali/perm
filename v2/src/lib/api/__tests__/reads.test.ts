@@ -9,24 +9,24 @@ const getFreshness = vi.fn();
 const entityPending = vi.fn();
 const searchByName = vi.fn();
 
-vi.mock("@/lib/turso/publicData", () => ({
+vi.mock("@/lib/db/publicData", () => ({
   getEntityBySlug: (...a: unknown[]) => getEntityBySlug(...a),
   getFreshness: (...a: unknown[]) => getFreshness(...a),
   getLiveBacklog: vi.fn(),
 }));
-vi.mock("@/lib/turso/entityDetail", () => ({ entityPending: (...a: unknown[]) => entityPending(...a) }));
-vi.mock("@/lib/turso/entities", () => ({ searchByName: (...a: unknown[]) => searchByName(...a) }));
+vi.mock("@/lib/db/entityDetail", () => ({ entityPending: (...a: unknown[]) => entityPending(...a) }));
+vi.mock("@/lib/db/entities", () => ({ searchByName: (...a: unknown[]) => searchByName(...a) }));
 const lookupCase = vi.fn();
-vi.mock("@/lib/turso/caseLookup", () => ({ lookupCase: (...a: unknown[]) => lookupCase(...a) }));
-vi.mock("@/lib/turso/client", () => ({ one: vi.fn() }));
-vi.mock("@/lib/turso/processingTimes", () => ({ getProcessingTimes: vi.fn() }));
-vi.mock("@/lib/turso/pwdCases", () => ({ pwd: {} }));
-vi.mock("@/lib/turso/lcaCases", () => ({ lca: {} }));
+vi.mock("@/lib/db/caseLookup", () => ({ lookupCase: (...a: unknown[]) => lookupCase(...a) }));
+vi.mock("@/lib/db/client", () => ({ one: vi.fn() }));
+vi.mock("@/lib/db/processingTimes", () => ({ getProcessingTimes: vi.fn() }));
+vi.mock("@/lib/db/pwdCases", () => ({ pwd: {} }));
+vi.mock("@/lib/db/lcaCases", () => ({ lca: {} }));
 const seasonalLookup = vi.fn();
 const seasonalDisclosed = vi.fn();
 const seasonalRecord = vi.fn();
 const seasonalPosting = vi.fn();
-vi.mock("@/lib/turso/seasonalCases", () => ({
+vi.mock("@/lib/db/seasonalCases", () => ({
   seasonal: {
     lookup: (...a: unknown[]) => seasonalLookup(...a),
     lookupDisclosed: (...a: unknown[]) => seasonalDisclosed(...a),
@@ -35,7 +35,7 @@ vi.mock("@/lib/turso/seasonalCases", () => ({
   lookupSeasonalPosting: (...a: unknown[]) => seasonalPosting(...a),
 }));
 const estimatePermCase = vi.fn();
-vi.mock("@/lib/turso/permEstimate", () => ({
+vi.mock("@/lib/db/permEstimate", () => ({
   estimatePermCase: (...a: unknown[]) => estimatePermCase(...a),
   loadPermEstimateContext: vi.fn(async () => ({})),
 }));

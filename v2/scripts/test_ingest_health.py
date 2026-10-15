@@ -3,7 +3,7 @@
 
     python3 scripts/test_ingest_health.py
 
-No network, no Turso. The database is a stub returning Hrana-shaped rows.
+No network, no Database. The database is a stub returning Hrana-shaped rows.
 
 WHAT THIS PROTECTS. Before 2026-09-03 nothing anywhere alerted on a failed
 ingest. Two scheduled DOL sweeps died that morning within two minutes of each
@@ -589,10 +589,10 @@ def check_main_combines_every_check() -> None:
                 {"type": "integer", "value": "3"}, {"type": "text", "value": "DOL"},
                 {"type": "text", "value": "Daily"}, {"type": "integer", "value": str(int(NOW))}]]}}}
 
-    saved = {name: getattr(health, name) for name in CHECKS + ("Turso", "check_cap_streak",
+    saved = {name: getattr(health, name) for name in CHECKS + ("Database", "check_cap_streak",
                                                               "check_unclassified_statuses", "check_hand_read_figures")}
     try:
-        health.Turso = FreshDB
+        health.Database = FreshDB
         for name in ("check_cap_streak", "check_unclassified_statuses", "check_hand_read_figures"):
             setattr(health, name, lambda *a: 0)
         for name in CHECKS:

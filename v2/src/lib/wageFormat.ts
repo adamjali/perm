@@ -51,7 +51,7 @@ export function formatWage(wage: number | null | undefined, unit: string | null 
  * thin out above $20,000 and start again at $40,000 (11 monthly rows between
  * $30,000 and $40,000, 1,378 above). Above these floors a wage is shown as
  * DOL printed it, with a note, and left out of every average and median.
- * The SQL twins are in src/lib/turso/lcaWages.ts and scripts/build_lca_facets.py.
+ * The SQL twins are in src/lib/db/lcaWages.ts and scripts/build_lca_facets.py.
  */
 export const HOURLY_LOOKS_YEARLY = 10_000;
 export const PERIOD_LOOKS_YEARLY = 40_000;

@@ -41,8 +41,8 @@ from collections.abc import Callable
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from entity_identity import SpacedKeyMap, entity_key, program_key  # noqa: E402
-from lib_turso import (  # noqa: E402
-    Turso, add_missing_columns, query_rows, record_run, stamp_freshness,
+from lib_db import (  # noqa: E402
+    Database, add_missing_columns, query_rows, record_run, stamp_freshness,
 )
 
 CA_URL = "https://edd.ca.gov/siteassets/files/jobs_and_training/warn/warn_report1.xlsx"
@@ -467,7 +467,7 @@ def page_matcher(pairs) -> Callable[[str], str | None]:
     return match
 
 
-def match_employers(db: Turso, rows: list[dict]) -> int:
+def match_employers(db: Database, rows: list[dict]) -> int:
     """Attach a sponsor slug where the normalised name equals a PERM employer's merge key,
     or failing that, a live-only or no-PERM employer page's own key."""
     # Every employer page's key, busiest first, so a notice spelled with the gaps
@@ -548,7 +548,7 @@ INSERT_COLS = ("id, state, notice_date, effective_date, company, kind, employees
                "industry, employer_slug, source_url, fetched_at, site")
 
 
-def write(db: Turso, rows: list[dict], state: str) -> int:
+def write(db: Database, rows: list[dict], state: str) -> int:
     db.script(DDL)
     add_missing_columns(db, "warn_notices", EXTRA_COLUMNS)
     have, held_rank, held_site = {}, {}, {}
@@ -619,7 +619,7 @@ def prune_plan(held: list[tuple[str, str, str]], rows: list[dict]) -> tuple[list
     return sorted(i for i, _, _ in in_range if i not in ids), coverage
 
 
-def prune(db: Turso, rows: list[dict], state: str) -> int:
+def prune(db: Database, rows: list[dict], state: str) -> int:
     held = [tuple(r) for r in query_rows(
         db, "SELECT id, company, notice_date FROM warn_notices WHERE state = ?", [state])]
     stale, coverage = prune_plan(held, rows)
@@ -692,7 +692,7 @@ def main() -> int:
     if not parsed:
         log("nothing parsed for any state")
         return 1
-    db = Turso()
+    db = Database()
     every = [r for rows in parsed.values() for r in rows]
     matched = match_employers(db, every)
     log(f"matched {matched} of {len(every)} to a PERM sponsor by merge key")

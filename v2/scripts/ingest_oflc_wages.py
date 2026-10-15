@@ -47,7 +47,7 @@ import zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import POLITE_PAUSE_S, discover_links, fetch, log  # noqa: E402
 from lib_reference import keep_record, seen_before, sha256, sheet_paths, sheet_rows, sync_rows  # noqa: E402
-from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_oflc_wages.py"
 # What the site prints as the source line: a readable name, never a bare URL (a URL has no
@@ -215,7 +215,7 @@ def parse_year(zip_bytes: bytes, year: int) -> dict[str, list[tuple]]:
     return {"alc": alc, "edc": edc, "geo": geo, "basis": basis_rows(z, year)}
 
 
-def load_year(db: Turso, year: int, zip_bytes: bytes, *, newest: bool, force: bool) -> dict:
+def load_year(db: Database, year: int, zip_bytes: bytes, *, newest: bool, force: bool) -> dict:
     digest = sha256(zip_bytes)
     record = f"oflc_wages_load_{year}"
     if not force and seen_before(db, record, digest):
@@ -270,7 +270,7 @@ def main() -> int:
                 f"basis {len(parts['basis'])} ({sum(r[6] or 0 for r in parts['basis'])} on Appendix A)")
         return 0
 
-    db = Turso()
+    db = Database()
     db.script(DDL)
     results, failed = [], []
     # Newest first, so the year the site reads most is current before history.
@@ -295,8 +295,8 @@ def main() -> int:
     return 0
 
 
-def query_years(db: Turso) -> list[dict]:
-    from lib_turso import query_rows
+def query_years(db: Database) -> list[dict]:
+    from lib_db import query_rows
     return [{"year": int(r[0])} for r in query_rows(db, f"SELECT DISTINCT wage_year FROM {LEVELS} ORDER BY 1")]
 
 

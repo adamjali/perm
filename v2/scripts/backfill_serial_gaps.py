@@ -34,7 +34,7 @@ import time
 from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows, record_run, write_doc  # noqa: E402
+from lib_db import Database, query_rows, record_run, write_doc  # noqa: E402
 import sweep_serial_gaps as g  # noqa: E402
 
 SCRIPT = "backfill_serial_gaps.py"
@@ -164,7 +164,7 @@ def main() -> int:
     ap.add_argument("--status", action="store_true", help="print progress and exit")
     a = ap.parse_args()
 
-    db = Turso()
+    db = Database()
     if a.status:
         print(json.dumps(read_state(db), indent=1))
         return 0

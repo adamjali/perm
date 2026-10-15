@@ -28,7 +28,7 @@ import argparse
 import sys
 import time
 
-from lib_turso import Turso, query_rows, run_stmts, stmt
+from lib_db import Database, query_rows, run_stmts, stmt
 
 SOURCE = "dol-disclosure"
 
@@ -75,7 +75,7 @@ def log(msg: str) -> None:
     print(msg, flush=True)
 
 
-def build(db: Turso, dry_run: bool = False, source: str = SOURCE) -> int:
+def build(db: Database, dry_run: bool = False, source: str = SOURCE) -> int:
     cases = SERIES[source]
     days = [(str(d), int(t), int(c or 0), int(n or 0), int(w or 0))
             for d, t, c, n, w in query_rows(db, days_sql(cases))]
@@ -120,7 +120,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="Count and check; write nothing.")
     ap.add_argument("--only", choices=sorted(GROUPS), help="Build one group of series (default: all).")
     args = ap.parse_args()
-    db = Turso()
+    db = Database()
     sources = GROUPS[args.only] if args.only else list(SERIES)
     # Each series stands alone: one that reads nothing keeps its old rows and
     # the others are still built; the exit code reports any that failed.

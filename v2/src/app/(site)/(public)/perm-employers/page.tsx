@@ -20,9 +20,9 @@ import { fetchEntitySeed } from "@/lib/entitySeed";
 import { BrowseTeaser } from "@/components/entities/BrowseBody";
 import { PendingLeaderboard } from "@/components/entities/PendingLeaderboard";
 import { WaitLeaders } from "@/components/entities/WaitLeaders";
-import { getFieldWait } from "@/lib/turso/employerWait";
-import { pendingLeaders } from "@/lib/turso/entityDetail";
-import { getFreshness } from "@/lib/turso/publicData";
+import { getFieldWait } from "@/lib/db/employerWait";
+import { pendingLeaders } from "@/lib/db/entityDetail";
+import { getFreshness } from "@/lib/db/publicData";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";

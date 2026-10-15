@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { WarnNotice as Notice } from "@/lib/turso/warn";
+import type { WarnNotice as Notice } from "@/lib/db/warn";
 
 /**
  * A sponsor's WARN notices, on its own page. One line per filing as the

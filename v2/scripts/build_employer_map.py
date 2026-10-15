@@ -62,7 +62,7 @@ from collections import Counter, defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import program_key, spacing_aliases, typo_aliases  # noqa: E402
-from lib_turso import Turso, et_date, record_run, rows_of  # noqa: E402
+from lib_db import Database, et_date, record_run, rows_of  # noqa: E402
 
 MAP = "employer_page_map"
 INDEX = "employer_other_index"
@@ -208,7 +208,7 @@ def fold(slugs: dict, slug, name, n, program, first, last) -> None:
         rec["last"] = last
 
 
-def read_sources(db: Turso) -> dict[str, dict]:
+def read_sources(db: Database) -> dict[str, dict]:
     """Every employer slug in every program table, with names and counts."""
     slugs: dict[str, dict] = {}
     for table, name_col, first_col, last_col, default, published in CASE_SOURCES:
@@ -246,7 +246,7 @@ def read_sources(db: Turso) -> dict[str, dict]:
     return slugs
 
 
-def read_pages(db: Turso) -> dict:
+def read_pages(db: Database) -> dict:
     """The pages that exist already: published, aliased and live-only PERM employers."""
     perm = {str(s): (str(n or ""), str(k or ""), int(t or 0)) for s, n, k, t in rows_of(db.execute(
         "SELECT slug, name, merge_key, total FROM perm_entities WHERE kind = 'employer'"))}
@@ -421,7 +421,7 @@ def plan(slugs: dict[str, dict], pages: dict) -> tuple[list[list], list[list], d
     return rows, index_rows, dict(stats)
 
 
-def read_firm_sources(db: Turso) -> dict[str, Counter]:
+def read_firm_sources(db: Database) -> dict[str, Counter]:
     """Every firm spelling in the program files: slug -> {printed name: filings}."""
     spellings: dict[str, Counter] = defaultdict(Counter)
     for table in FIRM_SOURCES:
@@ -441,7 +441,7 @@ def read_firm_sources(db: Turso) -> dict[str, Counter]:
     return spellings
 
 
-def read_firm_pages(db: Turso) -> dict[str, tuple[str, str, int]]:
+def read_firm_pages(db: Database) -> dict[str, tuple[str, str, int]]:
     """Every law-firm page: slug -> (name, merge key, total)."""
     return {str(s): (str(n or ""), str(k or ""), int(t or 0)) for s, n, k, t in rows_of(db.execute(
         "SELECT slug, name, merge_key, total FROM perm_entities WHERE kind = 'attorney'"))}
@@ -485,7 +485,7 @@ def norm(row: list, cols: list[str]) -> tuple:
     return tuple(int(v or 0) if c in ints else (None if v is None else str(v)) for c, v in zip(cols, row))
 
 
-def write_diff(db: Turso, table: str, cols: list[str], want: list[list]) -> tuple[int, int, list[str]]:
+def write_diff(db: Database, table: str, cols: list[str], want: list[list]) -> tuple[int, int, list[str]]:
     stored = {}
     for r in rows_of(db.execute(f"SELECT {','.join(cols)} FROM {table}")):
         n = norm(list(r), cols)
@@ -537,7 +537,7 @@ def main() -> int:
     args = ap.parse_args()
     WRITE_PAUSE_S = max(0.0, args.pause)
     started = time.time()
-    db = Turso()
+    db = Database()
     slugs = read_sources(db)
     pages = read_pages(db)
     rows, index_rows, stats = plan(slugs, pages)

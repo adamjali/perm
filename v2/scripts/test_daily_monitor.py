@@ -152,7 +152,7 @@ def main() -> int:
 
     # stdout: one status word per section, nothing numeric.
     fake = {"day": "2026-09-28", "generatedAt": 1, "sections": [
-        dm.section("turso", "Turso", "warn", "$143.12 over so far", ["9.29B rows read"]),
+        dm.section("bills", "Bills", "warn", "$143.12 over so far", ["9.29B rows read"]),
         dm.section("site", "Site", "ok", "8 of 8", [])]}
     orig = dm.build
     dm.build = lambda now: fake
@@ -163,7 +163,7 @@ def main() -> int:
         written = json.loads((pathlib.Path(d) / "r.json").read_text())
     dm.build = orig
     printed = buf.getvalue()
-    check(printed.strip() == "turso=warn site=ok", f"stdout is status words only: {printed!r}")
+    check(printed.strip() == "bills=warn site=ok", f"stdout is status words only: {printed!r}")
     check(not re.search(r"\d", printed), "no digit reaches the public log")
     check(written == fake, "the full report goes to the file")
 
@@ -444,20 +444,20 @@ def data_section_reads_the_scorecard_alarms() -> None:
             return [[json.dumps(priv)]]
         return []
 
-    fake = types.ModuleType("lib_turso")
-    fake.Turso = lambda *a, **k: None
+    fake = types.ModuleType("lib_db")
+    fake.Database = lambda *a, **k: None
     fake.query_rows = query_rows
-    saved = sys.modules.get("lib_turso")
-    sys.modules["lib_turso"] = fake
-    os.environ.setdefault("TURSO_DATABASE_URL", "http://x")
-    os.environ.setdefault("TURSO_AUTH_TOKEN", "x")
+    saved = sys.modules.get("lib_db")
+    sys.modules["lib_db"] = fake
+    os.environ.setdefault("DATABASE_URL", "http://x")
+    os.environ.setdefault("DATABASE_AUTH_TOKEN", "x")
     try:
         sec = dm.data_section(0)
     finally:
         if saved is not None:
-            sys.modules["lib_turso"] = saved
+            sys.modules["lib_db"] = saved
         else:
-            del sys.modules["lib_turso"]
+            del sys.modules["lib_db"]
     lines = sec["lines"]
     check(sec["status"] == "warn", "a scorecard alarm turns the data section amber")
     check(any(l.startswith("Scorecard alarm: Wage-request months: no case graded yet") for l in lines),

@@ -2,7 +2,7 @@
  * Reading the RFI clock from the nightly backtest's doc
  * (perm_docs['estimator_backtest'].rfiClock, scripts/backtest_queue.py).
  * Plain module so the unit project tests it; the reader is
- * src/lib/turso/rfiClock.ts.
+ * src/lib/db/rfiClock.ts.
  */
 
 import type { RfiClock } from "@/lib/perm";

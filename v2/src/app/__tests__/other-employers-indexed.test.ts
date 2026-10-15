@@ -27,7 +27,7 @@ function fnBody(src: string, name: string): string {
 describe("pages for employers with no PERM record", () => {
   it("are listed from the nightly table through a rank window, as a family of their own", () => {
     const sitemap = source("lib/sitemap/build.ts");
-    const reads = source("lib/turso/otherEmployers.ts");
+    const reads = source("lib/db/otherEmployers.ts");
     // Control: the live-only family is wired the same way in the same file.
     expect(sitemap).toContain("getLiveOnlySlugWindow(chunk, SITEMAP_CHUNK)");
 

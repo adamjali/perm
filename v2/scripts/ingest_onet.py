@@ -46,7 +46,7 @@ import zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import fetch, log  # noqa: E402
 from lib_reference import keep_record, seen_before, sha256, sync_rows  # noqa: E402
-from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_onet.py"
 # What the site prints as the source line: a readable name, never a bare URL (a URL has no
@@ -235,7 +235,7 @@ def main() -> int:
     except Refusal as exc:
         log(f"REFUSED: {exc}")
         if not args.dry_run:
-            record_run(Turso(), SCRIPT, status="failed", note=f"refused: {exc}", started_at=started)
+            record_run(Database(), SCRIPT, status="failed", note=f"refused: {exc}", started_at=started)
         return 1
     log(f"  {len(rows)} occupations, {sum(1 for r in rows if r[4])} with a Job Zone, "
         f"{reference['brightCount']} Bright Outlook")
@@ -244,7 +244,7 @@ def main() -> int:
             log(f"  {r[0]} {r[2]} zone {r[4]} bright {r[5]!r} {r[6][:160]}")
         return 0
 
-    db = Turso()
+    db = Database()
     db.script(DDL)
     if not args.force and seen_before(db, RECORD, digest):
         log("  unchanged since the last load; nothing to write")

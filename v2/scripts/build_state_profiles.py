@@ -39,7 +39,7 @@ import json
 import sys
 import time
 
-from lib_turso import Turso, lit, query_dicts, write_doc
+from lib_db import Database, lit, query_dicts, write_doc
 
 DOC_KEY = "state_profiles"
 
@@ -93,7 +93,7 @@ def top_by_count(counts: dict[str, int], labels: dict[str, str], n: int) -> list
     return [{"key": k, "label": labels.get(k, k), "count": c} for k, c in ranked]
 
 
-def build(db: Turso) -> dict:
+def build(db: Database) -> dict:
     log("  reading state x employer")
     t = time.time()
     emp = query_dicts(
@@ -219,7 +219,7 @@ def build(db: Turso) -> dict:
 
 def main() -> int:
     dry = "--dry-run" in sys.argv
-    db = Turso()
+    db = Database()
     log(f"  target: {db.url}")
 
     # The window this document describes, taken from the aggregate the rest of

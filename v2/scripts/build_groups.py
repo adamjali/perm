@@ -35,8 +35,8 @@ from collections import Counter, defaultdict
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_entity_detail import city_key, city_labels  # noqa: E402
 from lib_naics import naics_title, normalize_naics  # noqa: E402
-from lib_turso import (  # noqa: E402
-    Turso, insert_stmts, record_run, rows_of, run_stmts, stmt, write_doc,
+from lib_db import (  # noqa: E402
+    Database, insert_stmts, record_run, rows_of, run_stmts, stmt, write_doc,
 )
 from lib_slugs import slugify  # noqa: E402
 
@@ -284,7 +284,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
-    db = Turso()
+    db = Database()
     t = time.time()
 
     def both():

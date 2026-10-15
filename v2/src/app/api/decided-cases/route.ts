@@ -10,7 +10,7 @@ import {
   getDecidedFeed,
   isIsoDate,
   type DecidedNarrow,
-} from "@/lib/turso/decidedDays";
+} from "@/lib/db/decidedDays";
 import { MS_PER_DAY } from "@/lib/time";
 
 /**

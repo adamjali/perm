@@ -22,7 +22,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows  # noqa: E402
+from lib_db import Database, query_rows  # noqa: E402
 from lib_flag_serials import (  # noqa: E402
     ALL_FLAG_PREFIXES, PERM_OFFICE_PREFIXES, code_to_date, code_of, recent_day_codes,
 )
@@ -135,7 +135,7 @@ def check_no_duplicate_indexes(rows) -> tuple[bool, str]:
 
 
 def main(today: datetime.date | None = None) -> int:
-    db = Turso()
+    db = Database()
     today = today or datetime.date.today()
 
     def rows(sql: str, args: list | None = None) -> list[list]:

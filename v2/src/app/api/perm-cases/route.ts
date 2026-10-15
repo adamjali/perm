@@ -13,21 +13,21 @@ import {
   searchLiveCases,
   type CaseFilter,
   type CaseSlice,
-} from "@/lib/turso/cases";
+} from "@/lib/db/cases";
 import {
   LIVE_DEFAULT_ITEMS,
   MONTH_RE,
   isLiveKind,
   isLiveSort,
   listLiveCases,
-} from "@/lib/turso/liveCases";
+} from "@/lib/db/liveCases";
 
 /**
  * The case browser's data, for a page with no ConvexProvider.
  *
  * /perm-cases is public and static, so it cannot hold a reactive client. It
  * used to reach Convex over plain HTTP from the browser; the corpus now lives
- * in Turso, whose credential must never reach a client bundle, so the browser
+ * in the public-data database, whose credential must never reach a client bundle, so the browser
  * talks to this route instead and the credential stays on the server.
  *
  * PUBLIC AND UNAUTHENTICATED, so the guards below are ordered by cost. Every

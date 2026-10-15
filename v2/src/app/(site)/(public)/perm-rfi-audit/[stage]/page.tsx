@@ -66,8 +66,8 @@ import {
   getStageCohorts,
   listStageCases,
   stageListing,
-} from "@/lib/turso/rfi";
-import { getFreshness } from "@/lib/turso/publicData";
+} from "@/lib/db/rfi";
+import { getFreshness } from "@/lib/db/publicData";
 import { formatInt } from "@/lib/format";
 import { buttonVariants } from "@/components/ui/button";
 

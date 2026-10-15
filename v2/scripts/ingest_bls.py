@@ -46,7 +46,7 @@ import zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import POLITE_PAUSE_S, discover_links, fetch, log  # noqa: E402
 from lib_reference import keep_record, seen_before, sha256, sheet_rows, sync_rows  # noqa: E402
-from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_bls.py"
 # Readable source names for the site's source line, never bare URLs.
@@ -243,7 +243,7 @@ def xlsx_members(zip_bytes: bytes) -> list[bytes]:
     return [z.read(n) for n in sorted(names)]
 
 
-def load_oews(db: Turso | None, args, started: float) -> int:
+def load_oews(db: Database | None, args, started: float) -> int:
     if args.local_oews:
         yy = re.search(r"(\d\d)", os.path.basename(args.local_oews.rstrip("/"))).group(1)
         files = {k: open(os.path.join(args.local_oews, f"oesm{yy}{k}.zip"), "rb").read() for k in ("nat", "st", "ma")}
@@ -283,7 +283,7 @@ def load_oews(db: Turso | None, args, started: float) -> int:
     return 0
 
 
-def load_projections(db: Turso | None, args, started: float) -> int:
+def load_projections(db: Database | None, args, started: float) -> int:
     if args.local_projections:
         book = open(args.local_projections, "rb").read()
     else:
@@ -323,7 +323,7 @@ def main() -> int:
     started = time.time()
     db = None
     if not args.dry_run:
-        db = Turso()
+        db = Database()
         db.script(DDL)
     rc = 0
     for name, step in (("oews", load_oews), ("projections", load_projections)):

@@ -77,7 +77,7 @@ describe("a yearly salary under the wrong unit", () => {
   it("uses the same floors as the SQL that every average reads", () => {
     const root = join(__dirname, "..", "..", "..");
     const sources = [
-      readFileSync(join(root, "src/lib/turso/lcaWages.ts"), "utf8"),
+      readFileSync(join(root, "src/lib/db/lcaWages.ts"), "utf8"),
       readFileSync(join(root, "scripts/build_lca_facets.py"), "utf8"),
     ];
     for (const src of sources) {

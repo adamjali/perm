@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const exec = vi.fn();
 const rows = vi.fn();
-vi.mock("@/lib/turso/client", () => ({ exec: (...a: unknown[]) => exec(...a), rows: (...a: unknown[]) => rows(...a) }));
+vi.mock("@/lib/db/client", () => ({ exec: (...a: unknown[]) => exec(...a), rows: (...a: unknown[]) => rows(...a) }));
 
 import { API_PLANS } from "@convex/lib/apiPlans";
 import {

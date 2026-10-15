@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import { WARN_COLUMNS, WarnTable, sizeBand } from "../WarnTable";
-import type { WarnNotice } from "@/lib/turso/warn";
+import type { WarnNotice } from "@/lib/db/warn";
 
 function n(over: Partial<WarnNotice>): WarnNotice {
   return {

@@ -23,7 +23,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { PAGE_CARD_ALT, pageCardUrl, type PageCardSlug } from "@/lib/pageCards";
 import { pressCreditHtml } from "@/lib/pressCredit";
 import { withSocialCard } from "@/lib/socialCard";
-import { getEmployerStages } from "@/lib/turso/employerStages";
+import { getEmployerStages } from "@/lib/db/employerStages";
 import { buttonVariants } from "@/components/ui/button";
 
 const TITLE = "Press and Data for Journalists";

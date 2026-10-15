@@ -3,7 +3,7 @@ import { Fragment } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { formatInt } from "@/lib/format";
-import type { WarnNotice } from "@/lib/turso/warn";
+import type { WarnNotice } from "@/lib/db/warn";
 
 /**
  * The notices matched to a sponsor, drawn two ways before the table: by the

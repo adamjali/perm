@@ -20,7 +20,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
-import type { CaseChange, ChangeCalendar, ChangeDayFeed } from "@/lib/turso/changes";
+import type { CaseChange, ChangeCalendar, ChangeDayFeed } from "@/lib/db/changes";
 
 const usePublicQuery = vi.fn();
 vi.mock("@/hooks/usePublicQuery", () => ({ usePublicQuery }));

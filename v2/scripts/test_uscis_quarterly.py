@@ -22,7 +22,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ingest_uscis_quarterly as q  # noqa: E402
-from lib_turso import typed_cell  # noqa: E402
+from lib_db import typed_cell  # noqa: E402
 
 FIXTURES = pathlib.Path(__file__).resolve().parent / "fixtures" / "uscis"
 FAILURES: list[str] = []
@@ -473,7 +473,7 @@ def main() -> int:
           and q.previous_keys(db, af) is None)
 
     # -- the whole run over local files, against the fake --------------------
-    q.Turso = lambda: db  # type: ignore[assignment]
+    q.Database = lambda: db  # type: ignore[assignment]
     rc = q.main(["--local", str(FIXTURES), "--skip-factsheet"])
     loads = q.read_loads(db)
     check("main: exits 0 and records every file by name",

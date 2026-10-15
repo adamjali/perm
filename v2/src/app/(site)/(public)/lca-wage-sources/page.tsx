@@ -8,7 +8,7 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { formatInt, formatShare } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
-import { getWageSources } from "@/lib/turso/wageSources";
+import { getWageSources } from "@/lib/db/wageSources";
 import { splitYears } from "@/lib/wageSourceYears";
 
 /**

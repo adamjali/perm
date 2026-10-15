@@ -12,8 +12,8 @@ import {
   getWageFilterOptions,
   getWageHistogram,
   getWageStats,
-} from "@/lib/turso/publicData";
-import { getStateLadders, MIN_CASES_FOR_LADDER } from "@/lib/turso/wages";
+} from "@/lib/db/publicData";
+import { getStateLadders, MIN_CASES_FOR_LADDER } from "@/lib/db/wages";
 import { LadderCombViews } from "@/components/wages/LadderViews";
 import { SplitLadderNote } from "@/components/wages/SplitLadderNote";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
@@ -30,7 +30,7 @@ import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
  * The default view is rendered on the server so the page answers the common
  * question with no JavaScript at all, and so a crawler sees real numbers
  * rather than an empty frame. Filtering from there goes through
- * /api/perm-wages, because the Turso credential must not reach the browser.
+ * /api/perm-wages, because the database credential must not reach the browser.
  */
 
 const TITLE = "PERM Salary Explorer";

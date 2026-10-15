@@ -10,7 +10,7 @@ import {
   lookupSeasonalRecord,
   type SeasonalPosting,
   type SeasonalRecord,
-} from "@/lib/turso/seasonalCasesTypes";
+} from "@/lib/db/seasonalCasesTypes";
 import {
   decidedInFileOnly,
   h2aDecideBy,
@@ -23,8 +23,8 @@ import { isLookupGap } from "@/lib/dolMiss";
 import { SEASONAL_STATUSES, statusAnchor } from "@/lib/statusDictionary";
 import { seasonalForm } from "@/lib/seasonalForms";
 import { awaitingFirstDecision, easternDay, timingView } from "@/lib/seasonalTiming";
-import { getSeasonalCheck, getSeasonalTiming } from "@/lib/turso/seasonalTiming";
-import { getH2bGroupTiming, h2bGroupOf } from "@/lib/turso/h2bGroups";
+import { getSeasonalCheck, getSeasonalTiming } from "@/lib/db/seasonalTiming";
+import { getH2bGroupTiming, h2bGroupOf } from "@/lib/db/h2bGroups";
 import { pickGroup } from "@/lib/h2bGroups";
 import { SeasonalTimingPanel } from "@/components/tools/SeasonalTimingPanel";
 import { formatDay } from "@/lib/dolFormat";

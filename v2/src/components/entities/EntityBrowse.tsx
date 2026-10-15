@@ -7,7 +7,7 @@ import {
   browseHref,
   type BrowseBucket,
 } from "@/lib/entityBrowse";
-import type { BrowseEntry } from "@/lib/turso/entityBrowse";
+import type { BrowseEntry } from "@/lib/db/entityBrowse";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 

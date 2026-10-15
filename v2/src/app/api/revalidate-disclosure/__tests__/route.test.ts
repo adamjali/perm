@@ -64,7 +64,7 @@ describe("the disclosure revalidation list tracks the app tree", () => {
       const src = readFileSync(file, "utf8");
       const m = /export const revalidate = (\d+)/.exec(src);
       if (!m || Number(m[1]) < LONG_WINDOW) continue;
-      const reads = [...src.matchAll(/from "@\/lib\/turso\/(\w+)"/g)].map((x) => x[1]!);
+      const reads = [...src.matchAll(/from "@\/lib\/db\/(\w+)"/g)].map((x) => x[1]!);
       if (!reads.some((r) => QUARTERLY.includes(r))) continue;
       if (!(DISCLOSURE_PAGES as readonly string[]).includes(route)) missing.push(route);
     }

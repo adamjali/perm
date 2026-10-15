@@ -43,15 +43,15 @@ export function canonicalStatus(status: string): string {
  * `A-000-00000-000000`: one letter, then three, five and six-or-more digits.
  * Every case number in the 412,865-row mirror matches it.
  *
- * THIS LIVES HERE SO THERE IS ONE COPY. `src/lib/turso/caseLookup.ts` has its
+ * THIS LIVES HERE SO THERE IS ONE COPY. `src/lib/db/caseLookup.ts` has its
  * own `normaliseCaseNumber` written to the same rule, and a key normalised
  * differently by the subscriber than by the reader is a subscription that can
  * never match its own case. `caseNumber.test.ts` asserts the two agree on the
  * same fixtures; if that file's copy is ever deleted in favour of this one, the
  * assertion is what makes that safe.
  *
- * This module is import-safe from Convex, the browser and Node alike. The Turso
- * one is not: it carries `server-only`, which is why it cannot simply be
+ * This module is import-safe from Convex, the browser and Node alike. The
+ * database one is not: it carries `server-only`, which is why it cannot simply be
  * imported here.
  */
 export function normaliseCaseNumber(input: string): string | null {

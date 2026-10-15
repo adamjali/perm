@@ -42,7 +42,7 @@ import time
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_turso import Turso, query_rows, record_run, stamp_freshness  # noqa: E402
+from lib_db import Database, query_rows, record_run, stamp_freshness  # noqa: E402
 
 URL = "https://www.dol.gov/agencies/eta/foreign-labor/news"
 DATASET = "policy-notices-oflc"
@@ -201,7 +201,7 @@ DDL = [
 ]
 
 
-def write(db: Turso, rows: list[dict]) -> int:
+def write(db: Database, rows: list[dict]) -> int:
     """Upsert only the rows that are new or changed; the Federal Register feed's rows are untouched."""
     db.script(DDL)
     have = {r[0]: tuple(r[1:]) for r in query_rows(
@@ -249,7 +249,7 @@ def main() -> int:
             print(json.dumps(r, indent=2)[:900])
         return 0
 
-    db = Turso()
+    db = Database()
     written = write(db, rows)
     newest = max(r["publication_date"] for r in rows)
     stamp_freshness(

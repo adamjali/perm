@@ -47,7 +47,7 @@ function source(rel: string): string {
 describe("the sitemap reaches the live-only employers, and the page lets them in", () => {
   it("lists them from the nightly table through a rank window, as a child family of their own", () => {
     const sitemap = source("lib/sitemap/build.ts");
-    const publicData = source("lib/turso/publicData.ts");
+    const publicData = source("lib/db/publicData.ts");
     // THE CONTROL: something that must be present in the same run.
     expect(sitemap).toContain("getEntitySlugWindow");
 
@@ -105,7 +105,7 @@ describe("the sitemap reaches the live-only employers, and the page lets them in
     // calls that a crawl of pages we told it to ignore) or we withhold URLs
     // that are perfectly indexable.
     const sitemap = source("lib/sitemap/build.ts");
-    const publicData = source("lib/turso/publicData.ts");
+    const publicData = source("lib/db/publicData.ts");
     const payload = source("lib/entityPayload.ts");
 
     // The sitemap's rows come from the window, and the window applies the
@@ -142,7 +142,7 @@ describe("the sitemap reaches the live-only employers, and the page lets them in
     // palette downloads, and a single-request copy of the compilation that §4
     // of the Terms tells other people not to take.
     const payload = source("lib/entityPayload.ts");
-    const publicData = source("lib/turso/publicData.ts");
+    const publicData = source("lib/db/publicData.ts");
 
     const bulk = Number(/MIN_TOTAL_FOR_BULK\s*=\s*(\d+)/.exec(payload)?.[1]);
     const page = Number(/MIN_TOTAL_FOR_PAGE\s*=\s*(\d+)/.exec(payload)?.[1]);

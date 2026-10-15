@@ -13,7 +13,7 @@ import {
   listDebarments,
   type Debarment,
   type DebarmentProgram,
-} from "@/lib/turso/debarments";
+} from "@/lib/db/debarments";
 import { withSocialCard } from "@/lib/socialCard";
 import { formatInt } from "@/lib/format";
 

@@ -72,7 +72,7 @@ shows an amber "treat as rough" box with the scaled range.
 New
 - `src/lib/greenCardLine.ts`: the pure model (lag, spread, approval rate, pending, floor, check, `estimateLine`).
 - `src/lib/greenCardLineSnapshot.ts`: pure mapping from stored rows to the model's snapshot.
-- `src/lib/turso/greenCardLine.ts`: server-only reader (one GROUP BY over the newest I-485 release, the rest are existing small reads).
+- `src/lib/db/greenCardLine.ts`: server-only reader (one GROUP BY over the newest I-485 release, the rest are existing small reads).
 - `src/components/tools/GreenCardLine.tsx`: the calculator (client). Chart title ids are per instance so two can share a page.
 - `src/app/(site)/(public)/tools/green-card-line/page.tsx`: the page, `revalidate = 86400`, 6 FAQs with FAQPage schema.
 - `src/lib/__tests__/greenCardLine.fixture.ts`: the made-up EW3 line both test files use.
@@ -278,7 +278,7 @@ forecast. `translate="no"` on the category name and the table body.
 
 Files
 - New: `src/lib/bulletinLines.ts` (slugs, `fiscalYearMoves`, `inventoryRange`, `uscisCode`),
-  `src/lib/bulletinLines.test.ts` (9), `src/lib/turso/bulletinLine.ts` (server-only: one GROUP BY
+  `src/lib/bulletinLines.test.ts` (9), `src/lib/db/bulletinLine.ts` (server-only: one GROUP BY
   over the newest I-485 release, the awaiting read already cached), the two pages,
   `src/app/__tests__/visa-bulletin-lines.test.tsx` (10).
 - Modified: `src/components/tools/PriorityDateEstimator.tsx` (two optional props, default
@@ -312,7 +312,7 @@ URL") until the family is listed. Registry lines:
     }))));
   } catch { ... keep the existing catch ... }
   ```
-  (`import { lineSlugs } from "@/lib/bulletinLines"; import { categoriesIn } from "@/lib/turso/bulletin"; import type { BulletinMonth } from "@/lib/perm";`)
+  (`import { lineSlugs } from "@/lib/bulletinLines"; import { categoriesIn } from "@/lib/db/bulletin"; import type { BulletinMonth } from "@/lib/perm";`)
   and after the month entries:
   ```ts
   ...(bulletinLines.length
@@ -634,7 +634,7 @@ Files
 - `scripts/ingest_nvc_waiting_list.py` (`--archive`, `--from-file`, `--dry-run`),
   `scripts/test_nvc_waiting_list.py` (16), fixtures `scripts/__fixtures__/nvc-waiting-list-2017.txt`,
   `-2021.txt`, `-2023.txt` (report text, source capture in line one).
-- `src/lib/nvcWaitingList.ts` + test (7), `src/lib/turso/nvcWaitingList.ts`, the page,
+- `src/lib/nvcWaitingList.ts` + test (7), `src/lib/db/nvcWaitingList.ts`, the page,
   `src/app/__tests__/nvc-waiting-list.test.tsx` (6, on `src/lib/__tests__/nvc-waiting-list.fixture.json`,
   the real document the ingest builds from the seven reports).
 Probes: strict labels refuse the real 2017 report; no country-sum guard turns one check red; a

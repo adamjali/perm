@@ -9,7 +9,7 @@ import {
   type DecidedFilters as Filters,
 } from "@/lib/decidedFilter";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
-import type { DecidedCase } from "@/lib/turso/decidedDays";
+import type { DecidedCase } from "@/lib/db/decidedDays";
 import { buttonVariants } from "@/components/ui/button";
 
 const CONTROL =

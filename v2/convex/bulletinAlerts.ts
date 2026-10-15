@@ -3,8 +3,8 @@
  *
  * The question after "has DOL reached my month" is "has my priority date
  * moved". The State Department publishes a new bulletin roughly monthly and
- * keeps no notification channel; we hold every bulletin since June 2005 (Turso
- * `visa_bulletins`, written by scripts/ingest_visa_bulletin.py), so we can
+ * keeps no notification channel; we hold every bulletin since June 2005 (the
+ * public-data database's `visa_bulletins`, written by scripts/ingest_visa_bulletin.py), so we can
  * answer it the day a new bulletin lands in the archive.
  *
  * Third sibling of queueAlerts / caseAlerts, and it inherits their whole

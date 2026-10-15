@@ -12,7 +12,7 @@ most of them).
 view). This does all of them that matter: every combination of status x
 occupation group x state x fiscal year holding at least MIN_ROWS filings, for
 both tables, written to `wage_views` keyed exactly as
-`src/lib/turso/wageViews.ts` builds its keys. A selection under MIN_ROWS is
+`src/lib/db/wageViews.ts` builds its keys. A selection under MIN_ROWS is
 served live, where an index narrows it and it is fast.
 
 HOW. One keyset read of each table's five filter columns (roughly the rows of
@@ -45,7 +45,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_lca_facets import ANNUAL_WAGE_SQL, bin_width, min_for_median  # noqa: E402
-from lib_turso import Turso, cell, query_rows, record_run  # noqa: E402
+from lib_db import Database, cell, query_rows, record_run  # noqa: E402
 
 # A selection at or above this many filings is precomputed. Below it the live
 # query touches at most an index slice and returns in well under a second.
@@ -56,7 +56,7 @@ QUANTILES = ((0.05, "p5"), (0.25, "p25"), (0.5, "p50"), (0.75, "p75"), (0.95, "p
 STATUSES = ("certified", "denied", "withdrawn", "all")
 
 # Dimension order in a key: status|soc|state|fy. MUST MATCH wageViewKey() in
-# src/lib/turso/wageViews.ts; test_wage_views.py reads that function.
+# src/lib/db/wageViews.ts; test_wage_views.py reads that function.
 SOC, STATE, FY = 1, 2, 4
 
 # LCA rows outside this annual band are data defects, the same band as
@@ -120,7 +120,7 @@ def key(program: str, status: str, soc: str, state: str, fy: str) -> str:
     return f"{program}|{status}|{soc}|{state}|{fy}"
 
 
-def read_rows(db: Turso, program: str) -> list[tuple]:
+def read_rows(db: Database, program: str) -> list[tuple]:
     """(wage, statuses, soc, state, fy) for every row the explorer can see."""
     sql = READS[program]
     out: list[tuple] = []
@@ -213,7 +213,7 @@ def build(program: str, rows: list[tuple], min_cases: int) -> dict[str, dict]:
     return views
 
 
-def write(db: Turso, program: str, views: dict[str, dict]) -> int:
+def write(db: Database, program: str, views: dict[str, dict]) -> int:
     db.execute(
         """CREATE TABLE IF NOT EXISTS wage_views (
              key TEXT PRIMARY KEY, program TEXT NOT NULL, n INTEGER NOT NULL,
@@ -239,7 +239,7 @@ def write(db: Turso, program: str, views: dict[str, dict]) -> int:
     return got
 
 
-def verify(db: Turso, program: str, views: dict[str, dict]) -> None:
+def verify(db: Database, program: str, views: dict[str, dict]) -> None:
     """Recompute the smallest precomputed selection live and demand agreement.
 
     The smallest one because it is the cheapest honest control: a few thousand
@@ -297,7 +297,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     started = time.time()
-    db = Turso()
+    db = Database()
     floor = min_for_median()
     programs = ("perm", "lca") if a.program == "both" else (a.program,)
     notes = []

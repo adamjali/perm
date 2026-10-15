@@ -21,8 +21,8 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { StateExplorer, type StateStat } from "@/components/tools/USStateMap";
 import { StateConcentration, StateLeaders } from "@/components/tools/StateProfiles";
-import { getDisclosureStats } from "@/lib/turso/publicData";
-import { getStateProfiles } from "@/lib/turso/states";
+import { getDisclosureStats } from "@/lib/db/publicData";
+import { getStateProfiles } from "@/lib/db/states";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";

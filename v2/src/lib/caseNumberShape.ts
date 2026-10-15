@@ -5,7 +5,7 @@
  * serve three audiences with genuinely different needs. They are cross-
  * asserted by `caseNumberShape.test.ts` so none can drift silently:
  *
- *   `src/lib/turso/caseLookup.ts`      server, `server-only`, owns both rules
+ *   `src/lib/db/caseLookup.ts`      server, `server-only`, owns both rules
  *   `src/lib/caseStatusVocabulary.ts`  alerts, NARROW on purpose (G- only)
  *   this file                          the lookup form, WIDE (G- and A-)
  *

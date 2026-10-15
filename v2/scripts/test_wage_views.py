@@ -5,7 +5,7 @@ would: same n, same percentiles, same bins, same by-state table.
 The live SQL here is not a copy: it is assembled from percentile_select() and
 state_percentile_select() in build_lca_facets.py, which test_lca_facets.py
 already holds byte-for-byte to publicData.ts. The key format is read out of
-src/lib/turso/wageViews.ts.
+src/lib/db/wageViews.ts.
 
     python3 scripts/test_wage_views.py
 """
@@ -31,7 +31,7 @@ def check(ok: bool, msg: str) -> None:
 
 
 class FakeTurso:
-    """The subset of lib_turso.Turso that read_rows uses, over a real SQLite."""
+    """The subset of lib_db.Database that read_rows uses, over a real SQLite."""
 
     def __init__(self, con: sqlite3.Connection):
         self.con = con
@@ -151,7 +151,7 @@ def main() -> int:
     check(all(v["stats"]["n"] >= bwv.MIN_ROWS for v in views.values()), "no view under MIN_ROWS")
 
     # The key format is the TypeScript reader's.
-    ts = (HERE.parent / "src" / "lib" / "turso" / "wageViews.ts").read_text()
+    ts = (HERE.parent / "src" / "lib" / "db" / "wageViews.ts").read_text()
     check("return `${program}|${status}|${soc}|${state}|${fy}`;" in ts,
           "wageViewKey() builds program|status|soc|state|fy like key()")
     check(bwv.key("lca", "all", "", "TX", "2025") == "lca|all||TX|2025", "key() layout")

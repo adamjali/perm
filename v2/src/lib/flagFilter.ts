@@ -1,4 +1,4 @@
-import type { FlagDisclosedRow } from "@/lib/turso/flagCases";
+import type { FlagDisclosedRow } from "@/lib/db/flagCases";
 
 /**
  * Filters over one wage-request or LCA search's loaded rows.

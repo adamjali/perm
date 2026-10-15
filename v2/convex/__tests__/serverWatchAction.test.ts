@@ -26,8 +26,8 @@ async function scheduledEmails(t: ReturnType<typeof createTestContext>) {
 }
 
 beforeEach(() => {
-  vi.stubEnv("TURSO_DATABASE_URL", "https://example.turso.io");
-  vi.stubEnv("TURSO_AUTH_TOKEN", "stub-token");
+  vi.stubEnv("DATABASE_URL", "https://example.turso.io");
+  vi.stubEnv("DATABASE_AUTH_TOKEN", "stub-token");
 });
 afterEach(() => {
   global.fetch = originalFetch;

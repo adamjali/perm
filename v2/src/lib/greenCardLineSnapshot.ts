@@ -2,7 +2,7 @@
  * Shapes the stored USCIS, State and bulletin records into the calculator's
  * `LineSnapshot`. Pure, so the mapping (which is where a wrong column quietly
  * produces a wrong line) is tested without a database; the server module in
- * `lib/turso/greenCardLine.ts` only reads the rows and hands them here.
+ * `lib/db/greenCardLine.ts` only reads the rows and hands them here.
  */
 
 import { parseCutoff, type BulletinMonth, type CountryKey, type Cutoff } from "@/lib/perm";

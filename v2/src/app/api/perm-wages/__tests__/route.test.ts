@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const getWageStats = vi.fn();
 const getWageHistogram = vi.fn();
 const getWageByState = vi.fn();
-vi.mock("@/lib/turso/publicData", () => ({ getWageStats, getWageHistogram, getWageByState }));
+vi.mock("@/lib/db/publicData", () => ({ getWageStats, getWageHistogram, getWageByState }));
 
 const { GET } = await import("../route");
 

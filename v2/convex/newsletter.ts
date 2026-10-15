@@ -7,7 +7,7 @@
  * `NEWSLETTER_ENABLED=1`; with it set, `sendBatch` mails confirmed
  * subscribers under a global daily cap and reschedules itself for the rest.
  *
- * Every figure comes from Turso through the public mirror: DOL's processing
+ * Every figure comes from the public-data database through the public mirror: DOL's processing
  * times, the live remainder's pending count, the two newest bulletins, and
  * the Federal Register documents of the last seven days. The composition is
  * pure (`lib/newsletterCompose.ts`) and the HTML is rendered from the same

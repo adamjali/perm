@@ -6,7 +6,7 @@ import {
   getWageStats,
   type WageFilters,
   type WageStatusFilter,
-} from "@/lib/turso/publicData";
+} from "@/lib/db/publicData";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
 import { MAX_CITY, placeFilterRefusal, sectorCodes } from "@/lib/wagePlaceFilters";
 
@@ -14,7 +14,7 @@ import { MAX_CITY, placeFilterRefusal, sectorCodes } from "@/lib/wagePlaceFilter
  * The salary explorer's data, for a page with no ConvexProvider.
  *
  * Same shape and the same reasons as /api/perm-cases: the corpus lives in
- * Turso, whose credential must never reach a client bundle, so the browser
+ * the public-data database, whose credential must never reach a client bundle, so the browser
  * talks to this route and the credential stays on the server.
  *
  * PUBLIC AND UNAUTHENTICATED, so the guards are ordered by cost. Every length

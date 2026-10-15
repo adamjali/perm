@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { DAY_ROW_CAP, getChangeDay } from "@/lib/turso/changes";
+import { DAY_ROW_CAP, getChangeDay } from "@/lib/db/changes";
 import { MS_PER_DAY } from "@/lib/time";
 
 /**
@@ -74,7 +74,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       headers: {
         // A past day cannot gain events; today's can. Cache the settled ones
         // hard and today's briefly. This is what keeps the whole-day fetch
-        // cheap: one Turso read per day per cache entry, not per visitor.
+        // cheap: one database read per day per cache entry, not per visitor.
         "Cache-Control":
           asked === today
             ? "public, s-maxage=600, stale-while-revalidate=3600"

@@ -8,7 +8,7 @@ import type { SortColumn, SortState } from "@/lib/tableSort";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
 // runtime import of a "server-only" module.
-import type { CaseChange } from "@/lib/turso/changes";
+import type { CaseChange } from "@/lib/db/changes";
 import { PROGRAM_LABEL } from "@/lib/changeProgram";
 
 /**

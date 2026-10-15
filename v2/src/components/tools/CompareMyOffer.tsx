@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 
-import type { WageOption } from "@/lib/turso/publicData";
+import type { WageOption } from "@/lib/db/publicData";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { MIN_FOR_MEDIAN, placeOffer, type OfferPayload as Payload, type PlacedOffer as Placed } from "@/lib/wageStats";
 import { formatDollars } from "@/lib/format";

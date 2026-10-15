@@ -2,7 +2,7 @@ import { api } from "@convex/_generated/api";
 import { renderBadge } from "@/lib/badgeRender";
 import { queryStatic } from "@/lib/convexStatic";
 import { firmBadgeSpec, parseFirmBadgeFile } from "@/lib/firmBadge";
-import { resolveEntity } from "@/lib/turso/entityDetail";
+import { resolveEntity } from "@/lib/db/entityDetail";
 
 /**
  * GET /badge/firm/<slug>[.light].svg: a law firm's badge for its own site.

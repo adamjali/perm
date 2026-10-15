@@ -182,9 +182,9 @@ def post_to_linkedin(text: str, token: str, author_urn: str, url: str = LINKEDIN
 # ---------------------------------------------------------------- record
 
 def load_record() -> tuple[dict, dict, dict | None]:
-    from lib_turso import Turso, query_rows  # noqa: E402
+    from lib_db import Database, query_rows  # noqa: E402
 
-    db = Turso()
+    db = Database()
     snap = query_rows(db, "SELECT json FROM processing_times ORDER BY perm_as_of DESC LIMIT 1")
     snapshot = json.loads(snap[0][0])
     rows = query_rows(db, "SELECT bulletin_month, final_action FROM visa_bulletins "

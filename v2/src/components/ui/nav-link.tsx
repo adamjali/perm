@@ -64,7 +64,7 @@ export function NavLinkProvider({ children }: { children: React.ReactNode }) {
   // `isAnyNavigating` then believed a navigation was still running.
   //
   // Ten seconds, not two: this is a backstop for a navigation that will never
-  // resolve, not a timeout on a slow one. A cold entity page on a busy Turso
+  // resolve, not a timeout on a slow one. A cold entity page on a busy database
   // primary has been measured at several seconds, and cancelling the signal
   // out from under a request that is still working is its own bug.
   useEffect(() => {

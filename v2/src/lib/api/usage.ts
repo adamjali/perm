@@ -19,7 +19,7 @@
  */
 import "server-only";
 
-import { exec, rows } from "@/lib/turso/client";
+import { exec, rows } from "@/lib/db/client";
 import type { ApiPlan } from "@convex/lib/apiPlans";
 
 export const ANONYMOUS_ACCOUNT = "anonymous";

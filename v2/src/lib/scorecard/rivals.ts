@@ -1,7 +1,7 @@
 import "server-only";
 
-import type { NewPrediction, SampledCase } from "@/lib/turso/predictions";
-import { rows } from "@/lib/turso/client";
+import type { NewPrediction, SampledCase } from "@/lib/db/predictions";
+import { rows } from "@/lib/db/client";
 import { MS_PER_DAY } from "@/lib/time";
 
 /**

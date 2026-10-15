@@ -14,7 +14,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_slugs import plan_aliases, plan_sticky_slugs, with_aliases, with_unique_slugs  # noqa: E402
-from turso_migrate_public import prior_maps  # noqa: E402
+from db_migrate_public import prior_maps  # noqa: E402
 
 FAILURES: list[str] = []
 CHECKS = 0

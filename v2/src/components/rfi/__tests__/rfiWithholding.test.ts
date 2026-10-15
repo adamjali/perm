@@ -15,7 +15,7 @@ import {
   MIN_RFI,
   bandIsPublishable,
   occupationIsPublishable,
-} from "@/lib/turso/rfi";
+} from "@/lib/db/rfi";
 
 describe("bandIsPublishable", () => {
   it("publishes a band measured from most of its own stage", () => {

@@ -40,7 +40,7 @@ import datetime
 import json
 import sys
 
-from lib_turso import Turso, lit, query_dicts, write_doc
+from lib_db import Database, lit, query_dicts, write_doc
 
 DOC_KEY = "alphabet"
 
@@ -94,7 +94,7 @@ def maturity_cutoff() -> str:
     return f"{months // 12:04d}-{months % 12 + 1:02d}-01"
 
 
-def build(db: Turso) -> dict:
+def build(db: Database) -> dict:
     log("  reading pooled per-letter means...")
     pooled = query_dicts(
         db,
@@ -186,7 +186,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="compute and print, write nothing")
     args = ap.parse_args()
 
-    db = Turso()
+    db = Database()
     doc = build(db)
 
     if args.dry_run:

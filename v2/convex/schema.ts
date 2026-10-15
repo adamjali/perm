@@ -1138,7 +1138,7 @@ export default defineSchema({
    * RETIRED 2026-09-20, rows kept. NOTHING READS OR WRITES THIS TABLE any
    * more. `convex/permDisclosure.ts` is deleted and the workflow step that
    * called `storeStats` is gone; the figures the site serves come from
-   * Turso's `disclosure_stats` document (src/lib/turso/publicData.ts). The
+   * the public-data database's `disclosure_stats` document (src/lib/db/publicData.ts). The
    * 2026-09-06 audit listed this table in H7 beside permCases, permEntities,
    * permWageStats and visaBulletins as a write with no reader, and this was
    * one of the two steps that survived that sweep - the other, the visa
@@ -1305,7 +1305,7 @@ export default defineSchema({
    * RETIRED MIRROR, kept only so its rows are not orphaned (2026-09-20).
    *
    * NOTHING READS THIS TABLE and nothing writes it any more. The site's
-   * bulletin pages read Turso's `visa_bulletins`, which
+   * bulletin pages read the public-data database's `visa_bulletins`, which
    * `scripts/ingest_visa_bulletin.py` writes directly on both of its routes;
    * `convex/visaBulletin.ts` and the workflow step that called it are gone.
    * The 2026-09-06 audit listed this table in H7 beside permCases,
@@ -2096,7 +2096,7 @@ export default defineSchema({
    * `convex/lib/communityTimeline.ts`.
    *
    * The PERM half (`perm*`) is written ONLY by `communityTimelines.setPermHalf`,
-   * read from DOL's record in Turso by case number; the reporter never types
+   * read from DOL's record in the public-data database by case number; the reporter never types
    * it. Everything else is self-reported, has no free text, and is labelled as
    * self-reported wherever it renders.
    *

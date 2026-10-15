@@ -43,7 +43,7 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_gov_data import POLITE_PAUSE_S, fetch, log  # noqa: E402
 from lib_reference import sha256, sheet_rows, sync_rows  # noqa: E402
-from lib_turso import Turso, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_visa_issuances.py"
 # What the site prints as the source line: a readable name, never a bare URL (a URL has no
@@ -222,8 +222,8 @@ def parse(data: bytes, url: str) -> dict[tuple[str, str], int]:
     return from_xlsx(data, label) if url.lower().endswith(".xlsx") else from_pdf(data, label)
 
 
-def summary(db: Turso) -> dict:
-    from lib_turso import query_rows
+def summary(db: Database) -> dict:
+    from lib_db import query_rows
     by_month: dict[str, dict[str, int]] = {}
     for month, cat, n in query_rows(db, f"SELECT month, category, sum(n) FROM {TABLE} WHERE dim = 'fsc' GROUP BY 1, 2"):
         by_month.setdefault(month, {})[cat] = int(n)
@@ -255,7 +255,7 @@ def main() -> int:
     if args.since:
         files = {k: v for k, v in files.items() if k[0] >= args.since}
     log(f"{len(files)} month files linked, {min(files)[0] if files else '-'} to {max(files)[0] if files else '-'}")
-    db = None if args.dry_run else Turso()
+    db = None if args.dry_run else Database()
     if db:
         db.script(DDL)
     record = (read_doc(db, RECORD) or {}) if db else {}

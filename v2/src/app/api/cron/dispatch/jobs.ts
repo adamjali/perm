@@ -128,7 +128,7 @@ export const CRON_PATH_PREFIX = "/api/cron/dispatch/";
 
 /**
  * Housekeeping that runs INSIDE this app rather than on GitHub. Same clock,
- * same secret, its own route, because the work is a Turso write the app's
+ * same secret, its own route, because the work is a database write the app's
  * own read layer owns (and tests): a GitHub step would restate the retention
  * constant in a second language. The test next door holds the server's
  * timers to the union of this table and CRON_JOBS.

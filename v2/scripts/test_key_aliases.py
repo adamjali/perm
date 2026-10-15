@@ -16,7 +16,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import SpacedKeyMap, entity_key  # noqa: E402
 from ingest_perm_disclosure import merge_entities  # noqa: E402
-from turso_migrate import slug_maps  # noqa: E402
+from db_migrate import slug_maps  # noqa: E402
 
 FAILURES: list[str] = []
 CHECKS = 0

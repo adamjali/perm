@@ -24,7 +24,7 @@ def refuse(*_a, **_k):
 
 
 cc.BASE = "https://third-party.example/api"
-cc.Turso = lambda: None
+cc.Database = lambda: None
 real_open = cc.urllib.request.urlopen
 cc.urllib.request.urlopen = refuse
 try:

@@ -10,7 +10,7 @@ import { IndexHeader, type IndexFigure } from "@/components/data/IndexHeader";
 import { AsPrinted, SevpEmployerTable } from "@/components/data/SevpEmployerTable";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { formatInt } from "@/lib/format";
-import { getSevpLists, type SevpList } from "@/lib/turso/sevpEmployers";
+import { getSevpLists, type SevpList } from "@/lib/db/sevpEmployers";
 
 /**
  * ICE's yearly top-200 lists of employers of F-1 students on OPT, STEM OPT

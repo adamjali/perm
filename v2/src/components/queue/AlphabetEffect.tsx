@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 
-import type { Alphabet } from "@/lib/turso/alphabet";
+import type { Alphabet } from "@/lib/db/alphabet";
 
 /**
  * What the employer's first letter is actually worth.

@@ -4,7 +4,7 @@ import { BarRows } from "@/components/data/BarRows";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { formatDollars, formatInt } from "@/lib/format";
-import type { FacetRow } from "@/lib/turso/entityDetail";
+import type { FacetRow } from "@/lib/db/entityDetail";
 import {
   cityGeoMany,
   dolBasisFor,
@@ -17,7 +17,7 @@ import {
   wageLevelHistory,
   wageYearLabel,
   type MarketPay,
-} from "@/lib/turso/reference";
+} from "@/lib/db/reference";
 
 import { PayBands, type PayBand } from "./PayBands";
 

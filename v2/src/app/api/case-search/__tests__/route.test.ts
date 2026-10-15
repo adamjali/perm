@@ -13,19 +13,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const unifiedSearch = vi.fn();
-vi.mock("@/lib/turso/unifiedSearch", async () => {
+vi.mock("@/lib/db/unifiedSearch", async () => {
   // The pure half is real: `isSearchOrder`, `isProgram` and the row cap are
   // guards under test, and mocked versions would make those cases vacuous.
-  const real = await vi.importActual<typeof import("@/lib/turso/unifiedSearch")>(
-    "@/lib/turso/unifiedSearch",
+  const real = await vi.importActual<typeof import("@/lib/db/unifiedSearch")>(
+    "@/lib/db/unifiedSearch",
   );
   return { ...real, unifiedSearch };
 });
 const searchByName = vi.fn();
-vi.mock("@/lib/turso/entities", () => ({ searchByName }));
+vi.mock("@/lib/db/entities", () => ({ searchByName }));
 
 const { GET } = await import("../route");
-const { UNIFIED_MAX } = await import("@/lib/turso/unifiedSearch");
+const { UNIFIED_MAX } = await import("@/lib/db/unifiedSearch");
 
 const get = (qs: string) => GET(new Request(`https://permtracker.app/api/case-search?${qs}`));
 
@@ -269,8 +269,8 @@ describe("a part of the record that couldn't be read", () => {
   });
 
   it("answers 503 when nothing could be read, never an empty 200", async () => {
-    const { SearchUnavailableError } = await vi.importActual<typeof import("@/lib/turso/unifiedSearch")>(
-      "@/lib/turso/unifiedSearch",
+    const { SearchUnavailableError } = await vi.importActual<typeof import("@/lib/db/unifiedSearch")>(
+      "@/lib/db/unifiedSearch",
     );
     unifiedSearch.mockRejectedValue(new SearchUnavailableError(["published PERM cases"]));
     const r = await get("q=acme");

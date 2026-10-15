@@ -21,7 +21,7 @@ const sharedConfig = {
       "@convex": path.resolve(import.meta.dirname, "./convex"),
       // `server-only` throws on import from anything with a DOM. Every vitest
       // project here runs happy-dom or edge-runtime, so a test of a SERVER
-      // module - sitemap.ts, which reaches src/lib/turso/client.ts - fails to
+      // module - sitemap.ts, which reaches src/lib/db/client.ts - fails to
       // load at all, with an error that reads like a client/server mistake and
       // is not one.
       //
@@ -34,7 +34,7 @@ const sharedConfig = {
       // The guard still does its job where it matters: importing a server-only
       // module from a client component is a BUILD error, and `next build`
       // still catches it. There is a dedicated test asserting no "use client"
-      // file imports lib/turso.
+      // file imports lib/db.
       "server-only": path.resolve(import.meta.dirname, "./node_modules/server-only/empty.js"),
     },
   },
@@ -48,12 +48,12 @@ const sharedConfig = {
 const ISOLATED_UNIT_FILES = [
   // Added 2026-10-10: each mocks the database client (or Convex and Convex
   // Auth, for the sign-in gate) per test.
-  "src/lib/turso/__tests__/warnForSlug.test.ts",
-  "src/lib/turso/__tests__/tableColumns.test.ts",
-  "src/lib/turso/__tests__/processingTimesHydrate.test.ts",
-  "src/lib/turso/__tests__/storedMs.test.ts",
-  "src/lib/turso/__tests__/debarments.test.ts",
-  "src/lib/turso/__tests__/reference.test.ts",
+  "src/lib/db/__tests__/warnForSlug.test.ts",
+  "src/lib/db/__tests__/tableColumns.test.ts",
+  "src/lib/db/__tests__/processingTimesHydrate.test.ts",
+  "src/lib/db/__tests__/storedMs.test.ts",
+  "src/lib/db/__tests__/debarments.test.ts",
+  "src/lib/db/__tests__/reference.test.ts",
   "src/lib/auth/__tests__/authGate.test.ts",
   // Added 2026-10-02. The API layer's tests mock the database client, the
   // key check and the reads; isolated so no neighbour inherits those mocks.
@@ -69,7 +69,7 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/api/__tests__/live.test.ts",
   "src/lib/api/__tests__/exports.test.ts",
   "src/lib/api/__tests__/webhooksApi.test.ts",
-  "src/lib/turso/__tests__/openDataArchive.test.ts",
+  "src/lib/db/__tests__/openDataArchive.test.ts",
   "src/lib/ai/__tests__/page-context.test.tsx",
   // Added 2026-10-12: mocks convex/nextjs per test.
   "src/lib/ai/__tests__/caseActions.test.ts",
@@ -79,8 +79,8 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/__tests__/analyticsConsent.test.ts",
   // Both mock ../client and the wage-view module; shared-pool leaks would
   // hand one file's mock to the other.
-  "src/lib/turso/__tests__/lcaDefaultView.test.ts",
-  "src/lib/turso/__tests__/wageViews.test.ts",
+  "src/lib/db/__tests__/lcaDefaultView.test.ts",
+  "src/lib/db/__tests__/wageViews.test.ts",
   "src/hooks/__tests__/useJobDescriptionTemplates.test.ts",
   "src/hooks/__tests__/useChatWithPersistence.test.ts",
   "src/hooks/__tests__/useToolOrchestrator.test.ts",
@@ -88,20 +88,20 @@ const ISOLATED_UNIT_FILES = [
   // share `../cases` underneath. In the shared pool the first file to load
   // `cases.ts` binds it to ITS mock; every later file's mock then sees no
   // calls (6 failures on 2026-09-02 that each passed alone).
-  "src/lib/turso/__tests__/decisionPace.test.ts",
-  "src/lib/turso/__tests__/liveCases.test.ts",
-  "src/lib/turso/__tests__/unifiedSearch.test.ts",
-  "src/lib/turso/__tests__/caseSearchReads.test.ts",
-  "src/lib/turso/__tests__/stageCohorts.test.ts",
-  "src/lib/turso/__tests__/searchFilters.test.ts",
-  "src/lib/turso/__tests__/pwdCases.test.ts",
-  "src/lib/turso/__tests__/lcaCases.test.ts",
-  "src/lib/turso/__tests__/entityReads.test.ts",
+  "src/lib/db/__tests__/decisionPace.test.ts",
+  "src/lib/db/__tests__/liveCases.test.ts",
+  "src/lib/db/__tests__/unifiedSearch.test.ts",
+  "src/lib/db/__tests__/caseSearchReads.test.ts",
+  "src/lib/db/__tests__/stageCohorts.test.ts",
+  "src/lib/db/__tests__/searchFilters.test.ts",
+  "src/lib/db/__tests__/pwdCases.test.ts",
+  "src/lib/db/__tests__/lcaCases.test.ts",
+  "src/lib/db/__tests__/entityReads.test.ts",
   // Added 2026-09-13. Mocks ../client like its siblings above, so it needs the
   // isolated pool for the same reason: in the shared registry whichever file
   // registers its factory first wins and the rest see a `rows` nobody called.
-  "src/lib/turso/__tests__/wageFilterOptions.test.ts",
-  // Added 2026-08-30. This file mocks `@/lib/turso/client`, and so do four
+  "src/lib/db/__tests__/wageFilterOptions.test.ts",
+  // Added 2026-08-30. This file mocks `@/lib/db/client`, and so do four
   // other files in the same project. With `isolate: false` they share one
   // module registry per worker, so whichever registers its factory first
   // wins and the others' `rows` resolves to a function that was never given
@@ -109,34 +109,34 @@ const ISOLATED_UNIT_FILES = [
   // bug in the code under test. It passed alone and failed in the full run,
   // which is the signature. The other turso mockers were already here or
   // are ordered such that they have not collided yet; this one collides.
-  "src/lib/turso/__tests__/stageCases.test.ts",
+  "src/lib/db/__tests__/stageCases.test.ts",
   // Mocks `@libsql/client` and calls vi.resetModules() per case, so it needs
   // its own registry - under isolate:false it poisons whatever runs next.
-  "src/lib/turso/__tests__/clientRetry.test.ts",
+  "src/lib/db/__tests__/clientRetry.test.ts",
   // Added 2026-09-27. Each mocks ./client (and caseLookupHistory also mocks
   // ./caseDiscovery). In the shared pool caseLookupHistory's discoverCase mock
   // leaked into caseDiscovery.test.ts, which then read null for a real hit:
   // green alone, red in the full run, the same signature as the others here.
-  "src/lib/turso/caseLookupHistory.test.ts",
-  "src/lib/turso/decidedDays.test.ts",
-  "src/lib/turso/__tests__/wagePlaceFilters.test.ts",
+  "src/lib/db/caseLookupHistory.test.ts",
+  "src/lib/db/decidedDays.test.ts",
+  "src/lib/db/__tests__/wagePlaceFilters.test.ts",
   // The victim and the other leaker: it failed again in the next full run
   // with caseLookupHistory already moved, because embedLookup.test.ts (Sep 26)
   // mocks ./caseDiscovery in the same shared registry. Isolating the victim
   // means no neighbour can decide what it imports.
-  "src/lib/turso/caseDiscovery.test.ts",
-  "src/lib/turso/embedLookup.test.ts",
+  "src/lib/db/caseDiscovery.test.ts",
+  "src/lib/db/embedLookup.test.ts",
   // Added 2026-10-01. Mocks ../client, ../tableColumns and ../employerSlugs;
   // isolated from the start rather than after its first shared-pool collision.
-  "src/lib/turso/__tests__/lcaProfile.test.ts",
-  "src/lib/turso/__tests__/uscisH1b.test.ts",
+  "src/lib/db/__tests__/lcaProfile.test.ts",
+  "src/lib/db/__tests__/uscisH1b.test.ts",
   // Added 2026-10-03. Both mock ../client and set per-test answers.
-  "src/lib/turso/__tests__/seasonalCases.test.ts",
-  "src/lib/turso/__tests__/employerProgramsSeasonal.test.ts",
-  "src/lib/turso/__tests__/employerSlugs.test.ts",
-  "src/lib/turso/__tests__/otherEmployers.test.ts",
-  "src/lib/turso/__tests__/firmPrograms.test.ts",
-  "src/lib/turso/__tests__/seasonalEmployers.test.ts",
+  "src/lib/db/__tests__/seasonalCases.test.ts",
+  "src/lib/db/__tests__/employerProgramsSeasonal.test.ts",
+  "src/lib/db/__tests__/employerSlugs.test.ts",
+  "src/lib/db/__tests__/otherEmployers.test.ts",
+  "src/lib/db/__tests__/firmPrograms.test.ts",
+  "src/lib/db/__tests__/seasonalEmployers.test.ts",
 ];
 
 export default defineConfig({

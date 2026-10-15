@@ -4,8 +4,8 @@
 One file is about 156 MB compressed and over 1 GB of XML, so the sheet is
 streamed, never loaded whole. `--out` writes the aggregate payload; `--cases-out`
 writes one line per decided case (case number, dates, employer, job, wage, law
-firm: the same public record DOL publishes). turso_migrate.py and
-turso_migrate_public.py load both into the database.
+firm: the same public record DOL publishes). db_migrate.py and
+db_migrate_public.py load both into the database.
 
 No contact data, ever. The source rows carry attorney, employer and preparer
 emails, direct phone numbers and street addresses for real people. None of
@@ -287,7 +287,7 @@ from lib_gov_data import (  # noqa: E402
     SPREADSHEET_NS, column_index, fetch, log, read_shared_strings,
 )
 from lib_naics import normalize_naics  # noqa: E402
-from lib_turso import Turso, stamp_freshness  # noqa: E402
+from lib_db import Database, stamp_freshness  # noqa: E402
 
 
 def merge_entities(bucket: dict, name_of, kind: str | None = None,
@@ -402,7 +402,7 @@ class CaseWriter:
         # fiscal year (a quarter's file replaces the previous quarter's under
         # the same year, so the year is the stable key), blank shares, the
         # median wage, and rows whose values cannot be right. Compared by
-        # turso_migrate.py against the previous load BEFORE it writes.
+        # db_migrate.py against the previous load BEFORE it writes.
         self.guard = Fingerprint(tracked=PERM_TRACKED)
         self.resolved_by_fy: dict[str, list[str]] = {}
 
@@ -1151,7 +1151,7 @@ def build_payload(files: list[tuple[str, str]], acc: dict, unique: int) -> dict:
         "risk": risk,
         "topOccupations": top_socs,
         "topEmployers": top_employers,
-        # A spelling's key -> the key it merged under, per kind (turso_migrate*.py).
+        # A spelling's key -> the key it merged under, per kind (db_migrate*.py).
         "keyAliases": {"employer": employer_aliases, "attorney": attorney_aliases},
     }
     body = json.dumps(payload, sort_keys=True, separators=(",", ":"))
@@ -1435,7 +1435,7 @@ def main() -> int:
     # This run's own freshness row, which the site's provenance lines render
     # and the health check alerts on; a row no run refreshes would freeze and
     # end in a false alarm.
-    db = Turso()
+    db = Database()
     stamp_freshness(db, "perm-cases",
                     as_of=str(db.scalar("SELECT max(decision_date) FROM perm_cases"))[:10],
                     source="DOL quarterly disclosure files (flag.dol.gov)", cadence="Quarterly",

@@ -27,7 +27,7 @@ import {
   type BulletinRow,
   type DolRow,
 } from "@/lib/openData";
-import { getProcessingTimesArchive, getVisaBulletinsArchive } from "@/lib/turso/openData";
+import { getProcessingTimesArchive, getVisaBulletinsArchive } from "@/lib/db/openData";
 import { buttonVariants } from "@/components/ui/button";
 
 const TITLE = "Open Data: Visa Bulletin and DOL History";

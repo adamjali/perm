@@ -40,8 +40,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import SpacedKeyMap, entity_key  # noqa: E402
 from lib_naics import naics_title, normalize_naics  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
-from lib_turso import (  # noqa: E402
-    ET, Turso, add_missing_columns, cell, et_date, insert_rows, record_run, rows_of,
+from lib_db import (  # noqa: E402
+    ET, Database, add_missing_columns, cell, et_date, insert_rows, record_run, rows_of,
     stamp_freshness, write_doc,
 )
 
@@ -91,7 +91,7 @@ def raw_rows(res) -> list[list]:
 # Slug lookup
 # ---------------------------------------------------------------------------
 
-def slug_maps(db: Turso):
+def slug_maps(db: Database):
     """merge_key -> (slug, total) per kind, plus code -> slug for occupations."""
     out: dict[str, dict[str, tuple[str, int]]] = {}
     for kind in ("employer", "attorney", "occupation"):
@@ -119,7 +119,7 @@ def slug_maps(db: Turso):
 # Pending, from the live mirror
 # ---------------------------------------------------------------------------
 
-def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
+def build_live_recent(db: Database, maps) -> tuple[list[dict], str]:
     """Every live case the published files do not hold, slugged for search.
 
     The disclosure files carry only decided cases, and only up to the last
@@ -204,13 +204,13 @@ LIVE_COLS = ["case_number", "filing_date", "status", "is_final",
              "employer_name", "employer_slug", "job_title", "decided_seen"]
 
 
-def ensure_live_recent_columns(db: Turso) -> None:
+def ensure_live_recent_columns(db: Database) -> None:
     """Add the columns the CREATE TABLE above gained after the table existed."""
     if add_missing_columns(db, "perm_live_recent", {"decided_seen": "TEXT"}):
         log("  added column perm_live_recent.decided_seen")
 
 
-def decided_seen_map(db: Turso) -> dict[str, str]:
+def decided_seen_map(db: Database) -> dict[str, str]:
     """case_number -> the day OUR sweep first recorded a final status.
 
     An observation date, never DOL's decision date: DOL's per-case lookup
@@ -280,7 +280,7 @@ def employer_waits(by_emp: dict[str, list], names: dict[str, str]) -> list[dict]
     return out
 
 
-def write_recent_wait(db: Turso) -> bool:
+def write_recent_wait(db: Database) -> bool:
     """perm_docs['recent_decision_wait']: how long the cases DOL decided in
     the last 90 days took, filing to decision, for employer pages to compare
     one employer against.
@@ -325,7 +325,7 @@ def write_recent_wait(db: Turso) -> bool:
     return True
 
 
-def write_live_remainder_doc(db: Turso, live: list[dict]) -> bool:
+def write_live_remainder_doc(db: Database, live: list[dict]) -> bool:
     """Precompute the live remainder's counts into perm_docs['live_remainder'].
 
     The /perm-cases page prints "N decided and M pending since DOL's last
@@ -387,7 +387,7 @@ def live_norm(row) -> tuple:
     return tuple(out)
 
 
-def write_live_recent(db: Turso, live: list[dict],
+def write_live_recent(db: Database, live: list[dict],
                       extra_changed: dict[str, int] | None = None) -> bool:
     """Write only what changed.
 
@@ -450,7 +450,7 @@ LIVE_ONLY_DDL = [
     "CREATE INDEX IF NOT EXISTS perm_live_only_rank ON perm_live_only_index (rank)",
 ]
 
-def ensure_live_only_columns(db: Turso) -> None:
+def ensure_live_only_columns(db: Database) -> None:
     """Add the columns the live-only index gained after it existed."""
     if add_missing_columns(db, "perm_live_only_index", {"last_changed": "TEXT"}):
         log("  added column perm_live_only_index.last_changed")
@@ -492,7 +492,7 @@ def live_only_rows(live: list[dict], published_slugs: set[str]) -> list[list]:
     return out
 
 
-def write_live_only_index(db: Turso, live: list[dict], maps) -> bool:
+def write_live_only_index(db: Database, live: list[dict], maps) -> bool:
     """Write only the rows that changed, the same discipline as the live table."""
     for ddl in LIVE_ONLY_DDL:
         db.execute(ddl)
@@ -633,7 +633,7 @@ def pending_diff(stored: list, built: list[dict]):
     return changed, gone, moved
 
 
-def write_pending(db: Turso, pending: list[dict]) -> tuple[bool, dict[str, int]]:
+def write_pending(db: Database, pending: list[dict]) -> tuple[bool, dict[str, int]]:
     """Refresh `perm_entity_pending` every night, writing only what moved.
 
     Every published employer page prints this table in `LiveQueueBand` under
@@ -662,7 +662,7 @@ def write_pending(db: Turso, pending: list[dict]) -> tuple[bool, dict[str, int]]
     return ok, moved
 
 
-def build_pending(db: Turso, maps) -> list[dict]:
+def build_pending(db: Database, maps) -> list[dict]:
     """Per-employer live queue position, aggregated server-side.
 
     Aggregated in the database, so the read returns one row per employer rather
@@ -730,7 +730,7 @@ def build_pending(db: Turso, maps) -> list[dict]:
 # Facets, from the decided corpus
 # ---------------------------------------------------------------------------
 
-def read_cases(db: Turso, cache: str | None):
+def read_cases(db: Database, cache: str | None):
     cols = ["employer_name", "attorney_name", "soc_code", "soc_title", "status", "state",
             "naics", "worksite_city"]
     if cache:
@@ -792,7 +792,7 @@ def industry_label(code: str) -> str:
     return title if owner == code else f"{title} (Census group {owner})"
 
 
-def build_facets(db: Turso, maps, cache) -> list[list]:
+def build_facets(db: Database, maps, cache) -> list[list]:
     emp, att, occ = maps["employer"], maps["attorney"], maps["occupation"]
     city_votes: dict[str, Counter] = defaultdict(Counter)
     # (kind, slug, facet) -> label-key -> [n, certified, denied, display label]
@@ -881,7 +881,7 @@ def build_facets(db: Turso, maps, cache) -> list[list]:
 # Write
 # ---------------------------------------------------------------------------
 
-def write_rows(db: Turso, table: str, cols: list[str], rows: list) -> None:
+def write_rows(db: Database, table: str, cols: list[str], rows: list) -> None:
     """INSERT OR REPLACE, so a retry after a lost response replays a write
     that already landed without harm. Rows are dicts keyed by column, or
     sequences in column order."""
@@ -900,7 +900,7 @@ def main() -> int:
              "the case search and employer pages see the day's filings.")
     args = ap.parse_args()
 
-    db = Turso()
+    db = Database()
     log("SLUGS")
     maps = slug_maps(db)
 
@@ -1014,7 +1014,7 @@ def main() -> int:
 RECENT_WINDOW_DAYS = 365
 
 
-def refresh_recent_12m(db: Turso) -> tuple[int, int]:
+def refresh_recent_12m(db: Database) -> tuple[int, int]:
     """Refresh perm_entities.recent_12m for employers and law firms.
 
     The count is filings RECEIVED in the last 365 days, from both halves of the

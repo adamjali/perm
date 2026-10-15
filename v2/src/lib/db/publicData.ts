@@ -1,0 +1,1595 @@
+/**
+ * Reads for the public data pages, backed by the public-data database.
+ *
+ * Everything here is public DOL data. No user data is reachable from this
+ * module - see client.ts for why that boundary is enforced rather than
+ * merely intended.
+ *
+ * A NOTE ON ERROR HANDLING, BECAUSE THE PREVIOUS VERSION GOT IT WRONG.
+ * The Convex call sites wrapped every fetch in `.catch(() => [])`. When the
+ * deployment was disabled, /perm-employers, /perm-wages and /perm-cases each
+ * returned HTTP 200 carrying nav and footer and about 1,300 characters of
+ * visible text - an outage rendered as an empty state, which is
+ * indistinguishable from a genuinely empty table and so passed every status
+ * check. These functions THROW. A page that cannot load its data should fail
+ * visibly, and Next's error boundary is the right place to decide what the
+ * reader sees.
+ */
+import "server-only";
+import { cache } from "react";
+
+import type { BulletinMonth } from "@/lib/perm";
+import {
+  MIN_TOTAL_FOR_BULK,
+  MIN_TOTAL_FOR_PAGE,
+  type EntityKind,
+  type EntityRow,
+} from "@/lib/entityPayload";
+import { MS_PER_DAY } from "@/lib/time";
+
+import { one, rows } from "./client";
+import { wageView } from "./wageViews";
+import { getLiveCensus, type CensusMatrixRow } from "./liveCensus";
+
+interface EntityDbRow {
+  slug: string;
+  name: string;
+  rank: number;
+  total: number;
+  certified: number | null;
+  denied: number | null;
+  median_days: number | null;
+  median_annual_wage: number | null;
+  state: string | null;
+  code: string | null;
+  recent_12m: number | null;
+}
+
+function toEntityRow(r: EntityDbRow): EntityRow {
+  return {
+    slug: r.slug,
+    name: r.name,
+    rank: r.rank,
+    total: r.total,
+    certified: r.certified ?? 0,
+    denied: r.denied ?? 0,
+    medianDays: r.median_days,
+    medianAnnualWage: r.median_annual_wage,
+    state: r.state,
+    code: r.code,
+    recent12m: r.recent_12m ?? null,
+  };
+}
+
+const ENTITY_COLS =
+  "slug, name, rank, total, certified, denied, median_days, median_annual_wage, state, code, recent_12m";
+
+/** The head of one kind, plus how many exist in total. */
+export async function getEntitySeed(
+  kind: EntityKind,
+  limit = 250,
+): Promise<{ rows: EntityRow[]; total: number }> {
+  const [head, count] = await Promise.all([
+    rows<EntityDbRow>(
+      `SELECT ${ENTITY_COLS} FROM perm_entities WHERE kind = ? ORDER BY rank LIMIT ?`,
+      [kind, limit],
+    ),
+    // Pageworthy count, so the header's "N employers" matches what the table
+    // can actually enumerate; the sub-floor corpus is reachable via search.
+    countPageworthy(kind),
+  ]);
+  return { rows: head.map(toEntityRow), total: count || head.length };
+}
+
+/**
+ * Every row of one kind that belongs in the BULK dump, in one query.
+ *
+ * No paging: a single read here is not capped the way a Convex read is, so it
+ * needs no rank cursor, runaway guard or duplicate-rank check.
+ *
+ * IT READS `MIN_TOTAL_FOR_BULK`, NOT THE PAGE FLOOR, which is 1. Its only
+ * caller is `/api/perm-entities/<kind>`, which the search palette downloads
+ * as a client-side slice: at the page floor that response would be tens of
+ * thousands of employers rather than about nine thousand, which is both a
+ * page-weight problem and a one-request copy of the compilation that §4 of
+ * the Terms tells other people not to take. The sitemap does not share this
+ * function: it reads its own rank window (`getEntitySlugWindow`), because
+ * slicing a whole-table fetch in JS would mean one full read per sitemap
+ * file.
+ */
+export async function getAllEntities(kind: EntityKind): Promise<EntityRow[]> {
+  const all = await rows<EntityDbRow>(
+    `SELECT ${ENTITY_COLS} FROM perm_entities WHERE kind = ? AND total >= ? ORDER BY rank`,
+    [kind, MIN_TOTAL_FOR_BULK],
+  );
+  return all.map(toEntityRow);
+}
+
+/**
+ * The slugs for ONE sitemap chunk, read as a rank window.
+ *
+ * MEASURED on production, one employer chunk deep in the kind:
+ *
+ *     LIMIT 5000 OFFSET 60000 ORDER BY rank      4,858 ms
+ *     WHERE rank > 60000 AND rank <= 65000         459 ms
+ *
+ * The offset form is not a paged read at all. `idx_pe_kind_total` orders by
+ * `total`, so an `ORDER BY rank` on top of it is `USE TEMP B-TREE FOR ORDER
+ * BY`: SQLite reads all 71,512 rows of the kind and sorts them before
+ * discarding all but 5,000. Every chunk pays for the whole table, the same
+ * defect in a different costume as slicing a whole-table fetch in JS.
+ * The rank range is served by `idx_pe_kind_rank` directly and touches exactly
+ * the 5,000 index entries it returns.
+ *
+ * RANKS ARE DENSE 1..N PER KIND, verified again here before relying on it
+ * (employer 71,512, attorney 5,678, occupation 1,410, each with MAX(rank) ==
+ * COUNT(*)), so the windows partition the kind exactly: no slug is emitted
+ * twice and none is skipped.
+ *
+ * The floor still applies INSIDE the window rather than defining it. Today it
+ * removes nothing - no row anywhere has `total < 1` - but if the floor is ever
+ * raised again a window will contain sub-floor rows and its chunk will come
+ * back short. That is correct output, not a bug, and it is why the chunk COUNT
+ * comes from `countEntityRanks` (how many ranks exist) rather than from the
+ * pageworthy count: the windows have to cover every rank, whatever fraction of
+ * them earns a URL.
+ */
+export async function getEntitySlugWindow(
+  kind: EntityKind,
+  chunk: number,
+  size: number,
+): Promise<string[]> {
+  const lo = chunk * size;
+  const found = await rows<{ slug: string }>(
+    `SELECT slug FROM perm_entities
+      WHERE kind = ? AND rank > ? AND rank <= ? AND total >= ?
+      ORDER BY rank`,
+    [kind, lo, lo + size, MIN_TOTAL_FOR_PAGE],
+  );
+  return found.map((r) => r.slug);
+}
+
+/**
+ * How many ranks one kind holds, which is how many chunks the index lists.
+ *
+ * `MAX(rank)` off the top of `idx_pe_kind_rank`, not `count(*)`: ranks are
+ * dense, so the two agree, and one is a single index read while the other
+ * walked 71,512 covering-index entries in 989 ms.
+ */
+export async function countEntityRanks(kind: EntityKind): Promise<number> {
+  const r = await one<{ n: number }>(
+    "SELECT max(rank) AS n FROM perm_entities WHERE kind = ?",
+    [kind],
+  );
+  return r?.n ?? 0;
+}
+
+/**
+ * The live-only employers, for the `live-employer-N.xml` sitemap children.
+ *
+ * `perm_live_only_index` is written by `build_entity_detail.py` every night
+ * beside `perm_live_recent`: one row per employer the live feed names and the
+ * published files do not, with a dense rank ordered by first filing then slug
+ * so a night's new arrivals mostly append and the windows stay stable. Read
+ * exactly as the entity windows are: a rank RANGE off the rank index, never an
+ * OFFSET that sorts the whole table per chunk.
+ *
+ * A missing table (the first deploy before the first nightly run) reads as
+ * zero ranks, so the index lists no live children rather than failing every
+ * sitemap on the site; `captureError` names it.
+ *
+ * Each row carries `lastChanged`: the Eastern day any of that employer's cases
+ * last changed as the page shows it, written by the nightly builder
+ * (`last_changed`, from perm_case_status.fetched_at). It is the
+ * page's sitemap lastmod, in place of one nightly date on every URL.
+ */
+export interface LiveOnlySlug {
+  slug: string;
+  lastChanged: string | null;
+}
+
+export async function getLiveOnlySlugWindow(chunk: number, size: number): Promise<LiveOnlySlug[]> {
+  const lo = chunk * size;
+  const found = await rows<{ slug: string; last_changed: string | null }>(
+    "SELECT slug, last_changed FROM perm_live_only_index WHERE rank > ? AND rank <= ? ORDER BY rank",
+    [lo, lo + size],
+  );
+  return found.map((r) => ({ slug: r.slug, lastChanged: r.last_changed ?? null }));
+}
+
+export async function countLiveOnlyRanks(): Promise<number> {
+  const r = await one<{ n: number }>("SELECT max(rank) AS n FROM perm_live_only_index");
+  return r?.n ?? 0;
+}
+
+/** One entity by slug. `null` means no such page, which callers turn into a 404. */
+export async function getEntityBySlug(
+  kind: EntityKind,
+  slug: string,
+): Promise<EntityRow | null> {
+  const r = await one<EntityDbRow>(
+    `SELECT ${ENTITY_COLS} FROM perm_entities WHERE kind = ? AND slug = ?`,
+    [kind, slug],
+  );
+  return r ? toEntityRow(r) : null;
+}
+
+/**
+ * One precomputed document by key, with its write time folded in.
+ *
+ * Exported so a sibling reader (alphabet.ts) uses this parse rather than a
+ * second copy: two doc readers is two places for `computedAt` to go missing.
+ */
+export async function doc<T>(key: string): Promise<T | null> {
+  const r = await one<{ json: string; computed_at: number }>(
+    "SELECT json, computed_at FROM perm_docs WHERE key = ?",
+    [key],
+  );
+  if (!r) return null;
+  return { ...(JSON.parse(r.json) as object), computedAt: r.computed_at } as T;
+}
+
+/**
+ * The aggregate document, typed.
+ *
+ * Mirrors the return validator the Convex query used to declare. Written out
+ * rather than inferred from the JSON: `JSON.parse` yields `any`, and a
+ * generic default of `Record<string, unknown>` collapses every field to `{}`,
+ * which typechecks at the call site and then renders nothing. The nullable
+ * percentiles are nullable in the data, not as a formality - a wage ladder is
+ * only meaningful if all three rungs exist and ascend.
+ */
+export interface Cohort {
+  cohortMonth: string;
+  decided: number;
+  /**
+   * Cases DOL received that month, PENDING INCLUDED, or null when the live
+   * sweep does not cover the month. Never comes from the disclosure files -
+   * they hold no pending rows - so it is merged in from `live_census`. See
+   * `receivedByMonthFrom`.
+   */
+  totalReceived?: number | null;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  p90: number | null;
+}
+export interface ClearanceMonth {
+  month: string;
+  decisions: number;
+}
+export interface FrontierPoint {
+  decisionMonth: string;
+  medianFilingMonth: string;
+  decisions: number;
+}
+export interface StateStat {
+  state: string;
+  total: number;
+  certified: number;
+  denied: number;
+  withdrawn: number;
+  medianDays: number | null;
+  medianAnnualWage: number | null;
+}
+export interface SocStat {
+  code: string;
+  title: string;
+  total: number;
+  certified: number;
+  denied: number;
+  medianDays: number | null;
+  medianAnnualWage: number | null;
+}
+export interface EmployerStat {
+  name: string;
+  total: number;
+  certified: number;
+  denied: number;
+  medianDays: number | null;
+}
+export interface AttorneyStat extends EmployerStat {
+  /** Two-letter state, or "" when DOL's cell was unusable. */
+  state: string;
+}
+export interface WageLadder {
+  count: number;
+  p10: number | null;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  p90: number | null;
+}
+export interface RiskRow {
+  bucket: string;
+  decided: number;
+  denied: number;
+  denialRate: number;
+}
+export interface Risk {
+  baseline: { decided: number; denied: number; denialRate: number };
+  byWage: RiskRow[];
+  byYear: RiskRow[];
+  byFlag: RiskRow[];
+}
+export interface DisclosureStats {
+  sourceFiles: string[];
+  uniqueCases: number;
+  cohorts: Cohort[];
+  clearanceByMonth: ClearanceMonth[];
+  frontierHistory: FrontierPoint[];
+  byState?: StateStat[];
+  topOccupations?: SocStat[];
+  topEmployers?: EmployerStat[];
+  topAttorneys?: AttorneyStat[];
+  wageLadder?: WageLadder | null;
+  risk?: Risk;
+  computedAt: number;
+}
+
+/**
+ * How many entity rows the aggregate document carries per kind.
+ *
+ * THIS NUMBER IS LOAD-BEARING AND MUST NOT BE RAISED CASUALLY.
+ * `dataPageFigures.deriveFigures` turns these arrays into "the largest
+ * sponsors account for N% of cases". That statistic is only meaningful
+ * against a FIXED head of the ranking - hand it all 16,305 employers and the
+ * share becomes ~100% and the published figure quietly changes meaning while
+ * still rendering a plausible number.
+ *
+ * 250 is what the Convex aggregate happened to hold, for an unrelated reason
+ * (its 1 MB document cap). The cap is gone; the statistic's definition is
+ * not, so the number is now an explicit editorial choice rather than an
+ * accident of the old backend.
+ */
+export const STATS_ENTITY_HEAD = 250;
+
+/**
+ * The aggregate series: cohorts, clearance, frontier, byState, wage ladder,
+ * risk - plus the head of each entity ranking.
+ *
+ * The entity arrays are hydrated from `perm_entities` rather than stored a
+ * second time in the document. Keeping a copy in both places is how the
+ * truncated 250-row version became the de-facto source of truth for pages
+ * that should have been reading the full table.
+ */
+export async function getDisclosureStats<T = DisclosureStats>(): Promise<T | null> {
+  const base = await doc<Record<string, unknown>>("disclosure_stats");
+  if (!base) return null;
+  const [employers, attorneys, occupations] = await Promise.all([
+    getEntitySeed("employer", STATS_ENTITY_HEAD),
+    getEntitySeed("attorney", STATS_ENTITY_HEAD),
+    getEntitySeed("occupation", STATS_ENTITY_HEAD),
+  ]);
+  return {
+    ...base,
+    topEmployers: employers.rows.map((r) => ({
+      name: r.name, total: r.total, certified: r.certified,
+      denied: r.denied, medianDays: r.medianDays,
+    })),
+    topAttorneys: attorneys.rows.map((r) => ({
+      name: r.name, total: r.total, certified: r.certified,
+      denied: r.denied, medianDays: r.medianDays, state: r.state,
+    })),
+    topOccupations: occupations.rows.map((r) => ({
+      title: r.name, code: r.code, total: r.total, certified: r.certified,
+      denied: r.denied, medianDays: r.medianDays,
+      medianAnnualWage: r.medianAnnualWage,
+    })),
+  } as T;
+}
+
+/** Corpus metadata: totals, date span, byStatus / byFiscalYear / byState. */
+export function getCasesMeta<T = Record<string, unknown>>(): Promise<T | null> {
+  return doc<T>("cases_meta");
+}
+
+export function getWageMeta<T = Record<string, unknown>>(): Promise<T | null> {
+  return doc<T>("wage_meta");
+}
+
+export interface WageCell {
+  kind: string;
+  key: string;
+  socCode: string | null;
+  socTitle: string | null;
+  state: string | null;
+  fiscalYear: string;
+  count: number;
+  p5: number | null;
+  p10: number | null;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  p90: number | null;
+  p95: number | null;
+  mean: number | null;
+  histogram: unknown;
+}
+
+/**
+ * Wage cells for one key.
+ *
+ * `fiscalYear` is part of the identity, not a filter you may omit: a key has
+ * a row per year AND an 'all' rollup. Collapsing them cost 57% of the table
+ * on the first load of this data and would have served one year's median as
+ * the all-time figure.
+ */
+export async function getWageCells(
+  kind: string,
+  key: string,
+  fiscalYear?: string,
+): Promise<WageCell[]> {
+  const sql =
+    "SELECT kind, key, soc_code, soc_title, state, fiscal_year, count, p5, p10, p25, p50, p75, p90, p95, mean, histogram " +
+    "FROM perm_wage_stats WHERE kind = ? AND key = ?" +
+    (fiscalYear ? " AND fiscal_year = ?" : "") +
+    " ORDER BY fiscal_year";
+  const args = fiscalYear ? [kind, key, fiscalYear] : [kind, key];
+  const r = await rows<Record<string, never>>(sql, args);
+  return r.map((x) => {
+    const o = x as unknown as Record<string, unknown>;
+    return {
+      kind: o.kind as string,
+      key: o.key as string,
+      socCode: (o.soc_code as string) ?? null,
+      socTitle: (o.soc_title as string) ?? null,
+      state: (o.state as string) ?? null,
+      fiscalYear: o.fiscal_year as string,
+      count: (o.count as number) ?? 0,
+      p5: (o.p5 as number) ?? null,
+      p10: (o.p10 as number) ?? null,
+      p25: (o.p25 as number) ?? null,
+      p50: (o.p50 as number) ?? null,
+      p75: (o.p75 as number) ?? null,
+      p90: (o.p90 as number) ?? null,
+      p95: (o.p95 as number) ?? null,
+      mean: (o.mean as number) ?? null,
+      histogram: o.histogram ? JSON.parse(o.histogram as string) : null,
+    };
+  });
+}
+
+export async function getVisaBulletins(): Promise<
+  Array<{
+    bulletinMonth: string;
+    sourceUrl: string | null;
+    archivedAt: string | null;
+    finalAction: unknown;
+    datesForFiling: unknown;
+  }>
+> {
+  const r = await rows<Record<string, string | null>>(
+    "SELECT bulletin_month, source_url, archived_at, final_action, dates_for_filing " +
+      "FROM visa_bulletins ORDER BY bulletin_month",
+  );
+  return r.map((x) => ({
+    bulletinMonth: x.bulletin_month as string,
+    // `?? null` rather than a cast: indexing a Record yields `| undefined`,
+    // and the column is nullable, so both absences collapse to one.
+    sourceUrl: x.source_url ?? null,
+    archivedAt: x.archived_at ?? null,
+    finalAction: x.final_action ? JSON.parse(x.final_action) : null,
+    datesForFiling: x.dates_for_filing ? JSON.parse(x.dates_for_filing) : null,
+  }));
+}
+
+/**
+ * The family-sponsored charts (F1, F2A, F2B, F3, F4), in the same shape as
+ * the employment ones so `summariseBulletins` can read them. Only months the
+ * parser has read the family tables for; a month captured from a browser
+ * before the parser learned them is absent here, not empty, and the archive
+ * backfill refills it.
+ */
+export async function getFamilyBulletinSeries(): Promise<Array<BulletinMonth & { archivedAt: string; sourceUrl: string }>> {
+  const r = await rows<Record<string, string | null>>(
+    "SELECT bulletin_month, source_url, archived_at, family_final_action, family_dates_for_filing " +
+      "FROM visa_bulletins WHERE family_final_action IS NOT NULL ORDER BY bulletin_month",
+  ).catch(() => [] as Record<string, string | null>[]);
+  return r.map((x) => ({
+    bulletinMonth: x.bulletin_month as string,
+    sourceUrl: x.source_url ?? "",
+    archivedAt: x.archived_at ?? "",
+    finalAction: x.family_final_action ? (JSON.parse(x.family_final_action) as BulletinMonth["finalAction"]) : {},
+    datesForFiling: x.family_dates_for_filing ? (JSON.parse(x.family_dates_for_filing) as BulletinMonth["datesForFiling"]) : {},
+  }));
+}
+
+/**
+ * The bulletin series in the shape the priority-date chart expects: ascending
+ * by month, with `archivedAt` and `sourceUrl` as plain strings.
+ *
+ * Both are non-null for every row the archive ingest writes, but the columns
+ * are nullable, so the coercion happens once here instead of at the call
+ * site. `getVisaBulletins` above stays honest about the column types.
+ */
+export async function getVisaBulletinSeries(): Promise<
+  Array<BulletinMonth & { archivedAt: string; sourceUrl: string }>
+> {
+  const all = await getVisaBulletins();
+  return all
+    .map((b) => ({
+      bulletinMonth: b.bulletinMonth,
+      archivedAt: b.archivedAt ?? "",
+      sourceUrl: b.sourceUrl ?? "",
+      finalAction: b.finalAction as BulletinMonth["finalAction"],
+      datesForFiling: b.datesForFiling as BulletinMonth["datesForFiling"],
+    }))
+    .sort((a, b) => a.bulletinMonth.localeCompare(b.bulletinMonth));
+}
+
+/**
+ * How many entities of one kind actually HAVE a page.
+ *
+ * The sitemap index has to know how many child files exist before it can list
+ * them, and that count is of PAGEWORTHY rows, not of all rows: everything
+ * below the threshold is stored and searchable but has no URL. Counting in
+ * SQL rather than fetching every row to call .filter().length on them.
+ *
+ * ONE ROW READ, NOT A COUNT. `count(*) ... WHERE kind = ? AND total >= ?`
+ * walks every index entry of the kind (71,512 for employers), and every
+ * entity page, the case page's estimate and llms.txt would ask it three
+ * times per render, which makes it by far the heaviest read on the database.
+ * Ranks are dense 1..N per kind and ordered by total, so the pageworthy
+ * count is the last rank whenever the last-ranked entity clears the floor,
+ * which it does at a floor of 1 (every entity holds at least one filing;
+ * measured: no rank/total inversions, minimum total 1). The
+ * count survives as the fallback for a floor the tail does not clear.
+ */
+export const countPageworthy = cache(async (kind: EntityKind): Promise<number> => {
+  const last = await one<{ rank: number; total: number }>(
+    "SELECT rank, total FROM perm_entities WHERE kind = ? ORDER BY rank DESC LIMIT 1",
+    [kind],
+  );
+  if (!last) return 0;
+  if (Number(last.total) >= MIN_TOTAL_FOR_PAGE) return Number(last.rank);
+  const r = await one<{ n: number }>(
+    "SELECT count(*) AS n FROM perm_entities WHERE kind = ? AND total >= ?",
+    [kind, MIN_TOTAL_FOR_PAGE],
+  );
+  return Number(r?.n ?? 0);
+});
+
+export interface DatasetFreshness {
+  dataset: string;
+  asOf: string | null;
+  fetchedAt: number;
+  source: string;
+  cadence: string;
+  note: string | null;
+  /** Days after which this dataset should be treated as overdue. */
+  maxAgeDays: number | null;
+  /** Whole days between the as-of date and now, null if unparseable. */
+  ageDays: number | null;
+  /** ageDays past maxAgeDays. An ingest has probably stopped. */
+  stale: boolean;
+}
+
+export interface DailyDecisions {
+  /** ISO date, "YYYY-MM-DD". */
+  date: string;
+  total: number;
+  certified: number;
+  denied: number;
+  withdrawn: number;
+}
+
+/**
+ * Decisions DOL issued on a single day, ascending.
+ *
+ * Two sources live in this table and they are not interchangeable:
+ * "dol-disclosure", derived from our own case corpus by DOL's decision date,
+ * and "sweep-observed", dated by when our sweep saw a case become final. The
+ * default is the first; ask for the second by name.
+ */
+export async function getDailyDecisions(
+  source = "dol-disclosure",
+): Promise<DailyDecisions[]> {
+  const r = await rows<Record<string, unknown>>(
+    "SELECT date, total, certified, denied, withdrawn FROM daily_decisions " +
+      "WHERE source = ? ORDER BY date",
+    [source],
+  );
+  return r.map((x) => ({
+    date: x.date as string,
+    // The columns are nullable, and indexing a Record yields `| undefined`.
+    // Both absences collapse to 0 so a caller never has to guard arithmetic.
+    total: (x.total as number) ?? 0,
+    certified: (x.certified as number) ?? 0,
+    denied: (x.denied as number) ?? 0,
+    withdrawn: (x.withdrawn as number) ?? 0,
+  }));
+}
+
+/**
+ * The freshness registry: what every dataset is, where it comes from, the
+ * date it carries, and how often it moves. Written by the ingest scripts;
+ * rendered by <DataProvenance> so provenance sits ON the page instead of in
+ * a methodology page nobody visits. A row per dataset, replaced on ingest.
+ */
+/**
+ * Freshness for every dataset. Read by nearly every public page, and the SAME
+ * result for all of them.
+ *
+ * Not in `unstable_cache`: a data cache entry's window caps every page
+ * reading it, so an hour-long entry would make those pages rebuild hourly
+ * for good, far costlier than one ~40-row query per render. See getFreshness
+ * below.
+ */
+const freshnessUncached = async (): Promise<Record<string, DatasetFreshness>> => {
+  const r = await rows<Record<string, unknown>>(
+    "SELECT dataset, as_of, fetched_at, source, cadence, note, max_age_days FROM data_freshness",
+  );
+  const out: Record<string, DatasetFreshness> = {};
+  const now = Date.now();
+  for (const x of r) {
+    const asOf = (x.as_of as string) ?? null;
+    const maxAgeDays = (x.max_age_days as number) ?? null;
+    // A bare "2026-08" is a month, and Date.parse reads it as the 1st, which
+    // makes a fresh monthly dataset look up to 30 days older than it is.
+    // Anchor a month to its END so the age is the smallest true value.
+    let ageDays: number | null = null;
+    if (asOf) {
+      // eslint's security/detect-unsafe-regex flags this one. FALSE POSITIVE,
+      // measured rather than argued: the pattern is fully anchored with only
+      // fixed-length quantifiers and no nested repetition, so there is no
+      // backtracking to explode. Against the classic almost-matching-prefix
+      // input it runs linearly - 0.09 ms at 1k characters, 0.33 ms at 400k -
+      // where a real ReDoS would be seconds (this repo has measured one at
+      // 8.2 s). `asOf` is also our own `data_freshness.as_of` column, never
+      // anything a caller supplies, so the attacker-controlled precondition
+      // does not hold either. Not suppressed inline on purpose: the reason
+      // belongs where the next reader will look.
+      const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(asOf);
+      if (m) {
+        const y = Number(m[1]);
+        const mo = Number(m[2]);
+        const d = m[3] ? Number(m[3]) : new Date(Date.UTC(y, mo, 0)).getUTCDate();
+        ageDays = Math.floor((now - Date.UTC(y, mo - 1, d)) / MS_PER_DAY);
+      }
+    }
+    out[x.dataset as string] = {
+      dataset: x.dataset as string,
+      asOf,
+      fetchedAt: (x.fetched_at as number) ?? 0,
+      source: (x.source as string) ?? "",
+      cadence: (x.cadence as string) ?? "",
+      note: (x.note as string) ?? null,
+      maxAgeDays,
+      ageDays,
+      // Only claim stale when BOTH numbers are known. An unknown age is not
+      // evidence of freshness, but it is not evidence of staleness either,
+      // and a false alarm on every page teaches people to ignore the real one.
+      stale: ageDays !== null && maxAgeDays !== null && ageDays > maxAgeDays,
+    };
+  }
+  return out;
+};
+
+// React's per-request cache, NOT `unstable_cache`. A data cache entry's
+// `revalidate` becomes the ceiling of every page that reads it, and this sits
+// under DataProvenance on most of the site's ISR pages: an hour-long entry
+// here makes pages that declare 30 days, 6 hours or a day rebuild every hour
+// (the build's route table shows it). The query reads ~40 rows,
+// so running it once per render costs nothing, and the stamp is always the
+// one that was true when the page was built.
+export const getFreshness = cache(freshnessUncached);
+
+export interface I485Position {
+  asOf: string;
+  country: string;
+  category: string;
+  /** Applications pending with an EARLIER priority date, counted cells only. */
+  counted: number;
+  /** How many cells USCIS suppressed inside that set (each holds 1-10). */
+  suppressedCells: number;
+  /** counted + suppressedCells (every suppressed cell at its floor of 1). */
+  low: number;
+  /** counted + suppressedCells * 10 (every suppressed cell at its ceiling). */
+  high: number;
+  /** The priority-date range USCIS publishes for this country+category. */
+  coverage: { earliest: string; latest: string };
+  /** True when the asked-for date sits outside that published range. */
+  outsideCoverage: boolean;
+  /** Total pending in this country+category, for context. */
+  categoryTotal: number;
+}
+
+/**
+ * How many employment-based adjustment applications sit ahead of a given
+ * priority date, from USCIS's own monthly inventory.
+ *
+ * WE PUBLISH A RANGE, NOT A POINT. USCIS replaces any cell holding 1-10
+ * applications with a "D", so an exact total is not knowable from the
+ * release. Resolving every D to 5 and printing one number would claim a
+ * precision the release does not carry; on a site that refuses to blend
+ * denial factors into a single score because the inputs cannot carry it, a
+ * point estimate here would be the same mistake. `low` and `high` are the
+ * arithmetic bounds and
+ * both are true statements about the published data.
+ *
+ * "Ahead" counts BOTH pending statuses. A case whose visa number is already
+ * available but which USCIS has not adjudicated is still in front of you in
+ * the only queue that matters to the asker.
+ */
+export async function getI485Position(
+  country: string,
+  category: string,
+  pdYear: number,
+  pdMonth: number,
+): Promise<I485Position | null> {
+  const asOf = await one<{ d: string }>(
+    "SELECT max(as_of) AS d FROM i485_inventory",
+  );
+  if (!asOf?.d) return null;
+
+  const agg = await one<{ counted: number; sup: number }>(
+    `SELECT coalesce(sum(count), 0) AS counted,
+            coalesce(sum(suppressed), 0) AS sup
+       FROM i485_inventory
+      WHERE as_of = ? AND country = ? AND category = ?
+        AND (pd_year = 'prior'
+             OR (pd_year <> 'prior' AND CAST(pd_year AS INTEGER) < ?)
+             OR (pd_year = ? AND pd_month < ?))`,
+    [asOf.d, country, category, pdYear, String(pdYear), pdMonth],
+  );
+  if (!agg) return null;
+
+  const span = await one<{ lo: string; hi: string; total: number }>(
+    `SELECT min(CASE WHEN pd_year = 'prior' THEN '0000' ELSE pd_year END) AS lo,
+            max(CASE WHEN pd_year = 'prior' THEN '0000' ELSE pd_year END) AS hi,
+            coalesce(sum(count), 0) AS total
+       FROM i485_inventory
+      WHERE as_of = ? AND country = ? AND category = ?`,
+    [asOf.d, country, category],
+  );
+  if (!span?.hi) return null;
+
+  const counted = Number(agg.counted) || 0;
+  const sup = Number(agg.sup) || 0;
+  return {
+    asOf: asOf.d,
+    country,
+    category,
+    counted,
+    suppressedCells: sup,
+    low: counted + sup,
+    high: counted + sup * 10,
+    coverage: { earliest: span.lo === "0000" ? "prior" : span.lo, latest: span.hi },
+    outsideCoverage: pdYear > Number(span.hi),
+    categoryTotal: Number(span.total) || 0,
+  };
+}
+
+/** Which country+category pairs USCIS actually publishes, for the form. */
+export async function getI485Options(): Promise<
+  { country: string; categories: string[] }[]
+> {
+  const r = await rows<{ country: string; category: string }>(
+    `SELECT DISTINCT country, category FROM i485_inventory
+      WHERE as_of = (SELECT max(as_of) FROM i485_inventory)
+      ORDER BY country, category`,
+  );
+  const byCountry = new Map<string, string[]>();
+  for (const x of r) {
+    const list = byCountry.get(x.country) ?? [];
+    list.push(x.category);
+    byCountry.set(x.country, list);
+  }
+  return [...byCountry.entries()].map(([country, categories]) => ({ country, categories }));
+}
+
+/** Month-over-month movement in the whole pending inventory. */
+export async function getI485Trend(): Promise<
+  { asOf: string; total: number; available: number; awaiting: number }[]
+> {
+  // USCIS reports two pending statuses: a visa number already available, and
+  // awaiting one. Both are ahead of the reader; the split is what the trend
+  // chart shows, because "available but unadjudicated" is the backlog USCIS
+  // owns and "awaiting" is the one the bulletin owns.
+  const r = await rows<{ as_of: string; status: string; total: number }>(
+    `SELECT as_of, status, coalesce(sum(count), 0) AS total
+       FROM i485_inventory GROUP BY as_of, status ORDER BY as_of`,
+  );
+  const by = new Map<string, { asOf: string; total: number; available: number; awaiting: number }>();
+  for (const x of r) {
+    const row = by.get(x.as_of) ?? { asOf: x.as_of, total: 0, available: 0, awaiting: 0 };
+    const n = Number(x.total) || 0;
+    row.total += n;
+    if (x.status === "available") row.available += n;
+    else row.awaiting += n;
+    by.set(x.as_of, row);
+  }
+  return [...by.values()];
+}
+
+/**
+ * Every published cell in the newest release, keyed by country and category.
+ *
+ * `getI485Position` answers one question per query, which is the right shape
+ * for a server caller. The calculator page needs a different shape: four
+ * selects, each of which would otherwise be a database round-trip and a
+ * pending state on a figure that ought to be instant. So the page takes the
+ * whole table once and computes in the browser, exactly as every other
+ * calculator in the suite takes its dataset as a prop.
+ *
+ * It is affordable because the release is small: 2,424 grouped cells, 38 KB
+ * of JSON, about 6 KB over the wire once compressed.
+ *
+ * The two statuses USCIS reports, `awaiting availability` and `available`,
+ * are summed here. Both are pending and both sit ahead of a later priority
+ * date, which is the same rule `getI485Position` applies.
+ *
+ * Shape is `[year, month, count, suppressed]` with year 0 for the "Prior
+ * Years" column, which keeps it compact and lets it sort ahead of every real
+ * year without special handling. `src/lib/i485/position.ts` consumes it.
+ */
+export async function getI485Cells(): Promise<Record<string, [number, number, number, number][]>> {
+  const r = await rows<{
+    country: string;
+    category: string;
+    pd_year: string;
+    pd_month: number;
+    c: number;
+    s: number;
+  }>(
+    `SELECT country, category, pd_year, pd_month,
+            coalesce(sum(count), 0) AS c, coalesce(sum(suppressed), 0) AS s
+       FROM i485_inventory
+      WHERE as_of = (SELECT max(as_of) FROM i485_inventory)
+      GROUP BY country, category, pd_year, pd_month
+      ORDER BY country, category,
+               (CASE WHEN pd_year = 'prior' THEN 0 ELSE CAST(pd_year AS INTEGER) END),
+               pd_month`,
+  );
+  const out: Record<string, [number, number, number, number][]> = {};
+  for (const x of r) {
+    const key = `${x.country}|${x.category}`;
+    (out[key] ??= []).push([
+      x.pd_year === "prior" ? 0 : Number(x.pd_year),
+      Number(x.pd_month),
+      Number(x.c) || 0,
+      Number(x.s) || 0,
+    ]);
+  }
+  return out;
+}
+
+export interface MonthQueueStat {
+  filingMonth: string;
+  total: number;
+  pending: number;
+  decided: number;
+  analystReview: number;
+  rfiIssued: number;
+  auditResponse: number;
+  appeals: number;
+  /** decided / total, 0-100. Null when the month holds nothing. */
+  decidedPct: number | null;
+}
+
+export interface QueueAhead {
+  /** Pending cases filed BEFORE the given month. */
+  ahead: number;
+  /** Pending cases in the same filing month. */
+  sameMonth: number;
+  /** Every month's progress, oldest first. */
+  months: MonthQueueStat[];
+  /** The subject month's own row, when we hold one. */
+  subject: MonthQueueStat | null;
+  /** Months DOL is visibly working: some decided, not yet finished. */
+  activeRange: { from: string; to: string } | null;
+  source: string;
+}
+
+function toMonthStat(r: Record<string, unknown>): MonthQueueStat {
+  const total = Number(r.total) || 0;
+  const decided = Number(r.decided) || 0;
+  return {
+    filingMonth: String(r.filing_month),
+    total,
+    pending: Number(r.pending) || 0,
+    decided,
+    analystReview: Number(r.analyst_review) || 0,
+    rfiIssued: Number(r.rfi_issued) || 0,
+    auditResponse: Number(r.audit_response) || 0,
+    appeals: Number(r.appeals) || 0,
+    decidedPct: total > 0 ? (decided / total) * 100 : null,
+  };
+}
+
+/**
+ * How much of the PERM queue sits in front of a given filing month.
+ *
+ * THIS IS THE ONE THING DOL'S OWN FILES CANNOT ANSWER. The quarterly
+ * disclosure release contains no pending rows - every record carries a
+ * decision date - so a pending count cannot be derived from it at any level
+ * of effort. These counts come from per-case status, mirrored with
+ * attribution; `source` is carried through to the page rather than kept in a
+ * footnote.
+ *
+ * "Ahead" counts PENDING cases only. A decided case in an earlier month is
+ * no longer in front of anyone, and counting it would inflate the number in
+ * exactly the direction that flatters a wait estimate.
+ */
+export async function getQueueAhead(filingMonth: string): Promise<QueueAhead | null> {
+  // FROM THE LIVE CENSUS, NOT perm_month_stats: nothing writes that table,
+  // so reading it would serve a queue position that silently ages. The
+  // census doc is our own count,
+  // recomputed twice a day, and carries its own source attribution.
+  const census = await getLiveCensus();
+  const fromCensus = census ? monthQueueStatsFromMatrix(census.matrix) : [];
+  if (census && fromCensus.length > 0) {
+    return assembleQueueAhead(fromCensus, filingMonth, census.source);
+  }
+
+  const all = await rows<Record<string, unknown>>(
+    `SELECT filing_month, total, pending, decided, analyst_review, rfi_issued,
+            audit_response, appeals, source
+       FROM perm_month_stats ORDER BY filing_month`,
+  );
+  if (all.length === 0) return null;
+
+  const months = all.map(toMonthStat);
+  return assembleQueueAhead(months, filingMonth, String(all[0]?.source ?? ""));
+}
+
+function assembleQueueAhead(
+  months: MonthQueueStat[],
+  filingMonth: string,
+  source: string,
+): QueueAhead {
+  const ahead = months
+    .filter((m) => m.filingMonth < filingMonth)
+    .reduce((n, m) => n + m.pending, 0);
+  const subject = months.find((m) => m.filingMonth === filingMonth) ?? null;
+
+  // The band DOL is visibly working: months that have started but are not
+  // finished. A month at 0% has not been reached; one at ~100% is done.
+  const working = months.filter(
+    (m) => m.decidedPct !== null && m.decidedPct > 0.5 && m.decidedPct < 99,
+  );
+  const activeRange = working.length
+    ? {
+        from: working[0]!.filingMonth,
+        to: working[working.length - 1]!.filingMonth,
+      }
+    : null;
+
+  return {
+    ahead,
+    sameMonth: subject?.pending ?? 0,
+    months,
+    subject,
+    activeRange,
+    source,
+  };
+}
+
+/**
+ * Fold the census matrix into per-month queue stats. Pure so the stage
+ * bucketing is testable: the named buckets must match the live-SQL fallback
+ * below exactly, or the two paths disagree the day the doc goes missing.
+ */
+export function monthQueueStatsFromMatrix(
+  matrix: readonly CensusMatrixRow[],
+): MonthQueueStat[] {
+  const by = new Map<
+    string,
+    { total: number; pending: number; analyst: number; rfi: number; audit: number; appeals: number }
+  >();
+  for (const r of matrix) {
+    if (!r.month) continue;
+    const b =
+      by.get(r.month) ??
+      { total: 0, pending: 0, analyst: 0, rfi: 0, audit: 0, appeals: 0 };
+    b.total += r.n;
+    if (r.is_final === 0) b.pending += r.n;
+    const s = r.status.trim().toUpperCase().replace(/\s+/g, " ");
+    if (s === "ANALYST REVIEW") b.analyst += r.n;
+    else if (s === "RFI ISSUED") b.rfi += r.n;
+    else if (s === "PENDING AUDIT RESPONSE") b.audit += r.n;
+    else if (
+      s === "RECONSIDERATION APPEALS" ||
+      s === "BALCA APPEALS" ||
+      s === "REQUEST FOR REVIEW"
+    ) {
+      b.appeals += r.n;
+    }
+    by.set(r.month, b);
+  }
+  return [...by.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([m, b]) => ({
+      filingMonth: m,
+      total: b.total,
+      pending: b.pending,
+      decided: b.total - b.pending,
+      analystReview: b.analyst,
+      rfiIssued: b.rfi,
+      auditResponse: b.audit,
+      appeals: b.appeals,
+      decidedPct: b.total > 0 ? ((b.total - b.pending) / b.total) * 100 : null,
+    }));
+}
+
+/** Every month's queue progress, for the bar chart. */
+export async function getMonthQueueStats(): Promise<MonthQueueStat[]> {
+  const census = await getLiveCensus();
+  if (census) return monthQueueStatsFromMatrix(census.matrix);
+  /*
+   * COMPUTED FROM OUR OWN ROWS, not read from anybody else's aggregate of
+   * the same cases.
+   *
+   * TWO DIFFERENT QUESTIONS, ANSWERED TWO DIFFERENT WAYS, deliberately:
+   *
+   *   "is this case still open?" -> `is_final`, NEVER a status list. Sixteen
+   *   statuses exist and DOL adds more; a hardcoded list silently mis-buckets
+   *   every one it has not heard of, and mis-buckets it as DECIDED, which is
+   *   the direction that under-reports the backlog.
+   *
+   *   "which stage is it at?" -> named statuses, because a stage breakdown is
+   *   a question ABOUT the names. Anything pending that matches none of them
+   *   is still counted in `pending`; it just does not land in a named bucket,
+   *   which is honest rather than lossy.
+   */
+  const r = await rows<Record<string, unknown>>(
+    `SELECT substr(filing_date, 1, 7) AS month,
+            COUNT(*)                                      AS total,
+            SUM(CASE WHEN is_final = 0 THEN 1 ELSE 0 END) AS pending,
+            SUM(CASE WHEN current_status = 'ANALYST REVIEW' THEN 1 ELSE 0 END) AS analyst,
+            SUM(CASE WHEN current_status = 'RFI ISSUED' THEN 1 ELSE 0 END)     AS rfi,
+            SUM(CASE WHEN current_status = 'PENDING AUDIT RESPONSE' THEN 1 ELSE 0 END) AS audit,
+            SUM(CASE WHEN current_status IN
+                  ('RECONSIDERATION APPEALS','BALCA APPEALS','REQUEST FOR REVIEW')
+                THEN 1 ELSE 0 END) AS appeals
+       FROM perm_case_status
+      WHERE filing_date IS NOT NULL AND filing_date <> ''
+      GROUP BY month ORDER BY month`,
+  );
+  return r.map((x) => {
+    const total = Number(x.total) || 0;
+    const pending = Number(x.pending) || 0;
+    const decided = total - pending;
+    return {
+      filingMonth: String(x.month),
+      total,
+      pending,
+      decided,
+      analystReview: Number(x.analyst) || 0,
+      rfiIssued: Number(x.rfi) || 0,
+      auditResponse: Number(x.audit) || 0,
+      appeals: Number(x.appeals) || 0,
+      decidedPct: total > 0 ? (decided / total) * 100 : null,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Salary explorer
+//
+// FOLLOW-UP: this file is now ~1,050 lines against cases.ts at 488, and the
+// browse-shaped reads below have the same shape as the ones in cases.ts - a
+// filtered layer serving an API route. A split into db/wages.ts is the
+// right end state. Deliberately NOT done now: three agents are in this tree
+// and a file move buys a merge conflict for no user-visible gain.
+// ---------------------------------------------------------------------------
+
+export type WageStatusFilter = "certified" | "denied" | "withdrawn" | "all";
+
+export interface WageFilters {
+  /** SOC code, e.g. "15-1252". Null means every occupation. */
+  socCode?: string | null;
+  /** Two-letter worksite state. Null means the whole country. */
+  state?: string | null;
+  /** Fiscal year as DOL prints it. Null means the whole window. */
+  fiscalYear?: string | null;
+  /** Defaults to certified: a denied case's offered wage was never agreed. */
+  status?: WageStatusFilter;
+  /**
+   * Worksite city as DOL prints it, matched without case. A narrowing only:
+   * the route refuses it without a state (see `placeFilterRefusal`).
+   */
+  city?: string | null;
+  /** NAICS sector codes (two digits each); refused without a state or occupation. */
+  sectorCodes?: readonly string[] | null;
+}
+
+export interface WagePercentileRow {
+  n: number;
+  avg: number | null;
+  p5: number | null;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  p95: number | null;
+}
+
+export interface WageStateRow extends WagePercentileRow {
+  state: string;
+}
+
+export interface WageOption {
+  value: string;
+  label: string;
+  n: number;
+}
+
+/**
+ * The filtered population, as a WHERE fragment plus its arguments.
+ *
+ * `wage > 0` is not tidiness. DOL's files carry rows with a null or zero
+ * offered wage, and averaging those in drags every figure down by an amount
+ * that varies with how many such rows a filter happens to catch, which is the
+ * worst kind of wrong: invisible and inconsistent.
+ */
+function wageWhere(f: WageFilters): { sql: string; args: unknown[] } {
+  const parts = ["wage IS NOT NULL", "wage > 0"];
+  const args: unknown[] = [];
+  const status = f.status ?? "certified";
+  if (status !== "all") {
+    parts.push("status = ?");
+    args.push(status);
+  }
+  if (f.socCode) {
+    parts.push("substr(soc_code, 1, 7) = ?");
+    args.push(f.socCode.trim().slice(0, 7));
+  }
+  if (f.state) {
+    parts.push("state = ?");
+    args.push(f.state);
+  }
+  if (f.fiscalYear) {
+    parts.push("fiscal_year = ?");
+    args.push(f.fiscalYear);
+  }
+  if (f.city) {
+    parts.push("worksite_city = ? COLLATE NOCASE");
+    args.push(f.city);
+  }
+  if (f.sectorCodes && f.sectorCodes.length > 0) {
+    parts.push(`substr(naics, 1, 2) IN (${f.sectorCodes.map(() => "?").join(", ")})`);
+    args.push(...f.sectorCodes);
+  }
+  return { sql: parts.join(" AND "), args };
+}
+
+/**
+ * Percentile over the SELECTED subset, by LINEAR INTERPOLATION.
+ *
+ * The whole point of the explorer: a median must describe the rows the reader
+ * filtered to, never the corpus. Computed in SQL because doing it in JS means
+ * shipping 373,162 wages through the RSC payload to produce five numbers.
+ *
+ * INTERPOLATED, NOT NEAREST-RANK, AND THAT IS NOT A FREE CHOICE. This project
+ * already fixed the definition: `percentile()` in scripts/ingest_perm_disclosure.py
+ * uses numpy's default `linear` method and its docstring says so explicitly,
+ * so that wage stats and processing-time percentiles agree everywhere on the
+ * site. Rank k = (n-1) * p, then interpolate between floor(k) and ceil(k).
+ *
+ * This first shipped nearest-rank, on the reasoning that interpolating
+ * between two middle values invents a wage nobody was offered. That is a fair
+ * argument and it is the wrong one to make here: the cost of one figure being
+ * computed differently from every other figure on the site is larger than the
+ * cost of a median landing between two real offers. The cross-check script
+ * caught it - four materialised rows disagreed by $1 to $37 with counts
+ * matching exactly, which is the signature of a definition mismatch rather
+ * than a stale corpus.
+ *
+ * Verified: this SQL reproduces perm_wage_stats' own p50 exactly on every row
+ * that had diverged. `scripts/cross_check_wage_stats.py` keeps it that way.
+ *
+ * ONE DIFFERENCE REMAINS AND IT IS A DOLLAR. SQLite's ROUND() rounds halves
+ * away from zero; Python's round() rounds them to even, which the upstream
+ * percentile() docstring calls out by name. So a percentile landing exactly on
+ * a half-dollar can differ by $1 between the two routes - measured on 2 of 8
+ * per-state rows, e.g. FL's median at 58638.5. Matching banker's rounding in
+ * SQLite is real complexity for a difference no reader of a wage can act on,
+ * so the cross-check tolerates exactly $1 and nothing more.
+ */
+function percentileExpr(p: number, name: string): string {
+  const k = `(c.n - 1) * ${p}`;
+  const lo = `1 + CAST(${k} AS INTEGER)`;
+  return (
+    `(SELECT ROUND(lo.wage + (hi.wage - lo.wage) * (${k} - CAST(${k} AS INTEGER)))` +
+    `   FROM c JOIN o lo ON lo.rn = ${lo}` +
+    `          JOIN o hi ON hi.rn = MIN(${lo} + 1, c.n)) AS ${name}`
+  );
+}
+
+export const PERCENTILE_SELECT = (
+  [
+    [0.05, "p5"],
+    [0.25, "p25"],
+    [0.5, "p50"],
+    [0.75, "p75"],
+    [0.95, "p95"],
+  ] as const
+)
+  .map(([p, name]) => percentileExpr(p, name))
+  .join(",\n            ");
+
+/**
+ * The same interpolation, per state.
+ *
+ * A partitioned window rather than the correlated-subquery form above,
+ * because one query per state would be 56 round trips to build one table.
+ * `n` is constant within a partition, so MAX(n) inside the aggregate is that
+ * partition's count rather than a maximum over anything.
+ */
+function statePercentileExpr(p: number, name: string): string {
+  const k = `(n - 1) * ${p}`;
+  const loRank = `1 + CAST(${k} AS INTEGER)`;
+  const lo = `MAX(CASE WHEN rn = ${loRank} THEN wage END)`;
+  const hi = `MAX(CASE WHEN rn = MIN(${loRank} + 1, n) THEN wage END)`;
+  const frac = `(MAX(${k}) - CAST(MAX(${k}) AS INTEGER))`;
+  return `ROUND(${lo} + (${hi} - ${lo}) * ${frac}) AS ${name}`;
+}
+
+export const STATE_PERCENTILE_SELECT = (
+  [
+    [0.05, "p5"],
+    [0.25, "p25"],
+    [0.5, "p50"],
+    [0.75, "p75"],
+    [0.95, "p95"],
+  ] as const
+)
+  .map(([p, name]) => statePercentileExpr(p, name))
+  .join(",\n            ");
+
+/**
+ * The precomputed view for a selection (wageViews.ts), or null. A city or an
+ * industry filter is never precomputed: both are narrowings the route only
+ * accepts beside a state or an occupation, so the live query stays small.
+ */
+function permView(f: WageFilters) {
+  if (f.city || (f.sectorCodes && f.sectorCodes.length > 0)) return Promise.resolve(null);
+  return wageView("perm", f);
+}
+
+export async function getWageStats(f: WageFilters): Promise<WagePercentileRow> {
+  const view = await permView(f);
+  if (view) return view.stats;
+  const w = wageWhere(f);
+  const r = await one<Record<string, unknown>>(
+    `WITH f AS (SELECT wage FROM perm_cases WHERE ${w.sql}),
+          c AS (SELECT COUNT(*) AS n FROM f),
+          o AS (SELECT wage, ROW_NUMBER() OVER (ORDER BY wage) AS rn FROM f)
+     SELECT (SELECT n FROM c) AS n, (SELECT AVG(wage) FROM f) AS avg,
+            ${PERCENTILE_SELECT}`,
+    w.args,
+  );
+  const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
+  return {
+    n: Number(r?.n ?? 0),
+    avg: num(r?.avg),
+    p5: num(r?.p5),
+    p25: num(r?.p25),
+    p50: num(r?.p50),
+    p75: num(r?.p75),
+    p95: num(r?.p95),
+  };
+}
+
+/** Every occupied bin at the given width, oldest edge first. */
+export async function getWageHistogram(
+  f: WageFilters,
+  width: number,
+): Promise<{ from: number; count: number }[]> {
+  // Bins are stored at the width the builder used; a different width means
+  // binWidth() changed since, so the live query answers.
+  const view = await permView(f);
+  if (view && view.binWidth === width) {
+    return view.histogram.map(([from, count]) => ({ from, count }));
+  }
+  const w = wageWhere(f);
+  // Width is a number this module computed, never caller text, but it is
+  // still bound rather than interpolated so the shape of this query cannot
+  // depend on a value at all.
+  const r = await rows<Record<string, unknown>>(
+    `SELECT CAST(wage / ? AS INTEGER) * ? AS bin, COUNT(*) AS n
+       FROM perm_cases WHERE ${w.sql}
+      GROUP BY bin ORDER BY bin`,
+    [width, width, ...w.args],
+  );
+  return r.map((x) => ({ from: Number(x.bin), count: Number(x.n) }));
+}
+
+/**
+ * Per-state percentiles for the same filtered population.
+ *
+ * One query with a PARTITION rather than one query per state: 56 round trips
+ * to build one table is how a page ends up taking eight seconds.
+ */
+export async function getWageByState(
+  f: WageFilters,
+  minCases: number,
+): Promise<WageStateRow[]> {
+  const view = await permView({ ...f, state: null });
+  if (view?.byState && view.minCases === minCases) return view.byState;
+  const w = wageWhere({ ...f, state: null });
+  const r = await rows<Record<string, unknown>>(
+    `WITH o AS (
+       SELECT state, wage,
+              ROW_NUMBER() OVER (PARTITION BY state ORDER BY wage) AS rn,
+              COUNT(*)     OVER (PARTITION BY state)               AS n
+         FROM perm_cases WHERE ${w.sql} AND state IS NOT NULL AND state <> ''
+     )
+     SELECT state, MAX(n) AS n, AVG(wage) AS avg,
+            ${STATE_PERCENTILE_SELECT}
+       FROM o GROUP BY state HAVING MAX(n) >= ? ORDER BY MAX(n) DESC`,
+    [...w.args, minCases],
+  );
+  const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
+  return r.map((x) => ({
+    state: String(x.state),
+    n: Number(x.n),
+    avg: num(x.avg),
+    p5: num(x.p5),
+    p25: num(x.p25),
+    p50: num(x.p50),
+    p75: num(x.p75),
+    p95: num(x.p95),
+  }));
+}
+
+/**
+ * The salary explorer's filter dropdowns.
+ *
+ * PRECOMPUTED, because computing them per render times out. The state facet
+ * is a GROUP BY over the whole of perm_cases that no index can serve past its
+ * first predicate: about 1.5s idle, and far worse under a concurrent
+ * disclosure load (measured: an ordinary GROUP BY state goes from ~0.3s to a
+ * worst of 59.2s while a 147k-row file is written). The facets only change
+ * when perm_cases is reloaded, which is quarterly, so there is no reason to
+ * recompute them per request.
+ *
+ * `build_wage_bands.py` writes perm_docs['wage_filter_options'] on the same
+ * quarterly run that rebuilds the table. The live queries stay as the
+ * doc-missing fallback so a fresh database still renders - degraded to slow,
+ * never to empty.
+ *
+ * The doc's own `minCases` is checked against the caller's: a doc built under
+ * a different floor would offer a state the page then refuses a median for,
+ * which reads to a visitor as broken filtering rather than a stale document.
+ */
+export async function getWageFilterOptions(minCases: number): Promise<{
+  occupations: { value: string; label: string; n: number }[];
+  states: { value: string; label: string; n: number }[];
+  fiscalYears: string[];
+}> {
+  const pre = await doc<{
+    minCases: number;
+    occupations: { value: string; label: string; n: number }[];
+    states: { value: string; label: string; n: number }[];
+    fiscalYears: string[];
+  }>("wage_filter_options");
+  if (
+    pre &&
+    pre.minCases === minCases &&
+    pre.occupations?.length &&
+    pre.states?.length &&
+    pre.fiscalYears?.length
+  ) {
+    return {
+      occupations: pre.occupations,
+      states: pre.states,
+      fiscalYears: pre.fiscalYears,
+    };
+  }
+  return getWageFilterOptionsLive(minCases);
+}
+
+/**
+ * What the filters may be set to.
+ *
+ * Occupations carry their case count and are ordered by it, because a list of
+ * 4,893 SOC codes in alphabetical order is a list nobody can use. The count
+ * also lets the picker show which choices will actually support a figure.
+ */
+async function getWageFilterOptionsLive(minCases: number): Promise<{
+  occupations: WageOption[];
+  states: WageOption[];
+  fiscalYears: string[];
+}> {
+  const [occ, st, fy] = await Promise.all([
+    // Labels come from perm_entities, NOT from perm_cases.soc_title.
+    //
+    // That column holds the EMPLOYER'S free-text job title, not the standard
+    // occupation name: soc_code 15-1252.00 carries 263 distinct values across
+    // its rows, among them "Software Developers", "SOFTWARE DEVELOPERS",
+    // "Senior QA Automation Engineer" and "software engineer". A
+    // MAX(soc_title) label would therefore name each occupation after
+    // whichever job title happened to sort last, which is arbitrary and looks
+    // deliberate. perm_entities carries one canonical name per code and is
+    // what the /perm-wages pages already display.
+    rows<Record<string, unknown>>(
+      `SELECT code AS soc_code, name AS soc_title, total AS n
+         FROM perm_entities
+        WHERE kind = 'occupation' AND code IS NOT NULL AND code <> ''
+          AND total >= ? ORDER BY total DESC`,
+      [minCases],
+    ),
+    rows<Record<string, unknown>>(
+      `SELECT state, COUNT(*) AS n
+         FROM perm_cases
+        WHERE wage IS NOT NULL AND wage > 0 AND state IS NOT NULL AND state <> ''
+        GROUP BY state HAVING COUNT(*) >= ? ORDER BY state`,
+      [minCases],
+    ),
+    rows<Record<string, unknown>>(
+      `SELECT DISTINCT fiscal_year FROM perm_cases
+        WHERE fiscal_year IS NOT NULL AND fiscal_year <> '' ORDER BY fiscal_year DESC`,
+    ),
+  ]);
+  return {
+    occupations: occ.map((r) => ({
+      value: String(r.soc_code),
+      label: String(r.soc_title ?? r.soc_code),
+      n: Number(r.n),
+    })),
+    states: st.map((r) => ({
+      value: String(r.state),
+      label: String(r.state),
+      n: Number(r.n),
+    })),
+    fiscalYears: fy.map((r) => String(r.fiscal_year)),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Live queue (per-case mirror)
+// ---------------------------------------------------------------------------
+
+export interface LiveCohortMonth {
+  month: string;
+  total: number;
+  pending: number;
+  decided: number;
+  decidedPct: number | null;
+  /** Pending cases in ANALYST REVIEW: the ordinary line (see `inLine`). */
+  analystReview: number;
+}
+
+export interface LiveStatusCount {
+  status: string;
+  count: number;
+  isFinal: boolean;
+}
+
+/**
+ * Every filing month in the live mirror, oldest first.
+ *
+ * PENDING COMES FROM `is_final`, NOT FROM A STATUS LIST. Verified on the
+ * settled table: zero integrity violations across all 16 statuses. The count
+ * moved from 15 to 16 while this was being built - `DENIED - BALCA DISMISSED`
+ * arrived with one case - which is exactly the failure a hardcoded list would
+ * have absorbed silently.
+ *
+ * UPPER() ON `current_status` IS KEPT DELIBERATELY. The table is canonical
+ * uppercase now and the ingest ends each run canonical, so it is currently a
+ * no-op. It stays because it costs nothing and the last regression here came
+ * from a running process holding pre-fix code, which no amount of committing
+ * prevents. The pending split does not read this column at all.
+ */
+export async function getLiveBacklog(): Promise<LiveCohortMonth[]> {
+  const census = await getLiveCensus();
+  if (census) {
+    return monthQueueStatsFromMatrix(census.matrix).map((m) => ({
+      month: m.filingMonth,
+      total: m.total,
+      pending: m.pending,
+      decided: m.decided,
+      decidedPct: m.decidedPct,
+      analystReview: m.analystReview,
+    }));
+  }
+  const r = await rows<Record<string, unknown>>(
+    `SELECT substr(filing_date, 1, 7) AS month,
+            COUNT(*)                                       AS total,
+            SUM(CASE WHEN is_final = 0 THEN 1 ELSE 0 END)  AS pending,
+            SUM(CASE WHEN current_status = 'ANALYST REVIEW' THEN 1 ELSE 0 END) AS analyst
+       FROM perm_case_status
+      WHERE filing_date IS NOT NULL AND filing_date <> ''
+      GROUP BY month ORDER BY month`,
+  );
+  return r.map((x) => {
+    const total = Number(x.total) || 0;
+    const pending = Number(x.pending) || 0;
+    const decided = total - pending;
+    return {
+      month: String(x.month),
+      total,
+      pending,
+      decided,
+      decidedPct: total > 0 ? (decided / total) * 100 : null,
+      analystReview: Number(x.analyst) || 0,
+    };
+  });
+}
+
+/** One filing month's status split, normalised and largest first. */
+export async function getLiveCohort(month: string): Promise<LiveStatusCount[]> {
+  const census = await getLiveCensus();
+  if (census) {
+    const merged = new Map<string, { count: number; isFinal: boolean }>();
+    for (const r of census.matrix) {
+      if (r.month !== month) continue;
+      const key = r.status.trim().toUpperCase().replace(/\s+/g, " ");
+      const b = merged.get(key) ?? { count: 0, isFinal: false };
+      b.count += r.n;
+      if (r.is_final === 1) b.isFinal = true;
+      merged.set(key, b);
+    }
+    return [...merged.entries()]
+      .map(([status, b]) => ({ status, count: b.count, isFinal: b.isFinal }))
+      .sort((a, b) => b.count - a.count);
+  }
+  const r = await rows<Record<string, unknown>>(
+    `SELECT UPPER(current_status) AS status, MAX(is_final) AS is_final, COUNT(*) AS n
+       FROM perm_case_status
+      WHERE substr(filing_date, 1, 7) = ?
+      GROUP BY status ORDER BY n DESC`,
+    [month],
+  );
+  return r.map((x) => ({
+    status: String(x.status),
+    count: Number(x.n) || 0,
+    isFinal: Number(x.is_final) === 1,
+  }));
+}
+
+/** How many cases the mirror holds, for the provisional banner. */
+export async function getLiveMirrorSize(): Promise<number> {
+  const census = await getLiveCensus();
+  if (census) return census.totalCases;
+  const r = await one<Record<string, unknown>>(
+    "SELECT COUNT(*) AS n FROM perm_case_status",
+  );
+  return Number(r?.n ?? 0);
+}
+
+// ---------------------------------------------------------------------------
+// I-140 trends (USCIS quarterly counts)
+// ---------------------------------------------------------------------------
+
+export interface I140TrendRow {
+  fiscalYear: number;
+  quarter: number;
+  category: string;
+  categoryLabel: string;
+  received: number;
+  approved: number;
+  denied: number;
+  pending: number;
+}
+
+/**
+ * Every quarter USCIS has reported, oldest first.
+ *
+ * `category_label` is USCIS'S OWN LABEL and is carried through verbatim. E21
+ * is "Professionals with Advanced Degrees", which covers both national-
+ * interest-waiver and employer-sponsored EB-2. Relabelling it "National
+ * Interest Waiver" - as at least one public tracker does - is wrong, and it
+ * is wrong in the direction that misleads this site's readers specifically,
+ * since a PERM applicant is employer-sponsored by definition.
+ */
+export async function getI140Trends(): Promise<I140TrendRow[]> {
+  const r = await rows<Record<string, unknown>>(
+    `SELECT fiscal_year, quarter, category, category_label,
+            received, approved, denied, pending
+       FROM i140_trends
+      ORDER BY fiscal_year, quarter, category`,
+  );
+  return r.map((x) => ({
+    fiscalYear: Number(x.fiscal_year),
+    quarter: Number(x.quarter),
+    category: String(x.category),
+    categoryLabel: String(x.category_label ?? x.category),
+    received: Number(x.received) || 0,
+    approved: Number(x.approved) || 0,
+    denied: Number(x.denied) || 0,
+    pending: Number(x.pending) || 0,
+  }));
+}

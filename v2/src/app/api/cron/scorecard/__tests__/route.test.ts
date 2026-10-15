@@ -9,7 +9,7 @@ const gradeOpenPredictions = vi.fn();
 const writeScorecardDocs = vi.fn();
 const rivalPredictions = vi.fn();
 
-vi.mock("@/lib/turso/predictions", () => ({
+vi.mock("@/lib/db/predictions", () => ({
   predictOurs: (...a: unknown[]) => predictOurs(...a),
   predictSeasonal: (...a: unknown[]) => predictSeasonal(...a),
   predictWatched: (...a: unknown[]) => predictWatched(...a),

@@ -37,7 +37,7 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows, record_run  # noqa: E402
+from lib_db import Database, query_rows, record_run  # noqa: E402
 from lib_flag_serials import PERM_OFFICE_PREFIXES, decode_filing_date  # noqa: E402
 import ingest_case_status_direct as core  # noqa: E402
 import ingest_pwd_status_direct as programs  # noqa: E402
@@ -155,7 +155,7 @@ def main() -> int:
     ap.add_argument("--cap", type=int, default=DEFAULT_CAP)
     ap.add_argument("--dry-run", action="store_true", help="ask DOL but store nothing")
     a = ap.parse_args()
-    db = Turso()
+    db = Database()
     programs.ensure_schema(db)
     r = sync(db, cap=a.cap, dry=a.dry_run)
     note = note_of(r)

@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 
-import type { FlagCaseRow } from "@/lib/turso/flagCases";
+import type { FlagCaseRow } from "@/lib/db/flagCases";
 import { seasonalForm } from "@/lib/seasonalForms";
 
 /**

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { averagePhrase, dolNow, dolPwdNow, pwdSentence, pwdWaitPhrase, queueSentence } from "@/lib/dolNow";
-import type { ProcessingTimesSnapshot } from "@/lib/turso/processingTimes";
+import type { ProcessingTimesSnapshot } from "@/lib/db/processingTimes";
 
 // DOL's snapshot as stored on Oct 9 2026 (perm_as_of 2026-10-05), the fields this reads.
 const OCT_5 = {

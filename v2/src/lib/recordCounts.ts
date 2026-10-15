@@ -5,7 +5,7 @@
  * (plus the bulletin count) and returns figures with the date each one is
  * true for. Nothing here counts a table; every number is read from a doc the
  * ingest reconciled before writing, so a homepage render costs a handful of
- * point reads. The Turso half is `src/lib/turso/recordCounts.ts`.
+ * point reads. The database half is `src/lib/db/recordCounts.ts`.
  *
  * A figure whose doc is missing or malformed is null and the strip leaves it
  * out, rather than printing a dash beside a date.

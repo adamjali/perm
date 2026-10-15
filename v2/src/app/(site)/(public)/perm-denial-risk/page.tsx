@@ -26,13 +26,13 @@ import { RateViews, RankedRateViews, type RateRow } from "@/components/tools/Rat
 import { DenialReach } from "@/components/tools/DenialReach";
 import { CENSUS_REGION } from "@/components/tools/USStateMap";
 import { FreshnessDots, AnswerPanel } from "@/components/tools/Insight";
-import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getDisclosureStats } from "@/lib/db/publicData";
 import {
   getWageDenialBands,
   isMonotonic,
   peakBand,
   type WageBand,
-} from "@/lib/turso/wageBands";
+} from "@/lib/db/wageBands";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";

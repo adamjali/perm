@@ -1,7 +1,7 @@
 /**
  * Reading the nightly backtest's measurement of the printed pace range
  * (perm_docs['estimator_backtest']). Plain module so the unit project tests
- * the rules; the reader is src/lib/turso/rangeCoverage.ts.
+ * the rules; the reader is src/lib/db/rangeCoverage.ts.
  */
 
 import { SERVED_MIN_JUDGED, type MeasuredBucket, type RangeCoverage } from "@/lib/perm";

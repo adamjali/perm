@@ -16,7 +16,7 @@ import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { getDisclosureStats } from "@/lib/turso/publicData";
+import { getDisclosureStats } from "@/lib/db/publicData";
 import { MoreText } from "@/components/data/MoreText";
 import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 import { buttonVariants } from "@/components/ui/button";

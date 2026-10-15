@@ -11,7 +11,7 @@ import { failureFromError, failureFromResponse, FetchFailureError, type FetchFai
  * layouts, with the comment "Public pages skip this entirely, avoiding Convex
  * WebSocket + auth overhead." That is a deliberate decision about what a
  * visitor to a public page downloads, and it is still true now the data lives
- * in Turso: `src/lib/turso/client.ts` is `server-only`, so a client component
+ * in the public-data database: `src/lib/db/client.ts` is `server-only`, so a client component
  * cannot read it at all and has to go through a route.
  *
  * The contract deliberately matches `useQuery`, so a component can move
@@ -46,7 +46,7 @@ import { failureFromError, failureFromResponse, FetchFailureError, type FetchFai
  * keeps the old rows on screen (dimmed, marked busy) until the new ones land.
  */
 
-/** Deadline for one request. Hot-path Turso reads are &lt;550ms; live case
+/** Deadline for one request. Hot-path Database reads are &lt;550ms; live case
  *  discovery is ~3.5s. 15s catches a true hang without tripping on a slow-but-
  *  working request. Injectable so a test can drive it with real timers. */
 const DEFAULT_TIMEOUT_MS = 15_000;

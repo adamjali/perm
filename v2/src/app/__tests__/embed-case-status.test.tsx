@@ -7,12 +7,12 @@ vi.mock("next/headers", () => ({
 }));
 
 const lookupForEmbed = vi.fn();
-vi.mock("@/lib/turso/embedLookup", () => ({
+vi.mock("@/lib/db/embedLookup", () => ({
   lookupForEmbed: (...a: unknown[]) => lookupForEmbed(...a),
 }));
 
 import Page from "../embed/case-status/page";
-import type { EmbedCaseAnswer } from "@/lib/turso/embedLookup";
+import type { EmbedCaseAnswer } from "@/lib/db/embedLookup";
 
 /**
  * The embedded lookup's page: which site it charges, and that every answer

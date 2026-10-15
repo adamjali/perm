@@ -1,4 +1,4 @@
-import type { DecidedCase } from "@/lib/turso/decidedDays";
+import type { DecidedCase } from "@/lib/db/decidedDays";
 
 /**
  * Filtering the decided half of `/perm-decision-activity`, in the browser.

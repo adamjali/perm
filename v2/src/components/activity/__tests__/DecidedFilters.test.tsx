@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DecidedFilters } from "../DecidedFilters";
-import type { DecidedCase } from "@/lib/turso/decidedDays";
+import type { DecidedCase } from "@/lib/db/decidedDays";
 
 function c(over: Partial<DecidedCase>): DecidedCase {
   return {

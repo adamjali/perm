@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
-import type { ReviewStage } from "@/lib/turso/rfi";
+import type { ReviewStage } from "@/lib/db/rfi";
 import { GROUP_STYLE, stageMeta } from "./stageMeta";
 
 /**

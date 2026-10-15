@@ -4,7 +4,7 @@ import { Fragment, useMemo, useState } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { stateName } from "@/lib/usStateNames";
-import type { StateProfile } from "@/lib/turso/states";
+import type { StateProfile } from "@/lib/db/states";
 import { formatInt } from "@/lib/format";
 import { CENSUS_REGION } from "./USStateMap";
 import { DataView } from "./DataView";

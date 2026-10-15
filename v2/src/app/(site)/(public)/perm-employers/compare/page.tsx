@@ -9,8 +9,8 @@ import { withSocialCard } from "@/lib/socialCard";
 import { approvalRate } from "@/lib/entityPayload";
 import { wilsonInterval } from "@/lib/wageLadder";
 import { stateName } from "@/lib/usStateNames";
-import { entityFacets, entityPending, resolveEntity, type EntityFacets, type EntityPending, type ResolvedEntity } from "@/lib/turso/entityDetail";
-import { getSponsorProfile } from "@/lib/turso/sponsorIndex";
+import { entityFacets, entityPending, resolveEntity, type EntityFacets, type EntityPending, type ResolvedEntity } from "@/lib/db/entityDetail";
+import { getSponsorProfile } from "@/lib/db/sponsorIndex";
 import { partValue, type SponsorPart } from "@/lib/sponsorProfile";
 import { formatDollars, formatInt, formatPercent } from "@/lib/format";
 

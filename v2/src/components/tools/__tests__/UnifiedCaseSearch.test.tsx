@@ -12,7 +12,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import type { UnifiedCase } from "@/lib/turso/unifiedSearch";
+import type { UnifiedCase } from "@/lib/db/unifiedSearch";
 
 const usePublicQuery = vi.fn();
 vi.mock("@/hooks/usePublicQuery", () => ({ usePublicQuery }));

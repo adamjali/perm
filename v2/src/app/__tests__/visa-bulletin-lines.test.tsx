@@ -1,15 +1,15 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/turso/publicData", () => ({ getVisaBulletins: vi.fn() }));
-vi.mock("@/lib/turso/bulletinLine", () => ({ getLineCounts: vi.fn() }));
+vi.mock("@/lib/db/publicData", () => ({ getVisaBulletins: vi.fn() }));
+vi.mock("@/lib/db/bulletinLine", () => ({ getLineCounts: vi.fn() }));
 // Reads Turso for the freshness line; not what this file is about.
 vi.mock("@/components/data/DataProvenance", () => ({
   DataProvenance: () => <div data-testid="provenance" />,
 }));
 
-import { getVisaBulletins } from "@/lib/turso/publicData";
-import { getLineCounts } from "@/lib/turso/bulletinLine";
+import { getVisaBulletins } from "@/lib/db/publicData";
+import { getLineCounts } from "@/lib/db/bulletinLine";
 import LinePage, { generateMetadata, generateStaticParams } from "../(site)/(public)/visa-bulletin/categories/[line]/page";
 import HubPage from "../(site)/(public)/visa-bulletin/categories/page";
 

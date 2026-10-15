@@ -42,7 +42,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { withSocialCard } from "@/lib/socialCard";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { SCHEMA_IDS } from "@/lib/structuredData";
-import { getRecordCounts } from "@/lib/turso/recordCounts";
+import { getRecordCounts } from "@/lib/db/recordCounts";
 import {
   ABOUT_ONE_LINER,
   FOUNDED,

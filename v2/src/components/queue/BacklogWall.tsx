@@ -6,7 +6,7 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import type { VolumeAnomaly } from "@/lib/queueAhead";
 import { cn } from "@/lib/utils";
-import type { BacklogMonth } from "@/lib/turso/backlog";
+import type { BacklogMonth } from "@/lib/db/backlog";
 import { formatInt } from "@/lib/format";
 
 import { StageBar } from "./StageBar";

@@ -9,8 +9,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { OtherEmployerRecord } from "@/lib/turso/otherEmployers";
-import type { SeasonalEmployerCase } from "@/lib/turso/seasonalEmployers";
+import type { OtherEmployerRecord } from "@/lib/db/otherEmployers";
+import type { SeasonalEmployerCase } from "@/lib/db/seasonalEmployers";
 
 // An async server component; its own test covers it.
 vi.mock("@/components/data/DataProvenance", () => ({ DataProvenance: () => null }));

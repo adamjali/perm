@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { PROGRAM_LABEL, isActive, phase, type Debarment } from "@/lib/turso/debarments";
+import { PROGRAM_LABEL, isActive, phase, type Debarment } from "@/lib/db/debarments";
 import { cn } from "@/lib/utils";
 
 /**

@@ -1,11 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/turso/nvcWaitingList", () => ({ getNvcWaitingList: vi.fn() }));
+vi.mock("@/lib/db/nvcWaitingList", () => ({ getNvcWaitingList: vi.fn() }));
 // Reads Turso for the freshness line; not what this file is about.
 vi.mock("@/components/data/DataProvenance", () => ({ DataProvenance: () => <div data-testid="provenance" /> }));
 
-import { getNvcWaitingList } from "@/lib/turso/nvcWaitingList";
+import { getNvcWaitingList } from "@/lib/db/nvcWaitingList";
 import type { NvcWaitingListDoc } from "@/lib/nvcWaitingList";
 import Page, { metadata } from "../(site)/(public)/nvc-waiting-list/page";
 import REAL from "@/lib/__tests__/nvc-waiting-list.fixture.json";

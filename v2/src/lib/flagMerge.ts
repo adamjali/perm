@@ -1,4 +1,4 @@
-import type { FlagCaseRow, FlagDisclosedRow } from "@/lib/turso/flagCases";
+import type { FlagCaseRow, FlagDisclosedRow } from "@/lib/db/flagCases";
 
 /**
  * One row per case across the two halves of a FLAG search. The live table

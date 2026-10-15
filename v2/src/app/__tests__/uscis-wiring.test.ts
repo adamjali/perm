@@ -25,7 +25,7 @@ const DOL_PAGE = "(site)/(public)/perm-case-status/page.tsx";
 const USCIS_PAGE = "(site)/(public)/uscis-case-status/page.tsx";
 const PRIVACY = "(site)/(public)/privacy/page.tsx";
 const DOL_FORM = "../components/tools/CaseLookupForm.tsx";
-const STORAGE = "../lib/turso/uscisCaseStatus.ts";
+const STORAGE = "../lib/db/uscisCaseStatus.ts";
 
 /** The page function's body only, so a mention elsewhere cannot satisfy an ordering assertion. */
 function pageBody(src: string): string {

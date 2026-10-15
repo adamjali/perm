@@ -78,7 +78,7 @@ import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_slugs import slugify  # noqa: E402
 from lib_gov_data import BROWSER_HEADERS, fetch, log, quarter_end  # noqa: E402
-from lib_turso import Turso, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
 
 SCRIPT = "ingest_uscis_h1b_hub.py"
 # For readers only (the freshness record's source line). Never fetched: see above.
@@ -317,7 +317,7 @@ def drift(previous: dict | None, rows: list[dict]) -> list[str]:
 # Storage
 # ---------------------------------------------------------------------------
 
-def store(db: Turso, fy: int, rows: list[dict]) -> int:
+def store(db: Database, fy: int, rows: list[dict]) -> int:
     """Stage the year, count it back, then swap it in under one transaction."""
     for ddl in DDL:
         db.execute(ddl)
@@ -348,7 +348,7 @@ def store(db: Turso, fy: int, rows: list[dict]) -> int:
     return held
 
 
-def load_year(db: Turso | None, fy: int, rows: list[dict], loads: dict, quarter: int, *,
+def load_year(db: Database | None, fy: int, rows: list[dict], loads: dict, quarter: int, *,
               accept_drift: bool, dry_run: bool) -> int:
     t = totals(rows)
     appr = sum(t[c] for c in APPROVAL_COLUMNS)
@@ -414,7 +414,7 @@ def main(argv: list[str] | None = None) -> int:
     page_fy, page_q = reports_quarter(fetch(REPORTS_PAGE).decode("utf-8", errors="replace"))
     sheets = session_sheets(VIEW)
 
-    db = None if args.dry_run else Turso()
+    db = None if args.dry_run else Database()
     loads = (read_doc(db, LOADS_DOC) or {}) if db else {}
     written = 0
     loaded: list[int] = []

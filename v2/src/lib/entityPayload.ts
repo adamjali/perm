@@ -70,7 +70,7 @@ export type PackedRow = [
  * which no column renderer can accept by accident.
  *
  * Lives here rather than beside its query because it crosses the wire and
- * `src/lib/turso/*` is `server-only`: this file is where the encode and
+ * `src/lib/db/*` is `server-only`: this file is where the encode and
  * decode halves of that wire format already live together.
  */
 export interface LiveEmployerHit {

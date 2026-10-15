@@ -13,7 +13,7 @@ import {
   getLcaWageFilterOptions,
   getLcaWageHistogram,
   getLcaWageStats,
-} from "@/lib/turso/lcaWages";
+} from "@/lib/db/lcaWages";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 

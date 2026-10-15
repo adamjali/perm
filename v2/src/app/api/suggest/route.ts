@@ -8,7 +8,7 @@ import {
   suggestNames,
   type NameSuggestion,
   type SuggestKind,
-} from "@/lib/turso/nameSuggest";
+} from "@/lib/db/nameSuggest";
 
 /**
  * GET /api/suggest?kind=employer|attorney|occupation|all&q=...

@@ -109,7 +109,7 @@ developersupport@uscis.dhs.gov, a demo, production keys.
 
 - `/uscis-case-status` starts answering real receipts; nothing to flip.
 - Stored responses: the table keeps the receipt, form type, current status text and the
-  dated history, per the owner's decision (`src/lib/turso/uscisCaseStatus.ts`; a test holds
+  dated history, per the owner's decision (`src/lib/db/uscisCaseStatus.ts`; a test holds
   its columns to the privacy bullet). The privacy policy says so, names the retention (12
   months after the last lookup, or on request), and `/api/cron/prune-uscis` deletes on that
   clock nightly at 5:20 AM ET. No email is sent, so the preference center is not involved.

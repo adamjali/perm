@@ -114,6 +114,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@edge-runtime/vm": "^5.0.0",
     "@next/bundle-analyzer": "^16.4.0",
     "@playwright/test": "^1.63.0",

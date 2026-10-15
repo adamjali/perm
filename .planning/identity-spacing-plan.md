@@ -38,7 +38,7 @@ without splitting anything: two keys equal with spaces are equal without them.
 ## Why the keys keep their spaces
 
 Four readers depend on the words:
-- `nameVariants` (`src/lib/turso/entityDetail.ts`) ranges over `merge_key` from its first
+- `nameVariants` (`src/lib/db/entityDetail.ts`) ranges over `merge_key` from its first
   word (`[root, root + "!")`, served by `idx_pe_merge`).
 - `typo_aliases` (law firms) aligns keys token by token.
 - `isPossibleMatch` (`src/lib/employerNameMatch.ts`) matches whole words, which is what
@@ -51,7 +51,7 @@ a busier key's moves under that key. Deterministic, never inference (no letter d
 ## Where it has to apply
 
 Every place a name's key is matched against an entity's key:
-`ingest_perm_disclosure.py` (the entity merge, beside `typo_aliases`), `turso_migrate.py`
+`ingest_perm_disclosure.py` (the entity merge, beside `typo_aliases`), `db_migrate.py`
 (case rows to slugs), `build_entity_detail.py`, `ingest_perm_history.py`,
 `ingest_warn.py`, `build_employer_map.py`, `build_firm_domains.py`, and on the site
 `employerLookup.ts`. The cleanest shape is one alias map written by the entity build

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/turso/reference", () => ({}));
+vi.mock("@/lib/db/reference", () => ({}));
 
 const { countyPhrase } = await import("../CityReference");
 

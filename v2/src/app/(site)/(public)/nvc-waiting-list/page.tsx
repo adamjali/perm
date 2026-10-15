@@ -22,7 +22,7 @@ import {
 } from "@/lib/nvcWaitingList";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
-import { getNvcWaitingList } from "@/lib/turso/nvcWaitingList";
+import { getNvcWaitingList } from "@/lib/db/nvcWaitingList";
 
 export const revalidate = 86400;
 

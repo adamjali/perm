@@ -94,7 +94,7 @@ check("@" not in str(_store), "no address is ever in it")
 # ---- what a failed check records (Oct 10 2026) --------------------------------
 import json as _json, tempfile as _tf
 _runs: list = []
-_w.Turso = lambda: None
+_w.Database = lambda: None
 _w.record_run = lambda db, script, **kw: _runs.append(kw) or True
 _list = _tf.NamedTemporaryFile("w", suffix=".json", delete=False)
 _json.dump({"caseNumbers": ["G-100-26001-000001"]}, _list); _list.close()

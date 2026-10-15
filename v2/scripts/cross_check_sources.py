@@ -21,7 +21,7 @@ import sys
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows  # noqa: E402
+from lib_db import Database, query_rows  # noqa: E402
 
 # The endpoint is configuration, not source: it names a third party, so it
 # lives in the CROSS_CHECK_API Actions secret rather than in a public repo.
@@ -81,7 +81,7 @@ def main() -> int:
 
 
 def compare() -> int:
-    db = Turso()
+    db = Database()
     findings: list[str] = []
 
     if not BASE:

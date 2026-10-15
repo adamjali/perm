@@ -57,7 +57,7 @@ from collections import Counter, defaultdict
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import program_key, typo_aliases  # noqa: E402
 from lib_gov_data import iter_rows, log, read_shared_strings  # noqa: E402
-from lib_turso import Turso, record_run, rows_of, stamp_freshness  # noqa: E402
+from lib_db import Database, record_run, rows_of, stamp_freshness  # noqa: E402
 
 SCRIPT = "build_firm_domains.py"
 TABLE = "firm_email_domains"
@@ -307,7 +307,7 @@ def main() -> int:
     if args.local and len(programs) != 1:
         ap.error("--local reads one workbook: name its --program")
     started = time.time()
-    db = Turso()
+    db = Database()
     pages = read_firm_pages(db)
     log(f"law-firm pages: {len(pages):,}")
     if not pages:

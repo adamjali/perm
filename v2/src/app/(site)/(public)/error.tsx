@@ -8,8 +8,8 @@
  * all the way to `global-error.tsx` - which replaces the whole document,
  * taking the header, the nav and every route out with it. That is the
  * harshest fallback in the app, and it was covering the pages MOST likely to
- * fail: these read an external database (Turso) on every regeneration, and
- * `src/lib/turso/client.ts` throws rather than degrading, deliberately, so an
+ * fail: these read an external database on every regeneration, and
+ * `src/lib/db/client.ts` throws rather than degrading, deliberately, so an
  * outage is loud instead of rendering an empty page that looks like real data.
  * Loud is right; losing the entire site's chrome is not.
  *

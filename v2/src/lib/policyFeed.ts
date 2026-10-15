@@ -9,7 +9,7 @@
  * twelve-month strip. Nothing reads the clock; the page passes the date.
  */
 
-import type { PolicyNotice } from "@/lib/turso/policyNotices";
+import type { PolicyNotice } from "@/lib/db/policyNotices";
 import { MS_PER_DAY } from "@/lib/time";
 
 export const OFLC_TYPE = "OFLC announcement";

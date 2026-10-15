@@ -16,7 +16,7 @@ WHAT MAKES THIS VISIBLE rather than just recorded: `check_ingest_health.py`
 reads `ingest_runs` at 10:00 UTC daily and exits non-zero when an ingest's most
 recent run did not finish clean, which turns THAT scheduled run red and fires
 GitHub's own notification. So this needs no new alerting service and no
-credential the repo does not already hold - it rides `TURSO_AUTH_TOKEN`, which
+credential the repo does not already hold - it rides the database token, which
 every ingest workflow already has.
 
 IT NEVER FAILS THE JOB. It is only ever running because something else already
@@ -71,8 +71,8 @@ def main() -> int:
     mark_run_failed(args.script)
 
     try:
-        from lib_turso import Turso, query_rows, record_run
-        db = Turso()
+        from lib_db import Database, query_rows, record_run
+        db = Database()
         record_run(db, args.script, status=args.status, note=args.note[:500])
         # Read it back. "recorded" used to print whether or not the row
         # landed, so a hook that could not write looked exactly like one that
@@ -85,7 +85,7 @@ def main() -> int:
         else:
             print(f"::error::wrote the failure row for {args.script} but could not "
                   f"read it back; check_ingest_health.py may not see this failure")
-    # SystemExit is what lib_turso.env() raises for a missing credential, and
+    # SystemExit is what lib_db.env() raises for a missing credential, and
     # `except Exception` let it straight through, so a runner with no secrets
     # died here silently. Catch both; never let the recorder itself fail the job.
     except (Exception, SystemExit) as exc:  # noqa: BLE001 - see the docstring

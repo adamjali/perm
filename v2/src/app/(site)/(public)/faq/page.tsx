@@ -15,7 +15,7 @@ import { getFAQPageSchema } from "@/lib/structuredData";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { FaqList } from "@/components/tools/FaqList";
 import { averagePhrase, dolNow } from "@/lib/dolNow";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
 
 const START_LINKS = [
   { href: "/perm-processing-times", label: "Processing times", note: "Which month DOL is reviewing now", Icon: ClockIcon },

@@ -1,5 +1,5 @@
 import { ChartTips } from "@/components/data/ChartTips";
-import type { SizeBand } from "@/lib/turso/entityDetail";
+import type { SizeBand } from "@/lib/db/entityDetail";
 import { FinePrint } from "@/components/data/FinePrint";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";

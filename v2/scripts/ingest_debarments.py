@@ -43,7 +43,7 @@ import time
 import urllib.request
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
-from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_db import Database, record_run, stamp_freshness, write_doc  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
 
 OFLC_URL = "https://www.dol.gov/agencies/eta/foreign-labor/program-debarments"
@@ -274,7 +274,7 @@ DDL = [
 ]
 
 
-def write(db: Turso, rows: list[dict]) -> int:
+def write(db: Database, rows: list[dict]) -> int:
     for ddl in DDL:
         db.execute(ddl)
     now = int(time.time() * 1000)
@@ -319,7 +319,7 @@ def main() -> int:
             log(f"  {r['program']:4} {r['entity'][:40]:40} {r['start_date']} to {r['end_date']}  {r['violation'] or ''}")
         return 0
 
-    db = Turso()
+    db = Database()
     before = int(db.scalar("SELECT COUNT(*) FROM debarments") or 0) if db.scalar(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='debarments'") else 0
     n = write(db, rows)

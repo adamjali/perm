@@ -88,7 +88,7 @@ the billing question is settled.
 
 3. **Remaining Convex calls on public pages** (agent `turso-queries` is on
    these): permCases.getMeta, permEntities.{getBySlug, fieldDistribution,
-   comparables, listByKind}. src/lib/turso/{cases,entities}.ts written.
+   comparables, listByKind}. src/lib/db/{cases,entities}.ts written.
 
 4. **Preloader still not verified on a real device.** Must be the absolute first thing
    for every entry path: typed URL, click from another page, cross-group

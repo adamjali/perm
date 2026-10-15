@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import Link from "next/link";
 
 import { formatInt, formatShare } from "@/lib/format";
-import type { FirmProgramLine, FirmPrograms as FirmProgramsData } from "@/lib/turso/firmPrograms";
+import type { FirmProgramLine, FirmPrograms as FirmProgramsData } from "@/lib/db/firmPrograms";
 
 /**
  * A law firm's H-1B, wage-request and H-2A, H-2B and CW-1 work, beside its

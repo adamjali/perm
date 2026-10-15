@@ -438,9 +438,9 @@ def site_section() -> dict:
 
 
 def data_section(now_ms: int) -> dict:
-    from lib_turso import Turso, query_rows  # noqa: PLC0415 - only needed here
+    from lib_db import Database, query_rows  # noqa: PLC0415 - only needed here
 
-    db = Turso(os.environ["TURSO_DATABASE_URL"], os.environ["TURSO_AUTH_TOKEN"])
+    db = Database()
 
     def one(sql, args=()):
         rows = query_rows(db, sql, list(args))
@@ -550,9 +550,9 @@ def live_lookup_line(doc, ceiling: int) -> tuple[str, bool]:
 
 
 def api_section() -> dict:
-    from lib_turso import Turso, query_rows  # noqa: PLC0415
+    from lib_db import Database, query_rows  # noqa: PLC0415
 
-    db = Turso(os.environ["TURSO_DATABASE_URL"], os.environ["TURSO_AUTH_TOKEN"])
+    db = Database()
     rows = query_rows(db, "SELECT day, account, key_id, calls FROM api_usage WHERE day >= date('now', '-8 day')", [])
     today = dt.datetime.now(dt.timezone.utc).date()
     summary, lines = api_lines(rows, today.isoformat())
@@ -1031,9 +1031,9 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
 
 
 def server_section(now_ms: int) -> dict:
-    from lib_turso import Turso, read_doc  # noqa: PLC0415 - only needed here
+    from lib_db import Database, read_doc  # noqa: PLC0415 - only needed here
 
-    db = Turso(os.environ["TURSO_DATABASE_URL"], os.environ["TURSO_AUTH_TOKEN"])
+    db = Database()
     return server_verdict(read_doc(db, "server_health"), now_ms)
 
 

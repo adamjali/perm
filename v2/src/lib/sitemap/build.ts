@@ -11,14 +11,14 @@ import {
 } from "@/lib/entityBrowse";
 import { type EntityKind } from "@/lib/entityPayload";
 import { captureError } from "@/lib/sentry";
-import { browseCounts } from "@/lib/turso/entityBrowse";
-import { getBacklogCensus } from "@/lib/turso/backlog";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
-import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
-import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/turso/otherEmployers";
-import { lcaOnlyCities } from "@/lib/turso/lcaCities";
-import { getH1bSummary } from "@/lib/turso/h1bRanks";
+import { browseCounts } from "@/lib/db/entityBrowse";
+import { getBacklogCensus } from "@/lib/db/backlog";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { getSweepCoverage } from "@/lib/db/sweepCoverage";
+import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/db/groups";
+import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/db/otherEmployers";
+import { lcaOnlyCities } from "@/lib/db/lcaCities";
+import { getH1bSummary } from "@/lib/db/h1bRanks";
 import { rankedStates, stateSlug } from "@/lib/h1bRanks";
 import {
   countEntityRanks,
@@ -27,10 +27,10 @@ import {
   getFreshness,
   getLiveOnlySlugWindow,
   getVisaBulletins,
-} from "@/lib/turso/publicData";
+} from "@/lib/db/publicData";
 import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
 import { lineSlugs } from "@/lib/bulletinLines";
-import { categoriesIn } from "@/lib/turso/bulletin";
+import { categoriesIn } from "@/lib/db/bulletin";
 import type { BulletinMonth } from "@/lib/perm";
 import { SITE_URL } from "@/lib/constants/site";
 
@@ -519,7 +519,7 @@ export async function entityEntries(kind: EntityKind, chunk: number): Promise<En
     }
     const detail =
       `Sitemap child ${kind} chunk ${chunk} built with only ${slugs.length} rows. ` +
-      `The Turso read failed or returned almost nothing.`;
+      `The database read failed or returned almost nothing.`;
     captureError(new Error(detail));
     // Throw, do not emit. The previous version REPORTED this and shipped the
     // truncated file anyway: while Convex was disabled it captured "0 entity
@@ -562,7 +562,7 @@ export async function liveEmployerEntries(chunk: number): Promise<Entry[]> {
     }
     const detail =
       `Sitemap child live-employer chunk ${chunk} built with only ${slugs.length} rows. ` +
-      `The Turso read failed or the nightly table is empty.`;
+      `The database read failed or the nightly table is empty.`;
     captureError(new Error(detail));
     throw new Error(detail);
   }

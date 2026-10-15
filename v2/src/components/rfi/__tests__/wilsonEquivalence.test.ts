@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest";
 
 import { wilsonInterval as rateBarsWilson } from "@/components/tools/RateBars";
-import { wilsonInterval } from "@/lib/turso/rfi";
+import { wilsonInterval } from "@/lib/db/rfi";
 
 describe("rfi wilsonInterval matches RateBars", () => {
   it("agrees across the range these rates actually live in", () => {

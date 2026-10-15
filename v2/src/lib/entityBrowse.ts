@@ -24,7 +24,7 @@
  * leading non-alphanumeric, so a slug's first character IS the name's first
  * alphanumeric one - which is the bucket a reader expects. And `(kind, slug)`
  * is the table's PRIMARY KEY, so a range over it is an index seek, where
- * `substr(name, 1, 1) = ?` would be a full scan of the kind. Turso reads are
+ * `substr(name, 1, 1) = ?` would be a full scan of the kind. Database reads are
  * the budget that got blocked in August; a scan per letter page is not
  * affordable and is not necessary.
  */

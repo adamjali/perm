@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { fetchAllEntitiesServer } from "@/lib/entitySeed";
-import { searchByName } from "@/lib/turso/entities";
-import { searchLiveOnlyEmployers } from "@/lib/turso/liveEmployers";
+import { searchByName } from "@/lib/db/entities";
+import { searchLiveOnlyEmployers } from "@/lib/db/liveEmployers";
 import { isEntityKind, packRow, type EntityPayload } from "@/lib/entityPayload";
 
 /**

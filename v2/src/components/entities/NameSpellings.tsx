@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 
-import type { NameVariant } from "@/lib/turso/entityDetail";
+import type { NameVariant } from "@/lib/db/entityDetail";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 

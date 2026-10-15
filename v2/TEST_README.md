@@ -422,5 +422,5 @@ Run any of them locally with the miniconda python (the system `python3` is
 | `test_pwd_status.py` | the PWD and LCA prober's day windows, insert paths and progress record |
 | `test_sticky_slugs.py` | slugs survive rebuilds, newcomers take the first free suffix, vanished slugs get aliases (17 checks) |
 | `test_sweep_runs.py` | the sweep's own run records |
-| `test_turso_load.py` | the PERM loader and its fingerprint gate |
+| `test_db_load.py` | the PERM loader and its fingerprint gate |
 | `test_visa_bulletin.py` | the bulletin parser, column-by-name and the `C`/`U` cells |

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { hasBasis, NATION, type H1bBasis } from "@/lib/h1bRanks";
-import { getH1bSummary, getH1bView } from "@/lib/turso/h1bRanks";
+import { getH1bSummary, getH1bView } from "@/lib/db/h1bRanks";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 
 /**

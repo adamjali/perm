@@ -6,7 +6,7 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { getI140Trends } from "@/lib/turso/publicData";
+import { getI140Trends } from "@/lib/db/publicData";
 import { quartersFor, totalsFor } from "@/lib/i140Trends";
 import { withSocialCard } from "@/lib/socialCard";
 

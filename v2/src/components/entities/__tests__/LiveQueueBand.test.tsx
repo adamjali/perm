@@ -9,7 +9,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { EntityPending } from "@/lib/turso/entityDetail";
+import type { EntityPending } from "@/lib/db/entityDetail";
 
 import { LiveQueueBand } from "../LiveQueueBand";
 

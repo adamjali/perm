@@ -6,7 +6,7 @@ import { ChartTips } from "@/components/data/ChartTips";
 import { FinePrint } from "@/components/data/FinePrint";
 import { MIN_DECIDED_FOR_RATE } from "@/components/tools/EntityContext";
 import { PlateLabel } from "@/components/tools/FigurePlate";
-import type { FacetRow } from "@/lib/turso/entityDetail";
+import type { FacetRow } from "@/lib/db/entityDetail";
 import { stateName } from "@/lib/usStateNames";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";

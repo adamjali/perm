@@ -10,7 +10,7 @@ process, and grades it against what DOL actually did by END.
 
 GRADED AGAINST THE MONTH. The estimate names a month, so the hit is "decided
 inside that month"; the error in days is measured from the month's middle, the
-way the daily sample grades it (src/lib/turso/predictions.ts). A request still
+way the daily sample grades it (src/lib/db/predictions.ts). A request still
 in process at END is a miss once its month has ended, counted at the days
 since. A request that left the line another way (an RFI, a redetermination,
 a withdrawal) is not on this clock and is left out.
@@ -33,7 +33,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib_turso import ET, Turso, query_rows, write_doc  # noqa: E402
+from lib_db import ET, Database, query_rows, write_doc  # noqa: E402
 
 IN_LINE = "IN PROCESS"
 PREFIX = "P-100-"
@@ -82,7 +82,7 @@ def estimated_month(request_month: str, backlog: list[dict], as_of: str, rate: f
     return month_add(as_of_month, max(0, math.ceil(into - 1e-9) - 1))
 
 
-def snapshots(db: Turso) -> list[dict]:
+def snapshots(db: Database) -> list[dict]:
     """One per DOL wage as-of date: its backlog, and the day we first read it."""
     seen: dict[str, dict] = {}
     for perm_as_of, pwd_as_of, js, fetched in query_rows(
@@ -274,7 +274,7 @@ def main() -> int:
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
     end = date.fromisoformat(a.end)
-    db = Turso()
+    db = Database()
     snaps = snapshots(db)
     events: dict[str, list[tuple[int, str, str, int]]] = {}
     for cn, at, fr, to, tf in query_rows(

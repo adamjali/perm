@@ -13,7 +13,7 @@
 
 import { NextResponse } from "next/server";
 
-import { pruneUscisCaseStatus } from "@/lib/turso/uscisCaseStatus";
+import { pruneUscisCaseStatus } from "@/lib/db/uscisCaseStatus";
 
 export const dynamic = "force-dynamic";
 

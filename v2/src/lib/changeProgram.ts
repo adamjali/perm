@@ -1,7 +1,7 @@
 /**
  * The FLAG programs the change feed covers, and what to call them.
  *
- * A PLAIN MODULE, NOT AN EXPORT FROM `turso/changes`. That module is
+ * A PLAIN MODULE, NOT AN EXPORT FROM `db/changes`. That module is
  * `server-only`, so a value import of it from a client component is a build
  * error - the same reason `flagMerge.ts` is a plain module rather than an
  * export from the browser component that uses it. The labels are needed on

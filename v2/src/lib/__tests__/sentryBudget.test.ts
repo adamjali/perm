@@ -18,8 +18,8 @@ function clock(start = 0) {
 
 describe("the Sentry budget", () => {
   it("counts attempt 1 and attempt 2 of one stall as the same error", () => {
-    expect(errorKey(err("turso query deadline (20000ms, attempt 1): SELECT slug"))).toBe(
-      errorKey(err("turso query deadline (20000ms, attempt 2): SELECT slug")),
+    expect(errorKey(err("database query deadline (20000ms, attempt 1): SELECT slug"))).toBe(
+      errorKey(err("database query deadline (20000ms, attempt 2): SELECT slug")),
     );
     expect(errorKey(err("a"))).not.toBe(errorKey(err("b")));
   });

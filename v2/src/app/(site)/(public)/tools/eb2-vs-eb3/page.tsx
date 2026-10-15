@@ -7,7 +7,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
-import { getLineSnapshot } from "@/lib/turso/greenCardLine";
+import { getLineSnapshot } from "@/lib/db/greenCardLine";
 
 /**
  * EB-2 and EB-3 for one priority date, side by side. The counts are the green

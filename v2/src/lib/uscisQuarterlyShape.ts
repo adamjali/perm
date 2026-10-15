@@ -1,6 +1,6 @@
 /**
  * The pure half of the USCIS quarterly data: labels, pivots and rankings
- * over the rows `src/lib/turso/uscisQuarterly.ts` reads.
+ * over the rows `src/lib/db/uscisQuarterly.ts` reads.
  *
  * A plain module, not `server-only`, so the tests can exercise the shaping
  * without a database and a client component could share the labels. Nothing

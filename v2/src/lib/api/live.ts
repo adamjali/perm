@@ -13,7 +13,7 @@
  * 2. every API account together, `API_LIVE_DAILY_CAP` (20,000) a UTC day, a
  *    fifth of the site's own 100,000, so DOL never sees a spike from the API;
  * 3. the site-wide discovery budget every live ask already charges
- *    (src/lib/turso/caseDiscovery.ts).
+ *    (src/lib/db/caseDiscovery.ts).
  * The first two share one `perm_docs` row a UTC day, `api_live_<date>`, a
  * JSON map of account to count. The account is charged first and the shared
  * count only when the account was allowed, so an account past its own cap
@@ -29,12 +29,12 @@ import "server-only";
 import { SITE_URL } from "@/lib/constants/site";
 import { budgetResetEastern, unsettledClause } from "@/lib/dolMiss";
 import { normaliseFlagCaseNumber } from "@/lib/flagCaseNumber";
-import { discoverCaseOutcome } from "@/lib/turso/caseDiscovery";
-import { one } from "@/lib/turso/client";
-import { bumpDocCount } from "@/lib/turso/embedLookup";
-import { lca } from "@/lib/turso/lcaCases";
-import { pwd } from "@/lib/turso/pwdCases";
-import { seasonal } from "@/lib/turso/seasonalCases";
+import { discoverCaseOutcome } from "@/lib/db/caseDiscovery";
+import { one } from "@/lib/db/client";
+import { bumpDocCount } from "@/lib/db/embedLookup";
+import { lca } from "@/lib/db/lcaCases";
+import { pwd } from "@/lib/db/pwdCases";
+import { seasonal } from "@/lib/db/seasonalCases";
 import { API_LIVE_DAILY_CAP, type ApiPlan } from "@convex/lib/apiPlans";
 import type { DiscoveryMiss } from "@/lib/dolMiss";
 

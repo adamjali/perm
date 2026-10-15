@@ -35,12 +35,12 @@ import "server-only";
 import { SITE_URL } from "@/lib/constants/site";
 import { entityKey, programKey } from "@/lib/entitySlug";
 import { cleanEmployerQuery, pickPossibleMatch } from "@/lib/employerNameMatch";
-import { one } from "@/lib/turso/client";
-import { entityPending } from "@/lib/turso/entityDetail";
-import { searchByLetters, searchByName } from "@/lib/turso/entities";
-import { employerMatch } from "@/lib/turso/employerSlugs";
-import { otherEmployerRecord } from "@/lib/turso/otherEmployers";
-import { getEntityBySlug, getFreshness } from "@/lib/turso/publicData";
+import { one } from "@/lib/db/client";
+import { entityPending } from "@/lib/db/entityDetail";
+import { searchByLetters, searchByName } from "@/lib/db/entities";
+import { employerMatch } from "@/lib/db/employerSlugs";
+import { otherEmployerRecord } from "@/lib/db/otherEmployers";
+import { getEntityBySlug, getFreshness } from "@/lib/db/publicData";
 import type { ReadResult } from "./reads";
 import { certifiedShare } from "./share";
 

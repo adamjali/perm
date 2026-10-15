@@ -14,7 +14,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { buildFeed, buildStrip, commentWindow, feedLedger } from "@/lib/policyFeed";
 import type { RecordFigure } from "@/lib/recordCounts";
 import { withSocialCard } from "@/lib/socialCard";
-import { listPolicyNotices } from "@/lib/turso/policyNotices";
+import { listPolicyNotices } from "@/lib/db/policyNotices";
 import { easternDay } from "@/lib/time";
 
 /**

@@ -4,10 +4,10 @@ import { cache } from "react";
 
 import type { BadgeData } from "@/lib/badge";
 import { cutoffLabel } from "@/lib/bulletinNext";
-import { getBulletinBoard } from "@/lib/turso/bulletin";
-import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import { getRecordCounts } from "@/lib/turso/recordCounts";
-import { getReviewStages } from "@/lib/turso/rfi";
+import { getBulletinBoard } from "@/lib/db/bulletin";
+import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { getRecordCounts } from "@/lib/db/recordCounts";
+import { getReviewStages } from "@/lib/db/rfi";
 
 /**
  * Every figure the badges can carry, assembled once.

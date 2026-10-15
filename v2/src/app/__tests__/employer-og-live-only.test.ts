@@ -23,9 +23,9 @@ async function load({ found, record, other = null }: { found: unknown; record: u
   const generateEntityOG = vi.fn(() => "published-card");
   const generateLiveEmployerOG = vi.fn(() => "live-card");
   const generateOtherEmployerOG = vi.fn(() => "other-card");
-  vi.doMock("@/lib/turso/entityDetail", () => ({ resolveEntity: vi.fn().mockResolvedValue(found) }));
-  vi.doMock("@/lib/turso/liveEmployers", () => ({ liveEmployerRecord: vi.fn().mockResolvedValue(record) }));
-  vi.doMock("@/lib/turso/otherEmployers", () => ({ otherEmployerRecord: vi.fn().mockResolvedValue(other) }));
+  vi.doMock("@/lib/db/entityDetail", () => ({ resolveEntity: vi.fn().mockResolvedValue(found) }));
+  vi.doMock("@/lib/db/liveEmployers", () => ({ liveEmployerRecord: vi.fn().mockResolvedValue(record) }));
+  vi.doMock("@/lib/db/otherEmployers", () => ({ otherEmployerRecord: vi.fn().mockResolvedValue(other) }));
   vi.doMock("@/lib/entityOg", () => ({
     ENTITY_OG_SIZE: { width: 1200, height: 630 },
     generateEntityOG,
@@ -38,9 +38,9 @@ async function load({ found, record, other = null }: { found: unknown; record: u
 }
 
 afterEach(() => {
-  vi.doUnmock("@/lib/turso/entityDetail");
-  vi.doUnmock("@/lib/turso/liveEmployers");
-  vi.doUnmock("@/lib/turso/otherEmployers");
+  vi.doUnmock("@/lib/db/entityDetail");
+  vi.doUnmock("@/lib/db/liveEmployers");
+  vi.doUnmock("@/lib/db/otherEmployers");
   vi.doUnmock("@/lib/entityOg");
 });
 

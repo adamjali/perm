@@ -23,7 +23,7 @@ eight in ten. Measured Oct 3 2026: about 8% a day, half within 9 days.
 
 Written to perm_docs['straggler_rates'] after the nightly full sweep; the case
 estimate reads it and falls back to no date when it is stale or thin
-(src/lib/turso/stragglers.ts). Nothing here is a fitted constant.
+(src/lib/db/stragglers.ts). Nothing here is a fitted constant.
 
     python3 scripts/build_straggler_rates.py [--dry-run]
 """
@@ -39,7 +39,7 @@ import time
 from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows, record_run, write_doc  # noqa: E402
+from lib_db import Database, query_rows, record_run, write_doc  # noqa: E402
 
 SCRIPT = "build_straggler_rates.py"
 DOC = "straggler_rates"
@@ -126,7 +126,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
-    db = Turso()
+    db = Database()
     doc = measure(db)
     print(json.dumps(doc, indent=1))
     if a.dry_run:

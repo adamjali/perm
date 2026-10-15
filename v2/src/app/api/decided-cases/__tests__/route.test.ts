@@ -17,7 +17,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const getDecidedFeed = vi.fn();
-vi.mock("@/lib/turso/decidedDays", async () => {
+vi.mock("@/lib/db/decidedDays", async () => {
   // The pure half is real: `isIsoDate` is one of the guards under test, and a
   // mocked version would make the date validation cases vacuous.
   const pure = await vi.importActual<typeof import("@/lib/dateCoverage")>(

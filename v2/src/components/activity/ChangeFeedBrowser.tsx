@@ -17,8 +17,8 @@ import { coverageFor, daysInRange, type CoverageWindows } from "@/lib/dateCovera
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
 // runtime import of a "server-only" module.
-import type { ChangeCalendar, ChangeDayFeed } from "@/lib/turso/changes";
-import type { DecidedFeed } from "@/lib/turso/decidedDays";
+import type { ChangeCalendar, ChangeDayFeed } from "@/lib/db/changes";
+import type { DecidedFeed } from "@/lib/db/decidedDays";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { choiceVariants } from "@/components/ui/choice";
 

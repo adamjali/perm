@@ -390,7 +390,7 @@ export const setPermHalf = internalMutation({
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * Read DOL's record for one case from Turso (SELECT only, see
+ * Read DOL's record for one case from the public-data database (SELECT only, see
  * lib/publicMirror.ts) and write the PERM half.
  *
  * Filing date: the live status table, else the disclosure file. Certification

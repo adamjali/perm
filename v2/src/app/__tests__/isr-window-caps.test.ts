@@ -74,7 +74,7 @@ describe("no cached read caps a page's ISR window below a day", () => {
   });
 
   it("getFreshness is a per-request read, not a Data Cache entry", () => {
-    const src = strip(readFileSync(join(SRC, "lib/turso/publicData.ts"), "utf8"));
+    const src = strip(readFileSync(join(SRC, "lib/db/publicData.ts"), "utf8"));
     const def = /export const getFreshness = ([^;]+);/.exec(src)?.[1] ?? "";
     expect(def).toMatch(/^cache\(/);
     expect(def).not.toMatch(/unstable_cache/);

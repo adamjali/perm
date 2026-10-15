@@ -50,7 +50,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib_turso import ET, Turso, query_rows, write_doc  # noqa: E402
+from lib_db import ET, Database, query_rows, write_doc  # noqa: E402
 import ingest_case_status_direct as c  # noqa: E402
 
 FINAL = ("CERTIFIED", "DENIED", "WITHDRAWN")
@@ -66,7 +66,7 @@ def is_final_status(s: str) -> bool:
     return s.startswith(FINAL)
 
 
-def pace_before(db: Turso, t0: date) -> float | None:
+def pace_before(db: Database, t0: date) -> float | None:
     rows = query_rows(
         db,
         "SELECT total FROM daily_decisions WHERE source = 'sweep-observed' AND date >= ? AND date < ?",
@@ -80,7 +80,7 @@ def pace_before(db: Turso, t0: date) -> float | None:
     return sum(vals) / len(vals)
 
 
-def frontier_at(db: Turso, t0: date) -> tuple[str | None, int | None]:
+def frontier_at(db: Database, t0: date) -> tuple[str | None, int | None]:
     """DOL's Analyst Review month and its average days, from the newest reading on or before t0."""
     rows = query_rows(
         db,
@@ -96,7 +96,7 @@ def frontier_at(db: Turso, t0: date) -> tuple[str | None, int | None]:
     return month, (int(avg) if avg else None)
 
 
-def first_moves(db: Turso, t0: date) -> dict[str, tuple[date, str, bool]]:
+def first_moves(db: Database, t0: date) -> dict[str, tuple[date, str, bool]]:
     """Each case's first status change on or after t0: (day, new status, final)."""
     t0_ms = int(datetime(t0.year, t0.month, t0.day, tzinfo=ET).timestamp() * 1000)
     return {
@@ -205,7 +205,7 @@ def bound_range(day: int, early: int, late: int, floor: int) -> tuple[int, int]:
     return e, l
 
 
-def weekday_spread(db: Turso, t0: date, pace: float) -> tuple[float, float] | None:
+def weekday_spread(db: Database, t0: date, pace: float) -> tuple[float, float] | None:
     """(fast, slow) calendar rates from the weekday p90/p10, scaled onto the
     calendar pace the way `measurePace` does it."""
     rows = query_rows(
@@ -249,7 +249,7 @@ def coverage(bands: dict[str, tuple[date, date]], decided: dict[str, date], end:
     return {"judged": len(judged), "insideShare": round(inside / len(judged), 3) if judged else None}
 
 
-def rebuild(db: Turso, t0: date) -> tuple[list[dict], dict[str, date]]:
+def rebuild(db: Database, t0: date) -> tuple[list[dict], dict[str, date]]:
     t0_ms = int(datetime(t0.year, t0.month, t0.day, tzinfo=ET).timestamp() * 1000)
     first_after = {
         r[0]: (r[1], r[2])
@@ -308,7 +308,7 @@ class Record:
             self.events[cn].append((int(at), (fr or "").upper(), (to or "").upper(), int(tf or 0)))
 
     @classmethod
-    def load(cls, db: Turso, earliest: date) -> "Record":
+    def load(cls, db: Database, earliest: date) -> "Record":
         e_ms = int(datetime(earliest.year, earliest.month, earliest.day, tzinfo=ET).timestamp() * 1000)
         status = query_rows(
             db,
@@ -343,7 +343,7 @@ class Record:
         return cases, decided, how
 
 
-def decided_how(db: Turso, t0: date) -> dict[str, str]:
+def decided_how(db: Database, t0: date) -> dict[str, str]:
     """The status each case's first decision after t0 went TO. A withdrawal is
     the employer's act, so the range test leaves it out like the scorecard."""
     t0_ms = int(datetime(t0.year, t0.month, t0.day, tzinfo=ET).timestamp() * 1000)
@@ -560,7 +560,7 @@ def rival_c(cases: list[dict], t0: date, chosen: set[str]) -> dict[str, date]:
     return out
 
 
-def origin_run(db: Turso, rec: Record, t0: date, end: date, prior_model: list[dict] | None) -> dict | None:
+def origin_run(db: Database, rec: Record, t0: date, end: date, prior_model: list[dict] | None) -> dict | None:
     """One start day: our dates, the fixed range, the range the prior start days measured, rival C."""
     pace = pace_before(db, t0)
     if pace is None:
@@ -601,7 +601,7 @@ ATTORNEY_SLOW_DAYS = 14
 RFI_MIN_ELIGIBLE = 50
 
 
-def rfi_followups(db: Turso) -> tuple[list[dict], date | None]:
+def rfi_followups(db: Database) -> tuple[list[dict], date | None]:
     """Each case watched entering RFI (after the log's first day, so the entry is
     real): when it entered, when it left and to what, when DOL decided it."""
     rows = query_rows(
@@ -713,7 +713,7 @@ def main() -> int:
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
     t0, end = date.fromisoformat(a.t0), date.fromisoformat(a.end)
-    db = Turso()
+    db = Database()
     pace = pace_before(db, t0)
     if pace is None:
         print("::warning::backtest: fewer than 14 days of decisions before T0; nothing scored")

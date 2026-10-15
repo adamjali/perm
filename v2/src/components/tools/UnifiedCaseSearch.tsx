@@ -40,8 +40,8 @@ import {
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
 // runtime import of a "server-only" module.
-import type { Program, UnifiedCase } from "@/lib/turso/unifiedSearch";
-import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/turso/caseSearchReads";
+import type { Program, UnifiedCase } from "@/lib/db/unifiedSearch";
+import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/db/caseSearchReads";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
@@ -540,7 +540,7 @@ export function UnifiedCaseSearch({
   const outcomes = useMemo(() => availableOutcomes(lead), [lead]);
 
   // Narrowing applied AFTER the answer arrives: not a new request, so flipping
-  // between them costs nothing and cannot re-bill a Turso read.
+  // between them costs nothing and cannot re-bill a database read.
   const [stage, setStage] = useState<"all" | "pending" | "decided">("all");
   const [sort, setSort] = useState<SortState>(orderToSort("filed-desc"));
 

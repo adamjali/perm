@@ -23,7 +23,7 @@ python3 scripts/ingest_visa_bulletin.py --direct
 python3 scripts/ingest_visa_bulletin.py --from-file ~/Downloads/vb.html
 python3 scripts/ingest_visa_bulletin.py --out /tmp/vb.json --months 18
 # The archive route writes the database directly too; the JSON is
-# turso_migrate_public.py's input.
+# db_migrate_public.py's input.
 
 Tests: python3 scripts/test_visa_bulletin.py
 """
@@ -43,7 +43,7 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, add_missing_columns, query_rows, record_run, stamp_freshness  # noqa: E402
+from lib_db import Database, add_missing_columns, query_rows, record_run, stamp_freshness  # noqa: E402
 
 # Queried per calendar year: one wildcard over the whole bulletin path hits the
 # row limit and truncates before the recent months, while reporting success.
@@ -340,7 +340,7 @@ def month_from_page(page: str) -> str | None:
     return hits.pop() if len(hits) == 1 else None
 
 
-def ensure_family_columns(db: Turso) -> None:
+def ensure_family_columns(db: Database) -> None:
     """Add the family-chart columns to a table that predates them."""
     add_missing_columns(db, "visa_bulletins",
                         {"family_final_action": "TEXT", "family_dates_for_filing": "TEXT"})
@@ -377,7 +377,7 @@ def ingest_saved_page(path: str, month: str | None) -> int:
         raise SystemExit(f"FATAL: --month {month} but the page says {found}.")
 
     parsed = validated(page, m)   # every refusal happens before any connection
-    db = Turso()
+    db = Database()
     write_month(db, m, parsed, SAVED_PAGE_SOURCE)
     stamp_bulletin_freshness(db, SAVED_PAGE_SOURCE)
     return 0
@@ -408,7 +408,7 @@ FIRST_SEEN_DDL = (
 )
 
 
-def write_month(db: Turso, m: str, parsed: dict, source: str) -> None:
+def write_month(db: Database, m: str, parsed: dict, source: str) -> None:
     """Store one validated bulletin as a primary-source row."""
     ensure_family_columns(db)
     prior = db.scalar(
@@ -417,7 +417,7 @@ def write_month(db: Turso, m: str, parsed: dict, source: str) -> None:
     # The first time this site held the month, kept once and never moved: a
     # re-parse rewrites computed_at, and the estimate scorecard grades the
     # release-day estimate against the day the bulletin was first found
-    # (src/lib/turso/predictions.ts). Only a NEW month records it, so the
+    # (src/lib/db/predictions.ts). Only a NEW month records it, so the
     # history the archive backfill fills in never claims a day.
     if not prior:
         db.execute(FIRST_SEEN_DDL)
@@ -443,7 +443,7 @@ def write_month(db: Turso, m: str, parsed: dict, source: str) -> None:
     log(f"stored {m}")
 
 
-def stamp_bulletin_freshness(db: Turso, source: str) -> None:
+def stamp_bulletin_freshness(db: Database, source: str) -> None:
     n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
     stamp_freshness(db, "visa-bulletin",
                     as_of=str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10],
@@ -507,7 +507,7 @@ def ingest_direct(limit: int, dry_run: bool = False, skip_bad: bool = False) -> 
         return 0
     log(f"State's index links {len(linked)} bulletins; newest {linked[0][0]}")
 
-    db = Turso()
+    db = Database()
     held = {str(m)[:7]: src or "" for m, src in query_rows(
         db, "SELECT bulletin_month, source_url FROM visa_bulletins")}
     # The nightly run reads what's NEW (a month past the newest we hold) and
@@ -609,7 +609,7 @@ def backfill_from_archive(years: list[int], limit: int, dry_run: bool = False) -
     reads the held rows so its ADDED/RE-PARSED lines mean what a real run's
     would.
     """
-    db = Turso()
+    db = Database()
     if not dry_run:
         ensure_family_columns(db)
     have = {}
@@ -802,7 +802,7 @@ def main() -> int:
 
     # Stamp this ingest's own freshness row, so the health check judges the
     # data this run actually wrote.
-    stamp_bulletin_freshness(Turso(), "State Dept via Internet Archive")
+    stamp_bulletin_freshness(Database(), "State Dept via Internet Archive")
 
     return 0
 

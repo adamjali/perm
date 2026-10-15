@@ -19,7 +19,7 @@ import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { lineIssuance, monthName } from "@/lib/turso/visaIssuances";
+import { lineIssuance, monthName } from "@/lib/db/visaIssuances";
 import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
 import { PriorityDateEstimator } from "@/components/tools/PriorityDateEstimator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
@@ -37,9 +37,9 @@ import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import type { BulletinMonth, CountryKey } from "@/lib/perm";
-import { getLineCounts } from "@/lib/turso/bulletinLine";
-import { categoriesIn, summariseBulletins, type BoardCell } from "@/lib/turso/bulletin";
-import { getVisaBulletins } from "@/lib/turso/publicData";
+import { getLineCounts } from "@/lib/db/bulletinLine";
+import { categoriesIn, summariseBulletins, type BoardCell } from "@/lib/db/bulletin";
+import { getVisaBulletins } from "@/lib/db/publicData";
 import { DAYS_PER_MONTH, easternDay } from "@/lib/time";
 import { buttonVariants } from "@/components/ui/button";
 

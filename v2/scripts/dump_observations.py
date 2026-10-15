@@ -29,7 +29,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, cell  # noqa: E402
+from lib_db import Database, cell  # noqa: E402
 
 # (table, expected floor) - a table that dumps fewer rows than its floor fails
 # the run: a dump that is silently empty is a backup that does not exist.
@@ -62,7 +62,7 @@ def _cells(res) -> tuple[list[str], list[list]]:
     return cols, rows
 
 
-def dump_table(db: Turso, table: str, out: pathlib.Path) -> int:
+def dump_table(db: Database, table: str, out: pathlib.Path) -> int:
     """Page by rowid so each request is bounded; returns rows written."""
     n = 0
     last = 0
@@ -90,7 +90,7 @@ def main() -> int:
     args = ap.parse_args()
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    db = Turso()
+    db = Database()
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
     manifest: dict[str, int] = {}
     short: list[str] = []

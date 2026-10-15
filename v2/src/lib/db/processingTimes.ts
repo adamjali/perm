@@ -1,0 +1,93 @@
+/**
+ * DOL processing times, read from the public-data database.
+ *
+ * Written by scripts/ingest_processing_times.mts, which runs the SAME parser
+ * the Convex action uses (convex/lib/dolProcessingTimes.ts) so the stored
+ * shape is identical and nothing has to be re-derived.
+ *
+ * ON THE HISTORY, AND BE HONEST ABOUT IT. The series is keyed by DOL's own
+ * as-of date, so it gains a point only when DOL republishes, and a chart that
+ * draws a trend through a single point would be inventing one.
+ */
+import "server-only";
+
+import { one, rows } from "./client";
+
+// Re-exported from the parser so there is exactly one declaration of these
+// shapes. Writing a second set here is how a field quietly acquires a
+// different name on the read side than the write side.
+export type {
+  PermQueueRow,
+  PermDeterminationRow,
+  PwdQueueRow,
+  PwdBacklogRow,
+} from "@convex/lib/dolProcessingTimes";
+import type {
+  PermQueueRow,
+  PermDeterminationRow,
+  PwdQueueRow,
+  PwdBacklogRow,
+} from "@convex/lib/dolProcessingTimes";
+
+export interface ProcessingTimesSnapshot {
+  permAsOf: string;
+  permQueues: PermQueueRow[];
+  permAverageDays: PermDeterminationRow[];
+  pwdAsOf: string | null;
+  pwdQueues: PwdQueueRow[];
+  pwdPermBacklog: PwdBacklogRow[];
+  sourceUrl: string;
+  fetchedAt: number;
+}
+
+const SNAPSHOT_LISTS = ["permQueues", "permAverageDays", "pwdQueues", "pwdPermBacklog"] as const;
+
+/**
+ * The stored JSON as a snapshot, its lists checked rather than cast: a field
+ * the Python ingest renamed would otherwise reach every page as undefined and
+ * throw where it maps over it. A missing list becomes empty (the pages show
+ * their empty state) and the gap is logged by name.
+ */
+export function hydrate(r: { json: string; fetched_at: number }): ProcessingTimesSnapshot {
+  const raw = JSON.parse(r.json) as Record<string, unknown>;
+  const missing = SNAPSHOT_LISTS.filter((k) => !Array.isArray(raw[k]));
+  if (missing.length > 0 || typeof raw.permAsOf !== "string") {
+    console.error("[processingTimes] the stored snapshot is missing", [...missing, ...(typeof raw.permAsOf === "string" ? [] : ["permAsOf"])].join(", "));
+  }
+  const lists = Object.fromEntries(SNAPSHOT_LISTS.map((k) => [k, Array.isArray(raw[k]) ? raw[k] : []]));
+  return {
+    ...raw,
+    ...lists,
+    permAsOf: typeof raw.permAsOf === "string" ? raw.permAsOf : "",
+    pwdAsOf: typeof raw.pwdAsOf === "string" ? raw.pwdAsOf : null,
+    sourceUrl: typeof raw.sourceUrl === "string" ? raw.sourceUrl : "",
+    fetchedAt: r.fetched_at,
+  } as ProcessingTimesSnapshot;
+}
+
+/** The newest snapshot, or null if the ingest has never run. */
+export async function getProcessingTimes(): Promise<ProcessingTimesSnapshot | null> {
+  const r = await one<{ json: string; fetched_at: number }>(
+    "SELECT json, fetched_at FROM processing_times ORDER BY perm_as_of DESC LIMIT 1",
+  );
+  return r ? hydrate(r) : null;
+}
+
+/**
+ * The stored series, newest first.
+ *
+ * Clamped at BOTH ends, carried over from the Convex query for the same
+ * reason it existed there: `limit` reaches this from an unauthenticated
+ * caller, and -1 and NaN both used to pass through unchallenged.
+ */
+export async function getProcessingTimesHistory(
+  limit?: number,
+): Promise<ProcessingTimesSnapshot[]> {
+  const requested = Math.floor(limit ?? 24);
+  const n = Number.isFinite(requested) ? Math.min(Math.max(requested, 1), 120) : 24;
+  const r = await rows<{ json: string; fetched_at: number }>(
+    "SELECT json, fetched_at FROM processing_times ORDER BY perm_as_of DESC LIMIT ?",
+    [n],
+  );
+  return r.map(hydrate);
+}

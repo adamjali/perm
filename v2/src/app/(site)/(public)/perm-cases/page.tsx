@@ -19,11 +19,11 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { CaseBrowser, type OccupationOption } from "@/components/tools/CaseBrowser";
 import { LiveCaseBrowser } from "@/components/tools/LiveCaseBrowser";
-import { getLiveRemainderSummary } from "@/lib/turso/liveCases";
-import { getMeta } from "@/lib/turso/cases";
-import { getDailyDecisions } from "@/lib/turso/publicData";
+import { getLiveRemainderSummary } from "@/lib/db/liveCases";
+import { getMeta } from "@/lib/db/cases";
+import { getDailyDecisions } from "@/lib/db/publicData";
 import { DailyDecisionsChart } from "@/components/tools/DailyDecisionsChart";
-import { listByKind } from "@/lib/turso/entities";
+import { listByKind } from "@/lib/db/entities";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";

@@ -4,20 +4,20 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
-// A public page has no ConvexProvider above it by design, and the Turso
+// A public page has no ConvexProvider above it by design, and the database
 // client is server-only, so the reads go through /api/perm-cases. See
 // src/hooks/usePublicQuery.ts.
 import { usePublicQuery } from "@/hooks/usePublicQuery";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { Pager } from "@/components/ui/pager";
 import { LinkPending, PendingLink } from "@/components/ui/pending-link";
-// TYPE ONLY, and that is what makes it legal here. `@/lib/turso/cases` imports
+// TYPE ONLY, and that is what makes it legal here. `@/lib/db/cases` imports
 // `server-only`, so a value import would be a build error in a client
 // component - correctly, because the token behind it grants access to the
 // whole database. A type import compiles to nothing, and it is worth having:
 // the response shape is a JSON boundary, so a field renamed on the server
 // would otherwise fail at runtime instead of at compile time.
-import type { CasePage } from "@/lib/turso/cases";
+import type { CasePage } from "@/lib/db/cases";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
@@ -36,7 +36,7 @@ const EMPTY_ROWS: CaseRow[] = [];
  * **A count never comes from counting rows.** Every total on screen comes from
  * the coverage document the ingest wrote, over exactly the rows it emitted.
  * Counting a filtered set would mean reading it, and reading 50,000 rows to
- * print a number is the failure `src/lib/turso/cases.ts` is arranged to avoid.
+ * print a number is the failure `src/lib/db/cases.ts` is arranged to avoid.
  * Where no exact total exists for the current combination, the page shows the
  * row range and says nothing else, rather than inventing one.
  *
@@ -315,7 +315,7 @@ export function CaseBrowser({
   }, [dimension, stateValue, socValue, employerSlug, attorneySlug, status, fiscalYear, pathname, router]);
 
   // One url per distinct question, so the hook's dependency is the question
-  // itself and a repeat is served from the edge cache rather than Turso.
+  // itself and a repeat is served from the edge cache rather than the database.
   /**
    * A dimension is picked but its value is not.
    *

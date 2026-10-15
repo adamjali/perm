@@ -7,7 +7,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
-import { getLcaWageFilterOptions } from "@/lib/turso/lcaWages";
+import { getLcaWageFilterOptions } from "@/lib/db/lcaWages";
 import { MIN_FOR_MEDIAN } from "@/lib/wageStats";
 
 /**

@@ -54,12 +54,12 @@ import {
   entityMetadata,
   entityStaticParams,
 } from "@/lib/entityPage";
-import { employerHistoryCases, employerYears, workerFacets } from "@/lib/turso/employerHistory";
-import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
+import { employerHistoryCases, employerYears, workerFacets } from "@/lib/db/employerHistory";
+import { getDisclosureStats, getFreshness } from "@/lib/db/publicData";
 import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
 import { EmployerWait } from "@/components/entities/EmployerWait";
-import { getEmployerWait, getFieldWait, getFiledTodayEstimate } from "@/lib/turso/employerWait";
-import { similarSponsors } from "@/lib/turso/similarSponsors";
+import { getEmployerWait, getFieldWait, getFiledTodayEstimate } from "@/lib/db/employerWait";
+import { similarSponsors } from "@/lib/db/similarSponsors";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { EmployerYears } from "@/components/entities/EmployerYears";
@@ -72,37 +72,37 @@ import {
   nameVariants,
   resolveEntity,
   sizeBand,
-} from "@/lib/turso/entityDetail";
-import { recentLiveByEmployer } from "@/lib/turso/cases";
-import { searchPwdCases, searchPwdDeterminations } from "@/lib/turso/pwdCases";
-import { searchLcaCases, searchLcaDisclosed } from "@/lib/turso/lcaCases";
-import { searchSeasonalCases } from "@/lib/turso/seasonalCases";
+} from "@/lib/db/entityDetail";
+import { recentLiveByEmployer } from "@/lib/db/cases";
+import { searchPwdCases, searchPwdDeterminations } from "@/lib/db/pwdCases";
+import { searchLcaCases, searchLcaDisclosed } from "@/lib/db/lcaCases";
+import { searchSeasonalCases } from "@/lib/db/seasonalCases";
 import { SeasonalFilings } from "@/components/entities/SeasonalFilings";
-import { getLcaProfile } from "@/lib/turso/lcaProfile";
+import { getLcaProfile } from "@/lib/db/lcaProfile";
 import { LcaProfile } from "@/components/entities/LcaProfile";
-import { getUscisH1bRecord } from "@/lib/turso/uscisH1b";
+import { getUscisH1bRecord } from "@/lib/db/uscisH1b";
 import { UscisH1bRecord } from "@/components/entities/UscisH1bRecord";
-import { getEmployerLottery } from "@/lib/turso/h1bLotteryFoia";
+import { getEmployerLottery } from "@/lib/db/h1bLotteryFoia";
 import { H1bLotteryHistory } from "@/components/entities/H1bLotteryHistory";
 import { CapExemptNote } from "@/components/entities/CapExemptNote";
 import { unifiedRows } from "@/lib/flagMerge";
-import { liveEmployerRecord } from "@/lib/turso/liveEmployers";
-import { getEmployerPrograms } from "@/lib/turso/employerPrograms";
-import { employerMatch, pageForSpelling } from "@/lib/turso/employerSlugs";
-import { getSponsorProfile } from "@/lib/turso/sponsorIndex";
+import { liveEmployerRecord } from "@/lib/db/liveEmployers";
+import { getEmployerPrograms } from "@/lib/db/employerPrograms";
+import { employerMatch, pageForSpelling } from "@/lib/db/employerSlugs";
+import { getSponsorProfile } from "@/lib/db/sponsorIndex";
 import { SponsorProfile } from "@/components/entities/SponsorProfile";
-import { getEmployerStages } from "@/lib/turso/employerStages";
+import { getEmployerStages } from "@/lib/db/employerStages";
 import { EmployerPrograms } from "@/components/entities/EmployerPrograms";
 import { EmployerFollow } from "@/components/employers/EmployerFollow";
 import { employerMoves } from "@/lib/employerStages";
 import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
-import { debarmentsForSlug } from "@/lib/turso/debarments";
-import { warnForSlug } from "@/lib/turso/warn";
+import { debarmentsForSlug } from "@/lib/db/debarments";
+import { warnForSlug } from "@/lib/db/warn";
 import { WarnNoticeBand } from "@/components/entities/WarnNotice";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
 import { OtherEmployer } from "@/components/entities/OtherEmployer";
-import { seasonalEmployerCases } from "@/lib/turso/seasonalEmployers";
-import { otherEmployerRecord, type OtherEmployerRecord } from "@/lib/turso/otherEmployers";
+import { seasonalEmployerCases } from "@/lib/db/seasonalEmployers";
+import { otherEmployerRecord, type OtherEmployerRecord } from "@/lib/db/otherEmployers";
 import { programsMix, programsShort } from "@/lib/otherEmployers";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { WageAndLcaFilings } from "@/components/entities/WageAndLcaFilings";
@@ -112,8 +112,8 @@ import { Chapter } from "@/components/entities/Chapter";
 import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { groupIndustries } from "@/components/entities/FilingMakeup";
 import { HOLD_STATUS } from "@/lib/employerStages";
-import { phase } from "@/lib/turso/debarments";
-import { comparables, fieldDistribution } from "@/lib/turso/entities";
+import { phase } from "@/lib/db/debarments";
+import { comparables, fieldDistribution } from "@/lib/db/entities";
 
 /**
  * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
@@ -231,7 +231,7 @@ function otherEmployerMetadata(slug: string, other: OtherEmployerRecord): Metada
  *
  * Reached ONLY after `resolveEntity` has missed, so it never runs for an
  * employer that has a published record. Deliberately NOT wrapped in a catch:
- * a Turso failure would already have thrown out of `resolveEntity` on the
+ * a database failure would already have thrown out of `resolveEntity` on the
  * same client a moment earlier, so swallowing here could not rescue an
  * outage - it could only turn a real employer into a 404.
  */

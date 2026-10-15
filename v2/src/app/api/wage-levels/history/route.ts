@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { AREA_RE, SOC_RE } from "@/lib/wageLevels";
-import { marketPayIn, wageLevelHistory } from "@/lib/turso/reference";
+import { marketPayIn, wageLevelHistory } from "@/lib/db/reference";
 
 /**
  * GET /api/wage-levels/history?soc=15-1252&area=41940

@@ -14,8 +14,8 @@
 import "server-only";
 
 import { budgetResetEastern } from "@/lib/dolMiss";
-import { one } from "@/lib/turso/client";
-import { bumpDocCount } from "@/lib/turso/embedLookup";
+import { one } from "@/lib/db/client";
+import { bumpDocCount } from "@/lib/db/embedLookup";
 import type { ApiPlan } from "@convex/lib/apiPlans";
 
 import { resetsIn, utcDay } from "./usage";

@@ -76,8 +76,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import ingest_perm_disclosure as ipd  # noqa: E402
 from entity_identity import SpacedKeyMap, entity_key  # noqa: E402
 from lib_naics import normalize_naics  # noqa: E402
-from lib_turso import (  # noqa: E402
-    Turso, add_missing_columns, canon, canon_hash, case_update, insert_rows, insert_stmts,
+from lib_db import (  # noqa: E402
+    Database, add_missing_columns, canon, canon_hash, case_update, insert_rows, insert_stmts,
     record_run, rows_of, run_stmts, stmt, write_doc,
 )
 from lib_gov_data import SPREADSHEET_NS, column_index, fetch, log, read_shared_strings  # noqa: E402
@@ -674,14 +674,14 @@ def main() -> int:
     args = ap.parse_args()
 
     if args.fill_slugs:
-        db = Turso()
+        db = Database()
         n = fill_slugs(db)
         record_run(db, "ingest_perm_history.py --fill-slugs", status="ok", rows_written=n,
                    note="employer slugs for rows no page matched")
         return 0
 
     if args.finish_only:
-        db = Turso()
+        db = Database()
         db.script(SCHEMA)
         ensure_columns(db)
         n = write_current_years(db)
@@ -693,7 +693,7 @@ def main() -> int:
         return 0
 
     if args.current:
-        db = Turso()
+        db = Database()
         db.script(SCHEMA)
         n = write_current_years(db)
         record_run(db, "ingest_perm_history.py --current", status="ok", rows_written=n,
@@ -709,7 +709,7 @@ def main() -> int:
             raise SystemExit("FATAL: no PERM workbooks in range on DOL's performance page")
     log(f"  {len(files)} workbook(s): " + ", ".join(f"FY{fy} {n}" for n, _, fy in files))
 
-    db = None if args.dry_run else Turso()
+    db = None if args.dry_run else Database()
     if db:
         db.script(SCHEMA)
         added = ensure_columns(db)

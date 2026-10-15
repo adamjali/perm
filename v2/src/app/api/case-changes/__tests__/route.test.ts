@@ -17,7 +17,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const getChangeDay = vi.fn();
-vi.mock("@/lib/turso/changes", () => ({
+vi.mock("@/lib/db/changes", () => ({
   getChangeDay,
   DAY_ROW_CAP: 5000,
 }));

@@ -3,7 +3,7 @@ import { render } from "@testing-library/react";
 
 import { BulletinBoard } from "../BulletinBoard";
 import { PriorityDateEstimator } from "@/components/tools/PriorityDateEstimator";
-import type { BulletinBoard as Board, BoardCell } from "@/lib/turso/bulletin";
+import type { BulletinBoard as Board, BoardCell } from "@/lib/db/bulletin";
 import type { BulletinMonth } from "@/lib/perm";
 
 /**

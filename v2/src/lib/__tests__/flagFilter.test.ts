@@ -7,7 +7,7 @@ import {
   passesFlagFilters,
   type FlagFilterItem,
 } from "../flagFilter";
-import type { FlagDisclosedRow } from "@/lib/turso/flagCases";
+import type { FlagDisclosedRow } from "@/lib/db/flagCases";
 
 function file(over: Partial<FlagDisclosedRow>): FlagDisclosedRow {
   return {

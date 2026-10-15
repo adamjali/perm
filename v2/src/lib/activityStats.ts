@@ -2,7 +2,7 @@
  * Derivations over DOL's daily decision series, outside the server-only
  * boundary so the `unit` vitest project (happy-dom) can import them.
  *
- * The queries live in src/lib/turso/activity.ts. Everything here is pure.
+ * The queries live in src/lib/db/activity.ts. Everything here is pure.
  */
 
 export interface ActivityDay {

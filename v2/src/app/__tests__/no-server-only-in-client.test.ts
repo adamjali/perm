@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 /**
  * A client component must not import the Turso layer.
  *
- * `src/lib/turso/client.ts` imports `server-only`, and TURSO_AUTH_TOKEN grants
+ * `src/lib/db/client.ts` imports `server-only`, and DATABASE_AUTH_TOKEN grants
  * access to the whole database. Importing it from a `"use client"` module
  * would put that credential in the browser bundle.
  *
@@ -24,10 +24,10 @@ import { describe, expect, it } from "vitest";
  */
 
 const ROOT = join(process.cwd(), "src");
-const BANNED = /from\s+["']@\/lib\/turso\//;
+const BANNED = /from\s+["']@\/lib\/db\//;
 const CLIENT = /^\s*["']use client["']/m;
 /** A type-only import erases at compile time and carries no runtime code. */
-const TYPE_ONLY = /import\s+type\s+\{[^}]*\}\s+from\s+["']@\/lib\/turso\//;
+const TYPE_ONLY = /import\s+type\s+\{[^}]*\}\s+from\s+["']@\/lib\/db\//;
 
 function walk(dir: string, out: string[] = []): string[] {
   let entries: string[];
@@ -60,7 +60,7 @@ describe("no server-only Turso import from a client component", () => {
     expect(clientFiles.length).toBeGreaterThan(50);
   });
 
-  it("no client component imports @/lib/turso at runtime", () => {
+  it("no client component imports @/lib/db at runtime", () => {
     const offenders = clientFiles.filter((f) => {
       const src = readFileSync(f, "utf8");
       if (!BANNED.test(src)) return false;

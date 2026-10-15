@@ -15,9 +15,9 @@
  * row stamps it, what to call it in an email, and which status means it
  * landed well.
  *
- * ## Why it lives here and not in `src/lib/turso`
+ * ## Why it lives here and not in `src/lib/db`
  *
- * `src/lib/turso/pwdCases.ts` and `lcaCases.ts` already carry the prefix
+ * `src/lib/db/pwdCases.ts` and `lcaCases.ts` already carry the prefix
  * rules, but both import `server-only`, so Convex cannot read them. This
  * module has no such import and is safe from Convex, the browser and Node
  * alike, exactly as `caseStatusVocabulary.ts` is. The rules are therefore
@@ -46,7 +46,7 @@ export type FlagProgram = "perm" | "pwd" | "lca" | "seasonal";
 export const FLAG_PROGRAMS: readonly FlagProgram[] = ["perm", "pwd", "lca", "seasonal"];
 
 /**
- * The prefix rules, byte-identical to the Turso read layer's own.
+ * The prefix rules, byte-identical to the public-data read layer's own.
  *
  * PERM has no entry: its shape rule accepts any leading letter, so it is the
  * fallback rather than a pattern. See `programOf`.

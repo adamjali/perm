@@ -7,7 +7,7 @@
  * table caption. The ingest refreshes that hourly through the working day on
  * weekdays and daily otherwise, but the pages carrying it sit
  * on `revalidate = 86400`. So on the day DOL moves, the fresh number can be in
- * Turso while every public page still serves the old one for up to another 24
+ * the database while every public page still serves the old one for up to another 24
  * hours: worst case ~48h behind DOL when the two windows stack, on a band whose
  * whole claim is that it is live. `page.tsx` has said "The ingest should also
  * revalidate on demand" since it was written; this is that.
@@ -15,7 +15,7 @@
  * WHY A FIXED LIST AND NO INPUT. The employer endpoint next door has to accept
  * slugs, because which employers moved is only known at runtime. Here the set is
  * static: it is exactly the pages that read `getProcessingTimes()` (directly or
- * through `lib/turso/estimate`), and it changes only when someone adds a page.
+ * through `lib/db/estimate`), and it changes only when someone adds a page.
  * Taking no input at all means there is no path to validate, no traversal to
  * defend against, and no way to aim this at anything else. A caller either
  * knows the secret and expires these paths (DOL_PAGES in paths.ts), or does

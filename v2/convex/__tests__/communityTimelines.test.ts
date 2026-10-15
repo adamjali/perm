@@ -56,8 +56,8 @@ function fakeMirror(opts: { status?: string; published?: string | null; observed
 }
 
 beforeEach(() => {
-  vi.stubEnv("TURSO_DATABASE_URL", "https://example.turso.io");
-  vi.stubEnv("TURSO_AUTH_TOKEN", "stub-token");
+  vi.stubEnv("DATABASE_URL", "https://example.turso.io");
+  vi.stubEnv("DATABASE_AUTH_TOKEN", "stub-token");
   fakeMirror();
 });
 afterEach(() => {

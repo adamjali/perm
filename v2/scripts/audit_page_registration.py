@@ -45,7 +45,7 @@ def main() -> int:
     # The rail map replaced DataNav on 2026-08-30: pages no longer pass an
     # `active` key, sectionForPath() derives it from the pathname by longest
     # prefix. So the check is now: every page that READS DATA (imports from
-    # lib/turso) is reachable from the rail, either as an entry's href or under
+    # lib/db) is reachable from the rail, either as an entry's href or under
     # one by prefix. A data page the rail cannot reach is listed nowhere a
     # reader browses.
     sections = (ROOT / "src/components/tools/dataSections.ts").read_text()
@@ -64,7 +64,7 @@ def main() -> int:
         src = path.read_text()
         if route not in listed:
             findings.append(f"{route}: not in sitemap statics ({path.relative_to(ROOT)})")
-        reads_data = "lib/turso" in src
+        reads_data = "lib/db" in src
         reachable = route in rail or any(route.startswith(h + "/") for h in rail)
         if reads_data and not reachable and route not in RAIL_EXEMPT:
             findings.append(f"{route}: reads data but no rail entry reaches it (dataSections.ts)")

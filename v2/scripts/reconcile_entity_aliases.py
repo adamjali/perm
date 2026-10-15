@@ -31,10 +31,10 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, lit, rows_of  # noqa: E402
+from lib_db import Database, lit, rows_of  # noqa: E402
 
 
-def classify(db: Turso) -> dict[str, list[tuple[str, str, str]]]:
+def classify(db: Database) -> dict[str, list[tuple[str, str, str]]]:
     """Every alias row, bucketed by which of its two ends is a live slug.
     One JOIN over the alias table (hundreds of rows) against the primary key
     of perm_entities; no scan."""
@@ -59,7 +59,7 @@ def classify(db: Turso) -> dict[str, list[tuple[str, str, str]]]:
     return out
 
 
-def apply(db: Turso, buckets: dict[str, list[tuple[str, str, str]]]) -> None:
+def apply(db: Database, buckets: dict[str, list[tuple[str, str, str]]]) -> None:
     stmts = []
     for kind, slug, target in buckets["reverse"]:
         stmts.append({"type": "execute", "stmt": {
@@ -80,7 +80,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
-    db = Turso()
+    db = Database()
     b = classify(db)
     print(f"alias rows: keep {len(b['keep'])}, reverse {len(b['reverse'])}, "
           f"drop (both live) {len(b['drop_both_live'])}, drop (both dead) {len(b['drop_both_dead'])}")

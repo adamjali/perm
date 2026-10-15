@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { FilterableStatTable, type Facet, type StatColumn } from "@/components/tools/FilterableStatTable";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import line on its own.
-import type { WarnNotice } from "@/lib/turso/warn";
+import type { WarnNotice } from "@/lib/db/warn";
 
 const long = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });

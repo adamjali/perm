@@ -27,7 +27,7 @@ from collections import Counter, defaultdict
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_entity_detail import city_key, city_labels  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
-from lib_turso import Turso, record_run, rows_of  # noqa: E402
+from lib_db import Database, record_run, rows_of  # noqa: E402
 
 TABLE = "lca_cities"
 COLS = ["key", "slug", "label", "total", "certified", "fy_from", "fy_to", "detail"]
@@ -61,7 +61,7 @@ def num(v) -> int:
         return 0
 
 
-def read(db: Turso) -> dict:
+def read(db: Database) -> dict:
     totals: dict[str, list[int]] = {}
     votes: dict[str, Counter] = defaultdict(Counter)
     fy: dict[str, list[int]] = {}
@@ -162,7 +162,7 @@ def norm(row: list) -> tuple:
     return tuple(None if v is None else int(float(v)) if c in ints else str(v) for c, v in zip(COLS, row))
 
 
-def write_diff(db: Turso, want: list[list]) -> tuple[int, int]:
+def write_diff(db: Database, want: list[list]) -> tuple[int, int]:
     stored = {}
     for r in rows_of(db.execute(f"SELECT {','.join(COLS)} FROM {TABLE}")):
         n = norm(list(r))
@@ -188,7 +188,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     started = time.time()
-    db = Turso()
+    db = Database()
     d = read(db)
     rows = plan(d)
     own = sum(1 for r in rows if not json.loads(r[7])["hasPermPage"])

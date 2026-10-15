@@ -30,7 +30,7 @@ import time
 from collections import Counter, defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, record_run, rows_of, write_doc  # noqa: E402
+from lib_db import Database, record_run, rows_of, write_doc  # noqa: E402
 
 DOC_KEY = "lca_wage_sources"
 KINDS = ("OES", "Survey", "CBA", "SCA", "DBA", "Other")
@@ -99,7 +99,7 @@ def publisher_key(name: str) -> str:
     return label if any(label == g for g, _ in PUBLISHER_GROUPS) else f"~{_letters(name)}"
 
 
-def read(db: Turso) -> dict:
+def read(db: Database) -> dict:
     by_year: dict[int, Counter] = defaultdict(Counter)
     for fy, oes, other, n in rows_of(db.execute(
             "SELECT fiscal_year, pw_oes_year IS NOT NULL, pw_other_source, COUNT(*) FROM lca_cases "
@@ -187,7 +187,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     started = time.time()
-    db = Turso()
+    db = Database()
     as_of = str(rows_of(db.execute("SELECT MAX(decision_date) FROM lca_cases WHERE pw_wage IS NOT NULL"))[0][0] or "")[:10]
     doc = plan(read(db), as_of)
     log(f"LCAs with a prevailing wage on file {doc['rows']:,}; years {[y['fy'] for y in doc['years']]}; "

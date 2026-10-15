@@ -29,14 +29,14 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DecisionPaceChart } from "@/components/activity/DecisionPaceChart";
 import { PermPulse } from "@/components/pulse/PermPulse";
-import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
+import { getSweepCoverage } from "@/lib/db/sweepCoverage";
 import { OutcomeMix } from "@/components/activity/OutcomeMix";
 import { WeekdayShape } from "@/components/activity/WeekdayShape";
 import { ChangeFeedBrowser } from "@/components/activity/ChangeFeedBrowser";
-import { getActivitySeries } from "@/lib/turso/activity";
-import { getChangeActivity } from "@/lib/turso/changes";
-import { getCoverageWindows, type CoverageWindows } from "@/lib/turso/decidedDays";
-import { getLiveMirrorSize } from "@/lib/turso/publicData";
+import { getActivitySeries } from "@/lib/db/activity";
+import { getChangeActivity } from "@/lib/db/changes";
+import { getCoverageWindows, type CoverageWindows } from "@/lib/db/decidedDays";
+import { getLiveMirrorSize } from "@/lib/db/publicData";
 import {
   fillZeros,
   outcomeByQuarter,
