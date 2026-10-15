@@ -10,10 +10,8 @@ import type { CSSProperties } from 'react';
  */
 export const labelStyle: CSSProperties = {
   color: '#71717a',
-  fontSize: '12px',
+  fontSize: '14px',
   fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
   margin: '0 0 4px 0',
 };
 
@@ -58,7 +56,7 @@ export const ctaSectionStyle: CSSProperties = {
  */
 export const urgencyColors = {
   normal: '#2563EB',   // Blue - 15+ days
-  high: '#F97316',     // Orange - 8-14 days
+  high: '#C2410C',     // Orange - 8-14 days
   urgent: '#DC2626',   // Red - 1-7 days
   overdue: '#991B1B',  // Dark red - <=0 days
 } as const;
@@ -106,3 +104,34 @@ export function formatEmailDate(dateStr: string): string {
   });
 }
 
+
+/**
+ * A group of deadlines in a digest: its urgency colour as a 3px top edge on
+ * the head, the label in ink, the rows framed in the same light line.
+ * Shared by the daily deadline digest and the weekly case summary.
+ */
+export function urgencyHeadStyle(color: string): CSSProperties {
+  return {
+    padding: '10px 16px',
+    border: '1px solid #e4e4e7',
+    borderTop: `3px solid ${color}`,
+    borderBottom: 'none',
+  };
+}
+
+export const urgencyHeadText: CSSProperties = {
+  color: '#18181b',
+  fontSize: '14px',
+  fontWeight: 700,
+  margin: '0',
+};
+
+export const urgencyRow: CSSProperties = {
+  backgroundColor: '#fffffe',
+  padding: '12px 16px',
+  border: '1px solid #e4e4e7',
+  borderBottom: 'none',
+};
+
+/** The last row closes the frame the head opened. */
+export const urgencyRowLast: CSSProperties = { borderBottom: '1px solid #e4e4e7' };

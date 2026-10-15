@@ -80,7 +80,9 @@ const DARK_MODE_STYLES = [
   // Layout
   "  .em-body { background-color: #18181b !important; }",
   "  .em-content { background-color: #27272a !important; border-color: #52525b !important; }",
-  "  .em-header { border-color: #52525b !important; }",
+  "  .em-header { background-color: #27272a !important; border-color: #52525b !important; }",
+  // The mark's PERM: the lime reads on the dark band (the ink is for light).
+  "  .em-logo-perm { color: #2ECC40 !important; }",
   // Text
   "  .em-text { color: #fafafa !important; }",
   "  .em-text-body { color: #d4d4d8 !important; }",
@@ -123,8 +125,8 @@ const DARK_MODE_STYLES = [
   // Activity rows
   "  .em-activity-row { border-color: #3f3f46 !important; }",
   // Buttons
-  "  .em-button { border-color: #52525b !important; box-shadow: 4px 4px 0 #3f3f46 !important; }",
-  "  .em-cta-button { background-color: #fafafa !important; color: #18181b !important; border-color: #52525b !important; box-shadow: 4px 4px 0 #3f3f46 !important; }",
+  "  .em-button { border-color: #52525b !important; }",
+  "  .em-cta-button { background-color: #fafafa !important; color: #18181b !important; border-color: #52525b !important; }",
   // Closure
   "  .em-closure-box { background-color: #450a0a !important; border-color: #dc2626 !important; }",
   "  .em-closure-title { color: #fca5a5 !important; }",
@@ -153,13 +155,13 @@ const DARK_MODE_STYLES = [
    * rather than a second border. The FILL stays lime with an ink label, which
    * must not invert (ink on lime 9.82:1, white on lime 2.14:1).
    */
-  "  .qa-stamp { background-color: #2ECC40 !important; border-color: #000001 !important; box-shadow: 6px 6px 0 #78787E !important; }",
+  "  .qa-stamp { background-color: #EAF7EC !important; border-color: #1A7A25 !important; }",
   "  .qa-stamp-value { color: #000001 !important; }",
   "  .em-link-strong { color: #fafafa !important; }",
   // Both queue button variants carry an ink label on a light fill, so the
   // generic .em-button dark rule above must not repaint them.
-  "  .em-button-primary { background-color: #2ECC40 !important; color: #000001 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #78787E !important; }",
-  "  .em-button-outline { background-color: #FAFAFA !important; color: #000001 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #78787E !important; }",
+  "  .em-button-primary { background-color: #2ECC40 !important; color: #000001 !important; border-color: #000001 !important; }",
+  "  .em-button-outline { background-color: #FAFAFA !important; color: #000001 !important; border-color: #000001 !important; }",
   // Footer copyright, on the body rather than a card. 5.18:1.
   "  .em-footer-muted { color: #8A8A93 !important; }",
   // The queue emails' filing-month box sits on .em-card (#3f3f46 in dark),
@@ -180,8 +182,8 @@ const DARK_MODE_STYLES = [
    * or absence of the brand colour. Only the offset moves, for the contrast
    * reason above.
    */
-  "  .cs-block-live { background-color: #2ECC40 !important; border-color: #000001 !important; box-shadow: 6px 6px 0 #78787E !important; }",
-  "  .cs-block-closed { background-color: #FAFAFA !important; border-color: #000001 !important; box-shadow: 6px 6px 0 #78787E !important; }",
+  "  .cs-block-live { background-color: #EAF7EC !important; border-color: #1A7A25 !important; }",
+  "  .cs-block-closed { background-color: #FAFAFA !important; border-color: #000001 !important; }",
   "  .cs-block-value { color: #000001 !important; }",
   // The figure table sits directly on the card. #2A2A2A would be 1.36:1 there.
   "  .cs-fig-label { color: #D4D4D8 !important; }",
@@ -267,8 +269,8 @@ export function EmailLayout({
           {/* Header */}
           <Section className="em-header" style={styles.header}>
             <Text style={styles.logo}>
-              <span style={styles.logoPerm}>PERM</span>{" "}
-              <span style={styles.logoTracker}> Tracker</span>
+              <span className="em-logo-perm" style={styles.logoPerm}>PERM</span>{" "}
+              <span className="em-text" style={styles.logoTracker}>Tracker</span>
             </Text>
           </Section>
 
@@ -335,10 +337,11 @@ const styles = {
     margin: "0 auto",
     padding: "20px",
   },
+  // A white band with a line under it, like the site's own header.
   header: {
-    backgroundColor: "#000001",
-    padding: "24px 32px",
-    borderBottom: "4px solid #000001",
+    backgroundColor: "#fffffe",
+    padding: "20px 32px",
+    border: "1px solid #e4e4e7",
   },
   logo: {
     margin: "0",
@@ -347,18 +350,17 @@ const styles = {
     letterSpacing: "-0.02em",
   },
   logoPerm: {
-    // The brand lime from globals.css (`--primary`). This read #22c55e, a
-    // Tailwind green that predates the token, so every email in this directory
-    // was signing off in a colour the site does not use.
-    color: "#2ECC40",
+    // The site's green ink (`--primary-text`): the lime itself is 2.05:1 on
+    // white, so on a light band the mark takes the ink, as the site's does.
+    color: "#1A7A25",
   },
   logoTracker: {
-    color: "#fffffe",
+    color: "#141414",
   },
   content: {
     backgroundColor: "#fffffe",
     padding: "32px",
-    border: "4px solid #000001",
+    border: "1px solid #e4e4e7",
     borderTop: "none",
   },
   footer: {
@@ -371,13 +373,13 @@ const styles = {
     // only footer-local styles, so this affects the footer of every template
     // and nothing else.
     color: "#5F5F67",
-    fontSize: "12px",
+    fontSize: "14px",
     lineHeight: "18px",
     margin: "0 0 12px 0",
   },
   footerLinks: {
     color: "#5F5F67",
-    fontSize: "12px",
+    fontSize: "14px",
     // Each link's own padded box (18px text + 26px) is the 44px row; a taller
     // line-height on top of it doubled the gap when the row wrapped on a phone.
     lineHeight: "18px",
@@ -407,7 +409,7 @@ const styles = {
   copyright: {
     // Quieter than the links above it (5.76:1) and still over the floor.
     color: "#6B6B74",
-    fontSize: "11px",
+    fontSize: "14px",
     lineHeight: "16px",
     margin: "0",
   },

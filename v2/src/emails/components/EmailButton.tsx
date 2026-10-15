@@ -3,8 +3,8 @@
  * CTA button component for email templates.
  *
  * Features:
- * - Black background, white text (default)
- * - Bold border (neobrutalist)
+ * - The site's main-button lime with an ink label (default and primary)
+ * - A 1px ink edge, no offset shadow
  * - Inline styles for email client compatibility
  * - Urgency variants (urgent=red, warning=orange)
  * - Dark mode via CSS class
@@ -21,13 +21,9 @@ export interface EmailButtonProps {
   /**
    * Visual variant.
    *
-   * `default` is the original black fill and is left exactly as it was, because
-   * fourteen templates render it. Note that on `default` the `4px 4px 0`
-   * shadow is the same colour as the fill, so it does not read as an offset. It
-   * reads as a ragged edge. `primary` and `outline` were added for the queue
-   * alerts and mirror the two button variants the site actually ships in
-   * `src/components/ui/button.tsx`, where the shadow contrasts with the fill and
-   * the device works.
+   * `default` and `primary` are the email's one main action, in lime;
+   * `outline` is a second action beside it. They mirror the site's own button
+   * variants in `src/components/ui/button.tsx`.
    */
   variant?: "default" | "primary" | "outline" | "urgent" | "warning";
 }
@@ -68,17 +64,18 @@ export function EmailButton({
  * Inline styles for email client compatibility.
  */
 const styles = {
+  // Unless a variant says otherwise, an email's button is its one main
+  // action, in the site's main-button lime with an ink label (9.8:1).
   button: {
-    backgroundColor: "#000001",
-    color: "#fffffe",
+    backgroundColor: "#2ECC40",
+    color: "#000001",
     padding: "14px 28px",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
     textAlign: "center" as const,
     display: "inline-block",
-    border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #000001",
+    border: "1px solid #000001",
   },
   /**
    * The site's primary button: brand fill, ink label, ink offset.
@@ -90,21 +87,19 @@ const styles = {
     backgroundColor: "#2ECC40",
     color: "#000001",
     borderColor: "#000001",
-    boxShadow: "4px 4px 0 #000001",
   },
   /** The site's outline button: paper fill, ink border and label, ink offset. */
   outline: {
     backgroundColor: "#FAFAFA",
     color: "#000001",
     borderColor: "#000001",
-    boxShadow: "4px 4px 0 #000001",
   },
   urgent: {
     backgroundColor: "#dc2626",
     borderColor: "#000001",
   },
   warning: {
-    backgroundColor: "#f97316",
+    backgroundColor: "#C2410C",
     borderColor: "#000001",
   },
 } as const;

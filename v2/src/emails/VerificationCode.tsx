@@ -109,16 +109,14 @@ const styles = {
   },
   codeBox: {
     backgroundColor: "#f0fdf4",
-    border: "3px solid #22c55e",
+    border: "1px solid #22c55e",
     padding: "24px",
     textAlign: "center" as const,
   },
   codeLabel: {
     color: "#71717a",
-    fontSize: "11px",
+    fontSize: "14px",
     fontWeight: "700" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     margin: "0 0 12px 0",
   },
   code: {
@@ -136,7 +134,7 @@ const styles = {
   },
   expiryText: {
     color: "#71717a",
-    fontSize: "13px",
+    fontSize: "14px",
     margin: "0",
   },
   ctaSection: {
@@ -151,17 +149,16 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #22c55e",
+    border: "1px solid #e4e4e7",
   },
   disclaimerBox: {
     backgroundColor: "#f4f4f5",
     padding: "16px",
-    border: "2px solid #e4e4e7",
+    border: "1px solid #e4e4e7",
   },
   disclaimerText: {
     color: "#52525b",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "20px",
     margin: "0",
   },

@@ -233,20 +233,20 @@ describe("EmailButton", () => {
           variant: "warning",
         })
       );
-      // Warning button has orange background (#f97316)
-      expect(html).toContain("#f97316");
+      // Warning button uses the orange ink, which white text reads on (5.2:1)
+      expect(html).toContain("#C2410C");
     });
   });
 
-  describe("Neobrutalist Styling", () => {
-    it("contains box shadow styling", async () => {
+  describe("Calm styling", () => {
+    it("carries no hard offset shadow", async () => {
       const html = await render(
         EmailButton({
           href: "https://test.com",
           children: "Click",
         })
       );
-      expect(html).toContain("box-shadow");
+      expect(html).not.toContain("box-shadow");
     });
 
     it("contains border styling", async () => {
@@ -337,8 +337,8 @@ describe("EmailHeader", () => {
           urgency: "high",
         })
       );
-      // High uses orange (#f97316)
-      expect(html).toContain("#f97316");
+      // High uses the orange ink (5.2:1 on white)
+      expect(html).toContain("#C2410C");
     });
 
     it("uses red color for urgent urgency", async () => {

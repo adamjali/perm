@@ -118,10 +118,8 @@ const styles = {
   eyebrow: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: 700 as const,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase" as const,
     margin: "0 0 4px 0",
   },
   count: {
@@ -133,17 +131,15 @@ const styles = {
     margin: 0,
   },
   item: { marginBottom: "14px" },
-  markGood: { ...MARK, backgroundColor: "#2ECC40", border: "2px solid #000001" },
-  markBad: { ...MARK, backgroundColor: "#FFFFFE", border: "2px solid #000001" },
-  markNeutral: { ...MARK, backgroundColor: "#D4D4D8", border: "2px solid #D4D4D8" },
+  markGood: { ...MARK, backgroundColor: "#2ECC40", border: "1px solid #e4e4e7" },
+  markBad: { ...MARK, backgroundColor: "#FFFFFE", border: "1px solid #e4e4e7" },
+  markNeutral: { ...MARK, backgroundColor: "#D4D4D8", border: "1px solid #D4D4D8" },
   body: { paddingLeft: "14px", verticalAlign: "top" as const },
   kind: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: 700 as const,
-    letterSpacing: "0.06em",
-    textTransform: "uppercase" as const,
     margin: "0 0 2px 0",
   },
   title: {
@@ -171,10 +167,10 @@ const styles = {
   note: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "20px",
     margin: "8px 0 0 0",
   },
-  footerExtra: { fontSize: "13px", margin: "8px 0 0 0" },
+  footerExtra: { fontSize: "14px", margin: "8px 0 0 0" },
   footerLink: { color: "#5A5A5A", textDecorationLine: "underline" as const },
 } as const;

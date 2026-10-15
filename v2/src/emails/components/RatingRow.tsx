@@ -107,7 +107,7 @@ const styles = {
     width: "40px",
     height: "40px",
     lineHeight: "40px",
-    border: "2px solid #000001",
+    border: "1px solid #e4e4e7",
     backgroundColor: "#FAFAFA",
     color: "#000001",
     fontFamily: MONO_STACK,
@@ -119,7 +119,7 @@ const styles = {
   labelLow: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "18px",
     paddingTop: "8px",
     textAlign: "left" as const,
@@ -127,7 +127,7 @@ const styles = {
   labelHigh: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "18px",
     paddingTop: "8px",
     textAlign: "right" as const,

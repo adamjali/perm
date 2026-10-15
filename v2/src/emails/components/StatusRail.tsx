@@ -45,7 +45,7 @@
  */
 
 import { Section, Text } from "@react-email/components";
-import { MONO_STACK, SANS_STACK } from "./QueueStamp";
+import { SANS_STACK } from "./QueueStamp";
 
 export interface StatusRailProps {
   /** The status the case has left, already display-cased. */
@@ -131,27 +131,23 @@ const styles = {
   eyebrow: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: 700 as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     lineHeight: "16px",
     margin: "0 0 6px 0",
   },
   eyebrowNow: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: 700 as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     lineHeight: "16px",
     // The gap between the two stops. Wide enough to read as two moments on one
     // line rather than a two-line label.
     margin: "26px 0 8px 0",
   },
   was: {
-    fontFamily: MONO_STACK,
+    fontFamily: SANS_STACK,
     // 6.90:1 on the card. Quieter than the block, still comfortably over the
     // body floor, because a status nobody can read is not context.
     color: "#5A5A5A",
@@ -163,10 +159,11 @@ const styles = {
   blockTable: {
     borderCollapse: "separate" as const,
   },
+  // A pale green with a green-ink edge: the live status stands out without
+  // the lime, which the site keeps for its one main button.
   blockLive: {
-    backgroundColor: "#2ECC40",
-    border: "3px solid #000001",
-    boxShadow: "6px 6px 0 #000001",
+    backgroundColor: "#EAF7EC",
+    border: "1px solid #1A7A25",
     padding: "18px 24px",
   },
   blockClosed: {
@@ -174,17 +171,15 @@ const styles = {
     // treatment that cannot be turned into a false positive by an inverting
     // client.
     backgroundColor: "#FAFAFA",
-    border: "3px solid #000001",
-    boxShadow: "6px 6px 0 #000001",
+    border: "1px solid #e4e4e7",
     padding: "18px 24px",
   },
   blockValue: {
-    fontFamily: MONO_STACK,
+    fontFamily: SANS_STACK,
     color: "#000001",
-    fontSize: "26px",
+    fontSize: "24px",
     fontWeight: 700 as const,
-    lineHeight: "32px",
-    letterSpacing: "-0.01em",
+    lineHeight: "30px",
     /*
      * Pinned to one line at desktop, released below 600px by EmailLayout.
      *

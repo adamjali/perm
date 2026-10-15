@@ -366,7 +366,7 @@ export function getUrgencyColor(urgency: DigestDeadline["urgency"]): string {
     case "urgent":
       return "#DC2626"; // Red
     case "upcoming":
-      return "#F97316"; // Orange
+      return "#C2410C"; // Orange
     case "later":
       return "#2563EB"; // Blue
   }

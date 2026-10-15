@@ -12,7 +12,7 @@
  * Urgency colors:
  * - overdue: #991B1B (dark red)
  * - urgent (1-7): #DC2626 (red)
- * - upcoming (8-14): #F97316 (orange)
+ * - upcoming (8-14): #C2410C (orange)
  * - later (15+): #2563EB (blue)
  */
 
@@ -23,6 +23,7 @@ import type { DigestContent, DigestDeadline, DigestCaseUpdate } from "../../conv
 import { formatRelativeDays } from "../../convex/lib/digestHelpers";
 import { MS_PER_DAY } from "../../convex/lib/time";
 import { SITE_URL } from "../../convex/lib/links";
+import { urgencyHeadStyle, urgencyHeadText, urgencyRow, urgencyRowLast } from "./components/emailStyles";
 
 export interface WeeklyDigestProps {
   /** Complete digest content built by digestHelpers */
@@ -130,12 +131,12 @@ export function WeeklyDigest({
       {([
         { key: "overdue", label: "Overdue", color: "#991B1B", list: overdueDeadlines },
         { key: "week", label: "This week", color: "#DC2626", list: next7DaysDeadlines },
-        { key: "next", label: "Next week", color: "#F97316", list: next14DaysDeadlines },
+        { key: "next", label: "Next week", color: "#C2410C", list: next14DaysDeadlines },
       ] as const).map(({ key, label, color, list }) =>
         list.length === 0 ? null : (
           <Section key={key} style={styles.deadlineSection}>
-            <Section className="em-banner" style={getDeadlineHeaderStyle(color)}>
-              <Text className="em-text-white" style={styles.deadlineHeaderText}>
+            <Section className="em-banner" style={urgencyHeadStyle(color)}>
+              <Text className="em-text" style={urgencyHeadText}>
                 {`${label} (${list.length})`}
               </Text>
             </Section>
@@ -188,7 +189,7 @@ export function WeeklyDigest({
 
       {unsubscribeUrl && (
         <Section style={{ textAlign: "center" as const, marginTop: "12px", paddingTop: "8px" }}>
-          <Text className="em-text-muted" style={{ color: "#a1a1aa", fontSize: "12px", lineHeight: "18px", margin: "0" }}>
+          <Text className="em-text-muted" style={{ color: "#a1a1aa", fontSize: "14px", lineHeight: "18px", margin: "0" }}>
             You get this weekly case summary because it&#39;s on in your settings.{" "}
             <Link href={unsubscribeUrl} className="em-link" style={{ color: "#71717a", textDecoration: "underline" }}>
               Unsubscribe from weekly summaries
@@ -222,7 +223,7 @@ function DeadlineRow({
   };
 
   return (
-    <Section className="em-deadline-row" style={last ? { ...styles.deadlineRow, ...styles.deadlineRowLast } : styles.deadlineRow}>
+    <Section className="em-deadline-row" style={last ? { ...urgencyRow, ...urgencyRowLast } : urgencyRow}>
       <table width="100%" cellPadding="0" cellSpacing="0">
         <tbody>
           <tr>
@@ -318,15 +319,6 @@ function getStatCellStyle(highlightColor?: string): React.CSSProperties {
 /**
  * Get deadline header style with urgency color.
  */
-function getDeadlineHeaderStyle(color: string): React.CSSProperties {
-  return {
-    backgroundColor: color,
-    padding: "10px 16px",
-    border: "3px solid #000001",
-    borderBottom: "none",
-  };
-}
-
 /**
  * Get deadline days style based on urgency.
  */
@@ -336,7 +328,7 @@ function getDeadlineDaysStyle(
   const colorMap = {
     overdue: "#991B1B",
     urgent: "#DC2626",
-    upcoming: "#F97316",
+    upcoming: "#C2410C",
     later: "#2563EB",
   };
 
@@ -371,14 +363,14 @@ const styles = {
   statsTable: {
     width: "100%",
     borderCollapse: "collapse" as const,
-    border: "3px solid #000001",
+    border: "1px solid #e4e4e7",
   },
   statCell: {
     padding: "16px 12px",
     textAlign: "center" as const,
     backgroundColor: "#fafafa",
-    borderRight: "2px solid #e4e4e7",
-    borderBottom: "3px solid #e4e4e7",
+    borderRight: "1px solid #e4e4e7",
+    borderBottom: "1px solid #e4e4e7",
     verticalAlign: "top" as const,
   },
   statNumber: {
@@ -390,17 +382,15 @@ const styles = {
   },
   statLabel: {
     color: "#71717a",
-    fontSize: "11px",
+    fontSize: "14px",
     fontWeight: "600" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
     margin: "0",
   },
   emptyState: {
     textAlign: "center" as const,
     padding: "40px 20px",
     backgroundColor: "#f0fdf4",
-    border: "3px solid #22c55e",
+    border: "1px solid #22c55e",
     marginBottom: "24px",
   },
   emptyTitle: {
@@ -417,21 +407,6 @@ const styles = {
   deadlineSection: {
     marginBottom: "24px",
   },
-  deadlineHeaderText: {
-    color: "#fffffe",
-    fontSize: "14px",
-    fontWeight: "700" as const,
-    margin: "0",
-  },
-  deadlineRow: {
-    backgroundColor: "#fffffe",
-    padding: "12px 16px",
-    borderLeft: "3px solid #000001",
-    borderRight: "3px solid #000001",
-    borderBottom: "2px solid #e4e4e7",
-  },
-  // The last row closes the card the banner opened.
-  deadlineRowLast: { borderBottom: "3px solid #000001" },
   deadlineContent: {
     verticalAlign: "top" as const,
     paddingRight: "12px",
@@ -444,7 +419,7 @@ const styles = {
   },
   deadlineType: {
     color: "#71717a",
-    fontSize: "12px",
+    fontSize: "14px",
     margin: "0",
   },
   deadlineDateCell: {
@@ -459,7 +434,7 @@ const styles = {
     margin: "0 0 2px 0",
   },
   deadlineDays: {
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: "700" as const,
     margin: "0",
   },
@@ -470,12 +445,12 @@ const styles = {
   },
   viewLink: {
     color: "#2563eb",
-    fontSize: "13px",
+    fontSize: "14px",
     fontWeight: "600" as const,
     textDecoration: "underline",
   },
   divider: {
-    borderTop: "2px solid #e4e4e7",
+    borderTop: "1px solid #e4e4e7",
     margin: "24px 0",
   },
   activitySection: {
@@ -502,7 +477,7 @@ const styles = {
   },
   activityChange: {
     color: "#71717a",
-    fontSize: "13px",
+    fontSize: "14px",
     margin: "0",
   },
   activityTime: {
@@ -511,7 +486,7 @@ const styles = {
   },
   activityTimeText: {
     color: "#a1a1aa",
-    fontSize: "12px",
+    fontSize: "14px",
     margin: "0",
   },
   moreActivity: {
@@ -532,8 +507,7 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #000001",
+    border: "1px solid #e4e4e7",
   },
 } as const;
 

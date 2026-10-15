@@ -87,9 +87,7 @@ const styles = {
   stampEyebrow: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "12px",
-    letterSpacing: "0.08em",
-    textTransform: "uppercase" as const,
+    fontSize: "14px",
     margin: "0 0 4px 0",
   },
   stampValue: {
@@ -123,7 +121,7 @@ const styles = {
   note: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "20px",
     margin: 0,
   },

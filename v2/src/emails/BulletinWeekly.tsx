@@ -262,8 +262,6 @@ const styles = {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
     fontSize: "14px",
-    letterSpacing: "0.06em",
-    textTransform: "uppercase" as const,
     fontWeight: 700 as const,
     lineHeight: "20px",
     margin: "28px 0 8px",
@@ -289,7 +287,7 @@ const styles = {
   },
   // The recipient's own block: a hard-edged card, ink border, no fill.
   yours: {
-    border: "2px solid #000001",
+    border: "1px solid #e4e4e7",
     padding: "16px 18px 18px",
     margin: "0 0 24px",
   },
@@ -306,7 +304,7 @@ const styles = {
     margin: "0 0 10px",
   },
   figureCell: {
-    border: "2px solid #000001",
+    border: "1px solid #e4e4e7",
     borderRight: "none",
     padding: "14px 10px 12px",
     textAlign: "center" as const,
@@ -314,7 +312,7 @@ const styles = {
     width: "33%",
   },
   figureCellLast: {
-    border: "2px solid #000001",
+    border: "1px solid #e4e4e7",
     padding: "14px 10px 12px",
     textAlign: "center" as const,
     verticalAlign: "top" as const,

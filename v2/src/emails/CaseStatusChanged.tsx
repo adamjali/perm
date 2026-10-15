@@ -261,7 +261,7 @@ export function CaseStatusChanged({
       ) : null}
 
       <Section style={styles.cta}>
-        <EmailButton href={caseUrl} variant="outline">
+        <EmailButton href={caseUrl} variant="primary">
           Open this case
         </EmailButton>
       </Section>
@@ -366,7 +366,7 @@ const styles = {
   },
   footerExtra: {
     color: "#5F5F67",
-    fontSize: "12px",
+    fontSize: "14px",
     lineHeight: "18px",
     margin: "0 0 12px 0",
   },

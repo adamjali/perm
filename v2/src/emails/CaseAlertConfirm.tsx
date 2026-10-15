@@ -174,7 +174,7 @@ const styles = {
   provenance: {
     fontFamily: MONO_STACK,
     color: "#5A5A5A",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "20px",
     margin: "14px 0 0 0",
   },

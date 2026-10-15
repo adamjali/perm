@@ -92,15 +92,13 @@ const styles = {
   closureBox: {
     backgroundColor: "#fef2f2",
     padding: "20px",
-    border: "2px solid #dc2626",
+    border: "1px solid #dc2626",
     marginBottom: "24px",
   },
   closureTitle: {
     color: "#991b1b",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: "700" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
     margin: "0 0 8px 0",
   },
   closureType: {
@@ -121,18 +119,18 @@ const styles = {
   },
   timestampText: {
     color: "#71717a",
-    fontSize: "13px",
+    fontSize: "14px",
     margin: "0",
   },
   infoBox: {
     backgroundColor: "#f4f4f5",
     padding: "16px",
-    border: "2px solid #e4e4e7",
+    border: "1px solid #e4e4e7",
     marginBottom: "24px",
   },
   infoText: {
     color: "#52525b",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "20px",
     margin: "0",
   },

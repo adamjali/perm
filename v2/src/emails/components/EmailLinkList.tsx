@@ -80,10 +80,8 @@ const styles = {
   label: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: 700 as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     lineHeight: "16px",
     margin: "0 0 6px 0",
   },

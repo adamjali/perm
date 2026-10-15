@@ -98,7 +98,7 @@ export function DailyReport({ report }: DailyReportProps) {
 const styles = {
   section: { padding: "0 24px", marginBottom: "14px" },
   title: { fontSize: "15px", lineHeight: "22px", margin: "0 0 4px", fontWeight: 700 },
-  badge: { fontSize: "12px", letterSpacing: "0.06em", fontWeight: 800 },
+  badge: { fontSize: "14px", fontWeight: 700 },
   summary: { fontWeight: 400 },
   lines: {
     fontSize: "14px",

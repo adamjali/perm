@@ -144,10 +144,8 @@ const styles = {
   eyebrow: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: 700 as const,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase" as const,
     margin: "0 0 6px 0",
   },
   name: {
@@ -159,14 +157,14 @@ const styles = {
     margin: 0,
   },
   item: { marginBottom: "12px" },
-  markGood: { ...MARK, backgroundColor: "#2ECC40", border: "2px solid #000001" },
-  markBad: { ...MARK, backgroundColor: "#FFFFFE", border: "2px solid #000001" },
-  markNeutral: { ...MARK, backgroundColor: "#D4D4D8", border: "2px solid #D4D4D8" },
+  markGood: { ...MARK, backgroundColor: "#2ECC40", border: "1px solid #e4e4e7" },
+  markBad: { ...MARK, backgroundColor: "#FFFFFE", border: "1px solid #e4e4e7" },
+  markNeutral: { ...MARK, backgroundColor: "#D4D4D8", border: "1px solid #D4D4D8" },
   body: { paddingLeft: "14px", verticalAlign: "top" as const },
   date: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "13px",
+    fontSize: "14px",
     margin: "0 0 2px 0",
   },
   sentence: {
@@ -178,7 +176,7 @@ const styles = {
     margin: 0,
   },
   mixWrap: { margin: "22px 0 18px 0" },
-  bar: { border: "2px solid #000001", borderCollapse: "collapse" as const },
+  bar: { border: "1px solid #e4e4e7", borderCollapse: "collapse" as const },
   segment: { height: "18px", padding: 0, fontSize: "1px", lineHeight: "1px" },
   legend: {
     fontFamily: SANS_STACK,
@@ -201,6 +199,6 @@ const styles = {
     fontWeight: 600 as const,
     textDecorationLine: "underline" as const,
   },
-  footerExtra: { fontSize: "13px", margin: "8px 0 0 0" },
+  footerExtra: { fontSize: "14px", margin: "8px 0 0 0" },
   footerLink: { color: "#5A5A5A", textDecorationLine: "underline" as const },
 } as const;

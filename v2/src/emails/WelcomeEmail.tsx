@@ -197,7 +197,7 @@ const styles = {
     textAlign: "center" as const,
     padding: "24px 20px 20px",
     backgroundColor: "#f0fdf4",
-    border: "3px solid #22c55e",
+    border: "1px solid #22c55e",
     marginBottom: "24px",
   },
   welcomeTitle: {
@@ -227,7 +227,7 @@ const styles = {
   },
   featureCard: {
     backgroundColor: "#fafafa",
-    border: "2px solid #e4e4e7",
+    border: "1px solid #e4e4e7",
     padding: "16px",
     marginBottom: "10px",
   },
@@ -274,11 +274,10 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #22c55e",
+    border: "1px solid #e4e4e7",
   },
   divider: {
-    borderTop: "2px solid #e4e4e7",
+    borderTop: "1px solid #e4e4e7",
     margin: "24px 0",
   },
   reviewSection: {

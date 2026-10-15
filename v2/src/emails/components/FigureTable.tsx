@@ -91,10 +91,8 @@ const styles = {
   heading: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: 700 as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     lineHeight: "16px",
     margin: "0 0 12px 0",
   },
@@ -127,9 +125,9 @@ const styles = {
     whiteSpace: "nowrap" as const,
   },
   provenance: {
-    fontFamily: MONO_STACK,
+    fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "20px",
     margin: "14px 0 0 0",
   },

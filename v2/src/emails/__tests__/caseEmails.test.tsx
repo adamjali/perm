@@ -257,10 +257,10 @@ describe("case email templates", () => {
     // meaning opposite things, which this codebase shipped once on the
     // priority-date chart. Fill, not alpha.
     expect(statusBlock(live).tone).toBe("live");
-    expect(statusBlock(live).style).toContain("#2ECC40");
+    expect(statusBlock(live).style).toContain("#EAF7EC");
     expect(statusBlock(closed).tone).toBe("closed");
     expect(statusBlock(closed).style).toContain("#FAFAFA");
-    expect(statusBlock(closed).style).not.toContain("2ECC40");
+    expect(statusBlock(closed).style).not.toContain("EAF7EC");
     // No opacity anywhere on either: that is the mechanism being ruled out.
     expect(statusBlock(live).style).not.toContain("opacity");
     expect(statusBlock(closed).style).not.toContain("opacity");

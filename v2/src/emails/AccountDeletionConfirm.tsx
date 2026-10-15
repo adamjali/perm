@@ -162,18 +162,18 @@ export function AccountDeletionConfirm({
  */
 const styles = {
   banner: {
-    backgroundColor: "#F97316", // Orange - high priority
+    backgroundColor: "#C2410C", // Orange - high priority
     padding: "12px 16px",
     textAlign: "center" as const,
     marginBottom: "24px",
-    border: "3px solid #000001",
+    border: "1px solid #e4e4e7",
   },
   bannerImmediate: {
     backgroundColor: "#DC2626", // Red - immediate/destructive
     padding: "12px 16px",
     textAlign: "center" as const,
     marginBottom: "24px",
-    border: "3px solid #000001",
+    border: "1px solid #e4e4e7",
   },
   bannerText: {
     color: "#fffffe",
@@ -187,7 +187,7 @@ const styles = {
   detailsCard: {
     backgroundColor: "#f4f4f5",
     padding: "20px",
-    border: "3px solid #000001",
+    border: "1px solid #e4e4e7",
   },
   greeting: {
     color: "#18181b",
@@ -202,10 +202,10 @@ const styles = {
     margin: "0 0 16px 0",
   },
   dateCallout: {
-    backgroundColor: "#F97316",
+    backgroundColor: "#C2410C",
     padding: "16px",
     textAlign: "center" as const,
-    border: "3px solid #000001",
+    border: "1px solid #e4e4e7",
     marginTop: "8px",
     marginBottom: "16px",
   },
@@ -213,7 +213,7 @@ const styles = {
     backgroundColor: "#DC2626",
     padding: "16px",
     textAlign: "center" as const,
-    border: "3px solid #000001",
+    border: "1px solid #e4e4e7",
     marginTop: "8px",
     marginBottom: "16px",
   },
@@ -243,12 +243,12 @@ const styles = {
   support: {
     backgroundColor: "#fef3cd",
     padding: "16px",
-    border: "2px solid #856404",
+    border: "1px solid #856404",
     marginTop: "24px",
   },
   supportText: {
     color: "#856404",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "20px",
     margin: "0",
   },

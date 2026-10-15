@@ -58,7 +58,7 @@ export function EmailHeader({
  */
 const urgencyColors = {
   normal: "#3b82f6", // Blue
-  high: "#f97316", // Orange
+  high: "#C2410C", // Orange
   urgent: "#dc2626", // Red
   overdue: "#991b1b", // Dark red
 } as const;

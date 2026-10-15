@@ -89,7 +89,7 @@ const styles = {
   },
   badgeBox: {
     backgroundColor: "#dcfce7",
-    border: "2px solid #22c55e",
+    border: "1px solid #22c55e",
     padding: "12px 20px",
     display: "inline-block" as const,
   },
@@ -111,8 +111,7 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #22c55e",
+    border: "1px solid #e4e4e7",
   },
 } as const;
 

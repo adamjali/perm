@@ -121,10 +121,8 @@ const styles = {
   eyebrow: {
     fontFamily: SANS_STACK,
     color: "#5A5A5A",
-    fontSize: "12px",
+    fontSize: "14px",
     fontWeight: 700 as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     lineHeight: "16px",
     margin: "0 0 10px 0",
   },
@@ -144,18 +142,16 @@ const styles = {
   provenance: {
     fontFamily: MONO_STACK,
     color: "#5A5A5A",
-    fontSize: "13px",
+    fontSize: "14px",
     lineHeight: "20px",
-    // 14px clears the 6px offset shadow with room to spare; the same value
-    // CaseAlertConfirm gives its own provenance lines.
+    // The same gap CaseAlertConfirm gives its own provenance lines.
     margin: "14px 0 0 0",
   },
+  // A pale green block with a green-ink edge, as the case alert's status:
+  // light in every theme, ink label, nothing for a client to invert badly.
   stamp: {
-    backgroundColor: "#2ECC40",
-    border: "3px solid #000001",
-    // Outlook drops box-shadow and renders a solid bordered block, which is the
-    // same idiom one layer flatter. Not worth VML for a decorative offset.
-    boxShadow: "6px 6px 0 #000001",
+    backgroundColor: "#EAF7EC",
+    border: "1px solid #1A7A25",
     padding: "22px 24px",
   },
   month: {

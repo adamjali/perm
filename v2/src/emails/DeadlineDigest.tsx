@@ -13,7 +13,7 @@
  * Urgency colors:
  * - overdue:  #991B1B (dark red)
  * - urgent:   #DC2626 (red), 0-7 days
- * - upcoming: #F97316 (orange), 8-14 days
+ * - upcoming: #C2410C (orange), 8-14 days
  * - later:    #2563EB (blue), 15+ days
  */
 
@@ -27,6 +27,7 @@ import {
 } from "../../convex/lib/digestHelpers";
 import type { DeadlineDigestItem } from "../../convex/lib/reminderDigest";
 import { SITE_URL } from "../../convex/lib/links";
+import { urgencyHeadStyle, urgencyHeadText, urgencyRow, urgencyRowLast } from "./components/emailStyles";
 import { deadlineDigestWords } from "../../convex/lib/deadlineDigestWords";
 
 export interface DeadlineDigestProps {
@@ -47,7 +48,7 @@ type Urgency = DeadlineDigestItem["urgency"];
 const SECTIONS: ReadonlyArray<{ key: Urgency; label: string; color: string }> = [
   { key: "overdue", label: "Overdue", color: "#991B1B" },
   { key: "urgent", label: "This week", color: "#DC2626" },
-  { key: "upcoming", label: "Next week", color: "#F97316" },
+  { key: "upcoming", label: "Next week", color: "#C2410C" },
   { key: "later", label: "Coming up", color: "#2563EB" },
 ];
 
@@ -77,8 +78,8 @@ export function DeadlineDigest({
         if (sectionItems.length === 0) return null;
         return (
           <Section key={key} style={styles.section}>
-            <Section className="em-banner" style={getSectionHeaderStyle(color)}>
-              <Text className="em-text-white" style={styles.sectionHeaderText}>
+            <Section className="em-banner" style={urgencyHeadStyle(color)}>
+              <Text className="em-text" style={urgencyHeadText}>
                 {`${label} (${sectionItems.length})`}
               </Text>
             </Section>
@@ -95,7 +96,7 @@ export function DeadlineDigest({
       })}
 
       <Section style={styles.ctaSection}>
-        <Link href={`${baseUrl}/dashboard`} className="em-cta-button" style={styles.ctaButton}>
+        <Link href={`${baseUrl}/dashboard`} className="em-button-primary" style={styles.ctaButton}>
           View all cases
         </Link>
       </Section>
@@ -111,7 +112,7 @@ function DeadlineRow({ item, baseUrl, last }: { item: DeadlineDigestItem; baseUr
       : "em-days-warning";
 
   return (
-    <Section className="em-deadline-row" style={last ? { ...styles.row, ...styles.rowLast } : styles.row}>
+    <Section className="em-deadline-row" style={last ? { ...urgencyRow, ...urgencyRowLast } : urgencyRow}>
       <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
         <tbody>
           <tr>
@@ -143,15 +144,6 @@ function DeadlineRow({ item, baseUrl, last }: { item: DeadlineDigestItem; baseUr
   );
 }
 
-function getSectionHeaderStyle(color: string): React.CSSProperties {
-  return {
-    backgroundColor: color,
-    padding: "10px 16px",
-    border: "3px solid #000001",
-    borderBottom: "none",
-  };
-}
-
 /** Inline styles (email-client compatible), matching the WeeklyDigest aesthetic. */
 const styles = {
   greeting: { marginBottom: "24px" },
@@ -168,21 +160,6 @@ const styles = {
     margin: "0",
   },
   section: { marginBottom: "24px" },
-  sectionHeaderText: {
-    color: "#fffffe",
-    fontSize: "14px",
-    fontWeight: "700" as const,
-    margin: "0",
-  },
-  row: {
-    backgroundColor: "#fffffe",
-    padding: "12px 16px",
-    borderLeft: "3px solid #000001",
-    borderRight: "3px solid #000001",
-    borderBottom: "2px solid #e4e4e7",
-  },
-  // The last row closes the card the banner opened.
-  rowLast: { borderBottom: "3px solid #000001" },
   rowContent: { verticalAlign: "top" as const, paddingRight: "12px" },
   caseName: {
     color: "#18181b",
@@ -190,7 +167,7 @@ const styles = {
     fontWeight: "600" as const,
     margin: "0 0 2px 0",
   },
-  deadlineType: { color: "#71717a", fontSize: "12px", margin: "0" },
+  deadlineType: { color: "#71717a", fontSize: "14px", margin: "0" },
   dateCell: {
     textAlign: "right" as const,
     verticalAlign: "top" as const,
@@ -202,7 +179,7 @@ const styles = {
     fontWeight: "600" as const,
     margin: "0 0 2px 0",
   },
-  days: { fontSize: "12px", fontWeight: "700" as const, margin: "0" },
+  days: { fontSize: "14px", fontWeight: "700" as const, margin: "0" },
   actionCell: {
     verticalAlign: "middle" as const,
     textAlign: "right" as const,
@@ -210,20 +187,20 @@ const styles = {
   },
   viewLink: {
     color: "#2563eb",
-    fontSize: "13px",
+    fontSize: "14px",
     fontWeight: "600" as const,
     textDecoration: "underline",
   },
   ctaSection: { textAlign: "center" as const, marginTop: "8px" },
+  // The email's one main action, in the site's main-button lime with ink.
   ctaButton: {
-    backgroundColor: "#18181b",
-    color: "#fffffe",
+    backgroundColor: "#2ECC40",
+    color: "#141414",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
     padding: "14px 32px",
-    border: "3px solid #000001",
-    boxShadow: "4px 4px 0 #22c55e",
+    border: "1px solid #141414",
     display: "inline-block",
   },
 } as const;

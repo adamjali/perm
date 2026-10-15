@@ -112,7 +112,7 @@ const styles = {
   statusChange: {
     backgroundColor: "#f4f4f5",
     padding: "20px",
-    border: "2px solid #e4e4e7",
+    border: "1px solid #e4e4e7",
     marginBottom: "24px",
   },
   statusBox: {
@@ -127,10 +127,8 @@ const styles = {
   },
   statusLabel: {
     color: "#71717a",
-    fontSize: "11px",
+    fontSize: "14px",
     fontWeight: "600" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
     margin: "0 0 8px 0",
   },
   statusValue: {
@@ -140,7 +138,7 @@ const styles = {
     margin: "0",
     padding: "8px 16px",
     backgroundColor: "#fffffe",
-    border: "2px solid #e4e4e7",
+    border: "1px solid #e4e4e7",
     display: "inline-block" as const,
   },
   statusValueNew: {
@@ -150,7 +148,7 @@ const styles = {
     margin: "0",
     padding: "8px 16px",
     backgroundColor: "#dcfce7",
-    border: "2px solid #22c55e",
+    border: "1px solid #22c55e",
     display: "inline-block" as const,
   },
   arrow: {
@@ -165,7 +163,7 @@ const styles = {
   },
   timestampText: {
     color: "#71717a",
-    fontSize: "13px",
+    fontSize: "14px",
     margin: "0",
   },
 } as const;
