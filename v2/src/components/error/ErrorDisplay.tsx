@@ -38,15 +38,13 @@ export function ErrorDisplay({
     <div
       className={`flex min-h-[50vh] flex-col items-center justify-center gap-6 p-8 ${className || ""}`}
     >
-      <div className="flex size-16 items-center justify-center border border-destructive bg-destructive/10">
-        <Icon className="size-8 text-destructive" />
-      </div>
+      <Icon className="size-8 text-destructive-text" aria-hidden="true" />{" "}
 
       <div className="text-center">
         <h2 className="font-heading text-xl font-bold text-foreground">
           {title}
         </h2>{" "}
-        <p className="mt-2 max-w-md text-sm text-muted-foreground">{message}</p>
+        <p className="mt-2 max-w-md text-base text-soft">{message}</p>
         {details && (
           <p className="mt-1 font-mono text-sm text-muted-foreground">
             {details}
@@ -55,7 +53,7 @@ export function ErrorDisplay({
       </div>
 
       {actions && actions.length > 0 && (
-        <div className="flex gap-3">
+        <div className="flex flex-wrap justify-center gap-3">
           {actions.map((action, index) => (
             <Button
               key={index}

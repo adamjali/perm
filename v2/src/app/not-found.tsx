@@ -49,9 +49,8 @@ export default function NotFound() {
   // matched against them. Read from the content folder when the page is built.
   const articles = getAllPosts().map((p) => ({ title: p.meta.title, href: `/${p.type}/${p.slug}`, kind: p.type }));
   return (
-    <main className="relative min-h-screen bg-background">
-
-      <div className="relative mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-20">
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-20">
         {/* The way home when this page stands alone; under the site's own
             header (a missing employer, firm or article) that header already
             carries the name, so this one steps aside. */}
@@ -62,25 +61,14 @@ export default function NotFound() {
           <span className="text-primary-text">PERM</span>&nbsp;Tracker
         </Link>{" "}
 
-        <div className="relative mt-10 overflow-hidden border border-border bg-card p-6 sm:p-10">
-          {/* An oversized 404 clipped by the card. */}
-          <div
-            className="pointer-events-none absolute -right-4 -top-10 select-none font-heading text-[11rem] font-bold leading-none text-foreground/[0.07] sm:text-[15rem]"
-            aria-hidden="true"
-          >
-            404
-          </div>
-          <div className="relative">
-            <p className="inline-block border border-destructive/40 bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive">
-              Page not found
-            </p>{" "}
-            <h1 className="mt-5 font-heading text-5xl font-bold leading-none sm:text-6xl">Dead end</h1>{" "}
-            <p className="mt-4 max-w-md text-lg leading-relaxed text-soft">
-              This page doesn&apos;t exist or has moved. If you were after a case, put its number in here.
-            </p>{" "}
-            <CaseLookupForm className="mt-7 max-w-xl" label="Case number" compact source="not-found" help={null} />{" "}
-            <NotFoundSuggestions articles={articles} />
-          </div>
+        <p className="mt-10 text-sm text-muted-foreground">Error 404</p>{" "}
+        <h1 className="mt-2 font-heading text-3xl font-bold">Page not found</h1>{" "}
+        <p className="mt-3 max-w-xl text-base leading-relaxed text-soft">
+          This page doesn&apos;t exist or has moved. If you were after a case, put its number here.
+        </p>{" "}
+        <div className="mt-6 bg-tint p-5 sm:p-6">
+          <CaseLookupForm className="max-w-xl" label="Case number" compact source="not-found" help={null} />{" "}
+          <NotFoundSuggestions articles={articles} />
         </div>{" "}
 
         <h2 className="mt-12 font-heading text-xl font-bold">Or go to</h2>{" "}
@@ -90,11 +78,11 @@ export default function NotFound() {
               <li>
                 <Link
                   href={d.href}
-                  className="flex min-h-[56px] items-center gap-3 border border-border bg-card px-4 font-bold transition-colors hover:bg-tint"
+                  className="flex min-h-[56px] items-center gap-3 border border-border bg-card px-4 font-semibold transition-colors hover:bg-muted"
                 >
-                  <d.Icon aria-hidden="true" className="size-5 shrink-0" weight="bold" />{" "}
+                  <d.Icon aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />{" "}
                   <span className="flex-1">{d.label}</span>{" "}
-                  <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
+                  <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
                 </Link>
               </li>{" "}
             </Fragment>
