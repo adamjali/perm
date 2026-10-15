@@ -15,6 +15,7 @@ import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
 import { NavLink } from "@/components/ui/nav-link";
 import { NotificationBell, NotificationDropdown } from "@/components/notifications";
+import { AppSearch } from "@/components/search/AppSearch";
 import { useNotificationToasts } from "@/hooks";
 import {
   DropdownMenu,
@@ -208,6 +209,8 @@ export default function Header(): React.ReactElement {
               );
             })}
           </div>
+
+          <AppSearch />
 
           <NotificationBell>
             <NotificationDropdown />
