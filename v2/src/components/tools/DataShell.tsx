@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import { sectionForPath, sectionPages } from "@/lib/siteMap";
-import { SectionList } from "./SectionList";
+import { AllSectionsList, SectionList } from "./SectionList";
 
 /**
  * Lays a data page out beside the pages of its section, and stays out of the
@@ -21,7 +21,8 @@ export function DataShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const section = sectionPages(pathname);
   if (!section) return <>{children}</>;
-  const current = sectionForPath(pathname)?.href ?? pathname;
+  const found = sectionForPath(pathname);
+  const current = found?.href ?? pathname;
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
@@ -30,8 +31,11 @@ export function DataShell({ children }: { children: React.ReactNode }) {
         pages={section.pages}
         current={current}
         placement="side"
-        className="hidden pt-10 lg:block"
+        className="nav-one hidden pt-10 lg:block"
       />
+      {/* SAMPLE (Oct 15 2026): every group at once, shown instead when
+          html[data-nav="all"]; one of the two goes once a design is chosen. */}
+      <AllSectionsList current={current} group={found?.group ?? section.title} className="nav-all hidden pt-8" />
       {/* `min-w-0`: a grid item's minimum is its content, so one wide table
           would otherwise push the column past the viewport. */}
       <div className="min-w-0">

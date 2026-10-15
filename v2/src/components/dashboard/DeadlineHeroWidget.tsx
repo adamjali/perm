@@ -17,7 +17,7 @@ import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { countdownWords, formatDeadlineDate } from "@/components/cases/case-card.utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import UrgencyGroup from "./UrgencyGroup";
-import { WIDGET_CONTAINER_CLASSES, WidgetHeader, WidgetLink } from "./widget-primitives";
+import { WidgetHeader, WidgetLink } from "./widget-primitives";
 
 const GROUPS = [
   { key: "overdue", title: "Overdue" },
@@ -70,7 +70,7 @@ export function deadlineAnswer(data: Pick<DeadlineGroups, "overdue" | "thisWeek"
 
 export function DeadlineHeroLoadingSkeleton(): ReactNode {
   return (
-    <section className={WIDGET_CONTAINER_CLASSES} aria-busy={true} aria-label="Deadlines">
+    <section className="object" aria-busy={true} aria-label="Deadlines">
       <WidgetHeader title="Deadlines" />
       <div className="p-5">
         <Skeleton variant="line" className="h-7 w-full max-w-xl" />
@@ -103,13 +103,13 @@ export default function DeadlineHeroWidget(): ReactNode {
       id="deadlines"
       data-tour="deadline-hero"
       aria-labelledby="deadlines-title"
-      className={WIDGET_CONTAINER_CLASSES}
+      className="object"
     >
       <WidgetHeader id="deadlines-title" title="Deadlines" count={total} action={<WidgetLink href="/calendar">Calendar</WidgetLink>} />
       <div className="p-5">
-        <p className="bg-tint px-4 py-3 text-base font-semibold sm:text-lg">{deadlineAnswer(data, openCaseCount(summary))}</p>
+        <p className="text-base font-semibold sm:text-lg">{deadlineAnswer(data, openCaseCount(summary))}</p>
         {total > 0 ? (
-          <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {GROUPS.map((g) => (
               <UrgencyGroup key={g.key} title={g.title} urgency={g.key} items={data[g.key]} />
             ))}

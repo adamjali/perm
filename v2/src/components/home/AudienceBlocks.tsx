@@ -84,7 +84,9 @@ export function AudienceBlocks() {
     <section
       id="who-it-is-for"
       aria-labelledby="who-it-is-for-heading"
-      className="border-b border-border py-14 sm:py-20"
+      // A dark field, the page's one change of colour: the .dark scope gives
+      // everything inside the dark theme's tokens, in both themes.
+      className="dark bg-[#161616] py-12 text-foreground sm:py-16"
     >
       <div className="mx-auto max-w-[1200px] px-4 sm:px-8">
         <h2 id="who-it-is-for-heading" className="font-heading text-2xl font-bold sm:text-3xl">
@@ -98,7 +100,7 @@ export function AudienceBlocks() {
                 {h.heading}
               </h3>{" "}
               <ExplainerFilm film={h.film} className="mt-4" />{" "}
-              <details className="group mt-4 border-y border-border">
+              <details className="group mt-4 border-b border-border">
                 <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between font-semibold [&::-webkit-details-marker]:hidden">
                   What it does{" "}
                   <CaretDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />

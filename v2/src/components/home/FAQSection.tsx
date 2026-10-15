@@ -32,7 +32,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
   return (
     <div
       className={cn(
-        "relative border border-border bg-background",
+        "relative bg-card",
         "transition-colors duration-150",
         // A short ease-out
         "[transition-timing-function:cubic-bezier(0.165,0.84,0.44,1)]",
@@ -58,10 +58,10 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
           {item.question}
         </span>
 
-        {/* Chevron icon - spring bounce rotation on open */}
+        {/* Chevron: turns when the answer opens */}
         <div
           className={cn(
-            "shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+            "shrink-0 transition-transform duration-200 ease-out",
             isOpen && "rotate-180"
           )}
         >
@@ -80,7 +80,7 @@ function FAQAccordionItem({ item, isOpen, onToggle, index }: FAQAccordionItemPro
         )}
       >
         <div ref={contentRef} className="overflow-hidden">
-          <div className="border-t border-border px-5 pb-5 pt-5">
+          <div className="px-5 pb-5">
             <p className="text-base leading-7 text-soft">
               {item.rich}
             </p>
@@ -100,12 +100,12 @@ export function FAQSection() {
   };
 
   return (
-    <section id="faq" aria-labelledby="faq-h" className="relative bg-card py-16 sm:py-24">
+    <section id="faq" aria-labelledby="faq-h" className="relative bg-tint py-12 sm:py-16">
       {/* Two columns from lg: the heading and the way to every other
           question on the left, the answers on the right. */}
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-8 px-4 [&>*]:min-w-0 sm:px-8 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-14">
         <div>
-          <h2 id="faq-h" className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+          <h2 id="faq-h" className="font-heading text-2xl font-bold sm:text-3xl">
             Questions about PERM Tracker
           </h2>{" "}
           <p className="mt-3 max-w-sm text-base leading-relaxed text-soft sm:text-lg">
@@ -119,7 +119,7 @@ export function FAQSection() {
             <ArrowRightIcon size={18} weight="bold" aria-hidden="true" />
           </Link>
         </div>{" "}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           {HOME_FAQS.map((item, index) => (
             <FAQAccordionItem
               key={index}

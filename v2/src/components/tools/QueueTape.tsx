@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,17 @@ export interface QueueTapeProps {
   monthsAhead?: number;
   /** Months to draw before the frontier. Cleared territory. */
   monthsBehind?: number;
+  /**
+   * Draw the processed months as fills that TapeReveal can play once, left to
+   * right, when the tape first scrolls into view. Off, the tape is drawn
+   * filled; on, it is still drawn filled until TapeReveal arms it.
+   */
+  reveal?: boolean;
+  /**
+   * Said across the months between DOL's front and the reader's month, so the
+   * empty stretch names what fills it ("80,416 cases ahead").
+   */
+  aheadLabel?: string;
   className?: string;
 }
 
@@ -61,6 +72,8 @@ export function QueueTape({
   selectedMonth,
   monthsAhead = 10,
   monthsBehind = 8,
+  reveal = false,
+  aheadLabel,
   className,
 }: QueueTapeProps) {
   const months: string[] = [];
@@ -87,9 +100,21 @@ export function QueueTape({
     <figure className={cn("m-0", className)}>
       <ChartTips label="DOL's PERM queue by filing month" scroll={cn("-mx-1 px-1", flagsCollide ? "pt-14" : "pt-7")}>
         <div
-          className="relative grid min-w-[560px] border border-border"
+          className="relative grid min-w-[560px] border-2 border-[var(--object-border)] bg-card"
           style={{ gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))` }}
         >
+          {aheadLabel && frontierAt >= 0 && youAt - frontierAt > 2 ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 z-[5] flex items-start justify-center pt-3"
+              style={{
+                left: `${((frontierAt + 1) / months.length) * 100}%`,
+                width: `${((youAt - frontierAt - 1) / months.length) * 100}%`,
+              }}
+            >
+              <span className="bg-card px-2 font-heading text-base font-bold whitespace-nowrap">{aheadLabel}</span>
+            </span>
+          ) : null}
           {months.map((m) => {
             const cleared = m < frontierMonth;
             const isFrontier = m === frontierMonth;
@@ -99,12 +124,18 @@ export function QueueTape({
               <div
                 data-tip={tipFor(m, months.indexOf(m) - frontierAt, isYou)}
                 className={cn(
-                  "relative flex h-16 items-end justify-center border-r border-border/30 pb-1 last:border-r-0",
-                  cleared && "bg-primary",
-                  isFrontier && "bg-primary/80",
-                  !cleared && !isFrontier && "bg-card",
+                  "relative flex h-16 items-end justify-center border-r border-foreground/10 pb-1 last:border-r-0",
+                  !reveal && cleared && "bg-primary",
+                  !reveal && isFrontier && "bg-primary/70",
                 )}
               >
+                {reveal && (cleared || isFrontier) ? (
+                  <span
+                    aria-hidden="true"
+                    className={cn("qt-fill absolute inset-0", isFrontier ? "bg-primary/70" : "bg-primary")}
+                    style={{ "--i": months.indexOf(m) } as CSSProperties}
+                  />
+                ) : null}
                 {/* Tick */}
                 <span
                   aria-hidden="true"
@@ -128,14 +159,20 @@ export function QueueTape({
                     and would glue for every DOM extractor. */}
                 {" "}
                 {isFrontier ? (
-                  <span className="absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-border bg-foreground px-1.5 py-0.5 text-sm font-bold text-background">
+                  <span
+                    className={cn(
+                      "absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap bg-foreground px-1.5 py-0.5 text-sm font-bold text-background",
+                      reveal && "qt-flag",
+                    )}
+                    style={{ "--i": frontierAt } as CSSProperties}
+                  >
                     DOL is here
                   </span>
                 ) : null}
                 {isYou && !isFrontier ? (
                   <span
                     className={cn(
-                      "absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border border-border bg-primary px-1.5 py-0.5 text-sm font-bold text-black",
+                      "absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-[var(--object-border)] bg-primary px-1.5 py-px text-sm font-bold text-black",
                       flagsCollide ? "-top-14" : "-top-7",
                     )}
                   >
@@ -158,11 +195,11 @@ export function QueueTape({
       </ChartTips>
       <figcaption className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-3 border border-border bg-primary" />
+          <span aria-hidden="true" className="h-3 w-3 border border-foreground/40 bg-primary" />
           Processed
         </span>{" "}
         <span className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-3 border border-border bg-card" />
+          <span aria-hidden="true" className="h-3 w-3 border border-foreground/40 bg-card" />
           Still pending
         </span>
       </figcaption>

@@ -455,6 +455,23 @@ function Answer({
           : "bad"
         : "flat";
 
+  // THE PICTURE: DOL's tape of filing months, its work front flagged and this
+  // case's month marked, for a pending case DOL hasn't reached yet. The same
+  // tape the homepage draws, so the two teach one picture.
+  const front = publishedFront ?? wall?.frontMonth ?? null;
+  const filedMonth = filingDate?.slice(0, 7) ?? null;
+  const gap = front && filedMonth ? monthsBetween(front, filedMonth) : null;
+  const tape =
+    !isFinal && wall && !wall.isPastFront && front && filedMonth && gap !== null && gap > 0 && gap <= 16 ? (
+      <QueueTape
+        frontierMonth={front}
+        selectedMonth={filedMonth}
+        monthsBehind={1}
+        monthsAhead={gap + 1}
+        aheadLabel={casesAhead !== null ? `${formatInt(casesAhead)} cases ahead` : undefined}
+      />
+    ) : null;
+
   const sourceBits = [
     check ? `DOL showed this status on ${formatAsOf(check.date)}` : null,
     publishedAsOf ? `DOL's queue position as of ${formatAsOf(publishedAsOf)}` : null,
@@ -466,6 +483,7 @@ function Answer({
       direction={direction}
       label={<span translate="no">{caseNumber}</span>}
       source={sourceBits.length > 0 ? sourceBits.join(" · ") : undefined}
+      picture={tape}
       actions={
         isFinal ? (
           <DecidedNext status={status} approved={approved} />
@@ -542,6 +560,13 @@ function Answer({
       ) : null}
     </AnswerPanel>
   );
+}
+
+/** Whole months from `from` to `to` ("YYYY-MM"); negative when `to` is earlier. */
+function monthsBetween(from: string, to: string): number {
+  const [fy, fm] = from.split("-").map(Number);
+  const [ty, tm] = to.split("-").map(Number);
+  return ((ty ?? 0) - (fy ?? 0)) * 12 + ((tm ?? 1) - (fm ?? 1));
 }
 
 /** A decided case's next step: what comes after PERM, or what a denial means. */

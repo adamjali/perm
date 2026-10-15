@@ -66,14 +66,19 @@ export const CaseCard = memo(function CaseCard({
     <article
       data-testid="case-card"
       className={cn(
-        "relative flex flex-col border bg-card transition-colors hover:border-input",
-        isSelected ? "border-primary-text ring-2 ring-primary-text" : "border-border",
-        isClosed && "bg-muted/40",
+        "manila relative mt-7 flex flex-col transition-colors",
+        isSelected && "outline-4 outline-offset-2 outline-primary",
+        isClosed && "manila-closed",
       )}
     >
-      <div className="flex flex-1 flex-col gap-3 p-5">
-        <div className="flex min-h-11 items-center justify-between gap-2">
-          <span className="flex items-center gap-3">
+      {/* The folder's tab: the case's stage, written where a file clerk would. */}
+      <span className="manila-tab">
+        <CaseStageBadge stage={c.caseStatus} />
+      </span>
+      <div className="flex flex-1 flex-col gap-3 p-5 pt-4">
+        {/* The controls sit in the corner, beside the name, not on a row of their own. */}
+        <div className="absolute right-2 top-2 z-10 flex items-center gap-2">
+          <span className="flex items-center">
             {selectionMode ? (
               <Checkbox
                 data-testid="selection-checkbox"
@@ -83,7 +88,6 @@ export const CaseCard = memo(function CaseCard({
                 aria-label={`Select ${c.employerName}`}
               />
             ) : null}
-            <CaseStageBadge stage={c.caseStatus} />
           </span>
           {selectionMode ? null : (
             <span className="relative z-10 flex items-center">
@@ -133,7 +137,7 @@ export const CaseCard = memo(function CaseCard({
           )}
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 pr-20">
           <h3 className="truncate font-heading text-lg font-bold leading-tight" title={c.employerName}>
             {selectionMode ? (
               <button
@@ -192,7 +196,7 @@ export const CaseCard = memo(function CaseCard({
 
       {!isClosed && (dateCount > 0 || c.notes) ? (
         <details
-          className="group relative z-10 border-t border-border"
+          className="group relative z-10 border-t-2 border-border"
           open={c.isPinned}
           onToggle={(e) => {
             // Keeping a case's dates open is remembered for that case.

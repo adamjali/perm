@@ -98,7 +98,7 @@ function Panel({ id, open, className, children }: { id: string; open: boolean; c
       inert={!open}
       aria-hidden={!open}
       className={cn(
-        "absolute inset-x-0 top-full border-b border-border bg-popover shadow-overlay transition-opacity duration-150",
+        "absolute inset-x-0 top-full max-h-[calc(100dvh-var(--site-header-h))] overflow-y-auto overscroll-contain border-b border-border bg-popover shadow-overlay transition-opacity duration-150",
         !open && "pointer-events-none invisible opacity-0",
         className,
       )}
@@ -115,8 +115,10 @@ function PanelLink({ page, pathname }: { page: SitePage; pathname: string }) {
       href={page.href}
       aria-current={here ? "page" : undefined}
       className={cn(
-        "flex min-h-10 items-center text-base transition-colors hover:text-foreground hover:underline",
-        here ? "font-semibold text-foreground" : "text-soft",
+        "relative flex min-h-9 items-center py-1 pl-3 text-[15px] leading-snug transition-colors hover:text-foreground hover:underline",
+        here
+          ? "font-semibold text-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-1 before:bg-primary before:content-['']"
+          : "text-soft",
       )}
     >
       {page.name}
@@ -161,7 +163,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       ref={barRef}
       data-site-header=""
       style={{ height: "var(--site-header-h)" }}
-      className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background print:hidden"
+      className="dark fixed inset-x-0 top-0 z-40 border-b border-border bg-[#141414] text-foreground print:hidden"
     >
       <div className="mx-auto flex h-full max-w-[1440px] items-center gap-2 px-4 sm:px-6 lg:gap-6">
         <Link
@@ -210,10 +212,10 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       </div>
 
       <Panel id="data-menu" open={menu === "data"} className="hidden lg:block">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-3 gap-x-12 gap-y-8 px-6 py-8">
+        <div className="mx-auto grid max-w-[1440px] grid-cols-6 gap-x-6 px-6 py-6 xl:gap-x-10">
           {GROUPS.map((group) => (
             <div key={group}>
-              <p className="font-heading text-base font-bold text-foreground">{group}</p>{" "}
+              <p className="pl-3 font-heading text-base font-bold text-foreground">{group}</p>{" "}
               <ul className="mt-2">
                 {pagesIn(group).map((p) => (
                   <li key={p.href}>
@@ -225,7 +227,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
           ))}
         </div>
         <div className="border-t border-border">
-          <ul className="mx-auto flex max-w-[1440px] flex-wrap gap-x-8 px-6 py-3">
+          <ul className="mx-auto flex max-w-[1440px] flex-wrap gap-x-8 px-6 py-2">
             {DATA_MENU_FOOTER.map((p) => (
               <li key={p.href}>
                 <PanelLink page={p} pathname={pathname} />{" "}
@@ -236,7 +238,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       </Panel>
 
       <Panel id="learn-menu" open={menu === "learn"} className="hidden lg:block">
-        <ul className="mx-auto grid max-w-[1440px] grid-cols-4 gap-x-12 px-6 py-6">
+        <ul className="mx-auto grid max-w-[1440px] grid-cols-4 gap-x-10 px-6 py-5">
           {LEARN_PAGES.map((p) => (
             <li key={p.href}>
               <PanelLink page={p} pathname={pathname} />{" "}
@@ -250,7 +252,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       {menu === "mobile" ? (
         <div
           id="mobile-menu"
-          className="absolute inset-x-0 top-full max-h-[calc(100dvh-var(--site-header-h))] overflow-y-auto border-b border-border bg-background px-4 pb-8 lg:hidden"
+          className="absolute inset-x-0 top-full max-h-[calc(100dvh-var(--site-header-h))] overflow-y-auto overscroll-contain border-b border-border bg-popover px-4 pb-8 shadow-overlay md:left-auto md:right-4 md:w-[26rem] md:border-x lg:hidden"
         >
           <nav aria-label="Menu" className="divide-y divide-border">
             {[HEADER_PAGES.caseStatus, HEADER_PAGES.processingTimes].map((p) => (

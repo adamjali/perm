@@ -3,6 +3,7 @@ import Link from "next/link";
 
 
 import { QueueTape } from "@/components/tools/QueueTape";
+import { TapeReveal } from "@/components/tools/TapeReveal";
 import { formatAsOf } from "@/lib/dolFormat";
 
 /**
@@ -153,8 +154,8 @@ export function LiveDataBand({
   if (!frontierMonth) return null;
 
   return (
-    <section aria-labelledby="pace-title" className="border-b border-border">
-      <div className="mx-auto max-w-[1200px] px-4 py-14 sm:px-8 sm:py-20">
+    <section aria-labelledby="pace-title" className="bg-tint">
+      <div className="mx-auto max-w-[1200px] px-4 py-12 sm:px-8 sm:py-16">
         <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
           <div>
             <h2 id="pace-title" className="font-heading text-2xl font-bold sm:text-3xl">
@@ -169,12 +170,11 @@ export function LiveDataBand({
           </Link>
         </div>
 
-        <QueueTape
-          frontierMonth={frontierMonth}
-          className="mt-8"
-          monthsBehind={6}
-          monthsAhead={8}
-        />{" "}
+        {/* The homepage's one moment of motion: the processed months fill in
+            once, left to right, when the tape first scrolls into view. */}
+        <TapeReveal>
+          <QueueTape frontierMonth={frontierMonth} className="mt-8" monthsBehind={6} monthsAhead={8} reveal />
+        </TapeReveal>{" "}
         {children ? <div className="mt-8">{children}</div> : null}
 
       </div>
@@ -188,8 +188,8 @@ export function LiveDataBand({
  */
 export function DataShelf({ figures }: { figures?: DataPageFigures }) {
   return (
-    <section aria-labelledby="data-shelf-heading" className="border-b border-border">
-      <div className="mx-auto max-w-[1200px] px-4 py-14 sm:px-8 sm:py-20">
+    <section aria-labelledby="data-shelf-heading" className="bg-tint">
+      <div className="mx-auto max-w-[1200px] px-4 py-12 sm:px-8 sm:py-16">
         <h2 id="data-shelf-heading" className="font-heading text-2xl font-bold sm:text-3xl">
           Look through the record
         </h2>{" "}
@@ -215,7 +215,7 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
             wrong until entity identity is normalised. */}
         <nav
           aria-label="Data pages"
-          className="mt-8 grid grid-cols-2 gap-3 [&>*]:min-w-0 sm:grid-cols-3 lg:grid-cols-5"
+          className="object mt-8 grid grid-cols-2 [&>*]:min-w-0 max-sm:[&>*:last-child]:col-span-2 sm:max-lg:grid-cols-6 sm:max-lg:[&>*]:col-span-2 sm:max-lg:[&>*:nth-child(n+4)]:col-span-3 lg:grid-cols-5"
         >
           {[
             {
@@ -330,7 +330,7 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
             <Link
               key={d.href}
               href={d.href}
-              className="group flex flex-col border border-border bg-card p-4 transition-colors duration-150 hover:border-foreground"
+              className="group flex flex-col bg-card p-4 transition-colors duration-150 hover:bg-accent"
             >
               {/* THE PICTURE AND THE NAME: no "View ..." line or OPEN row
                   restating the label; the whole card is the link, and `what`
@@ -339,7 +339,7 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
                 {d.label}{" "}
               </span>{" "}
               {d.figure ? (
-                <span className="mt-3 block border-t border-border/30 pt-3">
+                <span className="mt-3 block">
                   {d.figure}
                 </span>
               ) : null}{" "}

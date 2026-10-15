@@ -30,16 +30,18 @@ export interface FigurePlateProps {
 
 export function FigurePlate({ title, subject, caption, source, id, className, children }: FigurePlateProps) {
   return (
-    <figure id={id} className={cn("m-0 border border-border bg-card", className)}>
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-5 py-3 sm:px-6">
-        <span className="text-base font-semibold">{title}</span>{" "}
-        {subject ? <span className="text-sm text-muted-foreground">{subject}</span> : null}
+    // One heavy ink rule over the figure, no box: the figure reads as a
+    // figure, and the page keeps no hairline frames around its charts.
+    <figure id={id} className={cn("m-0 border-t-2 border-[var(--object-border)] pt-3 text-foreground", className)}>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="font-heading text-lg font-bold">{title}</span>{" "}
+        {subject ? <span className="text-sm text-soft">{subject}</span> : null}
       </div>
 
-      <div className="px-5 py-6 sm:px-6">{children}</div>
+      <div className="py-5">{children}</div>
 
       {caption || source ? (
-        <figcaption className="border-t border-border px-5 py-3 text-sm leading-relaxed text-muted-foreground sm:px-6">
+        <figcaption className="text-sm leading-relaxed text-muted-foreground">
           {caption && wordCount(caption) > 28 ? (
             <MoreText gist={firstSentence(plainText(caption))} size="sm" className="max-w-none">
               <div>{caption}</div>
@@ -65,7 +67,7 @@ export function FigurePlate({ title, subject, caption, source, id, className, ch
  */
 export function PlateLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-3 border-b border-border pb-1.5 text-sm font-semibold text-muted-foreground">
+    <p className="mb-3 text-sm font-semibold text-foreground">
       {children}
     </p>
   );

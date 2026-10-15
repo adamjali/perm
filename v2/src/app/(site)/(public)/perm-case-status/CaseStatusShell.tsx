@@ -1,4 +1,5 @@
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { normaliseFlagCaseNumber, programNounWithArticle } from "@/lib/flagCaseNumber";
 
 /**
  * The parts of /perm-case-status that its loading state and the page share,
@@ -12,7 +13,15 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
  */
 export const CASE_STATUS_FRAME = "mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16";
 
-const TITLE = "Check a PERM case";
+/**
+ * The page's heading names the program the typed number belongs to: a wage
+ * request or an LCA looked up here isn't a PERM case. With nothing typed (or
+ * nothing readable) it's the PERM lookup the page is named for.
+ */
+export function headingFor(typed: string): string {
+  const ref = normaliseFlagCaseNumber(typed);
+  return `Check ${programNounWithArticle(ref?.program ?? "perm")}`;
+}
 
 /**
  * The page's head. With nothing typed it's the title, one line on what the
@@ -37,15 +46,16 @@ export function CaseStatusHead({
   withBox?: boolean;
 }) {
   const titleClass = "font-heading text-3xl font-bold leading-tight sm:text-4xl";
+  const title = headingFor(typed);
   return (
     <>
       <header>
         {loading ? (
           <p role="heading" aria-level={1} className={titleClass}>
-            {TITLE}
+            {title}
           </p>
         ) : (
-          <h1 className={titleClass}>{TITLE}</h1>
+          <h1 className={titleClass}>{title}</h1>
         )}{" "}
         {withBox ? (
           <p className="mt-3 max-w-2xl text-lg leading-relaxed text-soft">

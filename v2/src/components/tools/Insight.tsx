@@ -40,7 +40,7 @@ export function Verdict({
   children: ReactNode;
 }) {
   return (
-    <span className="inline-flex items-center gap-2 bg-card px-2.5 py-1 text-sm font-semibold text-foreground">
+    <span className="inline-flex items-center gap-2 bg-tint px-2.5 py-1 text-sm font-semibold text-foreground">
       <span aria-hidden="true" className={cn("size-2.5 shrink-0", DIRECTION_DOT[direction])} />{" "}
       {children}
     </span>
@@ -61,6 +61,7 @@ export function AnswerPanel({
   label,
   children,
   source,
+  picture,
   actions,
   className,
 }: {
@@ -70,13 +71,16 @@ export function AnswerPanel({
   label?: ReactNode;
   children: ReactNode;
   source?: ReactNode;
+  /** A picture of the answer, under the claim (the queue with the case on it). */
+  picture?: ReactNode;
   /** What to do next, under the claim and above the source line. */
   actions?: ReactNode;
   className?: string;
 }) {
   return (
     // `data-answer` marks a page's answer for the article picture captures.
-    <section data-answer className={cn("bg-tint p-5 sm:p-8", className)}>
+    // An object: the one thing on the page meant to be read first.
+    <section data-answer className={cn("object p-5 text-foreground sm:p-8", className)}>
       {verdict || label ? (
         <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
           {verdict ? <Verdict direction={direction}>{verdict}</Verdict> : null}{" "}
@@ -84,6 +88,7 @@ export function AnswerPanel({
         </div>
       ) : null}
       <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-xl">{children}</p>{" "}
+      {picture ? <div className="mt-6">{picture}</div> : null}{" "}
       {actions ?? null}{" "}
       {source ? <p className="mt-5 text-sm text-muted-foreground">{source}</p> : null}
     </section>

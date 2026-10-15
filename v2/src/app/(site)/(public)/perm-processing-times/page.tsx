@@ -44,6 +44,7 @@ import {
   analystReviewAverage,
 } from "@convex/lib/dolProcessingTimes";
 import { QueueAlertForm } from "./QueueAlertForm";
+import { Figure, FigureRow } from "@/components/data/FigureRow";
 import { QueueTape } from "@/components/tools/QueueTape";
 import { DecisionsByMonth, QueueHistoryChart } from "@/components/tools/QueueHistoryChart";
 import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
@@ -124,24 +125,6 @@ const FAQ = [
       "Directly from the Department of Labor's Office of Foreign Labor Certification, at flag.dol.gov/processingtimes. PERM Tracker reads that source daily and stores every publication.",
   },
 ];
-
-function Figure({
-  label,
-  value,
-  caption,
-}: {
-  label: string;
-  value: string;
-  caption?: string;
-}) {
-  return (
-    <div className="border border-border bg-card p-5">
-      <p className="text-sm text-muted-foreground">{label}</p>{" "}
-      <p className="mt-2 font-heading text-3xl font-bold leading-none sm:text-4xl">{value}</p>{" "}
-      {caption ? <p className="mt-2 text-sm text-muted-foreground">{caption}</p> : null}
-    </div>
-  );
-}
 
 export default async function PermProcessingTimesPage() {
   const [snapshot, history, disclosure, estimator, board] = await Promise.all([
@@ -347,9 +330,11 @@ export default async function PermProcessingTimesPage() {
       {snapshot ? (
         <>
           {/* The headline. This one sentence is what the whole search cluster asks for. */}
-          <section className="mt-10 border border-border bg-card p-6 sm:p-8">
-            <p className="text-sm text-muted-foreground">The analyst review queue</p>{" "}
-            <p className="mt-3 font-heading text-3xl font-bold leading-tight sm:text-4xl">
+          {/* The answer, as the page's one object, with its picture: DOL's
+              tape of filing months and where it is on it. */}
+          <section className="object mt-8 p-5 sm:p-7">
+            <p className="text-sm font-semibold">The analyst review queue</p>{" "}
+            <p className="mt-2 font-heading text-2xl font-bold leading-tight sm:text-3xl">
               {analystMonth
                 ? `DOL is reviewing PERM applications filed in ${analystMonth}.`
                 : "DOL hasn’t published a filing month for the analyst review queue."}
@@ -360,6 +345,9 @@ export default async function PermProcessingTimesPage() {
                 <span className="font-bold">&ldquo;{analyst.raw}&rdquo;</span> in that row.
               </p>
             ) : null}
+            {analyst?.priorityDate ? (
+              <QueueTape frontierMonth={analyst.priorityDate} className="mt-6" monthsBehind={6} monthsAhead={10} />
+            ) : null}{" "}
             <p className="mt-4 text-sm text-muted-foreground">
               DOL&apos;s figure, as of {permAsOf}.{" "}
               <a
@@ -374,12 +362,12 @@ export default async function PermProcessingTimesPage() {
             </p>
           </section>
 
-          <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <FigureRow className="mt-8">
             {analystAvg?.calendarDays !== null && analystAvg?.calendarDays !== undefined ? (
               <Figure
                 label="Average to a determination"
                 value={`${analystAvg.calendarDays} days`}
-                caption={[
+                note={[
                   daysAsApproxMonths(analystAvg.calendarDays),
                   `for determinations DOL issued in ${formatMonth(analystAvg.month) ?? "the reported month"}.`,
                 ]
@@ -392,7 +380,7 @@ export default async function PermProcessingTimesPage() {
               <Figure
                 label="Audit review queue"
                 value={formatMonth(audit.priorityDate) ?? audit.raw}
-                caption="Audited cases sit in their own queue, behind the main one."
+                note="Audited cases sit in their own queue, behind the main one."
               />
             ) : null}
 
@@ -400,20 +388,11 @@ export default async function PermProcessingTimesPage() {
               <Figure
                 label="Prevailing wage (PERM)"
                 value={formatMonth(pwdPerm.oewsReceiptDate) ?? pwdPerm.oewsReceiptDate}
-                caption={`OEWS requests. Non-OEWS: ${formatMonth(pwdPerm.nonOewsReceiptDate) ?? "not reported"}.`}
+                note={`OEWS requests. Non-OEWS: ${formatMonth(pwdPerm.nonOewsReceiptDate) ?? "not reported"}.`}
               />
             ) : null}
-          </section>
+          </FigureRow>
 
-          {analyst?.priorityDate ? (
-            <section className="mt-8">
-              <h2 className="font-heading text-2xl font-bold">The queue, drawn</h2>{" "}
-              <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-                Every PERM waits in filing-month order. Solid months are cleared.
-              </p>
-              <QueueTape frontierMonth={analyst.priorityDate} className="mt-6" />
-            </section>
-          ) : null}
 
           <ChapterNav items={chapters} className="mt-12" />{" "}
 

@@ -7,7 +7,7 @@ import { useQuery, useMutation } from "convex/react";
 import Link from "next/link";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { ArchiveIcon, ArrowCounterClockwiseIcon, ArrowLeftIcon, CalendarBlankIcon, CalendarCheckIcon, CalendarSlashIcon, ChartBarHorizontalIcon, DotsThreeVerticalIcon, PencilSimpleIcon, StarIcon, TrashIcon } from "@phosphor-icons/react";
+import { ArchiveIcon, ArrowCounterClockwiseIcon, ArrowLeftIcon, CalendarBlankIcon, CalendarCheckIcon, CalendarSlashIcon, ChartBarHorizontalIcon, CheckIcon, DotsThreeVerticalIcon, PencilSimpleIcon, StarIcon, TrashIcon } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { AppBreadcrumb } from "../../components/AppBreadcrumb";
@@ -692,31 +692,30 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   );
 }
 
-/** Where the case is in the four stages: "Stage 2 of 4: Recruitment" over a thin bar. */
+/**
+ * Where the case is in the four stages, as the four stages: the done ones
+ * ticked, the current one filled in its own colour, the rest still grey.
+ */
 function StageProgress({ index }: { index: number }) {
   const stages = ["pwd", "recruitment", "eta9089", "i140"] as const;
-  const stage = stages[Math.min(Math.max(index, 0), stages.length - 1)]!;
+  const at = Math.min(Math.max(index, 0), stages.length - 1);
   return (
-    <div className="max-w-md">
-      <p className="text-sm">
-        <span className="font-semibold">
-          Stage {index + 1} of {stages.length}:
-        </span>{" "}
-        {formatCaseStatus(stage)}
-      </p>
-      <div
-        role="progressbar"
-        aria-label="PERM case progress"
-        aria-valuemin={1}
-        aria-valuemax={stages.length}
-        aria-valuenow={index + 1}
-        className="mt-2 grid h-1.5 grid-cols-4 gap-1"
-      >
-        {stages.map((st, i) => (
-          <span key={st} className={cn(i <= index ? STAGE_VISUALS[stage].fill : "bg-muted")} />
-        ))}
-      </div>
-    </div>
+    <ol aria-label="PERM case progress" className="grid grid-cols-4 border-2 border-[var(--object-border)]">
+      {stages.map((st, i) => (
+        <li
+          key={st}
+          aria-current={i === at ? "step" : undefined}
+          className={cn(
+            "flex min-h-11 items-center justify-center gap-1.5 border-l-2 border-[var(--object-border)] px-2 text-center text-sm font-semibold first:border-l-0",
+            i === at ? `${STAGE_VISUALS[st].fill} text-black` : i < at ? "bg-card text-foreground" : "bg-muted text-muted-foreground",
+          )}
+        >
+          {i < at ? <CheckIcon weight="bold" aria-hidden="true" className="size-4 shrink-0 text-primary-text" /> : null}
+          <span className="sr-only">{i < at ? "Done: " : i === at ? "Now: " : "Next: "}</span>
+          {formatCaseStatus(st)}
+        </li>
+      ))}
+    </ol>
   );
 }
 

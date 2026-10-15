@@ -1,9 +1,9 @@
 import { ABOUT_ONE_LINER } from "@/lib/constants/about";
 import Link from "next/link";
 import { CalendarCheckIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
-import { Fragment } from "react";
 
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { FlapBoard } from "@/components/home/FlapBoard";
 import { currentWait, type WaitMonthRow } from "@/lib/waitTrend";
 import { checkedLabel } from "@/lib/time";
 import { formatMonthDay, formatMonthShort } from "@/lib/dolFormat";
@@ -68,25 +68,34 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
   const boardRows = boardRowsFor(board);
 
   return (
-    <section id="hero" className="border-b border-border">
-      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-x-16 gap-y-10 px-4 pb-12 pt-10 sm:px-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)] lg:pb-16 lg:pt-14 [&>*]:min-w-0">
+    <section id="hero">
+      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-x-12 gap-y-10 px-4 pb-12 pt-8 sm:px-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pb-16 lg:pt-12 [&>*]:min-w-0">
         <div>
-          <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
+          <h1 className="font-heading text-[2.5rem] font-bold leading-[1.08] tracking-[-0.02em] sm:text-[3.25rem]">
             {/* The brand, small, inside the H1: the measured wait leads, and
                 the name tells search engines whose site this is. */}
-            <span className="mb-2 block text-base font-semibold text-muted-foreground">PERM Tracker</span>{" "}
-            {wait ? <>A PERM case takes {wait} months</> : <>The whole PERM process, tracked</>}
+            <span className="mb-3 block text-base font-semibold tracking-normal text-soft">PERM Tracker</span>{" "}
+            {wait ? (
+              <>
+                A PERM case takes{" "}
+                <span className="whitespace-nowrap bg-primary px-2 text-black [box-decoration-break:clone]">
+                  {wait} months
+                </span>
+              </>
+            ) : (
+              <>The whole PERM process, tracked</>
+            )}
           </h1>{" "}
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-soft">{ABOUT_ONE_LINER}</p>{" "}
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-soft">{ABOUT_ONE_LINER}</p>{" "}
           {/* The two halves as two short lines, so both audiences are named
               under the H1 without a paragraph pushing the lookup down. */}
-          <ul aria-label="Free on both sides" className="mt-4 flex max-w-2xl flex-col gap-2 text-base">
+          <ul aria-label="Free on both sides" className="mt-4 flex max-w-xl flex-col gap-2 text-base">
             <li className="flex items-start gap-2.5">
-              <MagnifyingGlassIcon size={20} aria-hidden="true" className="mt-0.5 shrink-0 text-primary-text" />{" "}
+              <MagnifyingGlassIcon size={20} weight="bold" aria-hidden="true" className="mt-0.5 shrink-0 text-primary-text" />{" "}
               <span>A lookup of any PERM, wage request, LCA, H-2A or H-2B case{" "}</span>
             </li>{" "}
             <li className="flex items-start gap-2.5">
-              <CalendarCheckIcon size={20} aria-hidden="true" className="mt-0.5 shrink-0 text-primary-text" />{" "}
+              <CalendarCheckIcon size={20} weight="bold" aria-hidden="true" className="mt-0.5 shrink-0 text-primary-text" />{" "}
               <span>
                 A case-management app for attorneys, paralegals and HR teams.{" "}
                 <Link href="/for-attorneys" className="link">
@@ -95,7 +104,7 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
               </span>
             </li>
           </ul>{" "}
-          <div className="mt-8 bg-tint p-5 sm:p-6">
+          <div className="object mt-8 p-5 sm:p-6">
             {/* Kept short: the field is 212px wide at 320 (hero-placeholder.test.ts). */}
             <CaseLookupForm
               label="Check a case"
@@ -109,27 +118,20 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
           </div>
         </div>{" "}
         {boardRows.length ? (
-          <aside aria-labelledby="dol-now" className="lg:pt-2">
-            <h2 id="dol-now" className="font-heading text-lg font-bold">
-              At DOL now
-            </h2>{" "}
-            <dl className="mt-4 divide-y divide-border border-y border-border">
-              {boardRows.map((r) => (
-                <Fragment key={r.label}>
-                  {" "}
-                  <div className="flex items-baseline justify-between gap-4 py-3">
-                    <dt className="text-base text-soft">{r.label}</dt>{" "}
-                    <dd className="font-heading text-2xl font-bold tabular-nums">{r.value}</dd>
-                  </div>
-                </Fragment>
-              ))}
-            </dl>{" "}
-            <p className="mt-3 text-sm text-muted-foreground">
-              {board?.checkedAt ? <>Checked against DOL {checkedLabel(board.checkedAt)}. </> : null}
-              <Link href="/perm-queue" className="link">
-                Where the line stands
-              </Link>
-            </p>
+          <aside aria-label="At DOL now" className="lg:pt-1">
+            <FlapBoard
+              title="At DOL now"
+              rows={boardRows}
+              className="h-full"
+              footer={
+                <>
+                  {board?.checkedAt ? <span>Checked against DOL {checkedLabel(board.checkedAt)}</span> : null}{" "}
+                  <Link href="/perm-queue" className="flap-board-link">
+                    Where the line stands
+                  </Link>
+                </>
+              }
+            />
           </aside>
         ) : null}
       </div>

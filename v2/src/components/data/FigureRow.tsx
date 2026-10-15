@@ -14,8 +14,8 @@ export function FigureRow({ children, className }: { children: ReactNode; classN
 export function Figure({ label, value, note }: { label: string; value: ReactNode; note?: ReactNode }) {
   return (
     <div className="min-w-0 flex-1 basis-40">
-      <p className="text-sm text-muted-foreground">{label}</p>{" "}
-      <p className="mt-1 font-heading text-3xl font-bold leading-none tabular-nums">{value}</p>{" "}
+      <p className="text-sm font-semibold">{label}</p>{" "}
+      <p className="mt-1.5 font-heading text-3xl font-bold leading-none tabular-nums">{value}</p>{" "}
       {note ? <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{note}</p> : null}
     </div>
   );

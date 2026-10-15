@@ -21,6 +21,7 @@ import Link from "next/link";
 
 import { LinkedinLogoIcon, XLogoIcon } from "@phosphor-icons/react";
 import ThemeToggle from "./ThemeToggle";
+import { AnalyticsSwitch } from "./AnalyticsSwitch";
 import { NOT_LEGAL_SERVICES, LEGAL_NAME } from "@/lib/constants/about";
 import { SOCIAL_LINKS } from "@/lib/constants/externalLinks";
 import { LOCALES } from "@/lib/i18n/locales";
@@ -56,7 +57,8 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
   }
 
   return (
-    <footer className="border-t border-border bg-muted print:hidden">
+    // Ink, in both themes: the .dark scope gives it the dark tokens.
+    <footer className="dark bg-[#141414] text-foreground print:hidden">
       <div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6">
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="col-span-2 lg:col-span-1">
@@ -123,7 +125,8 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
             ))}
             <ThemeToggle />
           </nav>
-        </div>
+        </div>{" "}
+        <AnalyticsSwitch />
 
         <p className="mt-6 max-w-3xl text-sm text-muted-foreground">{NOT_LEGAL_SERVICES}</p>{" "}
         <p className="mt-2 text-sm text-muted-foreground">

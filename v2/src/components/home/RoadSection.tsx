@@ -148,38 +148,52 @@ function stops({ pwdPending, frontierMonth }: RoadSectionProps): Stop[] {
 
 export function RoadSection(props: RoadSectionProps) {
   return (
-    <section aria-labelledby="road-heading" className="border-b border-border">
-      <div className="mx-auto max-w-[1200px] px-4 py-14 sm:px-8 sm:py-20">
+    <section aria-labelledby="road-heading">
+      <div className="mx-auto max-w-[1200px] px-4 py-12 sm:px-8 sm:py-16">
         <h2 id="road-heading" className="font-heading text-2xl font-bold sm:text-3xl">
           The road to a green card
         </h2>{" "}
         <p className="mt-2 max-w-2xl text-base text-soft">Six stops, three agencies. Each one has a calculator.</p>{" "}
-        <ol aria-label="The stages, in order" className="mt-8 grid grid-cols-1 gap-x-6 gap-y-2 lg:grid-cols-6 lg:gap-y-8">
+        {/* THE ROAD IS DRAWN: one ink line through six numbered stops, each
+            with its stage's real paperwork. Down the left edge on a phone,
+            across the top from 1024px. The order is real, so the numbers are. */}
+        <ol
+          aria-label="The stages, in order"
+          className="relative mt-8 grid grid-cols-1 gap-y-6 before:absolute before:bottom-4 before:left-[16px] before:top-4 before:w-1 before:bg-foreground before:content-[''] lg:grid-cols-6 lg:gap-x-6 lg:before:bottom-auto lg:before:left-0 lg:before:right-0 lg:before:top-4 lg:before:h-1 lg:before:w-auto"
+        >
           {stops(props).map((s) => (
-            <li key={s.n}>
+            <li key={s.n} className="relative">
               <Link
                 href={s.href}
                 aria-label={`${s.name}, ${s.who}: ${s.fact}. Open the ${s.cta.toLowerCase()} tool`}
-                className="group grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-4 py-2 lg:grid-cols-1 lg:items-start lg:gap-3"
+                className="group grid grid-cols-[36px_minmax(0,1fr)] gap-x-4 lg:grid-cols-1 lg:gap-y-4"
               >
-                <span className="block overflow-hidden border border-border bg-card lg:order-2">
-                  <Image
-                    src={s.img.src}
-                    alt={s.img.alt}
-                    width={s.img.w}
-                    height={s.img.h}
-                    unoptimized
-                    loading="lazy"
-                    className="block h-auto w-full"
-                  />
+                <span
+                  aria-hidden="true"
+                  className="relative z-10 flex size-9 items-center justify-center bg-foreground font-heading text-lg font-bold text-background ring-4 ring-background group-hover:bg-primary group-hover:text-black"
+                >
+                  {s.n}
                 </span>{" "}
-                <span className="min-w-0 lg:order-1">
-                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span aria-hidden="true" className={`size-2.5 shrink-0 ${s.dot}`} />
-                    {s.n} · {s.who}
+                <span className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-4 lg:grid-cols-1 lg:gap-3">
+                  <span className="block aspect-[5/4] overflow-hidden border-2 border-[var(--object-border)] bg-card transition-transform duration-150 group-hover:-translate-y-0.5">
+                    <Image
+                      src={s.img.src}
+                      alt={s.img.alt}
+                      width={s.img.w}
+                      height={s.img.h}
+                      unoptimized
+                      loading="lazy"
+                      className="block size-full object-cover object-top"
+                    />
                   </span>{" "}
-                  <span className="mt-1 block font-heading text-lg font-bold group-hover:underline">{s.name}</span>{" "}
-                  <span className="mt-0.5 block text-sm leading-snug text-soft">{s.fact}</span>
+                  <span className="min-w-0">
+                    <span className="block font-heading text-lg font-bold leading-tight group-hover:underline">{s.name}</span>{" "}
+                    <span className="mt-1 flex items-center gap-2 text-sm font-semibold text-soft">
+                      <span aria-hidden="true" className={`size-2.5 shrink-0 ${s.dot}`} />
+                      {s.who}
+                    </span>{" "}
+                    <span className="mt-1 block text-sm leading-snug text-soft">{s.fact}</span>
+                  </span>
                 </span>
               </Link>
             </li>

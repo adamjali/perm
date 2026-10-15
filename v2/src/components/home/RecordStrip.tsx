@@ -27,10 +27,10 @@ function asOfLine(f: RecordFigure): string {
   return `through ${dateLabel(f.asOf)}`;
 }
 
-export function RecordStrip({ record }: { record: RecordFigure[] }) {
+export function RecordStrip({ record, className = "mt-10" }: { record: RecordFigure[]; className?: string }) {
   if (record.length === 0) return null;
   return (
-    <div className="mt-10">
+    <div className={className}>
       <p className="text-base leading-relaxed text-soft sm:text-lg">
         What it holds, and the date each figure is true for:
       </p>{" "}

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { ABOUT_ONE_LINER, SABRINA } from "@/lib/constants/about";
@@ -19,49 +18,24 @@ import { ReviewsLine } from "./ReviewsLine";
  */
 export function AboutSection({ record = [] }: { record?: RecordFigure[] }) {
   return (
-    <section id="about" className="border-b border-border py-16 sm:py-20">
-      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-10 px-4 [&>*]:min-w-0 sm:px-8 lg:grid-cols-12 lg:gap-14">
-        {/* THE PERSON, SHOWN: the portrait /about ships sits here too,
-            tilted and loose like a photo on a desk, not boxed, so the block
-            that names her shows her. */}
-        <figure className="m-0 lg:col-span-4">
-          <div className="mx-auto max-w-[280px] -rotate-2 border border-border bg-card p-2 lg:mx-0">
-            <Image
-              src={SABRINA.image}
-              alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
-              width={SABRINA.imageSize[0]}
-              height={SABRINA.imageSize[1]}
-              sizes="280px"
-              className="block h-auto w-full"
-            />
-          </div>{" "}
-          <figcaption className="mt-4 text-center text-base lg:text-left">
-            <span className="block font-heading text-lg font-bold">{SABRINA.name}</span>{" "}
-            <span className="block text-soft">
-              {SABRINA.jobTitle} who files these cases
-            </span>
-          </figcaption>
-        </figure>{" "}
-        <div className="lg:col-span-8">
-          <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
-            About PERM Tracker
-          </h2>{" "}
+    <section id="about" className="py-12 sm:py-16">
+      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-8 px-4 [&>*]:min-w-0 sm:px-8 lg:grid-cols-12 lg:gap-14">
+        <div className="lg:col-span-5">
+          <h2 className="font-heading text-2xl font-bold sm:text-3xl">About PERM Tracker</h2>{" "}
           {/* The definition is the hero's opening line; screen readers and
               crawlers get it here too, readers aren't shown it twice. */}
           <p className="sr-only">{ABOUT_ONE_LINER}</p>{" "}
-          <p className="mt-5 text-base leading-relaxed text-soft sm:text-lg">
-            It&apos;s run by {SABRINA.name}, an immigration attorney who files
-            these cases. It&apos;s not a law firm, and nothing here is legal
-            advice.{" "}
-            <Link
-              href="/about"
-              className="link"
-            >
-              More about us &rarr;
+          <p className="mt-4 text-base leading-relaxed text-soft sm:text-lg">
+            It&apos;s run by {SABRINA.name}, an immigration attorney. It&apos;s not a law firm, and nothing here is
+            legal advice.{" "}
+            <Link href="/about" className="link">
+              More about us
             </Link>
           </p>{" "}
-          <RecordStrip record={record} />{" "}
           <ReviewsLine />
+        </div>{" "}
+        <div className="lg:col-span-7">
+          <RecordStrip record={record} className="lg:pt-1" />
         </div>
       </div>
     </section>
