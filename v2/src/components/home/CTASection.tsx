@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
  * the app on the attorney page.
  */
 export function CTASection({ lead = "lookup" }: { lead?: "lookup" | "app" }) {
+  // The lead door is black in both themes, so its label is the lime itself:
+  // `text-primary` is remapped to the dark green ink in light mode (3.4:1 here).
   const ink = "inline-flex min-h-12 items-center justify-center border-2 border-primary-foreground px-6 text-base font-semibold transition-colors";
   return (
     <section aria-labelledby="cta-title" className="bg-primary text-primary-foreground">
@@ -24,13 +26,13 @@ export function CTASection({ lead = "lookup" }: { lead?: "lookup" | "app" }) {
         <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href="/perm-case-status"
-            className={cn(ink, lead === "lookup" ? "bg-primary-foreground text-primary hover:opacity-90" : "hover:bg-primary-foreground/10")}
+            className={cn(ink, lead === "lookup" ? "bg-primary-foreground text-[var(--primary)] hover:opacity-90" : "hover:bg-primary-foreground/10")}
           >
             Check my case
           </Link>{" "}
           <Link
             href="/signup"
-            className={cn(ink, lead === "app" ? "bg-primary-foreground text-primary hover:opacity-90" : "hover:bg-primary-foreground/10")}
+            className={cn(ink, lead === "app" ? "bg-primary-foreground text-[var(--primary)] hover:opacity-90" : "hover:bg-primary-foreground/10")}
           >
             Start tracking cases
           </Link>

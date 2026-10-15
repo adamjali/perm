@@ -142,42 +142,45 @@ export function LiveQueueBand({
                     // the DOM. A whitespace-only node is not laid out as a grid
                     // or flex item, so it costs nothing visually.
                     <Fragment key={s.status}>{" "}
+                    {/* One group per stage, as a <dl> allows: the name, its
+                        count, and its rule and meaning as a second description. */}
                     <div
                       data-tip={`${s.status}\n${formatInt(s.n)} waiting\n${share >= 0.5 ? `${share.toFixed(0)}%` : "Under 1%"} of the ${formatInt(waiting)} waiting`}
+                      className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5"
                     >
-                      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                        <dt className="text-sm font-bold">
-                          {s.status}
-                        </dt>{" "}
-                        <dd className="font-mono text-sm font-bold tabular-nums">
-                          {formatInt(s.n)}
-                          <span className="ml-2 font-normal text-muted-foreground">
-                            {share >= 0.5 ? `${share.toFixed(0)}%` : "<1%"}
-                          </span>
-                        </dd>
-                      </div>
-                      {/* One rule per stage, and NO track behind it.
-                          Measured: the lime fill on a `border/40` track is
-                          1.38:1 in light mode, under the 3:1 floor a
-                          graphical object has to clear, and a filled track
-                          is a scoring-bar idiom this design system does not
-                          use. Ink on card is 20.1:1 light and 16.7:1 dark.
-                          The rule is scaled against the BIGGEST stage rather
-                          than the total, because with 96% of cases in one
-                          stage every other rule would be too short to see;
-                          the percentage beside the count carries the share. */}
-                      <div
-                        aria-hidden="true"
-                        className="mt-1.5 h-1.5 bg-foreground"
-                        style={{
-                          width: `${biggest > 0 ? Math.max(2, (s.n / biggest) * 100) : 0}%`,
-                        }}
-                      />
-                      {meaning ? (
-                        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                          {meaning}
-                        </p>
-                      ) : null}
+                      <dt className="text-sm font-bold">
+                        {s.status}
+                      </dt>{" "}
+                      <dd className="font-mono text-sm font-bold tabular-nums">
+                        {formatInt(s.n)}
+                        <span className="ml-2 font-normal text-muted-foreground">
+                          {share >= 0.5 ? `${share.toFixed(0)}%` : "<1%"}
+                        </span>
+                      </dd>{" "}
+                      <dd className="w-full">
+                        {/* One rule per stage, and NO track behind it.
+                            Measured: the lime fill on a `border/40` track is
+                            1.38:1 in light mode, under the 3:1 floor a
+                            graphical object has to clear, and a filled track
+                            is a scoring-bar idiom this design system does not
+                            use. Ink on card is 20.1:1 light and 16.7:1 dark.
+                            The rule is scaled against the BIGGEST stage rather
+                            than the total, because with 96% of cases in one
+                            stage every other rule would be too short to see;
+                            the percentage beside the count carries the share. */}
+                        <div
+                          aria-hidden="true"
+                          className="mt-1.5 h-1.5 bg-foreground"
+                          style={{
+                            width: `${biggest > 0 ? Math.max(2, (s.n / biggest) * 100) : 0}%`,
+                          }}
+                        />
+                        {meaning ? (
+                          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                            {meaning}
+                          </p>
+                        ) : null}
+                      </dd>
                     </div>
                     </Fragment>
                   );
