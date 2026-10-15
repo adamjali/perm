@@ -66,7 +66,7 @@ describe("validateDocumentFile", () => {
       const file = createMockFile(name, 1024, type);
       const result = await validateDocumentFile(file);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("not allowed");
+      expect(result.error).toContain("can't be added");
     });
 
     it("rejects files without extension", async () => {
@@ -105,14 +105,14 @@ describe("validateDocumentFile", () => {
       const file = createMockFile("test.pdf", 1024, "text/html");
       const result = await validateDocumentFile(file);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("not allowed");
+      expect(result.error).toContain("can't be added");
     });
 
     it("rejects empty MIME type", async () => {
       const file = createMockFile("test.pdf", 1024, "");
       const result = await validateDocumentFile(file);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("could not be determined");
+      expect(result.error).toContain("Couldn't tell what kind of file");
     });
   });
 
@@ -124,7 +124,7 @@ describe("validateDocumentFile", () => {
       const file = new File([blob], "fake.pdf", { type: "application/pdf" });
       const result = await validateDocumentFile(file);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("does not match");
+      expect(result.error).toContain("don't match its ending");
     });
 
     it("rejects PNG magic bytes declared as JPEG", async () => {
@@ -133,7 +133,7 @@ describe("validateDocumentFile", () => {
       const file = new File([blob], "fake.jpg", { type: "image/jpeg" });
       const result = await validateDocumentFile(file);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("does not match");
+      expect(result.error).toContain("don't match its ending");
     });
   });
 });

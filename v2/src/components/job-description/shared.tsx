@@ -2,7 +2,7 @@
  * Shared utilities, constants, and components for job description templates.
  *
  * This module centralizes common functionality used across JobDescriptionField,
- * JobDescriptionDetailView, TemplateManagementModal, and TemplateSelector.
+ * TemplateManagementModal and TemplateSelector.
  */
 
 import { toast } from "@/lib/toast";
@@ -19,12 +19,6 @@ import { ToneBadge } from "@/components/ui/badge";
  * (INPUT_LIMITS.LONG in convex/lib/validation.ts, cases and templates both).
  */
 export const JOB_DESCRIPTION_MAX_LENGTH = 50000;
-
-/** Minimum height for touch-friendly interactive elements */
-export const TOUCH_MIN_HEIGHT = "min-h-[44px]";
-
-/** Minimum size for touch-friendly buttons/icons */
-export const TOUCH_MIN_SIZE = "min-h-[44px] min-w-[44px]";
 
 // ============================================================================
 // TYPES

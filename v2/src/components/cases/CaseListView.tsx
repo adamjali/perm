@@ -213,7 +213,7 @@ export function CaseListView({
         <div key={group.key}>
           {/* Group header - only show if there’s a label */}
           {group.label && (
-            <div className="sticky top-0 z-20 border-b border-border bg-muted px-4 py-2">
+            <div className="sticky top-16 z-20 border-b border-border bg-muted px-4 py-2">
               <h3 className="text-sm font-semibold">
                 {group.label}{" "}
                 <span className="font-normal text-muted-foreground">{group.cases.length}</span>

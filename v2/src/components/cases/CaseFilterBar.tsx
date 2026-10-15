@@ -269,14 +269,16 @@ export function CaseFilterBar({
 
   return (
     <div data-testid="case-filter-bar" className="space-y-3">
-      <div className="grid grid-cols-4 gap-2 [&>*]:min-w-0 sm:flex sm:flex-wrap" role="group" aria-label="Which cases">
+      {/* Two by two on a phone, so "Completed" has the room it needs and the
+          four stay the same size; one row from 640px. */}
+      <div className="grid grid-cols-2 gap-2 [&>*]:min-w-0 sm:flex sm:flex-wrap" role="group" aria-label="Which cases">
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             aria-pressed={activeTab === t.id}
             onClick={() => handleTabClick(t.id)}
-            className={choiceVariants({ on: activeTab === t.id, className: "px-2 sm:px-4" })}
+            className={choiceVariants({ on: activeTab === t.id, className: "min-h-11 justify-center px-3 sm:px-4" })}
           >
             {t.label}
           </button>

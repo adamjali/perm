@@ -66,9 +66,13 @@ export function OnboardingTour({
     const pollTimer = setInterval(() => {
       attempts++;
 
-      // Filter steps to only those with existing DOM elements
+      // Only steps whose element is on screen: a link the layout hides at this
+      // width (the header's page links on a phone) exists but can't be shown.
       const availableSteps: DriveStep[] = phaseConfig.steps
-        .filter((step) => document.querySelector(step.element) !== null)
+        .filter((step) => {
+          const el = document.querySelector(step.element);
+          return el !== null && el.getClientRects().length > 0;
+        })
         .map((step) => ({
           element: step.element,
           popover: {

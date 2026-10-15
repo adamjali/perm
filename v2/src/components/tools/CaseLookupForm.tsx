@@ -38,6 +38,8 @@ export interface CaseLookupFormProps {
   label?: string;
   /** For a block that already asks the question: the label is read, not shown. */
   compact?: boolean;
+  /** Box and button one under the other at every width (a narrow column). */
+  stack?: boolean;
   /** Where "Don't have the number?" goes, and its words; null leaves it off. */
   searchHref?: string | null;
   searchLabel?: string;
@@ -69,6 +71,7 @@ export function CaseLookupForm({
   className,
   label = "Your PERM case number",
   compact = false,
+  stack = false,
   searchHref = "/case-search",
   searchLabel = "Find a case by employer name",
   source,
@@ -140,14 +143,15 @@ export function CaseLookupForm({
           aria-invalid={malformed || undefined}
           aria-describedby={hint ? helpId : undefined}
           className={cn(
-            "h-12 w-full min-w-0 flex-1 basis-56 border border-input bg-card px-4 text-base placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+            "h-12 w-full min-w-0 flex-1 border border-input bg-card px-4 text-base placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring",
+            stack ? "basis-full" : "basis-56",
             !names && "font-mono",
           )}
         />
         <button
           type="submit"
           data-ph-capture-attribute-cta="case-lookup"
-          className={cn(buttonVariants({ size: "lg" }), "h-12 w-full sm:w-auto")}
+          className={cn(buttonVariants({ size: "lg" }), "h-12 w-full", !stack && "sm:w-auto")}
         >
           {buttonLabel}
         </button>

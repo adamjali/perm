@@ -932,10 +932,12 @@ export function CasesPageClient() {
   // ============================================================================
 
   return (
-    <div data-tour="cases-list" className="space-y-6">
+    // Room under the list for the selection bar when it shows (it publishes its height).
+    <div data-tour="cases-list" className="space-y-6 pb-[var(--bottom-bar-h,0px)]">
       {/* Page Header - responsive: stacks on mobile, horizontal on desktop */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3">
+        {/* The view switch lines up with the title, not with title and count together. */}
+        <div className="flex items-start gap-3">
           <div>
             <PageHeading
               meta={`${totalCount} ${totalCount === 1 ? "case" : "cases"}`}

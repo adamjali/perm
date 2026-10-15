@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
  * the app on the attorney page.
  */
 export function CTASection({ lead = "lookup" }: { lead?: "lookup" | "app" }) {
-  const ink = "inline-flex min-h-12 items-center justify-center border-2 border-black px-6 text-base font-semibold transition-colors";
+  const ink = "inline-flex min-h-12 items-center justify-center border-2 border-primary-foreground px-6 text-base font-semibold transition-colors";
   return (
-    <section aria-labelledby="cta-title" className="bg-primary text-black">
+    <section aria-labelledby="cta-title" className="bg-primary text-primary-foreground">
       <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-14 text-center sm:px-8 sm:py-16">
         <FlapWord word="permtracker.app" />{" "}
         <h2 id="cta-title" className="mt-6 font-heading text-2xl font-bold sm:text-3xl">
@@ -24,13 +24,13 @@ export function CTASection({ lead = "lookup" }: { lead?: "lookup" | "app" }) {
         <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href="/perm-case-status"
-            className={cn(ink, lead === "lookup" ? "bg-black text-white hover:bg-[#262626]" : "hover:bg-black/10")}
+            className={cn(ink, lead === "lookup" ? "bg-primary-foreground text-primary hover:opacity-90" : "hover:bg-primary-foreground/10")}
           >
             Check my case
           </Link>{" "}
           <Link
             href="/signup"
-            className={cn(ink, lead === "app" ? "bg-black text-white hover:bg-[#262626]" : "hover:bg-black/10")}
+            className={cn(ink, lead === "app" ? "bg-primary-foreground text-primary hover:opacity-90" : "hover:bg-primary-foreground/10")}
           >
             Start tracking cases
           </Link>

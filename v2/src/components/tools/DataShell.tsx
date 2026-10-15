@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import { sectionForPath, sectionPages } from "@/lib/siteMap";
+import { CaseNextStep } from "./CaseNextStep";
 import { AllSectionsList, SectionList } from "./SectionList";
 
 /**
@@ -17,6 +18,15 @@ import { AllSectionsList, SectionList } from "./SectionList";
  * Desktop: the list in a narrow column beside the page. Phone: the list at the
  * end of the page, after the content. Nothing sticks but the header.
  */
+/** Pages that carry their own case box, so the closing one would repeat it. */
+const OWN_LOOKUP: readonly RegExp[] = [
+  /^\/perm-case-status/,
+  /^\/case-search/,
+  /^\/perm-employers\/(?!compare$|under-review$|browse$)[^/]+$/,
+  /^\/perm-attorneys\/(?!browse$)[^/]+$/,
+  /^\/perm-queue\/\d{4}-\d{2}/,
+];
+
 export function DataShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const section = sectionPages(pathname);
@@ -25,27 +35,29 @@ export function DataShell({ children }: { children: React.ReactNode }) {
   const current = found?.href ?? pathname;
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
-      <SectionList
-        title={section.title}
-        pages={section.pages}
-        current={current}
-        placement="side"
-        className="nav-one hidden pt-10 lg:block"
-      />
-      {/* SAMPLE (Oct 15 2026): every group at once, shown instead when
-          html[data-nav="all"]; one of the two goes once a design is chosen. */}
-      <AllSectionsList current={current} group={found?.group ?? section.title} className="nav-all hidden pt-8" />
+    <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-12">
+      <AllSectionsList current={current} group={found?.group ?? section.title} className="hidden pt-8 lg:block" />
       {/* `min-w-0`: a grid item's minimum is its content, so one wide table
           would otherwise push the column past the viewport. */}
       <div className="min-w-0">
         {children}
+        {/* Every data page ends where most visitors want to go: their own case
+            (status, an estimated date, an email when it moves), or an estimate
+            without the number. Pages that already lead with the box skip it. */}
+        {OWN_LOOKUP.some((re) => re.test(pathname)) ? null : (
+          <CaseNextStep
+            question="Waiting on a PERM case?"
+            source="data-page-end"
+            extra={{ href: "/tools/perm-timeline-calculator", label: "No number? Estimate your date" }}
+            className="mt-16"
+          />
+        )}
         <SectionList
           title={section.title}
           pages={section.pages}
           current={current}
           placement="end"
-          className="mt-16 border-t border-border pt-8 pb-4 lg:hidden"
+          className="mt-12 pb-4 lg:hidden"
         />
       </div>
     </div>

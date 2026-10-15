@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Figure } from "@/components/data/FigureRow";
 import Link from "next/link";
 import { PlusIcon } from "@phosphor-icons/react/ssr";
 
@@ -66,15 +67,6 @@ const HORIZON_LABEL: Record<(typeof HORIZONS)[number], string> = {
   "181+": "More than six months out",
 };
 
-function Figure({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="min-w-0 border border-border bg-background p-4">
-      <p className="text-sm font-bold text-muted-foreground">{label}</p>{" "}
-      <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{value}</p>{" "}
-      <p className="mt-1 text-sm text-muted-foreground">{note}</p>
-    </div>
-  );
-}
 
 function SampleCells({ cell, since }: { cell: Cell; since: string | null }) {
   return (

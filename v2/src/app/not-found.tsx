@@ -66,7 +66,7 @@ export default function NotFound() {
         <p className="mt-3 max-w-xl text-base leading-relaxed text-soft">
           This page doesn&apos;t exist or has moved. If you were after a case, put its number here.
         </p>{" "}
-        <div className="mt-6 bg-tint p-5 sm:p-6">
+        <div className="object mt-6 p-5 sm:p-6">
           <CaseLookupForm className="max-w-xl" label="Case number" compact source="not-found" help={null} />{" "}
           <NotFoundSuggestions articles={articles} />
         </div>{" "}
@@ -78,11 +78,11 @@ export default function NotFound() {
               <li>
                 <Link
                   href={d.href}
-                  className="flex min-h-[56px] items-center gap-3 border border-border bg-card px-4 font-semibold transition-colors hover:bg-muted"
+                  className="flex min-h-[56px] items-center gap-3 bg-tint px-4 font-semibold transition-colors hover:bg-accent"
                 >
-                  <d.Icon aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />{" "}
+                  <d.Icon aria-hidden="true" className="size-5 shrink-0 text-primary-text" />{" "}
                   <span className="flex-1">{d.label}</span>{" "}
-                  <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+                  <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0" />
                 </Link>
               </li>{" "}
             </Fragment>

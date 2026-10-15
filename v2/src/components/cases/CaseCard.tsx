@@ -12,26 +12,18 @@
 
 import { memo } from "react";
 import Link from "next/link";
-import { useQuery } from "convex/react";
 import { ArchiveIcon, ArrowCounterClockwiseIcon, CaretDownIcon, DotsThreeIcon, PencilSimpleIcon, StarIcon, TrashIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
-import { getUrgencyFromDeadline } from "@/lib/status";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
-import { api } from "@convex/_generated/api";
+import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import type { CaseCardData } from "@convex/lib/caseListTypes";
-import {
-  countShownDates,
-  deadlineCountdownWords,
-  formatClosureReasonLabel,
-  formatCompactDate,
-  formatDeadlineDate,
-} from "./case-card.utils";
+import { countShownDates, formatClosureReasonLabel, formatCompactDate } from "./case-card.utils";
 import { useCardMutations } from "./useCardMutations";
-import { CaseBadges, CalendarSyncIndicator, CaseDates } from "./CaseCardParts";
+import { CaseBadges, CaseDates } from "./CaseCardParts";
+import { DeadlineCountdown } from "./DeadlineCountdown";
 
 interface CaseCardProps {
   case: CaseCardData;
@@ -41,9 +33,6 @@ interface CaseCardProps {
   onDeleteRequest?: (caseId: string, caseName: string) => void;
   onArchiveRequest?: (caseId: string, caseName: string) => void;
 }
-
-/** The countdown's colour: late or within a week in red, within a month in amber. */
-const URGENCY_INK = { urgent: "text-destructive", soon: "text-data-warn-ink", normal: "text-foreground" } as const;
 
 export const CaseCard = memo(function CaseCard({
   case: c,
@@ -57,8 +46,7 @@ export const CaseCard = memo(function CaseCard({
   const role = c.positionTitle || c.beneficiaryIdentifier;
   const caseName = `${c.employerName} - ${role}`;
   const actions = useCardMutations(c._id);
-  const profile = useQuery(api.users.currentUserProfile);
-  const urgency = !isClosed && c.nextDeadline ? getUrgencyFromDeadline(c.nextDeadline) : null;
+  const stage = STAGE_VISUALS[c.caseStatus];
   const dateCount = countShownDates(c.dates);
   const closedReason = formatClosureReasonLabel(c.closedReason);
 
@@ -71,10 +59,9 @@ export const CaseCard = memo(function CaseCard({
         isClosed && "manila-closed",
       )}
     >
-      {/* The folder's tab: the case's stage, written where a file clerk would. */}
-      <span className="manila-tab">
-        <CaseStageBadge stage={c.caseStatus} />
-      </span>
+      {/* The folder's tab, in its stage's colour, so a row of folders reads
+          by stage at a glance. */}
+      <span className={cn("manila-tab", stage.fill, stage.onFill)}>{stage.label}</span>
       <div className="flex flex-1 flex-col gap-3 p-5 pt-4">
         {/* The controls sit in the corner, beside the name, not on a row of their own. */}
         <div className="absolute right-2 top-2 z-10 flex items-center gap-2">
@@ -164,33 +151,19 @@ export const CaseCard = memo(function CaseCard({
             {closedReason ? `: ${closedReason}` : ""}
           </p>
         ) : c.nextDeadline && c.nextDeadlineLabel ? (
-          <p className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="min-w-0">
-              <span className="font-semibold">{c.nextDeadlineLabel}</span>{" "}
-              <span className="whitespace-nowrap text-muted-foreground">{formatDeadlineDate(c.nextDeadline)}</span>
-            </span>{" "}
-            <span className={cn("shrink-0 whitespace-nowrap font-semibold tabular-nums", urgency && URGENCY_INK[urgency])}>
-              {deadlineCountdownWords(c.nextDeadline)}
-            </span>
-          </p>
+          <DeadlineCountdown deadline={c.nextDeadline} label={c.nextDeadlineLabel} />
         ) : (
-          <p className="text-sm text-muted-foreground">No upcoming deadlines</p>
+          // The countdown's footprint, so folders in a row line up.
+          <p className="flex min-h-14 items-center border-2 border-dashed border-border px-3 text-sm font-semibold text-soft">
+            No upcoming deadlines
+          </p>
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-1.5">
           {isClosed || (c.progressStatus === "rfi_rfe" && (c.hasActiveRfi || c.hasActiveRfe)) ? null : (
             <ProgressStatusBadge status={c.progressStatus} />
           )}
-          <CaseBadges
-            duplicateOf={c.duplicateOf}
-            isProfessionalOccupation={c.isProfessionalOccupation}
-            hasActiveRfi={c.hasActiveRfi}
-            hasActiveRfe={c.hasActiveRfe}
-            isSample={c.isSample}
-          />
-          <span className="ml-auto">
-            <CalendarSyncIndicator enabled={c.calendarSyncEnabled ?? false} isGoogleConnected={profile?.googleCalendarConnected ?? false} />
-          </span>
+          <CaseBadges duplicateOf={c.duplicateOf} hasActiveRfi={c.hasActiveRfi} hasActiveRfe={c.hasActiveRfe} isSample={c.isSample} />
         </div>
       </div>
 

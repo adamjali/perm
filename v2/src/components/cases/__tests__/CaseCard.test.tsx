@@ -58,7 +58,6 @@ describe("CaseCard - Rendering", () => {
 
 describe("CaseCard - Badges", () => {
   it.each([
-    ["Professional", { isProfessionalOccupation: true }],
     ["RFI open", { hasActiveRfi: true }],
     ["RFE open", { hasActiveRfe: true }],
   ] as const)("shows %s badge when applicable", (badge, overrides) => {
@@ -67,12 +66,18 @@ describe("CaseCard - Badges", () => {
   });
 
   it.each([
-    ["Professional", { isProfessionalOccupation: false }],
     ["RFI open", { hasActiveRfi: false }],
     ["RFE open", { hasActiveRfe: false }],
   ] as const)("hides %s badge when not applicable", (badge, overrides) => {
     renderWithProviders(<CaseCard case={createMockCaseCardData(overrides)} />);
     expect(screen.queryByText(badge)).not.toBeInTheDocument();
+  });
+
+  // A folder carries only what needs acting on: whether the job is a
+  // professional occupation is on the case itself, not its folder.
+  it("never shows a Professional chip", () => {
+    renderWithProviders(<CaseCard case={createMockCaseCardData({ isProfessionalOccupation: true })} />);
+    expect(screen.queryByText("Professional")).not.toBeInTheDocument();
   });
 
   it("shows both RFI and RFE badges when both active", () => {
@@ -93,13 +98,10 @@ describe("CaseCard - Favorite Star", () => {
 });
 
 describe("CaseCard - Calendar Sync", () => {
-  it("shows the synced mark when enabled and connected", () => {
+  // Calendar sync is a setting, read on the case and in Settings; the folder
+  // stays clear of it.
+  it("puts no calendar mark on the folder, synced or not", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ calendarSyncEnabled: true })} />);
-    expect(screen.getByLabelText("Synced to Google Calendar")).toBeInTheDocument();
-  });
-
-  it("hides the calendar mark when disabled", () => {
-    renderWithProviders(<CaseCard case={createMockCaseCardData({ calendarSyncEnabled: false })} />);
     expect(screen.queryByLabelText(/google calendar/i)).not.toBeInTheDocument();
   });
 });
@@ -113,12 +115,24 @@ describe("CaseCard - Next Deadline", () => {
     expect(screen.getByText(new RegExp(expected))).toBeInTheDocument();
   });
 
-  it("says how long until the deadline, in the urgency colour", () => {
-    const urgentDate = new Date();
-    urgentDate.setDate(urgentDate.getDate() + 5);
-    const iso = `${urgentDate.getFullYear()}-${String(urgentDate.getMonth() + 1).padStart(2, "0")}-${String(urgentDate.getDate()).padStart(2, "0")}`;
-    renderWithProviders(<CaseCard case={createMockCaseCardData({ nextDeadline: iso })} />);
-    expect(screen.getByText("In 5 days")).toHaveClass("text-destructive");
+  const inDays = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  it.each([
+    [5, "5", "days left", "bg-data-bad"],
+    [20, "20", "days left", "bg-data-warn"],
+    [90, "90", "days left", "bg-primary"],
+    [0, "Due", "today", "bg-data-bad"],
+    [-3, "3", "days late", "bg-data-bad"],
+  ])("in %i days: shows %s %s on the urgency colour", (n, value, unit, fill) => {
+    renderWithProviders(<CaseCard case={createMockCaseCardData({ nextDeadline: inDays(n), nextDeadlineLabel: "PWD expires" })} />);
+    const figure = screen.getByText(value);
+    expect(figure.parentElement).toHaveClass(fill);
+    expect(figure.parentElement).toHaveTextContent(unit);
+    expect(screen.getByText("PWD expires")).toBeInTheDocument();
   });
 
   it("handles missing deadline gracefully", () => {

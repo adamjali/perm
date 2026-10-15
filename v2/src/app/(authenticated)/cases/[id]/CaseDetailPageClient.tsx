@@ -286,18 +286,14 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   const saveDocumentMutation = useMutation(api.documents.saveDocument);
   const removeDocumentMutation = useMutation(api.documents.removeDocument);
 
-  const handleUploadDocument = useCallback(async (file: File, category?: DocumentCategory) => {
+  // Resolves to null when the file is saved, or to the reason it wasn't, which
+  // the documents tab shows beside the file (and keeps the file to try again).
+  const handleUploadDocument = useCallback(async (file: File, category?: DocumentCategory): Promise<string | null> => {
     // Client-side validation
     const validation = await validateDocumentFile(file);
-    if (!validation.valid) {
-      toast.error(validation.error);
-      return;
-    }
+    if (!validation.valid) return validation.error;
     // The server refuses the 51st document; say so before uploading anything.
-    if ((caseData.documents?.length ?? 0) >= MAX_DOCUMENTS_PER_CASE) {
-      toast.error(DOCUMENT_CAP_MESSAGE);
-      return;
-    }
+    if ((caseData.documents?.length ?? 0) >= MAX_DOCUMENTS_PER_CASE) return DOCUMENT_CAP_MESSAGE;
 
     try {
       // 1. Get upload URL (server validates too)
@@ -339,10 +335,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           ? `Document uploaded. Its name was shortened to ${MAX_DOCUMENT_NAME_LENGTH} characters, the most a document name holds.`
           : "Document uploaded"
       );
+      return null;
     } catch (error) {
-      handleOperationError(error, {
-        userMessage: caseWriteErrorMessage(error, "Couldn’t upload the document. Try again."),
-      });
+      const message = caseWriteErrorMessage(error, "Couldn’t upload it. Try again.");
+      handleOperationError(error, { userMessage: message, silent: true });
+      return message;
     }
   }, [generateUploadUrlMutation, saveDocumentMutation, caseId, caseData.documents?.length]);
 

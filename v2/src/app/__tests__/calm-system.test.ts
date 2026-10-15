@@ -3,13 +3,17 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 /**
- * The calm system (Oct 14 2026), held in place.
+ * The calm system (Oct 14 2026), with its character back (Oct 15), held in
+ * place.
  *
  * The owner's brief: simple, plain, readable, nothing moving unless the
- * visitor did something. The redesign took out hard shadows, hover lifts,
- * all-caps labels, black-weight type, looping animation and the textures; this
- * fails the moment one comes back, and checks every text colour token against
- * every surface it sits on.
+ * visitor did something; then, on Oct 15, "too plain": a few things on each
+ * screen are solid objects again. So hard shadows come back only as the
+ * object's shadow (`--object-shadow`) on the named objects in the stylesheet,
+ * and the caution tape only on a case's Next up. Hover lifts, all-caps labels,
+ * black-weight type, looping animation and the textures stay out; this fails
+ * the moment one comes back, and checks every text colour token against every
+ * surface it sits on, the case folder's tan included.
  *
  * Source checks over the class strings and the stylesheet, comments stripped.
  */
@@ -118,6 +122,25 @@ describe("the calm system", () => {
     expect(findAll(tok("(?:[\\w-]+:)*border(?:-[trblxy])?-(?:black|white)"))).toEqual([]);
   });
 
+  it("gives the hard shadow to the named objects only, from the stylesheet", () => {
+    // `--object-shadow` is used by these rules and nowhere else; no class string
+    // reaches for it, so an object is always one of these, never improvised.
+    const css = stripComments(CSS);
+    const users = [...css.matchAll(/([^{}]+)\{[^{}]*var\(--object-shadow\)[^{}]*\}/g)].map((m) => m[1]!.trim());
+    const OBJECTS = [".object", ".flap-board", ".next-up", ".manila"];
+    expect(users.filter((sel) => !OBJECTS.includes(sel))).toEqual([]);
+    expect(users.length).toBeGreaterThanOrEqual(3);
+    expect(findAll(/--object-shadow/g)).toEqual([]);
+  });
+
+  it("strings the caution tape across a case's Next up and nowhere else", () => {
+    // The owner's call (Oct 15): the yellow and black tape stays, calmer, as
+    // one band on the step that's due.
+    const css = stripComments(CSS);
+    const tape = [...css.matchAll(/([^{}]+)\{[^{}]*repeating-linear-gradient\([^)]*#fbbf24[^{}]*\}/gi)].map((m) => m[1]!.trim());
+    expect(tape).toEqual([".next-up::before"]);
+  });
+
   it("draws every hatch with the shared utility, at one pitch", () => {
     expect(findAll(tok("bg-\\[repeating-linear-gradient[^\\s\"'`]*"))).toEqual([]);
   });
@@ -165,6 +188,33 @@ describe("token contrast", () => {
       for (const s of SURFACES) expect(contrast(t.input!, t[s]!)).toBeGreaterThanOrEqual(3);
     });
   }
+
+  it("the case detail's folder is a surface every text colour reads on", () => {
+    for (const t of [light, dark]) {
+      const fails = TEXT.filter((c) => contrast(t[c]!, t.folder!) < 4.5).map((c) => `${c}: ${contrast(t[c]!, t.folder!).toFixed(2)}`);
+      expect(fails).toEqual([]);
+      expect(contrast(t.input!, t.folder!)).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("the case folder (manila) sets inks that read on its tan in both themes", () => {
+    // The folder stays tan in dark mode, so it sets its own light inks.
+    const own = block(".manila");
+    const grounds = [".manila", ".dark .manila"].map((sel) => {
+      const m = CSS.match(new RegExp(`(?:^|\\n)${sel.replace(/\./g, "\\.")}\\s*\\{([\\s\\S]*?)\\n\\}`));
+      return m?.[1]?.match(/background-color:\s*(#[0-9A-Fa-f]{6})/)?.[1];
+    });
+    expect(grounds.every(Boolean)).toBe(true);
+    const fails: string[] = [];
+    for (const g of grounds as string[]) {
+      for (const c of ["foreground", "soft-foreground", "muted-foreground", "primary-text", "data-warn-ink", "data-bad-ink", "destructive-text"]) {
+        if (!own[c]) fails.push(`${c} not set`);
+        else if (contrast(own[c]!, g) < 4.5) fails.push(`${c} on ${g}: ${contrast(own[c]!, g).toFixed(2)}`);
+      }
+      if (contrast(own.input!, g) < 3) fails.push(`input on ${g}`);
+    }
+    expect(fails).toEqual([]);
+  });
 
   it("the lime main button's label reads on the lime", () => {
     expect(contrast(light["primary-foreground"]!, light.primary!)).toBeGreaterThanOrEqual(4.5);

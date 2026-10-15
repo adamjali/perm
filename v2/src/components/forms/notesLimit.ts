@@ -7,6 +7,16 @@
 
 export const NOTES_PER_CASE_MAX = 200;
 
+/**
+ * The notes still in use. A deleted note used to stay in the list marked
+ * "deleted", so it went on counting toward the limit and "delete one to add
+ * another" wasn't true; a delete now removes it, and every add or delete
+ * writes back only these, clearing any old marked ones.
+ */
+export function liveNotes<T extends { status?: string }>(notes: readonly T[]): T[] {
+  return notes.filter((n) => n.status !== "deleted");
+}
+
 /** How close to the cap the count starts showing. */
 const WARN_WITHIN = 10;
 

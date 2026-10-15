@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Figure } from "@/components/data/FigureRow";
 import { withSocialCard } from "@/lib/socialCard";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { getDatasetSchema } from "@/lib/structuredData";
@@ -360,24 +361,3 @@ export default async function PermQueuePage() {
 }
 
 /** One headline figure: its label, the number, and what the number counts. */
-function Figure({
-  label,
-  value,
-  note,
-}: {
-  label: string;
-  value: string;
-  note: string;
-}) {
-  return (
-    <div>
-      <p className="text-sm font-bold text-soft">
-        {label}
-      </p>{" "}
-      <p className="mt-1 font-heading text-4xl font-bold leading-none tabular-nums">
-        {value}
-      </p>{" "}
-      <p className="mt-2 text-sm leading-snug text-muted-foreground">{note}</p>
-    </div>
-  );
-}

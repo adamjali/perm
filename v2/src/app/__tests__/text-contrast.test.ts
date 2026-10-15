@@ -49,9 +49,6 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-/** The case card and its parts: once a manila folder, now the plain card surface. */
-const CASE_CARD_FILES = ["/cases/CaseCard.tsx", "/cases/CaseCardParts.tsx"];
-
 describe("text contrast", () => {
   const files = walk(SRC);
 
@@ -61,16 +58,8 @@ describe("text contrast", () => {
     expect(files.length).toBeGreaterThan(300);
   });
 
-  it("the case card sits on the theme's own surface, never the old manila", () => {
-    // Manila stayed tan in both themes, so theme text on it fell to 1.16:1 in
-    // dark mode. The card is plain now; this keeps the tan from coming back.
-    const offenders = files
-      .filter((f) => CASE_CARD_FILES.some((m) => f.endsWith(m)))
-      .filter((f) => /manila/.test(readFileSync(f, "utf8")))
-      .map((f) => f.replace(SRC, "src"));
-    expect(offenders).toEqual([]);
-    expect(files.filter((f) => CASE_CARD_FILES.some((m) => f.endsWith(m)))).toHaveLength(CASE_CARD_FILES.length);
-  });
+  // The case folder's tan, and the inks it sets for itself so its text reads
+  // on it in both themes, are measured in calm-system.test.ts ("the case folder").
 
   it.each(Object.entries(BANNED))(
     "%s is not used (%s)",

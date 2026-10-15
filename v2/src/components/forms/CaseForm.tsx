@@ -778,24 +778,32 @@ function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCance
   return (
     // No entrance animation: it slid in 350ms after the form had appeared, a
     // late second arrival of the page's main controls.
-    <div ref={barRef} className="sticky bottom-0 left-0 right-0 z-10 border-t border-border bg-background p-4">
-      {/* Mobile: stacked layout, Desktop: horizontal */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4 max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 md:gap-4 order-2 md:order-1">
-          {mode === "edit" && caseId && (
-            <Button type="button" variant="ghost" size="lg" onClick={onDeleteClick} disabled={isSubmitting || isDeleting || isCancelNavigating} className="flex-1 text-destructive-text md:flex-none">
-              <Trash2 className="size-4" aria-hidden="true" />Delete
-            </Button>
-          )}
-          {isDirty && !isSubmitting && !isCancelNavigating && (
-            <p className="flex items-center gap-2 text-sm text-data-warn-ink" role="status">
-              <AlertTriangle className="size-4" aria-hidden="true" /><span className="hidden sm:inline">Unsaved changes</span>
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-3 md:gap-4 order-1 md:order-2">
-          <Button type="button" variant="outline" size="lg" onClick={onCancel} disabled={isSubmitting || isDeleting || isCancelNavigating} loading={isCancelNavigating} loadingText="Cancelling..." className="flex-1 md:flex-none">Cancel</Button>
-          <Button type="submit" size="lg" loading={isSubmitting} loadingText="Saving..." disabled={isSubmitting || isDeleting || isCancelNavigating} className="flex-1 md:flex-none">Save case</Button>
+    // One row at every width, about 72px tall: on a phone Delete is its icon
+    // and "Unsaved changes" its mark, both still named for screen readers.
+    <div ref={barRef} className="sticky bottom-0 left-0 right-0 z-10 border-t-2 border-[var(--object-border)] bg-background px-4 py-3">
+      <div className="mx-auto flex max-w-5xl items-center gap-2 md:gap-4">
+        {mode === "edit" && caseId && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onDeleteClick}
+            disabled={isSubmitting || isDeleting || isCancelNavigating}
+            className="text-destructive-text"
+            aria-label="Delete case"
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
+            <span className="max-sm:hidden">Delete</span>
+          </Button>
+        )}
+        {isDirty && !isSubmitting && !isCancelNavigating && (
+          <p className="flex items-center gap-2 text-sm text-data-warn-ink" role="status">
+            <AlertTriangle className="size-4" aria-hidden="true" />
+            <span className="max-sm:sr-only">Unsaved changes</span>
+          </p>
+        )}
+        <div className="ml-auto flex items-center gap-2 md:gap-3">
+          <Button type="button" variant="outline" size="lg" onClick={onCancel} disabled={isSubmitting || isDeleting || isCancelNavigating} loading={isCancelNavigating} loadingText="Cancelling...">Cancel</Button>
+          <Button type="submit" size="lg" loading={isSubmitting} loadingText="Saving..." disabled={isSubmitting || isDeleting || isCancelNavigating}>Save case</Button>
         </div>
       </div>
     </div>
@@ -808,7 +816,7 @@ function DeleteDialog({ open, isDeleting, caseName, onCancel, onConfirm }: { ope
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete case</DialogTitle>
-          <DialogDescription>Are you sure you want to delete &quot;{caseName}&quot;? This action can’t be undone.</DialogDescription>
+          <DialogDescription>Delete &quot;{caseName}&quot;? It can’t be undone.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={isDeleting}>Cancel</Button>

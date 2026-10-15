@@ -14,7 +14,7 @@
 export interface FlapRow {
   /** What the row is, in plain words. */
   label: string;
-  /** The value as it reads aloud; the board upper-cases it. Keep it short. */
+  /** The value as it reads aloud, shown as written. Keep it short. */
   value: string;
 }
 
@@ -22,18 +22,15 @@ export function FlapBoard({
   title,
   rows,
   footer,
-  caps = false,
   className = "",
 }: {
   title: string;
   rows: readonly FlapRow[];
   footer?: React.ReactNode;
-  /** Station-board capitals on the labels (one- and two-word labels only). */
-  caps?: boolean;
   className?: string;
 }) {
   return (
-    <figure className={`flap-board m-0 ${className}`} data-caps={caps ? "" : undefined}>
+    <figure className={`flap-board m-0 ${className}`}>
       <div className="flap-board-head">
         <span aria-hidden="true" className="flap-board-dot" />{" "}
         <span>{title}</span>
@@ -45,7 +42,7 @@ export function FlapBoard({
             <dd className="m-0">
               <span className="sr-only">{row.value}</span>{" "}
               <span className="flap-cells" aria-hidden="true">
-                {[...row.value.toUpperCase()].map((ch, i) =>
+                {[...row.value].map((ch, i) =>
                   ch === " " ? (
                     <span key={i} className="flap-cell flap-gap" />
                   ) : (
@@ -70,7 +67,7 @@ export function FlapBoard({
 export function FlapWord({ word, className = "" }: { word: string; className?: string }) {
   return (
     <span className={`flap-cells flap-word ${className}`} aria-hidden="true">
-      {[...word.toUpperCase()].map((ch, i) =>
+      {[...word].map((ch, i) =>
         ch === " " ? <span key={i} className="flap-cell flap-gap" /> : <span key={i} className="flap-cell" data-c={ch} />,
       )}
     </span>

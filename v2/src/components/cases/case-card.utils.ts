@@ -54,6 +54,13 @@ export function countdownWords(daysUntil: number): string {
   return `In ${daysUntil} ${daysUntil === 1 ? "day" : "days"}`;
 }
 
+/** A countdown as its figure and unit, for the countdown block: 14 / "days", 3 / "days late", 0 / "today". */
+export function countdownParts(daysUntil: number): { value: string; unit: string } {
+  if (daysUntil < 0) return { value: String(-daysUntil), unit: daysUntil === -1 ? "day late" : "days late" };
+  if (daysUntil === 0) return { value: "Due", unit: "today" };
+  return { value: String(daysUntil), unit: daysUntil === 1 ? "day left" : "days left" };
+}
+
 /** The countdown for a deadline date, read against today. */
 export function deadlineCountdownWords(deadline: string): string {
   return countdownWords(getDaysUntilDeadline(deadline));

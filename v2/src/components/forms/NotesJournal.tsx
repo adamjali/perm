@@ -25,7 +25,7 @@ import {
 } from "@/lib/forms/case-form-schema";
 import { CharLimit } from "@/components/ui/char-limit";
 import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "@/lib/time";
-import { NOTES_PER_CASE_MAX, notesLimitMessage } from "./notesLimit";
+import { NOTES_PER_CASE_MAX, liveNotes, notesLimitMessage } from "./notesLimit";
 
 /** How many notes the journal lists before a show-more. */
 const NOTES_SHOWN_STEP = 20;
@@ -235,7 +235,8 @@ export function NotesJournal({
    */
   const handleAddNote = useCallback(() => {
     const content = newNoteContent.trim();
-    if (!content || notes.length >= NOTES_PER_CASE_MAX) return;
+    const live = liveNotes(notes);
+    if (!content || live.length >= NOTES_PER_CASE_MAX) return;
 
     const newNote: NoteEntry = {
       id: generateNoteId(),
@@ -246,7 +247,7 @@ export function NotesJournal({
       category: newNoteCategory,
     };
 
-    onChange([...notes, newNote]);
+    onChange([...live, newNote]);
     setNewNoteContent("");
     setShowNewNoteOptions(false);
 
@@ -273,16 +274,10 @@ export function NotesJournal({
     [notes, onChange]
   );
 
-  /**
-   * Delete a note (soft delete - set status to 'deleted')
-   */
+  /** Delete a note: it leaves the list (see liveNotes). */
   const handleDelete = useCallback(
     (noteId: string) => {
-      onChange(
-        notes.map((note) =>
-          note.id === noteId ? { ...note, status: "deleted" as const } : note
-        )
-      );
+      onChange(liveNotes(notes).filter((note) => note.id !== noteId));
     },
     [notes, onChange]
   );
@@ -381,7 +376,7 @@ export function NotesJournal({
             type="button"
             variant="outline"
             onClick={handleAddNote}
-            disabled={!newNoteContent.trim() || notes.length >= NOTES_PER_CASE_MAX}
+            disabled={!newNoteContent.trim() || liveNotes(notes).length >= NOTES_PER_CASE_MAX}
           >
             <PlusIcon className="size-4" aria-hidden="true" />
             Add note
@@ -390,9 +385,9 @@ export function NotesJournal({
             {shortcutKey}+Enter
           </span>
         </div>
-        {notesLimitMessage(notes.length) && (
+        {notesLimitMessage(liveNotes(notes).length) && (
           <p className="text-sm font-semibold text-foreground" role="status">
-            {notesLimitMessage(notes.length)}
+            {notesLimitMessage(liveNotes(notes).length)}
           </p>
         )}
 

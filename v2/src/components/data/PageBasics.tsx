@@ -626,10 +626,8 @@ export function PageBasics({
   const entries = BASICS[page];
   if (!entries || entries.length === 0) return null;
   return (
-    <section className="mt-14 border-t border-border pt-8">
-      <p className="text-sm font-bold text-muted-foreground">
-        The basics
-      </p>{" "}
+    <section className="mt-14">
+      <h2 className="font-heading text-2xl font-bold">The basics</h2>{" "}
       {/* QUESTIONS VISIBLE, ANSWERS ON DEMAND. This is the answer-engine
           layer: questions phrased the way people search, each an <h3> so the
           outline carries them, with the answer in the DOM whether open or
@@ -638,17 +636,17 @@ export function PageBasics({
           prose it was 100 to 250 words on each of twelve pages, and on the
           chart pages it was most of what remained after the captions were
           cut. The <h3> sits INSIDE the <summary> so the heading survives. */}
-      <div className="mt-4 divide-y divide-border border border-border bg-card">
+      <div className="mt-4 flex flex-col gap-1.5">
         {entries.map((e) => (
-          <details key={e.q} className="group">
-            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
+          <details key={e.q} className="group bg-tint">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
               <h3 className="font-heading text-base font-bold">{e.q}</h3>{" "}
               <CaretDownIcon
-                className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+                className="h-5 w-5 shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
                 aria-hidden="true"
               />
             </summary>{" "}
-            <p className="max-w-prose border-t border-border/40 px-5 pb-4 pt-3 text-base leading-relaxed text-muted-foreground sm:px-6">
+            <p className="max-w-prose px-5 pb-4 text-base leading-relaxed text-soft sm:px-6">
               {typeof e.a === "function" ? e.a(figures) : e.a}
             </p>
           </details>

@@ -4,7 +4,6 @@
  * note, the calendar-sync mark and the dates list.
  */
 
-import { CalendarCheckIcon, CalendarSlashIcon } from "@phosphor-icons/react/ssr";
 import { Badge, ToneBadge } from "@/components/ui/badge";
 import { countShownDates, formatCompactDate } from "./case-card.utils";
 import type { CaseCardData } from "@convex/lib/caseListTypes";
@@ -15,7 +14,6 @@ import type { CaseCardData } from "@convex/lib/caseListTypes";
 
 interface CaseBadgesProps {
   duplicateOf?: string;
-  isProfessionalOccupation?: boolean;
   hasActiveRfi?: boolean;
   hasActiveRfe?: boolean;
   isSample?: boolean;
@@ -25,7 +23,7 @@ interface CaseBadgesProps {
  * The chips that need saying: an open RFI or RFE first (it carries a response
  * deadline), then a duplicate, a professional occupation, the sample case.
  */
-export function CaseBadges({ duplicateOf, isProfessionalOccupation, hasActiveRfi, hasActiveRfe, isSample }: CaseBadgesProps) {
+export function CaseBadges({ duplicateOf, hasActiveRfi, hasActiveRfe, isSample }: CaseBadgesProps) {
   return (
     <>
       {hasActiveRfi && (
@@ -43,39 +41,12 @@ export function CaseBadges({ duplicateOf, isProfessionalOccupation, hasActiveRfi
           Duplicate
         </ToneBadge>
       )}
-      {isProfessionalOccupation && (
-        <Badge className="font-normal" title="Professional occupation: the extra recruitment steps apply">
-          Professional
-        </Badge>
-      )}
       {isSample && (
         <Badge className="border-dashed font-normal" title="Sample case. Delete it anytime">
           Sample
         </Badge>
       )}
     </>
-  );
-}
-
-// ============================================================================
-// CALENDAR SYNC INDICATOR
-// ============================================================================
-
-/**
- * Account-level state, so it stays quiet on every card: one icon, the words in
- * its label and tooltip.
- */
-export function CalendarSyncIndicator({ enabled, isGoogleConnected }: { enabled: boolean; isGoogleConnected: boolean }) {
-  if (!enabled) return null;
-  const label = isGoogleConnected ? "Synced to Google Calendar" : "Not synced: connect Google Calendar in Settings";
-  return (
-    <span aria-label={label} title={label} className="inline-flex shrink-0 items-center text-muted-foreground">
-      {isGoogleConnected ? (
-        <CalendarCheckIcon className="size-5" aria-hidden="true" />
-      ) : (
-        <CalendarSlashIcon className="size-5" aria-hidden="true" />
-      )}
-    </span>
   );
 }
 

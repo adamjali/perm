@@ -74,7 +74,7 @@ export async function validateDocumentFile(
   if (!ext || !ALLOWED_DOCUMENT_EXTENSIONS.has(ext)) {
     return {
       valid: false,
-      error: `File type .${ext || "unknown"} is not allowed. Accepted: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, TIFF.`,
+      error: `A .${ext || "unknown"} file can't be added. These can: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, TIFF.`,
     };
   }
 
@@ -83,7 +83,7 @@ export async function validateDocumentFile(
     const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
     return {
       valid: false,
-      error: `File is ${sizeMB} MB. Maximum allowed size is 20 MB.`,
+      error: `This file is ${sizeMB} MB; the most a document can be is ${MAX_DOCUMENT_SIZE_BYTES / (1024 * 1024)} MB.`,
     };
   }
 
@@ -91,13 +91,13 @@ export async function validateDocumentFile(
   if (!file.type) {
     return {
       valid: false,
-      error: "File type could not be determined. Please ensure the file has the correct extension.",
+      error: "Couldn't tell what kind of file this is. Check it has the right ending, such as .pdf.",
     };
   }
   if (!ALLOWED_DOCUMENT_CONTENT_TYPES.has(file.type)) {
     return {
       valid: false,
-      error: `Content type ${file.type} is not allowed.`,
+      error: `A ${file.type} file can't be added.`,
     };
   }
 
@@ -109,13 +109,13 @@ export async function validateDocumentFile(
     if (!matchesMagicBytes(bytes, declaredType)) {
       return {
         valid: false,
-        error: "File content does not match its declared type.",
+        error: "This file's contents don't match its ending (a .pdf that isn't a PDF, say).",
       };
     }
   } catch {
     return {
       valid: false,
-      error: "Unable to verify file integrity. Please try again.",
+      error: "Couldn't check this file. Try again.",
     };
   }
 

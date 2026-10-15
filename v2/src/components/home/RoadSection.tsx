@@ -175,7 +175,7 @@ export function RoadSection(props: RoadSectionProps) {
                   {s.n}
                 </span>{" "}
                 <span className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-4 lg:grid-cols-1 lg:gap-3">
-                  <span className="block aspect-[5/4] overflow-hidden border-2 border-[var(--object-border)] bg-card transition-transform duration-150 group-hover:-translate-y-0.5">
+                  <span className="block aspect-[5/4] overflow-hidden border-2 border-[var(--object-border)] bg-card transition-colors group-hover:border-primary-text">
                     <Image
                       src={s.img.src}
                       alt={s.img.alt}

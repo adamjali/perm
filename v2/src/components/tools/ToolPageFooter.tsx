@@ -34,23 +34,23 @@ export function ToolPageFooter({ reading }: ToolPageFooterProps) {
       {reading.length > 0 ? (
         <section className="mt-12">
           <h2 className="font-heading text-2xl font-bold">The rules behind these numbers</h2>
-          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+          <ul className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
             {reading.slice(0, MAX_READING).map((r) => (
               <li key={r.href} className="flex">
                 <Link
                   href={r.href}
-                  className="group flex w-full flex-col border border-border bg-card p-5 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="group flex w-full flex-col border-t-2 border-[var(--object-border)] pt-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <span className="flex items-start justify-between gap-3">
-                    <span className="font-heading text-base font-bold leading-tight">
+                    <span className="font-heading text-base font-bold leading-tight group-hover:underline">
                       {r.label}
                     </span>
                     <ArrowUpRightIcon
-                      className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform duration-150 motion-reduce:transition-none"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-primary-text"
                       aria-hidden="true"
                     />
                   </span>{" "}
-                  <span className="mt-2 text-base leading-relaxed text-muted-foreground">
+                  <span className="mt-1.5 text-base leading-relaxed text-soft">
                     {r.note}
                   </span>
                 </Link>

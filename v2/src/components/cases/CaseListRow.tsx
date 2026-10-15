@@ -17,8 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { STAGE_VISUALS } from "@/components/status/stage-visuals";
-import { deadlineCountdownWords, formatDeadlineDate } from "./case-card.utils";
-import { getUrgencyFromDeadlineExtended } from "@/lib/status/urgency";
+import { formatDeadlineDate } from "./case-card.utils";
+import { CountdownChip } from "./DeadlineCountdown";
 import type { CaseCardData } from "@convex/lib/caseListTypes";
 
 export interface CaseListRowProps {
@@ -28,8 +28,6 @@ export interface CaseListRowProps {
   selectionMode?: boolean;
 }
 
-const URGENCY_INK = { overdue: "text-destructive", urgent: "text-destructive", soon: "text-data-warn-ink", normal: "" } as const;
-
 export const CaseListRow = memo(function CaseListRow({
   caseData: c,
   isSelected = false,
@@ -38,13 +36,12 @@ export const CaseListRow = memo(function CaseListRow({
 }: CaseListRowProps) {
   const stage = STAGE_VISUALS[c.caseStatus];
   const open = c.caseStatus !== "closed" && c.nextDeadline;
-  const urgency = open && c.nextDeadline ? getUrgencyFromDeadlineExtended(c.nextDeadline) : null;
 
   return (
     <div
       data-testid="case-list-row"
       className={cn(
-        "relative flex min-h-16 items-center gap-3 border-b border-border px-4 py-3 transition-colors hover:bg-accent",
+        "relative flex min-h-16 items-center gap-3 border-b border-border py-3 pl-5 pr-4 transition-colors hover:bg-accent",
         isSelected && "bg-tint",
       )}
     >
@@ -56,7 +53,8 @@ export const CaseListRow = memo(function CaseListRow({
           aria-label={`Select ${c.employerName}`}
         />
       ) : null}
-      <span aria-hidden="true" className={cn("size-2.5 shrink-0", stage?.fill ?? "bg-muted")} title={stage?.label} />
+      {/* The stage's colour down the row's edge, as on the folder tabs. */}
+      <span aria-hidden="true" className={cn("absolute inset-y-0 left-0 w-1.5", stage?.fill ?? "bg-muted")} />
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2 truncate font-semibold" title={c.employerName}>
           {selectionMode ? (
@@ -75,13 +73,12 @@ export const CaseListRow = memo(function CaseListRow({
         </p>
       </div>
       {open && c.nextDeadline ? (
-        <div className="shrink-0 text-right text-sm">
-          <p className={cn("whitespace-nowrap font-semibold tabular-nums", urgency && URGENCY_INK[urgency])}>
-            {deadlineCountdownWords(c.nextDeadline)}
+        <div className="flex shrink-0 items-center gap-3 text-sm">
+          <p className="hidden max-w-56 text-right sm:block" title={c.nextDeadlineLabel}>
+            <span className="block truncate font-semibold">{c.nextDeadlineLabel}</span>{" "}
+            <span className="block font-mono text-soft">{formatDeadlineDate(c.nextDeadline)}</span>
           </p>{" "}
-          <p className="hidden max-w-56 truncate text-muted-foreground sm:block" title={c.nextDeadlineLabel}>
-            {c.nextDeadlineLabel} · {formatDeadlineDate(c.nextDeadline)}
-          </p>
+          <CountdownChip deadline={c.nextDeadline} />
         </div>
       ) : null}
       <div className="hidden shrink-0 md:block">

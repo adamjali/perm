@@ -1,5 +1,7 @@
 "use client";
 
+import { URGENCY_FILL } from "@/components/cases/DeadlineCountdown";
+import { getUrgencyLevel } from "@/lib/status/urgency";
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -215,13 +217,8 @@ export function OverviewTab({
           ? buildEditSectionUrl(caseId, "recruitment")
           : null;
         const late = nextDeadline ? nextDeadline.daysUntil < 0 : false;
-        const urgencyClass = !nextDeadline
-          ? ""
-          : nextDeadline.daysUntil <= 14
-            ? "text-destructive"
-            : nextDeadline.daysUntil <= 30
-              ? "text-data-warn-ink"
-              : "";
+        // The same urgency colours as the case folders and the dashboard.
+        const urgencyClass = nextDeadline ? URGENCY_FILL[getUrgencyLevel(nextDeadline.daysUntil)] : "";
         const isInteractive = !!navigateUrl || canExpand;
         const mainContent = (
           <>
@@ -260,7 +257,9 @@ export function OverviewTab({
               )}
               {nextDeadline ? (
                 <div className="next-up-stat">
-                  <div className={cn("big", urgencyClass)}>{Math.abs(nextDeadline.daysUntil)}</div>
+                  <div className={cn("big inline-flex min-w-14 justify-center px-2 py-1", urgencyClass)}>
+                    {Math.abs(nextDeadline.daysUntil)}
+                  </div>
                   <div className="label">
                     {late
                       ? `${Math.abs(nextDeadline.daysUntil) === 1 ? "day" : "days"} late: ${nextDeadline.label}`
@@ -371,7 +370,7 @@ export function OverviewTab({
           {showJobDescCard && (
             <div>
               <div className="detail-card">
-                <div className="detail-card-head ch-yellow">
+                <div className="detail-card-head">
                   <h2 className="flex items-center gap-1.5">
                     <BriefcaseIcon className="h-3.5 w-3.5" />
                     Job description

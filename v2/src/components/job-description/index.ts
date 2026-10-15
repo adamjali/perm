@@ -7,9 +7,6 @@
  * ```tsx
  * // In case form
  * import { JobDescriptionField } from '@/components/job-description';
- *
- * // In case detail page
- * import { JobDescriptionDetailView } from '@/components/job-description';
  * ```
  */
 
@@ -19,8 +16,6 @@ export type {
   JobDescriptionTemplate,
 } from "./JobDescriptionField";
 
-export { JobDescriptionDetailView } from "./JobDescriptionDetailView";
-export type { JobDescriptionDetailViewProps } from "./JobDescriptionDetailView";
 
 export { TemplateSelector } from "./TemplateSelector";
 export type { TemplateSelectorProps } from "./TemplateSelector";

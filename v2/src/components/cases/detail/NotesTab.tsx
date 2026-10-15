@@ -21,7 +21,7 @@ const ITEMS_PER_PAGE = 10;
 
 import { fmtTimestamp } from "./case-detail-utils";
 import { CharLimit, CharLimitNote, useCharLimit } from "@/components/ui/char-limit";
-import { NOTES_PER_CASE_MAX, notesLimitMessage } from "@/components/forms/notesLimit";
+import { NOTES_PER_CASE_MAX, liveNotes, notesLimitMessage } from "@/components/forms/notesLimit";
 
 const PRIORITY_LABELS: Record<NotePriority, string> = {
   high: "High",
@@ -158,7 +158,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
     if (!onUpdateNotes) return;
     try {
       await onUpdateNotes(
-        notes.map((n) => n.id === noteId ? { ...n, status: "deleted" as const } : n)
+        liveNotes(notes).filter((n) => n.id !== noteId)
       );
       if (selectedId === noteId) {
         setSelectedId(null);
@@ -184,7 +184,8 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
   const handleAddNote = useCallback(async () => {
     if (!onUpdateNotes) return;
     const content = newContent.trim();
-    if (!content || notes.length >= NOTES_PER_CASE_MAX) return;
+    const live = liveNotes(notes);
+    if (!content || live.length >= NOTES_PER_CASE_MAX) return;
 
     const newNote: NoteEntry = {
       id: generateNoteId(),
@@ -197,7 +198,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
     };
 
     try {
-      await onUpdateNotes([...notes, newNote]);
+      await onUpdateNotes([...live, newNote]);
       setNewContent("");
       setNewDueDate("");
       setShowOptions(false);
@@ -221,7 +222,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
     <div className="space-y-6">
       <div>
         <div className="detail-card" style={{ overflow: "hidden" }}>
-          <div className="detail-card-head ch-yellow" style={{ gap: 8 }}>
+          <div className="detail-card-head" style={{ gap: 8 }}>
             <h2 className="flex items-center gap-1.5">
               <ChatCircleIcon className="h-3.5 w-3.5" />
               Case notes
@@ -473,23 +474,23 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                 />
                 <button
                   className="note-send-btn"
-                  disabled={!newContent.trim() || notes.length >= NOTES_PER_CASE_MAX}
+                  disabled={!newContent.trim() || liveNotes(notes).length >= NOTES_PER_CASE_MAX}
                   onClick={handleAddNote}
                   aria-label="Add note"
                 >
                   <Send className="h-4 w-4" />
                 </button>
               </div>
-              <div className={newNoteLimit.message || notesLimitMessage(notes.length) ? "px-5 pb-3" : undefined}>
+              <div className={newNoteLimit.message || notesLimitMessage(liveNotes(notes).length) ? "px-5 pb-3" : undefined}>
                 <CharLimitNote
                   id={newNoteLimit.id}
                   message={newNoteLimit.message}
                   full={newNoteLimit.full}
                   className="mt-0"
                 />
-                {notesLimitMessage(notes.length) && (
+                {notesLimitMessage(liveNotes(notes).length) && (
                   <p className="text-sm font-semibold text-foreground" role="status">
-                    {notesLimitMessage(notes.length)}
+                    {notesLimitMessage(liveNotes(notes).length)}
                   </p>
                 )}
               </div>

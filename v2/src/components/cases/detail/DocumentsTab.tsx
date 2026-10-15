@@ -7,6 +7,17 @@ import {
   DOCUMENT_CATEGORY_LABELS,
   type DocumentCategory,
 } from "@/lib/documents";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { fmtTimestamp } from "./case-detail-utils";
 import type { CaseDetailData } from "./case-detail-types";
 
@@ -14,11 +25,23 @@ type DocumentEntry = NonNullable<CaseDetailData["documents"]>[number];
 
 interface DocumentsTabProps {
   documents: DocumentEntry[];
-  onUpload?: (file: File, category?: DocumentCategory) => Promise<void>;
+  /** Uploads one file; resolves to null when it's saved, or the reason it wasn't. */
+  onUpload?: (file: File, category?: DocumentCategory) => Promise<string | null>;
   onDelete?: (documentId: string) => Promise<void>;
 }
 
 const ITEMS_PER_PAGE = 10;
+
+/** A select at the controls' height (44px), the input's own outline. */
+const SELECT = "h-11 border border-input bg-card px-2 text-sm font-semibold text-foreground disabled:opacity-60";
+
+/** A file chosen and waiting to go up, with its category and, after a failed try, why. */
+interface PendingFile {
+  key: string;
+  file: File;
+  category: DocumentCategory;
+  error?: string;
+}
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -252,8 +275,7 @@ export function DocumentsTab({
 }: DocumentsTabProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [pendingCategory, setPendingCategory] = useState<DocumentCategory>("general");
+  const [pending, setPending] = useState<PendingFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [fullscreenId, setFullscreenId] = useState<string | null>(null);
@@ -303,37 +325,48 @@ export function DocumentsTab({
     if (next >= 0 && target) setFullscreenId(target.id);
   }
 
-  // File selection stages to pending (category picker) instead of immediate upload
+  // Chosen or dropped files wait in a list (each with a category) until
+  // "Upload" sends them, one at a time. A file that fails stays, with the
+  // reason beside it, so it can be sent again without picking it again.
   const handleFileStage = useCallback(
-    (file: File) => {
-      if (!onUpload) return;
-      setPendingFile(file);
-      setPendingCategory("general");
+    (files: FileList | File[] | null | undefined) => {
+      if (!onUpload || !files) return;
+      const added = Array.from(files).map((file, i) => ({
+        key: `${Date.now()}-${i}-${file.name}`,
+        file,
+        category: "general" as DocumentCategory,
+      }));
+      if (added.length) setPending((now) => [...now, ...added]);
     },
     [onUpload]
   );
 
   const handleConfirmUpload = useCallback(async () => {
-    if (!onUpload || !pendingFile || isUploading) return;
+    if (!onUpload || pending.length === 0 || isUploading) return;
     setIsUploading(true);
     try {
-      await onUpload(pendingFile, pendingCategory);
-    } catch {
-      // Defensive: onUpload should handle its own errors via handleOperationError
+      for (const item of pending) {
+        const reason = await onUpload(item.file, item.category);
+        setPending((now) =>
+          reason === null ? now.filter((p) => p.key !== item.key) : now.map((p) => (p.key === item.key ? { ...p, error: reason } : p)),
+        );
+      }
     } finally {
       setIsUploading(false);
-      setPendingFile(null);
     }
-  }, [onUpload, pendingFile, pendingCategory, isUploading]);
+  }, [onUpload, pending, isUploading]);
 
-  const handleCancelUpload = useCallback(() => {
-    setPendingFile(null);
+  const removePending = useCallback((key: string) => {
+    setPending((now) => now.filter((p) => p.key !== key));
+  }, []);
+
+  const setPendingCategoryFor = useCallback((key: string, category: DocumentCategory) => {
+    setPending((now) => now.map((p) => (p.key === key ? { ...p, category } : p)));
   }, []);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) handleFileStage(file);
+      handleFileStage(e.target.files);
       e.target.value = "";
     },
     [handleFileStage]
@@ -343,8 +376,7 @@ export function DocumentsTab({
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragOver(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file) handleFileStage(file);
+      handleFileStage(e.dataTransfer.files);
     },
     [handleFileStage]
   );
@@ -378,128 +410,87 @@ export function DocumentsTab({
     <div className="space-y-6">
       <div>
         <div className="detail-card" style={{ overflow: "hidden" }}>
-          <div className="detail-card-head ch-dark" style={{ gap: 8 }}>
+          <div className="detail-card-head" style={{ gap: 8 }}>
             <h2 className="flex items-center gap-1.5">
               <FolderOpenIcon className="h-3.5 w-3.5" />
               Documents
             </h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="sr-only" htmlFor="documents-filter">Show</label>
               <select
+                id="documents-filter"
                 value={filterCategory}
                 onChange={(e) => { setFilterCategory(e.target.value as DocumentCategory | "all"); setPage(0); }}
-                style={{
-                  height: 24,
-                  padding: "0 6px",
-                  border: "1px solid var(--border)",
-                  background: "var(--card)",
-                  color: "var(--foreground)",
-                  fontSize: "0.875rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
+                className={SELECT}
               >
-                <option value="all">All</option>
+                <option value="all">All ({documents.length})</option>
                 {DOCUMENT_CATEGORIES.map((c) => (
                   <option key={c} value={c}>{DOCUMENT_CATEGORY_LABELS[c]}</option>
                 ))}
-              </select>
-              <span
-                style={{
-                  fontSize: "0.875rem",
-                  background: "var(--card)",
-                  border: "1px solid var(--border)",
-                  padding: "1px 8px",
-                  color: "var(--foreground)",
-                }}
-              >
-                {filteredDocs.length}
-              </span>
-
-              {/* Upload button */}
+              </select>{" "}
               {onUpload && (
-                <button
-                  className="font-heading flex items-center gap-2 font-bold border border-current bg-card text-foreground"
-                  style={{
-                    fontSize: "0.875rem",
-                    padding: "3px 10px",
-                    cursor: isUploading ? "wait" : "pointer",
-                    opacity: isUploading ? 0.7 : 1,
-                  }}
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading || !!pendingFile}
-                >
-                  {isUploading ? (
-                    <CircleNotchIcon className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <UploadIcon className="h-3.5 w-3.5" />
-                  )}
-                  {isUploading ? "Uploading..." : "Upload"}
-                </button>
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                  <UploadIcon className="size-4" aria-hidden="true" />
+                  Add files
+                </Button>
               )}
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 accept={ACCEPT_STRING}
                 onChange={handleInputChange}
-                style={{ display: "none" }}
+                className="hidden"
               />
             </div>
           </div>
 
-          {/* Pending upload bar — outside split-wrap so it stays visible on mobile when preview is open */}
-          {pendingFile && (
-            <div className="pending-upload-bar">
-              <FileTextIcon className="h-4 w-4" style={{ flexShrink: 0 }} />
-              <div className="pending-upload-name">{pendingFile.name}</div>
-              <select
-                value={pendingCategory}
-                onChange={(e) => setPendingCategory(e.target.value as DocumentCategory)}
-                style={{
-                  height: 26,
-                  padding: "0 6px",
-                  border: "1px solid var(--border)",
-                  background: "var(--card)",
-                  color: "var(--foreground)",
-                  fontSize: "0.875rem",
-                  fontWeight: 700,
-                  }}
-                disabled={isUploading}
-              >
-                {DOCUMENT_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {DOCUMENT_CATEGORY_LABELS[c]}
-                  </option>
+          {/* Files waiting to go up: outside the split view, so a phone sees them with the preview open. */}
+          {pending.length > 0 && (
+            <div className="space-y-2 border-b-2 border-border bg-muted p-3">
+              <ul className="space-y-2">
+                {pending.map((p) => (
+                  <li key={p.key} className="flex flex-wrap items-center gap-2">
+                    <FileTextIcon className="size-4 shrink-0" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate font-mono text-sm font-semibold" title={p.file.name}>
+                      {p.file.name}
+                    </span>{" "}
+                    <label className="sr-only" htmlFor={`cat-${p.key}`}>Category for {p.file.name}</label>
+                    <select
+                      id={`cat-${p.key}`}
+                      value={p.category}
+                      onChange={(e) => setPendingCategoryFor(p.key, e.target.value as DocumentCategory)}
+                      className={SELECT}
+                      disabled={isUploading}
+                    >
+                      {DOCUMENT_CATEGORIES.map((c) => (
+                        <option key={c} value={c}>
+                          {DOCUMENT_CATEGORY_LABELS[c]}
+                        </option>
+                      ))}
+                    </select>{" "}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePending(p.key)}
+                      disabled={isUploading}
+                      aria-label={`Remove ${p.file.name}`}
+                    >
+                      <XIcon className="size-4" aria-hidden="true" />
+                    </Button>
+                    {p.error ? (
+                      <p role="alert" className="basis-full text-sm font-semibold text-destructive">
+                        {p.error}
+                      </p>
+                    ) : null}
+                  </li>
                 ))}
-              </select>
-              <button
-                className="icon-btn"
-                style={{
-                  width: "auto",
-                  padding: "3px 10px",
-                  fontWeight: 700,
-                  fontSize: "0.875rem",
-                  background: "var(--primary)",
-                  color: "var(--primary-foreground)",
-                  }}
-                onClick={handleConfirmUpload}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <CircleNotchIcon className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  "Upload"
-                )}
-              </button>
-              {!isUploading && (
-                <button
-                  className="icon-btn"
-                  style={{ width: 26, height: 26, padding: 0 }}
-                  onClick={handleCancelUpload}
-                  title="Cancel"
-                >
-                  <XIcon className="h-3 w-3" />
-                </button>
-              )}
+              </ul>{" "}
+              <Button type="button" onClick={handleConfirmUpload} disabled={isUploading}>
+                {isUploading ? <CircleNotchIcon className="size-4 animate-spin" aria-hidden="true" /> : <UploadIcon className="size-4" aria-hidden="true" />}
+                {isUploading ? "Uploading" : pending.length === 1 ? "Upload 1 file" : `Upload ${pending.length} files`}
+              </Button>
             </div>
           )}
 
@@ -589,36 +580,22 @@ export function DocumentsTab({
                 </div>
               )}
 
-              {/* Drag & drop area */}
-              {onUpload && !pendingFile && (
-                <div style={{ padding: 16 }}>
+              {/* Drag & drop area: more files can be added while some wait. */}
+              {onUpload && (
+                <div className="p-4">
                   <button
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 font-heading font-bold text-sm"
-                    style={{
-                      border: isDragOver
-                        ? "3px dashed var(--primary)"
-                        : "3px dashed var(--muted-foreground)",
-                      background: isDragOver
-                        ? "var(--primary-light, rgba(46,204,64,0.08))"
-                        : "transparent",
-                      boxShadow: "none",
-                      cursor: isUploading ? "wait" : "pointer",
-                      opacity: isUploading ? 0.6 : 1,
-                      color: isDragOver
-                        ? "var(--primary)"
-                        : "var(--muted-foreground)",
-                      transition: "all 0.15s ease",
-                    }}
+                    type="button"
+                    className={`flex min-h-12 w-full items-center justify-center gap-2 border-2 border-dashed px-4 py-3 font-heading text-sm font-bold transition-colors ${
+                      isDragOver ? "border-primary-text bg-primary/10 text-foreground" : "border-input text-soft hover:border-foreground hover:text-foreground"
+                    }`}
                     onClick={() => fileInputRef.current?.click()}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     disabled={isUploading}
                   >
-                    <UploadIcon className="h-4 w-4" />
-                    {isDragOver
-                      ? "Drop file to upload"
-                      : "Drag files here or click to upload"}
+                    <UploadIcon className="size-4" aria-hidden="true" />
+                    {isDragOver ? "Drop to add them" : "Drag files here, or click to choose"}
                   </button>
                 </div>
               )}
@@ -748,77 +725,21 @@ export function DocumentsTab({
         </div>
       </div>
 
-      {/* Delete confirmation dialog */}
-      {confirmDeleteId && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-          }}
-          onClick={() => setConfirmDeleteId(null)}
-        >
-          <div
-            style={{
-              background: "var(--card)",
-              border: "1px solid var(--border)",
-              padding: 24,
-              maxWidth: 400,
-              width: "90%",
-              boxShadow: "6px 6px 0px var(--foreground)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                fontFamily: "var(--font-heading)",
-                fontWeight: 700,
-                fontSize: "1.1rem",
-                marginBottom: 8,
-              }}
-            >
-              Delete document
-            </div>
-            <div
-              style={{
-                fontSize: "0.875rem",
-                color: "var(--muted-foreground)",
-                marginBottom: 20,
-              }}
-            >
-              This will permanently delete the document. This action can’t be
-              undone.
-            </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button
-                className="icon-btn"
-                style={{ width: "auto", padding: "6px 16px", fontWeight: 700 }}
-                onClick={() => setConfirmDeleteId(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="icon-btn"
-                style={{
-                  width: "auto",
-                  padding: "6px 16px",
-                  fontWeight: 700,
-                  background: "var(--destructive)",
-                  color: "var(--destructive-foreground)",
-                  border: "2px solid var(--destructive)",
-                }}
-                onClick={handleConfirmDelete}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete confirmation: a real dialog (focus kept inside, Escape closes). */}
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={(open) => (open ? null : setConfirmDeleteId(null))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this document?</AlertDialogTitle>
+            <AlertDialogDescription>It&apos;s deleted for good; it can&apos;t be brought back.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleConfirmDelete()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Fullscreen viewer */}
       {fullscreenDoc && (

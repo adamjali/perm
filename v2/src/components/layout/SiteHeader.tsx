@@ -115,7 +115,7 @@ function PanelLink({ page, pathname }: { page: SitePage; pathname: string }) {
       href={page.href}
       aria-current={here ? "page" : undefined}
       className={cn(
-        "relative flex min-h-9 items-center py-1 pl-3 text-[15px] leading-snug transition-colors hover:text-foreground hover:underline",
+        "relative flex min-h-11 items-center py-1 pl-3 text-[15px] leading-snug transition-colors hover:text-foreground hover:underline",
         here
           ? "font-semibold text-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-1 before:bg-primary before:content-['']"
           : "text-soft",
@@ -163,7 +163,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       ref={barRef}
       data-site-header=""
       style={{ height: "var(--site-header-h)" }}
-      className="dark fixed inset-x-0 top-0 z-40 border-b border-border bg-[#141414] text-foreground print:hidden"
+      className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background print:hidden"
     >
       <div className="mx-auto flex h-full max-w-[1440px] items-center gap-2 px-4 sm:px-6 lg:gap-6">
         <Link

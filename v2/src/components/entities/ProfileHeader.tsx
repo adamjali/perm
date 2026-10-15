@@ -87,7 +87,7 @@ export function ProfileHeader({
             <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
               {facts.map((f) => (
                 <div key={f.label} className="min-w-0">
-                  <dt className="text-sm text-muted-foreground">{f.label}</dt>{" "}
+                  <dt className="text-sm font-semibold">{f.label}</dt>{" "}
                   <dd className="text-base font-semibold [overflow-wrap:anywhere]">
                     {f.href ? (
                       <Link href={f.href} className="link">

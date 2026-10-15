@@ -24,21 +24,38 @@ interface Cell {
   href: string;
 }
 
+/**
+ * The split at a glance: one slim bar, each stage's share of the cases in its
+ * own colour, then each stage's count under a band of the same colour (the
+ * deadline hub's language). Duplicates overlap the stages, so they get a
+ * count and no share of the bar.
+ */
+function StageSplit({ cells }: { cells: readonly Cell[] }) {
+  const shares = cells.filter((c) => c.key !== "duplicates" && c.count > 0);
+  const total = shares.reduce((n, c) => n + c.count, 0);
+  if (total === 0) return null;
+  return (
+    <div className="flex h-3 w-full overflow-hidden" role="img" aria-label={shares.map((c) => `${c.label} ${c.count}`).join(", ")}>
+      {shares.map((c) => (
+        <span key={c.key} className={cn("h-full", c.dot)} style={{ width: `${(c.count / total) * 100}%` }} title={`${c.label}: ${c.count}`} />
+      ))}
+    </div>
+  );
+}
+
 function CountRow({ cells }: { cells: readonly Cell[] }) {
   return (
-    <ul className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+    <ul className="grid grid-cols-2 gap-2 [&>*]:min-w-0 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(8.5rem,1fr))] max-sm:[&>*:last-child:nth-child(odd)]:col-span-2">
       {cells.map((c) => (
-        <li key={c.key} data-status={c.key} className="border-b border-r border-border">
+        <li key={c.key} data-status={c.key} className="bg-tint">
           <Link
             href={c.href}
-            className="group flex h-full min-h-24 flex-col p-4 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="group flex h-full min-h-24 flex-col px-3 pb-3 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
-            <span className="flex items-center gap-2 text-sm font-semibold">
-              <span aria-hidden="true" className={cn("size-2 shrink-0", c.dot)} />
-              {c.label}
-            </span>{" "}
-            <span className="mt-1 font-heading text-2xl font-bold tabular-nums group-hover:text-primary-text">{c.count}</span>{" "}
-            {c.note ? <span className="mt-0.5 text-sm text-muted-foreground">{c.note}</span> : null}
+            <span aria-hidden="true" className={cn("-mx-3 mb-2.5 block h-1", c.dot)} />
+            <span className="text-sm font-semibold">{c.label}</span>{" "}
+            <span className="mt-0.5 font-heading text-3xl font-bold leading-none tabular-nums group-hover:underline">{c.count}</span>{" "}
+            {c.note ? <span className="mt-1.5 text-sm leading-snug text-soft">{c.note}</span> : null}
           </Link>
         </li>
       ))}
@@ -46,18 +63,20 @@ function CountRow({ cells }: { cells: readonly Cell[] }) {
   );
 }
 
-/** Loading: the real heading over six cells of the real height. */
 export function SummaryTilesSkeleton() {
   return (
     <section className={cn(WIDGET_CONTAINER_CLASSES, "overflow-hidden")} aria-busy={true} aria-label="Cases by stage">
       <WidgetHeader title="Cases" />
-      <div className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="min-h-24 border-b border-r border-border p-4">
-            <Skeleton variant="line" className="h-5 w-20" />
-            <Skeleton variant="line" className="mt-2 h-7 w-10" />
-          </div>
-        ))}
+      <div className="space-y-4 p-4">
+        <Skeleton variant="line" className="h-3 w-full" />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="min-h-24 bg-tint px-3 pb-3 pt-4">
+              <Skeleton variant="line" className="h-5 w-20" />
+              <Skeleton variant="line" className="mt-2 h-8 w-10" />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -117,7 +136,10 @@ function SummaryTilesGridContent() {
   return (
     <section data-tour="summary-tiles" aria-labelledby="cases-title" className={cn(WIDGET_CONTAINER_CLASSES, "overflow-hidden")}>
       <WidgetHeader id="cases-title" title="Cases" count={total} action={<WidgetLink href="/cases">All cases</WidgetLink>} />
-      <CountRow cells={cells} />
+      <div className="space-y-4 p-4">
+        <StageSplit cells={cells} />
+        <CountRow cells={cells} />
+      </div>
     </section>
   );
 }

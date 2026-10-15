@@ -5,11 +5,12 @@
 
 :root {
   /* Core */
-  /* THE CALM SYSTEM (Oct 14 2026). One flat page, white surfaces, near-black
-     text in three levels, light lines that only group, a darker line around
+  /* THE SYSTEM (Oct 14 2026, with character back Oct 15). One flat page,
+     white surfaces, near-black text in three levels, a few solid objects
+     (2px ink edge, hard shadow) for what matters, a darker line around
      controls (WCAG 1.4.11), and one lime for the main action. Every pair was
      measured: text-1/2/3 are 17.65, 10.41 and 6.21:1 on the page, and no
-     text colour falls under 4.87:1 on any surface. */
+     text colour falls under 4.77:1 on any surface (calm-system.test.ts). */
   --background: #FAFAFA;
   --foreground: #141414;
   --card: #FFFFFF;
@@ -75,8 +76,9 @@
      hard 4px shadow. Everything else sits on the ground with no box. */
   --object-border: #141414;
   --object-shadow: 4px 4px 0 0 #141414;
-  /* A case's folder: the manila the case detail's sections sit in. */
-  --folder: #F5E6C8;
+  /* A case's folder: the manila the case detail's sections sit in, light
+     enough that the green ink (4.61:1) and control lines (3.12:1) clear it. */
+  --folder: #F7EBD3;
   --elev-overlay: 0 12px 32px -8px rgba(20, 20, 20, 0.18), 0 2px 6px rgba(20, 20, 20, 0.06);
 
   /* Case Stage Colors */
@@ -106,7 +108,7 @@
    */
   --data-good: #2ECC40;        /* cleared, approved, you */
   --data-warn: #E8A33D;        /* in progress, above baseline */
-  --data-warn-ink: #A84D08;    /* the same meaning, as text (5.03:1 on the tint) */
+  --data-warn-ink: #A84D08;    /* the same meaning, as text (4.93:1 on the tint) */
   --data-bad: #E05A44;         /* denied, unavailable, retrogressed */
   --data-bad-ink: #B3271A;     /* the same meaning, as text */
   --data-none: #94A3B8;        /* not reached, no data */
@@ -378,6 +380,8 @@ html {
      grow a seventh: small 14 (the floor), body 16, subheading 18, heading
      24, title 28 to 32, display 34 to 44. text-xs is 14px: nothing on the
      site is smaller. */
+  /* A bit smaller since Oct 15 2026, so more fits on a screen: page titles 30 to
+     36px, section headings 22 to 28px; body text stays 16px. */
   --text-xs: 0.875rem;
   --text-xs--line-height: 1.25rem;
   --text-sm: 0.875rem;
@@ -388,15 +392,15 @@ html {
   --text-lg--line-height: 1.75rem;
   --text-xl: 1.125rem;
   --text-xl--line-height: 1.75rem;
-  --text-2xl: 1.5rem;
-  --text-2xl--line-height: 2rem;
-  --text-3xl: clamp(1.75rem, 1.4rem + 1.2vw, 2rem);
+  --text-2xl: 1.375rem;
+  --text-2xl--line-height: 1.875rem;
+  --text-3xl: clamp(1.5rem, 1.3rem + 0.8vw, 1.75rem);
   --text-3xl--line-height: 1.2;
-  --text-4xl: clamp(2.125rem, 1.6rem + 2vw, 2.75rem);
+  --text-4xl: clamp(1.875rem, 1.55rem + 1.3vw, 2.25rem);
   --text-4xl--line-height: 1.12;
-  --text-5xl: clamp(2.125rem, 1.6rem + 2vw, 2.75rem);
+  --text-5xl: clamp(1.875rem, 1.55rem + 1.3vw, 2.25rem);
   --text-5xl--line-height: 1.12;
-  --text-6xl: clamp(2.125rem, 1.6rem + 2vw, 2.75rem);
+  --text-6xl: clamp(1.875rem, 1.55rem + 1.3vw, 2.25rem);
   --text-6xl--line-height: 1.12;
   --text-7xl: clamp(2.125rem, 1.6rem + 2vw, 2.75rem);
   --text-7xl--line-height: 1.12;
@@ -510,14 +514,6 @@ html {
     font-size: 0.875rem;
     font-weight: 600;
     color: #c9c9c9;
-  }
-  /* Station-board capitals, for comparison: only the one- and two-word labels. */
-  .flap-board[data-caps] .flap-label,
-  .flap-board[data-caps] .flap-board-head {
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
   }
   .flap-cells {
     display: flex;
@@ -668,7 +664,7 @@ html {
 /* A card's heading row: a band in its stage's colour on top, ink otherwise. */
 .detail-card-head.ch-pwd { border-top-color: var(--stage-pwd); }
 .detail-card-head.ch-rec { border-top-color: var(--stage-recruitment); }
-.detail-card-head.ch-yellow { border-top-color: var(--stage-eta9089); }
+.detail-card-head.ch-eta { border-top-color: var(--stage-eta9089); }
 .detail-card-head.ch-i140 { border-top-color: var(--stage-i140); }
 .detail-card-head.ch-muted { border-top-color: var(--stage-closed); }
 .detail-card-head {
@@ -761,8 +757,17 @@ html {
 .req-item { display: flex; gap: 8px; font-size: 1rem; overflow-wrap: break-word; word-break: break-word; min-width: 0; }
 .req-bullet { color: var(--muted-foreground); }
 
-/* Next up: the page's one object, the step that's due. */
-.next-up { background: var(--card); display: flex; overflow: hidden; border: 2px solid var(--object-border); box-shadow: var(--object-shadow); }
+/* Next up: the page's one object, the step that's due, under a strip of
+   caution tape (the live site's yellow and black, never recoloured; the
+   urgency colour is on the countdown). */
+.next-up { position: relative; padding-top: 8px; background: var(--card); display: flex; overflow: hidden; border: 2px solid var(--object-border); box-shadow: var(--object-shadow); }
+.next-up::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 8px;
+  background: repeating-linear-gradient(-45deg, #fbbf24 0 10px, #141414 10px 20px);
+}
 .next-up-label { font-size: 0.875rem; color: var(--muted-foreground); margin-bottom: 2px; }
 .next-up-main { flex: 1; padding: 16px 20px; display: flex; align-items: center; gap: 14px; }
 .next-up-icon { width: 28px; height: 28px; color: var(--primary-text); display: grid; place-items: center; flex-shrink: 0; }
@@ -1875,12 +1880,6 @@ input[type="week"] {
 
 
 
-/* SAMPLE ONLY (Oct 15 2026): the two data-page side lists, compared by
-   setting html[data-nav="all"]. One goes once a design is chosen. */
-@media (min-width: 1024px) {
-  html[data-nav="all"] .nav-one { display: none; }
-  html[data-nav="all"] .nav-all { display: block; }
-}
 
 /* ---------------------------------------------------------------------------
    The case folder (cases page): a manila folder with its tab above the card,
@@ -1893,31 +1892,32 @@ input[type="week"] {
   --muted-foreground: #4a4a4a;
   --soft-foreground: #2e2e2e;
   --border: rgba(20, 20, 20, 0.2);
-  --input: #6b6b6b;
+  --input: #595959;
   --card: #fdf6e6;
   --accent: rgba(20, 20, 20, 0.06);
-  --primary-text: #1a7a25;
+  /* Inks darkened to clear 4.5:1 on the tan in both themes (the dark
+     theme's tan is #dcc79b): green 4.66, red 4.96, amber 5.38. */
+  --primary-text: #14601d;
   --tint: #ecdcb6;
+  --object-border: #141414;
   --muted: #fdf6e6;
   --secondary: #fdf6e6;
   --secondary-foreground: #141414;
   --accent-foreground: #141414;
-  --data-good-ink: #1a7a25;
-  --data-warn-ink: #8f4006;
-  --data-bad-ink: #b3271a;
-  --destructive-text: #c00000;
+  --data-good-ink: #14601d;
+  --data-warn-ink: #7a3605;
+  --data-bad-ink: #a30000;
+  --destructive-text: #a30000;
   color: #141414;
   background-color: #f5e6c8;
   border: 2px solid #141414;
-  box-shadow: 4px 4px 0 0 #141414;
+  box-shadow: var(--object-shadow);
 }
 .dark .manila {
   background-color: #dcc79b;
-  box-shadow: 4px 4px 0 0 #000;
 }
-.manila:hover { background-color: #f1dfbb; }
-.dark .manila:hover { background-color: #d6bf90; }
-/* The tab: same paper, the ink edge on three sides, sitting on the folder. */
+/* The tab: the stage's colour (STAGE_VISUALS fill and text, set on the
+   element), with the ink edge on three sides, sitting on the folder. */
 .manila-tab {
   position: absolute;
   left: -2px;
@@ -1928,11 +1928,9 @@ input[type="week"] {
   max-width: 70%;
   height: 1.75rem;
   padding: 0 0.75rem;
-  background-color: inherit;
   border: 2px solid #141414;
   border-bottom: 0;
   font-size: 0.875rem;
   font-weight: 600;
 }
-.manila-tab > * { background: transparent; padding: 0; }
 .manila-closed { filter: grayscale(1); }
