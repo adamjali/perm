@@ -40,6 +40,21 @@ describe("SeasonalTimingPanel", () => {
     expect(screen.getByText("Today, Oct 3")).toBeTruthy();
   });
 
+  it("says why an H-2A job is counted from filing, and drops the rule's date", () => {
+    const view = timingView({ caseNumber: "H-300-26258-234946", filingDate: "2026-09-15", firstDay: "2027-02-15", today: "2026-09-20", timing })!;
+    render(<SeasonalTimingPanel view={view} firstDay="2027-02-15" filingDate="2026-09-15" />);
+    expect(screen.getByText(/This job starts February 15, 2027, more than 75 days after filing/)).toBeTruthy();
+    expect(screen.getByText(/were decided 17 to 35 days after filing/)).toBeTruthy();
+    expect(screen.queryByText(/The rule has DOL decide/)).toBeNull();
+  });
+
+  it("prints no passed date as the estimate: any day now", () => {
+    const view = timingView({ caseNumber: "C-500-26189-084701", filingDate: "2026-07-08", firstDay: null, today: "2026-10-03", timing })!;
+    render(<SeasonalTimingPanel view={view} firstDay={null} filingDate="2026-07-08" />);
+    expect(screen.getByText(/The usual day has passed, so the decision could come any day now/)).toBeTruthy();
+    expect(screen.queryByText(/most often around/)).toBeNull();
+  });
+
   it("counts a CW-1 case from filing, says when it's past most, and names no rule", () => {
     const view = timingView({ caseNumber: "C-500-26189-084701", filingDate: "2026-07-08", firstDay: null, today: "2026-10-03", timing })!;
     render(<SeasonalTimingPanel view={view} firstDay={null} filingDate="2026-07-08" />);

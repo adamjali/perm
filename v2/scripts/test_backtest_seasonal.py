@@ -74,6 +74,27 @@ def main() -> int:
     check("pooled is pulled toward the summer's 30", jan.get("pooled/filed", {}).get("typicalMissDays", 0) > 10, True)
     check("the page's own totals are carried at the top", out["page"] is not None, True)
 
+    # H-2A, Oct 15 2026: the first-day clock, unless the first day is more
+    # than 75 days after filing or so close the usual lead lands before filing.
+    start = {"n": 100, "p10": 13, "p25": 25, "p50": 33, "p75": 42, "p90": 52}
+    filed = {"n": 100, "p10": 11, "p25": 17, "p50": 26, "p75": 35, "p90": 44}
+    check("60 days out: the first-day clock", bt.page_clock(row(date(2025, 4, 1), 20, 40), start), "start")
+    check("exactly 75 days out: still the first-day clock", bt.page_clock(row(date(2025, 4, 1), 20, 55), start), "start")
+    check("76 days out: from filing", bt.page_clock(row(date(2025, 4, 1), 20, 56), start), "filed")
+    check("first day 25 days out, under the 33-day lead: from filing",
+          bt.page_clock(row(date(2025, 4, 1), 20, 5), start), "filed")
+    herder = [row(date(2025, 4, 1), 20, 130)]  # decided 20 days in, first day 150 days out
+    check("a far first day is scored from filing: the date 6 days late, not 97",
+          bt.score_page(herder, start, filed)["biasDays"], -6)
+    h2a = []
+    for y in (2024, 2025):
+        for i in range(60):
+            h2a.append(row(date(y, 1, 2), 26 + i % 3, 33))
+            h2a.append(row(date(y, 7, 1), 26 + i % 3, 33))
+    page = bt.backtest_visa(h2a, "H-2A", lambda lo, hi: 0)
+    check("the page method for H-2A is the mixed clock", page["pageMethod"], "pooled/page")
+    check("its totals are carried at the top", page["page"] is not None and page["page"]["cases"] > 0, True)
+
     print(f"\n{len(FAILED)} failed")
     return 1 if FAILED else 0
 

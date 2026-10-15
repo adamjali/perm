@@ -59,13 +59,16 @@ export function SeasonalTimingPanel({
         </p>
       ) : (
       <p className="max-w-2xl text-base leading-relaxed text-soft">
+        {view.filedBecause && firstDay
+          ? `This job starts ${day(firstDay)}, ${view.filedBecause === "far" ? "more than 75 days after filing, and DOL decides jobs that far out within weeks of filing" : "close to its filing date"}, so it's counted from filing. `
+          : ""}
         {start
           ? `Half of the H-2A applications DOL certified were decided ${view.days.to} to ${view.days.from} days before the work began. For this job, starting ${firstDay ? day(firstDay) : "on its first day"}, that's `
           : `Half of the ${view.visa} applications DOL certified${view.season ? ` that were filed ${view.season}` : ""} were decided ${view.days.from} to ${view.days.to} days after filing. For this case${filingDate ? `, filed ${day(filingDate)}` : ""}, that's `}
         <b className="font-semibold text-foreground">
           {day(view.from)} to {day(view.to)}
         </b>
-        , most often around {day(view.typical)}.
+        {view.anyDayNow ? ". The usual day has passed, so the decision could come any day now." : `, most often around ${day(view.typical)}.`}
       </p>
       )}{" "}
       <div className="mt-5" aria-hidden="true">

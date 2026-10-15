@@ -11,6 +11,15 @@
  * day is placed against that day. H-2B and CW-1 have no such deadline and
  * their decisions land on both sides of the start date (a quarter of H-2B
  * certifications came after it), so they are placed against the filing date.
+ *
+ * TWO H-2A CASES THE FIRST DAY CAN'T DATE (Oct 15 2026). Dated on its own
+ * filing day from DOL's certifications decided before it, over 32,539 H-2A
+ * applications filed January 2025 to March 2026: a first day more than 75
+ * days after filing (2.3%, most of them range livestock herders) was decided
+ * weeks before the first-day clock's date (typically 25 days off from 76 to
+ * 120 days out, 75 past that; 16 and 17 from filing), and a first day so
+ * close that the usual lead lands before filing was decided a month after
+ * it (31 days off; 9 from filing). Both are counted from filing.
  */
 
 import type { GroupPick } from "@/lib/h2bGroups";
@@ -166,7 +175,18 @@ export interface TimingView {
   season: string | null;
   /** An H-2B application in one of DOL's assignment groups: the group's own figures. */
   group: GroupPick | null;
+  /**
+   * An H-2A case counted from filing although its first day is known: the
+   * first day is too far out (`far`) or too close (`near`) for the first-day
+   * clock to date it.
+   */
+  filedBecause: "far" | "near" | null;
+  /** The typical day has passed: the decision could come any day now. */
+  anyDayNow: boolean;
 }
+
+/** An H-2A first day more than this many days after filing is counted from filing. */
+export const H2A_FAR_FIRST_DAY_DAYS = 75;
 
 
 function addDays(day: string, n: number): string {
@@ -217,7 +237,15 @@ export function timingView(args: {
   let basis: "start" | "filed";
   let at: (days: number) => string;
   let p: TimingPercentiles;
-  if (visa === "H-2A" && firstDay && isDay(firstDay) && block.leadDays) {
+  // The first-day clock, unless the first day is too far out or too close to
+  // date the case (see the top of this file).
+  let filedBecause: "far" | "near" | null = null;
+  if (visa === "H-2A" && firstDay && isDay(firstDay) && block.leadDays && filingDate && isDay(filingDate)) {
+    const ahead = dayNumber(firstDay.slice(0, 10)) - dayNumber(filingDate.slice(0, 10));
+    if (ahead > H2A_FAR_FIRST_DAY_DAYS) filedBecause = "far";
+    else if (addDays(firstDay, -block.leadDays.p50) < filingDate.slice(0, 10)) filedBecause = "near";
+  }
+  if (visa === "H-2A" && firstDay && isDay(firstDay) && block.leadDays && !filedBecause) {
     // Counted back from the first day: the 90th percentile of lead time is the
     // EARLIEST decision date, so the order flips.
     basis = "start";
@@ -250,6 +278,7 @@ export function timingView(args: {
     days: { from: p.p25, typical: p.p50, to: p.p75 },
     ruleDay: null,
     season: seasonal && key ? seasonLabel(key) : null,
+    filedBecause,
   });
 }
 
@@ -268,6 +297,7 @@ function finish(a: {
   ruleDay: string | null;
   season?: string | null;
   group?: GroupPick | null;
+  filedBecause?: "far" | "near" | null;
 }): TimingView {
   const span = dayNumber(a.late) - dayNumber(a.early);
   const raw = span > 0 ? (dayNumber(a.today) - dayNumber(a.early)) / span : 0;
@@ -290,7 +320,21 @@ function finish(a: {
     onTimeShare: a.basis === "start" && a.block.onTime ? a.block.onTime.share : null,
     season: a.season ?? null,
     group: a.group ?? null,
+    filedBecause: a.filedBecause ?? null,
+    anyDayNow: a.today > a.typical,
   };
+}
+
+/**
+ * The view as a recorded estimate: its typical day and middle half, never
+ * before `today` (a typical day that has passed is "any day now", so the
+ * estimate is today). The scorecard records exactly what the page says.
+ */
+export function viewEstimate(view: TimingView): { predicted: string; early: string; late: string } {
+  const predicted = view.anyDayNow ? view.today : view.typical;
+  const early = view.from < view.today ? view.today : view.from;
+  const late = view.to < predicted ? predicted : view.to;
+  return { predicted, early: early > predicted ? predicted : early, late };
 }
 
 /** How the page's own method did on past seasons: perm_docs['seasonal_backtest']. */

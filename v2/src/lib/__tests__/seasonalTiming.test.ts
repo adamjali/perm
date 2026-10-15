@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { easternDay, parseSeasonalTiming, timingView, type SeasonalTiming } from "../seasonalTiming";
+import { easternDay, H2A_FAR_FIRST_DAY_DAYS, parseSeasonalTiming, timingView, viewEstimate, type SeasonalTiming } from "../seasonalTiming";
 
 // The production doc of Oct 3 2026 (FY2026 files), trimmed to what the tests read.
 const DOC = {
@@ -79,6 +79,35 @@ describe("timingView", () => {
       ruleDay: null,
       days: { from: 18, typical: 27, to: 36 },
     });
+  });
+
+  it("counts an H-2A job starting more than 75 days after filing from filing (range herders)", () => {
+    // Filed Sep 15 2026 for a first day of Feb 15 2027: the first-day clock would say January.
+    const v = timingView({ caseNumber: "H-300-26258-234946", filingDate: "2026-09-15", firstDay: "2027-02-15", today: "2026-09-20", timing });
+    expect(v).toMatchObject({ basis: "filed", filedBecause: "far", typical: "2026-10-12", ruleDay: null });
+    expect(H2A_FAR_FIRST_DAY_DAYS).toBe(75);
+  });
+
+  it("keeps the first-day clock at exactly 75 days out", () => {
+    // Sep 17 to Dec 1 is 75 days: the first test above.
+    const v = timingView({ caseNumber: "H-300-26260-241810", filingDate: "2026-09-17", firstDay: "2026-12-01", today: "2026-10-03", timing });
+    expect(v).toMatchObject({ basis: "start", filedBecause: null });
+  });
+
+  it("counts an H-2A job starting so soon that the usual lead lands before filing from filing", () => {
+    // First day Oct 25, 24 days after filing; 32 days before it is Sep 23, before the Oct 1 filing.
+    const v = timingView({ caseNumber: "H-300-26274-270001", filingDate: "2026-10-01", firstDay: "2026-10-25", today: "2026-10-03", timing });
+    expect(v).toMatchObject({ basis: "filed", filedBecause: "near", typical: "2026-10-28" });
+  });
+
+  it("never records a passed typical day: it is any day now, today", () => {
+    // Filed Sep 1, no first day: typical Sep 28, middle half Sep 19 to Oct 7; read Oct 3.
+    const v = timingView({ caseNumber: "H-300-26244-200001", filingDate: "2026-09-01", firstDay: null, today: "2026-10-03", timing })!;
+    expect(v.anyDayNow).toBe(true);
+    expect(viewEstimate(v)).toEqual({ predicted: "2026-10-03", early: "2026-10-03", late: "2026-10-07" });
+    const fresh = timingView({ caseNumber: "H-300-26260-241810", filingDate: "2026-09-17", firstDay: null, today: "2026-10-03", timing })!;
+    expect(fresh.anyDayNow).toBe(false);
+    expect(viewEstimate(fresh)).toEqual({ predicted: "2026-10-14", early: "2026-10-05", late: "2026-10-23" });
   });
 
   it("counts H-2B from filing, because its decisions land on both sides of the start date", () => {

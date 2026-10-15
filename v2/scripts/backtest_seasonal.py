@@ -100,30 +100,52 @@ def training(rows: list[dict], origin: date, method: str, clock: str) -> list[in
     return out
 
 
-def score(test: list[dict], p: dict, clock: str) -> dict:
-    """Error is decided minus the predicted decision day: positive means DOL was later."""
-    errs, mid, wide = [], 0, 0
-    for r in test:
-        if clock == "start":
-            v = r["lead"]
-            err = p["p50"] - v  # predicted day is start - p50; actual is start - lead
-            mid += p["p25"] <= v <= p["p75"]
-            wide += p["p10"] <= v <= p["p90"]
-        else:
-            v = r["waited"]
-            err = v - p["p50"]
-            mid += p["p25"] <= v <= p["p75"]
-            wide += p["p10"] <= v <= p["p90"]
-        errs.append(err)
+# An H-2A first day more than this many days after filing is counted from
+# filing, as is one so close that the usual lead lands before filing
+# (H2A_FAR_FIRST_DAY_DAYS and timingView in src/lib/seasonalTiming.ts).
+H2A_FAR_FIRST_DAY_DAYS = 75
+
+
+def page_clock(r: dict, start_fit: dict) -> str:
+    """The clock the case page uses for one H-2A application with a first day."""
+    ahead = r["lead"] + r["waited"]  # first day minus filing
+    return "filed" if ahead > H2A_FAR_FIRST_DAY_DAYS or ahead < start_fit["p50"] else "start"
+
+
+def row_score(r: dict, p: dict, clock: str) -> tuple[int, bool, bool]:
+    """(error, inside the middle half, inside p10 to p90). Error is decided minus
+    the predicted decision day: positive means DOL was later."""
+    if clock == "start":
+        v = r["lead"]
+        return p["p50"] - v, p["p25"] <= v <= p["p75"], p["p10"] <= v <= p["p90"]
+    v = r["waited"]
+    return v - p["p50"], p["p25"] <= v <= p["p75"], p["p10"] <= v <= p["p90"]
+
+
+def summarise(scored: list[tuple[int, bool, bool]]) -> dict:
+    errs = [e for e, _, _ in scored]
     n = len(errs)
     return {
         "cases": n,
-        "middleHalfShare": round(mid / n, 3),
-        "wideShare": round(wide / n, 3),
+        "middleHalfShare": round(sum(m for _, m, _ in scored) / n, 3),
+        "wideShare": round(sum(w for _, _, w in scored) / n, 3),
         "typicalMissDays": round(statistics.median(abs(e) for e in errs), 1),
         "biasDays": round(statistics.median(errs), 1),
         "within7Share": round(sum(abs(e) <= 7 for e in errs) / n, 3),
     }
+
+
+def score(test: list[dict], p: dict, clock: str) -> dict:
+    return summarise([row_score(r, p, clock) for r in test])
+
+
+def score_page(test: list[dict], start_fit: dict, filed_fit: dict) -> dict:
+    """The H-2A page: the first-day clock, or the filing clock where page_clock says."""
+    scored = []
+    for r in test:
+        clock = page_clock(r, start_fit)
+        scored.append(row_score(r, start_fit if clock == "start" else filed_fit, clock))
+    return summarise(scored)
 
 
 def load(db: Database, visa: str) -> list[dict]:
@@ -161,11 +183,13 @@ def still_pending(db: Database, visa: str, lo: date, hi: date) -> int:
 
 
 # What the case page uses for each visa (src/lib/seasonalTiming.ts, from
-# build_seasonal_timing.py): H-2A against the first day of work, pooled; H-2B
-# forward from filing, from the same quarter a year earlier; CW-1 forward from
-# filing, pooled. Every method on both clocks is tested for every visa, so the
-# choice is measured rather than assumed; these three won (Oct 7 2026).
-PAGE_METHOD = {"H-2A": "pooled/start", "H-2B": "same-season/filed", "CW-1": "pooled/filed"}
+# build_seasonal_timing.py): H-2A against the first day of work, pooled, but
+# from filing when the first day is too far out or too close (page_clock,
+# Oct 15 2026); H-2B forward from filing, from the same quarter a year
+# earlier; CW-1 forward from filing, pooled. Every method on both clocks is
+# tested for every visa, so the choice is measured rather than assumed; these
+# won (Oct 7 2026, and the H-2A split Oct 15).
+PAGE_METHOD = {"H-2A": "pooled/page", "H-2B": "same-season/filed", "CW-1": "pooled/filed"}
 CLOCKS = ("start", "filed")
 
 
@@ -191,12 +215,17 @@ def backtest_visa(rows: list[dict], visa: str, pending_in) -> dict:
                 p = fit(training(rows, origin, m, clock))
                 if p:
                     q["methods"][f"{m}/{clock}"] = {"fit": p, **score(test, p, clock)}
+        if visa == "H-2A":
+            for m in METHODS:
+                ps, pf = fit(training(rows, origin, m, "start")), fit(training(rows, origin, m, "filed"))
+                if ps and pf:
+                    q["methods"][f"{m}/page"] = {"fit": {"start": ps, "filed": pf}, **score_page(test, ps, pf)}
         if not q["methods"]:
             continue
         q["stillPending"] = waiting
         quarters.append(q)
     totals = {}
-    for key in [f"{m}/{c}" for c in CLOCKS for m in METHODS]:
+    for key in [f"{m}/{c}" for c in (*CLOCKS, "page") for m in METHODS]:
         cells = [q["methods"][key] for q in quarters if key in q["methods"]]
         if not cells:
             continue

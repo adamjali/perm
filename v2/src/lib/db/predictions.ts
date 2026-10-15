@@ -19,7 +19,7 @@ import { scorecardAlarms } from "@/lib/scorecard/alarms";
 import type { BacktestRangeFields } from "@/lib/rangeCoverage";
 import { isCurrentMethod, parseSupplyDivision, readMethods, readOurs, readRival, readSupplyDivision } from "@/lib/scorecard/verdict";
 import { SETTLED_BY_FILE_STATUSES } from "@/lib/seasonalDetails";
-import { timingView } from "@/lib/seasonalTiming";
+import { timingView, viewEstimate } from "@/lib/seasonalTiming";
 import { BULLETIN_FIRST_CAPTURES } from "@/lib/bulletinCaptures";
 import { monthAfter, releaseEstimate } from "@/lib/bulletinReleaseEstimate";
 import { getSeasonalCheck, getSeasonalTiming } from "@/lib/db/seasonalTiming";
@@ -296,6 +296,8 @@ export async function predictSeasonal(recordedOn: string): Promise<NewPrediction
       group: g && groupTiming ? pickGroup(groupTiming, g.peak, g.grp) : null,
     });
     if (!view) continue;
+    // What the page says: a typical day that has passed is today, "any day now".
+    const said = viewEstimate(view);
     out.push({
       source: "ours",
       program: "seasonal",
@@ -305,9 +307,9 @@ export async function predictSeasonal(recordedOn: string): Promise<NewPrediction
       // "H-2B-filed-season": the visa, the clock, and whether one season's
       // figures were used, so a change of method shows in the split.
       model: view.group ? "H-2B-group" : `${view.visa}-${view.basis}${view.season ? "-season" : ""}`,
-      predicted: view.typical,
-      bandEarly: view.from,
-      bandLate: view.to,
+      predicted: said.predicted,
+      bandEarly: said.early,
+      bandLate: said.late,
       casesAhead: null,
     });
   }
