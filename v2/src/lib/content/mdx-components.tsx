@@ -326,7 +326,7 @@ export const mdxComponents: MDXComponents = {
   // Code
   code: ({ children, ...props }) => (
     <code
-      className="border border-border bg-muted px-1.5 py-0.5 font-mono text-sm"
+      className="bg-tint px-1.5 py-0.5 font-mono text-sm"
       {...props}
     >
       {children}

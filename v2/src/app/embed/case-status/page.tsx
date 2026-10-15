@@ -70,7 +70,7 @@ function Row({ term, value, noTranslate }: { term: string; value: string | null;
 function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | null }) {
   if (!answer) {
     return (
-      <p className="border border-border bg-card p-4 text-base">
+      <p className="bg-tint p-4 text-base">
         <b>{typed}</b> isn&apos;t a DOL case number. A PERM number looks like{" "}
         <span translate="no">G-100-26125-868956</span>.
       </p>
@@ -79,7 +79,7 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
   const full = `/perm-case-status?case=${encodeURIComponent(answer.caseNumber)}`;
   if (!answer.found) {
     return (
-      <div className="border border-border bg-card p-4 text-base">
+      <div className="bg-tint p-4 text-base">
         <p>
           {answer.capped
             ? "PERM Tracker holds no record of this number, and live checks with DOL from this site are used up for today."
@@ -97,7 +97,7 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
   }
   const meaning = answer.program === "perm" && answer.status ? getStatusMeaning(answer.status) : null;
   return (
-    <div className="border border-border bg-card p-4">
+    <div className="object mb-1 mr-1 p-4">
       <p className="text-sm font-bold text-muted-foreground">{PROGRAM[answer.program]}</p>{" "}
       <p className="mt-1 font-heading text-2xl font-bold leading-tight" translate="no">
         {prettyStatus(answer.status ?? "")}
@@ -124,16 +124,16 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
 function QueueNow({ now }: { now: DolNow | null }) {
   if (!now || (now.frontier === null && now.days === null)) return null;
   return (
-    <div className="mt-5 border border-border bg-card">
-      <dl className="grid grid-cols-2 gap-px bg-border [&>*]:min-w-0 [&>*:last-child:nth-child(odd)]:col-span-2">
+    <div className="mt-5">
+      <dl className="grid grid-cols-2 gap-2 [&>*]:min-w-0 [&>*:last-child:nth-child(odd)]:col-span-2">
         {now.frontier ? (
-          <div className="bg-card p-3">
+          <div className="bg-tint p-3">
             <dt className="text-sm text-muted-foreground">DOL is deciding PERMs filed in{" "}</dt>{" "}
             <dd className="mt-0.5 font-heading text-xl font-bold">{now.frontier}</dd>
           </div>
         ) : null}{" "}
         {now.days !== null ? (
-          <div className="bg-card p-3">
+          <div className="bg-tint p-3">
             <dt className="text-sm text-muted-foreground">Its average, filing to decision{" "}</dt>{" "}
             <dd className="mt-0.5 font-heading text-xl font-bold tabular-nums">{now.days} days</dd>
           </div>

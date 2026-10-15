@@ -62,6 +62,18 @@ describe("the calm system", () => {
     expect(findAll(tok("(?:[\\w-]+:)*bg-(?:green|emerald|lime)-(?:50|100|200)"))).toEqual([]);
   });
 
+  it("groups nothing in a light hairline box: the tint or an object does that", () => {
+    // Oct 15 2026: about 600 such boxes were sorted by hand into the page's one
+    // object, the tint, or an ink rule over a table. Admin, the shared UI
+    // primitives, the site chrome, article figures and the homepage were left as
+    // they are; a floating panel keeps its edge so it reads over the page.
+    const SKIP = /^(components\/(admin|ui|layout|content|search|home|skeletons)\/|app\/\(authenticated\)\/admin\/)/;
+    const FLOATING = ["components/calendar/CalendarToolbar.tsx"];
+    const hits = findAll(/border border-border(?:\/\d+)? bg-(?:card|background|muted|tint)\S*(?: [^"'`\n]*?)? p[xy]?-\d/g)
+      .filter((h) => !SKIP.test(h) && !FLOATING.some((f) => h.startsWith(`${f}:`)));
+    expect(hits).toEqual([]);
+  });
+
   it("draws no hard offset shadow", () => {
     expect(findAll(tok("(?:[\\w-]+:)*shadow-(?:hard(?:-sm|-lg)?|\\[[^\\]\\s]*px[^\\]\\s]*\\])"))).toEqual([]);
   });
