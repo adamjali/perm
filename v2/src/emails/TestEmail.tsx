@@ -55,7 +55,7 @@ export function TestEmail({
       <Section style={styles.ctaSection}>
         <Link
           href={settingsUrl}
-          className="em-button-primary"
+          className="em-cta-button"
           style={styles.ctaButton}
         >
           Manage notification settings
@@ -87,17 +87,16 @@ const styles = {
     textAlign: "center" as const,
     marginBottom: "24px",
   },
-  // A solid lime stamp with an ink label (9.8:1), the site's "it worked" colour.
   badgeBox: {
-    backgroundColor: "#2ECC40",
-    border: "2px solid #000001",
+    backgroundColor: "#dcfce7",
+    border: "2px solid #22c55e",
     padding: "12px 20px",
     display: "inline-block" as const,
   },
   badgeText: {
-    color: "#000001",
+    color: "#166534",
     fontSize: "14px",
-    fontWeight: "700" as const,
+    fontWeight: "600" as const,
     margin: "0",
   },
   ctaSection: {
@@ -106,13 +105,14 @@ const styles = {
   },
   ctaButton: {
     display: "inline-block" as const,
-    backgroundColor: "#2ECC40",
-    color: "#000001",
+    backgroundColor: "#18181b",
+    color: "#fffffe",
     padding: "14px 32px",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
     border: "2px solid #000001",
+    boxShadow: "4px 4px 0 #2ECC40",
   },
 } as const;
 

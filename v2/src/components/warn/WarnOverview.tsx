@@ -101,7 +101,7 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
           <span className="mt-1 block text-sm text-muted-foreground">Every notice held, each sponsor by its own page.</span>
         </figcaption>{" "}
         <ChartTips label="Sponsors by employees named in their layoff notices" className="mt-5">
-          <ol className="space-y-2">
+          <ol className="space-y-0 sm:space-y-2">
             {top.map((s) => (
               <Fragment key={s.slug}>
                 <li
@@ -110,7 +110,7 @@ export function WarnOverview({ rows }: { rows: WarnNotice[] }) {
                 >
                   <Link
                     href={`/perm-employers/${s.slug}`}
-                    className="link truncate text-sm"
+                    className="link block truncate py-3 text-sm leading-5 sm:py-0"
                   >
                     {s.name}
                   </Link>{" "}

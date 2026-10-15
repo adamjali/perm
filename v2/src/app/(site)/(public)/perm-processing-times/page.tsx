@@ -565,7 +565,7 @@ export default async function PermProcessingTimesPage() {
           href="/tools/perm-timeline-calculator"
           className={buttonVariants({ variant: "outline", size: "lg", className: "mt-6" })}
         >
-          Open the processing time calculator
+          Estimate your decision date
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>

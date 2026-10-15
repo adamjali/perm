@@ -101,7 +101,7 @@ export function ScopeSelect({
         value={value}
         aria-label={hint ? `${label}. ${hint}` : label}
         onChange={(e) => onChange(e.target.value)}
-        className="min-w-0 max-w-[16rem] bg-transparent py-2 text-base outline-none"
+        className="min-h-11 min-w-0 max-w-[16rem] bg-transparent text-base outline-none"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

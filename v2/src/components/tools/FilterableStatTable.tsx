@@ -387,7 +387,7 @@ export function FilterableStatTable<T>({
                 setPage(0);
               }}
               placeholder={searchPlaceholder}
-              className="w-full min-w-0 bg-transparent py-2 text-base outline-none placeholder:text-muted-foreground"
+              className="min-h-11 w-full min-w-0 bg-transparent text-base outline-none placeholder:text-muted-foreground"
             />
           </label>
 
@@ -405,7 +405,7 @@ export function FilterableStatTable<T>({
                   setFacetValues((v) => ({ ...v, [f.key]: e.target.value }));
                   setPage(0);
                 }}
-                className="min-w-0 bg-transparent py-2 text-base outline-none"
+                className="min-h-11 min-w-0 bg-transparent text-base outline-none"
               >
                 {/* The space that keeps option labels from gluing in the DOM sits
                     INSIDE each option: a whitespace text node between options
@@ -503,7 +503,7 @@ export function FilterableStatTable<T>({
                   setPageSize(Number(e.target.value));
                   setPage(0);
                 }}
-                className="border border-input bg-card px-2 py-1.5 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="min-h-11 border border-input bg-card px-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {PAGE_SIZES.map((n) => (
                   <option key={n} value={n}>{`${n === 0 ? "All" : n} `}</option>

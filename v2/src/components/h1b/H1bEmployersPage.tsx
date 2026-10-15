@@ -226,17 +226,17 @@ export async function H1bEmployersPage({ state }: { state: string }) {
           declared one.
         </p>
       </FinePrint>{" "}
-      <nav aria-label="Related" className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-base">
-        <Link href="/lca-wages" className="link">
+      <nav aria-label="Related" className="mt-8 flex flex-wrap gap-x-6 text-base">
+        <Link href="/lca-wages" className="link inline-flex min-h-11 items-center">
           H-1B salaries
         </Link>{" "}
-        <Link href="/sponsor-finder" className="link">
+        <Link href="/sponsor-finder" className="link inline-flex min-h-11 items-center">
           Find a green card sponsor
         </Link>{" "}
-        <Link href="/h1b-lottery-odds" className="link">
+        <Link href="/h1b-lottery-odds" className="link inline-flex min-h-11 items-center">
           H-1B lottery odds
         </Link>{" "}
-        <Link href="/lca-cases" className="link">
+        <Link href="/lca-cases" className="link inline-flex min-h-11 items-center">
           Search H-1B LCAs
         </Link>
       </nav>{" "}
