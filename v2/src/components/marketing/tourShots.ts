@@ -45,10 +45,10 @@ export const TOUR_SHOTS: Record<TourSurface, WindowShots> = {
     narrowDark: { src: "/images/for-attorneys/case-detail-dark-phone.webp", width: 732, height: 2400 },
   },
   "edit-case": {
-    light: { src: "/images/for-attorneys/edit-case-light.webp", width: 1800, height: 1067 },
-    dark: { src: "/images/for-attorneys/edit-case-dark.webp", width: 1800, height: 1067 },
-    narrowLight: { src: "/images/for-attorneys/edit-case-light-phone.webp", width: 732, height: 2546 },
-    narrowDark: { src: "/images/for-attorneys/edit-case-dark-phone.webp", width: 732, height: 2546 },
+    light: { src: "/images/for-attorneys/edit-case-light.webp", width: 1800, height: 1060 },
+    dark: { src: "/images/for-attorneys/edit-case-dark.webp", width: 1800, height: 1060 },
+    narrowLight: { src: "/images/for-attorneys/edit-case-light-phone.webp", width: 732, height: 2536 },
+    narrowDark: { src: "/images/for-attorneys/edit-case-dark-phone.webp", width: 732, height: 2536 },
   },
   "calendar": {
     light: { src: "/images/for-attorneys/calendar-light.webp", width: 1800, height: 1458 },
