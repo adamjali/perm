@@ -5,6 +5,7 @@ import { StakesSection, SecuritySection, CTASection } from "@/components/home";
 import { AttorneyHero } from "@/components/home/AttorneyHero";
 import { AttorneyTour } from "@/components/home/AttorneyTour";
 import { FirmSiteSection } from "@/components/home/FirmSiteSection";
+import { SectionDivider } from "@/components/home/SectionDivider";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -39,7 +40,11 @@ export default function ForAttorneysPage() {
       <AttorneyTour />
       <FirmSiteSection />
       <StakesSection />
+      {/* Stepped seams between the grey stakes, the ink security band and the
+          lime close (round 2: the original's dividers). */}
+      <SectionDivider kind="ledger" above="var(--muted)" fill="#141414" />
       <SecuritySection />
+      <SectionDivider kind="notch" above="#141414" fill="var(--primary)" />
       <CTASection lead="app" />
     </>
   );

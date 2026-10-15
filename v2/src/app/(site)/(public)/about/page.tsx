@@ -419,7 +419,7 @@ export default async function AboutPage() {
         </h2>{" "}
         <a
           href="mailto:support@permtracker.app"
-          className="link mt-5 inline-block font-heading text-xl font-bold [overflow-wrap:anywhere] sm:text-3xl"
+          className="link mt-5 inline-flex min-h-11 items-center font-heading text-xl font-bold [overflow-wrap:anywhere] sm:text-3xl"
         >
           support@permtracker.app
         </a>{" "}

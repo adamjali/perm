@@ -23,6 +23,7 @@
  */
 
 import type { Metadata } from "next";
+import { SectionDivider } from "@/components/home/SectionDivider";
 import { withSocialCard } from "@/lib/socialCard";
 import {
   HeroSection,
@@ -178,6 +179,8 @@ export default async function HomePage() {
       <AudienceBlocks />
       <AboutSection record={record} />
       <FAQSection />
+      {/* A stepped seam into the lime close, as the original had. */}
+      <SectionDivider kind="step" above="var(--tint)" fill="var(--primary)" />
       <CTASection />
     </>
   );

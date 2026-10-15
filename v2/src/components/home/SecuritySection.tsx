@@ -19,7 +19,7 @@ export function SecuritySection() {
   return (
     // An ink band (`dark` resolves every token inside to the dark theme, so the
     // list reads on it unchanged), between the grey stakes and the lime close.
-    <section id="security" aria-labelledby="security-title" className="dark border-t-2 border-black bg-[#141414] text-foreground">
+    <section id="security" aria-labelledby="security-title" className="dark bg-[#141414] text-foreground">
       <div className="mx-auto max-w-[1200px] px-4 py-16 sm:px-8 sm:py-20">
         <div className="flex items-center gap-4">
           <span aria-hidden="true" className="grid size-12 shrink-0 place-items-center border-2 border-black bg-primary text-black">
