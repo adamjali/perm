@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState, useCallback, useRef, useMemo } from "react";
-import { FlagIcon, PlusIcon, SortAscendingIcon, TagIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
+import { PlusIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 // DateInput available for due date editing
 // import { DateInput } from "@/components/forms/DateInput";
 import { cn } from "@/lib/utils";
+import { ToneBadge } from "@/components/ui/badge";
+import { choiceVariants } from "@/components/ui/choice";
 import type {
   NoteEntry,
   NotePriority,
@@ -56,65 +58,23 @@ type FilterOption = "all" | "highPriority" | "pending" | "done";
 // CONSTANTS
 // ============================================================================
 
-const PRIORITY_CONFIG: Record<
-  NotePriority,
-  { label: string; color: string; bgColor: string; borderColor: string }
-> = {
-  high: {
-    label: "High",
-    color: "text-destructive",
-    bgColor: "bg-destructive/10",
-    borderColor: "border-destructive",
-  },
-  medium: {
-    label: "Medium",
-    color: "text-data-warn-ink",
-    bgColor: "bg-data-warn/15",
-    borderColor: "border-data-warn",
-  },
-  low: {
-    label: "Low",
-    color: "text-muted-foreground",
-    bgColor: "bg-muted",
-    borderColor: "border-border",
-  },
+/** A note's priority: its word, and the tone of its chip. */
+const PRIORITY_CONFIG: Record<NotePriority, { label: string; tone: "bad" | "warn" | "flat" }> = {
+  high: { label: "High", tone: "bad" },
+  medium: { label: "Medium", tone: "warn" },
+  low: { label: "Low", tone: "flat" },
 };
 
-const CATEGORY_CONFIG: Record<
-  NoteCategory,
-  { label: string; color: string; bgColor: string }
-> = {
-  "follow-up": {
-    label: "Follow-up",
-    color: "text-data-info-ink",
-    bgColor: "bg-data-info/10",
-  },
-  document: {
-    label: "Document",
-    color: "text-stage-recruitment-ink",
-    bgColor: "bg-stage-recruitment/10",
-  },
-  client: {
-    label: "Client",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  internal: {
-    label: "Internal",
-    color: "text-foreground",
-    bgColor: "bg-muted",
-  },
-  deadline: {
-    label: "Deadline",
-    color: "text-destructive",
-    bgColor: "bg-destructive/10",
-  },
-  other: {
-    label: "Other",
-    color: "text-foreground",
-    bgColor: "bg-muted",
-  },
-};
+/** The journal's quick filters, each with the count it shows. */
+const NOTE_FILTERS: ReadonlyArray<{ id: FilterOption; label: string; count: "total" | "highPriority" | "pending" | "done" }> = [
+  { id: "all", label: "All", count: "total" },
+  { id: "highPriority", label: "High priority", count: "highPriority" },
+  { id: "pending", label: "Pending", count: "pending" },
+  { id: "done", label: "Done", count: "done" },
+];
+
+/** The note controls' small native selects, at the 44px floor. */
+const NOTE_SELECT = "h-11 border border-input bg-card px-3 text-sm";
 
 // ============================================================================
 // HELPERS
@@ -420,13 +380,11 @@ export function NotesJournal({
         <div className="flex items-center justify-between">
           <Button
             type="button"
-            variant="default"
-            size="sm"
+            variant="outline"
             onClick={handleAddNote}
             disabled={!newNoteContent.trim() || notes.length >= NOTES_PER_CASE_MAX}
-            className="gap-1.5"
           >
-            <PlusIcon className="h-4 w-4" />
+            <PlusIcon className="size-4" aria-hidden="true" />
             Add note
           </Button>
           <span className="text-sm text-muted-foreground">
@@ -440,18 +398,14 @@ export function NotesJournal({
         )}
 
         {/* New note options (priority, category) */}
-        <>
           {showNewNoteOptions && (
-            <div
-              className="flex flex-wrap items-center gap-3 overflow-hidden"
-            >
-              {/* Priority selector */}
-              <div className="flex items-center gap-1.5">
-                <FlagIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                Priority
                 <select
                   value={newNotePriority}
                   onChange={(e) => setNewNotePriority(e.target.value as NotePriority)}
-                  className="h-7 rounded border border-input bg-background px-2 text-sm font-medium"
+                  className={NOTE_SELECT}
                 >
                   {NOTE_PRIORITIES.map((p) => (
                     <option key={p} value={p}>
@@ -459,15 +413,14 @@ export function NotesJournal({
                     </option>
                   ))}
                 </select>
-              </div>
+              </label>
 
-              {/* Category selector */}
-              <div className="flex items-center gap-1.5">
-                <TagIcon className="h-3.5 w-3.5 text-muted-foreground" />
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                Category
                 <select
                   value={newNoteCategory}
                   onChange={(e) => setNewNoteCategory(e.target.value as NoteCategory)}
-                  className="h-7 rounded border border-input bg-background px-2 text-sm font-medium"
+                  className={NOTE_SELECT}
                 >
                   {NOTE_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
@@ -475,82 +428,43 @@ export function NotesJournal({
                     </option>
                   ))}
                 </select>
-              </div>
+              </label>
             </div>
           )}
-        </>
       </div>
 
       {/* ========== FILTER & SORT CONTROLS ========== */}
       {notes.filter((n) => n.status !== "deleted").length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
-          {/* Quick filter buttons */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setFilterBy("all")}
-              className={cn(
-                "px-2 py-1 rounded text-sm font-medium transition-colors border",
-                filterBy === "all"
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
-              )}
-            >
-              All ({counts.total})
-            </button>
-            {counts.highPriority > 0 && (
+          {/* Quick filters: the shared choice look */}
+          <div className="flex flex-wrap items-center gap-2">
+            {NOTE_FILTERS.filter((f) => f.id !== "highPriority" || counts.highPriority > 0).map((f) => (
               <button
+                key={f.id}
                 type="button"
-                onClick={() => setFilterBy("highPriority")}
-                className={cn(
-                  "px-2 py-1 rounded text-sm font-medium transition-colors border",
-                  filterBy === "highPriority"
-                    ? "bg-data-warn text-black border-data-warn"
-                    : "bg-data-warn/15 text-data-warn-ink border-data-warn hover:border-data-warn"
-                )}
+                aria-pressed={filterBy === f.id}
+                onClick={() => setFilterBy(f.id)}
+                className={choiceVariants({ on: filterBy === f.id, className: "px-3" })}
               >
-                High Priority ({counts.highPriority})
+                {f.label}
+                <span className="text-muted-foreground tabular-nums"> {counts[f.count]}</span>
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setFilterBy("pending")}
-              className={cn(
-                "px-2 py-1 rounded text-sm font-medium transition-colors border",
-                filterBy === "pending"
-                  ? "bg-data-info text-white border-data-info"
-                  : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
-              )}
-            >
-              Pending ({counts.pending})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterBy("done")}
-              className={cn(
-                "px-2 py-1 rounded text-sm font-medium transition-colors border",
-                filterBy === "done"
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
-              )}
-            >
-              Done ({counts.done})
-            </button>
+            ))}
           </div>
 
           {/* Sort dropdown */}
-          <div className="flex items-center gap-1.5">
-            <SortAscendingIcon className="h-3.5 w-3.5 text-muted-foreground" />
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            Sort
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="h-7 rounded border border-input bg-background px-2 text-sm font-medium"
+              className={NOTE_SELECT}
             >
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="priority">By priority</option>
             </select>
-          </div>
+          </label>
         </div>
       )}
 
@@ -561,22 +475,14 @@ export function NotesJournal({
             {processedNotes.slice(0, shownCount).map((note) => {
               const timestamp = formatTimestamp(note.createdAt);
               const priorityConfig = PRIORITY_CONFIG[note.priority || "medium"];
-              const categoryConfig = CATEGORY_CONFIG[note.category || "other"];
               const isEditing = editingNoteId === note.id;
 
               return (
                 <div
                   key={note.id}
                   className={cn(
-                    "group rounded-lg border p-3 transition-colors duration-150",
-                    "",
-                    "",
-                    note.status === "done"
-                      ? "bg-muted/50 opacity-60 border-muted"
-                      : "bg-background border-border hover:border-muted-foreground/50",
-                    note.priority === "high" &&
-                      note.status !== "done" &&
-                      "ring-2 ring-destructive/50"
+                    "group border border-border p-3",
+                    note.priority === "high" && note.status !== "done" && "border-l-2 border-l-destructive",
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -595,26 +501,9 @@ export function NotesJournal({
                       {/* Badges row */}
                       <div className="flex flex-wrap items-center gap-1.5">
                         {/* Priority badge */}
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-sm font-bold",
-                            priorityConfig.bgColor,
-                            priorityConfig.color
-                          )}
-                        >
-                          <FlagIcon className="h-2.5 w-2.5" />
-                          {priorityConfig.label}
-                        </span>{" "}
-
-                        {/* Category badge */}
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-sm font-medium",
-                            categoryConfig.bgColor,
-                            categoryConfig.color
-                          )}
-                        >
-                          {categoryConfig.label}
+                        <ToneBadge tone={priorityConfig.tone}>{priorityConfig.label}</ToneBadge>{" "}
+                        <span className="text-sm text-muted-foreground">
+                          {NOTE_CATEGORY_LABELS[note.category || "other"]}
                         </span>
                       </div>
 
@@ -628,38 +517,25 @@ export function NotesJournal({
                               onChange={(e) => setEditingContent(e.target.value)}
                               onKeyDown={handleEditKeyDown}
                               rows={4}
-                              className="text-sm border border-primary/50"
+                              className="text-sm"
                             />
                           </CharLimit>
                           <div className="flex items-center gap-2">
-                            <Button
-                              type="button"
-                              variant="default"
-                              size="sm"
-                              onClick={handleSaveEdit}
-                              disabled={!editingContent.trim()}
-                              className="h-7 text-sm"
-                            >
+                            <Button type="button" variant="outline" onClick={handleSaveEdit} disabled={!editingContent.trim()}>
                               Save
                             </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleCancelEdit}
-                              className="h-7 text-sm"
-                            >
+                            <Button type="button" variant="ghost" onClick={handleCancelEdit}>
                               Cancel
                             </Button>
                             <span className="text-sm text-muted-foreground">
-                              {shortcutKey}+Enter to save · Esc to cancel
+                              {shortcutKey}+Enter to save. Esc to cancel.
                             </span>
                           </div>
                         </div>
                       ) : (
                         <p
                           className={cn(
-                            "text-sm whitespace-pre-wrap break-words cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors",
+                            "-mx-1 cursor-pointer whitespace-pre-wrap break-words px-1 text-sm hover:bg-muted/50",
                             "line-clamp-4",
                             note.status === "done" &&
                               "line-through text-muted-foreground"
@@ -672,12 +548,9 @@ export function NotesJournal({
                       )}
 
                       {/* Timestamp row */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span title={timestamp.full}>{timestamp.full}</span>{" "}
-                        <span className="px-1.5 py-0.5 rounded bg-muted text-sm font-medium">
-                          {timestamp.relative}
-                        </span>
-                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        <span title={timestamp.full}>{timestamp.full}</span>, {timestamp.relative}
+                      </p>
                     </div>
 
                     {/* Delete button */}
@@ -686,10 +559,10 @@ export function NotesJournal({
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDelete(note.id)}
-                      className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive-text hover:bg-destructive/10 transition-colors"
+                      className="shrink-0 text-muted-foreground hover:text-destructive-text md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                       aria-label="Delete note"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="size-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>

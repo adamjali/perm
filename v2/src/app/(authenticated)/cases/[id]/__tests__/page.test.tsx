@@ -346,7 +346,7 @@ describe("CaseDetailPage - Case Details Rendering", () => {
 
     await renderPageAndWait("test-id");
 
-    expect(screen.getByText("Tech Innovations")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Tech Innovations" })).toBeInTheDocument();
   });
 
   it("renders position title below employer name", async () => {

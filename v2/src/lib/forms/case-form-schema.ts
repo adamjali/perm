@@ -87,8 +87,8 @@ export type NoteCategory = (typeof NOTE_CATEGORIES)[number];
  */
 export const NOTE_CATEGORY_LABELS: Record<NoteCategory, string> = {
   'follow-up': 'Follow-up',
-  'document': 'Document Needed',
-  'client': 'Client Communication',
+  'document': 'Document needed',
+  'client': 'Client communication',
   'internal': 'Internal',
   'deadline': 'Deadline',
   'other': 'Other',

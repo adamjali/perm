@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { FormSection } from "@/components/forms/FormSection";
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { SelectInput } from "@/components/forms/SelectInput";
@@ -183,7 +182,7 @@ export function PWDSection(props: PWDSectionProps) {
   const detIsDisabled = determinationDisabled?.disabled;
 
   return (
-    <FormSection title="PWD (Prevailing Wage Determination)" defaultOpen>
+    <div className="space-y-4">
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-3">
         {/* ========== ROW 1: DATE FIELDS ========== */}
 
@@ -317,6 +316,6 @@ export function PWDSection(props: PWDSectionProps) {
           />
         </FormField>
       </div>
-    </FormSection>
+    </div>
   );
 }

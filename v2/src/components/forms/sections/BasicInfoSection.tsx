@@ -169,7 +169,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
   const statusColor = statusOption ? statusOption.color : '#6B7280';
 
   return (
-    <FormSection title="Basic information" defaultOpen>
+    <FormSection title="Basic information">
       <div className="space-y-4">
         {/* ========== PRIMARY FIELDS ========== */}
         <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
@@ -280,16 +280,12 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
         </div>
 
         {/* ========== STATUS FIELDS (Grouped) ========== */}
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
+        <div className="border border-border p-4">
           {/* Auto-Status Toggle Header */}
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">Status</span>
-              {isAutoStatusEnabled && (
-                <span className="text-sm text-primary bg-primary/10 px-2 py-0.5 border border-primary">
-                  Auto-updating
-                </span>
-              )}
+              {isAutoStatusEnabled && <span className="text-sm text-muted-foreground">Auto-updating</span>}
             </div>
             <div className="flex items-center gap-2">
               <Switch

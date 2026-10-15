@@ -38,8 +38,7 @@ describe('RecruitmentSection', () => {
         <RecruitmentSection values={mockValues} onChange={mockOnChange} />
       );
 
-      // Section headers
-      expect(screen.getByText('Recruitment')).toBeInTheDocument();
+      // Sub-section headers (the section's own title is the form's wrapper)
       expect(screen.getByText('Sunday newspaper ads')).toBeInTheDocument();
       expect(screen.getByText('Job order')).toBeInTheDocument();
       expect(screen.getByText('Notice of filing')).toBeInTheDocument();

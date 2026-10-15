@@ -42,7 +42,7 @@ import { useMutation } from "convex/react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zod4Resolver } from "@/lib/forms/zod4-resolver";
 import { api } from "@convex/_generated/api";
-import { BuildingIcon as Building2, ClipboardTextIcon, FileArrowUpIcon as FileCheck, FileTextIcon, NoteIcon as StickyNote, TrashIcon as Trash2, WarningIcon as AlertTriangle, XCircleIcon } from "@phosphor-icons/react/ssr";
+import { TrashIcon as Trash2, WarningIcon as AlertTriangle, XCircleIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
 import type { Id } from "@convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -133,6 +133,9 @@ const VALID_SECTIONS: ReadonlySet<string> = new Set<SectionName>(["pwd", "recrui
 // ============================================================================
 // COMPONENT
 // ============================================================================
+
+/** The four stages a case moves through, in order: the form's progress counts these. */
+const FORM_STAGES = ["pwd", "recruitment", "eta9089", "i140"] as const;
 
 export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initialField, initialSection }: CaseFormProps) {
   const router = useRouter();
@@ -599,26 +602,23 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
           <WarningSummary warnings={warnings} warningCount={warningCount} />
         )}
 
-        {/* Progress + Instruction */}
+        {/* How far the case's four stages are filled in */}
         <div className="space-y-2">
-          <div className="flex items-center gap-3 font-mono">
-            <span className="text-base font-bold text-foreground">
-              {(['pwd', 'recruitment', 'eta9089', 'i140'] as const).filter((s) => sectionStates[s].isComplete).length} of 4 sections complete
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-foreground">
+              {FORM_STAGES.filter((s) => sectionStates[s].isComplete).length} of {FORM_STAGES.length} sections complete
             </span>
-            <div className="flex gap-1">
-              {(['pwd', 'recruitment', 'eta9089', 'i140'] as const).map((s) => (
+            <div className="flex gap-1" aria-hidden="true">
+              {FORM_STAGES.map((s) => (
                 <div
                   key={s}
-                  className={cn(
-                    "h-2.5 w-10 border border-border rounded-sm transition-colors",
-                    sectionStates[s].isComplete ? "bg-primary" : "bg-muted"
-                  )}
+                  className={cn("h-1.5 w-8", sectionStates[s].isComplete ? "bg-primary-text" : "bg-muted")}
                 />
               ))}
             </div>
           </div>
-          <p className="text-sm text-muted-foreground font-medium">
-            Track your PERM case dates below. Fill in what you have, save anytime and come back later.
+          <p className="text-sm text-muted-foreground">
+            Fill in what you have. Save any time and come back later.
           </p>
         </div>
 
@@ -629,22 +629,22 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
         <BasicInfoSection />
 
         {/* PWD Section */}
-        <CollapsibleSection name="pwd" title="PWD (Prevailing Wage Determination)" state={sectionStates.pwd} onToggle={() => toggleSection("pwd")} icon={<FileTextIcon className="size-5" />} description="Prevailing wage filing and determination dates">
+        <CollapsibleSection name="pwd" title="PWD (Prevailing Wage Determination)" state={sectionStates.pwd} onToggle={() => toggleSection("pwd")} description="Prevailing wage filing and determination dates">
           <PWDSection />
         </CollapsibleSection>
 
         {/* Recruitment Section */}
-        <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} icon={<ClipboardTextIcon className="size-5" />} description="Sunday ads, job order, and notice of filing">
+        <CollapsibleSection name="recruitment" title="Recruitment" state={sectionStates.recruitment} onToggle={() => toggleSection("recruitment")} description="Sunday ads, job order, and notice of filing">
           <RecruitmentSection />
         </CollapsibleSection>
 
         {/* ETA 9089 Section */}
-        <CollapsibleSection name="eta9089" title="ETA 9089 (PERM Application)" state={sectionStates.eta9089} onToggle={() => toggleSection("eta9089")} icon={<FileCheck className="size-5" />} description="PERM application filing, audit, and certification">
+        <CollapsibleSection name="eta9089" title="ETA 9089 (PERM Application)" state={sectionStates.eta9089} onToggle={() => toggleSection("eta9089")} description="PERM application filing, audit, and certification">
           <ETA9089Section />
         </CollapsibleSection>
 
         {/* I-140 Section */}
-        <CollapsibleSection name="i140" title="I-140 (Immigrant Petition)" state={sectionStates.i140} onToggle={() => toggleSection("i140")} icon={<Building2 className="size-5" />} description="I-140 petition filing, receipt, and approval">
+        <CollapsibleSection name="i140" title="I-140 (Immigrant Petition)" state={sectionStates.i140} onToggle={() => toggleSection("i140")} description="I-140 petition filing, receipt, and approval">
           <I140Section />
         </CollapsibleSection>
 
@@ -673,7 +673,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
           />
 
         {/* Notes Section */}
-        <CollapsibleSection name="notes" title="Notes & Settings" state={sectionStates.notes} onToggle={() => toggleSection("notes")} icon={<StickyNote className="size-5" />} description="Case notes, journal entries, and preferences">
+        <CollapsibleSection name="notes" title="Notes and settings" state={sectionStates.notes} onToggle={() => toggleSection("notes")} description="Case notes, journal entries, and preferences">
           <div className="space-y-6">
             <div className="space-y-2">
               <Label>Notes</Label>
@@ -704,15 +704,15 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
 
 function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors: Record<string, string>; errorCount: number; onDismiss: () => void; onFieldClick: (field: string) => void }) {
   return (
-    <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
+    <div className="border border-destructive p-4" role="alert">
       <div className="flex items-start gap-3">
         <XCircleIcon className="size-6 text-destructive shrink-0 mt-0.5" />
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <h3 className="font-heading font-bold text-destructive">{errorCount} Validation Error{errorCount > 1 ? "s" : ""}</h3>
-            <button type="button" onClick={onDismiss} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Dismiss</button>
+            <h2 className="font-heading font-bold text-destructive-text">{errorCount} {errorCount > 1 ? "errors" : "error"} to fix</h2>
+            <button type="button" onClick={onDismiss} className="min-h-11 px-2 text-sm text-muted-foreground hover:text-foreground">Dismiss</button>
           </div>
-          <p className="text-sm text-muted-foreground mb-3">Please fix the following errors before saving:</p>
+          <p className="mb-3 text-sm text-muted-foreground">Fix these before saving:</p>
           <ul className="space-y-1">
             {Object.entries(errors).map(([field, message]) => {
               const label = getFieldLabel(field);
@@ -734,11 +734,11 @@ function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors:
 
 function WarningSummary({ warnings, warningCount }: { warnings: Record<string, string>; warningCount: number }) {
   return (
-    <div className="rounded-lg border border-data-warn bg-data-warn/15 p-4">
+    <div className="border border-data-warn p-4">
       <div className="flex items-start gap-3">
         <AlertTriangle className="size-5 text-data-warn-ink shrink-0 mt-0.5" />
         <div className="flex-1">
-          <h3 className="font-semibold text-data-warn-ink text-sm">{warningCount} Warning{warningCount > 1 ? "s" : ""}</h3>
+          <h2 className="text-sm font-semibold text-data-warn-ink">{warningCount} {warningCount > 1 ? "warnings" : "warning"}</h2>
           <ul className="mt-1 space-y-0.5">
             {Object.entries(warnings).map(([field, message]) => (
               <li key={field} className="text-sm text-data-warn-ink">{message}</li>
@@ -755,7 +755,7 @@ function SettingsToggles({ formData, onChange }: { formData: CaseFormData; onCha
     <div className="pt-4 border-t border-border space-y-4">
       <SettingsToggle id="calendarSync" label="Calendar sync" description="Sync deadlines to your Google Calendar" checked={formData.calendarSyncEnabled} onChange={(checked) => onChange("calendarSyncEnabled", checked)} />
       <SettingsToggle id="favorite" label="Favorite" description="Mark as favorite for quick access" checked={formData.isFavorite} onChange={(checked) => onChange("isFavorite", checked)} />
-      <SettingsToggle id="showOnTimeline" label="Show on Timeline" description="Display this case on the timeline view" checked={formData.showOnTimeline} onChange={(checked) => onChange("showOnTimeline", checked)} />
+      <SettingsToggle id="showOnTimeline" label="Show on timeline" description="Display this case on the timeline view" checked={formData.showOnTimeline} onChange={(checked) => onChange("showOnTimeline", checked)} />
     </div>
   );
 }
@@ -778,19 +778,19 @@ function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCance
   return (
     // No entrance animation: it slid in 350ms after the form had appeared, a
     // late second arrival of the page's main controls.
-    <div ref={barRef} className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border border-border rounded-t-lg p-4 z-10">
+    <div ref={barRef} className="sticky bottom-0 left-0 right-0 z-10 border-t border-border bg-background p-4">
       {/* Mobile: stacked layout, Desktop: horizontal */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4 max-w-5xl mx-auto">
         <div className="flex items-center gap-3 md:gap-4 order-2 md:order-1">
           {mode === "edit" && caseId && (
-            <Button type="button" variant="destructive" size="lg" onClick={onDeleteClick} disabled={isSubmitting || isDeleting || isCancelNavigating} className="gap-2 flex-1 md:flex-none">
-              <Trash2 className="size-4" />Delete
+            <Button type="button" variant="ghost" size="lg" onClick={onDeleteClick} disabled={isSubmitting || isDeleting || isCancelNavigating} className="flex-1 text-destructive-text md:flex-none">
+              <Trash2 className="size-4" aria-hidden="true" />Delete
             </Button>
           )}
           {isDirty && !isSubmitting && !isCancelNavigating && (
-            <div className="flex items-center gap-2 text-sm text-data-warn-ink animate-fade-in">
-              <AlertTriangle className="size-4" /><span className="hidden sm:inline">Unsaved changes</span>
-            </div>
+            <p className="flex items-center gap-2 text-sm text-data-warn-ink" role="status">
+              <AlertTriangle className="size-4" aria-hidden="true" /><span className="hidden sm:inline">Unsaved changes</span>
+            </p>
           )}
         </div>
         <div className="flex items-center gap-3 md:gap-4 order-1 md:order-2">

@@ -10,6 +10,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { ArchiveIcon, ArrowCounterClockwiseIcon, ArrowLeftIcon, CalendarBlankIcon, CalendarCheckIcon, CalendarSlashIcon, ChartBarHorizontalIcon, DotsThreeVerticalIcon, PencilSimpleIcon, StarIcon, TrashIcon } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { AppBreadcrumb } from "../../components/AppBreadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
@@ -516,12 +517,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       />
 
       <header className="space-y-4">
-        <nav aria-label="Breadcrumb" className="text-sm">
-          <Link href="/cases" className="link">
-            Cases
-          </Link>{" "}
-          <span className="text-muted-foreground">/ {caseData.employerName}</span>
-        </nav>
+        <AppBreadcrumb steps={[{ href: "/cases", label: "Cases" }]} current={caseData.employerName} />
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
@@ -529,7 +525,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
               {caseData.employerName}
             </h1>{" "}
             <p className="mt-1 text-base text-muted-foreground [overflow-wrap:anywhere]">
-              {[caseData.positionTitle, caseData.beneficiaryIdentifier].filter(Boolean).join(" · ")}
+              {[caseData.positionTitle, caseData.beneficiaryIdentifier].filter(Boolean).join(", ")}
             </p>
           </div>
 

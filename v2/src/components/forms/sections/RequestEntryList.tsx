@@ -220,7 +220,7 @@ export function RequestEntryList({
 
       {/* Empty State */}
       {entries.length === 0 && (
-        <div className="rounded-lg border border-dashed border-muted-foreground/25 p-6 text-center">
+        <div className="border border-dashed border-border p-6 text-center">
           <p className="text-sm text-muted-foreground">
             {`No ${label}s recorded. Click "Add ${label}" to track a ${name} from ${agency}.`}
           </p>

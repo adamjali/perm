@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { CalendarDotIcon as CalendarClock, CheckCircleIcon, ClockIcon, WarningIcon as AlertTriangle, XCircleIcon } from "@phosphor-icons/react";
+import { ToneBadge } from "@/components/ui/badge";
+import { WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import { format, parseISO, differenceInDays } from "date-fns";
 
 // ============================================================================
@@ -35,13 +36,15 @@ export interface FilingWindowIndicatorProps {
   label: string;
   /** Additional className */
   className?: string;
-  /** Whether to show a compact version */
-  compact?: boolean;
 }
 
 // ============================================================================
 // HELPERS
 // ============================================================================
+
+/** A window or deadline this close reads as urgent; this close, as a warning. */
+export const CLOSING_SOON_DAYS = 14;
+export const DEADLINE_WARNING_DAYS = 30;
 
 function getWindowStatus(window: FilingWindowData): WindowStatus {
   // Check for incomplete recruitment first
@@ -61,7 +64,7 @@ function getWindowStatus(window: FilingWindowData): WindowStatus {
     return "closed";
   }
 
-  if (window.daysRemaining !== undefined && window.daysRemaining <= 14) {
+  if (window.daysRemaining !== undefined && window.daysRemaining <= CLOSING_SOON_DAYS) {
     return "closing_soon";
   }
 
@@ -91,55 +94,14 @@ function getProgressPercentage(window: FilingWindowData): number {
   return Math.round((elapsedDays / totalDays) * 100);
 }
 
-function getStatusConfig(status: WindowStatus) {
-  switch (status) {
-    case "recruitment_incomplete":
-      return {
-        label: "Recruitment incomplete",
-        bgColor: "bg-muted",
-        textColor: "text-muted-foreground",
-        borderColor: "border-border",
-        icon: ClockIcon,
-        progressColor: "bg-muted-foreground",
-      };
-    case "not_open":
-      return {
-        label: "Not yet open",
-        bgColor: "bg-muted",
-        textColor: "text-muted-foreground",
-        borderColor: "border-border",
-        icon: ClockIcon,
-        progressColor: "bg-muted-foreground",
-      };
-    case "open":
-      return {
-        label: "OPEN",
-        bgColor: "bg-primary/10",
-        textColor: "text-primary",
-        borderColor: "border-primary",
-        icon: CheckCircleIcon,
-        progressColor: "bg-primary",
-      };
-    case "closing_soon":
-      return {
-        label: "Closing soon",
-        bgColor: "bg-data-warn/15",
-        textColor: "text-data-warn-ink",
-        borderColor: "border-data-warn",
-        icon: AlertTriangle,
-        progressColor: "bg-data-warn",
-      };
-    case "closed":
-      return {
-        label: "CLOSED",
-        bgColor: "bg-destructive/10",
-        textColor: "text-destructive",
-        borderColor: "border-destructive",
-        icon: XCircleIcon,
-        progressColor: "bg-destructive",
-      };
-  }
-}
+/** Each state's words and tone. The tone colours only the chip and the count. */
+const STATUS: Record<WindowStatus, { label: string; tone: "good" | "warn" | "bad" | "flat"; ink: string }> = {
+  recruitment_incomplete: { label: "Recruitment incomplete", tone: "flat", ink: "text-muted-foreground" },
+  not_open: { label: "Not yet open", tone: "flat", ink: "text-foreground" },
+  open: { label: "Open", tone: "good", ink: "text-primary-text" },
+  closing_soon: { label: "Closing soon", tone: "warn", ink: "text-data-warn-ink" },
+  closed: { label: "Closed", tone: "bad", ink: "text-destructive-text" },
+};
 
 function formatDate(dateStr: string): string {
   try {
@@ -159,196 +121,77 @@ function formatDate(dateStr: string): string {
  * Displays filing window status with:
  * - Visual progress bar showing position within window
  * - Window dates and days remaining
- * - Status badge with urgency coloring
+ * - A status chip in the state's tone
  * - PWD expiration warning when applicable
- * - Pulse animation when deadline is near
  */
-export function FilingWindowIndicator({
-  window,
-  label,
-  className,
-  compact = false,
-}: FilingWindowIndicatorProps) {
+export function FilingWindowIndicator({ window, label, className }: FilingWindowIndicatorProps) {
   const status = getWindowStatus(window);
-  const config = getStatusConfig(status);
+  const config = STATUS[status];
   const progress = getProgressPercentage(window);
-  const Icon = config.icon;
 
-  // If recruitment is incomplete, show special message
-  if (status === "recruitment_incomplete") {
+  // Before the window can be drawn, one line says what it waits on.
+  if (status === "recruitment_incomplete" || (!window.opensOn && !window.closesOn)) {
     return (
-      <div
-        className={cn(
-          "rounded-lg border p-3",
-          config.bgColor,
-          config.borderColor,
-          className
-        )}
-      >
-        <div className="flex items-center gap-2">
-          <CalendarClock className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            {label}: Complete all recruitment activities to see filing window
-          </span>
-        </div>
-      </div>
+      <p className={cn("border border-border p-3 text-sm text-muted-foreground", className)}>
+        {label}:{" "}
+        {status === "recruitment_incomplete"
+          ? "Complete all recruitment activities to see filing window"
+          : "Complete prerequisites to see window"}
+      </p>
     );
   }
 
-  // If no window data, show minimal state
-  if (!window.opensOn && !window.closesOn) {
-    return (
-      <div
-        className={cn(
-          "rounded-lg border p-3",
-          config.bgColor,
-          config.borderColor,
-          className
-        )}
-      >
-        <div className="flex items-center gap-2">
-          <CalendarClock className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            {label}: Complete prerequisites to see window
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (compact) {
-    return (
-      <div
-        className={cn(
-          "rounded-md border px-3 py-2",
-          config.bgColor,
-          config.borderColor,
-          className
-        )}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Icon className={cn("h-4 w-4", config.textColor)} />
-            <span className={cn("text-sm font-medium", config.textColor)}>
-              {config.label}
-            </span>
-          </div>
-          {window.daysRemaining !== undefined && window.daysRemaining > 0 && (
-            <span className={cn("text-sm font-bold", config.textColor)}>
-              {window.daysRemaining}d left
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const showCount = (status === "open" || status === "closing_soon") && window.daysRemaining !== undefined && window.daysRemaining > 0;
 
   return (
-    <div
-      className={cn(
-        "rounded-lg border p-4",
-        config.bgColor,
-        config.borderColor,
-        className
-      )}
-    >
-      {/* Header with status badge */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Icon className={cn("h-5 w-5", config.textColor)} />
-          <span className="font-semibold text-sm">{label}</span>
-        </div>
-        <span
-          className={cn(
-            "px-2 py-1 rounded-md text-sm font-bold",
-            config.bgColor,
-            config.textColor,
-            "border",
-            config.borderColor
-          )}
-        >
-          {config.label}
-        </span>
+    <div className={cn("space-y-3 border border-border p-4", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-semibold">{label}</span>
+        <ToneBadge tone={config.tone}>{config.label}</ToneBadge>
       </div>
 
-      {/* Progress bar */}
       {(status === "open" || status === "closing_soon") && (
-        <div className="mb-3">
-          <div className="h-2 bg-accent rounded-full overflow-hidden">
-            <div
-              className={cn("h-full rounded-full", config.progressColor)}
-            />
+        <div>
+          <div className="h-1.5 bg-muted" role="progressbar" aria-label={`${label}, share elapsed`} aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+            <div className={cn("h-full", status === "closing_soon" ? "bg-data-warn" : "bg-primary-text")} style={{ width: `${progress}%` }} />
           </div>
-          <div className="flex justify-between mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 flex justify-between text-sm text-muted-foreground tabular-nums">
             <span>{progress}% elapsed</span>{" "}
             <span>{100 - progress}% remaining</span>
-          </div>
-        </div>
-      )}
-
-      {/* Window dates */}
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="text-muted-foreground text-sm">
-            Opens
-          </span>{" "}
-          <p className="font-medium">
-            {window.opensOn ? formatDate(window.opensOn) : "-"}
           </p>
         </div>
+      )}
+
+      <dl className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-muted-foreground text-sm">
-            Closes
-          </span>{" "}
-          <p className="font-medium">
-            {window.closesOn ? formatDate(window.closesOn) : "-"}
-          </p>
+          <dt className="text-muted-foreground">Opens</dt>{" "}
+          <dd className="font-medium">{window.opensOn ? formatDate(window.opensOn) : "-"}</dd>
         </div>
-      </div>
+        <div>
+          <dt className="text-muted-foreground">Closes</dt>{" "}
+          <dd className="font-medium">{window.closesOn ? formatDate(window.closesOn) : "-"}</dd>
+        </div>
+      </dl>
 
-      {/* Days display */}
-      {status === "not_open" && window.daysUntilOpen && window.daysUntilOpen > 0 && (
-        <div className="mt-3 text-center">
-          <span className="text-3xl font-bold text-muted-foreground">
-            {window.daysUntilOpen}
-          </span>{" "}
-          <span className="text-sm text-muted-foreground ml-1">days until open</span>
-        </div>
+      {status === "not_open" && window.daysUntilOpen !== undefined && window.daysUntilOpen > 0 && (
+        <p className="text-sm text-muted-foreground">
+          <span className="font-heading text-lg font-bold text-foreground tabular-nums">{window.daysUntilOpen}</span> days until open
+        </p>
       )}
 
-      {(status === "open" || status === "closing_soon") &&
-        window.daysRemaining !== undefined &&
-        window.daysRemaining > 0 && (
-          <div className="mt-3 text-center">
-            <span
-              className={cn(
-                "text-3xl font-bold",
-                status === "closing_soon" ? "text-data-warn-ink" : "text-primary"
-              )}
-            >
-              {window.daysRemaining}
-            </span>{" "}
-            <span className="text-sm text-muted-foreground ml-1">days remaining</span>
-          </div>
-        )}
-
-      {status === "closed" && (
-        <div className="mt-3 text-center">
-          <span className="text-lg font-bold text-destructive">
-            Window has closed
-          </span>
-        </div>
+      {showCount && (
+        <p className="text-sm text-muted-foreground">
+          <span className={cn("font-heading text-lg font-bold tabular-nums", config.ink)}>{window.daysRemaining}</span> days remaining
+        </p>
       )}
 
-      {/* PWD expiration warning */}
+      {status === "closed" && <p className="text-sm font-semibold text-destructive-text">Window has closed</p>}
+
       {window.isPwdLimited && (
-        <div className="mt-3 flex items-start gap-2 rounded-md bg-data-warn/15 p-2 border border-data-warn">
-          <AlertTriangle className="h-4 w-4 text-data-warn-ink shrink-0 mt-0.5" />
-          <p className="text-sm text-data-warn-ink">
-            <strong>Note:</strong> This window closes early due to PWD expiration date.
-            The standard 180-day rule is limited by your PWD validity.
-          </p>
-        </div>
+        <p className="flex items-start gap-2 text-sm text-data-warn-ink">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          This window closes early because the PWD expires first. The standard 180-day rule is limited by your PWD validity.
+        </p>
       )}
     </div>
   );

@@ -13,16 +13,6 @@ export interface FormSectionProps {
   title: string;
 
   /**
-   * Icon to display next to title
-   */
-  icon?: React.ReactNode;
-
-  /**
-   * Whether section is initially expanded (kept for backward compat, ignored)
-   */
-  defaultOpen?: boolean;
-
-  /**
    * Section completion status
    */
   status?: SectionStatus;
@@ -39,51 +29,24 @@ export interface FormSectionProps {
 }
 
 /**
- * FormSection component - static section wrapper for form organization.
- *
- * Features:
- * - Section title with optional icon
- * - Status indicator (complete/incomplete/has-errors)
- * - Neobrutalist styling
- *
- * Note: No longer collapsible, outer CollapsibleSection handles collapse.
+ * A form section that is always open: the same plain box and heading as the
+ * collapsible ones, so the first section and the rest look alike.
  */
-export function FormSection({
-  title,
-  icon,
-  status,
-  className,
-  children,
-}: FormSectionProps) {
-  const statusIcon = React.useMemo(() => {
-    switch (status) {
-      case "complete":
-        return <CheckCircle2 className="h-5 w-5 text-primary" />;
-      case "has-errors":
-        return <AlertCircle className="h-5 w-5 text-destructive" />;
-      default:
-        return null;
-    }
-  }, [status]);
-
+export function FormSection({ title, status, className, children }: FormSectionProps) {
   return (
-    <div
+    <section
       className={cn(
         "border border-border bg-card",
         status === "has-errors" && "border-destructive",
-        status === "complete" && "border-primary/50",
         className
       )}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 min-w-0 p-4 pb-0">
-        {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
-        <h3 className="font-heading font-semibold text-lg break-words min-w-0">{title}</h3>
-        {statusIcon && <span className="shrink-0">{statusIcon}</span>}
+      <div className="flex items-center gap-3 p-4">
+        <h2 className="min-w-0 break-words font-heading text-lg font-bold">{title}</h2>
+        {status === "complete" && <CheckCircle2 className="size-5 shrink-0 text-primary-text" aria-label="Complete" role="img" />}
+        {status === "has-errors" && <AlertCircle className="size-5 shrink-0 text-destructive" aria-label="Has errors" role="img" />}
       </div>
-
-      {/* Content */}
-      <div className="p-4 space-y-4">{children}</div>
-    </div>
+      <div className="space-y-4 border-t border-border p-4">{children}</div>
+    </section>
   );
 }

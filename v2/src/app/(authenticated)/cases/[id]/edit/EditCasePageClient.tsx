@@ -5,14 +5,15 @@ import { useCallback, useState } from "react";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
-import { CaretRightIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { api } from "@convex/_generated/api";
-import type { Id, Doc } from "@convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 import { CaseForm, type CaseFormInitialData } from "@/components/forms/CaseForm";
 import { CaseFormSkeleton } from "@/components/forms/CaseFormSkeleton";
 import { BreadcrumbSkeleton } from "@/components/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppBreadcrumb } from "../../../components/AppBreadcrumb";
+import { PageHeading } from "../../../components/PageHeading";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { SectionName } from "@/hooks/useSectionState";
 import { prepareUpdatePayload } from "@/lib/forms/prepareUpdatePayload";
@@ -45,20 +46,13 @@ export function EditPageSkeleton() {
     <div className="mx-auto w-full max-w-4xl space-y-6" data-testid="edit-page-skeleton">
       <BreadcrumbSkeleton items={3} />
 
-      {/* The title block: employer (h1 line), position (mono line), and the
-          lede, which never changes. */}
-      <div className="relative">
-        <div className="absolute -top-2 -left-2 h-6 w-6 border border-foreground bg-primary" />
-        <div className="min-w-0 pl-6">
-          <div className="flex h-[2.025rem] items-center sm:h-[2.43rem]">
-            <Skeleton variant="line" className="h-7 w-2/3 sm:h-8" />
-          </div>
-          <div className="mt-2 flex h-5 items-center">
-            <Skeleton variant="line" className="h-4 w-1/3" />
-          </div>
-          <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
-            Update case details below. All changes will be saved to your account.
-          </p>
+      {/* The title block: employer, then the position and worker line */}
+      <div className="min-w-0">
+        <div className="flex h-[2.025rem] items-center sm:h-[2.43rem]">
+          <Skeleton variant="line" className="h-7 w-2/3 sm:h-8" />
+        </div>
+        <div className="mt-2 flex h-6 items-center">
+          <Skeleton variant="line" className="h-4 w-1/3" />
         </div>
       </div>
 
@@ -75,47 +69,16 @@ function NotFoundState() {
     <div className="mx-auto max-w-4xl px-4 py-16">
       <div className="text-center space-y-6">
         <div className="space-y-2">
-          <h1 className="font-heading text-3xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-4xl">Case not found</h1>{" "}
+          <h1 className="font-heading text-3xl font-bold leading-[1.08] sm:text-4xl">Case not found</h1>{" "}
           <p className="text-base leading-relaxed text-muted-foreground">
             The case you&apos;re looking for doesn&apos;t exist or you don&apos;t have access.
           </p>
         </div>
-        <Link
-          href="/cases"
-          className="inline-flex min-h-[44px] items-center justify-center border border-border bg-primary px-6 py-3 font-semibold text-primary-foreground transition-transform duration-150"
-        >
+        <Link href="/cases" className={buttonVariants()}>
           Back to cases
         </Link>
       </div>
     </div>
-  );
-}
-
-/**
- * Breadcrumb component
- */
-function Breadcrumb({ caseData }: { caseData: Doc<"cases"> }) {
-  const router = useRouter();
-
-  return (
-    <nav className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
-      <button
-        onClick={() => router.push("/cases")}
-        className="hover:text-foreground transition-colors shrink-0"
-      >
-        Cases
-      </button>
-      <CaretRightIcon className="size-4 shrink-0" />
-      <button
-        onClick={() => router.push(`/cases/${caseData._id}`)}
-        className="hover:text-foreground transition-colors truncate"
-        title={`${caseData.employerName} - ${caseData.positionTitle}`}
-      >
-        {caseData.employerName} - {caseData.positionTitle}
-      </button>
-      <CaretRightIcon className="size-4 shrink-0" />
-      <span className="text-foreground font-medium shrink-0">Edit</span>
-    </nav>
   );
 }
 
@@ -326,26 +289,18 @@ export function EditCasePageClient() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
-      {/* Breadcrumb */}
-      <Breadcrumb caseData={caseData} />
+      <AppBreadcrumb
+        steps={[
+          { href: "/cases", label: "Cases" },
+          { href: `/cases/${caseData._id}`, label: caseData.employerName },
+        ]}
+        current="Edit"
+      />
 
-      {/* Page Title with neobrutalist accent */}
-      <div className="relative">
-        {/* Corner accent decoration */}
-        <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border border-foreground" />
-        <div className="pl-6 min-w-0">
-          <h1 className="truncate font-heading text-3xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-4xl" title={`Edit Case: ${caseData.employerName} - ${caseData.positionTitle}`}>
-            {caseData.employerName}
-          </h1>{" "}
-          <p className="mt-2 truncate text-sm font-semibold text-muted-foreground" title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
-            {caseData.positionTitle}
-            {caseData.beneficiaryIdentifier && <>, {caseData.beneficiaryIdentifier}</>}
-          </p>{" "}
-          <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
-            Update case details below. All changes will be saved to your account.
-          </p>
-        </div>
-      </div>
+      <PageHeading
+        title={caseData.employerName}
+        meta={[caseData.positionTitle, caseData.beneficiaryIdentifier].filter(Boolean).join(", ")}
+      />
 
       {/* Case Form */}
       <CaseForm

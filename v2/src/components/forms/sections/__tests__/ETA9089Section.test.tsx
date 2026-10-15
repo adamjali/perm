@@ -111,7 +111,9 @@ describe('ETA9089Section', () => {
 
       renderETA9089Section(values);
 
-      expect(screen.getByText('ETA 9089')).toBeInTheDocument();
+      // The section's title belongs to the form's collapsible wrapper; the
+      // section itself opens with its filing date.
+      expect(screen.getAllByText(/filing date/i).length).toBeGreaterThan(0);
     });
 
     it('renders with default open state', () => {
@@ -469,7 +471,7 @@ describe('ETA9089Section', () => {
       renderETA9089Section(values);
 
       // Should not crash, should show some neutral state
-      expect(screen.getByText('ETA 9089')).toBeInTheDocument();
+      expect(screen.getAllByText(/filing date/i).length).toBeGreaterThan(0);
     });
 
     it('handles missing PWD expiration gracefully', () => {

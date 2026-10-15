@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import EditCasePage from '../page';
@@ -170,9 +170,10 @@ describe('EditCasePage', () => {
 
       render(<EditCasePage />);
 
-      expect(screen.getByText('Cases')).toBeInTheDocument();
-      expect(screen.getByText('Acme Corp - Software Engineer')).toBeInTheDocument();
-      expect(screen.getByText('Edit')).toBeInTheDocument();
+      const trail = screen.getByRole('navigation', { name: 'Breadcrumb' });
+      expect(within(trail).getByRole('link', { name: 'Cases' })).toHaveAttribute('href', '/cases');
+      expect(within(trail).getByRole('link', { name: 'Acme Corp' })).toBeInTheDocument();
+      expect(within(trail).getByText('Edit')).toHaveAttribute('aria-current', 'page');
     });
 
     it('renders page title with case details', () => {
@@ -180,8 +181,9 @@ describe('EditCasePage', () => {
 
       render(<EditCasePage />);
 
-      const titleElements = screen.getAllByTitle('Acme Corp - Software Engineer');
-      expect(titleElements.length).toBeGreaterThan(0);
+      expect(screen.getByRole('heading', { level: 1, name: 'Acme Corp' })).toBeInTheDocument();
+      // The position and worker sit on the line under the title
+      expect(screen.getByRole('heading', { level: 1, name: 'Acme Corp' }).nextElementSibling?.textContent).toContain('Software Engineer');
     });
   });
 

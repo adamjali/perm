@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { FormSection } from "@/components/forms/FormSection";
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { FilingWindowIndicator, type FilingWindowData } from "@/components/forms/FilingWindowIndicator";
@@ -245,14 +244,14 @@ export function I140Section(props: I140SectionProps) {
   const isApproved = !!values.i140ApprovalDate;
 
   return (
-    <FormSection title="I-140 immigrant petition" defaultOpen>
+    <div className="space-y-4">
       <div className="space-y-4">
         {/* ========== COMPLETION BADGE ========== */}
         {isApproved && (
-          <div className="flex items-center gap-2 rounded-lg border border-primary bg-primary/10 p-3 text-primary">
-            <CheckCircle2 className="h-5 w-5" />
-            <span className="font-heading font-semibold">Complete: I-140 approved</span>
-          </div>
+          <p className="flex items-center gap-2 font-semibold text-primary-text">
+            <CheckCircle2 className="size-5" aria-hidden="true" />
+            Complete: I-140 approved
+          </p>
         )}
 
         {/* ========== FILING WINDOW INDICATOR ========== */}
@@ -439,7 +438,7 @@ export function I140Section(props: I140SectionProps) {
             error={errors?.i140PremiumProcessing}
             className="md:col-span-2"
           >
-            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
+            <div className="flex items-start gap-3 border border-border p-3">
               <Checkbox
                 id="i140PremiumProcessing"
                 name="i140PremiumProcessing"
@@ -483,9 +482,9 @@ export function I140Section(props: I140SectionProps) {
 
         {/* ========== RFE SUBSECTION ========== */}
         <div className="space-y-3 pt-2">
-          <h4 className="text-sm font-semibold text-muted-foreground">
+          <h3 className="text-sm font-semibold text-muted-foreground">
             Request for Evidence (RFE)
-          </h4>
+          </h3>
 
           <RequestEntryList
             kind="rfe"
@@ -498,6 +497,6 @@ export function I140Section(props: I140SectionProps) {
           />
         </div>
       </div>
-    </FormSection>
+    </div>
   );
 }

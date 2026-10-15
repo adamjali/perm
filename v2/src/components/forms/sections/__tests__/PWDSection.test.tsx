@@ -31,14 +31,6 @@ describe('PWDSection', () => {
   // ============================================================================
 
   describe('Basic Rendering', () => {
-    it('renders section title "PWD (Prevailing Wage Determination)"', () => {
-      renderWithProviders(
-        <PWDSection values={mockValues} onChange={mockOnChange} />
-      );
-
-      expect(screen.getByText('PWD (Prevailing Wage Determination)')).toBeInTheDocument();
-    });
-
     it('renders all 6 PWD fields', () => {
       renderWithProviders(
         <PWDSection values={mockValues} onChange={mockOnChange} />

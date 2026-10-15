@@ -109,14 +109,10 @@ export function TemplateUpdateConfirmDialog({
     <AlertDialog open={open} onOpenChange={handleClose}>
       <AlertDialogContent className="sm:max-w-[440px]">
         <AlertDialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-500 bg-amber-50 dark:bg-amber-900/20">
-              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <AlertDialogTitle>
-              Template already exists
-            </AlertDialogTitle>
-          </div>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="size-5 text-data-warn-ink" aria-hidden="true" />
+            Template already exists
+          </AlertDialogTitle>
           <AlertDialogDescription className="pt-2">
             A template named <span className="font-semibold text-foreground">&ldquo;{templateName}&rdquo;</span> already exists.
             Would you like to update it or save as a new template?
@@ -129,13 +125,9 @@ export function TemplateUpdateConfirmDialog({
             <Button
               onClick={handleOverwrite}
               disabled={isProcessing}
-              className={cn(
-                "w-full gap-2 border",
-                "bg-blue-600 hover:bg-blue-700 text-white border-blue-700",
-                "dark:bg-blue-600 dark:hover:bg-blue-700 dark:border-blue-500"
-              )}
+              className="w-full"
             >
-              <Save className="h-4 w-4" />
+              <Save className="size-4" aria-hidden="true" />
               {isProcessing ? "Updating..." : "Update existing template"}
             </Button>
 
@@ -200,13 +192,9 @@ export function TemplateUpdateConfirmDialog({
               <Button
                 onClick={handleSaveAsNew}
                 disabled={!canSaveAsNew || isProcessing}
-                className={cn(
-                  "flex-1 gap-2 border",
-                  "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700",
-                  "dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:border-emerald-500"
-                )}
+                className="flex-1"
               >
-                <SparkleIcon className="h-4 w-4" />
+                <SparkleIcon className="size-4" aria-hidden="true" />
                 {isProcessing ? "Saving..." : "Save"}
               </Button>
             </AlertDialogFooter>

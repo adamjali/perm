@@ -8,8 +8,9 @@ import { DateInput } from "@/components/forms/DateInput";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { CheckCircleIcon as CheckCircle2, XIcon } from "@phosphor-icons/react";
+import { XIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { ToneBadge } from "@/components/ui/badge";
 import { getRfiRfeUrgency, type UrgencyLevelWithCompletion } from "@/lib/status/urgency";
 import { calculateRFIDueDate } from "@/lib/perm";
 import type { ISODateString } from "@/lib/perm";
@@ -118,11 +119,12 @@ export interface RequestEntryProps {
  * Urgency-based styling classes for the entry card.
  * Memoized outside component to prevent recreation.
  */
+/** The entry's edge says how near its due date is; nothing is filled. */
 const URGENCY_CLASSES: Record<UrgencyLevelWithCompletion, string> = {
-  urgent: "border-destructive bg-destructive/10",
-  soon: "border-data-warn bg-data-warn/15",
-  normal: "border-border bg-background",
-  completed: "border-primary bg-primary/10",
+  urgent: "border-destructive",
+  soon: "border-data-warn",
+  normal: "border-border",
+  completed: "border-border",
 };
 
 // ============================================================================
@@ -308,7 +310,7 @@ function RequestEntryComponent({
   return (
     <div
       className={cn(
-        "relative rounded-lg border p-4 transition-colors",
+        "relative border p-4",
         URGENCY_CLASSES[urgency]
       )}
       data-testid={`${kind}-entry`}
@@ -316,27 +318,22 @@ function RequestEntryComponent({
       {/* ========== STATUS BADGES ========== */}
       <div className="mb-3 flex items-center justify-between gap-2">
         {isActive && (
-          <div className="flex items-center gap-1.5 rounded-md border border-destructive bg-destructive px-2 py-1 text-sm font-bold text-white">
-            <span>{`Active ${copy.label}`}</span>
-          </div>
+          <ToneBadge tone="bad">{`Active ${copy.label}`}</ToneBadge>
         )}
         {isCompleted && (
-          <div className="flex items-center gap-1.5 rounded-md border border-primary bg-primary/10 px-2 py-1 text-sm font-semibold text-primary">
-            <CheckCircle2 className="h-4 w-4" />
-            <span>Completed</span>
-          </div>
+          <ToneBadge tone="good">Completed</ToneBadge>
         )}
 
         {/* Remove Button */}
         <Button
           type="button"
-          variant="destructive"
-          size="sm"
+          variant="ghost"
+          size="icon"
           onClick={handleRemove}
-          className="ml-auto"
+          className="ml-auto text-destructive-text"
           aria-label={`Remove ${copy.label}`}
         >
-          <XIcon className="h-4 w-4" />
+          <XIcon className="size-4" aria-hidden="true" />
         </Button>
       </div>
 

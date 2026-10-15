@@ -58,8 +58,8 @@ function Callout({
 
   const styles = {
     info: "border-l-2 border-primary bg-primary/5",
-    warning: "border-l-2 border-yellow-500 bg-yellow-500/5",
-    tip: "border-l-2 border-blue-500 bg-blue-500/5",
+    warning: "border-l-2 border-data-warn bg-data-warn/5",
+    tip: "border-l-2 border-data-info bg-data-info/5",
     important: "border-l-2 border-destructive bg-destructive/5",
   };
 

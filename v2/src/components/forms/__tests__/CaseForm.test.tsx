@@ -76,9 +76,8 @@ describe('CaseForm', () => {
         />
       );
 
-      // Check for section headings using h3 elements to avoid matching dropdown options
-      const h3Elements = container.querySelectorAll('h3');
-      const headingTexts = Array.from(h3Elements).map(el => el.textContent);
+      // Section headings are h2s; reading them avoids matching dropdown options
+      const headingTexts = Array.from(container.querySelectorAll('h2')).map(el => el.textContent);
 
       expect(headingTexts).toContain('Basic information');
       expect(headingTexts).toContain('PWD (Prevailing Wage Determination)');

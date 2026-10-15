@@ -381,7 +381,7 @@ export function TemplateManagementModal({
                               className="gap-1.5 min-h-[44px] min-w-[44px]"
                             >
                               {isCopied ? (
-                                <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
+                                <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-primary-text" />
                               ) : (
                                 <CopyIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                               )}
@@ -421,7 +421,7 @@ export function TemplateManagementModal({
                           className="gap-1.5 min-h-[44px]"
                         >
                           {isCopied ? (
-                            <CheckIcon className="h-5 w-5 text-green-600" />
+                            <CheckIcon className="h-5 w-5 text-primary-text" />
                           ) : (
                             <CopyIcon className="h-5 w-5" />
                           )}
@@ -571,7 +571,7 @@ export function TemplateManagementModal({
               <span className="block">
                 This action can’t be undone. The template will be permanently removed from the database.
               </span>{" "}
-              <span className="block text-amber-600 dark:text-amber-400">
+              <span className="block text-data-warn-ink">
                 Any cases using this template will retain their job description content, but the template link will be removed.
               </span>
             </AlertDialogDescription>

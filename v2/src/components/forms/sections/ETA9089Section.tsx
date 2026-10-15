@@ -2,7 +2,6 @@
 
 import { WarningIcon } from "@phosphor-icons/react";
 import * as React from "react";
-import { FormSection } from "@/components/forms/FormSection";
 import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { FilingWindowIndicator, type FilingWindowData } from "@/components/forms/FilingWindowIndicator";
@@ -252,7 +251,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
   );
 
   return (
-    <FormSection title="ETA 9089" defaultOpen>
+    <div className="space-y-4">
       <div className="space-y-4">
         {/* ========== FILING WINDOW INDICATOR ========== */}
         <FilingWindowIndicator
@@ -285,7 +284,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
 
           {/* Audit Date */}
           <FormField
-            label="Audit Date (optional)"
+            label="Audit date (optional)"
             name="eta9089AuditDate"
             error={errors?.eta9089AuditDate}
             hint={auditIsDisabled ? auditDisabled.reason : (auditHint || "Date case was selected for audit, if applicable")}
@@ -378,9 +377,9 @@ export function ETA9089Section(props: ETA9089SectionProps) {
 
         {/* ========== RFI SUBSECTION ========== */}
         <div className="space-y-3 pt-2">
-          <h4 className="text-sm font-semibold text-muted-foreground">
+          <h3 className="text-sm font-semibold text-muted-foreground">
             Request for Information (RFI)
-          </h4>
+          </h3>
 
           <RequestEntryList
             kind="rfi"
@@ -393,6 +392,6 @@ export function ETA9089Section(props: ETA9089SectionProps) {
           />
         </div>
       </div>
-    </FormSection>
+    </div>
   );
 }

@@ -5,8 +5,10 @@
  * JobDescriptionDetailView, TemplateManagementModal, and TemplateSelector.
  */
 
-import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
+import { FloppyDiskIcon, SparkleIcon } from "@phosphor-icons/react/ssr";
+import { Button } from "@/components/ui/button";
+import { ToneBadge } from "@/components/ui/badge";
 
 // ============================================================================
 // CONSTANTS
@@ -147,62 +149,32 @@ export function isTemplateNameTaken<T extends { _id: string; name: string }>(
 // SHARED COMPONENTS
 // ============================================================================
 
-interface TemplateStatusBadgeProps {
-  /** Whether the template content has been modified */
-  isModified: boolean;
-  /** Additional className */
-  className?: string;
+/** Whether the text came from a template, and whether it has changed since. */
+export function TemplateStatusBadge({ isModified }: { isModified: boolean }) {
+  return <ToneBadge tone={isModified ? "warn" : "flat"}>{isModified ? "Modified" : "From template"}</ToneBadge>;
 }
 
-/**
- * Badge showing template modification status.
- * Shows "Modified" in amber when content changed, "From Template" in blue otherwise.
- */
-export function TemplateStatusBadge({
-  isModified,
-  className,
-}: TemplateStatusBadgeProps) {
-  return (
-    <span
-      className={cn(
-        "text-sm px-2 py-0.5 rounded-full border",
-        isModified
-          ? "bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-400"
-          : "bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400",
-        className
-      )}
-    >
-      {isModified ? "Modified" : "From template"}
-    </span>
-  );
+/** Whether the name typed matches a saved template: plain words beside the save button. */
+export function TemplateTypeBadge({ isExisting }: { isExisting: boolean }) {
+  return <span className="hidden text-sm text-muted-foreground xs:inline">{isExisting ? "Existing" : "New"}</span>;
 }
 
-interface TemplateTypeBadgeProps {
-  /** Whether this matches an existing template name */
-  isExisting: boolean;
-  /** Additional className */
-  className?: string;
-}
-
-/**
- * Badge showing whether the template name matches an existing template.
- * Shows "Existing" in blue for matches, "New" in emerald for new names.
- */
-export function TemplateTypeBadge({
+/** Saves the text as a template, or updates the one with the same name. */
+export function TemplateSaveButton({
   isExisting,
-  className,
-}: TemplateTypeBadgeProps) {
+  isSaving,
+  disabled,
+  onClick,
+}: {
+  isExisting: boolean;
+  isSaving: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
   return (
-    <span
-      className={cn(
-        "text-sm px-2 py-1 rounded border",
-        isExisting
-          ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
-          : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400",
-        className
-      )}
-    >
-      {isExisting ? "Existing" : "New"}
-    </span>
+    <Button type="button" variant="outline" onClick={onClick} disabled={disabled}>
+      {isExisting ? <FloppyDiskIcon className="size-4" aria-hidden="true" /> : <SparkleIcon className="size-4" aria-hidden="true" />}
+      {isExisting ? (isSaving ? "Updating..." : "Update template") : isSaving ? "Saving..." : "Save template"}
+    </Button>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { CaretDownIcon, CheckIcon, CopyIcon, FileTextIcon, FloppyDiskIcon as Save, PencilIcon, SlidersIcon, SparkleIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
+import { CaretDownIcon, CheckIcon, CopyIcon, FileTextIcon, PencilIcon, SlidersIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +18,7 @@ import { TemplateSelector } from "./TemplateSelector";
 import { TemplateManagementModal } from "./TemplateManagementModal";
 import { TemplateUpdateConfirmDialog } from "./TemplateUpdateConfirmDialog";
 import type { JobDescriptionTemplate } from "./JobDescriptionField";
-import { JOB_DESCRIPTION_MAX_LENGTH } from "./shared";
+import { JOB_DESCRIPTION_MAX_LENGTH, TemplateSaveButton, TemplateStatusBadge, TemplateTypeBadge } from "./shared";
 
 // ============================================================================
 // TYPES
@@ -357,18 +357,7 @@ export function JobDescriptionDetailView({
                     </TooltipProvider>
 
                     {/* Template indicator badge */}
-                    {loadedTemplate && (
-                      <span
-                        className={cn(
-                          "text-sm px-2 py-0.5 rounded-full border",
-                          isModifiedFromTemplate
-                            ? "bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-400"
-                            : "bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
-                        )}
-                      >
-                        {isModifiedFromTemplate ? "Modified" : "From template"}
-                      </span>
-                    )}
+                    {loadedTemplate && <TemplateStatusBadge isModified={!!isModifiedFromTemplate} />}
 
                     {/* Copy button */}
                     <TooltipProvider>
@@ -383,7 +372,7 @@ export function JobDescriptionDetailView({
                             className="gap-1.5 border min-h-[44px] min-w-[44px]"
                           >
                             {isCopied ? (
-                              <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
+                              <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-primary-text" />
                             ) : (
                               <CopyIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                             )}
@@ -439,55 +428,13 @@ export function JobDescriptionDetailView({
                   {/* Save template row - dynamic based on whether name exists */}
                   {onSaveAsNewTemplate && (
                     <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border">
-                      {/* Single dynamic save button */}
-                      <div
-                        className={cn(
-                          "rounded-md border transition-colors",
-                          isExistingTemplateName
-                            ? "border-blue-500 dark:border-blue-400"
-                            : "border-emerald-500 dark:border-emerald-400"
-                        )}
-                      >
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleSaveTemplateClick}
-                          disabled={!canSaveTemplate || isSavingTemplate}
-                          className={cn(
-                            "gap-1.5 rounded-[4px] min-h-[44px]",
-                            isExistingTemplateName
-                              ? "text-blue-700 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
-                              : "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-900/30"
-                          )}
-                        >
-                          {isExistingTemplateName ? (
-                            <>
-                              <Save className="h-5 w-5 sm:h-4 sm:w-4" />
-                              <span className="text-sm">{isSavingTemplate ? "Updating..." : "Update template"}</span>
-                            </>
-                          ) : (
-                            <>
-                              <SparkleIcon className="h-5 w-5 sm:h-4 sm:w-4" />
-                              <span className="text-sm">{isSavingTemplate ? "Saving..." : "Save template"}</span>
-                            </>
-                          )}
-                        </Button>
-                      </div>
-
-                      {/* Status indicator */}
-                      {editPositionTitle.trim() && (
-                        <span
-                          className={cn(
-                            "text-sm px-2 py-1 rounded border hidden xs:inline-block",
-                            isExistingTemplateName
-                              ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
-                              : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400"
-                          )}
-                        >
-                          {isExistingTemplateName ? "Existing" : "New"}
-                        </span>
-                      )}
+                      <TemplateSaveButton
+                        isExisting={isExistingTemplateName}
+                        isSaving={isSavingTemplate}
+                        disabled={!canSaveTemplate || isSavingTemplate}
+                        onClick={handleSaveTemplateClick}
+                      />
+                      {editPositionTitle.trim() && <TemplateTypeBadge isExisting={isExistingTemplateName} />}
                     </div>
                   )}
 
@@ -592,7 +539,7 @@ export function JobDescriptionDetailView({
                                   className="h-9 sm:h-8 gap-1.5 text-sm min-w-[44px] px-2 sm:px-3"
                                 >
                                   {isCopied ? (
-                                    <CheckIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-green-600" />
+                                    <CheckIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-primary-text" />
                                   ) : (
                                     <CopyIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                   )}

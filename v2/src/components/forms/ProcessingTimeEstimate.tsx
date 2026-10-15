@@ -50,7 +50,7 @@ export function ProcessingTimeEstimate({
     return (
       <div
         className={cn(
-          "rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground",
+          "border border-border p-3 text-sm text-muted-foreground",
           className,
         )}
       >
@@ -64,13 +64,11 @@ export function ProcessingTimeEstimate({
 
   if (!range) return null;
 
-  const tone = isPremiumProcessing
-    ? "border-data-warn bg-data-warn/15"
-    : "border-data-info bg-data-info/10";
+  const tone = "border-border";
 
   if (compact) {
     return (
-      <div className={cn("rounded-md border px-3 py-2", tone, className)}>
+      <div className={cn("border px-3 py-2", tone, className)}>
         <div className="flex items-center gap-2">
           {isPremiumProcessing ? (
             <Zap className="h-4 w-4 text-data-warn-ink" aria-hidden="true" />
@@ -91,7 +89,7 @@ export function ProcessingTimeEstimate({
 
   return (
     <div
-      className={cn("rounded-lg border p-4", tone, className)}
+      className={cn("border p-4", tone, className)}
     >
       <div className="mb-3 flex items-center gap-2">
         {isPremiumProcessing ? (

@@ -7,9 +7,16 @@
  */
 
 import { differenceInDays, format, parseISO } from "date-fns";
-import { CalendarDotIcon as CalendarClock, ClockIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { calculateRecruitmentWindowCloses, getFirstRecruitmentDate } from "@/lib/perm";
+import {
+  calculateRecruitmentWindowCloses,
+  FILING_WINDOW_CLOSE_DAYS,
+  FILING_WINDOW_WAIT_DAYS,
+  getFirstRecruitmentDate,
+  PWD_RECRUITMENT_BUFFER_DAYS,
+  RECRUITMENT_WINDOW_DAYS,
+} from "@/lib/perm";
+import { CLOSING_SOON_DAYS, DEADLINE_WARNING_DAYS } from "@/components/forms/FilingWindowIndicator";
 
 // ============================================================================
 // TYPES
@@ -48,29 +55,10 @@ export function RecruitmentDeadlineIndicator({
   noticeOfFilingStartDate,
   isProfessionalOccupation,
 }: RecruitmentDeadlineIndicatorProps) {
-  // If no PWD determination, show initial state
-  if (!pwdDeterminationDate) {
-    return (
-      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <CalendarClock className="h-4 w-4" />
-          <span>Enter PWD determination date to see recruitment deadline</span>
-        </div>
-      </div>
-    );
-  }
+  const note = (text: string) => <p className="border border-border p-3 text-sm text-muted-foreground">{text}</p>;
 
-  // If we have determination but no expiration, something is off
-  if (!pwdExpirationDate) {
-    return (
-      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <CalendarClock className="h-4 w-4" />
-          <span>PWD expiration date will be calculated...</span>
-        </div>
-      </div>
-    );
-  }
+  if (!pwdDeterminationDate) return note("Enter PWD determination date to see recruitment deadline");
+  if (!pwdExpirationDate) return note("PWD expiration date will be calculated...");
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -80,127 +68,57 @@ export function RecruitmentDeadlineIndicator({
   const recWindow = calculateRecruitmentWindowCloses(firstDate, pwdExpirationDate);
 
   if (!recWindow) {
-    // No first recruitment date yet — show PWD-only deadline
+    // No first recruitment date yet: show the PWD-only deadline
     const expirationDate = parseISO(pwdExpirationDate);
-    const daysToExpiration = differenceInDays(expirationDate, today);
-    return (
-      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <CalendarClock className="h-4 w-4" />
-          <span>PWD expires {format(expirationDate, "MMM d, yyyy")} ({daysToExpiration} days)</span>
-        </div>
-      </div>
-    );
+    return note(`PWD expires ${format(expirationDate, "MMM d, yyyy")} (${differenceInDays(expirationDate, today)} days)`);
   }
 
   const recruitmentDeadline = parseISO(recWindow.closes);
-  const limitingFactor: 'pwd' | '150-day' = recWindow.isPwdLimited ? 'pwd' : '150-day';
   const daysRemaining = differenceInDays(recruitmentDeadline, today);
-
-  // Determine status
-  let status: "open" | "warning" | "urgent" | "expired";
-  if (daysRemaining < 0) {
-    status = "expired";
-  } else if (daysRemaining <= 14) {
-    status = "urgent";
-  } else if (daysRemaining <= 30) {
-    status = "warning";
-  } else {
-    status = "open";
-  }
-
-  const statusConfig = {
-    open: {
-      bgColor: "bg-primary/10",
-      borderColor: "border-primary",
-      textColor: "text-primary",
-      icon: ClockIcon,
-    },
-    warning: {
-      bgColor: "bg-data-warn/15",
-      borderColor: "border-data-warn",
-      textColor: "text-data-warn-ink",
-      icon: AlertTriangle,
-    },
-    urgent: {
-      bgColor: "bg-destructive/10",
-      borderColor: "border-destructive",
-      textColor: "text-destructive",
-      icon: AlertTriangle,
-    },
-    expired: {
-      bgColor: "bg-destructive/10",
-      borderColor: "border-destructive",
-      textColor: "text-destructive",
-      icon: AlertTriangle,
-    },
-  };
-
-  const config = statusConfig[status];
-  const Icon = config.icon;
+  const ink =
+    daysRemaining <= CLOSING_SOON_DAYS
+      ? "text-destructive-text"
+      : daysRemaining <= DEADLINE_WARNING_DAYS
+        ? "text-data-warn-ink"
+        : "text-foreground";
+  const professionalNote = isProfessionalOccupation
+    ? ` One additional recruitment method for professional positions may be completed during the ${FILING_WINDOW_WAIT_DAYS}-day quiet period.`
+    : "";
 
   return (
-    <div
-      className={cn(
-        "rounded-lg border p-4 space-y-2",
-        config.bgColor,
-        config.borderColor
-      )}
-    >
-      <div className="flex items-center gap-2">
-        <Icon className={cn("h-5 w-5", config.textColor)} />
-        <span className={cn("font-semibold text-sm", config.textColor)}>
-          Recruitment deadline
-        </span>
-      </div>
+    <div className="space-y-3 border border-border p-4">
+      <p className="text-sm font-semibold">Recruitment deadline</p>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      <dl className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-muted-foreground text-sm">
-            Must complete by
-          </span>{" "}
-          <p className="font-medium">
-            {format(recruitmentDeadline, "MMM d, yyyy")}
-          </p>{" "}
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {limitingFactor === '150-day'
-              ? '(150 days from first recruitment)'
-              : '(30 days before PWD expires)'}
-          </p>
+          <dt className="text-muted-foreground">Must complete by</dt>{" "}
+          <dd className="font-medium">{format(recruitmentDeadline, "MMM d, yyyy")}</dd>{" "}
+          <dd className="mt-0.5 text-muted-foreground">
+            {recWindow.isPwdLimited
+              ? `(${PWD_RECRUITMENT_BUFFER_DAYS} days before PWD expires)`
+              : `(${RECRUITMENT_WINDOW_DAYS} days from first recruitment)`}
+          </dd>
         </div>
         <div>
-          <span className="text-muted-foreground text-sm">
-            PWD expires
-          </span>{" "}
-          <p className="font-medium">
-            {format(parseISO(pwdExpirationDate), "MMM d, yyyy")}
-          </p>
+          <dt className="text-muted-foreground">PWD expires</dt>{" "}
+          <dd className="font-medium">{format(parseISO(pwdExpirationDate), "MMM d, yyyy")}</dd>
         </div>
-      </div>
+      </dl>
 
-      {status !== "expired" && (
-        <div className="text-center pt-2">
-          <span className={cn("text-2xl font-bold", config.textColor)}>
-            {daysRemaining}
-          </span>{" "}
-          <span className="text-sm text-muted-foreground ml-1">
-            days remaining
-          </span>
-        </div>
+      {daysRemaining >= 0 ? (
+        <p className="text-sm text-muted-foreground">
+          <span className={cn("font-heading text-lg font-bold tabular-nums", ink)}>{daysRemaining}</span> days remaining
+        </p>
+      ) : (
+        <p className="text-sm font-semibold text-destructive-text">Deadline has passed</p>
       )}
 
-      {status === "expired" && (
-        <div className={cn("text-center pt-2 font-semibold", config.textColor)}>
-          Deadline has passed
-        </div>
-      )}
-
-      <p className="text-sm text-muted-foreground pt-1">
-        {limitingFactor === '150-day'
-          ? `Recruitment must be complete within 150 days of the first recruitment step${firstDate ? ` (${format(parseISO(firstDate), "MMM d, yyyy")})` : ""}, leaving a 30-day quiet period (180 days total).${isProfessionalOccupation ? " One additional recruitment method for professional positions may be completed during the 30-day quiet period." : ""}`
+      <p className="text-sm text-muted-foreground">
+        {!recWindow.isPwdLimited
+          ? `Recruitment must be complete within ${RECRUITMENT_WINDOW_DAYS} days of the first recruitment step${firstDate ? ` (${format(parseISO(firstDate), "MMM d, yyyy")})` : ""}, leaving a ${FILING_WINDOW_WAIT_DAYS}-day quiet period (${FILING_WINDOW_CLOSE_DAYS} days total).${professionalNote}`
           : firstDate
-            ? `Recruitment must complete 30 days before PWD expires to preserve the filing window. This PWD constraint is earlier than the 150-day rule.${isProfessionalOccupation ? " One additional recruitment method for professional positions may be completed during the 30-day quiet period." : ""}`
-            : `Recruitment must complete 30 days before PWD expires to allow for the mandatory waiting period before ETA 9089 filing.${isProfessionalOccupation ? " One additional recruitment method for professional positions may be completed during the 30-day quiet period." : ""}`}
+            ? `Recruitment must complete ${PWD_RECRUITMENT_BUFFER_DAYS} days before PWD expires to preserve the filing window. This PWD constraint is earlier than the ${RECRUITMENT_WINDOW_DAYS}-day rule.${professionalNote}`
+            : `Recruitment must complete ${PWD_RECRUITMENT_BUFFER_DAYS} days before PWD expires to allow for the mandatory waiting period before ETA 9089 filing.${professionalNote}`}
       </p>
     </div>
   );

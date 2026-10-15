@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState, useCallback, useEffect } from "react";
-import { ArrowsClockwiseIcon as RefreshCw, CaretDownIcon, CheckIcon, CopyIcon, FileTextIcon, FloppyDiskIcon as Save, SparkleIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon as RefreshCw, CaretDownIcon, CheckIcon, CopyIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ import {
 import { ConvexError } from "convex/values";
 import { TemplateSelector } from "./TemplateSelector";
 import { toast } from "@/lib/toast";
-import { JOB_DESCRIPTION_MAX_LENGTH } from "./shared";
+import { JOB_DESCRIPTION_MAX_LENGTH, TemplateSaveButton, TemplateStatusBadge, TemplateTypeBadge } from "./shared";
 
 /** Extract error message from ConvexError or plain Error */
 function getErrorMessage(error: unknown): string {
@@ -306,77 +306,38 @@ export function JobDescriptionField({
   // ============================================================================
 
   return (
-    <div
-      className={cn(
-        "rounded-lg border border-border bg-card",
-        "transition-colors duration-150",
-        isExpanded && "",
-        !isExpanded && "",
-        className
-      )}
-    >
-      {/* Header - Clickable to expand/collapse */}
-      <button
-        type="button"
-        onClick={() => setIsExpanded(!isExpanded)}
-        className={cn(
-          "flex w-full items-center justify-between p-3 sm:p-4 text-left",
-          "hover:bg-muted/50 transition-colors",
-          "rounded-t-lg",
-          !isExpanded && "rounded-b-lg",
-          "min-h-[48px]"
-        )}
-        aria-expanded={isExpanded}
-      >
-        <div className="flex items-center gap-2 sm:gap-3">
-          <FileTextIcon className="h-5 w-5 text-muted-foreground shrink-0" />
-          <div className="flex items-center gap-2">
-            <span className="font-heading font-semibold text-base sm:text-lg">
+    <section className={cn("border border-border bg-card", className)}>
+      {/* The heading's button covers the header row, as on every form section */}
+      <div className="relative flex min-h-12 items-center justify-between gap-4 p-4 hover:bg-muted/50 has-[:focus-visible]:bg-muted/50">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h2 className="font-heading text-lg font-bold">
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              aria-expanded={isExpanded}
+              className="text-left after:absolute after:inset-0 focus-visible:outline-none"
+            >
               Job description
-            </span>
-            {/* Template indicator badge */}
-            {loadedTemplate && (
-              <span
-                className={cn(
-                  "text-sm px-2 py-0.5 rounded-full border",
-                  isModified
-                    ? "bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-400"
-                    : "bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
-                )}
-              >
-                {isModified ? "Modified" : "From template"}
-              </span>
-            )}
-          </div>
+            </button>
+          </h2>
+          {loadedTemplate && <TemplateStatusBadge isModified={!!isModified} />}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Character count badge (when expanded or has content) */}
+        <div className="flex shrink-0 items-center gap-3">
           {(isExpanded || hasContent) && (
-            <span
-              className={cn(
-                "text-sm text-muted-foreground",
-                isOverLimit && "text-destructive font-medium"
-              )}
-            >
+            <span className={cn("text-sm text-muted-foreground tabular-nums", isOverLimit && "font-medium text-destructive-text")}>
               {characterCount.toLocaleString()}/{maxLength.toLocaleString()}
             </span>
           )}
           <CaretDownIcon
-            className={cn(
-              "h-5 w-5 text-muted-foreground transition-transform duration-200",
-              isExpanded && "rotate-180"
-            )}
+            className={cn("size-5 text-muted-foreground transition-transform", isExpanded && "rotate-180")}
+            aria-hidden="true"
           />
         </div>
-      </button>
+      </div>
 
-      {/* Content - Animated expand/collapse */}
-      <>
-        {isExpanded && (
-          <div
-          >
-            <div className="px-4 pb-4 pt-1 space-y-4">
+      {isExpanded && (
+            <div className="space-y-4 border-t border-border p-4">
               {/* Template selector row */}
               <div className="flex items-center gap-2 flex-wrap">
                 <TemplateSelector
@@ -401,7 +362,7 @@ export function JobDescriptionField({
                         className="gap-1.5 border min-h-[44px] min-w-[44px]"
                       >
                         {isCopied ? (
-                          <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
+                          <CheckIcon className="h-5 w-5 sm:h-4 sm:w-4 text-primary-text" />
                         ) : (
                           <CopyIcon className="h-5 w-5 sm:h-4 sm:w-4" />
                         )}
@@ -505,64 +466,20 @@ export function JobDescriptionField({
 
               {/* Save template row - dynamic based on whether name exists */}
               <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border">
-                {/* Single dynamic save button */}
-                <div
-                  className={cn(
-                    "rounded-md border transition-colors",
-                    isExistingTemplateName
-                      ? "border-blue-500 dark:border-blue-400"
-                      : "border-emerald-500 dark:border-emerald-400"
-                  )}
-                >
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSaveClick}
-                    disabled={!canSaveTemplate || isLoading || isSaving}
-                    className={cn(
-                      "gap-1.5 rounded-[4px] min-h-[44px]",
-                      isExistingTemplateName
-                        ? "text-blue-700 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
-                        : "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-900/30"
-                    )}
-                  >
-                    {isExistingTemplateName ? (
-                      <>
-                        <Save className="h-5 w-5 sm:h-4 sm:w-4" />
-                        <span className="text-sm">{isSaving ? "Updating..." : "Update template"}</span>
-                      </>
-                    ) : (
-                      <>
-                        <SparkleIcon className="h-5 w-5 sm:h-4 sm:w-4" />
-                        <span className="text-sm">{isSaving ? "Saving..." : "Save template"}</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {/* Status indicator - hidden on very small screens to save space */}
-                {positionTitle.trim() && (
-                  <span
-                    className={cn(
-                      "text-sm px-2 py-1 rounded border hidden xs:inline-block",
-                      isExistingTemplateName
-                        ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
-                        : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400"
-                    )}
-                  >
-                    {isExistingTemplateName ? "Existing" : "New"}
-                  </span>
-                )}
+                <TemplateSaveButton
+                  isExisting={isExistingTemplateName}
+                  isSaving={isSaving}
+                  disabled={!canSaveTemplate || isLoading || isSaving}
+                  onClick={handleSaveClick}
+                />
+                {positionTitle.trim() && <TemplateTypeBadge isExisting={isExistingTemplateName} />}
 
                 <span className="text-sm text-muted-foreground ml-auto hidden sm:inline">
                   Changes auto-save to case
                 </span>
               </div>
             </div>
-          </div>
-        )}
-      </>
+      )}
 
       {/* Confirmation dialog when server finds existing template */}
       <Dialog open={!!pendingUpdate} onOpenChange={(open) => { if (!open) setPendingUpdate(null); }}>
@@ -583,7 +500,7 @@ export function JobDescriptionField({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </section>
   );
 }
 

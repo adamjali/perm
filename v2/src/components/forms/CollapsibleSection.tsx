@@ -18,8 +18,6 @@ export interface CollapsibleSectionProps {
   state: SectionState;
   /** Callback when section is toggled open/closed */
   onToggle: () => void;
-  /** Optional icon to display next to title */
-  icon?: React.ReactNode;
   /** Optional description shown below title */
   description?: string;
   /** Section content */
@@ -33,141 +31,70 @@ export interface CollapsibleSectionProps {
 // ============================================================================
 
 /**
- * CollapsibleSection Component
+ * One section of the case form: a plain box whose heading opens and closes it.
  *
- * A collapsible form section with dependency indicators.
- *
- * Features:
- * - Always openable (even when prerequisites aren’t met)
- * - Animated expand/collapse
- * - Completion checkmark + summary when collapsed
- * - Soft prerequisite note when opened without prerequisites
- * - Neobrutalist design (hard shadows, snappy animations)
+ * The heading's button is stretched over the whole header row, so the row is
+ * one click target and the heading stays a heading. A section whose earlier
+ * steps aren't done still opens, says so in one line, and is never faded.
  */
 export function CollapsibleSection({
   name,
   title,
   state,
   onToggle,
-  icon,
   description,
   children,
   className,
 }: CollapsibleSectionProps) {
   const { isOpen, isEnabled, disabledReason, statusInfo, isComplete, summary } = state;
+  const contentId = `section-${name}-content`;
+  const statusId = `section-${name}-status`;
 
   return (
-    <div
-      data-section={name}
-      className={cn(
-        "rounded-lg border border-border bg-background",
-        !isEnabled && "opacity-70",
-        isEnabled && "",
-        className
-      )}
-    >
-      {/* Header — always clickable */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={onToggle}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onToggle();
-          }
-        }}
-        className={cn(
-          "flex w-full items-center justify-between p-4",
-          "text-left transition-colors duration-150 rounded-t-lg",
-          "hover:bg-muted/50 cursor-pointer",
-        )}
-        aria-expanded={isOpen}
-        aria-controls={`section-${name}-content`}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Icon */}
-          {icon && (
-            <span className={cn(
-              "shrink-0",
-              isEnabled ? "text-foreground" : "text-muted-foreground"
-            )}>
-              {icon}
-            </span>
-          )}
-
-          {/* Title and description */}
-          <div className="min-w-0">
-            <h3 className={cn(
-              "font-heading font-semibold text-lg break-words",
-              !isEnabled && "text-muted-foreground"
-            )}>
+    <section data-section={name} className={cn("border border-border bg-card", className)}>
+      <div className="relative flex items-center justify-between gap-4 p-4 hover:bg-muted/50 has-[:focus-visible]:bg-muted/50">
+        <div className="min-w-0">
+          <h2 className={cn("font-heading text-lg font-bold break-words", !isEnabled && "text-muted-foreground")}>
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-expanded={isOpen}
+              aria-controls={contentId}
+              aria-describedby={statusInfo || (isComplete && summary) ? statusId : undefined}
+              className="text-left after:absolute after:inset-0 focus-visible:outline-none"
+            >
               {title}
-            </h3>
-            {description && (
-              <p className="text-sm text-muted-foreground mt-0.5 break-words">
-                {description}
-              </p>
-            )}
-          </div>
+            </button>
+          </h2>
+          {description && <p className="mt-0.5 break-words text-sm text-muted-foreground">{description}</p>}
         </div>
 
-        {/* Right side: Status indicators, completion, and chevron */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Status info — amber warning for waiting period, subtle for enabled sections */}
-          {statusInfo && (
-            <span className={cn(
-              "text-sm font-medium px-2 py-1 rounded hidden sm:inline",
-              !isEnabled
-                ? "bg-data-warn/15 text-data-warn-ink border border-data-warn"
-                : "text-muted-foreground bg-muted"
-            )}>
-              {statusInfo}
-            </span>
-          )}
-
-          {/* Completion indicator */}
-          {isComplete && (
-            <div className="flex items-center gap-1.5 text-primary">
-              <CheckCircle2 className="h-4 w-4" />
-              {!isOpen && summary && (
-                <span className="text-sm text-muted-foreground max-w-[300px] truncate hidden sm:inline">
-                  {summary}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Chevron */}
-          <span className="text-muted-foreground transition-transform duration-200">
-            <CaretDownIcon className={cn(
-              "h-5 w-5",
-              isOpen && "rotate-180"
-            )} />
+        <div className="flex shrink-0 items-center gap-3 text-sm">
+          <span id={statusId} className="hidden items-center gap-2 sm:flex">
+            {statusInfo && (
+              <span className={isEnabled ? "text-muted-foreground" : "text-data-warn-ink"}>{statusInfo}</span>
+            )}
+            {isComplete && !isOpen && summary && (
+              <span className="max-w-[300px] truncate text-muted-foreground">{summary}</span>
+            )}
           </span>
+          {isComplete && <CheckCircle2 className="size-5 text-primary-text" aria-label="Complete" role="img" />}
+          <CaretDownIcon className={cn("size-5 text-muted-foreground transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
         </div>
       </div>
 
-      {/* Content */}
-      <>
-        {isOpen && (
-          <div
-            id={`section-${name}-content`}
-          >
-            {/* Prerequisite warning when opened without prerequisites */}
-            {!isEnabled && (
-              <div className="mx-4 mb-3 flex items-center gap-2 text-sm px-3 py-2.5 rounded-md border border-data-warn/50 bg-data-warn/15 text-data-warn-ink">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-data-warn-ink" />
-                <span className="font-medium">{disabledReason || "Complete earlier sections first for accurate validation."}</span>
-              </div>
-            )}
-            <div className="px-4 pb-4 pt-1">
-              {children}
-            </div>
-          </div>
-        )}
-      </>
-    </div>
+      {isOpen && (
+        <div id={contentId} className="space-y-4 border-t border-border p-4">
+          {!isEnabled && (
+            <p className="flex items-center gap-2 text-sm text-data-warn-ink">
+              <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
+              {disabledReason || "Complete earlier sections first for accurate validation."}
+            </p>
+          )}
+          {children}
+        </div>
+      )}
+    </section>
   );
 }
 
