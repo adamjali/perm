@@ -1,17 +1,18 @@
 /**
  * StatusChange Email Template
- * Sent when a case status changes (stage or progress status).
+ * Sent when a case's stage or progress changes in the app.
  *
- * Features:
- * - Visual status change indicator (from -> to)
- * - Case details
- * - CTA to view case
- * - Dark mode support via CSS classes
+ * The person and employer are the heading, then the change on the same rail
+ * the DOL status alert uses (StatusRail): the old stage quiet above, the new
+ * one as the solid lime block. No arrow glyph (a font dependency), no pale
+ * green chip (owner, Oct 15 2026: lime or dark, never the highlighter green).
  */
 
 import { Text, Section } from "@react-email/components";
-import { EmailLayout, EmailButton, EmailHeader } from "./components";
-import { labelStyle, valueStyle, detailsSectionStyle, ctaSectionStyle } from "./components/emailStyles";
+import { EmailLayout, EmailButton } from "./components";
+import { StatusRail } from "./components/StatusRail";
+import { SANS_STACK } from "./components/QueueStamp";
+import { ctaSectionStyle } from "./components/emailStyles";
 import { SITE_URL } from "../../convex/lib/links";
 
 export interface StatusChangeProps {
@@ -33,10 +34,9 @@ export interface StatusChangeProps {
   caseNumber?: string;
 }
 
-/**
- * Email template for status change notifications.
- * Shows clear before/after status with visual indicator.
- */
+/** A stage that ends the case takes the rail's closed block, not the lime. */
+const ENDED = /\b(closed|denied|withdrawn|archived)\b/i;
+
 export function StatusChange({
   beneficiaryName,
   companyName,
@@ -58,48 +58,22 @@ export function StatusChange({
 
   return (
     <EmailLayout previewText={previewText}>
-      <EmailHeader
-        title={title}
-        subtitle={caseNumber ? `Case #${caseNumber}` : undefined}
-        urgency="normal"
-      />
+      <Text className="em-text-secondary" style={styles.eyebrow}>{title}</Text>
+      <Text className="em-text" style={styles.heading}>{`${beneficiaryName} at ${companyName}`}</Text>
+      {caseNumber ? (
+        <Text className="em-text-secondary" style={styles.caseNumber}>{`Case #${caseNumber}`}</Text>
+      ) : null}
 
-      <Section style={detailsSectionStyle}>
-        <Text className="em-text-secondary" style={labelStyle}>Foreign worker</Text>
-        <Text className="em-text" style={valueStyle}>{beneficiaryName}</Text>
-
-        <Text className="em-text-secondary" style={labelStyle}>Company</Text>
-        <Text className="em-text" style={valueStyle}>{companyName}</Text>
+      <Section style={styles.railWrap}>
+        <StatusRail
+          fromStatus={isNew ? undefined : previousStatus}
+          toStatus={newStatus}
+          tone={ENDED.test(newStatus) ? "closed" : "live"}
+          nowLabel={isNew ? "Starting stage" : "Now"}
+        />
       </Section>
 
-      {/* Status change indicator — table layout for reliable rendering (flex/gap is unsupported in Outlook) */}
-      <Section className="em-status-box" style={styles.statusChange}>
-        <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
-          <tbody>
-            <tr>
-              {!isNew && (
-                <td style={styles.statusBox}>
-                  <Text className="em-text-secondary" style={styles.statusLabel}>Previous</Text>
-                  <Text className="em-status-prev" style={styles.statusValue}>{previousStatus}</Text>
-                </td>
-              )}
-              {!isNew && (
-                <td style={styles.arrowCell}>
-                  <Text className="em-arrow" style={styles.arrow}>→</Text>
-                </td>
-              )}
-              <td style={styles.statusBox}>
-                <Text className="em-text-secondary" style={styles.statusLabel}>{isNew ? "Starting stage" : "Current"}</Text>
-                <Text className="em-status-new" style={styles.statusValueNew}>{newStatus}</Text>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </Section>
-
-      <Section style={styles.timestamp}>
-        <Text className="em-text-secondary" style={styles.timestampText}>{isNew ? "Added" : "Changed"} on {changedAt}</Text>
-      </Section>
+      <Text className="em-text-secondary" style={styles.when}>{`${isNew ? "Added" : "Changed"} on ${changedAt}`}</Text>
 
       <Section style={ctaSectionStyle}>
         <EmailButton href={caseUrl}>View case</EmailButton>
@@ -109,62 +83,38 @@ export function StatusChange({
 }
 
 const styles = {
-  statusChange: {
-    backgroundColor: "#f4f4f5",
-    padding: "20px",
-    border: "2px solid #e4e4e7",
-    marginBottom: "24px",
-  },
-  statusBox: {
-    textAlign: "center" as const,
-    verticalAlign: "middle" as const,
-    width: "44%",
-  },
-  arrowCell: {
-    textAlign: "center" as const,
-    verticalAlign: "middle" as const,
-    width: "12%",
-  },
-  statusLabel: {
-    color: "#71717a",
+  eyebrow: {
+    fontFamily: SANS_STACK,
+    color: "#5A5A5A",
     fontSize: "14px",
-    fontWeight: "600" as const,
-    margin: "0 0 8px 0",
+    fontWeight: 700 as const,
+    lineHeight: "18px",
+    margin: "0 0 6px 0",
   },
-  statusValue: {
-    color: "#71717a",
-    fontSize: "14px",
-    fontWeight: "600" as const,
-    margin: "0",
-    padding: "8px 16px",
-    backgroundColor: "#fffffe",
-    border: "2px solid #e4e4e7",
-    display: "inline-block" as const,
-  },
-  statusValueNew: {
-    color: "#18181b",
-    fontSize: "14px",
-    fontWeight: "700" as const,
-    margin: "0",
-    padding: "8px 16px",
-    backgroundColor: "#dcfce7",
-    border: "2px solid #2ECC40",
-    display: "inline-block" as const,
-  },
-  arrow: {
+  heading: {
+    fontFamily: SANS_STACK,
+    color: "#141414",
     fontSize: "24px",
-    fontWeight: "700" as const,
-    color: "#22c55e",
+    fontWeight: 700 as const,
+    lineHeight: "30px",
     margin: "0",
   },
-  timestamp: {
-    textAlign: "center" as const,
-    marginBottom: "24px",
-  },
-  timestampText: {
-    color: "#71717a",
+  caseNumber: {
+    fontFamily: SANS_STACK,
+    color: "#5A5A5A",
     fontSize: "14px",
-    margin: "0",
+    lineHeight: "20px",
+    margin: "4px 0 0 0",
+  },
+  railWrap: {
+    marginTop: "24px",
+  },
+  when: {
+    fontFamily: SANS_STACK,
+    color: "#5A5A5A",
+    fontSize: "14px",
+    lineHeight: "20px",
+    margin: "0 0 24px 0",
   },
 } as const;
 

@@ -49,6 +49,14 @@ describe("CaseNextStep", () => {
     expect(screen.getByRole("link", { name: "Or follow this employer by email" })).toHaveAttribute("href", "#follow");
   });
 
+  // The two reasons people come (owner, Oct 15 2026): when it'll be
+  // decided, and an email when it moves. Named before the number is typed.
+  it("names what the number gets: the likely decision date and an email when it moves", () => {
+    render(<CaseNextStep question="Waiting on a case with Acme?" source="employer" />);
+    expect(screen.getByText(/when it.ll likely be decided/i)).toBeInTheDocument();
+    expect(screen.getByText(/an email the day DOL moves it/i)).toBeInTheDocument();
+  });
+
   it("records which page sent the lookup, and nothing else about it", () => {
     const { container } = render(<CaseNextStep question="Waiting on a PERM case?" source="article-end" />);
     fireEvent.submit(container.querySelector("form")!);

@@ -48,8 +48,8 @@ import { Section, Text } from "@react-email/components";
 import { SANS_STACK } from "./QueueStamp";
 
 export interface StatusRailProps {
-  /** The status the case has left, already display-cased. */
-  fromStatus: string;
+  /** The status the case has left, already display-cased. A new case has none, and the rail starts at "Now". */
+  fromStatus?: string;
   /** The status the case is in now, already display-cased. */
   toStatus: string;
   /**
@@ -59,9 +59,11 @@ export interface StatusRailProps {
    * single word CERTIFIED, never from a judgement about the status text.
    */
   tone: "live" | "closed";
+  /** The label over the new status. "Now" unless the caller says otherwise ("Starting stage"). */
+  nowLabel?: string;
 }
 
-export function StatusRail({ fromStatus, toStatus, tone }: StatusRailProps) {
+export function StatusRail({ fromStatus, toStatus, tone, nowLabel = "Now" }: StatusRailProps) {
   const isLive = tone === "live";
   return (
     <Section style={styles.wrap}>
@@ -75,15 +77,19 @@ export function StatusRail({ fromStatus, toStatus, tone }: StatusRailProps) {
         <tbody>
           <tr>
             <td className="cs-rail" style={styles.rail}>
-              <Text className="em-text-secondary" style={styles.eyebrow}>
-                Was
-              </Text>
-              <Text className="em-text-secondary" style={styles.was}>
-                {fromStatus}
-              </Text>
+              {fromStatus ? (
+                <>
+                  <Text className="em-text-secondary" style={styles.eyebrow}>
+                    Was
+                  </Text>
+                  <Text className="em-text-secondary" style={styles.was}>
+                    {fromStatus}
+                  </Text>
+                </>
+              ) : null}
 
-              <Text className="em-text-secondary" style={styles.eyebrowNow}>
-                Now
+              <Text className="em-text-secondary" style={fromStatus ? styles.eyebrowNow : styles.eyebrow}>
+                {nowLabel}
               </Text>
               <table
                 role="presentation"

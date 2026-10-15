@@ -3,8 +3,9 @@
  * Sent after signup (post-verification / OAuth completion).
  *
  * Features:
- * - Green welcome banner
- * - 3 feature highlights with green square markers
+ * - A plain heading (no banner: owner, Oct 15 2026, lime or dark, never the
+ *   pale highlighter green)
+ * - The three things it does, on one black panel with lime markers
  * - Guide links, and a line for anyone waiting on a case of their own
  * - CTA button to create first case
  * - Senja review ask
@@ -38,83 +39,57 @@ export function WelcomeEmail({
       footerText="You're receiving this email because a PERM Tracker account was created with this address."
       hideSettingsLink
     >
-      {/* Welcome Banner */}
-      <Section className="em-alert-green" style={styles.welcomeBanner}>
-        <Text className="em-alert-green-title" style={styles.welcomeTitle}>
-          Welcome to PERM Tracker
-        </Text>
+      <Text className="em-text-secondary" style={styles.eyebrow}>Welcome to PERM Tracker</Text>
+      <Text className="em-text" style={styles.heading}>{`Hi ${userName}, your account is ready.`}</Text>
+      <Text className="em-text-body" style={styles.bodyText}>
+        It keeps every PERM case in one place and works out each deadline from the dates you enter.
+      </Text>
+
+      {/* What it does, on a black panel: dark in every client, white and lime on it. */}
+      <Section style={styles.panel}>
+        <Text style={styles.panelLabel}>From your first case</Text>
+        <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
+          <tbody>
+              <tr>
+                <td style={styles.featureMarkerCell}>
+                  <div style={styles.featureMarker}>&nbsp;</div>
+                </td>
+                <td style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>Every deadline, worked out</Text>
+                  <Text style={styles.featureDesc}>Wage expiration, the recruitment clocks, the ETA 9089 filing window and the I-140 cutoff, with reminders before each one</Text>
+                </td>
+              </tr>
+              <tr>
+                <td style={styles.featureMarkerCell}>
+                  <div style={styles.featureMarker}>&nbsp;</div>
+                </td>
+                <td style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>Job descriptions you can reuse</Text>
+                  <Text style={styles.featureDesc}>Pull a job description from an earlier case into a new one</Text>
+                </td>
+              </tr>
+              <tr>
+                <td style={styles.featureMarkerCell}>
+                  <div style={styles.featureMarker}>&nbsp;</div>
+                </td>
+                <td style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>An assistant for your caseload</Text>
+                  <Text style={styles.featureDesc}>Ask it to review your cases and point out what needs attention</Text>
+                </td>
+              </tr>
+          </tbody>
+        </table>
       </Section>
 
-      {/* Greeting */}
-      <Section style={styles.greeting}>
-        <Text className="em-text" style={styles.greetingText}>
-          Hi {userName},
-        </Text>
-        <Text className="em-text-body" style={styles.bodyText}>
-          Your account is ready. It keeps every PERM case in one place and works out each
-          deadline from the dates you enter. Here&apos;s what it does from your first case:
-        </Text>
-      </Section>
-
-      {/* Feature Highlights */}
-      <Section style={styles.featuresSection}>
-        <Section className="em-card" style={styles.featureCard}>
-          <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
-            <tbody>
-              <tr>
-                <td style={styles.featureMarkerCell}>
-                  <Text style={styles.featureMarker}>&#9632;</Text>
-                </td>
-                <td style={styles.featureContent}>
-                  <Text className="em-text" style={styles.featureTitle}>
-                    Every deadline, worked out
-                  </Text>
-                  <Text className="em-text-body" style={styles.featureDesc}>
-                    Wage expiration, the recruitment clocks, the ETA 9089 filing window and the I-140 cutoff, with reminders before each one
-                  </Text>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </Section>
-        <Section className="em-card" style={styles.featureCard}>
-          <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
-            <tbody>
-              <tr>
-                <td style={styles.featureMarkerCell}>
-                  <Text style={styles.featureMarker}>&#9632;</Text>
-                </td>
-                <td style={styles.featureContent}>
-                  <Text className="em-text" style={styles.featureTitle}>
-                    Job descriptions you can reuse
-                  </Text>
-                  <Text className="em-text-body" style={styles.featureDesc}>
-                    Pull a job description from an earlier case into a new one
-                  </Text>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </Section>
-        <Section className="em-card" style={styles.featureCard}>
-          <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
-            <tbody>
-              <tr>
-                <td style={styles.featureMarkerCell}>
-                  <Text style={styles.featureMarker}>&#9632;</Text>
-                </td>
-                <td style={styles.featureContent}>
-                  <Text className="em-text" style={styles.featureTitle}>
-                    An assistant for your caseload
-                  </Text>
-                  <Text className="em-text-body" style={styles.featureDesc}>
-                    Ask it to review your cases and point out what needs attention
-                  </Text>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </Section>
+      {/* The main action right after what it does. */}
+      <Section style={ctaSectionStyle}>
+        <Link
+          href={`${baseUrl}/cases`}
+          className="em-button-primary"
+          style={styles.ctaButton}
+        >
+          Create your first case
+        </Link>
       </Section>
 
       {/* Guide links */}
@@ -151,17 +126,6 @@ export function WelcomeEmail({
         </Text>
       </Section>
 
-      {/* CTA Button */}
-      <Section style={ctaSectionStyle}>
-        <Link
-          href={`${baseUrl}/cases`}
-          className="em-button-primary"
-          style={styles.ctaButton}
-        >
-          Create your first case
-        </Link>
-      </Section>
-
       {/* Divider */}
       <Hr className="em-divider" style={styles.divider} />
 
@@ -192,27 +156,19 @@ export function WelcomeEmail({
 }
 
 const styles = {
-  welcomeBanner: {
-    textAlign: "center" as const,
-    padding: "24px 20px 20px",
-    backgroundColor: "#f0fdf4",
-    border: "2px solid #2ECC40",
-    marginBottom: "24px",
-  },
-  welcomeTitle: {
-    color: "#166534",
-    fontSize: "28px",
-    fontWeight: "800" as const,
-    letterSpacing: "-0.02em",
-    margin: "0",
-  },
-  greeting: {
-    marginBottom: "8px",
-  },
-  greetingText: {
-    color: "#18181b",
-    fontSize: "20px",
+  eyebrow: {
+    color: "#5A5A5A",
+    fontSize: "14px",
     fontWeight: "700" as const,
+    lineHeight: "18px",
+    margin: "0 0 6px 0",
+  },
+  heading: {
+    color: "#141414",
+    fontSize: "26px",
+    fontWeight: "700" as const,
+    lineHeight: "32px",
+    letterSpacing: "-0.01em",
     margin: "0 0 12px 0",
   },
   bodyText: {
@@ -221,38 +177,46 @@ const styles = {
     lineHeight: "24px",
     margin: "0 0 16px 0",
   },
-  featuresSection: {
-    marginBottom: "8px",
+  // Black in every client: white on it is 21:1, the lime 10.7:1.
+  panel: {
+    backgroundColor: "#000001",
+    border: "2px solid #000001",
+    padding: "20px 20px 8px 20px",
+    margin: "8px 0 24px 0",
   },
-  featureCard: {
-    backgroundColor: "#fafafa",
-    border: "2px solid #e4e4e7",
-    padding: "16px",
-    marginBottom: "10px",
+  panelLabel: {
+    color: "#2ECC40",
+    fontSize: "14px",
+    fontWeight: "700" as const,
+    lineHeight: "18px",
+    margin: "0 0 14px 0",
   },
   featureMarkerCell: {
-    width: "28px",
+    width: "26px",
     verticalAlign: "top" as const,
-    paddingTop: "2px",
+    paddingTop: "5px",
   },
+  // A lime square drawn as a box, not a glyph, so no font can swap it.
   featureMarker: {
-    color: "#22c55e",
-    fontSize: "14px",
-    margin: "0",
-    lineHeight: "22px",
+    width: "12px",
+    height: "12px",
+    lineHeight: "12px",
+    fontSize: "1px",
+    backgroundColor: "#2ECC40",
   },
   featureContent: {
     verticalAlign: "top" as const,
+    paddingBottom: "14px",
   },
   featureTitle: {
-    color: "#18181b",
+    color: "#fffffe",
     fontSize: "15px",
     fontWeight: "700" as const,
-    margin: "0 0 4px 0",
+    margin: "0 0 2px 0",
     lineHeight: "22px",
   },
   featureDesc: {
-    color: "#52525b",
+    color: "#D4D4D8",
     fontSize: "14px",
     lineHeight: "20px",
     margin: "0",
@@ -276,7 +240,7 @@ const styles = {
     border: "2px solid #000001",
   },
   divider: {
-    borderTop: "2px solid #e4e4e7",
+    borderTop: "2px solid #000001",
     margin: "24px 0",
   },
   reviewSection: {

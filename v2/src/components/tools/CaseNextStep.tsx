@@ -1,4 +1,5 @@
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { CasePromises } from "@/components/tools/CasePromises";
 import { cn } from "@/lib/utils";
 
 /**
@@ -39,9 +40,7 @@ export function CaseNextStep({
   return (
     <section aria-label="Check your case" className={cn("object p-5 sm:p-6", className)}>
       <h2 className="font-heading text-xl font-bold leading-tight">{question}</h2>{" "}
-      <p className="mt-1 max-w-2xl text-base leading-relaxed text-soft">
-        Its number gives DOL&apos;s live status, an estimated decision date and an email when it moves.
-      </p>{" "}
+      <CasePromises className="mt-4" />{" "}
       <CaseLookupForm
         className="mt-4"
         compact

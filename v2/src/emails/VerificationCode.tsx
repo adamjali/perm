@@ -106,9 +106,11 @@ const styles = {
   codeSection: {
     marginBottom: "20px",
   },
+  // Paper with an ink edge and the site's offset: the one object in the email.
   codeBox: {
-    backgroundColor: "#f0fdf4",
-    border: "2px solid #2ECC40",
+    backgroundColor: "#fffffe",
+    border: "2px solid #000001",
+    boxShadow: "4px 4px 0 #2ECC40",
     padding: "24px",
     textAlign: "center" as const,
   },

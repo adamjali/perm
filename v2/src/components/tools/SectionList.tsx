@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { CasePromises } from "@/components/tools/CasePromises";
 import { CALCULATOR_PAGES, GROUPS, SECTIONS, type SitePage } from "@/lib/siteMap";
 import { cn } from "@/lib/utils";
 
@@ -67,14 +68,15 @@ export function SectionList({
 }
 
 /**
- * The site's main jobs, kept in view while someone browses the data: look a
- * case up (and from there, an email when it moves), or estimate a date
- * without the number.
+ * The site's main job, kept beside the data: a case number gets the likely
+ * decision date and an email the day DOL moves the case. Without the number,
+ * the estimate from a filing month.
  */
 function CheckACase() {
   return (
-    <div className="object mb-6 p-3">
-      <p className="font-heading text-base font-bold">Check a case</p>{" "}
+    <div className="object mt-6 p-3">
+      <p className="font-heading text-base font-bold">Waiting on a case?</p>{" "}
+      <CasePromises compact className="mt-3" />{" "}
       <CaseLookupForm
         compact
         stack
@@ -82,9 +84,8 @@ function CheckACase() {
         placeholder="Case number"
         help={null}
         source="data-list"
-        className="mt-2"
+        className="mt-3"
       />{" "}
-      <p className="mt-2 text-sm text-soft">Then get an email when it moves.</p>{" "}
       <Link href="/tools/perm-timeline-calculator" className="link mt-1 inline-flex min-h-11 items-center text-sm">
         No number? Estimate your date
       </Link>
@@ -99,14 +100,13 @@ const LIST_GROUPS: readonly { name: string; pages: readonly SitePage[] }[] = [
 ];
 
 /**
- * Beside a data page on a wide screen: the main jobs, then every data group
- * at once with the page's own group open, so the whole map is in view and
- * nothing is hunted for group by group.
+ * Beside a data page on a wide screen: every data group at once with the
+ * page's own group open, so the whole map is in view and nothing is hunted
+ * for group by group, then the case lookup under it (owner, Oct 15).
  */
 export function AllSectionsList({ current, group, className }: { current: string; group: string; className?: string }) {
   return (
     <nav aria-label="All data pages" className={cn("print:hidden", className)}>
-      <CheckACase />
       {/* Each group a fold; the page's own is open. */}
       {LIST_GROUPS.map(({ name, pages }) => {
         const open = name === group;
@@ -119,7 +119,8 @@ export function AllSectionsList({ current, group, className }: { current: string
             <PageLinks pages={pages} current={current} placement="side" />
           </details>
         );
-      })}
+      })}{" "}
+      <CheckACase />
     </nav>
   );
 }

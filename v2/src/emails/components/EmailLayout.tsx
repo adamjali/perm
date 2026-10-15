@@ -102,9 +102,10 @@ const DARK_MODE_STYLES = [
   "  .em-alert-red { background-color: #450a0a !important; border-color: #b91c1c !important; }",
   "  .em-alert-red-text { color: #fca5a5 !important; }",
   // Alert - green
-  "  .em-alert-green { background-color: #052e16 !important; border-color: #22c55e !important; }",
-  "  .em-alert-green-title { color: #4ade80 !important; }",
-  "  .em-alert-green-text { color: #86efac !important; }",
+  // A good-news block is the solid lime with ink in both themes (ink on lime 9.8:1).
+  "  .em-alert-green { background-color: #2ECC40 !important; border-color: #000001 !important; }",
+  "  .em-alert-green-title { color: #000001 !important; }",
+  "  .em-alert-green-text { color: #000001 !important; }",
   // Info boxes
   "  .em-info-box { background-color: #3f3f46 !important; border-color: #52525b !important; }",
   "  .em-info-text { color: #a1a1aa !important; }",
@@ -113,9 +114,6 @@ const DARK_MODE_STYLES = [
   "  .em-support-text { color: #fbbf24 !important; }",
   "  .em-support-link { color: #fbbf24 !important; }",
   // Status change
-  "  .em-status-box { background-color: #3f3f46 !important; border-color: #52525b !important; }",
-  "  .em-status-prev { background-color: #27272a !important; border-color: #52525b !important; color: #a1a1aa !important; }",
-  "  .em-status-new { background-color: #052e16 !important; border-color: #22c55e !important; color: #fafafa !important; }",
   // Stats table
   "  .em-stat-cell { background-color: #27272a !important; border-color: #52525b !important; }",
   "  .em-stat-number { color: #fafafa !important; }",
@@ -136,7 +134,6 @@ const DARK_MODE_STYLES = [
   // White text on colored backgrounds (prevent inversion)
   "  .em-text-white { color: #fffffe !important; }",
   // Status change arrow
-  "  .em-arrow { color: #4ade80 !important; }",
   // Days remaining indicators
   "  .em-days-warning { color: #fb923c !important; }",
   "  .em-days-overdue { color: #fca5a5 !important; }",

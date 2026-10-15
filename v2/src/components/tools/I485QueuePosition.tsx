@@ -514,7 +514,7 @@ export function I485QueuePosition({
                     aria-label={`Between ${position.low.toLocaleString("en-US")} and ${position.high.toLocaleString("en-US")} applications are ahead. ${position.counted.toLocaleString("en-US")} are counted individually and ${position.suppressedCells.toLocaleString("en-US")} cells were withheld by USCIS.`}
                   >
                     <div
-                      className="h-full border-r border-border bg-primary"
+                      className="h-full border-r-2 border-foreground bg-primary"
                       style={{ width: `${split.solid}%` }}
                       data-tip={`At least ${position.low.toLocaleString("en-US")} ahead\n${position.counted.toLocaleString("en-US")} published individually`}
                     />

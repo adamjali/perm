@@ -55,12 +55,16 @@ PAIRS = [
 # pairs above cannot see: text-muted-foreground on dark manila measured
 # 1.16:1 and shipped, twice, before this section existed.
 MANILA = [
-    ("#000000", 1.0, "#F5E6C8", "ink on light manila", 4.5),
-    ("#000000", 1.0, "#C4A97A", "ink on dark manila", 4.5),
-    ("#000000", 0.7, "#F5E6C8", "soft ink (black/70) on light manila", 4.5),
-    ("#000000", 0.7, "#C4A97A", "soft ink (black/70) on dark manila", 4.5),
-    ("#000000", 1.0, "#E8D4A8", "ink on light manila-dark (tab bar)", 4.5),
-    ("#000000", 1.0, "#A8916A", "ink on dark manila-dark (tab bar)", 4.5),
+    # The case folder (.manila in globals.css, Oct 15 2026): tan in both themes,
+    # #F5E6C8 light and #DCC79B dark, with the inks it sets for itself.
+    ("#141414", 1.0, "#F5E6C8", "ink on the light folder", 4.5),
+    ("#141414", 1.0, "#DCC79B", "ink on the dark folder", 4.5),
+    ("#4A4A4A", 1.0, "#F5E6C8", "muted ink on the light folder", 4.5),
+    ("#4A4A4A", 1.0, "#DCC79B", "muted ink on the dark folder", 4.5),
+    ("#14601D", 1.0, "#DCC79B", "green ink on the dark folder", 4.5),
+    ("#7A3605", 1.0, "#DCC79B", "amber ink on the dark folder", 4.5),
+    ("#A30000", 1.0, "#DCC79B", "red ink on the dark folder", 4.5),
+    ("#595959", 1.0, "#DCC79B", "control edge on the dark folder", 3.0),
 ]
 
 
@@ -88,7 +92,7 @@ DERIVED = [
 # The certainty bar's two segments meet without a gap. Comparing their fills
 # alone reports FAIL at 1.96:1 in light mode and passes at 8.14:1 in dark,
 # which is true and is not the question: the segments are separated by a 2px
-# --border rule that measures 9.83:1 against lime, and by hatching, which is
+# ink rule (--foreground, border-r-2 in I485QueuePosition) that clears 3:1 against lime, and by hatching, which is
 # a texture difference no ratio describes. A boundary is perceivable if ANY
 # of its carriers clears the floor, so the check takes the best one. Testing
 # only the fills would have made this gate permanently red over a boundary
@@ -97,7 +101,7 @@ DERIVED = [
 # (label, floor, [(token_a, surface_a), ...] candidate carriers)
 BOUNDARIES = [
     ("certainty bar: solid meets hatched", 3.0,
-     [("--primary", "muted"), ("--input", "--primary")]),
+     [("--primary", "muted"), ("--foreground", "--primary")]),
 ]
 
 

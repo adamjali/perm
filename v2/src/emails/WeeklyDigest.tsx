@@ -388,18 +388,18 @@ const styles = {
   emptyState: {
     textAlign: "center" as const,
     padding: "40px 20px",
-    backgroundColor: "#f0fdf4",
-    border: "2px solid #2ECC40",
+    backgroundColor: "#2ECC40",
+    border: "2px solid #000001",
     marginBottom: "24px",
   },
   emptyTitle: {
-    color: "#166534",
+    color: "#000001",
     fontSize: "24px",
     fontWeight: "800" as const,
     margin: "0 0 8px 0",
   },
   emptyMessage: {
-    color: "#15803d",
+    color: "#000001",
     fontSize: "16px",
     margin: "0",
   },

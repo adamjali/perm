@@ -87,16 +87,17 @@ const styles = {
     textAlign: "center" as const,
     marginBottom: "24px",
   },
+  // A solid lime stamp with an ink label (9.8:1), the site's "it worked" colour.
   badgeBox: {
-    backgroundColor: "#dcfce7",
-    border: "2px solid #2ECC40",
+    backgroundColor: "#2ECC40",
+    border: "2px solid #000001",
     padding: "12px 20px",
     display: "inline-block" as const,
   },
   badgeText: {
-    color: "#166534",
+    color: "#000001",
     fontSize: "14px",
-    fontWeight: "600" as const,
+    fontWeight: "700" as const,
     margin: "0",
   },
   ctaSection: {
