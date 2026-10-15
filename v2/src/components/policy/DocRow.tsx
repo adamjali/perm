@@ -49,7 +49,7 @@ export function dateLine(doc: PolicyNotice, today: string): string | null {
 }
 
 const LINK =
-  "font-semibold underline decoration-primary decoration-2 underline-offset-[3px] transition-colors hover:text-primary";
+  "font-semibold link";
 
 export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: string }) {
   const corrections = "corrections" in doc ? doc.corrections : [];

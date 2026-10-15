@@ -843,7 +843,7 @@ export function ChangeFeedBrowser({
                 {failed ? (
                   <>
                     {" "}That request didn&apos;t come back. {failure?.message}{" "}
-                    <button type="button" onClick={retry} className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+                    <button type="button" onClick={retry} className="font-bold link">
                       Try again
                     </button>
                   </>

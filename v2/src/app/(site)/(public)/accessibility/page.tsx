@@ -37,9 +37,6 @@ export const metadata: Metadata = withSocialCard({
 
 const STATEMENT_DATE = "September 22, 2026";
 
-const LINK =
-  "font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
-
 export default function AccessibilityPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
@@ -90,12 +87,12 @@ export default function AccessibilityPage() {
             <h2 className="font-heading text-2xl font-bold mt-8 mb-4">Report a barrier</h2>{" "}
             <p className="text-soft leading-relaxed">
               If something on this site is hard or impossible for you to use, email{" "}
-              <a href="mailto:support@permtracker.app?subject=Accessibility" className={LINK}>
+              <a href="mailto:support@permtracker.app?subject=Accessibility" className="font-bold link">
                 support@permtracker.app
               </a>{" "}
               with the page address and what happened. You&apos;ll get a reply within five
               business days, and fixes for a real barrier ship in the next release. The{" "}
-              <Link href="/contact" className={LINK}>
+              <Link href="/contact" className="font-bold link">
                 contact page
               </Link>{" "}
               works too.

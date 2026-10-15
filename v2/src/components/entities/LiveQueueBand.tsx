@@ -193,7 +193,7 @@ export function LiveQueueBand({
             <Link
               href="/perm-processing-times"
               className={cn(
-                "font-bold underline decoration-primary decoration-2 underline-offset-2",
+                "font-bold link",
                 "hover:text-primary",
               )}
             >

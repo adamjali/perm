@@ -15,7 +15,6 @@ import { EMBED_GROUP_LABEL, EMBED_SITE_DAILY_LIVE, EMBEDS, embedSnippet, type Em
 
 const GROUPS: EmbedGroup[] = ["lookup", "estimate", "calculator", "chart"];
 
-const link = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export function EmbedGallery({ origin }: { origin: string }) {
   const lookup = EMBEDS.find((e) => e.slug === "case-status")!;
@@ -60,7 +59,7 @@ export function EmbedGallery({ origin }: { origin: string }) {
                   <p className="font-heading text-base font-bold">{e.title}</p>{" "}
                   <p className="mt-1 flex-1 text-sm leading-relaxed text-soft">{e.blurb}</p>{" "}
                   <p className="mt-2 text-sm">
-                    <a href={`/embed/${e.slug}`} target="_blank" rel="noopener noreferrer" className={link}>
+                    <a href={`/embed/${e.slug}`} target="_blank" rel="noopener noreferrer" className="font-bold link">
                       Preview the frame
                     </a>
                   </p>{" "}

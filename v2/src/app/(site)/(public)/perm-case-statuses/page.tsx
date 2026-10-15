@@ -67,7 +67,7 @@ function Count({ n, href }: { n: number | null; href?: string }) {
   return href ? (
     // A 44px target that doesn't grow the row: the negative margin takes back
     // what the height adds.
-    <Link href={href} className={`${cls} -my-2 inline-flex min-h-11 items-center underline decoration-primary decoration-2 underline-offset-4 hover:text-primary-text`}>
+    <Link href={href} className={`${cls} -my-2 inline-flex min-h-11 items-center link`}>
       {body}
     </Link>
   ) : (

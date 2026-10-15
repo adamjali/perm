@@ -56,7 +56,7 @@ function nameCol(base: string, label: string): StatColumn<EntityRow> {
     render: (e) => (
       <PendingLink
         href={`${base}/${e.slug}`}
-        className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+        className="font-bold link"
       >
         {e.name}
       </PendingLink>
@@ -235,7 +235,7 @@ export const OCCUPATION_COLUMNS: StatColumn<EntityRow>[] = [
       <span className="font-bold">
         <PendingLink
           href={`/perm-wages/${e.slug}`}
-          className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          className="link"
         >
           {e.name}
         </PendingLink>{" "}

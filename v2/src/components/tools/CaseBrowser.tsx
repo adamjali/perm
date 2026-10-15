@@ -603,7 +603,7 @@ export function CaseBrowser({
               feed hasn&apos;t seen this number either. It may be very new:{" "}
               <PendingLink
                 href={`/perm-case-status?case=${encodeURIComponent(caseQuery)}`}
-                className="font-bold underline decoration-primary decoration-2 underline-offset-2"
+                className="font-bold link"
               >
                 check it against DOL&apos;s live system
               </PendingLink>
@@ -929,7 +929,7 @@ export function CaseBrowser({
                       DOL live, so a bare link is seconds of silence. */}
                   <PendingLink
                     href={`/perm-case-status?case=${encodeURIComponent(h.caseNumber)}`}
-                    className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2"
+                    className="font-mono text-sm font-bold link"
                   >
                     {h.caseNumber}
                   </PendingLink>{" "}
@@ -974,7 +974,7 @@ export function CaseBrowser({
                     setNameQuery("");
                     setNameNote(null);
                   }}
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2"
+                  className="font-bold link"
                 >
                   Back to browsing
                 </button>

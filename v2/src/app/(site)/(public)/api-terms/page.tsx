@@ -31,7 +31,6 @@ export const metadata: Metadata = withSocialCard(
 
 export const dynamic = "force-static";
 
-const link = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 /** The sections in order: the index and the headings both read this list. */
 const SECTIONS: readonly LegalSection[] = [
@@ -86,7 +85,7 @@ export default function ApiTermsPage() {
             permtracker.app/v1 and the Model Context Protocol server at permtracker.app/mcp (together, the
             &ldquo;API&rdquo;), provided by {LEGAL_NAME}, {LEGAL_FORM} (&ldquo;we&rdquo; or &ldquo;us&rdquo;). They
             supplement the{" "}
-            <Link href="/terms" className={link}>
+            <Link href="/terms" className="link">
               Terms of Service
             </Link>
             , which also apply. Where the two conflict, these API Terms govern your use of the API. By making an API
@@ -112,7 +111,7 @@ export default function ApiTermsPage() {
         <Section id="limits" title="3. Limits">
           <p>
             Each plan has limits on calls a minute, a day and a month, published on the{" "}
-            <Link href="/developers" className={link}>
+            <Link href="/developers" className="link">
               developers page
             </Link>
             . The Free plan currently allows {free.perMinute} calls a minute, {free.perDay.toLocaleString("en-US")} a
@@ -145,7 +144,7 @@ export default function ApiTermsPage() {
             <li>
               Use the API to copy, compile or redistribute all or a substantial part of PERM Tracker&rsquo;s
               compilation as a dataset, or to build a substitute for it. The files on{" "}
-              <Link href="/open-data" className={link}>
+              <Link href="/open-data" className="link">
                 Open data
               </Link>{" "}
               remain available under their own licence.
@@ -234,7 +233,7 @@ export default function ApiTermsPage() {
         <Section id="contact" title="12. Contact">
           <p>
             Questions about these terms or the API:{" "}
-            <a href="mailto:support@permtracker.app" className={link}>
+            <a href="mailto:support@permtracker.app" className="link">
               support@permtracker.app
             </a>
             .

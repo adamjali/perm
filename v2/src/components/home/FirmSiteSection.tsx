@@ -13,7 +13,6 @@ import { firmBadgeSpec } from "@/lib/firmBadge";
  * Both link back to this site, which is how a firm's clients find the rest.
  */
 
-const link = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 const STEPS = ["Claim your firm's page", "We check the claim", "Paste the badge"];
 
@@ -58,7 +57,7 @@ export function FirmSiteSection() {
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <CopyButton text={snippet} />{" "}
               <span className="text-base text-soft">the code for this checker, ready to paste</span>{" "}
-              <Link href="/badges#embeds" className={`ml-auto inline-flex min-h-11 items-center ${link}`}>
+              <Link href="/badges#embeds" className={`ml-auto inline-flex min-h-11 items-center font-bold link`}>
                 Every tool you can embed
               </Link>
             </div>
@@ -97,7 +96,7 @@ export function FirmSiteSection() {
               <span>It says &ldquo;Verified firm&rdquo; only after we&apos;ve confirmed the claim, and links to your record.</span>
             </p>{" "}
             <p className="mt-5 text-base">
-              <Link href="/perm-attorneys" className={`inline-flex min-h-11 items-center ${link}`}>
+              <Link href="/perm-attorneys" className={`inline-flex min-h-11 items-center font-bold link`}>
                 Find your firm
               </Link>
             </p>

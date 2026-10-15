@@ -10,11 +10,10 @@ import Link from "next/link";
  * name (I-140, I-485), kept whole on one line.
  */
 
-const link = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export function En({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} hrefLang="en" className={link}>
+    <Link href={href} hrefLang="en" className="font-bold link">
       {children}
     </Link>
   );

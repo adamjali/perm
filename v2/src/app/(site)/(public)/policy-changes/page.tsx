@@ -49,7 +49,7 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 21600;
 
 const LINK =
-  "font-semibold underline decoration-primary decoration-2 underline-offset-[3px] transition-colors hover:text-primary";
+  "font-semibold link";
 
 export default async function PolicyChangesPage() {
   const today = easternDay();

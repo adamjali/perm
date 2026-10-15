@@ -285,7 +285,7 @@ export default async function EmployersUnderReviewPage() {
               </ol>{" "}
               {earlierDays.length > 0 ? (
                 <details className="mt-3">
-                  <summary className="min-h-11 cursor-pointer py-2 text-base font-bold underline decoration-primary decoration-2 underline-offset-2">
+                  <summary className="min-h-11 cursor-pointer py-2 text-base font-bold link">
                     {`Show the ${formatInt(earlierDays.length)} earlier days`}
                   </summary>
                   <ol className="mt-2 divide-y divide-border border-y border-border">

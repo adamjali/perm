@@ -43,7 +43,6 @@ async function fetchBoard() {
   return queryStatic(api.communityTimelines.board, {}, revalidate);
 }
 
-const link = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export default async function GreenCardTimelinesPage() {
   const board: Board | null = await fetchBoard().catch(() => null);
@@ -193,11 +192,11 @@ export default async function GreenCardTimelinesPage() {
           </p>{" "}
           <p>
             <b>USCIS publishes its own medians.</b> For the office-wide picture, see{" "}
-            <Link href="/uscis-processing-times" className={link}>
+            <Link href="/uscis-processing-times" className="font-bold link">
               USCIS processing times
             </Link>
             , which are USCIS&apos;s figures across every case, and the{" "}
-            <Link href="/visa-bulletin" className={link}>
+            <Link href="/visa-bulletin" className="font-bold link">
               visa bulletin
             </Link>
             , which decides when an I-485 can be filed at all.

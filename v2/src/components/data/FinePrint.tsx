@@ -40,7 +40,7 @@ export function FinePrint({ summary, children, className }: FinePrintProps) {
         />{" "}
         {summary}
       </summary>{" "}
-      <div className="max-w-3xl pb-1 pl-5 text-sm leading-relaxed text-muted-foreground [&_a]:underline [&_a]:decoration-primary [&_a]:decoration-2 [&_a]:underline-offset-2 [&>*+*]:mt-2">
+      <div className="max-w-3xl pb-1 pl-5 text-sm leading-relaxed text-muted-foreground [&_a]:link [&>*+*]:mt-2">
         {children}
       </div>
     </details>

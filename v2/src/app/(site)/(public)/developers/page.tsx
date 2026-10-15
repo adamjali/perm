@@ -35,7 +35,6 @@ export const metadata: Metadata = withSocialCard(
 export const dynamic = "force-static";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
-const link = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 function Code({ children }: { children: string }) {
   return (
@@ -104,7 +103,7 @@ export default function DevelopersPage() {
       body: (
         <>
           Sign in, then{" "}
-          <Link href="/settings?tab=api-keys" className={link}>
+          <Link href="/settings?tab=api-keys" className="font-bold link">
             Settings, API keys
           </Link>
           . Free, no card. It&rsquo;s shown once.
@@ -191,7 +190,7 @@ export default function DevelopersPage() {
         </div>{" "}
         <p className="mt-3 text-base text-soft">
           Calls are counted per account and reset at midnight UTC. Need more?{" "}
-          <a href="mailto:support@permtracker.app?subject=API%20limits" className={link}>
+          <a href="mailto:support@permtracker.app?subject=API%20limits" className="font-bold link">
             Write to us
           </a>
           .
@@ -204,7 +203,7 @@ export default function DevelopersPage() {
         </h2>{" "}
         <p className="mt-2 text-base text-soft">
           All under <code className="font-mono">{API_BASE}</code>; GET unless marked. The{" "}
-          <a href={`${API_BASE}/openapi.json`} className={link}>
+          <a href={`${API_BASE}/openapi.json`} className="font-bold link">
             OpenAPI description
           </a>{" "}
           has the same list for tools that read it.
@@ -424,7 +423,7 @@ export default function DevelopersPage() {
         <h2 className="font-heading text-2xl font-bold">The rules</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-soft">
           Use it under the{" "}
-          <Link href="/api-terms" className={link}>
+          <Link href="/api-terms" className="font-bold link">
             API terms
           </Link>
           . Credit &ldquo;PERM Tracker (permtracker.app)&rdquo; where you show what it returns, keep your key out of

@@ -210,7 +210,7 @@ export default async function OpenDataPage() {
           <CopyButton text={openDataCreditHtml(SITE_URL)} />
         </div>{" "}
         <details className="group mt-5">
-          <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center font-heading text-base font-bold underline decoration-primary decoration-2 underline-offset-4 [&::-webkit-details-marker]:hidden">
+          <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center font-heading text-base font-bold link [&::-webkit-details-marker]:hidden">
             What the licence covers
           </summary>{" "}
           <div className="mt-3 max-w-2xl space-y-3 text-base leading-relaxed text-soft">
@@ -324,7 +324,7 @@ function DatasetPanel<T extends object>({
           . Updated the day it changes.
         </p>{" "}
         <details className="group">
-          <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center font-heading text-base font-bold underline decoration-primary decoration-2 underline-offset-4 [&::-webkit-details-marker]:hidden">
+          <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center font-heading text-base font-bold link [&::-webkit-details-marker]:hidden">
             Columns
           </summary>{" "}
           <dl className="mt-2 space-y-2 text-sm">

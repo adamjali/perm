@@ -17,9 +17,6 @@ import Link from "next/link";
  * here updates both consumers.
  */
 
-const faqLink =
-  "font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary";
-
 export interface HomeFaqItem {
   question: string;
   /** Canonical plain text. This is what the FAQPage schema publishes. */
@@ -37,12 +34,12 @@ export const HOME_FAQS: HomeFaqItem[] = [
     rich: (
       <>
         Two things, both free. For anyone waiting on a case:{" "}
-        <Link href="/perm-case-status" className={faqLink}>look up a PERM, prevailing wage or H-1B LCA number</Link>,
+        <Link href="/perm-case-status" className="link">look up a PERM, prevailing wage or H-1B LCA number</Link>,
         pending ones included, see the federal record and where DOL&apos;s queue
         stands, get an email when the status changes, and search every filing by
         employer, law firm, state or occupation, with no account. For attorneys,
         paralegals and HR teams:{" "}
-        <Link href="/for-attorneys" className={faqLink}>a case-management app</Link>{" "}
+        <Link href="/for-attorneys" className="link">a case-management app</Link>{" "}
         that computes every deadline per case, with reminders, calendar sync,
         import and encrypted client data.
       </>
@@ -69,7 +66,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
     rich: (
       <>
         Yes. Enter the case number on the homepage or on{" "}
-        <Link href="/perm-case-status" className={faqLink}>the case status page</Link>{" "}
+        <Link href="/perm-case-status" className="link">the case status page</Link>{" "}
         and it shows DOL&apos;s current status, when it was last seen, how many
         cases DOL is working ahead of yours, and an estimate when the data
         supports one. It takes all three DOL numbers: a PERM case (G- or A-), a
@@ -93,7 +90,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
         hours and calendar sync, a weekly case summary arrives on the same day each
         week, and an
         AI assistant answers questions over your own cases.{" "}
-        <Link href="/for-attorneys" className={faqLink}>How the software works &rarr;</Link>
+        <Link href="/for-attorneys" className="link">How the software works &rarr;</Link>
       </>
     ),
   },
@@ -108,7 +105,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
         other firm can see your cases. Privacy Mode hides sensitive fields during
         screen sharing. The public data pages carry no client data at all, only
         DOL&apos;s published records.{" "}
-        <Link href="/security" className={faqLink}>Security details &rarr;</Link>
+        <Link href="/security" className="link">Security details &rarr;</Link>
       </>
     ),
   },

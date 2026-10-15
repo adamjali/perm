@@ -248,7 +248,7 @@ export default async function GreenCardTimelinePage() {
           >
             <span className="font-heading text-lg font-bold">{t.name}</span>{" "}
             <p className="mt-2 flex-1 text-base leading-relaxed text-muted-foreground">{t.blurb}</p>{" "}
-            <span className="mt-4 inline-flex items-center gap-2 font-bold text-foreground underline decoration-primary decoration-2 underline-offset-4">
+            <span className="mt-4 inline-flex items-center gap-2 font-bold link">
               Open
               <ArrowRightIcon
                 className="h-4 w-4 transition-transform duration-150 motion-reduce:transition-none"

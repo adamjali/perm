@@ -126,7 +126,7 @@ export function EmployerFollow({
         )}{" "}
         {!docMissing && moves.length > RAIL_SHOWN ? (
           <details className="mt-2">
-            <summary className="min-h-11 cursor-pointer py-2 text-sm font-bold underline decoration-primary decoration-2 underline-offset-2">
+            <summary className="min-h-11 cursor-pointer py-2 text-sm font-bold link">
               {`Show the ${formatInt(moves.length - RAIL_SHOWN)} earlier ${moves.length - RAIL_SHOWN === 1 ? "move" : "moves"}`}
             </summary>
             <ol className="mt-1 border-l border-border">

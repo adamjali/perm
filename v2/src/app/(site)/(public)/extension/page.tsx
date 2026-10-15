@@ -38,7 +38,6 @@ export const metadata: Metadata = {
 /** The example's figures move with DOL's records; a day is plenty. */
 export const revalidate = 86400;
 
-const link = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 async function examplePanel(): Promise<PanelModel | null> {
   try {
@@ -74,7 +73,7 @@ function ExamplePanel({ model }: { model: PanelModel }) {
           </dl>{" "}
           {model.link ? (
             <p className="mt-3">
-              <a href={model.link.href} className={link}>
+              <a href={model.link.href} className="font-bold link">
                 {model.link.text}
               </a>
             </p>
@@ -211,11 +210,11 @@ export default async function ExtensionPage() {
         </dl>{" "}
         <p className="mt-4 max-w-3xl text-base leading-relaxed text-soft">
           The rest of how this site handles data is in the{" "}
-          <Link href="/privacy" className={link}>
+          <Link href="/privacy" className="font-bold link">
             privacy policy
           </Link>
           . Questions go to{" "}
-          <a href="mailto:support@permtracker.app?subject=Chrome%20extension" className={link}>
+          <a href="mailto:support@permtracker.app?subject=Chrome%20extension" className="font-bold link">
             support@permtracker.app
           </a>
           .
@@ -227,7 +226,7 @@ export default async function ExtensionPage() {
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
           The extension asks one endpoint, <code className="font-mono">/v1/lookup/employer</code>, and it needs no key.
           It&rsquo;s documented with the rest of the{" "}
-          <Link href="/developers" className={link}>
+          <Link href="/developers" className="font-bold link">
             API
           </Link>
           . PERM Tracker isn&rsquo;t affiliated with the U.S. government, and nothing here is legal advice.

@@ -193,7 +193,7 @@ function Rows({
                     a page that looks like it ignored the click. */}
                 <PendingLink
                   href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   {r.caseNumber}
                 </PendingLink>
@@ -286,7 +286,7 @@ function DisclosedRows({
                     a page that looks like it ignored the click. */}
                 <PendingLink
                   href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="link"
                 >
                   {r.caseNumber}
                 </PendingLink>
@@ -652,7 +652,7 @@ export function FlagCaseBrowser({
             That is a case number.{" "}
             <PendingLink
               href={`/perm-case-status?case=${encodeURIComponent(typedCaseNumber)}`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              className="font-bold link"
             >
               Look up {typedCaseNumber} directly
             </PendingLink>{" "}

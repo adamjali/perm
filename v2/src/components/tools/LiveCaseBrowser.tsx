@@ -299,7 +299,7 @@ export function LiveCaseBrowser({
                           ask DOL live, so a bare link is seconds of silence. */}
                       <PendingLink
                         href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                        className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                        className="link"
                       >
                         {r.caseNumber}
                       </PendingLink>

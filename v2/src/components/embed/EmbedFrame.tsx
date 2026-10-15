@@ -58,7 +58,6 @@ function mustEmbed(slug: string): EmbedDef {
   return def;
 }
 
-const link = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export function EmbedFrame({ slug, children }: { slug: string; children: React.ReactNode }) {
   const def = mustEmbed(slug);
@@ -75,7 +74,7 @@ export function EmbedFrame({ slug, children }: { slug: string; children: React.R
       <RefreshWhenStale />
       <div className="embed-root flex-1 py-4">{children}</div>
       <footer className="border-t border-border px-4 py-2 text-sm text-soft">
-        <a href={def.href} target="_blank" rel="noopener noreferrer" className={link}>
+        <a href={def.href} target="_blank" rel="noopener noreferrer" className="font-bold link">
           Open the full tool on PERM Tracker
         </a>
       </footer>
