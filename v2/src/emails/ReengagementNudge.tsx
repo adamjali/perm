@@ -57,7 +57,7 @@ export function ReengagementNudge({
       </Section>
 
       <Section style={styles.ctaSection}>
-        <Link href={`${baseUrl}/dashboard`} className="em-cta-button" style={styles.ctaButton}>
+        <Link href={`${baseUrl}/dashboard`} className="em-button-primary" style={styles.ctaButton}>
           Open PERM Tracker
         </Link>
       </Section>
@@ -98,13 +98,13 @@ const styles = {
   },
   ctaSection: { textAlign: "center" as const, marginTop: "8px" },
   ctaButton: {
-    backgroundColor: "#18181b",
-    color: "#fffffe",
+    backgroundColor: "#2ECC40",
+    color: "#000001",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
     padding: "14px 32px",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
     display: "inline-block",
   },
   unsubSection: { textAlign: "center" as const, marginTop: "20px", paddingTop: "8px" },

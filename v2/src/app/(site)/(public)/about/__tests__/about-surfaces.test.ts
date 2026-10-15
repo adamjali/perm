@@ -86,11 +86,15 @@ describe("the About surfaces", () => {
   });
 
   it("makes no beneficiary claim for the person named", () => {
-    // Approved wording: she FILES these cases. A first-person waiting claim
-    // would be false, and no other person is named anywhere on the surfaces.
+    // She's named as an immigration attorney, nothing more (owner, Oct 15
+    // 2026: "who files these cases" is gone everywhere). A first-person
+    // waiting claim would be false, and no other person is named anywhere.
     const page = read("src/app/(site)/(public)/about/page.tsx");
     expect(page).not.toMatch(/waited on (her|his|my) own/i);
-    expect(page).toMatch(/files these cases/);
+    expect(page).toMatch(/is an immigration attorney\./);
+    for (const rel of ["src/app/(site)/(public)/about/page.tsx", "src/app/llms.txt/route.ts", "src/lib/pageCards.ts", "src/components/home/AboutSection.tsx"]) {
+      expect(read(rel), rel).not.toMatch(/files these cases/i);
+    }
     for (const rel of [
       "src/app/(site)/(public)/about/page.tsx",
       "src/components/home/AboutSection.tsx",

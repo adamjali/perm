@@ -42,14 +42,14 @@ export interface DailyReportProps {
 function SectionBlock({ s, full }: { s: ReportSection; full: boolean }) {
   return (
     <Section style={styles.section}>
-      <Text style={styles.title}>
+      <Text className="em-text" style={styles.title}>
         <span style={{ ...styles.badge, color: STATUS_COLOR[s.status] }}>{STATUS_WORD[s.status]}</span>{" "}
         {s.title}
         {": "}
         <span style={styles.summary}>{s.summary}</span>
       </Text>
       {full && s.lines.length > 0 ? (
-        <Text style={styles.lines}>
+        <Text className="em-text-body" style={styles.lines}>
           {s.lines.map((l, i) => (
             <React.Fragment key={i}>
               {l}

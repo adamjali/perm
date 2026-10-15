@@ -119,7 +119,7 @@ export function WeeklyDigest({
           <Text className="em-alert-green-title" style={styles.emptyTitle}>All clear</Text>
           <Text className="em-alert-green-text" style={styles.emptyMessage}>{emptyMessage}</Text>
           <Section style={styles.ctaSection}>
-            <Link href={`${baseUrl}/cases`} className="em-cta-button" style={styles.ctaButton}>
+            <Link href={`${baseUrl}/cases`} className="em-button-primary" style={styles.ctaButton}>
               View your cases
             </Link>
           </Section>
@@ -135,7 +135,7 @@ export function WeeklyDigest({
         list.length === 0 ? null : (
           <Section key={key} style={styles.deadlineSection}>
             <Section className="em-banner" style={urgencyHeadStyle(color)}>
-              <Text className="em-text" style={urgencyHeadText}>
+              <Text className="em-text-white" style={urgencyHeadText}>
                 {`${label} (${list.length})`}
               </Text>
             </Section>
@@ -180,7 +180,7 @@ export function WeeklyDigest({
       {/* CTA */}
       {!isEmpty && (
         <Section style={styles.ctaSection}>
-          <Link href={`${baseUrl}/cases`} className="em-cta-button" style={styles.ctaButton}>
+          <Link href={`${baseUrl}/cases`} className="em-button-primary" style={styles.ctaButton}>
             View all cases
           </Link>
         </Section>
@@ -362,14 +362,14 @@ const styles = {
   statsTable: {
     width: "100%",
     borderCollapse: "collapse" as const,
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
   },
   statCell: {
     padding: "16px 12px",
     textAlign: "center" as const,
     backgroundColor: "#fafafa",
-    borderRight: "1px solid #e4e4e7",
-    borderBottom: "1px solid #e4e4e7",
+    borderRight: "2px solid #e4e4e7",
+    borderBottom: "2px solid #e4e4e7",
     verticalAlign: "top" as const,
   },
   statNumber: {
@@ -389,7 +389,7 @@ const styles = {
     textAlign: "center" as const,
     padding: "40px 20px",
     backgroundColor: "#f0fdf4",
-    border: "1px solid #22c55e",
+    border: "2px solid #2ECC40",
     marginBottom: "24px",
   },
   emptyTitle: {
@@ -449,7 +449,7 @@ const styles = {
     textDecoration: "underline",
   },
   divider: {
-    borderTop: "1px solid #e4e4e7",
+    borderTop: "2px solid #e4e4e7",
     margin: "24px 0",
   },
   activitySection: {
@@ -500,13 +500,13 @@ const styles = {
   },
   ctaButton: {
     display: "inline-block",
-    backgroundColor: "#18181b",
-    color: "#fffffe",
+    backgroundColor: "#2ECC40",
+    color: "#000001",
     padding: "14px 28px",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
   },
 } as const;
 

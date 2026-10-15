@@ -76,8 +76,8 @@ export function FirmClaimEmail({ kind, firmName, url, validFor, domainVerified =
       footerText={`This address was entered to claim ${firmName}'s page on PERM Tracker.`}
     >
       <Section style={styles.stamp}>
-        <Text style={styles.stampEyebrow}>Law firm</Text>
-        <Text style={styles.stampValue}>{firmName}</Text>
+        <Text className="em-text-secondary" style={styles.stampEyebrow}>Law firm</Text>
+        <Text className="em-text" style={styles.stampValue}>{firmName}</Text>
       </Section>
 
       <Text className="em-text-body" style={styles.body}>

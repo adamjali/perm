@@ -166,14 +166,14 @@ const styles = {
     padding: "12px 16px",
     textAlign: "center" as const,
     marginBottom: "24px",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
   },
   bannerImmediate: {
     backgroundColor: "#DC2626", // Red - immediate/destructive
     padding: "12px 16px",
     textAlign: "center" as const,
     marginBottom: "24px",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
   },
   bannerText: {
     color: "#fffffe",
@@ -187,7 +187,7 @@ const styles = {
   detailsCard: {
     backgroundColor: "#f4f4f5",
     padding: "20px",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
   },
   greeting: {
     color: "#18181b",
@@ -205,7 +205,7 @@ const styles = {
     backgroundColor: "#C2410C",
     padding: "16px",
     textAlign: "center" as const,
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
     marginTop: "8px",
     marginBottom: "16px",
   },
@@ -213,7 +213,7 @@ const styles = {
     backgroundColor: "#DC2626",
     padding: "16px",
     textAlign: "center" as const,
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
     marginTop: "8px",
     marginBottom: "16px",
   },
@@ -243,7 +243,7 @@ const styles = {
   support: {
     backgroundColor: "#fef3cd",
     padding: "16px",
-    border: "1px solid #856404",
+    border: "2px solid #856404",
     marginTop: "24px",
   },
   supportText: {

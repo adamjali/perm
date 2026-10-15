@@ -81,8 +81,8 @@ export function EmployerMoved({
       }
     >
       <Section style={styles.stamp}>
-        <Text style={styles.eyebrow}>Employer you follow</Text>
-        <Text style={styles.name}>{employerName}</Text>
+        <Text className="em-text-secondary" style={styles.eyebrow}>Employer you follow</Text>
+        <Text className="em-text" style={styles.name}>{employerName}</Text>
       </Section>
 
       {moves.map((m, i) => (
@@ -97,7 +97,7 @@ export function EmployerMoved({
                   <Text className="em-text-secondary" style={styles.date}>
                     {`Recorded ${m.dateLabel} `}
                   </Text>
-                  <Text style={styles.sentence}>{`${m.sentence}.`}</Text>
+                  <Text className="em-text" style={styles.sentence}>{`${m.sentence}.`}</Text>
                 </td>
               </tr>
             </tbody>
@@ -157,9 +157,9 @@ const styles = {
     margin: 0,
   },
   item: { marginBottom: "12px" },
-  markGood: { ...MARK, backgroundColor: "#2ECC40", border: "1px solid #e4e4e7" },
-  markBad: { ...MARK, backgroundColor: "#FFFFFE", border: "1px solid #e4e4e7" },
-  markNeutral: { ...MARK, backgroundColor: "#D4D4D8", border: "1px solid #D4D4D8" },
+  markGood: { ...MARK, backgroundColor: "#2ECC40", border: "2px solid #000001" },
+  markBad: { ...MARK, backgroundColor: "#FFFFFE", border: "2px solid #000001" },
+  markNeutral: { ...MARK, backgroundColor: "#D4D4D8", border: "2px solid #D4D4D8" },
   body: { paddingLeft: "14px", verticalAlign: "top" as const },
   date: {
     fontFamily: SANS_STACK,
@@ -176,7 +176,7 @@ const styles = {
     margin: 0,
   },
   mixWrap: { margin: "22px 0 18px 0" },
-  bar: { border: "1px solid #e4e4e7", borderCollapse: "collapse" as const },
+  bar: { border: "2px solid #000001", borderCollapse: "collapse" as const },
   segment: { height: "18px", padding: 0, fontSize: "1px", lineHeight: "1px" },
   legend: {
     fontFamily: SANS_STACK,

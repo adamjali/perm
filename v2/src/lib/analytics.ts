@@ -34,23 +34,40 @@ import posthog from "posthog-js";
  */
 
 /**
- * localStorage key that turns PostHog off completely on this browser. Set only
- * by `optOut()`, which runs for a signed-in staff account or an account that
- * switched usage analytics off in Settings, so a visitor who never signs in
+ * localStorage key that turns PostHog off completely on this browser for an
+ * ACCOUNT: set by `optOut()`, which runs for a signed-in staff account or an
+ * account that switched usage analytics off in Settings, and cleared by
+ * `optIn()` when the account no longer is. A visitor who never signs in
  * never gets it.
  */
 export const ANALYTICS_OFF_KEY = "pt_analytics_off";
 
+/**
+ * The visitor's own choice, from the switch in the footer: kept apart from
+ * the account's flag, so signing in (which re-checks the account and may
+ * clear the account flag) never undoes it.
+ */
+export const VISITOR_OFF_KEY = "pt_analytics_visitor_off";
+
 /** Fired on window once a signed-in account has switched to persistence. */
 export const ANALYTICS_CONSENT_EVENT = "pt:analytics-consent";
 
-/** True when this browser has been switched off (staff, or analytics off in Settings). */
-export function isAnalyticsOff(): boolean {
+function flag(key: string): boolean {
   try {
-    return window.localStorage.getItem(ANALYTICS_OFF_KEY) === "1";
+    return window.localStorage.getItem(key) === "1";
   } catch {
     return false;
   }
+}
+
+/** True when this browser has been switched off: by its account (staff, or Settings), or by the visitor in the footer. */
+export function isAnalyticsOff(): boolean {
+  return flag(ANALYTICS_OFF_KEY) || flag(VISITOR_OFF_KEY);
+}
+
+/** True when the account signed in on this browser has analytics off. */
+export function isAccountAnalyticsOff(): boolean {
+  return flag(ANALYTICS_OFF_KEY);
 }
 
 /** True when the browser sends a Global Privacy Control signal. */
@@ -221,9 +238,34 @@ function optIn(): void {
   }
 }
 
-/** True when this browser has been switched off by optOut(). */
+/** True when the account's flag is set (what optOut() writes and optIn() clears). */
 function hasOptedOut(): boolean {
-  return isAnalyticsOff();
+  return isAccountAnalyticsOff();
+}
+
+/** The footer switch, off: this browser sends nothing, whoever is signed in. */
+function visitorOptOut(): void {
+  try {
+    window.localStorage.setItem(VISITOR_OFF_KEY, "1");
+  } catch {
+    // Storage blocked — before_send can't see the flag, nothing else to do
+  }
+  whenAnalyticsReady(() => {
+    try {
+      posthog.opt_out_capturing();
+    } catch {
+      // PostHog not initialized — safe to ignore
+    }
+  });
+}
+
+/** The footer switch, on again: clears the visitor's own flag only. */
+function visitorOptIn(): void {
+  try {
+    window.localStorage.removeItem(VISITOR_OFF_KEY);
+  } catch {
+    // Storage blocked — safe to ignore
+  }
 }
 
 export const analytics = {
@@ -234,5 +276,7 @@ export const analytics = {
   consentForAccount,
   optOut,
   optIn,
+  visitorOptOut,
+  visitorOptIn,
   hasOptedOut,
 };

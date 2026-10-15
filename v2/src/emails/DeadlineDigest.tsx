@@ -79,7 +79,7 @@ export function DeadlineDigest({
         return (
           <Section key={key} style={styles.section}>
             <Section className="em-banner" style={urgencyHeadStyle(color)}>
-              <Text className="em-text" style={urgencyHeadText}>
+              <Text className="em-text-white" style={urgencyHeadText}>
                 {`${label} (${sectionItems.length})`}
               </Text>
             </Section>
@@ -195,12 +195,12 @@ const styles = {
   // The email's one main action, in the site's main-button lime with ink.
   ctaButton: {
     backgroundColor: "#2ECC40",
-    color: "#141414",
+    color: "#000001",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
     padding: "14px 32px",
-    border: "1px solid #141414",
+    border: "2px solid #000001",
     display: "inline-block",
   },
 } as const;

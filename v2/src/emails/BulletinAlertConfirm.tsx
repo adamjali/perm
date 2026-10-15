@@ -42,8 +42,8 @@ export function BulletinAlertConfirm({
       footerText={`This address was entered to be told when the State Department’s final-action cutoff for ${seriesLabel} moves. It isn’t confirmed yet, so nothing else will be sent.`}
     >
       <Section style={styles.stamp}>
-        <Text style={styles.stampEyebrow}>Your series</Text>
-        <Text style={styles.stampValue}>{seriesLabel}</Text>
+        <Text className="em-text-secondary" style={styles.stampEyebrow}>Your series</Text>
+        <Text className="em-text" style={styles.stampValue}>{seriesLabel}</Text>
       </Section>
 
       <Text className="em-text-body" style={styles.body}>

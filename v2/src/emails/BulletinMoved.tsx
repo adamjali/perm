@@ -50,20 +50,20 @@ export function BulletinMoved({
       }
     >
       <Section style={styles.stamp}>
-        <Text style={styles.stampEyebrow}>{seriesLabel} moved</Text>
-        <Text style={styles.stampValue}>{toCutoff}</Text>
+        <Text className="em-text-secondary" style={styles.stampEyebrow}>{seriesLabel} moved</Text>
+        <Text className="em-text" style={styles.stampValue}>{toCutoff}</Text>
         <Text className="em-text-secondary" style={styles.provenance}>
           {bulletinMonth} visa bulletin, final action
         </Text>
       </Section>
 
       <Section className="em-card" style={styles.changeCard}>
-        <Text style={styles.changeRow}>
-          <span style={styles.changeLabel}>Before&nbsp;&nbsp;</span>
+        <Text className="em-text-body" style={styles.changeRow}>
+          <span className="em-text-secondary" style={styles.changeLabel}>Before&nbsp;&nbsp;</span>
           {fromCutoff}
         </Text>
-        <Text style={styles.changeRowLast}>
-          <span style={styles.changeLabel}>Now&nbsp;&nbsp;</span>
+        <Text className="em-text-body" style={styles.changeRowLast}>
+          <span className="em-text-secondary" style={styles.changeLabel}>Now&nbsp;&nbsp;</span>
           {toCutoff}
         </Text>
       </Section>

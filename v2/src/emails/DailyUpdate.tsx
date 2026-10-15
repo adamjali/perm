@@ -59,8 +59,8 @@ export function DailyUpdate({ items, prefsUrl, stopUrl, moreWaiting = false }: D
       }
     >
       <Section style={styles.stamp}>
-        <Text style={styles.eyebrow}>Since we last wrote</Text>
-        <Text style={styles.count}>{`${n} things you follow moved`}</Text>
+        <Text className="em-text-secondary" style={styles.eyebrow}>Since we last wrote</Text>
+        <Text className="em-text" style={styles.count}>{`${n} things you follow moved`}</Text>
       </Section>
 
       {items.map((item, i) => {
@@ -80,7 +80,7 @@ export function DailyUpdate({ items, prefsUrl, stopUrl, moreWaiting = false }: D
                     <Text className="em-text-secondary" style={styles.kind}>
                       {`${KIND_LABEL[item.kind]} `}
                     </Text>
-                    <Text style={styles.title}>{`${item.title} `}</Text>
+                    <Text className="em-text" style={styles.title}>{`${item.title} `}</Text>
                     <Text className="em-text-body" style={styles.line}>
                       {`${item.line} `}
                     </Text>
@@ -131,9 +131,9 @@ const styles = {
     margin: 0,
   },
   item: { marginBottom: "14px" },
-  markGood: { ...MARK, backgroundColor: "#2ECC40", border: "1px solid #e4e4e7" },
-  markBad: { ...MARK, backgroundColor: "#FFFFFE", border: "1px solid #e4e4e7" },
-  markNeutral: { ...MARK, backgroundColor: "#D4D4D8", border: "1px solid #D4D4D8" },
+  markGood: { ...MARK, backgroundColor: "#2ECC40", border: "2px solid #000001" },
+  markBad: { ...MARK, backgroundColor: "#FFFFFE", border: "2px solid #000001" },
+  markNeutral: { ...MARK, backgroundColor: "#D4D4D8", border: "2px solid #D4D4D8" },
   body: { paddingLeft: "14px", verticalAlign: "top" as const },
   kind: {
     fontFamily: SANS_STACK,

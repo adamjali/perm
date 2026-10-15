@@ -107,7 +107,7 @@ const styles = {
     width: "40px",
     height: "40px",
     lineHeight: "40px",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
     backgroundColor: "#FAFAFA",
     color: "#000001",
     fontFamily: MONO_STACK,

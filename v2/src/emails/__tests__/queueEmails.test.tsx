@@ -256,9 +256,9 @@ describe("queue email templates", () => {
 
     it("labels the brand fill in ink, never white", async () => {
       const { confirm, alert } = await renderBoth();
-      // The stamp's pale green takes an ink label; a white one would vanish.
+      // White on #2ECC40 measures 2.14:1. Ink on the same lime is 9.82:1.
       for (const html of [confirm, alert]) {
-        const stamp = /background-color:#EAF7EC[^"]*"/.exec(html)?.[0] ?? "";
+        const stamp = /background-color:#2ECC40[^"]*"/.exec(html)?.[0] ?? "";
         expect(stamp).not.toBe("");
         expect(stamp).not.toMatch(/color:\s*#f{3,6}/i);
         expect(html).toContain("#000001");

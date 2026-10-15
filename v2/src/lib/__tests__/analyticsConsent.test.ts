@@ -87,6 +87,20 @@ describe("analytics consent", () => {
     expect(ph.opt_in_capturing).not.toHaveBeenCalled();
   });
 
+  it("the footer's switch is the visitor's own flag, which signing in never clears", () => {
+    analytics.visitorOptOut();
+    expect(isAnalyticsOff()).toBe(true);
+    expect(ph.opt_out_capturing).toHaveBeenCalledTimes(1);
+    // What LoginTracker does for an account with analytics on.
+    expect(analytics.hasOptedOut()).toBe(false);
+    analytics.optIn();
+    expect(isAnalyticsOff()).toBe(true);
+    analytics.consentForAccount();
+    expect(ph.opt_in_capturing).not.toHaveBeenCalled();
+    analytics.visitorOptIn();
+    expect(isAnalyticsOff()).toBe(false);
+  });
+
   it("a visitor who never signs in has nothing written to storage", () => {
     analytics.capture("page_seen");
     expect(window.localStorage.length).toBe(0);

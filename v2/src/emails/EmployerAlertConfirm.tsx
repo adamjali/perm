@@ -43,8 +43,8 @@ export function EmployerAlertConfirm({
       footerText={`This address was entered to follow ${employerName}’s PERM cases on PERM Tracker. It isn’t confirmed yet, so nothing else will be sent.`}
     >
       <Section style={styles.stamp}>
-        <Text style={styles.stampEyebrow}>Employer to follow</Text>
-        <Text style={styles.stampValue}>{employerName}</Text>
+        <Text className="em-text-secondary" style={styles.stampEyebrow}>Employer to follow</Text>
+        <Text className="em-text" style={styles.stampValue}>{employerName}</Text>
       </Section>
 
       <Text className="em-text-body" style={styles.body}>

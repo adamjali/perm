@@ -4,7 +4,7 @@
  *
  * Features:
  * - The site's main-button lime with an ink label (default and primary)
- * - A 1px ink edge, no offset shadow
+ * - A 2px ink edge, solid fill, no offset (Outlook drops one anyway)
  * - Inline styles for email client compatibility
  * - Urgency variants (urgent=red, warning=orange)
  * - Dark mode via CSS class
@@ -75,7 +75,7 @@ const styles = {
     textDecoration: "none",
     textAlign: "center" as const,
     display: "inline-block",
-    border: "1px solid #000001",
+    border: "2px solid #000001",
   },
   /**
    * The site's primary button: brand fill, ink label, ink offset.

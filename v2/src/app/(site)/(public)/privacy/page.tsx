@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">Privacy policy</h1>{" "}
         <p className="mb-8 mt-4 text-lg text-muted-foreground">
-          Effective Date: February 17, 2026 | Last Updated: October 12, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 15, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -465,10 +465,11 @@ export default function PrivacyPage() {
               mode.
             </p>{" "}
             <p className="text-soft leading-relaxed mt-4">
-              You can switch usage analytics off at any time in Settings, under
-              Support. While it’s off, your browser sends PostHog nothing at
-              all, signed in or not, and the setting follows your account to
-              every device you sign in on.
+              You can switch usage analytics off at any time with the switch at
+              the foot of every page: while it’s off, this browser sends PostHog
+              nothing at all, signed in or not. Signed in, you can also switch it
+              off in Settings, under Support, and that setting follows your
+              account to every device you sign in on.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">

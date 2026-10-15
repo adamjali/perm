@@ -68,7 +68,7 @@ export function VerificationCode({
       <Section style={styles.ctaSection}>
         <Link
           href={baseUrl}
-          className="em-cta-button"
+          className="em-button-primary"
           style={styles.ctaButton}
         >
           Open PERM Tracker
@@ -108,7 +108,7 @@ const styles = {
   },
   codeBox: {
     backgroundColor: "#f0fdf4",
-    border: "1px solid #22c55e",
+    border: "2px solid #2ECC40",
     padding: "24px",
     textAlign: "center" as const,
   },
@@ -142,18 +142,18 @@ const styles = {
   },
   ctaButton: {
     display: "inline-block" as const,
-    backgroundColor: "#18181b",
-    color: "#fffffe",
+    backgroundColor: "#2ECC40",
+    color: "#000001",
     padding: "14px 32px",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
   },
   disclaimerBox: {
     backgroundColor: "#f4f4f5",
     padding: "16px",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #e4e4e7",
   },
   disclaimerText: {
     color: "#52525b",

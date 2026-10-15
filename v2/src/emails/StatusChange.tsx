@@ -112,7 +112,7 @@ const styles = {
   statusChange: {
     backgroundColor: "#f4f4f5",
     padding: "20px",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #e4e4e7",
     marginBottom: "24px",
   },
   statusBox: {
@@ -138,7 +138,7 @@ const styles = {
     margin: "0",
     padding: "8px 16px",
     backgroundColor: "#fffffe",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #e4e4e7",
     display: "inline-block" as const,
   },
   statusValueNew: {
@@ -148,7 +148,7 @@ const styles = {
     margin: "0",
     padding: "8px 16px",
     backgroundColor: "#dcfce7",
-    border: "1px solid #22c55e",
+    border: "2px solid #2ECC40",
     display: "inline-block" as const,
   },
   arrow: {

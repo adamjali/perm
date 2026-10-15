@@ -192,7 +192,7 @@ const styles = {
   },
   yours: {
     backgroundColor: "#F5F5F5",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
     padding: "14px 16px",
     marginBottom: "28px",
   },

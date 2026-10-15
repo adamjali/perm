@@ -106,21 +106,22 @@ export function formatEmailDate(dateStr: string): string {
 
 
 /**
- * A group of deadlines in a digest: its urgency colour as a 3px top edge on
- * the head, the label in ink, the rows framed in the same light line.
- * Shared by the daily deadline digest and the weekly case summary.
+ * A group of deadlines in a digest: a head filled with its urgency colour,
+ * the label in white (every urgency colour clears 4.8:1 under it), and the
+ * rows in a 2px ink frame the head opens. Shared by the daily deadline digest
+ * and the weekly case summary.
  */
 export function urgencyHeadStyle(color: string): CSSProperties {
   return {
+    backgroundColor: color,
     padding: '10px 16px',
-    border: '1px solid #e4e4e7',
-    borderTop: `3px solid ${color}`,
+    border: '2px solid #000001',
     borderBottom: 'none',
   };
 }
 
 export const urgencyHeadText: CSSProperties = {
-  color: '#18181b',
+  color: '#fffffe',
   fontSize: '14px',
   fontWeight: 700,
   margin: '0',
@@ -129,9 +130,10 @@ export const urgencyHeadText: CSSProperties = {
 export const urgencyRow: CSSProperties = {
   backgroundColor: '#fffffe',
   padding: '12px 16px',
-  border: '1px solid #e4e4e7',
-  borderBottom: 'none',
+  borderLeft: '2px solid #000001',
+  borderRight: '2px solid #000001',
+  borderBottom: '1px solid #e4e4e7',
 };
 
 /** The last row closes the frame the head opened. */
-export const urgencyRowLast: CSSProperties = { borderBottom: '1px solid #e4e4e7' };
+export const urgencyRowLast: CSSProperties = { borderBottom: '2px solid #000001' };

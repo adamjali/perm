@@ -64,7 +64,7 @@ import { monthYear } from "@convex/lib/months";
 
 const TITLE = "About PERM Tracker";
 const DESCRIPTION =
-  "Who runs PERM Tracker, an immigration attorney who files these cases, since when, where every figure comes from, and what the site is not.";
+  "Who runs PERM Tracker, an immigration attorney, since when, where every figure comes from, and what the site is not.";
 
 export const metadata: Metadata = withSocialCard({
   // Absolute: the root template would make it "About PERM Tracker | PERM Tracker".
@@ -247,9 +247,9 @@ export default async function AboutPage() {
         <div>
           <SectionHead id="who" title="Who runs it" />{" "}
           <p className="mt-5 max-w-2xl text-lg leading-relaxed">
-            {SABRINA.name} is an immigration attorney who files these cases. She started PERM Tracker because the
-            people she files for had no way to see where a case stood between the filing and the decision, and her
-            clients&apos; questions still shape what the site answers first.
+            {SABRINA.name} is an immigration attorney. She started PERM Tracker because her clients had no way to
+            see where a case stood between the filing and the decision, and their questions still shape what the site
+            answers first.
           </p>
         </div>{" "}
         <dl className="grid grid-cols-1 gap-px self-start border border-border bg-border">

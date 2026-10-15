@@ -79,8 +79,8 @@ const DARK_MODE_STYLES = [
   // Layout
   "  .em-body { background-color: #18181b !important; }",
   "  .em-content { background-color: #27272a !important; border-color: #52525b !important; }",
-  "  .em-header { background-color: #27272a !important; border-color: #52525b !important; }",
-  // The mark's PERM: the lime reads on the dark band (the ink is for light).
+  // The header stays the black band it is in light mode, edged so it sits on the dark body.
+  "  .em-header { background-color: #000001 !important; border-color: #52525b !important; }",
   "  .em-logo-perm { color: #2ECC40 !important; }",
   // Text
   "  .em-text { color: #fafafa !important; }",
@@ -154,7 +154,7 @@ const DARK_MODE_STYLES = [
    * rather than a second border. The FILL stays lime with an ink label, which
    * must not invert (ink on lime 9.82:1, white on lime 2.14:1).
    */
-  "  .qa-stamp { background-color: #EAF7EC !important; border-color: #1A7A25 !important; }",
+  "  .qa-stamp { background-color: #2ECC40 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #78787E !important; }",
   "  .qa-stamp-value { color: #000001 !important; }",
   "  .em-link-strong { color: #fafafa !important; }",
   // Both queue button variants carry an ink label on a light fill, so the
@@ -181,8 +181,8 @@ const DARK_MODE_STYLES = [
    * or absence of the brand colour. Only the offset moves, for the contrast
    * reason above.
    */
-  "  .cs-block-live { background-color: #EAF7EC !important; border-color: #1A7A25 !important; }",
-  "  .cs-block-closed { background-color: #FAFAFA !important; border-color: #000001 !important; }",
+  "  .cs-block-live { background-color: #2ECC40 !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #78787E !important; }",
+  "  .cs-block-closed { background-color: #FAFAFA !important; border-color: #000001 !important; box-shadow: 4px 4px 0 #78787E !important; }",
   "  .cs-block-value { color: #000001 !important; }",
   // The figure table sits directly on the card. #2A2A2A would be 1.36:1 there.
   "  .cs-fig-label { color: #D4D4D8 !important; }",
@@ -336,11 +336,11 @@ const styles = {
     margin: "0 auto",
     padding: "20px",
   },
-  // A white band with a line under it, like the site's own header.
+  // A black band with the lime mark: the solid header the emails have always had.
   header: {
-    backgroundColor: "#fffffe",
-    padding: "20px 32px",
-    border: "1px solid #e4e4e7",
+    backgroundColor: "#000001",
+    padding: "22px 32px",
+    border: "2px solid #000001",
   },
   logo: {
     margin: "0",
@@ -349,17 +349,16 @@ const styles = {
     letterSpacing: "-0.02em",
   },
   logoPerm: {
-    // The site's green ink (`--primary-text`): the lime itself is 2.05:1 on
-    // white, so on a light band the mark takes the ink, as the site's does.
-    color: "#1A7A25",
+    // The brand lime from globals.css (`--primary`): 10.7:1 on the black band.
+    color: "#2ECC40",
   },
   logoTracker: {
-    color: "#141414",
+    color: "#fffffe",
   },
   content: {
     backgroundColor: "#fffffe",
     padding: "32px",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
     borderTop: "none",
   },
   footer: {

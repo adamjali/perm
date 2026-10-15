@@ -68,7 +68,7 @@ export function PasswordResetCode({
       <Section style={styles.ctaSection}>
         <Link
           href={`${baseUrl}/reset-password`}
-          className="em-cta-button"
+          className="em-button-primary"
           style={styles.ctaButton}
         >
           Reset password
@@ -113,7 +113,7 @@ const styles = {
   },
   codeBox: {
     backgroundColor: "#fff7ed",
-    border: "1px solid #C2410C",
+    border: "2px solid #C2410C",
     padding: "24px",
     textAlign: "center" as const,
   },
@@ -147,17 +147,17 @@ const styles = {
   },
   ctaButton: {
     display: "inline-block" as const,
-    backgroundColor: "#18181b",
-    color: "#fffffe",
+    backgroundColor: "#2ECC40",
+    color: "#000001",
     padding: "14px 32px",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
   },
   disclaimerBox: {
     backgroundColor: "#fef3c7",
-    border: "1px solid #f59e0b",
+    border: "2px solid #f59e0b",
     padding: "16px",
   },
   disclaimerText: {

@@ -55,7 +55,7 @@ export function TestEmail({
       <Section style={styles.ctaSection}>
         <Link
           href={settingsUrl}
-          className="em-cta-button"
+          className="em-button-primary"
           style={styles.ctaButton}
         >
           Manage notification settings
@@ -89,7 +89,7 @@ const styles = {
   },
   badgeBox: {
     backgroundColor: "#dcfce7",
-    border: "1px solid #22c55e",
+    border: "2px solid #2ECC40",
     padding: "12px 20px",
     display: "inline-block" as const,
   },
@@ -105,13 +105,13 @@ const styles = {
   },
   ctaButton: {
     display: "inline-block" as const,
-    backgroundColor: "#18181b",
-    color: "#fffffe",
+    backgroundColor: "#2ECC40",
+    color: "#000001",
     padding: "14px 32px",
     fontSize: "14px",
     fontWeight: "700" as const,
     textDecoration: "none",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
   },
 } as const;
 

@@ -159,11 +159,12 @@ const styles = {
   blockTable: {
     borderCollapse: "separate" as const,
   },
-  // A pale green with a green-ink edge: the live status stands out without
-  // the lime, which the site keeps for its one main button.
+  // The live status in the brand's lime with an ink label (9.8:1), a 2px ink
+  // edge and the site's 4px offset: the one solid block in the email.
   blockLive: {
-    backgroundColor: "#EAF7EC",
-    border: "1px solid #1A7A25",
+    backgroundColor: "#2ECC40",
+    border: "2px solid #000001",
+    boxShadow: "4px 4px 0 #000001",
     padding: "18px 24px",
   },
   blockClosed: {
@@ -171,7 +172,8 @@ const styles = {
     // treatment that cannot be turned into a false positive by an inverting
     // client.
     backgroundColor: "#FAFAFA",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #000001",
+    boxShadow: "4px 4px 0 #000001",
     padding: "18px 24px",
   },
   blockValue: {

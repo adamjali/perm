@@ -3,15 +3,16 @@
 import { useSyncExternalStore } from "react";
 
 import { Switch } from "@/components/ui/switch";
-import { analytics, isAnalyticsOff, isGpcEnabled } from "@/lib/analytics";
+import { analytics, isAccountAnalyticsOff, isAnalyticsOff, isGpcEnabled } from "@/lib/analytics";
 
 /**
  * Usage analytics on or off, for anyone, from the footer of every page.
  *
- * It sets the same browser flag the signed-in switch in Settings sets
- * (`analytics.optOut()`), so off means this browser sends our analytics
- * service nothing at all. A browser sending Global Privacy Control already
- * sends nothing, and the switch says so instead of pretending to work.
+ * Off means this browser sends our analytics service nothing at all, signed in
+ * or not. It's the visitor's own flag (`analytics.visitorOptOut()`), kept apart
+ * from the account's, so signing in never turns it back on. When the account
+ * signed in here has analytics off, or the browser sends Global Privacy
+ * Control, the switch shows off and says why instead of pretending to work.
  */
 const listeners = new Set<() => void>();
 const subscribe = (fn: () => void) => {
@@ -28,10 +29,12 @@ const offOnServer = () => false;
 export function AnalyticsSwitch() {
   const off = useSyncExternalStore(subscribe, isAnalyticsOff, offOnServer);
   const gpc = useSyncExternalStore(subscribe, isGpcEnabled, offOnServer);
+  const byAccount = useSyncExternalStore(subscribe, isAccountAnalyticsOff, offOnServer);
+  const locked = gpc || byAccount;
 
   const set = (on: boolean) => {
-    if (on) analytics.optIn();
-    else analytics.optOut();
+    if (on) analytics.visitorOptIn();
+    else analytics.visitorOptOut();
     listeners.forEach((fn) => fn());
   };
 
@@ -41,7 +44,7 @@ export function AnalyticsSwitch() {
         id="footer-analytics"
         checked={!off && !gpc}
         onCheckedChange={set}
-        disabled={gpc}
+        disabled={locked}
         aria-describedby="footer-analytics-note"
       />{" "}
       <label htmlFor="footer-analytics" className="text-soft">
@@ -50,7 +53,9 @@ export function AnalyticsSwitch() {
       <span id="footer-analytics-note" className="sr-only">
         {gpc
           ? "Your browser sends Global Privacy Control, so it already sends no analytics."
-          : "Off means this browser sends our analytics service nothing."}
+          : byAccount
+            ? "Off for your account. Turn it back on in Settings, under Support."
+            : "Off means this browser sends our analytics service nothing."}
       </span>
     </div>
   );

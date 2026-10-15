@@ -147,11 +147,13 @@ const styles = {
     // The same gap CaseAlertConfirm gives its own provenance lines.
     margin: "14px 0 0 0",
   },
-  // A pale green block with a green-ink edge, as the case alert's status:
-  // light in every theme, ink label, nothing for a client to invert badly.
+  // The month DOL reached, as a solid lime block with an ink label (9.8:1),
+  // a 2px ink edge and the site's 4px offset. Outlook drops the shadow and
+  // keeps a bordered block, which still reads.
   stamp: {
-    backgroundColor: "#EAF7EC",
-    border: "1px solid #1A7A25",
+    backgroundColor: "#2ECC40",
+    border: "2px solid #000001",
+    boxShadow: "4px 4px 0 #000001",
     padding: "22px 24px",
   },
   month: {

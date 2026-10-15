@@ -60,7 +60,7 @@ export const PAGE_CARD_ALT = {
   "lca-wage-sources": "Where H-1B prevailing wages come from. The split between DOL's OES data, private salary surveys and union contracts by fiscal year, from DOL's LCA files.",
   "ead-extension": "Was my work permit extended? Whether a renewal automatically extended an expiring EAD, and to when, from 8 CFR 274a.13.",
   "wage-levels": "Prevailing wage levels by occupation and area. DOL's four wage levels for an occupation in a metro or non-metro area, read live from the OFLC wage search.",
-  "about": "About PERM Tracker. A free, independent site on DOL's own data, run by an immigration attorney who files these cases.",
+  "about": "About PERM Tracker. A free, independent site on DOL's own data, run by an immigration attorney.",
   "press": "Press and data for journalists. What DOL's records can tell a reporter, and how to credit PERM Tracker.",
   "blog": "PERM Tracker blog. What DOL's own files show about processing times, denials, wages and the queue.",
   "calculators": "PERM calculators. A calculator for each question about your case, all free, on data the government publishes, beside the table that matches a situation to its calculator.",

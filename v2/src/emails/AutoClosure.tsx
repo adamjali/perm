@@ -92,7 +92,7 @@ const styles = {
   closureBox: {
     backgroundColor: "#fef2f2",
     padding: "20px",
-    border: "1px solid #dc2626",
+    border: "2px solid #dc2626",
     marginBottom: "24px",
   },
   closureTitle: {
@@ -125,7 +125,7 @@ const styles = {
   infoBox: {
     backgroundColor: "#f4f4f5",
     padding: "16px",
-    border: "1px solid #e4e4e7",
+    border: "2px solid #e4e4e7",
     marginBottom: "24px",
   },
   infoText: {

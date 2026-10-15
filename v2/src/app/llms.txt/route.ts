@@ -543,7 +543,7 @@ export async function GET() {
     "## Product",
     "",
     `- [Home](${BASE_URL}/): What the product does, for the person waiting and the person managing cases`,
-    `- [About](${BASE_URL}/about): Who runs PERM Tracker (an immigration attorney who files these cases), since when, and what it is not`,
+    `- [About](${BASE_URL}/about): Who runs PERM Tracker (an immigration attorney), since when, and what it is not`,
     `- [Press](${BASE_URL}/press): What DOL's records on this site can tell a reporter, how to credit PERM Tracker, and the press contact`,
     `- [For attorneys](${BASE_URL}/for-attorneys): The case-management side - every deadline computed per case, reminders, calendar sync`,
     `- [FAQ](${BASE_URL}/faq): Questions about PERM and about this site`,
