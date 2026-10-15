@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, type KeyboardEvent } from "react";
 import { FileTextIcon, FolderOpenIcon, NoteIcon as StickyNote, ScalesIcon as Scale, SquaresFourIcon as LayoutDashboard, UsersIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +41,12 @@ export function CaseDetailTabs({
   children,
 }: CaseDetailTabsProps) {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // On a phone the bar scrolls sideways; keep the open section's tab in view.
+  useEffect(() => {
+    const i = TABS.findIndex((t) => t.id === activeTab);
+    tabRefs.current[i]?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [activeTab]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -93,8 +99,8 @@ export function CaseDetailTabs({
               className="section-tab"
               onClick={() => onTabChange(tab.id)}
             >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">{tab.label}</span>
+              <Icon className="size-4 shrink-0" aria-hidden="true" />
+              {tab.label}
             </button>
           );
         })}

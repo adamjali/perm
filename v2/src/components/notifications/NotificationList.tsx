@@ -188,7 +188,9 @@ function NotificationListItem({
   // The title is the row's one button, stretched over the whole row, so the
   // row opens the case and the two small actions stay separate buttons.
   return (
-    <li className="group relative flex items-start gap-3 border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/60 has-[:focus-visible]:bg-muted/60">
+    <li className="group relative flex items-start gap-3 border-b border-border py-3 pl-4 pr-1 hover:bg-accent has-[:focus-visible]:bg-accent">
+      {/* An unread notice carries the lime down its edge, as a case row carries its stage. */}
+      {!notification.isRead ? <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1.5 bg-primary" /> : null}
       <IconComponent
         className={cn("mt-0.5 size-5 shrink-0", PRIORITY_INK[notification.priority])}
         aria-hidden="true"
@@ -204,9 +206,7 @@ function NotificationListItem({
           )}
           title={notification.title}
         >
-          {!notification.isRead && (
-            <span className="mr-2 inline-block size-2 bg-primary-text align-middle" aria-label="Unread" role="img" />
-          )}
+          {!notification.isRead && <span className="sr-only">Unread: </span>}
           {notification.title}
         </button>
 
@@ -252,7 +252,7 @@ function NotificationListSkeleton() {
   return (
     <div className="space-y-3">
       <Skeleton variant="line" className="h-5 w-24" />
-      <div className="border border-border">
+      <div className="border-t-2 border-[var(--object-border)]">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="flex items-start gap-3 border-b border-border px-4 py-3 last:border-b-0">
             <Skeleton className="size-5 shrink-0" />
@@ -296,7 +296,7 @@ function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
   const { title, description } = messages[activeTab];
 
   return (
-    <div className="border border-border px-4 py-12 text-center">
+    <div className="bg-tint px-4 py-12 text-center">
       <p className="font-heading text-lg font-bold text-foreground">{title}</p>{" "}
       <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">{description}</p>
     </div>
@@ -448,10 +448,10 @@ export default function NotificationList({
       {Array.from(groupedNotifications.entries()).map(([group, notifications]) => (
         <div key={group}>
           {/* Group header */}
-          <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{group}</h2>
+          <h2 className="border-b-2 border-[var(--object-border)] pb-2 font-heading text-base font-bold">{group}</h2>
 
           {/* Notifications in group */}
-          <ul className="border border-border">
+          <ul>
             {notifications.map((notification) => (
               <NotificationListItem
                 key={notification._id}

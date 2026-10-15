@@ -107,7 +107,8 @@ export default function BulkActions({ className }: BulkActionsProps) {
 
   return (
     <>
-      <div className={cn("flex flex-col sm:flex-row items-stretch sm:items-center gap-3", className)}>
+      {/* Side by side, a phone too: two short actions, not two full-width slabs. */}
+      <div className={cn("grid grid-cols-2 gap-2 sm:flex sm:items-center", className)}>
         {/* Mark All Read Button */}
         <Button
           variant="outline"

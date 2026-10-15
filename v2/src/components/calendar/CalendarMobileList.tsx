@@ -24,11 +24,12 @@ import {
   isTomorrow,
   addDays,
 } from "date-fns";
-import { CalendarIcon, CaretRightIcon, CheckCircleIcon as CheckCircle2, ClockIcon, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react/ssr";
+import { CalendarIcon } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/lib/utils";
 import type { CalendarEvent } from "@/lib/calendar/types";
-import { STAGE_COLORS, URGENCY_COLORS } from "@/lib/calendar/types";
+import { STAGE_COLORS } from "@/lib/calendar/types";
+import { DaysChip } from "@/components/cases/DeadlineCountdown";
 import type { CaseDataMap } from "./CalendarView";
 
 // ============================================================================
@@ -97,7 +98,7 @@ function groupEventsByWeek(
       const isCurrentWeek =
         weekStartDate <= today && weekEndDate >= today;
       const weekLabel = isCurrentWeek
-        ? `This Week (${startMonth} - ${endMonth})`
+        ? `This week (${startMonth} - ${endMonth})`
         : `${startMonth} - ${endMonth}, ${year}`;
 
       weekMap.set(weekKey, {
@@ -121,22 +122,6 @@ function formatEventDate(date: Date): string {
   if (isToday(date)) return "Today";
   if (isTomorrow(date)) return "Tomorrow";
   return format(date, "EEE, MMM d");
-}
-
-/**
- * Get urgency icon
- */
-function UrgencyIcon({ urgency }: { urgency: CalendarEvent["urgency"] }) {
-  switch (urgency) {
-    case "overdue":
-    case "urgent":
-      return <AlertCircle className="size-4" />;
-    case "soon":
-      return <ClockIcon className="size-4" />;
-    case "normal":
-    case "done":
-      return <CheckCircle2 className="size-4" />;
-  }
 }
 
 // ============================================================================
@@ -165,7 +150,7 @@ export function CalendarMobileList({
   if (groupedEvents.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className="mb-4 p-4 bg-muted inline-block border border-border">
+        <div className="mb-4 inline-block bg-tint p-4">
           <CalendarIcon className="size-10 text-muted-foreground" />
         </div>
         <h3 className="font-heading text-lg font-semibold mb-2">
@@ -182,103 +167,44 @@ export function CalendarMobileList({
   return (
     <div className="space-y-6">
       {groupedEvents.map((group) => (
-        <div key={group.weekLabel} className="space-y-2">
-          {/* Week Header */}
-          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-2">
-            <h3 className="font-heading text-sm font-bold text-muted-foreground px-1">
-              {group.weekLabel}
-            </h3>
-          </div>
-
-          {/* Events in week with stagger animation */}
-          <div className="space-y-2">
+        <section key={group.weekLabel} aria-label={group.weekLabel}>
+          {/* The week, under one ink rule, held under the app's header while its rows scroll. */}
+          <h3 className="sticky top-16 z-10 border-b-2 border-[var(--object-border)] bg-background py-2 font-heading text-base font-bold">
+            {group.weekLabel}
+          </h3>{" "}
+          <ul>
             {group.events.map((event) => {
               const caseData = caseDataMap?.get(event.caseId as string);
               // Extracted to local variable (React Compiler disabled; kept for SWC safety)
               const employerName = caseData?.employerName;
               const stageColor = STAGE_COLORS[event.stage] ?? "#6B7280";
-              const urgencyColor = URGENCY_COLORS[event.urgency] ?? "#059669";
-              const isOverdueOrUrgent =
-                event.urgency === "overdue" || event.urgency === "urgent";
-
               return (
-                <button
-                  key={event.id}
-                  type="button"
-                  onClick={() => handleEventTap(event.caseId as string)}
-                  className={cn(
-                    "w-full min-h-[68px] p-3 flex items-center gap-3",
-                    "bg-card border border-border",
-                    "",
-                    "",
-                    "text-left",
-                    "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                  )}
-                  aria-label={`${event.title} - ${employerName ?? "Case"} - ${formatEventDate(event.start)}`}
-                >
-                  {/* Stage color indicator */}
-                  <div
-                    className="w-1.5 h-12 shrink-0 border border-border"
-                    style={{ backgroundColor: stageColor }}
-                    aria-hidden="true"
-                  />
-
-                  {/* Event content */}
-                  <div className="flex-1 min-w-0">
-                    {/* Deadline type */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-heading text-sm font-bold truncate" title={event.title}>
-                        {event.title}
+                <li key={event.id} className="relative border-b border-border">
+                  {/* The stage's colour down the row's edge, as in the case list. */}
+                  <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1.5" style={{ backgroundColor: stageColor }} />
+                  <button
+                    type="button"
+                    onClick={() => handleEventTap(event.caseId as string)}
+                    className="flex min-h-16 w-full items-center gap-3 py-3 pl-4 pr-1 text-left hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    aria-label={`${event.title}, ${employerName ?? "case"}, ${formatEventDate(event.start)}`}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="line-clamp-2 font-semibold leading-snug">{event.title}</span>{" "}
+                      <span className="mt-0.5 block truncate text-sm text-muted-foreground">
+                        {employerName ?? "Unknown case"}
+                        {caseData?.positionTitle ? <span className="hidden sm:inline">{` - ${caseData.positionTitle}`}</span> : null}
                       </span>
-                    </div>
-
-                    {/* Case name */}
-                    <p className="text-sm text-muted-foreground truncate" title={`${employerName ?? "Unknown case"}${caseData?.positionTitle ? ` - ${caseData.positionTitle}` : ""}`}>
-                      {employerName ?? "Unknown case"}
-                      {caseData?.positionTitle && (
-                        <span className="hidden sm:inline">
-                          {" "}
-                          - {caseData.positionTitle}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Date and urgency */}
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span
-                      className={cn(
-                        "text-sm font-semibold",
-                        isOverdueOrUrgent && "text-destructive"
-                      )}
-                    >
-                      {formatEventDate(event.start)}
+                    </span>{" "}
+                    <span className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="font-mono text-sm text-soft">{formatEventDate(event.start)}</span>{" "}
+                      <DaysChip days={event.daysUntil} className="min-w-0 px-1.5 py-0.5" />
                     </span>
-                    <div
-                      className="flex items-center gap-1 text-sm"
-                      style={{ color: urgencyColor }}
-                    >
-                      <UrgencyIcon urgency={event.urgency} />
-                      <span className="font-medium">
-                        {event.daysUntil === 0
-                          ? "Due today"
-                          : event.daysUntil < 0
-                            ? `${Math.abs(event.daysUntil)}d overdue`
-                            : `${event.daysUntil}d`}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Chevron indicator */}
-                  <CaretRightIcon
-                    className="size-5 text-muted-foreground shrink-0"
-                    aria-hidden="true"
-                  />
-                </button>
+                  </button>
+                </li>
               );
             })}
-          </div>
-        </div>
+          </ul>
+        </section>
       ))}
     </div>
   );

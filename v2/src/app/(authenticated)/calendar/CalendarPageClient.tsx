@@ -306,9 +306,9 @@ export function CalendarPageClient() {
         </div>
 
         {/* Calendar view with empty state message */}
-        <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 border border-border bg-card">
+        <div className="flex flex-1 flex-col items-center justify-center bg-tint px-4 py-16">
           <div className="text-center max-w-md">
-            <div className="mb-4 p-4 bg-muted inline-block border border-border">
+            <div className="mb-4 inline-block bg-background p-4">
               <CalendarIcon className="size-12 text-muted-foreground" />
             </div>
             <h2 className="font-heading text-xl font-semibold mb-2">
@@ -334,13 +334,9 @@ export function CalendarPageClient() {
 
       {/* Google Calendar Connection Banner - shown when not connected */}
       {!isGoogleConnected && (
-        <div
-          className="mb-4 flex items-center justify-between gap-4 border border-border bg-muted px-4 py-3"
-        >
+        <div className="mb-4 flex items-center justify-between gap-4 bg-tint px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="border border-border bg-card p-1.5">
-              <InfoIcon className="h-4 w-4 text-foreground" />
-            </div>
+            <InfoIcon className="size-5 shrink-0 text-foreground" aria-hidden="true" />
             <div>
               <p className="text-sm font-medium text-foreground">
                 Sync deadlines to Google Calendar
@@ -352,7 +348,7 @@ export function CalendarPageClient() {
           </div>
           <Link
             href="/settings?tab=calendar-sync"
-            className="inline-flex items-center gap-1.5 border border-border bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-transform duration-150"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 bg-primary px-3 text-sm font-semibold text-black transition-colors hover:bg-primary/90"
           >
             Connect
             <ArrowSquareOutIcon className="w-3.5 h-3.5" />

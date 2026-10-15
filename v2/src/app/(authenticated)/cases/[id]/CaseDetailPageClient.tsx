@@ -703,13 +703,19 @@ function StageProgress({ index }: { index: number }) {
           key={st}
           aria-current={i === at ? "step" : undefined}
           className={cn(
-            "flex min-h-11 items-center justify-center gap-1.5 border-l-2 border-[var(--object-border)] px-2 text-center text-sm font-semibold first:border-l-0",
-            i === at ? `${STAGE_VISUALS[st].fill} text-black` : i < at ? "bg-card text-foreground" : "bg-muted text-muted-foreground",
+            "flex min-h-11 min-w-0 items-center justify-center gap-1 border-l-2 border-[var(--object-border)] px-1 text-center text-sm font-semibold first:border-l-0 sm:gap-1.5 sm:px-2",
+            i === at
+              ? cn(STAGE_VISUALS[st].fill, STAGE_VISUALS[st].onFill)
+              : i < at
+                ? "bg-card text-foreground"
+                : "bg-muted text-muted-foreground",
           )}
         >
           {i < at ? <CheckIcon weight="bold" aria-hidden="true" className="size-4 shrink-0 text-primary-text" /> : null}
-          <span className="sr-only">{i < at ? "Done: " : i === at ? "Now: " : "Next: "}</span>
-          {formatCaseStatus(st)}
+          <span className="sr-only">{i < at ? "Done: " : i === at ? "Now: " : "Next: "}</span>{" "}
+          {/* Four cells share a phone's width, so each takes its short code there. */}
+          <span className="sm:hidden" aria-hidden="true">{STAGE_VISUALS[st].code}</span>{" "}
+          <span className="max-sm:sr-only">{formatCaseStatus(st)}</span>
         </li>
       ))}
     </ol>

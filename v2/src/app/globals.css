@@ -620,10 +620,12 @@ html {
 
 .section-tab {
   display: inline-flex;
+  flex-shrink: 0;
+  white-space: nowrap;
   align-items: center;
   gap: 6px;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 12px;
   margin-bottom: -2px;
   border: 2px solid transparent;
   border-bottom: 0;

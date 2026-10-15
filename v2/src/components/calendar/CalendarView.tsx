@@ -245,7 +245,8 @@ export function CalendarView({
       {/* View mode toggle. On desktop the calendar's toolbar carries "List"
           itself, so this row shows on phones and in list view. Until the
           reader picks, a phone is already showing the list. */}
-      <div className={cn("mb-4 flex justify-end", userViewMode !== "list" && "md:hidden")}>
+      <div className={cn("mb-4 flex items-center justify-between gap-3", userViewMode !== "list" && "md:hidden")}>
+        <p className="text-sm font-semibold">{userViewMode === "calendar" ? "By month" : "The next 30 days"}</p>{" "}
         <Button
           variant="outline"
           onClick={handleViewModeToggle}

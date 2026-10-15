@@ -32,6 +32,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import {
   CaseSelectionModal,
   type CaseForSelection,
@@ -254,8 +255,8 @@ export function CalendarFilters({
     <div className="space-y-4">
       {/* Filter Controls Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        {/* Top row on mobile: Cases button + Filters toggle */}
-        <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
+        {/* One row on a phone: which cases, and the filters fold */}
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           {/* Case Selection Button */}
           <Button
             variant="outline"
@@ -280,6 +281,7 @@ export function CalendarFilters({
             data-testid="toggle-filters-btn"
           >
             <Filter className="size-4" />
+            <span className="sm:hidden">Filters</span>{" "}
             <span className="hidden sm:inline">Deadline filters</span>
             {isFiltersExpanded ? (
               <CaretUpIcon className="size-4" />
@@ -290,7 +292,7 @@ export function CalendarFilters({
         </div>
 
         {/* Two switches for what the calendar includes */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
+        <div className={cn("flex-col sm:flex sm:flex-row sm:items-center sm:gap-6", isFiltersExpanded ? "flex" : "hidden")}>
           <div className="flex items-center gap-2 min-h-[44px]">
             <Checkbox
               id="show-completed"
@@ -329,12 +331,12 @@ export function CalendarFilters({
         </div>
 
         {/* What the colours mean, in the same bar instead of a box of its own */}
-        <TimelineLegendCompact className="sm:ml-auto" />
+        <TimelineLegendCompact className={cn("sm:ml-auto", !isFiltersExpanded && "max-sm:hidden")} />
       </div>
 
       {/* Deadline types, shown when the reader opens them */}
       {isFiltersExpanded && (
-        <div className="border border-border bg-card p-4" data-testid="deadline-filters-panel">
+        <div className="bg-tint p-4" data-testid="deadline-filters-panel">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {DEADLINE_TYPE_GROUPS.map((group) => (
               <div

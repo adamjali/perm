@@ -50,7 +50,8 @@ export default function NotificationTabs({
 }: NotificationTabsProps) {
   return (
     <div
-      className={cn("flex flex-wrap gap-2", className)}
+      // Three to a row on a phone, every one the same width; one row from sm.
+      className={cn("grid grid-cols-3 gap-2 sm:flex sm:flex-wrap", className)}
       role="tablist"
       aria-label="Notification filters"
     >
@@ -67,7 +68,7 @@ export default function NotificationTabs({
             aria-selected={isActive}
             aria-controls={isActive ? NOTIFICATION_PANEL_ID : undefined}
             onClick={() => onTabChange(tab.id)}
-            className={choiceVariants({ on: isActive })}
+            className={cn(choiceVariants({ on: isActive }), "justify-center px-2 sm:px-4")}
           >
             {tab.label}
             {count !== undefined && count > 0 && (

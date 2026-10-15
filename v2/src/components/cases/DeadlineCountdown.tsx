@@ -15,9 +15,13 @@ export const URGENCY_FILL = {
   normal: "bg-primary text-black",
 } as const;
 
-/** The same countdown as one small chip, for a row: "14 days" on the urgency colour. */
+/** The same countdown as one small chip, for a row: "14 days left" on the urgency colour. */
 export function CountdownChip({ deadline, className }: { deadline: string; className?: string }) {
-  const days = getDaysUntilDeadline(deadline);
+  return <DaysChip days={getDaysUntilDeadline(deadline)} className={className} />;
+}
+
+/** The chip for a count of days already worked out (the calendar's events carry theirs). */
+export function DaysChip({ days, className }: { days: number; className?: string }) {
   const { value, unit } = countdownParts(days);
   return (
     <span
