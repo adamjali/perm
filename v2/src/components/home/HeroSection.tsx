@@ -8,7 +8,6 @@ import { FlapBoard } from "@/components/home/FlapBoard";
 import { currentWait, type WaitMonthRow } from "@/lib/waitTrend";
 import { checkedLabel } from "@/lib/time";
 import { formatMonthDay, formatMonthShort } from "@/lib/dolFormat";
-import { HeroParallax } from "./HeroParallax";
 
 /** One figure at DOL right now: what it is, and the value as it reads. */
 export interface BoardRow {
@@ -74,7 +73,6 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
     // grain that fade out behind the words and drift slower than the page as
     // it scrolls, closed by an ink rule. `hero-ground` in globals.css.
     <section id="hero" className="hero-ground">
-      <HeroParallax />
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-x-12 gap-y-10 px-4 pb-12 pt-8 sm:px-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pb-16 lg:pt-12 [&>*]:min-w-0">
         <div>
           <h1 className="font-heading text-[2.25rem] font-bold leading-[1.08] tracking-[-0.02em] sm:text-[3rem]">

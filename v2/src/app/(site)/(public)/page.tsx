@@ -83,11 +83,12 @@ export const metadata: Metadata = withSocialCard({
   // no description is guaranteed to be used - but one that answers the query
   // it is competing for has a far better chance than one that never says it.
   //
-  // Says what a visitor can do here, with the name as its subject (the gate in
+  // Says what each side does here, with the name as its subject (the gate in
   // brand-signals.test.ts: without the name, Google printed scraped page text).
-  // No figure, so it can't go stale between renders. 140 characters.
+  // Both halves, like the definition under the H1 (owner, Oct 16 2026: the
+  // snippet named only the case lookup). No figure, so it can't go stale. 149 characters.
   description:
-    "PERM Tracker looks up any PERM case by number, shows which month DOL is reviewing now, and estimates your decision. Free, no account needed.",
+    "PERM Tracker looks up any PERM case and estimates when DOL will decide it, and tracks every PWD, recruitment and filing deadline for attorneys. Free.",
   alternates: {
     canonical: "/",
   },
@@ -103,7 +104,7 @@ export const metadata: Metadata = withSocialCard({
     // thing and every shared link said another, and the shared link is the one
     // a person waiting on a case actually receives.
     description:
-      "PERM Tracker looks up any PERM case by number, shows which month DOL is reviewing now, and estimates your decision. Free, no account needed.",
+      "PERM Tracker looks up any PERM case and estimates when DOL will decide it, and tracks every PWD, recruitment and filing deadline for attorneys. Free.",
     url: "/",
   },
 }, "home");

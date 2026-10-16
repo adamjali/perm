@@ -650,9 +650,8 @@ html {
    (the owner took the sage and mint fields off), then one layer of fine dots
    and grain behind the content. It fades out under the text column so the
    words read on a clean ground, and drifts slower than the page as it scrolls
-   (HeroParallax sets --hero-shift; reduced motion never does). The layer
-   starts 260px above the section so the drift never opens a gap at its top.
-   An ink rule closes the section. */
+   (hero-drift, below). The layer starts 260px above the section so the drift
+   never opens a gap at its top. An ink rule closes the section. */
 .hero-ground {
   position: relative;
   isolation: isolate;
@@ -670,7 +669,6 @@ html {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
     radial-gradient(circle at center, rgb(20 20 20 / 0.2) 1.1px, transparent 1.7px);
   background-size: 160px 160px, 20px 20px;
-  transform: translate3d(0, var(--hero-shift, 0px), 0);
   /* Faint behind the words, whole around them. On a phone the words fill the
      width, so the pattern stays faint throughout. */
   -webkit-mask-image: linear-gradient(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.28));
@@ -687,8 +685,29 @@ html {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
     radial-gradient(circle at center, rgb(255 255 255 / 0.14) 1.1px, transparent 1.7px);
 }
-@media (prefers-reduced-motion: reduce) {
-  .hero-ground::before { transform: none; }
+/* The drift is tied to the page's scroll by the browser itself, so the
+   pattern moves in step with the scroll: 240px over the first 800px, 0.3 of
+   the page's speed. A script moving it a frame behind the scroll made the dots
+   shake (owner, Oct 16 2026: "glitchy"). A browser without scroll-driven
+   animations, or a visitor who asks for less motion, gets a still pattern. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    .hero-ground::before {
+      will-change: transform;
+      animation: hero-drift linear both;
+    }
+    /* A separate, stronger rule: the CSS compiler folds a timeline written
+       beside the shorthand into it ("animation: ... scroll(root)"), which
+       Chrome rejects whole, so nothing moved (Oct 16 2026). */
+    .hero-ground.hero-ground::before {
+      animation-timeline: scroll(root block);
+      animation-range: 0px 800px;
+    }
+  }
+}
+@keyframes hero-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 240px, 0); }
 }
 
 @keyframes flap-show {
