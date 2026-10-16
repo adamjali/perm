@@ -63,7 +63,7 @@ export const CaseCard = memo(function CaseCard({
       <span className="manila-papers" aria-hidden="true">
         <span className="manila-sheet" />
         <span className="manila-sheet" />
-      </span>
+      </span>{" "}
       {/* The folder's tab, in its stage's colour, so a row of folders reads
           by stage at a glance. */}
       <span className={cn("manila-tab", stage.fill, stage.onFill)}>{stage.label}</span>
