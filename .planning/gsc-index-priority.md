@@ -1038,7 +1038,7 @@ Requested (11, then "Quota Exceeded"): `/` (last crawl Oct 15 4:43 PM), `/perm-c
 (read the crawl date before every click). Skipped: `/perm-cases`, crawled Oct 15 11:38 PM. Refused at the quota:
 `/uscis-case-status` (last crawl Sep 23). The sitemap index had last been read Oct 10; resubmitted.
 
-Still to request, in order: `/perm-rfi-audit` (owner, Oct 16 5:14 AM: first; the step-by-step RFI section is new), `/uscis-rfe-rates` (new Oct 16, 6:45 AM: never crawled, so it goes straight in), `/` again only if crawled before Oct 16 5:30 AM (the hero changed), `/uscis-case-status`, `/guides`, `/changelog`, `/tools`, `/perm-employers`,
+Still to request, in order: `/` (FIRST: its description names both sides since Oct 16 7:29 PM EDT, and Google showed `/calculators` for "perm tracker" after its 4:40 PM crawl of the redesigned homepage; the 7:30 PM request met the quota), `/perm-rfi-audit` (owner, Oct 16 5:14 AM: the step-by-step RFI section is new), `/uscis-rfe-rates` (new Oct 16, 6:45 AM: never crawled, so it goes straight in), `/` again only if crawled before Oct 16 5:30 AM (the hero changed), `/uscis-case-status`, `/guides`, `/changelog`, `/tools`, `/perm-employers`,
 `/perm-wages/software-developers`, `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`, `/policy-changes`.
 
 **Server error (5xx), checked Fri Oct 16, 6:00 AM EDT.** The "Some fixes failed" email (Oct 15, 8:35 AM) covered Oct 12
