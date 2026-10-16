@@ -117,6 +117,24 @@ developersupport@uscis.dhs.gov, a demo, production keys.
   before the API's 400,000 does. The ledger in `convex/caseAlerts.ts` has no line for
   them, and a line has to be claimed before any sending path ships.
 
+## Gate D: everything the keys make possible (owner, Oct 16 2026: "do it all, fully exhaustive")
+
+Production allows 10 requests a second and 400,000 a day, and each answer carries the case's dated
+history (`hist_case_status[]`: RFE sent, response received, interview, approval). That makes these
+measurable for the first time, with the same rigour as the DOL side:
+
+1. **RFE rates and timings for the I-140 and I-485** (and the I-765 and I-131): USCIS publishes RFE
+   figures for the I-129 only (`/uscis-rfe-rates`, from its quarterly files). From case histories:
+   share with an RFE, days from receipt to RFE, from RFE to response, from response to decision, by
+   form, category and service center, each with its count and window.
+2. **Processing times by form and center from real cases**, beside USCIS's published medians.
+3. **Alerts on USCIS receipts**, like the DOL alerts, once the email budget has a line for them.
+4. **A walk of receipt numbers**, like the FLAG serial walk, for the populations above.
+   **BEFORE building this, read USCIS's API Terms of Use and the use case we describe in its
+   due diligence:** looking up cases people ask about is the stated purpose; a walk of receipts
+   wholesale may need USCIS's say-so, and the keys are the price of guessing wrong.
+5. **The undocumented `/processing-times/` endpoint**: ask it what it returns the day the keys work.
+
 ## What was deliberately not done
 
 - No developer account was created and no form was submitted. Both carry an identity

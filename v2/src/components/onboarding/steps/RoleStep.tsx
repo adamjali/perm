@@ -9,7 +9,7 @@ import type { UserRole } from "@/lib/onboarding/types";
 import { BriefcaseIcon, BuildingIcon as Building2, QuestionIcon as HelpCircle, ScalesIcon as Scale, UserCheckIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { handleOperationError } from "@/lib/errors";
-import { retryOnce } from "@/lib/onboarding/retryOnce";
+import { retryBriefly } from "@/lib/onboarding/retryBriefly";
 import { OWN_CASE_ROLE } from "@/lib/audience";
 import { OwnCaseStep } from "./OwnCaseStep";
 
@@ -39,7 +39,7 @@ export function RoleStep({ onNext }: RoleStepProps) {
       // how many people pick this is the only measure of how much beneficiary
       // demand is landing in a tool built for someone else - and that number
       // is the input to whether a beneficiary product ever gets built.
-      await retryOnce(() => saveRole({ role: selectedRole }));
+      await retryBriefly(() => saveRole({ role: selectedRole }));
 
       // The person the case is about is offered a watch on that case, not
       // the rest of this wizard. The next steps are "create a case" and a

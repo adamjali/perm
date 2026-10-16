@@ -17,7 +17,7 @@ import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
 import type { ChecklistItemId, OnboardingContextValue, OnboardingStep, TourPhase } from "@/lib/onboarding/types";
 import { TOUR_PHASE_ORDER } from "@/lib/onboarding/constants";
-import { retryOnce } from "@/lib/onboarding/retryOnce";
+import { retryBriefly } from "@/lib/onboarding/retryBriefly";
 import { useAuthContextOptional } from "@/lib/contexts/AuthContext";
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
@@ -46,9 +46,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const onboardingState = useQuery(api.onboarding.getOnboardingState, isSigningOut ? "skip" : {});
 
   const updateStepOnce = useMutation(api.onboarding.updateOnboardingStep);
-  // One delayed retry: see retryOnce (Sentry 4B).
+  // Up to two delayed retries: see retryBriefly (Sentry 4B, 57).
   const updateStep = useCallback(
-    (args: Parameters<typeof updateStepOnce>[0]) => retryOnce(() => updateStepOnce(args)),
+    (args: Parameters<typeof updateStepOnce>[0]) => retryBriefly(() => updateStepOnce(args)),
     [updateStepOnce],
   );
   const completeItem = useMutation(api.onboarding.completeChecklistItem);

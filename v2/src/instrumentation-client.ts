@@ -15,6 +15,7 @@ import posthog from "posthog-js";
 import { config as zodConfig } from "zod/v4/core";
 
 import {
+  analytics,
   holdUntilStarted,
   isAnalyticsOff,
   isGpcEnabled,
@@ -22,8 +23,9 @@ import {
 } from "@/lib/analytics";
 import { edgeCountry } from "@/lib/edgeCountry";
 import { chunkDiagnostics, isMissingModule } from "@/components/error/recovery";
-import { fromInjectedBridge, fromServiceWorkerRegister } from "@/lib/exceptionNoise";
+import { fromInjectedBridge, fromInjectedPageScript, fromServiceWorkerRegister } from "@/lib/exceptionNoise";
 import { scrubClickEvent } from "@/lib/analyticsRedact";
+import { guardDomAgainstTranslators } from "@/lib/translateSafeDom";
 
 // The live site's security policy has no 'unsafe-eval', so zod must not
 // compile parsers with new Function: its probe would be refused and log a
@@ -31,6 +33,18 @@ import { scrubClickEvent } from "@/lib/analyticsRedact";
 // this skips the probe. Schemas read the flag when they are built, and this
 // file runs before any app module loads.
 zodConfig({ jitless: true });
+
+// A page the browser has translated must not drop to the error screen when
+// React updates it (src/lib/translateSafeDom.ts). It runs before hydration,
+// and the first time the guard steps in on a page it's counted, never the text.
+if (typeof Node === "function") {
+  let counted = false;
+  guardDomAgainstTranslators(Node.prototype, (op) => {
+    if (counted) return;
+    counted = true;
+    analytics.capture("dom_guard_stepped_in", { op, lang: navigator.language || null });
+  });
+}
 
 /**
  * Strip `case=<number>` out of every URL-shaped property on an event.
@@ -230,6 +244,8 @@ function startPostHog(key: string, country: string | null): void {
           if (fromServiceWorkerRegister(event.properties, msg)) return null;
           // A crypto wallet's or an app's in-app browser calling its own bridge.
           if (fromInjectedBridge(msg)) return null;
+          // Chrome for iPhone's own Translate and form scripts.
+          if (fromInjectedPageScript(event.properties, navigator.userAgent)) return null;
         }
         return event;
       },
