@@ -1040,3 +1040,8 @@ Requested (11, then "Quota Exceeded"): `/` (last crawl Oct 15 4:43 PM), `/perm-c
 
 Still to request, in order: `/perm-rfi-audit` (owner, Oct 16 5:14 AM: first; the step-by-step RFI section is new), `/` again only if crawled before Oct 16 5:30 AM (the hero changed), `/uscis-case-status`, `/guides`, `/changelog`, `/tools`, `/perm-employers`,
 `/perm-wages/software-developers`, `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`, `/policy-changes`.
+
+**Server error (5xx), checked Fri Oct 16, 6:00 AM EDT.** The "Some fixes failed" email (Oct 15, 8:35 AM) covered Oct 12
+to 14, when the search-engine cap of 6 turned away up to 19% of Googlebot's requests (8,294 on Oct 13). The cap went to 12
+at 3:09 PM Oct 15, and Search Console started validating again the same minute (its 3:08 and 3:09 PM emails), so don't
+press Validate again. Since then: 157 Googlebot 503s, all between 10 and 11 PM EDT Oct 15, about 0.3% of its day.
