@@ -2192,3 +2192,20 @@ a:focus-visible .u-title,
     box-shadow: none;
   }
 }
+
+/* Toasts (round 2, Oct 15 2026): an ink frame with a hard shadow, and a thick
+   left edge in the message's colour, as the chat's cards have. Sonner marks
+   each toast with data-type. */
+[data-sonner-toast][data-styled="true"] {
+  border: 2px solid var(--object-border) !important;
+  border-left-width: 6px !important;
+  border-radius: 0 !important;
+  box-shadow: var(--shadow-hard) !important;
+}
+[data-sonner-toast][data-type="success"] { border-left-color: var(--primary) !important; }
+[data-sonner-toast][data-type="error"] { border-left-color: var(--destructive) !important; }
+[data-sonner-toast][data-type="warning"] { border-left-color: var(--data-warn) !important; }
+[data-sonner-toast][data-type="info"] { border-left-color: var(--data-info) !important; }
+[data-sonner-toast][data-type="success"] [data-icon] { color: var(--primary-text); }
+[data-sonner-toast][data-type="error"] [data-icon] { color: var(--destructive-text); }
+[data-sonner-toast][data-type="warning"] [data-icon] { color: var(--data-warn-ink); }

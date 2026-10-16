@@ -14,7 +14,7 @@
  * - Motion animations (spring physics)
  *
  * States:
- * - pending: Shimmer effect, Forest Green border
+ * - pending: an amber left edge (red for a change that removes something)
  * - approved: Green left border, checkmark icon
  * - denied: Gray styling, X icon
  * - executing: Spinner, pulsing border
@@ -185,18 +185,21 @@ export function InChatConfirmationCard({
   // Border styles by status
   // Status reads from the whole 2px outline, the site's own card language,
   // not a thick left bar.
+  // A thick left edge in the state's colour (round 2, Oct 15 2026): amber while
+  // it waits for your OK or runs, lime once done, red for a change that removes
+  // something or that failed, grey when cancelled.
   const BORDER_STYLES: Record<ConfirmationStatus, string> = {
-    pending: 'border-primary',
-    approved: 'border-primary ',
-    done: 'border-primary ',
-    executing: 'border-primary',
-    denied: 'opacity-60',
-    error: 'border-destructive',
+    pending: 'border-l-data-warn',
+    approved: 'border-l-primary',
+    done: 'border-l-primary',
+    executing: 'border-l-data-warn',
+    denied: 'border-l-muted-foreground opacity-60',
+    error: 'border-l-destructive',
   };
 
   // Destructive pending state overrides default pending style
   const borderStyles = isDestructive && status === 'pending'
-    ? 'border-destructive'
+    ? 'border-l-destructive'
     : BORDER_STYLES[status];
 
   return (
@@ -208,7 +211,7 @@ export function InChatConfirmationCard({
       className={cn(
         // Base styles
         'relative overflow-hidden',
-        'border-border border',
+        'border-2 border-l-[6px] border-black',
         'bg-card shadow-hard',
         // Status-specific border
         borderStyles

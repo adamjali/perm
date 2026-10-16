@@ -96,7 +96,7 @@ export default function NotificationBell({ className, children }: NotificationBe
         align="end"
         sideOffset={8}
         onCloseAutoFocus={(e) => e.preventDefault()}
-        className="border border-border bg-popover p-0 shadow-overlay"
+        className="border-2 border-black bg-popover p-0 shadow-hard"
       >
         {children || (
           <div className="p-4 text-center text-sm text-muted-foreground">

@@ -68,6 +68,13 @@ const MODE_CONFIG: Record<ActionMode, ModeConfig> = {
 
 const MODES: ActionMode[] = ["off", "confirm", "auto"];
 
+/** Each mode's colour when chosen; black words read on the lime and the amber. */
+const ACTIVE_FILL: Record<ActionMode, string> = {
+  off: "bg-[#141414] text-white dark:bg-white dark:text-black",
+  confirm: "bg-primary text-black",
+  auto: "bg-data-warn text-black",
+};
+
 /**
  * One line naming what a mode does, shown briefly after it changes. The
  * tooltips above appear on hover only, so a phone never saw them.
@@ -117,7 +124,7 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
             "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
             "whitespace-nowrap shadow-hard-sm",
             "pointer-events-none",
-            "border-foreground border"
+            "border-2 border-black"
           )}
           style={{ top: position.top, left: position.left }}
         >
@@ -172,8 +179,8 @@ export function ActionModeToggle({
       className={cn(
         // Container styling
         "relative inline-flex",
-        "border-border bg-background border",
-        "",
+        "border-2 border-black bg-background",
+        "shadow-hard-sm",
         // Disabled state
         disabled && "opacity-50 pointer-events-none",
         className
@@ -211,17 +218,14 @@ export function ActionModeToggle({
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 // Border between segments (not on last)
                 "border-r-2 border-border last:border-r-0",
-                // The chosen mode: the shared tint, never a filled block
+                // The chosen mode in its own colour (round 2, Oct 15 2026): read
+                // only is ink, asking first is lime, acting on its own is amber.
                 isActive
-                  ? "bg-primary text-primary-foreground"
+                  ? ACTIVE_FILL[m]
                   : "bg-background text-soft hover:bg-muted hover:text-foreground"
               )}
             >
-              {/* Scale pulse on active change */}
-              <span
-              >
-                <Icon className="h-4 w-4" />
-              </span>
+              <Icon weight={isActive ? "bold" : "regular"} className="h-4 w-4" />
             </button>
 
             {/* Portal-based Tooltip */}

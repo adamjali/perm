@@ -125,7 +125,7 @@ export function ChatMessage({
           className={cn(
             'max-w-[85%] border-2 px-4 py-3 border-border',
             isUser
-              ? 'border-primary bg-primary text-primary-foreground shadow-hard-sm'
+              ? 'border-black bg-primary text-black shadow-hard-sm'
               : 'bg-card text-card-foreground border-border shadow-hard-sm'
           )}
         >

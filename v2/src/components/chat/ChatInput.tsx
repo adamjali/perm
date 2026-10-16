@@ -335,8 +335,8 @@ export function ChatInput({
         className={cn(
           // 16px on phones: iOS Safari zooms the page into any field under 16px.
           'flex-1 resize-none px-3 py-2 text-base md:text-sm',
-          'border-input bg-background border',
-          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0',
+          'border-2 border-input bg-background shadow-hard-sm',
+          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0 focus:shadow-hard',
           'placeholder:text-muted-foreground',
           'disabled:text-muted-foreground disabled:cursor-not-allowed'
         )}

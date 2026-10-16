@@ -44,14 +44,14 @@ function DropdownMenuContent({
         sideOffset={sideOffset}
         className={cn(
           // Base styles
-          "bg-popover text-popover-foreground z-50 min-w-[8rem] border border-border p-1 shadow-overlay",
+          "bg-popover text-popover-foreground z-50 min-w-[8rem] border-2 border-black p-1 shadow-hard",
           // Sizing
           "max-h-(--radix-dropdown-menu-content-available-height) origin-(--radix-dropdown-menu-content-transform-origin)",
           // Overflow
           "overflow-x-hidden overflow-y-auto overscroll-contain",
           // Snappy animations (100ms duration)
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
-          "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
+          "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95",
                                         // GPU acceleration - prevents jank during animations
           "will-change-[transform,opacity]",
           // Fast duration override
@@ -249,7 +249,7 @@ function DropdownMenuSubContent({
     <DropdownMenuPrimitive.SubContent
       data-slot="dropdown-menu-sub-content"
       className={cn(
-        "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden border border-border p-1",
+        "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden border-2 border-black p-1 shadow-hard",
         className
       )}
       {...props}

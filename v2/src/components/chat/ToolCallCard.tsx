@@ -102,14 +102,14 @@ export function ToolCallCard({
       className={cn(
         // Base styles
         'relative overflow-hidden',
-        'border-border border',
+        'border-2 border-l-[6px] border-black',
         'bg-card shadow-hard-sm',
-        // Status reads from the whole outline (the site's 2px border), not a
-        // thick left bar; the spinner and status icon carry "in progress".
-        status === 'success' && 'border-primary ',
-        status === 'error' && !wasDenied && 'border-destructive',
-        wasDenied && 'opacity-60',
-        status === 'pending' && isAwaitingConfirmation && 'border-data-warn'
+        // The state's colour on a thick left edge, as on the permission card:
+        // lime done, red failed, amber waiting for your OK, grey cancelled.
+        status === 'success' && 'border-l-primary',
+        status === 'error' && !wasDenied && 'border-l-destructive',
+        wasDenied && 'border-l-muted-foreground opacity-60',
+        status === 'pending' && isAwaitingConfirmation && 'border-l-data-warn'
       )}
     >
 

@@ -86,7 +86,7 @@ function UserMenu({ userName }: UserMenuProps) {
 
       <DropdownMenuContent
         align="end"
-        className="min-w-[180px] border border-border bg-popover p-0 text-popover-foreground shadow-overlay"
+        className="min-w-[180px] border-2 border-black bg-popover p-0 text-popover-foreground shadow-hard"
       >
         <DropdownMenuItem
           onSelect={handleSettingsClick}

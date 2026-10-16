@@ -98,7 +98,7 @@ function Panel({ id, open, className, children }: { id: string; open: boolean; c
       inert={!open}
       aria-hidden={!open}
       className={cn(
-        "absolute inset-x-0 top-full max-h-[calc(100dvh-var(--site-header-h))] overflow-y-auto overscroll-contain border-b border-border bg-popover shadow-overlay transition-opacity duration-150",
+        "absolute inset-x-0 top-full max-h-[calc(100dvh-var(--site-header-h))] overflow-y-auto overscroll-contain border-b-2 border-black bg-popover shadow-hard transition-opacity duration-150",
         !open && "pointer-events-none invisible opacity-0",
         className,
       )}
@@ -254,7 +254,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       {menu === "mobile" ? (
         <div
           id="mobile-menu"
-          className="absolute inset-x-0 top-full max-h-[calc(100dvh-var(--site-header-h))] overflow-y-auto overscroll-contain border-b border-border bg-popover px-4 pb-8 shadow-overlay md:left-auto md:right-4 md:w-[26rem] md:border-x lg:hidden"
+          className="absolute inset-x-0 top-full max-h-[calc(100dvh-var(--site-header-h))] overflow-y-auto overscroll-contain border-b-2 border-black bg-popover px-4 pb-8 shadow-hard md:left-auto md:right-4 md:w-[26rem] md:border-x-2 lg:hidden"
         >
           <nav aria-label="Menu" className="divide-y divide-border">
             {[HEADER_PAGES.caseStatus, HEADER_PAGES.processingTimes].map((p) => (

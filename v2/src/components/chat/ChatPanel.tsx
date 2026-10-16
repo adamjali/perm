@@ -200,6 +200,9 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const { scrollRef, contentRef, onScroll, showJump, stick, jump, toBottom } = useStickToBottom();
   const reduceMotion = useReducedMotion();
+  // Messages present when the panel opened render still; only messages that
+  // arrive while it is open fade in.
+  const [initialIds] = useState(() => new Set(messages.map((m) => m.id)));
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
@@ -265,7 +268,9 @@ export function ChatPanel({
           onClose();
         }
       }}
-      initial={false}
+      // It rises into place when opened (round 2, Oct 15 2026); a fade alone
+      // under reduced motion.
+      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}
       transition={springConfig}
@@ -280,12 +285,13 @@ export function ChatPanel({
         'md:bottom-20 md:right-4',
         'md:w-[380px] md:h-[560px] md:max-h-[80vh]',
         'flex flex-col',
-        'bg-background border-border border',
+        'bg-background border-2 border-black md:shadow-hard-lg',
         'overflow-hidden'
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b-2 border-border bg-muted gap-2">
+      {/* An ink title bar; `dark` resolves its tokens to the dark theme. */}
+      <div className="dark flex items-center justify-between px-3 py-2 border-b-2 border-black bg-[#141414] text-foreground gap-2">
         <div className="flex items-center gap-2 flex-shrink-0">
           <ChatTextIcon className="h-5 w-5 text-primary" />
           <h2 id={titleId} className="font-heading font-semibold text-sm max-[389px]:sr-only">PERM Assistant</h2>
@@ -400,7 +406,7 @@ export function ChatPanel({
                       />
                     )}
                     <motion.div
-                      initial={false}
+                      initial={!initialIds.has(message.id) && !reduceMotion ? { opacity: 0, y: 6 } : false}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.18, ease: 'easeOut' }}
                     >

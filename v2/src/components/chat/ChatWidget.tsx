@@ -111,10 +111,10 @@ export function ChatWidget({
               size="lg"
               className={cn(
                 'h-14 w-14 p-0',
-                'bg-primary hover:bg-primary',
-                'border-border border',
-                'transition-transform duration-150',
-                ''
+                'bg-primary hover:bg-primary-hover',
+                'border-2 border-black shadow-hard',
+                'transition-[transform,box-shadow] duration-150',
+                'motion-safe:hover:-translate-y-1 hover:shadow-hard-lg motion-safe:active:translate-y-0 active:shadow-hard-sm'
               )}
               aria-label="Open chat"
             >
