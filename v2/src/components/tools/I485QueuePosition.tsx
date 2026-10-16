@@ -31,7 +31,7 @@
 import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
-import { UsersIcon, InfoIcon, PlusIcon } from "@phosphor-icons/react";
+import { UsersIcon, PlusIcon } from "@phosphor-icons/react";
 
 import { pairKey,
   certaintySplit,
@@ -43,6 +43,7 @@ import { bulletinCheckSentence, type BulletinCheck } from "@/lib/bulletinCheck";
 import { monthsToReach, scenarioMonths, type PaceBasis } from "@/lib/bulletinNext";
 import { ChartTips } from "@/components/data/ChartTips";
 import { Label } from "@/components/ui/label";
+import { CaveatBox } from "@/components/ui/note";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { buttonVariants } from "@/components/ui/button";
@@ -514,15 +515,15 @@ export function I485QueuePosition({
                     aria-label={`Between ${position.low.toLocaleString("en-US")} and ${position.high.toLocaleString("en-US")} applications are ahead. ${position.counted.toLocaleString("en-US")} are counted individually and ${position.suppressedCells.toLocaleString("en-US")} cells were withheld by USCIS.`}
                   >
                     <div
-                      className="h-full border-r-2 border-foreground bg-primary"
+                      className="h-full border-r-2 border-data-good-ink bg-primary"
                       style={{ width: `${split.solid}%` }}
                       data-tip={`At least ${position.low.toLocaleString("en-US")} ahead\n${position.counted.toLocaleString("en-US")} published individually`}
                     />
-                    {/* Texture, not a second colour, so the two segments stay
-                        distinguishable without relying on hue; the control grey
-                        keeps the hatch at 3:1 against the solid part. */}
+                    {/* Texture as well as a second colour, so the two segments
+                        stay apart without relying on hue: a yellow hatch on the
+                        soft waiting ground (round 3: no grey in charts). */}
                     <div
-                      className="h-full bg-muted bg-hatch-reverse text-input"
+                      className="h-full bg-soft-wait bg-hatch-reverse text-data-warn"
                       data-tip={`Up to ${position.high.toLocaleString("en-US")} ahead\n${position.suppressedCells.toLocaleString("en-US")} ${position.suppressedCells === 1 ? "cell" : "cells"} withheld by USCIS, 1 to 10 applications each`}
                       style={{ width: `${split.hatched}%` }}
                     />
@@ -577,7 +578,7 @@ export function I485QueuePosition({
                 yours. Anyone who hasn’t filed yet isn’t in this figure.
               </p>
             </div>{" "}
-            <div className="bg-tint p-6 sm:p-8">
+            <div className="bg-sage p-6 sm:p-8">
               <p className={EYEBROW_CLASS}>The whole category</p>{" "}
               <p className="mt-2 font-heading text-3xl font-bold leading-none tabular-nums">
                 {position.categorySuppressedCells > 0
@@ -636,13 +637,13 @@ export function I485QueuePosition({
                       <span className="truncate text-sm text-muted-foreground">
                         {formatAsOfShort(t.asOf)}
                       </span>{" "}
-                      <span className="flex h-6 w-full border-input bg-muted border">
+                      <span className="flex h-6 w-full border-input bg-sage border">
                         <span
                           className="block h-full bg-primary"
                           style={{ width: `${Math.max(((t.available ?? t.total) / max) * 100, 1)}%` }}
                         />{" "}
                         <span
-                          className="block h-full bg-foreground/50"
+                          className="block h-full bg-chart-yellow"
                           style={{ width: `${Math.max(((t.awaiting ?? 0) / max) * 100, 0)}%` }}
                         />
                       </span>{" "}
@@ -657,22 +658,18 @@ export function I485QueuePosition({
             );
           })()}{" "}
           <p className="mt-4 text-sm text-muted-foreground">
-            Lime: pending with a visa number available (USCIS&apos;s part). Grey: waiting for a number (the
+            Lime: pending with a visa number available (USCIS&apos;s part). Yellow: waiting for a number (the
             bulletin&apos;s part). Each release counts what was pending that day, so a month moves with both
             new filings and decisions. USCIS keeps no archive, so the series grows forward only.
           </p>
         </div>
       ) : null}{" "}
 
-      <div className="bg-muted p-6 sm:p-8">
-        <div className="flex items-start gap-3">
-          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <div>
-            <h3 className="font-heading text-base font-bold">
-              What this can’t tell you
-            </h3>{" "}
-            {/* The one that matters most stays in view; the rest fold. */}
-            <p className="mt-3 text-base leading-relaxed text-muted-foreground">{LIMITS[0]}</p>{" "}
+      <div className="p-6 sm:p-8">
+        {/* The site's caveat box (round 3, Oct 15 2026: a grey panel read as a
+            wall). The one that matters most stays in view; the rest fold. */}
+        <CaveatBox title={<span role="heading" aria-level={3}>What this can’t tell you</span>}>
+            <p className="text-base leading-relaxed">{LIMITS[0]}</p>{" "}
             <details className="group mt-3">
               <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center gap-2 font-bold [&::-webkit-details-marker]:hidden">
                 {LIMITS.length - 1} more limits{" "}
@@ -682,7 +679,7 @@ export function I485QueuePosition({
                 {LIMITS.slice(1).map((c) => (
                   <Fragment key={c}>
                     {" "}
-                    <li className="text-base leading-relaxed text-muted-foreground">
+                    <li className="text-base leading-relaxed">
                       {c}
                     </li>
                   </Fragment>
@@ -694,8 +691,7 @@ export function I485QueuePosition({
                 USCIS employment-based pending inventory, as of {asOfLabel}.
               </p>
             ) : null}
-          </div>
-        </div>
+        </CaveatBox>
       </div>
     </div>
   );
@@ -736,7 +732,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
     return `${r} ${r === 1 ? "month" : "months"}`;
   };
   return (
-    <div className="mt-6 bg-tint p-4 sm:p-5 border-2 border-border">
+    <div className="mt-6 bg-sage p-4 sm:p-5 border-2 border-border">
       <p className="text-sm font-bold text-muted-foreground">
         If the supply were
       </p>{" "}

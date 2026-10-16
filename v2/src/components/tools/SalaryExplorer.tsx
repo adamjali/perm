@@ -431,7 +431,7 @@ export function SalaryExplorer({
                 .map((c) => (
                   <div
                     key={c.label}
-                    className="min-w-0 flex-1 basis-52 bg-tint p-4 border-2 border-border"
+                    className="min-w-0 flex-1 basis-52 bg-sage p-4 border-2 border-border"
                   >
                     <p className="text-sm font-semibold text-muted-foreground">
                       {c.label}
@@ -475,7 +475,7 @@ export function SalaryExplorer({
                         data-tip={`${usd(b.from)} to ${usd(b.from + data.binWidth)}\n${formatInt(b.count)} ${nounPlural}`}
                       >
                         <span className="text-sm tabular-nums text-muted-foreground">{usd(b.from)}</span>{" "}
-                        <span className="block h-5 w-full border-input bg-muted border">
+                        <span className="block h-5 w-full border-input bg-sage border">
                           <span
                             className="block h-full bg-primary"
                             style={{ width: `${Math.max((b.count / maxBin) * 100, 1)}%` }}
@@ -497,7 +497,7 @@ export function SalaryExplorer({
                 <h3 className="font-heading text-xl font-bold">By worksite state</h3>{" "}
                 <p className="mt-2 text-base text-muted-foreground">
                   States with at least {MIN_FOR_MEDIAN} matching {nounPlural}, most first. Each bar runs from the 5th
-                  to the 95th percentile on one shared scale; the black mark is the median.
+                  to the 95th percentile on one shared scale; the dark green mark is the median.
                 </p>
                 {/* THE SPREAD, DRAWN. Fifty-five rows of five numbers each made
                     a reader compare figures column by column; on one scale the
@@ -533,13 +533,13 @@ export function SalaryExplorer({
                                 {r.ends ? (
                                   <span
                                     aria-hidden="true"
-                                    className="absolute inset-y-0.5 border-border bg-tint border"
+                                    className="absolute inset-y-0.5 border-data-good-ink bg-chart-green border"
                                     style={{ left: at(r.ends.p5), width: `${((r.ends.p95 - r.ends.p5) / span) * 100}%` }}
                                   />
                                 ) : null}
                                 <span
                                   aria-hidden="true"
-                                  className="absolute inset-y-0 w-1.5 -translate-x-1/2 bg-foreground"
+                                  className="absolute inset-y-0 w-1.5 -translate-x-1/2 bg-data-good-ink ring-1 ring-background"
                                   style={{ left: at(r.p50) }}
                                 />
                               </span>{" "}
@@ -590,7 +590,7 @@ export function SalaryExplorer({
                       {data.byState.map((r, i) => (
                         <tr
                           key={r.state}
-                          className={cn("border-t-2 border-border", i % 2 === 1 && "bg-muted")}
+                          className={cn("border-t-2 border-border", i % 2 === 1 && "bg-sage")}
                         >
                           <th scope="row" className="px-3 py-2 font-bold">
                             {r.state}{" "}

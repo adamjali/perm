@@ -121,9 +121,9 @@ const FAQ = [
       "There’s no premium processing for PERM. An individual case can take longer if DOL issues a request for information (RFI) or selects it for audit. Audited cases sit in a separate queue that DOL publishes its own date for.",
   },
   {
-    question: "Where does this data come from?",
+    question: "Where do these numbers come from?",
     answer:
-      "Directly from the Department of Labor's Office of Foreign Labor Certification, at flag.dol.gov/processingtimes. PERM Tracker reads that source daily and stores every publication.",
+      "Directly from the Department of Labor's Office of Foreign Labor Certification, at flag.dol.gov/processingtimes, each with the date DOL attached to it. PERM Tracker reads that page daily and keeps every publication, because DOL overwrites its own and keeps no archive. Where a number is missing here, DOL didn't publish one.",
   },
 ];
 
@@ -301,7 +301,7 @@ export default async function PermProcessingTimesPage() {
     ...(decisionsByMonth.length >= 2 ? [{ id: "decisions", label: "Decisions per month" }] : []),
     { id: "queues", label: "Every queue" },
     { id: "your-case", label: "Your case" },
-    { id: "questions", label: "Questions" },
+    { id: "questions", label: "FAQs" },
   ];
 
   return (
@@ -513,7 +513,7 @@ export default async function PermProcessingTimesPage() {
           >
             <ScrollBox label="Where each DOL queue stands" className="mt-6">
               <table className="w-full border-t-2 border-[var(--object-border)] text-left text-sm">
-                <thead className="bg-muted">
+                <thead className="bg-sage">
                   <tr>
                     <th scope="col" className="border-b-2 border-border p-3 font-bold">
                       Queue
@@ -549,7 +549,7 @@ export default async function PermProcessingTimesPage() {
           </Chapter>
         </>
       ) : (
-        <section className="mt-10 bg-tint p-6 border-2 shadow-hard border-border">
+        <section className="mt-10 bg-sage p-6 border-2 shadow-hard border-border">
           <p className="text-base leading-relaxed">
             Live figures are being fetched from the Department of Labor. Until they land,{" "}
             <a
@@ -630,29 +630,10 @@ export default async function PermProcessingTimesPage() {
       </section>
       </Chapter>
 
-      <Chapter id="questions" title="Common questions">
+      {/* Where the numbers come from is one of the questions (round 3, Oct 15
+          2026: it had a section of its own). */}
+      <Chapter id="questions" title="FAQs">
         <FaqList items={FAQ.map((item) => ({ q: item.question, a: item.answer }))} openFirst={false} />
-
-      <section className="mt-12 bg-tint p-6 border-2 border-border">
-        <h3 className="font-heading text-xl font-bold">Where these numbers come from</h3>{" "}
-        {/* The absence rule changes how a blank cell reads, so it stays in
-            the open. The provenance behind it collapses. */}
-        <p className="mt-3 leading-relaxed text-muted-foreground">
-          Where a number is missing here, DOL didn’t publish one.
-        </p>{" "}
-        <FinePrint summary="Sources" className="mt-3">
-          <p>
-            Every figure here is published by the Office of Foreign Labor
-            Certification at{" "}
-            <a href={DOL_SOURCE} target="_blank" rel="noopener noreferrer">
-              flag.dol.gov/processingtimes
-            </a>
-            , and carries the date DOL attached to it. We read that page daily
-            and keep each publication, because DOL overwrites its own and keeps
-            no archive.
-          </p>
-        </FinePrint>
-      </section>
 
       <section className="mt-12 border-2 shadow-hard p-6 sm:p-8 bg-card border-border">
         <h3 className="font-heading text-2xl font-bold">

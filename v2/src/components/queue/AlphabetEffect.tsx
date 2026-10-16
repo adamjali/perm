@@ -35,11 +35,11 @@ export function AlphabetEffect({ data }: { data: Alphabet }) {
     <div>
       <ul className="m-0 mb-5 flex list-none flex-wrap items-center gap-x-6 gap-y-2 p-0 text-sm text-muted-foreground">
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-8 border-input bg-data-good-ink border" />{" "}
+          <span aria-hidden="true" className="h-3 w-8 border-foreground/50 bg-chart-green border" />{" "}
           <span>Decided faster than average</span>
         </li>{" "}
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-8 border-input bg-data-warn-ink border" />{" "}
+          <span aria-hidden="true" className="h-3 w-8 border-foreground/50 bg-chart-yellow border" />{" "}
           <span>Decided slower than average</span>
         </li>{" "}
       </ul>{" "}
@@ -56,8 +56,8 @@ export function AlphabetEffect({ data }: { data: Alphabet }) {
                   style={{ marginLeft: "50%", width: "50%" }}
                 >
                   <span
-                    className={`absolute top-0 h-3 border border-input ${
-                      faster ? "bg-data-good-ink" : "bg-data-warn-ink"
+                    className={`absolute top-0 h-3 border border-foreground/50 ${
+                      faster ? "bg-chart-green" : "bg-chart-yellow"
                     }`}
                     style={
                       faster

@@ -164,7 +164,7 @@ export async function H1bEmployersPage({ state }: { state: string }) {
             <H1bEmployerRanks summary={forClient} initial={view} states={states} />
           </SearchParamsBoundary>
         ) : (
-          <p className="bg-tint p-5 text-base border-2 border-border">
+          <p className="bg-sage p-5 text-base border-2 border-border">
             The rankings aren&apos;t built yet. They&apos;re made from DOL&apos;s LCA files and USCIS&apos;s Employer
             Data Hub after each load; the <Link href="/lca-cases" className="link">LCA case search</Link> answers one employer at a time meanwhile.
           </p>

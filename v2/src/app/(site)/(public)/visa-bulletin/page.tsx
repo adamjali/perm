@@ -385,7 +385,7 @@ export default async function VisaBulletinPage() {
       <div className="mt-6 border-border bg-card border">
       {sections.map((s) => (
         <details key={s.key} className="group border-b-2 border-border last:border-b-0">
-          <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 hover:bg-sage-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
             <h3 className="font-heading text-lg font-bold tracking-tight">{s.label}</h3>{" "}
             <span className="flex items-center gap-3">
               <span className="font-mono text-sm text-muted-foreground">{s.rows.length} {s.rows.length === 1 ? "country" : "countries"}</span>{" "}

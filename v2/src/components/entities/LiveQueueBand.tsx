@@ -4,10 +4,27 @@ import Link from "next/link";
 import { ChartTips } from "@/components/data/ChartTips";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { statusMeaning } from "@/lib/caseStatusVocabulary";
+import { caseStatusTint, type CaseStatusTint } from "@/lib/statusTone";
 import type { EntityPending } from "@/lib/db/entityDetail";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { DAYS_PER_MONTH, MS_PER_DAY } from "@/lib/time";
+
+/**
+ * Each stage's rule in the soft chart colour of what the stage means (round 3,
+ * Oct 15 2026: no black or grey in charts): the ordinary line yellow, held or
+ * diverted blue, appeals and denials red, withdrawn orange, decided green.
+ * Each rule carries a thin edge in its own hue's stronger shade, so the shape
+ * reads on paper; the count and share beside it carry the figure.
+ */
+const STAGE_BAR: Record<CaseStatusTint, string> = {
+  wait: "bg-chart-yellow border-data-warn",
+  good: "bg-chart-green border-data-good-ink",
+  withdrawn: "bg-chart-orange border-data-warn-ink",
+  bad: "bg-chart-red border-data-bad",
+  aside: "bg-chart-blue border-data-info",
+  flat: "bg-chart-sage border-data-good-ink",
+};
 
 /**
  * Where one sponsor's cases are standing in the queue TODAY.
@@ -158,19 +175,14 @@ export function LiveQueueBand({
                         </span>
                       </dd>{" "}
                       <dd className="w-full">
-                        {/* One rule per stage, and NO track behind it.
-                            Measured: the lime fill on a `border/40` track is
-                            1.38:1 in light mode, under the 3:1 floor a
-                            graphical object has to clear, and a filled track
-                            is a scoring-bar idiom this design system does not
-                            use. Ink on card is 20.1:1 light and 16.7:1 dark.
-                            The rule is scaled against the BIGGEST stage rather
+                        {/* One rule per stage, and NO track behind it. The
+                            rule is scaled against the BIGGEST stage rather
                             than the total, because with 96% of cases in one
                             stage every other rule would be too short to see;
                             the percentage beside the count carries the share. */}
                         <div
                           aria-hidden="true"
-                          className="mt-1.5 h-1.5 bg-foreground"
+                          className={cn("mt-1.5 h-2 border", STAGE_BAR[caseStatusTint(s.status)])}
                           style={{
                             width: `${biggest > 0 ? Math.max(2, (s.n / biggest) * 100) : 0}%`,
                           }}

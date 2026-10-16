@@ -54,9 +54,11 @@ export function LineAhead({
               data-tip={`${r.label}${r.own ? ", your own month, filed before you" : ""}\n${formatInt(r.n)} cases still in line`}
             >
               <span className={`font-mono text-sm ${r.own ? "font-semibold" : "text-soft"}`}>{r.label}</span>{" "}
-              <span className="block h-4 bg-muted" aria-hidden="true">
+              {/* Soft colours, no black or grey (round 3, Oct 15 2026): the
+                  line ahead of you soft green, your own month lime. */}
+              <span className="block h-4 border border-foreground/30 bg-card" aria-hidden="true">
                 <span
-                  className={`block h-full ${r.own ? "bg-primary-text" : "bg-foreground"}`}
+                  className={`block h-full border-r-2 border-foreground/50 ${r.own ? "bg-primary" : "bg-chart-green"}`}
                   style={{ width: `${Math.max(1, Math.round((r.n / max) * 100))}%` }}
                 />
               </span>{" "}

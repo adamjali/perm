@@ -316,8 +316,7 @@ function QueueHistorySvg({
               x2={W - PAD.right}
               y1={py(m)}
               y2={py(m)}
-              stroke="var(--border)"
-              strokeOpacity="0.25"
+              stroke="var(--chart-sage)"
             />
             {labelled.has(m) ? (
               <text
@@ -366,8 +365,9 @@ function QueueHistorySvg({
           </text>
         ))}
 
-        {/* The step line, primary over an ink underlay for weight. */}
-        <path d={d} fill="none" stroke="var(--border)" strokeWidth="6" />
+        {/* The step line, lime over a dark green underlay for weight (no black
+            in charts, round 3, Oct 15 2026). */}
+        <path d={d} fill="none" stroke="var(--data-good-ink)" strokeWidth="6" />
         <path d={d} fill="none" stroke="var(--primary)" strokeWidth="3.5" />
 
         {/* Reading dots at each step change only. */}
@@ -380,7 +380,7 @@ function QueueHistorySvg({
               cy={py(p.frontierMonth)}
               r="5"
               fill="var(--primary)"
-              stroke="var(--border)"
+              stroke="var(--data-good-ink)"
               strokeWidth="2"
             />
           ))}
@@ -562,7 +562,7 @@ export function QueueHistoryChart({ points, className, kind = "readings" }: Queu
         controls={rangeControl}
         chart={
           chart ?? (
-            <p className="bg-tint p-6 text-base text-muted-foreground border-2 shadow-hard-sm border-border">
+            <p className="bg-sage p-6 text-base text-muted-foreground border-2 shadow-hard-sm border-border">
               The queue month didn’t change across these {shown.length} readings, so
               there’s no step to draw. The table has every reading and its date.
             </p>
@@ -711,10 +711,10 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
               {med > 0 && med <= max ? (
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-foreground/60"
+                  className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-data-warn-ink"
                   style={{ bottom: `${(med / max) * 100}%` }}
                 >
-                  <span className="absolute -top-6 right-0 bg-background px-1 text-sm font-bold tabular-nums">
+                  <span className="absolute -top-6 right-0 bg-background px-1 text-sm font-bold tabular-nums text-data-warn-ink">
                     Median {Math.round(med).toLocaleString("en-US")}
                   </span>
                 </div>

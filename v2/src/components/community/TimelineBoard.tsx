@@ -56,7 +56,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
           {metrics.map((m, i) => (
             <Fragment key={m.id}>
               {" "}
-              <li className="flex items-start gap-3 bg-tint p-3 border-2 border-border">
+              <li className="flex items-start gap-3 bg-sage p-3 border-2 border-border">
                 <span className="flex size-7 shrink-0 items-center justify-center border-input font-mono text-sm font-bold border">
                   {i + 1}
                 </span>{" "}
@@ -66,7 +66,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
                     {Array.from({ length: METRIC_MIN_N }, (_, k) => (
                       <span
                         key={k}
-                        className={cn("h-2 flex-1 border border-input", k < m.n ? "bg-primary" : "bg-foreground/10")}
+                        className={cn("h-2 flex-1 border border-input", k < m.n ? "bg-primary" : "bg-soft-wait")}
                       />
                     ))}
                   </span>{" "}
@@ -88,7 +88,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
       {metrics.map((m) => (
         <Fragment key={m.id}>
           {" "}
-          <li className="bg-tint p-4 border-2 border-border">
+          <li className="bg-sage p-4 border-2 border-border">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <p className="font-heading text-base font-bold">{m.label}</p>{" "}
               <p className="text-sm text-muted-foreground">
@@ -99,7 +99,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
             {m.median !== null && m.p25 !== null && m.p75 !== null ? (
               <>
                 <div
-                  className="relative mt-3 h-6 border-input bg-background border"
+                  className="relative mt-3 h-6 border-input bg-card border"
                   aria-hidden="true"
                   data-tip={`${m.label}\nMedian ${days(m.median)}\nMiddle half ${m.p25.toLocaleString("en-US")} to ${days(m.p75)}\n${m.n.toLocaleString("en-US")} ${m.n === 1 ? "timeline" : "timelines"}, ${m.verified ? "DOL's record" : "self-reported"}`}
                 >
@@ -107,7 +107,10 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
                     className={cn("absolute inset-y-0 border-x-2 border-input", m.verified ? "bg-primary" : "bg-card bg-hatch text-primary-text")}
                     style={{ left: pct(m.p25), width: `calc(${pct(m.p75)} - ${pct(m.p25)})` }}
                   />{" "}
-                  <span className="absolute inset-y-[-4px] w-1 bg-foreground" style={{ left: pct(m.median) }} />
+                  {/* The median in the amber ink (round 3, Oct 15 2026: no black
+                      marks in charts), ringed in the card's colour so it parts
+                      from the lime bar in dark mode, where the two inks are close. */}
+                  <span className="absolute inset-y-[-4px] w-1 bg-data-warn-ink ring-2 ring-card" style={{ left: pct(m.median) }} />
                 </div>{" "}
                 <p className="mt-2 text-base">
                   <b>Median {days(m.median)}</b>,{" "}
@@ -135,15 +138,21 @@ const STOPS = [
   ...DATE_FIELDS.map((f) => ({ id: f.id as string, short: f.short as string })),
 ] as const;
 
-/** Tones by stage family, drawn from the house palette only. */
+/**
+ * Tones by stage family (round 3, Oct 15 2026: no black or grey marks). A
+ * decision is green, dark for DOL's certification and lime for USCIS's
+ * approvals; a filing is the waiting yellow; the work and travel papers are
+ * blue; the interview stays an open ring. The key names every one, and the
+ * green card is a diamond, so no mark depends on its colour alone.
+ */
 const DOT: Record<string, string> = {
-  permCertifiedOn: "bg-foreground",
-  i140FiledOn: "bg-background",
+  permCertifiedOn: "bg-data-good-ink",
+  i140FiledOn: "bg-chart-yellow",
   i140ApprovedOn: "bg-primary",
-  i485FiledOn: "bg-background",
-  eadOn: "bg-muted-foreground",
-  apOn: "bg-muted-foreground",
-  interviewOn: "bg-background",
+  i485FiledOn: "bg-chart-yellow",
+  eadOn: "bg-chart-blue",
+  apOn: "bg-chart-blue",
+  interviewOn: "bg-card",
   greenCardOn: "bg-primary",
 };
 
@@ -177,7 +186,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
   return (
     <ChartTips label="Shared timelines, each step by days from PERM filing" scroll="border-t-2 border-[var(--object-border)]">
       <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
-        <thead className="bg-muted">
+        <thead className="bg-sage">
           <tr>
             <th scope="col" className="px-3 py-2 font-bold">PERM filed{" "}</th>
             <th scope="col" className="px-3 py-2 font-bold">Category{" "}</th>
@@ -208,7 +217,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
                 </td>
                 <td className="px-3 py-3">
                   <div className="relative h-5" role="img" aria-label={words || "No dated steps yet"}>
-                    <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-border" aria-hidden="true" />
+                    <span className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 bg-chart-sage" aria-hidden="true" />
                     {shown.map((s) => (
                       <span
                         key={s.id}
@@ -265,7 +274,7 @@ export function RfeBars({ rfe }: { rfe: RfeSummary }) {
         ))}
       </ul>
       </ChartTips>{" "}
-      <dl className="grid grid-cols-1 gap-2 self-start bg-tint p-4 text-sm border-2 border-border">
+      <dl className="grid grid-cols-1 gap-2 self-start bg-soft-wait p-4 text-sm border-2 border-border">
         {rfe.byForm.map((f) => (
           <Fragment key={f.id}>
             {" "}
@@ -322,7 +331,7 @@ export function WhoIsWaiting({ waiting, total }: { waiting: WaitingView; total: 
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <caption className="sr-only">Timelines by category, country and step</caption>
             <thead>
-              <tr className="border-b-2 border-border bg-muted text-left">
+              <tr className="border-b-2 border-border bg-sage text-left">
                 <th scope="col" className="p-2 font-bold">
                   Category and country{" "}
                 </th>

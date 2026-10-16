@@ -126,26 +126,27 @@ export interface StageMeta {
 }
 
 export const STAGE_META: Record<QueueStage, StageMeta> = {
-  // The ordinary line is ink and everything pulled out of it is amber, the
-  // same two colours a filing month's page uses for "in DOL's line" and "on
-  // hold, at an RFI or on appeal", so one colour never means both.
+  // Soft fills, no black (round 3, Oct 15 2026; the owner asked for the
+  // wall's ink to become a light green). The ordinary line is light green,
+  // out of filing order soft blue (the status chips' "on hold, RFI" blue),
+  // under appeal soft orange. The counts and labels stay ink.
   analyst: {
     label: "Analyst review",
     gloss: "the ordinary queue, worked in filing order",
-    fill: "bg-foreground",
+    fill: "bg-chart-green",
     ink: "text-foreground",
   },
   held: {
     label: "Out of filing order",
     gloss:
       "an information request, an audit, supervised recruitment or a hold takes a case off the ordinary queue",
-    fill: "bg-data-warn-ink",
+    fill: "bg-chart-blue",
     ink: "text-data-warn-ink",
   },
   appeal: {
     label: "Under appeal or review",
     gloss: "cases that went to appeal after an adverse determination",
-    fill: "bg-data-bad-ink",
+    fill: "bg-chart-orange",
     ink: "text-data-bad-ink",
   },
 };

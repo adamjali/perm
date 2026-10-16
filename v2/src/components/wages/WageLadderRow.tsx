@@ -92,18 +92,17 @@ export function WageLadderRow({
       {/* p5 to p95. */}
       <span
         aria-hidden="true"
-        className="absolute top-1/2 h-[3px] -translate-y-1/2 bg-foreground/50"
+        className="absolute top-1/2 h-1 -translate-y-1/2 bg-chart-yellow"
         style={{ left: `${p.p5}%`, width: `${Math.max(0, p.p95 - p.p5)}%` }}
       />
       {/* p25 to p75, the middle half. */}
       <span
         aria-hidden="true"
-        // bg-data-good-ink, not bg-primary. Measured on the real #FAFAFA
-        // page: --primary #2ECC40 is 2.05:1, under WCAG 1.4.11's 3:1 floor
-        // for a graphical object you must see to read the chart. The -ink
-        // variant is #1D8229 at 4.70:1 in light and resolves to the SAME
-        // #2ECC40 in dark, so it costs nothing there and fixes light.
-        className="absolute top-1/2 h-4 -translate-y-1/2 border-input bg-data-good-ink border"
+        // A soft green fill inside a dark green edge (round 3, Oct 15 2026:
+        // soft colours, no grey). The edge, --data-good-ink, measures 4.70:1
+        // on the #FAFAFA page, over WCAG 1.4.11's 3:1 floor for a graphical
+        // object, so the shape reads whatever the fill.
+        className="absolute top-1/2 h-4 -translate-y-1/2 border-2 border-data-good-ink bg-chart-green"
         style={{ left: `${p.p25}%`, width: `${Math.max(0, p.p75 - p.p25)}%` }}
       />
       {/* p10 and p90: where the tails start. */}
@@ -111,14 +110,14 @@ export function WageLadderRow({
         <span
           key={r}
           aria-hidden="true"
-          className="absolute top-1/2 h-2 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-foreground/50"
+          className="absolute top-1/2 h-2 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-data-warn"
           style={{ left: `${p[r]}%` }}
         />
       ))}
       {/* The median, tallest and darkest. */}
       <span
         aria-hidden="true"
-        className="absolute top-1/2 h-6 w-[3px] -translate-x-1/2 -translate-y-1/2 bg-foreground"
+        className="absolute top-1/2 h-6 w-[3px] -translate-x-1/2 -translate-y-1/2 bg-data-good-ink"
         style={{ left: `${p.p50}%` }}
       />
     </div>
@@ -138,22 +137,22 @@ export function WageLadderKey({ className }: { className?: string }) {
       )}
     >
       <li className="flex items-center gap-2">
-        <span aria-hidden="true" className="h-[3px] w-8 bg-foreground/50" />{" "}
+        <span aria-hidden="true" className="h-1 w-8 bg-chart-yellow" />{" "}
         <span>5th to 95th</span>
       </li>{" "}
       <li className="flex items-center gap-2">
         <span
           aria-hidden="true"
-          className="h-4 w-8 border-input bg-data-good-ink border"
+          className="h-4 w-8 border-2 border-data-good-ink bg-chart-green"
         />{" "}
         <span>25th to 75th</span>
       </li>{" "}
       <li className="flex items-center gap-2">
-        <span aria-hidden="true" className="h-5 w-[3px] bg-foreground" />{" "}
+        <span aria-hidden="true" className="h-5 w-[3px] bg-data-good-ink" />{" "}
         <span>Median</span>
       </li>{" "}
       <li className="flex items-center gap-2">
-        <span aria-hidden="true" className="h-2 w-0.5 bg-foreground/50" />{" "}
+        <span aria-hidden="true" className="h-2 w-0.5 bg-data-warn" />{" "}
         <span>10th and 90th</span>
       </li>{" "}
     </ul>

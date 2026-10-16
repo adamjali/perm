@@ -24,10 +24,12 @@ export interface YearCount {
   withdrawn: number;
 }
 
+// Soft chart colours by outcome (round 3, Oct 15 2026: no grey in charts):
+// certified green, denied red, withdrawn (the employer's own step) orange.
 const TONE = {
-  certified: "bg-data-good",
-  denied: "bg-data-bad",
-  withdrawn: "bg-data-none",
+  certified: "bg-chart-green",
+  denied: "bg-chart-red",
+  withdrawn: "bg-chart-orange",
 } as const;
 
 /** What a year's bar says on hover: the year, its total, then each outcome. */
@@ -58,7 +60,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
   const max = Math.max(...totals, 1);
   const total = totals.reduce((a, b) => a + b, 0);
   return (
-    <div className="bg-tint p-5 sm:p-6 border-2 border-border">
+    <div className="bg-sage p-5 sm:p-6 border-2 border-border">
       <ChartTips label="PERM decisions by fiscal year" scroll="">
         <div
           className="flex h-48 min-w-[640px] items-end gap-1.5 border-b-2 border-border"

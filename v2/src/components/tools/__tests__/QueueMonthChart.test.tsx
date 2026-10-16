@@ -90,9 +90,9 @@ describe("QueueMonthChart", () => {
     );
   });
 
-  it("names all three positions in the legend", () => {
+  it("names all three positions and the pending remainder in the legend", () => {
     render(<QueueMonthChart months={SERIES} selectedMonth="2025-09" />);
-    for (const t of ["Ahead of yours", "Your month", "Filed after yours"]) {
+    for (const t of ["Decided, ahead of yours", "Your month", "Decided, filed after yours", "Still pending"]) {
       expect(screen.getByText(t)).toBeInTheDocument();
     }
   });

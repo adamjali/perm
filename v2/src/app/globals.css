@@ -19,9 +19,10 @@
   --popover-foreground: #141414;
   /* Text level 2: secondary sentences and labels (10.41:1 on the page). */
   --soft-foreground: #3D3D3D;
-  /* A quiet tone step for a panel that isn't an object: neutral, never
-     tinted green (the pale mint read as a highlighter). */
-  --tint: #F0F0EE;
+  /* A quiet tone step for a panel that isn't an object. A very pale, muted
+     sage since round 3 (Oct 15 2026: "too much gray scale"); low chroma, so it
+     doesn't read as the highlighter the old pale mint did. */
+  --tint: #EDF2E9;
 
   /* Brand - Lime Green (same in light and dark for consistency) */
   --primary: #2ECC40;
@@ -164,6 +165,7 @@
      both themes); they never carry meaning alone, the word does. */
   --sage: #E8F0E4;             /* the data rail's ground */
   --sage-hover: #DCEAD5;       /* a tile under the pointer */
+  --rail-hover: #FFFFFF;       /* a data-rail row under the pointer: lifted to white, lime edge */
   --soft-good: #D5EBCD;        /* certified, issued, decided */
   --soft-wait: #FBEFC2;        /* in DOL's line, in process, waiting */
   --soft-warn: #F9DDBB;        /* withdrawn, the employer's own step */
@@ -211,7 +213,7 @@
   --popover: #1F1F1F;
   --popover-foreground: #EDEDED;
   --soft-foreground: #C4C4C4;
-  --tint: #1E1E1E;
+  --tint: #1B211C;
   --primary: #2ECC40;
   --primary-foreground: #141414;
   --primary-hover: #29B83A;
@@ -256,6 +258,7 @@
   --data-good-ink: #2ECC40;
   --sage: #18211A;
   --sage-hover: #213026;
+  --rail-hover: #26352A;
   --soft-good: #1F3A22;
   --soft-wait: #3A3214;
   --soft-warn: #3E2A14;
@@ -398,6 +401,7 @@ html {
   --color-data-info-ink: var(--data-info-ink);
   --color-sage: var(--sage);
   --color-sage-hover: var(--sage-hover);
+  --color-rail-hover: var(--rail-hover);
   --color-soft-good: var(--soft-good);
   --color-soft-wait: var(--soft-wait);
   --color-soft-warn: var(--soft-warn);
@@ -641,13 +645,14 @@ html {
   .flap-word { display: flex; width: max-content; max-width: 100%; font-size: clamp(0.85rem, 3.4vw, 1.25rem); }
 }
 
-/* The homepage hero's own ground (round 3, Oct 15 2026). A sage field, a
-   fine pattern and an ink rule under it. The variants were sampled for the
-   owner; `data-hero` picks one. The pattern never sits under text alone: the
-   lookup box and the board are solid objects on top of it. */
+/* The homepage hero's own ground (round 3, Oct 15 2026). The page's own
+   colour (the owner took the sage and mint fields off, 9:48 PM), a fine dot
+   pattern and an ink rule under it. The variants were sampled for the owner;
+   `data-hero` picks one. The pattern never sits under text alone: the lookup
+   box and the board are solid objects on top of it. */
 .hero-ground {
   position: relative;
-  background-color: var(--sage);
+  background-color: var(--background);
   border-bottom: 2px solid var(--border);
 }
 .hero-ground[data-hero="dots"] {
@@ -683,18 +688,6 @@ html {
 .dark .hero-ground[data-hero="mint"] {
   background-color: #16301A;
   background-image: radial-gradient(circle at center, rgb(255 255 255 / 0.13) 1.1px, transparent 1.7px);
-}
-
-/* The header's pending rule: a lime third sweeping under a clicked link while
-   its page loads (SiteHeader's LinkPending). Reduced motion holds it full and
-   still. */
-@keyframes link-pending {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(300%); }
-}
-.link-pending { animation: link-pending 0.9s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) {
-  .link-pending { animation: none; }
 }
 
 @keyframes flap-show {
@@ -761,7 +754,6 @@ html {
   gap: 6px;
   min-height: 44px;
   padding: 0 12px;
-  margin-bottom: -2px;
   border: 2px solid transparent;
   border-bottom: 0;
   background: var(--muted);
@@ -784,7 +776,12 @@ html {
   padding-bottom: 2px;
 }
 
-.section-tab-body { position: relative; }
+/* The body tucks 2px under the tab row, so the chosen tab (z-index 1, the
+   folder's colour, no bottom edge) covers the body's top rule and reads as
+   one piece with it. The tab used to reach down with margin-bottom: -2px, but
+   the row scrolls sideways, and a scroll box clips what hangs out of it: the
+   rule showed under the tab (Oct 15 2026). */
+.section-tab-body { position: relative; margin-top: -2px; }
 .section-tab-content {
   padding: 16px;
   background: var(--folder);
@@ -2145,13 +2142,16 @@ input[type="week"] {
   /* 15px: between Overview (16px) and the pages under each group (14px). */
   font-size: 0.9375rem;
   font-weight: 700;
-  transition-property: transform, background-color, color;
+  transition-property: transform, background-color, box-shadow, color;
   transition-duration: 150ms;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
 .rail-tab:hover {
   transform: translateX(3px);
-  background-color: var(--sage-hover);
+  /* Lifted to white with a lime edge (owner, Oct 15 2026: the darker sage
+     read as a smudge). */
+  background-color: var(--rail-hover);
+  box-shadow: inset 3px 0 0 var(--primary);
   color: var(--foreground);
 }
 .rail-tab:focus-visible {
@@ -2234,6 +2234,24 @@ button:hover > .hover-underline::after,
 a:focus-visible > .hover-underline::after {
   transform: scaleX(1);
 }
+/* The PERM Tracker mark wherever it links home (header, app header, footer;
+   all three sit on black). Pointed at or focused, its ground lights, "Tracker"
+   turns lime and the underline above runs under the wordmark, so the logo
+   reads as a link (owner, Oct 15 2026: it gave no sign). */
+.logo-link {
+  margin-inline: -0.5rem;
+  padding-inline: 0.5rem;
+  transition: background-color 150ms ease-out;
+}
+.logo-link:hover,
+.logo-link:focus-visible {
+  background-color: rgb(255 255 255 / 0.12);
+}
+.logo-link .logo-word { transition: color 150ms ease-out; }
+.logo-link:hover .logo-word,
+.logo-link:focus-visible .logo-word {
+  color: var(--primary-text);
+}
 .u-title {
   background-image: linear-gradient(var(--primary), var(--primary));
   background-repeat: no-repeat;
@@ -2255,27 +2273,6 @@ a:focus-visible .u-title,
 }
 
 
-/* ==========================================================================
-   Scroll reveal (round 2, Oct 15 2026). AutoReveal marks the sections that
-   start below the screen; each rises 16px and fades in once as it arrives.
-   Nothing above the fold is ever marked, the server renders everything
-   visible, and reduced motion never marks anything.
-   `transform: none` once shown, never translateY(0): a transform on an
-   ancestor would capture position:fixed children.
-   ========================================================================== */
-@media (prefers-reduced-motion: no-preference) {
-  [data-reveal="hidden"] {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  [data-reveal="shown"] {
-    opacity: 1;
-    transform: none;
-    transition:
-      opacity 0.5s ease-out,
-      transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-}
 
 /* A card or tile that lifts one pixel toward the reader on hover and settles
    on press (the original's .hover-lift, smaller). Paired with an ink edge and

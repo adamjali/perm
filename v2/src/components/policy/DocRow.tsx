@@ -27,10 +27,13 @@ export function typeLabel(type: string): string {
 }
 
 /** The dot beside a document's type: a final rule is the one that binds. */
-function badgeDot(type: string): string {
-  if (type === "Rule") return "bg-primary text-black";
-  if (type === "Proposed Rule") return "dark border-black bg-[#141414] text-foreground";
-  return "bg-muted-foreground";
+/** Each kind's fill, the strip's colours (round 3, Oct 15 2026: no black or
+ *  grey): final lime, proposed soft yellow, notice soft blue, OFLC sage. */
+function badgeFill(type: string): string {
+  if (type === "Rule") return "border-foreground bg-primary text-black";
+  if (type === "Proposed Rule") return "border-foreground bg-chart-yellow text-black";
+  if (type === OFLC_TYPE) return "border-foreground bg-chart-green text-black";
+  return "border-foreground bg-chart-blue text-black";
 }
 
 /**
@@ -61,11 +64,10 @@ export function DocRow({ doc, today }: { doc: FeedDoc | PolicyNotice; today: str
 
   return (
     <details id={`doc-${doc.documentNumber}`} className="group border-b-2 border-border last:border-b-0">
-      <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-sage-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <Badge>
-              <span aria-hidden="true" className={`size-2 shrink-0 ${badgeDot(doc.type)}`} />
+            <Badge variant="outline" className={badgeFill(doc.type)}>
               {typeLabel(doc.type)}
             </Badge>{" "}
             <span className="font-mono text-sm text-muted-foreground">{dayLabel(doc.publicationDate)}</span>{" "}

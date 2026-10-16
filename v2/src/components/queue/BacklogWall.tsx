@@ -97,7 +97,7 @@ export function BacklogWall({
       <Header />
 
       {passed.length > 0 ? (
-        <details className="mt-4 bg-tint">
+        <details className="mt-4 bg-sage">
           <summary className="cursor-pointer px-4 py-3 text-base font-bold marker:text-primary hover:text-primary">
             {passed.length} earlier {passed.length === 1 ? "month" : "months"} DOL
             has worked past. {formatInt(passedPending)}{" "}

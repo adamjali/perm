@@ -51,7 +51,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
   const plotH = H - PAD.t - PAD.b;
 
   return (
-    <div className="mt-4 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
+    <div className="mt-4 bg-sage p-6 sm:p-8 border-2 shadow-hard border-border">
       <p className="text-lg leading-relaxed">
         Of the {summary.months} bulletins the archive caught before their month began ({monthName(summary.first)} to{" "}
         {monthName(summary.last)}), half were out by the{" "}
@@ -102,7 +102,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
                   y={H - PAD.b - h}
                   width={Math.max(bw - 2, 1)}
                   height={h}
-                  className={isToday ? "fill-primary" : "fill-foreground/75"}
+                  className={isToday ? "fill-primary stroke-data-good-ink" : "fill-chart-blue"}
                 />
               </ChartHit>
             );

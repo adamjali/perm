@@ -20,9 +20,10 @@
 import * as React from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { CaretDownIcon, CircleNotchIcon, FileTextIcon, ListIcon, XIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, CircleNotchIcon, ListIcon, XIcon } from "@phosphor-icons/react";
 
 import { SiteSearch } from "@/components/search/SiteSearch";
+import { LogoMark } from "./LogoMark";
 import type { SearchArticle } from "@/components/search/SearchPalette";
 import {
   DATA_MENU_FOOTER,
@@ -47,24 +48,33 @@ function isLearnPath(path: string): boolean {
 /**
  * The header's loading state (Oct 15 2026: a click on a slow page gave no
  * sign it had been heard). It reads `useLinkStatus`, so it must sit inside
- * the `<Link>`; it clears on commit, failure or a newer click. In the bar a
- * lime rule runs under the link (no width change, so nothing shifts); in a
- * menu row a spinner sits at the row's end. Reduced motion holds both still.
+ * the `<Link>`; it clears on commit, failure or a newer click. Always a
+ * spinner (owner, 9:50 PM: a rule under the link read as an underline). In the
+ * bar it sits in the link's right padding, so nothing shifts; on the Sign in
+ * button it covers the label; in a menu row it sits at the row's end. The
+ * logo's mark turns into one itself (`LogoMark`). Reduced motion holds it still.
  */
-function LinkPending({ kind }: { kind: "bar" | "row" }) {
+function LinkPending({ kind }: { kind: "bar" | "button" | "row" }) {
   const { pending } = useLinkStatus();
   if (!pending) return null;
-  return kind === "bar" ? (
-    <span aria-hidden="true" className="absolute inset-x-3 -bottom-0.5 h-0.5 overflow-hidden bg-white/20">
-      <span className="link-pending block h-full w-1/3 bg-primary motion-reduce:w-full" />
-    </span>
-  ) : (
-    <CircleNotchIcon
-      aria-label="Loading"
-      weight="bold"
-      className="ml-auto size-4 shrink-0 animate-spin text-primary-text motion-reduce:animate-none"
-    />
-  );
+  const spin = "animate-spin text-primary-text motion-reduce:animate-none";
+  if (kind === "bar") {
+    return (
+      <CircleNotchIcon
+        aria-label="Loading"
+        weight="bold"
+        className={cn("absolute -right-1.5 top-1/2 size-3.5 -translate-y-1/2", spin)}
+      />
+    );
+  }
+  if (kind === "button") {
+    return (
+      <span className="absolute inset-0 grid place-items-center bg-card">
+        <CircleNotchIcon aria-label="Loading" weight="bold" className={cn("size-4", spin)} />
+      </span>
+    );
+  }
+  return <CircleNotchIcon aria-label="Loading" weight="bold" className={cn("ml-auto size-4 shrink-0", spin)} />;
 }
 
 /** A link in the bar: current page marked by a green rule under it. */
@@ -74,7 +84,7 @@ function BarLink({ page, current }: { page: SitePage; current: boolean }) {
       href={page.href}
       aria-current={current ? "page" : undefined}
       className={cn(
-        "relative flex h-11 items-center border-b-2 px-3 text-base transition-colors",
+        "relative flex h-11 items-center whitespace-nowrap border-b-2 px-3 text-base transition-colors",
         current ? "border-primary-text font-semibold text-foreground" : "border-transparent text-soft hover:text-foreground",
       )}
     >
@@ -104,7 +114,7 @@ function MenuButton({
       aria-controls={id}
       onClick={onToggle}
       className={cn(
-        "flex h-11 items-center gap-1 border-b-2 px-3 text-base transition-colors",
+        "flex h-11 items-center gap-1 whitespace-nowrap border-b-2 px-3 text-base transition-colors",
         current || open ? "border-primary-text font-semibold text-foreground" : "border-transparent text-soft hover:text-foreground",
       )}
     >
@@ -195,13 +205,16 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       <div className="dark mx-auto flex h-full max-w-[1440px] items-center gap-2 px-4 text-foreground sm:px-6 lg:gap-6">
         <Link
           href="/"
-          className="relative flex h-11 shrink-0 items-center gap-2 font-heading text-xl font-bold text-foreground"
+          className="logo-link relative flex h-11 shrink-0 items-center gap-2 font-heading text-xl font-bold text-foreground group/logo"
         >
-          <FileTextIcon aria-hidden="true" className="size-6 text-primary-text" />
-          <span>
-            <span className="text-primary-text">PERM</span> Tracker
+          {/* Hover (Oct 15 2026: the logo gave no sign it's a link): a lit
+              ground behind it, the mark tips, "Tracker" turns lime and the
+              wordmark takes the lime underline (`.logo-link`). Loading, the
+              mark spins (`LogoMark`). */}
+          <LogoMark />
+          <span className="hover-underline">
+            <span className="text-primary-text">PERM</span> <span className="logo-word">Tracker</span>
           </span>
-          <LinkPending kind="bar" />
         </Link>{" "}
         <nav aria-label="Main" className="hidden items-center lg:flex">
           <BarLink page={HEADER_PAGES.caseStatus} current={pathname === HEADER_PAGES.caseStatus.href} />{" "}
@@ -217,14 +230,14 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
           <BarLink page={HEADER_PAGES.forAttorneys} current={pathname === HEADER_PAGES.forAttorneys.href} />
         </nav>{" "}
         <div className="ml-auto flex items-center gap-1 lg:gap-3">
-          <SiteSearch articles={articles} className="w-96" />{" "}
+          <SiteSearch articles={articles} className="w-80 2xl:w-96" />{" "}
           {pathname !== "/login" ? (
             <Link
               href="/login"
-              className="relative hidden h-10 items-center border border-input bg-card px-4 text-base font-semibold text-foreground transition-colors hover:bg-accent lg:flex"
+              className="relative hidden h-10 items-center whitespace-nowrap border border-input bg-card px-4 text-base font-semibold text-foreground transition-colors hover:bg-accent lg:flex"
             >
               Sign in
-              <LinkPending kind="bar" />
+              <LinkPending kind="button" />
             </Link>
           ) : null}{" "}
           <button

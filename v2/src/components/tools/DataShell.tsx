@@ -56,7 +56,7 @@ export function DataShell({ children }: { children: React.ReactNode }) {
           would otherwise push the column past the viewport. Pages set their own
           measure with mx-auto; beside the rail every page starts at the same
           edge, only its width differs. */}
-      <div className="min-w-0 pb-16 lg:flex-1 lg:[&>.mx-auto]:ml-0 lg:[&>*>.mx-auto]:ml-0">
+      <div data-shell-column className="min-w-0 pb-16 lg:flex-1 lg:[&>.mx-auto]:ml-0 lg:[&>*>.mx-auto]:ml-0">
         <SiteBreadcrumbs inColumn />
         {children}
         {OWN_LOOKUP.some((re) => re.test(pathname)) ? null : (

@@ -352,7 +352,7 @@ export async function BrowseLetterBody({
             Each number is the PERM cases DOL&apos;s current files record for that {cfg.singular}.
           </p>{" "}
           {capped ? (
-            <p className="mt-3 max-w-3xl border-l-4 border-primary bg-tint px-4 py-3 text-base text-soft">
+            <p className="mt-3 max-w-3xl border-l-4 border-primary bg-sage px-4 py-3 text-base text-soft">
               This letter holds {formatInt(bucketTotal)} {cfg.plural}; the list stops at {formatInt(shown)}. The other{" "}
               {formatInt(bucketTotal - shown)} still have their own pages.{" "}
               <Link href={cfg.base} className="link">
@@ -371,7 +371,7 @@ export async function BrowseLetterBody({
       ) : null}
 
       <section className="mt-12 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2">
-        <div className="bg-tint p-6 border-2 shadow-hard-sm border-border">
+        <div className="bg-sage p-6 border-2 shadow-hard-sm border-border">
           <h2 className="font-heading text-lg font-bold">
             Looking for one in particular?
           </h2>{" "}

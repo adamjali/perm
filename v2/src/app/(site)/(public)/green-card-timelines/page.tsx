@@ -7,6 +7,7 @@ import { BoardKey, BoardTable, RfeBars, StageMedians, WhoIsWaiting } from "@/com
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { buttonVariants } from "@/components/ui/button";
+import { NoteBanner } from "@/components/ui/note";
 
 /**
  * Green card timelines, as the people waiting report them.
@@ -60,16 +61,18 @@ export default async function GreenCardTimelinesPage() {
 
       {board ? (
         <>
+          {/* Soft grounds by meaning (round 3, Oct 15 2026): the record in sage,
+              what's shared in green, RFEs in the waiting yellow. */}
           <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0" aria-label="The record so far">
-            <div className="bg-tint p-5 border-2 shadow-hard border-border">
+            <div className="bg-sage p-5 border-2 shadow-hard border-border">
               <p className="text-sm text-muted-foreground">Timelines added</p>{" "}
               <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{board.total.toLocaleString("en-US")}</p>
             </div>{" "}
-            <div className="bg-tint p-5 border-2 shadow-hard border-border">
+            <div className="bg-soft-good p-5 border-2 shadow-hard border-border">
               <p className="text-sm text-muted-foreground">Shared on the public board</p>{" "}
               <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{board.shared.toLocaleString("en-US")}</p>
             </div>{" "}
-            <div className="bg-tint p-5 border-2 shadow-hard border-border">
+            <div className="bg-soft-wait p-5 border-2 shadow-hard border-border">
               <p className="text-sm text-muted-foreground">RFEs reported</p>{" "}
               <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{board.rfe.total.toLocaleString("en-US")}</p>
             </div>
@@ -80,7 +83,7 @@ export default async function GreenCardTimelinesPage() {
               How long each step took
             </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-              The bar is the middle half of the reports and the dark tick is the median. Every timeline counts here,
+              The bar is the middle half of the reports and the amber tick is the median. Every timeline counts here,
               shared on the board or not
               {board.scanCapped ? `, up to the newest ${board.scanCap.toLocaleString("en-US")}` : ""}.
             </p>
@@ -110,15 +113,15 @@ export default async function GreenCardTimelinesPage() {
                 </div>
               </>
             ) : (
-              <div className="mt-4 max-w-2xl bg-tint p-5 border-2 shadow-hard border-border">
+              <NoteBanner className="mt-4 max-w-2xl">
                 <p className="font-heading text-xl font-bold">
                   Opens at {board.opensAt} shared timelines. {board.shared.toLocaleString("en-US")} so far.
                 </p>{" "}
-                <p className="mt-2 text-base leading-relaxed text-soft">
+                <p className="mt-2">
                   A board with a handful of rows lets anyone pick one person out, so it stays shut until there are
                   enough to read as a crowd. The medians above already count every timeline added.
                 </p>
-              </div>
+              </NoteBanner>
             )}
           </section>
 
@@ -156,9 +159,9 @@ export default async function GreenCardTimelinesPage() {
           </section>
         </>
       ) : (
-        <p className="mt-8 max-w-2xl bg-tint p-5 text-base border-2 shadow-hard border-border">
-          The timelines can&apos;t be read right now. Try again in a few minutes.
-        </p>
+        <NoteBanner alert className="mt-8 max-w-2xl">
+          <p>The timelines can&apos;t be read right now. Try again in a few minutes.</p>
+        </NoteBanner>
       )}
 
       <section className="mt-12 max-w-3xl" aria-labelledby="add-h">

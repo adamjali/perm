@@ -96,7 +96,10 @@ const MIN_SEGMENT_PX = 4;
  * 150px to 400px bar that is under 2%, every count is printed beside it, and
  * the alternative is a bar whose composition cannot be read at all.
  */
-const SEGMENT_EDGE = "border-r-2 border-muted";
+// Round 3 (Oct 15 2026): the fills are soft now (green, yellow, red), so the
+// boundary is a dark rule at half strength instead, which reads against each
+// pastel and against the white track alike.
+const SEGMENT_EDGE = "border-r-2 border-foreground/50";
 
 export function StageBar({ stages, scale, tipHeading, className }: StageBarProps) {
   const own = stages.reduce((n, s) => n + s.count, 0);
@@ -104,7 +107,7 @@ export function StageBar({ stages, scale, tipHeading, className }: StageBarProps
   if (denominator <= 0 || own === 0) {
     return (
       <span
-        className={`block h-5 w-full border border-input bg-muted ${className ?? ""}`}
+        className={`block h-5 w-full border border-input bg-card ${className ?? ""}`}
         aria-hidden="true"
       />
     );
@@ -112,7 +115,7 @@ export function StageBar({ stages, scale, tipHeading, className }: StageBarProps
 
   return (
     <span
-      className={`flex h-5 w-full overflow-hidden border border-input bg-muted ${className ?? ""}`}
+      className={`flex h-5 w-full overflow-hidden border border-input bg-card ${className ?? ""}`}
       aria-hidden="true"
     >
       {STAGE_ORDER.map((stage) => {

@@ -164,7 +164,7 @@ export default async function SponsorFinderPage({
       </p>
 
       {found === null ? (
-        <p className="mt-8 bg-tint p-5 text-base border-2 border-border">
+        <p className="mt-8 bg-sage p-5 text-base border-2 border-border">
           The sponsor index is being built. Try again in a few minutes.
         </p>
       ) : (
@@ -182,7 +182,7 @@ export default async function SponsorFinderPage({
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <caption className="sr-only">Sponsors matching the filters</caption>
                   <thead>
-                    <tr className="border-b-2 border-border bg-muted text-left">
+                    <tr className="border-b-2 border-border bg-sage text-left">
                       <th scope="col" className="p-2 font-bold">Employer </th>
                       <th scope="col" className="p-2 font-bold">State </th>
                       <th scope="col" className="p-2 text-right font-bold">PERM, 12 months </th>

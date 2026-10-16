@@ -21,17 +21,19 @@
  */
 
 import { FinePrint } from "@/components/data/FinePrint";
+import { NoteBanner } from "@/components/ui/note";
 
 /** DOL's own case-status search: the source, and the authority for one case. */
 export const DOL_CASE_STATUS_URL = "https://flag.dol.gov/case-status-search";
 
 export function SourceNote({ className }: { className?: string }) {
   return (
-    // The direction of the error stays visible, because it changes how every
-    // figure below should be read. Where the counts come from and how often
-    // they are read is provenance, so it collapses; `<details>` keeps it in
-    // the DOM for anything that reads the page.
-    <div className={className ?? "text-base leading-relaxed text-soft"}>
+    // A banner with the alert mark (round 3, Oct 15 2026: the grey paragraph
+    // read as boring and awkwardly set). The direction of the error stays in
+    // the open, because it changes how every figure below should be read;
+    // where the counts come from is provenance, so it collapses, and
+    // `<details>` keeps it in the DOM for anything that reads the page.
+    <NoteBanner alert className={className}>
       <p>
         This is a sweep, not a live reading, so a case decided between sweeps
         still counts as waiting here: the backlog figures run a little high
@@ -47,6 +49,6 @@ export function SourceNote({ className }: { className?: string }) {
           a day. That page is also the authority for any single case.
         </p>
       </FinePrint>
-    </div>
+    </NoteBanner>
   );
 }

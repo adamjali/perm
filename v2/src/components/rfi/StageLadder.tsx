@@ -92,7 +92,7 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
                     whole reason to draw a band rather than a dot.
                   */}
                   <div
-                    className="absolute top-1/2 h-4 -translate-y-1/2 border-input border"
+                    className="absolute top-1/2 h-4 -translate-y-1/2 border border-foreground"
                     style={{
                       left: pct(band.p10),
                       width: pct(Math.max(1, band.p90 - band.p10)),

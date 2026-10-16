@@ -140,8 +140,8 @@ function Row({ r, rank, max, cols, by }: { r: H1bRankRow; rank: number; max: num
         ) : (
           <span className="text-base font-bold [overflow-wrap:anywhere] lg:text-lg">{r.name}</span>
         )}{" "}
-        <span className="mt-2 block h-3.5 border-input bg-background border" aria-hidden="true">
-          <span className="block h-full bg-foreground" style={{ width: `${width}%` }} />
+        <span className="mt-2 block h-3.5 border-input bg-sage border" aria-hidden="true">
+          <span className="block h-full bg-primary" style={{ width: `${width}%` }} />
         </span>{" "}
         <Marks r={r} />
       </div>{" "}
@@ -175,11 +175,11 @@ function Headline({ view, rows }: { view: H1bView; rows: H1bRankRow[] }) {
   const seg = (n: number) => (c.whole > 0 ? Math.max(n > 0 ? 1 : 0, (n / c.whole) * 100) : 0);
   const bands = [
     { key: "top", n: c.top, count: c.topCount, label: `The ${c.topCount} busiest`, swatch: "bg-primary" },
-    { key: "next", n: c.next, count: c.nextCount, label: `The next ${c.nextCount}`, swatch: "bg-foreground" },
-    { key: "rest", n: c.rest, count: c.restCount, label: `${formatInt(c.restCount)} other employers`, swatch: "bg-data-none" },
+    { key: "next", n: c.next, count: c.nextCount, label: `The next ${c.nextCount}`, swatch: "bg-chart-blue" },
+    { key: "rest", n: c.rest, count: c.restCount, label: `${formatInt(c.restCount)} other employers`, swatch: "bg-chart-sage" },
   ].filter((b) => b.n > 0);
   return (
-    <section aria-label="The year in three figures" className="mt-8 bg-tint p-5 sm:p-6 border-2 border-border">
+    <section aria-label="The year in three figures" className="mt-8 bg-sage p-5 sm:p-6 border-2 border-border">
       <dl className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 [&>*]:min-w-0">
         <div className="col-span-2 sm:col-span-1">
           <dt className="sr-only">{what}</dt>{" "}
@@ -199,11 +199,11 @@ function Headline({ view, rows }: { view: H1bView; rows: H1bRankRow[] }) {
           </div>
         ) : null}
       </dl>{" "}
-      <div className="mt-6 flex h-7 border-input border" aria-hidden="true">
+      <div className="mt-6 flex h-7 border-input bg-background border" aria-hidden="true">
         {bands.map((b, i) => (
           <span
             key={b.key}
-            className={`${b.swatch} ${i < bands.length - 1 ? "border-r-2 border-border" : ""}`}
+            className={`${b.swatch} ${i < bands.length - 1 ? "border-r-2 border-background" : ""}`}
             style={{ width: `${seg(b.n)}%` }}
           />
         ))}
@@ -270,7 +270,7 @@ export function H1bEmployerRanks({
 
   return (
     <div>
-      <div className="bg-tint p-4 sm:p-5 border-2 shadow-hard border-border">
+      <div className="bg-sage p-4 sm:p-5 border-2 shadow-hard border-border">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end [&>*]:min-w-0">
           <label className="block text-sm font-bold">
             Fiscal year
@@ -331,13 +331,13 @@ export function H1bEmployerRanks({
       </div>
 
       {q.failed ? (
-        <RequestFailed what="This ranking" failure={q.failure} onRetry={q.retry} className="mt-6 bg-tint p-4 border-2 border-border" />
+        <RequestFailed what="This ranking" failure={q.failure} onRetry={q.retry} className="mt-6 bg-sage p-4 border-2 border-border" />
       ) : null}
 
       <div className={loading ? "opacity-60 transition-opacity motion-reduce:transition-none" : ""} aria-busy={loading}>
         {view ? <Headline view={view} rows={rows} /> : null}{" "}
         {view && rows.length === 0 ? (
-          <p className="mt-8 bg-tint p-5 text-base border-2 border-border">
+          <p className="mt-8 bg-sage p-5 text-base border-2 border-border">
             {by === "lca"
               ? `DOL's files hold no certified H-1B LCAs for ${placeName(state)} in FY${year.fy}.`
               : `USCIS's counts hold no H-1B approvals for ${placeName(state)} in FY${year.fy}.`}

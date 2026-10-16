@@ -30,6 +30,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { formatPercent } from "@/lib/format";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { AlertMark } from "@/components/ui/note";
 
 const TITLE = "H-1B Lottery Odds by Year";
 const DESCRIPTION =
@@ -100,7 +101,7 @@ export default function H1bLotteryOddsPage() {
         </p>
       </header>
 
-      <section className="mt-10 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border" aria-labelledby="latest">
+      <section className="mt-10 bg-sage p-6 sm:p-8 border-2 shadow-hard border-border" aria-labelledby="latest">
         <p className="text-sm font-semibold text-muted-foreground">FY{newest.fy} cap</p>{" "}
         <h2 id="latest" className="mt-2 font-heading text-4xl font-bold leading-tight tabular-nums sm:text-5xl">
           {formatPercent(newestRate, 1)}
@@ -139,8 +140,10 @@ export default function H1bLotteryOddsPage() {
                     y={PAD.t}
                     height={plotH}
                   >
-                    <rect x={x} y={H - PAD.b - he} width={bw} height={he} className="fill-none stroke-foreground" strokeWidth={2} />
-                    <rect x={x} y={H - PAD.b - hs} width={bw} height={hs} className="fill-foreground/75" />
+                    {/* Eligible in the soft waiting yellow with its own edge,
+                        selected in green inside it (round 3: no black or grey marks). */}
+                    <rect x={x} y={H - PAD.b - he} width={bw} height={he} className="fill-soft-wait stroke-data-warn" strokeWidth={2} />
+                    <rect x={x} y={H - PAD.b - hs} width={bw} height={hs} className="fill-chart-green stroke-data-good-ink" strokeWidth={2} />
                   </ChartHit>
                   <text x={x + bw / 2} y={H - PAD.b - he - 10} fontSize={16} textAnchor="middle" className="fill-foreground font-bold">
                     {`${formatPercent(perRegistrationRate(y), 1)} `}
@@ -155,7 +158,7 @@ export default function H1bLotteryOddsPage() {
           </svg>
         </ChartTips>{" "}
         <p className="mt-3 text-base text-soft">
-          Outline: eligible registrations. Filled: selected. The share above each bar is selected over eligible. From FY
+          Yellow, the whole bar: eligible registrations. Green, the part inside it: selected. The share above each bar is selected over eligible. From FY
           {BENEFICIARY_CENTRIC_FROM} USCIS drew people rather than registrations, which is why the FY2024 pile of
           repeat registrations disappears.
         </p>
@@ -169,7 +172,7 @@ export default function H1bLotteryOddsPage() {
           A registration now enters the draw once at OEWS wage level I and up to four times at level IV. DHS estimated
           what that does to one beneficiary&apos;s chance, in the final rule, before the first weighted lottery ran:
         </p>{" "}
-        <div className="mt-5 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
+        <div className="mt-5 bg-sage p-6 sm:p-8 border-2 shadow-hard border-border">
           <ChartTips label="DHS's estimated chance at each wage level">
           <ul className="space-y-4">
             {WEIGHTED_ESTIMATE.levels.map((l) => (
@@ -181,9 +184,10 @@ export default function H1bLotteryOddsPage() {
                 >
                   <span className="font-heading text-lg font-bold">Level {l.level}</span>{" "}
                   <span className="relative block h-8 border-input bg-background border" aria-hidden="true">
-                    <span className="absolute inset-y-0 left-0 bg-foreground" style={{ width: `${l.percent}%` }} />
+                    <span className="absolute inset-y-0 left-0 bg-chart-green" style={{ width: `${l.percent}%` }} />
+                    {/* The random-draw benchmark in blue, so it reads against the green bars. */}
                     <span
-                      className="absolute inset-y-0 border-l-2 border-dashed border-primary"
+                      className="absolute inset-y-0 border-l-2 border-dashed border-data-info-ink"
                       style={{ left: `${WEIGHTED_ESTIMATE.randomPercent}%` }}
                     />
                   </span>{" "}
@@ -194,7 +198,7 @@ export default function H1bLotteryOddsPage() {
           </ul>
           </ChartTips>{" "}
           <p className="mt-4 text-base text-soft">
-            Dashed line: {WEIGHTED_ESTIMATE.randomPercent}%, DHS&apos;s figure for everyone under the random draw. Its
+            Blue dashed line: {WEIGHTED_ESTIMATE.randomPercent}%, DHS&apos;s figure for everyone under the random draw. Its
             estimate ({WEIGHTED_ESTIMATE.citation}) assumes employers keep their wages and pools the two caps; DHS
             notes it may understate selections at higher levels.{" "}
             <Link href="/tools/h1b-lottery-odds-calculator" className="link">
@@ -211,7 +215,7 @@ export default function H1bLotteryOddsPage() {
         </h2>{" "}
         <ScrollBox label="USCIS's lottery figures, by fiscal year" className="mt-4 border-t-2 border-[var(--object-border)]">
           <table className="w-full min-w-[720px] text-left text-base">
-            <thead className="border-b-2 border-border bg-muted/40">
+            <thead className="border-b-2 border-border bg-sage">
               <tr>
                 <th scope="col" className="px-3 py-3 font-bold">Cap year{" "}</th>
                 <th scope="col" className="px-3 py-3 font-bold">Registrations{" "}</th>
@@ -248,8 +252,10 @@ export default function H1bLotteryOddsPage() {
         </p>
       </section>
 
-      <details className="group mt-12 bg-tint p-6 sm:p-8 border-2 border-border">
-        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
+      {/* Folded, in the site's caveat colours (round 3, Oct 15 2026). */}
+      <details className="group mt-12 border-2 border-data-warn bg-soft-wait p-6 sm:p-8">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none [&::-webkit-details-marker]:hidden">
+          <AlertMark className="mr-3" />{" "}
           What this can&apos;t tell you
         </summary>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-soft">

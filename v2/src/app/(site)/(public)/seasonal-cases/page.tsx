@@ -118,7 +118,7 @@ export default async function SeasonalCasesPage() {
                 const share = summary.total > 0 ? Math.round((n / summary.total) * 100) : 0;
                 if (!f) return null;
                 return (
-                  <li key={p} className="bg-tint p-4 border-2 shadow-hard border-border">
+                  <li key={p} className="bg-sage p-4 border-2 shadow-hard border-border">
                     <p className="font-mono text-sm font-bold">
                       {p}- <span className="text-muted-foreground">· {f.form}</span>
                     </p>{" "}
@@ -127,7 +127,7 @@ export default async function SeasonalCasesPage() {
                     <p className="text-sm text-muted-foreground">{formatInt(pending)} still in process</p>{" "}
                     {/* Drawn to measure: the bar is this form's share of every filing held. */}
                     <div
-                      className="mt-3 h-2 w-full bg-muted"
+                      className="mt-3 h-2 w-full bg-background"
                       aria-hidden="true"
                       data-tip={`${p}- ${f.label}\n${share}% of the ${formatInt(summary.total)} filings held\n${formatInt(n)} filings, ${formatInt(pending)} still in process`}
                     >
@@ -140,15 +140,15 @@ export default async function SeasonalCasesPage() {
             </ChartTips>
           ) : (
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
-              <div className="bg-tint p-4 border-2 shadow-hard border-border">
+              <div className="bg-sage p-4 border-2 shadow-hard border-border">
                 <dt className="text-sm font-bold text-muted-foreground">Confirmed in DOL&apos;s case status</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.total)}</dd>
               </div>{" "}
-              <div className="bg-tint p-4 border-2 shadow-hard border-border">
+              <div className="bg-sage p-4 border-2 shadow-hard border-border">
                 <dt className="text-sm font-bold text-muted-foreground">Still in process</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.pending)}</dd>
               </div>{" "}
-              <div className="bg-tint p-4 border-2 shadow-hard border-border">
+              <div className="bg-sage p-4 border-2 shadow-hard border-border">
                 <dt className="text-sm font-bold text-muted-foreground">Decided</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold">{formatInt(summary.decided)}</dd>
               </div>
@@ -182,7 +182,7 @@ export default async function SeasonalCasesPage() {
           </Link>
           .
         </p>{" "}
-        <details className="group mt-4 bg-tint">
+        <details className="group mt-4 bg-sage">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
             Where these figures come from{" "}
             <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
@@ -233,12 +233,12 @@ export default async function SeasonalCasesPage() {
             <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
               {perVisa.map((v) => {
                 const parts = [
-                  { key: "certified", n: v.certified, word: "certified", cls: "bg-data-good" },
-                  { key: "denied", n: v.denied, word: "denied or rejected", cls: "bg-data-bad" },
-                  { key: "withdrawn", n: v.withdrawn, word: "withdrawn", cls: "bg-data-none" },
+                  { key: "certified", n: v.certified, word: "certified", cls: "bg-chart-green" },
+                  { key: "denied", n: v.denied, word: "denied or rejected", cls: "bg-chart-red" },
+                  { key: "withdrawn", n: v.withdrawn, word: "withdrawn", cls: "bg-chart-orange" },
                 ];
                 return (
-                  <li key={v.visa} className="bg-tint p-4 border-2 border-border">
+                  <li key={v.visa} className="bg-sage p-4 border-2 border-border">
                     <p className="font-heading text-lg font-bold">{v.visa}</p>{" "}
                     <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{pct(v.certified, v.total)}%</p>{" "}
                     <p className="text-sm text-muted-foreground">certified, of {formatInt(v.total)} decided</p>{" "}

@@ -39,9 +39,9 @@ function Panel({ title, rows }: { title: string; rows: WorkerFacetRow[] }) {
                 <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
                 <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">{formatInt(r.n)}</span>
               </span>{" "}
-              <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
+              <span className="mt-1 block h-2 w-full bg-sage" aria-hidden="true">
                 <span
-                  className="block h-full bg-foreground"
+                  className="block h-full bg-primary"
                   style={{ width: `${top > 0 ? Math.max(2, (r.n / top) * 100) : 0}%` }}
                 />
               </span>

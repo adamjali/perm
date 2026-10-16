@@ -11,13 +11,14 @@
  * time rather than filled in with something plausible.
  */
 
-import { useId, useMemo, useState } from "react";
-import { ScalesIcon as Scale, WarningIcon } from "@phosphor-icons/react";
+import { useCallback, useId, useMemo, useState } from "react";
+import { ScalesIcon as Scale } from "@phosphor-icons/react";
 
 import { estimatePwdQueue, type PwdBacklogMonth } from "@/lib/perm";
 import { formatMonth } from "@/lib/dolFormat";
 import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
 import { Label } from "@/components/ui/label";
+import { CaveatBox } from "@/components/ui/note";
 import { cn } from "@/lib/utils";
 
 export interface PwdQueueEstimatorProps {
@@ -47,6 +48,17 @@ export function PwdQueueEstimator({
   const [month, setMonth] = useState<string>(
     () => options[0]?.value || "2026-01",
   );
+
+  // A month picked before the page's script has loaded stays in the box, but
+  // React doesn't read a select's value back when it takes the page over, so
+  // the answer kept describing the first month while the box showed another,
+  // and picking that month again changed nothing (the owner, Oct 15 2026:
+  // "won't let me change month", then it worked). When the box first mounts,
+  // take the month it already shows.
+  const adoptShownMonth = useCallback((node: HTMLSelectElement | null) => {
+    const shown = node ? node.value : "";
+    if (shown) setMonth((m) => (m === shown ? m : shown));
+  }, []);
 
   const estimate = useMemo(
     () =>
@@ -101,6 +113,7 @@ export function PwdQueueEstimator({
             Month DOL received your wage request
           </Label>
           <select
+            ref={adoptShownMonth}
             id={selectId}
             value={month}
             onChange={(e) => setMonth(e.target.value)}
@@ -115,7 +128,9 @@ export function PwdQueueEstimator({
         </div>
       </div>
 
-      <div className="border-b-2 border-border bg-tint p-6 sm:p-8">
+      {/* Soft green, the colour the backlog chart gives the months ahead of
+          yours (round 3, Oct 15 2026). */}
+      <div className="border-b-2 border-border bg-soft-good p-6 sm:p-8">
         <p className="text-sm font-bold text-muted-foreground">
           Requests ahead of yours
         </p>{" "}
@@ -178,23 +193,19 @@ export function PwdQueueEstimator({
         </div>
       ) : null}
 
-      <div className="bg-muted p-6 sm:p-8">
-        <div className="flex items-start gap-3">
-          <WarningIcon
-            className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <div>
-            <h3 className="font-heading text-base font-bold">What this can’t tell you</h3>{" "}
-            <ul className="mt-3 space-y-2">
-              {estimate.caveats.map((c) => (
-                <li key={c} className="text-base leading-relaxed text-muted-foreground">
-                  {c}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+      {/* The soft yellow box the queue page uses for its caveat (round 3,
+          Oct 15 2026), the heading kept as an h3 for the outline. */}
+      <div className="p-6 sm:p-8">
+        <CaveatBox>
+          <h3 className="font-heading text-base font-bold">What this can’t tell you</h3>{" "}
+          <ul className="mt-3 space-y-2">
+            {estimate.caveats.map((c) => (
+              <li key={c} className="text-base leading-relaxed">
+                {c}{" "}
+              </li>
+            ))}
+          </ul>
+        </CaveatBox>
       </div>
     </div>
   );

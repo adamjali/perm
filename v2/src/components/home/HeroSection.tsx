@@ -72,7 +72,7 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
     // Its own ground (round 3, Oct 15 2026: "the header should be a distinct
     // colour, maybe light green"; "boring"): a light green field with a fine
     // dot grid, closed by an ink rule. `hero-ground` in globals.css.
-    <section id="hero" className="hero-ground" data-hero="mint">
+    <section id="hero" className="hero-ground" data-hero="dots">
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-x-12 gap-y-10 px-4 pb-12 pt-8 sm:px-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pb-16 lg:pt-12 [&>*]:min-w-0">
         <div>
           <h1 className="font-heading text-[2.25rem] font-bold leading-[1.08] tracking-[-0.02em] sm:text-[3rem]">

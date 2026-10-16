@@ -19,6 +19,35 @@ export interface ChapterItem {
 export function ChapterNav({ items, className }: { items: ChapterItem[]; className?: string }) {
   const [active, setActive] = useState<string | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  // The bar's rules run edge to edge (owner, Oct 15 2026: they stopped short of
+  // the rail on the left and the window on the right). The page's own column
+  // is narrower than that, so the bar measures how far it has to reach: on a
+  // data page to the rail's edge, elsewhere and on a phone to the screen's.
+  // Before this runs the rules span the column, as they always did.
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const column = nav.closest<HTMLElement>("[data-shell-column]");
+    const wide = window.matchMedia("(min-width: 64rem)");
+    const measure = () => {
+      const box = nav.getBoundingClientRect();
+      let edge = 0;
+      if (column && wide.matches && column.parentElement) {
+        const gap = parseFloat(getComputedStyle(column.parentElement).columnGap) || 0;
+        edge = column.getBoundingClientRect().left - gap;
+      }
+      nav.style.setProperty("--bleed-l", `${Math.max(0, box.left - edge)}px`);
+      nav.style.setProperty("--bleed-r", `${Math.max(0, document.documentElement.clientWidth - box.right)}px`);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.documentElement);
+    ro.observe(nav);
+    if (column) ro.observe(column);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
@@ -29,9 +58,11 @@ export function ChapterNav({ items, className }: { items: ChapterItem[]; classNa
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) visible.set(e.target.id, e.isIntersecting);
-        // The first part, in page order, whose top band is on screen.
+        // The first part, in page order, whose top band is on screen. Above
+        // the first part (scrolled back to the top) nothing is marked.
         const first = items.find((i) => visible.get(i.id));
         if (first) setActive(first.id);
+        else if (sections[0] && sections[0].getBoundingClientRect().top > window.innerHeight * 0.25) setActive(null);
       },
       { rootMargin: "-25% 0px -65% 0px" },
     );
@@ -53,11 +84,15 @@ export function ChapterNav({ items, className }: { items: ChapterItem[]; classNa
 
   return (
     <nav
+      ref={navRef}
       aria-label="On this page"
       className={cn(
-        // Sticks under the fixed header. `-mx` reaches the column's edges so
-        // the bar's rules run the full width of the content beside the rail.
-        "sticky top-(--site-header-h) z-30 -mx-4 border-y-2 border-border bg-background px-4 sm:-mx-6 sm:px-6 print:hidden",
+        // Sticks under the fixed header. `-mx` lines its parts up with the
+        // column's edges; the ground and rules are a layer behind them that
+        // reaches as far as the effect above measured.
+        "sticky top-(--site-header-h) z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 print:hidden",
+        "before:absolute before:inset-y-0 before:-z-10 before:border-y-2 before:border-border before:bg-background before:content-['']",
+        "before:left-[calc(-1*var(--bleed-l,0px))] before:right-[calc(-1*var(--bleed-r,0px))]",
         className,
       )}
     >

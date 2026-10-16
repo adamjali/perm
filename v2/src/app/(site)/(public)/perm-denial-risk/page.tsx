@@ -39,6 +39,7 @@ import { ChapterNav, type ChapterItem } from "@/components/entities/Chapters";
 import { FinePrint } from "@/components/data/FinePrint";
 import { SITE_URL } from "@/lib/constants/site";
 import { describeDisclosureFiles } from "@/lib/disclosureFiles";
+import { CaveatBox } from "@/components/ui/note";
 
 const TITLE = "PERM Denial Rates";
 // 147 characters. Anything past ~155 is truncated mid-sentence in the SERP,
@@ -347,28 +348,28 @@ export default async function PermDenialRiskPage() {
             </div>
           </section>
 
-          {/* Read this before the bars, not after. */}
-          <section className="mt-6 bg-tint p-6 border-2 shadow-hard-sm border-border">
-            <h2 className="font-heading text-lg font-bold">
-              What these rates can and can’t tell you
-            </h2>{" "}
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-muted-foreground">
-              Each bar is a group’s rate, not the odds on one case.
-            </p>{" "}
-            <FinePrint summary="Why there is no single score" className="mt-3">
-              <p>
-                The factors aren’t independent, so we don’t blend them into a
-                score. A rate over a small group is mostly noise, so the
-                occupation and state rankings carry a minimum population and a
-                95% range.
-              </p>
-            </FinePrint>{" "}
-            <FinePrint summary="Which window each cut covers">
-              <p>
-                Only the year cut splits the window. The wage, occupation and
-                state rates each span all of {sourceWindow}.
-              </p>
-            </FinePrint>
+          {/* Read this before the bars, not after. The caveat box (round 3,
+              Oct 15 2026: what a page can't tell you is yellow). */}
+          <section aria-labelledby="rates-caveat" className="mt-6">
+            <CaveatBox
+              title={<span id="rates-caveat">What these rates can and can’t tell you</span>}
+            >
+              <p>Each bar is a group’s rate, not the odds on one case.</p>{" "}
+              <FinePrint summary="Why there is no single score" className="mt-3">
+                <p>
+                  The factors aren’t independent, so we don’t blend them into a
+                  score. A rate over a small group is mostly noise, so the
+                  occupation and state rankings carry a minimum population and a
+                  95% range.
+                </p>
+              </FinePrint>{" "}
+              <FinePrint summary="Which window each cut covers">
+                <p>
+                  Only the year cut splits the window. The wage, occupation and
+                  state rates each span all of {sourceWindow}.
+                </p>
+              </FinePrint>
+            </CaveatBox>
           </section>
 
           <ChapterNav

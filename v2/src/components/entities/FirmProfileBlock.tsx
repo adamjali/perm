@@ -67,7 +67,7 @@ export function FirmProfileBlock({ firmName, profile }: { firmName: string; prof
       v: (
         <ul className="flex flex-wrap gap-2">
           {profile.focus.map((f) => (
-            <li key={f} className="bg-tint px-2 py-0.5 text-sm font-bold border-2 border-border">
+            <li key={f} className="bg-sage px-2 py-0.5 text-sm font-bold border-2 border-border">
               {focusLabel(f)}{" "}
             </li>
           ))}

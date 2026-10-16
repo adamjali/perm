@@ -157,7 +157,7 @@ export default async function CompareEmployersPage({
                 <Link
                   href={`/perm-employers/compare?a=${e.a}&b=${e.b}`}
                   rel="nofollow"
-                  className="inline-flex min-h-11 items-center border-2 border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-tint"
+                  className="inline-flex min-h-11 items-center border-2 border-dashed border-foreground/50 bg-background px-3 text-sm font-bold hover:border-solid hover:bg-sage"
                 >
                   {e.label}
                 </Link>{" "}
@@ -173,8 +173,8 @@ export default async function CompareEmployersPage({
                   className="grid grid-cols-[minmax(0,1fr)_5rem_5rem] items-center gap-3 py-2 sm:grid-cols-[minmax(0,16rem)_8rem_8rem] [&>*]:min-w-0"
                 >
                   <dt className="text-sm text-muted-foreground">{r.label}{" "}</dt>{" "}
-                  <dd className="h-4 bg-foreground/10" />{" "}
-                  <dd className="h-4 bg-foreground/10" />
+                  <dd className="h-4 bg-sage" />{" "}
+                  <dd className="h-4 bg-sage" />
                 </div>
               ))}
             </dl>
@@ -183,7 +183,7 @@ export default async function CompareEmployersPage({
       ) : null}{" "}
 
       {(slugA && !left) || (slugB && !right) ? (
-        <p role="alert" className="mt-6 bg-tint p-4 text-sm font-bold border-2 border-border">
+        <p role="alert" className="mt-6 border-2 border-data-bad bg-soft-bad p-4 text-sm font-bold">
           One of those employers is not in the index. Pick it again from the search.
         </p>
       ) : null}{" "}

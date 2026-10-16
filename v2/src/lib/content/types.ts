@@ -83,7 +83,7 @@ export const CONTENT_TYPE_CONFIG: Record<
     plural: "Guides",
     byline: "PERM Tracker data desk",
     description:
-      "Plain-English guides to a PERM case, from the case number to the green card, grouped by where you are in it.",
+      "Plain-English guides to a PERM case, from the case number to the green card, grouped by different stages.",
     icon: "BookOpen",
   },
   changelog: {

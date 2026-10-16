@@ -164,13 +164,22 @@ function FrontierSvg({
             x2={W - PAD_R}
             y1={py(v)}
             y2={py(v)}
-            stroke="currentColor"
-            strokeOpacity="0.14"
+            stroke="var(--chart-sage)"
             strokeWidth="1"
           />
         ))}
 
         <path d={area} fill={`url(#${gradientId})`} />
+        {/* A dark green underlay gives the lime its edge on paper (no black
+            in charts, round 3, Oct 15 2026). */}
+        <path
+          d={line}
+          fill="none"
+          stroke="var(--data-good-ink)"
+          strokeWidth="5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
         <path
           d={line}
           fill="none"
@@ -186,6 +195,8 @@ function FrontierSvg({
             cy={py(ys[i]!)}
             r="4"
             fill="var(--primary)"
+            stroke="var(--data-good-ink)"
+            strokeWidth="1.5"
           />
         ))}
 
@@ -196,10 +207,9 @@ function FrontierSvg({
           x2={W - PAD_R}
           y1={py(target)}
           y2={py(target)}
-          stroke="currentColor"
-          strokeWidth="2"
+          stroke="var(--data-warn-ink)"
+          strokeWidth="2.5"
           strokeDasharray="7 5"
-          strokeOpacity="0.85"
         />
 
         {yTicks.map((v) => (
@@ -295,7 +305,7 @@ function FrontierTable({
                 key={p.decisionMonth}
                 className={cn(
                   "border-t border-border/40",
-                  isTarget && "bg-tint",
+                  isTarget && "bg-soft-wait",
                 )}
               >
                 <td className="px-3 py-2.5 tabular-nums">
@@ -418,9 +428,9 @@ export function FrontierProgressChart({
           month" is the overdue hero's own heading two sections up. */}
       <figcaption className="mt-4 space-y-2 text-sm leading-relaxed text-muted-foreground">
         <p>
-          <span className="font-bold text-foreground">Solid line</span>: the
+          <span className="font-bold text-data-good-ink">Solid green line</span>: the
           filing month DOL was deciding.{" "}
-          <span className="font-bold text-foreground">Dashed</span>: yours,{" "}
+          <span className="font-bold text-data-warn-ink">Dashed amber</span>: yours,{" "}
           <span className="font-bold text-foreground">{formatMonth(filingMonth)}</span>.
         </p>{" "}
         <p>

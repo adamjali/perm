@@ -62,7 +62,7 @@ function Panel({
 }) {
   const worst = worstBand(bands);
   return (
-    <div className="bg-tint p-4 border-2 border-border">
+    <div className="bg-sage p-4 border-2 border-border">
       <p className="text-sm font-bold text-muted-foreground">
         {title}
       </p>{" "}
@@ -103,8 +103,10 @@ function Panel({
                       // second thing, and "highest in this panel" is the same
                       // measurement, marked.
                       className={cn(
-                        "h-full bg-data-bad-ink",
-                        isWorst && "outline-2 outline-offset-0 outline-foreground",
+                        // Denials in the soft red; the worst band edged in the
+                        // red's ink (round 3: no black marks).
+                        "h-full bg-chart-red",
+                        isWorst && "outline-2 outline-offset-0 outline-data-bad-ink",
                       )}
                       style={{
                         width: `${Math.min(100, (b.deniedPct / max) * 100)}%`,
@@ -213,7 +215,7 @@ export function DenialByWageBand({
       </div>
 
       {/* The summary comes SECOND and says what it costs. */}
-      <div className="mt-8 bg-tint p-4 border-2 border-border">
+      <div className="mt-8 bg-sage p-4 border-2 border-border">
         <p className="text-sm font-bold text-muted-foreground">
           The same cases in five wide bands
         </p>{" "}

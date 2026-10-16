@@ -14,6 +14,7 @@ import { AUTHENTICATED_NAV_LINKS, ADMIN_NAV_LINK } from "@/lib/constants/navigat
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
 import { NavLink } from "@/components/ui/nav-link";
+import { LogoMark } from "./LogoMark";
 import { NotificationBell, NotificationDropdown } from "@/components/notifications";
 import { AppSearch } from "@/components/search/AppSearch";
 import { useNotificationToasts } from "@/hooks";
@@ -182,11 +183,15 @@ export default function Header(): React.ReactElement {
             apart for anything that reads the page's text. */}
         <Link
           href="/dashboard"
-          className="flex h-11 shrink-0 items-center gap-2 whitespace-nowrap font-heading text-xl font-bold text-foreground"
+          className="logo-link flex h-11 shrink-0 items-center gap-2 whitespace-nowrap font-heading text-xl font-bold text-foreground group/logo"
         >
-          <FileTextIcon aria-hidden="true" className="size-6 text-primary-text" />
-          <span>
-            <span className="text-primary-text">PERM</span>{" "}Tracker
+          {/* Hover (Oct 15 2026: the logo gave no sign it's a link): a lit
+              ground behind it, the mark tips, "Tracker" turns lime and the
+              wordmark takes the lime underline (`.logo-link`). Loading, the
+              mark spins (`LogoMark`). */}
+          <LogoMark />
+          <span className="hover-underline">
+            <span className="text-primary-text">PERM</span>{" "}<span className="logo-word">Tracker</span>
           </span>
         </Link>
 

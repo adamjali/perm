@@ -108,7 +108,7 @@ export function BulletinMonthStrip({ months, newest }: BulletinMonthStripProps) 
       </p>{" "}
       <ol className="mt-5 flex flex-col gap-3">{rows(open)}</ol>{" "}
       {folded.length > 0 ? (
-        <details className="mt-4 bg-tint">
+        <details className="mt-4 bg-sage">
           <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-bold">
             {`Earlier years, ${folded.at(-1)} to ${folded[0]} (${foldedCount} bulletins)`}
           </summary>

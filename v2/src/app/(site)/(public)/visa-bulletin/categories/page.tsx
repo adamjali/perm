@@ -35,13 +35,14 @@ export const metadata: Metadata = withSocialCard({
 /** A final action cell's fill says its state before its words do. */
 const STATE_FILL: Record<string, string> = {
   current: "bg-primary text-black [&_*]:text-black hover:bg-primary/85",
-  unavailable: "bg-foreground/10 hover:bg-foreground/20",
+  // No numbers this month: the soft red, never a grey (round 3, Oct 15 2026).
+  unavailable: "bg-soft-bad hover:bg-chart-red",
 };
 
 const MATRIX_KEY = [
   { label: "Current", means: "every priority date qualifies", fill: "bg-primary" },
   { label: "A date", means: "priority dates before it qualify", fill: "bg-card" },
-  { label: "Unavailable", means: "no numbers this month", fill: "bg-foreground/10" },
+  { label: "Unavailable", means: "no numbers this month", fill: "bg-soft-bad" },
 ];
 
 export default async function BulletinCategoriesPage() {
@@ -78,7 +79,7 @@ export default async function BulletinCategoriesPage() {
               <caption className="sr-only">
                 Final action and dates for filing cutoffs, {bulletinMonthLabel(board.lastMonth)}, by category and country
               </caption>
-              <thead className="border-b-2 border-border bg-muted/40">
+              <thead className="border-b-2 border-border bg-sage">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>
                   {LINE_PAGE_COUNTRIES.map((c) => (
@@ -102,7 +103,7 @@ export default async function BulletinCategoriesPage() {
                           {fa ? (
                             <Link
                               href={`/visa-bulletin/categories/${lineSlug(cat, country)}`}
-                              className={`block min-h-[44px] px-2 py-2 ${STATE_FILL[fa.latest.kind] ?? "hover:bg-muted"}`}
+                              className={`block min-h-[44px] px-2 py-2 ${STATE_FILL[fa.latest.kind] ?? "hover:bg-sage"}`}
                               aria-label={`${LINE_CATEGORY_SHORT[cat]} ${LINE_COUNTRY_SHORT[country]}: final action ${cutoffLabel(fa.latest)}`}
                             >
                               <span className="block font-bold tabular-nums underline underline-offset-2">{cutoffLabel(fa.latest)}</span>{" "}

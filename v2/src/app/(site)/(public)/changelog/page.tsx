@@ -1,8 +1,8 @@
 /**
  * Changelog Page
  *
- * Product updates, new features, and improvements.
- * Single listing page (no individual detail routes).
+ * Product updates and new features, newest first, one short row each; the
+ * pictures and full text are on each entry's own page.
  */
 
 import type { Metadata } from "next";
@@ -51,7 +51,9 @@ export default function ChangelogPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
-      <ContentHero type="changelog" postCount={posts.length} />
+      {/* One short line (round 3, Oct 15 2026). The longer description, which
+          names the corrections log, stays the changelog's line in llms.txt. */}
+      <ContentHero type="changelog" postCount={posts.length} description="Product updates and new features." />
       <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         {/* One dated history. The corrections log is one entry in it
             (`content/changelog/corrections.mdx`, category "Correction"), in

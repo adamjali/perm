@@ -274,7 +274,7 @@ export default async function DecisionActivityPage() {
               these answers it from the same corpus. */}
           <nav
             aria-label="Related records"
-            className="mt-6 max-w-3xl bg-tint p-4 border-2 border-border"
+            className="mt-6 max-w-3xl bg-sage p-4 border-2 border-border"
           >
             <p className="text-sm font-bold">
               The same cases, other ways in
@@ -486,7 +486,7 @@ export default async function DecisionActivityPage() {
       ) : null}
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="bg-tint p-6 border-2 shadow-hard-sm border-border">
+        <div className="bg-sage p-6 border-2 shadow-hard-sm border-border">
           <h2 className="font-heading text-lg font-bold">Waiting on a case?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Pace alone does not place a case in the queue. The{" "}

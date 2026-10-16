@@ -78,17 +78,18 @@ function Bars({
 
               {/* The track is always full width, so a small bar reads as small
                   rather than as a missing row. */}
-              <span className="h-6 w-full border-input bg-muted border">
+              <span className="h-6 w-full border-input bg-sage border">
+                {/* Soft colours by meaning, no grey (round 3, Oct 15 2026):
+                    green ahead of yours, lime yours, yellow after yours or,
+                    with no month chosen, simply still pending. */}
                 <span
                   className={cn(
-                    "block h-full",
+                    "block h-full border-r-2 border-foreground/50",
                     isSelected
                       ? "bg-primary"
                       : isAhead
-                        ? "bg-foreground/70"
-                        : selectedMonth === undefined
-                          ? "bg-foreground/70"
-                          : "bg-foreground/20",
+                        ? "bg-chart-green"
+                        : "bg-chart-yellow",
                   )}
                   // A bar under ~1% is invisible at any width, and four of
                   // these months are genuinely near zero. A floor keeps the row
@@ -155,7 +156,7 @@ function BacklogTable({
               key={row.receiptMonth}
               className={cn(
                 "border-t border-border/40",
-                row.receiptMonth === selectedMonth && "bg-tint",
+                row.receiptMonth === selectedMonth && "bg-sage-hover",
               )}
             >
               <td className="px-3 py-2.5 font-bold">
@@ -173,7 +174,7 @@ function BacklogTable({
             </tr>
           ))}
         </tbody>
-        <tfoot className="bg-muted">
+        <tfoot className="bg-sage">
           <tr className="border-t-2 border-border">
             <td className="px-3 py-2.5 font-bold">Whole pile{" "}</td>
             <td className="px-3 py-2.5 text-right font-bold tabular-nums">
@@ -253,7 +254,7 @@ export function PwdBacklogChart({
         controls={scopeControl}
         chart={
           rows.length === 0 ? (
-            <p className="bg-tint p-6 text-base text-muted-foreground border-2 shadow-hard-sm border-border">
+            <p className="bg-sage p-6 text-base text-muted-foreground border-2 shadow-hard-sm border-border">
               No months in the published backlog fall in that part of the pile.
             </p>
           ) : (
@@ -279,7 +280,7 @@ export function PwdBacklogChart({
         ) : (
           <>
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border-input bg-foreground/70 border" aria-hidden="true" />
+              <span className="h-3 w-3 border-input bg-chart-green border" aria-hidden="true" />
               Ahead of yours
             </span>{" "}
             <span className="flex items-center gap-2">
@@ -287,7 +288,7 @@ export function PwdBacklogChart({
               Your month
             </span>{" "}
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 border-input bg-foreground/20 border" aria-hidden="true" />
+              <span className="h-3 w-3 border-input bg-chart-yellow border" aria-hidden="true" />
               Received after yours
             </span>
           </>

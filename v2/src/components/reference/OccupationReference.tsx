@@ -172,7 +172,7 @@ export async function OccupationReference({
       ) : null}
 
       {busiest && history.length >= 2 ? (
-        <section className="mt-10 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border" aria-labelledby="occ-dol-years">
+        <section className="mt-10 bg-sage p-6 sm:p-8 border-2 shadow-hard border-border" aria-labelledby="occ-dol-years">
           <h2 id="occ-dol-years" className="font-heading text-xl font-bold sm:text-2xl">
             DOL&apos;s levels for this job in {busiest.name}, year by year
           </h2>{" "}
@@ -224,14 +224,14 @@ export async function OccupationReference({
           <p className="mt-3 max-w-3xl text-lg leading-relaxed">{main.description}</p>{" "}
           <dl className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
             {zone ? (
-              <div className="bg-tint p-4">
+              <div className="bg-sage p-4">
                 <dt className="text-sm font-bold text-muted-foreground">Preparation</dt>{" "}
                 <dd className="mt-1 text-base font-bold">{zone.name.replace(/^Job Zone [\w-]+: /, "")}</dd>{" "}
                 <dd className="mt-1 text-sm text-muted-foreground">{`O*NET Job Zone ${main.jobZone === 2 ? "1-2" : main.jobZone}`}</dd>
               </div>
             ) : null}{" "}
             {basis?.education ? (
-              <div className="bg-tint p-4">
+              <div className="bg-sage p-4">
                 <dt className="text-sm font-bold text-muted-foreground">DOL&apos;s education basis</dt>{" "}
                 <dd className="mt-1 text-base font-bold">{basis.education}</dd>{" "}
                 <dd className="mt-1 text-sm text-muted-foreground">
@@ -240,7 +240,7 @@ export async function OccupationReference({
               </div>
             ) : null}{" "}
             {projection?.changePct != null ? (
-              <div className="bg-tint p-4">
+              <div className="bg-sage p-4">
                 <dt className="text-sm font-bold text-muted-foreground">
                   {`Jobs, ${projection.baseYear} to ${projection.projYear}`}
                 </dt>{" "}
@@ -253,7 +253,7 @@ export async function OccupationReference({
               </div>
             ) : null}{" "}
             {projection?.education ? (
-              <div className="bg-tint p-4">
+              <div className="bg-sage p-4">
                 <dt className="text-sm font-bold text-muted-foreground">Typical entry</dt>{" "}
                 <dd className="mt-1 text-base font-bold">{projection.education}</dd>{" "}
                 <dd className="mt-1 text-sm text-muted-foreground">
@@ -264,7 +264,7 @@ export async function OccupationReference({
           </dl>
           {main.bright.length ? (
             <p className="mt-4 text-base">
-              <span className="mr-2 inline-block bg-tint px-2 py-0.5 font-bold border-2 border-border">Bright Outlook</span>{" "}
+              <span className="mr-2 inline-block bg-sage px-2 py-0.5 font-bold border-2 border-border">Bright Outlook</span>{" "}
               O*NET OnLine lists this job for {main.bright.map((b) => b.toLowerCase()).join(" and ")}.
             </p>
           ) : null}

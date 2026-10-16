@@ -128,7 +128,21 @@ const FACTSHEET_SERIES: ReadonlyArray<{ form: string; basisContains: string; lab
   { form: "I-131", basisContains: "Advance Parole", label: "I-131 advance parole" },
   { form: "N-400", basisContains: "Naturalization", label: "N-400" },
 ];
-const SERIES_CLASSES = ["stroke-primary", "stroke-foreground", "stroke-foreground/60", "stroke-foreground/35", "stroke-primary/50"] as const;
+/**
+ * One colour and dash per line (round 3, Oct 15 2026: the lines had been
+ * black and three greys). The forms are categories, not outcomes, so they take
+ * the green, blue and amber inks and never the denied red; the last two repeat
+ * a colour dashed, so no two lines differ by colour alone. Each `swatch` is
+ * the legend's sample of the same line.
+ */
+const SERIES_STYLES: ReadonlyArray<{ stroke: string; dash?: string; swatch: string }> = [
+  { stroke: "stroke-data-good-ink", swatch: "h-1 bg-data-good-ink" },
+  { stroke: "stroke-data-info-ink", swatch: "h-1 bg-data-info-ink" },
+  { stroke: "stroke-data-warn-ink", swatch: "h-1 bg-data-warn-ink" },
+  { stroke: "stroke-data-info-ink", dash: "7 5", swatch: "h-0 border-t-[3px] border-dashed border-data-info-ink" },
+  { stroke: "stroke-data-warn-ink", dash: "7 5", swatch: "h-0 border-t-[3px] border-dashed border-data-warn-ink" },
+];
+const seriesStyle = (i: number) => SERIES_STYLES[i % SERIES_STYLES.length]!;
 
 /**
  * The factsheet's medians drawn as lines, FY2016 to FY2024. One `<text>` per
@@ -147,7 +161,7 @@ function MedianHistoryChart({ years, series }: { years: number[]; series: Array<
       <svg viewBox={`0 0 ${W} ${H}`} className="min-w-[720px] w-full" role="img" aria-label="Median months by fiscal year, one line per form">
         {ticks.map((t) => (
           <g key={t}>
-            <line x1={L} x2={W - R} y1={y(t)} y2={y(t)} className="stroke-border" strokeWidth={1} />
+            <line x1={L} x2={W - R} y1={y(t)} y2={y(t)} className="stroke-chart-sage" strokeWidth={1} />
             <text x={L - 8} y={y(t) + 5} textAnchor="end" className="fill-muted-foreground font-mono" fontSize={14}>{t}{" "}</text>
           </g>
         ))}
@@ -161,7 +175,8 @@ function MedianHistoryChart({ years, series }: { years: number[]; series: Array<
               strokeWidth={si === 0 ? 4 : 2.5}
               strokeLinejoin="round"
               strokeLinecap="round"
-              className={SERIES_CLASSES[si % SERIES_CLASSES.length]}
+              strokeDasharray={seriesStyle(si).dash}
+              className={seriesStyle(si).stroke}
               points={s.months.map((m, i) => `${x(i)},${y(m)}`).join(" ")}
             />
           </g>
@@ -280,7 +295,7 @@ export default async function UscisProcessingTimesPage() {
         <QuarterlyEmpty file="quarterly_all_forms" />
       ) : (
         <>
-          <RecordStrip record={ledger} />
+          <RecordStrip record={ledger} label="USCIS's medians and backlog" />
 
           <section id="green-card-forms" className="mt-12 scroll-mt-24">
             <FigurePlate
@@ -324,7 +339,7 @@ export default async function UscisProcessingTimesPage() {
                 }
               >
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] [&>*]:min-w-0">
-                  <div className="bg-tint p-5 border-2 border-border">
+                  <div className="bg-sage p-5 border-2 border-border">
                     <p className="text-sm font-bold text-muted-foreground">Quarterly median, all I-140s</p>{" "}
                     <p className="mt-2 font-heading text-5xl font-bold leading-none tabular-nums">{monthsLabel(i140.medianMonths)}</p>{" "}
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -368,7 +383,7 @@ export default async function UscisProcessingTimesPage() {
                   {factsheetSeries.map((s, i) => (
                     <Fragment key={s.label}>{" "}
                     <li className="flex items-center gap-1.5">
-                      <span className={`inline-block h-1 w-5 ${["bg-primary", "bg-foreground", "bg-foreground/60", "bg-foreground/35", "bg-primary/50"][i % 5]}`} aria-hidden="true" />{" "}
+                      <span className={`inline-block w-5 ${seriesStyle(i).swatch}`} aria-hidden="true" />{" "}
                       <span>{s.label}</span>{" "}
                       <span className="font-mono font-bold tabular-nums">{monthsLabel(s.months[s.months.length - 1] ?? null)}</span>
                     </li>
@@ -421,7 +436,7 @@ export default async function UscisProcessingTimesPage() {
                 const rowsIn = forms.filter((r) => r.category === cat);
                 return (
                   <Fragment key={cat}>{" "}
-                  <details className="group bg-tint">
+                  <details className="group bg-sage">
                     <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-lg font-bold [&::-webkit-details-marker]:hidden">
                       <span>{cat}</span>{" "}
                       <span className="font-mono text-sm font-bold text-muted-foreground">{rowsIn.length} lines</span>

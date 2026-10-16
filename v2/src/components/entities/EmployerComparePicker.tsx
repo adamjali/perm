@@ -97,7 +97,7 @@ function Picker({
               <button
                 type="button"
                 onClick={() => pick({ slug: h.slug, name: h.name })}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-tint"
+                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-sage"
               >
                 <span className="font-semibold">{h.name}</span>{" "}
                 <span className="shrink-0 font-mono text-sm text-muted-foreground">

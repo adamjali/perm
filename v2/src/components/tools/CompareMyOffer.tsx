@@ -49,9 +49,9 @@ function OfferStrip({ placed, offer }: { placed: Placed | null; offer: number | 
   if (!ok) {
     return (
       <div aria-hidden="true" className="relative mt-3 h-12">
-        <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground/20" />
-        <span className="absolute inset-y-1 left-[30%] w-[38%] border-dashed border-foreground/30 text-muted-foreground bg-hatch border" />
-        <span className="absolute inset-y-0 left-[48%] w-0.5 bg-foreground/30" />
+        <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-input" />
+        <span className="absolute inset-y-1 left-[30%] w-[38%] border-dashed border-data-good-ink text-chart-green bg-hatch border" />
+        <span className="absolute inset-y-0 left-[48%] w-0.5 bg-data-good-ink" />
       </div>
     );
   }
@@ -64,15 +64,18 @@ function OfferStrip({ placed, offer }: { placed: Placed | null; offer: number | 
   return (
     <div className="mt-3">
       <div aria-hidden="true" className="relative h-12">
-        <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground/30" />
-        <span className="absolute inset-y-1 border-border bg-primary/70 border" style={{ left: `${at(p25)}%`, width: `${at(p75) - at(p25)}%` }} />
-        <span className="absolute inset-y-0 w-1 -translate-x-1/2 bg-foreground" style={{ left: `${at(p50)}%` }} />
+        {/* The axis stays a control-grey rule; the marks take the wage bands'
+            colours (round 3): the middle half soft green with its dark green
+            edge, the median dark green, the offer in amber ink. */}
+        <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-input" />
+        <span className="absolute inset-y-1 border-2 border-data-good-ink bg-chart-green" style={{ left: `${at(p25)}%`, width: `${at(p75) - at(p25)}%` }} />
+        <span className="absolute inset-y-0 w-1 -translate-x-1/2 bg-data-good-ink" style={{ left: `${at(p50)}%` }} />
         <span className="absolute -top-1 bottom-[-4px] w-1.5 -translate-x-1/2 bg-data-warn-ink" style={{ left: `${mark}%` }} />
       </div>{" "}
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-data-warn-ink align-middle" />Your offer <b className="tabular-nums">{usd(offer)}</b>{" "}</li>{" "}
-        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-foreground align-middle" />Median <b className="tabular-nums">{usd(p50)}</b>{" "}</li>{" "}
-        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 border-input bg-primary/70 align-middle border" />Middle half <b className="tabular-nums">{usd(p25)} to {usd(p75)}</b>{" "}</li>
+        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 bg-data-good-ink align-middle" />Median <b className="tabular-nums">{usd(p50)}</b>{" "}</li>{" "}
+        <li><span aria-hidden="true" className="mr-1.5 inline-block size-2.5 border-data-good-ink bg-chart-green align-middle border" />Middle half <b className="tabular-nums">{usd(p25)} to {usd(p75)}</b>{" "}</li>
       </ul>
     </div>
   );
@@ -193,7 +196,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
       </form>{" "}
 
       {error ? (
-        <p role="alert" className="mt-5 bg-tint p-3 text-sm font-bold border-2 border-border">{error}</p>
+        <p role="alert" className="mt-5 border-2 border-data-bad bg-soft-bad p-3 text-sm font-bold">{error}</p>
       ) : null}{" "}
 
       {!results ? (
@@ -214,7 +217,7 @@ export function CompareMyOffer({ occupations, states }: Props) {
             const r = results[p];
             const meta = PROGRAM[p];
             return (
-              <div key={p} className="bg-tint p-5 border-2 border-border">
+              <div key={p} className="bg-sage p-5 border-2 border-border">
                 <p className={label}>{meta.name} </p>{" "}
                 {r === "thin" || r === null ? (
                   <p className="mt-3 text-base leading-relaxed">

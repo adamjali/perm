@@ -95,24 +95,24 @@ function Track({ band, domain, ends }: { band: PayBand; domain: [number, number]
         <>
           <span
             aria-hidden="true"
-            className="absolute top-5 h-[3px] -translate-y-1/2 bg-foreground/50"
+            className="absolute top-5 h-1 -translate-y-1/2 bg-chart-yellow"
             style={{ left: `${pct(band.p10!, domain)}%`, width: `${pct(band.p90!, domain) - pct(band.p10!, domain)}%` }}
           />
           <span
             aria-hidden="true"
-            className="absolute top-5 h-4 -translate-y-1/2 border-input bg-data-good-ink border"
+            className="absolute top-5 h-4 -translate-y-1/2 border-2 border-data-good-ink bg-chart-green"
             style={{ left: `${pct(band.p25!, domain)}%`, width: `${pct(band.p75!, domain) - pct(band.p25!, domain)}%` }}
           />
           <span
             aria-hidden="true"
-            className="absolute top-5 h-6 w-[3px] -translate-x-1/2 -translate-y-1/2 bg-foreground"
+            className="absolute top-5 h-6 w-[3px] -translate-x-1/2 -translate-y-1/2 bg-data-good-ink"
             style={{ left: `${pct(band.median!, domain)}%` }}
           />
         </>
       ) : band.median != null ? (
         <span
           aria-hidden="true"
-          className="absolute top-5 h-6 w-[3px] -translate-x-1/2 -translate-y-1/2 bg-foreground"
+          className="absolute top-5 h-6 w-[3px] -translate-x-1/2 -translate-y-1/2 bg-data-good-ink"
           style={{ left: `${pct(band.median, domain)}%` }}
         />
       ) : null}
@@ -121,7 +121,7 @@ function Track({ band, domain, ends }: { band: PayBand; domain: [number, number]
           <span
             key={i}
             aria-hidden="true"
-            className="absolute top-8 h-3 w-0.5 -translate-x-1/2 bg-foreground"
+            className="absolute top-8 h-3 w-0.5 -translate-x-1/2 bg-data-info"
             style={{ left: `${pct(v, domain)}%` }}
           />
         ),
@@ -191,18 +191,18 @@ export function PayBands({
       )}
       <ul className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-4 w-8 border-input bg-data-good-ink border" /> middle
+          <span aria-hidden="true" className="inline-block h-4 w-8 border-2 border-data-good-ink bg-chart-green" /> middle
           half of pay (BLS)
         </li>{" "}
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-5 w-[3px] bg-foreground" /> median
+          <span aria-hidden="true" className="inline-block h-5 w-[3px] bg-data-good-ink" /> median
         </li>{" "}
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-[3px] w-8 bg-foreground/50" /> 10th to 90th percentile
+          <span aria-hidden="true" className="inline-block h-1 w-8 bg-chart-yellow" /> 10th to 90th percentile
         </li>{" "}
         {anyLevels ? (
           <li className="flex items-center gap-2">
-            <span aria-hidden="true" className="inline-block h-3 w-0.5 bg-foreground" /> DOL&apos;s Levels I to IV, left
+            <span aria-hidden="true" className="inline-block h-3 w-0.5 bg-data-info" /> DOL&apos;s Levels I to IV, left
             to right
           </li>
         ) : null}{" "}

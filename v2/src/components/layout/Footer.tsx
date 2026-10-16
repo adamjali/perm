@@ -63,8 +63,10 @@ export default function Footer({ audience = "public" }: { audience?: "public" | 
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="col-span-2 lg:col-span-1">
             {/* The brand name links home from every page. */}
-            <Link href="/" className="font-heading text-xl font-bold text-foreground">
-              <span className="text-primary-text">PERM</span> Tracker
+            <Link href="/" className="logo-link inline-flex min-h-11 items-center font-heading text-xl font-bold text-foreground">
+              <span className="hover-underline">
+                <span className="text-primary-text">PERM</span> <span className="logo-word">Tracker</span>
+              </span>
             </Link>{" "}
             <p className="mt-3 max-w-xs text-base text-soft">
               Live DOL data for the wait, automatic deadlines for the work. Free for applicants and attorneys.

@@ -274,7 +274,7 @@ function FirmBadge({ slug, firmName }: { slug: string; firmName: string }) {
       {/* eslint-disable-next-line @next/next/no-img-element -- the badge is the SVG a firm's site will load, shown as it will look */}
       <img src={`/badge/firm/${slug}.svg`} alt={`${firmName} on PERM Tracker`} height={20} className="mt-3 h-5 w-auto" />{" "}
       <div className="mt-3 flex flex-wrap items-start gap-3">
-        <code className="block min-w-0 flex-1 break-all bg-tint px-3 py-2 font-mono text-sm border-2 border-border">
+        <code className="block min-w-0 flex-1 break-all bg-card px-3 py-2 font-mono text-sm border-2 border-border">
           {snippet}
         </code>{" "}
         <CopyButton text={snippet} />
@@ -286,7 +286,7 @@ function FirmBadge({ slug, firmName }: { slug: string; firmName: string }) {
 /** The fold at the foot of a firm's page. */
 export function FirmClaimPanel({ slug, firmName, claimed }: { slug: string; firmName: string; claimed: boolean }) {
   return (
-    <section aria-labelledby="claim-this-page" className="mt-10 bg-tint">
+    <section aria-labelledby="claim-this-page" className="mt-10 bg-sage">
       <details className="group">
         <summary className="flex min-h-[56px] cursor-pointer list-none items-center justify-between gap-4 px-6 py-4 [&::-webkit-details-marker]:hidden">
           <h2 id="claim-this-page" className="font-heading text-lg font-bold">

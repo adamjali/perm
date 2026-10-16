@@ -58,14 +58,15 @@ function LeaderBar({ list }: { list: SevpList }) {
   if (s.all === 0) return null;
   const pct = Math.round(s.share * 100);
   return (
-    <figure className="m-0 bg-tint p-5 border-2 shadow-hard border-border">
+    <figure className="m-0 bg-sage p-5 border-2 shadow-hard border-border">
       <figcaption className="font-heading text-lg font-bold leading-snug">
         The {LEADERS} busiest hold {pct}% of the {list.year} list
       </figcaption>{" "}
       <span className="sr-only">{`The ${LEADERS} busiest employers: ${formatInt(s.lead)}. The other ${list.rows.length - LEADERS}: ${formatInt(s.rest)}.`}</span>
       <div aria-hidden="true" className="mt-4 flex h-6 border-input border">
         <span className="block h-full bg-primary" style={{ width: `${s.share * 100}%` }} />
-        <span className="block h-full flex-1 bg-muted" />
+        {/* The rest in blue beside the lime leaders (round 3: no grey in charts). */}
+        <span className="block h-full flex-1 bg-chart-blue" />
       </div>{" "}
       <dl aria-hidden="true" className="mt-3 grid grid-cols-2 gap-3 text-sm [&>*]:min-w-0">
         <div>
@@ -76,7 +77,7 @@ function LeaderBar({ list }: { list: SevpList }) {
         </div>{" "}
         <div>
           <dt className="flex items-center gap-2 text-muted-foreground">
-            <span className="size-3 shrink-0 border-input bg-muted border" /> The other {list.rows.length - LEADERS}{" "}
+            <span className="size-3 shrink-0 border-input bg-chart-blue border" /> The other {list.rows.length - LEADERS}{" "}
           </dt>{" "}
           <dd className="mt-0.5 font-bold tabular-nums">{formatInt(s.rest)}</dd>
         </div>
@@ -119,7 +120,7 @@ export default async function OptEmployersPage() {
       />
 
       {lists.length === 0 ? (
-        <p className="mt-10 bg-tint p-5 text-base border-2 border-border">
+        <p className="mt-10 bg-sage p-5 text-base border-2 border-border">
           The lists haven&apos;t been loaded yet. ICE&apos;s own PDFs are on its{" "}
           <a href={SOURCE} rel="noopener noreferrer" className="link">
             SEVIS &quot;What&apos;s New&quot; page
@@ -154,7 +155,7 @@ export default async function OptEmployersPage() {
             {earlier.map((l) => (
               <Fragment key={`${l.year}-${l.list}`}>
                 {" "}
-                <details className="group bg-tint">
+                <details className="group bg-sage">
                   <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-lg font-bold [&::-webkit-details-marker]:hidden">
                     <span>
                       {l.year}: {label(l)}, led by {l.rows[0]?.employer ?? "nobody"}

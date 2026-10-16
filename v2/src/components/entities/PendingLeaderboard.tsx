@@ -77,13 +77,13 @@ export function PendingLeaderboard({
                   {formatInt(l.tracked)} tracked
                 </p>
               </div>
-              {/* Trackless. The lime fill measures 1.38:1 against a
-                  `border/40` track in light mode, under the 3:1 floor for a
-                  graphical object; ink on card is 20.1:1. The row already
-                  prints "N of M", which is what a track would have implied. */}
+              {/* Trackless, the row already prints "N of M". Pending cases
+                  in the site's waiting yellow (round 3, Oct 15 2026: no black
+                  or grey in charts), edged in the amber so the shape reads on
+                  paper. */}
               <div
                 aria-hidden="true"
-                className="mt-1.5 h-1.5 bg-foreground"
+                className="mt-1.5 h-2 border border-data-warn bg-chart-yellow"
                 style={{ width: `${Math.max(2, (l.pending / max) * 100)}%` }}
               />
               {l.topStage ? (

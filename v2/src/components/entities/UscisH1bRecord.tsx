@@ -63,15 +63,15 @@ export function UscisH1bRecord({
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
-        <div className="bg-tint p-4 border-2 border-border">
+        <div className="bg-sage p-4 border-2 border-border">
           <p className="text-sm font-bold text-muted-foreground">Approved, FY{y.fy}{lead.partial ? " so far" : ""}</p>{" "}
           <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(approved)}</p>
         </div>{" "}
-        <div className="bg-tint p-4 border-2 border-border">
+        <div className="bg-sage p-4 border-2 border-border">
           <p className="text-sm font-bold text-muted-foreground">Denied</p>{" "}
           <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(denied)}</p>
         </div>{" "}
-        <div className="bg-tint p-4 border-2 border-border">
+        <div className="bg-sage p-4 border-2 border-border">
           <p className="text-sm font-bold text-muted-foreground">Approved on first decision</p>{" "}
           <p className="mt-1 font-heading text-3xl font-bold tabular-nums">{rate === null ? "Too few" : pct(rate)}</p>{" "}
           {rate === null ? <p className="text-sm text-muted-foreground">Under 20 decisions that year.</p> : null}
@@ -103,9 +103,9 @@ export function UscisH1bRecord({
               {" "}
               <li data-tip={tip} className="grid grid-cols-[4rem_1fr_auto] items-center gap-3 [&>*]:min-w-0">
                 <span className="font-mono text-sm font-bold">FY{v.fy}</span>{" "}
-                <span className="flex h-3 w-full bg-muted" aria-hidden="true">
-                  <span className="h-full bg-data-good-ink" style={{ width: `${(a / peak) * 100}%` }} />
-                  <span className="h-full bg-data-bad-ink" style={{ width: `${(d / peak) * 100}%` }} />
+                <span className="flex h-3 w-full bg-sage" aria-hidden="true">
+                  <span className="h-full bg-chart-green" style={{ width: `${(a / peak) * 100}%` }} />{" "}
+                  <span className="h-full bg-chart-red" style={{ width: `${(d / peak) * 100}%` }} />
                 </span>{" "}
                 <span className="text-sm tabular-nums text-soft">
                   {formatInt(a)} approved, {formatInt(d)} denied

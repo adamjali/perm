@@ -193,18 +193,21 @@ export const GROUP_STYLE: Record<
   StageGroup,
   { fill: string; ink: string; name: string }
 > = {
+  // Fills are the soft chart colours (round 3, Oct 15 2026: no grey): the
+  // queue waits (yellow), review is a detour (orange), an appeal a challenge
+  // (red). Every shape that carries one has an ink edge for contrast.
   queue: {
-    fill: "var(--data-none-ink)",
+    fill: "var(--chart-yellow)",
     ink: "var(--data-none-ink)",
     name: "Waiting for an analyst",
   },
   review: {
-    fill: "var(--data-warn-ink)",
+    fill: "var(--chart-orange)",
     ink: "var(--data-warn-ink)",
     name: "Pulled aside for extra review",
   },
   appeal: {
-    fill: "var(--data-bad-ink)",
+    fill: "var(--chart-red)",
     ink: "var(--data-bad-ink)",
     name: "Challenging a determination",
   },

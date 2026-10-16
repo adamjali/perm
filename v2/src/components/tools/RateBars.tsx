@@ -132,7 +132,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
                 />
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-0 w-0.5 bg-foreground/40"
+                  className="absolute inset-y-0 w-0.5 bg-foreground"
                   style={{ left: `${(baseline / max) * 100}%` }}
                 />
               </div>
@@ -146,7 +146,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
       </ChartTips>
       <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden="true" className="inline-block h-3 w-0.5 bg-foreground/40" />
+          <span aria-hidden="true" className="inline-block h-3 w-0.5 bg-foreground" />
           Field baseline, {baseline.toFixed(2)}%
         </span>{" "}
         <span className="inline-flex items-center gap-1.5">

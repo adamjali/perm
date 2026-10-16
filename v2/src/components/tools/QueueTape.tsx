@@ -125,6 +125,8 @@ export function QueueTape({
                 data-tip={tipFor(m, months.indexOf(m) - frontierAt, isYou)}
                 className={cn(
                   "relative flex h-16 items-end justify-center border-r border-foreground/10 pb-1 last:border-r-0",
+                  // Still waiting reads soft yellow, not blank (round 3, Oct 15 2026).
+                  !cleared && !isFrontier && "bg-soft-wait",
                   !reveal && cleared && "bg-primary",
                   !reveal && isFrontier && "bg-primary/70",
                 )}
@@ -141,7 +143,7 @@ export function QueueTape({
                   aria-hidden="true"
                   className={cn(
                     "absolute left-1/2 top-0 h-2 w-px",
-                    cleared || isFrontier ? "bg-foreground" : "bg-input",
+                    cleared || isFrontier ? "bg-data-good-ink" : "bg-data-warn",
                   )}
                 />
                 <span
@@ -199,7 +201,7 @@ export function QueueTape({
           Processed
         </span>{" "}
         <span className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-3 border border-foreground/40 bg-card" />
+          <span aria-hidden="true" className="h-3 w-3 border border-foreground/40 bg-soft-wait" />
           Still pending
         </span>
       </figcaption>

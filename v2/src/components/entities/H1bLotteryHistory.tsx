@@ -43,9 +43,9 @@ export function H1bLotteryHistory({ years, className }: { years: LotteryYear[] |
                     {formatInt(y.approved)} approved, {formatInt(y.denied)} denied
                   </span>
                 </span>{" "}
-                <span className="mt-1 flex h-3 w-full bg-muted" aria-hidden="true">
-                  <span className="h-full bg-foreground" style={{ width: `${(y.selected / peak) * 100}%` }} />
-                  <span className="h-full bg-foreground/30" style={{ width: `${((y.registrations - y.selected) / peak) * 100}%` }} />
+                <span className="mt-1 flex h-3 w-full bg-sage" aria-hidden="true">
+                  <span className="h-full bg-primary" style={{ width: `${(y.selected / peak) * 100}%` }} />{" "}
+                  <span className="h-full bg-chart-yellow" style={{ width: `${((y.registrations - y.selected) / peak) * 100}%` }} />
                 </span>
               </li>
             </Fragment>
@@ -54,7 +54,7 @@ export function H1bLotteryHistory({ years, className }: { years: LotteryYear[] |
       </ul>
       </ChartTips>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
-        Dark: selected. Light: not selected. From USCIS&apos;s registration records, obtained by Bloomberg News under
+        Green: selected. Yellow: not selected. From USCIS&apos;s registration records, obtained by Bloomberg News under
         FOIA and{" "}
         <a href={SOURCE} rel="noopener noreferrer" className="link">
           published by Bloomberg

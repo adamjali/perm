@@ -50,7 +50,7 @@ export function EmployerWait({
       sub: `median of ${formatInt(field.n)} decisions in the same ${field.windowDays} days`,
       value: field.p50,
       text: `${formatInt(field.p50)} days`,
-      tone: "ink" as const,
+      tone: "blue" as const,
     });
   }
   const gap = mine.p50 !== null && field?.p50 != null ? mine.p50 - field.p50 : null;

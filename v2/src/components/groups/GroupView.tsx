@@ -47,9 +47,9 @@ function Ranked({
               <span className="min-w-0 truncate text-sm font-bold">{it.label}</span>{" "}
               <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">{formatInt(it.n)}</span>
             </span>{" "}
-            <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
+            <span className="mt-1 block h-2 w-full bg-sage" aria-hidden="true">
               <span
-                className="block h-full bg-foreground"
+                className="block h-full bg-primary"
                 style={{ width: `${top > 0 ? Math.max(2, (it.n / top) * 100) : 0}%` }}
               />
             </span>
@@ -235,7 +235,7 @@ export function GroupView({
         ].map(([k, v]) => (
           <Fragment key={k}>
             {" "}
-            <div className="bg-tint p-4 border-2 border-border">
+            <div className="bg-sage p-4 border-2 border-border">
               <dt className="text-sm font-bold text-muted-foreground">{k}</dt>{" "}
               <dd className="mt-1 font-heading text-2xl font-bold tabular-nums">{v}</dd>
             </div>

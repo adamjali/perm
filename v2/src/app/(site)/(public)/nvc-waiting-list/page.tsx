@@ -24,6 +24,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { getNvcWaitingList } from "@/lib/db/nvcWaitingList";
 import { MONTH_ABBR } from "@convex/lib/months";
+import { AlertMark } from "@/components/ui/note";
 
 export const revalidate = 86400;
 
@@ -47,7 +48,7 @@ function dateLabel(iso: string): string {
   return `${MONTH_ABBR[Number(iso.slice(5, 7)) - 1]} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
 }
 
-/** One category's years as small bars, the newest filled in the brand's ink. */
+/** One category's years as small bars in the waiting yellow, the newest in its stronger shade. */
 function Spark({ row, max }: { row: CategorySeries; max: number }) {
   const W = 240;
   const H = 48;
@@ -59,7 +60,7 @@ function Spark({ row, max }: { row: CategorySeries; max: number }) {
         const last = i === row.points.length - 1;
         return (
           <ChartHit key={p.asOf} tip={`${row.label}\n${p.n.toLocaleString("en-US")} waiting\nAs of ${dateLabel(p.asOf)}`} x={i * bw} width={bw} y={0} height={H}>
-            <rect x={i * bw + 1} y={H - h} width={Math.max(bw - 2, 1)} height={h} className={last ? "fill-foreground" : "fill-foreground/35"} />
+            <rect x={i * bw + 1} y={H - h} width={Math.max(bw - 2, 1)} height={h} className={last ? "fill-data-warn" : "fill-chart-yellow"} />
           </ChartHit>
         );
       })}
@@ -73,7 +74,7 @@ function CategoryTable({ rows, caption }: { rows: CategorySeries[]; caption: str
     <ChartTips label={caption} className="mt-4" scroll="border-t-2 border-[var(--object-border)] bg-card">
       <table className="w-full min-w-[640px] text-left text-base">
         <caption className="sr-only">{caption}</caption>
-        <thead className="border-b-2 border-border bg-muted/40">
+        <thead className="border-b-2 border-border bg-sage">
           <tr>
             <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>
             <th scope="col" className="px-4 py-3 font-bold">Each November, oldest to newest{" "}</th>
@@ -155,7 +156,7 @@ export default async function NvcWaitingListPage() {
               ].map((t) => (
                 <Fragment key={t.label}>
                   {" "}
-                  <div className="bg-tint p-5 border-2 shadow-hard border-border">
+                  <div className="bg-sage p-5 border-2 shadow-hard border-border">
                     <dt className="text-base text-soft">{t.label}</dt>{" "}
                     <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{t.now.toLocaleString("en-US")}</dd>{" "}
                     <dd className="font-mono text-sm text-muted-foreground">
@@ -209,8 +210,10 @@ export default async function NvcWaitingListPage() {
             <CategoryTable rows={family} caption="Family-sponsored applicants at the National Visa Center, each November" />
           </section>
 
-          <details className="group mt-12 bg-tint p-6 sm:p-8 border-2 border-border">
-            <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none">
+          {/* Folded, in the site's caveat colours (round 3, Oct 15 2026). */}
+          <details className="group mt-12 border-2 border-data-warn bg-soft-wait p-6 sm:p-8">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center font-heading text-lg font-bold marker:content-none [&::-webkit-details-marker]:hidden">
+              <AlertMark className="mr-3" />{" "}
               How it&apos;s read, and what it can&apos;t tell you
             </summary>
             <div className="mt-3 max-w-3xl space-y-3 text-base leading-relaxed text-soft">

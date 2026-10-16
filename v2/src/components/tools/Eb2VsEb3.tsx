@@ -111,7 +111,7 @@ export function Eb2VsEb3({ snapshot, defaultCountry = "india", className }: Eb2V
               <div key={line} className="border-2 border-dashed border-foreground/40 p-4">
                 <p className="font-heading text-xl font-bold text-muted-foreground">{line}</p>{" "}
                 <p className="mt-3 text-sm text-muted-foreground">This month&apos;s cutoff</p>{" "}
-                <div className="mt-1 h-6 w-32 bg-foreground/10" />{" "}
+                <div className="mt-1 h-6 w-32 bg-sage" />{" "}
                 <p className="mt-3 text-sm text-muted-foreground">People ahead of you</p>{" "}
                 <div className="mt-1 h-9 w-40 text-muted-foreground bg-hatch" />
               </div>
@@ -220,7 +220,7 @@ function Verdict({
   }
   const good = fewer === "both-current" || ((fewer === "EB2" || fewer === "EB3") && cmp[fewer].kind === "current");
   return (
-    <div className={cn("border-b-2 border-border p-6 sm:p-8", good && "bg-tint")}>
+    <div className={cn("border-b-2 border-border p-6 sm:p-8", good && "bg-soft-good")}>
       <p className={EYEBROW_CLASS}>{LINE_COUNTRY_LABEL[country]}</p>{" "}
       <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">{head}</p>{" "}
       {body ? <p className="mt-3 max-w-3xl text-base leading-relaxed text-soft">{body}</p> : null}
@@ -256,7 +256,7 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
             <span className="font-heading text-lg font-bold">{LINE_NAME[line]}</span>{" "}
             {r.kind === "estimate" ? (
               <div
-                className="relative h-8 border-input bg-background border"
+                className="relative h-8 border-input bg-sage border"
                 role="img"
                 aria-label={`${LINE_NAME[line]}: ${rangeLabel(r)} people ahead`}
                 data-tip={
@@ -267,13 +267,15 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
               >
                 {r.check?.scaled ? (
                   <span
-                    className="absolute inset-y-0 border-dashed border-foreground/60 border"
+                    className="absolute inset-y-0 border-dashed border-data-warn-ink border"
                     style={{ left: pct(plausibleRange(r).low), width: pct(plausibleRange(r).high - plausibleRange(r).low) }}
                     aria-hidden="true"
                   />
                 ) : null}
+                {/* People ahead are people waiting: the site's waiting yellow,
+                    edged in its own stronger shade (round 3: no black marks). */}
                 <span
-                  className="absolute inset-y-0 bg-foreground"
+                  className="absolute inset-y-0 border-2 border-data-warn bg-chart-yellow"
                   style={{ left: pct(r.peopleAhead.low), width: `max(4px, ${pct(r.peopleAhead.high - r.peopleAhead.low)})` }}
                   aria-hidden="true"
                 />
@@ -316,7 +318,7 @@ function LineCard({
     <section
       className={cn(
         "border-border p-6 sm:p-8 md:[&:first-child]:border-r-2 max-md:[&:first-child]:border-b-2",
-        fewer ? "bg-tint" : "",
+        fewer ? "bg-soft-good" : "",
       )}
       aria-labelledby={headingId}
     >

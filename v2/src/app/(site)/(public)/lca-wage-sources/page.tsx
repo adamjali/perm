@@ -43,13 +43,15 @@ const KIND_LABEL: Record<string, string> = {
   Other: "Not stated",
 };
 const KINDS = ["OES", "Survey", "CBA", "SCA", "DBA", "Other"] as const;
+// One soft colour per source (round 3, Oct 15 2026: no grey in charts); a
+// source the file doesn't state is hatched, the site's mark for "not known".
 const COLOR: Record<string, string> = {
-  OES: "bg-foreground/20",
+  OES: "bg-chart-blue",
   Survey: "bg-primary",
-  CBA: "bg-data-warn",
-  SCA: "bg-data-bad",
-  DBA: "bg-data-info",
-  Other: "bg-card",
+  CBA: "bg-chart-yellow",
+  SCA: "bg-chart-orange",
+  DBA: "bg-chart-sage",
+  Other: "bg-card bg-hatch text-input",
 };
 
 export default async function LcaWageSourcesPage() {
@@ -70,7 +72,7 @@ export default async function LcaWageSourcesPage() {
       </header>
 
       {!doc ? (
-        <p className="mt-8 bg-tint p-5 text-base border-2 border-border">These figures are being built. Try again tomorrow.</p>
+        <p className="mt-8 bg-sage p-5 text-base border-2 border-border">These figures are being built. Try again tomorrow.</p>
       ) : (
         <>
           <section className="mt-10" aria-labelledby="by-year">

@@ -52,7 +52,7 @@ export const metadata: Metadata = withSocialCard(
 
 const SPARK_MONTHS = 36;
 
-/** One category's months as small bars, the newest in full ink. */
+/** One category's months as small bars in green (visas issued), the newest in the stronger green. */
 function Spark({ label, points, max }: { label: string; points: { month: string; n: number }[]; max: number }) {
   const W = 360;
   const H = 48;
@@ -69,7 +69,7 @@ function Spark({ label, points, max }: { label: string; points: { month: string;
         const last = i === points.length - 1;
         return (
           <ChartHit key={p.month} tip={`${label}\n${monthName(p.month)}\n${formatInt(p.n)} issued`} x={i * bw} width={bw} y={0} height={H}>
-            <rect x={i * bw + 0.5} y={H - h} width={Math.max(bw - 1, 1)} height={h} className={last ? "fill-foreground" : "fill-foreground/40"} />
+            <rect x={i * bw + 0.5} y={H - h} width={Math.max(bw - 1, 1)} height={h} className={last ? "fill-data-good-ink" : "fill-chart-green"} />
           </ChartHit>
         );
       })}
@@ -83,7 +83,7 @@ function topRows(groups: IssuanceGroup[], category: string, n: number): BarRow[]
   const shown = mine.slice(0, n);
   const rest = total - shown.reduce((a, g) => a + g.n, 0);
   const rows: BarRow[] = shown.map((g) => ({ key: g.group, label: g.label, value: g.n, text: formatInt(g.n) }));
-  if (rest > 0) rows.push({ key: "rest", label: `Everyone else (${formatInt(mine.length - shown.length)} more)`, value: rest, text: formatInt(rest), tone: "ink" });
+  if (rest > 0) rows.push({ key: "rest", label: `Everyone else (${formatInt(mine.length - shown.length)} more)`, value: rest, text: formatInt(rest), tone: "blue" });
   return rows;
 }
 
@@ -221,7 +221,7 @@ export default async function VisaIssuancesPage() {
         <ScrollBox label="Immigrant visas issued abroad, by category" className="mt-4 border-t-2 border-[var(--object-border)] bg-card">
           <table className="w-full min-w-[32rem] text-left text-base">
             <caption className="sr-only">Immigrant visas issued abroad by category{" "}</caption>
-            <thead className="border-b-2 border-border bg-muted/40">
+            <thead className="border-b-2 border-border bg-sage">
               <tr>
                 <th scope="col" className="px-4 py-3 font-bold">Category{" "}</th>
                 <th scope="col" className="px-4 py-3 text-right font-bold">{monthName(newest)}{" "}</th>

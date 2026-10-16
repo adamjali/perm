@@ -48,7 +48,7 @@ export function SizeBandNote({
 
   return (
     <section
-      className={cn("bg-tint p-5 sm:p-6 border-2 shadow-hard-sm border-border", className)}
+      className={cn("bg-sage p-5 sm:p-6 border-2 shadow-hard-sm border-border", className)}
     >
       <p className="text-sm font-bold text-muted-foreground">
         Against the {subject} ranked nearest
@@ -89,7 +89,7 @@ export function SizeBandNote({
               <dt className="text-sm font-bold text-soft">{row.k}</dt>{" "}
               <dd className="m-0 h-4 border-input bg-background border">
                 <span
-                  className={cn("block h-full", row.strong ? "bg-primary" : "bg-foreground/50")}
+                  className={cn("block h-full", row.strong ? "bg-primary" : "bg-chart-blue")}
                   style={{ width: `${Math.max(2, ((row.v ?? 0) / max) * 100)}%` }}
                 />
               </dd>{" "}

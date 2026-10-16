@@ -44,13 +44,15 @@ const CERTAINTY = {
   },
   queue: {
     label: "Government queue",
-    bar: "bg-foreground/70",
+    // Waiting in an agency's line: the site's waiting yellow (round 3, Oct 15 2026).
+    bar: "bg-chart-yellow",
     icon: TimerIcon,
     note: "A forecast over a backlog. It moves when the agency moves.",
   },
   unknown: {
     label: "Not knowable",
-    bar: "bg-foreground/15",
+    // Nothing published to measure: a hatch, never a solid that reads as a figure.
+    bar: "bg-background bg-hatch text-data-warn",
     icon: CircleAlert,
     note: "No published figure supports a number here.",
   },
@@ -79,7 +81,7 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
             key={stage.id}
             className={cn(
               CERTAINTY[stage.certainty].bar,
-              i > 0 && "border-l-2 border-border",
+              i > 0 && "border-l-2 border-background",
             )}
             style={{ width: `${(stage.months / total) * 100}%` }}
             data-tip={`${stage.label}\n${months(stage.months)} of ${total}\n${CERTAINTY[stage.certainty].label}`}
@@ -128,7 +130,7 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
         })}
       </ol>
 
-      <figcaption className="mt-6 bg-tint p-6 border-2 border-border">
+      <figcaption className="mt-6 bg-sage p-6 border-2 border-border">
         <p className="font-heading text-xl font-bold leading-tight">
           {months(timeline.employerControlledMonths)} of {total} are on your
           side of the process.

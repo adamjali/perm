@@ -57,7 +57,7 @@ export function StageCohortsChart({
             // a different KIND of thing from the stage rows, so it gets a
             // colour that appears nowhere in the legend rather than a paler
             // version of one that does.
-            fill="var(--muted-foreground)"
+            fill="var(--chart-green)"
             context
           />
           {rows.map((r) => {

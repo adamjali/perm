@@ -215,7 +215,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
         </p>{" "}
         <ScrollBox label="Cutoffs a fiscal year at a time" className="mt-4 border-t-2 border-[var(--object-border)]">
           <table className="w-full min-w-[560px] text-left text-base">
-            <thead className="border-b-2 border-border bg-muted/40">
+            <thead className="border-b-2 border-border bg-sage">
               <tr>
                 <th scope="col" className="px-4 py-3 font-bold">Fiscal year{" "}</th>
                 <th scope="col" className="px-4 py-3 font-bold">First bulletin{" "}</th>
@@ -234,14 +234,14 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
                   <td className="px-4 py-3 tabular-nums">{cutoffLabel(y.start.cutoff)}{" "}</td>
                   <td className="px-4 py-3 tabular-nums">{cutoffLabel(y.end.cutoff)}{" "}</td>
                   <td className="px-4 py-3 tabular-nums">
-                    {/* The year's move, drawn from a centre line: forward to
-                        the right in lime, backwards to the left in red. */}
+                    {/* The year's move, drawn from an ink centre line: forward
+                        to the right in green, backwards to the left in red. */}
                     <span className="flex items-center gap-3">
-                      <span aria-hidden="true" className="relative block h-3 w-28 shrink-0 bg-muted sm:w-40">
+                      <span aria-hidden="true" className="relative block h-3 w-28 shrink-0 bg-sage sm:w-40">
                         <span className="absolute inset-y-[-3px] left-1/2 w-0.5 -translate-x-1/2 bg-foreground" />
                         {y.movedDays ? (
                           <span
-                            className={`absolute inset-y-0 ${y.movedDays > 0 ? "left-1/2 bg-primary" : "right-1/2 bg-destructive"}`}
+                            className={`absolute inset-y-0 ${y.movedDays > 0 ? "left-1/2 bg-chart-green" : "right-1/2 bg-chart-red"}`}
                             style={{ width: `${Math.max(2, (Math.abs(y.movedDays) / maxMove) * 50)}%` }}
                           />
                         ) : null}
@@ -264,7 +264,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
           </h2>{" "}
           <dl className="mt-4 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-3">
             {counts.awaiting ? (
-              <div className="bg-tint p-4 border-2 shadow-hard border-border">
+              <div className="bg-sage p-4 border-2 shadow-hard border-border">
                 <dt className="text-base text-soft">Approved petitions waiting for a visa number</dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                   {counts.awaiting.count.toLocaleString("en-US")}
@@ -275,14 +275,14 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             {counts.inventory ? (
               <Fragment>
                 {" "}
-                <div className="bg-tint p-4 border-2 shadow-hard border-border">
+                <div className="bg-sage p-4 border-2 shadow-hard border-border">
                   <dt className="text-base text-soft">I-485s pending, visa number available</dt>{" "}
                   <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                     {rangeLabel(counts.inventory.available)}
                   </dd>{" "}
                   <dd className="font-mono text-sm text-muted-foreground">inventory of {counts.inventory.asOf}</dd>
                 </div>{" "}
-                <div className="bg-tint p-4 border-2 shadow-hard border-border">
+                <div className="bg-sage p-4 border-2 shadow-hard border-border">
                   <dt className="text-base text-soft">I-485s pending, waiting for a visa number</dt>{" "}
                   <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
                     {rangeLabel(counts.inventory.awaiting)}

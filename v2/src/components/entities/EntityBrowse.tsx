@@ -165,7 +165,7 @@ export function BrowseIndexGrid({
                   <span className="mt-1 font-mono text-sm font-bold tabular-nums text-muted-foreground">
                     {formatInt(n)} {plural}
                   </span>{" "}
-                  <span aria-hidden="true" className="mt-2 block h-1.5 bg-foreground/10">
+                  <span aria-hidden="true" className="mt-2 block h-1.5 bg-sage">
                     <span className="block h-full bg-primary" style={{ width: `${Math.max(3, (n / max) * 100)}%` }} />
                   </span>
                 </Link>

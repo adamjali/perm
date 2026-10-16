@@ -101,9 +101,11 @@ export function CaseWall({
                     // understand the content and owes 3:1. --primary is
                     // 2.05:1 on paper; --data-good-ink is 4.70:1 and is the
                     // same hex as --primary in dark mode.
+                    // Neighbours soft yellow, still waiting (round 3, Oct 15
+                    // 2026: no grey in charts); yours stays the dark green.
                     s.isSubject
                       ? "border-foreground bg-data-good-ink"
-                      : "border-border bg-foreground/20",
+                      : "border-foreground/40 bg-chart-yellow",
                   )}
                   style={{
                     height: `${Math.max(3, (s.pending / peak) * 100) * 1.6}px`,

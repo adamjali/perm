@@ -50,9 +50,9 @@ export function SponsorProfile({
                     role="img"
                     aria-label={partRank(p)}
                   >
-                    <span className="absolute inset-y-0 left-0 bg-primary/40" style={{ width: `${at}%` }} aria-hidden="true" />
+                    <span className="absolute inset-y-0 left-0 bg-chart-green" style={{ width: `${at}%` }} aria-hidden="true" />
                     <span
-                      className="absolute -top-1 h-4 w-1 -translate-x-1/2 bg-foreground"
+                      className="absolute -top-1 h-4 w-1 -translate-x-1/2 bg-data-good-ink"
                       style={{ left: `${at}%` }}
                       aria-hidden="true"
                     />

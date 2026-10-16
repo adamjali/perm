@@ -162,8 +162,10 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
         ))}
       </dl>{" "}
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
-        {/* Thirty days. Weekends sit low because DOL decides little then. */}
-        <figure className="m-0 bg-tint p-5 lg:col-span-2 border-2 shadow-hard-sm border-border">
+        {/* Thirty days. Weekends sit low because DOL decides little then.
+            Withdrawn is the employer's own step, so it takes the withdrawn
+            orange the status chips use (round 3, Oct 15 2026: no grey marks). */}
+        <figure className="m-0 bg-card p-5 lg:col-span-2 border-2 shadow-hard-sm border-border">
           <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
             <span className="text-base font-semibold">The last {bars.length} days</span>{" "}
             <span className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-soft">
@@ -176,7 +178,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
                 Denied
               </span>{" "}
               <span className="inline-flex items-center gap-1.5">
-                <span aria-hidden="true" className="size-3 bg-foreground/50" />
+                <span aria-hidden="true" className="size-3 bg-chart-orange" />
                 Withdrawn
               </span>
             </span>
@@ -199,7 +201,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
               >
                 <div className="bg-data-good-ink" style={{ height: `${b.total ? (b.certified / b.total) * 100 : 0}%` }} />
                 <div className="bg-data-bad-ink" style={{ height: `${b.total ? (b.denied / b.total) * 100 : 0}%` }} />
-                <div className="bg-foreground/50" style={{ height: `${b.total ? (b.withdrawn / b.total) * 100 : 0}%` }} />
+                <div className="bg-chart-orange" style={{ height: `${b.total ? (b.withdrawn / b.total) * 100 : 0}%` }} />
               </div>
             ))}
           </div>
@@ -210,8 +212,10 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
           </div>
         </figure>{" "}
 
-        {/* The shape of a week, over the last four. */}
-        <figure className="m-0 bg-tint p-5 border-2 shadow-hard-sm border-border">
+        {/* The shape of a week, over the last four: working days in the
+            decided green, the weekend in sage, each with a darker cap so the
+            soft fill still reads against the card. */}
+        <figure className="m-0 bg-card p-5 border-2 shadow-hard-sm border-border">
           <figcaption className="text-base font-semibold">A typical week</figcaption>{" "}
           <ChartTips label="Average decisions by day of the week">
           <div className="mt-4 flex h-40 items-end gap-2 sm:h-48" role="img" aria-label="Average decisions by day of the week over the last four weeks.">
@@ -223,7 +227,7 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
               >
                 <span className="mb-1 text-sm font-semibold tabular-nums">{w.days ? formatInt(w.mean) : ""}</span>{" "}
                 <div
-                  className={w.weekday >= 5 ? "bg-foreground/25" : "bg-foreground/60"}
+                  className={cn(w.days && "border-t-2 border-data-good-ink", w.weekday >= 5 ? "bg-chart-sage" : "bg-chart-green")}
                   style={{ height: w.days ? `${Math.max(2, (w.mean / weekMax) * 100)}%` : "0" }}
                 />
               </div>

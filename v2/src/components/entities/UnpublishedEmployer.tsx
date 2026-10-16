@@ -133,7 +133,7 @@ export function UnpublishedEmployer({
               sub: first && first !== last ? `oldest ${first}` : "",
             },
           ].map((d) => (
-            <div key={d.k} className="bg-tint p-5">
+            <div key={d.k} className="bg-sage p-5">
               <p className="text-sm font-bold text-muted-foreground">
                 {d.k}
               </p>{" "}

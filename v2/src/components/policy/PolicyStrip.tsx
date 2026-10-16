@@ -41,8 +41,10 @@ function typeWord(type: string): string {
 
 function markClass(type: string): string {
   if (type === "Rule") return "fill-primary stroke-foreground";
-  if (type === "Proposed Rule") return "fill-foreground stroke-foreground";
-  return "fill-background stroke-foreground";
+  // Colour, not black and grey (round 3, Oct 15 2026): a proposal is
+  // pending, so yellow; a notice is blue.
+  if (type === "Proposed Rule") return "fill-chart-yellow stroke-foreground";
+  return "fill-chart-blue stroke-foreground";
 }
 
 export function PolicyStrip({ strip }: { strip: Strip }) {
@@ -101,7 +103,7 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
               height={6}
               // Not `fill-border`: the border token is ink in light mode, so a
               // closed window drew as black as a proposed rule's mark.
-              className={m.bar.open ? "fill-primary" : "fill-foreground/35"}
+              className={m.bar.open ? "fill-primary" : "fill-chart-sage stroke-foreground/40"}
               data-tip={`Comment window ${m.bar.open ? "open" : "closed"}\n${m.title}\nProposed ${dayLabel(m.publicationDate)}`}
             />
           ) : null,
@@ -129,7 +131,8 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
             y={RAIL_OFLC - 7 - m.lane * 4}
             width={3}
             height={14}
-            className="fill-foreground"
+            className="fill-chart-green stroke-foreground"
+            strokeWidth={0.75}
             data-tip={`${dayLabel(m.publicationDate)}\nOFLC announcement\n${m.title}`}
           />
         ))}
@@ -163,11 +166,11 @@ export function StripLegend() {
   return (
     <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm text-soft">
       {item("inline-block size-3 border-foreground bg-primary border", "final rule")}{" "}
-      {item("inline-block size-3 border-foreground bg-foreground border", "proposed rule")}{" "}
-      {item("inline-block size-3 border-foreground bg-background border", "notice")}{" "}
+      {item("inline-block size-3 border-foreground bg-chart-yellow border", "proposed rule")}{" "}
+      {item("inline-block size-3 border-foreground bg-chart-blue border", "notice")}{" "}
       {item("inline-block h-1.5 w-6 bg-primary", "comment window, open")}{" "}
-      {item("inline-block h-1.5 w-6 bg-foreground/35", "comment window, closed")}{" "}
-      {item("inline-block h-3.5 w-[3px] bg-foreground", "OFLC announcement")}
+      {item("inline-block h-1.5 w-6 border border-foreground/40 bg-chart-sage", "comment window, closed")}{" "}
+      {item("inline-block h-3.5 w-[4px] border border-foreground bg-chart-green", "OFLC announcement")}
     </ul>
   );
 }

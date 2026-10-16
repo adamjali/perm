@@ -30,7 +30,16 @@ function asOfLine(f: RecordFigure): string {
   return `through ${dateLabel(f.asOf)}`;
 }
 
-export function RecordStrip({ record, className = "mt-10" }: { record: RecordFigure[]; className?: string }) {
+export function RecordStrip({
+  record,
+  className = "mt-10",
+  label = "Data stored on PERM Tracker",
+}: {
+  record: RecordFigure[];
+  className?: string;
+  /** The band's words: what this ledger counts on the page it sits on. */
+  label?: string;
+}) {
   if (record.length === 0) return null;
   return (
     // An object with its own ink band (round 3, Oct 15 2026: the sentence that
@@ -43,7 +52,7 @@ export function RecordStrip({ record, className = "mt-10" }: { record: RecordFig
         className="flex items-center gap-2 border-b-2 border-black bg-[#141414] px-5 py-3 font-heading text-base font-bold text-white"
       >
         <DatabaseIcon aria-hidden="true" weight="bold" className="size-5 text-[#2ECC40]" />
-        Data stored on PERM Tracker
+        {label}
       </p>{" "}
       <dl className="px-5">
         {record.map((f) => (

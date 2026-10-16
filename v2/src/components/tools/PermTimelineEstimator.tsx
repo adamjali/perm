@@ -18,7 +18,7 @@
 
 import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BellIcon, CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } from "@phosphor-icons/react";
+import { BellIcon, CalendarDotIcon as CalendarClock, InfoIcon } from "@phosphor-icons/react";
 
 import {
   estimateQueueDecision,
@@ -63,6 +63,7 @@ import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
 import { trackEstimateShown } from "@/lib/funnelEvents";
 import { buttonVariants } from "@/components/ui/button";
+import { CaveatBox } from "@/components/ui/note";
 
 export interface PermTimelineEstimatorProps {
   frontier: DolFrontier | null;
@@ -202,15 +203,15 @@ function StagesLine({
 
 const POSITION_COPY: Record<string, { tone: string; heading: string }> = {
   "awaiting-queue": {
-    tone: "bg-tint",
+    tone: "bg-soft-wait",
     heading: "DOL hasn’t reached your filing month yet",
   },
   "queue-reached": {
-    tone: "bg-tint border-l-8 border-primary",
+    tone: "bg-soft-good border-l-8 border-primary",
     heading: "DOL is working on your filing month now",
   },
   overdue: {
-    tone: "bg-muted",
+    tone: "bg-soft-bad",
     heading: "DOL's queue has already passed your filing month",
   },
 };
@@ -619,8 +620,8 @@ export function PermTimelineEstimator({
       {!hasDate ? (
         <div className="border-b-2 border-border p-6 sm:p-8">
           <p className="text-sm font-bold text-muted-foreground">Most likely</p>{" "}
-          <div aria-hidden="true" className="mt-2 h-11 w-80 max-w-full bg-foreground/10 sm:h-14" />{" "}
-          <div aria-hidden="true" className="mt-3 h-6 w-[26rem] max-w-full bg-foreground/[0.07]" />{" "}
+          <div aria-hidden="true" className="mt-2 h-11 w-80 max-w-full bg-sage sm:h-14" />{" "}
+          <div aria-hidden="true" className="mt-3 h-6 w-[26rem] max-w-full bg-sage" />{" "}
           <div className="relative mt-6 flex h-12 items-center justify-center border-dashed border-foreground/40 text-muted-foreground bg-hatch border">
             <span className="bg-background px-2 text-center text-sm font-bold text-muted-foreground">
               Pick a date above and this fills in
@@ -748,7 +749,7 @@ export function PermTimelineEstimator({
           {progress ? (
             <div className="mt-6">
               <div
-                className="relative h-4 w-full border-input bg-muted border"
+                className="relative h-4 w-full border-input bg-soft-wait border"
                 role="img"
                 aria-label={`${progress.elapsedMonths} of about ${progress.totalMonths} months elapsed since filing`}
               >
@@ -778,9 +779,14 @@ export function PermTimelineEstimator({
           {/* Flex-wrap rather than a fixed column count: every card here is
               conditional, and a 3-across grid holding 3 of 4 cards leaves an
               empty cell that reads as a card that failed to load. */}
+          {/* Coloured by what each says (round 3, Oct 15 2026): DOL's pace in
+              soft yellow, where the queue is in soft green, and the reader's
+              own month by its position: yellow not reached, green reached,
+              red passed. The words carry the same meaning, so colour is never
+              the only sign. */}
           <div className="mt-6 flex flex-wrap gap-3">
             {pace ? (
-              <div className="min-w-0 flex-1 basis-60 bg-tint p-4 border-2 border-border">
+              <div className="min-w-0 flex-1 basis-60 bg-soft-wait p-4 border-2 border-border">
                 <p className="text-sm font-semibold text-muted-foreground">
                   DOL pace
                 </p>{" "}
@@ -793,7 +799,7 @@ export function PermTimelineEstimator({
               </div>
             ) : null}
             {frontier ? (
-              <div className="min-w-0 flex-1 basis-60 bg-tint p-4 border-2 border-border">
+              <div className="min-w-0 flex-1 basis-60 bg-soft-good p-4 border-2 border-border">
                 <p className="text-sm font-semibold text-muted-foreground">
                   Queue is at
                 </p>{" "}
@@ -806,7 +812,16 @@ export function PermTimelineEstimator({
               </div>
             ) : null}
             {estimate.monthsBehindFrontier !== null ? (
-              <div className="min-w-0 flex-1 basis-60 bg-tint p-4 border-2 border-border">
+              <div
+                className={cn(
+                  "min-w-0 flex-1 basis-60 p-4 border-2 border-border",
+                  estimate.monthsBehindFrontier > 0
+                    ? "bg-soft-wait"
+                    : estimate.monthsBehindFrontier === 0
+                      ? "bg-soft-good"
+                      : "bg-soft-bad",
+                )}
+              >
                 <p className="text-sm font-semibold text-muted-foreground">
                   Your month
                 </p>{" "}
@@ -875,7 +890,7 @@ export function PermTimelineEstimator({
             )}
           </p>
 
-          <div className="mt-6 bg-tint p-4 sm:max-w-sm border-2 border-border">
+          <div className="mt-6 bg-soft-good p-4 sm:max-w-sm border-2 border-border">
             <p className="text-sm font-semibold text-muted-foreground">
               Cases ahead of you
             </p>{" "}
@@ -1002,23 +1017,19 @@ export function PermTimelineEstimator({
 
       {/* Caveats. Not boilerplate: each one is generated for this case. */}
       {hasDate && notes.length > 0 ? (
-        <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
-          <div className="flex items-start gap-3">
-            <WarningIcon
-              className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <div>
-              <h3 className="font-heading text-base font-bold">What this can’t tell you</h3>{" "}
-              <ul className="mt-3 space-y-2">
-                {notes.map((c) => (
-                  <li key={c} className="text-base leading-relaxed text-muted-foreground">
-                    {c}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+        // The soft yellow caveat box the queue page uses (round 3, Oct 15
+        // 2026), the heading kept as an h3 for the outline.
+        <div className="border-t-2 border-border p-6 sm:p-8">
+          <CaveatBox>
+            <h3 className="font-heading text-base font-bold">What this can’t tell you</h3>{" "}
+            <ul className="mt-3 space-y-2">
+              {notes.map((c) => (
+                <li key={c} className="text-base leading-relaxed">
+                  {c}{" "}
+                </li>
+              ))}
+            </ul>
+          </CaveatBox>
         </div>
       ) : null}
 

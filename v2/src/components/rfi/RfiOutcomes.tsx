@@ -38,28 +38,28 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
       key: "certified",
       label: "Certified",
       n: certified,
-      fill: "var(--data-good-ink)",
+      fill: "var(--chart-green)",
       ink: "var(--data-good-ink)",
     },
     {
       key: "denied",
       label: "Denied",
       n: denied,
-      fill: "var(--data-bad-ink)",
+      fill: "var(--chart-red)",
       ink: "var(--data-bad-ink)",
     },
     {
       key: "withdrawn",
       label: "Withdrawn",
       n: withdrawn,
-      fill: "var(--data-none-ink)",
-      ink: "var(--data-none-ink)",
+      fill: "var(--chart-orange)",
+      ink: "var(--data-warn-ink)",
     },
     {
       key: "open",
       label: "No decision yet",
       n: stillOpen,
-      fill: "var(--data-warn-ink)",
+      fill: "var(--chart-yellow)",
       ink: "var(--data-warn-ink)",
     },
   ];
@@ -74,12 +74,12 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
         <ChartTips label="What became of every RFI DOL issued">
         <Row label={`${everIssued.toLocaleString()} RFIs issued`}>
           <div
-            className="h-full border-r-2 border-border bg-foreground/85"
+            className="h-full border-r-2 border-border bg-chart-green"
             style={{ width: `${share(resolved)}%` }}
             data-tip={`Reached a decision\n${resolved.toLocaleString()} of ${everIssued.toLocaleString()} RFIs issued\n${share(resolved).toFixed(1)}%`}
           />
           <div
-            className="h-full flex-1 bg-foreground/25"
+            className="h-full flex-1 bg-chart-yellow"
             data-tip={`No decision yet\n${stillOpen.toLocaleString()} of ${everIssued.toLocaleString()} RFIs issued\n${share(stillOpen).toFixed(1)}%`}
           />
         </Row>
@@ -176,7 +176,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <div className="text-sm font-bold leading-tight">
         {label}
       </div>{" "}
-      <div className="flex h-9 border-input bg-secondary border">
+      <div className="flex h-9 border-2 border-foreground bg-card">
         {children}
       </div>
     </div>

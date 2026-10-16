@@ -42,7 +42,7 @@ export function LadderTable({
           {`Offered wage percentiles by ${subjectLabel.toLowerCase()}, with the number of ${unit} behind each row.`}
         </caption>
         <thead>
-          <tr className="border-b-2 border-border bg-muted">
+          <tr className="border-b-2 border-border bg-sage">
             <th scope="col" className="px-3 py-2 text-sm font-bold">
               {subjectLabel}{" "}
             </th>

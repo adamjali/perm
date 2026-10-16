@@ -146,6 +146,8 @@ export default async function I485ByFieldOfficePage() {
         : `${delta >= 0 ? "+" : ""}${delta.toLocaleString("en-US")} since ${prev ? quarterLabel(prev.fy, prev.quarter).split(" (")[0] : "last quarter"} · ${fmt(o.empApproved)} approved, ${fmt(o.empDenied)} denied`,
       value: o.empPending,
       text: fmt(o.empPending),
+      // Still waiting at the office: soft yellow, the site's "pending".
+      tone: "yellow" as const,
     };
   });
 
@@ -162,7 +164,7 @@ export default async function I485ByFieldOfficePage() {
       sub: `${fmt(o.empPending)} pending against ${((o.empApproved ?? 0) + (o.empDenied ?? 0)).toLocaleString("en-US")} decided in the quarter`,
       value: q,
       text: `${q.toFixed(1)} qtrs`,
-      tone: "ink" as const,
+      tone: "blue" as const,
     }));
 
   const centerRows: BarRow[] = [...serviceCenters]
@@ -197,7 +199,7 @@ export default async function I485ByFieldOfficePage() {
         <QuarterlyEmpty file="i485_performance_data" />
       ) : (
         <>
-          <RecordStrip record={ledger} />
+          <RecordStrip record={ledger} label="The quarter at USCIS's offices" />
           {workNational !== null ? (
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-soft">
               Nationally, that pending pile is{" "}

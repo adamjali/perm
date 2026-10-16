@@ -18,9 +18,10 @@ const fmt = (n: number | null) => (n === null ? "" : formatInt(n));
 function RowsTable({ list, rows, top }: { list: SevpList; rows: SevpList["rows"]; top: number }) {
   const opt = list.list === "opt";
   return (
-    <div className="overflow-x-auto border-t-2 border-[var(--object-border)]">
+    // A card ground of its own, so the sage bar tracks read on any panel.
+    <div className="overflow-x-auto border-t-2 border-[var(--object-border)] bg-card">
       <table className="w-full min-w-[560px] text-left text-base">
-        <thead className="border-b-2 border-border bg-muted/40">
+        <thead className="border-b-2 border-border bg-sage">
           <tr>
             <th scope="col" className="w-12 px-3 py-2 font-bold">#{" "}</th>
             <th scope="col" className="px-3 py-2 font-bold">Employer, as ICE names it{" "}</th>
@@ -44,7 +45,7 @@ function RowsTable({ list, rows, top }: { list: SevpList; rows: SevpList["rows"]
                     total is printed by the bar there too. */}
                 <span className="mt-1 flex max-w-xs items-center gap-2" aria-hidden="true">
                 <span
-                  className="block h-2 min-w-0 flex-1 bg-muted"
+                  className="block h-2 min-w-0 flex-1 bg-sage"
                   data-tip={[
                     r.employer,
                     `#${r.rank} of ${list.rows.length}`,
@@ -55,7 +56,7 @@ function RowsTable({ list, rows, top }: { list: SevpList; rows: SevpList["rows"]
                     .filter(Boolean)
                     .join("\n")}
                 >
-                  <span className="block h-full bg-foreground" style={{ width: `${Math.max(1, (r.total / top) * 100)}%` }} />
+                  <span className="block h-full bg-primary" style={{ width: `${Math.max(1, (r.total / top) * 100)}%` }} />
                 </span>{" "}
                 <span className="shrink-0 text-sm font-bold tabular-nums sm:hidden">{fmt(r.total)}</span>
                 </span>{" "}
@@ -85,7 +86,7 @@ export function SevpEmployerTable({ list, open }: { list: SevpList; open?: numbe
     <ChartTips label={`ICE's top employers for ${opt ? "OPT and STEM OPT" : "CPT"}, ${list.year}`}>
       <RowsTable list={list} rows={shown} top={top} />{" "}
       {rest.length > 0 ? (
-        <details className="group mt-3 bg-tint">
+        <details className="group mt-3 bg-sage">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 font-heading text-base font-bold [&::-webkit-details-marker]:hidden">
             Ranks {rest[0]!.rank} to {rest[rest.length - 1]!.rank}{" "}
             <PlusIcon aria-hidden="true" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />

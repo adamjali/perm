@@ -154,7 +154,7 @@ export function FieldPosition({
             <span
               key={i}
               aria-hidden="true"
-              className={cn("flex-1", i === subjectBin ? "bg-primary" : "bg-foreground/25")}
+              className={cn("flex-1", i === subjectBin ? "bg-primary" : "bg-chart-blue")}
               style={{ height: `${Math.max(4, (c / peak) * 100)}%` }}
               data-tip={`Around ${format(binMid)}\n${c.toLocaleString("en-US")} of ${clean.length.toLocaleString("en-US")} in the field${i === subjectBin ? `\nThis one: ${valueLabel}` : ""}`}
             />
@@ -164,7 +164,7 @@ export function FieldPosition({
         {placed ? (
           <span
             aria-hidden="true"
-            className="absolute bottom-0 top-[-6px] w-0.5 bg-foreground"
+            className="absolute bottom-0 top-[-6px] w-0.5 bg-data-good-ink"
             style={{ left: `${clampedPct}%` }}
           />
         ) : null}

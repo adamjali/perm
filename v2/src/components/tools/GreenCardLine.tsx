@@ -188,7 +188,7 @@ export function GreenCardLine({
         // sentence that says what fills it in. Nothing in it is a figure.
         <div className="p-6 sm:p-8">
           <p className="text-sm font-bold text-muted-foreground">People ahead of you</p>{" "}
-          <div aria-hidden="true" className="mt-2 h-12 w-56 max-w-full bg-foreground/10" />{" "}
+          <div aria-hidden="true" className="mt-2 h-12 w-56 max-w-full bg-sage" />{" "}
           <div
             aria-hidden="true"
             className="mt-5 flex h-8 border-dashed border-foreground/40 text-muted-foreground [&>*]:min-w-0 border"
@@ -212,7 +212,7 @@ export function GreenCardLine({
           <p className="text-base text-soft">{result.reason}</p>
         </div>
       ) : result.kind === "current" ? (
-        <div className="bg-tint p-6 sm:p-8">
+        <div className="bg-sage p-6 sm:p-8">
           <p className={EYEBROW_CLASS}>{lineLabel}</p>{" "}
           <p className="mt-2 font-heading text-3xl font-bold leading-tight sm:text-4xl">
             Your priority date is current
@@ -263,9 +263,9 @@ function LineAnswer({
   const tested = reach ? bulletinCheckSentence(check, reach.gapDays) : null;
   const { parts } = result;
   const segs = [
-    { key: "current", label: "Current, not finished", note: "I-485s USCIS holds with a visa number available", value: (parts.currentUnfinished.low + parts.currentUnfinished.high) / 2, cls: "bg-data-good" },
-    { key: "approved", label: "Approved, waiting for the bulletin", note: "USCIS's own count, spread across priority dates", value: (parts.approvedWaiting.low + parts.approvedWaiting.high) / 2, cls: "bg-foreground" },
-    { key: "pending", label: "Waiting for I-140 approval", note: "pending petitions at the rate USCIS approves them", value: (parts.pendingApproval.low + parts.pendingApproval.high) / 2, cls: "bg-data-warn" },
+    { key: "current", label: "Current, not finished", note: "I-485s USCIS holds with a visa number available", value: (parts.currentUnfinished.low + parts.currentUnfinished.high) / 2, cls: "bg-chart-green" },
+    { key: "approved", label: "Approved, waiting for the bulletin", note: "USCIS's own count, spread across priority dates", value: (parts.approvedWaiting.low + parts.approvedWaiting.high) / 2, cls: "bg-chart-blue" },
+    { key: "pending", label: "Waiting for I-140 approval", note: "pending petitions at the rate USCIS approves them", value: (parts.pendingApproval.low + parts.pendingApproval.high) / 2, cls: "bg-chart-yellow" },
   ];
   const total = segs.reduce((n, s) => n + s.value, 0);
 
@@ -485,7 +485,8 @@ function LineStrip({ histogram, front, you }: { histogram: Array<{ month: string
                   y={H - PAD.b - h}
                   width={Math.max(bw - 1, 0.5)}
                   height={h}
-                  className="fill-foreground/75"
+                  // People in line ahead: the site's waiting yellow (round 3).
+                  className="fill-chart-yellow"
                 />
               </ChartHit>
             );

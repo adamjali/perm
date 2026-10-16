@@ -4,12 +4,12 @@ import { withSocialCard } from "@/lib/socialCard";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { getDatasetSchema } from "@/lib/structuredData";
 import Link from "next/link";
-import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
 import { BacklogWall } from "@/components/queue/BacklogWall";
+import { CaveatBox, NoteBanner } from "@/components/ui/note";
 import { SourceNote } from "@/components/queue/SourceNote";
 import { OctoberNote, OCTOBER_2025 } from "@/components/queue/OctoberNote";
 import { PendingCensus } from "@/components/queue/PendingCensus";
@@ -148,29 +148,28 @@ export default async function PermQueuePage() {
         <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
           Where the PERM queue stands
         </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-soft">
-          DOL publishes which month it&rsquo;s working and nothing about the
-          size of what&rsquo;s behind it. Its disclosure files carry no pending
-          rows, so the backlog cannot be derived from them.
-        </p>{" "}
-        <SourceNote className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground" />
+        {/* Two banners, not two grey paragraphs (round 3, Oct 15 2026): what
+            DOL publishes, then how to read the sweep's counts. */}
+        <NoteBanner className="mt-5 max-w-3xl">
+          <p>
+            DOL publishes which month it&rsquo;s working and nothing about the
+            size of what&rsquo;s behind it. Its disclosure files carry no pending
+            rows, so the backlog cannot be derived from them.
+          </p>
+        </NoteBanner>{" "}
+        <SourceNote className="mt-3 max-w-3xl" />
       </header>
 
       {/* The provisional notice sits ABOVE every figure it qualifies, for the
           same reason a withheld statistic states its reason first: a number
           the reader has already absorbed cannot be un-absorbed by a footnote. */}
       {!MIRROR_COMPLETE ? (
-        <p className="mt-8 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base text-soft">
-          <WarningIcon
-            className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink"
-            weight="fill"
-            aria-hidden="true"
-          />{" "}
-          <span>{PROVISIONAL_NOTICE}</span>
-        </p>
+        <CaveatBox className="mt-8">
+          <p>{PROVISIONAL_NOTICE}</p>
+        </CaveatBox>
       ) : null}
 
-      <section className="mt-10 bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
+      <section className="mt-10 bg-sage p-6 sm:p-8 border-2 shadow-hard border-border">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 [&>*]:min-w-0">
           <Figure
             label="Last seen undecided"

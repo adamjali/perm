@@ -343,7 +343,7 @@ export function DataRail() {
                   // `-mt-1` takes the nav's 4px top padding, so the 44px button costs
                   // the rail the 40px the old tab did (rail-fits.test.ts).
                   "-mt-1 flex size-11 shrink-0 items-center justify-center self-end text-foreground/65",
-                  "transition-colors duration-150 hover:bg-sage-hover hover:text-foreground",
+                  "transition-colors duration-150 hover:bg-rail-hover hover:text-foreground",
                   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
                   "motion-reduce:transition-none",
                 )}
@@ -372,7 +372,7 @@ export function DataRail() {
                   focusAfterToggle.current = "rail-collapse";
                   setRailOpen(true);
                 }}
-                className="rail-square text-foreground/65 hover:bg-sage-hover hover:text-foreground"
+                className="rail-square text-foreground/65 hover:bg-rail-hover hover:text-foreground"
               >
                 <span className="sr-only">Expand data sections</span>
                 <SidebarSimpleIcon className="size-5" weight="bold" aria-hidden="true" />
@@ -382,7 +382,7 @@ export function DataRail() {
                 aria-label={OVERVIEW.label}
                 title={OVERVIEW.label}
                 aria-current={onOverview ? "page" : undefined}
-                className={cn("rail-square", onOverview ? "bg-primary text-black" : "text-primary hover:bg-sage-hover")}
+                className={cn("rail-square", onOverview ? "bg-primary text-black" : "text-primary hover:bg-rail-hover")}
               >
                 <HouseIcon className="size-4" weight="fill" aria-hidden="true" />
               </Link>{" "}
@@ -400,7 +400,7 @@ export function DataRail() {
                         setOpen(g);
                         setRailOpen(true);
                       }}
-                      className={cn("rail-square", here ? "bg-primary text-black" : "text-foreground/65 hover:bg-sage-hover hover:text-foreground")}
+                      className={cn("rail-square", here ? "bg-primary text-black" : "text-foreground/65 hover:bg-rail-hover hover:text-foreground")}
                     >
                       <GroupIcon className="size-4" weight="bold" aria-hidden="true" />
                     </button>
@@ -581,7 +581,7 @@ function Tab({
               kind === "home" && "-mr-[20px]",
             )
           : cn(
-              "text-foreground/75 motion-safe:hover:translate-x-[3px] hover:bg-sage-hover hover:text-foreground",
+              "text-foreground/75 motion-safe:hover:translate-x-[3px] hover:bg-rail-hover hover:text-foreground hover:shadow-[inset_3px_0_0_var(--primary)]",
               kind === "home" ? "font-heading font-bold" : "font-semibold",
             ),
       )}

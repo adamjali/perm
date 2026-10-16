@@ -78,7 +78,7 @@ function WageLadder({ levels }: { levels: WageLevel[] | null }) {
           ) : (
             <span
               aria-hidden="true"
-              className="block h-9 border-dashed border-foreground/30 text-muted-foreground bg-hatch border"
+              className="block h-9 border-dashed border-data-good-ink text-chart-green bg-hatch border"
               style={{ width: `${GHOST_WIDTHS[i]}%` }}
             />
           )}
@@ -261,7 +261,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
       </form>
 
       {result.kind === "error" || result.kind === "none" ? (
-        <p className="mt-5 flex items-start gap-2 bg-tint p-3 text-sm border-2 border-border">
+        <p className="mt-5 flex items-start gap-2 border-2 border-data-warn bg-soft-wait p-3 text-sm">
           <WarningIcon size={18} weight="bold" className="mt-0.5 shrink-0" aria-hidden="true" /> {result.message}
         </p>
       ) : null}
@@ -318,7 +318,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
             </div>
           ) : null}
           {history.edc.some((y) => y.levels.some((v) => v != null)) ? (
-            <details className="bg-tint p-4 border-2 border-border">
+            <details className="bg-sage p-4 border-2 border-border">
               <summary className="cursor-pointer font-bold">
                 Universities and research employers (DOL&apos;s ACWIA table)
               </summary>{" "}

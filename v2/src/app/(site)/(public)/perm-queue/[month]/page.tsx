@@ -3,7 +3,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeftIcon, ArrowRightIcon, WarningIcon } from "@phosphor-icons/react/ssr";
+import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -37,6 +37,8 @@ import { formatShare } from "@/lib/format";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 import { buttonVariants } from "@/components/ui/button";
 import { monthDay } from "@convex/lib/months";
+import { cn } from "@/lib/utils";
+import { CaveatBox } from "@/components/ui/note";
 
 /**
  * One filing month, split across the queues DOL actually runs.
@@ -186,16 +188,15 @@ export default async function CohortPage({
           Filed {label}
         </h1>{" "}
         <MonthHeadline makeup={makeup} label={label} end={end} />{" "}
-        <SourceNote className="mt-4 text-base leading-relaxed text-muted-foreground" />
+        <SourceNote className="mt-4" />
       </header>{" "}
 
       {detail && dolDecisions(detail.days) >= 50 ? <MonthActivity detail={detail} label={label} month={month} /> : null}{" "}
 
       {!MIRROR_COMPLETE ? (
-        <p className="mt-8 flex items-start gap-2 border-2 border-data-warn bg-data-warn/8 px-4 py-3 text-base text-soft">
-          <WarningIcon className="mt-0.5 h-4 w-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
-          <span>{PROVISIONAL_NOTICE}</span>
-        </p>
+        <CaveatBox className="mt-8">
+          <p>{PROVISIONAL_NOTICE}</p>
+        </CaveatBox>
       ) : null}
 
       {isNoted ? (
@@ -246,7 +247,7 @@ export default async function CohortPage({
         className="mt-6"
       />{" "}
 
-      <details className="mt-6 bg-tint">
+      <details className="mt-6 bg-sage">
         <summary className="flex min-h-12 cursor-pointer items-center px-5 py-3 font-heading text-lg font-bold">
           {`Every status, pending and decided, and the ${label} cases themselves`}
         </summary>
@@ -295,7 +296,7 @@ export default async function CohortPage({
             </div>
           </>
         ) : (
-          <p className="mt-6 bg-tint p-4 text-base text-soft border-2 border-border">
+          <p className="mt-6 bg-soft-good p-4 text-base border-2 border-border">
             Every application filed in {label} has a decision. There is nothing
             left in the queue for this month.
           </p>
@@ -564,11 +565,14 @@ const longDay = (iso: string) =>
 function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: string; end: MonthEnd | null }) {
   const pct = m.total ? m.decided / m.total : 0;
   const parts = [
-    { key: "certified", n: m.certified + m.otherDecided, cls: "bg-data-good-ink", text: "certified" },
-    { key: "denied", n: m.denied, cls: "bg-data-bad-ink", text: "denied" },
-    { key: "withdrawn", n: m.withdrawn, cls: "bg-data-none-ink", text: "withdrawn by the employer" },
-    { key: "line", n: m.inLine, cls: "bg-foreground", text: "in DOL's line" },
-    { key: "outside", n: m.outside, cls: "bg-data-warn-ink", text: "on hold, at an RFI or on appeal" },
+    // Soft colours by meaning, no black or grey (round 3, Oct 15 2026), the
+    // status chips' own: certified green, denied red, withdrawn orange, in
+    // DOL's line yellow, out of order blue.
+    { key: "certified", n: m.certified + m.otherDecided, cls: "bg-primary", text: "certified" },
+    { key: "denied", n: m.denied, cls: "bg-chart-red", text: "denied" },
+    { key: "withdrawn", n: m.withdrawn, cls: "bg-chart-orange", text: "withdrawn by the employer" },
+    { key: "line", n: m.inLine, cls: "bg-chart-yellow", text: "in DOL's line" },
+    { key: "outside", n: m.outside, cls: "bg-chart-blue", text: "on hold, at an RFI or on appeal" },
   ].filter((p) => p.n > 0);
   return (
     <div className="mt-5">
@@ -579,11 +583,11 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
         {`${formatInt(m.decided)} of the ${formatInt(m.total)} applications filed in ${label} have a decision.`}
       </p>{" "}
       <ChartTips label={`Applications filed in ${label}, by where they stand`} className="mt-5">
-        <div className="flex h-6 w-full border-input bg-muted border" role="img" aria-label={parts.map((p) => `${formatInt(p.n)} ${p.text}`).join(", ")}>
+        <div className="flex h-6 w-full border-input bg-card border" role="img" aria-label={parts.map((p) => `${formatInt(p.n)} ${p.text}`).join(", ")}>
           {parts.map((p) => (
             <span
               key={p.key}
-              className={`block h-full ${p.cls}`}
+              className={`block h-full border-r-2 border-foreground/50 last:border-r-0 ${p.cls}`}
               style={{ width: `${(p.n / m.total) * 100}%` }}
               data-tip={`${formatInt(p.n)} ${p.text}`}
             />
@@ -600,18 +604,26 @@ function MonthHeadline({ makeup: m, label, end }: { makeup: MonthMakeup; label: 
           </Fragment>
         ))}
       </ul>{" "}
+      {/* The tiles take their part's colour from the bar above (round 3, Oct
+          15 2026): in the line yellow, outside it blue, and the month's end by
+          where the queue is, as the timeline calculator colours it. */}
       <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="bg-tint p-4 border-2 shadow-hard-sm border-border">
+        <div className="bg-soft-wait p-4 border-2 shadow-hard-sm border-border">
           <dt className="text-sm font-bold">In DOL&apos;s line</dt>{" "}
           <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.inLine)}</dd>{" "}
           <dd className="text-sm text-muted-foreground">analyst review, worked in filing order</dd>
         </div>{" "}
-        <div className="bg-tint p-4 border-2 shadow-hard-sm border-border">
+        <div className="bg-soft-info p-4 border-2 shadow-hard-sm border-border">
           <dt className="text-sm font-bold">Outside the line</dt>{" "}
           <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">{formatInt(m.outside)}</dd>{" "}
           <dd className="text-sm text-muted-foreground">on hold, at an RFI or on appeal</dd>
         </div>{" "}
-        <div className="bg-tint p-4 border-2 shadow-hard-sm border-border">
+        <div
+          className={cn(
+            "p-4 border-2 shadow-hard-sm border-border",
+            end?.kind === "estimate" ? "bg-soft-wait" : end?.kind === "passed" ? "bg-soft-bad" : "bg-sage",
+          )}
+        >
           {end?.kind === "estimate" ? (
             <>
               <dt className="text-sm font-bold">The line reaches this month&apos;s end</dt>{" "}
@@ -691,9 +703,9 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
                 className="flex h-full min-w-0 flex-1 flex-col justify-end"
                 data-tip={`${shortDay(d.date)}\n${formatInt(d.certified)} certified, ${formatInt(d.denied)} denied, ${formatInt(d.withdrawn)} withdrawn`}
               >
-                <span className="block w-full bg-data-none-ink" style={{ height: `${(d.withdrawn / max) * 100}%` }} />
-                <span className="block w-full bg-data-bad-ink" style={{ height: `${(d.denied / max) * 100}%` }} />
-                <span className="block w-full bg-data-good-ink" style={{ height: `${(d.certified / max) * 100}%` }} />
+                <span className="block w-full bg-chart-orange" style={{ height: `${(d.withdrawn / max) * 100}%` }} />
+                <span className="block w-full bg-chart-red" style={{ height: `${(d.denied / max) * 100}%` }} />
+                <span className="block w-full bg-primary" style={{ height: `${(d.certified / max) * 100}%` }} />
                 <span className="sr-only">{` ${shortDay(d.date)}: ${formatInt(total)} decided. `}</span>
               </span>
             );
@@ -705,7 +717,7 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
         <span>{shortDay(newest!.date)}</span>
       </div>{" "}
       <p className="mt-2 text-sm text-muted-foreground">
-        Green certified, red denied, grey withdrawn by the employer. Days are when our sweep first saw each decision,
+        Green certified, red denied, orange withdrawn by the employer. Days are when our sweep first saw each decision,
         not DOL&apos;s own date.
       </p>{" "}
       <h3 className="mt-8 font-heading text-lg font-bold">By the employer&apos;s first letter</h3>{" "}
@@ -718,15 +730,15 @@ function MonthActivity({ detail, label, month }: { detail: MonthDetail; label: s
           return (
             <Fragment key={l}>{" "}
             <li
-              className="bg-tint p-2 border-2 border-border"
+              className="bg-sage p-2 border-2 border-border"
               data-tip={`${l}: ${formatInt(v[1])} of ${formatInt(v[0])} decided`}
             >
               <span className="flex items-baseline justify-between gap-1">
                 <span className="font-heading text-lg font-bold">{l}</span>{" "}
                 <span className="font-mono text-sm tabular-nums">{v[0] ? formatShare(share) : "none"}</span>
               </span>{" "}
-              <span className="mt-1 block h-2 border border-input bg-muted" aria-hidden="true">
-                <span className="block h-full bg-data-good-ink" style={{ width: `${Math.round(share * 100)}%` }} />
+              <span className="mt-1 block h-2 border border-input bg-soft-wait" aria-hidden="true">
+                <span className="block h-full bg-primary" style={{ width: `${Math.round(share * 100)}%` }} />
               </span>
             </li>
             </Fragment>

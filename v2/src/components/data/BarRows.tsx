@@ -27,7 +27,13 @@ export interface BarRow {
   value: number | null;
   /** The figure as printed beside the bar. */
   text: string;
-  tone?: "primary" | "ink";
+  /**
+   * The bar's colour (round 3, Oct 15 2026: no black or grey in charts).
+   * `primary` lime is the subject; `blue` a second series or a benchmark
+   * ("every employer"); `yellow` waiting or pending; `green` done. `ink` is
+   * the old name for the second series and draws blue.
+   */
+  tone?: "primary" | "ink" | "blue" | "yellow" | "green";
   /**
    * The hover detail, lines split by "\n". Defaults to the row's own label,
    * figure and sub-line, so every page using the rows gets a tooltip.
@@ -41,6 +47,14 @@ export function barRowTip(r: BarRow): string {
   const sub = plainText(r.sub).trim();
   return [plainText(r.label).trim(), r.value === null ? "withheld" : r.text, sub].filter(Boolean).join("\n");
 }
+
+const BAR_TONE: Record<NonNullable<BarRow["tone"]>, string> = {
+  primary: "bg-primary",
+  ink: "bg-chart-blue",
+  blue: "bg-chart-blue",
+  yellow: "bg-chart-yellow",
+  green: "bg-chart-green",
+};
 
 export function BarRows({
   rows,
@@ -67,10 +81,10 @@ export function BarRows({
             <div className="min-w-0">
               <p className="text-base font-semibold leading-snug">{r.label}</p>{" "}
               {r.sub ? <p className="text-sm text-muted-foreground">{r.sub}</p> : null}
-              <div className="mt-1.5 h-2.5 w-full bg-muted" aria-hidden="true">
+              <div className="mt-1.5 h-2.5 w-full bg-sage" aria-hidden="true">
                 {r.value !== null ? (
                   <div
-                    className={cn("h-full", r.tone === "ink" ? "bg-foreground" : "bg-primary")}
+                    className={cn("h-full", BAR_TONE[r.tone ?? "primary"])}
                     style={{ width: `${width}%` }}
                   />
                 ) : null}
@@ -94,8 +108,9 @@ export interface StackSegment {
   value: number;
 }
 
-/** The five grounds the stacked bar uses, in segment order, all on house tokens. */
-const STACK_TONES = ["bg-primary", "bg-foreground", "bg-foreground/60", "bg-foreground/35", "bg-primary/40"] as const;
+/** The five grounds the stacked bar uses, in segment order: soft colours, no
+ *  black or grey (round 3, Oct 15 2026). The legend carries the figures. */
+const STACK_TONES = ["bg-primary", "bg-chart-blue", "bg-chart-yellow", "bg-chart-orange", "bg-chart-sage"] as const;
 
 /**
  * One bar split into parts, with a legend that carries the figures. The bar
@@ -118,7 +133,7 @@ export function StackedBar({
   return (
     <div className={className}>
       <ChartTips label={label}>
-      <div className="flex h-4 w-full overflow-hidden bg-muted" aria-hidden="true">
+      <div className="flex h-4 w-full overflow-hidden border border-border/40 bg-sage" aria-hidden="true">
         {segments.map((s, i) => (
           <div
             key={s.key}
@@ -150,7 +165,7 @@ export function StackedBar({
 /** The empty state every USCIS quarterly page shares: the file has not arrived. */
 export function QuarterlyEmpty({ file, children }: { file: string; children?: ReactNode }) {
   return (
-    <section className="mt-8 bg-tint p-6 sm:p-8 border-2 border-border">
+    <section className="mt-8 bg-sage p-6 sm:p-8 border-2 border-border">
       <h2 className="font-heading text-xl font-bold">Nothing loaded yet</h2>{" "}
       <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
         USCIS&apos;s quarterly file ({file}) has not been read into this site&apos;s

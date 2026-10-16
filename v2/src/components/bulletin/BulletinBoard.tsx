@@ -298,15 +298,17 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                   <span className="text-sm font-bold">
                     {categoryLabel(c.category)} {COUNTRY_LABELS[c.country]}
                   </span>{" "}
-                  <span className="relative block h-6 border-input bg-muted border">
+                  <span className="relative block h-6 border-input bg-sage border">
                     <span
                       className="absolute inset-y-0 block"
                       style={{
                         left: `${left}%`,
                         width: `${width}%`,
+                        // Soft colours (round 3, Oct 15 2026): green moving
+                        // forward, yellow going back or holding.
                         background: gaining
-                          ? "var(--data-good-ink)"
-                          : "var(--data-warn-ink)",
+                          ? "var(--chart-green)"
+                          : "var(--chart-yellow)",
                       }}
                     />
                     {/* The baseline is the whole point of the drawing, so it
@@ -358,7 +360,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
               <ul className="mt-3 flex flex-wrap gap-2">
                 {openLines.map((g) => (
                   <Fragment key={g.category}>
-                    <li className="bg-tint px-3 py-1.5 text-sm font-bold border-2 border-border">
+                    <li className="bg-sage px-3 py-1.5 text-sm font-bold border-2 border-border">
                       {g.everyCountry
                         ? `${categoryLabel(g.category)}, every country`
                         : `${categoryLabel(g.category)}: ${g.countries.map((k) => COUNTRY_LABELS[k]).join(", ")}`}

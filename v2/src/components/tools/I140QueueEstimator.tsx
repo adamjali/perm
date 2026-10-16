@@ -17,7 +17,7 @@
  */
 
 import { Fragment, useId, useMemo, useState } from "react";
-import { FileTextIcon, TrendUpIcon as TrendingUp, WarningIcon } from "@phosphor-icons/react";
+import { FileTextIcon, TrendUpIcon as TrendingUp } from "@phosphor-icons/react";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { estimateI140Queue, type I140QuarterStats } from "@/lib/perm";
@@ -29,6 +29,7 @@ import {
 import Link from "next/link";
 
 import { Label } from "@/components/ui/label";
+import { CaveatBox } from "@/components/ui/note";
 import { cn } from "@/lib/utils";
 
 export interface I140QueueEstimatorProps {
@@ -157,7 +158,7 @@ export function I140QueueEstimator({
       </div>
 
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2">
-        <div className="bg-tint p-6 sm:p-8">
+        <div className="bg-sage p-6 sm:p-8">
           <p className="text-sm font-bold text-muted-foreground">
             Petitions waiting
           </p>{" "}
@@ -246,8 +247,8 @@ export function I140QueueEstimator({
       </div>
 
       {estimate.backlogGrowing ? (
-        <div className="flex items-start gap-3 border-b-2 border-border bg-muted p-6 sm:p-8">
-          <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <div className="flex items-start gap-3 border-b-2 border-border bg-soft-wait p-6 sm:p-8">
+          <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-data-warn-ink" aria-hidden="true" />
           <p className="text-base leading-relaxed">
             <strong>This queue is growing.</strong>{" "}
             {estimate.receivedInQuarter.toLocaleString("en-US")} arrived last
@@ -287,11 +288,12 @@ export function I140QueueEstimator({
                     <span className="sm:hidden">{s.code}</span>{" "}
                     <span className="hidden sm:inline">{s.label}</span>
                   </span>{" "}
-                  <span className="h-6 w-full border-input bg-muted border">
+                  <span className="h-6 w-full border-input bg-sage border">
                     <span
                       className={cn(
                         "block h-full",
-                        s.code === code ? "bg-primary" : "bg-foreground/25",
+                        // Yours in lime, the other petition types in blue.
+                        s.code === code ? "bg-primary" : "bg-chart-blue",
                       )}
                       style={{ width: `${Math.max((s.pending / maxPending) * 100, 1.5)}%` }}
                     />
@@ -311,14 +313,12 @@ export function I140QueueEstimator({
         </ChartTips>
       </div>
 
-      <div className="bg-muted p-6 sm:p-8">
-        <div className="flex items-start gap-3">
-          <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <div>
-            <h3 className="font-heading text-base font-bold">What this can’t tell you</h3>{" "}
-            <ul className="mt-3 space-y-2">
+      <div className="p-6 sm:p-8">
+        {/* The site's caveat box (round 3, Oct 15 2026: a grey panel read as a wall). */}
+        <CaveatBox title={<span role="heading" aria-level={3}>What this can’t tell you</span>}>
+            <ul className="space-y-2">
               {estimate.caveats.map((c) => (
-                <li key={c} className="text-base leading-relaxed text-muted-foreground">
+                <li key={c} className="text-base leading-relaxed">
                   {c}
                 </li>
               ))}
@@ -329,8 +329,7 @@ export function I140QueueEstimator({
                 {sourceFile ? `, from ${sourceFile}` : ""}.
               </p>
             ) : null}
-          </div>
-        </div>
+        </CaveatBox>
       </div>
     </div>
   );

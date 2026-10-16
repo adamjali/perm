@@ -62,7 +62,7 @@ function Shell({
   className?: string;
 }) {
   return (
-    <section className={cn("bg-tint p-5 sm:p-6 border-2 border-border", className)}>
+    <section className={cn("bg-card p-5 sm:p-6 border-2 border-border", className)}>
       {/* The spaces are load-bearing, not formatting. Without them the title
           welds to the first row and the last row welds to the note - "What the
           jobs are||Software Developers", "15-2051.01111||These are the 6
@@ -210,7 +210,7 @@ export function StateMix({
         {rows.map((r) => (
           <Fragment key={r.key ?? r.label}>{" "}
             <li
-              className="bg-tint px-3 py-1.5 border-2 border-border"
+              className="bg-sage px-3 py-1.5 border-2 border-border"
             >
               <span className="block text-sm font-bold">
                 {r.key ? stateName(r.key) : r.label}
@@ -341,9 +341,9 @@ export function CityMix({
                 <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
                 <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">{formatInt(r.n)}</span>
               </span>{" "}
-              <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
+              <span className="mt-1 block h-2 w-full bg-sage" aria-hidden="true">
                 <span
-                  className="block h-full bg-foreground"
+                  className="block h-full bg-primary"
                   style={{ width: `${top > 0 ? Math.max(2, (r.n / top) * 100) : 0}%` }}
                 />
               </span>

@@ -57,9 +57,9 @@ function BarRow({
           {pct !== null ? ` · ${pct}%` : ""}
         </span>
       </span>{" "}
-      <span className="mt-1 block h-2.5 w-full bg-muted" aria-hidden="true">
+      <span className="mt-1 block h-2.5 w-full bg-sage" aria-hidden="true">
         <span
-          className={cn("block h-full", strong ? "bg-foreground" : "bg-foreground/35")}
+          className={cn("block h-full", strong ? "bg-primary" : "bg-chart-blue")}
           style={{ width: `${top > 0 && n > 0 ? Math.max(2, (n / top) * 100) : 0}%` }}
         />
       </span>
@@ -179,11 +179,11 @@ export function LcaProfile({
           <h3 className="font-heading text-lg font-bold">What it declared on Section H</h3>{" "}
           {p.newest ? (
             <dl className="mt-3 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
-              <div className="bg-tint p-4 border-2 border-border">
+              <div className="bg-sage p-4 border-2 border-border">
                 <dt className="text-sm font-bold text-muted-foreground">H-1B-dependent</dt>{" "}
                 <dd className="mt-1 font-heading text-2xl font-bold">{yesNo(p.newest.dependent)}</dd>
               </div>{" "}
-              <div className="bg-tint p-4 border-2 border-border">
+              <div className="bg-sage p-4 border-2 border-border">
                 <dt className="text-sm font-bold text-muted-foreground">Found a willful violator</dt>{" "}
                 <dd className="mt-1 font-heading text-2xl font-bold">{yesNo(p.newest.violator)}</dd>
               </div>

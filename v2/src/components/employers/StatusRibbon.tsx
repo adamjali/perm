@@ -31,10 +31,17 @@ export function ribbonParts(row: EmployerStageRow): RibbonParts {
   return { pending: row.pending, held, appeal, queue, otherReview: Math.max(0, row.pending - held - appeal - queue) };
 }
 
+// Soft chart colours by meaning (round 3, Oct 15 2026: no black or grey in
+// charts): DOL pulling a case aside is out of order (blue), the employer's
+// appeal red, DOL's ordinary line the waiting yellow.
+const REVIEW = "bg-chart-blue";
+const APPEAL = "bg-chart-red";
+const QUEUE = "bg-chart-yellow";
+
 const SEGMENTS = [
-  { key: "review", cls: "bg-data-warn-ink", n: (p: RibbonParts) => p.held + p.otherReview },
-  { key: "appeal", cls: "bg-data-bad-ink", n: (p: RibbonParts) => p.appeal },
-  { key: "queue", cls: "bg-data-none-ink", n: (p: RibbonParts) => p.queue },
+  { key: "review", cls: REVIEW, n: (p: RibbonParts) => p.held + p.otherReview },
+  { key: "appeal", cls: APPEAL, n: (p: RibbonParts) => p.appeal },
+  { key: "queue", cls: QUEUE, n: (p: RibbonParts) => p.queue },
 ] as const;
 
 /** The legend's words, one per segment, each naming who acted. */
@@ -43,9 +50,9 @@ export function ribbonLegend(p: RibbonParts): { key: string; cls: string; text: 
     .filter(Boolean)
     .join(", ");
   return [
-    review ? { key: "review", cls: "bg-data-warn-ink", text: review } : null,
-    p.appeal > 0 ? { key: "appeal", cls: "bg-data-bad-ink", text: `${formatInt(p.appeal)} under the employer's appeal` } : null,
-    p.queue > 0 ? { key: "queue", cls: "bg-data-none-ink", text: `${formatInt(p.queue)} in DOL's normal queue` } : null,
+    review ? { key: "review", cls: REVIEW, text: review } : null,
+    p.appeal > 0 ? { key: "appeal", cls: APPEAL, text: `${formatInt(p.appeal)} under the employer's appeal` } : null,
+    p.queue > 0 ? { key: "queue", cls: QUEUE, text: `${formatInt(p.queue)} in DOL's normal queue` } : null,
   ].filter((x): x is { key: string; cls: string; text: string } => x !== null);
 }
 

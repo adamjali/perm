@@ -112,7 +112,7 @@ export default async function PolicyChangesPage() {
         </p>
       ) : (
         <>
-          <RecordStrip record={record} />{" "}
+          <RecordStrip record={record} label="Policies recorded" />{" "}
 
           <section className="mt-12">
             <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">The last twelve months</h2>{" "}
@@ -134,10 +134,10 @@ export default async function PolicyChangesPage() {
             <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">In the Federal Register</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-soft">
               {feed.register.length} {feed.register.length === 1 ? "document" : "documents"}
-              {ledger.earliest ? ` since ${monthYear(ledger.earliest)}` : ""}, newest first. Open one
-              for the abstract, the dates as published, and the first page as printed.
+              {ledger.earliest ? ` as of ${monthYear(ledger.earliest)}` : ""}. Open one to see the abstract, the
+              effective date and a link to the published document.
             </p>{" "}
-            <div className="mt-6 border-border bg-card border">
+            <div className="mt-6 border-2 border-border bg-card shadow-hard-sm">
               {feed.register.map((d) => (
                 <DocRow key={d.documentNumber} doc={d} today={today} />
               ))}

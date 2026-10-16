@@ -179,7 +179,7 @@ export default async function I140AwaitingVisaPage() {
         <QuarterlyEmpty file="eb_i140_i360_i526_performancedata" />
       ) : (
         <>
-          <RecordStrip record={ledger} />
+          <RecordStrip record={ledger} label="USCIS's count, by country" />
 
           <section id="by-country" className="mt-12 scroll-mt-24">
             <FigurePlate
@@ -314,7 +314,7 @@ export default async function I140AwaitingVisaPage() {
                   sub: `${n(y.approved)} approved, ${n(y.denied)} denied, ${n(y.pending)} pending${y.denialRate !== null ? ` · ${(y.denialRate * 100).toFixed(1)}% of decided denied` : ""}`,
                   value: y.total,
                   text: all && all.total > 0 ? `${n(y.total)} (${Math.round((y.total / all.total) * 100)}%)` : n(y.total),
-                  tone: "ink" as const,
+                  tone: "blue" as const,
                 };
               })}
             />

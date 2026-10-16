@@ -36,9 +36,9 @@ import { buttonVariants } from "@/components/ui/button";
  * cannot make read as broken). With the keys present, the client half asks
  * `/api/uscis-case-status`, which carries every guard.
  *
- * USCIS's own navy (#162E51, the darker primary of uscis.gov's stylesheet,
- * read Oct 15 2026) colours the page's boxes, so the page reads as the USCIS
- * half of the site at a glance. White on it measures 14:1.
+ * The two links to USCIS's own tools are in uscis.gov's blue (#1A4480, read
+ * from its stylesheet Oct 15 2026; white on it measures 10:1). Only those: the
+ * owner tried the whole page in navy and kept the rest as every other page.
  *
  * WHY A SEPARATE PAGE FROM `/perm-case-status`. Different agency, different
  * record, different lookup, different terms of use. One page that reads both
@@ -57,9 +57,6 @@ const DESCRIPTION =
 
 const USCIS_STATUS_URL = "https://egov.uscis.gov/casestatus/landing.do";
 const USCIS_EMMA_URL = "https://www.uscis.gov/tools/meet-emma-our-virtual-assistant";
-
-/** uscis.gov's navy, as a fill; text on it is white. */
-const NAVY = "bg-[#162E51]";
 
 export async function generateMetadata({
   searchParams,
@@ -191,7 +188,7 @@ export default async function UscisCaseStatusPage({
         </p>
       </header>
 
-      <div className={`dark mt-8 border-2 border-black p-5 text-foreground shadow-hard sm:p-6 ${NAVY}`}>
+      <div className="mt-8 border-2 border-border bg-tint p-5 shadow-hard sm:p-6">
         <UscisReceiptForm defaultValue={typed} live={enabled} />
       </div>
 
@@ -225,13 +222,11 @@ export default async function UscisCaseStatusPage({
       ) : null}
 
       {decoded ? (
-        <section className="object mt-8" aria-labelledby="decoded-heading">
-          <div className={`dark border-b-2 border-black px-5 py-3 text-foreground sm:px-6 ${NAVY}`}>
-            <h2 id="decoded-heading" className="font-heading text-xl font-bold sm:text-2xl">
-              What <span className="font-mono">{decoded.receipt}</span> encodes
-            </h2>
-          </div>{" "}
-          <dl className="grid gap-x-8 gap-y-4 p-5 text-sm sm:grid-cols-3 sm:p-6">
+        <section className="mt-8" aria-labelledby="decoded-heading">
+          <h2 id="decoded-heading" className="font-heading text-2xl font-bold">
+            What <span className="font-mono">{decoded.receipt}</span> encodes
+          </h2>{" "}
+          <dl className="mt-4 grid gap-x-8 gap-y-4 border-2 border-border bg-tint p-5 text-sm shadow-hard sm:grid-cols-3 sm:p-6">
             <div>
               <dt className="font-bold text-muted-foreground">Prefix {decoded.prefix}</dt>{" "}
               <dd className="mt-1 text-base">
@@ -301,7 +296,7 @@ export default async function UscisCaseStatusPage({
             {prefixes.map(([code, p]) => (
               <div key={code} className="grid gap-x-6 gap-y-1 px-5 py-3 sm:grid-cols-[6rem_1fr] sm:items-center sm:px-6">
                 <dt>
-                  <span className={`inline-block px-2 py-0.5 font-mono text-base font-bold text-white ${NAVY}`}>{code}</span>
+                  <span className="font-mono text-base font-bold">{code}</span>
                 </dt>{" "}
                 <dd className="text-base leading-relaxed text-soft">
                   {p.name}
@@ -358,7 +353,7 @@ export default async function UscisCaseStatusPage({
 
 /**
  * Where the status lives while this page has no USCIS keys: USCIS's own two
- * tools, in USCIS's navy. Says nothing about access it does not have, and
+ * tools, as uscis.gov-blue buttons in an ordinary box. Says nothing about access it does not have, and
  * never shows a status it did not get from USCIS.
  */
 function CheckWithUscis() {
@@ -377,7 +372,7 @@ function CheckWithUscis() {
   return (
     <section
       aria-labelledby="check-heading"
-      className={`border-2 border-black p-5 text-white shadow-hard sm:p-6 ${NAVY}`}
+      className="border-2 border-border bg-card p-5 shadow-hard sm:p-6"
     >
       <h2 id="check-heading" className="font-heading text-2xl font-bold">
         Check case status with USCIS
@@ -390,7 +385,7 @@ function CheckWithUscis() {
               <a
                 href={t.href}
                 rel="noopener noreferrer"
-                className="lift flex min-h-[44px] w-full items-start justify-between gap-3 border-2 border-black bg-[#1A4480] px-4 py-3 shadow-hard-sm hover:bg-[#005288] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="lift flex min-h-[44px] w-full items-start justify-between gap-3 border-2 border-black bg-[#1A4480] px-4 py-3 text-white shadow-hard-sm hover:bg-[#005288] focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 <span className="flex flex-col">
                   <span className="font-heading text-base font-bold">{t.title}</span>{" "}

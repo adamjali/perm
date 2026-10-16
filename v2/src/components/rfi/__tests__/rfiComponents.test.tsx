@@ -212,17 +212,21 @@ describe("RfiOutcomes", () => {
     expect(fills.size).toBeGreaterThanOrEqual(4);
   });
 
-  it("paints the segments with the -ink tokens, which are the ones that pass 3:1", () => {
-    // Measured on #FAFAFA: the bare tokens are --data-good 2.05:1,
-    // --data-warn 2.07:1, --data-none 2.46:1, all under the WCAG 1.4.11
-    // graphic floor. The -ink variants are 4.70, 4.81 and 7.24, and resolve to
-    // the same hex as the bare tokens in dark mode, so this costs nothing there.
+  it("paints the segments in the soft chart colours, each edged in ink for 3:1", () => {
+    // Round 3 (Oct 15 2026): no grey or black in charts. The soft fills sit
+    // under the WCAG 1.4.11 graphic floor on their own, so the shapes take
+    // their contrast from ink: every segment ends in a 2px ink rule
+    // (--border is #141414 in light, and #6B6B6B at 3.5:1 on dark), inside a
+    // 2px ink frame.
     const { container } = render(<RfiOutcomes funnel={funnel} />);
-    const fills = [...container.querySelectorAll<HTMLElement>("[style*='background-color']")]
-      .map((el) => el.style.backgroundColor)
-      .filter(Boolean);
-    expect(fills.length).toBeGreaterThan(0);
-    for (const f of fills) expect(f).toContain("-ink");
+    const segs = [...container.querySelectorAll<HTMLElement>("[style*='background-color']")].filter((el) =>
+      el.className.includes("border-r-2"),
+    );
+    expect(segs.length).toBe(4);
+    for (const el of segs) expect(el.style.backgroundColor).toMatch(/var\(--chart-(green|red|orange|yellow)\)/);
+    for (const el of segs) expect(el.className).toMatch(/border-border/);
+    const frames = [...container.querySelectorAll<HTMLElement>(".border-foreground.border-2")];
+    expect(frames.length).toBeGreaterThan(0);
   });
 
   it("names every segment in its hover detail, because hue cannot be the only channel", () => {

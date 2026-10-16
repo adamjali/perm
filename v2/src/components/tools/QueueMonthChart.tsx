@@ -109,7 +109,7 @@ export function QueueMonthChart({
                       // Real semantic state, not decoration: this month's
                       // filing volume collapsed and the note below says so.
                       // Its meaning is in the row's hover detail and aria-label.
-                      className="bg-tint px-1 font-mono text-sm font-bold text-soft"
+                      className="border border-data-warn bg-soft-wait px-1 font-mono text-sm font-bold text-foreground"
                     >
                       !
                     </span>
@@ -117,17 +117,19 @@ export function QueueMonthChart({
                 </span>{" "}
                 {/* The track is always full width, so a month DOL has not
                     started reads as untouched rather than as a missing row. */}
-                <span className="block h-6 w-full border-input bg-muted border">
+                {/* Colour by meaning, no grey (round 3, Oct 15 2026): the
+                    track is what's still pending (soft yellow), the fill what
+                    DOL has decided, green ahead of yours, lime yours, a paler
+                    green after yours. */}
+                <span className="block h-6 w-full border-input bg-soft-wait border">
                   <span
                     className={cn(
-                      "block h-full",
+                      "block h-full border-r-2 border-foreground/50",
                       isSelected
                         ? "bg-primary"
-                        : isAhead
-                          ? "bg-foreground/70"
-                          : selectedMonth === undefined
-                            ? "bg-foreground/70"
-                            : "bg-foreground/20",
+                        : isAhead || selectedMonth === undefined
+                          ? "bg-chart-green"
+                          : "bg-chart-sage",
                     )}
                     style={{ width: `${Math.min(100, Math.max(pct, 0))}%` }}
                   />
@@ -157,16 +159,20 @@ export function QueueMonthChart({
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border-input bg-foreground/70 border" aria-hidden="true" />
-          Ahead of yours
+          <span className="h-3 w-3 border-input bg-chart-green border" aria-hidden="true" />
+          Decided, ahead of yours
         </span>{" "}
         <span className="flex items-center gap-2">
           <span className="h-3 w-3 border-input bg-primary border" aria-hidden="true" />
           Your month
         </span>{" "}
         <span className="flex items-center gap-2">
-          <span className="h-3 w-3 border-input bg-foreground/20 border" aria-hidden="true" />
-          Filed after yours
+          <span className="h-3 w-3 border-input bg-chart-sage border" aria-hidden="true" />
+          Decided, filed after yours
+        </span>{" "}
+        <span className="flex items-center gap-2">
+          <span className="h-3 w-3 border-input bg-soft-wait border" aria-hidden="true" />
+          Still pending
         </span>{" "}
         <span>Columns: share of the month decided, then cases still pending.</span>
       </div>

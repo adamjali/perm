@@ -190,13 +190,17 @@ function tallySentence(name: string, t: ReturnType<typeof tally>): string {
   return `${name}: ${parts.join(", ")}.`;
 }
 
-/** The tally's parts in the order a reader scans them, coloured as the cells are. */
+/**
+ * The tally's parts in the order a reader scans them, in the chart colours
+ * by meaning (round 3, Oct 15 2026: no black or grey in charts): moving
+ * forward green, reopened lime, unchanged sage, backwards red, shut orange.
+ */
 const TALLY_PARTS: { key: keyof ReturnType<typeof tally>; word: string; fill: string }[] = [
-  { key: "advanced", word: "advanced", fill: "bg-primary" },
-  { key: "opened", word: "reopened", fill: "bg-data-good-ink" },
-  { key: "held", word: "unchanged", fill: "bg-muted" },
-  { key: "back", word: "went backwards", fill: "bg-destructive" },
-  { key: "shut", word: "became unavailable", fill: "bg-foreground" },
+  { key: "advanced", word: "advanced", fill: "bg-chart-green" },
+  { key: "opened", word: "reopened", fill: "bg-primary" },
+  { key: "held", word: "unchanged", fill: "bg-chart-sage" },
+  { key: "back", word: "went backwards", fill: "bg-chart-red" },
+  { key: "shut", word: "became unavailable", fill: "bg-chart-orange" },
 ];
 
 /**
@@ -216,7 +220,7 @@ function TallyBar({ name, t }: { name: string; t: ReturnType<typeof tally> }) {
         {parts.map((p, i) => (
           <span
             key={p.key}
-            className={`h-full ${p.fill} ${i > 0 ? "border-l-2 border-border" : ""}`}
+            className={`h-full ${p.fill} ${i > 0 ? "border-l-2 border-background" : ""}`}
             style={{ width: `${(t[p.key] / total) * 100}%` }}
           />
         ))}

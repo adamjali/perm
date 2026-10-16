@@ -25,14 +25,14 @@ export interface ProfileTag {
   text: string;
   /** An anchor on the same page. */
   href: string;
-  /** warn: on hold or at RFI; bad: an appeal or a debarment; ink: everything else worth a look. */
+  /** warn: on hold or at RFI; bad: an appeal or a debarment; ink: everything else worth a look (drawn blue, round 3: no black marks). */
   tone: "warn" | "bad" | "ink";
 }
 
 const TONE: Record<ProfileTag["tone"], string> = {
   warn: "bg-data-warn-ink",
   bad: "bg-data-bad-ink",
-  ink: "bg-foreground",
+  ink: "bg-data-info",
 };
 
 export function ProfileHeader({

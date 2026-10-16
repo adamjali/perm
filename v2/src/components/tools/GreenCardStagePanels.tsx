@@ -42,7 +42,7 @@ export function I140SubtypePanel({
   if (subtypes.length === 0) return null;
   const slowest = Math.max(...subtypes.map((s) => s.months80));
   return (
-    <div className={cn("bg-tint p-4 border-2 border-border", className)}>
+    <div className={cn("bg-sage p-4 border-2 border-border", className)}>
       <p className="text-sm font-semibold text-muted-foreground">
         USCIS published times, 80% within
       </p>{" "}
@@ -63,9 +63,9 @@ export function I140SubtypePanel({
                 {/* A bar rather than a second number: the point of the row is
                     which categories are slow, and a length says that faster
                     than a figure the eye has to compare. */}
-                <div className="mt-1 h-1.5 w-full bg-muted" aria-hidden="true">
+                <div className="mt-1 h-1.5 w-full bg-background" aria-hidden="true">
                   <div
-                    className={cn("h-full", active ? "bg-primary" : "bg-foreground/30")}
+                    className={cn("h-full", active ? "bg-primary" : "bg-chart-blue")}
                     style={{ width: `${(s.months80 / slowest) * 100}%` }}
                   />
                 </div>
@@ -141,7 +141,7 @@ export function PriorityDatePanel({
   const rows = categories.filter((c) => bulletin.finalAction[c]);
   if (rows.length === 0) return null;
   return (
-    <div className={cn("bg-tint p-4 border-2 border-border", className)}>
+    <div className={cn("bg-sage p-4 border-2 border-border", className)}>
       <p className="text-sm font-semibold text-muted-foreground">
         Where the line stood in {formatMonth(bulletin.bulletinMonth) ?? bulletin.bulletinMonth}
       </p>{" "}

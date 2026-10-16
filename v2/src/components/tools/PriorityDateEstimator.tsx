@@ -35,6 +35,7 @@ import {
 } from "@/components/tools/chartTicks";
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui/label";
+import { CaveatBox } from "@/components/ui/note";
 import { cn } from "@/lib/utils";
 import { MS_PER_DAY } from "@/lib/time";
 
@@ -247,10 +248,9 @@ const LEGEND: {
         y1="9"
         x2="26"
         y2="9"
-        stroke="currentColor"
+        stroke="var(--data-info-ink)"
         strokeWidth="2"
         strokeDasharray="7 5"
-        strokeOpacity="0.85"
       />
     ),
   },
@@ -645,7 +645,7 @@ export function PriorityDateEstimator({
         // Warnings sit ABOVE everything they cast doubt on. A date computed
         // from suspect input must never read as more authoritative than the
         // doubt about the input, and below the answer is where nobody looks.
-        <div className="border-b-2 border-border bg-tint p-6 sm:p-8" role="alert">
+        <div className="border-b-2 border-border bg-soft-wait p-6 sm:p-8" role="alert">
           {warnings.map((w) => (
             <div key={w} className="flex items-start gap-3 [&+&]:mt-4">
               <WarningIcon
@@ -662,7 +662,7 @@ export function PriorityDateEstimator({
         // Which bulletin is being read, and how old it is, next to the answer
         // rather than in a footnote. Being two bulletins behind is defensible.
         // Being two bulletins behind silently is not.
-        <div className="border-b-2 border-border bg-muted p-6 sm:p-8">
+        <div className="border-b-2 border-border bg-sage p-6 sm:p-8">
           <div className="flex items-start gap-3">
             <History className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
             <div>
@@ -734,7 +734,7 @@ export function PriorityDateEstimator({
                 // all, it changes month to month, and it is published on a
                 // host that serves scripts. Dated, sourced, and never used to
                 // infer a cutoff.
-                <div className="mt-4 bg-tint p-4 border-2 border-border">
+                <div className="mt-4 bg-sage p-4 border-2 border-border">
                   <p className="text-sm font-bold text-muted-foreground">
                     What USCIS is accepting now
                   </p>{" "}
@@ -776,8 +776,8 @@ export function PriorityDateEstimator({
             estimate.latest?.kind === "unavailable"
               ? "bg-[color-mix(in_srgb,var(--data-bad)_14%,var(--card))]"
               : estimate.isCurrent
-                ? "bg-tint border-l-8 border-primary"
-                : "bg-muted",
+                ? "bg-soft-good border-l-8 border-primary"
+                : "bg-soft-wait",
           )}
         >
           <p className="text-sm font-bold text-muted-foreground">
@@ -813,7 +813,7 @@ export function PriorityDateEstimator({
             // nothing about the reader's own case. The last bulletin that did
             // publish a cutoff is where they can still see where they stand,
             // and that gap is the thing worth watching when it reopens.
-            <div className="mt-4 bg-tint p-4 border-2 border-border">
+            <div className="mt-4 bg-sage p-4 border-2 border-border">
               <p className="text-sm font-bold text-muted-foreground">
                 Where your date stood before it closed
               </p>{" "}
@@ -857,7 +857,7 @@ export function PriorityDateEstimator({
             </div>
           ) : null}{" "}
           {estimate.latest?.kind === "unavailable" ? (
-            <div className="mt-4 bg-tint p-4 border-2 border-border">
+            <div className="mt-4 bg-sage p-4 border-2 border-border">
               <p className="text-sm font-bold text-muted-foreground">
                 Why a category closes
               </p>{" "}
@@ -875,8 +875,8 @@ export function PriorityDateEstimator({
       ) : null}
 
       {estimate && estimate.retrogressions.length > 0 ? (
-        <div className="flex items-start gap-3 border-b-2 border-border bg-muted p-6 sm:p-8">
-          <TrendDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <div className="flex items-start gap-3 border-b-2 border-border bg-soft-bad p-6 sm:p-8">
+          <TrendDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-data-bad-ink" aria-hidden="true" />
           <p className="text-base leading-relaxed">
             <strong>This cutoff has gone backwards.</strong> It retrogressed in{" "}
             {estimate.retrogressions.map((m) => formatMonth(m)).join(", ")}. Being
@@ -898,7 +898,7 @@ export function PriorityDateEstimator({
             // Said ABOVE the drawing, because it explains an absence in the
             // drawing. A reader who typed a date and sees no dashed line has
             // to be told why before they read the picture, not after.
-            <p className="mt-3 max-w-2xl bg-tint p-4 text-base font-bold leading-relaxed border-2 border-border">
+            <p className="mt-3 max-w-2xl bg-sage p-4 text-base font-bold leading-relaxed border-2 border-border">
               {formatAsOf(priorityDate)} is{" "}
               {pdEdgeDays !== null
                 ? `${pdEdgeDays.toLocaleString("en-US")} days `
@@ -1047,15 +1047,16 @@ export function PriorityDateEstimator({
                   )}
 
                   {pdPlacement === "inside" && pdTime !== null ? (
+                    // The reader's own date in blue, apart from the green
+                    // cutoff line (round 3, Oct 15 2026: no black marks).
                     <line
                       x1={PAD_L}
                       x2={W - PAD_R}
                       y1={py(pdTime)}
                       y2={py(pdTime)}
-                      stroke="currentColor"
+                      stroke="var(--data-info-ink)"
                       strokeWidth="2"
                       strokeDasharray="7 5"
-                      strokeOpacity="0.85"
                     />
                   ) : null}
 
@@ -1225,20 +1226,18 @@ export function PriorityDateEstimator({
         </div>
       ) : null}
 
-      <div className="bg-muted p-6 sm:p-8">
-        <div className="flex items-start gap-3">
-          <WarningIcon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <div>
-            <h3 className="font-heading text-base font-bold">What this can’t tell you</h3>{" "}
-            <ul className="mt-3 space-y-2">
+      <div className="p-6 sm:p-8">
+        {/* The site's caveat box (round 3, Oct 15 2026: a grey panel read as a wall). */}
+        <CaveatBox title={<span role="heading" aria-level={3}>What this can’t tell you</span>}>
+            <ul className="space-y-2">
               {(estimate?.caveats ?? [
                 "Enter a priority date to see where it sits against the cutoff.",
               ]).map((c) => (
-                <li key={c} className="text-base leading-relaxed text-muted-foreground">
+                <li key={c} className="text-base leading-relaxed">
                   {c}
                 </li>
               ))}
-              <li className="text-base leading-relaxed text-muted-foreground">
+              <li className="text-base leading-relaxed">
                 It can’t tell you this month&apos;s cutoff. It holds archived
                 bulletins only, and the archive itself stops at{" "}
                 {newestMonth ? formatMonth(newestMonth) : "the last month captured"}.{" "}
@@ -1253,8 +1252,7 @@ export function PriorityDateEstimator({
                 before acting on any of it.
               </li>
             </ul>
-          </div>
-        </div>
+        </CaveatBox>
       </div>
     </div>
   );

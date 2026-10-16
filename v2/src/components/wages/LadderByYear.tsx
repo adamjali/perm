@@ -103,7 +103,7 @@ export function LadderByYear({
         {(["p10", "p50", "p90", "p95"] as const).map((r) => {
           const pct = move(r);
           return (
-            <div key={r} className="bg-tint p-3">
+            <div key={r} className="bg-sage p-3">
               <dt className="text-sm font-bold text-muted-foreground">
                 {RUNG_LABEL[r]}
               </dt>{" "}
