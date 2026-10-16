@@ -72,6 +72,7 @@ export type DataSection =
   | "visa-issuances"
   | "risk"
   | "rfi-audit"
+  | "uscis-rfe"
   | "by-state"
   | "by-city"
   | "by-industry"
@@ -144,6 +145,7 @@ export const SECTIONS: DataNavSection[] = [
 
   s("risk", "Approvals and denials", "Denial rates", "/perm-denial-risk"),
   s("rfi-audit", "Approvals and denials", "RFI and audits", "/perm-rfi-audit"),
+  s("uscis-rfe", "Approvals and denials", "USCIS RFE rates", "/uscis-rfe-rates"),
   s("by-state", "Approvals and denials", "By state", "/perm-by-state"),
   s("by-city", "Approvals and denials", "By city", "/perm-cities"),
   s("by-industry", "Approvals and denials", "By industry", "/perm-industries"),

@@ -49,6 +49,7 @@ export function ChartTips({
   label,
   className,
   scroll,
+  startAtEnd = false,
   children,
 }: {
   /** What the chart shows, for the keyboard focus announcement. */
@@ -56,9 +57,17 @@ export function ChartTips({
   className?: string;
   /** Classes for a box the chart scrolls sideways in; omit for a chart that fits. */
   scroll?: string;
+  /** A scrolling chart whose newest end is on the right opens scrolled there. */
+  startAtEnd?: boolean;
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const openAtEnd = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (el && startAtEnd) el.scrollLeft = el.scrollWidth;
+    },
+    [startAtEnd],
+  );
   const [shown, setShown] = useState<Shown | null>(null);
   const activeRef = useRef<Element | null>(null);
 
@@ -163,7 +172,7 @@ export function ChartTips({
       {scroll === undefined ? (
         children
       ) : (
-        <div {...stop} className={cn("chart-tips-scroll overflow-x-auto", scroll)}>
+        <div {...stop} ref={openAtEnd} className={cn("chart-tips-scroll overflow-x-auto", scroll)}>
           {children}
         </div>
       )}

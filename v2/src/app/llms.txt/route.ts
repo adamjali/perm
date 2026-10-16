@@ -425,6 +425,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "USCIS's quarterly count of approved I-140, I-360 and I-526 petitions waiting for a visa number, by preference and country of birth, with the movement since the previous count and I-140 receipts by fiscal year for India and the top five countries.",
   },
   {
+    path: "/uscis-rfe-rates",
+    label: "USCIS RFE rates for H-1B, L-1, O-1 and other work visas",
+    blurb:
+      "How often USCIS sent a request for evidence before deciding an I-129 petition, per month and visa (H-1B, L-1A, L-1B, Blanket L, O, P, R-1, TN, H-2A, H-2B) since FY2015, with how many of those were approved, from USCIS's quarterly request-for-evidence files checked against their own totals. USCIS publishes no RFE counts for the I-140 or the I-485.",
+  },
+  {
     path: "/visa-bulletin",
     label: "The next visa bulletin",
     blurb:

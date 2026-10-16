@@ -106,6 +106,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Approved I-140, I-360 and I-526 petitions whose beneficiary is still waiting for a visa number, by preference and country of birth, as of the month USCIS states. Primary beneficiaries only, dependents excluded.",
   "uscis-i140-class-country":
     "I-140 petitions by the fiscal year USCIS received them and their current status, all countries and the top five, with approvals by class. Counted by filing year, so a recent year is mostly still pending.",
+  "uscis-rfe":
+    "I-129 petitions USCIS decided each month, by visa, and how many of them had a request for evidence, from FY2015. Initial decisions only, a petition with several RFEs counted once, and no figures for the I-140, the I-485 or any employer.",
   // --- ICE SEVIS by the Numbers -------------------------------------------------
   "sevp-top-employers":
     "The 200 employers with the most F-1 students on OPT or STEM OPT, and on CPT, for each year ICE published a list, under ICE's own employer names. Top 200 only; a student in two programs at one employer is counted in each.",
@@ -183,6 +185,7 @@ export const DATASET_LABELS: Readonly<Record<string, string>> = {
   "uscis-i485-offices": "I-485 by field office",
   "uscis-eb-awaiting-visa": "Petitions awaiting a visa",
   "uscis-i140-class-country": "I-140 by class and country",
+  "uscis-rfe": "USCIS I-129 requests for evidence",
   "sevp-top-employers": "ICE top OPT and CPT employers",
   "uscis-h1b-hub": "USCIS H-1B Employer Data Hub",
   onet: "O*NET occupation data",

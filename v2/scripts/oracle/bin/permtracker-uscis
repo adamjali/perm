@@ -32,7 +32,10 @@ case "$job" in
     else rc=1; fail ingest_uscis_i140.py "fetch, reduce or database write failed"; fi
     rm -rf "$t"
     python3 scripts/ingest_i140_trends.py || { rc=1; fail ingest_i140_trends.py "ingest exited non-zero"; } ;;
-  quarterly) python3 scripts/ingest_uscis_quarterly.py || { rc=1; fail ingest_uscis_quarterly.py "ingest exited non-zero"; } ;;
+  # USCIS's quarterly performance workbooks, then the I-129 request-for-evidence
+  # files USCIS posts with them (Oct 16 2026). Each records its own ok row.
+  quarterly) python3 scripts/ingest_uscis_quarterly.py || { rc=1; fail ingest_uscis_quarterly.py "ingest exited non-zero"; }
+    python3 scripts/ingest_uscis_rfe.py || { rc=1; fail ingest_uscis_rfe.py "ingest exited non-zero"; } ;;
   # USCIS's H-1B Employer Data Hub (a Tableau export, 75 to 110 MB a year).
   # The ingest records its own ok row, or its refusal with the reason; this adds the timer's row on any non-zero exit.
   # Then the busiest H-1B employers by year and state, which read the hub's rows.

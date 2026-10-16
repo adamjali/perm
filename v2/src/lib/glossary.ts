@@ -436,6 +436,7 @@ export const GLOSSARY: GlossaryTerm[] = [
     aka: ["RFE"],
     definition:
       "USCIS's request for more evidence on a petition or application, with its own response period. Not DOL's RFI on a PERM, which is a different agency, a different letter and a different clock.",
+    see: [{ label: "USCIS RFE rates", href: "/uscis-rfe-rates" }],
   },
   {
     term: "Request for information",

@@ -341,6 +341,20 @@
   ]
  },
  {
+  "slug": "uscis-rfe-rates",
+  "path": "/uscis-rfe-rates",
+  "fromEl": "#h1b-by-month",
+  "title": "USCIS RFE rates",
+  "label": "How often USCIS asked for more evidence on H-1B, L-1, O-1 and other work visa petitions, month by month.",
+  "shot": "uscis-rfe-rates.png",
+  "crop": [
+   0,
+   0,
+   1504,
+   1028
+  ]
+ },
+ {
   "slug": "i485-by-field-office",
   "path": "/i485-by-field-office",
   "title": "I-485s by field office",

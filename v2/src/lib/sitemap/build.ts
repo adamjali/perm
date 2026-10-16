@@ -279,6 +279,8 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/uscis-processing-times`, lastModified: changed("/uscis-processing-times"), images: [`${base}/og/uscis-processing-times.jpg`] },
     { url: `${base}/i485-by-field-office`, lastModified: changed("/i485-by-field-office"), images: [`${base}/og/i485-by-field-office.jpg`] },
     { url: `${base}/i140-awaiting-visa`, lastModified: changed("/i140-awaiting-visa"), images: [`${base}/og/i140-awaiting-visa.jpg`] },
+    // No card of its own yet, so no image entry: the sitemap names a card only once its file exists.
+    { url: `${base}/uscis-rfe-rates`, lastModified: changed("/uscis-rfe-rates") },
     // Gated on MIRROR_COMPLETE together with the page's own robots directive
     // and its provisional notice: a page carrying provisional counts must not
     // be listed for search, and one that is listed must not still be calling

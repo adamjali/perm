@@ -38,6 +38,7 @@ export const PAGE_CARD_ALT = {
   "visa-issuances": "Immigrant visas issued abroad. State's monthly count of the visas its consulates issued, by employment and family category, since March 2017.",
   "green-card-timelines": "Green card timelines as the people waiting report them: PERM dates checked against DOL, the I-140 and I-485 self-reported.",
   "uscis-processing-times": "USCIS processing times, the median. Every form's median months to a decision from USCIS's quarterly workbook, beside the figure on its processing-times page.",
+  "uscis-rfe-rates": "USCIS RFE rates for work visa petitions. The share of H-1B petitions USCIS decided each month that had a request for evidence, since October 2014, from USCIS's quarterly files.",
   "i485-by-field-office": "The I-485 by field office. What each USCIS office received, approved, denied and still holds, employment-based first, from USCIS's quarterly count.",
   "i140-awaiting-visa": "Approved and waiting for a visa number. USCIS's count of approved I-140, I-360 and I-526 petitions by category and country of birth, with the change since the last count.",
   "layoffs": "Layoff notices against PERM sponsors. WARN Act filings as the state printed them, matched to the employers in DOL's PERM files.",

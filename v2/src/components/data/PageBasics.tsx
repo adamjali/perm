@@ -652,6 +652,67 @@ export const BASICS: Record<string, BasicsEntry[]> = {
       ),
     },
   ],
+  // USCIS's own definitions are the notes on every sheet of its I-129
+  // request-for-evidence file; the live figures come from the page.
+  "uscis-rfe-rates": [
+    {
+      q: "What is an RFE?",
+      a: (
+        <>
+          A request for evidence: USCIS writing to the petitioner for documents
+          or explanations before it decides. The petition waits until the answer
+          arrives or the deadline in the RFE passes, and then USCIS approves or
+          denies it.
+        </>
+      ),
+    },
+    {
+      q: "How does USCIS count completions with an RFE?",
+      a: (
+        <>
+          A completion is a petition USCIS approved or denied in the month, an
+          initial decision only. It counts as a completion with an RFE if USCIS
+          sent at least one RFE on it, and a petition with several RFEs counts
+          once. The RFE may have been sent in an earlier month than the
+          decision.
+        </>
+      ),
+    },
+    {
+      q: "Does an RFE mean my petition will be denied?",
+      a: (f) =>
+        f.h1bApprovedAfterRfe && f.h1bApprovalRate ? (
+          <>
+            Usually not. Of the H-1B petitions USCIS decided with an RFE in{" "}
+            {f.h1bFy} so far ({f.h1bSpan}), {f.h1bApprovedAfterRfe} were approved,
+            against {f.h1bApprovalRate} of all H-1B petitions decided. Petitions
+            with an RFE are approved less often than the rest, and most still
+            are. The cards above give the same share for every visa.
+          </>
+        ) : (
+          <>
+            Usually not: in USCIS&apos;s own counts most petitions decided with
+            an RFE are approved. The cards above give the share for every visa
+            and year.
+          </>
+        ),
+    },
+    {
+      q: "Where are the RFE rates for green cards?",
+      a: (
+        <>
+          USCIS doesn&apos;t publish them. Its request-for-evidence counts cover
+          the I-129 work visa petition alone, with nothing like them for the
+          I-140 or the I-485. For those forms its quarterly data gives approvals,
+          denials and how long decisions took, on the{" "}
+          <Link href="/uscis-processing-times" className={link}>
+            USCIS processing times
+          </Link>{" "}
+          page.
+        </>
+      ),
+    },
+  ],
   // The page's own questions already explain the receipt number and why no
   // status shows yet; this block adds only what they don't.
   "uscis-case-status": [
