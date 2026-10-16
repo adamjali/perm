@@ -57,10 +57,10 @@ const boardDay = (iso: string) => formatMonthDay(iso) ?? iso;
 export function boardRowsFor(board: HeroBoard | undefined): BoardRow[] {
   if (!board) return [];
   const rows: BoardRow[] = [];
-  if (board.frontierMonth) rows.push({ label: "Now deciding", value: boardMonth(board.frontierMonth) });
-  if (board.lastDay) rows.push({ label: `Decided ${boardDay(board.lastDay.date)}`, value: board.lastDay.total.toLocaleString("en-US") });
-  if (board.pending !== null) rows.push({ label: "PERM waiting", value: board.pending.toLocaleString("en-US") });
-  if (board.pwdPending) rows.push({ label: "Wage requests", value: board.pwdPending.toLocaleString("en-US") });
+  if (board.frontierMonth) rows.push({ label: "Now deciding cases filed in", value: boardMonth(board.frontierMonth) });
+  if (board.lastDay) rows.push({ label: `Cases decided on ${boardDay(board.lastDay.date)}`, value: board.lastDay.total.toLocaleString("en-US") });
+  if (board.pending !== null) rows.push({ label: "PERMs pending", value: board.pending.toLocaleString("en-US") });
+  if (board.pwdPending) rows.push({ label: "Wage requests pending", value: board.pwdPending.toLocaleString("en-US") });
   return rows;
 }
 
@@ -69,7 +69,10 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
   const boardRows = boardRowsFor(board);
 
   return (
-    <section id="hero">
+    // Its own ground (round 3, Oct 15 2026: "the header should be a distinct
+    // colour, maybe light green"; "boring"): a light green field with a fine
+    // dot grid, closed by an ink rule. `hero-ground` in globals.css.
+    <section id="hero" className="hero-ground" data-hero="mint">
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-x-12 gap-y-10 px-4 pb-12 pt-8 sm:px-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pb-16 lg:pt-12 [&>*]:min-w-0">
         <div>
           <h1 className="font-heading text-[2.25rem] font-bold leading-[1.08] tracking-[-0.02em] sm:text-[3rem]">
@@ -87,7 +90,7 @@ export function HeroSection({ waitRows = [], board }: HeroSectionProps) {
               <>The whole PERM process, tracked</>
             )}
           </h1>{" "}
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-soft">{ABOUT_ONE_LINER}</p>{" "}
+          <p className="mt-5 max-w-xl text-lg leading-normal text-soft">{ABOUT_ONE_LINER}</p>{" "}
           {/* The two halves as two short lines, so both audiences are named
               under the H1 without a paragraph pushing the lookup down. */}
           <ul aria-label="Free on both sides" className="mt-4 flex max-w-xl flex-col gap-2 text-base">

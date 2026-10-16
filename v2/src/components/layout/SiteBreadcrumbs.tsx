@@ -23,7 +23,15 @@ import { breadcrumbSchema, breadcrumbTrail, trailEndsAtPage, trailNamesPage } fr
  * place: articles have no data rail, so the page's first element sits exactly
  * where the layout's bar would. The layout's copy steps aside on those paths.
  */
-export function SiteBreadcrumbs({ pageName }: { pageName?: string } = {}) {
+export function SiteBreadcrumbs({
+  pageName,
+  inColumn = false,
+}: {
+  pageName?: string;
+  /** Inside the data shell's content column: no centring of its own, so the
+   *  rail can run from the header down and the trail sits beside it. */
+  inColumn?: boolean;
+} = {}) {
   const pathname = usePathname();
   if (!pageName && isArticlePath(pathname)) return null;
   const base = breadcrumbTrail(pathname);
@@ -35,7 +43,7 @@ export function SiteBreadcrumbs({ pageName }: { pageName?: string } = {}) {
   return (
     // One quiet line of text above the page, aligned with its content. It
     // doesn't stick and carries nothing but the trail.
-    <div className="mx-auto w-full max-w-[1440px] px-4 pt-3 sm:px-6">
+    <div className={inColumn ? "w-full px-4 pt-3 sm:px-6" : "mx-auto w-full max-w-[1440px] px-4 pt-3 sm:px-6"}>
       <nav aria-label="Breadcrumb" className="min-w-0">
         {emitsList ? <JsonLdScript schema={breadcrumbSchema(pathname)} /> : null}
         <ol className="flex flex-wrap items-center gap-x-1 text-sm">

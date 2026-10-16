@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { DatabaseIcon } from "@phosphor-icons/react/ssr";
+
+import { cn } from "@/lib/utils";
 
 import type { RecordFigure } from "@/lib/recordCounts";
 import { MONTH_ABBR } from "@convex/lib/months";
@@ -30,35 +33,40 @@ function asOfLine(f: RecordFigure): string {
 export function RecordStrip({ record, className = "mt-10" }: { record: RecordFigure[]; className?: string }) {
   if (record.length === 0) return null;
   return (
-    <div className={className}>
-      <p className="text-base leading-relaxed text-soft sm:text-lg">
-        What it holds, and the date each figure is true for:
+    // An object with its own ink band (round 3, Oct 15 2026: the sentence that
+    // introduced it read as a stray line, so the ledger names itself).
+    <section aria-labelledby="record-ledger" className={cn("object", className)}>
+      {/* A label, not a heading: the ledger sits under an h1 on some pages and
+          an h2 on others, and a fixed level would skip one. */}
+      <p
+        id="record-ledger"
+        className="flex items-center gap-2 border-b-2 border-black bg-[#141414] px-5 py-3 font-heading text-base font-bold text-white"
+      >
+        <DatabaseIcon aria-hidden="true" weight="bold" className="size-5 text-[#2ECC40]" />
+        Data stored on PERM Tracker
       </p>{" "}
-      <dl className="mt-4 border-t-2 border-border">
+      <dl className="px-5">
         {record.map((f) => (
           <div
             // Several figures may point at one section (the policy page sends
             // three at #register), so the key is the pair, not the route alone.
             key={`${f.href} ${f.label}`}
-            className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4"
+            className="grid grid-cols-[minmax(6.5rem,auto)_minmax(0,1fr)] items-baseline gap-x-4 gap-y-0.5 border-b-2 border-border py-3 last:border-b-0 sm:grid-cols-[8rem_minmax(0,1fr)_auto]"
           >
             <dt className="font-heading text-xl font-bold tabular-nums tracking-tight sm:text-2xl">
               {f.value.toLocaleString("en-US")}
             </dt>{" "}
-            <dd className="text-base leading-snug text-soft">
-              <Link
-                href={f.href}
-                className="link"
-              >
+            <dd className="text-base leading-snug">
+              <Link href={f.href} className="link">
                 {f.label}
               </Link>
             </dd>{" "}
-            <dd className="font-mono text-sm text-muted-foreground sm:whitespace-nowrap sm:text-right">
+            <dd className="col-start-2 font-mono text-sm text-muted-foreground sm:col-start-auto sm:whitespace-nowrap sm:text-right">
               {asOfLine(f)}
             </dd>
           </div>
         ))}
       </dl>
-    </div>
+    </section>
   );
 }

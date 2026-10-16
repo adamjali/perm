@@ -43,9 +43,9 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   },
   {
     path: "/uscis-case-status",
-    label: "USCIS case status by receipt number",
+    label: "USCIS receipt numbers decoded",
     blurb:
-      "Decode a USCIS receipt number (three letters and ten digits, like EAC2190123456): the office behind the prefix and the conventional reading of the digits. Live status from USCIS's Case Status API once USCIS issues API access; until then the page says so and links USCIS's own status page. USCIS's record of the I-140 or I-485, distinct from the DOL PERM lookup.",
+      "Decode a USCIS receipt number (three letters and ten digits, like EAC2190123456): the office behind the prefix and the conventional reading of the digits, with links to USCIS's own Case Status Online and Emma for the status itself. USCIS's record of the I-140 or I-485, distinct from the DOL PERM lookup.",
   },
   {
     path: "/tools",

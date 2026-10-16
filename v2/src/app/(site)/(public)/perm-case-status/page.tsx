@@ -277,7 +277,7 @@ export default async function PermCaseStatusPage({
       {hasNumber ? <CheckAnother typed={typed} /> : null}
 
       <section className="mt-12 border-t border-border pt-8 sm:mt-16">
-        <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">FAQs</h2>{" "}
         <FaqList items={FAQS} />
       </section>
 

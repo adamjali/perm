@@ -23,7 +23,6 @@ import { HashScrollHandler } from "@/components/ui/hash-scroll-handler";
 import { RefreshWhenStale } from "@/components/ui/refresh-when-stale";
 import { ViewportDiag } from "@/components/diag/ViewportDiag";
 import { DataShell } from "@/components/tools/DataShell";
-import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { AutoReveal } from "@/components/ui/auto-reveal";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
@@ -49,7 +48,8 @@ export default function PublicLayout({
             pages: a sidebar has to sit BESIDE the content, so something has
             to own both. On every other public page DataShell renders its
             children untouched. */}
-        <SiteBreadcrumbs />
+        {/* DataShell places the breadcrumb trail: above the page, or in the
+            content column beside the rail on data pages. */}
         <DataShell>{children}</DataShell>
       </main>
 

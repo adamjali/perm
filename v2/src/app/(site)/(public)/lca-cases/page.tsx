@@ -5,7 +5,6 @@ import { PageBasics } from "@/components/data/PageBasics";
 import { IndexHeader, IndexLookup } from "@/components/data/IndexHeader";
 import { FilingMonthBars } from "@/components/data/FilingMonthBars";
 import { formatInt } from "@/lib/format";
-import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, LCA_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/db/lcaCases";
@@ -104,20 +103,6 @@ export default async function LcaCasesPage() {
         </SearchParamsBoundary>
       </div>
 
-      <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-bold">How this works</h2>{" "}
-        <div className="mt-4 space-y-4 text-base leading-relaxed text-soft">
-          <FinePrint summary="Where the rows come from">
-            <p>DOL numbers every filing from one running counter. This site walks it two or three times a day for new filings, then re-checks each LCA until DOL decides. {" "}</p>
-          </FinePrint>{" "}
-          <p>
-            <b className="font-bold">Why one might be missing.</b> The live record
-            is walking backwards through earlier filings, so an old one may not be
-            in it yet. A filing from today appears after the next check, which runs
-            at least twice a day.
-          </p>
-        </div>
-      </section>
       <PageBasics page="lca-cases" />{" "}
     </div>
   );

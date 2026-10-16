@@ -18,9 +18,9 @@
  */
 
 import * as React from "react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { CaretDownIcon, FileTextIcon, ListIcon, XIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, CircleNotchIcon, FileTextIcon, ListIcon, XIcon } from "@phosphor-icons/react";
 
 import { SiteSearch } from "@/components/search/SiteSearch";
 import type { SearchArticle } from "@/components/search/SearchPalette";
@@ -44,6 +44,29 @@ function isLearnPath(path: string): boolean {
   return LEARN_PAGES.some((p) => path === p.href) || isArticlePath(path);
 }
 
+/**
+ * The header's loading state (Oct 15 2026: a click on a slow page gave no
+ * sign it had been heard). It reads `useLinkStatus`, so it must sit inside
+ * the `<Link>`; it clears on commit, failure or a newer click. In the bar a
+ * lime rule runs under the link (no width change, so nothing shifts); in a
+ * menu row a spinner sits at the row's end. Reduced motion holds both still.
+ */
+function LinkPending({ kind }: { kind: "bar" | "row" }) {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return kind === "bar" ? (
+    <span aria-hidden="true" className="absolute inset-x-3 -bottom-0.5 h-0.5 overflow-hidden bg-white/20">
+      <span className="link-pending block h-full w-1/3 bg-primary motion-reduce:w-full" />
+    </span>
+  ) : (
+    <CircleNotchIcon
+      aria-label="Loading"
+      weight="bold"
+      className="ml-auto size-4 shrink-0 animate-spin text-primary-text motion-reduce:animate-none"
+    />
+  );
+}
+
 /** A link in the bar: current page marked by a green rule under it. */
 function BarLink({ page, current }: { page: SitePage; current: boolean }) {
   return (
@@ -51,11 +74,12 @@ function BarLink({ page, current }: { page: SitePage; current: boolean }) {
       href={page.href}
       aria-current={current ? "page" : undefined}
       className={cn(
-        "flex h-11 items-center border-b-2 px-3 text-base transition-colors",
+        "relative flex h-11 items-center border-b-2 px-3 text-base transition-colors",
         current ? "border-primary-text font-semibold text-foreground" : "border-transparent text-soft hover:text-foreground",
       )}
     >
       <span className={current ? undefined : "hover-underline"}>{page.name}</span>
+      <LinkPending kind="bar" />
     </Link>
   );
 }
@@ -115,13 +139,14 @@ function PanelLink({ page, pathname }: { page: SitePage; pathname: string }) {
       href={page.href}
       aria-current={here ? "page" : undefined}
       className={cn(
-        "relative flex min-h-11 items-center py-1 pl-3 text-[15px] leading-snug transition-colors hover:text-foreground hover:underline",
+        "relative flex min-h-11 items-center gap-2 py-1 pl-3 pr-1 text-[15px] leading-snug transition-colors hover:text-foreground hover:underline",
         here
           ? "font-semibold text-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-1 before:bg-primary before:content-['']"
           : "text-soft",
       )}
     >
       {page.name}
+      <LinkPending kind="row" />
     </Link>
   );
 }
@@ -170,12 +195,13 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
       <div className="dark mx-auto flex h-full max-w-[1440px] items-center gap-2 px-4 text-foreground sm:px-6 lg:gap-6">
         <Link
           href="/"
-          className="flex h-11 shrink-0 items-center gap-2 font-heading text-xl font-bold text-foreground"
+          className="relative flex h-11 shrink-0 items-center gap-2 font-heading text-xl font-bold text-foreground"
         >
           <FileTextIcon aria-hidden="true" className="size-6 text-primary-text" />
           <span>
             <span className="text-primary-text">PERM</span> Tracker
           </span>
+          <LinkPending kind="bar" />
         </Link>{" "}
         <nav aria-label="Main" className="hidden items-center lg:flex">
           <BarLink page={HEADER_PAGES.caseStatus} current={pathname === HEADER_PAGES.caseStatus.href} />{" "}
@@ -195,9 +221,10 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
           {pathname !== "/login" ? (
             <Link
               href="/login"
-              className="hidden h-10 items-center border border-input bg-card px-4 text-base font-semibold text-foreground transition-colors hover:bg-accent lg:flex"
+              className="relative hidden h-10 items-center border border-input bg-card px-4 text-base font-semibold text-foreground transition-colors hover:bg-accent lg:flex"
             >
               Sign in
+              <LinkPending kind="bar" />
             </Link>
           ) : null}{" "}
           <button
@@ -260,6 +287,7 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
             {[HEADER_PAGES.caseStatus, HEADER_PAGES.processingTimes].map((p) => (
               <Link key={p.href} href={p.href} className="flex min-h-12 items-center text-lg font-semibold">
                 {p.name}
+                <LinkPending kind="row" />
               </Link>
             ))}
             <details className="group">
@@ -304,10 +332,12 @@ export default function SiteHeader({ articles = [] }: { articles?: SearchArticle
             </details>
             <Link href={HEADER_PAGES.forAttorneys.href} className="flex min-h-12 items-center text-lg font-semibold">
               {HEADER_PAGES.forAttorneys.name}
+              <LinkPending kind="row" />
             </Link>
             {pathname !== "/login" ? (
               <Link href="/login" className="flex min-h-12 items-center text-lg font-semibold">
                 Sign in
+                <LinkPending kind="row" />
               </Link>
             ) : null}
           </nav>

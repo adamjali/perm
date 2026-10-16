@@ -95,10 +95,13 @@ describe("the middle ground", () => {
     expect(providers).toMatch(/<MotionConfig reducedMotion="user">/);
   });
 
-  it("loops no animation but the skeleton sweep and a spinner", () => {
+  it("loops no animation but the loading signals: the skeleton sweep, a spinner, a header link's pending rule", () => {
+    // `link-pending` runs only while a clicked header link's page loads
+    // (round 3, Oct 15 2026: the header had no loading state), so it is a
+    // spinner in another shape, and it holds still under reduced motion.
     const css = stripComments(CSS);
     const infinite = [...css.matchAll(/animation:\s*([\w-]+)[^;]*\binfinite\b/g)].map((m) => m[1]);
-    expect(infinite.filter((name) => !["skeleton-sweep", "spin"].includes(name!))).toEqual([]);
+    expect(infinite.filter((name) => !["skeleton-sweep", "spin", "link-pending"].includes(name!))).toEqual([]);
     expect(findAll(tok("(?:[\\w-]+:)*animate-(?:bounce|ping|pulse)"))).toEqual([]);
   });
 

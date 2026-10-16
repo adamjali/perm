@@ -4,7 +4,6 @@ import { PlusIcon } from "@phosphor-icons/react/ssr";
 
 import { ChartTips } from "@/components/data/ChartTips";
 import { PageBasics } from "@/components/data/PageBasics";
-import { FinePrint } from "@/components/data/FinePrint";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FlagCaseBrowser, SEASONAL_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -264,23 +263,6 @@ export default async function SeasonalCasesPage() {
         </section>
       ) : null}{" "}
 
-      <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-bold">How this works</h2>{" "}
-        <div className="mt-4 space-y-4 text-base leading-relaxed text-soft">
-          <FinePrint summary="Where the rows come from">
-            <p>
-              DOL numbers every filing, PERM and H-1B included, from one running counter. This
-              site walks it two or three times a day for new filings and re-checks each one until DOL decides.{" "}
-            </p>
-          </FinePrint>{" "}
-          <p>
-            <b className="font-bold">Why one might be missing.</b> These forms joined the live
-            record on October 1, 2026, and it is still being filled in backwards; DOL&apos;s
-            quarterly files reach further back and are loaded year by year. A filing from today
-            appears after the next check.
-          </p>
-        </div>
-      </section>
       <PageBasics page="seasonal-cases" />{" "}
       <DataProvenance datasets={["seasonal-status"]} />
     </div>

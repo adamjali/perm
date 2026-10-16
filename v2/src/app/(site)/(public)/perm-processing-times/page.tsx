@@ -64,6 +64,7 @@ import { SITE_URL } from "@/lib/constants/site";
 import { describeDisclosureFiles } from "@/lib/disclosureFiles";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollBox } from "@/components/ui/scroll-box";
+import { cn } from "@/lib/utils";
 
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
@@ -441,20 +442,36 @@ export default async function PermProcessingTimesPage() {
 
               <div className="dark mt-6 p-6 sm:p-8 border-2 shadow-hard border-black bg-[#141414] text-foreground">
                 <p className="text-sm text-muted-foreground">Measured advance</p>{" "}
-                <p className="mt-3 font-heading text-4xl font-bold leading-none tabular-nums sm:text-5xl">
+                {/* The rate carries its verdict's colour: green gaining, amber
+                    holding, red falling behind. The words below say the same,
+                    so nothing rests on colour alone. */}
+                <p
+                  className={cn(
+                    "mt-3 font-heading text-4xl font-bold leading-none tabular-nums sm:text-5xl",
+                    advance.rate > 1.05
+                      ? "text-primary-text"
+                      : advance.rate < 0.95
+                        ? "text-data-bad-ink"
+                        : "text-data-warn-ink",
+                  )}
+                >
                   {advance.rate.toFixed(2)}
+                  <span className="ml-1 text-3xl sm:text-4xl">×</span>
                 </p>{" "}
+                {advance.slowest !== null && advance.fastest !== null ? (
+                  <AdvanceScale rate={advance.rate} slowest={advance.slowest} fastest={advance.fastest} />
+                ) : null}
                 <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
                   months of filing queue cleared per calendar month, over the{" "}
                   {advance.pointsUsed} determination months to{" "}
-                  {formatMonth(advance.toMonth) ?? advance.toMonth}. At 1.00 the
-                  queue holds station, so at {advance.rate.toFixed(2)} it is{" "}
+                  {formatMonth(advance.toMonth) ?? advance.toMonth}. At 1.00× the
+                  queue holds station, so at {advance.rate.toFixed(2)}× it is{" "}
                   <strong className="text-foreground">{advanceVerdict}</strong>.
                 </p>
                 {advance.slowest !== null && advance.fastest !== null ? (
                   <p className="mt-3 max-w-2xl text-base leading-relaxed text-soft">
-                    It has ranged from {advance.slowest.toFixed(2)} to{" "}
-                    {advance.fastest.toFixed(2)} over rolling three-month
+                    It has ranged from {advance.slowest.toFixed(2)}× to{" "}
+                    {advance.fastest.toFixed(2)}× over rolling three-month
                     windows, so it describes the past rather than predicting a case.
                   </p>
                 ) : null}
@@ -663,6 +680,32 @@ export default async function PermProcessingTimesPage() {
       </section>
       </Chapter>
       <DataProvenance datasets={["processing-times"]} />
+    </div>
+  );
+}
+
+/**
+ * The measured rate on its own range: red where the queue falls behind (under
+ * 0.95), amber where it holds station, green where it gains (over 1.05), the
+ * slowest and fastest rolling windows at the ends, and today's rate marked.
+ */
+function AdvanceScale({ rate, slowest, fastest }: { rate: number; slowest: number; fastest: number }) {
+  const lo = Math.min(slowest, rate, 0.9);
+  const hi = Math.max(fastest, rate, 1.1);
+  const at = (v: number) => `${(((v - lo) / (hi - lo)) * 100).toFixed(2)}%`;
+  return (
+    <div className="mt-5 max-w-xl" aria-hidden="true">
+      <div className="relative h-3 border-2 border-white/80">
+        <span className="absolute inset-y-0 left-0 bg-data-bad" style={{ width: at(0.95) }} />{" "}
+        <span className="absolute inset-y-0 bg-data-warn" style={{ left: at(0.95), width: `calc(${at(1.05)} - ${at(0.95)})` }} />{" "}
+        <span className="absolute inset-y-0 right-0 bg-primary" style={{ left: at(1.05) }} />{" "}
+        <span className="absolute -top-2 -bottom-2 w-1 -translate-x-1/2 bg-white" style={{ left: at(rate) }} />
+      </div>
+      <div className="relative mt-1.5 h-5 text-sm tabular-nums text-soft">
+        <span className="absolute left-0">{slowest.toFixed(2)}×</span>{" "}
+        <span className="absolute -translate-x-1/2" style={{ left: at(1) }}>1.00×</span>{" "}
+        <span className="absolute right-0">{fastest.toFixed(2)}×</span>
+      </div>
     </div>
   );
 }

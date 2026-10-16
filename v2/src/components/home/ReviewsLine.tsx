@@ -15,7 +15,9 @@ import { buttonVariants } from "@/components/ui/button";
  */
 export function ReviewsLine() {
   return (
-    <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t-2 border-border pt-6">
+    // Beside the founder line on the homepage: the rating over its button, in
+    // a framed box so it holds its place next to the prose.
+    <div className="flex flex-wrap items-center justify-between gap-4 border-2 border-border bg-card p-5 shadow-hard-sm">
       {shouldAdvertiseRating() ? (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="flex" aria-hidden="true">

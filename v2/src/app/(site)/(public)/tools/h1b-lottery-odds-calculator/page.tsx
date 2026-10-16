@@ -79,7 +79,7 @@ export default function H1bLotteryCalculatorPage() {
         . Cap-exempt employers, such as universities and their affiliated nonprofits, file outside the lottery.
       </p>
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">FAQs</h2>
         <FaqList items={FAQS} />
       </section>
       <ToolPageFooter

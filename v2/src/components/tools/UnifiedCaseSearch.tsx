@@ -50,7 +50,7 @@ import { formText } from "@/lib/forms/formText";
 import { seasonalForm } from "@/lib/seasonalForms";
 import { choiceVariants } from "@/components/ui/choice";
 import { buttonVariants } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/badge";
+import { CaseStatusChip } from "@/components/ui/badge";
 
 /**
  * Every DOL filing this site holds, in one search, with every filter the
@@ -339,7 +339,7 @@ function PhoneRow({ r }: { r: UnifiedCase }) {
         >
           {r.caseNumber}
         </PendingLink>{" "}
-        {r.status ? <StatusBadge status={r.status} /> : null}
+        {r.status ? <CaseStatusChip status={r.status} /> : null}
       </div>{" "}
       <p className="text-base">
         {r.employerSlug && r.program === "perm" ? (
@@ -1691,7 +1691,7 @@ export function UnifiedCaseSearch({
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm">{rowProgramLabel(r)}{" "}</td>
                     <td className="px-3 py-3">
-                      {r.status ? <StatusBadge status={r.status} /> : <span className="text-muted-foreground">Not given</span>}
+                      {r.status ? <CaseStatusChip status={r.status} /> : <span className="text-muted-foreground">Not given</span>}
                     {" "}</td>
                     <td className="px-3 py-3 text-sm">
                       {r.employerSlug && r.program === "perm" ? (

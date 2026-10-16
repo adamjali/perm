@@ -18,12 +18,18 @@ import { buttonVariants } from "@/components/ui/button";
 export interface UscisReceiptFormProps {
   defaultValue?: string;
   className?: string;
+  /**
+   * Whether the page looks the receipt up at USCIS. Without USCIS's API keys
+   * it only decodes the number and keeps nothing, so the help line must not
+   * promise a stored answer.
+   */
+  live?: boolean;
 }
 
 /** A DOL FLAG number: letter, dash, digits. Never a USCIS receipt. */
 const DOL_SHAPE = /^[A-Z]-\d/i;
 
-export function UscisReceiptForm({ defaultValue = "", className }: UscisReceiptFormProps) {
+export function UscisReceiptForm({ defaultValue = "", className, live = false }: UscisReceiptFormProps) {
   const inputId = useId();
   const helpId = useId();
   const [value, setValue] = useState(defaultValue);
@@ -76,12 +82,17 @@ export function UscisReceiptForm({ defaultValue = "", className }: UscisReceiptF
           </span>
         ) : malformed ? (
           <span className="font-bold text-data-bad-ink">{RECEIPT_SHAPE_MESSAGE}</span>
-        ) : (
+        ) : live ? (
           <>
-            It is at the top of every I-797 notice USCIS mailed. The number goes
+            It&apos;s at the top of every I-797 notice USCIS mailed. The number goes
             into this page&apos;s address so you can bookmark or share the result.
             The receipt number and USCIS&apos;s answer are kept for twelve months
             after the last lookup; nothing about you is.
+          </>
+        ) : (
+          <>
+            It&apos;s at the top of every I-797 notice USCIS mailed. The number goes
+            into this page&apos;s address so you can bookmark or share what it encodes.
           </>
         )}
       </p>

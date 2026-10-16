@@ -40,7 +40,7 @@ describe("the figures at DOL beside the lookup", () => {
   it("drops a row whose figure is missing, and never invents one", () => {
     expect(boardRowsFor(undefined)).toEqual([]);
     const rows = boardRowsFor({ frontierMonth: null, lastDay: null, pending: 91933, checkedAt: null, pwdPending: null });
-    expect(rows).toEqual([{ label: "PERM waiting", value: "91,933" }]);
+    expect(rows).toEqual([{ label: "PERMs pending", value: "91,933" }]);
   });
 
   it("names the day by its date, never a weekday that reads as a month", () => {
@@ -52,10 +52,10 @@ describe("the figures at DOL beside the lookup", () => {
       pwdPending: 47941,
     });
     expect(rows.map((r) => `${r.label}=${r.value}`)).toEqual([
-      "Now deciding=Dec 2025",
-      "Decided Sep 30=901",
-      "PERM waiting=91,933",
-      "Wage requests=47,941",
+      "Now deciding cases filed in=Dec 2025",
+      "Cases decided on Sep 30=901",
+      "PERMs pending=91,933",
+      "Wage requests pending=47,941",
     ]);
   });
 });

@@ -355,7 +355,7 @@ export default async function I140AwaitingVisaPage() {
       ) : null}
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">FAQs</h2>
         <FaqList items={FAQS} />
       </section>
 
@@ -380,7 +380,7 @@ export default async function I140AwaitingVisaPage() {
         </ul>
       </section>
 
-      <PageBasics
+      <PageBasics title="More questions"
         page="i140-awaiting-visa"
         figures={{
           indiaEb2: indiaEb2 !== null ? indiaEb2.toLocaleString("en-US") : undefined,

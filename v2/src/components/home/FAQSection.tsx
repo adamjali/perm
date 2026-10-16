@@ -103,19 +103,16 @@ export function FAQSection() {
     <section id="faq" aria-labelledby="faq-h" className="relative bg-tint py-12 sm:py-16">
       {/* Two columns from lg: the heading and the way to every other
           question on the left, the answers on the right. */}
-      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-8 px-4 [&>*]:min-w-0 sm:px-8 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-14">
+      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-8 px-4 [&>*]:min-w-0 sm:px-8 md:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] md:gap-10 lg:gap-14">
         <div>
           <h2 id="faq-h" className="font-heading text-3xl font-bold sm:text-4xl">
             Questions about PERM Tracker
           </h2>{" "}
-          <p className="mt-3 max-w-sm text-base leading-relaxed text-soft sm:text-lg">
-            About the site and the app. How PERM itself works has its own page.
-          </p>{" "}
           <Link
             href="/faq"
-            className="link mt-5 inline-flex min-h-11 items-center gap-2"
+            className="link mt-4 inline-flex min-h-11 items-center gap-2"
           >
-            Every question about PERM
+            FAQs
             <ArrowRightIcon size={18} weight="bold" aria-hidden="true" />
           </Link>
         </div>{" "}

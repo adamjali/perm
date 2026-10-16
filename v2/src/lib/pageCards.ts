@@ -93,10 +93,10 @@ export const PAGE_CARD_ALT = {
   "pwd-cases": "Find a prevailing wage request. Pending from DOL's case status, decided with the wage set, searched by employer.",
   "security": "How your data is protected. Encryption at rest, isolated accounts, short sessions, and no client data on the public pages.",
   "accessibility": "The standard the site builds to, WCAG 2.2 AA, what it means on each page, and where to report a barrier.",
-  "uscis-case-status": "Check a USCIS case by receipt number. What the letters and digits encode, and USCIS's own status once API access is live.",
+  "uscis-case-status": "A USCIS receipt number decoded: what its letters and digits encode, with links to USCIS's own status pages.",
   "terms": "Terms of service. The terms for using PERM Tracker, its data and its case management.",
   "visa-bulletin": "The next visa bulletin. When past bulletins first appeared, by day of the month before, and what every earlier bulletin for this month did, since October 2014.",
-  "tools": "Live PERM data and free calculators. DOL's own figures, each with its date, and calculators built on them.",
+  "tools": "Live PERM data and free calculators: DOL's figures with their dates, and every data field.",
 } as const;
 
 export type PageCardSlug = keyof typeof PAGE_CARD_ALT;

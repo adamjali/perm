@@ -73,7 +73,7 @@ export function deriveRecordCounts(docs: RecordDocs): RecordFigure[] {
     out.push({
       href: "/perm-case-status",
       value: live.pending,
-      label: "PERM cases pending at DOL, in the live record",
+      label: "PERM cases pending at DOL",
       asOf: checked,
       asOfKind: "checked",
     });
@@ -84,7 +84,7 @@ export function deriveRecordCounts(docs: RecordDocs): RecordFigure[] {
     out.push({
       href: "/pwd-cases",
       value: pw.rows,
-      label: "prevailing wage determinations, with the",
+      label: "Prevailing wage determinations",
       asOf: pw.latestDecision.slice(0, 10),
       asOfKind: "through",
     });
@@ -95,7 +95,7 @@ export function deriveRecordCounts(docs: RecordDocs): RecordFigure[] {
     out.push({
       href: "/lca-cases",
       value: lca.rows,
-      label: "H-1B labor condition applications, with the wage",
+      label: "H-1B labor condition applications",
       asOf: lca.latestDecision.slice(0, 10),
       asOfKind: "through",
     });
@@ -105,7 +105,7 @@ export function deriveRecordCounts(docs: RecordDocs): RecordFigure[] {
     out.push({
       href: "/visa-bulletin",
       value: docs.bulletinCount,
-      label: "monthly visa bulletins, every category and country",
+      label: "Monthly visa bulletins",
       asOf: docs.bulletinLatest.slice(0, 7),
       asOfKind: "newest",
     });

@@ -14,7 +14,7 @@ import type { LiveKind, LiveListPage, LiveRemainderSummary, LiveSort } from "@/l
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { cn } from "@/lib/utils";
 import { formatInt } from "@/lib/format";
-import { StatusBadge } from "@/components/ui/badge";
+import { CaseStatusChip } from "@/components/ui/badge";
 import { choiceVariants } from "@/components/ui/choice";
 
 /**
@@ -305,7 +305,7 @@ export function LiveCaseBrowser({
                       </PendingLink>
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3">
-                      {r.status ? <StatusBadge status={r.status} /> : <span className="text-muted-foreground">Unknown</span>}
+                      {r.status ? <CaseStatusChip status={r.status} /> : <span className="text-muted-foreground">Unknown</span>}
                     {" "}</td>
                     <td className="px-3 py-3">
                       {r.employerSlug ? (

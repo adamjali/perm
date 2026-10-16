@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { WarningIcon } from "@phosphor-icons/react/ssr";
+import { Fragment } from "react";
+import { ArrowSquareOutIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
@@ -24,15 +25,20 @@ import { MoreText } from "@/components/data/MoreText";
 import { buttonVariants } from "@/components/ui/button";
 
 /**
- * A USCIS receipt number in; what it encodes, and (once USCIS has issued API
- * keys) the case status from USCIS's Case Status API.
+ * A USCIS receipt number in; what it encodes, and (with USCIS's API keys on
+ * the deployment) the case status from USCIS's Case Status API.
  *
  * TWO STATES, BOTH HONEST. Until `USCIS_ENV` and the two credentials exist on
  * the deployment, the page decodes the receipt (prefix, office, the
- * conventional reading of the digits) and says in words that live status is
- * pending, with links to USCIS's own status page and to Emma. It never shows
- * a status it did not get from USCIS. With the keys present, the client half
- * asks `/api/uscis-case-status`, which carries every guard.
+ * conventional reading of the digits) and hands the reader to USCIS's own
+ * status page and to Emma. It shows no status at all and says nothing about
+ * access it does not have (round 3, Oct 15 2026: a page promising a lookup it
+ * cannot make read as broken). With the keys present, the client half asks
+ * `/api/uscis-case-status`, which carries every guard.
+ *
+ * USCIS's own navy (#162E51, the darker primary of uscis.gov's stylesheet,
+ * read Oct 15 2026) colours the page's boxes, so the page reads as the USCIS
+ * half of the site at a glance. White on it measures 14:1.
  *
  * WHY A SEPARATE PAGE FROM `/perm-case-status`. Different agency, different
  * record, different lookup, different terms of use. One page that reads both
@@ -51,6 +57,9 @@ const DESCRIPTION =
 
 const USCIS_STATUS_URL = "https://egov.uscis.gov/casestatus/landing.do";
 const USCIS_EMMA_URL = "https://www.uscis.gov/tools/meet-emma-our-virtual-assistant";
+
+/** uscis.gov's navy, as a fill; text on it is white. */
+const NAVY = "bg-[#162E51]";
 
 export async function generateMetadata({
   searchParams,
@@ -87,7 +96,7 @@ function faqsFor(enabled: boolean) {
       q: "Does this page show my case status?",
       a: enabled
         ? "Yes. It asks USCIS's Case Status API for the receipt you type and shows USCIS's own status text and dates, with the time we last heard from USCIS printed beside them. A copy under six hours old is answered from our record rather than asking USCIS again."
-        : "Not yet. PERM Tracker's application for USCIS API access is pending. Until USCIS issues keys, this page decodes what the receipt number encodes and links you to USCIS's own status page, which answers the same receipt today. No status is shown here that did not come from USCIS.",
+        : "No. It reads what the receipt number encodes. For the status itself, USCIS Case Status Online answers every receipt, and Emma, USCIS's virtual assistant, answers questions about a case. Both are linked on this page.",
     },
     {
       q: "Is this the same as my PERM case number?",
@@ -99,7 +108,9 @@ function faqsFor(enabled: boolean) {
     },
     {
       q: "Do you store the receipt number I type in?",
-      a: "Yes, and nothing about you. When USCIS access is live, each lookup sends the receipt number to USCIS and keeps what comes back: the receipt number, the form type, the status text, the dated history and the time of the lookup. A stored lookup is deleted twelve months after the last lookup of that receipt, or sooner on request. No name, email or address is asked for or kept. Section 18 of the privacy policy states exactly this.",
+      a: enabled
+        ? "Yes, and nothing about you. Each lookup sends the receipt number to USCIS and keeps what comes back: the receipt number, the form type, the status text, the dated history and the time of the lookup. A stored lookup is deleted twelve months after the last lookup of that receipt, or sooner on request. No name, email or address is asked for or kept. Section 18 of the privacy policy states exactly this."
+        : "This page doesn't store it. The number sits in the page's address so you can bookmark or share the result, and decoding it asks nothing of USCIS. A list you save stays in your own browser.",
     },
   ];
 }
@@ -171,7 +182,7 @@ export default async function UscisCaseStatusPage({
           and{" "}
           {enabled
             ? "the case's current status from USCIS."
-            : "its current status once USCIS grants this site API access."}{" "}
+            : "where USCIS shows its status."}{" "}
           A DOL number (G-100-…) goes on the{" "}
           <Link href="/perm-case-status" className={link}>
             PERM case page
@@ -180,8 +191,8 @@ export default async function UscisCaseStatusPage({
         </p>
       </header>
 
-      <div className="mt-8 bg-tint p-5 sm:p-6 border-2 shadow-hard border-border">
-        <UscisReceiptForm defaultValue={typed} />
+      <div className={`dark mt-8 border-2 border-black p-5 text-foreground shadow-hard sm:p-6 ${NAVY}`}>
+        <UscisReceiptForm defaultValue={typed} live={enabled} />
       </div>
 
       <SavedReceipts current={receipt} />
@@ -214,11 +225,13 @@ export default async function UscisCaseStatusPage({
       ) : null}
 
       {decoded ? (
-        <section className="mt-8" aria-labelledby="decoded-heading">
-          <h2 id="decoded-heading" className="font-heading text-2xl font-bold">
-            What {decoded.receipt} encodes
-          </h2>{" "}
-          <dl className="mt-4 grid gap-x-8 gap-y-4 bg-tint p-5 text-sm sm:grid-cols-3 sm:p-6 border-2 shadow-hard border-border">
+        <section className="object mt-8" aria-labelledby="decoded-heading">
+          <div className={`dark border-b-2 border-black px-5 py-3 text-foreground sm:px-6 ${NAVY}`}>
+            <h2 id="decoded-heading" className="font-heading text-xl font-bold sm:text-2xl">
+              What <span className="font-mono">{decoded.receipt}</span> encodes
+            </h2>
+          </div>{" "}
+          <dl className="grid gap-x-8 gap-y-4 p-5 text-sm sm:grid-cols-3 sm:p-6">
             <div>
               <dt className="font-bold text-muted-foreground">Prefix {decoded.prefix}</dt>{" "}
               <dd className="mt-1 text-base">
@@ -246,7 +259,7 @@ export default async function UscisCaseStatusPage({
               </div>
             )}
           </dl>{" "}
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="border-t-2 border-border bg-tint px-5 py-3 text-sm text-muted-foreground sm:px-6">
             The reading of the digits is a practitioner convention. USCIS publishes the
             letters&apos; meaning and not the digits&apos;, so the year and day are labelled
             as convention rather than fact.
@@ -254,19 +267,17 @@ export default async function UscisCaseStatusPage({
         </section>
       ) : null}
 
-      {receipt ? (
-        <div className="mt-8">
-          {enabled ? (
+      {enabled ? (
+        receipt ? (
+          <div className="mt-8">
             <UscisStatusResult receipt={receipt} />
-          ) : (
-            <PendingPanel receipt={receipt} />
-          )}
-        </div>
-      ) : !enabled ? (
+          </div>
+        ) : null
+      ) : (
         <div className="mt-8">
-          <PendingPanel />
+          <CheckWithUscis />
         </div>
-      ) : null}
+      )}
 
       <section className="mt-14">
         <h2 className="font-heading text-2xl font-bold">The three letters</h2>{" "}
@@ -288,8 +299,10 @@ export default async function UscisCaseStatusPage({
           </summary>{" "}
           <dl className="divide-y divide-border border-t-2 border-border">
             {prefixes.map(([code, p]) => (
-              <div key={code} className="grid gap-x-6 gap-y-1 px-5 py-3 sm:grid-cols-[6rem_1fr] sm:px-6">
-                <dt className="font-mono text-base font-bold">{code}</dt>{" "}
+              <div key={code} className="grid gap-x-6 gap-y-1 px-5 py-3 sm:grid-cols-[6rem_1fr] sm:items-center sm:px-6">
+                <dt>
+                  <span className={`inline-block px-2 py-0.5 font-mono text-base font-bold text-white ${NAVY}`}>{code}</span>
+                </dt>{" "}
                 <dd className="text-base leading-relaxed text-soft">
                   {p.name}
                   {p.source === "notices" ? " (seen on notices; not in USCIS's glossary list)" : ""}
@@ -302,11 +315,12 @@ export default async function UscisCaseStatusPage({
       </section>
 
       <section className="mt-14">
-        <h2 className="font-heading text-2xl font-bold">Common questions</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">FAQs</h2>{" "}
         <FaqList items={faqs} />
       </section>
 
-      <DataProvenance datasets={["uscis-case-status"]} />
+      {enabled ? <DataProvenance datasets={["uscis-case-status"]} /> : null}
+      {enabled ? (
       <MoreText gist={"Statuses are USCIS's own words, timed; USCIS is the authority."} className="mt-2">
         <p className="text-sm text-muted-foreground">
           Statuses on this page, when shown, are USCIS&apos;s own words from its Case
@@ -324,8 +338,18 @@ export default async function UscisCaseStatusPage({
           .
         </p>
       </MoreText>
+      ) : (
+        <p className="mt-10 text-sm text-muted-foreground">
+          The office names come from USCIS&apos;s glossary; the reading of the digits is a
+          convention and is labelled as one. USCIS is the authority for any receipt, and{" "}
+          <a href={USCIS_STATUS_URL} rel="noopener noreferrer" className={link}>
+            its own status page
+          </a>{" "}
+          answers every one.
+        </p>
+      )}
 
-      <PageBasics page="uscis-case-status" />
+      <PageBasics page="uscis-case-status" title="More questions" />
 
       <ToolPageFooter currentHref="/uscis-case-status" reading={READING} />
     </div>
@@ -333,49 +357,50 @@ export default async function UscisCaseStatusPage({
 }
 
 /**
- * The state while the keys are absent. Says so, plainly, and hands the reader
- * the two USCIS tools that answer today. Never a placeholder status.
+ * Where the status lives while this page has no USCIS keys: USCIS's own two
+ * tools, in USCIS's navy. Says nothing about access it does not have, and
+ * never shows a status it did not get from USCIS.
  */
-function PendingPanel({ receipt }: { receipt?: string }) {
+function CheckWithUscis() {
+  const tiles = [
+    {
+      href: USCIS_STATUS_URL,
+      title: "USCIS Case Status Online",
+      note: "Opens egov.uscis.gov.",
+    },
+    {
+      href: USCIS_EMMA_URL,
+      title: "Emma, USCIS's virtual assistant",
+      note: "USCIS's own chat tool for case and form questions. Opens uscis.gov.",
+    },
+  ];
   return (
-    <section aria-labelledby="pending-heading" className="bg-tint p-5 sm:p-6 border-2 shadow-hard border-border">
-      <p className="text-sm font-bold text-muted-foreground">
-        Live status
-      </p>{" "}
-      <h2 id="pending-heading" className="mt-2 font-heading text-2xl font-bold">
-        USCIS access is pending
+    <section
+      aria-labelledby="check-heading"
+      className={`border-2 border-black p-5 text-white shadow-hard sm:p-6 ${NAVY}`}
+    >
+      <h2 id="check-heading" className="font-heading text-2xl font-bold">
+        Check case status with USCIS
       </h2>{" "}
-      <p className="mt-3 max-w-prose text-base leading-relaxed text-soft">
-        This page will check live once USCIS issues API keys. PERM Tracker&apos;s
-        application for USCIS Case Status API access is in progress, and until it
-        is granted nothing here is looked up at USCIS.{" "}
-        {receipt ? `The receipt ${receipt} has been decoded above and not checked.` : ""}
-      </p>{" "}
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-        <li className="flex">
-          <a
-            href={USCIS_STATUS_URL}
-            rel="noopener noreferrer"
-            className="flex min-h-[44px] w-full flex-col justify-center bg-tint px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary border-2 border-border"
-          >
-            <span className="font-heading text-base font-bold">USCIS Case Status Online</span>{" "}
-            <span className="text-sm text-muted-foreground">
-              The same receipt, answered by USCIS today. Opens egov.uscis.gov.
-            </span>
-          </a>{" "}
-        </li>{" "}
-        <li className="flex">
-          <a
-            href={USCIS_EMMA_URL}
-            rel="noopener noreferrer"
-            className="flex min-h-[44px] w-full flex-col justify-center bg-tint px-4 py-3 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary border-2 border-border"
-          >
-            <span className="font-heading text-base font-bold">Emma, USCIS&apos;s virtual assistant</span>{" "}
-            <span className="text-sm text-muted-foreground">
-              USCIS&apos;s own chat tool for case and form questions. Opens uscis.gov.
-            </span>
-          </a>{" "}
-        </li>
+      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
+        {tiles.map((t) => (
+          <Fragment key={t.href}>
+            {" "}
+            <li className="flex">
+              <a
+                href={t.href}
+                rel="noopener noreferrer"
+                className="lift flex min-h-[44px] w-full items-start justify-between gap-3 border-2 border-black bg-[#1A4480] px-4 py-3 shadow-hard-sm hover:bg-[#005288] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <span className="flex flex-col">
+                  <span className="font-heading text-base font-bold">{t.title}</span>{" "}
+                  <span className="text-sm text-white/85">{t.note}</span>
+                </span>{" "}
+                <ArrowSquareOutIcon aria-hidden="true" weight="bold" className="mt-1 size-4 shrink-0" />
+              </a>
+            </li>
+          </Fragment>
+        ))}
       </ul>
     </section>
   );

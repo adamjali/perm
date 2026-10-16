@@ -19,24 +19,27 @@ import { ReviewsLine } from "./ReviewsLine";
 export function AboutSection({ record = [] }: { record?: RecordFigure[] }) {
   return (
     <section id="about" className="py-12 sm:py-16 border-b-3 border-border">
-      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-8 px-4 [&>*]:min-w-0 sm:px-8 lg:grid-cols-12 lg:gap-14">
-        <div className="lg:col-span-5">
-          <h2 className="font-heading text-2xl font-bold sm:text-3xl">About PERM Tracker</h2>{" "}
-          {/* The definition is the hero's opening line; screen readers and
-              crawlers get it here too, readers aren't shown it twice. */}
-          <p className="sr-only">{ABOUT_ONE_LINER}</p>{" "}
-          <p className="mt-4 text-base leading-relaxed text-soft sm:text-lg">
-            It&apos;s run by {SABRINA.name}, an immigration attorney. It&apos;s not a law firm, and nothing here is
-            legal advice.{" "}
-            <Link href="/about" className="link">
-              More about us
-            </Link>
-          </p>{" "}
+      {/* One arrangement at every width from a tablet up (round 3, Oct 15
+          2026: below full screen the columns stacked and read awkwardly): the
+          founder line beside the reviews, then the ledger across both. */}
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-8">
+        <div className="grid grid-cols-1 gap-8 [&>*]:min-w-0 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] md:items-end md:gap-12">
+          <div>
+            <h2 className="font-heading text-2xl font-bold sm:text-3xl">About PERM Tracker</h2>{" "}
+            {/* The definition is the hero's opening line; screen readers and
+                crawlers get it here too, readers aren't shown it twice. */}
+            <p className="sr-only">{ABOUT_ONE_LINER}</p>{" "}
+            <p className="mt-4 text-base leading-relaxed text-soft sm:text-lg">
+              PERM Tracker was founded by {SABRINA.name}, an immigration attorney. PERM Tracker is not affiliated
+              with any law firms and nothing on the site constitutes legal advice.{" "}
+              <Link href="/about" className="link">
+                More about us
+              </Link>
+            </p>
+          </div>{" "}
           <ReviewsLine />
         </div>{" "}
-        <div className="lg:col-span-7">
-          <RecordStrip record={record} className="lg:pt-1" />
-        </div>
+        <RecordStrip record={record} className="mt-10" />
       </div>
     </section>
   );

@@ -46,7 +46,7 @@ export function AdminTabs({ tabs }: { tabs: AdminTab[] }) {
 
   return (
     <div>
-      <div role="tablist" aria-label="Admin sections" className="flex flex-wrap gap-2 border-b-2 border-border">
+      <div role="tablist" aria-label="Admin sections" className="flex flex-wrap gap-2">
         {tabs.map((t, i) => {
           const selected = t.id === active;
           return (

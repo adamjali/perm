@@ -33,7 +33,7 @@ import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
 import { choiceVariants } from "@/components/ui/choice";
 import { buttonVariants } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/badge";
+import { CaseStatusChip } from "@/components/ui/badge";
 
 /**
  * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
@@ -204,7 +204,7 @@ function Rows({
                 {" "}</td>
               ) : null}
               <td className="whitespace-nowrap px-3 py-3">
-                <StatusBadge status={r.status} />
+                <CaseStatusChip status={r.status} />
               {" "}</td>
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
               <td className="px-3 py-3 text-soft max-sm:text-sm">{r.jobTitle ?? ""}{" "}</td>
@@ -292,7 +292,7 @@ function DisclosedRows({
                 </PendingLink>
               {" "}</td>
               <td className="whitespace-nowrap px-3 py-3">
-                <StatusBadge status={r.status} />
+                <CaseStatusChip status={r.status} />
               {" "}</td>
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
               <td className="px-3 py-3 text-soft">{r.jobTitle ?? ""}{" "}</td>

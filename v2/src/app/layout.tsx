@@ -30,6 +30,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 // Viewport configuration for proper mobile scaling
 import { SITE_URL } from "@/lib/constants/site";
+import { Preloader, PRELOADER_BOOT, PRELOADER_CSS } from "@/components/home/Preloader";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -173,6 +174,18 @@ export default async function RootLayout({
     // (authenticated), where it lives.
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
         <head>
+          {/*
+            The home curtain (back, round 3, Oct 15 2026: the owner asked for
+            the old design's loading screen). Its CSS and boot script go FIRST
+            in <head>, inline, so the rules exist before anything paints
+            (WebKit paints before a pending external stylesheet). The script
+            gates on location.pathname, so other routes are untouched. A RAW
+            <script>, not next/script: in the App Router a beforeInteractive
+            script runs after the bundle, too late to cover anything. The
+            panel is the first child of <body> below. See Preloader.tsx.
+          */}
+          <style dangerouslySetInnerHTML={{ __html: PRELOADER_CSS }} />
+          <script dangerouslySetInnerHTML={{ __html: PRELOADER_BOOT }} />
           <link rel="alternate" type="application/rss+xml" title="PERM Tracker RSS Feed" href="/feed.xml" />
           {/* JSON-LD structured data for rich search results
               Note: Using dangerouslySetInnerHTML is safe here because structuredData
@@ -187,6 +200,12 @@ export default async function RootLayout({
         <body
           className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} font-body antialiased`}
         >
+          {/*
+            The home curtain's panel, FIRST in <body> on every route so it
+            paints in the same frame as the header it covers. Hidden unless
+            the boot script arms it (hard loads of "/" only).
+          */}
+          <Preloader />
           <SharedProviders>{children}</SharedProviders>
           {/*
             Ahrefs Web Analytics. EXTERNAL-SCRIPT form deliberately - Ahrefs

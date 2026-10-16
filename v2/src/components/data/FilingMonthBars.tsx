@@ -5,8 +5,8 @@ import { formatInt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
- * One column per filing month: how many filings DOL has decided, and on top
- * of them, how many still wait. Where DOL publishes the month it is working
+ * One column per filing month: how many filings DOL has decided (green), and
+ * on top of them, how many still wait (soft yellow). Where DOL publishes the month it is working
  * on, that column carries a flag, so the line reads at a glance: everything
  * left of the flag is done, everything right of it is waiting.
  *
@@ -61,10 +61,10 @@ export function FilingMonthBars({
     <figure className={cn("m-0", className)}>
       <div aria-hidden="true" className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 border-input bg-foreground border" /> Decided
+          <span className="size-3 border-border bg-primary border" /> Decided
         </span>{" "}
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 border-input bg-primary border" /> Still waiting at DOL
+          <span className="size-3 border-border bg-soft-wait border" /> Still waiting at DOL
         </span>
       </div>{" "}
       <ChartTips label={label} className="mt-4">
@@ -93,8 +93,16 @@ export function FilingMonthBars({
                     className={cn("flex flex-col border-border border", flagged && "outline outline-2 outline-offset-2 outline-primary")}
                     style={{ height: `${Math.max(2, h)}%` }}
                   >
-                    {m.pending > 0 ? <div className="bg-primary" style={{ height: `${waitShare}%` }} /> : null}
-                    <div className="flex-1 bg-foreground" />
+                    {/* Decided in the brand green, still waiting in a soft yellow
+                        (round 3, Oct 15 2026: black and lime read as two
+                        alarms); an ink rule keeps the yellow off the paper. */}
+                    {m.pending > 0 ? (
+                      <div
+                        className={cn("bg-soft-wait", m.pending < m.total && "border-b border-border")}
+                        style={{ height: `${waitShare}%` }}
+                      />
+                    ) : null}
+                    <div className="flex-1 bg-primary" />
                   </div>
                 </div>
               );

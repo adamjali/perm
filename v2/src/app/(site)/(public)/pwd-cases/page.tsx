@@ -7,7 +7,6 @@ import { FilingMonthBars } from "@/components/data/FilingMonthBars";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { dolPwdNow } from "@/lib/dolNow";
 import { formatInt } from "@/lib/format";
-import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, PWD_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getPwdSummary, getPwdDisclosureSummary } from "@/lib/db/pwdCases";
@@ -124,24 +123,6 @@ export default async function PwdCasesPage() {
         </SearchParamsBoundary>
       </div>
 
-      <section className="mt-12 max-w-3xl">
-        <h2 className="font-heading text-2xl font-bold">How this works</h2>{" "}
-        <div className="mt-4 space-y-4 text-base leading-relaxed text-soft">
-          <p>
-            <b className="font-bold">Why a request might be missing.</b> One filed
-            today appears after the next check, which runs at least twice a day. A pending one from before the
-            backfill&apos;s reach is absent until the walk gets there. A decided one
-            outside the quarterly files loaded here has no wage yet.
-          </p>{" "}
-          <FinePrint summary="Where the rows come from">
-            <p>
-              DOL numbers wage requests and PERM cases from one running counter.
-              This site walks it two or three times a day for new filings, then
-              re-checks each request until DOL decides.
-            </p>
-          </FinePrint>
-        </div>
-      </section>
       <PageBasics page="pwd-cases" />{" "}
     </div>
   );

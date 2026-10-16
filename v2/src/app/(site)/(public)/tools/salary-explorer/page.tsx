@@ -168,7 +168,7 @@ export default async function SalaryExplorerPage() {
       ) : null}
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-bold">Common questions</h2>
+        <h2 className="font-heading text-2xl font-bold">FAQs</h2>
         <FaqList items={FAQS} />
       </section>
 

@@ -10,7 +10,7 @@ import { PROGRAM_LABEL } from "@/lib/changeProgram";
 // runtime import of a "server-only" module.
 import type { DecidedCase } from "@/lib/db/decidedDays";
 import { YearlyPayNote } from "@/components/data/YearlyPayNote";
-import { toneOf } from "./ChangeTable";
+import { CaseStatusChip } from "@/components/ui/badge";
 
 /**
  * A wage, with the period DOL quoted it per.
@@ -158,12 +158,8 @@ export function DecidedTable({
               <td className="px-3 py-3 text-sm text-soft">{c.citizenship ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{c.visaClass ?? ""}{" "}</td>
               <td className="px-3 py-3 text-sm text-soft">{c.education ?? ""}{" "}</td>
-              <td
-                className={
-                  "whitespace-nowrap px-3 py-3 text-sm font-bold " + toneOf(c.status)
-                }
-              >
-                {c.status}{" "}
+              <td className="whitespace-nowrap px-3 py-3">
+                <CaseStatusChip status={c.status} />{" "}
               </td>
             </tr>
           ))}

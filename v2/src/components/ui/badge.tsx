@@ -2,7 +2,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
-import { prettyStatus, statusTone, type StatusTone } from "@/lib/statusTone"
+import { CASE_STATUS_FILL, caseStatusTint, prettyStatus, statusTone, type StatusTone } from "@/lib/statusTone"
 
 /**
  * A badge is a chip with an ink edge. A status badge is filled with its
@@ -80,4 +80,23 @@ function StatusBadge({ status, className }: { status: string; className?: string
   )
 }
 
-export { Badge, badgeVariants, StatusBadge, ToneBadge }
+/**
+ * A DOL status in the data section's case tables: a soft wash under ink words
+ * (round 3, Oct 15 2026: the full-strength fills read as alarms row after
+ * row). Yellow waits in DOL's line, sage is certified or issued, orange is
+ * withdrawn, red is denied, blue is out of filing order. The words carry the
+ * meaning; the wash is a second signal, never the only one.
+ */
+function CaseStatusChip({ status, className }: { status: string; className?: string }) {
+  return (
+    <Badge
+      variant="outline"
+      data-tint={caseStatusTint(status)}
+      className={cn("border border-foreground/30 font-semibold text-foreground", CASE_STATUS_FILL[caseStatusTint(status)], className)}
+    >
+      <span translate="no">{prettyStatus(status)}</span>
+    </Badge>
+  )
+}
+
+export { Badge, badgeVariants, CaseStatusChip, StatusBadge, ToneBadge }

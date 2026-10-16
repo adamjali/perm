@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
+import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { isDataPath } from "@/lib/siteMap";
 import { CaseNextStep } from "./CaseNextStep";
 import { DataRail } from "./DataRail";
@@ -31,10 +32,21 @@ const OWN_LOOKUP: readonly RegExp[] = [
 
 export function DataShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  if (!isDataPath(pathname)) return <>{children}</>;
+  // Off the data pages the trail sits above the page; on them it sits in the
+  // content column, so the rail runs from the header down in one piece. Above
+  // the rail it left the rail's edge starting a line late, under a toggle
+  // floating on its own (Oct 15 2026).
+  if (!isDataPath(pathname)) {
+    return (
+      <>
+        <SiteBreadcrumbs />
+        {children}
+      </>
+    );
+  }
 
   return (
-    <div className="w-full px-4 max-lg:pt-3 sm:px-6 lg:flex lg:gap-8">
+    <div className="w-full px-4 sm:px-6 lg:flex lg:gap-8">
       {/* `contents` keeps the wrapper out of the flex layout; it exists only so
           the rail can be left off a printed page. */}
       <div className="contents print:hidden">
@@ -45,6 +57,7 @@ export function DataShell({ children }: { children: React.ReactNode }) {
           measure with mx-auto; beside the rail every page starts at the same
           edge, only its width differs. */}
       <div className="min-w-0 pb-16 lg:flex-1 lg:[&>.mx-auto]:ml-0 lg:[&>*>.mx-auto]:ml-0">
+        <SiteBreadcrumbs inColumn />
         {children}
         {OWN_LOOKUP.some((re) => re.test(pathname)) ? null : (
           <CaseNextStep question="Waiting on a PERM case?" source="data-page-end" className="mt-16 max-w-5xl" />

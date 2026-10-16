@@ -22,7 +22,7 @@ import { RequestFailed } from "@/components/tools/RequestFailed";
 import { DidYouMean, useNameSuggestions } from "@/components/search/DidYouMean";
 import { formatInt } from "@/lib/format";
 import { formText } from "@/lib/forms/formText";
-import { StatusBadge } from "@/components/ui/badge";
+import { CaseStatusChip } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 
 /** One shared empty result, so an empty page or search does not mint a new array identity per render. */
@@ -632,11 +632,6 @@ export function CaseBrowser({
       {/* ---------------------------------------------------------------- */}
       <section>
         <h2 className="font-heading text-xl font-bold">Browse the cases</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
-          Slice by one of state, occupation, employer or law firm, then narrow
-          by outcome and year. One slice at a time: picking a new one clears the
-          last.
-        </p>
 
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           <label className="block">
@@ -1005,13 +1000,6 @@ export function CaseBrowser({
               </span>
             )}
           </p>
-          {!searching && !sortable && rows.length > 0 ? (
-            <p className="text-sm text-muted-foreground">
-              More than one page matches, so the table stays in decision-date
-              order. Narrow the filter, or raise the rows per page, to sort by
-              any column.
-            </p>
-          ) : null}
         </div>
 
         {awaitingValue && !searching ? (
@@ -1149,7 +1137,14 @@ function CaseTable({
                 aria-sort={active ? (sortAsc ? "ascending" : "descending") : undefined}
                 className={
                   "whitespace-nowrap px-3 py-3 text-sm font-bold" +
-                  (c.numeric ? "text-right " : "")
+                  (c.numeric ? " text-right" : "")
+                }
+                // Sorting needs every match on one page; when more than one
+                // page matches, the header says why it can't sort.
+                title={
+                  !sortable && c.key !== null
+                    ? "Sorted by decision date. Narrow the filter or show more rows per page to sort by this column."
+                    : undefined
                 }
               >
                 {canSort ? (
@@ -1177,7 +1172,7 @@ function CaseTable({
           >
             <td className="whitespace-nowrap px-3 py-3 font-mono text-base max-sm:whitespace-nowrap!">{r.caseNumber}{" "}</td>
             <td className="whitespace-nowrap px-3 py-3">
-              <StatusBadge status={STATUS_LABEL[r.status]} />
+              <CaseStatusChip status={STATUS_LABEL[r.status]} />
             {" "}</td>
             <td className="px-3 py-3">
               {r.employerSlug ? (

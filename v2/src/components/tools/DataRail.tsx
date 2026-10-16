@@ -296,7 +296,7 @@ export function DataRail() {
           the other `auto` too, which would clip the protruding tab. */}
       <div
         className={cn(
-          "-ml-4 hidden bg-background sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch",
+          "-ml-4 hidden bg-sage sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch",
           // Open or collapsed, the rail has an edge: collapsed, it's the strip
           // of group squares, and the toggle tab sits on this border.
           "lg:border-r-2 lg:border-border",
@@ -343,7 +343,7 @@ export function DataRail() {
                   // `-mt-1` takes the nav's 4px top padding, so the 44px button costs
                   // the rail the 40px the old tab did (rail-fits.test.ts).
                   "-mt-1 flex size-11 shrink-0 items-center justify-center self-end text-foreground/65",
-                  "transition-colors duration-150 hover:bg-accent hover:text-foreground",
+                  "transition-colors duration-150 hover:bg-sage-hover hover:text-foreground",
                   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
                   "motion-reduce:transition-none",
                 )}
@@ -372,7 +372,7 @@ export function DataRail() {
                   focusAfterToggle.current = "rail-collapse";
                   setRailOpen(true);
                 }}
-                className="rail-square text-foreground/65 hover:bg-accent hover:text-foreground"
+                className="rail-square text-foreground/65 hover:bg-sage-hover hover:text-foreground"
               >
                 <span className="sr-only">Expand data sections</span>
                 <SidebarSimpleIcon className="size-5" weight="bold" aria-hidden="true" />
@@ -382,7 +382,7 @@ export function DataRail() {
                 aria-label={OVERVIEW.label}
                 title={OVERVIEW.label}
                 aria-current={onOverview ? "page" : undefined}
-                className={cn("rail-square", onOverview ? "bg-primary text-black" : "text-primary hover:bg-accent")}
+                className={cn("rail-square", onOverview ? "bg-primary text-black" : "text-primary hover:bg-sage-hover")}
               >
                 <HouseIcon className="size-4" weight="fill" aria-hidden="true" />
               </Link>{" "}
@@ -400,7 +400,7 @@ export function DataRail() {
                         setOpen(g);
                         setRailOpen(true);
                       }}
-                      className={cn("rail-square", here ? "bg-primary text-black" : "text-foreground/65 hover:bg-accent hover:text-foreground")}
+                      className={cn("rail-square", here ? "bg-primary text-black" : "text-foreground/65 hover:bg-sage-hover hover:text-foreground")}
                     >
                       <GroupIcon className="size-4" weight="bold" aria-hidden="true" />
                     </button>
@@ -477,7 +477,7 @@ export function DataRail() {
           // scrolls, and a scrolling box can't let a tab protrude (one axis
           // `auto` makes the other `auto`), so its negative margin is zeroed.
           // The protrusion stays a desktop move.
-          "fixed bottom-0 left-0 z-40 flex w-[17rem] flex-col overflow-y-auto border-r-2 border-border bg-background pb-4 pt-[52px] [&_[aria-current=page]]:mr-0 [&_ul]:w-full",
+          "fixed bottom-0 left-0 z-40 flex w-[17rem] flex-col overflow-y-auto border-r-2 border-border bg-sage pb-4 pt-[52px] [&_[aria-current=page]]:mr-0 [&_ul]:w-full",
           "transition-transform duration-200 ease-out motion-reduce:transition-none",
           "lg:hidden",
           panelOpen ? "translate-x-0" : "-translate-x-full",
@@ -581,7 +581,7 @@ function Tab({
               kind === "home" && "-mr-[20px]",
             )
           : cn(
-              "text-foreground/75 motion-safe:hover:translate-x-[3px] hover:bg-accent hover:text-foreground",
+              "text-foreground/75 motion-safe:hover:translate-x-[3px] hover:bg-sage-hover hover:text-foreground",
               kind === "home" ? "font-heading font-bold" : "font-semibold",
             ),
       )}

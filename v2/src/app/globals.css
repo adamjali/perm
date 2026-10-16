@@ -159,6 +159,28 @@
   --stage-success-ink: #1A7A25;
   /* good had no -ink unlike warn/bad/none; this is the green ink. */
   --data-good-ink: #1A7A25;
+  /* Soft fills (Oct 15 2026, round 3): pastel washes for status chips, the
+     data rail and hover. Text on them stays --foreground (13:1 or more in
+     both themes); they never carry meaning alone, the word does. */
+  --sage: #E8F0E4;             /* the data rail's ground */
+  --sage-hover: #DCEAD5;       /* a tile under the pointer */
+  --soft-good: #D5EBCD;        /* certified, issued, decided */
+  --soft-wait: #FBEFC2;        /* in DOL's line, in process, waiting */
+  --soft-warn: #F9DDBB;        /* withdrawn, the employer's own step */
+  --soft-bad: #F6D2CD;         /* denied, rejected */
+  --soft-info: #D9E6FA;        /* on hold, appeal: out of order */
+  /* Chart colours (round 3, Oct 15 2026: "avoid black and grey in charts").
+     Soft but visible fills for marks; text stays ink. Meaning, not order:
+     green done or ahead, yellow waiting or behind you, orange the employer's
+     own step, red denied, blue out of order, sage a neutral second series
+     (the job grey used to do). Each sits on paper with an ink edge where it
+     must read as a shape. */
+  --chart-green: #8FD694;
+  --chart-yellow: #F5D76E;
+  --chart-orange: #F2B27A;
+  --chart-red: #EE9A90;
+  --chart-blue: #9EC3F0;
+  --chart-sage: #C9E2C0;
   /* The site header is one fixed 64px bar at every width (Oct 14 2026). Pages
      pad by it and every in-page anchor lands below it (scroll-padding-top on
      html, below), so nothing else repeats the number. */
@@ -232,6 +254,19 @@
   --stage-closed-ink: #7B8290;
   --stage-success-ink: #2ECC40;
   --data-good-ink: #2ECC40;
+  --sage: #18211A;
+  --sage-hover: #213026;
+  --soft-good: #1F3A22;
+  --soft-wait: #3A3214;
+  --soft-warn: #3E2A14;
+  --soft-bad: #3F1D1A;
+  --soft-info: #1B2A42;
+  --chart-green: #4FA85A;
+  --chart-yellow: #C9A93A;
+  --chart-orange: #C07A3E;
+  --chart-red: #C0605A;
+  --chart-blue: #4F7FB8;
+  --chart-sage: #3B5A3F;
 }
 
 /* ---------------------------------------------------------------------------
@@ -361,6 +396,19 @@ html {
   --color-data-bad-on-ink: var(--data-bad-on-ink);
   --color-data-info: var(--data-info);
   --color-data-info-ink: var(--data-info-ink);
+  --color-sage: var(--sage);
+  --color-sage-hover: var(--sage-hover);
+  --color-soft-good: var(--soft-good);
+  --color-soft-wait: var(--soft-wait);
+  --color-soft-warn: var(--soft-warn);
+  --color-soft-bad: var(--soft-bad);
+  --color-soft-info: var(--soft-info);
+  --color-chart-green: var(--chart-green);
+  --color-chart-yellow: var(--chart-yellow);
+  --color-chart-orange: var(--chart-orange);
+  --color-chart-red: var(--chart-red);
+  --color-chart-blue: var(--chart-blue);
+  --color-chart-sage: var(--chart-sage);
   /* The text forms of the accent and the destructive colour, for the variants
      the remap below cannot reach (hover:, group-hover:, decoration-). */
   --color-primary-text: var(--primary-text);
@@ -591,6 +639,62 @@ html {
   }
   /* The closing band's word: smaller cells, centred, no wrap. */
   .flap-word { display: flex; width: max-content; max-width: 100%; font-size: clamp(0.85rem, 3.4vw, 1.25rem); }
+}
+
+/* The homepage hero's own ground (round 3, Oct 15 2026). A sage field, a
+   fine pattern and an ink rule under it. The variants were sampled for the
+   owner; `data-hero` picks one. The pattern never sits under text alone: the
+   lookup box and the board are solid objects on top of it. */
+.hero-ground {
+  position: relative;
+  background-color: var(--sage);
+  border-bottom: 2px solid var(--border);
+}
+.hero-ground[data-hero="dots"] {
+  background-image: radial-gradient(circle at center, rgb(20 20 20 / 0.2) 1.1px, transparent 1.7px);
+  background-size: 20px 20px;
+}
+.dark .hero-ground[data-hero="dots"] {
+  background-image: radial-gradient(circle at center, rgb(255 255 255 / 0.14) 1.1px, transparent 1.7px);
+}
+.hero-ground[data-hero="grid"] {
+  background-image:
+    linear-gradient(to right, rgb(46 204 64 / 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(46 204 64 / 0.3) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.hero-ground[data-hero="photo"] {
+  background-image:
+    linear-gradient(90deg, rgb(232 240 228 / 0.97) 0%, rgb(232 240 228 / 0.9) 45%, rgb(232 240 228 / 0.5) 100%),
+    url("/images/content/heroes/blog/what-dol-publishes-about-perm.webp");
+  background-size: cover;
+  background-position: center 35%;
+}
+.dark .hero-ground[data-hero="photo"] {
+  background-image:
+    linear-gradient(90deg, rgb(24 33 26 / 0.97) 0%, rgb(24 33 26 / 0.9) 45%, rgb(24 33 26 / 0.55) 100%),
+    url("/images/content/heroes/blog/what-dol-publishes-about-perm.webp");
+}
+.hero-ground[data-hero="mint"] {
+  background-color: #D7F0CF;
+  background-image: radial-gradient(circle at center, rgb(20 20 20 / 0.16) 1.1px, transparent 1.7px);
+  background-size: 20px 20px;
+}
+.dark .hero-ground[data-hero="mint"] {
+  background-color: #16301A;
+  background-image: radial-gradient(circle at center, rgb(255 255 255 / 0.13) 1.1px, transparent 1.7px);
+}
+
+/* The header's pending rule: a lime third sweeping under a clicked link while
+   its page loads (SiteHeader's LinkPending). Reduced motion holds it full and
+   still. */
+@keyframes link-pending {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+.link-pending { animation: link-pending 0.9s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .link-pending { animation: none; }
 }
 
 @keyframes flap-show {
@@ -2047,7 +2151,7 @@ input[type="week"] {
 }
 .rail-tab:hover {
   transform: translateX(3px);
-  background-color: var(--accent);
+  background-color: var(--sage-hover);
   color: var(--foreground);
 }
 .rail-tab:focus-visible {

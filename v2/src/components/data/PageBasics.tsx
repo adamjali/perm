@@ -3,7 +3,7 @@ import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 import type { ReactNode } from "react";
 
 /**
- * The basics block: plain-English grounding at the bottom of a data page.
+ * The FAQs block: plain-English grounding at the bottom of a data page.
  *
  * WHY VISIBLE PROSE AND NOT SCHEMA. These pages assumed their reader knew
  * what a PERM wage or an audit was; most arrivals don't, and the engines
@@ -35,6 +35,43 @@ export interface BasicsEntry {
 
 const link =
   "font-bold underline underline-offset-2 hover:text-primary";
+
+/**
+ * How the live list is built, and why a case can be missing from it: the two
+ * questions every FLAG search page answers. They were a "How this works"
+ * section above the FAQs (round 3, Oct 15 2026: moved in). The walk runs on
+ * the 4:10 AM, the weekday 10:40 AM and the 3:40 PM passes, so "two or three
+ * times a day" is the schedule as it stands.
+ */
+function howItWorks(each: string): BasicsEntry {
+  return {
+    q: "How does this work?",
+    a: (
+      <>
+        DOL numbers every filing from one running counter. This site walks it
+        two or three times a day for new filings, then re-checks each {each}{" "}
+        until DOL decides.
+      </>
+    ),
+  };
+}
+
+function whyMissing(why: ReactNode): BasicsEntry {
+  return {
+    q: "Why might one case be missing?",
+    a: (
+      <>
+        {why}{" "}
+        Have the number? The{" "}
+        <Link href="/perm-case-status" className={link}>
+          case lookup
+        </Link>{" "}
+        asks DOL live, so it finds a case this list doesn&apos;t hold yet, and
+        a mistyped number is worth checking first.
+      </>
+    ),
+  };
+}
 
 export const BASICS: Record<string, BasicsEntry[]> = {
   "perm-wages": [
@@ -251,6 +288,15 @@ export const BASICS: Record<string, BasicsEntry[]> = {
         </>
       ),
     },
+    howItWorks("request"),
+    whyMissing(
+      <>
+        One filed today shows up after the next check. A pending one older
+        than the live record has reached so far is absent until the walk gets
+        there, and a decided one outside the quarterly files loaded here has no
+        wage yet.
+      </>,
+    ),
   ],
   "lca-cases": [
     {
@@ -294,6 +340,13 @@ export const BASICS: Record<string, BasicsEntry[]> = {
         </>
       ),
     },
+    howItWorks("LCA"),
+    whyMissing(
+      <>
+        One filed today shows up after the next check. The live record fills in
+        earlier filings backwards, so an older one may not be in it yet.
+      </>,
+    ),
   ],
   "seasonal-cases": [
     {
@@ -358,6 +411,14 @@ export const BASICS: Record<string, BasicsEntry[]> = {
         </>
       ),
     },
+    howItWorks("application"),
+    whyMissing(
+      <>
+        These forms joined the live record on October 1, 2026, and it&apos;s
+        still filling in earlier filings backwards; DOL&apos;s quarterly files
+        reach further back. One filed today shows up after the next check.
+      </>,
+    ),
   ],
   "case-search": [
     {
@@ -619,15 +680,18 @@ export const BASICS: Record<string, BasicsEntry[]> = {
 export function PageBasics({
   page,
   figures = {},
+  title = "FAQs",
 }: {
   page: keyof typeof BASICS | string;
   figures?: BasicsFigures;
+  /** The block's heading: "FAQs" (round 3, Oct 15 2026; it read "The basics"). A page with its own question list above passes another. */
+  title?: string;
 }) {
   const entries = BASICS[page];
   if (!entries || entries.length === 0) return null;
   return (
     <section className="mt-14 border-t-3 border-border">
-      <h2 className="font-heading text-2xl font-bold">The basics</h2>{" "}
+      <h2 className="font-heading text-2xl font-bold">{title}</h2>{" "}
       {/* QUESTIONS VISIBLE, ANSWERS ON DEMAND. This is the answer-engine
           layer: questions phrased the way people search, each an <h3> so the
           outline carries them, with the answer in the DOM whether open or

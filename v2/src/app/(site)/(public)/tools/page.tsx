@@ -31,13 +31,13 @@ import {
   ShareBarsMini,
   TapeMini,
   UnionMini,
-  TwoBarsMini,
   WageLevelsMini,
   WindowSpansMini,
 } from "@/components/tools/MiniDiagrams";
 import { QueueTape } from "@/components/tools/QueueTape";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { StatesMapMini } from "@/components/tools/StatesMapMini";
 
 const TITLE = "Live PERM Data Overview";
 const DESCRIPTION =
@@ -76,52 +76,58 @@ export default async function ToolsPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <header className="pt-10 sm:pt-12">
-        {/* NOT "Where the PERM queue stands" - that is /perm-queue's H1, and
-            this page shipped a byte-identical copy of it. Two pages competing
-            on one headline is a duplicate-content signal, and the borrowed one
-            described the wrong page anyway: this is the hub over every live
-            figure and calculator, and the queue is one of the things it links
-            to. The H1 now says what the page is, matching its own title and
-            the sentence directly under it. */}
-        <h1 className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
-          Live PERM data and free calculators
-        </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          DOL&apos;s own figures, each with its date, and calculators built on them.
-          {snapshot?.permAsOf ? ` DOL's figures below are as of ${formatAsOf(snapshot.permAsOf)}.` : null}
-        </p>
+      {/* The page's title on its own ink band (round 3, Oct 15 2026: a plain
+          heading on the white ground read as a blank page), with DOL's date
+          under it and DOL's three figures fastened to its foot. */}
+      <header className="mt-8 shadow-hard sm:mt-10">
+        <div className="dark relative border-2 border-black bg-[#141414] px-5 py-7 text-foreground sm:px-8 sm:py-9">
+          <span aria-hidden="true" className="absolute left-0 top-0 h-1.5 w-24 bg-primary" />
+          {/* NOT "Where the PERM queue stands" - that is /perm-queue's H1, and
+              this page shipped a byte-identical copy of it. Two pages competing
+              on one headline is a duplicate-content signal, and the borrowed one
+              described the wrong page anyway: this is the hub over every live
+              figure and calculator, and the queue is one of the things it links
+              to. The H1 now says what the page is, matching its own title. */}
+          <h1 className="font-heading text-3xl font-bold leading-tight sm:text-5xl">
+            Live PERM data and free calculators
+          </h1>{" "}
+          {formatAsOf(snapshot?.permAsOf) ? (
+            <p className="mt-3 text-base text-soft sm:text-lg">
+              DOL figures, as of {formatAsOf(snapshot?.permAsOf)}.
+            </p>
+          ) : null}
+        </div>{" "}
+        {/* DOL's position in three figures, then the case box: a person
+            holding a case number outranks every aggregate below. */}
+        {snapshot ? (
+          <section aria-label="Live DOL position">
+            <FigureRow className="border-t-0 shadow-none">
+              <Figure
+                tone="lime"
+                label="DOL is deciding cases filed"
+                value={formatMonth(frontierMonth) ?? "Not published"}
+                note="Analyst review, the queue nearly every case sits in."
+              />
+              <Figure
+                label="Average to a determination"
+                value={analystAvg?.calendarDays != null ? `${analystAvg.calendarDays} days` : "Not published"}
+                note="Across cases DOL decided recently. An RFI or audit can make one case take longer."
+              />
+              <Figure
+                label="Wage requests pending"
+                value={pwd != null ? pwd.toLocaleString("en-US") : "Not published"}
+                note="Prevailing wage, the stage before recruitment."
+              />
+            </FigureRow>
+          </section>
+        ) : null}
       </header>
 
-      {/* DOL's position in three figures, then the case box: a person holding
-          a case number outranks every aggregate below. */}
-      {snapshot ? (
-        <section aria-label="Live DOL position" className="mt-10">
-          <FigureRow>
-            <Figure
-              label="DOL is deciding cases filed"
-              value={formatMonth(frontierMonth) ?? "Not published"}
-              note="Analyst review, the queue nearly every case sits in."
-            />
-            <Figure
-              label="Average to a determination"
-              value={analystAvg?.calendarDays != null ? `${analystAvg.calendarDays} days` : "Not published"}
-              note="Across cases DOL decided recently. An RFI or audit can make one case take longer."
-            />
-            <Figure
-              label="Wage requests pending"
-              value={pwd != null ? pwd.toLocaleString("en-US") : "Not published"}
-              note="Prevailing wage, the stage before recruitment."
-            />
-          </FigureRow>
-        </section>
-      ) : null}
-
-      <section aria-labelledby="your-case" className="object mt-10 p-5 sm:p-8">
+      <section aria-labelledby="your-case" className="object mt-10 bg-sage p-5 sm:p-8">
         <h2 id="your-case" className="font-heading text-xl font-bold">
           Where&apos;s your case? When could it be decided?
         </h2>{" "}
-        <p className="mt-1 max-w-xl text-base leading-relaxed text-soft">
+        <p className="mt-1 max-w-xl text-base leading-relaxed text-foreground">
           Live DOL status, your place in the queue and an estimate. Free, no account.
         </p>{" "}
         <CaseLookupForm
@@ -137,7 +143,7 @@ export default async function ToolsPage() {
 
       {/* The queue as a tape: the one drawing that carries the mental model. */}
       {frontierMonth ? (
-        <section className="mt-10">
+        <section className="mt-10 border-2 border-border bg-tint p-5 sm:p-8">
           <h2 className="font-heading text-2xl font-bold">The queue, oldest first</h2>{" "}
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted-foreground">
             Every PERM waits in filing-month order.{" "}
@@ -152,10 +158,10 @@ export default async function ToolsPage() {
 
 
 
-      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 border-border p-6 border-2 shadow-hard">
+      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 border-2 border-black bg-primary p-6 text-black shadow-hard sm:p-8">
         <div>
           <h2 className="font-heading text-2xl font-bold">All {CALCULATOR_PAGES.length} calculators</h2>{" "}
-          <p className="mt-1 max-w-xl text-base text-soft">
+          <p className="mt-1 max-w-xl text-base">
             Decision times, the wage, I-140 and I-485 queues, priority dates,
             the green card drawn to scale, and every statutory deadline.
           </p>
@@ -167,8 +173,8 @@ export default async function ToolsPage() {
 
       {/* The two sides of the product, connected in one band. */}
       {/* The disclosure aggregates: three cuts of the same quarterly files. */}
-      <section className="mt-12">
-        <h2 className="font-heading text-2xl font-bold">The whole field</h2>
+      <section className="mt-12 border-2 border-border bg-tint p-5 sm:p-8">
+        <h2 className="font-heading text-2xl font-bold">Data fields</h2>
         {/* Flex-wrap, not a 3-column grid: the card count changes as pages are
             added, and a fixed third column leaves an empty cell in the last
             row that reads as a card that failed to load. Wrapping lets the
@@ -185,13 +191,13 @@ export default async function ToolsPage() {
               href: "/perm-by-state",
               label: "By state",
               blurb: "An interactive map of filings, approval rates and wages by state.",
-              viz: "scale" as const,
+              viz: "map" as const,
             },
             {
               href: "/perm-wages",
               label: "Wages",
               blurb: "Median offered wage by occupation, from what employers committed to pay.",
-              viz: "twobars" as const,
+              viz: "scale" as const,
             },
             {
               href: "/perm-employers",
@@ -239,13 +245,13 @@ export default async function ToolsPage() {
             <a
               key={c.href}
               href={c.href}
-              className="group flex flex-col border-2 p-6 lift border-border bg-card shadow-hard-sm hover:bg-accent"
+              className="group flex flex-col border-2 p-6 lift border-border bg-card shadow-hard-sm hover:bg-sage-hover"
             >
               <h3 className="font-heading text-lg font-bold"><span className="u-title">{c.label}</span></h3>{" "}
               {/* The card's own subject, drawn. */}
               <div className="mt-3 max-w-[150px] text-foreground">
+                {c.viz === "map" ? <StatesMapMini /> : null}
                 {c.viz === "scale" ? <ScaleBarsMini /> : null}
-                {c.viz === "twobars" ? <TwoBarsMini /> : null}
                 {c.viz === "queue" ? <QueueDepthMini /> : null}
                 {c.viz === "spans" ? <WindowSpansMini /> : null}
                 {c.viz === "shares" ? <ShareBarsMini /> : null}
@@ -276,7 +282,7 @@ export default async function ToolsPage() {
             <Link
               key={c.href}
               href={c.href}
-              className="group flex flex-col border-2 p-5 lift border-border bg-card shadow-hard-sm hover:bg-accent"
+              className="group flex flex-col border-2 p-5 lift border-border bg-card shadow-hard-sm hover:bg-sage-hover"
             >
               <h3 className="font-heading text-lg font-bold"><span className="u-title">{c.label}</span></h3>{" "}
               {/* The page's subject, drawn, as on the tiles above. */}
@@ -295,12 +301,12 @@ export default async function ToolsPage() {
       </section>
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="bg-tint p-6 sm:p-8 border-2 shadow-hard border-border">
-          <p className="text-sm text-muted-foreground">For your own case</p>{" "}
+        <div className="bg-sage p-6 sm:p-8 border-2 shadow-hard border-border">
+          <p className="text-sm font-bold">For your own case</p>{" "}
           <h2 className="mt-2 font-heading text-xl font-bold">
             Get notified when DOL reaches your month
           </h2>{" "}
-          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-base leading-relaxed text-foreground">
             Set it on the{" "}
             <Link
               href="/perm-processing-times"

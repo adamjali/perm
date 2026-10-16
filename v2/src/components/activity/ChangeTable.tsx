@@ -3,37 +3,13 @@
 import Link from "next/link";
 
 import { SortableHeader } from "@/components/tools/SortableHeader";
-import { getStatusMeaning } from "@/lib/permStatus";
+import { CaseStatusChip } from "@/components/ui/badge";
 import type { SortColumn, SortState } from "@/lib/tableSort";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
 // runtime import of a "server-only" module.
 import type { CaseChange } from "@/lib/db/changes";
 import { PROGRAM_LABEL } from "@/lib/changeProgram";
-
-/**
- * The colour a status is written in, from its kind.
- *
- * The kind lookup is the shared logic and lives in `permStatus`; only this
- * mapping to a text token is local, because the one in `CaseStatusResult`
- * paints backgrounds for a hero band and would be wrong inline.
- *
- * An unknown status gets the plain foreground rather than a guess. The wage
- * and LCA programs use words PERM never does, and inventing a colour for one
- * would assert a meaning the lookup does not hold.
- */
-function toneOf(status: string): string {
-  switch (getStatusMeaning(status)?.kind) {
-    case "decided":
-      return "text-data-good-ink";
-    case "action":
-      return "text-data-warn-ink";
-    case "appeal":
-      return "text-data-bad-ink";
-    default:
-      return "text-foreground";
-  }
-}
 
 /**
  * Every column this table sorts on. Exported because the browser above needs
@@ -131,12 +107,8 @@ export function ChangeTable({
               <td className="whitespace-nowrap px-3 py-3 text-sm text-muted-foreground">
                 {c.fromStatus}{" "}
               </td>
-              <td
-                className={
-                  "whitespace-nowrap px-3 py-3 text-sm font-bold " + toneOf(c.toStatus)
-                }
-              >
-                {c.toStatus}{" "}
+              <td className="whitespace-nowrap px-3 py-3">
+                <CaseStatusChip status={c.toStatus} />{" "}
               </td>
             </tr>
           ))}
@@ -146,4 +118,3 @@ export function ChangeTable({
   );
 }
 
-export { toneOf };
