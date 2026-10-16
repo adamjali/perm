@@ -800,3 +800,26 @@ Branch `calm/middle`, not live. Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under
 - **The case-number links in employer filings lists are 44px on a phone** (`CASE_ROW`, `CASE_ROW_LINK` in
   `src/components/entities/caseRows.ts`); they measured 20px live.
 
+
+## Oct 16 2026, in nine lines
+
+- **`/uscis-rfe-rates`**: USCIS's quarterly I-129 request-for-evidence files (spreadsheets, a CSV and older PDFs), every
+  visa by month since October 2014 (`scripts/ingest_uscis_rfe.py`, table `uscis_i129_rfe`, doc `uscis_rfe_summary`).
+  Each file must add up to its own totals or nothing is written; the server's quarterly USCIS job reloads the newest
+  file, and `--history` reloads every year (run once Oct 16: 1,362 rows, FY2015 to FY2026 Q3).
+- **The RFI page says what happens next, step by step** (`stage_stats.rfiPath`, written by the sweep; `src/lib/stageMoves.ts`):
+  the RFIs our sweep watched DOL issue, how they ended, and where every review stage leads.
+- **A page the browser has translated keeps working** (`src/lib/translateSafeDom.ts`, before hydration): Chrome's and
+  Safari's Translate move text nodes React holds, and React's next update threw NotFoundError (5 visits in a month, all
+  in other languages). Each time the guard steps in it's counted once a page (`dom_guard_stepped_in`).
+- **Chrome for iPhone files its own scripts' errors under the page's address**, at lines past the page's end (a 130-line
+  page, frames at lines 192 to 495): check the served HTML's length before blaming our code (`fromInjectedPageScript`).
+- **React #419 on the case page follows a Cloudflare challenge** (`__cf_chl_tk` in the referrer, 5 in 44,880 post-challenge
+  views) and the page still renders; left alone.
+- **Onboarding's writes retry twice** (`retryBriefly`, 1.2 s and 3 s): Sentry 57 failed twice in a row during a token refresh.
+- **A case folder lifts and two sheets rise out of it on hover** (`.manila-papers`, a pointer that can hover only; under
+  reduced motion the sheets just show). A new component: run `pnpm exec vitest run src/app/__tests__` before pushing,
+  because `pnpm check` skips the whole-tree gates; the glued-text gate stopped the first deploy (the suite gate held).
+- **resend 6.32.1, svix 2.8.0, tailwind-merge 3.7.0, zod 4.6.5** (Convex deployed with them; Resend still returns `{error}`,
+  Svix still refuses an unsigned or forged webhook with 401, checked live).
+- **A scrolling chart can open at its newest end** (`ChartTips startAtEnd`): a 141-month chart opened at FY2015 on a phone.
