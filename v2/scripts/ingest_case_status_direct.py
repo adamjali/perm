@@ -1077,6 +1077,79 @@ def write_stage_cohorts(db) -> None:
         f"{len(payload):,} bytes)")
 
 
+RFI_PATH_SQL = """
+    WITH first_day AS (SELECT MIN(changed_at) AS t FROM perm_case_events WHERE source = ?),
+    entered AS (
+        SELECT case_number, MIN(changed_at) AS t0 FROM perm_case_events
+         WHERE to_status = 'RFI ISSUED' AND from_status <> 'RFI ISSUED' AND source = ?
+           AND changed_at >= (SELECT t FROM first_day) + 86400000
+         GROUP BY case_number),
+    replied AS (
+        SELECT e.case_number, MIN(e.changed_at) AS tr
+          FROM perm_case_events e JOIN entered n ON n.case_number = e.case_number
+         WHERE e.from_status = 'RFI ISSUED' AND e.to_status <> 'RFI ISSUED'
+           AND e.to_final IN (0, '0') AND e.changed_at > n.t0 AND e.source = ?
+         GROUP BY e.case_number),
+    ended AS (
+        SELECT e.case_number, MIN(e.changed_at) AS tf
+          FROM perm_case_events e JOIN entered n ON n.case_number = e.case_number
+         WHERE e.to_final IN (1, '1') AND e.changed_at > n.t0 AND e.source = ?
+         GROUP BY e.case_number)
+    SELECT n.t0, r.tr, f.tf,
+           (SELECT x.to_status FROM perm_case_events x
+             WHERE x.case_number = n.case_number AND x.changed_at = f.tf) AS outcome
+      FROM entered n
+      LEFT JOIN replied r ON r.case_number = n.case_number
+      LEFT JOIN ended f ON f.case_number = n.case_number"""
+
+
+def _outcome_bucket(status) -> str:
+    s = str(status or "").upper()
+    if s.startswith("CERTIFIED"):
+        return "certified"
+    if s.startswith("DENIED"):
+        return "denied"
+    if s.startswith("WITHDRAWN"):
+        return "withdrawn"
+    return "other"
+
+
+def rfi_path(db) -> dict | None:
+    """Where the RFIs we watched DOL issue stand now, and how the decided ones ended.
+
+    Only RFIs whose start our sweep saw: the event log's first day is left out,
+    because a case already at an RFI then has no known start. "Replied" is the
+    case leaving RFI for a pending status (DOL has the employer's response and
+    the case is back in review); "decided" is its first final status after the
+    RFI, so a denial later reopened on appeal still counts as the denial it was.
+    The decided shares are of cases decided SO FAR: the slow ones are still
+    open, so they will move.
+    """
+    rows = query_rows(db, RFI_PATH_SQL, [SOURCE, SOURCE, SOURCE, SOURCE])
+    if not rows:
+        return None
+    first = query_rows(db, "SELECT MIN(changed_at) FROM perm_case_events WHERE source = ?", [SOURCE])
+    since_ms = int(first[0][0]) + 86_400_000 if first and first[0][0] is not None else None
+    empty = {"certified": 0, "denied": 0, "withdrawn": 0, "other": 0}
+    decided, after_reply = dict(empty), dict(empty)
+    in_rfi = replied_waiting = 0
+    for _t0, tr, tf, outcome in rows:
+        if tf is None:
+            if tr is None:
+                in_rfi += 1
+            else:
+                replied_waiting += 1
+            continue
+        bucket = _outcome_bucket(outcome)
+        decided[bucket] += 1
+        if tr is not None and int(tf) > int(tr):
+            after_reply[bucket] += 1
+    since = (datetime.datetime.fromtimestamp(since_ms / 1000, ET).strftime("%Y-%m-%d")
+             if since_ms is not None else None)
+    return {"since": since, "entered": len(rows), "inRfi": in_rfi,
+            "repliedWaiting": replied_waiting, "decided": decided, "afterReply": after_reply}
+
+
 def write_stage_stats(db) -> None:
     """Precompute what each review stage looks like right now.
 
@@ -1174,6 +1247,14 @@ def write_stage_stats(db) -> None:
            "stages": sorted(stages, key=lambda r: -r["pending"]),
            "exits": sorted(moves, key=lambda r: -r["n"]),
            "durations": sorted(dur, key=lambda r: -r["entered"])}
+    # The RFI path rides the same doc, so the RFI page reads one row. A failure
+    # here costs only this part: the stages and exits are still written.
+    try:
+        path = rfi_path(db)
+        if path:
+            doc["rfiPath"] = path
+    except Exception as e:  # noqa: BLE001
+        log(f"  stage_stats: RFI path not computed ({type(e).__name__})")
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")

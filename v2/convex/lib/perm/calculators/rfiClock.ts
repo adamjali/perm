@@ -29,6 +29,8 @@ export interface RfiClock {
   slowEndFrom: 'measured' | "an immigration attorney's estimate";
   /** RFIs watched from their first day. */
   watched: number;
+  /** Of those, how many were decided after leaving RFI: the count the after-leave days are measured over. */
+  afterLeaveWatched?: number | null;
   /** The first day of our record: an RFI begun on or before it has no known start. */
   watchedFrom: string;
   /** The out-of-sample test, once the record is long enough; null before. */

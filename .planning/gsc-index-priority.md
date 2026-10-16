@@ -1028,3 +1028,15 @@ template. The sitemap's lastmod carries most of them; slots go to the pages most
 18. `/perm-wages/software-developers`
 19. `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`
 20. `/policy-changes`
+
+### Round, Fri Oct 16 2026, 12:35 to 1:05 AM EDT
+
+Requested (11, then "Quota Exceeded"): `/` (last crawl Oct 15 4:43 PM), `/perm-case-status` (Oct 11),
+`/perm-processing-times` (Oct 15 4:49 PM), `/faq` (Oct 11), `/about` (Oct 9), `/for-attorneys` (Oct 6),
+`/perm-case-statuses` (Oct 10), `/perm-employers/google-llc` (Oct 15 12:49 AM), `/visa-bulletin` (Oct 12),
+`/case-search` (Oct 11), and `/perm-queue`, which turned out to be crawled Oct 15 11:38 PM, after the last change
+(read the crawl date before every click). Skipped: `/perm-cases`, crawled Oct 15 11:38 PM. Refused at the quota:
+`/uscis-case-status` (last crawl Sep 23). The sitemap index had last been read Oct 10; resubmitted.
+
+Still to request, in order: `/uscis-case-status`, `/guides`, `/changelog`, `/tools`, `/perm-employers`,
+`/perm-wages/software-developers`, `/perm-attorneys/fragomen-del-rey-bernsen-loewy-llp`, `/policy-changes`.

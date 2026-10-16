@@ -29,6 +29,7 @@ export function parseRfiClock(json: string | null): RfiClock | null {
       slowEndDays: slow,
       slowEndFrom: c.slowEndFrom === "measured" ? "measured" : "an immigration attorney's estimate",
       watched: num(c.watched as Num) ?? 0,
+      afterLeaveWatched: num(c.afterLeaveWatched as Num),
       watchedFrom: from,
       test: t && typeof t.judged === "number" ? t : null,
     };

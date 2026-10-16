@@ -24,6 +24,7 @@ describe("parseRfiClock", () => {
       slowEndDays: 14,
       slowEndFrom: "an immigration attorney's estimate",
       watched: 1021,
+      afterLeaveWatched: 259,
       watchedFrom: "2026-08-27",
       test: null,
     });

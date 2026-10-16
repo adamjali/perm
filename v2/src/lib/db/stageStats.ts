@@ -58,6 +58,8 @@ export interface StageStats {
   stages: StageStat[];
   exits: StageMove[];
   durations?: StageDuration[];
+  /** The RFIs the sweep watched DOL issue; read through `parseRfiPath` (`src/lib/stageMoves.ts`). */
+  rfiPath?: unknown;
 }
 
 /**

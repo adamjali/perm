@@ -36,6 +36,7 @@ import { DataView } from "@/components/tools/DataView";
 import { AnswerPanel } from "@/components/tools/Insight";
 import { OccupationRates } from "@/components/rfi/OccupationRates";
 import { RfiOutcomes } from "@/components/rfi/RfiOutcomes";
+import { RfiJourney, StageMoves } from "@/components/rfi/StepByStep";
 import { StageCensus, CensusLinks } from "@/components/rfi/StageCensus";
 import {
   StageCohortsChart,
@@ -46,6 +47,8 @@ import { StageLadder, StageLadderTable } from "@/components/rfi/StageLadder";
 import { isReviewStage, reviewStages, stageMeta } from "@/components/rfi/stageMeta";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getProcessingTimes } from "@/lib/db/processingTimes";
+import { getRfiClock } from "@/lib/db/rfiClock";
+import { getStageStats } from "@/lib/db/stageStats";
 import type { ReviewStage } from "@/lib/db/rfi";
 import {
   SMALL_STAGE_MAX,
@@ -84,7 +87,7 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 86400;
 
 export default async function PermRfiAuditPage() {
-  const [stages, funnel, cohortsRaw, occupations, smallRecords, dol] =
+  const [stages, funnel, cohortsRaw, occupations, smallRecords, dol, stageStats, rfiClock] =
     await Promise.all([
       getReviewStages(),
       getBlendedRfiFunnel(),
@@ -92,6 +95,8 @@ export default async function PermRfiAuditPage() {
       getRfiOccupations(),
       getSmallStageRecords(),
       getProcessingTimes().catch(() => null),
+      getStageStats().catch(() => null),
+      getRfiClock().catch(() => null),
     ]);
 
   const pending = stages.reduce((n, s) => n + s.cases, 0);
@@ -320,6 +325,26 @@ export default async function PermRfiAuditPage() {
             <EmptyState what="The RFI outcome tally" />
           )}
         </Section>
+
+        {/* 3b. STEP BY STEP, FROM OUR OWN SWEEP -------------------------- */}
+        {stageStats || rfiClock ? (
+          <Section
+            id="step-by-step"
+            title="What happens next, step by step"
+            lede={
+              <>
+                From our own sweep of every PERM case: the RFIs we watched DOL issue, how long the reply and the
+                decision took, and where every review step leads.
+              </>
+            }
+          >
+            <RfiJourney stats={stageStats} clock={rfiClock} />
+            <h3 className="mt-10 font-heading text-xl font-bold">Where each step leads</h3>{" "}
+            <div className="mt-4">
+              <StageMoves stats={stageStats} since={rfiClock?.watchedFrom ?? null} />
+            </div>
+          </Section>
+        ) : null}
 
         {/* 4. THE CONVEYOR ------------------------------------------------ */}
         <Section
