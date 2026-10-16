@@ -108,13 +108,13 @@ interface WarningBannerProps {
 
 function WarningBanner({ visible, children, variant = "warning" }: WarningBannerProps): React.ReactElement | null {
   const styles = variant === "warning"
-    ? "bg-data-warn/15 border-data-warn text-data-warn-ink"
+    ? "bg-data-warn/15 border-black border-l-[6px] border-l-data-warn text-foreground"
     : "bg-muted border-border text-muted-foreground";
 
   if (!visible) return null;
   return (
-    <div className={cn("flex items-center gap-2 border px-3 py-2 text-sm", styles)}>
-      <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
+    <div className={cn("flex items-center gap-2 border-2 px-3 py-2 text-sm", styles)}>
+      <AlertTriangle weight="fill" className="size-4 shrink-0 text-data-warn-ink" aria-hidden="true" />
       <span>{children}</span>
     </div>
   );
