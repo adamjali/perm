@@ -210,24 +210,24 @@ export function LiveCaseBrowser({
               className="w-full min-w-0 bg-transparent py-2 text-base font-medium outline-none placeholder:text-muted-foreground"
             />
           </label>{" "}
-          <label className="flex min-h-[44px] items-center gap-2 text-sm font-bold">
+          <label className="flex min-h-[44px] min-w-0 max-w-full items-center gap-2 text-sm font-bold">
             <span>Sort by</span>{" "}
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as LiveSort)}
-              className="min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] min-w-0 max-w-full border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="filed">Filing date</option>
               <option value="employer">Employer</option>
               <option value="status">Status</option>
             </select>
           </label>{" "}
-          <label className={`ml-auto flex min-h-[44px] items-center gap-2 text-sm font-bold${fixedMonth ? " hidden" : ""}`}>
+          <label className={`ml-auto flex min-h-[44px] min-w-0 max-w-full items-center gap-2 text-sm font-bold${fixedMonth ? " hidden" : ""}`}>
             <span>Filed in</span>{" "}
             <select
               value={month}
               onChange={(e) => pickMonth(e.target.value)}
-              className="min-h-[44px] border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] min-w-0 max-w-full border-2 border-input bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
             >
               <option value="">Any month</option>
               {months.map((m) => (

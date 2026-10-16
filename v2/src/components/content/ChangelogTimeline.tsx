@@ -104,8 +104,9 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
               ) : null}
             </div>{" "}
             <h2 className="mt-1.5 font-heading text-lg font-bold leading-snug">
-              <Link href={`/changelog/${entry.post.slug}`} className="hover-underline">
-                {meta.title}
+              {/* The padding makes a one-line title a 44px tap target without moving the text. */}
+              <Link href={`/changelog/${entry.post.slug}`} className="inline-block py-2.5 -my-2.5">
+                <span className="hover-underline">{meta.title}</span>
               </Link>
             </h2>{" "}
             <p className="mt-1 leading-relaxed text-soft">{meta.description}</p>
