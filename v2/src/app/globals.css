@@ -2070,6 +2070,52 @@ input[type="week"] {
 }
 .manila-closed { filter: grayscale(1); }
 
+/* On hover the folder lifts and tips back a touch, and two sheets rise out of
+   its top edge, right of the tab (owner, Oct 16 2026). The sheets sit in a
+   strip just above the folder that clips them, so at rest they're hidden
+   below its edge. Decoration only: aria-hidden, a pointer that can hover, and
+   nothing moves under reduced motion. */
+.manila-papers {
+  position: absolute;
+  right: 1rem;
+  bottom: calc(100% + 2px);
+  width: min(46%, 10rem);
+  height: 1.5rem;
+  overflow: hidden;
+  pointer-events: none;
+}
+.manila-sheet {
+  position: absolute;
+  bottom: 0;
+  height: 1.375rem;
+  border: 2px solid #141414;
+  border-bottom: 0;
+  background-color: #fffdf8;
+  /* A title stroke, then ruled lines. */
+  background-image:
+    linear-gradient(#141414, #141414),
+    repeating-linear-gradient(to bottom, transparent 0 4px, rgb(20 20 20 / 0.24) 4px 5px);
+  background-size: 42% 2px, 100% 100%;
+  background-position: 8px 5px, 0 7px;
+  background-repeat: no-repeat;
+  transform: translateY(100%);
+}
+.manila-sheet:first-child { left: 22%; right: 0; transform-origin: bottom right; }
+.manila-sheet:last-child { left: 0; right: 16%; transform-origin: bottom left; }
+@media (hover: hover) {
+  .manila:hover .manila-sheet:first-child { transform: translateY(4px) rotate(1deg); }
+  .manila:hover .manila-sheet:last-child { transform: translateY(8px) rotate(-1deg); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .manila { transition: transform 200ms ease-out, box-shadow 200ms ease-out; }
+  .manila-sheet { transition: transform 240ms ease-out; }
+  .manila-sheet:last-child { transition-delay: 50ms; }
+  .manila:hover {
+    transform: translateY(-3px) rotate(-0.5deg);
+    box-shadow: 6px 7px 0 0 #141414;
+  }
+}
+
 /* Date fields: Chrome and Safari hide their own picker icon (DateInput's
    ::-webkit-calendar-picker-indicator rules) and show ours; Firefox's picker
    button can't be hidden, so there ours goes instead. :-moz-focusring

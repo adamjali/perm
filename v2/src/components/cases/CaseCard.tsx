@@ -54,11 +54,16 @@ export const CaseCard = memo(function CaseCard({
     <article
       data-testid="case-card"
       className={cn(
-        "manila relative mt-7 flex flex-col transition-colors",
+        "manila relative mt-7 flex flex-col",
         isSelected && "outline-4 outline-offset-2 outline-primary",
         isClosed && "manila-closed",
       )}
     >
+      {/* Two sheets that rise out of the folder on hover (globals.css). */}
+      <span className="manila-papers" aria-hidden="true">
+        <span className="manila-sheet" />
+        <span className="manila-sheet" />
+      </span>
       {/* The folder's tab, in its stage's colour, so a row of folders reads
           by stage at a glance. */}
       <span className={cn("manila-tab", stage.fill, stage.onFill)}>{stage.label}</span>
